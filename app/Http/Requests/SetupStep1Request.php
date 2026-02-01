@@ -23,7 +23,7 @@ class SetupStep1Request extends FormRequest
     public function rules(): array
     {
         return [
-            'password' => [
+            'admin_password' => [
                 'required',
                 'string',
                 'confirmed',
@@ -45,9 +45,9 @@ class SetupStep1Request extends FormRequest
     public function messages(): array
     {
         return [
-            'password.required' => 'An admin password is required to complete setup.',
-            'password.confirmed' => 'The password confirmation does not match.',
-            'password.min' => 'The password must be at least 12 characters.',
+            'admin_password.required' => 'An admin password is required to complete setup.',
+            'admin_password.confirmed' => 'The password confirmation does not match.',
+            'admin_password.min' => 'The password must be at least 12 characters.',
         ];
     }
 
@@ -59,7 +59,7 @@ class SetupStep1Request extends FormRequest
     public function attributes(): array
     {
         return [
-            'password' => 'admin password',
+            'admin_password' => 'admin password',
         ];
     }
 }

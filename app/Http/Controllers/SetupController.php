@@ -15,7 +15,7 @@ class SetupController extends Controller
 {
     public function welcome()
     {
-        return view('setup.welcome', ['currentStep' => 1]);
+        return view('setup.welcome', ['step' => 1]);
     }
 
     public function stepOne(SetupStep1Request $request)
@@ -30,7 +30,7 @@ class SetupController extends Controller
 
     public function branding()
     {
-        return view('setup.branding', ['currentStep' => 2]);
+        return view('setup.branding', ['step' => 2]);
     }
 
     public function stepTwo(SetupStep2Request $request)
@@ -53,7 +53,7 @@ class SetupController extends Controller
 
     public function preferences()
     {
-        return view('setup.preferences', ['currentStep' => 3]);
+        return view('setup.preferences', ['step' => 3]);
     }
 
     public function complete(SetupStep3Request $request)

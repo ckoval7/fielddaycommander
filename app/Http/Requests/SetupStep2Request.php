@@ -32,7 +32,7 @@ class SetupStep2Request extends FormRequest
                 'string',
                 'max:255',
             ],
-            'site_logo' => [
+            'logo' => [
                 'nullable',
                 'image',
                 'mimes:jpeg,jpg,png,svg',
@@ -52,9 +52,9 @@ class SetupStep2Request extends FormRequest
             'site_name.required' => 'A site name is required.',
             'site_name.max' => 'The site name must not exceed 100 characters.',
             'site_tagline.max' => 'The site tagline must not exceed 255 characters.',
-            'site_logo.image' => 'The site logo must be an image file.',
-            'site_logo.mimes' => 'The site logo must be a JPEG, PNG, or SVG file.',
-            'site_logo.max' => 'The site logo must not exceed 2MB.',
+            'logo.image' => 'The site logo must be an image file.',
+            'logo.mimes' => 'The site logo must be a JPEG, PNG, or SVG file.',
+            'logo.max' => 'The site logo must not exceed 2MB.',
         ];
     }
 
@@ -68,7 +68,7 @@ class SetupStep2Request extends FormRequest
         return [
             'site_name' => 'site name',
             'site_tagline' => 'site tagline',
-            'site_logo' => 'site logo',
+            'logo' => 'site logo',
         ];
     }
 }
