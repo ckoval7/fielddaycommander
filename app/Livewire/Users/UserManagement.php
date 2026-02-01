@@ -45,7 +45,7 @@ class UserManagement extends Component
 
     public ?string $license_class = null;
 
-    public ?int $roleId = null;
+    public ?int $role_id = null;
 
     public bool $inviteMode = true;
 
@@ -75,7 +75,7 @@ class UserManagement extends Component
 
     public bool $selectAll = false;
 
-    public ?int $bulkRoleId = null;
+    public ?int $bulk_role_id = null;
 
     public ?string $bulkLockExpiry = null;
 
@@ -149,7 +149,7 @@ class UserManagement extends Component
     {
         $this->reset([
             'editingUserId', 'call_sign', 'first_name', 'last_name',
-            'email', 'license_class', 'roleId', 'password',
+            'email', 'license_class', 'role_id', 'password',
             'password_confirmation', 'inviteMode',
         ]);
         $this->inviteMode = true;
@@ -166,7 +166,7 @@ class UserManagement extends Component
         $this->last_name = $user->last_name;
         $this->email = $user->email;
         $this->license_class = $user->license_class;
-        $this->roleId = $user->roles->first()?->id;
+        $this->role_id = $user->roles->first()?->id;
 
         $this->showModal = true;
     }
@@ -190,7 +190,7 @@ class UserManagement extends Component
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users'],
             'license_class' => ['nullable', 'in:Technician,General,Advanced,Extra'],
-            'roleId' => ['required', 'exists:roles,id'],
+            'role_id' => ['required', 'exists:roles,id'],
             'password' => ['required_if:inviteMode,false', 'confirmed', Password::defaults()],
         ], [
             'call_sign.unique' => 'This call sign is already registered',
@@ -206,7 +206,7 @@ class UserManagement extends Component
             'password' => $this->inviteMode ? Hash::make(str()->random(32)) : Hash::make($validated['password']),
         ]);
 
-        $role = Role::find($validated['roleId']);
+        $role = Role::find($validated['role_id']);
         $user->assignRole($role);
 
         if ($this->inviteMode) {
@@ -227,7 +227,7 @@ class UserManagement extends Component
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($this->editingUserId)],
             'license_class' => ['nullable', 'in:Technician,General,Advanced,Extra'],
-            'roleId' => ['required', 'exists:roles,id'],
+            'role_id' => ['required', 'exists:roles,id'],
         ], [
             'call_sign.unique' => 'This call sign is already registered',
             'email.unique' => 'This email is already registered',
@@ -243,7 +243,7 @@ class UserManagement extends Component
             'license_class' => $validated['license_class'],
         ]);
 
-        $role = Role::find($validated['roleId']);
+        $role = Role::find($validated['role_id']);
         $user->syncRoles([$role]);
 
         $this->showModal = false;
@@ -366,7 +366,7 @@ class UserManagement extends Component
     {
         Gate::authorize('manage-users');
 
-        if (empty($this->selectedUsers) || ! $this->bulkRoleId) {
+        if (empty($this->selectedUsers) || ! $this->bulk_role_id) {
             return;
         }
 
@@ -376,13 +376,13 @@ class UserManagement extends Component
             return;
         }
 
-        $role = Role::find($this->bulkRoleId);
+        $role = Role::find($this->bulk_role_id);
         User::whereIn('id', $this->selectedUsers)->each(function ($user) use ($role) {
             $user->syncRoles([$role]);
         });
 
         $count = count($this->selectedUsers);
-        $this->reset(['selectedUsers', 'selectAll', 'bulkRoleId']);
+        $this->reset(['selectedUsers', 'selectAll', 'bulk_role_id']);
         $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} users", icon: 'o-check-circle', css: 'alert-success');
     }
 

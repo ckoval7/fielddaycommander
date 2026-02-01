@@ -52,7 +52,7 @@
             {{-- Role --}}
             <x-select
                 label="Role"
-                wire:model="roleId"
+                wire:model="role_id"
                 :options="$this->roles"
                 option-value="id"
                 option-label="name"

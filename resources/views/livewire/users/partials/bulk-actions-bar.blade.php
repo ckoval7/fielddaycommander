@@ -9,7 +9,7 @@
             {{-- Assign Role --}}
             <x-select
                 placeholder="Assign Role"
-                wire:model="bulkRoleId"
+                wire:model="bulk_role_id"
                 :options="$this->roles"
                 option-value="id"
                 option-label="name"
@@ -20,7 +20,7 @@
                 icon="o-user-group"
                 class="btn-sm btn-primary"
                 wire:click="bulkAssignRole"
-                :disabled="!$bulkRoleId"
+                :disabled="!$bulk_role_id"
                 spinner="bulkAssignRole"
             />
 
