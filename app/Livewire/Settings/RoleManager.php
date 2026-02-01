@@ -144,6 +144,7 @@ class RoleManager extends Component
             'roles' => Role::withCount(['permissions', 'users'])->get(),
             'permissions' => Permission::all(),
             'selectedRole' => $this->selectedRoleId ? Role::findById($this->selectedRoleId) : null,
+            'categories' => $this->categories,
         ]);
     }
 }

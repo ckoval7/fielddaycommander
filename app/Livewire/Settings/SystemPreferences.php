@@ -54,7 +54,11 @@ class SystemPreferences extends Component
 
     public function getPreviewProperty(): string
     {
-        return now()->timezone($this->timezone)->format($this->date_format.' '.$this->time_format);
+        try {
+            return now()->timezone($this->timezone ?: 'UTC')->format($this->date_format.' '.$this->time_format);
+        } catch (\Exception $e) {
+            return 'Invalid format';
+        }
     }
 
     public function render()
