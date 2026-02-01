@@ -69,7 +69,7 @@ class UserManagement extends Component
 
     public string $resetPassword = '';
 
-    public string $resetPasswordConfirmation = '';
+    public string $resetPassword_confirmation = '';
 
     // Delete confirmation
     public ?int $deletingUserId = null;
@@ -337,7 +337,7 @@ class UserManagement extends Component
         $this->resettingUserId = $userId;
         $this->sendResetEmail = true;
         $this->resetPassword = '';
-        $this->resetPasswordConfirmation = '';
+        $this->resetPassword_confirmation = '';
         $this->showResetModal = true;
     }
 
@@ -364,7 +364,7 @@ class UserManagement extends Component
             $this->dispatch('toast', title: 'Success', description: 'Password reset email sent', icon: 'o-envelope', css: 'alert-success');
         }
 
-        $this->reset(['resettingUserId', 'sendResetEmail', 'resetPassword', 'resetPasswordConfirmation']);
+        $this->reset(['resettingUserId', 'sendResetEmail', 'resetPassword', 'resetPassword_confirmation']);
     }
 
     public function openDeleteModal(int $userId): void

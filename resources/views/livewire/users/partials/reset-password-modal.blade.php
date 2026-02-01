@@ -18,7 +18,7 @@
                 <x-input
                     label="Confirm New Password"
                     type="password"
-                    wire:model="resetPasswordConfirmation"
+                    wire:model="resetPassword_confirmation"
                     icon="o-lock-closed"
                     required
                 />
