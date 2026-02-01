@@ -6,7 +6,7 @@
                 <img src="{{ asset(auth()->user()->avatar_path) }}" alt="{{ auth()->user()->call_sign }}" class="rounded-full">
             @else
                 <div class="avatar placeholder">
-                    <div class="bg-neutral text-neutral-content rounded-full w-10">
+                    <div class="bg-neutral text-neutral-content rounded-full w-10 flex items-center justify-center">
                         <span class="text-sm">{{ substr(auth()->user()->call_sign, 0, 2) }}</span>
                     </div>
                 </div>
@@ -31,19 +31,14 @@
         <div class="divider my-1"></div>
 
         <!-- Menu items -->
-        <li>
-            <a href="{{ route('profile.show') }}" wire:navigate>
-                <x-icon name="o-user" class="w-4 h-4" />
-                View Profile
-            </a>
-        </li>
-
+        {{-- TODO: Implement profile page
         <li>
             <a href="{{ route('profile.edit') }}" wire:navigate>
-                <x-icon name="o-pencil" class="w-4 h-4" />
-                Edit Profile
+                <x-icon name="o-user" class="w-4 h-4" />
+                Profile
             </a>
         </li>
+        --}}
 
         @can('manage-users')
             <div class="divider my-1"></div>
@@ -70,7 +65,7 @@
         <li>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="w-full text-left text-error">
+                <button type="submit" class="w-full text-start text-error flex items-center gap-2">
                     <x-icon name="o-arrow-right-on-rectangle" class="w-4 h-4" />
                     Logout
                 </button>
@@ -78,4 +73,8 @@
         </li>
     </ul>
 </div>
+@else
+<a href="{{ route('login') }}" wire:navigate class="btn btn-primary">
+    Login
+</a>
 @endauth

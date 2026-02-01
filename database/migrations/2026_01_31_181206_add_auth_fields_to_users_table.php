@@ -9,13 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Two-Factor Authentication
-            $table->timestamp('two_factor_enabled_at')->nullable()->after('password');
-            $table->text('two_factor_secret')->nullable()->after('two_factor_enabled_at');
-            $table->text('two_factor_recovery_codes')->nullable()->after('two_factor_secret');
-
             // Emergency 2FA Bypass
-            $table->boolean('two_factor_bypass_enabled')->default(false)->after('two_factor_recovery_codes');
+            $table->boolean('two_factor_bypass_enabled')->default(false)->after('two_factor_confirmed_at');
             $table->timestamp('two_factor_bypass_expires_at')->nullable()->after('two_factor_bypass_enabled');
             $table->string('two_factor_bypass_reason')->nullable()->after('two_factor_bypass_expires_at');
 
@@ -36,9 +31,6 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn([
-                'two_factor_enabled_at',
-                'two_factor_secret',
-                'two_factor_recovery_codes',
                 'two_factor_bypass_enabled',
                 'two_factor_bypass_expires_at',
                 'two_factor_bypass_reason',

@@ -1,73 +1,37 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@layer components {
+    .btn-primary {
+        @apply px-4 py-2 rounded-lg font-medium;
+        @apply bg-blue-600 text-white border-blue-600;
+        @apply hover:bg-blue-700 hover:border-blue-700;
+        @apply active:bg-blue-800 active:border-blue-800;
+        @apply focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+        @apply disabled:bg-blue-400 disabled:border-blue-400 disabled:cursor-not-allowed;
+        @apply transition-colors duration-150;
+    }
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
+    [data-theme="dark"] .btn-primary {
+        @apply bg-blue-500 text-white border-blue-500;
+        @apply hover:bg-blue-600 hover:border-blue-600;
+        @apply active:bg-blue-700 active:border-blue-700;
+        @apply focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-gray-900;
+        @apply disabled:bg-blue-800 disabled:border-blue-800 disabled:cursor-not-allowed;
+    }
 
+    /* Checkbox styling */
+    .checkbox {
+        @apply w-5 h-5 rounded border-2 border-gray-300 bg-white;
+        @apply checked:bg-blue-600 checked:border-blue-600;
+        @apply focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+        @apply cursor-pointer transition-colors duration-150;
+    }
 
-
-/**
-    The lines above are intact.
-    The lines below were added by maryUI installer.
-*/
-
-/** daisyUI */
-@plugin "daisyui" {
-    themes: light --default, dark --prefersdark;
-}
-
-/* Custom color overrides for cleaner palette */
-[data-theme="light"] {
-    --p: 217 91% 60%;        /* Blue primary */
-    --pc: 0 0% 100%;
-    --s: 215 20% 65%;        /* Muted blue-gray secondary */
-    --sc: 0 0% 100%;
-    --a: 38 92% 50%;         /* Amber accent */
-    --ac: 222 47% 11%;
-    --n: 215 25% 35%;        /* Neutral slate */
-    --nc: 210 20% 95%;
-    --b1: 0 0% 100%;         /* White base */
-    --b2: 210 40% 98%;
-    --b3: 214 32% 91%;
-    --bc: 222 47% 11%;       /* Dark text */
-}
-
-[data-theme="dark"] {
-    --p: 217 91% 65%;        /* Lighter blue for dark */
-    --pc: 210 20% 98%;
-    --s: 215 20% 65%;        /* Muted blue-gray */
-    --sc: 210 20% 98%;
-    --a: 43 96% 56%;         /* Lighter amber */
-    --ac: 222 47% 6%;
-    --n: 215 28% 25%;
-    --nc: 214 32% 91%;
-    --b1: 222 47% 6%;        /* Very dark background */
-    --b2: 222 47% 11%;
-    --b3: 215 28% 17%;
-    --bc: 214 32% 91%;       /* Light text */
-}
-
-/* maryUI */
-@source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";
-
-/* Theme toggle */
-@custom-variant dark (&:where(.dark, .dark *));
-
-/**
-* Paginator - Traditional style
-* Because Laravel defaults does not match well the design of daisyUI.
-*/
-
-.mary-table-pagination span[aria-current="page"] > span {
-    @apply bg-primary text-base-100
-}
-
-.mary-table-pagination button {
-    @apply cursor-pointer
+    [data-theme="dark"] .checkbox {
+        @apply border-gray-600 bg-gray-800;
+        @apply checked:bg-blue-500 checked:border-blue-500;
+        @apply focus:ring-blue-400 focus:ring-offset-gray-900;
+    }
 }

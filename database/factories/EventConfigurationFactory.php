@@ -16,14 +16,42 @@ class EventConfigurationFactory extends Factory
      */
     public function definition(): array
     {
+        // Ensure we have required reference data
+        $section = \App\Models\Section::where('code', 'CT')->first();
+        if (! $section) {
+            $section = \App\Models\Section::create([
+                'code' => 'CT',
+                'name' => 'Connecticut',
+                'region' => 'W1',
+            ]);
+        }
+
+        $eventType = \App\Models\EventType::where('code', 'FD')->first();
+        if (! $eventType) {
+            $eventType = \App\Models\EventType::create([
+                'name' => 'Field Day',
+                'code' => 'FD',
+                'description' => 'ARRL Field Day',
+            ]);
+        }
+
+        $operatingClass = \App\Models\OperatingClass::where('code', '1A')->first();
+        if (! $operatingClass) {
+            $operatingClass = \App\Models\OperatingClass::create([
+                'event_type_id' => $eventType->id,
+                'code' => '1A',
+                'name' => 'Class 1A',
+                'description' => 'Test Class',
+            ]);
+        }
+
         return [
             'event_id' => \App\Models\Event::factory(),
             'created_by_user_id' => \App\Models\User::factory(),
             'callsign' => 'W1AW',
             'club_name' => 'Test Radio Club',
-            'is_active' => true,
-            'section_id' => \App\Models\Section::where('abbreviation', 'CT')->first()?->id ?? 1,
-            'operating_class_id' => \App\Models\OperatingClass::first()?->id ?? 1,
+            'section_id' => $section->id,
+            'operating_class_id' => $operatingClass->id,
             'transmitter_count' => 1,
             'has_gota_station' => false,
             'max_power_watts' => 100,
@@ -35,7 +63,7 @@ class EventConfigurationFactory extends Factory
             'uses_wind' => false,
             'uses_water' => false,
             'uses_methane' => false,
-            'uses_other_power' => false,
+            'uses_other_power' => null,
         ];
     }
 }
