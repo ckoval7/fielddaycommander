@@ -1,13 +1,11 @@
 <div class="space-y-6">
     <!-- Header -->
     <x-header title="Events" subtitle="Manage Field Day and other contest events" separator progress-indicator>
-        {{-- Future: Add create event button when events.create route exists
         <x-slot:actions>
             @can('create-events')
-                <x-button label="Create Event" icon="o-plus" class="btn-primary" link="{{ route('events.create') }}" responsive />
+                <x-button label="Create Event" icon="o-plus" class="btn-primary" link="{{ route('events.create') }}" wire:navigate responsive />
             @endcan
         </x-slot:actions>
-        --}}
     </x-header>
 
     <!-- Controls -->
@@ -108,18 +106,16 @@
                                         </li>
                                         --}}
 
-                                        {{-- Future: Add when events.edit route exists
                                         @can('edit-events')
                                             @if(!$event->deleted_at)
                                                 <li>
-                                                    <a href="{{ route('events.edit', $event->id) }}" wire:navigate>
+                                                    <a href="{{ route('events.edit', ['eventId' => $event->id]) }}" wire:navigate>
                                                         <x-icon name="o-pencil" class="w-4 h-4" />
                                                         Edit
                                                     </a>
                                                 </li>
                                             @endif
                                         @endcan
-                                        --}}
 
                                         @can('activate-events')
                                             @if(!$event->deleted_at && $event->status !== 'active')
@@ -134,18 +130,16 @@
                                             @endif
                                         @endcan
 
-                                        {{-- Future: Add when events.clone route exists
-                                        @can('clone-events')
+                                        @can('create-events')
                                             @if(!$event->deleted_at)
                                                 <li>
-                                                    <a href="{{ route('events.clone', $event->id) }}" wire:navigate>
+                                                    <a href="{{ route('events.clone', ['eventId' => $event->id]) }}" wire:navigate>
                                                         <x-icon name="o-document-duplicate" class="w-4 h-4" />
                                                         Clone Event
                                                     </a>
                                                 </li>
                                             @endif
                                         @endcan
-                                        --}}
 
                                         @can('delete-events')
                                             @if(!$event->deleted_at)
@@ -172,11 +166,9 @@
                                 <div class="flex flex-col items-center gap-2">
                                     <x-icon name="o-calendar" class="w-12 h-12 opacity-50" />
                                     <p>No events found</p>
-                                    {{-- Future: Add when events.create route exists
                                     @can('create-events')
-                                        <x-button label="Create First Event" icon="o-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" />
+                                        <x-button label="Create First Event" icon="o-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" wire:navigate />
                                     @endcan
-                                    --}}
                                 </div>
                             </td>
                         </tr>

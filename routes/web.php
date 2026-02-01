@@ -78,6 +78,18 @@ Route::middleware(['auth', 'can:view-events'])->group(function () {
     Route::get('/events', \App\Livewire\Events\EventsList::class)->name('events.index');
 });
 
+Route::middleware(['auth', 'can:create-events'])->group(function () {
+    Route::get('/events/create', \App\Livewire\Events\EventForm::class)->name('events.create');
+});
+
+Route::middleware(['auth', 'can:edit-events'])->group(function () {
+    Route::get('/events/{eventId}/edit', \App\Livewire\Events\EventForm::class)->name('events.edit');
+});
+
+Route::middleware(['auth', 'can:create-events'])->group(function () {
+    Route::get('/events/{eventId}/clone', \App\Livewire\Events\EventForm::class)->name('events.clone');
+});
+
 Route::middleware(['auth', 'can:manage-users'])->group(function () {
     Route::get('/users', function () {
         return view('users.index');
