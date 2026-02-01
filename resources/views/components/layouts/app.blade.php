@@ -113,5 +113,19 @@
 
     {{--  TOAST area --}}
     <x-toast />
+
+    {{-- Toast notification listener --}}
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('notify', (event) => {
+                window.$toast(event.description, {
+                    description: event.title,
+                    icon: event.title.toLowerCase().includes('error') ? 'error' : 'success',
+                    css: event.title.toLowerCase().includes('error') ? 'alert-error' : 'alert-success',
+                    timeout: 3000
+                });
+            });
+        });
+    </script>
 </body>
 </html>

@@ -106,8 +106,14 @@
                     <div class="text-sm text-gray-600">
                         {{ count($selectedPermissions) }} {{ Str::plural('permission', count($selectedPermissions)) }} selected
                     </div>
-                    <x-button wire:click="savePermissions" class="btn-primary" icon="o-check">
-                        Save Permissions
+                    <x-button
+                        wire:click="savePermissions"
+                        class="btn-primary"
+                        icon="o-check"
+                        spinner="savePermissions"
+                    >
+                        <span wire:loading.remove wire:target="savePermissions">Save Permissions</span>
+                        <span wire:loading wire:target="savePermissions">Saving...</span>
                     </x-button>
                 </div>
             </x-card>
@@ -161,8 +167,13 @@
             <x-button wire:click="$set('showCreateModal', false)" class="btn-ghost">
                 Cancel
             </x-button>
-            <x-button wire:click="createRole" class="btn-primary">
-                Create Role
+            <x-button
+                wire:click="createRole"
+                class="btn-primary"
+                spinner="createRole"
+            >
+                <span wire:loading.remove wire:target="createRole">Create Role</span>
+                <span wire:loading wire:target="createRole">Creating...</span>
             </x-button>
         </x-slot:actions>
     </x-modal>
@@ -175,8 +186,13 @@
             <x-button wire:click="$set('showDeleteModal', false)" class="btn-ghost">
                 Cancel
             </x-button>
-            <x-button wire:click="deleteRole" class="btn-error">
-                Delete Role
+            <x-button
+                wire:click="deleteRole"
+                class="btn-error"
+                spinner="deleteRole"
+            >
+                <span wire:loading.remove wire:target="deleteRole">Delete Role</span>
+                <span wire:loading wire:target="deleteRole">Deleting...</span>
             </x-button>
         </x-slot:actions>
     </x-modal>

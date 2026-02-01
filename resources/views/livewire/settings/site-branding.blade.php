@@ -29,8 +29,14 @@
                     <label class="block text-sm font-medium mb-2">Current Logo</label>
                     <div class="flex items-center gap-4">
                         <img src="{{ Storage::url($logo_path) }}" alt="Site Logo" class="max-h-24 border rounded">
-                        <x-button wire:click="removeLogo" class="btn-error btn-sm" icon="o-trash">
-                            Remove Logo
+                        <x-button
+                            wire:click="removeLogo"
+                            class="btn-error btn-sm"
+                            icon="o-trash"
+                            spinner="removeLogo"
+                        >
+                            <span wire:loading.remove wire:target="removeLogo">Remove Logo</span>
+                            <span wire:loading wire:target="removeLogo">Removing...</span>
                         </x-button>
                     </div>
                 </div>
@@ -41,7 +47,13 @@
                 wire:model="new_logo"
                 accept="image/png,image/jpeg,image/svg+xml"
                 hint="PNG, JPG, or SVG. Maximum 2MB. Recommended: 800x200px"
-            />
+            >
+                <x-slot:append>
+                    <div wire:loading wire:target="new_logo" class="text-sm text-primary">
+                        Uploading...
+                    </div>
+                </x-slot:append>
+            </x-file>
 
             @if($new_logo)
                 <div>
@@ -100,8 +112,14 @@
     </x-card>
 
     <div class="flex justify-end">
-        <x-button wire:click="save" class="btn-primary" icon="o-check">
-            Save Branding
+        <x-button
+            wire:click="save"
+            class="btn-primary"
+            icon="o-check"
+            spinner="save"
+        >
+            <span wire:loading.remove wire:target="save">Save Branding</span>
+            <span wire:loading wire:target="save">Saving...</span>
         </x-button>
     </div>
 </div>

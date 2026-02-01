@@ -96,8 +96,14 @@
     </x-card>
 
     <div class="flex justify-end">
-        <x-button wire:click="save" class="btn-primary" icon="o-check">
-            Save Preferences
+        <x-button
+            wire:click="save"
+            class="btn-primary"
+            icon="o-check"
+            spinner="save"
+        >
+            <span wire:loading.remove wire:target="save">Save Preferences</span>
+            <span wire:loading wire:target="save">Saving...</span>
         </x-button>
     </div>
 </div>
