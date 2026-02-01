@@ -33,12 +33,20 @@
                 hint="Optional subtitle or motto"
             />
 
-            <x-file
-                label="Site Logo"
-                name="logo"
-                accept="image/png,image/jpeg,image/svg+xml"
-                hint="PNG, JPG, or SVG. Maximum 2MB. Recommended: 800x200px"
-            />
+            <div class="form-control w-full">
+                <label class="label">
+                    <span class="label-text">Site Logo</span>
+                </label>
+                <input
+                    type="file"
+                    name="logo"
+                    accept="image/png,image/jpeg,image/svg+xml"
+                    class="file-input file-input-bordered w-full"
+                />
+                <label class="label">
+                    <span class="label-text-alt">PNG, JPG, or SVG. Maximum 2MB. Recommended: 800x200px</span>
+                </label>
+            </div>
 
             <div class="flex justify-between">
                 <x-button
@@ -50,7 +58,7 @@
                     Back
                 </x-button>
 
-                <x-button type="submit" class="btn-primary" icon="o-arrow-right" :icon-right="true">
+                <x-button type="submit" class="btn-primary" icon-right="o-arrow-right">
                     Next: Preferences
                 </x-button>
             </div>

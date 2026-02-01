@@ -17,37 +17,40 @@
             @csrf
 
             <div class="space-y-4">
-                <x-select
-                    label="Timezone"
-                    name="timezone"
-                    required
-                    icon="o-globe-americas"
-                    :options="collect(timezone_identifiers_list())->mapWithKeys(fn($tz) => [$tz => $tz])->toArray()"
-                    searchable
-                />
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text">Timezone <span class="text-error">*</span></span>
+                    </label>
+                    <select name="timezone" required class="select select-bordered w-full">
+                        <option value="">Select timezone...</option>
+                        @foreach(timezone_identifiers_list() as $tz)
+                            <option value="{{ $tz }}">{{ $tz }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-                <x-select
-                    label="Date Format"
-                    name="date_format"
-                    required
-                    icon="o-calendar"
-                    :options="[
-                        'Y-m-d' => '2026-02-01 (ISO)',
-                        'm/d/Y' => '02/01/2026 (US)',
-                        'd/m/Y' => '01/02/2026 (EU)',
-                    ]"
-                />
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text">Date Format <span class="text-error">*</span></span>
+                    </label>
+                    <select name="date_format" required class="select select-bordered w-full">
+                        <option value="">Select format...</option>
+                        <option value="Y-m-d">2026-02-01 (ISO)</option>
+                        <option value="m/d/Y">02/01/2026 (US)</option>
+                        <option value="d/m/Y">01/02/2026 (EU)</option>
+                    </select>
+                </div>
 
-                <x-select
-                    label="Time Format"
-                    name="time_format"
-                    required
-                    icon="o-clock"
-                    :options="[
-                        'H:i' => '14:30 (24-hour)',
-                        'h:i A' => '02:30 PM (12-hour)',
-                    ]"
-                />
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text">Time Format <span class="text-error">*</span></span>
+                    </label>
+                    <select name="time_format" required class="select select-bordered w-full">
+                        <option value="">Select format...</option>
+                        <option value="H:i">14:30 (24-hour)</option>
+                        <option value="h:i A">02:30 PM (12-hour)</option>
+                    </select>
+                </div>
 
                 <x-input
                     label="Contact Email"
@@ -68,7 +71,7 @@
                     Back
                 </x-button>
 
-                <x-button type="submit" class="btn-success" icon="o-check-circle" :icon-right="true">
+                <x-button type="submit" class="btn-success" icon-right="o-check-circle">
                     Complete Setup
                 </x-button>
             </div>

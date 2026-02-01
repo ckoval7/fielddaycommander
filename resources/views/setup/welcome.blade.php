@@ -44,7 +44,7 @@
 
             <div class="flex justify-between">
                 <div></div>
-                <x-button type="submit" class="btn-primary" icon="o-arrow-right" :icon-right="true">
+                <x-button type="submit" class="btn-primary" icon-right="o-arrow-right">
                     Next: Site Branding
                 </x-button>
             </div>

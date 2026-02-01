@@ -229,6 +229,28 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - State lives on the server; the UI reflects it. Validate and authorize in actions (they're like HTTP requests).
 - IMPORTANT: Activate `livewire-development` every time you're working with Livewire-related tasks.
 
+## Livewire v4 Layout Structure
+
+This application maintains layouts in TWO locations due to Livewire v4 requirements:
+
+1. **`resources/views/layouts/`** - Livewire v4 default location (uses `layouts::` namespace)
+   - Required for full-page Livewire components
+   - Default layout: `layouts::app` points to `resources/views/layouts/app.blade.php`
+   - Guest layout: `layouts::guest` points to `resources/views/layouts/guest.blade.php`
+
+2. **`resources/views/components/layouts/`** - Original component-based location
+   - Used for Blade components with `<x-layouts.app>` syntax
+   - Maintained for backwards compatibility
+
+**CRITICAL: When modifying layouts, update BOTH locations to maintain consistency:**
+```bash
+# Update both files when making layout changes
+resources/views/layouts/app.blade.php
+resources/views/components/layouts/app.blade.php
+```
+
+**Alternative:** Consider consolidating to one location and updating Livewire config in the future if this becomes cumbersome.
+
 === pint/core rules ===
 
 # Laravel Pint Code Formatter
