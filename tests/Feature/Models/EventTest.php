@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\Event;
-use App\Models\EventType;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Setting;
 
 beforeEach(function () {

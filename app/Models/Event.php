@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Event extends Model
 {
@@ -61,6 +61,7 @@ class Event extends Model
     public function scopeActive($query)
     {
         $activeEventId = Setting::get('active_event_id');
+
         return $query->where('id', $activeEventId);
     }
 
@@ -77,7 +78,7 @@ class Event extends Model
     public function scopeInProgress($query)
     {
         return $query->where('start_time', '<=', now())
-                     ->where('end_time', '>=', now());
+            ->where('end_time', '>=', now());
     }
 
     // Accessors
@@ -96,7 +97,7 @@ class Event extends Model
 
     public function getStatusBadgeColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'active' => 'success',
             'upcoming' => 'info',
             'in_progress' => 'warning',

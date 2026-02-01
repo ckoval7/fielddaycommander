@@ -76,6 +76,7 @@ Route::middleware(['auth', 'can:manage-equipment'])->group(function () {
 // Administration
 Route::middleware(['auth', 'can:view-events'])->group(function () {
     Route::get('/events', \App\Livewire\Events\EventsList::class)->name('events.index');
+    Route::get('/events/{event}', \App\Livewire\Events\EventDashboard::class)->name('events.show');
 });
 
 Route::middleware(['auth', 'can:create-events'])->group(function () {
