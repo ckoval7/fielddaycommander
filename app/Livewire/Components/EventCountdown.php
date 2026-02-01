@@ -3,6 +3,7 @@
 namespace App\Livewire\Components;
 
 use App\Models\Event;
+use App\Models\Setting;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -137,8 +138,10 @@ class EventCountdown extends Component
 
     protected function updateTimes(): void
     {
+        $timezone = Setting::get('timezone', config('app.timezone'));
         $now = now();
-        $this->localTime = $now->format('H:i:s');
+
+        $this->localTime = $now->timezone($timezone)->format('H:i:s');
         $this->utcTime = $now->timezone('UTC')->format('H:i:s');
     }
 
