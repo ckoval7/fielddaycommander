@@ -7,6 +7,7 @@ use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -215,7 +216,8 @@ class UserManagement extends Component
         if ($this->inviteMode) {
             try {
                 $token = Str::random(64);
-                $adminName = auth()->user()->first_name.' '.auth()->user()->last_name;
+                $admin = auth()->user();
+                $adminName = trim($admin->first_name.' '.$admin->last_name) ?: $admin->call_sign;
 
                 UserInvitation::create([
                     'user_id' => $user->id,
@@ -229,7 +231,15 @@ class UserManagement extends Component
                 $this->reset(['selectedUsers', 'selectAll']);
                 $this->dispatch('toast', title: 'Success', description: 'User created and invitation email sent', icon: 'o-envelope', css: 'alert-success');
             } catch (\Exception $e) {
-                $this->dispatch('toast', title: 'Warning', description: 'User created but invitation email failed to send. Please check mail configuration.', icon: 'o-exclamation-triangle', css: 'alert-warning');
+                Log::error('Failed to send user invitation email', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'user_call_sign' => $user->call_sign,
+                    'admin_id' => auth()->id(),
+                    'error' => $e->getMessage(),
+                ]);
+
+                $this->dispatch('toast', title: 'Warning', description: 'User created but invitation email failed to send. Check application logs for details.', icon: 'o-exclamation-triangle', css: 'alert-warning');
             }
         } else {
             $this->showModal = false;
@@ -396,9 +406,12 @@ class UserManagement extends Component
         }
 
         $role = Role::find($this->bulk_role_id);
-        User::whereIn('id', $this->selectedUsers)->each(function ($user) use ($role) {
-            $user->syncRoles([$role]);
-        });
+        User::whereIn('id', $this->selectedUsers)
+            ->with('roles')
+            ->get()
+            ->each(function ($user) use ($role) {
+                $user->syncRoles([$role]);
+            });
 
         $count = count($this->selectedUsers);
         $this->reset(['selectedUsers', 'selectAll', 'bulk_role_id']);

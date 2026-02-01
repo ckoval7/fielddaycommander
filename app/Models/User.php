@@ -81,7 +81,7 @@ class User extends Authenticatable
      */
     public function isLocked(): bool
     {
-        return $this->account_locked_at !== null && $this->account_locked_at->isFuture();
+        return $this->account_locked_at !== null;
     }
 
     /**
