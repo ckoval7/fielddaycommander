@@ -1,9 +1,9 @@
 <x-layouts.guest>
     {{-- Progress Stepper --}}
     <ul class="steps steps-horizontal w-full mb-8">
-        <li class="step @if($step >= 1) step-primary @endif">Admin Password</li>
-        <li class="step @if($step >= 2) step-primary @endif">Site Branding</li>
-        <li class="step @if($step >= 3) step-primary @endif">Preferences</li>
+        <li class="step {{ $step >= 1 ? 'step-primary' : '' }}">Admin Password</li>
+        <li class="step {{ $step >= 2 ? 'step-primary' : '' }}">Site Branding</li>
+        <li class="step {{ $step >= 3 ? 'step-primary' : '' }}">Preferences</li>
     </ul>
 
     <div class="mb-6">
