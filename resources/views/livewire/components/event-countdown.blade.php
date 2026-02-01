@@ -26,10 +26,10 @@
 
         {{-- Countdown Label and Time --}}
         <div class="flex items-center gap-2">
-            <span class="text-lg lg:text-xl font-semibold">
+            <span class="text-base lg:text-lg font-semibold">
                 {{ $label }}:
             </span>
-            <span class="text-2xl lg:text-3xl font-mono font-bold {{ $textClass }}">
+            <span class="text-xl lg:text-2xl font-mono font-bold {{ $textClass }}">
                 {{ $this->formattedCountdown }}
             </span>
         </div>
@@ -41,11 +41,11 @@
         <div class="flex items-center gap-4 text-base lg:text-lg">
             <div class="flex items-center gap-2">
                 <span class="text-base-content/70 font-semibold">Local:</span>
-                <span class="font-mono font-bold text-lg lg:text-xl">{{ $localTime }}</span>
+                <span class="font-mono font-bold text-xl lg:text-2xl">{{ $localTime }}</span>
             </div>
             <div class="flex items-center gap-2">
                 <span class="text-base-content/70 font-semibold">UTC:</span>
-                <span class="font-mono font-bold text-lg lg:text-xl">{{ $utcTime }}</span>
+                <span class="font-mono font-bold text-xl lg:text-2xl">{{ $utcTime }}</span>
             </div>
         </div>
     @endif
