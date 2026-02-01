@@ -170,7 +170,7 @@ class UserManagement extends Component
         $this->last_name = $user->last_name;
         $this->email = $user->email;
         $this->license_class = $user->license_class;
-        $this->role_id = $user->roles->first()?->id;
+        $this->role_id = $user->roles->first()?->id ?? $this->roles->first()->id;
 
         $this->showModal = true;
     }

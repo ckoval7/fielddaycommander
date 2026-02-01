@@ -1,5 +1,16 @@
 <x-modal wire:model="showModal" title="{{ $editingUserId ? 'Edit User' : 'Create User' }}" class="modal-lg">
     <form wire:submit="saveUser">
+        {{-- Validation Error Summary --}}
+        @if ($errors->any())
+            <x-alert title="Please fix the following errors:" icon="o-exclamation-triangle" class="alert-error mb-4">
+                <ul class="list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </x-alert>
+        @endif
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {{-- Call Sign --}}
             <x-input
@@ -52,7 +63,7 @@
             {{-- Role --}}
             <x-select
                 label="Role"
-                wire:model="role_id"
+                wire:model.live="role_id"
                 :options="$this->roles"
                 option-value="id"
                 option-label="name"
@@ -89,8 +100,8 @@
         @endif
 
         <x-slot:actions>
-            <x-button label="Cancel" wire:click="$set('showModal', false)" />
-            <x-button label="{{ $editingUserId ? 'Update' : 'Create' }}" type="submit" class="btn-primary" spinner="saveUser" />
+            <x-button label="Cancel" wire:click="$set('showModal', false)" class="btn-ghost" />
+            <x-button label="{{ $editingUserId ? 'Update' : 'Create' }}" wire:click="saveUser" class="btn-primary" spinner="saveUser" />
         </x-slot:actions>
     </form>
 </x-modal>
