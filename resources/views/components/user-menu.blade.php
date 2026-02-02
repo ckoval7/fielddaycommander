@@ -31,14 +31,12 @@
         <div class="divider my-1"></div>
 
         <!-- Menu items -->
-        {{-- TODO: Implement profile page
         <li>
-            <a href="{{ route('profile.edit') }}" wire:navigate>
+            <a href="{{ route('profile') }}" wire:navigate>
                 <x-icon name="o-user" class="w-4 h-4" />
                 Profile
             </a>
         </li>
-        --}}
 
         @can('manage-users')
             <div class="divider my-1"></div>
