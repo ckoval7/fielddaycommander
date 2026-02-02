@@ -36,6 +36,8 @@ class User extends Authenticatable
         'password_changed_at',
         'requires_password_change',
         'two_factor_secret',
+        'preferred_timezone',
+        'notification_preferences',
     ];
 
     /**
@@ -66,6 +68,7 @@ class User extends Authenticatable
             'requires_password_change' => 'boolean',
             'two_factor_bypass_enabled' => 'boolean',
             'two_factor_bypass_expires_at' => 'datetime',
+            'notification_preferences' => 'array',
         ];
     }
 
@@ -99,5 +102,29 @@ class User extends Authenticatable
     public function invitations(): HasMany
     {
         return $this->hasMany(UserInvitation::class);
+    }
+
+    /**
+     * Check if user has event notifications enabled.
+     */
+    public function hasEventNotificationsEnabled(): bool
+    {
+        return $this->notification_preferences['event_notifications'] ?? true;
+    }
+
+    /**
+     * Check if user has system announcements enabled.
+     */
+    public function hasSystemAnnouncementsEnabled(): bool
+    {
+        return $this->notification_preferences['system_announcements'] ?? true;
+    }
+
+    /**
+     * Get user's preferred timezone or system default.
+     */
+    public function getTimezone(): string
+    {
+        return $this->preferred_timezone ?? config('app.timezone');
     }
 }
