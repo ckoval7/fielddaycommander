@@ -21,6 +21,8 @@ class EventCountdown extends Component
 
     public string $utcTime = '';
 
+    public string $timezoneLabel = '';
+
     public string $label = '';
 
     public string $badgeClass = '';
@@ -138,9 +140,15 @@ class EventCountdown extends Component
 
     protected function updateTimes(): void
     {
-        $timezone = Setting::get('timezone', config('app.timezone'));
+        // Use user's preferred timezone if authenticated, otherwise use system timezone
+        $timezone = auth()->check() && auth()->user()->preferred_timezone
+            ? auth()->user()->preferred_timezone
+            : Setting::get('timezone', config('app.timezone'));
+
         $now = now();
 
+        // Get timezone abbreviation (e.g., EST, EDT, PST, PDT)
+        $this->timezoneLabel = $now->timezone($timezone)->format('T');
         $this->localTime = $now->timezone($timezone)->format('H:i:s');
         $this->utcTime = $now->timezone('UTC')->format('H:i:s');
     }

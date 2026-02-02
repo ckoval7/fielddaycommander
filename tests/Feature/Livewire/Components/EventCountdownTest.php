@@ -102,16 +102,109 @@ test('component shows ended state when next event is more than 4 weeks away', fu
         ->assertSee('ENDED');
 });
 
-test('component displays both local and UTC times', function () {
+test('component displays both timezone and UTC times', function () {
     Event::factory()->create([
         'event_type_id' => $this->eventType->id,
         'start_time' => now()->addDays(3),
         'end_time' => now()->addDays(4),
     ]);
 
-    Livewire::test(EventCountdown::class)
-        ->assertSee('Local:')
-        ->assertSee('UTC:');
+    $component = Livewire::test(EventCountdown::class);
+
+    // Should display timezone abbreviation (not generic "Local")
+    expect($component->get('timezoneLabel'))->not->toBeEmpty();
+
+    // Should display UTC label
+    $component->assertSee('UTC:');
+});
+
+test('component displays user preferred timezone abbreviation when user is authenticated', function () {
+    $user = \App\Models\User::factory()->create([
+        'preferred_timezone' => 'America/New_York',
+    ]);
+
+    Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->addDays(3),
+        'end_time' => now()->addDays(4),
+    ]);
+
+    $this->actingAs($user);
+
+    $component = Livewire::test(EventCountdown::class);
+
+    // Should see timezone abbreviation (EST or EDT depending on season)
+    $timezoneLabel = $component->get('timezoneLabel');
+    expect($timezoneLabel)->toBeIn(['EST', 'EDT']);
+
+    // Should not see generic "Local:" label
+    $component->assertDontSee('Local:');
+});
+
+test('component falls back to system timezone when user has no preferred timezone', function () {
+    $user = \App\Models\User::factory()->create([
+        'preferred_timezone' => null,
+    ]);
+
+    \App\Models\Setting::set('timezone', 'America/Chicago');
+
+    Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->addDays(3),
+        'end_time' => now()->addDays(4),
+    ]);
+
+    $this->actingAs($user);
+
+    $component = Livewire::test(EventCountdown::class);
+
+    // Should see system timezone abbreviation (CST or CDT)
+    $timezoneLabel = $component->get('timezoneLabel');
+    expect($timezoneLabel)->toBeIn(['CST', 'CDT']);
+});
+
+test('component uses system timezone when no user is authenticated', function () {
+    \App\Models\Setting::set('timezone', 'America/Los_Angeles');
+
+    Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->addDays(3),
+        'end_time' => now()->addDays(4),
+    ]);
+
+    $component = Livewire::test(EventCountdown::class);
+
+    // Should see system timezone abbreviation (PST or PDT)
+    $timezoneLabel = $component->get('timezoneLabel');
+    expect($timezoneLabel)->toBeIn(['PST', 'PDT']);
+});
+
+test('component displays correct timezone abbreviation for different timezones', function () {
+    $testCases = [
+        ['timezone' => 'America/Denver', 'expected' => ['MST', 'MDT']],
+        ['timezone' => 'Europe/London', 'expected' => ['GMT', 'BST']],
+        ['timezone' => 'Asia/Tokyo', 'expected' => ['JST']],
+        ['timezone' => 'Australia/Sydney', 'expected' => ['AEDT', 'AEST']],
+    ];
+
+    Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->addDays(3),
+        'end_time' => now()->addDays(4),
+    ]);
+
+    foreach ($testCases as $testCase) {
+        $user = \App\Models\User::factory()->create([
+            'preferred_timezone' => $testCase['timezone'],
+        ]);
+
+        $this->actingAs($user);
+
+        $component = Livewire::test(EventCountdown::class);
+        $timezoneLabel = $component->get('timezoneLabel');
+
+        expect($timezoneLabel)->toBeIn($testCase['expected']);
+    }
 });
 
 test('component uses 1 second polling when event within 1 hour', function () {

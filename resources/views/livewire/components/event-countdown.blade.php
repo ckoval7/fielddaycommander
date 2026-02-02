@@ -40,7 +40,7 @@
         {{-- Clocks --}}
         <div class="flex items-center gap-4 text-base lg:text-lg">
             <div class="flex items-center gap-2">
-                <span class="text-base-content/70 font-semibold">Local:</span>
+                <span class="text-base-content/70 font-semibold">{{ $timezoneLabel }}:</span>
                 <span class="font-mono font-bold text-xl lg:text-2xl">{{ $localTime }}</span>
             </div>
             <div class="flex items-center gap-2">
