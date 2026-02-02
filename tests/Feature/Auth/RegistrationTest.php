@@ -3,10 +3,14 @@
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Ensure Operator role exists (required for new user registration)
+    Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+
     // Mark system as set up for registration tests
     DB::table('system_config')->insert([
         'key' => 'setup_completed',
