@@ -18,25 +18,64 @@
                     <x-slot:trigger>
                         <x-button label="Export" icon="o-document-arrow-down" class="btn-outline" />
                     </x-slot:trigger>
+
+                    {{-- Pre-Event Reports --}}
+                    <x-menu-separator title="Pre-Event" />
                     <x-menu-item
-                        title="Summary Report"
+                        title="Commitment Summary (CSV)"
                         icon="o-document-text"
-                        wire:click="exportReport('summary')"
+                        link="{{ route('events.equipment.reports.commitment-summary', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
-                        title="Delivery Checklist"
+                        title="Delivery Checklist (PDF)"
                         icon="o-clipboard-document-check"
-                        wire:click="exportReport('delivery')"
+                        link="{{ route('events.equipment.reports.delivery-checklist', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
-                        title="Station Inventory"
+                        title="Station Inventory (PDF)"
                         icon="o-building-office"
-                        wire:click="exportReport('station')"
+                        link="{{ route('events.equipment.reports.station-inventory-pdf', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
-                        title="Owner Contact List"
+                        title="Station Inventory (CSV)"
+                        icon="o-table-cells"
+                        link="{{ route('events.equipment.reports.station-inventory-csv', ['event' => $event->id]) }}"
+                    />
+
+                    {{-- Post-Event Reports --}}
+                    <x-menu-separator title="Post-Event" />
+                    <x-menu-item
+                        title="Return Checklist (PDF)"
+                        icon="o-arrow-uturn-left"
+                        link="{{ route('events.equipment.reports.return-checklist', ['event' => $event->id]) }}"
+                    />
+                    <x-menu-item
+                        title="Historical Record (CSV)"
+                        icon="o-archive-box"
+                        link="{{ route('events.equipment.reports.historical-record', ['event' => $event->id]) }}"
+                    />
+
+                    {{-- Other Reports --}}
+                    <x-menu-separator title="Reference & Incidents" />
+                    <x-menu-item
+                        title="Owner Contacts (PDF)"
                         icon="o-users"
-                        wire:click="exportReport('contacts')"
+                        link="{{ route('events.equipment.reports.owner-contacts-pdf', ['event' => $event->id]) }}"
+                    />
+                    <x-menu-item
+                        title="Owner Contacts (CSV)"
+                        icon="o-table-cells"
+                        link="{{ route('events.equipment.reports.owner-contacts-csv', ['event' => $event->id]) }}"
+                    />
+                    <x-menu-item
+                        title="Incident Report (PDF)"
+                        icon="o-exclamation-triangle"
+                        link="{{ route('events.equipment.reports.incident-report-pdf', ['event' => $event->id]) }}"
+                    />
+                    <x-menu-item
+                        title="Incident Report (CSV)"
+                        icon="o-table-cells"
+                        link="{{ route('events.equipment.reports.incident-report-csv', ['event' => $event->id]) }}"
                     />
                 </x-dropdown>
             @endif

@@ -103,6 +103,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/{event}/equipment', \App\Livewire\Equipment\EventEquipmentDashboard::class)->name('events.equipment.dashboard');
 });
 
+// Equipment Reports - requires manage-event-equipment permission
+Route::middleware(['auth', 'can:manage-event-equipment'])->prefix('events/{event}/equipment/reports')->name('events.equipment.reports.')->group(function () {
+    Route::get('/commitment-summary', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'commitmentSummary'])->name('commitment-summary');
+    Route::get('/delivery-checklist', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'deliveryChecklist'])->name('delivery-checklist');
+    Route::get('/station-inventory-pdf', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'stationInventoryPdf'])->name('station-inventory-pdf');
+    Route::get('/station-inventory-csv', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'stationInventoryCsv'])->name('station-inventory-csv');
+    Route::get('/owner-contacts-pdf', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'ownerContactListPdf'])->name('owner-contacts-pdf');
+    Route::get('/owner-contacts-csv', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'ownerContactListCsv'])->name('owner-contacts-csv');
+    Route::get('/return-checklist', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'returnChecklist'])->name('return-checklist');
+    Route::get('/incident-report-pdf', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'incidentReportPdf'])->name('incident-report-pdf');
+    Route::get('/incident-report-csv', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'incidentReportCsv'])->name('incident-report-csv');
+    Route::get('/historical-record', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'historicalRecord'])->name('historical-record');
+});
+
 Route::middleware(['auth', 'can:manage-users'])->group(function () {
     Route::get('/users', \App\Livewire\Users\UserManagement::class)->name('users.index');
 });

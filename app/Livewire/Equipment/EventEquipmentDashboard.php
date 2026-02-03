@@ -637,17 +637,6 @@ class EventEquipmentDashboard extends Component
     }
 
     /**
-     * Export a report (placeholder for Phase 7).
-     *
-     * @param  string  $reportType  The type of report to generate
-     */
-    public function exportReport(string $reportType): void
-    {
-        // Placeholder for Phase 7 implementation
-        $this->dispatch('notify', title: 'Info', description: "Export '{$reportType}' will be available in a future update.", type: 'info');
-    }
-
-    /**
      * Clear all filters.
      */
     public function clearFilters(): void
