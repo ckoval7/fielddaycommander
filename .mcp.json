@@ -5,7 +5,14 @@
             "args": [
                 "artisan",
                 "boost:mcp"
-            ]
-        }
+            ],
+            "cwd": "/home/corey/webdev/fdlogdb/fdlogdb"
+        },
+	"docs-mcp-server": {
+		      "type": "sse",
+		            "url": "http://localhost:6280/sse",
+			          "disabled": false,
+				        "autoApprove": []
+					    }
     }
 }

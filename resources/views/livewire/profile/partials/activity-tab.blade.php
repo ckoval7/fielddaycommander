@@ -4,10 +4,9 @@
             <h3 class="card-title">Your Recent Activity</h3>
 
             @if($activityLog->isEmpty())
-                <div class="alert">
-                    <x-mary-icon name="o-information-circle" class="w-5 h-5" />
-                    <span>No recent activity to display.</span>
-                </div>
+                <x-alert icon="o-information-circle">
+                    No recent activity to display.
+                </x-alert>
             @else
                 {{-- Activity Timeline --}}
                 <div class="space-y-4 mt-4">
@@ -17,19 +16,19 @@
                             <div class="mt-1">
                                 @switch($activity->action)
                                     @case('user.login.success')
-                                        <x-mary-icon name="o-arrow-right-on-rectangle" class="w-5 h-5 text-success" />
+                                        <x-icon name="o-arrow-right-on-rectangle" class="w-5 h-5 text-success" />
                                         @break
                                     @case('user.logout')
-                                        <x-mary-icon name="o-arrow-left-on-rectangle" class="w-5 h-5 text-gray-500" />
+                                        <x-icon name="o-arrow-left-on-rectangle" class="w-5 h-5 text-gray-500" />
                                         @break
                                     @case('user.password.changed')
-                                        <x-mary-icon name="o-lock-closed" class="w-5 h-5 text-warning" />
+                                        <x-icon name="o-lock-closed" class="w-5 h-5 text-warning" />
                                         @break
                                     @case('user.profile.updated')
-                                        <x-mary-icon name="o-pencil" class="w-5 h-5 text-info" />
+                                        <x-icon name="o-pencil" class="w-5 h-5 text-info" />
                                         @break
                                     @default
-                                        <x-mary-icon name="o-information-circle" class="w-5 h-5 text-gray-400" />
+                                        <x-icon name="o-information-circle" class="w-5 h-5 text-gray-400" />
                                 @endswitch
                             </div>
 

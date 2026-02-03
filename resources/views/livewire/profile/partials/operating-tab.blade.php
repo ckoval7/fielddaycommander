@@ -4,10 +4,11 @@
         <div class="card bg-base-100 shadow border-2 border-error">
             <div class="card-body">
                 <div class="flex items-center gap-2">
-                    <div class="badge badge-error gap-1">
-                        <span class="inline-block w-2 h-2 bg-error rounded-full animate-pulse"></span>
-                        Currently Operating
-                    </div>
+                    <x-badge value="Currently Operating" class="badge-error gap-1">
+                        <x-slot:prepend>
+                            <span class="inline-block w-2 h-2 bg-error rounded-full animate-pulse"></span>
+                        </x-slot:prepend>
+                    </x-badge>
                 </div>
 
                 <div class="mt-2 space-y-1">
@@ -38,10 +39,9 @@
             <h3 class="card-title">Recent Operating Sessions</h3>
 
             @if($operatingSessions->isEmpty())
-                <div class="alert">
-                    <x-mary-icon name="o-information-circle" class="w-5 h-5" />
-                    <span>You haven't operated any stations yet.</span>
-                </div>
+                <x-alert icon="o-information-circle">
+                    You haven't operated any stations yet.
+                </x-alert>
             @else
                 {{-- Table of operating sessions --}}
                 <div class="overflow-x-auto">

@@ -1,72 +1,45 @@
 <div class="space-y-6">
+    @php
+        $timezones = collect(timezone_identifiers_list())->map(fn($tz) => ['id' => $tz, 'name' => str_replace('_', ' ', $tz)])->all();
+        $dateFormats = [
+            ['id' => 'Y-m-d', 'name' => now()->format('Y-m-d') . ' (ISO 8601)'],
+            ['id' => 'm/d/Y', 'name' => now()->format('m/d/Y') . ' (US Format)'],
+            ['id' => 'd/m/Y', 'name' => now()->format('d/m/Y') . ' (EU Format)'],
+        ];
+        $timeFormats = [
+            ['id' => 'H:i:s', 'name' => now()->format('H:i:s') . ' (24-hour)'],
+            ['id' => 'h:i:s A', 'name' => now()->format('h:i:s A') . ' (12-hour)'],
+        ];
+    @endphp
+
     <x-card>
         <x-slot:title>Regional Settings</x-slot:title>
 
         <div class="space-y-4">
-            {{-- Timezone Select --}}
-            <div>
-                <label class="label">
-                    <span class="label-text">Timezone <span class="text-error">*</span></span>
-                </label>
-                <select
-                    wire:model.live="timezone"
-                    class="select select-bordered w-full"
-                    required
-                >
-                    <option value="">Select a timezone...</option>
-                    @foreach(timezone_identifiers_list() as $tz)
-                        <option value="{{ $tz }}" @selected($timezone === $tz)>
-                            {{ str_replace('_', ' ', $tz) }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+            <x-select
+                label="Timezone"
+                wire:model.live="timezone"
+                :options="$timezones"
+                placeholder="Select a timezone..."
+                required
+            />
 
-            {{-- Date Format Select --}}
-            <div>
-                <label class="label">
-                    <span class="label-text">Date Format <span class="text-error">*</span></span>
-                </label>
-                <select
-                    wire:model.live="date_format"
-                    class="select select-bordered w-full"
-                    required
-                >
-                    <option value="Y-m-d" @selected($date_format === 'Y-m-d')>
-                        {{ now()->format('Y-m-d') }} (ISO 8601)
-                    </option>
-                    <option value="m/d/Y" @selected($date_format === 'm/d/Y')>
-                        {{ now()->format('m/d/Y') }} (US Format)
-                    </option>
-                    <option value="d/m/Y" @selected($date_format === 'd/m/Y')>
-                        {{ now()->format('d/m/Y') }} (EU Format)
-                    </option>
-                </select>
-            </div>
+            <x-select
+                label="Date Format"
+                wire:model.live="date_format"
+                :options="$dateFormats"
+                required
+            />
 
-            {{-- Time Format Select --}}
-            <div>
-                <label class="label">
-                    <span class="label-text">Time Format <span class="text-error">*</span></span>
-                </label>
-                <select
-                    wire:model.live="time_format"
-                    class="select select-bordered w-full"
-                    required
-                >
-                    <option value="H:i:s" @selected($time_format === 'H:i:s')>
-                        {{ now()->format('H:i:s') }} (24-hour)
-                    </option>
-                    <option value="h:i:s A" @selected($time_format === 'h:i:s A')>
-                        {{ now()->format('h:i:s A') }} (12-hour)
-                    </option>
-                </select>
-            </div>
+            <x-select
+                label="Time Format"
+                wire:model.live="time_format"
+                :options="$timeFormats"
+                required
+            />
 
-            <x-alert class="alert-info">
-                <div class="text-sm">
-                    <strong>Preview:</strong> {{ $this->preview }}
-                </div>
+            <x-alert icon="o-eye" class="alert-info">
+                <strong>Preview:</strong> {{ $this->preview }}
             </x-alert>
         </div>
     </x-card>

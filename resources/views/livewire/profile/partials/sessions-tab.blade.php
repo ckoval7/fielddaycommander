@@ -3,10 +3,11 @@
     <div class="card bg-base-100 shadow border-2 border-primary">
         <div class="card-body">
             <div class="flex items-center gap-2">
-                <div class="badge badge-success gap-1">
-                    <span class="inline-block w-2 h-2 bg-success rounded-full animate-pulse"></span>
-                    Current Session
-                </div>
+                <x-badge value="Current Session" class="badge-success gap-1">
+                    <x-slot:prepend>
+                        <span class="inline-block w-2 h-2 bg-success rounded-full animate-pulse"></span>
+                    </x-slot:prepend>
+                </x-badge>
             </div>
 
             <div class="mt-2 space-y-1">
@@ -83,9 +84,8 @@
             </div>
         </div>
     @else
-        <div class="alert">
-            <x-mary-icon name="o-information-circle" class="w-5 h-5" />
-            <span>You are only logged in on this device.</span>
-        </div>
+        <x-alert icon="o-information-circle">
+            You are only logged in on this device.
+        </x-alert>
     @endif
 </div>

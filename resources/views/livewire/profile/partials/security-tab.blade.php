@@ -51,12 +51,11 @@
             <h3 class="card-title">Two-Factor Authentication</h3>
 
             @if($user->has2FAEnabled())
-                <div class="alert alert-success">
-                    <x-mary-icon name="o-check-circle" class="w-5 h-5" />
-                    <span>Two-factor authentication is enabled</span>
-                </div>
+                <x-alert icon="o-check-circle" class="alert-success">
+                    Two-factor authentication is enabled
+                </x-alert>
 
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-base-content/60">
                     Your account is protected with two-factor authentication.
                 </p>
 
@@ -66,12 +65,11 @@
                     <x-button class="btn-outline">Regenerate Codes</x-button>
                 </div>
             @else
-                <div class="alert alert-warning">
-                    <x-mary-icon name="o-exclamation-triangle" class="w-5 h-5" />
-                    <span>Two-factor authentication is not enabled</span>
-                </div>
+                <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                    Two-factor authentication is not enabled
+                </x-alert>
 
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-base-content/60">
                     Enable two-factor authentication to add an extra layer of security to your account.
                 </p>
 

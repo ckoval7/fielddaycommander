@@ -29,14 +29,14 @@
                                 <td>
                                     <div class="font-medium">{{ $role->name }}</div>
                                     @if($role->name === 'System Administrator')
-                                        <span class="badge badge-sm badge-warning">System Protected</span>
+                                        <x-badge value="System Protected" class="badge-warning badge-sm" />
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge badge-ghost">{{ $role->permissions_count }}</span>
+                                    <x-badge :value="$role->permissions_count" class="badge-soft" />
                                 </td>
                                 <td>
-                                    <span class="badge badge-ghost">{{ $role->users_count }}</span>
+                                    <x-badge :value="$role->users_count" class="badge-soft" />
                                 </td>
                                 <td>
                                     <x-button
@@ -64,41 +64,39 @@
 
                 <div class="space-y-4">
                     @foreach($categories as $category => $categoryPermissions)
-                        <div class="collapse collapse-arrow bg-base-200">
-                            <input type="checkbox" checked />
-                            <div class="collapse-title font-medium flex items-center justify-between">
-                                <span>{{ $category }}</span>
-                                <label class="label cursor-pointer gap-2" onclick="event.stopPropagation()">
-                                    <span class="label-text text-xs">Select All</span>
-                                    <input
-                                        type="checkbox"
-                                        class="checkbox checkbox-sm"
-                                        wire:change="toggleCategory('{{ $category }}', $event.target.checked)"
-                                        @checked(empty(array_diff($categoryPermissions, $selectedPermissions)))
-                                    />
-                                </label>
-                            </div>
-                            <div class="collapse-content">
+                        <x-collapse class="bg-base-200" collapse-plus-minus>
+                            <x-slot:heading class="font-medium">
+                                <div class="flex items-center justify-between w-full pr-4">
+                                    <span>{{ $category }}</span>
+                                    <label class="flex items-center gap-2 cursor-pointer" onclick="event.stopPropagation()">
+                                        <span class="text-xs">Select All</span>
+                                        <x-checkbox
+                                            wire:change="toggleCategory('{{ $category }}', $event.target.checked)"
+                                            :checked="empty(array_diff($categoryPermissions, $selectedPermissions))"
+                                        />
+                                    </label>
+                                </div>
+                            </x-slot:heading>
+                            <x-slot:content>
                                 <div class="space-y-2 pl-4">
                                     @foreach($permissions->whereIn('name', $categoryPermissions) as $permission)
-                                        <label class="label cursor-pointer justify-start gap-3">
-                                            <input
-                                                type="checkbox"
-                                                class="checkbox checkbox-sm"
-                                                value="{{ $permission->name }}"
-                                                wire:model.live="selectedPermissions"
-                                            />
-                                            <div>
-                                                <div class="font-medium text-sm">{{ $permission->name }}</div>
-                                                @if($permission->description)
-                                                    <div class="text-xs text-gray-600">{{ $permission->description }}</div>
-                                                @endif
-                                            </div>
-                                        </label>
+                                        <x-checkbox
+                                            value="{{ $permission->name }}"
+                                            wire:model.live="selectedPermissions"
+                                        >
+                                            <x-slot:label>
+                                                <div>
+                                                    <div class="font-medium text-sm">{{ $permission->name }}</div>
+                                                    @if($permission->description)
+                                                        <div class="text-xs text-base-content/60">{{ $permission->description }}</div>
+                                                    @endif
+                                                </div>
+                                            </x-slot:label>
+                                        </x-checkbox>
                                     @endforeach
                                 </div>
-                            </div>
-                        </div>
+                            </x-slot:content>
+                        </x-collapse>
                     @endforeach
                 </div>
 
@@ -144,20 +142,15 @@
             />
 
             <div>
-                <label class="label">
-                    <span class="label-text">Initial Permissions (optional)</span>
-                </label>
-                <div class="space-y-2 max-h-48 overflow-y-auto border rounded p-2">
+                <div class="text-sm font-medium mb-2">Initial Permissions (optional)</div>
+                <div class="space-y-2 max-h-48 overflow-y-auto border border-base-300 rounded p-2">
                     @foreach($permissions as $permission)
-                        <label class="label cursor-pointer justify-start gap-2" wire:key="perm-{{ $permission->id }}">
-                            <input
-                                type="checkbox"
-                                class="checkbox checkbox-sm"
-                                value="{{ $permission->name }}"
-                                wire:model="initialPermissions"
-                            />
-                            <span class="text-sm">{{ $permission->name }}</span>
-                        </label>
+                        <x-checkbox
+                            label="{{ $permission->name }}"
+                            value="{{ $permission->name }}"
+                            wire:model="initialPermissions"
+                            wire:key="perm-{{ $permission->id }}"
+                        />
                     @endforeach
                 </div>
             </div>

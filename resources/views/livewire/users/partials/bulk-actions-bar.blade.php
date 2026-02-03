@@ -1,20 +1,18 @@
-<div class="alert alert-info mb-4">
-    <div class="flex items-center justify-between w-full">
-        <div class="flex items-center gap-4">
-            <x-icon name="o-check-circle" class="w-6 h-6" />
-            <span class="font-semibold">{{ count($selectedUsers) }} user(s) selected</span>
-        </div>
+<x-alert icon="o-check-circle" class="alert-info mb-4">
+    <div class="flex items-center justify-between w-full gap-4">
+        <span class="font-semibold">{{ count($selectedUsers) }} user(s) selected</span>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             {{-- Assign Role --}}
-            <x-select
-                placeholder="Assign Role"
-                wire:model="bulk_role_id"
-                :options="$this->roles"
-                option-value="id"
-                option-label="name"
-                class="select-sm"
-            />
+            <div class="w-44 [&_select]:!text-base-content [&_select]:dark:!bg-base-300">
+                <x-select
+                    placeholder="Assign Role"
+                    wire:model="bulk_role_id"
+                    :options="$this->roles"
+                    option-value="id"
+                    option-label="name"
+                />
+            </div>
             <x-button
                 label="Assign"
                 icon="o-user-group"
@@ -59,4 +57,4 @@
             />
         </div>
     </div>
-</div>
+</x-alert>

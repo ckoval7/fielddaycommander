@@ -42,7 +42,7 @@ class UserProfile extends Component
         $this->last_name = $user->last_name;
         $this->email = $user->email;
         $this->license_class = $user->license_class;
-        $this->preferred_timezone = $user->preferred_timezone ?? config('app.timezone');
+        $this->preferred_timezone = $user->preferred_timezone ?? \App\Models\Setting::get('timezone', config('app.timezone'));
 
         // Load notification preferences
         $preferences = $user->notification_preferences ?? [];

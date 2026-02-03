@@ -1,6 +1,6 @@
 <x-modal wire:model="showResetModal" title="Reset Password">
     <form wire:submit="resetPassword">
-        <div class="form-control mb-4">
+        <div class="mb-4">
             <x-radio label="Send password reset email" value="1" wire:model.live="sendResetEmail" />
             <x-radio label="Set new password manually" value="0" wire:model.live="sendResetEmail" />
         </div>
@@ -23,10 +23,9 @@
                     required
                 />
 
-                <div class="alert alert-warning">
-                    <x-icon name="o-information-circle" class="w-5 h-5" />
-                    <span>User will be required to change this password on next login.</span>
-                </div>
+                <x-alert icon="o-information-circle" class="alert-warning">
+                    User will be required to change this password on next login.
+                </x-alert>
             </div>
         @endif
 

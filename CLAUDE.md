@@ -22,6 +22,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - phpunit/phpunit (PHPUNIT) - v12
 - alpinejs (ALPINEJS) - v3
 - tailwindcss (TAILWINDCSS) - v3
+- maryui (MARYUI) - Use `mcp__docs-mcp-server__search_docs` for documentation
 
 ## Skills Activation
 
@@ -275,4 +276,14 @@ resources/views/components/layouts/app.blade.php
 - Always use existing Tailwind conventions; check project patterns before adding new ones.
 - IMPORTANT: Always use `search-docs` tool for version-specific Tailwind CSS documentation and updated code examples. Never rely on training data.
 - IMPORTANT: Activate `tailwindcss-development` every time you're working with a Tailwind CSS or styling-related task.
+
+=== maryui rules ===
+
+# MaryUI
+
+- This project uses MaryUI as the primary UI component library built on top of Livewire and Tailwind CSS.
+- CRITICAL: Always use the `mcp__docs-mcp-server__search_docs` tool with `library: "maryui"` for MaryUI documentation before implementing UI components.
+- Search MaryUI docs for component usage, props, slots, and examples. Example: `search_docs(library: "maryui", query: "button")`.
+- MaryUI components are Blade components prefixed with `<x-mary-*>` or `<x-*>` depending on configuration.
+- Check existing components in the codebase to see how MaryUI is being used before adding new patterns.
 </laravel-boost-guidelines>

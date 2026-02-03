@@ -6,7 +6,7 @@
     </div>
 
     {{-- Tab Navigation --}}
-    <div role="tablist" class="tabs tabs-bordered mb-6">
+    <div role="tablist" class="tabs tabs-border mb-6">
         <a role="tab"
            class="tab {{ $activeTab === 'profile' ? 'tab-active' : '' }}"
            wire:click="$set('activeTab', 'profile')">
@@ -44,7 +44,7 @@
     </div>
 
     {{-- Tab Content --}}
-    <div class="tab-content">
+    <div class="profile-tab-content">
         @if($activeTab === 'profile')
             @include('livewire.profile.partials.profile-tab')
         @elseif($activeTab === 'security')
