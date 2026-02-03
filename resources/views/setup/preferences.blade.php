@@ -29,7 +29,50 @@
                 ];
             @endphp
 
+            {{-- Organization Information --}}
             <div class="space-y-4">
+                <h3 class="text-lg font-semibold mb-2">Organization Information</h3>
+                <p class="text-sm text-gray-600 mb-4">Set up your club or organization details. This will be used for club-owned equipment.</p>
+
+                <x-input
+                    label="Organization Name"
+                    name="organization_name"
+                    icon="o-building-office"
+                    placeholder="e.g., Springfield Amateur Radio Club"
+                    required
+                />
+
+                <x-input
+                    label="Organization Callsign"
+                    name="organization_callsign"
+                    icon="o-signal"
+                    placeholder="e.g., W1ABC"
+                    hint="Optional - Club station callsign (3-10 uppercase letters/numbers)"
+                />
+
+                <x-input
+                    label="Organization Email"
+                    type="email"
+                    name="organization_email"
+                    icon="o-envelope"
+                    placeholder="e.g., info@example.org"
+                    hint="Optional - Club contact email"
+                />
+
+                <x-input
+                    label="Organization Phone"
+                    type="tel"
+                    name="organization_phone"
+                    icon="o-phone"
+                    placeholder="e.g., (555) 123-4567"
+                    hint="Optional - Club contact phone number"
+                />
+            </div>
+
+            {{-- System Preferences --}}
+            <div class="space-y-4 mt-6">
+                <h3 class="text-lg font-semibold mb-2">System Preferences</h3>
+
                 <x-select
                     label="Timezone"
                     name="timezone"

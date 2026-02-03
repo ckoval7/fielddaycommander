@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Organization;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -92,11 +93,40 @@ test('step 3 validates timezone required', function () {
     $this->session(['setup_wizard.step2' => ['site_name' => 'Test']]);
 
     $response = $this->post(route('setup.complete'), [
+        'organization_name' => 'Test Org',
         'date_format' => 'Y-m-d',
         'time_format' => 'H:i',
     ]);
 
     $response->assertSessionHasErrors('timezone');
+});
+
+test('step 3 validates organization name required', function () {
+    $this->session(['setup_wizard.step1' => ['admin_password' => 'pass']]);
+    $this->session(['setup_wizard.step2' => ['site_name' => 'Test']]);
+
+    $response = $this->post(route('setup.complete'), [
+        'timezone' => 'America/New_York',
+        'date_format' => 'Y-m-d',
+        'time_format' => 'H:i',
+    ]);
+
+    $response->assertSessionHasErrors('organization_name');
+});
+
+test('step 3 validates callsign format', function () {
+    $this->session(['setup_wizard.step1' => ['admin_password' => 'pass']]);
+    $this->session(['setup_wizard.step2' => ['site_name' => 'Test']]);
+
+    $response = $this->post(route('setup.complete'), [
+        'organization_name' => 'Test Org',
+        'organization_callsign' => 'invalid-callsign',
+        'timezone' => 'America/New_York',
+        'date_format' => 'Y-m-d',
+        'time_format' => 'H:i',
+    ]);
+
+    $response->assertSessionHasErrors('organization_callsign');
 });
 
 test('complete wizard saves all settings', function () {
@@ -111,6 +141,10 @@ test('complete wizard saves all settings', function () {
     ]);
 
     $response = $this->post(route('setup.complete'), [
+        'organization_name' => 'Springfield Amateur Radio Club',
+        'organization_callsign' => 'W1ABC',
+        'organization_email' => 'info@sparc.org',
+        'organization_phone' => '(555) 123-4567',
         'timezone' => 'America/New_York',
         'date_format' => 'Y-m-d',
         'time_format' => 'H:i',
@@ -123,6 +157,18 @@ test('complete wizard saves all settings', function () {
     expect(Setting::get('site_name'))->toBe('Test Club');
     expect(Setting::get('timezone'))->toBe('America/New_York');
     expect(Setting::getBoolean('setup_completed'))->toBeTrue();
+
+    // Verify organization created
+    $organization = Organization::first();
+    expect($organization)->not->toBeNull();
+    expect($organization->name)->toBe('Springfield Amateur Radio Club');
+    expect($organization->callsign)->toBe('W1ABC');
+    expect($organization->email)->toBe('info@sparc.org');
+    expect($organization->phone)->toBe('(555) 123-4567');
+    expect($organization->is_active)->toBeTrue();
+
+    // Verify default organization ID saved
+    expect((int) Setting::get('default_organization_id'))->toBe($organization->id);
 
     // Verify admin password updated
     $admin->refresh();
@@ -146,6 +192,7 @@ test('complete wizard handles logo upload', function () {
 
     // Step 3: Complete wizard
     $this->post(route('setup.complete'), [
+        'organization_name' => 'Test Organization',
         'timezone' => 'America/New_York',
         'date_format' => 'Y-m-d',
         'time_format' => 'H:i',
@@ -155,4 +202,31 @@ test('complete wizard handles logo upload', function () {
     $logoPath = Setting::get('site_logo_path');
     expect($logoPath)->not->toBeNull();
     Storage::disk('public')->assertExists($logoPath);
+});
+
+test('complete wizard creates organization without optional fields', function () {
+    $admin = User::factory()->create(['call_sign' => 'SYSTEM']);
+
+    $this->session([
+        'setup_wizard.step1' => ['admin_password' => 'NewPass123!@#'],
+        'setup_wizard.step2' => ['site_name' => 'Test'],
+    ]);
+
+    $response = $this->post(route('setup.complete'), [
+        'organization_name' => 'Minimal Org',
+        'timezone' => 'America/New_York',
+        'date_format' => 'Y-m-d',
+        'time_format' => 'H:i',
+    ]);
+
+    $response->assertRedirect(route('login'));
+
+    // Verify organization created with only required fields
+    $organization = Organization::first();
+    expect($organization)->not->toBeNull();
+    expect($organization->name)->toBe('Minimal Org');
+    expect($organization->callsign)->toBeNull();
+    expect($organization->email)->toBeNull();
+    expect($organization->phone)->toBeNull();
+    expect($organization->is_active)->toBeTrue();
 });

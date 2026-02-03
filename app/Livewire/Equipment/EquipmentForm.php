@@ -4,6 +4,8 @@ namespace App\Livewire\Equipment;
 
 use App\Models\Band;
 use App\Models\Equipment;
+use App\Models\Organization;
+use App\Models\Setting;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +23,12 @@ class EquipmentForm extends Component
 
     // Equipment being edited (null for create mode)
     public ?int $equipmentId = null;
+
+    // Is this club equipment?
+    public bool $isClubEquipment = false;
+
+    // Manager for club equipment
+    public ?int $managed_by_user_id = null;
 
     // Form fields
     public string $make = '';
@@ -52,14 +60,21 @@ class EquipmentForm extends Component
 
     public ?string $existingPhotoPath = null;
 
-    public function mount(?Equipment $equipment = null): void
+    public function mount(?Equipment $equipment = null, bool $club = false): void
     {
         if ($equipment) {
             $this->equipmentId = $equipment->id;
+            $this->isClubEquipment = (bool) $equipment->owner_organization_id;
             $this->loadEquipment();
             $this->authorize('update', $equipment);
         } else {
-            $this->authorize('create', Equipment::class);
+            $this->isClubEquipment = $club;
+            if ($this->isClubEquipment) {
+                // Verify user has permission to create club equipment
+                $this->authorize('edit-any-equipment');
+            } else {
+                $this->authorize('create', Equipment::class);
+            }
         }
     }
 
@@ -80,6 +95,7 @@ class EquipmentForm extends Component
         $this->tagsInput = implode(',', $equipment->tags ?? []);
         $this->selectedBands = $equipment->bands->pluck('id')->toArray();
         $this->existingPhotoPath = $equipment->photo_path;
+        $this->managed_by_user_id = $equipment->managed_by_user_id;
     }
 
     #[Computed]
@@ -102,6 +118,20 @@ class EquipmentForm extends Component
             ['value' => 'furniture', 'label' => 'Furniture'],
             ['value' => 'other', 'label' => 'Other'],
         ];
+    }
+
+    #[Computed]
+    public function availableManagers()
+    {
+        // Get users with manage-event-equipment permission (Event Managers)
+        return User::permission('manage-event-equipment')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get()
+            ->map(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->full_name.' ('.$user->call_sign.')',
+            ]);
     }
 
     public function save()
@@ -130,7 +160,6 @@ class EquipmentForm extends Component
 
         // Prepare equipment data
         $equipmentData = [
-            'owner_user_id' => auth()->id(),
             'make' => $validated['make'],
             'model' => $validated['model'],
             'type' => $validated['type'],
@@ -144,12 +173,26 @@ class EquipmentForm extends Component
             'photo_path' => $photoPath,
         ];
 
+        // Set ownership based on type (club vs personal)
+        if ($this->isClubEquipment) {
+            // Get default organization from settings
+            $organizationId = Setting::get('default_organization_id');
+            $equipmentData['owner_organization_id'] = $organizationId;
+            $equipmentData['owner_user_id'] = null;
+            $equipmentData['managed_by_user_id'] = $this->managed_by_user_id;
+        } else {
+            $equipmentData['owner_user_id'] = auth()->id();
+            $equipmentData['owner_organization_id'] = null;
+            $equipmentData['managed_by_user_id'] = null;
+        }
+
         if ($this->equipmentId) {
             // Update existing equipment
             $equipment = Equipment::findOrFail($this->equipmentId);
 
             // Don't override owner for existing equipment
             unset($equipmentData['owner_user_id']);
+            unset($equipmentData['owner_organization_id']);
 
             $equipment->update($equipmentData);
         } else {
@@ -217,6 +260,7 @@ class EquipmentForm extends Component
             'selectedBands' => ['nullable', 'array'],
             'selectedBands.*' => ['exists:bands,id'],
             'photo' => ['nullable', 'image', 'max:5120'], // 5MB max
+            'managed_by_user_id' => ['nullable', 'exists:users,id'],
         ];
     }
 

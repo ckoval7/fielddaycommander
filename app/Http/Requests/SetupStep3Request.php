@@ -42,6 +42,27 @@ class SetupStep3Request extends FormRequest
                 'email',
                 'max:255',
             ],
+            'organization_name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'organization_callsign' => [
+                'nullable',
+                'string',
+                'max:20',
+                'regex:/^[A-Z0-9]{3,10}$/',
+            ],
+            'organization_email' => [
+                'nullable',
+                'email',
+                'max:255',
+            ],
+            'organization_phone' => [
+                'nullable',
+                'string',
+                'max:20',
+            ],
         ];
     }
 
@@ -61,6 +82,13 @@ class SetupStep3Request extends FormRequest
             'time_format.in' => 'The selected time format is invalid.',
             'contact_email.email' => 'The contact email must be a valid email address.',
             'contact_email.max' => 'The contact email must not exceed 255 characters.',
+            'organization_name.required' => 'An organization name is required.',
+            'organization_name.max' => 'The organization name must not exceed 255 characters.',
+            'organization_callsign.regex' => 'The callsign must be 3-10 uppercase letters and numbers.',
+            'organization_callsign.max' => 'The callsign must not exceed 20 characters.',
+            'organization_email.email' => 'The organization email must be a valid email address.',
+            'organization_email.max' => 'The organization email must not exceed 255 characters.',
+            'organization_phone.max' => 'The phone number must not exceed 20 characters.',
         ];
     }
 
@@ -76,6 +104,10 @@ class SetupStep3Request extends FormRequest
             'date_format' => 'date format',
             'time_format' => 'time format',
             'contact_email' => 'contact email',
+            'organization_name' => 'organization name',
+            'organization_callsign' => 'organization callsign',
+            'organization_email' => 'organization email',
+            'organization_phone' => 'organization phone',
         ];
     }
 }

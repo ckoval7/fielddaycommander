@@ -1,12 +1,18 @@
 <div class="space-y-6">
     {{-- Header --}}
     <x-header
-        title="{{ $equipmentId ? 'Edit Equipment' : 'Create Equipment' }}"
-        subtitle="{{ $equipmentId ? 'Update equipment details' : 'Add a new piece of equipment to your inventory' }}"
+        title="{{ $equipmentId ? 'Edit Equipment' : ($isClubEquipment ? 'Create Club Equipment' : 'Create Equipment') }}"
+        subtitle="{{ $equipmentId ? 'Update equipment details' : ($isClubEquipment ? 'Add equipment to the club inventory' : 'Add a new piece of equipment to your inventory') }}"
         separator
         progress-indicator
     >
         <x-slot:actions>
+            @if($isClubEquipment)
+                <span class="badge badge-secondary badge-lg">
+                    <x-icon name="o-building-office" class="w-4 h-4 mr-1" />
+                    Club Equipment
+                </span>
+            @endif
             <x-button
                 label="Cancel"
                 icon="o-x-mark"
@@ -71,6 +77,22 @@
                     rows="3"
                 />
             </div>
+
+            {{-- Managed By (Club Equipment Only) --}}
+            @if($isClubEquipment)
+                <div class="mt-4">
+                    <x-select
+                        label="Managed By"
+                        wire:model="managed_by_user_id"
+                        :options="$this->availableManagers"
+                        option-value="id"
+                        option-label="name"
+                        placeholder="No specific manager"
+                        hint="Optional - Assign a specific person to manage this club equipment"
+                        icon="o-user"
+                    />
+                </div>
+            @endif
         </x-card>
 
         {{-- Technical Specifications Card --}}

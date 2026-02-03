@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SetupStep1Request;
 use App\Http\Requests\SetupStep2Request;
 use App\Http\Requests\SetupStep3Request;
+use App\Models\Organization;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -74,6 +75,18 @@ class SetupController extends Controller
             $admin->update([
                 'password' => Hash::make($step1['admin_password']),
             ]);
+
+            // Create default organization
+            $organization = Organization::create([
+                'name' => $step3['organization_name'],
+                'callsign' => $step3['organization_callsign'] ?? null,
+                'email' => $step3['organization_email'] ?? null,
+                'phone' => $step3['organization_phone'] ?? null,
+                'is_active' => true,
+            ]);
+
+            // Store organization ID as system setting
+            Setting::set('default_organization_id', $organization->id);
 
             // Save site branding settings
             Setting::set('site_name', $step2['site_name']);

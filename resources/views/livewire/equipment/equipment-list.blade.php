@@ -5,7 +5,12 @@
         {{-- Header --}}
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-3xl font-bold">My Equipment</h1>
-            <x-button label="Add Equipment" icon="o-plus" class="btn-primary" link="{{ route('equipment.create') }}" wire:navigate />
+            <div class="flex gap-2">
+                <x-button label="Add Equipment" icon="o-plus" class="btn-primary" link="{{ route('equipment.create') }}" wire:navigate />
+                @can('edit-any-equipment')
+                    <x-button label="Add Club Equipment" icon="o-building-office" class="btn-secondary" link="{{ route('equipment.create', ['club' => true]) }}" wire:navigate />
+                @endcan
+            </div>
         </div>
 
         {{-- Search and Filters --}}

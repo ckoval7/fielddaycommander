@@ -35,7 +35,7 @@ test('equipment_event table has all required columns', function () {
 
 test('can create equipment_event record with all required relationships', function () {
     $user = User::factory()->create();
-    $equipment = Equipment::factory()->create(['owner_id' => $user->id]);
+    $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
     $station = Station::factory()->create(['event_id' => $event->id]);
 
@@ -63,7 +63,7 @@ test('can create equipment_event record with all required relationships', functi
 
 test('unique constraint prevents duplicate equipment commitments per event', function () {
     $user = User::factory()->create();
-    $equipment = Equipment::factory()->create(['owner_id' => $user->id]);
+    $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
 
     $pivotData = [
@@ -81,7 +81,7 @@ test('unique constraint prevents duplicate equipment commitments per event', fun
 
 test('cascades delete when equipment is deleted', function () {
     $user = User::factory()->create();
-    $equipment = Equipment::factory()->create(['owner_id' => $user->id]);
+    $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
 
     \DB::table('equipment_event')->insert([
@@ -100,7 +100,7 @@ test('cascades delete when equipment is deleted', function () {
 
 test('cascades delete when event is deleted', function () {
     $user = User::factory()->create();
-    $equipment = Equipment::factory()->create(['owner_id' => $user->id]);
+    $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
 
     \DB::table('equipment_event')->insert([
@@ -119,7 +119,7 @@ test('cascades delete when event is deleted', function () {
 
 test('nulls station_id when station is deleted', function () {
     $user = User::factory()->create();
-    $equipment = Equipment::factory()->create(['owner_id' => $user->id]);
+    $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
     $station = Station::factory()->create(['event_id' => $event->id]);
 
@@ -141,7 +141,7 @@ test('nulls station_id when station is deleted', function () {
 
 test('nulls assigned_by_user_id when user is deleted', function () {
     $user = User::factory()->create();
-    $equipment = Equipment::factory()->create(['owner_id' => $user->id]);
+    $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
 
     \DB::table('equipment_event')->insert([
@@ -162,7 +162,7 @@ test('nulls assigned_by_user_id when user is deleted', function () {
 
 test('status enum accepts all valid values', function () {
     $user = User::factory()->create();
-    $equipment = Equipment::factory()->create(['owner_id' => $user->id]);
+    $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
 
     $validStatuses = [
@@ -191,7 +191,7 @@ test('status enum accepts all valid values', function () {
 
 test('default status is committed', function () {
     $user = User::factory()->create();
-    $equipment = Equipment::factory()->create(['owner_id' => $user->id]);
+    $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
 
     \DB::table('equipment_event')->insert([

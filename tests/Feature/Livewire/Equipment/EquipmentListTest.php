@@ -500,3 +500,18 @@ test('multiple filters work together', function () {
         ->assertDontSee('IC-7300')
         ->assertDontSee('ATAS-120A');
 });
+
+test('club equipment button is hidden for operators without edit-any-equipment permission', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EquipmentList::class)
+        ->assertDontSee('Add Club Equipment');
+});
+
+test('club equipment button is visible for users with edit-any-equipment permission', function () {
+    $this->actingAs($this->user);
+    $this->user->givePermissionTo('edit-any-equipment');
+
+    Livewire::test(EquipmentList::class)
+        ->assertSee('Add Club Equipment');
+});
