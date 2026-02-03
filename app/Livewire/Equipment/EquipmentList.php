@@ -26,6 +26,12 @@ class EquipmentList extends Component
 
     public string $sortDirection = 'desc';
 
+    public bool $showPhotoModal = false;
+
+    public ?string $photoPath = null;
+
+    public ?string $photoDescription = null;
+
     /**
      * Mount the component and authorize the user.
      */
@@ -121,6 +127,19 @@ class EquipmentList extends Component
             })
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(25);
+    }
+
+    /**
+     * Open modal to view full-size equipment photo.
+     *
+     * @param  string  $photoPath  The storage path of the photo
+     * @param  string  $description  Equipment description
+     */
+    public function viewPhoto(string $photoPath, string $description): void
+    {
+        $this->photoPath = $photoPath;
+        $this->photoDescription = $description;
+        $this->showPhotoModal = true;
     }
 
     /**

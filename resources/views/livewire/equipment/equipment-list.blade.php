@@ -28,12 +28,14 @@
                 wire:model.live="typeFilter"
                 :options="[
                     ['value' => null, 'label' => 'All Types'],
-                    ['value' => 'transceiver', 'label' => 'Transceiver'],
+                    ['value' => 'radio', 'label' => 'Radio'],
                     ['value' => 'antenna', 'label' => 'Antenna'],
                     ['value' => 'amplifier', 'label' => 'Amplifier'],
-                    ['value' => 'power_supply', 'label' => 'Power Supply'],
-                    ['value' => 'tuner', 'label' => 'Tuner'],
                     ['value' => 'computer', 'label' => 'Computer'],
+                    ['value' => 'power_supply', 'label' => 'Power Supply'],
+                    ['value' => 'accessory', 'label' => 'Accessory'],
+                    ['value' => 'tool', 'label' => 'Tool'],
+                    ['value' => 'furniture', 'label' => 'Furniture'],
                     ['value' => 'other', 'label' => 'Other'],
                 ]"
                 option-value="value"
@@ -90,7 +92,8 @@
                                         <img
                                             src="{{ asset('storage/' . $item->photo_path) }}"
                                             alt="Equipment photo"
-                                            class="w-12 h-12 object-cover rounded"
+                                            class="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                            wire:click="viewPhoto('{{ $item->photo_path }}', '{{ $item->make }} {{ $item->model }}')"
                                         />
                                     @else
                                         <div class="w-12 h-12 bg-base-300 rounded flex items-center justify-center">
@@ -170,4 +173,21 @@
             @endif
         </x-card>
     </div>
+
+    {{-- Photo Viewer Modal --}}
+    <x-modal wire:model="showPhotoModal" title="{{ $photoDescription ?? 'Equipment Photo' }}" class="backdrop-blur" box-class="max-w-4xl">
+        @if($photoPath)
+            <div class="flex justify-center items-center">
+                <img
+                    src="{{ asset('storage/' . $photoPath) }}"
+                    alt="{{ $photoDescription ?? 'Equipment photo' }}"
+                    class="max-w-full max-h-[70vh] object-contain rounded"
+                />
+            </div>
+        @endif
+
+        <x-slot:actions>
+            <x-button label="Close" @click="$wire.showPhotoModal = false" class="btn-ghost" />
+        </x-slot:actions>
+    </x-modal>
 </div>

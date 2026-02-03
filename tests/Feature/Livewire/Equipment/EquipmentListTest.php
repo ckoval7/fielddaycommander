@@ -158,7 +158,7 @@ test('equipment list type filter works correctly', function () {
     Equipment::factory()->create([
         'owner_user_id' => $this->user->id,
         'make' => 'Yaesu',
-        'type' => 'transceiver',
+        'type' => 'radio',
     ]);
 
     Equipment::factory()->create([
@@ -168,7 +168,7 @@ test('equipment list type filter works correctly', function () {
     ]);
 
     Livewire::test(EquipmentList::class)
-        ->set('typeFilter', 'transceiver')
+        ->set('typeFilter', 'radio')
         ->assertSee('Yaesu')
         ->assertDontSee('Diamond');
 });
@@ -312,14 +312,14 @@ test('updating type filter resets pagination', function () {
 
     Equipment::factory()->count(30)->create([
         'owner_user_id' => $this->user->id,
-        'type' => 'transceiver',
+        'type' => 'radio',
     ]);
 
     // Setting type filter should work correctly
     $component = Livewire::test(EquipmentList::class)
-        ->set('typeFilter', 'transceiver');
+        ->set('typeFilter', 'radio');
 
-    expect($component->get('typeFilter'))->toBe('transceiver');
+    expect($component->get('typeFilter'))->toBe('radio');
 });
 
 test('updating status filter resets pagination', function () {
@@ -468,21 +468,21 @@ test('multiple filters work together', function () {
         'owner_user_id' => $this->user->id,
         'make' => 'Yaesu',
         'model' => 'FT-991A',
-        'type' => 'transceiver',
+        'type' => 'radio',
     ]);
 
     Equipment::factory()->create([
         'owner_user_id' => $this->user->id,
         'make' => 'Yaesu',
         'model' => 'FT-DX10',
-        'type' => 'transceiver',
+        'type' => 'radio',
     ]);
 
     Equipment::factory()->create([
         'owner_user_id' => $this->user->id,
         'make' => 'Icom',
         'model' => 'IC-7300',
-        'type' => 'transceiver',
+        'type' => 'radio',
     ]);
 
     Equipment::factory()->create([
@@ -494,7 +494,7 @@ test('multiple filters work together', function () {
 
     Livewire::test(EquipmentList::class)
         ->set('search', 'Yaesu')
-        ->set('typeFilter', 'transceiver')
+        ->set('typeFilter', 'radio')
         ->assertSee('FT-991A')
         ->assertSee('FT-DX10')
         ->assertDontSee('IC-7300')
@@ -514,4 +514,101 @@ test('club equipment button is visible for users with edit-any-equipment permiss
 
     Livewire::test(EquipmentList::class)
         ->assertSee('Add Club Equipment');
+});
+
+test('clicking on equipment photo opens photo modal', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'make' => 'Yaesu',
+        'model' => 'FT-991A',
+        'photo_path' => 'equipment/test-photo.jpg',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->assertSet('showPhotoModal', false)
+        ->assertSet('photoPath', null)
+        ->call('viewPhoto', $equipment->photo_path, $equipment->make . ' ' . $equipment->model)
+        ->assertSet('showPhotoModal', true)
+        ->assertSet('photoPath', 'equipment/test-photo.jpg')
+        ->assertSet('photoDescription', 'Yaesu FT-991A');
+});
+
+test('photo modal displays correct equipment information', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+        'photo_path' => 'equipment/icom-photo.jpg',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('showPhotoModal', true)
+        ->set('photoPath', $equipment->photo_path)
+        ->set('photoDescription', $equipment->make . ' ' . $equipment->model)
+        ->assertSee('Icom IC-7300')
+        ->assertSee($equipment->photo_path);
+});
+
+test('photo modal can be closed', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'photo_path' => 'equipment/test-photo.jpg',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('viewPhoto', $equipment->photo_path, 'Test Equipment')
+        ->assertSet('showPhotoModal', true)
+        ->set('showPhotoModal', false)
+        ->assertSet('showPhotoModal', false);
+});
+
+test('equipment without photo shows placeholder', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'make' => 'Yaesu',
+        'model' => 'FT-991A',
+        'photo_path' => null,
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->assertSee('Yaesu')
+        ->assertSee('bg-base-300');
+});
+
+test('multiple equipment photos can be viewed in modal', function () {
+    $this->actingAs($this->user);
+
+    $equipment1 = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'make' => 'Yaesu',
+        'model' => 'FT-991A',
+        'photo_path' => 'equipment/yaesu.jpg',
+    ]);
+
+    $equipment2 = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+        'photo_path' => 'equipment/icom.jpg',
+    ]);
+
+    $component = Livewire::test(EquipmentList::class);
+
+    // View first photo
+    $component->call('viewPhoto', $equipment1->photo_path, $equipment1->make . ' ' . $equipment1->model)
+        ->assertSet('photoPath', 'equipment/yaesu.jpg')
+        ->assertSet('photoDescription', 'Yaesu FT-991A');
+
+    // View second photo
+    $component->call('viewPhoto', $equipment2->photo_path, $equipment2->make . ' ' . $equipment2->model)
+        ->assertSet('photoPath', 'equipment/icom.jpg')
+        ->assertSet('photoDescription', 'Icom IC-7300');
 });

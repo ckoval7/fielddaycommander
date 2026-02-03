@@ -82,7 +82,8 @@
                                                                 <img
                                                                     src="{{ asset('storage/' . $commitment->equipment->photo_path) }}"
                                                                     alt="Equipment"
-                                                                    class="w-10 h-10 object-cover rounded"
+                                                                    class="w-10 h-10 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                                                    wire:click="viewPhoto('{{ $commitment->equipment->photo_path }}', '{{ $commitment->equipment->make }} {{ $commitment->equipment->model }}')"
                                                                 />
                                                             @else
                                                                 <div class="w-10 h-10 bg-base-300 rounded flex items-center justify-center">
@@ -336,6 +337,23 @@
                 />
             </x-slot:actions>
         </x-form>
+    </x-modal>
+
+    {{-- Photo Viewer Modal --}}
+    <x-modal wire:model="showPhotoModal" title="{{ $photoDescription ?? 'Equipment Photo' }}" class="backdrop-blur" box-class="max-w-4xl">
+        @if($photoPath)
+            <div class="flex justify-center items-center">
+                <img
+                    src="{{ asset('storage/' . $photoPath) }}"
+                    alt="{{ $photoDescription ?? 'Equipment photo' }}"
+                    class="max-w-full max-h-[70vh] object-contain rounded"
+                />
+            </div>
+        @endif
+
+        <x-slot:actions>
+            <x-button label="Close" @click="$wire.showPhotoModal = false" class="btn-ghost" />
+        </x-slot:actions>
     </x-modal>
 
     {{-- Hidden Test Elements --}}

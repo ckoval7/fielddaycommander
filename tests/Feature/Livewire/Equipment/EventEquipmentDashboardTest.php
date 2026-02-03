@@ -56,7 +56,7 @@ beforeEach(function () {
     // Create equipment and commitments
     $this->equipment1 = Equipment::factory()->create([
         'owner_user_id' => $this->manager->id,
-        'type' => 'transceiver',
+        'type' => 'radio',
         'make' => 'Icom',
         'model' => 'IC-7300',
     ]);
@@ -154,7 +154,7 @@ test('displays equipment types in view', function () {
     $this->actingAs($this->manager);
 
     Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->assertSee('Transceiver')
+        ->assertSee('Radio')
         ->assertSee('Antenna');
 });
 
@@ -210,8 +210,8 @@ test('type filter filters commitments', function () {
     $this->actingAs($this->manager);
 
     Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->set('typeFilter', 'transceiver')
-        ->assertSet('typeFilter', 'transceiver')
+        ->set('typeFilter', 'radio')
+        ->assertSet('typeFilter', 'radio')
         ->assertSee('IC-7300');
 });
 
@@ -229,7 +229,7 @@ test('clearFilters resets all filters', function () {
 
     Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
         ->set('searchQuery', 'test')
-        ->set('typeFilter', 'transceiver')
+        ->set('typeFilter', 'radio')
         ->set('statusFilter', 'committed')
         ->set('stationFilter', 1)
         ->call('clearFilters')
@@ -573,4 +573,43 @@ test('hidden test elements contain correct data', function () {
         ->assertSeeHtml('data-testid="event-id"')
         ->assertSeeHtml('data-testid="total-commitments"')
         ->assertSeeHtml('data-testid="active-tab"');
+});
+
+test('clicking on equipment photo opens photo modal in event equipment', function () {
+    $this->actingAs($this->manager);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->manager->id,
+        'make' => 'Yaesu',
+        'model' => 'FT-991A',
+        'photo_path' => 'equipment/test-photo.jpg',
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test('equipment.event-equipment')
+        ->assertSet('showPhotoModal', false)
+        ->call('viewPhoto', $equipment->photo_path, $equipment->make . ' ' . $equipment->model)
+        ->assertSet('showPhotoModal', true)
+        ->assertSet('photoPath', 'equipment/test-photo.jpg')
+        ->assertSet('photoDescription', 'Yaesu FT-991A');
+});
+
+test('photo modal can be closed in event equipment', function () {
+    $this->actingAs($this->manager);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->manager->id,
+        'photo_path' => 'equipment/test-photo.jpg',
+    ]);
+
+    Livewire::test('equipment.event-equipment')
+        ->call('viewPhoto', $equipment->photo_path, 'Test Equipment')
+        ->assertSet('showPhotoModal', true)
+        ->set('showPhotoModal', false)
+        ->assertSet('showPhotoModal', false);
 });

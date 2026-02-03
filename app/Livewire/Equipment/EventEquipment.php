@@ -32,6 +32,12 @@ class EventEquipment extends Component
 
     public ?string $tempNotes = null;
 
+    public bool $showPhotoModal = false;
+
+    public ?string $photoPath = null;
+
+    public ?string $photoDescription = null;
+
     /**
      * Mount the component and set default selected event.
      */
@@ -88,6 +94,19 @@ class EventEquipment extends Component
             ->with(['equipment', 'event', 'statusChangedBy'])
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    /**
+     * Open modal to view full-size equipment photo.
+     *
+     * @param  string  $photoPath  The storage path of the photo
+     * @param  string  $description  Equipment description
+     */
+    public function viewPhoto(string $photoPath, string $description): void
+    {
+        $this->photoPath = $photoPath;
+        $this->photoDescription = $description;
+        $this->showPhotoModal = true;
     }
 
     /**
@@ -265,6 +284,7 @@ class EventEquipment extends Component
         return view('livewire.equipment.event-equipment', [
             'events' => $this->upcomingEvents,
             'commitments' => $this->commitments,
+            'userEquipment' => $this->userEquipment,
         ]);
     }
 }
