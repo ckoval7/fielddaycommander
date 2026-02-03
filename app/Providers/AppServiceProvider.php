@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\EquipmentEvent;
 use App\Models\User;
+use App\Observers\EquipmentEventObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register model observers
+        EquipmentEvent::observe(EquipmentEventObserver::class);
+
         // Define authorization gates based on user roles
         Gate::define('log-contacts', function (User $user) {
             return in_array($user->user_role, ['OPERATOR', 'ADMIN']);
