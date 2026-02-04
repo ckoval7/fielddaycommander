@@ -4,6 +4,9 @@
 /* Colors */
 @import './colors.css';
 
+/* Alpine.js x-cloak - prevents flash of unstyled content */
+[x-cloak] { display: none !important; }
+
 /* daisyUI */
 @plugin "daisyui" {
     themes: light --default, dark --prefersdark;
@@ -230,7 +233,7 @@
     /* When sidebar is collapsed, hide separators and their lines */
     .drawer-side > div[class*="w-[62px]"] .menu-title,
     .drawer-side > div[class*="w-[62px]"] hr {
-        @apply hidden;
+        display: none !important;
     }
 
     /* Club Equipment Badge - Custom Styling */
@@ -255,5 +258,39 @@
 
     .link-primary:hover {
         @apply underline;
+    }
+
+    /* Drag & Drop Animations */
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.3s ease-out;
+    }
+
+    /* Keyboard drag state indicator */
+    .keyboard-dragging {
+        @apply ring-2 ring-primary scale-105 shadow-lg;
+        @apply transition-all duration-200;
+    }
+
+    /* Drop zone visual feedback */
+    .drop-zone-active {
+        @apply ring-2 ring-success ring-offset-2 bg-success/5;
+        @apply transition-all duration-200;
+    }
+
+    .drop-zone-invalid {
+        @apply ring-2 ring-error ring-offset-2 bg-error/5;
+        @apply cursor-not-allowed;
+        @apply transition-all duration-200;
     }
 }
