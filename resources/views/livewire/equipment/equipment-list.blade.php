@@ -140,7 +140,7 @@
                                             'cancelled' => 'badge-error',
                                             'lost' => 'badge-error',
                                             'damaged' => 'badge-error',
-                                            default => 'badge-ghost'
+                                            default => 'badge-success badge-outline'  // Available = ready to use (positive)
                                         };
                                         $statusIcon = match($item->status ?? 'available') {
                                             'committed' => 'heroicon-o-clipboard-document-list',
@@ -150,7 +150,7 @@
                                             'cancelled' => 'heroicon-o-x-circle',
                                             'lost' => 'heroicon-o-exclamation-triangle',
                                             'damaged' => 'heroicon-o-exclamation-triangle',
-                                            default => 'o-check'
+                                            default => 'o-check-circle'  // Available = ready (checkmark)
                                         };
                                     @endphp
                                     <x-badge
