@@ -82,6 +82,16 @@ class EventConfiguration extends Model
         return $this->hasMany(EventBonus::class);
     }
 
+    public function stations(): HasMany
+    {
+        return $this->hasMany(Station::class);
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(Image::class);
+    }
+
     /**
      * Calculate power multiplier based on 2025 Field Day rules.
      *
