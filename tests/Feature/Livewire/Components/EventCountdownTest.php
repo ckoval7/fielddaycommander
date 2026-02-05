@@ -207,18 +207,8 @@ test('component displays correct timezone abbreviation for different timezones',
     }
 });
 
-test('component uses 1 second polling when event within 1 hour', function () {
-    Event::factory()->create([
-        'event_type_id' => $this->eventType->id,
-        'start_time' => now()->addMinutes(45),
-        'end_time' => now()->addHours(24),
-    ]);
-
-    Livewire::test(EventCountdown::class)
-        ->assertSet('pollingInterval', 1);
-});
-
-test('component uses 60 second polling when event more than 1 hour away', function () {
+test('component always uses 1 second polling for real-time clock updates', function () {
+    // Even when event is far away, we want clocks to tick every second
     Event::factory()->create([
         'event_type_id' => $this->eventType->id,
         'start_time' => now()->addDays(3),
@@ -226,7 +216,7 @@ test('component uses 60 second polling when event more than 1 hour away', functi
     ]);
 
     Livewire::test(EventCountdown::class)
-        ->assertSet('pollingInterval', 60);
+        ->assertSet('pollingInterval', 1);
 });
 
 test('countdown formats correctly for days remaining', function () {

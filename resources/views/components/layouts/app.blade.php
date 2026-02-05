@@ -50,6 +50,11 @@
         <livewire:components.event-countdown />
     </div>
 
+    {{-- Developer Mode Banner --}}
+    @if(config('developer.enabled'))
+        <livewire:components.developer-banner />
+    @endif
+
     {{-- MAIN --}}
     <x-main full-width with-nav>
         {{-- SIDEBAR --}}
@@ -84,9 +89,14 @@
                         <x-menu-item title="Event Commitments" link="{{ route('equipment.events') }}" route="equipment.events" />
                     </x-menu-sub>
 
-                    <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
+                    @can('view-guestbook')
+                        @php $activeEventId = \App\Models\Setting::get('active_event_id'); @endphp
+                        @if($activeEventId)
+                            <x-menu-item title="Guestbook" icon="o-book-open" link="{{ route('events.guestbook', $activeEventId) }}" :active="request()->routeIs('events.guestbook')" />
+                        @endif
+                    @endcan
 
-                    <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" />
+                    <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
 
                     @canany(['manage-events', 'manage-users', 'manage-settings', 'view-reports', 'view-security-logs'])
                         <x-menu-separator title="ADMINISTRATION" />
@@ -110,6 +120,12 @@
                         @can('view-security-logs')
                             <x-menu-item title="Audit Logs" icon="o-clipboard-document-list" link="{{ route('admin.audit-logs') }}" :active="request()->routeIs('admin.audit-logs')" />
                         @endcan
+
+                        @if(config('developer.enabled'))
+                            @can('manage-settings')
+                                <x-menu-item title="Developer Tools" icon="o-wrench" link="{{ route('admin.developer') }}" :active="request()->routeIs('admin.developer')" />
+                            @endcan
+                        @endif
                     @endcanany
                 @else
                     <x-menu-item title="Home" icon="o-home" link="/" />

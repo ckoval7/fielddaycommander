@@ -5,7 +5,10 @@ namespace App\Providers;
 use App\Models\EquipmentEvent;
 use App\Models\User;
 use App\Observers\EquipmentEventObserver;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,8 +26,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Define rate limiters
+        $this->configureRateLimiters();
+
         // Register policies
         Gate::policy(\App\Models\Image::class, \App\Policies\ImagePolicy::class);
+        Gate::policy(\App\Models\GuestbookEntry::class, \App\Policies\GuestbookEntryPolicy::class);
 
         // Register model observers
         EquipmentEvent::observe(EquipmentEventObserver::class);
@@ -60,6 +67,16 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('view-reports', function (User $user) {
             return in_array($user->user_role, ['ADMIN', 'STATION_CAPTAIN']);
+        });
+    }
+
+    /**
+     * Configure the application's rate limiters.
+     */
+    protected function configureRateLimiters(): void
+    {
+        RateLimiter::for('guestbook', function (Request $request) {
+            return Limit::perHour(5)->by($request->ip());
         });
     }
 }

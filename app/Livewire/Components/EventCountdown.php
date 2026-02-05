@@ -59,7 +59,7 @@ class EventCountdown extends Component
 
         // Check for recently completed event (within 4 weeks)
         $completed = Event::completed()->orderBy('end_time', 'desc')->first();
-        $completedWithin4Weeks = $completed && abs(now()->diffInDays($completed->end_time, false)) <= 28;
+        $completedWithin4Weeks = $completed && abs(appNow()->diffInDays($completed->end_time, false)) <= 28;
 
         // Check for upcoming event
         $upcoming = Event::upcoming()->orderBy('start_time')->first();
@@ -67,7 +67,7 @@ class EventCountdown extends Component
         // If there's a recently completed event
         if ($completedWithin4Weeks) {
             // If there's an upcoming event within 4 weeks, show that instead
-            if ($upcoming && abs(now()->diffInDays($upcoming->start_time, false)) < 28) {
+            if ($upcoming && abs(appNow()->diffInDays($upcoming->start_time, false)) < 28) {
                 return $upcoming;
             }
 
@@ -89,15 +89,15 @@ class EventCountdown extends Component
             return '';
         }
 
-        if ($this->event->start_time <= now() && $this->event->end_time >= now()) {
+        if ($this->event->start_time <= appNow() && $this->event->end_time >= appNow()) {
             return 'active';
         }
 
-        if ($this->event->start_time > now()) {
+        if ($this->event->start_time > appNow()) {
             return 'upcoming';
         }
 
-        if ($this->event->end_time < now()) {
+        if ($this->event->end_time < appNow()) {
             return 'ended';
         }
 
@@ -125,7 +125,7 @@ class EventCountdown extends Component
             return;
         }
 
-        $now = now();
+        $now = appNow();
         $diff = $this->state === 'ended'
             ? $now->diff($targetTime)
             : $targetTime->diff($now);
@@ -145,7 +145,7 @@ class EventCountdown extends Component
             ? auth()->user()->preferred_timezone
             : Setting::get('timezone', config('app.timezone'));
 
-        $now = now();
+        $now = appNow();
 
         // Get timezone abbreviation (e.g., EST, EDT, PST, PDT)
         $this->timezoneLabel = $now->timezone($timezone)->format('T');
@@ -155,26 +155,8 @@ class EventCountdown extends Component
 
     protected function determinePollingInterval(): void
     {
-        if (! $this->event) {
-            $this->pollingInterval = 60;
-
-            return;
-        }
-
-        $targetTime = match ($this->state) {
-            'upcoming' => $this->event->start_time,
-            'active' => $this->event->end_time,
-            default => null,
-        };
-
-        if (! $targetTime) {
-            $this->pollingInterval = 60;
-
-            return;
-        }
-
-        $minutesUntil = now()->diffInMinutes($targetTime);
-        $this->pollingInterval = $minutesUntil < 60 ? 1 : 60;
+        // Always poll every second to keep clocks ticking
+        $this->pollingInterval = 1;
     }
 
     protected function setStateStyles(): void

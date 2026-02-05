@@ -1,5 +1,5 @@
 <div
-    @if($event) wire:poll.{{ $pollingInterval }}s="updateComponent" @endif
+    @if($event) wire:poll.1s="updateComponent" @endif
     class="flex flex-col lg:flex-row items-start lg:items-baseline gap-3 lg:gap-4"
     aria-live="polite"
     aria-label="Event countdown timer"

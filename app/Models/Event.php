@@ -86,9 +86,9 @@ class Event extends Model
     {
         if ($this->id == Setting::get('active_event_id')) {
             return 'active';
-        } elseif ($this->start_time && $this->start_time > now()) {
+        } elseif ($this->start_time && $this->start_time > appNow()) {
             return 'upcoming';
-        } elseif ($this->end_time && $this->end_time < now()) {
+        } elseif ($this->end_time && $this->end_time < appNow()) {
             return 'completed';
         } else {
             return 'in_progress';

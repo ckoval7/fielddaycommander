@@ -48,11 +48,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/scoring', function () {
         return view('scoring.index');
     })->name('scoring.index');
-
-    Route::get('/guestbook', function () {
-        return view('guestbook.index');
-    })->name('guestbook.index');
 });
+
+// Public Guestbook
+Route::get('/guestbook', function () {
+    return view('guestbook.index');
+})->name('guestbook.index');
 
 // Gallery
 Route::get('/gallery', \App\Livewire\Gallery\GalleryIndex::class)->name('gallery.index');
@@ -111,6 +112,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/{event}/equipment', \App\Livewire\Equipment\EventEquipmentDashboard::class)->name('events.equipment.dashboard');
 });
 
+// Guestbook Management - requires view-guestbook permission (manage-guestbook checked in component for edit actions)
+Route::middleware(['auth', 'can:view-guestbook'])->group(function () {
+    Route::get('/events/{event}/guestbook', \App\Livewire\Guestbook\GuestbookManager::class)->name('events.guestbook');
+});
+
 // Equipment Reports - requires manage-event-equipment permission
 Route::middleware(['auth', 'can:manage-event-equipment'])->prefix('events/{event}/equipment/reports')->name('events.equipment.reports.')->group(function () {
     Route::get('/commitment-summary', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'commitmentSummary'])->name('commitment-summary');
@@ -144,4 +150,9 @@ Route::middleware(['auth', 'can:view-reports'])->group(function () {
 // Administration
 Route::middleware(['auth', 'can:view-security-logs'])->prefix('admin')->group(function () {
     Route::get('/audit-logs', \App\Livewire\Admin\AuditLogViewer::class)->name('admin.audit-logs');
+});
+
+// Developer Tools (only available when DEVELOPER_MODE=true in .env)
+Route::middleware(['auth', 'can:manage-settings'])->prefix('admin')->group(function () {
+    Route::get('/developer', \App\Livewire\Admin\DeveloperTools::class)->name('admin.developer');
 });
