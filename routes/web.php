@@ -49,14 +49,15 @@ Route::middleware('auth')->group(function () {
         return view('scoring.index');
     })->name('scoring.index');
 
-    Route::get('/gallery', function () {
-        return view('gallery.index');
-    })->name('gallery.index');
-
     Route::get('/guestbook', function () {
         return view('guestbook.index');
     })->name('guestbook.index');
 });
+
+// Gallery
+// Note: Livewire components are added in Task 5-7, controller routes are from Task 8
+Route::get('/gallery/thumb/{image}', [\App\Http\Controllers\GalleryController::class, 'thumbnail'])->name('gallery.thumb');
+Route::get('/gallery/image/{image}', [\App\Http\Controllers\GalleryController::class, 'image'])->name('gallery.image');
 
 Route::middleware(['auth', 'can:manage-bonuses'])->group(function () {
     Route::get('/bonuses', function () {
@@ -64,10 +65,13 @@ Route::middleware(['auth', 'can:manage-bonuses'])->group(function () {
     })->name('bonuses.index');
 });
 
+Route::middleware(['auth', 'can:view-stations'])->group(function () {
+    Route::get('/stations', \App\Livewire\Stations\StationsList::class)->name('stations.index');
+});
+
 Route::middleware(['auth', 'can:manage-stations'])->group(function () {
-    Route::get('/stations', function () {
-        return view('stations.index');
-    })->name('stations.index');
+    Route::get('/stations/create', \App\Livewire\Stations\StationForm::class)->name('stations.create');
+    Route::get('/stations/{station}/edit', \App\Livewire\Stations\StationForm::class)->name('stations.edit');
 });
 
 Route::middleware(['auth', 'can:manage-equipment'])->group(function () {
