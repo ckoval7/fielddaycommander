@@ -55,7 +55,11 @@ Route::middleware('auth')->group(function () {
 });
 
 // Gallery
-// Note: Livewire components are added in Task 5-7, controller routes are from Task 8
+Route::get('/gallery', \App\Livewire\Gallery\GalleryIndex::class)->name('gallery.index');
+Route::get('/gallery/{eventConfiguration}', \App\Livewire\Gallery\GalleryShow::class)->name('gallery.show');
+Route::get('/gallery/{eventConfiguration}/upload', \App\Livewire\Gallery\GalleryUpload::class)
+    ->middleware('auth')
+    ->name('gallery.upload');
 Route::get('/gallery/thumb/{image}', [\App\Http\Controllers\GalleryController::class, 'thumbnail'])->name('gallery.thumb');
 Route::get('/gallery/image/{image}', [\App\Http\Controllers\GalleryController::class, 'image'])->name('gallery.image');
 
