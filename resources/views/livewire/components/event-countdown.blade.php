@@ -9,11 +9,11 @@
         <div class="flex items-center gap-3">
             <span class="badge {{ $badgeClass }} badge-lg text-base font-bold flex items-center gap-2">
                 @if($state === 'upcoming')
-                    <x-icon name="heroicon-o-calendar" class="w-4 h-4" />
+                    <x-icon name="o-calendar-days" class="w-4 h-4" />
                 @elseif($state === 'active')
-                    <x-icon name="heroicon-o-play-circle" class="w-4 h-4" />
+                    <x-icon name="o-play-circle" class="w-4 h-4" />
                 @elseif($state === 'ended')
-                    <x-icon name="heroicon-o-check-badge" class="w-4 h-4" />
+                    <x-icon name="o-check-badge" class="w-4 h-4" />
                 @endif
                 {{ $state === 'active' ? 'LIVE' : strtoupper($state) }}
             </span>

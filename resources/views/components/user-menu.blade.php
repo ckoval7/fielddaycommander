@@ -6,7 +6,7 @@
                 <img src="{{ asset(auth()->user()->avatar_path) }}" alt="{{ auth()->user()->call_sign }}" class="rounded-full">
             @else
                 <div class="avatar placeholder">
-                    <div class="bg-neutral text-neutral-content rounded-full w-10 flex items-center justify-center">
+                    <div class="bg-slate-600 text-white rounded-full w-10 flex items-center justify-center">
                         <span class="text-sm">{{ substr(auth()->user()->call_sign, 0, 2) }}</span>
                     </div>
                 </div>

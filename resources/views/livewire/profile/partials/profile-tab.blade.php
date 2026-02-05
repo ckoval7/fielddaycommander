@@ -80,8 +80,8 @@
                         <div class="flex items-center gap-2">
                             <x-checkbox checked disabled />
                             <span>Security Alerts <span class="text-xs text-base-content/60">(always enabled)</span></span>
-                            <x-icon name="o-information-circle" class="w-4 h-4 text-base-content/40"
-                                x-tooltip="Security notifications cannot be disabled for your protection" />
+                            <x-icon name="o-information-circle" class="w-4 h-4 text-base-content/40 cursor-help"
+                                title="Security notifications cannot be disabled for your protection" />
                         </div>
 
                         {{-- Event Notifications --}}
