@@ -37,7 +37,7 @@ test('user can upload a valid image', function () {
         ->test(GalleryUpload::class, ['eventConfiguration' => $eventConfig])
         ->set('photo', $file)
         ->set('caption', 'Test caption')
-        ->call('upload')
+        ->call('save')
         ->assertDispatched('notify');
 
     expect(Image::count())->toBe(1);
@@ -60,13 +60,13 @@ test('duplicate file upload is rejected', function () {
     Livewire::actingAs($user)
         ->test(GalleryUpload::class, ['eventConfiguration' => $eventConfig])
         ->set('photo', $file1)
-        ->call('upload');
+        ->call('save');
 
     // Try to upload duplicate
     Livewire::actingAs($user)
         ->test(GalleryUpload::class, ['eventConfiguration' => $eventConfig])
         ->set('photo', $file2)
-        ->call('upload')
+        ->call('save')
         ->assertHasErrors(['photo']);
 
     expect(Image::count())->toBe(1);
@@ -80,7 +80,7 @@ test('invalid file type is rejected', function () {
     Livewire::actingAs($user)
         ->test(GalleryUpload::class, ['eventConfiguration' => $eventConfig])
         ->set('photo', $file)
-        ->call('upload')
+        ->call('save')
         ->assertHasErrors(['photo']);
 
     expect(Image::count())->toBe(0);
@@ -94,7 +94,7 @@ test('oversized file is rejected', function () {
     Livewire::actingAs($user)
         ->test(GalleryUpload::class, ['eventConfiguration' => $eventConfig])
         ->set('photo', $file)
-        ->call('upload')
+        ->call('save')
         ->assertHasErrors(['photo']);
 
     expect(Image::count())->toBe(0);
@@ -108,7 +108,7 @@ test('caption is optional', function () {
     Livewire::actingAs($user)
         ->test(GalleryUpload::class, ['eventConfiguration' => $eventConfig])
         ->set('photo', $file)
-        ->call('upload')
+        ->call('save')
         ->assertDispatched('notify');
 
     expect(Image::first()->caption)->toBeNull();

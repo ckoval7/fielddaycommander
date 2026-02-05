@@ -96,13 +96,14 @@
 
         <x-slot:actions>
             <x-mary-button label="Cancel" wire:click="$set('showEventSelector', false)" />
-            <x-mary-button
-                label="Continue"
-                icon="o-arrow-right"
-                class="btn-primary"
-                wire:click="uploadToEvent"
-                :disabled="!$selectedEventId"
-            />
+            @if($selectedEventId)
+                <x-mary-button
+                    label="Continue"
+                    icon="o-arrow-right"
+                    class="btn-primary"
+                    wire:click="uploadToEvent"
+                />
+            @endif
         </x-slot:actions>
     </x-mary-modal>
 </div>

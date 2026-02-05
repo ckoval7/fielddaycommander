@@ -6,14 +6,20 @@
     </x-mary-header>
 
     <x-mary-card>
-        <form wire:submit="upload" class="space-y-6">
+        <form wire:submit="save" class="space-y-6">
             <div>
                 <label class="block text-sm font-medium mb-2">Photo</label>
                 <div
                     x-data="{ isDragging: false }"
                     x-on:dragover.prevent="isDragging = true"
                     x-on:dragleave.prevent="isDragging = false"
-                    x-on:drop.prevent="isDragging = false; $refs.fileInput.files = $event.dataTransfer.files; $refs.fileInput.dispatchEvent(new Event('change'))"
+                    x-on:drop.prevent="
+                        isDragging = false;
+                        if ($event.dataTransfer.files.length > 0) {
+                            $refs.fileInput.files = $event.dataTransfer.files;
+                            $refs.fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    "
                     :class="{ 'border-primary bg-primary/5': isDragging }"
                     class="border-2 border-dashed border-base-300 rounded-lg p-8 text-center transition-colors"
                 >
@@ -65,7 +71,7 @@
                     type="submit"
                     class="btn-primary"
                     wire:loading.attr="disabled"
-                    spinner="upload"
+                    spinner="save"
                 />
             </div>
         </form>

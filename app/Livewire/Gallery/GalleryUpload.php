@@ -29,7 +29,7 @@ class GalleryUpload extends Component
         $this->eventConfiguration = $eventConfiguration;
     }
 
-    public function upload(): void
+    public function save(): void
     {
         $this->validate();
 
