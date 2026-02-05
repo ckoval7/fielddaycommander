@@ -4,7 +4,6 @@ namespace App\Livewire\Gallery;
 
 use App\Models\EventConfiguration;
 use App\Models\Image;
-use App\Services\ImageService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Collection;
@@ -50,10 +49,10 @@ class GalleryShow extends Component
 
         $this->authorize('delete', $image);
 
-        $imageService = app(ImageService::class);
-        $imageService->delete($image->storage_path);
-
+        // Soft delete only - keep file for potential restore
         $image->delete();
+
+        $this->closeLightbox();
 
         $this->dispatch('notify', title: 'Success', description: 'Photo deleted.', type: 'success');
     }

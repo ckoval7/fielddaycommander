@@ -17,7 +17,7 @@ class ImageService
         'image/webp',
     ];
 
-    protected const THUMBNAIL_WIDTH = 400;
+    protected const THUMBNAIL_WIDTH = 600;
 
     public function calculateHash(UploadedFile $file): string
     {
@@ -105,6 +105,16 @@ class ImageService
         imagedestroy($thumb);
 
         return $thumbnailPath;
+    }
+
+    public function regenerateThumbnail(string $storagePath): ?string
+    {
+        $directory = dirname($storagePath);
+        $hashPrefix = basename($directory);
+        $parentDirectory = dirname($directory);
+        $filename = basename($storagePath);
+
+        return $this->generateThumbnail($storagePath, $parentDirectory, $hashPrefix, $filename);
     }
 
     public function delete(string $path, ?string $thumbnailPath = null): bool
