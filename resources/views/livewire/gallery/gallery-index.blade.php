@@ -48,7 +48,7 @@
             </div>
         </x-mary-card>
     @else
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             @foreach($this->events as $eventConfig)
                 <a href="{{ route('gallery.show', $eventConfig) }}" class="block">
                     <x-mary-card class="hover:shadow-lg transition-shadow cursor-pointer h-full">
