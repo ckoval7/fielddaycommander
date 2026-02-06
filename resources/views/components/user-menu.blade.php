@@ -7,7 +7,7 @@
             @else
                 <div class="avatar placeholder">
                     <div class="bg-slate-600 text-white rounded-full w-10 flex items-center justify-center">
-                        <span class="text-sm">{{ substr(auth()->user()->call_sign, 0, 2) }}</span>
+                        <span class="text-sm">{{ auth()->user()->getInitials() }}</span>
                     </div>
                 </div>
             @endif

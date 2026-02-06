@@ -127,4 +127,23 @@ class User extends Authenticatable
     {
         return $this->preferred_timezone ?? config('app.timezone');
     }
+
+    /**
+     * Get user's initials from first and last name.
+     * Falls back to first 2 characters of callsign if names are not available.
+     */
+    public function getInitials(): string
+    {
+        $firstInitial = $this->first_name ? mb_substr($this->first_name, 0, 1) : '';
+        $lastInitial = $this->last_name ? mb_substr($this->last_name, 0, 1) : '';
+
+        $initials = $firstInitial.$lastInitial;
+
+        // Fallback to callsign if no name is available
+        if (empty($initials)) {
+            return mb_substr($this->call_sign, 0, 2);
+        }
+
+        return mb_strtoupper($initials);
+    }
 }
