@@ -22,9 +22,12 @@ class GalleryController extends Controller
             abort(404);
         }
 
+        $etag = '"thumb-'.$image->id.'-'.substr($image->file_hash, 0, 12).'"';
+
         return Storage::disk('local')->response($thumbnailPath, null, [
             'Content-Type' => 'image/jpeg',
-            'Cache-Control' => 'public, max-age=31536000',
+            'Cache-Control' => 'public, max-age=86400, must-revalidate',
+            'ETag' => $etag,
         ]);
     }
 
@@ -34,9 +37,12 @@ class GalleryController extends Controller
             abort(404);
         }
 
+        $etag = '"img-'.$image->id.'-'.substr($image->file_hash, 0, 12).'"';
+
         return Storage::disk('local')->response($image->storage_path, null, [
             'Content-Type' => $image->mime_type,
-            'Cache-Control' => 'public, max-age=31536000',
+            'Cache-Control' => 'public, max-age=86400, must-revalidate',
+            'ETag' => $etag,
         ]);
     }
 

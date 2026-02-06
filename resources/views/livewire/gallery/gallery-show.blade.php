@@ -21,7 +21,7 @@
     @else
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             @foreach($this->images as $image)
-                <div class="group relative aspect-square bg-base-300 rounded-lg overflow-hidden cursor-pointer" wire:click="openLightbox({{ $image->id }})">
+                <div wire:key="image-{{ $image->id }}" class="group relative aspect-square bg-base-300 rounded-lg overflow-hidden cursor-pointer" wire:click="openLightbox({{ $image->id }})">
                     <img
                         src="{{ route('gallery.thumb', $image) }}"
                         alt="{{ $image->caption ?? 'Photo' }}"
