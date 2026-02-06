@@ -79,7 +79,7 @@ Route::middleware(['auth', 'can:manage-stations'])->group(function () {
     Route::get('/stations/{station}/edit', \App\Livewire\Stations\StationForm::class)->name('stations.edit');
 });
 
-Route::middleware(['auth', 'can:manage-equipment'])->group(function () {
+Route::middleware(['auth', 'can:manage-own-equipment'])->group(function () {
     Route::get('/equipment', \App\Livewire\Equipment\EquipmentList::class)->name('equipment.index');
     Route::get('/equipment/create', \App\Livewire\Equipment\EquipmentForm::class)->name('equipment.create');
     Route::get('/equipment/{equipment}/edit', \App\Livewire\Equipment\EquipmentForm::class)->name('equipment.edit');
@@ -112,8 +112,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/{event}/equipment', \App\Livewire\Equipment\EventEquipmentDashboard::class)->name('events.equipment.dashboard');
 });
 
-// Guestbook Management - requires view-guestbook permission (manage-guestbook checked in component for edit actions)
-Route::middleware(['auth', 'can:view-guestbook'])->group(function () {
+// Guestbook Management - requires manage-guestbook permission for editing/verifying entries
+Route::middleware(['auth', 'can:manage-guestbook'])->group(function () {
     Route::get('/events/{event}/guestbook', \App\Livewire\Guestbook\GuestbookManager::class)->name('events.guestbook');
 });
 

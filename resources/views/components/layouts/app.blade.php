@@ -11,7 +11,7 @@
 <body class="min-h-screen font-sans antialiased bg-base-200" x-data x-cloak>
 
     {{-- NAVBAR mobile only --}}
-    <x-nav sticky class="lg:hidden">
+    <x-nav sticky class="lg:hidden z-50">
         <x-slot:brand>
             <x-app-brand />
         </x-slot:brand>
@@ -46,7 +46,7 @@
     </div>
 
     {{-- Mobile timer bar - below navbar --}}
-    <div class="lg:hidden sticky top-16 bg-base-100 border-b border-base-300 px-4 py-2">
+    <div class="lg:hidden sticky top-16 z-40 bg-base-100 border-b border-base-300 px-4 py-2">
         <livewire:components.event-countdown />
     </div>
 
@@ -89,14 +89,15 @@
                         <x-menu-item title="Event Commitments" link="{{ route('equipment.events') }}" route="equipment.events" />
                     </x-menu-sub>
 
-                    @can('view-guestbook')
+                    <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
+                    <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
+
+                    @can('manage-guestbook')
                         @php $activeEvent = \App\Models\Event::active()->first(); @endphp
                         @if($activeEvent)
-                            <x-menu-item title="Guestbook" icon="o-book-open" link="{{ route('events.guestbook', $activeEvent->id) }}" :active="request()->routeIs('events.guestbook')" />
+                            <x-menu-item title="Manage Guestbook" icon="o-clipboard-document-list" link="{{ route('events.guestbook', $activeEvent->id) }}" :active="request()->routeIs('events.guestbook')" />
                         @endif
                     @endcan
-
-                    <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
 
                     @canany(['manage-events', 'manage-users', 'manage-settings', 'view-reports', 'view-security-logs'])
                         <x-menu-separator title="ADMINISTRATION" />
