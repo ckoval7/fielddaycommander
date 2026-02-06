@@ -16,6 +16,8 @@ class EventEquipment extends Component
 {
     use AuthorizesRequests;
 
+    public ?string $selectedTab = null;
+
     public ?int $selectedEventId = null;
 
     public ?int $equipmentId = null;
@@ -46,7 +48,19 @@ class EventEquipment extends Component
         // Set default selected event to first upcoming event
         $firstEvent = $this->upcomingEvents->first();
         if ($firstEvent) {
+            $this->selectedTab = "event-{$firstEvent->id}";
             $this->selectedEventId = $firstEvent->id;
+        }
+    }
+
+    /**
+     * When tab changes, extract and set the event ID.
+     */
+    public function updatedSelectedTab(): void
+    {
+        // Extract event ID from tab name (format: "event-123")
+        if ($this->selectedTab && preg_match('/^event-(\d+)$/', $this->selectedTab, $matches)) {
+            $this->selectedEventId = (int) $matches[1];
         }
     }
 
@@ -58,8 +72,8 @@ class EventEquipment extends Component
     {
         return Event::query()
             ->where(function (Builder $query) {
-                $query->where('start_time', '<=', now()->addDays(30))
-                    ->where('end_time', '>=', now());
+                $query->where('start_time', '<=', appNow()->addDays(30))
+                    ->where('end_time', '>=', appNow());
             })
             ->orderBy('start_time')
             ->get();

@@ -11,7 +11,7 @@
 
     {{-- Events Tabs --}}
     @if($events && count($events) > 0)
-        <x-tabs wire:model="selectedEventId">
+        <x-tabs wire:model="selectedTab">
             @foreach($events as $event)
                 <x-tab
                     name="event-{{ $event->id }}"

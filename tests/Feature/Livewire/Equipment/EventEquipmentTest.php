@@ -361,3 +361,42 @@ test('only shows events within next 30 days or currently active', function () {
         ->assertSee($this->event->name)
         ->assertDontSee($farFutureEvent->name);
 });
+
+test('detects currently active event using appNow for developer mode time travel', function () {
+    // Create an event that is "future" in real time but "active" in dev mode time
+    $futureEvent = Event::factory()->create([
+        'name' => 'Dev Mode Active Event',
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(12),
+        'setup_allowed_from' => now()->addDays(9),
+    ]);
+
+    // Simulate developer mode time travel to make the future event "active"
+    app(\App\Services\DeveloperClockService::class)->setFakeTime(now()->addDays(11));
+
+    // The component should detect this as an active event
+    Livewire::test(EventEquipment::class)
+        ->assertSet('selectedEventId', $futureEvent->id)
+        ->assertSee($futureEvent->name);
+});
+
+test('first tab is active on page load showing event details and commitments', function () {
+    // Create a commitment for the upcoming event
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Initial load test notes',
+    ]);
+
+    $component = Livewire::test(EventEquipment::class);
+
+    // Should have selected event ID set
+    $component->assertSet('selectedEventId', $this->event->id);
+
+    // Should see event details (which are inside the first tab)
+    $component->assertSee($this->event->name)
+        ->assertSee('Event Details')
+        ->assertSee('My Commitments')
+        ->assertSee('Initial load test notes');
+});
