@@ -170,7 +170,7 @@ test('guestbook list refreshes when guestbook-signed event is dispatched', funct
     ]);
 
     // Dispatch the event
-    $component->dispatch('guestbook-signed');
+    $component->dispatch('guestbook-entry-created');
 
     // Should reload entries
     expect($component->get('entries'))->toHaveCount(1);
