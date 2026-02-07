@@ -18,7 +18,7 @@
         <!-- User info header -->
         <li class="menu-title px-3 py-2">
             <div class="flex flex-col gap-1">
-                <span class="text-base font-bold">{{ auth()->user()->call_sign }}</span>
+                <span class="text-base font-bold">{{ auth()->user()->effectiveCallSign() }}</span>
                 @if(auth()->user()->name)
                     <span class="text-xs opacity-60">{{ auth()->user()->name }}</span>
                 @endif
@@ -60,14 +60,14 @@
 
         <div class="divider my-1"></div>
 
-        <li>
-            <form method="POST" action="{{ route('logout') }}">
+        <li x-data>
+            <form x-ref="logoutForm" method="POST" action="{{ route('logout') }}" class="hidden">
                 @csrf
-                <button type="submit" class="w-full text-start text-error flex items-center gap-2">
-                    <x-icon name="o-arrow-right-on-rectangle" class="w-4 h-4" />
-                    Logout
-                </button>
             </form>
+            <a @click.prevent="$refs.logoutForm.submit()" class="text-error cursor-pointer">
+                <x-icon name="o-arrow-right-on-rectangle" class="w-4 h-4" />
+                Logout
+            </a>
         </li>
     </ul>
 </div>
