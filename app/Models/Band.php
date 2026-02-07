@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -31,5 +32,15 @@ class Band extends Model
             'allowed_fd' => 'boolean',
             'allowed_wfd' => 'boolean',
         ];
+    }
+
+    public function scopeAllowedForFieldDay(Builder $query): Builder
+    {
+        return $query->where('allowed_fd', true);
+    }
+
+    public function scopeOrdered(Builder $query): Builder
+    {
+        return $query->orderBy('sort_order');
     }
 }

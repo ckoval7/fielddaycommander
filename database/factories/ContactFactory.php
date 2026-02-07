@@ -53,4 +53,23 @@ class ContactFactory extends Factory
             'notes' => null,
         ];
     }
+
+    public function duplicate(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_duplicate' => true,
+            'points' => 0,
+        ]);
+    }
+
+    public function withSection(string $code = 'CT'): static
+    {
+        return $this->state(function (array $attributes) use ($code) {
+            $section = \App\Models\Section::where('code', $code)->first();
+
+            return [
+                'section_id' => $section?->id,
+            ];
+        });
+    }
 }

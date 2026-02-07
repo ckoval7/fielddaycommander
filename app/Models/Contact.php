@@ -52,4 +52,34 @@ class Contact extends Model
     {
         return $this->belongsTo(EventConfiguration::class);
     }
+
+    public function operatingSession(): BelongsTo
+    {
+        return $this->belongsTo(OperatingSession::class);
+    }
+
+    public function logger(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'logger_user_id');
+    }
+
+    public function band(): BelongsTo
+    {
+        return $this->belongsTo(Band::class);
+    }
+
+    public function mode(): BelongsTo
+    {
+        return $this->belongsTo(Mode::class);
+    }
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(Section::class);
+    }
+
+    public function duplicateOf(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'duplicate_of_contact_id');
+    }
 }

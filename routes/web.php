@@ -37,6 +37,8 @@ Route::middleware(['auth', 'can:log-contacts'])->group(function () {
     Route::get('/contacts/create', function () {
         return view('contacts.create');
     })->name('contacts.create');
+    Route::get('/logging', \App\Livewire\Logging\StationSelect::class)->name('logging.station-select');
+    Route::get('/logging/session/{operatingSession}', \App\Livewire\Logging\LoggingInterface::class)->name('logging.session');
 });
 
 Route::get('/contacts', function () {

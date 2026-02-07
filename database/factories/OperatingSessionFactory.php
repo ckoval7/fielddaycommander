@@ -41,7 +41,24 @@ class OperatingSessionFactory extends Factory
             'mode_id' => $mode->id,
             'start_time' => now(),
             'end_time' => null,
+            'power_watts' => 100,
             'qso_count' => 0,
         ];
+    }
+
+    public function active(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'start_time' => now(),
+            'end_time' => null,
+        ]);
+    }
+
+    public function ended(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'start_time' => now()->subHours(2),
+            'end_time' => now()->subHour(),
+        ]);
     }
 }

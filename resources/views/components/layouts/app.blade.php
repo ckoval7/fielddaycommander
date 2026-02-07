@@ -67,7 +67,7 @@
                     <x-menu-separator title="LOGGING" />
 
                     @can('log-contacts')
-                        <x-menu-item title="Log Contact" icon="o-pencil-square" link="/contacts/create" />
+                        <x-menu-item title="Log Contact" icon="o-pencil-square" link="{{ route('logging.station-select') }}" />
                     @endcan
 
                     <x-menu-item title="View Log" icon="o-queue-list" link="/contacts" />
