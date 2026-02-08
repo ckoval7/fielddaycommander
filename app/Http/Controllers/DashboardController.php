@@ -40,7 +40,7 @@ class DashboardController extends Controller
 
         return view('dashboard.default', [
             'dashboard' => $dashboard,
-            'widgets' => $dashboard->config,
+            'widgets' => collect($dashboard->config),
         ]);
     }
 
@@ -61,7 +61,7 @@ class DashboardController extends Controller
             'title' => $tvConfig['title'],
             'description' => $tvConfig['description'],
             'layout_type' => $tvConfig['layout_type'],
-            'widgets' => $tvConfig['widgets'],
+            'widgets' => collect($tvConfig['widgets']),
             'kiosk' => $kioskMode,
         ]);
     }

@@ -149,21 +149,21 @@ Each item: id, icon, title, message, time_ago, read
             @endforelse
         </div>
     @endif
+
+    <style>
+        @keyframes fade-in-down {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-down {
+            animation: fade-in-down 0.3s ease-out;
+        }
+    </style>
 </div>
-
-<style>
-    @keyframes fade-in-down {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .animate-fade-in-down {
-        animation: fade-in-down 0.3s ease-out;
-    }
-</style>

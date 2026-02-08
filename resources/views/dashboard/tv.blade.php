@@ -208,7 +208,7 @@ Props from controller:
                                         </x-card>
                                         @break
 
-                                    @case('list')
+                                    @case('list_widget')
                                         <livewire:dashboard.widgets.list-widget
                                             :config="$widget['config']"
                                             :widget-id="$widget['id']"
