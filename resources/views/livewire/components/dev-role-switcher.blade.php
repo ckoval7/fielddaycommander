@@ -19,7 +19,7 @@
                         <select
                             id="dev-role"
                             wire:model.live="role"
-                            class="select select-xs select-bordered bg-base-100 min-w-[140px]"
+                            class="select select-xs select-bordered bg-base-100 text-base-content min-w-[140px]"
                         >
                             <option value="">— No Override —</option>
                             @foreach($roles as $availableRole)
@@ -35,7 +35,7 @@
                             id="dev-callsign"
                             type="text"
                             wire:model.live.debounce.500ms="callSign"
-                            class="input input-xs input-bordered bg-base-100 w-28 uppercase"
+                            class="input input-xs input-bordered bg-base-100 text-base-content w-28 uppercase"
                             placeholder="e.g. W1AW"
                         />
                     </div>
