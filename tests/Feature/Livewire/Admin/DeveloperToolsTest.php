@@ -834,3 +834,29 @@ test('clearTestUsers logs audit trail with count', function () {
         ->and($auditLog->user_id)->toBe($this->adminUser->id)
         ->and($auditLog->new_values['count'])->toBe(3);
 });
+
+test('initializeTestUsers rejects count below minimum', function () {
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->call('initializeTestUsers', 2);
+
+    // No users should be created
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->count())->toBe(0);
+
+    // No audit log should be created
+    expect(AuditLog::where('action', 'developer.test_users.initialize')->count())->toBe(0);
+});
+
+test('initializeTestUsers rejects count above maximum', function () {
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->call('initializeTestUsers', 51);
+
+    // No users should be created
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->count())->toBe(0);
+
+    // No audit log should be created
+    expect(AuditLog::where('action', 'developer.test_users.initialize')->count())->toBe(0);
+});
