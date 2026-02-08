@@ -45,14 +45,36 @@ Props:
 
         checkConnection() {
             // Check if Echo is available and connected
-            if (window.Echo && window.Echo.connector && window.Echo.connector.socket) {
-                const socket = window.Echo.connector.socket;
+            if (window.Echo && window.Echo.connector) {
+                // Check for Pusher (Reverb) connection
+                if (window.Echo.connector.pusher && window.Echo.connector.pusher.connection) {
+                    const state = window.Echo.connector.pusher.connection.state;
 
-                if (socket.connected) {
-                    if (!this.connected) {
-                        this.handleReconnect();
+                    if (state === 'connected') {
+                        if (!this.connected) {
+                            this.handleReconnect();
+                        }
+                    } else {
+                        if (this.connected) {
+                            this.handleDisconnect();
+                        }
+                    }
+                }
+                // Check for Socket.io connection (fallback)
+                else if (window.Echo.connector.socket) {
+                    const socket = window.Echo.connector.socket;
+
+                    if (socket.connected) {
+                        if (!this.connected) {
+                            this.handleReconnect();
+                        }
+                    } else {
+                        if (this.connected) {
+                            this.handleDisconnect();
+                        }
                     }
                 } else {
+                    // Echo connector exists but no connection found
                     if (this.connected) {
                         this.handleDisconnect();
                     }
