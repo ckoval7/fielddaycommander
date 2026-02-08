@@ -676,16 +676,27 @@ class DeveloperTools extends Component
             $contactsPerUser = intdiv(50, $userCount);
             $remainingContacts = 50 % $userCount;
 
+            // Calculate event time window in seconds for random QSO times
+            $eventStart = Carbon::parse($event->start_time);
+            $eventEnd = Carbon::parse($event->end_time);
+            $eventDurationSeconds = $eventStart->diffInSeconds($eventEnd);
+
             foreach ($users as $index => $user) {
                 $contactCount = $contactsPerUser + ($index < $remainingContacts ? 1 : 0);
 
-                Contact::factory()
-                    ->count($contactCount)
-                    ->create([
+                // Create contacts with varied QSO times within the event window
+                for ($i = 0; $i < $contactCount; $i++) {
+                    // Random time offset within event duration
+                    $randomOffset = rand(0, $eventDurationSeconds);
+                    $qsoTime = $eventStart->copy()->addSeconds($randomOffset);
+
+                    Contact::factory()->create([
                         'event_configuration_id' => $eventConfig->id,
                         'logger_user_id' => $user->id,
                         'operating_session_id' => $sessions[$index]->id,
+                        'qso_time' => $qsoTime,
                     ]);
+                }
             }
 
             AuditLog::log(

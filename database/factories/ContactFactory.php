@@ -34,15 +34,18 @@ class ContactFactory extends Factory
             ]);
         }
 
+        // Get a random active section if available
+        $section = \App\Models\Section::where('is_active', true)->inRandomOrder()->first();
+
         return [
             'event_configuration_id' => \App\Models\EventConfiguration::factory(),
             'operating_session_id' => \App\Models\OperatingSession::factory(),
             'logger_user_id' => \App\Models\User::factory(),
             'band_id' => $band->id,
             'mode_id' => $mode->id,
-            'qso_time' => now(),
+            'qso_time' => appNow(),
             'callsign' => strtoupper(fake()->bothify('??#???')),
-            'section_id' => null,
+            'section_id' => $section?->id,
             'received_exchange' => fake()->word(),
             'power_watts' => fake()->numberBetween(5, 100),
             'is_gota_contact' => false,
