@@ -140,7 +140,7 @@ class Dashboard extends Model
         return [
             'config' => ['required', 'array'],
             'config.*.id' => ['required', 'string'],
-            'config.*.type' => ['required', 'string', 'in:stat_card,chart,progress_bar,list,timer,info_card,feed'],
+            'config.*.type' => ['required', 'string', 'in:stat_card,chart,progress_bar,list_widget,timer,info_card,feed'],
             'config.*.config' => ['sometimes', 'array'],
             'config.*.order' => ['sometimes', 'integer', 'min:0'],
             'config.*.visible' => ['sometimes', 'boolean'],

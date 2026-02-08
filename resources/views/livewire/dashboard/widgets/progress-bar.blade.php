@@ -15,7 +15,7 @@ Size variants:
 
 <div
     class="flex flex-col gap-3"
-    wire:poll.3s
+    wire:poll.visible.3s
     x-data="{
         displayCurrent: @js($data['current']),
         displayPercentage: @js($data['percentage']),

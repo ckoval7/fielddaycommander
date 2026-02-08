@@ -11,7 +11,7 @@ Props from component:
 
 <div
     class="h-full"
-    wire:poll.3s
+    wire:poll.visible.3s
     x-data="{
         displayValue: @js($data['value']),
         targetValue: @js($data['value']),

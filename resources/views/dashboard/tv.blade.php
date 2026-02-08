@@ -324,11 +324,26 @@ Props from controller:
         }
 
         /* Stagger animation for TV widgets */
-        @for $i from 1 through 20 {
-            .tv-widget-item:nth-child(#{$i}) {
-                animation-delay: #{$i * 0.08}s;
-            }
-        }
+        .tv-widget-item:nth-child(1) { animation-delay: 0.08s; }
+        .tv-widget-item:nth-child(2) { animation-delay: 0.16s; }
+        .tv-widget-item:nth-child(3) { animation-delay: 0.24s; }
+        .tv-widget-item:nth-child(4) { animation-delay: 0.32s; }
+        .tv-widget-item:nth-child(5) { animation-delay: 0.40s; }
+        .tv-widget-item:nth-child(6) { animation-delay: 0.48s; }
+        .tv-widget-item:nth-child(7) { animation-delay: 0.56s; }
+        .tv-widget-item:nth-child(8) { animation-delay: 0.64s; }
+        .tv-widget-item:nth-child(9) { animation-delay: 0.72s; }
+        .tv-widget-item:nth-child(10) { animation-delay: 0.80s; }
+        .tv-widget-item:nth-child(11) { animation-delay: 0.88s; }
+        .tv-widget-item:nth-child(12) { animation-delay: 0.96s; }
+        .tv-widget-item:nth-child(13) { animation-delay: 1.04s; }
+        .tv-widget-item:nth-child(14) { animation-delay: 1.12s; }
+        .tv-widget-item:nth-child(15) { animation-delay: 1.20s; }
+        .tv-widget-item:nth-child(16) { animation-delay: 1.28s; }
+        .tv-widget-item:nth-child(17) { animation-delay: 1.36s; }
+        .tv-widget-item:nth-child(18) { animation-delay: 1.44s; }
+        .tv-widget-item:nth-child(19) { animation-delay: 1.52s; }
+        .tv-widget-item:nth-child(20) { animation-delay: 1.60s; }
 
         @keyframes tv-fade-in {
             from {

@@ -261,10 +261,11 @@ class DashboardService
                 'requested_type' => $layoutType,
             ]);
 
-            return config('dashboard.default_dashboards.user', []);
+            $layout = config('dashboard.default_dashboards.user', []);
         }
 
-        return $layout;
+        // Return only the widgets array, not the full layout config
+        return $layout['widgets'] ?? [];
     }
 
     /**

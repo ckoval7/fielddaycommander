@@ -22,7 +22,7 @@ test('createDashboard creates a dashboard with default user layout when no confi
         ->config->toBeArray()
         ->config->not->toBeEmpty();
 
-    $expectedConfig = config('dashboard.default_dashboards.user');
+    $expectedConfig = config('dashboard.default_dashboards.user')['widgets'];
     expect($dashboard->config)->toBe($expectedConfig);
 });
 
@@ -254,7 +254,7 @@ test('getDefaultDashboard creates a new dashboard for user with none', function 
         ->is_default->toBeTrue()
         ->user_id->toBe($this->user->id);
 
-    expect($result->config)->toBe(config('dashboard.default_dashboards.user'));
+    expect($result->config)->toBe(config('dashboard.default_dashboards.user')['widgets']);
 });
 
 // ── setAsDefault ─────────────────────────────────────────────────────
@@ -365,23 +365,23 @@ test('validateConfig accepts all valid widget types', function () {
 test('applyDefaultLayout returns guest layout', function () {
     $layout = $this->service->applyDefaultLayout('guest');
 
-    expect($layout)->toBe(config('dashboard.default_dashboards.guest'));
+    expect($layout)->toBe(config('dashboard.default_dashboards.guest')['widgets']);
 });
 
 test('applyDefaultLayout returns user layout', function () {
     $layout = $this->service->applyDefaultLayout('user');
 
-    expect($layout)->toBe(config('dashboard.default_dashboards.user'));
+    expect($layout)->toBe(config('dashboard.default_dashboards.user')['widgets']);
 });
 
 test('applyDefaultLayout returns tv layout', function () {
     $layout = $this->service->applyDefaultLayout('tv');
 
-    expect($layout)->toBe(config('dashboard.default_dashboards.tv'));
+    expect($layout)->toBe(config('dashboard.default_dashboards.tv')['widgets']);
 });
 
 test('applyDefaultLayout falls back to user layout for unknown type', function () {
     $layout = $this->service->applyDefaultLayout('nonexistent');
 
-    expect($layout)->toBe(config('dashboard.default_dashboards.user'));
+    expect($layout)->toBe(config('dashboard.default_dashboards.user')['widgets']);
 });
