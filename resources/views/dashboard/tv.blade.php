@@ -24,6 +24,9 @@ Props from controller:
     @livewireStyles
 </head>
 <body class="font-sans antialiased bg-base-100">
+    {{-- Connection Monitor (Silent in TV Mode) --}}
+    <x-dashboard.connection-monitor :tvMode="true" />
+
     <div
         class="tv-dashboard"
         x-data="{

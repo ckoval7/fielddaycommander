@@ -10,6 +10,9 @@ Props from controller:
 --}}
 
 <x-layouts.app>
+    {{-- Connection Monitor --}}
+    <x-dashboard.connection-monitor />
+
     <div class="container mx-auto px-4 sm:px-6 py-4 sm:py-6" x-data="{
         editMode: false,
         fullscreen: $persist(false).as('dashboard-fullscreen'),
