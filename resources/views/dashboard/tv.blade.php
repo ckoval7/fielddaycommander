@@ -115,17 +115,20 @@ Props from controller:
                     @if($activeEvent)
                         <div
                             x-data="{
-                                endTime: new Date('{{ $activeEvent->end_time }}').getTime(),
+                                endTime: new Date(@js($activeEvent->end_time->toIso8601String())).getTime(),
+                                serverNow: new Date(@js(appNow()->toIso8601String())).getTime(),
                                 timeLeft: '',
 
                                 init() {
                                     this.updateTimer();
-                                    setInterval(() => this.updateTimer(), 1000);
+                                    setInterval(() => {
+                                        this.serverNow += 1000;
+                                        this.updateTimer();
+                                    }, 1000);
                                 },
 
                                 updateTimer() {
-                                    const now = new Date().getTime();
-                                    const diff = this.endTime - now;
+                                    const diff = this.endTime - this.serverNow;
 
                                     if (diff <= 0) {
                                         this.timeLeft = 'Event Ended';

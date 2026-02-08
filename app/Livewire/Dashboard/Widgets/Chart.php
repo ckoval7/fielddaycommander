@@ -29,7 +29,7 @@ class Chart extends Component
      *
      * @var array<string>
      */
-    protected const CHART_TYPES = ['bar', 'line', 'pie'];
+    protected const CHART_TYPES = ['bar', 'line', 'pie', 'doughnut'];
 
     /**
      * Supported data sources.
