@@ -12,7 +12,7 @@ Props from component:
 <div class="h-full">
     @if ($size === 'tv')
         {{-- TV Mode: Large display for kiosk/TV dashboards --}}
-        <x-card class="h-full flex flex-col justify-center p-6 sm:p-8">
+        <x-card class="h-full flex flex-col justify-center p-6 sm:p-8" shadow>
             <div class="space-y-4 sm:space-y-6">
                 <div>
                     <div class="text-sm sm:text-base text-base-content/60 mb-1">
@@ -53,7 +53,7 @@ Props from component:
         </x-card>
     @else
         {{-- Normal Mode: Compact info display --}}
-        <x-card class="h-full">
+        <x-card class="h-full" shadow>
             <x-slot name="title">Event Info</x-slot>
 
             <div class="space-y-3">

@@ -22,7 +22,7 @@ Size variants:
 @endphp
 
 <div class="h-full">
-<x-card class="h-full flex flex-col">
+<x-card class="h-full flex flex-col" shadow>
     {{-- Card Title --}}
     <div class="@if($size === 'tv') mb-4 @else mb-3 @endif">
         <h3 class="{{ $titleSize }} font-bold text-base-content">{{ $title }}</h3>
@@ -78,10 +78,10 @@ Size variants:
                         {{-- Recent Contact Item --}}
                         <div
                             x-data="{ itemId: '{{ $itemKey }}' }"
-                            class="@if($size === 'tv') p-4 @else p-3 @endif bg-base-200 rounded-lg transition-all duration-200"
+                            class="@if($size === 'tv') p-4 @else p-3 @endif bg-base-100 border border-base-content/10 rounded-lg transition-all duration-200"
                             ::class="{
                                 'animate-slide-down': newItems.has(itemId),
-                                'bg-primary/20 shadow-md shadow-primary/20': newItems.has(itemId)
+                                'bg-primary/20 border-primary/50 shadow-md shadow-primary/20': newItems.has(itemId)
                             }"
                         >
                             <div class="flex flex-col gap-2">
@@ -110,10 +110,10 @@ Size variants:
                         {{-- Active Station Item --}}
                         <div
                             x-data="{ itemId: '{{ $itemKey }}' }"
-                            class="@if($size === 'tv') p-4 @else p-3 @endif bg-base-200 rounded-lg transition-all duration-200"
+                            class="@if($size === 'tv') p-4 @else p-3 @endif bg-base-100 border border-base-content/10 rounded-lg transition-all duration-200"
                             ::class="{
                                 'animate-slide-down': newItems.has(itemId),
-                                'bg-success/20 shadow-md shadow-success/20': newItems.has(itemId)
+                                'bg-success/20 border-success/50 shadow-md shadow-success/20': newItems.has(itemId)
                             }"
                         >
                             <div class="flex flex-col gap-2">
@@ -143,10 +143,10 @@ Size variants:
                         {{-- Equipment Status Item --}}
                         <div
                             x-data="{ itemId: '{{ $itemKey }}' }"
-                            class="@if($size === 'tv') p-4 @else p-3 @endif bg-base-200 rounded-lg transition-all duration-200"
+                            class="@if($size === 'tv') p-4 @else p-3 @endif bg-base-100 border border-base-content/10 rounded-lg transition-all duration-200"
                             ::class="{
                                 'animate-slide-down': newItems.has(itemId),
-                                'bg-info/20 shadow-md shadow-info/20': newItems.has(itemId)
+                                'bg-info/20 border-info/50 shadow-md shadow-info/20': newItems.has(itemId)
                             }"
                         >
                             <div class="flex flex-col gap-2">

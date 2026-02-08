@@ -11,8 +11,10 @@ Props from component:
 Each item: id, icon, title, message, time_ago, read
 --}}
 
+<div class="h-full">
+<x-card class="h-full" shadow>
 <div
-    class="h-full flex flex-col"
+    class="flex flex-col"
     x-data="{
         itemIds: @js(array_column($data['items'], 'id')),
         newItems: new Set(),
@@ -63,10 +65,10 @@ Each item: id, icon, title, message, time_ago, read
                     wire:key="feed-item-{{ $item['id'] }}"
                     x-data="{ itemId: '{{ $item['id'] }}' }"
                     class="flex items-start gap-4 p-4 rounded-xl transition-all duration-300
-                        {{ $item['read'] ? 'bg-base-200/50' : 'bg-primary/10 border-l-4 border-primary' }}"
+                        {{ $item['read'] ? 'bg-base-100 border border-base-content/10' : 'bg-base-100 border-l-4 border-primary border-y border-r border-base-content/10' }}"
                     ::class="{
                         'animate-fade-in-down': newItems.has(itemId),
-                        'bg-primary/30 border-l-4 border-primary shadow-lg shadow-primary/30': newItems.has(itemId)
+                        'bg-primary/20 border-l-4 border-primary shadow-lg shadow-primary/30': newItems.has(itemId)
                     }"
                 >
                     <div class="flex-shrink-0 mt-1">
@@ -113,7 +115,7 @@ Each item: id, icon, title, message, time_ago, read
                     wire:key="feed-item-{{ $item['id'] }}"
                     x-data="{ itemId: '{{ $item['id'] }}' }"
                     class="flex items-start gap-2 p-2 rounded-lg transition-all duration-200
-                        {{ $item['read'] ? 'hover:bg-base-200/50' : 'bg-primary/5 border-l-2 border-primary' }}"
+                        {{ $item['read'] ? 'hover:bg-base-content/5' : 'bg-base-100 border-l-2 border-primary border-y border-r border-base-content/10' }}"
                     ::class="{
                         'animate-fade-in-down': newItems.has(itemId),
                         'bg-primary/20 border-l-2 border-primary shadow-md shadow-primary/20': newItems.has(itemId)
@@ -149,6 +151,8 @@ Each item: id, icon, title, message, time_ago, read
             @endforelse
         </div>
     @endif
+</div>
+</x-card>
 
     <style>
         @keyframes fade-in-down {

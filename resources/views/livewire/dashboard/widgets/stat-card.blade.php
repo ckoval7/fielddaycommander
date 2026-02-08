@@ -56,7 +56,7 @@ Props from component:
 >
     @if ($size === 'tv')
         {{-- TV Mode: Large display for kiosk/TV dashboards --}}
-        <x-card class="h-full flex flex-col items-center justify-center p-6 sm:p-8">
+        <x-card class="h-full flex flex-col items-center justify-center p-6 sm:p-8" shadow>
             <x-icon
                 :name="$data['icon']"
                 class="w-16 h-16 sm:w-20 sm:h-20 {{ $data['color'] }} mb-4 transition-transform duration-300"
@@ -76,7 +76,7 @@ Props from component:
         </x-card>
     @else
         {{-- Normal Mode: Compact stat display with animated value --}}
-        <x-card class="h-full">
+        <x-card class="h-full" shadow>
             <div class="flex items-center gap-4">
                 <x-icon
                     :name="$data['icon']"

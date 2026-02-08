@@ -13,6 +13,7 @@ Size variants:
 - tv: Larger for kiosk/TV displays
 --}}
 
+<x-card class="h-full" shadow>
 <div
     class="flex flex-col gap-3"
     wire:poll.visible.10s
@@ -87,3 +88,4 @@ Size variants:
         To next milestone
     </div>
 </div>
+</x-card>

@@ -10,7 +10,7 @@ Props from component:
 --}}
 
 <div class="h-full">
-    <x-card class="h-full flex flex-col items-center justify-center p-6 sm:p-8">
+    <x-card class="h-full flex flex-col items-center justify-center p-6 sm:p-8" shadow>
         @if ($data['is_ended'])
             {{-- Event has ended --}}
             <div class="text-center">
