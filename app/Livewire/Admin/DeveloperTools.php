@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\AuditLog;
 use App\Models\Contact;
+use App\Models\User;
 use App\Services\DatabaseSnapshotService;
 use App\Services\DeveloperClockService;
 use Carbon\Carbon;
@@ -474,6 +475,128 @@ class DeveloperTools extends Component
     }
 
     // =====================
+    // Test User Pool Methods
+    // =====================
+
+    /**
+     * Check if test user pool exists.
+     */
+    public function testUserPoolExists(): bool
+    {
+        return User::where('call_sign', 'LIKE', 'TEST%')->exists();
+    }
+
+    /**
+     * Get count of test users in the pool.
+     */
+    public function getTestUserPoolCount(): int
+    {
+        return User::where('call_sign', 'LIKE', 'TEST%')->count();
+    }
+
+    /**
+     * Generate test user callsign with TEST{n}{AA-ZZ} pattern.
+     * Sequential: TEST1AA, TEST2AB, TEST3AC, ..., TEST26AZ, TEST27BA, etc.
+     */
+    protected function generateTestCallsign(int $index): string
+    {
+        // Number starts at 1
+        $number = $index + 1;
+
+        // Calculate letter suffix: AA, AB, AC, ..., AZ, BA, BB, ..., ZZ
+        // Using base-26 system for letters
+        $firstLetter = chr(65 + intdiv($index, 26)); // A-Z (for every 26 users)
+        $secondLetter = chr(65 + ($index % 26)); // A-Z (cycles through A-Z)
+
+        return "TEST{$number}{$firstLetter}{$secondLetter}";
+    }
+
+    /**
+     * Initialize test user pool with specified count.
+     */
+    public function initializeTestUsers(int $count): void
+    {
+        if ($count < 3 || $count > 50) {
+            $this->error('Invalid count', 'Count must be between 3 and 50');
+
+            return;
+        }
+
+        try {
+            $operatorRole = \Spatie\Permission\Models\Role::where('name', 'Operator')->first();
+
+            if ($operatorRole === null) {
+                $this->error('Role not found', 'Operator role does not exist');
+
+                return;
+            }
+
+            $usersCreated = 0;
+
+            for ($i = 0; $i < $count; $i++) {
+                $callsign = $this->generateTestCallsign($i);
+                $email = strtolower($callsign).'@example.test';
+
+                $user = User::create([
+                    'call_sign' => $callsign,
+                    'first_name' => 'Test',
+                    'last_name' => 'User',
+                    'email' => $email,
+                    'password' => 'password',
+                ]);
+
+                $user->assignRole($operatorRole);
+                $usersCreated++;
+            }
+
+            AuditLog::log(
+                action: 'developer.test_users.initialize',
+                userId: auth()->id(),
+                newValues: ['count' => $usersCreated]
+            );
+
+            $this->success(
+                'Test user pool created',
+                "{$usersCreated} test users initialized"
+            );
+        } catch (\Exception $e) {
+            $this->error('Failed to initialize test users', $e->getMessage());
+        }
+    }
+
+    /**
+     * Clear all test users from the pool.
+     */
+    public function clearTestUsers(): void
+    {
+        try {
+            $count = $this->getTestUserPoolCount();
+
+            if ($count === 0) {
+                $this->info('No test users to clear');
+
+                return;
+            }
+
+            // Delete all test users (cascade will handle related records)
+            User::where('call_sign', 'LIKE', 'TEST%')->delete();
+
+            AuditLog::log(
+                action: 'developer.test_users.clear',
+                userId: auth()->id(),
+                newValues: ['count' => $count]
+            );
+
+            $this->success(
+                'Test user pool cleared',
+                "{$count} test users deleted"
+            );
+        } catch (\Exception $e) {
+            $this->error('Failed to clear test users', $e->getMessage());
+        }
+    }
+
+    // =====================
     // Quick Actions
     // =====================
 
@@ -500,23 +623,51 @@ class DeveloperTools extends Component
                 return;
             }
 
-            // Create 50 test contacts
-            Contact::factory()
-                ->count(50)
-                ->create([
-                    'event_configuration_id' => $eventConfig->id,
-                ]);
+            // Get existing stations
+            $stations = \App\Models\Station::all();
+
+            if ($stations->isEmpty()) {
+                $this->error('No stations configured', 'Please create at least one station before seeding test contacts.');
+
+                return;
+            }
+
+            // Create a random number of users (3-10) to spread the contacts across
+            $userCount = rand(3, 10);
+            $users = \App\Models\User::factory()->count($userCount)->create();
+
+            // Create one operating session per user, using random existing stations
+            $sessions = $users->map(fn ($user) => \App\Models\OperatingSession::factory()->create([
+                'station_id' => $stations->random()->id,
+            ]));
+
+            // Create 50 test contacts, distributed among the users/sessions
+            $contactsPerUser = intdiv(50, $userCount);
+            $remainingContacts = 50 % $userCount;
+
+            foreach ($users as $index => $user) {
+                $contactCount = $contactsPerUser + ($index < $remainingContacts ? 1 : 0);
+
+                Contact::factory()
+                    ->count($contactCount)
+                    ->create([
+                        'event_configuration_id' => $eventConfig->id,
+                        'logger_user_id' => $user->id,
+                        'operating_session_id' => $sessions[$index]->id,
+                    ]);
+            }
 
             AuditLog::log(
                 action: 'developer.quick_action.seed_contacts',
                 userId: auth()->id(),
                 newValues: [
                     'count' => 50,
+                    'user_count' => $userCount,
                     'event_configuration_id' => $eventConfig->id,
                 ]
             );
 
-            $this->success('Test contacts created', '50 contacts added to the active event');
+            $this->success('Test contacts created', "50 contacts added by {$userCount} users to the active event");
         } catch (\Exception $e) {
             $this->error('Failed to seed contacts', $e->getMessage());
         }

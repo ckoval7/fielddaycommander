@@ -410,6 +410,9 @@ test('deleteSnapshot deletes via service', function () {
 test('seedTestContacts creates 50 contacts for active event', function () {
     $this->actingAs($this->adminUser);
 
+    // Create at least one station (required for operating sessions)
+    \App\Models\Station::factory()->create();
+
     // Create an active event (within date range)
     $event = \App\Models\Event::factory()->create([
         'start_time' => now()->subHours(12),
@@ -432,6 +435,27 @@ test('seedTestContacts creates 50 contacts for active event', function () {
 
 test('seedTestContacts fails when no active event', function () {
     $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->call('seedTestContacts');
+
+    // No contacts should be created
+    expect(Contact::count())->toBe(0);
+
+    // No audit log should be created
+    expect(AuditLog::where('action', 'developer.quick_action.seed_contacts')->count())->toBe(0);
+});
+
+test('seedTestContacts fails when no stations configured', function () {
+    $this->actingAs($this->adminUser);
+
+    // Create an active event but no stations
+    $event = \App\Models\Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
 
     Livewire::test(DeveloperTools::class)
         ->call('seedTestContacts');
@@ -629,6 +653,9 @@ test('createSnapshot logs audit entry', function () {
 test('quick actions log audit entries', function () {
     $this->actingAs($this->adminUser);
 
+    // Create at least one station (required for operating sessions)
+    \App\Models\Station::factory()->create();
+
     // Set up active event for seedTestContacts (within date range)
     $event = \App\Models\Event::factory()->create([
         'start_time' => now()->subHours(12),
@@ -670,4 +697,140 @@ test('component handles missing service gracefully', function () {
     // The component should still load
     Livewire::test(DeveloperTools::class)
         ->assertStatus(200);
+});
+
+// =============================================================================
+// Test User Pool Tests (10 tests)
+// =============================================================================
+
+test('testUserPoolExists returns false when no test users exist', function () {
+    $this->actingAs($this->adminUser);
+
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->exists())->toBeFalse();
+});
+
+test('testUserPoolExists returns true when test users exist', function () {
+    $this->actingAs($this->adminUser);
+
+    // Create a test user
+    User::factory()->create(['call_sign' => 'TEST1AA']);
+
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->exists())->toBeTrue();
+});
+
+test('getTestUserPoolCount returns zero when no test users exist', function () {
+    $this->actingAs($this->adminUser);
+
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->count())->toBe(0);
+});
+
+test('getTestUserPoolCount returns correct count', function () {
+    $this->actingAs($this->adminUser);
+
+    // Create test users
+    User::factory()->create(['call_sign' => 'TEST1AA']);
+    User::factory()->create(['call_sign' => 'TEST2AB']);
+    User::factory()->create(['call_sign' => 'TEST3AC']);
+
+    // Create a non-test user
+    User::factory()->create(['call_sign' => 'W1AW']);
+
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->count())->toBe(3);
+});
+
+test('initializeTestUsers creates test users with sequential callsigns', function () {
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->call('initializeTestUsers', 5);
+
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->count())->toBe(5);
+
+    // Verify sequential callsigns (ordered by ID to preserve creation order)
+    $users = User::where('call_sign', 'LIKE', 'TEST%')->orderBy('id')->get();
+    expect($users[0]->call_sign)->toBe('TEST1AA')
+        ->and($users[1]->call_sign)->toBe('TEST2AB')
+        ->and($users[2]->call_sign)->toBe('TEST3AC')
+        ->and($users[3]->call_sign)->toBe('TEST4AD')
+        ->and($users[4]->call_sign)->toBe('TEST5AE');
+});
+
+test('initializeTestUsers assigns correct email and role', function () {
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->call('initializeTestUsers', 3);
+
+    $user = User::where('call_sign', 'TEST1AA')->first();
+
+    expect($user->email)->toBe('test1aa@example.test')
+        ->and($user->hasRole('Operator'))->toBeTrue();
+});
+
+test('initializeTestUsers logs audit trail', function () {
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->call('initializeTestUsers', 5);
+
+    $auditLog = AuditLog::where('action', 'developer.test_users.initialize')->first();
+
+    expect($auditLog)->not->toBeNull()
+        ->and($auditLog->user_id)->toBe($this->adminUser->id)
+        ->and($auditLog->new_values['count'])->toBe(5);
+});
+
+test('initializeTestUsers handles callsign overflow to next letter', function () {
+    $this->actingAs($this->adminUser);
+
+    // Create 28 users: TEST1AA-TEST26AZ (26), TEST27BA-TEST28BB (2)
+    Livewire::test(DeveloperTools::class)
+        ->call('initializeTestUsers', 28);
+
+    $users = User::where('call_sign', 'LIKE', 'TEST%')->orderBy('id')->get();
+
+    expect($users->count())->toBe(28)
+        ->and($users[0]->call_sign)->toBe('TEST1AA')
+        ->and($users[25]->call_sign)->toBe('TEST26AZ')
+        ->and($users[26]->call_sign)->toBe('TEST27BA')
+        ->and($users[27]->call_sign)->toBe('TEST28BB');
+});
+
+test('clearTestUsers deletes all test users', function () {
+    $this->actingAs($this->adminUser);
+
+    // Create test users with different callsigns
+    User::factory()->create(['call_sign' => 'TEST1AA']);
+    User::factory()->create(['call_sign' => 'TEST2AB']);
+    User::factory()->create(['call_sign' => 'TEST3AC']);
+    User::factory()->create(['call_sign' => 'TEST4AD']);
+    User::factory()->create(['call_sign' => 'TEST5AE']);
+
+    // Create non-test user
+    User::factory()->create(['call_sign' => 'W1XYZ']);
+
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->count())->toBe(5)
+        ->and(User::count())->toBe(8); // 5 test + 1 regular + 2 from beforeEach
+
+    Livewire::test(DeveloperTools::class)
+        ->call('clearTestUsers');
+
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->count())->toBe(0)
+        ->and(User::count())->toBe(3); // Only regular user and 2 from beforeEach remain
+});
+
+test('clearTestUsers logs audit trail with count', function () {
+    $this->actingAs($this->adminUser);
+
+    // Create test users
+    User::factory()->count(3)->create(['call_sign' => 'TEST1AA']);
+
+    Livewire::test(DeveloperTools::class)
+        ->call('clearTestUsers');
+
+    $auditLog = AuditLog::where('action', 'developer.test_users.clear')->first();
+
+    expect($auditLog)->not->toBeNull()
+        ->and($auditLog->user_id)->toBe($this->adminUser->id)
+        ->and($auditLog->new_values['count'])->toBe(3);
 });
