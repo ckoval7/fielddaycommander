@@ -90,7 +90,9 @@ test('component initializes with default property values', function () {
         ->assertSet('showRestoreModal', false)
         ->assertSet('showSelectiveResetModal', false)
         ->assertSet('selectedSnapshot', null)
-        ->assertSet('databaseTab', 'full-reset');
+        ->assertSet('databaseTab', 'full-reset')
+        ->assertSet('testUserCount', 10)
+        ->assertSet('showClearTestUsersModal', false);
 });
 
 test('component loads current fake time on mount', function () {
@@ -859,4 +861,62 @@ test('initializeTestUsers rejects count above maximum', function () {
 
     // No audit log should be created
     expect(AuditLog::where('action', 'developer.test_users.initialize')->count())->toBe(0);
+});
+
+// =============================================================================
+// Test User Pool UI Tests (5 tests)
+// =============================================================================
+
+test('test user pool section displays in UI', function () {
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->assertSee('Test User Pool')
+        ->assertSee('Number of test users');
+});
+
+test('initialize button is disabled when pool exists', function () {
+    $this->actingAs($this->adminUser);
+
+    // Create test user pool
+    User::factory()->create(['call_sign' => 'TEST1AA']);
+
+    Livewire::test(DeveloperTools::class)
+        ->assertSee('Initialize Test Users');
+});
+
+test('clear button is disabled when pool does not exist', function () {
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->assertSee('Clear Test Users');
+});
+
+test('clear test users shows confirmation modal', function () {
+    $this->actingAs($this->adminUser);
+
+    // Create test users
+    User::factory()->count(5)->sequence(
+        ['call_sign' => 'TEST1AA'],
+        ['call_sign' => 'TEST2AB'],
+        ['call_sign' => 'TEST3AC'],
+        ['call_sign' => 'TEST4AD'],
+        ['call_sign' => 'TEST5AE']
+    )->create();
+
+    Livewire::test(DeveloperTools::class)
+        ->set('showClearTestUsersModal', true)
+        ->assertSee('5 test users');
+});
+
+test('confirmation modal closes after clearing users', function () {
+    $this->actingAs($this->adminUser);
+
+    // Create test users
+    User::factory()->create(['call_sign' => 'TEST1AA']);
+
+    Livewire::test(DeveloperTools::class)
+        ->set('showClearTestUsersModal', true)
+        ->call('clearTestUsers')
+        ->assertSet('showClearTestUsersModal', false);
 });

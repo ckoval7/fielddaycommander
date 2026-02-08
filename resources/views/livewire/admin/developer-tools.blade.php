@@ -288,6 +288,43 @@
                 </div>
             </div>
         </x-card>
+
+        {{-- Test User Pool Section --}}
+        <x-card title="Test User Pool" subtitle="Manage reusable test users" icon="o-users">
+            <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row gap-4 items-end">
+                    <div class="flex-1">
+                        <x-input
+                            label="Number of test users"
+                            wire:model="testUserCount"
+                            type="number"
+                            min="3"
+                            max="50"
+                            icon="o-user-group"
+                            hint="Range: 3-50 users"
+                        />
+                    </div>
+
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <x-button
+                            label="Initialize Test Users"
+                            wire:click="initializeTestUsers(testUserCount)"
+                            class="btn-primary btn-sm flex-1 sm:flex-none"
+                            icon="o-user-plus"
+                            spinner="initializeTestUsers"
+                            :disabled="$this->testUserPoolExists()"
+                        />
+                        <x-button
+                            label="Clear Test Users"
+                            wire:click="confirmClearTestUsers"
+                            class="btn-error btn-sm flex-1 sm:flex-none"
+                            icon="o-trash"
+                            :disabled="!$this->testUserPoolExists()"
+                        />
+                    </div>
+                </div>
+            </div>
+        </x-card>
     </div>
 
     {{-- Full Reset Confirmation Modal --}}
@@ -390,6 +427,40 @@
                 class="btn-warning"
                 icon="o-arrow-uturn-left"
                 spinner="restoreSnapshot"
+            />
+        </x-slot:actions>
+    </x-modal>
+
+    {{-- Clear Test Users Confirmation Modal --}}
+    <x-modal wire:model="showClearTestUsersModal" title="Confirm Clear Test Users" persistent class="backdrop-blur">
+        <div class="space-y-4">
+            <x-alert
+                title="This action will permanently delete data!"
+                icon="o-exclamation-triangle"
+                class="alert-warning"
+            />
+            <p>You are about to delete:</p>
+            <ul class="list-disc list-inside text-base-content/70 space-y-1">
+                <li><strong>{{ $this->getTestUserPoolCount() }} test users</strong></li>
+                <li>All contacts logged by these users</li>
+                <li>All operating sessions created by these users</li>
+                <li>All other data associated with these users</li>
+            </ul>
+            <p class="font-semibold">This cannot be undone. Are you sure?</p>
+        </div>
+
+        <x-slot:actions>
+            <x-button
+                label="Cancel"
+                @click="$wire.showClearTestUsersModal = false"
+                class="btn-ghost"
+            />
+            <x-button
+                label="Yes, Delete All Test Users"
+                wire:click="clearTestUsers"
+                class="btn-error"
+                icon="o-trash"
+                spinner="clearTestUsers"
             />
         </x-slot:actions>
     </x-modal>

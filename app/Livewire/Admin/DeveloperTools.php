@@ -48,6 +48,11 @@ class DeveloperTools extends Component
     // Tab tracking
     public string $databaseTab = 'full-reset';
 
+    // Test User Pool Properties
+    public int $testUserCount = 10;
+
+    public bool $showClearTestUsersModal = false;
+
     /**
      * Table categories for selective reset.
      *
@@ -565,6 +570,14 @@ class DeveloperTools extends Component
     }
 
     /**
+     * Show confirmation modal for clearing test users.
+     */
+    public function confirmClearTestUsers(): void
+    {
+        $this->showClearTestUsersModal = true;
+    }
+
+    /**
      * Clear all test users from the pool.
      */
     public function clearTestUsers(): void
@@ -586,6 +599,8 @@ class DeveloperTools extends Component
                 userId: auth()->id(),
                 newValues: ['count' => $count]
             );
+
+            $this->showClearTestUsersModal = false;
 
             $this->success(
                 'Test user pool cleared',
