@@ -8,7 +8,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen font-sans antialiased bg-base-200" x-data x-cloak>
+<body class="min-h-screen font-sans antialiased bg-base-200">
 
     {{-- NAVBAR mobile only --}}
     <x-nav sticky class="lg:hidden z-50">
@@ -19,7 +19,7 @@
             @auth
                 <livewire:components.notification-bell />
             @endauth
-            <x-theme-toggle class="me-2" />
+            <x-custom-theme-toggle class="me-2" />
             <x-user-menu class="me-2" />
             <label for="main-drawer" class="lg:hidden me-3">
                 <x-icon name="o-bars-3" class="cursor-pointer" />
@@ -45,7 +45,7 @@
                 @auth
                     <livewire:components.notification-bell />
                 @endauth
-                <x-theme-toggle />
+                <x-custom-theme-toggle />
                 <x-user-menu />
             </div>
         </div>
