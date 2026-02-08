@@ -63,6 +63,15 @@ Props from controller:
                     />
                 @endif
 
+                {{-- Edit Layout Button --}}
+                <x-button
+                    label="Edit Layout"
+                    icon="o-pencil-square"
+                    class="btn-outline btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
+                    wire:click="$dispatch('toggle-edit-mode')"
+                    @click="$dispatch('toggle-edit-mode')"
+                />
+
                 {{-- Dashboard Management Button --}}
                 <x-button
                     label="Manage"

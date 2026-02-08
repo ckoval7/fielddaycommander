@@ -1,15 +1,15 @@
 <div>
-    {{-- Edit Mode Toggle Button --}}
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
-        <div class="min-w-0">
-            <h2 class="text-lg sm:text-xl font-bold truncate">{{ $dashboard->title }}</h2>
-            @if($dashboard->description)
-                <p class="text-sm text-base-content/70">{{ $dashboard->description }}</p>
-            @endif
-        </div>
+    @if($editMode)
+        {{-- Edit Mode Toggle Buttons --}}
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
+            <div class="min-w-0">
+                <h2 class="text-lg sm:text-xl font-bold truncate">{{ $dashboard->title }}</h2>
+                @if($dashboard->description)
+                    <p class="text-sm text-base-content/70">{{ $dashboard->description }}</p>
+                @endif
+            </div>
 
-        <div class="flex flex-wrap gap-2 flex-shrink-0">
-            @if($editMode)
+            <div class="flex flex-wrap gap-2 flex-shrink-0">
                 <x-button
                     label="Save"
                     icon="o-check"
@@ -24,28 +24,19 @@
                     wire:click="cancelEdit"
                     spinner="cancelEdit"
                 />
-            @else
-                <x-button
-                    label="Edit Layout"
-                    icon="o-pencil-square"
-                    class="btn-outline btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
-                    wire:click="toggleEditMode"
-                />
-            @endif
+            </div>
         </div>
-    </div>
 
-    {{-- Edit Mode Banner --}}
-    @if($editMode)
+        {{-- Edit Mode Banner --}}
         <x-alert icon="o-arrows-up-down" class="alert-info mb-4" dismissible>
             <span class="font-medium">Edit Mode</span> - Drag widgets to reorder, or use the controls to show, hide, configure, or remove widgets.
         </x-alert>
-    @endif
 
     {{-- Widget Grid with Sortable Integration --}}
     <div
         x-data="dashboardSortable($wire, @js($this->widgetIds))"
-        x-effect="setEnabled(@js($editMode))"
+        @widgets-reordered.window="resetOrder($event.detail.widgetIds)"
+        x-effect="setEnabled(@js($editMode));"
         wire:key="editor-sortable-{{ $dashboard->id }}"
     >
         {{-- Screen reader live region --}}
@@ -195,6 +186,7 @@
         </x-slot:actions>
     </x-modal>
 
-    {{-- Widget Configurator (nested component) --}}
-    <livewire:dashboard.widget-configurator wire:key="editor-configurator" />
+        {{-- Widget Configurator (nested component) --}}
+        <livewire:dashboard.widget-configurator wire:key="editor-configurator" />
+    @endif
 </div>

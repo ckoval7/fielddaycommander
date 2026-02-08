@@ -1,5 +1,10 @@
 import './bootstrap';
 import dashboardSortable from './components/dashboard-sortable';
+import { Chart, registerables } from 'chart.js/auto';
+
+// Make Chart.js globally available for dynamic imports
+Chart.register(...registerables);
+window.Chart = Chart;
 
 // Set initial theme on page load (this is redundant with inline script but kept for fallback)
 let theme = localStorage.getItem('theme');

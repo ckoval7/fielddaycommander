@@ -11,6 +11,11 @@
             this.$nextTick(() => {
                 this.renderChart();
             });
+
+            // Watch for Livewire updates to chartData
+            this.$watch('chartData', (newData) => {
+                this.updateChart(newData);
+            });
         },
 
         destroy() {
@@ -20,7 +25,7 @@
             }
         },
 
-        async renderChart() {
+        renderChart() {
             const canvas = this.$refs.canvas;
             if (!canvas) {
                 return;
@@ -31,12 +36,16 @@
                 this.chartInstance = null;
             }
 
-            const { Chart, registerables } = await import('chart.js/auto');
+            // Use globally available Chart.js
+            if (!window.Chart) {
+                console.error('Chart.js is not available. Make sure it is loaded in app.js');
+                return;
+            }
 
             const ctx = canvas.getContext('2d');
             const config = this.buildConfig();
 
-            this.chartInstance = new Chart(ctx, config);
+            this.chartInstance = new window.Chart(ctx, config);
         },
 
         buildConfig() {
@@ -132,7 +141,8 @@
         },
 
         updateChart(newData) {
-            this.chartData = newData;
+            // Note: chartData is already updated by Livewire/Alpine reactivity
+            // We don't need to manually set this.chartData = newData here
 
             if (!this.chartInstance) {
                 this.renderChart();
@@ -142,16 +152,17 @@
             const config = this.buildConfig();
 
             if (this.chartInstance.config.type !== config.type) {
+                // Chart type changed, need to re-render
                 this.renderChart();
                 return;
             }
 
+            // Update chart data and options
             this.chartInstance.data = config.data;
             this.chartInstance.options = config.options;
             this.chartInstance.update('none');
         },
     }"
-    x-effect="updateChart(chartData)"
     class="h-full"
 >
     <x-card

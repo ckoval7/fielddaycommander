@@ -61,6 +61,7 @@ class DashboardEditor extends Component
     /**
      * Enter or exit edit mode.
      */
+    #[On('toggle-edit-mode')]
     public function toggleEditMode(): void
     {
         if ($this->editMode) {
@@ -169,6 +170,9 @@ class DashboardEditor extends Component
         }
 
         $this->widgets = $reordered->values();
+
+        // Dispatch event to notify Alpine component of the new order
+        $this->dispatch('widgets-reordered', widgetIds: $this->widgetIds);
     }
 
     /**
