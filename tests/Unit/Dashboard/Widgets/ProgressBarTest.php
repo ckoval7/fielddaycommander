@@ -130,7 +130,7 @@ test('progress bar advances to next milestone after reaching 50', function () {
         ->toBeArray()
         ->and($data['current'])->toBe(75)
         ->and($data['target'])->toBe(100) // Next milestone is 100
-        ->and($data['percentage'])->toBe(50.0); // 25/50 = 50%
+        ->and($data['percentage'])->toBe(75.0); // 75/100 = 75%
 });
 
 test('progress bar shows 100% when exactly at milestone', function () {
@@ -175,7 +175,7 @@ test('progress bar shows 100% when exactly at milestone', function () {
         ->toBeArray()
         ->and($data['current'])->toBe(50)
         ->and($data['target'])->toBe(100) // Next milestone is 100
-        ->and($data['percentage'])->toBe(0.0); // At milestone, progress resets to 0%
+        ->and($data['percentage'])->toBe(50.0); // 50/100 = 50%
 });
 
 test('progress bar excludes duplicate contacts', function () {
@@ -272,7 +272,7 @@ test('progress bar handles large contact counts', function () {
         ->toBeArray()
         ->and($data['current'])->toBe(575)
         ->and($data['target'])->toBe(600) // Next milestone is 600
-        ->and($data['percentage'])->toBe(50.0); // 25/50 = 50%
+        ->and($data['percentage'])->toBe(95.8); // 575/600 = 95.8%
 });
 
 test('progress bar caches results for 3 seconds', function () {

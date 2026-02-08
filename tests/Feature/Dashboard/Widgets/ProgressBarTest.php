@@ -186,10 +186,12 @@ describe('percentage calculation logic', function () {
         expect($percentage)->toBe(0.0);
     });
 
-    it('calculates 100% when at milestone', function () {
+    it('calculates 100% when current equals target', function () {
         $widget = Livewire::test(ProgressBar::class)->instance();
 
         expect($widget->calculatePercentage(50, 50))->toBe(100.0);
+        expect($widget->calculatePercentage(100, 100))->toBe(100.0);
+        expect($widget->calculatePercentage(150, 150))->toBe(100.0);
     });
 
     it('calculates percentage before first milestone', function () {
@@ -200,35 +202,40 @@ describe('percentage calculation logic', function () {
         expect($widget->calculatePercentage(12, 50))->toBe(24.0);
     });
 
-    it('calculates percentage between milestones', function () {
+    it('calculates percentage as current/target ratio', function () {
         $widget = Livewire::test(ProgressBar::class)->instance();
 
-        // 50 to 100 range
-        expect($widget->calculatePercentage(50, 100))->toBe(0.0); // Just hit milestone
-        expect($widget->calculatePercentage(75, 100))->toBe(50.0); // Halfway
-        expect($widget->calculatePercentage(100, 100))->toBe(100.0); // At milestone
+        // 53 of 100 = 53%
+        expect($widget->calculatePercentage(53, 100))->toBe(53.0);
 
-        // 100 to 150 range
-        expect($widget->calculatePercentage(100, 150))->toBe(0.0);
-        expect($widget->calculatePercentage(125, 150))->toBe(50.0);
+        // 75 of 100 = 75%
+        expect($widget->calculatePercentage(75, 100))->toBe(75.0);
+        expect($widget->calculatePercentage(100, 100))->toBe(100.0);
+
+        // 125 of 150 = 83.3%
+        expect($widget->calculatePercentage(125, 150))->toBe(83.3);
         expect($widget->calculatePercentage(150, 150))->toBe(100.0);
 
-        // 150 to 200 range
-        expect($widget->calculatePercentage(187, 200))->toBe(74.0); // (187-150)/(200-150) * 100
-        expect($widget->calculatePercentage(175, 200))->toBe(50.0);
+        // 187 of 200 = 93.5%
+        expect($widget->calculatePercentage(187, 200))->toBe(93.5);
+        expect($widget->calculatePercentage(175, 200))->toBe(87.5);
     });
 
     it('rounds percentage to one decimal place', function () {
         $widget = Livewire::test(ProgressBar::class)->instance();
 
-        // 13/50 = 26%, but 13 of (0-50) = 26.0%
+        // 13/50 = 26%
         expect($widget->calculatePercentage(13, 50))->toBe(26.0);
 
-        // 123 in range 100-150: (123-100)/50 = 46%
-        expect($widget->calculatePercentage(123, 150))->toBe(46.0);
+        // 123/150 = 82%
+        expect($widget->calculatePercentage(123, 150))->toBe(82.0);
 
-        // 187 in range 150-200: (187-150)/50 = 74%
-        expect($widget->calculatePercentage(187, 200))->toBe(74.0);
+        // 187/200 = 93.5%
+        expect($widget->calculatePercentage(187, 200))->toBe(93.5);
+
+        // Test rounding with 1 decimal
+        expect($widget->calculatePercentage(33, 100))->toBe(33.0);
+        expect($widget->calculatePercentage(1, 3))->toBe(33.3); // 33.333... rounds to 33.3
     });
 
     it('handles edge case of zero target', function () {
@@ -341,22 +348,22 @@ describe('real-world scenarios', function () {
             'percentage' => 0.0,
         ]);
 
-        // Add 25 QSOs (halfway)
+        // Add 25 QSOs (halfway to 50)
         Cache::flush();
         Contact::factory()->count(25)->for($config, 'eventConfiguration')->create();
         expect($widget->getData())->toMatchArray([
             'current' => 25,
             'target' => 50,
-            'percentage' => 50.0,
+            'percentage' => 50.0, // 25/50 = 50%
         ]);
 
-        // Reach first milestone
+        // Reach first milestone - target advances to 100
         Cache::flush();
         Contact::factory()->count(25)->for($config, 'eventConfiguration')->create();
         expect($widget->getData())->toMatchArray([
             'current' => 50,
             'target' => 100,
-            'percentage' => 0.0, // Reset for new milestone
+            'percentage' => 50.0, // 50/100 = 50%
         ]);
     });
 
@@ -377,7 +384,7 @@ describe('real-world scenarios', function () {
 
         expect($data['current'])->toBe(187);
         expect($data['target'])->toBe(200);
-        expect($data['percentage'])->toBe(74.0); // (187-150)/50 * 100
+        expect($data['percentage'])->toBe(93.5); // 187/200 * 100 = 93.5%
         expect($data['label'])->toBe('187/200 QSOs to next milestone');
     });
 });

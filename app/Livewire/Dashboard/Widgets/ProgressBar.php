@@ -86,7 +86,7 @@ class ProgressBar extends Component
      *
      * Examples:
      * - 37/50 → 74%
-     * - 50/100 → 0% (just hit milestone)
+     * - 53/100 → 53%
      * - 187/200 → 93.5%
      */
     public function calculatePercentage(int $current, int $target): float
@@ -95,15 +95,7 @@ class ProgressBar extends Component
             return 0;
         }
 
-        $previousMilestone = $target - 50;
-        $progress = $current - $previousMilestone;
-        $milestoneRange = $target - $previousMilestone;
-
-        if ($milestoneRange === 0) {
-            return 0;
-        }
-
-        return round(($progress / $milestoneRange) * 100, 1);
+        return round(($current / $target) * 100, 1);
     }
 
     public function render()
