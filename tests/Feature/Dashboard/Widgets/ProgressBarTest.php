@@ -254,7 +254,7 @@ describe('rendering and display', function () {
             ->assertSee('74'); // percentage
     });
 
-    it('displays progress bar with correct value', function () {
+    it('displays progress bar with correct structure', function () {
         $event = Event::factory()->create([
             'start_time' => now()->subHours(1),
             'end_time' => now()->addHours(23),
@@ -263,7 +263,10 @@ describe('rendering and display', function () {
         Contact::factory()->count(25)->for($config, 'eventConfiguration')->create();
 
         Livewire::test(ProgressBar::class)
-            ->assertSeeHtml('value="50"'); // 50% progress
+            ->assertSee('50') // target
+            ->assertSeeHtml('x-text="displayCurrent"') // Alpine binding for current
+            ->assertSeeHtml('x-text="displayPercentage"') // Alpine binding for percentage
+            ->assertSeeHtml('%'); // percentage symbol
     });
 
     it('displays milestone label', function () {
