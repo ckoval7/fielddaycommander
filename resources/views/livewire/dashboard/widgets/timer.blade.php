@@ -53,70 +53,70 @@ Props from component:
     </x-card>
 </div>
 
+@script
 <script>
-document.addEventListener('alpine:init', () => {
-    Alpine.data('countdown', (endTimeIso, nowIso) => ({
-        endTime: null,
-        now: null,
-        intervalId: null,
-        formattedTime: '--:--:--',
-        isWarning: false,
-        isCritical: false,
+Alpine.data('countdown', (endTimeIso, nowIso) => ({
+    endTime: null,
+    now: null,
+    intervalId: null,
+    formattedTime: '--:--:--',
+    isWarning: false,
+    isCritical: false,
 
-        init() {
-            this.endTime = new Date(endTimeIso);
-            this.now = new Date(nowIso);
+    init() {
+        this.endTime = new Date(endTimeIso);
+        this.now = new Date(nowIso);
 
-            // Calculate initial countdown
+        // Calculate initial countdown
+        this.updateCountdown();
+
+        // Update every second
+        this.intervalId = setInterval(() => {
+            this.now = new Date(this.now.getTime() + 1000);
             this.updateCountdown();
+        }, 1000);
+    },
 
-            // Update every second
-            this.intervalId = setInterval(() => {
-                this.now = new Date(this.now.getTime() + 1000);
-                this.updateCountdown();
-            }, 1000);
-        },
+    destroy() {
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+        }
+    },
 
-        destroy() {
+    updateCountdown() {
+        const diff = this.endTime - this.now;
+
+        if (diff <= 0) {
+            this.formattedTime = 'Event Ended';
             if (this.intervalId) {
                 clearInterval(this.intervalId);
             }
-        },
-
-        updateCountdown() {
-            const diff = this.endTime - this.now;
-
-            if (diff <= 0) {
-                this.formattedTime = 'Event Ended';
-                if (this.intervalId) {
-                    clearInterval(this.intervalId);
-                }
-                return;
-            }
-
-            // Calculate time components
-            const totalSeconds = Math.floor(diff / 1000);
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-
-            // Format time string
-            if (days > 0) {
-                // DD:HH:MM:SS format
-                this.formattedTime = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            } else {
-                // HH:MM:SS format
-                this.formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            }
-
-            // Set warning states
-            const oneHour = 3600000; // 1 hour in milliseconds
-            const thirtyMinutes = 1800000; // 30 minutes in milliseconds
-
-            this.isCritical = diff < thirtyMinutes;
-            this.isWarning = !this.isCritical && diff < oneHour;
+            return;
         }
-    }));
-});
+
+        // Calculate time components
+        const totalSeconds = Math.floor(diff / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        // Format time string
+        if (days > 0) {
+            // DD:HH:MM:SS format
+            this.formattedTime = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            // HH:MM:SS format
+            this.formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Set warning states
+        const oneHour = 3600000; // 1 hour in milliseconds
+        const thirtyMinutes = 1800000; // 30 minutes in milliseconds
+
+        this.isCritical = diff < thirtyMinutes;
+        this.isWarning = !this.isCritical && diff < oneHour;
+    }
+}));
 </script>
+@endscript
