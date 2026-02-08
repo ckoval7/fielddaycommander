@@ -251,21 +251,21 @@
                     />
                 </div>
 
-                {{-- Trigger Event Activation --}}
+                {{-- Fast Forward to Next Event --}}
                 <div class="bg-base-200 rounded-lg p-4 space-y-3">
                     <div class="flex items-center gap-2">
-                        <x-icon name="o-calendar-days" class="w-5 h-5 text-success" />
-                        <h4 class="font-semibold">Event Activation</h4>
+                        <x-icon name="o-forward" class="w-5 h-5 text-success" />
+                        <h4 class="font-semibold">Fast Forward Event</h4>
                     </div>
                     <p class="text-sm text-base-content/60">
-                        Run the automatic event activation command based on current date.
+                        Jump to the start time of the next upcoming event.
                     </p>
                     <x-button
-                        label="Activate by Date"
-                        wire:click="triggerEventActivation"
+                        label="Fast Forward"
+                        wire:click="fastForwardToNextEvent"
                         class="btn-success btn-sm w-full"
-                        icon="o-play"
-                        spinner="triggerEventActivation"
+                        icon="o-forward"
+                        spinner="fastForwardToNextEvent"
                     />
                 </div>
 

@@ -716,23 +716,52 @@ class DeveloperTools extends Component
     }
 
     /**
-     * Trigger the event activation command.
+     * Fast-forward to the next upcoming event.
      */
-    public function triggerEventActivation(): void
+    public function fastForwardToNextEvent(): void
     {
         try {
-            Artisan::call('events:activate-by-date');
-            $output = Artisan::output();
+            $now = appNow();
+
+            // Find the next upcoming event (start_time > now)
+            $nextEvent = \App\Models\Event::query()
+                ->where('start_time', '>', $now)
+                ->orderBy('start_time', 'asc')
+                ->first();
+
+            if ($nextEvent === null) {
+                $this->error('No upcoming events', 'There are no future events to fast-forward to.');
+
+                return;
+            }
+
+            $clockService = app(DeveloperClockService::class);
+            $eventStartTime = Carbon::parse($nextEvent->start_time);
+
+            // Set fake time to the event's start time (frozen by default)
+            $clockService->setFakeTime($eventStartTime, frozen: true);
+
+            // Update the component properties to reflect the change
+            $this->fakeDate = $eventStartTime->format('Y-m-d');
+            $this->fakeTime = $eventStartTime->format('H:i');
+            $this->timeFrozen = true;
 
             AuditLog::log(
-                action: 'developer.quick_action.event_activation',
+                action: 'developer.quick_action.fast_forward_event',
                 userId: auth()->id(),
-                newValues: ['output' => $output]
+                newValues: [
+                    'event_id' => $nextEvent->id,
+                    'event_name' => $nextEvent->name,
+                    'start_time' => $eventStartTime->toIso8601String(),
+                ]
             );
 
-            $this->success('Event activation triggered', trim($output) ?: 'Command executed');
+            $this->success(
+                'Fast-forwarded to next event',
+                "Time set to {$nextEvent->name} start: {$eventStartTime->format('M j, Y g:i A')}"
+            );
         } catch (\Exception $e) {
-            $this->error('Event activation failed', $e->getMessage());
+            $this->error('Fast-forward failed', $e->getMessage());
         }
     }
 
