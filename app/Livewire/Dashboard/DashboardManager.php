@@ -6,6 +6,7 @@ use App\Models\Dashboard;
 use App\Services\DashboardService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class DashboardManager extends Component
@@ -42,9 +43,13 @@ class DashboardManager extends Component
             ->get();
     }
 
-    public function openModal(): void
+    #[On('open-modal')]
+    public function openModal(?string $modalId = null): void
     {
-        $this->showModal = true;
+        // Only open this modal if the modalId matches or is null
+        if ($modalId === null || $modalId === 'dashboard-manager') {
+            $this->showModal = true;
+        }
     }
 
     public function closeModal(): void

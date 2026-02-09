@@ -35,6 +35,20 @@ test('can open and close modal', function () {
         ->assertSet('showModal', false);
 });
 
+test('opens modal when open-modal event is dispatched with dashboard-manager id', function () {
+    Livewire::test(DashboardManager::class)
+        ->assertSet('showModal', false)
+        ->dispatch('open-modal', modalId: 'dashboard-manager')
+        ->assertSet('showModal', true);
+});
+
+test('does not open modal when open-modal event is dispatched with different id', function () {
+    Livewire::test(DashboardManager::class)
+        ->assertSet('showModal', false)
+        ->dispatch('open-modal', modalId: 'other-modal')
+        ->assertSet('showModal', false);
+});
+
 test('can open and cancel create form', function () {
     Livewire::test(DashboardManager::class)
         ->assertSet('showCreateForm', false)

@@ -77,7 +77,7 @@ Props from controller:
                     label="Manage"
                     icon="o-cog-6-tooth"
                     class="btn-ghost btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
-                    @click="$dispatch('open-modal', 'dashboard-manager')"
+                    @click="$dispatch('open-modal', { modalId: 'dashboard-manager' })"
                 />
 
                 {{-- Fullscreen Toggle --}}
