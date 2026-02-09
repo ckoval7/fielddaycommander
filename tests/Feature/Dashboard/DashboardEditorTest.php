@@ -49,14 +49,18 @@ test('component renders successfully', function () {
         ->assertViewIs('livewire.dashboard.dashboard-editor');
 });
 
-test('component displays dashboard title', function () {
+test('component displays dashboard title in edit mode', function () {
     Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
-        ->assertSee('Test Dashboard');
+        ->call('enterEditMode')
+        ->assertSee('Dashboard Name')
+        ->assertSet('title', 'Test Dashboard');
 });
 
-test('component displays dashboard description', function () {
+test('component displays dashboard description in edit mode', function () {
     Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
-        ->assertSee('Test description');
+        ->call('enterEditMode')
+        ->assertSee('Description (optional)')
+        ->assertSet('description', 'Test description');
 });
 
 test('component loads widgets from dashboard config', function () {
@@ -70,6 +74,7 @@ test('component handles empty config', function () {
         ->create(['config' => []]);
 
     Livewire::test(DashboardEditor::class, ['dashboard' => $dashboard])
+        ->call('enterEditMode')
         ->assertCount('widgets', 0)
         ->assertSee('No widgets configured');
 });
@@ -99,8 +104,7 @@ test('component handles config with widgets key', function () {
 
 test('edit mode starts disabled', function () {
     Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
-        ->assertSet('editMode', false)
-        ->assertSee('Edit Layout');
+        ->assertSet('editMode', false);
 });
 
 test('can toggle edit mode on', function () {

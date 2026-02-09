@@ -1,12 +1,46 @@
 <div>
+    {{-- Dashboard Header --}}
     @if($editMode)
-        {{-- Edit Mode Toggle Buttons --}}
-        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
-            <div class="min-w-0">
-                <h2 class="text-lg sm:text-xl font-bold truncate">{{ $dashboard->title }}</h2>
-                @if($dashboard->description)
-                    <p class="text-sm text-base-content/70">{{ $dashboard->description }}</p>
-                @endif
+        {{-- Edit Mode: Editable Title/Description --}}
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-4">
+            <div class="min-w-0 flex-1">
+                {{-- Editable Dashboard Title --}}
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-xs font-medium">Dashboard Name</span>
+                    </label>
+                    <input
+                        type="text"
+                        wire:model="title"
+                        placeholder="Dashboard name"
+                        class="input input-bordered w-full"
+                        maxlength="255"
+                    />
+                    @error('title')
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ $message }}</span>
+                        </label>
+                    @enderror
+                </div>
+
+                {{-- Editable Dashboard Description --}}
+                <div class="form-control mt-2">
+                    <label class="label">
+                        <span class="label-text text-xs font-medium">Description (optional)</span>
+                    </label>
+                    <textarea
+                        wire:model="description"
+                        placeholder="Brief description of this dashboard"
+                        class="textarea textarea-bordered w-full"
+                        rows="2"
+                        maxlength="1000"
+                    ></textarea>
+                    @error('description')
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ $message }}</span>
+                        </label>
+                    @enderror
+                </div>
             </div>
 
             <div class="flex flex-wrap gap-2 flex-shrink-0">
@@ -32,11 +66,12 @@
             <span class="font-medium">Edit Mode</span> - Drag widgets to reorder, or use the controls to show, hide, configure, or remove widgets.
         </x-alert>
 
-    {{-- Widget Grid with Sortable Integration --}}
+    {{-- Widget Grid with Sortable Integration (Edit Mode Only) --}}
     <div
         x-data="dashboardSortable($wire, @js($this->widgetIds))"
         @widgets-reordered.window="resetOrder($event.detail.widgetIds)"
-        x-effect="setEnabled(@js($editMode));"
+        @edit-mode-changed.window="setEnabled($event.detail.enabled)"
+        x-init="setEnabled(@js($editMode))"
         wire:key="editor-sortable-{{ $dashboard->id }}"
     >
         {{-- Screen reader live region --}}
@@ -124,36 +159,27 @@
             @endforeach
         </div>
 
-        {{-- Add Widget Button (Edit Mode) --}}
-        @if($editMode)
-            <div class="mt-4 sm:mt-6">
-                <button
-                    wire:click="openWidgetPicker"
-                    class="w-full border-2 border-dashed border-base-300 rounded-lg p-6 text-center text-base-content/50 hover:border-primary hover:text-primary transition-colors"
-                >
-                    <x-icon name="o-plus" class="w-8 h-8 mx-auto mb-2" />
-                    <p class="text-sm font-medium">Add Widget</p>
-                    <p class="text-xs">{{ $widgets->count() }} / {{ config('dashboard.max_widgets_per_dashboard', 20) }} widgets</p>
-                </button>
+        {{-- Add Widget Button --}}
+        <div class="mt-4 sm:mt-6">
+            <button
+                wire:click="openWidgetPicker"
+                class="w-full border-2 border-dashed border-base-300 rounded-lg p-6 text-center text-base-content/50 hover:border-primary hover:text-primary transition-colors"
+            >
+                <x-icon name="o-plus" class="w-8 h-8 mx-auto mb-2" />
+                <p class="text-sm font-medium">Add Widget</p>
+                <p class="text-xs">{{ $widgets->count() }} / {{ config('dashboard.max_widgets_per_dashboard', 20) }} widgets</p>
+            </button>
+        </div>
+
+        {{-- Empty State (Edit Mode) --}}
+        @if($widgets->isEmpty())
+            <div class="text-center py-12">
+                <x-icon name="o-squares-2x2" class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+                <p class="text-lg font-medium text-base-content mb-2">No widgets configured</p>
+                <p class="text-sm text-base-content/60 mb-6">Click the button above to add your first widget</p>
             </div>
         @endif
     </div>
-
-    {{-- Empty State --}}
-    @if($widgets->isEmpty())
-        <div class="text-center py-12">
-            <x-icon name="o-squares-2x2" class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-            <p class="text-lg font-medium text-base-content mb-2">No widgets configured</p>
-            <p class="text-sm text-base-content/60 mb-6">Enter edit mode to add widgets to this dashboard</p>
-            @unless($editMode)
-                <x-button
-                    label="Edit Dashboard"
-                    icon="o-pencil-square"
-                    class="btn-primary"
-                    wire:click="toggleEditMode"
-                />
-            @endunless
-        </div>
     @endif
 
     {{-- Delete Widget Confirmation Modal --}}
@@ -186,7 +212,6 @@
         </x-slot:actions>
     </x-modal>
 
-        {{-- Widget Configurator (nested component) --}}
-        <livewire:dashboard.widget-configurator wire:key="editor-configurator" />
-    @endif
+    {{-- Widget Configurator (nested component) --}}
+    <livewire:dashboard.widget-configurator wire:key="editor-configurator" />
 </div>

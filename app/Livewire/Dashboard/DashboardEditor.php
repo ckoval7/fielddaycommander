@@ -35,9 +35,23 @@ class DashboardEditor extends Component
     /** @var Collection Snapshot of widgets before entering edit mode */
     public Collection $originalWidgets;
 
+    /** @var string Dashboard title (editable in edit mode) */
+    public string $title;
+
+    /** @var string|null Dashboard description (editable in edit mode) */
+    public ?string $description = null;
+
+    /** @var string|null Original title before entering edit mode (for cancel) */
+    public ?string $originalTitle = null;
+
+    /** @var string|null Original description before entering edit mode (for cancel) */
+    public ?string $originalDescription = null;
+
     public function mount(Dashboard $dashboard): void
     {
         $this->dashboard = $dashboard;
+        $this->title = $dashboard->title;
+        $this->description = $dashboard->description;
         $this->loadWidgets();
         $this->originalWidgets = collect();
     }
@@ -72,12 +86,15 @@ class DashboardEditor extends Component
     }
 
     /**
-     * Enter edit mode, storing a snapshot of current widgets.
+     * Enter edit mode, storing a snapshot of current widgets and metadata.
      */
     public function enterEditMode(): void
     {
         $this->originalWidgets = $this->widgets->map(fn ($w) => $w)->values();
+        $this->originalTitle = $this->title;
+        $this->originalDescription = $this->description;
         $this->editMode = true;
+        $this->dispatch('edit-mode-changed', enabled: true);
     }
 
     /**
@@ -89,23 +106,45 @@ class DashboardEditor extends Component
         $this->showDeleteConfirmation = false;
         $this->widgetToDelete = null;
         $this->configuringWidgetId = null;
+        // Clear original snapshots
+        $this->originalTitle = null;
+        $this->originalDescription = null;
+        $this->dispatch('edit-mode-changed', enabled: false);
     }
 
     /**
-     * Save the current widget layout to the database.
+     * Save the current widget layout and dashboard metadata to the database.
      */
     public function saveLayout(DashboardService $service): void
     {
+        // Validate title
+        $this->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+
         $config = $this->widgets->values()->toArray();
 
+        // Convert empty string description to null
+        $description = empty($this->description) ? null : $this->description;
+
         try {
-            $service->updateDashboard($this->dashboard, ['config' => $config]);
+            $service->updateDashboard($this->dashboard, [
+                'title' => $this->title,
+                'description' => $description,
+                'config' => $config,
+            ]);
             $this->dashboard->refresh();
+            $this->originalTitle = $this->title;
+            $this->originalDescription = $this->description;
             $this->exitEditMode();
+
+            // Notify parent page to refresh dashboard data
+            $this->dispatch('dashboard-saved');
 
             $this->dispatch('toast', [
                 'title' => 'Success',
-                'description' => 'Dashboard layout saved',
+                'description' => 'Dashboard saved',
                 'icon' => 'o-check-circle',
                 'css' => 'alert-success',
             ]);
@@ -131,10 +170,20 @@ class DashboardEditor extends Component
      */
     public function cancelEdit(): void
     {
+        if (! $this->editMode) {
+            return;
+        }
+
         if ($this->originalWidgets->isNotEmpty()) {
             $this->widgets = $this->originalWidgets->map(fn ($w) => $w)->values();
         } else {
             $this->loadWidgets();
+        }
+
+        // Restore original title and description if they were saved
+        if ($this->originalTitle !== null) {
+            $this->title = $this->originalTitle;
+            $this->description = $this->originalDescription;
         }
 
         $this->exitEditMode();
@@ -173,6 +222,9 @@ class DashboardEditor extends Component
 
         // Dispatch event to notify Alpine component of the new order
         $this->dispatch('widgets-reordered', widgetIds: $this->widgetIds);
+
+        // Re-sync Alpine enabled state after Livewire re-render
+        $this->dispatch('edit-mode-changed', enabled: $this->editMode);
     }
 
     /**
@@ -191,6 +243,9 @@ class DashboardEditor extends Component
 
             return $widget;
         });
+
+        // Re-sync Alpine enabled state after Livewire re-render
+        $this->dispatch('edit-mode-changed', enabled: $this->editMode);
     }
 
     /**
@@ -230,6 +285,12 @@ class DashboardEditor extends Component
             });
 
         $this->cancelRemoveWidget();
+
+        // Notify Alpine component of the updated widget order
+        $this->dispatch('widgets-reordered', widgetIds: $this->widgetIds);
+
+        // Re-sync Alpine enabled state after Livewire re-render
+        $this->dispatch('edit-mode-changed', enabled: $this->editMode);
 
         $this->dispatch('toast', [
             'title' => 'Widget Removed',
@@ -273,6 +334,9 @@ class DashboardEditor extends Component
         ];
 
         $this->widgets->push($newWidget);
+
+        // Notify Alpine component of the new widget order
+        $this->dispatch('widgets-reordered', widgetIds: $this->widgetIds);
 
         $this->dispatch('toast', [
             'title' => 'Widget Added',
@@ -321,6 +385,8 @@ class DashboardEditor extends Component
     {
         if ($mode === 'add') {
             $this->addWidget($type, $config);
+            // Re-sync Alpine enabled state after Livewire re-render
+            $this->dispatch('edit-mode-changed', enabled: $this->editMode);
         } elseif ($mode === 'edit' && $this->configuringWidgetId) {
             $this->widgets = $this->widgets->map(function ($widget) use ($type, $config) {
                 if ($widget['id'] === $this->configuringWidgetId) {
@@ -339,6 +405,9 @@ class DashboardEditor extends Component
                 'icon' => 'o-check-circle',
                 'css' => 'alert-success',
             ]);
+
+            // Re-sync Alpine enabled state after Livewire re-render
+            $this->dispatch('edit-mode-changed', enabled: $this->editMode);
         }
     }
 

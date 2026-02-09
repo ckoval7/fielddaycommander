@@ -30,11 +30,21 @@ Props from controller:
                     this.fullscreen = !this.fullscreen;
                 }
             });
+
+            // Listen for edit mode changes from DashboardEditor component
+            window.addEventListener('edit-mode-changed', (e) => {
+                this.editMode = e.detail.enabled;
+            });
+
+            // Reload page when dashboard is saved to get updated title/description
+            window.addEventListener('dashboard-saved', () => {
+                window.location.reload();
+            });
         }
     }" :class="{ 'fullscreen-mode': fullscreen }">
 
-        {{-- Dashboard Header --}}
-        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4 sm:mb-6" x-show="!fullscreen" x-transition>
+        {{-- Dashboard Header (hidden in edit mode) --}}
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4 sm:mb-6" x-show="!fullscreen && !editMode" x-transition>
             <div class="min-w-0">
                 <h1 class="text-2xl sm:text-3xl font-bold text-base-content truncate">
                     {{ $dashboard->title }}
