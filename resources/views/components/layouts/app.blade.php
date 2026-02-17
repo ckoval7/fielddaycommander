@@ -82,6 +82,13 @@
     <x-main full-width with-nav>
         {{-- SIDEBAR --}}
         <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
+            @auth
+                <div class="px-4 pt-2 pb-3">
+                    <livewire:components.event-context-selector />
+                </div>
+                <x-menu-separator />
+            @endauth
+
             {{-- MENU --}}
             <x-menu activate-by-route class="mt-4">
                 @auth
@@ -162,6 +169,9 @@
 
         {{-- The `$slot` goes here --}}
         <x-slot:content>
+            @auth
+                <livewire:components.event-context-banner />
+            @endauth
             {{ $slot }}
         </x-slot:content>
     </x-main>
