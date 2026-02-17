@@ -56,8 +56,8 @@ class StationForm extends Component
             $this->authorize('update', $station);
         } else {
             $this->authorize('create', Station::class);
-            // Default to active event
-            $activeEvent = Event::active()->with('eventConfiguration')->first();
+            // Default to context event (session-overridden or active event)
+            $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
             if ($activeEvent) {
                 $this->event_configuration_id = $activeEvent->eventConfiguration?->id;
             }
@@ -279,8 +279,8 @@ class StationForm extends Component
             'power_source_description',
         ]);
 
-        // Reset to active event
-        $activeEvent = Event::active()->with('eventConfiguration')->first();
+        // Reset to context event (session-overridden or active event)
+        $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
         if ($activeEvent) {
             $this->event_configuration_id = $activeEvent->eventConfiguration?->id;
         }

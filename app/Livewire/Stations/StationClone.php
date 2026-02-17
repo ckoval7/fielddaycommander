@@ -358,8 +358,8 @@ class StationClone extends Component
         $this->availableStations = collect();
         $this->copyEquipmentAssignments = true;
 
-        // Reset to active event
-        $activeEvent = Event::active()->first();
+        // Reset to context event (session-overridden or active event)
+        $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
         if ($activeEvent) {
             $this->targetEventId = $activeEvent->id;
         }

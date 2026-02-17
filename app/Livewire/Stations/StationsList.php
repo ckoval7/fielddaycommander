@@ -33,10 +33,10 @@ class StationsList extends Component
      */
     private function getDefaultEvent(): ?Event
     {
-        // 1. Try active event (currently in progress by date range)
-        $activeEvent = Event::active()->first();
-        if ($activeEvent) {
-            return $activeEvent;
+        // 1. Try context event (session-overridden or active event)
+        $contextEvent = app(\App\Services\EventContextService::class)->getContextEvent();
+        if ($contextEvent) {
+            return $contextEvent;
         }
 
         // 2. Try next upcoming event
