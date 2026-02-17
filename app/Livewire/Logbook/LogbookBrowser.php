@@ -3,11 +3,11 @@
 namespace App\Livewire\Logbook;
 
 use App\Models\Band;
-use App\Models\Event;
 use App\Models\Mode;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use App\Services\EventContextService;
 use App\Services\LogbookQueryBuilder;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\View\View;
@@ -53,7 +53,7 @@ class LogbookBrowser extends Component
 
     public function mount(): void
     {
-        $activeEvent = Event::active()->with('eventConfiguration')->first();
+        $activeEvent = app(EventContextService::class)->getContextEvent();
 
         if (! $activeEvent || ! $activeEvent->eventConfiguration) {
             $this->eventConfigurationId = null;

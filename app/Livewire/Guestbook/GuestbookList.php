@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Guestbook;
 
-use App\Models\Event;
 use App\Models\GuestbookEntry;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -28,7 +27,7 @@ class GuestbookList extends Component
 
     public function loadEntries(): void
     {
-        $activeEvent = Event::active()->with('eventConfiguration')->first();
+        $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
 
         if (! $activeEvent || ! $activeEvent->eventConfiguration) {
             $this->entries = collect();

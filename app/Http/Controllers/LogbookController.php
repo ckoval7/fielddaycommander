@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Event;
 use App\Services\ContactExporter;
+use App\Services\EventContextService;
 use App\Services\LogbookQueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -13,7 +13,8 @@ class LogbookController extends Controller
 {
     public function __construct(
         protected LogbookQueryBuilder $queryBuilder,
-        protected ContactExporter $exporter
+        protected ContactExporter $exporter,
+        protected EventContextService $eventContext
     ) {}
 
     /**
@@ -22,7 +23,7 @@ class LogbookController extends Controller
     public function index(): View
     {
         // Get active event for context
-        $activeEvent = Event::active()->with('eventConfiguration')->first();
+        $activeEvent = $this->eventContext->getContextEvent();
 
         return view('logbook.index', [
             'activeEvent' => $activeEvent,
@@ -35,7 +36,7 @@ class LogbookController extends Controller
     public function export(Request $request): StreamedResponse
     {
         // Get active event
-        $activeEvent = Event::active()->with('eventConfiguration')->first();
+        $activeEvent = $this->eventContext->getContextEvent();
 
         if (! $activeEvent || ! $activeEvent->eventConfiguration) {
             abort(404, 'No active event found');

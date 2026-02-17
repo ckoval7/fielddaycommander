@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Gallery;
 
-use App\Models\Event;
 use App\Models\EventConfiguration;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -29,7 +28,7 @@ class GalleryIndex extends Component
     #[Computed]
     public function activeEventConfiguration(): ?EventConfiguration
     {
-        $activeEvent = Event::active()->with('eventConfiguration')->first();
+        $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
 
         return $activeEvent?->eventConfiguration;
     }
