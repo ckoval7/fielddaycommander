@@ -17,14 +17,18 @@ Props:
         showBanner: false,
         dismissedAt: null,
         checkInterval: null,
+        hasEverConnected: false,
 
         init() {
-            this.checkConnection();
-
-            // Check connection every 10 seconds
-            this.checkInterval = setInterval(() => {
+            // Delay the first check to give Echo time to establish its connection
+            setTimeout(() => {
                 this.checkConnection();
-            }, 10000);
+
+                // Check connection every 10 seconds
+                this.checkInterval = setInterval(() => {
+                    this.checkConnection();
+                }, 10000);
+            }, 5000);
 
             // Listen for online/offline events
             window.addEventListener('online', () => this.handleOnline());
@@ -51,6 +55,7 @@ Props:
                     const state = window.Echo.connector.pusher.connection.state;
 
                     if (state === 'connected') {
+                        this.hasEverConnected = true;
                         if (!this.connected) {
                             this.handleReconnect();
                         }
@@ -65,6 +70,7 @@ Props:
                     const socket = window.Echo.connector.socket;
 
                     if (socket.connected) {
+                        this.hasEverConnected = true;
                         if (!this.connected) {
                             this.handleReconnect();
                         }
@@ -100,7 +106,8 @@ Props:
             this.connected = false;
             this.reconnecting = false;
 
-            if (!@js($tvMode)) {
+            // Only show the banner if we previously had a connection
+            if (!@js($tvMode) && this.hasEverConnected) {
                 this.showBanner = true;
                 this.dismissedAt = null;
             }
@@ -115,6 +122,7 @@ Props:
             const wasDisconnected = !this.connected;
             this.connected = true;
             this.reconnecting = false;
+            this.hasEverConnected = true;
 
             if (wasDisconnected) {
                 // Dispatch event to widgets to restore real-time updates
