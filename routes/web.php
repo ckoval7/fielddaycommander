@@ -40,6 +40,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'can:log-contacts'])->group(function () {
     Route::get('/logging', \App\Livewire\Logging\StationSelect::class)->name('logging.station-select');
     Route::get('/logging/session/{operatingSession}', \App\Livewire\Logging\LoggingInterface::class)->name('logging.session');
+    Route::get('/logging/transcribe', \App\Livewire\Logging\TranscribeSelect::class)->name('logging.transcribe.select');
+    Route::get('/logging/transcribe/{station}', \App\Livewire\Logging\TranscribeInterface::class)->name('logging.transcribe.session');
 });
 
 // Logbook Browser
