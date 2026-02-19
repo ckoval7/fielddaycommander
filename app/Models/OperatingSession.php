@@ -23,6 +23,7 @@ class OperatingSession extends Model
         'end_time',
         'power_watts',
         'qso_count',
+        'is_transcription',
     ];
 
     protected function casts(): array
@@ -31,6 +32,7 @@ class OperatingSession extends Model
             'start_time' => 'datetime',
             'end_time' => 'datetime',
             'power_watts' => 'integer',
+            'is_transcription' => 'boolean',
         ];
     }
 
@@ -72,6 +74,11 @@ class OperatingSession extends Model
     public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('operator_user_id', $userId);
+    }
+
+    public function scopeTranscription(Builder $query): Builder
+    {
+        return $query->where('is_transcription', true);
     }
 
     protected function isActive(): Attribute

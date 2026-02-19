@@ -33,6 +33,7 @@ class Contact extends Model
         'satellite_name',
         'points',
         'is_duplicate',
+        'is_transcribed',
         'duplicate_of_contact_id',
         'notes',
     ];
@@ -45,6 +46,7 @@ class Contact extends Model
             'is_natural_power' => 'boolean',
             'is_satellite' => 'boolean',
             'is_duplicate' => 'boolean',
+            'is_transcribed' => 'boolean',
         ];
     }
 
@@ -102,6 +104,11 @@ class Contact extends Model
     public function scopeChronological($query)
     {
         return $query->orderBy('qso_time', 'desc');
+    }
+
+    public function scopeTranscribed($query)
+    {
+        return $query->where('is_transcribed', true);
     }
 
     /**
