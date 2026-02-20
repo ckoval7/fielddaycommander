@@ -97,8 +97,8 @@
                     <x-menu-separator title="LOGGING" />
 
                     @can('log-contacts')
-                        <x-menu-item title="Log Contact" icon="o-pencil-square" link="{{ route('logging.station-select') }}" />
-                        <x-menu-item title="Transcribe Paper Log" icon="o-clipboard-document" link="{{ route('logging.transcribe.select') }}" />
+                        <x-menu-item title="Log Contact" icon="o-pencil-square" link="{{ route('logging.station-select') }}" :active="request()->routeIs('logging.station-select', 'logging.session')" />
+                        <x-menu-item title="Transcribe Paper Log" icon="o-clipboard-document" link="{{ route('logging.transcribe.select') }}" :active="request()->routeIs('logging.transcribe.*')" />
                     @endcan
 
                     <x-menu-item title="View Log" icon="o-queue-list" link="{{ route('logbook.index') }}" />
