@@ -222,6 +222,40 @@ test('new section notifications debounce within 120 second window', function () 
     expect($user->notifications->first()->data['count'])->toBe(2);
 });
 
+test('debounce updates title to reflect count when count exceeds 1', function () {
+    $user = User::factory()->create();
+
+    $this->service->notify(
+        user: $user,
+        category: NotificationCategory::NewSection,
+        title: 'New Section Worked!',
+        message: 'CT worked',
+        groupKey: 'new_section_event_1',
+    );
+
+    $this->service->notify(
+        user: $user,
+        category: NotificationCategory::NewSection,
+        title: 'New Section Worked!',
+        message: 'NY worked',
+        groupKey: 'new_section_event_1',
+    );
+
+    $user->refresh();
+    expect($user->notifications->first()->data['title'])->toBe('2 New Sections Worked!');
+
+    $this->service->notify(
+        user: $user,
+        category: NotificationCategory::NewSection,
+        title: 'New Section Worked!',
+        message: 'WA worked',
+        groupKey: 'new_section_event_1',
+    );
+
+    $user->refresh();
+    expect($user->notifications->first()->data['title'])->toBe('3 New Sections Worked!');
+});
+
 test('notification data structure matches contract', function () {
     $user = User::factory()->create();
 

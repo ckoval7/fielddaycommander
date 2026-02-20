@@ -86,8 +86,13 @@ class NotificationService
         }
 
         $data = $notification->data;
-        $data['count'] = ($data['count'] ?? 1) + 1;
+        $count = ($data['count'] ?? 1) + 1;
+        $data['count'] = $count;
         $data['message'] = $message;
+        $data['title'] = $count === 1
+            ? $data['title']
+            : "{$count} New Sections Worked!";
+
         $notification->data = $data;
         $notification->read_at = null;
         $notification->save();
