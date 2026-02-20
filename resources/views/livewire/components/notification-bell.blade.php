@@ -60,9 +60,16 @@
 
                     {{-- Content --}}
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium {{ is_null($notification->read_at) ? 'text-base-content' : 'text-base-content/70' }} truncate">
-                            {{ $notification->data['title'] ?? 'Notification' }}
-                        </p>
+                        <div class="flex items-center gap-1.5">
+                            <p class="text-sm font-medium {{ is_null($notification->read_at) ? 'text-base-content' : 'text-base-content/70' }} truncate">
+                                {{ $notification->data['title'] ?? 'Notification' }}
+                            </p>
+                            @if(($notification->data['count'] ?? 1) > 1)
+                                <span class="flex-shrink-0 text-xs font-bold text-primary bg-primary/10 rounded px-1 leading-5">
+                                    ×{{ $notification->data['count'] }}
+                                </span>
+                            @endif
+                        </div>
                         <p class="text-xs text-base-content/60 truncate mt-0.5">
                             {{ $notification->data['message'] ?? '' }}
                         </p>
