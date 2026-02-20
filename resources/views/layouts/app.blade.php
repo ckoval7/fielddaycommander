@@ -98,6 +98,7 @@
 
                     @can('log-contacts')
                         <x-menu-item title="Log Contact" icon="o-pencil-square" link="{{ route('logging.station-select') }}" />
+                        <x-menu-item title="Transcribe Paper Log" icon="o-clipboard-document" link="{{ route('logging.transcribe.select') }}" />
                     @endcan
 
                     <x-menu-item title="View Log" icon="o-queue-list" link="{{ route('logbook.index') }}" />
