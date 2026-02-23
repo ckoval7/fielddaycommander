@@ -39,6 +39,18 @@ class AuditLog extends Model
         'permission.revoked' => 'Permission revoked',
         'system.setup.completed' => 'System setup completed',
         'config.security.changed' => 'Security config changed',
+        'developer.time_travel.set' => 'Time travel set',
+        'developer.time_travel.clear' => 'Time travel cleared',
+        'developer.database.full_reset' => 'Database full reset',
+        'developer.database.selective_reset' => 'Database selective reset',
+        'developer.snapshot.create' => 'Snapshot created',
+        'developer.snapshot.restore' => 'Snapshot restored',
+        'developer.snapshot.delete' => 'Snapshot deleted',
+        'developer.test_users.initialize' => 'Test users initialized',
+        'developer.test_users.clear' => 'Test users cleared',
+        'developer.quick_action.seed_contacts' => 'Test contacts seeded',
+        'developer.quick_action.fast_forward_event' => 'Fast-forwarded to event',
+        'developer.quick_action.clear_caches' => 'Caches cleared',
     ];
 
     protected $fillable = [
