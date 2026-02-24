@@ -14,6 +14,12 @@ use App\Models\Section;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    // Mark setup as complete
+    \Illuminate\Support\Facades\DB::table('system_config')->updateOrInsert(
+        ['key' => 'setup_completed'],
+        ['value' => 'true', 'updated_at' => now()]
+    );
+
     $this->eventType = EventType::create([
         'code' => 'FD',
         'name' => 'Field Day',
@@ -116,6 +122,16 @@ function makeActiveEvent(array $configOverrides = []): EventConfiguration
 // ============================================================================
 // MOUNT & RENDER
 // ============================================================================
+
+it('is accessible at the scoring route', function () {
+    $user = \App\Models\User::factory()->create();
+    $user->markEmailAsVerified();
+
+    $this->actingAs($user)
+        ->get(route('scoring.index'))
+        ->assertOk()
+        ->assertSeeLivewire('scoring');
+});
 
 it('renders successfully', function () {
     Livewire::test(Scoring::class)->assertOk();
