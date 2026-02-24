@@ -439,5 +439,7 @@ it('shows QSO column with band/mode counts and stats', function () {
         ->assertSee($band->name)
         ->assertSee('CW')
         ->assertSeeText('3')
-        ->assertSeeText('0.0%');
+        ->assertSeeText('0.0%')
+        ->assertSeeText('Total')
+        ->assertSeeText('6');  // grand total points: 3 contacts × 2 CW pts
 });

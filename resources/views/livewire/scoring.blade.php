@@ -156,6 +156,34 @@
                                 </tr>
                             @endforeach
                         </tbody>
+                        @php
+                            $bandTotals = [];
+                            $grandTotalCount = 0;
+                            $grandTotalPoints = 0;
+                            foreach ($this->bandModeGrid as $row) {
+                                foreach ($this->bands as $band) {
+                                    $bandTotals[$band->id] = ($bandTotals[$band->id] ?? 0) + ($row['cells'][$band->id] ?? 0);
+                                }
+                                $grandTotalCount += $row['total_count'];
+                                $grandTotalPoints += $row['total_points'];
+                            }
+                        @endphp
+                        <tfoot>
+                            <tr class="font-bold border-t" style="border-color: var(--score-divider);">
+                                <td class="pt-2 pr-2" style="color: var(--score-text);">Total</td>
+                                @foreach ($this->bands as $band)
+                                    <td class="pt-2 text-center px-1 tabular-nums" style="color: var(--score-text);">
+                                        {{ $bandTotals[$band->id] ?? 0 ?: '—' }}
+                                    </td>
+                                @endforeach
+                                <td class="pt-2 text-right pl-2 tabular-nums" style="color: var(--score-text);">
+                                    {{ $grandTotalCount }}
+                                </td>
+                                <td class="pt-2 text-right pl-2 tabular-nums" style="color: var(--score-text);">
+                                    {{ $grandTotalPoints }}
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             @else
@@ -186,7 +214,7 @@
                         <span class="text-sm font-normal">({{ number_format($this->duplicateRate, 1) }}%)</span>
                     </div>
                 </div>
-                @if ($this->event->eventConfiguration->has_gota_station)
+                @if ($this->gotaContactCount > 0)
                     <div>
                         <div class="text-xs uppercase tracking-wide" style="color: var(--score-text-muted);">GOTA Contacts</div>
                         <div class="text-xl font-semibold tabular-nums mt-0.5" style="color: var(--score-text);">
