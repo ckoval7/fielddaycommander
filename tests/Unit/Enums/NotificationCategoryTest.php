@@ -36,7 +36,7 @@ test('specific category values match expected strings', function () {
 });
 
 test('debounce values match specification', function () {
-    expect(NotificationCategory::NewSection->debounceSeconds())->toBe(0);
+    expect(NotificationCategory::NewSection->debounceSeconds())->toBe(120);
     expect(NotificationCategory::Guestbook->debounceSeconds())->toBe(180);
     expect(NotificationCategory::Photos->debounceSeconds())->toBe(300);
     expect(NotificationCategory::StationStatus->debounceSeconds())->toBe(120);
