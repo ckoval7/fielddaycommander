@@ -125,6 +125,34 @@
 
   /* Focus indicator - Blue-500 for high visibility */
   --color-focus: hsl(217, 91%, 60%);           /* Bright blue - WCAG compliant focus ring */
+
+  /* ============================================================================
+     SCORING PAGE — "The Scoring Ledger"
+     Newspaper editorial palette: amber headline + teal verified + 4 semantic chips
+     ========================================================================== */
+
+  /* Backgrounds */
+  --score-bg:          hsl(42, 18%, 95%);   /* warm newsprint */
+  --score-surface:     hsl(42, 14%, 90%);   /* card / column bg */
+  --score-surface-alt: hsl(42, 10%, 86%);   /* striped rows / inset sections */
+
+  /* Text */
+  --score-text:        hsl(220, 20%, 12%);  /* near-black ink */
+  --score-text-muted:  hsl(220, 10%, 42%);  /* section labels, column headers */
+
+  /* Headline amber — the score number color */
+  --score-headline:    hsl(38, 80%, 38%);   /* 5.8:1 on cream — WCAG AA */
+  --score-headline-lg: hsl(38, 85%, 34%);   /* final score (largest text) */
+
+  /* Status chips */
+  --score-verified:    hsl(162, 55%, 30%);  /* teal — "verified" bonus */
+  --score-warning:     hsl(38, 80%, 38%);   /* amber — claimed/unverified, high dupes */
+  --score-error:       hsl(2, 68%, 46%);    /* red — data errors */
+  --score-opportunity: hsl(210, 65%, 42%);  /* blue — unclaimed bonus opportunity */
+
+  /* Layout */
+  --score-border:      hsl(220, 12%, 78%);  /* column rules, card borders */
+  --score-divider:     hsl(38, 20%, 82%);   /* horizontal rules (warm tint) */
 }
 
 /* ==============================================================================
@@ -214,4 +242,27 @@
 
   /* Light border - subtle separation */
   --color-border-light: hsl(215, 25%, 40%);    /* Slightly lighter */
+
+  /* ============================================================================
+     SCORING PAGE — Dark (Night Edition)
+     Same amber/teal accents, glowing on charcoal
+     ========================================================================== */
+
+  --score-bg:          hsl(222, 18%, 10%);  /* deep charcoal */
+  --score-surface:     hsl(222, 14%, 15%);  /* card / column bg */
+  --score-surface-alt: hsl(222, 12%, 19%);  /* striped rows */
+
+  --score-text:        hsl(42, 18%, 88%);   /* warm off-white ink */
+  --score-text-muted:  hsl(220, 10%, 52%);  /* labels */
+
+  --score-headline:    hsl(40, 88%, 56%);   /* amber glows on charcoal */
+  --score-headline-lg: hsl(40, 92%, 60%);   /* final score */
+
+  --score-verified:    hsl(162, 58%, 48%);  /* teal glow */
+  --score-warning:     hsl(38, 88%, 52%);   /* amber warning glow */
+  --score-error:       hsl(2, 68%, 60%);    /* red (lighter on dark) */
+  --score-opportunity: hsl(210, 68%, 58%);  /* blue */
+
+  --score-border:      hsl(222, 14%, 22%);  /* column rules */
+  --score-divider:     hsl(222, 12%, 25%);  /* horizontal rules */
 }
