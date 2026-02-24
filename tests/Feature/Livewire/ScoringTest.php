@@ -388,7 +388,8 @@ it('shows callsign and section in the masthead', function () {
     $config = makeActiveEvent(['callsign' => 'W1AW']);
 
     Livewire::test(Scoring::class)
-        ->assertSee('W1AW');
+        ->assertSee('W1AW')
+        ->assertSee($config->section->name ?? $config->section->abbreviation ?? '');
 });
 
 it('shows all equation terms in the headline', function () {
@@ -407,7 +408,9 @@ it('shows all equation terms in the headline', function () {
     Livewire::test(Scoring::class)
         ->assertSeeText('QSO Base Pts')
         ->assertSeeText('Power Multi.')
-        ->assertSeeText('Final Score');
+        ->assertSeeText('Final Score')
+        ->assertSeeText('4')    // 2 contacts × 2 CW pts = 4 base points
+        ->assertSeeText('1×');  // >100W = 1x multiplier
 });
 
 it('shows no active event message when no event exists', function () {
