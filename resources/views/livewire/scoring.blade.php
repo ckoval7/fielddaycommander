@@ -318,7 +318,7 @@
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
                             <span class="text-xs tabular-nums font-semibold"
-                                  style="color: {{ $item['points'] > 0 ? 'var(--score-headline)' : 'var(--score-text-muted)' }};">
+                                  style="color: {{ $item['status'] !== 'unclaimed' ? 'var(--score-headline)' : 'var(--score-text-muted)' }};">
                                 @if ($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
                             </span>
 

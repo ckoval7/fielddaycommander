@@ -419,10 +419,6 @@ it('shows no active event message when no event exists', function () {
 });
 
 // ============================================================================
-// VIEW — QSO COLUMN
-// ============================================================================
-
-// ============================================================================
 // VIEW — POWER MULTIPLIER COLUMN
 // ============================================================================
 
@@ -453,10 +449,6 @@ it('shows 5x multiplier in power column for QRP with natural power', function ()
 });
 
 // ============================================================================
-// VIEW — QSO COLUMN
-// ============================================================================
-
-// ============================================================================
 // VIEW — BONUS COLUMN
 // ============================================================================
 
@@ -475,7 +467,9 @@ it('shows bonus column with status chips', function () {
 
     Livewire::test(Scoring::class)
         ->assertSee($bonusType->name)
-        ->assertSee('Verified');
+        ->assertSee('Verified')
+        ->assertSeeText('Unclaimed')    // summary grid label
+        ->assertSeeText('Claimed');     // summary grid label
 });
 
 it('shows QSO column with band/mode counts and stats', function () {
