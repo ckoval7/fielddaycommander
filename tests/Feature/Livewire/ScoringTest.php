@@ -125,7 +125,6 @@ function makeActiveEvent(array $configOverrides = []): EventConfiguration
 
 it('is accessible at the scoring route', function () {
     $user = \App\Models\User::factory()->create();
-    $user->markEmailAsVerified();
 
     $this->actingAs($user)
         ->get(route('scoring.index'))
