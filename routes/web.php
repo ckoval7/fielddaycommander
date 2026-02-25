@@ -152,6 +152,8 @@ Route::middleware(['auth', 'can:view-reports'])->group(function () {
     Route::get('/reports', function () {
         return view('reports.index');
     })->name('reports.index');
+    Route::get('/reports/cabrillo', [\App\Http\Controllers\ReportController::class, 'cabrillo'])->name('reports.cabrillo');
+    Route::get('/reports/club-summary', [\App\Http\Controllers\ReportController::class, 'clubSummary'])->name('reports.club-summary');
 });
 
 // Administration
