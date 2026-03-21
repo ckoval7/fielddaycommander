@@ -9,7 +9,6 @@
         @click="open = !open"
         class="btn btn-ghost btn-circle btn-sm relative"
         title="Notifications"
-        aria-label="Notifications"
     >
         <x-icon name="o-bell" class="w-5 h-5" aria-hidden="true" />
         @if($unreadCount > 0)

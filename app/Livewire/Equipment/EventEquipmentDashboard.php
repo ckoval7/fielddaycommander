@@ -36,6 +36,8 @@ class EventEquipmentDashboard extends Component
 
     private const PERMISSION_ERROR = 'You do not have permission to manage event equipment.';
 
+    private const NOT_COMMITTED_ERROR = 'This equipment is not committed to this event.';
+
     /**
      * The event being managed.
      */
@@ -462,7 +464,7 @@ class EventEquipmentDashboard extends Component
 
         // Validate this commitment belongs to this event
         if ($commitment->event_id !== $this->event->id) {
-            $this->dispatch('notify', title: 'Error', description: 'This equipment is not committed to this event.', type: 'error');
+            $this->dispatch('notify', title: 'Error', description: self::NOT_COMMITTED_ERROR, type: 'error');
 
             return;
         }
@@ -535,7 +537,7 @@ class EventEquipmentDashboard extends Component
 
         // Validate this commitment belongs to this event
         if ($commitment->event_id !== $this->event->id) {
-            $this->dispatch('notify', title: 'Error', description: 'This equipment is not committed to this event.', type: 'error');
+            $this->dispatch('notify', title: 'Error', description: self::NOT_COMMITTED_ERROR, type: 'error');
 
             return;
         }
@@ -600,7 +602,7 @@ class EventEquipmentDashboard extends Component
 
         // Validate this commitment belongs to this event
         if ($commitment->event_id !== $this->event->id) {
-            $this->dispatch('notify', title: 'Error', description: 'This equipment is not committed to this event.', type: 'error');
+            $this->dispatch('notify', title: 'Error', description: self::NOT_COMMITTED_ERROR, type: 'error');
 
             return;
         }

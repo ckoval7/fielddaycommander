@@ -93,26 +93,18 @@ class StationCloneService
         }
 
         try {
-            DB::transaction(function () use (
-                $sourceEventId,
-                $targetEventId,
-                $stationIds,
-                $copyEquipment,
-                $nameSuffix,
-                $skipConflicts,
-                $user,
-                &$result
-            ) {
-                $this->executeCloneTransaction(
-                    $sourceEventId,
-                    $targetEventId,
-                    $stationIds,
-                    $copyEquipment,
-                    $nameSuffix,
-                    $skipConflicts,
-                    $user,
-                    $result
-                );
+            $context = [
+                'sourceEventId' => $sourceEventId,
+                'targetEventId' => $targetEventId,
+                'stationIds' => $stationIds,
+                'copyEquipment' => $copyEquipment,
+                'nameSuffix' => $nameSuffix,
+                'skipConflicts' => $skipConflicts,
+                'user' => $user,
+            ];
+
+            DB::transaction(function () use ($context, &$result) {
+                $this->executeCloneTransaction($context, $result);
             });
         } catch (StationCloneException $e) {
             $result['errors'][] = $e->getMessage();
@@ -137,18 +129,19 @@ class StationCloneService
     /**
      * Execute the station cloning within a database transaction.
      *
+     * @param  array{sourceEventId: int, targetEventId: int, stationIds: array, copyEquipment: bool, nameSuffix: ?string, skipConflicts: bool, user: \App\Models\User}  $context
      * @param  array<string, mixed>  $result  Result array (passed by reference)
      */
-    protected function executeCloneTransaction(
-        int $sourceEventId,
-        int $targetEventId,
-        array $stationIds,
-        bool $copyEquipment,
-        ?string $nameSuffix,
-        bool $skipConflicts,
-        \App\Models\User $user,
-        array &$result
-    ): void {
+    protected function executeCloneTransaction(array $context, array &$result): void
+    {
+        $sourceEventId = $context['sourceEventId'];
+        $targetEventId = $context['targetEventId'];
+        $stationIds = $context['stationIds'];
+        $copyEquipment = $context['copyEquipment'];
+        $nameSuffix = $context['nameSuffix'];
+        $skipConflicts = $context['skipConflicts'];
+        $user = $context['user'];
+
         $sourceStations = Station::query()
             ->whereIn('id', $stationIds)
             ->where('event_configuration_id', $sourceEventId)
