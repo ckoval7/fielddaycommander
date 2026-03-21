@@ -1,6 +1,6 @@
 @auth
 <div class="dropdown dropdown-end">
-    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" @keydown.enter.prevent="$el.click()" @keydown.space.prevent="$el.click()">
         <div class="w-10 rounded-full">
             @if(auth()->user()->avatar_path && file_exists(public_path(auth()->user()->avatar_path)))
                 <img src="{{ asset(auth()->user()->avatar_path) }}" alt="{{ auth()->user()->call_sign }}" class="rounded-full">
@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[100] p-2 shadow-lg bg-base-100 rounded-box w-64 border border-base-300">
+    <ul class="menu menu-sm dropdown-content mt-3 z-[100] p-2 shadow-lg bg-base-100 rounded-box w-64 border border-base-300">
         <!-- User info header -->
         <li class="menu-title px-3 py-2">
             <div class="flex flex-col gap-1">

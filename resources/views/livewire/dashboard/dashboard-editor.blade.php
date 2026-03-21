@@ -6,10 +6,11 @@
             <div class="min-w-0 flex-1">
                 {{-- Editable Dashboard Title --}}
                 <div class="form-control">
-                    <label class="label">
+                    <label class="label" for="dashboard-title">
                         <span class="label-text text-xs font-medium">Dashboard Name</span>
                     </label>
                     <input
+                        id="dashboard-title"
                         type="text"
                         wire:model="title"
                         placeholder="Dashboard name"
@@ -17,18 +18,19 @@
                         maxlength="255"
                     />
                     @error('title')
-                        <label class="label">
+                        <span class="label">
                             <span class="label-text-alt text-error">{{ $message }}</span>
-                        </label>
+                        </span>
                     @enderror
                 </div>
 
                 {{-- Editable Dashboard Description --}}
                 <div class="form-control mt-2">
-                    <label class="label">
+                    <label class="label" for="dashboard-description">
                         <span class="label-text text-xs font-medium">Description (optional)</span>
                     </label>
                     <textarea
+                        id="dashboard-description"
                         wire:model="description"
                         placeholder="Brief description of this dashboard"
                         class="textarea textarea-bordered w-full"
@@ -36,9 +38,9 @@
                         maxlength="1000"
                     ></textarea>
                     @error('description')
-                        <label class="label">
+                        <span class="label">
                             <span class="label-text-alt text-error">{{ $message }}</span>
-                        </label>
+                        </span>
                     @enderror
                 </div>
             </div>

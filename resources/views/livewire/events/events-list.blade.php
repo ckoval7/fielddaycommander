@@ -94,7 +94,7 @@
                                     <button tabindex="0" class="btn btn-ghost btn-sm btn-square">
                                         <x-icon name="o-ellipsis-vertical" class="w-5 h-5" />
                                     </button>
-                                    <ul tabindex="0" class="dropdown-content menu menu-sm z-[1000] p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 mt-1">
+                                    <ul class="dropdown-content menu menu-sm z-[1000] p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 mt-1">
                                         <li>
                                             <a href="{{ route('events.show', $event) }}" wire:navigate>
                                                 <x-icon name="o-eye" class="w-4 h-4" />

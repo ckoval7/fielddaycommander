@@ -179,6 +179,7 @@
                 x-ref="canvas"
                 :id="canvasId"
                 aria-hidden="true"
+                tabindex="-1"
             ></canvas>
         </div>
 

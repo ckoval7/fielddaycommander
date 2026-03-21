@@ -26,7 +26,7 @@
         <div class="space-y-4">
             @if($logo_path)
                 <div>
-                    <label class="block text-sm font-medium mb-2">Current Logo</label>
+                    <span class="block text-sm font-medium mb-2">Current Logo</span>
                     <div class="flex items-center gap-4">
                         <img src="{{ Storage::url($logo_path) }}" alt="Site Logo" class="max-h-24 border rounded">
                         <x-button
@@ -57,7 +57,7 @@
 
             @if($new_logo)
                 <div>
-                    <label class="block text-sm font-medium mb-2">Preview</label>
+                    <span class="block text-sm font-medium mb-2">Preview</span>
                     <img src="{{ $new_logo->temporaryUrl() }}" alt="Logo Preview" class="max-h-24 border rounded">
                 </div>
             @endif

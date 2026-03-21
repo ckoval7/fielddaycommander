@@ -24,7 +24,7 @@
                 <div wire:key="image-{{ $image->id }}" class="group relative aspect-square bg-base-300 rounded-lg overflow-hidden cursor-pointer" wire:click="openLightbox({{ $image->id }})">
                     <img
                         src="{{ route('gallery.thumb', $image) }}"
-                        alt="{{ $image->caption ?? 'Photo' }}"
+                        alt="{{ $image->caption ?? 'Gallery entry' }}"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         loading="lazy"
                     >
@@ -58,7 +58,7 @@
                 <div class="space-y-4">
                     <img
                         src="{{ route('gallery.image', $currentImage) }}"
-                        alt="{{ $currentImage->caption ?? 'Photo' }}"
+                        alt="{{ $currentImage->caption ?? 'Gallery entry' }}"
                         class="w-full rounded-lg"
                     >
                     <div class="flex justify-between items-start">

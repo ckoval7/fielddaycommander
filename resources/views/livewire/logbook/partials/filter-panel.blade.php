@@ -108,8 +108,8 @@
                 />
 
                 {{-- Duplicate Filter --}}
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-base-content/70">Duplicate Status</label>
+                <fieldset class="flex flex-col gap-2">
+                    <legend class="text-sm font-medium text-base-content/70">Duplicate Status</legend>
                     <div class="flex flex-col gap-2">
                         <x-radio
                             wire:model.live="show_duplicates"
@@ -120,11 +120,11 @@
                             ]"
                         />
                     </div>
-                </div>
+                </fieldset>
 
                 {{-- Transcribed Filter --}}
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-base-content/70">Transcribed Status</label>
+                <fieldset class="flex flex-col gap-2">
+                    <legend class="text-sm font-medium text-base-content/70">Transcribed Status</legend>
                     <div class="flex flex-col gap-2">
                         <x-radio
                             wire:model.live="show_transcribed"
@@ -134,7 +134,7 @@
                             ]"
                         />
                     </div>
-                </div>
+                </fieldset>
 
             </div>
 

@@ -261,6 +261,12 @@
                     Multiplier Rules
                 </div>
                 <table class="w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th class="text-left pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Condition</th>
+                            <th class="text-right pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Multiplier</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         @foreach ($this->powerMultiplierRules as $rule)
                             <tr style="@if($rule['active']) font-weight: 700; color: var(--score-headline); @else color: var(--score-text-muted); @endif">

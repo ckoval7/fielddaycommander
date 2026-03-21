@@ -186,7 +186,7 @@
                         <p class="text-sm text-base-content/70">Current Photo:</p>
                         <img
                             src="{{ asset('storage/' . $existingPhotoPath) }}"
-                            alt="Equipment photo"
+                            alt="{{ $make }} {{ $model }}"
                             class="h-40 rounded-lg border border-base-300"
                         />
                     </div>
@@ -194,7 +194,7 @@
 
                 {{-- Photo Upload --}}
                 <div>
-                    <label class="block text-sm font-medium mb-2">
+                    <label for="photo-input" class="block text-sm font-medium mb-2">
                         {{ $photo ? 'New Photo' : ($existingPhotoPath ? 'Replace Photo' : 'Upload Photo') }}
                     </label>
 
@@ -213,7 +213,7 @@
                             @if(in_array($photo->getMimeType(), ['image/jpeg', 'image/png', 'image/jpg']))
                                 <img
                                     src="{{ $photo->temporaryUrl() }}"
-                                    alt="New equipment photo"
+                                    alt="{{ $make }} {{ $model }} preview"
                                     class="h-40 rounded-lg border border-base-300"
                                 />
                             @endif

@@ -340,12 +340,12 @@
     </x-modal>
 
     {{-- Photo Viewer Modal --}}
-    <x-modal wire:model="showPhotoModal" title="{{ $photoDescription ?? 'Equipment Photo' }}" class="backdrop-blur" box-class="max-w-4xl">
+    <x-modal wire:model="showPhotoModal" title="{{ $photoDescription ?? 'Equipment Detail' }}" class="backdrop-blur" box-class="max-w-4xl">
         @if($photoPath)
             <div class="flex justify-center items-center">
                 <img
                     src="{{ asset('storage/' . $photoPath) }}"
-                    alt="{{ $photoDescription ?? 'Equipment photo' }}"
+                    alt="{{ $photoDescription ?? 'Equipment' }}"
                     class="max-w-full max-h-[70vh] object-contain rounded"
                 />
             </div>

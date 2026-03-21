@@ -8,7 +8,7 @@
     <x-card>
         <form wire:submit="save" class="space-y-6">
             <div>
-                <label class="block text-sm font-medium mb-2">Photo</label>
+                <label for="photo-input" class="block text-sm font-medium mb-2">Photo</label>
                 <div
                     x-data="{ isDragging: false }"
                     x-on:dragover.prevent="isDragging = true"

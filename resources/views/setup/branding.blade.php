@@ -34,24 +34,26 @@
             />
 
             <div class="form-control w-full">
-                <label class="label">
+                <label for="logo-input" class="label">
                     <span class="label-text">Site Logo</span>
                 </label>
                 <input
                     type="file"
                     name="logo"
+                    id="logo-input"
                     accept="image/png,image/jpeg,image/svg+xml"
                     class="file-input file-input-bordered w-full"
                 />
-                <label class="label">
+                <span class="label">
                     <span class="label-text-alt">PNG, JPG, or SVG. Maximum 2MB. Recommended: 800x200px</span>
-                </label>
+                </span>
             </div>
 
             <div class="flex justify-between">
                 <x-button
                     type="button"
                     onclick="window.location='{{ route('setup.welcome') }}'"
+                    onkeydown="if(event.key==='Enter'||event.key===' '){window.location='{{ route('setup.welcome') }}'}"
                     class="btn-ghost"
                     icon="o-arrow-left"
                 >

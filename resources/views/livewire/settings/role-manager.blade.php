@@ -68,13 +68,13 @@
                             <x-slot:heading class="font-medium">
                                 <div class="flex items-center justify-between w-full pr-4">
                                     <span>{{ $category }}</span>
-                                    <label class="flex items-center gap-2 cursor-pointer" onclick="event.stopPropagation()">
-                                        <span class="text-xs">Select All</span>
+                                    <span class="flex items-center gap-2 cursor-pointer" role="group" aria-label="Category selection" @click.stop @keydown.stop>
                                         <x-checkbox
+                                            label="Select All"
                                             wire:change="toggleCategory('{{ $category }}', $event.target.checked)"
                                             :checked="empty(array_diff($categoryPermissions, $selectedPermissions))"
                                         />
-                                    </label>
+                                    </span>
                                 </div>
                             </x-slot:heading>
                             <x-slot:content>

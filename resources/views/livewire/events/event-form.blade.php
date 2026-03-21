@@ -185,7 +185,7 @@
                 />
 
                 <div>
-                    <label class="block text-sm font-medium mb-3">Power Sources</label>
+                    <span class="block text-sm font-medium mb-3" role="group" aria-label="Power Sources">Power Sources</span>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="form-control">
                             <label class="label cursor-pointer justify-start gap-3">

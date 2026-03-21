@@ -262,50 +262,68 @@
             {{-- Equation row --}}
             <div class="score-equation">
                 <table style="width: auto; margin: 0 auto; border-collapse: collapse; border: none;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center; padding: 0 8px; border: none; background: none; font-size: inherit; text-transform: none; letter-spacing: normal;">QSO Base Pts</th>
+                            <th style="border: none; background: none;"><span class="sr-only">Operator</span></th>
+                            <th style="text-align: center; padding: 0 8px; border: none; background: none; font-size: inherit; text-transform: none; letter-spacing: normal;">Power Multi.</th>
+                            <th style="border: none; background: none;"><span class="sr-only">Operator</span></th>
+                            <th style="text-align: center; padding: 0 8px; border: none; background: none; font-size: inherit; text-transform: none; letter-spacing: normal;">Bonus Pts</th>
+                            <th style="border: none; background: none;"><span class="sr-only">Operator</span></th>
+                            <th style="text-align: center; padding: 0 8px; border: none; background: none; font-size: inherit; text-transform: none; letter-spacing: normal;">Final Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     <tr>
                         <td style="text-align: center; padding: 0 8px; border: none;">
                             <span class="num">{{ number_format($qso_base_points) }}</span>
-                            <span class="label">QSO Base Pts</span>
                         </td>
                         <td style="text-align: center; padding: 0 4px; border: none; vertical-align: middle;">
                             <span class="op">&times;</span>
                         </td>
                         <td style="text-align: center; padding: 0 8px; border: none;">
                             <span class="num">{{ $power_multiplier }}&times;</span>
-                            <span class="label">Power Multi.</span>
                         </td>
                         <td style="text-align: center; padding: 0 4px; border: none; vertical-align: middle;">
                             <span class="op">+</span>
                         </td>
                         <td style="text-align: center; padding: 0 8px; border: none;">
                             <span class="num">{{ number_format($bonus_score) }}</span>
-                            <span class="label">Bonus Pts</span>
                         </td>
                         <td style="text-align: center; padding: 0 4px; border: none; vertical-align: middle;">
                             <span class="op">=</span>
                         </td>
                         <td style="text-align: center; padding: 0 8px; border: none;">
                             <span style="font-family: DejaVu Sans Mono, monospace; font-weight: bold; font-size: 22px; color: #1e3ea8;">{{ number_format($final_score) }}</span>
-                            <span class="label" style="font-weight: bold; color: #1e3ea8;">FINAL SCORE</span>
                         </td>
                     </tr>
+                    </tbody>
                 </table>
             </div>
 
             {{-- Component breakdown row --}}
             <div style="border-top: 1px solid #c7d4f0; margin-top: 10px; padding-top: 8px;">
                 <table style="width: auto; margin: 0 auto; border-collapse: collapse; border: none;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 0 12px; border: none; background: none; font-size: 10px; color: #475569; text-align: center; text-transform: none; letter-spacing: normal;">QSO Score</th>
+                            <th style="padding: 0 12px; border: none; background: none; font-size: 10px; color: #475569; text-align: center; text-transform: none; letter-spacing: normal;">Bonus Points</th>
+                            <th style="padding: 0 12px; border: none; background: none; font-size: 10px; color: #475569; text-align: center; text-transform: none; letter-spacing: normal;">Power Multiplier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     <tr>
                         <td style="padding: 0 12px; border: none; text-align: center; font-size: 10px; color: #475569;">
-                            QSO Score: <strong style="font-family: DejaVu Sans Mono, monospace; color: #1e293b;">{{ number_format($qso_score) }}</strong>
+                            <strong style="font-family: DejaVu Sans Mono, monospace; color: #1e293b;">{{ number_format($qso_score) }}</strong>
                         </td>
                         <td style="padding: 0 12px; border: none; text-align: center; font-size: 10px; color: #475569;">
-                            Bonus Points: <strong style="font-family: DejaVu Sans Mono, monospace; color: #1e293b;">{{ number_format($bonus_score) }}</strong>
+                            <strong style="font-family: DejaVu Sans Mono, monospace; color: #1e293b;">{{ number_format($bonus_score) }}</strong>
                         </td>
                         <td style="padding: 0 12px; border: none; text-align: center; font-size: 10px; color: #475569;">
-                            Power Multiplier: <strong style="font-family: DejaVu Sans Mono, monospace; color: #1e293b;">{{ $power_multiplier }}&times;</strong>
+                            <strong style="font-family: DejaVu Sans Mono, monospace; color: #1e293b;">{{ $power_multiplier }}&times;</strong>
                         </td>
                     </tr>
+                    </tbody>
                 </table>
             </div>
         </div>

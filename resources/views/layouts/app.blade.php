@@ -35,9 +35,9 @@
             @endauth
             <x-custom-theme-toggle class="me-2" />
             <x-user-menu class="me-2" />
-            <label for="main-drawer" class="lg:hidden me-3">
+            <button type="button" class="lg:hidden me-3" aria-label="Toggle navigation menu" onclick="document.getElementById('main-drawer').click()">
                 <x-icon name="o-bars-3" class="cursor-pointer" />
-            </label>
+            </button>
         </x-slot:actions>
     </x-nav>
 

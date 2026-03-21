@@ -71,8 +71,8 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {{-- Band --}}
                         <div>
-                            <label class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Band <span class="text-error">*</span></label>
-                            <select wire:model.live="selectedBandId" class="select select-bordered select-sm w-full">
+                            <label for="transcribe-band" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Band <span class="text-error">*</span></label>
+                            <select id="transcribe-band" wire:model.live="selectedBandId" class="select select-bordered select-sm w-full">
                                 <option value="">— Band —</option>
                                 @foreach($this->bands as $band)
                                     <option value="{{ $band->id }}">{{ $band->name }}</option>
@@ -85,8 +85,8 @@
 
                         {{-- Mode --}}
                         <div>
-                            <label class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Mode <span class="text-error">*</span></label>
-                            <select wire:model.live="selectedModeId" class="select select-bordered select-sm w-full">
+                            <label for="transcribe-mode" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Mode <span class="text-error">*</span></label>
+                            <select id="transcribe-mode" wire:model.live="selectedModeId" class="select select-bordered select-sm w-full">
                                 <option value="">— Mode —</option>
                                 @foreach($this->modes as $mode)
                                     <option value="{{ $mode->id }}">{{ $mode->name }}</option>
@@ -99,8 +99,9 @@
 
                         {{-- Power --}}
                         <div>
-                            <label class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Power (W)</label>
+                            <label for="transcribe-power" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Power (W)</label>
                             <input
+                                id="transcribe-power"
                                 type="number"
                                 wire:model="powerWatts"
                                 min="1"
@@ -115,8 +116,9 @@
 
                         {{-- Contact Time --}}
                         <div class="col-span-2">
-                            <label class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Contact Time (UTC)</label>
+                            <label for="transcribe-contact-time" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Contact Time (UTC)</label>
                             <input
+                                id="transcribe-contact-time"
                                 type="datetime-local"
                                 wire:model.live="contactTime"
                                 min="{{ $this->event->start_time->subMinutes(5)->format('Y-m-d\TH:i') }}"

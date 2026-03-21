@@ -96,10 +96,11 @@
                     @click.outside="open = false"
                     class="form-control w-full"
                 >
-                    <label class="label"><span class="label-text font-semibold">Timezone <span class="text-error">*</span></span></label>
+                    <label class="label" for="timezone-selector"><span class="label-text font-semibold">Timezone <span class="text-error">*</span></span></label>
                     <input type="hidden" name="timezone" :value="selected" required />
                     <div class="relative">
                         <button
+                            id="timezone-selector"
                             type="button"
                             @click="open = !open"
                             class="select select-bordered w-full text-left flex items-center justify-between"
@@ -168,6 +169,7 @@
                 <x-button
                     type="button"
                     onclick="window.location='{{ route('setup.branding') }}'"
+                    onkeydown="if(event.key==='Enter'||event.key===' '){window.location='{{ route('setup.branding') }}'}"
                     class="btn-ghost"
                     icon="o-arrow-left"
                 >

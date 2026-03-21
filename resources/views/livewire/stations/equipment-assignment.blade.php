@@ -255,22 +255,21 @@
                                 tabindex="0"
                                 role="button"
                                 aria-label="Drag {{ $commitment->equipment->make }} {{ $commitment->equipment->model }} to assign to station. Press Space to pick up, Arrow keys to navigate, Space to drop, Escape to cancel."
+                                @keydown="handleKeydown($event)"
                                 x-data="{
                                     isDragging: false,
                                     keyboardDrag: false,
-                                    init() {
-                                        this.$el.addEventListener('keydown', (e) => {
-                                            if (e.key === ' ' && !this.keyboardDrag) {
-                                                e.preventDefault();
-                                                this.startKeyboardDrag();
-                                            } else if (e.key === ' ' && this.keyboardDrag) {
-                                                e.preventDefault();
-                                                this.finishKeyboardDrag();
-                                            } else if (e.key === 'Escape' && this.keyboardDrag) {
-                                                e.preventDefault();
-                                                this.cancelKeyboardDrag();
-                                            }
-                                        });
+                                    handleKeydown(e) {
+                                        if (e.key === ' ' && !this.keyboardDrag) {
+                                            e.preventDefault();
+                                            this.startKeyboardDrag();
+                                        } else if (e.key === ' ' && this.keyboardDrag) {
+                                            e.preventDefault();
+                                            this.finishKeyboardDrag();
+                                        } else if (e.key === 'Escape' && this.keyboardDrag) {
+                                            e.preventDefault();
+                                            this.cancelKeyboardDrag();
+                                        }
                                     },
                                     startKeyboardDrag() {
                                         this.keyboardDrag = true;
@@ -292,6 +291,8 @@
                                         this.$root.announce('Drag cancelled.');
                                     }
                                 }"
+                                @keydown="handleKeydown($event)"
+                                @keydown.enter.prevent="handleKeydown({key: ' ', preventDefault: () => {}})"
                                 x-on:dragstart="
                                     isDragging = true;
                                     $event.dataTransfer.setData('application/json', JSON.stringify({
@@ -384,22 +385,21 @@
                                 tabindex="0"
                                 role="button"
                                 aria-label="Drag {{ $equipment->make }} {{ $equipment->model }} to commit and assign to station. Press Space to pick up, Arrow keys to navigate, Space to drop, Escape to cancel."
+                                @keydown="handleKeydown($event)"
                                 x-data="{
                                     isDragging: false,
                                     keyboardDrag: false,
-                                    init() {
-                                        this.$el.addEventListener('keydown', (e) => {
-                                            if (e.key === ' ' && !this.keyboardDrag) {
-                                                e.preventDefault();
-                                                this.startKeyboardDrag();
-                                            } else if (e.key === ' ' && this.keyboardDrag) {
-                                                e.preventDefault();
-                                                this.finishKeyboardDrag();
-                                            } else if (e.key === 'Escape' && this.keyboardDrag) {
-                                                e.preventDefault();
-                                                this.cancelKeyboardDrag();
-                                            }
-                                        });
+                                    handleKeydown(e) {
+                                        if (e.key === ' ' && !this.keyboardDrag) {
+                                            e.preventDefault();
+                                            this.startKeyboardDrag();
+                                        } else if (e.key === ' ' && this.keyboardDrag) {
+                                            e.preventDefault();
+                                            this.finishKeyboardDrag();
+                                        } else if (e.key === 'Escape' && this.keyboardDrag) {
+                                            e.preventDefault();
+                                            this.cancelKeyboardDrag();
+                                        }
                                     },
                                     startKeyboardDrag() {
                                         this.keyboardDrag = true;
@@ -421,6 +421,8 @@
                                         this.$root.announce('Drag cancelled.');
                                     }
                                 }"
+                                @keydown="handleKeydown($event)"
+                                @keydown.enter.prevent="handleKeydown({key: ' ', preventDefault: () => {}})"
                                 x-on:dragstart="
                                     isDragging = true;
                                     $event.dataTransfer.setData('application/json', JSON.stringify({
