@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
+use App\Services\EventContextService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -18,13 +19,13 @@ class Scoring extends Component
 
     public function mount(): void
     {
-        $this->event = Event::active()
-            ->with([
-                'eventConfiguration.section',
-                'eventConfiguration.operatingClass',
-                'eventConfiguration.bonuses',
-            ])
-            ->first();
+        $this->event = app(EventContextService::class)->getContextEvent();
+
+        $this->event?->load([
+            'eventConfiguration.section',
+            'eventConfiguration.operatingClass',
+            'eventConfiguration.bonuses',
+        ]);
     }
 
     /**

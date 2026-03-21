@@ -11,8 +11,8 @@
 
     {{-- ZONE 1: MASTHEAD --}}
     <div class="px-6 pt-8 pb-4" style="border-bottom: 2px solid var(--score-divider);">
-        <div class="text-center font-black tracking-[0.25em] uppercase"
-             style="font-size: clamp(2rem, 6vw, 4rem); color: var(--score-text);">
+        <div class="text-center font-black tracking-[0.25em] uppercase text-base-content"
+             style="font-size: clamp(2rem, 6vw, 4rem);">
             {{ $this->event->eventConfiguration->callsign }}
         </div>
         <div class="text-center text-sm tracking-widest uppercase mt-2 font-medium"
