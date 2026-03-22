@@ -3,6 +3,8 @@
 use App\Livewire\Schedule\ManageSchedule;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\SafetyChecklistEntry;
+use App\Models\SafetyChecklistItem;
 use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
@@ -398,6 +400,12 @@ describe('confirmations', function () {
             'checked_in_at' => appNow(),
         ]);
 
+        // Safety Officer requires completed checklist to confirm
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->required()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+        SafetyChecklistEntry::factory()->completed()->create(['safety_checklist_item_id' => $item->id]);
+
         $this->actingAs($this->admin);
 
         Livewire::test(ManageSchedule::class)
@@ -510,5 +518,181 @@ describe('manager overrides', function () {
             ->assertDispatched('toast', title: 'Success', description: 'Marked as no-show');
 
         expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_NO_SHOW);
+    });
+});
+
+// =============================================================================
+// Bonus Gating
+// =============================================================================
+
+describe('bonus gating', function () {
+    test('Safety Officer gate blocks confirmation without completed checklist', function () {
+        $safetyRole = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Safety Officer',
+            'requires_confirmation' => true,
+            'bonus_points' => 100,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $safetyRole->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow(),
+        ]);
+
+        // Create checklist items with uncompleted entries
+        $item1 = SafetyChecklistItem::factory()->safetyOfficer()->required()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+        SafetyChecklistEntry::factory()->create(['safety_checklist_item_id' => $item1->id]);
+
+        $item2 = SafetyChecklistItem::factory()->safetyOfficer()->required()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sort_order' => 1,
+        ]);
+        SafetyChecklistEntry::factory()->create(['safety_checklist_item_id' => $item2->id]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('confirmCheckIn', $assignment->id)
+            ->assertDispatched('toast', title: 'Checklist Incomplete');
+
+        expect($assignment->fresh()->confirmed_at)->toBeNull();
+    });
+
+    test('Safety Officer gate passes with completed checklist', function () {
+        $safetyRole = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Safety Officer',
+            'requires_confirmation' => true,
+            'bonus_points' => 100,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $safetyRole->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow(),
+        ]);
+
+        // Create checklist items with completed entries
+        $item1 = SafetyChecklistItem::factory()->safetyOfficer()->required()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+        SafetyChecklistEntry::factory()->completed()->create(['safety_checklist_item_id' => $item1->id]);
+
+        $item2 = SafetyChecklistItem::factory()->safetyOfficer()->required()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sort_order' => 1,
+        ]);
+        SafetyChecklistEntry::factory()->completed()->create(['safety_checklist_item_id' => $item2->id]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('confirmCheckIn', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Check-in confirmed');
+
+        expect($assignment->fresh()->confirmed_at)->not->toBeNull();
+    });
+
+    test('Site Responsibilities gate blocks confirmation without completed checklist', function () {
+        $siteRole = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Site Responsibilities',
+            'requires_confirmation' => true,
+            'bonus_points' => 50,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $siteRole->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow(),
+        ]);
+
+        // Create required items — leave uncompleted
+        $requiredItem = SafetyChecklistItem::factory()->siteResponsibilities()->required()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+        SafetyChecklistEntry::factory()->create(['safety_checklist_item_id' => $requiredItem->id]);
+
+        $optionalItem = SafetyChecklistItem::factory()->siteResponsibilities()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sort_order' => 1,
+        ]);
+        SafetyChecklistEntry::factory()->create(['safety_checklist_item_id' => $optionalItem->id]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('confirmCheckIn', $assignment->id)
+            ->assertDispatched('toast', title: 'Checklist Incomplete');
+
+        expect($assignment->fresh()->confirmed_at)->toBeNull();
+    });
+
+    test('Site Responsibilities gate passes with completed checklist', function () {
+        $siteRole = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Site Responsibilities',
+            'requires_confirmation' => true,
+            'bonus_points' => 50,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $siteRole->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow(),
+        ]);
+
+        // Create 2 required items (completed) + 1 optional item (completed) = 3/3 > 50%
+        $req1 = SafetyChecklistItem::factory()->siteResponsibilities()->required()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+        SafetyChecklistEntry::factory()->completed()->create(['safety_checklist_item_id' => $req1->id]);
+
+        $req2 = SafetyChecklistItem::factory()->siteResponsibilities()->required()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sort_order' => 1,
+        ]);
+        SafetyChecklistEntry::factory()->completed()->create(['safety_checklist_item_id' => $req2->id]);
+
+        $opt1 = SafetyChecklistItem::factory()->siteResponsibilities()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sort_order' => 2,
+        ]);
+        SafetyChecklistEntry::factory()->completed()->create(['safety_checklist_item_id' => $opt1->id]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('confirmCheckIn', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Check-in confirmed');
+
+        expect($assignment->fresh()->confirmed_at)->not->toBeNull();
     });
 });
