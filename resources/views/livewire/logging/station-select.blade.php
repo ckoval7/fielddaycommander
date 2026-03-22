@@ -105,12 +105,24 @@
         <div class="space-y-4">
             <x-select
                 label="Band"
-                wire:model="selectedBandId"
+                wire:model.live="selectedBandId"
                 :options="$this->bands->map(fn($b) => ['value' => $b->id, 'label' => $b->name])"
                 option-value="value"
                 option-label="label"
                 placeholder="Select a band..."
             />
+
+            @if($this->bandWarning)
+                <x-alert
+                    :icon="$this->bandWarning['type'] === 'warning' ? 'o-exclamation-triangle' : 'o-information-circle'"
+                    @class([
+                        'alert-warning' => $this->bandWarning['type'] === 'warning',
+                        'alert-info' => $this->bandWarning['type'] === 'info',
+                    ])
+                >
+                    {{ $this->bandWarning['message'] }}
+                </x-alert>
+            @endif
 
             <x-select
                 label="Mode"
