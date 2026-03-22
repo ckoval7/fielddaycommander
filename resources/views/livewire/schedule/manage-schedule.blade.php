@@ -354,7 +354,7 @@
                     hint="Check-ins must be confirmed by a manager"
                 />
                 {{-- Icon Picker --}}
-                <div>
+                <div x-data="{ selectedIcon: $wire.entangle('roleIcon') }">
                     <label class="label label-text font-semibold">Icon</label>
                     <div class="grid grid-cols-6 gap-2 mt-1">
                         @php
@@ -382,8 +382,9 @@
                         @foreach($iconOptions as $iconValue => $iconLabel)
                             <button
                                 type="button"
-                                wire:click="$set('roleIcon', '{{ $iconValue }}')"
-                                class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-colors cursor-pointer {{ $roleIcon === $iconValue ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-base-content/30' }}"
+                                @click="selectedIcon = '{{ $iconValue }}'"
+                                :class="selectedIcon === '{{ $iconValue }}' ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-base-content/30'"
+                                class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-colors cursor-pointer"
                                 title="{{ $iconLabel }}"
                             >
                                 <x-icon :name="$iconValue" class="w-5 h-5" />
@@ -394,7 +395,7 @@
                 </div>
 
                 {{-- Color Picker --}}
-                <div>
+                <div x-data="{ selectedColor: $wire.entangle('roleColor') }">
                     <label class="label label-text font-semibold">Color</label>
                     <div class="flex flex-wrap gap-2 mt-1">
                         @php
@@ -412,8 +413,9 @@
                         @foreach($colorOptions as $colorValue => $colorInfo)
                             <button
                                 type="button"
-                                wire:click="$set('roleColor', '{{ $colorValue }}')"
-                                class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-colors cursor-pointer {{ $roleColor === $colorValue ? 'border-primary ring-2 ring-primary/30' : 'border-base-300 hover:border-base-content/30' }}"
+                                @click="selectedColor = '{{ $colorValue }}'"
+                                :class="selectedColor === '{{ $colorValue }}' ? 'border-primary ring-2 ring-primary/30' : 'border-base-300 hover:border-base-content/30'"
+                                class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-colors cursor-pointer"
                             >
                                 <span class="w-4 h-4 rounded-full {{ $colorInfo['preview'] }}"></span>
                                 <span class="text-sm">{{ $colorInfo['label'] }}</span>
