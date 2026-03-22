@@ -35,4 +35,22 @@ class SafetyChecklistEntry extends Model
     {
         return $this->belongsTo(User::class, 'completed_by_user_id');
     }
+
+    public function markComplete(User $user): void
+    {
+        $this->update([
+            'is_completed' => true,
+            'completed_by_user_id' => $user->id,
+            'completed_at' => now(),
+        ]);
+    }
+
+    public function markIncomplete(): void
+    {
+        $this->update([
+            'is_completed' => false,
+            'completed_by_user_id' => null,
+            'completed_at' => null,
+        ]);
+    }
 }
