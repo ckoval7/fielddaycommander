@@ -389,14 +389,14 @@
                 </div>
 
                 {{-- Color Picker --}}
-                <div class="flex items-center gap-3">
+                <div x-data="{ selectedColor: $wire.entangle('roleColor') }" class="flex items-center gap-3">
                     <label class="label label-text font-semibold">Color</label>
                     <input
                         type="color"
-                        wire:model.live="roleColor"
+                        x-model="selectedColor"
                         class="w-10 h-10 rounded cursor-pointer border border-base-300"
                     />
-                    <span class="badge badge-sm text-white" style="background-color: {{ $roleColor }}">Preview</span>
+                    <span class="badge badge-sm text-white" :style="'background-color: ' + selectedColor">Preview</span>
                 </div>
             </div>
 
