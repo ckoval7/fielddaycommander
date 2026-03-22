@@ -45,6 +45,7 @@ class RoleSeeder extends Seeder
             'verify-bonuses',
             'view-reports',
             'manage-guestbook',
+            'manage-shifts',
             'manage-images',
             'view-security-logs',
             'manage-own-equipment',

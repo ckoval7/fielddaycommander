@@ -43,6 +43,7 @@ class PermissionSeeder extends Seeder
             // Content Management
             ['name' => 'sign-guestbook', 'description' => 'Sign the guestbook for events'],
             ['name' => 'manage-guestbook', 'description' => 'Manage guestbook entries (verify, edit, delete, export)'],
+            ['name' => 'manage-shifts', 'description' => 'Create, edit, and manage shift schedules and assignments'],
             ['name' => 'manage-images', 'description' => 'Upload and delete event photos'],
 
             // Reporting
@@ -59,6 +60,6 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created 25 permissions');
+        $this->command->info('Created 26 permissions');
     }
 }
