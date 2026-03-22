@@ -26,3 +26,4 @@ Thumbs.db
 .playwright-mcp/
 test-results/
 .scannerwork/
+.claude/
