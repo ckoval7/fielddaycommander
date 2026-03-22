@@ -115,6 +115,8 @@
                         <x-menu-item title="Stations" icon="o-server-stack" link="{{ route('stations.index') }}" route="stations.index" />
                     @endcan
 
+                    <x-menu-item title="Schedule" icon="o-calendar-days" link="{{ route('schedule.index') }}" :active="request()->routeIs('schedule.index', 'schedule.my-shifts')" />
+
                     <x-menu-sub title="Equipment" icon="o-wrench-screwdriver">
                         <x-menu-item title="My Catalog" link="{{ route('equipment.index') }}" route="equipment.index" />
                         <x-menu-item title="Event Commitments" link="{{ route('equipment.events') }}" route="equipment.events" />
@@ -130,11 +132,15 @@
                         @endif
                     @endcan
 
-                    @canany(['manage-events', 'manage-users', 'manage-settings', 'view-reports', 'view-security-logs'])
+                    @canany(['manage-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs'])
                         <x-menu-separator title="ADMINISTRATION" />
 
                         @can('manage-events')
                             <x-menu-item title="Events" icon="o-calendar-days" link="/events" />
+                        @endcan
+
+                        @can('manage-shifts')
+                            <x-menu-item title="Manage Schedule" icon="o-cog-6-tooth" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />
                         @endcan
 
                         @can('manage-users')
