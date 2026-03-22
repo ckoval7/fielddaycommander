@@ -116,6 +116,7 @@
                     @endcan
 
                     <x-menu-item title="Schedule" icon="o-calendar-days" link="{{ route('schedule.index') }}" :active="request()->routeIs('schedule.index', 'schedule.my-shifts')" />
+                    <x-menu-item title="Site Safety" icon="o-shield-check" link="{{ route('site-safety.index') }}" :active="request()->routeIs('site-safety.index')" />
 
                     <x-menu-sub title="Equipment" icon="o-wrench-screwdriver">
                         <x-menu-item title="My Catalog" link="{{ route('equipment.index') }}" route="equipment.index" />
@@ -141,6 +142,10 @@
 
                         @can('manage-shifts')
                             <x-menu-item title="Manage Schedule" icon="o-cog-6-tooth" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />
+                        @endcan
+
+                        @can('manage-shifts')
+                            <x-menu-item title="Manage Safety Checklist" icon="o-clipboard-document-check" link="{{ route('site-safety.manage') }}" :active="request()->routeIs('site-safety.manage')" />
                         @endcan
 
                         @can('manage-users')

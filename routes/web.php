@@ -134,6 +134,15 @@ Route::middleware(['auth', 'can:manage-shifts'])->group(function () {
     Route::get('/schedule/manage', \App\Livewire\Schedule\ManageSchedule::class)->name('schedule.manage');
 });
 
+// Site Safety
+Route::middleware('auth')->group(function () {
+    Route::get('/site-safety', \App\Livewire\Safety\SiteSafetyChecklist::class)->name('site-safety.index');
+});
+
+Route::middleware(['auth', 'can:manage-shifts'])->group(function () {
+    Route::get('/site-safety/manage', \App\Livewire\Safety\ManageSafetyChecklist::class)->name('site-safety.manage');
+});
+
 // Equipment Reports - requires manage-event-equipment permission
 Route::middleware(['auth', 'can:manage-event-equipment'])->prefix('events/{event}/equipment/reports')->name('events.equipment.reports.')->group(function () {
     Route::get('/commitment-summary', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'commitmentSummary'])->name('commitment-summary');
