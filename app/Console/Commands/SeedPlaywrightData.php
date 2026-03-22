@@ -10,10 +10,14 @@ use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\OperatingClass;
 use App\Models\Section;
+use App\Models\Shift;
+use App\Models\ShiftAssignment;
+use App\Models\ShiftRole;
 use App\Models\Station;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Spatie\Permission\Models\Permission;
 
 class SeedPlaywrightData extends Command
@@ -24,6 +28,23 @@ class SeedPlaywrightData extends Command
 
     public function handle(): int
     {
+        // Clear ALL login rate limiters to avoid 429 during rapid test runs
+        $email = 'playwright-test@example.com';
+        RateLimiter::clear($email);
+        RateLimiter::clear(strtolower($email).'|'.request()?->ip());
+        // Fortify uses SHA-256 hash of email|ip
+        RateLimiter::clear(sha1(strtolower($email).'|'.request()?->ip()));
+        // Also clear by just the IP
+        if (request()?->ip()) {
+            RateLimiter::clear(request()->ip());
+        }
+        // Nuclear option: clear all cache with login prefix
+        try {
+            cache()->flush();
+        } catch (\Exception $e) {
+            // Ignore if cache doesn't support flush
+        }
+
         $scenario = $this->argument('scenario');
 
         $result = match ($scenario) {
@@ -31,6 +52,9 @@ class SeedPlaywrightData extends Command
             'equipment-warning-power' => $this->seedPowerWarningScenario(),
             'equipment-no-warning' => $this->seedNoWarningScenario(),
             'station-update' => $this->seedStationUpdateScenario(),
+            'schedule-manage' => $this->seedScheduleManageScenario(),
+            'schedule-signup' => $this->seedScheduleSignupScenario(),
+            'schedule-checkin' => $this->seedScheduleCheckinScenario(),
             'cleanup' => $this->cleanup(),
             default => null,
         };
@@ -100,10 +124,16 @@ class SeedPlaywrightData extends Command
             ]
         );
 
+        // Make the test event span appNow (respects developer clock override)
+        Event::query()->update(['is_current' => false]);
+
         $event = Event::factory()->create([
             'event_type_id' => $eventType->id,
             'is_active' => true,
+            'is_current' => true,
             'name' => 'PW Test Field Day',
+            'start_time' => appNow()->subHours(6),
+            'end_time' => appNow()->addHours(21),
         ]);
 
         $eventConfig = EventConfiguration::factory()->create([
@@ -272,6 +302,175 @@ class SeedPlaywrightData extends Command
     }
 
     /**
+     * Scenario: manager creates shifts, assigns users, confirms check-ins.
+     */
+    private function seedScheduleManageScenario(): array
+    {
+        $infra = $this->createInfrastructure();
+        $infra['user']->givePermissionTo(
+            Permission::firstOrCreate(['name' => 'manage-shifts'])
+        );
+
+        // Seed default shift roles
+        ShiftRole::seedDefaults($infra['eventConfig']);
+
+        // Create a second user to assign
+        $operator = User::factory()->create([
+            'email' => 'playwright-operator@example.com',
+            'password' => Hash::make('playwright-test-password'),
+            'call_sign' => 'PW2OPR',
+            'first_name' => 'Operator',
+            'last_name' => 'Bob',
+        ]);
+
+        return [
+            'user_email' => 'playwright-test@example.com',
+            'user_password' => 'playwright-test-password',
+            'operator_id' => $operator->id,
+            'operator_name' => 'Operator Bob',
+            'event_config_id' => $infra['eventConfig']->id,
+        ];
+    }
+
+    /**
+     * Scenario: user sees open shifts and can sign up.
+     */
+    private function seedScheduleSignupScenario(): array
+    {
+        $infra = $this->createInfrastructure();
+        $infra['user']->givePermissionTo(
+            Permission::firstOrCreate(['name' => 'manage-shifts'])
+        );
+
+        ShiftRole::seedDefaults($infra['eventConfig']);
+
+        $role = ShiftRole::where('event_configuration_id', $infra['eventConfig']->id)
+            ->where('name', 'Public Greeter')
+            ->first();
+
+        // Create an open shift in the future with capacity 2
+        $shift = Shift::create([
+            'event_configuration_id' => $infra['eventConfig']->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+            'capacity' => 2,
+            'is_open' => true,
+        ]);
+
+        // Create a closed/full shift (capacity 1, already assigned)
+        $closedRole = ShiftRole::where('event_configuration_id', $infra['eventConfig']->id)
+            ->where('name', 'Event Manager')
+            ->first();
+
+        $fullShift = Shift::create([
+            'event_configuration_id' => $infra['eventConfig']->id,
+            'shift_role_id' => $closedRole->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+            'capacity' => 1,
+            'is_open' => false,
+        ]);
+
+        $otherUser = User::factory()->create([
+            'email' => 'playwright-operator@example.com',
+            'password' => Hash::make('playwright-test-password'),
+            'call_sign' => 'PW2OPR',
+            'first_name' => 'Operator',
+            'last_name' => 'Bob',
+        ]);
+
+        ShiftAssignment::create([
+            'shift_id' => $fullShift->id,
+            'user_id' => $otherUser->id,
+            'status' => 'scheduled',
+            'signup_type' => 'assigned',
+        ]);
+
+        return [
+            'user_email' => 'playwright-test@example.com',
+            'user_password' => 'playwright-test-password',
+            'open_shift_id' => $shift->id,
+            'full_shift_id' => $fullShift->id,
+            'role_name' => 'Public Greeter',
+        ];
+    }
+
+    /**
+     * Scenario: user has an assigned shift they can check in/out of,
+     * and a manager can confirm bonus-role check-ins.
+     */
+    private function seedScheduleCheckinScenario(): array
+    {
+        $infra = $this->createInfrastructure();
+        $infra['user']->givePermissionTo(
+            Permission::firstOrCreate(['name' => 'manage-shifts'])
+        );
+
+        ShiftRole::seedDefaults($infra['eventConfig']);
+
+        // Create a non-bonus role shift (current time so check-in works)
+        $stationCapRole = ShiftRole::where('event_configuration_id', $infra['eventConfig']->id)
+            ->where('name', 'Station Captain')
+            ->first();
+
+        $currentShift = Shift::create([
+            'event_configuration_id' => $infra['eventConfig']->id,
+            'shift_role_id' => $stationCapRole->id,
+            'start_time' => appNow()->subHour(),
+            'end_time' => appNow()->addHours(3),
+            'capacity' => 1,
+            'is_open' => false,
+        ]);
+
+        $assignment = ShiftAssignment::create([
+            'shift_id' => $currentShift->id,
+            'user_id' => $infra['user']->id,
+            'status' => 'scheduled',
+            'signup_type' => 'assigned',
+        ]);
+
+        // Create a bonus role shift with a second user checked in (for confirmation testing)
+        $safetyRole = ShiftRole::where('event_configuration_id', $infra['eventConfig']->id)
+            ->where('name', 'Safety Officer')
+            ->first();
+
+        $bonusShift = Shift::create([
+            'event_configuration_id' => $infra['eventConfig']->id,
+            'shift_role_id' => $safetyRole->id,
+            'start_time' => appNow()->subHour(),
+            'end_time' => appNow()->addHours(3),
+            'capacity' => 1,
+            'is_open' => false,
+        ]);
+
+        $operator = User::factory()->create([
+            'email' => 'playwright-operator@example.com',
+            'password' => Hash::make('playwright-test-password'),
+            'call_sign' => 'PW2OPR',
+            'first_name' => 'Operator',
+            'last_name' => 'Bob',
+        ]);
+
+        $bonusAssignment = ShiftAssignment::create([
+            'shift_id' => $bonusShift->id,
+            'user_id' => $operator->id,
+            'status' => 'checked_in',
+            'checked_in_at' => now(),
+            'signup_type' => 'assigned',
+        ]);
+
+        return [
+            'user_email' => 'playwright-test@example.com',
+            'user_password' => 'playwright-test-password',
+            'assignment_id' => $assignment->id,
+            'bonus_assignment_id' => $bonusAssignment->id,
+            'operator_name' => 'Operator Bob',
+            'event_config_id' => $infra['eventConfig']->id,
+        ];
+    }
+
+    /**
      * Clean up test data.
      */
     private function cleanup(): array
@@ -279,6 +478,16 @@ class SeedPlaywrightData extends Command
         $user = User::where('email', 'playwright-test@example.com')->first();
 
         if ($user) {
+            // Clean shift data
+            Event::where('name', 'PW Test Field Day')->each(function (Event $event) {
+                $config = $event->eventConfiguration;
+                if ($config) {
+                    ShiftAssignment::whereHas('shift', fn ($q) => $q->where('event_configuration_id', $config->id))->forceDelete();
+                    Shift::where('event_configuration_id', $config->id)->forceDelete();
+                    ShiftRole::where('event_configuration_id', $config->id)->forceDelete();
+                }
+            });
+
             Equipment::where('owner_user_id', $user->id)->each(function (Equipment $eq) {
                 $eq->commitments()->delete();
                 $eq->bands()->detach();
@@ -295,6 +504,17 @@ class SeedPlaywrightData extends Command
             });
 
             $user->delete();
+        }
+
+        // Also clean the second test user
+        User::where('email', 'playwright-operator@example.com')->delete();
+
+        // Restore the most recent non-test event as current
+        $lastEvent = Event::where('name', '!=', 'PW Test Field Day')
+            ->orderByDesc('id')
+            ->first();
+        if ($lastEvent) {
+            $lastEvent->update(['is_current' => true]);
         }
 
         return ['cleaned' => true];

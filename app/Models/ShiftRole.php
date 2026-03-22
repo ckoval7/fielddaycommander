@@ -15,74 +15,75 @@ class ShiftRole extends Model
     use HasFactory, SoftDeletes;
 
     /**
-     * Default shift roles with their configurations.
+     * Default shift role definitions keyed by name.
+     * 'eligible_classes' is informational — used for seeding recommendations.
      *
-     * @var array<string, array{description: string, eligible_classes: list<string>, bonus_points: int|null, requires_confirmation: bool, icon: string, color: string}>
+     * @var array<string, array{description: string, bonus_points: int|null, requires_confirmation: bool, eligible_classes: list<string>, icon: string, color: string}>
      */
     public const DEFAULTS = [
-        'Station Operator' => [
-            'description' => 'Operates a radio station during the shift',
-            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
-            'bonus_points' => null,
-            'requires_confirmation' => false,
-            'icon' => 'o-radio',
-            'color' => 'badge-primary',
-        ],
-        'GOTA Coach' => [
-            'description' => 'Coaches new operators at the GOTA station',
-            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
-            'bonus_points' => null,
-            'requires_confirmation' => false,
-            'icon' => 'o-academic-cap',
-            'color' => 'badge-secondary',
-        ],
         'Safety Officer' => [
-            'description' => 'Designated safety officer for the event',
-            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
+            'description' => 'Verifies all safety concerns on the Safety Officer checklist',
             'bonus_points' => 100,
             'requires_confirmation' => true,
+            'eligible_classes' => ['A', 'F'],
             'icon' => 'o-shield-check',
+            'color' => 'badge-error',
+        ],
+        'Site Responsibilities' => [
+            'description' => 'Ensures site is free of hazards and provides a point of contact for visitors',
+            'bonus_points' => 50,
+            'requires_confirmation' => true,
+            'eligible_classes' => ['B', 'C', 'D', 'E', 'F'],
+            'icon' => 'o-clipboard-document-check',
             'color' => 'badge-warning',
         ],
         'Public Information Table' => [
-            'description' => 'Staffs the public information table for visitors',
-            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
+            'description' => 'Staffs the public information table with handouts for visitors',
             'bonus_points' => 100,
             'requires_confirmation' => true,
+            'eligible_classes' => ['A', 'B', 'F'],
             'icon' => 'o-information-circle',
             'color' => 'badge-info',
         ],
         'Public Greeter' => [
-            'description' => 'Greets visitors at a publicly accessible location',
-            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
+            'description' => 'Greets visitors at a publicly accessible location with name badge',
             'bonus_points' => 100,
             'requires_confirmation' => true,
+            'eligible_classes' => ['A', 'B', 'F'],
             'icon' => 'o-hand-raised',
             'color' => 'badge-success',
         ],
-        'Logger' => [
-            'description' => 'Logs contacts at a station',
-            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
-            'bonus_points' => null,
-            'requires_confirmation' => false,
-            'icon' => 'o-pencil-square',
-            'color' => 'badge-neutral',
+        'GOTA Coach' => [
+            'description' => 'Coaches new operators at the GOTA station',
+            'bonus_points' => 100,
+            'requires_confirmation' => true,
+            'eligible_classes' => ['A', 'F'],
+            'icon' => 'o-academic-cap',
+            'color' => 'badge-secondary',
         ],
-        'Setup / Teardown' => [
-            'description' => 'Helps with site setup and teardown',
+        'Message Handler' => [
+            'description' => 'Handles NTS/ICS-213 message origination, relay, and delivery',
+            'bonus_points' => 100,
+            'requires_confirmation' => true,
             'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
-            'bonus_points' => null,
-            'requires_confirmation' => false,
-            'icon' => 'o-wrench-screwdriver',
+            'icon' => 'o-envelope',
             'color' => 'badge-accent',
         ],
-        'General Volunteer' => [
-            'description' => 'General volunteer duties as assigned',
-            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
+        'Event Manager' => [
+            'description' => 'Overall event coordination and management',
             'bonus_points' => null,
             'requires_confirmation' => false,
+            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
             'icon' => 'o-user-group',
-            'color' => 'badge-ghost',
+            'color' => 'badge-primary',
+        ],
+        'Station Captain' => [
+            'description' => 'Manages a specific radio station and its operators',
+            'bonus_points' => null,
+            'requires_confirmation' => false,
+            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
+            'icon' => 'o-signal',
+            'color' => 'badge-neutral',
         ],
     ];
 

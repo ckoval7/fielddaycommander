@@ -80,14 +80,13 @@ describe('Seeding', function () {
         $roles = ShiftRole::forEvent($eventConfiguration->id)->pluck('name')->toArray();
 
         expect($roles)
-            ->toContain('Station Operator')
             ->toContain('Safety Officer')
             ->toContain('Public Information Table')
             ->toContain('Public Greeter')
             ->toContain('GOTA Coach')
-            ->toContain('Logger')
-            ->toContain('Setup / Teardown')
-            ->toContain('General Volunteer')
+            ->toContain('Message Handler')
+            ->toContain('Event Manager')
+            ->toContain('Station Captain')
             ->not->toContain('Site Responsibilities');
     });
 
