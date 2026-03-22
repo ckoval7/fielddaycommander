@@ -229,6 +229,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's shift assignments.
+     */
+    public function shiftAssignments(): HasMany
+    {
+        return $this->hasMany(ShiftAssignment::class);
+    }
+
+    /**
      * Normalize call sign to uppercase.
      */
     protected function setCallSignAttribute(?string $value): void

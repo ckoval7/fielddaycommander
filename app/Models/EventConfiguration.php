@@ -107,6 +107,16 @@ class EventConfiguration extends Model
         return $this->hasMany(GuestbookEntry::class);
     }
 
+    public function shiftRoles(): HasMany
+    {
+        return $this->hasMany(ShiftRole::class);
+    }
+
+    public function shifts(): HasMany
+    {
+        return $this->hasMany(Shift::class);
+    }
+
     public function getHasGuestbookLocationAttribute(): bool
     {
         return $this->guestbook_latitude !== null && $this->guestbook_longitude !== null;
