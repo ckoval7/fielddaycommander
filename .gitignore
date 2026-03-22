@@ -24,4 +24,5 @@ Homestead.yaml
 Thumbs.db
 .worktrees
 .playwright-mcp/
+test-results/
 .scannerwork/
