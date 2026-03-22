@@ -520,13 +520,15 @@
     <x-modal wire:model="showAssignModal" title="Assign User to Shift">
         <div>
             <div class="space-y-4">
-                <x-select
+                <x-choices-offline
                     label="User"
                     wire:model="assignUserId"
                     :options="$this->users"
                     option-value="id"
                     option-label="name"
-                    placeholder="Select a user"
+                    placeholder="Search for a user..."
+                    searchable
+                    single
                 />
             </div>
 
