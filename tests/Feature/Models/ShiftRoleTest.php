@@ -102,13 +102,8 @@ describe('Seeding', function () {
         expect($countAfterSecond)->toBe($countAfterFirst);
     });
 
-    test('getBonusTypeCode returns correct codes for mapped roles', function () {
+    test('getBonusTypeCode returns codes for auto-award roles only', function () {
         $eventConfiguration = EventConfiguration::factory()->create();
-
-        $safetyOfficer = ShiftRole::factory()->safetyOfficer()->create([
-            'event_configuration_id' => $eventConfiguration->id,
-        ]);
-        expect($safetyOfficer->getBonusTypeCode())->toBe('safety_officer');
 
         $pioTable = ShiftRole::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
@@ -123,9 +118,26 @@ describe('Seeding', function () {
         expect($publicGreeter->getBonusTypeCode())->toBe('public_location');
     });
 
-    test('getBonusTypeCode returns null for unmapped roles', function () {
-        $role = ShiftRole::factory()->create(['name' => 'Station Operator']);
+    test('getBonusTypeCode returns null for eligibility-only roles', function () {
+        $safetyOfficer = ShiftRole::factory()->safetyOfficer()->create();
+        expect($safetyOfficer->getBonusTypeCode())->toBeNull();
 
-        expect($role->getBonusTypeCode())->toBeNull();
+        $siteResp = ShiftRole::factory()->create(['name' => 'Site Responsibilities']);
+        expect($siteResp->getBonusTypeCode())->toBeNull();
+
+        $gotaCoach = ShiftRole::factory()->create(['name' => 'GOTA Coach']);
+        expect($gotaCoach->getBonusTypeCode())->toBeNull();
+    });
+
+    test('isBonusEligibilityOnly identifies eligibility-only roles', function () {
+        $safetyOfficer = ShiftRole::factory()->safetyOfficer()->create();
+        expect($safetyOfficer->isBonusEligibilityOnly())->toBeTrue();
+        expect($safetyOfficer->getBonusEligibilityRequirement())->toContain('Checklist');
+
+        $pioTable = ShiftRole::factory()->create(['name' => 'Public Information Table']);
+        expect($pioTable->isBonusEligibilityOnly())->toBeFalse();
+
+        $custom = ShiftRole::factory()->create(['name' => 'Food Coordinator']);
+        expect($custom->isBonusEligibilityOnly())->toBeFalse();
     });
 });

@@ -81,13 +81,16 @@ describe('Confirmation & Bonus Sync', function () {
             ->and($assignment->confirmed_at)->not->toBeNull();
     });
 
-    test('confirm creates EventBonus for bonus-point role', function () {
+    test('confirm auto-awards EventBonus for auto-award role (PIO Table)', function () {
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\EventTypeSeeder']);
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\BonusTypeSeeder']);
 
         $eventConfiguration = EventConfiguration::factory()->create();
-        $role = ShiftRole::factory()->safetyOfficer()->create([
+        $role = ShiftRole::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
+            'name' => 'Public Information Table',
+            'bonus_points' => 100,
+            'requires_confirmation' => true,
         ]);
         $shift = Shift::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
@@ -98,21 +101,25 @@ describe('Confirmation & Bonus Sync', function () {
 
         $assignment->confirm($manager);
 
-        $bonusType = BonusType::where('code', 'safety_officer')->first();
+        $bonusType = BonusType::where('code', 'public_info_booth')->first();
 
         expect(EventBonus::where('event_configuration_id', $eventConfiguration->id)
             ->where('bonus_type_id', $bonusType->id)
+            ->where('is_verified', true)
             ->exists()
         )->toBeTrue();
     });
 
-    test('revokeConfirmation removes EventBonus', function () {
+    test('revokeConfirmation removes auto-awarded EventBonus', function () {
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\EventTypeSeeder']);
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\BonusTypeSeeder']);
 
         $eventConfiguration = EventConfiguration::factory()->create();
-        $role = ShiftRole::factory()->safetyOfficer()->create([
+        $role = ShiftRole::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
+            'name' => 'Public Information Table',
+            'bonus_points' => 100,
+            'requires_confirmation' => true,
         ]);
         $shift = Shift::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
@@ -123,7 +130,7 @@ describe('Confirmation & Bonus Sync', function () {
 
         $assignment->confirm($manager);
 
-        $bonusType = BonusType::where('code', 'safety_officer')->first();
+        $bonusType = BonusType::where('code', 'public_info_booth')->first();
         expect(EventBonus::where('event_configuration_id', $eventConfiguration->id)
             ->where('bonus_type_id', $bonusType->id)
             ->exists()
@@ -137,6 +144,26 @@ describe('Confirmation & Bonus Sync', function () {
         )->toBeFalse();
     });
 
+    test('confirm does NOT auto-award EventBonus for eligibility-only role (Safety Officer)', function () {
+        $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\EventTypeSeeder']);
+        $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\BonusTypeSeeder']);
+
+        $eventConfiguration = EventConfiguration::factory()->create();
+        $role = ShiftRole::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $eventConfiguration->id,
+        ]);
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $eventConfiguration->id,
+            'shift_role_id' => $role->id,
+        ]);
+        $assignment = ShiftAssignment::factory()->create(['shift_id' => $shift->id]);
+        $manager = User::factory()->create();
+
+        $assignment->confirm($manager);
+
+        expect(EventBonus::where('event_configuration_id', $eventConfiguration->id)->count())->toBe(0);
+    });
+
     test('confirm does not create EventBonus for non-bonus role', function () {
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\EventTypeSeeder']);
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\BonusTypeSeeder']);
@@ -144,7 +171,7 @@ describe('Confirmation & Bonus Sync', function () {
         $eventConfiguration = EventConfiguration::factory()->create();
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
-            'name' => 'Station Operator',
+            'name' => 'Station Captain',
         ]);
         $shift = Shift::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,

@@ -62,7 +62,14 @@
                             </x-slot:title>
 
                             @if($role->description)
-                                <p class="text-sm text-base-content/60 mb-4">{{ $role->description }}</p>
+                                <p class="text-sm text-base-content/60 mb-2">{{ $role->description }}</p>
+                            @endif
+
+                            @if($role->isBonusEligibilityOnly())
+                                <p class="text-xs text-warning mb-4">
+                                    <x-icon name="o-exclamation-triangle" class="w-3 h-3 inline" />
+                                    {{ $role->getBonusEligibilityRequirement() }}
+                                </p>
                             @endif
 
                             @if($shifts->isEmpty())

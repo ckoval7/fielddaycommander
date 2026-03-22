@@ -228,12 +228,22 @@
                                                 @if($role->description)
                                                     <p class="text-sm text-base-content/60">{{ $role->description }}</p>
                                                 @endif
-                                                <div class="flex items-center gap-3 mt-1 text-sm text-base-content/50">
-                                                    @if($role->bonus_points)
-                                                        <span>Bonus: {{ $role->bonus_points }} pts</span>
-                                                    @endif
-                                                    @if($role->requires_confirmation)
-                                                        <x-badge value="Requires Confirmation" class="badge-warning badge-sm badge-outline" />
+                                                <div class="flex flex-col gap-1 mt-1 text-sm text-base-content/50">
+                                                    <div class="flex items-center gap-3">
+                                                        @if($role->bonus_points)
+                                                            <span>Bonus: {{ $role->bonus_points }} pts</span>
+                                                            @if($role->getBonusTypeCode())
+                                                                <x-badge value="Auto-awarded on confirmation" class="badge-success badge-sm badge-outline" />
+                                                            @elseif($role->isBonusEligibilityOnly())
+                                                                <x-badge value="Eligibility only" class="badge-warning badge-sm badge-outline" />
+                                                            @endif
+                                                        @endif
+                                                        @if($role->requires_confirmation)
+                                                            <x-badge value="Requires Confirmation" class="badge-info badge-sm badge-outline" />
+                                                        @endif
+                                                    </div>
+                                                    @if($role->isBonusEligibilityOnly())
+                                                        <span class="text-xs text-warning">{{ $role->getBonusEligibilityRequirement() }}</span>
                                                     @endif
                                                 </div>
                                             </div>
@@ -285,12 +295,19 @@
                                                         <span class="text-base-content/50">({{ $confirmation->user->call_sign }})</span>
                                                     @endif
                                                 </div>
-                                                <div class="flex items-center gap-2 text-sm text-base-content/60">
-                                                    @if($confirmation->shift?->shiftRole)
-                                                        <span class="badge badge-sm text-white" style="background-color: {{ $confirmation->shift->shiftRole->color ?? '#64748b' }}">{{ $confirmation->shift->shiftRole->name }}</span>
-                                                    @endif
-                                                    @if($confirmation->checked_in_at)
-                                                        <span>Checked in: {{ $confirmation->checked_in_at->format('M j, g:i A') }}</span>
+                                                <div class="flex flex-col gap-1 text-sm text-base-content/60">
+                                                    <div class="flex items-center gap-2">
+                                                        @if($confirmation->shift?->shiftRole)
+                                                            <span class="badge badge-sm text-white" style="background-color: {{ $confirmation->shift->shiftRole->color ?? '#64748b' }}">{{ $confirmation->shift->shiftRole->name }}</span>
+                                                        @endif
+                                                        @if($confirmation->checked_in_at)
+                                                            <span>Checked in: {{ $confirmation->checked_in_at->format('M j, g:i A') }}</span>
+                                                        @endif
+                                                    </div>
+                                                    @if($confirmation->shift?->shiftRole?->getBonusTypeCode())
+                                                        <span class="text-xs text-success">Confirming will auto-award {{ $confirmation->shift->shiftRole->bonus_points }} bonus points</span>
+                                                    @elseif($confirmation->shift?->shiftRole?->isBonusEligibilityOnly())
+                                                        <span class="text-xs text-warning">Confirms attendance only — {{ $confirmation->shift->shiftRole->getBonusEligibilityRequirement() }}</span>
                                                     @endif
                                                 </div>
                                             </div>

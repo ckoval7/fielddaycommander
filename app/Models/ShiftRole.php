@@ -88,14 +88,33 @@ class ShiftRole extends Model
     ];
 
     /**
-     * Maps shift role names to BonusType codes for automatic bonus tracking.
+     * Maps shift role names to BonusType codes for automatic bonus awarding.
+     *
+     * Only roles where confirmed presence IS the bonus requirement are mapped here.
+     * Roles like Safety Officer and Site Responsibilities require additional
+     * verification (checklists) and are handled by their own features.
+     * GOTA Coach requires 10 supervised contacts — tracked via GOTA contact count.
+     * Message Handler requires actual messages sent — tracked separately.
      *
      * @var array<string, string>
      */
     public const BONUS_TYPE_MAP = [
-        'Safety Officer' => 'safety_officer',
         'Public Information Table' => 'public_info_booth',
         'Public Greeter' => 'public_location',
+    ];
+
+    /**
+     * Roles where having a confirmed person makes the event ELIGIBLE for the
+     * bonus, but additional verification is needed before points are awarded.
+     * The value describes what else is required.
+     *
+     * @var array<string, string>
+     */
+    public const BONUS_ELIGIBILITY_MAP = [
+        'Safety Officer' => 'Requires completed Safety Officer Checklist',
+        'Site Responsibilities' => 'Requires completed Site Responsibilities Checklist (present from setup to breakdown)',
+        'GOTA Coach' => 'Requires at least 10 GOTA contacts made under supervision',
+        'Message Handler' => 'Requires formal NTS/ICS-213 messages originated or relayed',
     ];
 
     protected $fillable = [
@@ -173,11 +192,27 @@ class ShiftRole extends Model
     // Methods
 
     /**
-     * Get the BonusType code associated with this shift role, if any.
+     * Get the BonusType code for auto-awarding, if this role qualifies.
      */
     public function getBonusTypeCode(): ?string
     {
         return self::BONUS_TYPE_MAP[$this->name] ?? null;
+    }
+
+    /**
+     * Check if this role only contributes to bonus eligibility (not auto-award).
+     */
+    public function isBonusEligibilityOnly(): bool
+    {
+        return isset(self::BONUS_ELIGIBILITY_MAP[$this->name]);
+    }
+
+    /**
+     * Get the additional requirement description for eligibility-only roles.
+     */
+    public function getBonusEligibilityRequirement(): ?string
+    {
+        return self::BONUS_ELIGIBILITY_MAP[$this->name] ?? null;
     }
 
     /**
