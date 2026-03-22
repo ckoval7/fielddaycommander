@@ -72,7 +72,7 @@
     {{-- Searchable Radio Select --}}
     <x-choices
         label="Primary Radio"
-        wire:model="radio_equipment_id"
+        wire:model.live="radio_equipment_id"
         :options="$availableRadios"
         option-value="id"
         option-label="name"
@@ -132,7 +132,7 @@
         {{-- Power Source Description --}}
         <x-textarea
             label="Power Source Description"
-            wire:model="power_source_description"
+            wire:model.live.debounce.500ms="power_source_description"
             placeholder="e.g., Solar + Battery Bank, Commercial + Generator Backup, 100% Solar"
             hint="Optional - Describe the power sources for this station"
             rows="3"

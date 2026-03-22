@@ -30,6 +30,7 @@ class SeedPlaywrightData extends Command
             'equipment-warning-band' => $this->seedBandWarningScenario(),
             'equipment-warning-power' => $this->seedPowerWarningScenario(),
             'equipment-no-warning' => $this->seedNoWarningScenario(),
+            'station-update' => $this->seedStationUpdateScenario(),
             'cleanup' => $this->cleanup(),
             default => null,
         };
@@ -253,6 +254,20 @@ class SeedPlaywrightData extends Command
             'station_id' => $infra['station']->id,
             'equipment_id' => $accessory->id,
             'equipment_label' => 'MFJ 993B',
+        ];
+    }
+
+    /**
+     * Scenario: station exists and needs power source updated.
+     */
+    private function seedStationUpdateScenario(): array
+    {
+        $infra = $this->createInfrastructure();
+
+        return [
+            'user_email' => 'playwright-test@example.com',
+            'user_password' => 'playwright-test-password',
+            'station_id' => $infra['station']->id,
         ];
     }
 

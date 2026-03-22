@@ -81,7 +81,7 @@ test('component can render for edit mode', function () {
         'name' => 'Test Station',
     ]);
 
-    Livewire::test(StationForm::class, ['stationId' => $station->id])
+    Livewire::test(StationForm::class, ['station' => $station])
         ->assertStatus(200)
         ->assertSee('Edit Station')
         ->assertSet('name', 'Test Station');
@@ -116,7 +116,7 @@ test('can update a station', function () {
         'max_power_watts' => 50,
     ]);
 
-    Livewire::test(StationForm::class, ['stationId' => $station->id])
+    Livewire::test(StationForm::class, ['station' => $station])
         ->set('name', 'New Name')
         ->set('max_power_watts', 100)
         ->call('save')

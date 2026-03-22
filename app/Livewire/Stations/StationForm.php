@@ -192,7 +192,13 @@ class StationForm extends Component
 
     public function save(): void
     {
-        $validated = $this->validate();
+        try {
+            $validated = $this->validate();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->activeTab = 'configuration';
+
+            throw $e;
+        }
 
         // Check for only one GOTA station per event
         if ($validated['is_gota']) {
