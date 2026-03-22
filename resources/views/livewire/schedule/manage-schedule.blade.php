@@ -517,7 +517,7 @@
     </x-modal>
 
     {{-- Assignment Modal --}}
-    <x-modal wire:model="showAssignModal" title="Assign User to Shift">
+    <x-modal wire:model="showAssignModal" title="Assign User to Shift" class="!overflow-visible" box-class="!overflow-visible">
         <div>
             <div class="space-y-4">
                 <x-choices-offline
