@@ -76,6 +76,7 @@ class StationSelect extends Component
 
         return $event->eventConfiguration->stations()
             ->with([
+                'primaryRadio.bands',
                 'operatingSessions' => function ($query) {
                     $query->active()->with(['operator', 'band', 'mode'])->latest();
                 },
@@ -114,6 +115,51 @@ class StationSelect extends Component
     public function modes()
     {
         return Mode::all();
+    }
+
+    #[Computed]
+    public function bandWarning(): ?array
+    {
+        if (! $this->selectedStationId || ! $this->selectedBandId) {
+            return null;
+        }
+
+        $station = $this->stations->firstWhere('id', $this->selectedStationId);
+        if (! $station) {
+            return null;
+        }
+
+        if (! $station->primaryRadio) {
+            return [
+                'type' => 'info',
+                'message' => 'This station has no radio assigned — band compatibility cannot be verified.',
+            ];
+        }
+
+        $radioBands = $station->primaryRadio->bands;
+
+        if ($radioBands->isEmpty()) {
+            return [
+                'type' => 'info',
+                'message' => "This station's radio has no band information configured — compatibility cannot be verified.",
+            ];
+        }
+
+        if (! $radioBands->contains('id', $this->selectedBandId)) {
+            $selectedBand = $this->bands->firstWhere('id', $this->selectedBandId);
+            if (! $selectedBand) {
+                return null;
+            }
+            $radioName = trim($station->primaryRadio->make.' '.$station->primaryRadio->model);
+            $supportedList = $radioBands->pluck('name')->join(', ');
+
+            return [
+                'type' => 'warning',
+                'message' => "Selected band ({$selectedBand->name}) is not supported by this station's radio ({$radioName}). Supported bands: {$supportedList}.",
+            ];
+        }
+
+        return null;
     }
 
     public function selectStation(int $stationId): void

@@ -2,6 +2,7 @@
 
 use App\Livewire\Logging\StationSelect;
 use App\Models\Band;
+use App\Models\Equipment;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
@@ -288,4 +289,134 @@ test('station select blocks logging for archived events', function () {
 
     Livewire::test(StationSelect::class)
         ->assertSee('No Active Event');
+});
+
+test('band warning is null when selected band matches station radio', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+    $radio->bands()->attach($this->band);
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $radio->id,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->set('selectedBandId', $this->band->id)
+        ->assertSet('bandWarning', null);
+});
+
+test('band warning shown when selected band is not supported by station radio', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $otherBand = Band::create([
+        'name' => '40m', 'meters' => 40, 'frequency_mhz' => 7.15,
+        'allowed_fd' => true, 'sort_order' => 3,
+    ]);
+
+    $radio = Equipment::factory()->create([
+        'type' => 'radio',
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+    ]);
+    $radio->bands()->attach($otherBand);
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $radio->id,
+    ]);
+
+    $component = Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->set('selectedBandId', $this->band->id);
+
+    $warning = $component->get('bandWarning');
+    expect($warning)->not->toBeNull()
+        ->and($warning['type'])->toBe('warning')
+        ->and($warning['message'])->toContain('20m')
+        ->and($warning['message'])->toContain('Icom IC-7300');
+});
+
+test('band warning shows info when station has no radio assigned', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => null,
+    ]);
+
+    $component = Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->set('selectedBandId', $this->band->id);
+
+    $warning = $component->get('bandWarning');
+    expect($warning)->not->toBeNull()
+        ->and($warning['type'])->toBe('info')
+        ->and($warning['message'])->toContain('no radio assigned');
+});
+
+test('band warning shows info when station radio has no bands configured', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+    // No bands attached to radio
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $radio->id,
+    ]);
+
+    $component = Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->set('selectedBandId', $this->band->id);
+
+    $warning = $component->get('bandWarning');
+    expect($warning)->not->toBeNull()
+        ->and($warning['type'])->toBe('info')
+        ->and($warning['message'])->toContain('no band information configured');
+});
+
+test('band warning is null when no band is selected', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => null,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->assertSet('bandWarning', null);
 });
