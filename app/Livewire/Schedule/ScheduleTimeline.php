@@ -191,7 +191,13 @@ class ScheduleTimeline extends Component
             return $contextEvent;
         }
 
-        // 2. Try next upcoming event
+        // 2. Try the event marked as current (for pre-event planning)
+        $currentEvent = Event::where('is_current', true)->first();
+        if ($currentEvent) {
+            return $currentEvent;
+        }
+
+        // 3. Try next upcoming event
         $upcomingEvent = Event::upcoming()
             ->orderBy('start_time', 'asc')
             ->first();
@@ -199,7 +205,7 @@ class ScheduleTimeline extends Component
             return $upcomingEvent;
         }
 
-        // 3. Fall back to most recent past event
+        // 4. Fall back to most recent past event
         return Event::completed()
             ->orderBy('end_time', 'desc')
             ->first();

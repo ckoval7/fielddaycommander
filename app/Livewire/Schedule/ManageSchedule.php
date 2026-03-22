@@ -88,7 +88,14 @@ class ManageSchedule extends Component
 
         $contextService = app(EventContextService::class);
         $this->event = $contextService->getContextEvent();
-        $this->eventConfig = $contextService->getEventConfiguration();
+
+        // Fall back to current event for pre-event planning
+        if (! $this->event) {
+            $this->event = Event::where('is_current', true)->first()
+                ?? Event::upcoming()->orderBy('start_time', 'asc')->first();
+        }
+
+        $this->eventConfig = $this->event?->eventConfiguration;
 
         // Seed default roles if none exist
         if ($this->eventConfig && $this->eventConfig->shiftRoles()->count() === 0) {
@@ -162,8 +169,8 @@ class ManageSchedule extends Component
             ->get()
             ->map(fn (User $user) => [
                 'id' => $user->id,
-                'name' => trim($user->first_name . ' ' . $user->last_name)
-                    . ($user->call_sign ? " ({$user->call_sign})" : ''),
+                'name' => trim($user->first_name.' '.$user->last_name)
+                    .($user->call_sign ? " ({$user->call_sign})" : ''),
             ]);
     }
 

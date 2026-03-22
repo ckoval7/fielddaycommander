@@ -165,6 +165,11 @@ class MyShifts extends Component
             return $contextEvent;
         }
 
+        $currentEvent = Event::where('is_current', true)->first();
+        if ($currentEvent) {
+            return $currentEvent;
+        }
+
         $upcomingEvent = Event::upcoming()
             ->orderBy('start_time', 'asc')
             ->first();
