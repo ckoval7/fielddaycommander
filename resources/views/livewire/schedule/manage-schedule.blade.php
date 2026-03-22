@@ -521,16 +521,11 @@
                 <x-select
                     label="User"
                     wire:model="assignUserId"
+                    :options="$this->users"
+                    option-value="id"
+                    option-label="name"
                     placeholder="Select a user"
-                    required
-                >
-                    @foreach($this->users as $user)
-                        <option value="{{ $user->id }}">
-                            {{ $user->first_name }} {{ $user->last_name }}
-                            @if($user->call_sign) ({{ $user->call_sign }}) @endif
-                        </option>
-                    @endforeach
-                </x-select>
+                />
             </div>
 
             <x-slot:actions>

@@ -159,7 +159,12 @@ class ManageSchedule extends Component
     {
         return User::query()
             ->orderBy('first_name')
-            ->get(['id', 'first_name', 'last_name', 'call_sign']);
+            ->get()
+            ->map(fn (User $user) => [
+                'id' => $user->id,
+                'name' => trim($user->first_name . ' ' . $user->last_name)
+                    . ($user->call_sign ? " ({$user->call_sign})" : ''),
+            ]);
     }
 
     // --- Role CRUD ---
