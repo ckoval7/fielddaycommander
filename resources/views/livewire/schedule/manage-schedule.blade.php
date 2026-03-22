@@ -353,28 +353,74 @@
                     wire:model="roleRequiresConfirmation"
                     hint="Check-ins must be confirmed by a manager"
                 />
-                <x-input
-                    label="Icon"
-                    wire:model="roleIcon"
-                    placeholder="e.g., o-user-group"
-                />
-                <x-select
-                    label="Color"
-                    wire:model="roleColor"
-                    :options="[
-                        ['value' => 'badge-primary', 'label' => 'Primary'],
-                        ['value' => 'badge-secondary', 'label' => 'Secondary'],
-                        ['value' => 'badge-accent', 'label' => 'Accent'],
-                        ['value' => 'badge-neutral', 'label' => 'Neutral'],
-                        ['value' => 'badge-info', 'label' => 'Info'],
-                        ['value' => 'badge-success', 'label' => 'Success'],
-                        ['value' => 'badge-warning', 'label' => 'Warning'],
-                        ['value' => 'badge-error', 'label' => 'Error'],
-                        ['value' => 'badge-ghost', 'label' => 'Ghost'],
-                    ]"
-                    option-value="value"
-                    option-label="label"
-                />
+                {{-- Icon Picker --}}
+                <div>
+                    <label class="label label-text font-semibold">Icon</label>
+                    <div class="grid grid-cols-6 gap-2 mt-1">
+                        @php
+                            $iconOptions = [
+                                'o-shield-check' => 'Shield',
+                                'o-user-group' => 'Group',
+                                'o-signal' => 'Radio',
+                                'o-academic-cap' => 'Coach',
+                                'o-information-circle' => 'Info',
+                                'o-hand-raised' => 'Greet',
+                                'o-envelope' => 'Message',
+                                'o-clipboard-document-check' => 'Checklist',
+                                'o-wrench-screwdriver' => 'Tools',
+                                'o-bolt' => 'Power',
+                                'o-fire' => 'Fire',
+                                'o-megaphone' => 'Announce',
+                                'o-map-pin' => 'Location',
+                                'o-camera' => 'Photo',
+                                'o-truck' => 'Transport',
+                                'o-heart' => 'Medical',
+                                'o-eye' => 'Watch',
+                                'o-star' => 'Star',
+                            ];
+                        @endphp
+                        @foreach($iconOptions as $iconValue => $iconLabel)
+                            <button
+                                type="button"
+                                wire:click="$set('roleIcon', '{{ $iconValue }}')"
+                                class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-colors cursor-pointer {{ $roleIcon === $iconValue ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-base-content/30' }}"
+                                title="{{ $iconLabel }}"
+                            >
+                                <x-icon :name="$iconValue" class="w-5 h-5" />
+                                <span class="text-xs text-base-content/60">{{ $iconLabel }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Color Picker --}}
+                <div>
+                    <label class="label label-text font-semibold">Color</label>
+                    <div class="flex flex-wrap gap-2 mt-1">
+                        @php
+                            $colorOptions = [
+                                'badge-error' => ['label' => 'Red', 'preview' => 'bg-error'],
+                                'badge-warning' => ['label' => 'Orange', 'preview' => 'bg-warning'],
+                                'badge-success' => ['label' => 'Green', 'preview' => 'bg-success'],
+                                'badge-info' => ['label' => 'Blue', 'preview' => 'bg-info'],
+                                'badge-primary' => ['label' => 'Purple', 'preview' => 'bg-primary'],
+                                'badge-secondary' => ['label' => 'Pink', 'preview' => 'bg-secondary'],
+                                'badge-accent' => ['label' => 'Teal', 'preview' => 'bg-accent'],
+                                'badge-neutral' => ['label' => 'Gray', 'preview' => 'bg-neutral'],
+                            ];
+                        @endphp
+                        @foreach($colorOptions as $colorValue => $colorInfo)
+                            <button
+                                type="button"
+                                wire:click="$set('roleColor', '{{ $colorValue }}')"
+                                class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-colors cursor-pointer {{ $roleColor === $colorValue ? 'border-primary ring-2 ring-primary/30' : 'border-base-300 hover:border-base-content/30' }}"
+                            >
+                                <span class="w-4 h-4 rounded-full {{ $colorInfo['preview'] }}"></span>
+                                <span class="text-sm">{{ $colorInfo['label'] }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
             </div>
 
             <x-slot:actions>
