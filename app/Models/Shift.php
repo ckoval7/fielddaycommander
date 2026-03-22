@@ -137,6 +137,17 @@ class Shift extends Model
     }
 
     /**
+     * Check if check-in is available (within 15 minutes before start through end).
+     */
+    protected function canCheckIn(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): bool => appNow()->isAfter($this->start_time->copy()->subMinutes(15))
+                && appNow()->isBefore($this->end_time)
+        );
+    }
+
+    /**
      * Check if this shift has not yet started.
      */
     protected function isUpcoming(): Attribute

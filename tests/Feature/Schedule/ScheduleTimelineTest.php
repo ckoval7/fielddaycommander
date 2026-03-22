@@ -207,6 +207,8 @@ describe('check in and check out', function () {
         $shift = Shift::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'shift_role_id' => $role->id,
+            'start_time' => appNow()->subMinutes(10),
+            'end_time' => appNow()->addHours(2),
         ]);
 
         $assignment = ShiftAssignment::factory()->create([

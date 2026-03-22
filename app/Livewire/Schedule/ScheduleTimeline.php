@@ -148,6 +148,12 @@ class ScheduleTimeline extends Component
             ->where('status', ShiftAssignment::STATUS_SCHEDULED)
             ->firstOrFail();
 
+        if (! $assignment->shift->can_check_in) {
+            $this->dispatch('toast', title: 'Too Early', description: 'Check-in opens 15 minutes before the shift starts.', icon: 'o-clock', css: 'alert-warning');
+
+            return;
+        }
+
         $assignment->checkIn();
 
         unset($this->shiftsByRole);

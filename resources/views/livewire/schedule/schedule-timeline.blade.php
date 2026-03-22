@@ -147,13 +147,17 @@
                                                 @if($isMyShift && $myAssignment)
                                                     @switch($myAssignment->status)
                                                         @case(\App\Models\ShiftAssignment::STATUS_SCHEDULED)
-                                                            <x-button
-                                                                label="Check In"
-                                                                icon="o-arrow-right-on-rectangle"
-                                                                class="btn-primary btn-sm"
-                                                                wire:click="checkIn({{ $myAssignment->id }})"
-                                                                spinner="checkIn"
-                                                            />
+                                                            @if($shift->can_check_in)
+                                                                <x-button
+                                                                    label="Check In"
+                                                                    icon="o-arrow-right-on-rectangle"
+                                                                    class="btn-primary btn-sm"
+                                                                    wire:click="checkIn({{ $myAssignment->id }})"
+                                                                    spinner="checkIn"
+                                                                />
+                                                            @else
+                                                                <x-badge value="Check-in opens {{ $shift->start_time->copy()->subMinutes(15)->format('g:i A') }}" class="badge-ghost badge-sm" />
+                                                            @endif
                                                             @if($myAssignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
                                                                 <x-button
                                                                     label="Cancel"

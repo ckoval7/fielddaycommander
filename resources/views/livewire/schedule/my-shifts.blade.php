@@ -97,13 +97,17 @@
                                         {{-- Actions --}}
                                         <div class="flex gap-2">
                                             @if($assignment->status === \App\Models\ShiftAssignment::STATUS_SCHEDULED)
-                                                <x-button
-                                                    label="Check In"
-                                                    icon="o-arrow-right-on-rectangle"
-                                                    class="btn-primary btn-sm"
-                                                    wire:click="checkIn({{ $assignment->id }})"
-                                                    spinner="checkIn"
-                                                />
+                                                @if($shift->can_check_in)
+                                                    <x-button
+                                                        label="Check In"
+                                                        icon="o-arrow-right-on-rectangle"
+                                                        class="btn-primary btn-sm"
+                                                        wire:click="checkIn({{ $assignment->id }})"
+                                                        spinner="checkIn"
+                                                    />
+                                                @else
+                                                    <x-badge value="Check-in opens {{ $shift->start_time->copy()->subMinutes(15)->format('g:i A') }}" class="badge-ghost badge-sm" />
+                                                @endif
                                             @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_IN)
                                                 <x-button
                                                     label="Check Out"
