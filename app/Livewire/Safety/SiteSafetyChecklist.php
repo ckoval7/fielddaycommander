@@ -3,6 +3,8 @@
 namespace App\Livewire\Safety;
 
 use App\Enums\ChecklistType;
+use App\Models\BonusType;
+use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\SafetyChecklistItem;
 use App\Models\ShiftAssignment;
@@ -120,6 +122,7 @@ class SiteSafetyChecklist extends Component
 
         if ($entry->is_completed) {
             $entry->markIncomplete();
+            $this->warnIfBonusAwarded($item->checklist_type);
         } else {
             $entry->markComplete(Auth::user());
         }
@@ -171,6 +174,36 @@ class SiteSafetyChecklist extends Component
             'required_total' => $requiredTotal,
             'required_completed' => $requiredCompleted,
         ];
+    }
+
+    /**
+     * Warn user if a bonus has already been awarded for this checklist type.
+     */
+    protected function warnIfBonusAwarded(ChecklistType $checklistType): void
+    {
+        $bonusTypeCode = match ($checklistType) {
+            ChecklistType::SafetyOfficer => 'safety_officer',
+            ChecklistType::SiteResponsibilities => 'site_responsibilities',
+        };
+
+        $bonusType = BonusType::where('code', $bonusTypeCode)->first();
+        if (! $bonusType) {
+            return;
+        }
+
+        $bonusAwarded = EventBonus::where('event_configuration_id', $this->eventConfig->id)
+            ->where('bonus_type_id', $bonusType->id)
+            ->where('is_verified', true)
+            ->exists();
+
+        if ($bonusAwarded) {
+            $this->dispatch('toast',
+                title: 'Warning',
+                description: 'A bonus has already been awarded for this checklist. Unchecking items may affect bonus eligibility.',
+                icon: 'o-exclamation-triangle',
+                css: 'alert-warning'
+            );
+        }
     }
 
     public function render(): View

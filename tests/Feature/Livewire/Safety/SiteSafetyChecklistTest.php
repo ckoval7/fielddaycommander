@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Safety\SiteSafetyChecklist;
+use App\Models\BonusType;
 use App\Models\Event;
+use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\SafetyChecklistEntry;
 use App\Models\SafetyChecklistItem;
@@ -179,6 +181,29 @@ describe('editing', function () {
             ->call('toggleItem', $item->id);
 
         expect($entry->fresh()->is_completed)->toBeFalse();
+    });
+
+    test('warns when unchecking item with bonus already awarded', function () {
+        $bonusType = BonusType::factory()->create(['code' => 'safety_officer']);
+        EventBonus::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'bonus_type_id' => $bonusType->id,
+            'is_verified' => true,
+        ]);
+
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Test uncheck warning',
+        ]);
+        SafetyChecklistEntry::factory()->completed()->create([
+            'safety_checklist_item_id' => $item->id,
+        ]);
+
+        $this->actingAs($this->safetyOfficer);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->call('toggleItem', $item->id)
+            ->assertDispatched('toast', title: 'Warning');
     });
 
     test('regular user cannot update notes', function () {
