@@ -112,6 +112,11 @@ class EventConfiguration extends Model
         return $this->hasMany(ShiftRole::class);
     }
 
+    public function safetyChecklistItems(): HasMany
+    {
+        return $this->hasMany(SafetyChecklistItem::class);
+    }
+
     public function shifts(): HasMany
     {
         return $this->hasMany(Shift::class);
