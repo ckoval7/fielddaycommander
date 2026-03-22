@@ -123,6 +123,12 @@
                     <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
                     <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
 
+                    <x-menu-item title="Schedule" icon="o-calendar-days" link="{{ route('schedule.index') }}" :active="request()->routeIs('schedule.index', 'schedule.my-shifts')" />
+
+                    @can('manage-shifts')
+                        <x-menu-item title="Manage Schedule" icon="o-cog-6-tooth" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />
+                    @endcan
+
                     @can('manage-guestbook')
                         @php $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
                         @if($activeEvent)

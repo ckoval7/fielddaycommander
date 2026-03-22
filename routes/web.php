@@ -124,6 +124,16 @@ Route::middleware(['auth', 'can:manage-guestbook'])->group(function () {
     Route::get('/events/{event}/guestbook', \App\Livewire\Guestbook\GuestbookManager::class)->name('events.guestbook');
 });
 
+// Shift Schedule
+Route::middleware('auth')->group(function () {
+    Route::get('/schedule', \App\Livewire\Schedule\ScheduleTimeline::class)->name('schedule.index');
+    Route::get('/schedule/my-shifts', \App\Livewire\Schedule\MyShifts::class)->name('schedule.my-shifts');
+});
+
+Route::middleware(['auth', 'can:manage-shifts'])->group(function () {
+    Route::get('/schedule/manage', \App\Livewire\Schedule\ManageSchedule::class)->name('schedule.manage');
+});
+
 // Equipment Reports - requires manage-event-equipment permission
 Route::middleware(['auth', 'can:manage-event-equipment'])->prefix('events/{event}/equipment/reports')->name('events.equipment.reports.')->group(function () {
     Route::get('/commitment-summary', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'commitmentSummary'])->name('commitment-summary');
