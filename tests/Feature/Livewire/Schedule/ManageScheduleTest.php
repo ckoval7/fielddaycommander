@@ -37,7 +37,7 @@ beforeEach(function () {
         'event_configuration_id' => $this->eventConfig->id,
         'name' => 'Station Operator',
         'icon' => 'o-radio',
-        'color' => 'badge-primary',
+        'color' => '#6366f1',
         'requires_confirmation' => false,
     ]);
 });
@@ -82,7 +82,7 @@ describe('role management', function () {
             ->set('roleName', 'Band Captain')
             ->set('roleDescription', 'Leads a band station')
             ->set('roleIcon', 'o-star')
-            ->set('roleColor', 'badge-accent')
+            ->set('roleColor', '#14b8a6')
             ->call('saveRole')
             ->assertSet('showRoleModal', false)
             ->assertDispatched('toast', title: 'Success', description: 'Role created successfully');

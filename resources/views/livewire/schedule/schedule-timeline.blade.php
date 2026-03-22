@@ -53,7 +53,7 @@
                                     @endif
                                     <span>{{ $role->name }}</span>
                                     @if($role->color)
-                                        <x-badge :value="$role->requires_confirmation ? 'Confirmation Required' : 'Open'" :class="$role->color . ' badge-sm'" />
+                                        <span class="badge badge-sm text-white" style="background-color: {{ $role->color }}">{{ $role->requires_confirmation ? 'Confirmation Required' : 'Open' }}</span>
                                     @endif
                                     @if($role->bonus_points)
                                         <x-badge :value="$role->bonus_points . ' bonus pts'" class="badge-warning badge-sm" />

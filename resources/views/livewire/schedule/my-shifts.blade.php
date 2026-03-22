@@ -59,7 +59,7 @@
                                             @endif
                                             <span class="font-semibold">{{ $role->name }}</span>
                                             @if($role->color)
-                                                <x-badge :value="$role->name" :class="$role->color . ' badge-sm'" />
+                                                <span class="badge badge-sm text-white" style="background-color: {{ $role->color }}">{{ $role->name }}</span>
                                             @endif
                                         </div>
 
@@ -148,7 +148,7 @@
                                             @endif
                                             <span class="font-semibold">{{ $role->name }}</span>
                                             @if($role->color)
-                                                <x-badge :value="$role->name" :class="$role->color . ' badge-sm'" />
+                                                <span class="badge badge-sm text-white" style="background-color: {{ $role->color }}">{{ $role->name }}</span>
                                             @endif
                                         </div>
 
@@ -204,7 +204,7 @@
                                             @endif
                                             <span class="font-semibold">{{ $role->name }}</span>
                                             @if($role->color)
-                                                <x-badge :value="$role->name" :class="$role->color . ' badge-sm'" />
+                                                <span class="badge badge-sm text-white" style="background-color: {{ $role->color }}">{{ $role->name }}</span>
                                             @endif
                                         </div>
 

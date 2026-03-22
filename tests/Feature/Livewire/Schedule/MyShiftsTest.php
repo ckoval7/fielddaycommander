@@ -24,7 +24,7 @@ beforeEach(function () {
         'event_configuration_id' => $this->eventConfig->id,
         'name' => 'Station Operator',
         'icon' => 'o-radio',
-        'color' => 'badge-primary',
+        'color' => '#6366f1',
         'requires_confirmation' => false,
     ]);
 });
@@ -227,7 +227,7 @@ test('my shifts shows confirmation badge for bonus roles', function () {
         'event_configuration_id' => $this->eventConfig->id,
         'name' => 'Safety Officer',
         'icon' => 'o-shield-check',
-        'color' => 'badge-warning',
+        'color' => '#f59e0b',
         'requires_confirmation' => true,
         'bonus_points' => 100,
     ]);

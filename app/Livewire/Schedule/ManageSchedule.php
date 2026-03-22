@@ -41,7 +41,7 @@ class ManageSchedule extends Component
 
     public string $roleIcon = 'o-user-group';
 
-    public string $roleColor = 'badge-neutral';
+    public string $roleColor = '#64748b';
 
     // Shift modal
     public bool $showShiftModal = false;
@@ -176,7 +176,7 @@ class ManageSchedule extends Component
             $this->roleBonusPoints = $role->bonus_points;
             $this->roleRequiresConfirmation = $role->requires_confirmation;
             $this->roleIcon = $role->icon ?? 'o-user-group';
-            $this->roleColor = $role->color ?? 'badge-neutral';
+            $this->roleColor = $role->color ?? '#64748b';
         }
 
         $this->showRoleModal = true;
@@ -544,7 +544,7 @@ class ManageSchedule extends Component
         $this->roleBonusPoints = null;
         $this->roleRequiresConfirmation = false;
         $this->roleIcon = 'o-user-group';
-        $this->roleColor = 'badge-neutral';
+        $this->roleColor = '#64748b';
     }
 
     protected function resetShiftForm(): void

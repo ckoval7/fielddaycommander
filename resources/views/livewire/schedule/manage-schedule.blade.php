@@ -64,10 +64,7 @@
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-2 mb-1">
                                                     @if($shift->shiftRole)
-                                                        <x-badge
-                                                            :value="$shift->shiftRole->name"
-                                                            class="{{ $shift->shiftRole->color ?? 'badge-neutral' }}"
-                                                        />
+                                                        <span class="badge text-white" style="background-color: {{ $shift->shiftRole->color ?? '#64748b' }}">{{ $shift->shiftRole->name }}</span>
                                                     @endif
                                                     @if(!$shift->is_open)
                                                         <x-badge value="Closed" class="badge-warning badge-sm" />
@@ -220,7 +217,7 @@
                                                     @endif
                                                     <span class="font-semibold">{{ $role->name }}</span>
                                                     @if($role->color)
-                                                        <x-badge value="sample" class="{{ $role->color }} badge-sm" />
+                                                        <span class="badge badge-sm text-white" style="background-color: {{ $role->color }}">sample</span>
                                                     @endif
                                                     @if($role->is_default)
                                                         <x-badge value="Default" class="badge-neutral badge-sm badge-outline" />
@@ -288,10 +285,7 @@
                                                 </div>
                                                 <div class="flex items-center gap-2 text-sm text-base-content/60">
                                                     @if($confirmation->shift?->shiftRole)
-                                                        <x-badge
-                                                            :value="$confirmation->shift->shiftRole->name"
-                                                            class="{{ $confirmation->shift->shiftRole->color ?? 'badge-neutral' }} badge-sm"
-                                                        />
+                                                        <span class="badge badge-sm text-white" style="background-color: {{ $confirmation->shift->shiftRole->color ?? '#64748b' }}">{{ $confirmation->shift->shiftRole->name }}</span>
                                                     @endif
                                                     @if($confirmation->checked_in_at)
                                                         <span>Checked in: {{ $confirmation->checked_in_at->format('M j, g:i A') }}</span>
@@ -395,33 +389,14 @@
                 </div>
 
                 {{-- Color Picker --}}
-                <div x-data="{ selectedColor: $wire.entangle('roleColor') }">
+                <div class="flex items-center gap-3">
                     <label class="label label-text font-semibold">Color</label>
-                    <div class="flex flex-wrap gap-2 mt-1">
-                        @php
-                            $colorOptions = [
-                                'badge-error' => ['label' => 'Red', 'preview' => 'bg-error'],
-                                'badge-warning' => ['label' => 'Orange', 'preview' => 'bg-warning'],
-                                'badge-success' => ['label' => 'Green', 'preview' => 'bg-success'],
-                                'badge-info' => ['label' => 'Blue', 'preview' => 'bg-info'],
-                                'badge-primary' => ['label' => 'Purple', 'preview' => 'bg-primary'],
-                                'badge-secondary' => ['label' => 'Pink', 'preview' => 'bg-secondary'],
-                                'badge-accent' => ['label' => 'Teal', 'preview' => 'bg-accent'],
-                                'badge-neutral' => ['label' => 'Gray', 'preview' => 'bg-neutral'],
-                            ];
-                        @endphp
-                        @foreach($colorOptions as $colorValue => $colorInfo)
-                            <button
-                                type="button"
-                                @click="selectedColor = '{{ $colorValue }}'"
-                                :class="selectedColor === '{{ $colorValue }}' ? 'border-primary ring-2 ring-primary/30' : 'border-base-300 hover:border-base-content/30'"
-                                class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-colors cursor-pointer"
-                            >
-                                <span class="w-4 h-4 rounded-full {{ $colorInfo['preview'] }}"></span>
-                                <span class="text-sm">{{ $colorInfo['label'] }}</span>
-                            </button>
-                        @endforeach
-                    </div>
+                    <input
+                        type="color"
+                        wire:model.live="roleColor"
+                        class="w-10 h-10 rounded cursor-pointer border border-base-300"
+                    />
+                    <span class="badge badge-sm text-white" style="background-color: {{ $roleColor }}">Preview</span>
                 </div>
             </div>
 

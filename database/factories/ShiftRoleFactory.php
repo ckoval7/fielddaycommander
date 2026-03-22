@@ -30,7 +30,7 @@ class ShiftRoleFactory extends Factory
             'bonus_points' => null,
             'requires_confirmation' => false,
             'icon' => 'o-user-group',
-            'color' => 'badge-neutral',
+            'color' => fake()->hexColor(),
             'sort_order' => 0,
         ];
     }
@@ -68,7 +68,7 @@ class ShiftRoleFactory extends Factory
             'bonus_points' => 100,
             'requires_confirmation' => true,
             'icon' => 'o-shield-check',
-            'color' => 'badge-warning',
+            'color' => '#dc2626',
         ]);
     }
 }

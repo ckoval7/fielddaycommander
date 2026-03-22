@@ -27,7 +27,7 @@ class ShiftRole extends Model
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'F'],
             'icon' => 'o-shield-check',
-            'color' => 'badge-error',
+            'color' => '#dc2626',
         ],
         'Site Responsibilities' => [
             'description' => 'Ensures site is free of hazards and provides a point of contact for visitors',
@@ -35,7 +35,7 @@ class ShiftRole extends Model
             'requires_confirmation' => true,
             'eligible_classes' => ['B', 'C', 'D', 'E', 'F'],
             'icon' => 'o-clipboard-document-check',
-            'color' => 'badge-warning',
+            'color' => '#f59e0b',
         ],
         'Public Information Table' => [
             'description' => 'Staffs the public information table with handouts for visitors',
@@ -43,7 +43,7 @@ class ShiftRole extends Model
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'B', 'F'],
             'icon' => 'o-information-circle',
-            'color' => 'badge-info',
+            'color' => '#3b82f6',
         ],
         'Public Greeter' => [
             'description' => 'Greets visitors at a publicly accessible location with name badge',
@@ -51,7 +51,7 @@ class ShiftRole extends Model
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'B', 'F'],
             'icon' => 'o-hand-raised',
-            'color' => 'badge-success',
+            'color' => '#10b981',
         ],
         'GOTA Coach' => [
             'description' => 'Coaches new operators at the GOTA station',
@@ -59,7 +59,7 @@ class ShiftRole extends Model
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'F'],
             'icon' => 'o-academic-cap',
-            'color' => 'badge-secondary',
+            'color' => '#8b5cf6',
         ],
         'Message Handler' => [
             'description' => 'Handles NTS/ICS-213 message origination, relay, and delivery',
@@ -67,7 +67,7 @@ class ShiftRole extends Model
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
             'icon' => 'o-envelope',
-            'color' => 'badge-accent',
+            'color' => '#ec4899',
         ],
         'Event Manager' => [
             'description' => 'Overall event coordination and management',
@@ -75,7 +75,7 @@ class ShiftRole extends Model
             'requires_confirmation' => false,
             'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
             'icon' => 'o-user-group',
-            'color' => 'badge-primary',
+            'color' => '#6366f1',
         ],
         'Station Captain' => [
             'description' => 'Manages a specific radio station and its operators',
@@ -83,7 +83,7 @@ class ShiftRole extends Model
             'requires_confirmation' => false,
             'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
             'icon' => 'o-radio',
-            'color' => 'badge-neutral',
+            'color' => '#64748b',
         ],
     ];
 
