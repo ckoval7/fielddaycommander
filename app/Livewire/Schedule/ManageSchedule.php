@@ -584,6 +584,6 @@ class ManageSchedule extends Component
 
     public function render(): View
     {
-        return view('livewire.schedule.manage-schedule')->layout('layouts::app');
+        return view('livewire.schedule.manage-schedule')->layout('layouts.app');
     }
 }

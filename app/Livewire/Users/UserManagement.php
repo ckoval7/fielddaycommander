@@ -501,6 +501,6 @@ class UserManagement extends Component
 
     public function render()
     {
-        return view('livewire.users.user-management')->layout('layouts::app');
+        return view('livewire.users.user-management')->layout('layouts.app');
     }
 }

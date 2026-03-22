@@ -455,6 +455,6 @@ class GuestbookManager extends Component
 
     public function render()
     {
-        return view('livewire.guestbook.guestbook-manager')->layout('layouts::app');
+        return view('livewire.guestbook.guestbook-manager')->layout('layouts.app');
     }
 }
