@@ -320,7 +320,7 @@
 
     {{-- Role Form Modal --}}
     <x-modal wire:model="showRoleModal" title="{{ $editingRoleId ? 'Edit Role' : 'Add Custom Role' }}">
-        <form wire:submit="saveRole">
+        <div>
             <div class="space-y-4">
                 <x-input
                     label="Role Name"
@@ -402,14 +402,14 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showRoleModal = false" />
-                <x-button label="Save" type="submit" class="btn-primary" spinner="saveRole" />
+                <x-button label="Save" wire:click="saveRole" class="btn-primary" spinner="saveRole" />
             </x-slot:actions>
-        </form>
+        </div>
     </x-modal>
 
     {{-- Shift Form Modal --}}
     <x-modal wire:model="showShiftModal" title="{{ $editingShiftId ? 'Edit Shift' : 'Add Shift' }}">
-        <form wire:submit="saveShift">
+        <div>
             <div class="space-y-4">
                 <x-select
                     label="Role"
@@ -454,14 +454,14 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showShiftModal = false" />
-                <x-button label="Save" type="submit" class="btn-primary" spinner="saveShift" />
+                <x-button label="Save" wire:click="saveShift" class="btn-primary" spinner="saveShift" />
             </x-slot:actions>
-        </form>
+        </div>
     </x-modal>
 
     {{-- Bulk Creation Modal --}}
     <x-modal wire:model="showBulkModal" title="Bulk Create Shifts">
-        <form wire:submit="createBulkShifts">
+        <div>
             <div class="space-y-4">
                 <x-select
                     label="Role"
@@ -509,14 +509,14 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showBulkModal = false" />
-                <x-button label="Create Shifts" type="submit" class="btn-primary" spinner="createBulkShifts" />
+                <x-button label="Create Shifts" wire:click="createBulkShifts" class="btn-primary" spinner="createBulkShifts" />
             </x-slot:actions>
-        </form>
+        </div>
     </x-modal>
 
     {{-- Assignment Modal --}}
     <x-modal wire:model="showAssignModal" title="Assign User to Shift">
-        <form wire:submit="assignUser">
+        <div>
             <div class="space-y-4">
                 <x-select
                     label="User"
@@ -535,8 +535,8 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showAssignModal = false" />
-                <x-button label="Assign" type="submit" class="btn-primary" spinner="assignUser" />
+                <x-button label="Assign" wire:click="assignUser" class="btn-primary" spinner="assignUser" />
             </x-slot:actions>
-        </form>
+        </div>
     </x-modal>
 </div>
