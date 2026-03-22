@@ -361,7 +361,7 @@
                             $iconOptions = [
                                 'o-shield-check' => 'Shield',
                                 'o-user-group' => 'Group',
-                                'o-signal' => 'Radio',
+                                'o-radio' => 'Radio',
                                 'o-academic-cap' => 'Coach',
                                 'o-information-circle' => 'Info',
                                 'o-hand-raised' => 'Greet',

@@ -82,7 +82,7 @@ class ShiftRole extends Model
             'bonus_points' => null,
             'requires_confirmation' => false,
             'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
-            'icon' => 'o-signal',
+            'icon' => 'o-radio',
             'color' => 'badge-neutral',
         ],
     ];
