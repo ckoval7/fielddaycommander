@@ -1,0 +1,514 @@
+<?php
+
+use App\Livewire\Schedule\ManageSchedule;
+use App\Models\Event;
+use App\Models\EventConfiguration;
+use App\Models\Setting;
+use App\Models\Shift;
+use App\Models\ShiftAssignment;
+use App\Models\ShiftRole;
+use App\Models\User;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+
+beforeEach(function () {
+    Permission::create(['name' => 'manage-shifts']);
+
+    $this->event = Event::factory()->create([
+        'name' => 'Field Day 2026',
+        'start_time' => appNow()->subHours(12),
+        'end_time' => appNow()->addHours(12),
+    ]);
+    $this->eventConfig = EventConfiguration::factory()->create(['event_id' => $this->event->id]);
+    Setting::set('active_event_id', $this->event->id);
+
+    $this->admin = User::factory()->create([
+        'first_name' => 'Admin',
+        'last_name' => 'User',
+    ]);
+    $this->admin->givePermissionTo('manage-shifts');
+
+    $this->regularUser = User::factory()->create([
+        'first_name' => 'Regular',
+        'last_name' => 'User',
+    ]);
+
+    $this->role = ShiftRole::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'name' => 'Station Operator',
+        'icon' => 'o-radio',
+        'color' => 'badge-primary',
+        'requires_confirmation' => false,
+    ]);
+});
+
+// =============================================================================
+// Access Control
+// =============================================================================
+
+describe('access control', function () {
+    test('requires authentication', function () {
+        Livewire::test(ManageSchedule::class)
+            ->assertForbidden();
+    });
+
+    test('requires manage-shifts permission', function () {
+        $this->actingAs($this->regularUser);
+
+        Livewire::test(ManageSchedule::class)
+            ->assertForbidden();
+    });
+
+    test('allows users with manage-shifts permission', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->assertStatus(200)
+            ->assertSee('Manage Schedule');
+    });
+});
+
+// =============================================================================
+// Role CRUD
+// =============================================================================
+
+describe('role management', function () {
+    test('can create a custom role', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openRoleModal')
+            ->assertSet('showRoleModal', true)
+            ->set('roleName', 'Band Captain')
+            ->set('roleDescription', 'Leads a band station')
+            ->set('roleIcon', 'o-star')
+            ->set('roleColor', 'badge-accent')
+            ->call('saveRole')
+            ->assertSet('showRoleModal', false)
+            ->assertDispatched('toast', title: 'Success', description: 'Role created successfully');
+
+        expect(ShiftRole::where('name', 'Band Captain')->exists())->toBeTrue();
+    });
+
+    test('creating role with bonus points forces requires_confirmation', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openRoleModal')
+            ->set('roleName', 'Bonus Role')
+            ->set('roleBonusPoints', 100)
+            ->set('roleRequiresConfirmation', false)
+            ->call('saveRole')
+            ->assertDispatched('toast', title: 'Success');
+
+        $role = ShiftRole::where('name', 'Bonus Role')->first();
+        expect($role->requires_confirmation)->toBeTrue();
+        expect($role->bonus_points)->toBe(100);
+    });
+
+    test('can edit a role', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openRoleModal', $this->role->id)
+            ->assertSet('editingRoleId', $this->role->id)
+            ->assertSet('roleName', 'Station Operator')
+            ->set('roleName', 'Updated Operator')
+            ->call('saveRole')
+            ->assertDispatched('toast', title: 'Success', description: 'Role updated successfully');
+
+        expect($this->role->fresh()->name)->toBe('Updated Operator');
+    });
+
+    test('can delete a role without assigned shifts', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('deleteRole', $this->role->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Role deleted successfully');
+
+        expect($this->role->fresh()->trashed())->toBeTrue();
+    });
+
+    test('cannot delete a role with assigned shifts', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->admin->id,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('deleteRole', $this->role->id)
+            ->assertDispatched('toast', title: 'Error', description: 'Cannot delete role with assigned shifts. Remove assignments first.');
+
+        expect($this->role->fresh()->trashed())->toBeFalse();
+    });
+});
+
+// =============================================================================
+// Shift CRUD
+// =============================================================================
+
+describe('shift management', function () {
+    test('can create a shift', function () {
+        $this->actingAs($this->admin);
+
+        $startTime = appNow()->addHour()->format('Y-m-d\TH:i');
+        $endTime = appNow()->addHours(3)->format('Y-m-d\TH:i');
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal')
+            ->assertSet('showShiftModal', true)
+            ->set('shiftRoleId', $this->role->id)
+            ->set('shiftStartTime', $startTime)
+            ->set('shiftEndTime', $endTime)
+            ->set('shiftCapacity', 3)
+            ->set('shiftIsOpen', true)
+            ->call('saveShift')
+            ->assertSet('showShiftModal', false)
+            ->assertDispatched('toast', title: 'Success', description: 'Shift created successfully');
+
+        expect(Shift::where('shift_role_id', $this->role->id)->count())->toBe(1);
+    });
+
+    test('can edit a shift', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'capacity' => 2,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal', $shift->id)
+            ->assertSet('editingShiftId', $shift->id)
+            ->set('shiftCapacity', 5)
+            ->call('saveShift')
+            ->assertDispatched('toast', title: 'Success', description: 'Shift updated successfully');
+
+        expect($shift->fresh()->capacity)->toBe(5);
+    });
+
+    test('validates end time after start time', function () {
+        $this->actingAs($this->admin);
+
+        $time = appNow()->addHour()->format('Y-m-d\TH:i');
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal')
+            ->set('shiftRoleId', $this->role->id)
+            ->set('shiftStartTime', $time)
+            ->set('shiftEndTime', $time)
+            ->set('shiftCapacity', 1)
+            ->call('saveShift')
+            ->assertHasErrors('shiftEndTime');
+    });
+
+    test('can delete a shift', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('deleteShift', $shift->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Shift deleted successfully');
+
+        expect($shift->fresh()->trashed())->toBeTrue();
+    });
+
+    test('deleting shift also deletes assignments', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->admin->id,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('deleteShift', $shift->id)
+            ->assertDispatched('toast');
+
+        expect($assignment->fresh()->trashed())->toBeTrue();
+    });
+});
+
+// =============================================================================
+// Bulk Creation
+// =============================================================================
+
+describe('bulk creation', function () {
+    test('can bulk create shifts', function () {
+        $this->actingAs($this->admin);
+
+        $startTime = appNow()->format('Y-m-d\TH:i');
+        $endTime = appNow()->addHours(6)->format('Y-m-d\TH:i');
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openBulkModal')
+            ->assertSet('showBulkModal', true)
+            ->set('bulkRoleId', $this->role->id)
+            ->set('bulkStartTime', $startTime)
+            ->set('bulkEndTime', $endTime)
+            ->set('bulkDurationMinutes', 120)
+            ->set('bulkCapacity', 2)
+            ->call('createBulkShifts')
+            ->assertSet('showBulkModal', false)
+            ->assertDispatched('toast', title: 'Success', description: '3 shifts created successfully');
+
+        expect(Shift::where('shift_role_id', $this->role->id)->count())->toBe(3);
+    });
+
+    test('bulk creation pre-fills event times', function () {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(ManageSchedule::class)
+            ->call('openBulkModal');
+
+        expect($component->get('bulkStartTime'))->not->toBeEmpty();
+        expect($component->get('bulkEndTime'))->not->toBeEmpty();
+    });
+});
+
+// =============================================================================
+// Assignments
+// =============================================================================
+
+describe('assignments', function () {
+    test('can assign a user to a shift', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'capacity' => 2,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openAssignModal', $shift->id)
+            ->assertSet('showAssignModal', true)
+            ->set('assignUserId', $this->regularUser->id)
+            ->call('assignUser')
+            ->assertSet('showAssignModal', false)
+            ->assertDispatched('toast', title: 'Success', description: 'User assigned to shift');
+
+        expect(ShiftAssignment::where('shift_id', $shift->id)
+            ->where('user_id', $this->regularUser->id)->exists())->toBeTrue();
+    });
+
+    test('cannot assign duplicate user to same shift', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'capacity' => 2,
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openAssignModal', $shift->id)
+            ->set('assignUserId', $this->regularUser->id)
+            ->call('assignUser')
+            ->assertDispatched('toast', title: 'Error', description: 'User is already assigned to this shift.');
+    });
+
+    test('cannot assign user when shift at capacity', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'capacity' => 1,
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->admin->id,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openAssignModal', $shift->id)
+            ->set('assignUserId', $this->regularUser->id)
+            ->call('assignUser')
+            ->assertDispatched('toast', title: 'Error', description: 'This shift is already at capacity.');
+    });
+
+    test('can remove an assignment', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('removeAssignment', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Assignment removed');
+
+        expect($assignment->fresh()->trashed())->toBeTrue();
+    });
+});
+
+// =============================================================================
+// Confirmations
+// =============================================================================
+
+describe('confirmations', function () {
+    test('can confirm a check-in', function () {
+        $bonusRole = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Safety Officer',
+            'requires_confirmation' => true,
+            'bonus_points' => 100,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $bonusRole->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow(),
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('confirmCheckIn', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Check-in confirmed');
+
+        $assignment->refresh();
+        expect($assignment->confirmed_by_user_id)->toBe($this->admin->id);
+        expect($assignment->confirmed_at)->not->toBeNull();
+    });
+
+    test('can revoke a confirmation', function () {
+        $bonusRole = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Safety Officer',
+            'requires_confirmation' => true,
+            'bonus_points' => 100,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $bonusRole->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow(),
+            'confirmed_by_user_id' => $this->admin->id,
+            'confirmed_at' => appNow(),
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('revokeConfirmation', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Confirmation revoked');
+
+        $assignment->refresh();
+        expect($assignment->confirmed_by_user_id)->toBeNull();
+        expect($assignment->confirmed_at)->toBeNull();
+    });
+});
+
+// =============================================================================
+// Manager Overrides
+// =============================================================================
+
+describe('manager overrides', function () {
+    test('can manager check in a user', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('managerCheckIn', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'User checked in');
+
+        expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_IN);
+    });
+
+    test('can manager check out a user', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow()->subMinutes(30),
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('managerCheckOut', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'User checked out');
+
+        expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
+    });
+
+    test('can mark a user as no-show', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('markNoShow', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Marked as no-show');
+
+        expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_NO_SHOW);
+    });
+});
