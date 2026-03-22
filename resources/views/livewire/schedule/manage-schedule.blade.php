@@ -157,12 +157,14 @@
 
                                             {{-- Shift actions --}}
                                             <div class="flex items-center gap-1 shrink-0">
-                                                <x-button
-                                                    icon="o-user-plus"
-                                                    class="btn-ghost btn-sm"
-                                                    wire:click="openAssignModal({{ $shift->id }})"
-                                                    tooltip="Assign User"
-                                                />
+                                                @if($shift->assignments->count() < $shift->capacity)
+                                                    <x-button
+                                                        icon="o-user-plus"
+                                                        class="btn-ghost btn-sm"
+                                                        wire:click="openAssignModal({{ $shift->id }})"
+                                                        tooltip="Assign User"
+                                                    />
+                                                @endif
                                                 <x-button
                                                     icon="o-pencil"
                                                     class="btn-ghost btn-sm"

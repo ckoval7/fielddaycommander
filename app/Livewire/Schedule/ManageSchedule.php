@@ -430,6 +430,7 @@ class ManageSchedule extends Component
 
         // Check capacity
         if (! $shift->has_capacity) {
+            $this->showAssignModal = false;
             $this->dispatch('toast', title: 'Error', description: 'This shift is already at capacity.', icon: 'o-x-circle', css: 'alert-error');
 
             return;
@@ -441,6 +442,7 @@ class ManageSchedule extends Component
             ->exists();
 
         if ($alreadyAssigned) {
+            $this->showAssignModal = false;
             $this->dispatch('toast', title: 'Error', description: 'User is already assigned to this shift.', icon: 'o-x-circle', css: 'alert-error');
 
             return;
