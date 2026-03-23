@@ -50,7 +50,8 @@ test('component renders when event recently ended', function () {
     Livewire::test(EventCountdown::class)
         ->assertSee($event->name)
         ->assertSee('Ended')
-        ->assertSee('ENDED');
+        ->assertSee('ENDED')
+        ->assertSee('ago');
 });
 
 test('component does not render when no relevant events exist', function () {

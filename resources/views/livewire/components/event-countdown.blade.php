@@ -53,9 +53,12 @@
                 hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
 
-            if (!this.targetTs || this.state === 'ended') return;
+            if (!this.targetTs) return;
 
-            const diff = this.targetTs - this.effectiveNow();
+            const effectiveNow = this.effectiveNow();
+            const diff = this.state === 'ended'
+                ? effectiveNow - this.targetTs
+                : this.targetTs - effectiveNow;
             if (diff <= 0) return;
 
             const days = Math.floor(diff / 86400);
@@ -63,13 +66,16 @@
             const minutes = Math.floor((diff % 3600) / 60);
             const seconds = diff % 60;
 
+            let formatted;
             if (days > 0) {
-                this.countdown = days + 'd ' + hours + 'h ' + minutes + 'm';
+                formatted = days + 'd ' + hours + 'h ' + minutes + 'm';
             } else if (hours > 0) {
-                this.countdown = hours + 'h ' + minutes + 'm';
+                formatted = hours + 'h ' + minutes + 'm';
             } else {
-                this.countdown = minutes + 'm ' + seconds + 's';
+                formatted = minutes + 'm ' + seconds + 's';
             }
+
+            this.countdown = this.state === 'ended' ? formatted + ' ago' : formatted;
         }
     }"
     class="flex flex-col lg:flex-row items-start lg:items-baseline gap-3 lg:gap-4"
@@ -106,10 +112,10 @@
         {{-- Countdown Label and Time --}}
         <div class="flex items-center gap-2">
             <span class="text-base lg:text-lg font-semibold">
-                {{ $label }}:
+                {{ $label }}{{ $state !== 'ended' ? ':' : '' }}
             </span>
             <span class="text-xl lg:text-2xl font-mono font-bold {{ $textClass }}" x-text="countdown">
-                {{ $this->formattedCountdown }}
+                {{ $this->formattedCountdown }}{{ $state === 'ended' ? ' ago' : '' }}
             </span>
         </div>
 
