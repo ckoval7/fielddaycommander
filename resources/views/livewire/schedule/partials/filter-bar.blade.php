@@ -51,14 +51,8 @@
     @endif
 
     {{-- Expanded filter controls --}}
+    <template x-if="open">
     <div
-        x-show="open"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 -translate-y-2"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 -translate-y-2"
         class="p-4 rounded-lg bg-base-200/50 border border-base-300"
     >
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -151,4 +145,5 @@
             </div>
         </div>
     </div>
+    </template>
 </div>

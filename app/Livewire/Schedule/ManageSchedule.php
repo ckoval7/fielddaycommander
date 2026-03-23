@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Schedule;
 
+use App\Livewire\Schedule\Concerns\WithScheduleFilters;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Shift;
@@ -19,6 +20,8 @@ use Livewire\Component;
 
 class ManageSchedule extends Component
 {
+    use WithScheduleFilters;
+
     public ?Event $event = null;
 
     public ?EventConfiguration $eventConfig = null;
@@ -129,11 +132,14 @@ class ManageSchedule extends Component
             return collect();
         }
 
-        return Shift::query()
+        $query = Shift::query()
             ->forEvent($this->eventConfig->id)
-            ->with(['shiftRole', 'assignments.user'])
-            ->chronological()
-            ->get();
+            ->with(['shiftRole', 'assignments.user']);
+
+        $this->applyShiftFilters($query);
+        $this->applyShiftSorting($query);
+
+        return $query->get();
     }
 
     /**
@@ -164,6 +170,10 @@ class ManageSchedule extends Component
     #[Computed]
     public function users(): Collection
     {
+        if (! $this->showAssignModal) {
+            return collect();
+        }
+
         return User::query()
             ->orderBy('first_name')
             ->get()

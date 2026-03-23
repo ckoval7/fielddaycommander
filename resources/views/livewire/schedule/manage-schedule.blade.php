@@ -46,17 +46,32 @@
                             />
                         </div>
 
+                        {{-- Filter Bar --}}
+                        @include('livewire.schedule.partials.filter-bar', [
+                            'showSearch' => true,
+                            'showTimeFilter' => true,
+                            'showStatusFilter' => true,
+                            'showAvailability' => true,
+                            'statuses' => $this->getFilterStatuses(),
+                        ])
+
                         {{-- Shifts list --}}
                         @if($this->shifts->isEmpty())
                             <x-card shadow>
                                 <div class="text-center py-8 text-base-content/60">
                                     <x-icon name="o-clock" class="w-12 h-12 mx-auto mb-3 opacity-30" />
-                                    <p class="text-lg font-medium">No shifts created yet</p>
-                                    <p class="text-sm">Create individual shifts or use bulk creation to get started.</p>
+                                    @if($this->activeFilterCount > 0)
+                                        <p class="text-lg font-medium">No shifts match your filters</p>
+                                        <p class="text-sm mb-3">Try adjusting your filters or clearing them.</p>
+                                        <button wire:click="resetFilters" class="btn btn-sm btn-outline">Clear filters</button>
+                                    @else
+                                        <p class="text-lg font-medium">No shifts created yet</p>
+                                        <p class="text-sm">Create individual shifts or use bulk creation to get started.</p>
+                                    @endif
                                 </div>
                             </x-card>
                         @else
-                            <div class="space-y-3">
+                            <div class="space-y-3" wire:loading.class="opacity-50">
                                 @foreach($this->shifts as $shift)
                                     <x-card shadow class="overflow-visible">
                                         <div class="flex flex-col lg:flex-row lg:items-center gap-4">

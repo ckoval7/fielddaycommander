@@ -59,9 +59,9 @@ trait WithScheduleFilters
         }
 
         if ($this->availability === 'unfilled') {
-            $query->havingRaw('assignments_count < shifts.capacity');
+            $query->whereRaw('(select count(*) from shift_assignments where shift_assignments.shift_id = shifts.id and shift_assignments.deleted_at is null) < shifts.capacity');
         } elseif ($this->availability === 'full') {
-            $query->havingRaw('assignments_count >= shifts.capacity');
+            $query->whereRaw('(select count(*) from shift_assignments where shift_assignments.shift_id = shifts.id and shift_assignments.deleted_at is null) >= shifts.capacity');
         }
 
         if ($this->timeFilter === 'current') {
@@ -108,7 +108,7 @@ trait WithScheduleFilters
                 ->orderBy('shifts.start_time', 'asc')
                 ->select('shifts.*');
         } elseif ($this->sortBy === 'fill') {
-            $query->orderByRaw('(assignments_count * 1.0 / shifts.capacity) '.$dir)
+            $query->orderByRaw('((select count(*) from shift_assignments where shift_assignments.shift_id = shifts.id and shift_assignments.deleted_at is null) * 1.0 / shifts.capacity) '.$dir)
                 ->orderBy('start_time', 'asc');
         } else {
             $query->orderBy('start_time', $dir);
