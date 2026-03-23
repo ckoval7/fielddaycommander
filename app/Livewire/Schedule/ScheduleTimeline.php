@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Schedule;
 
+use App\Livewire\Schedule\Concerns\WithScheduleFilters;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Shift;
@@ -15,6 +16,8 @@ use Livewire\Component;
 
 class ScheduleTimeline extends Component
 {
+    use WithScheduleFilters;
+
     public ?Event $event = null;
 
     public ?EventConfiguration $eventConfig = null;
@@ -31,6 +34,42 @@ class ScheduleTimeline extends Component
     }
 
     /**
+     * Get filtered shifts as a flat collection.
+     *
+     * @return Collection<int, Shift>
+     */
+    #[Computed]
+    public function filteredShifts(): Collection
+    {
+        if (! $this->eventConfig) {
+            return collect();
+        }
+
+        $query = Shift::query()
+            ->forEvent($this->eventConfig->id)
+            ->with(['shiftRole', 'assignments.user']);
+
+        $this->applyShiftFilters($query);
+        $this->applyShiftSorting($query);
+
+        return $query->get();
+    }
+
+    /**
+     * Whether the current sort should flatten the role grouping.
+     */
+    #[Computed]
+    public function isFlattened(): bool
+    {
+        return $this->sortBy !== 'role';
+    }
+
+    public function getFilterStatuses(): array
+    {
+        return [];
+    }
+
+    /**
      * Get shifts grouped by role for timeline display.
      *
      * @return array<int, array{role: ShiftRole, shifts: Collection<int, Shift>}>
@@ -42,18 +81,27 @@ class ScheduleTimeline extends Component
             return [];
         }
 
+        $shifts = $this->filteredShifts;
+
         $roles = ShiftRole::query()
             ->forEvent($this->eventConfig->id)
             ->ordered()
-            ->with(['shifts' => function ($query) {
-                $query->chronological()->with(['assignments.user']);
-            }])
             ->get();
 
-        return $roles->map(fn (ShiftRole $role) => [
-            'role' => $role,
-            'shifts' => $role->shifts,
-        ])->toArray();
+        if ($this->role !== '') {
+            $roles = $roles->where('id', (int) $this->role);
+        }
+
+        $shiftsByRoleId = $shifts->groupBy('shift_role_id');
+
+        return $roles
+            ->map(fn (ShiftRole $role) => [
+                'role' => $role,
+                'shifts' => $shiftsByRoleId->get($role->id, collect()),
+            ])
+            ->filter(fn (array $group) => $group['shifts']->isNotEmpty())
+            ->values()
+            ->toArray();
     }
 
     /**
@@ -113,6 +161,7 @@ class ScheduleTimeline extends Component
             'signup_type' => ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP,
         ]);
 
+        unset($this->filteredShifts);
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 
@@ -132,6 +181,7 @@ class ScheduleTimeline extends Component
 
         $assignment->delete();
 
+        unset($this->filteredShifts);
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 
@@ -156,6 +206,7 @@ class ScheduleTimeline extends Component
 
         $assignment->checkIn();
 
+        unset($this->filteredShifts);
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 
@@ -174,6 +225,7 @@ class ScheduleTimeline extends Component
 
         $assignment->checkOut();
 
+        unset($this->filteredShifts);
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 

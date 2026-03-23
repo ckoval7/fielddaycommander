@@ -252,3 +252,139 @@ describe('check in and check out', function () {
         expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
     });
 });
+
+// =============================================================================
+// Filtering & Sorting
+// =============================================================================
+
+describe('filtering and sorting', function () {
+    test('can filter by role', function () {
+        $this->actingAs($this->user);
+
+        $role1 = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+            'icon' => 'o-radio',
+        ]);
+
+        $role2 = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Safety Officer',
+            'icon' => 'o-shield-check',
+        ]);
+
+        Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role1->id,
+            'start_time' => appNow()->addHour(),
+            'end_time' => appNow()->addHours(3),
+        ]);
+
+        Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role2->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $component = Livewire::test(ScheduleTimeline::class)
+            ->set('role', (string) $role1->id)
+            ->assertSee('Station Operator');
+
+        // Verify filtered shifts only contain role1 (role names also appear in filter dropdown <template> tag)
+        $filteredShifts = $component->instance()->filteredShifts;
+        expect($filteredShifts)->toHaveCount(1);
+        expect($filteredShifts->first()->shift_role_id)->toBe($role1->id);
+    });
+
+    test('can search by assigned user name', function () {
+        $this->actingAs($this->user);
+
+        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Smith']);
+        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Jones']);
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Operator',
+        ]);
+
+        $shift1 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addHour(),
+            'end_time' => appNow()->addHours(3),
+        ]);
+
+        $shift2 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addHours(4),
+            'end_time' => appNow()->addHours(6),
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shift1->id, 'user_id' => $user1->id]);
+        ShiftAssignment::factory()->create(['shift_id' => $shift2->id, 'user_id' => $user2->id]);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->set('search', 'Alice')
+            ->assertSee('Alice')
+            ->assertDontSee('Bob');
+    });
+
+    test('can filter unfilled shifts only', function () {
+        $this->actingAs($this->user);
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Operator',
+        ]);
+
+        $fullShift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addHour(),
+            'end_time' => appNow()->addHours(3),
+            'capacity' => 1,
+            'is_open' => true,
+        ]);
+        ShiftAssignment::factory()->create(['shift_id' => $fullShift->id, 'user_id' => $this->user->id]);
+
+        $openShift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addHours(4),
+            'end_time' => appNow()->addHours(6),
+            'capacity' => 3,
+            'is_open' => true,
+        ]);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->set('availability', 'unfilled')
+            ->assertSee($openShift->start_time->format('M j, g:i A'))
+            ->assertDontSee($fullShift->start_time->format('M j, g:i A'));
+    });
+
+    test('shows empty state when filters match nothing', function () {
+        $this->actingAs($this->user);
+
+        ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Operator',
+        ]);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->set('timeFilter', 'current')
+            ->assertSee('No shifts match your filters');
+    });
+
+    test('can reset filters', function () {
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->set('role', '1')
+            ->set('timeFilter', 'upcoming')
+            ->call('resetFilters')
+            ->assertSet('role', '')
+            ->assertSet('timeFilter', '');
+    });
+});
