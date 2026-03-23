@@ -128,6 +128,7 @@ class SiteSafetyChecklist extends Component
         }
 
         unset($this->items);
+        $this->dispatch('autosaved');
     }
 
     /**
@@ -152,6 +153,7 @@ class SiteSafetyChecklist extends Component
 
         $entry->update(['notes' => $notes]);
         unset($this->items);
+        $this->dispatch('autosaved');
     }
 
     /**

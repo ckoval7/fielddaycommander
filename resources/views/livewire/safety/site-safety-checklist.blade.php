@@ -13,9 +13,24 @@
 
             @if($eventConfig && $this->items->isNotEmpty())
                 @php $summary = $this->completionSummary; @endphp
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <x-badge :value="$summary['completed'] . ' of ' . $summary['total'] . ' complete'" class="badge-info" />
                     <x-badge :value="$summary['required_completed'] . ' of ' . $summary['required_total'] . ' required'" class="badge-warning" />
+                    <span
+                        x-data="{ show: false }"
+                        x-on:autosaved.window="show = true; setTimeout(() => show = false, 1500)"
+                        x-show="show"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        x-transition:leave="transition ease-in duration-300"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        class="text-xs text-success font-medium"
+                        style="display: none;"
+                    >
+                        <x-icon name="o-check" class="w-3.5 h-3.5 inline" /> Saved
+                    </span>
                 </div>
             @endif
         </div>
