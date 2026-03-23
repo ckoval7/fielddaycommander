@@ -242,9 +242,6 @@
                                                             <x-badge value="Requires Confirmation" class="badge-info badge-sm badge-outline" />
                                                         @endif
                                                     </div>
-                                                    @if($role->isBonusEligibilityOnly())
-                                                        <span class="text-xs text-warning">{{ $role->getBonusEligibilityRequirement() }}</span>
-                                                    @endif
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-1 shrink-0">
@@ -306,8 +303,6 @@
                                                     </div>
                                                     @if($confirmation->shift?->shiftRole?->getBonusTypeCode())
                                                         <span class="text-xs text-success">Confirming will auto-award {{ $confirmation->shift->shiftRole->bonus_points }} bonus points</span>
-                                                    @elseif($confirmation->shift?->shiftRole?->isBonusEligibilityOnly())
-                                                        <span class="text-xs text-warning">Confirms attendance only — {{ $confirmation->shift->shiftRole->getBonusEligibilityRequirement() }}</span>
                                                     @endif
                                                 </div>
                                             </div>
