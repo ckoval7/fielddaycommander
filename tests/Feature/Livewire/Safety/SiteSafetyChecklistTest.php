@@ -205,7 +205,7 @@ describe('editing', function () {
             ->call('toggleItem', $item->id)
             ->assertDispatched('toast', title: 'Bonus Revoked');
 
-        expect($bonus->fresh()->is_verified)->toBeFalse();
+        expect(EventBonus::find($bonus->id))->toBeNull();
     });
 
     test('regular user cannot update notes', function () {

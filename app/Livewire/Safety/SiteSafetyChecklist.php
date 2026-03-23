@@ -193,7 +193,6 @@ class SiteSafetyChecklist extends Component
 
         $bonus = EventBonus::where('event_configuration_id', $this->eventConfig->id)
             ->where('bonus_type_id', $bonusType->id)
-            ->where('is_verified', true)
             ->first();
 
         if (! $bonus) {
@@ -202,11 +201,7 @@ class SiteSafetyChecklist extends Component
 
         // Check if the gate is still met after this uncheck
         if (! $this->checklistGateMet($checklistType)) {
-            $bonus->update([
-                'is_verified' => false,
-                'verified_by_user_id' => null,
-                'verified_at' => null,
-            ]);
+            $bonus->delete();
 
             $this->dispatch('toast',
                 title: 'Bonus Revoked',
