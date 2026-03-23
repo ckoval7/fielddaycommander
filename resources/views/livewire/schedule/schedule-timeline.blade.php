@@ -52,9 +52,6 @@
                                         <x-icon :name="$role->icon" class="w-5 h-5" />
                                     @endif
                                     <span>{{ $role->name }}</span>
-                                    @if($role->bonus_points)
-                                        <x-badge :value="$role->bonus_points . ' bonus pts'" class="badge-warning badge-sm" />
-                                    @endif
                                 </div>
                             </x-slot:title>
 
