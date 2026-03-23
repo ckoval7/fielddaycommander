@@ -264,6 +264,98 @@ test('my shifts shows no event alert when no event configured', function () {
         ->assertSee('No event is currently selected');
 });
 
+// =============================================================================
+// Filtering
+// =============================================================================
+
+describe('filtering', function () {
+    test('can filter shifts by role', function () {
+        $role2 = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Safety Officer',
+            'icon' => 'o-shield-check',
+            'color' => '#ef4444',
+        ]);
+
+        $shift1 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $shift2 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role2->id,
+            'start_time' => appNow()->addHours(5),
+            'end_time' => appNow()->addHours(7),
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shift1->id, 'user_id' => $this->user->id]);
+        ShiftAssignment::factory()->create(['shift_id' => $shift2->id, 'user_id' => $this->user->id]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->set('role', (string) $role2->id)
+            ->assertSee($shift2->start_time->format('g:i A'))
+            ->assertDontSee($shift1->start_time->format('g:i A'));
+    });
+
+    test('can filter by assignment status', function () {
+        $shift1 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $shift2 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(4),
+            'end_time' => appNow()->subHours(2),
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift1->id,
+            'user_id' => $this->user->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift2->id,
+            'user_id' => $this->user->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->set('status', 'checked_out')
+            ->assertSee('Checked Out')
+            ->assertDontSee($shift1->start_time->format('g:i A'));
+    });
+
+    test('can reset filters', function () {
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->set('role', (string) $this->role->id)
+            ->set('status', 'checked_in')
+            ->call('resetFilters')
+            ->assertSet('role', '')
+            ->assertSet('status', '');
+    });
+
+    test('search filter is not available on my shifts', function () {
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->assertDontSee('Search by name');
+    });
+});
+
 test('my shifts does not show other users shifts', function () {
     $otherUser = User::factory()->create();
 

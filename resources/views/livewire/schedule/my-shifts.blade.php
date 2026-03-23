@@ -20,6 +20,16 @@
             </div>
         </div>
 
+        @if($eventConfig)
+            @include('livewire.schedule.partials.filter-bar', [
+                'showSearch' => false,
+                'showTimeFilter' => false,
+                'showStatusFilter' => true,
+                'showAvailability' => false,
+                'statuses' => $this->getFilterStatuses(),
+            ])
+        @endif
+
         @if(!$eventConfig)
             <x-alert icon="o-information-circle" class="alert-info">
                 No event is currently selected. Please select an event to view your shifts.
@@ -43,7 +53,13 @@
                         <x-card>
                             <div class="text-center py-6">
                                 <x-icon name="o-clock" class="w-12 h-12 mx-auto mb-3 text-base-content/30" />
-                                <p class="text-base-content/60">You have no shifts happening right now.</p>
+                                <p class="text-base-content/60">
+                                    @if($this->activeFilterCount > 0)
+                                        No current shifts match your filters.
+                                    @else
+                                        You have no shifts happening right now.
+                                    @endif
+                                </p>
                             </div>
                         </x-card>
                     @else
@@ -136,7 +152,13 @@
                         <x-card>
                             <div class="text-center py-6">
                                 <x-icon name="o-calendar" class="w-12 h-12 mx-auto mb-3 text-base-content/30" />
-                                <p class="text-base-content/60">You have no upcoming shifts scheduled.</p>
+                                <p class="text-base-content/60">
+                                    @if($this->activeFilterCount > 0)
+                                        No upcoming shifts match your filters.
+                                    @else
+                                        You have no upcoming shifts scheduled.
+                                    @endif
+                                </p>
                             </div>
                         </x-card>
                     @else
@@ -192,7 +214,13 @@
                         <x-card>
                             <div class="text-center py-6">
                                 <x-icon name="o-archive-box" class="w-12 h-12 mx-auto mb-3 text-base-content/30" />
-                                <p class="text-base-content/60">You have no past shifts for this event.</p>
+                                <p class="text-base-content/60">
+                                    @if($this->activeFilterCount > 0)
+                                        No past shifts match your filters.
+                                    @else
+                                        You have no past shifts for this event.
+                                    @endif
+                                </p>
                             </div>
                         </x-card>
                     @else

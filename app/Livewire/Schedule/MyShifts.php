@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Schedule;
 
+use App\Livewire\Schedule\Concerns\WithScheduleFilters;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\ShiftAssignment;
@@ -14,6 +15,8 @@ use Livewire\Component;
 
 class MyShifts extends Component
 {
+    use WithScheduleFilters;
+
     public ?Event $event = null;
 
     public ?EventConfiguration $eventConfig = null;
@@ -36,15 +39,18 @@ class MyShifts extends Component
             return new Collection;
         }
 
-        return ShiftAssignment::query()
+        $query = ShiftAssignment::query()
             ->forUser(Auth::id())
             ->whereHas('shift', function ($query) {
                 $query->where('event_configuration_id', $this->eventConfig->id)
                     ->where('start_time', '<=', appNow())
                     ->where('end_time', '>=', appNow());
             })
-            ->with(['shift.shiftRole'])
-            ->get();
+            ->with(['shift.shiftRole']);
+
+        $this->applyAssignmentFilters($query);
+
+        return $query->get();
     }
 
     /**
@@ -59,14 +65,17 @@ class MyShifts extends Component
             return new Collection;
         }
 
-        return ShiftAssignment::query()
+        $query = ShiftAssignment::query()
             ->forUser(Auth::id())
             ->whereHas('shift', function ($query) {
                 $query->where('event_configuration_id', $this->eventConfig->id)
                     ->where('start_time', '>', appNow());
             })
-            ->with(['shift.shiftRole'])
-            ->get();
+            ->with(['shift.shiftRole']);
+
+        $this->applyAssignmentFilters($query);
+
+        return $query->get();
     }
 
     /**
@@ -81,14 +90,32 @@ class MyShifts extends Component
             return new Collection;
         }
 
-        return ShiftAssignment::query()
+        $query = ShiftAssignment::query()
             ->forUser(Auth::id())
             ->whereHas('shift', function ($query) {
                 $query->where('event_configuration_id', $this->eventConfig->id)
                     ->where('end_time', '<', appNow());
             })
-            ->with(['shift.shiftRole'])
-            ->get();
+            ->with(['shift.shiftRole']);
+
+        $this->applyAssignmentFilters($query);
+
+        return $query->get();
+    }
+
+    /**
+     * Get available statuses for the filter dropdown.
+     *
+     * @return array<string, string>
+     */
+    public function getFilterStatuses(): array
+    {
+        return [
+            'scheduled' => 'Scheduled',
+            'checked_in' => 'Checked In',
+            'checked_out' => 'Checked Out',
+            'no_show' => 'No Show',
+        ];
     }
 
     /**
