@@ -230,6 +230,44 @@ trait WithScheduleFilters
     }
 
     /**
+     * Validate enum-like filter properties when set via URL query params.
+     */
+    public function updatedStatus(string $value): void
+    {
+        if ($value !== '' && ! array_key_exists($value, $this->getFilterStatuses())) {
+            $this->status = '';
+        }
+    }
+
+    public function updatedAvailability(string $value): void
+    {
+        if (! in_array($value, ['', 'unfilled', 'full'])) {
+            $this->availability = '';
+        }
+    }
+
+    public function updatedTimeFilter(string $value): void
+    {
+        if (! in_array($value, ['', 'current', 'upcoming', 'past'])) {
+            $this->timeFilter = '';
+        }
+    }
+
+    public function updatedSortBy(string $value): void
+    {
+        if (! in_array($value, ['time', 'role', 'fill'])) {
+            $this->sortBy = 'time';
+        }
+    }
+
+    public function updatedSortDir(string $value): void
+    {
+        if (! in_array($value, ['asc', 'desc'])) {
+            $this->sortDir = 'asc';
+        }
+    }
+
+    /**
      * Remove a single filter by key.
      */
     public function removeFilter(string $key): void
