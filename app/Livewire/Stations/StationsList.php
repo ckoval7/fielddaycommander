@@ -216,6 +216,6 @@ class StationsList extends Component
             'events' => $this->events,
             'stations' => $this->stations,
             'stats' => $this->stats,
-        ]);
+        ])->layout('layouts.app');
     }
 }

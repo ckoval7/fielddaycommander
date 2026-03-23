@@ -79,6 +79,6 @@ class EventDashboard extends Component
 
     public function render(): View
     {
-        return view('livewire.events.event-dashboard');
+        return view('livewire.events.event-dashboard')->layout('layouts.app');
     }
 }

@@ -1075,6 +1075,6 @@ class EquipmentAssignment extends Component
      */
     public function render(): View
     {
-        return view('livewire.stations.equipment-assignment');
+        return view('livewire.stations.equipment-assignment')->layout('layouts.app');
     }
 }

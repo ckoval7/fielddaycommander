@@ -62,7 +62,7 @@ class AuditLogViewer extends Component
             'logs' => $logs,
             'users' => User::all(),
             'actionTypeGroups' => $this->getActionTypeGroups(),
-        ]);
+        ])->layout('layouts.app');
     }
 
     public function clearFilters(): void

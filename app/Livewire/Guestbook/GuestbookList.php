@@ -44,6 +44,6 @@ class GuestbookList extends Component
 
     public function render(): View
     {
-        return view('livewire.guestbook.guestbook-list');
+        return view('livewire.guestbook.guestbook-list')->layout('layouts.app');
     }
 }

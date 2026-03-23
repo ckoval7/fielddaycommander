@@ -356,6 +356,6 @@ class StationForm extends Component
 
     public function render(): View
     {
-        return view('livewire.stations.station-form');
+        return view('livewire.stations.station-form')->layout('layouts.app');
     }
 }

@@ -130,6 +130,6 @@ class ReportsIndex extends Component
 
     public function render(): \Illuminate\View\View
     {
-        return view('livewire.reports.index');
+        return view('livewire.reports.index')->layout('layouts.app');
     }
 }

@@ -278,6 +278,6 @@ class EquipmentForm extends Component
 
     public function render(): View
     {
-        return view('livewire.equipment.equipment-form');
+        return view('livewire.equipment.equipment-form')->layout('layouts.app');
     }
 }

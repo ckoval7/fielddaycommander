@@ -678,6 +678,6 @@ class EventForm extends Component
 
     public function render(): View
     {
-        return view('livewire.events.event-form');
+        return view('livewire.events.event-form')->layout('layouts.app');
     }
 }

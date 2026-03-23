@@ -301,6 +301,6 @@ class EventEquipment extends Component
             'events' => $this->upcomingEvents,
             'commitments' => $this->commitments,
             'userEquipment' => $this->userEquipment,
-        ]);
+        ])->layout('layouts.app');
     }
 }

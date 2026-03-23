@@ -81,7 +81,7 @@ class DeveloperTools extends Component
         return view('livewire.admin.developer-tools', [
             'snapshots' => $this->snapshots,
             'tableCategoryOptions' => $this->getTableCategoryOptions(),
-        ]);
+        ])->layout('layouts.app');
     }
 
     /**

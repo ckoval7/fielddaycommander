@@ -402,6 +402,6 @@ class StationClone extends Component
         return view('livewire.stations.station-clone', [
             'sourceEvents' => $this->sourceEvents,
             'targetEvents' => $this->targetEvents,
-        ]);
+        ])->layout('layouts.app');
     }
 }
