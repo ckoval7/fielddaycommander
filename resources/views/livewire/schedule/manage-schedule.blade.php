@@ -307,16 +307,7 @@
                                                     @if($confirmation->shift?->shiftRole?->getBonusTypeCode())
                                                         <span class="text-xs text-success">Confirming will auto-award {{ $confirmation->shift->shiftRole->bonus_points }} bonus points</span>
                                                     @elseif($confirmation->shift?->shiftRole?->isBonusEligibilityOnly())
-                                                        @if(in_array($confirmation->shift->shiftRole->name, ['Safety Officer', 'Site Responsibilities']))
-                                                            @if($this->checklistGateMet($confirmation->shift->shiftRole->name))
-                                                                <span class="text-xs text-success">✓ Checklist complete — eligible for bonus</span>
-                                                            @else
-                                                                <span class="text-xs text-error">✗ Checklist incomplete — confirmation blocked</span>
-                                                                <a href="{{ route('site-safety.index') }}" class="text-xs link link-primary">View checklist</a>
-                                                            @endif
-                                                        @else
-                                                            <span class="text-xs text-warning">{{ $confirmation->shift->shiftRole->getBonusEligibilityRequirement() }}</span>
-                                                        @endif
+                                                        <span class="text-xs text-warning">Confirms attendance only — {{ $confirmation->shift->shiftRole->getBonusEligibilityRequirement() }}</span>
                                                     @endif
                                                 </div>
                                             </div>

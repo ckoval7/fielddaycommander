@@ -2,10 +2,8 @@
 
 namespace App\Livewire\Schedule;
 
-use App\Enums\ChecklistType;
 use App\Models\Event;
 use App\Models\EventConfiguration;
-use App\Models\SafetyChecklistItem;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
@@ -491,65 +489,12 @@ class ManageSchedule extends Component
         Gate::authorize('manage-shifts');
 
         $assignment = ShiftAssignment::findOrFail($assignmentId);
-        $roleName = $assignment->shift?->shiftRole?->name;
-
-        // Check checklist gate for safety/site responsibility roles
-        if ($assignment->shift?->shiftRole?->isBonusEligibilityOnly()
-            && in_array($roleName, ['Safety Officer', 'Site Responsibilities'])
-            && ! $this->checklistGateMet($roleName)) {
-            $this->dispatch('toast',
-                title: 'Checklist Incomplete',
-                description: 'The safety checklist must be completed before this bonus can be awarded.',
-                icon: 'o-exclamation-triangle',
-                css: 'alert-warning'
-            );
-
-            return;
-        }
-
         $assignment->confirm(Auth::user());
 
         unset($this->pendingConfirmations);
         unset($this->shifts);
 
         $this->dispatch('toast', title: 'Success', description: 'Check-in confirmed', icon: 'o-check-circle', css: 'alert-success');
-    }
-
-    public function checklistGateMet(string $roleName): bool
-    {
-        if (! $this->eventConfig) {
-            return false;
-        }
-
-        $checklistType = match ($roleName) {
-            'Safety Officer' => ChecklistType::SafetyOfficer,
-            'Site Responsibilities' => ChecklistType::SiteResponsibilities,
-            default => null,
-        };
-
-        if (! $checklistType) {
-            return true; // No gate for other roles
-        }
-
-        $items = SafetyChecklistItem::forEvent($this->eventConfig->id)
-            ->byType($checklistType)
-            ->with('entry')
-            ->get();
-
-        if ($items->isEmpty()) {
-            return false; // No checklist seeded = can't verify
-        }
-
-        $totalCompleted = $items->filter(fn ($item) => $item->entry?->is_completed)->count();
-        $requiredCompleted = $items->filter(fn ($item) => $item->is_required && $item->entry?->is_completed)->count();
-        $requiredTotal = $items->filter(fn ($item) => $item->is_required)->count();
-
-        if ($checklistType === ChecklistType::SafetyOfficer) {
-            return $totalCompleted === $items->count();
-        }
-
-        // Site Responsibilities: all required + >50% total
-        return $requiredCompleted === $requiredTotal && $totalCompleted > ($items->count() / 2);
     }
 
     public function revokeConfirmation(int $assignmentId): void
