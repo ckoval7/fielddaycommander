@@ -122,7 +122,7 @@ class SiteSafetyChecklist extends Component
 
         if ($entry->is_completed) {
             $entry->markIncomplete();
-            $this->warnIfBonusAwarded($item->checklist_type);
+            $this->revokeIfGateNotMet($item->checklist_type);
         } else {
             $entry->markComplete(Auth::user());
         }
@@ -177,9 +177,9 @@ class SiteSafetyChecklist extends Component
     }
 
     /**
-     * Warn user if a bonus has already been awarded for this checklist type.
+     * Revoke the bonus if the checklist gate is no longer met after unchecking.
      */
-    protected function warnIfBonusAwarded(ChecklistType $checklistType): void
+    protected function revokeIfGateNotMet(ChecklistType $checklistType): void
     {
         $bonusTypeCode = match ($checklistType) {
             ChecklistType::SafetyOfficer => 'safety_officer',
@@ -191,19 +191,55 @@ class SiteSafetyChecklist extends Component
             return;
         }
 
-        $bonusAwarded = EventBonus::where('event_configuration_id', $this->eventConfig->id)
+        $bonus = EventBonus::where('event_configuration_id', $this->eventConfig->id)
             ->where('bonus_type_id', $bonusType->id)
             ->where('is_verified', true)
-            ->exists();
+            ->first();
 
-        if ($bonusAwarded) {
+        if (! $bonus) {
+            return;
+        }
+
+        // Check if the gate is still met after this uncheck
+        if (! $this->checklistGateMet($checklistType)) {
+            $bonus->update([
+                'is_verified' => false,
+                'verified_by_user_id' => null,
+                'verified_at' => null,
+            ]);
+
             $this->dispatch('toast',
-                title: 'Warning',
-                description: 'A bonus has already been awarded for this checklist. Unchecking items may affect bonus eligibility.',
+                title: 'Bonus Revoked',
+                description: 'The '.$checklistType->label().' bonus has been revoked because the checklist is no longer complete.',
                 icon: 'o-exclamation-triangle',
                 css: 'alert-warning'
             );
         }
+    }
+
+    /**
+     * Check if the checklist gate is met for a given type.
+     */
+    protected function checklistGateMet(ChecklistType $checklistType): bool
+    {
+        $items = SafetyChecklistItem::forEvent($this->eventConfig->id)
+            ->byType($checklistType)
+            ->with('entry')
+            ->get();
+
+        if ($items->isEmpty()) {
+            return false;
+        }
+
+        $totalCompleted = $items->filter(fn ($item) => $item->entry?->is_completed)->count();
+        $requiredCompleted = $items->filter(fn ($item) => $item->is_required && $item->entry?->is_completed)->count();
+        $requiredTotal = $items->filter(fn ($item) => $item->is_required)->count();
+
+        if ($checklistType === ChecklistType::SafetyOfficer) {
+            return $totalCompleted === $items->count();
+        }
+
+        return $requiredCompleted === $requiredTotal && $totalCompleted > ($items->count() / 2);
     }
 
     public function render(): View

@@ -183,9 +183,9 @@ describe('editing', function () {
         expect($entry->fresh()->is_completed)->toBeFalse();
     });
 
-    test('warns when unchecking item with bonus already awarded', function () {
+    test('revokes bonus when unchecking breaks the gate', function () {
         $bonusType = BonusType::factory()->create(['code' => 'safety_officer']);
-        EventBonus::factory()->create([
+        $bonus = EventBonus::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'bonus_type_id' => $bonusType->id,
             'is_verified' => true,
@@ -193,7 +193,7 @@ describe('editing', function () {
 
         $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
             'event_configuration_id' => $this->eventConfig->id,
-            'label' => 'Test uncheck warning',
+            'label' => 'Test uncheck revokes bonus',
         ]);
         SafetyChecklistEntry::factory()->completed()->create([
             'safety_checklist_item_id' => $item->id,
@@ -203,7 +203,9 @@ describe('editing', function () {
 
         Livewire::test(SiteSafetyChecklist::class)
             ->call('toggleItem', $item->id)
-            ->assertDispatched('toast', title: 'Warning');
+            ->assertDispatched('toast', title: 'Bonus Revoked');
+
+        expect($bonus->fresh()->is_verified)->toBeFalse();
     });
 
     test('regular user cannot update notes', function () {
