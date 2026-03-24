@@ -226,14 +226,6 @@ else
     PUBLIC_PORT="80"
 fi
 
-# --- Root Check ---
-check_root() {
-    if [[ $EUID -ne 0 ]]; then
-        log_error "This script must be run as root (or via sudo)"
-        exit 1
-    fi
-}
-
 # --- Dry Run ---
 print_dry_run() {
     echo -e "\n${BOLD}FD Commander Deployment Plan${NC}"
@@ -929,7 +921,6 @@ finalize() {
 
 # --- Main entrypoint ---
 main() {
-    check_root
     validate_args
     detect_distro
 
