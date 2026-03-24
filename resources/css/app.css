@@ -4,6 +4,9 @@
 /* Colors */
 @import './colors.css';
 
+/* Flatpickr datetime picker */
+@import './flatpickr-theme.css';
+
 /* Alpine.js x-cloak - prevents flash of unstyled content */
 [x-cloak] { display: none !important; }
 

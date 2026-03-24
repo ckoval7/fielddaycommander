@@ -1,0 +1,87 @@
+/* Flatpickr base styles */
+@import 'flatpickr/dist/flatpickr.css';
+
+/* daisyUI theme overrides */
+.flatpickr-calendar {
+    background: oklch(var(--b1));
+    border-color: oklch(var(--b3));
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    border-radius: var(--radius-box, 0.5rem);
+    font-family: inherit;
+}
+
+.flatpickr-months .flatpickr-month,
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-weekdays,
+span.flatpickr-weekday {
+    background: oklch(var(--b2));
+    color: oklch(var(--bc));
+}
+
+.flatpickr-current-month input.cur-year,
+.flatpickr-current-month .numInputWrapper {
+    color: oklch(var(--bc));
+}
+
+.flatpickr-day {
+    color: oklch(var(--bc));
+    border-radius: var(--radius-btn, 0.25rem);
+}
+
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+    background: oklch(var(--b3));
+    border-color: oklch(var(--b3));
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: oklch(var(--p));
+    border-color: oklch(var(--p));
+    color: oklch(var(--pc));
+}
+
+.flatpickr-day.today {
+    border-color: oklch(var(--p));
+}
+
+.flatpickr-day.today:hover {
+    background: oklch(var(--p) / 0.1);
+    border-color: oklch(var(--p));
+    color: oklch(var(--bc));
+}
+
+.flatpickr-time input,
+.flatpickr-time .flatpickr-am-pm {
+    color: oklch(var(--bc));
+}
+
+.flatpickr-time input:hover,
+.flatpickr-time input:focus,
+.flatpickr-time .flatpickr-am-pm:hover,
+.flatpickr-time .flatpickr-am-pm:focus {
+    background: oklch(var(--b2));
+}
+
+/* Prev/next navigation arrows */
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    color: oklch(var(--bc));
+    fill: oklch(var(--bc));
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: oklch(var(--p));
+}
+
+/* Disabled days */
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    color: oklch(var(--bc) / 0.3);
+}
+
+/* Time separator */
+.flatpickr-time .flatpickr-time-separator {
+    color: oklch(var(--bc));
+}

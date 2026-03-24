@@ -1,5 +1,6 @@
 import './bootstrap';
 import dashboardSortable from './components/dashboard-sortable';
+import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
 
 // Make Chart.js globally available for dynamic imports
@@ -17,4 +18,5 @@ document.documentElement.dataset.theme = theme;
 // Register Alpine.js components before Alpine starts
 document.addEventListener('alpine:init', () => {
     Alpine.data('dashboardSortable', dashboardSortable);
+    Alpine.data('flatpickr', flatpickrComponent);
 });
