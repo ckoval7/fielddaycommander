@@ -224,6 +224,162 @@ print_dry_run() {
     echo "Phases: Packages → App Setup → Database → Nginx → SSL → Systemd → Firewall → Cache"
 }
 
+# --- Package Installation ---
+install_packages_debian() {
+    log_phase "Phase 2: Installing system packages (Debian/Ubuntu)"
+
+    # Add PHP 8.4 PPA
+    if ! command -v php8.4 &>/dev/null; then
+        log_info "Adding Ondrej PHP PPA..."
+        apt-get update -y
+        apt-get install -y software-properties-common
+        add-apt-repository -y ppa:ondrej/php
+    else
+        log_warn "PHP 8.4 already installed, skipping PPA"
+    fi
+
+    # Add NodeSource repo
+    if ! command -v node &>/dev/null; then
+        log_info "Adding NodeSource repo for Node 20..."
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    else
+        log_warn "Node.js already installed, skipping NodeSource"
+    fi
+
+    log_info "Installing packages..."
+    apt-get update -y
+    apt-get install -y \
+        php8.4-cli php8.4-fpm php8.4-mysql php8.4-mbstring php8.4-xml \
+        php8.4-curl php8.4-zip php8.4-bcmath php8.4-gd php8.4-intl php8.4-redis \
+        mysql-server nginx nodejs unzip git
+
+    # Certbot (if SSL with Let's Encrypt)
+    if $SSL_ENABLED && [[ -z "$SSL_CERT" ]]; then
+        log_info "Installing Certbot..."
+        apt-get install -y certbot python3-certbot-nginx
+    fi
+}
+
+install_packages_rhel() {
+    log_phase "Phase 2: Installing system packages (RHEL-family)"
+
+    # EPEL + Remi repos
+    log_info "Enabling EPEL and Remi repos..."
+    dnf install -y epel-release
+    dnf install -y https://rpms.remirepo.net/enterprise/remi-release-$(rpm -E %rhel).rpm || true
+    dnf module reset php -y
+    dnf module enable php:remi-8.4 -y
+
+    # NodeSource repo
+    if ! command -v node &>/dev/null; then
+        log_info "Adding NodeSource repo for Node 20..."
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+    else
+        log_warn "Node.js already installed, skipping NodeSource"
+    fi
+
+    # MySQL 8 community repo
+    if ! command -v mysqld &>/dev/null; then
+        log_info "Adding MySQL community repo..."
+        dnf install -y https://dev.mysql.com/get/mysql80-community-release-el$(rpm -E %rhel)-1.noarch.rpm || true
+    fi
+
+    log_info "Installing packages..."
+    dnf install -y \
+        php-cli php-fpm php-mysqlnd php-mbstring php-xml \
+        php-curl php-zip php-bcmath php-gd php-intl php-redis \
+        mysql-community-server nginx nodejs unzip git
+
+    # Certbot
+    if $SSL_ENABLED && [[ -z "$SSL_CERT" ]]; then
+        log_info "Installing Certbot..."
+        dnf install -y certbot python3-certbot-nginx
+    fi
+
+    # SELinux: allow Nginx to connect to PHP-FPM socket and Reverb upstream
+    if command -v getenforce &>/dev/null && [[ "$(getenforce)" != "Disabled" ]]; then
+        log_info "Configuring SELinux for Nginx..."
+        setsebool -P httpd_can_network_connect 1
+    fi
+}
+
+install_composer() {
+    if command -v composer &>/dev/null; then
+        log_warn "Composer already installed, skipping"
+        return
+    fi
+
+    log_info "Installing Composer..."
+    local expected_sig
+    expected_sig=$(curl -fsSL https://composer.github.io/installer.sig)
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    local actual_sig
+    actual_sig=$(php -r "echo hash_file('sha384', 'composer-setup.php');")
+
+    if [[ "$expected_sig" != "$actual_sig" ]]; then
+        log_error "Composer installer signature mismatch"
+        rm composer-setup.php
+        exit 1
+    fi
+
+    php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+    rm composer-setup.php
+    log_info "Composer installed successfully"
+}
+
+create_system_user() {
+    if id "fdcommander" &>/dev/null; then
+        log_warn "User 'fdcommander' already exists, skipping"
+        return
+    fi
+
+    log_info "Creating system user 'fdcommander'..."
+    useradd --system --no-create-home --shell /usr/sbin/nologin -g "$WEB_GROUP" fdcommander
+}
+
+configure_fpm_pool() {
+    local pool_file="${FPM_POOL_DIR}/fdcommander.conf"
+
+    log_info "Configuring PHP-FPM pool..."
+
+    # Disable default www pool
+    local default_pool="${FPM_POOL_DIR}/www.conf"
+    if [[ -f "$default_pool" ]]; then
+        mv "$default_pool" "${default_pool}.bak"
+        log_info "Disabled default www pool"
+    fi
+
+    cat > "$pool_file" <<FPMEOF
+[fdcommander]
+user = fdcommander
+group = ${WEB_GROUP}
+listen = ${FPM_SOCKET}
+listen.owner = ${WEB_GROUP}
+listen.group = ${WEB_GROUP}
+listen.mode = 0660
+pm = dynamic
+pm.max_children = 10
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+FPMEOF
+
+    systemctl enable "$FPM_SERVICE"
+    systemctl restart "$FPM_SERVICE"
+    log_info "PHP-FPM pool configured and started"
+}
+
+install_packages() {
+    case "$DISTRO_FAMILY" in
+        debian) install_packages_debian ;;
+        rhel)   install_packages_rhel ;;
+    esac
+
+    install_composer
+    create_system_user
+    configure_fpm_pool
+}
+
 # --- Main entrypoint ---
 main() {
     check_root
@@ -236,6 +392,8 @@ main() {
     fi
 
     log_phase "Starting FD Commander deployment to ${SCHEME}://${DOMAIN}"
+
+    install_packages
 
     # Phase functions will be called here in subsequent tasks
 }
