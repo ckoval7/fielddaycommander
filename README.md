@@ -1,274 +1,81 @@
-# Field Day Logging Database (v2)
+# Field Day Commander
 
-A modern, web-based ham radio Field Day logging application built with Laravel 12 and Mary UI. Designed for easy deployment in air-gapped environments with simple hardware requirements.
+A web-based operations hub for ham radio clubs running ARRL Field Day. Manage contacts, scoring, stations, operators, and equipment from any device on your local network, no internet required.
 
-## Features
+Field Day Commander runs on modest hardware (including a Raspberry Pi 4) and is designed for air-gapped field deployments where reliability matters more than cloud connectivity.
 
-### ✅ Implemented
+## Why Use It?
 
-#### Equipment Inventory Management
-Complete equipment tracking and management system for Field Day operations.
+**For your club:** Multiple operators log contacts simultaneously from any phone, tablet, or laptop on the network. Scores update in real time so everyone can see how the event is going.
 
-**For All Operators:**
-- Create and manage personal equipment catalog
-- Track equipment by make, model, serial number, and type
-- Upload equipment photos and add searchable tags
-- Commit equipment to Field Day events
-- View equipment status and commitments
-- Search and filter equipment by type, status, and owner
-- Prevent overlapping equipment commitments
-- Receive notifications for equipment status changes
+**For event organizers:** Plan stations, schedule operator shifts, track equipment, manage safety checklists, and generate post-event reports and Cabrillo exports, all from one place.
 
-**For Event Managers:**
-- Manage club-owned equipment with assigned managers
-- Track equipment through full event lifecycle (Committed → Delivered → In Use → Returned)
-- Mark equipment as Lost or Damaged with audit trail
-- Assign equipment to specific operating stations
-- View equipment dashboard with real-time status
-- Generate equipment utilization and commitment reports
-- Override status changes during event operations
+**For operators:** A clean logging interface with realtime dupe detection. Just sit down and start making contacts.
 
-**Technical Highlights:**
-- Dual ownership model (User and Organization equipment)
-- State machine for equipment status transitions
-- Comprehensive permission system (manage-own-equipment, view-all-equipment, edit-any-equipment, manage-event-equipment)
-- Automated notifications for equipment owners
-- Soft deletes for data preservation
-- Full test coverage with 38 comprehensive tests
+## Key Features
 
-#### User Management
-- Role-based access control (Admin, Event Manager, Operator)
-- User profile management with activity tracking
-- Session management and security monitoring
-- Callsign and email validation
-- Last login tracking
+- **Real-time contact logging,** multiple operators log QSOs simultaneously with live dupe checking
+- **Live scoring,** scores update automatically as contacts are logged, with power multipliers and bonus tracking
+- **Station management,** define operating positions, assign equipment, and track which stations are active
+- **Volunteer scheduling,** build shift schedules and assign volunteers to stations and other roles
+- **Equipment tracking,** catalog personal and club-owned gear, commit it to events, and track status through the event lifecycle
+- **Role-based access,** four roles (System Admin, Event Manager, Station Captain, Operator) with appropriate permissions at each level
+- **Safety compliance,** built-in site safety checklist with completion tracking
+- **Cabrillo export,** generate submission-ready files when the event wraps up
+- **Air-gapped operation,** zero external dependencies at runtime; everything runs locally
+- **Runs on a Pi,** tested on Raspberry Pi 4 (4GB), Intel NUC, and standard Linux servers
 
-#### System Features
-- Setup wizard for initial configuration
-- Organization management
-- Comprehensive audit logging
-- Admin audit log viewer with filtering and export
+## Getting Started
 
-### 🚧 In Development
+### Automated Setup
 
-- QSO Logging
-- Real-time scoring
-- Station management
-- Band/mode tracking
+The fastest path to a running instance. On a fresh Ubuntu 22.04+ or Debian 12 server:
 
-### 📋 Planned
-
-- 2025 Field Day Rules Compliance
-- Interactive ARRL/RAC section maps
-- Rig interface agents (hamlib integration)
-- Callsign lookup (callook.info integration)
-- Winter Field Day support
-
-## Technology Stack
-
-- **Backend**: Laravel 12 (PHP 8.4+)
-- **Frontend**: Mary UI (Livewire 4 + Tailwind CSS + Alpine.js)
-- **Database**: MySQL 8.0+ / MariaDB 10.6+
-- **Real-time**: Laravel Reverb (WebSockets)
-- **Testing**: Pest 4
-- **Code Quality**: Laravel Pint
-
-## Requirements
-
-### Minimum System Requirements
-- PHP 8.4 or higher
-- Composer 2.x
-- Node.js 18+ and npm
-- MySQL 8.0+ or MariaDB 10.6+
-
-### Tested Hardware
-- Raspberry Pi 4 (4GB RAM)
-- Intel NUC
-- Standard LAMP server
-
-### Air-Gapped Deployment
-All dependencies are bundled and can run without internet connectivity:
-- No CDN dependencies
-- All assets compiled locally
-- Self-contained deployment
-
-## Installation
-
-### Development Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd fdlogdb/fdlogdb
-   ```
-
-2. **Install dependencies**
-   ```bash
-   composer install
-   npm install
-   ```
-
-3. **Environment configuration**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-
-4. **Configure database**
-   Edit `.env` and set your database credentials:
-   ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=fdlogdb
-   DB_USERNAME=your_username
-   DB_PASSWORD=your_password
-   ```
-
-5. **Run migrations**
-   ```bash
-   php artisan migrate
-   ```
-
-6. **Build assets**
-   ```bash
-   npm run build
-   ```
-
-7. **Start development server**
-   ```bash
-   php artisan serve
-   ```
-
-8. **Run setup wizard**
-   Navigate to `http://localhost:8000/setup` and complete the setup wizard.
-
-### Production Deployment
-
-#### Docker Compose (Recommended)
 ```bash
-docker-compose up -d
+# Setup Script COming Soon
 ```
 
-#### Traditional LAMP Stack
-1. Configure Apache/Nginx to serve from `public/` directory
-2. Set appropriate file permissions
-3. Configure environment variables
-4. Run migrations
-5. Build production assets: `npm run build`
+The interactive script handles installing dependencies, configuring the database, building assets, and setting up the web server.
 
-## Testing
+### Manual Setup
 
-Run the full test suite:
-```bash
-php artisan test
-```
+If you prefer to configure things yourself, or need to adapt the install to your environment, follow the step-by-step deployment guides in the `docs/guides/` directory:
 
-Run specific test files:
-```bash
-php artisan test tests/Feature/Equipment/EquipmentPermissionTest.php
-php artisan test --filter=EquipmentEvent
-```
+1. **Environment Preparation,** install PHP 8.3+, MySQL/MariaDB, Nginx, and Node.js
+2. **Application Deployment,** deploy the app, configure SSL, and start background services
+3. **Quick Start Guide,** first login, initial configuration, and creating your first event
 
-Run with coverage:
-```bash
-php artisan test --coverage
-```
+### System Requirements
+
+- **OS:** Ubuntu 22.04 LTS+ or Debian 12
+- **RAM:** 1 GB minimum (2+ GB recommended)
+- **Disk:** 10 GB minimum (SSD preferred)
+- **Database:** MySQL 8.0+ or MariaDB 10.6+
 
 ## Documentation
 
-- **User Guide**: See `/docs/equipment-inventory.md` for equipment inventory user documentation
-- **Project Tracking**: See `CLAUDE_DOCS/PROJECT_TRACKER.md` for development status
-- **Security**: See `CLAUDE_DOCS/SECURITY_AUDIT.md` for security considerations
-- **Architecture**: See `CLAUDE_DOCS/IMPLEMENTATION_ROADMAP.md` for technical details
+Full documentation lives in the `docs/guides/` directory:
 
-## Project Structure
+| Guide | Description |
+|-------|-------------|
+| Environment Preparation | Server and dependency setup |
+| Application Deployment | App installation and web server configuration |
+| Quick Start Guide | First-run walkthrough for new installations |
+| System Overview | Architecture, roles, event lifecycle, and navigation |
+| Glossary | Definitions of Field Day and app-specific terms |
 
-```
-fdlogdb/
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/      # HTTP controllers
-│   │   └── Requests/         # Form request validation
-│   ├── Livewire/             # Livewire components
-│   ├── Models/               # Eloquent models
-│   ├── Policies/             # Authorization policies
-│   └── Observers/            # Model observers
-├── database/
-│   ├── factories/            # Model factories
-│   ├── migrations/           # Database migrations
-│   └── seeders/              # Database seeders
-├── resources/
-│   ├── css/                  # Tailwind CSS
-│   ├── js/                   # JavaScript/Alpine.js
-│   └── views/                # Blade templates
-│       ├── components/       # Blade components
-│       ├── livewire/         # Livewire views
-│       └── layouts/          # Layout templates
-├── tests/
-│   ├── Feature/              # Feature tests
-│   └── Unit/                 # Unit tests
-├── docs/                     # User documentation
-└── CLAUDE_DOCS/              # Development documentation
-```
+## Technology
 
-## Development Workflow
-
-1. **Check Project Status**: Always start by reading `CLAUDE_DOCS/PROJECT_TRACKER.md`
-2. **Update Tracker**: Update the project tracker as changes are made
-3. **Test First**: Write tests before implementation
-4. **Code Style**: Run `vendor/bin/pint` before committing
-5. **Commit Messages**: Use conventional commits format
-
-## Guiding Principles
-
-- **Easy Deployment**: Simple setup for non-technical users
-- **Air-Gapped Ready**: No internet required during operation
-- **Open Source**: All dependencies are open source compatible
-- **Lightweight**: Runs on modest hardware (Raspberry Pi)
-- **Security First**: Modern security practices, no legacy vulnerabilities
+Built with Laravel 12, Livewire, and Mary UI. Real-time updates powered by Laravel Reverb (WebSockets). See the [System Overview](docs/04-system-overview.md) for architecture details.
 
 ## Contributing
 
-This is a modernization of a 10-year-old Field Day logging application. Contributions are welcome!
-
-1. Fork the repository
-2. Create a feature branch
-3. Write tests for new features
-4. Ensure all tests pass
-5. Run Laravel Pint for code formatting
-6. Submit a pull request
-
-## Security
-
-If you discover a security vulnerability, please send an email to the project maintainer. All security vulnerabilities will be promptly addressed.
-
-**Note**: The legacy v1 application (in `../html/`) contained 7 critical vulnerabilities including SQL injection and hardcoded credentials. v2 addresses all known security issues using Laravel's built-in protections.
+Contributions are welcome! Fork the repo, create a feature branch, and submit a pull request. Please run the test suite (`php artisan test`) and code formatter (`vendor/bin/pint`) before submitting.
 
 ## License
 
-This project is open-sourced software licensed under the MIT license.
+GPL v3. See [LICENSE](LICENSE) for details.
 
 ## Field Day Rules
 
-This application aims to comply with:
-- ARRL Field Day Rules 2025 (see `Field-Day-Rules-2025.pdf`)
-- Winter Field Day Rules (see `winter-Field-Day.pdf`)
-
-## Acknowledgments
-
-- Built with [Laravel](https://laravel.com)
-- UI components by [Mary UI](https://mary-ui.com)
-- Icons by [Heroicons](https://heroicons.com)
-- Testing with [Pest PHP](https://pestphp.com)
-
-## Support
-
-For questions or issues:
-- Check documentation in `/docs/` directory
-- Review `CLAUDE_DOCS/` for development information
-- Submit issues on the project repository
-
----
-
-**Original Project Proposal**: See `FDLDB_proposal.md` for the original 2016 vision behind this project.
+This application is designed to comply with current ARRL Field Day rules. See [arrl.org/field-day-rules](https://www.arrl.org/field-day-rules) for the official rules document.
