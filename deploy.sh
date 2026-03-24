@@ -508,6 +508,379 @@ setup_app() {
     log_info "Application setup complete"
 }
 
+setup_database() {
+    log_phase "Phase 4: Setting up database"
+
+    # Start and enable MySQL
+    local mysql_service="mysql"
+    if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+        mysql_service="mysqld"
+    fi
+
+    systemctl enable "$mysql_service"
+    systemctl start "$mysql_service"
+
+    # Create database and user
+    log_info "Creating database and user..."
+    mysql -u root <<SQLEOF
+CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD}';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
+FLUSH PRIVILEGES;
+SQLEOF
+
+    log_info "Database and user created"
+
+    # Run migrations
+    log_info "Running migrations..."
+    cd "$APP_PATH"
+    sudo -u fdcommander php artisan migrate --force
+
+    # Run production seeders
+    if ! $NO_SEEDERS; then
+        log_info "Running production seeders..."
+        local seeders=(
+            "EventTypeSeeder"
+            "BandSeeder"
+            "ModeSeeder"
+            "SectionSeeder"
+            "OperatingClassSeeder"
+            "BonusTypeSeeder"
+            "PermissionSeeder"
+            "RoleSeeder"
+            "SystemAdminSeeder"
+        )
+        for seeder in "${seeders[@]}"; do
+            log_info "  Seeding: $seeder"
+            sudo -u fdcommander php artisan db:seed --class="$seeder" --force
+        done
+    else
+        log_warn "Seeders skipped (--no-seeders)"
+    fi
+
+    log_info "Database setup complete"
+}
+
+configure_nginx() {
+    log_phase "Phase 5: Configuring Nginx"
+
+    local config_file
+    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+        config_file="${NGINX_SITES_DIR}/fd-commander"
+    else
+        config_file="${NGINX_SITES_DIR}/fd-commander.conf"
+    fi
+
+    log_info "Writing Nginx vhost config..."
+    cat > "$config_file" <<NGINXEOF
+server {
+    listen 80;
+    server_name ${DOMAIN};
+    root ${APP_PATH}/public;
+
+    index index.php;
+    client_max_body_size 20M;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    charset utf-8;
+
+    location / {
+        try_files \$uri \$uri/ /index.php?\$query_string;
+    }
+
+    location /app {
+        proxy_pass http://127.0.0.1:${REVERB_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 60s;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:${FPM_SOCKET};
+        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+}
+NGINXEOF
+
+    # Enable site (Debian-specific)
+    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+        ln -sf "$config_file" "${NGINX_ENABLED_DIR}/fd-commander"
+        # Remove default site if present
+        rm -f "${NGINX_ENABLED_DIR}/default"
+    fi
+
+    # Test and reload
+    nginx -t
+    systemctl enable nginx
+    systemctl reload nginx
+
+    log_info "Nginx configured and reloaded"
+}
+
+configure_ssl() {
+    if ! $SSL_ENABLED; then
+        log_warn "SSL not enabled, skipping Phase 6"
+        return
+    fi
+
+    log_phase "Phase 6: Configuring SSL"
+
+    if [[ -n "$SSL_CERT" ]]; then
+        # Custom certificate path
+        log_info "Configuring Nginx with custom SSL certificate..."
+
+        local config_file
+        if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+            config_file="${NGINX_SITES_DIR}/fd-commander"
+        else
+            config_file="${NGINX_SITES_DIR}/fd-commander.conf"
+        fi
+
+        # Rewrite config with SSL
+        cat > "$config_file" <<SSLEOF
+server {
+    listen 80;
+    server_name ${DOMAIN};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name ${DOMAIN};
+    root ${APP_PATH}/public;
+
+    ssl_certificate ${SSL_CERT};
+    ssl_certificate_key ${SSL_KEY};
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    index index.php;
+    client_max_body_size 20M;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    charset utf-8;
+
+    location / {
+        try_files \$uri \$uri/ /index.php?\$query_string;
+    }
+
+    location /app {
+        proxy_pass http://127.0.0.1:${REVERB_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 60s;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:${FPM_SOCKET};
+        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+}
+SSLEOF
+
+        nginx -t
+        systemctl reload nginx
+        log_info "Custom SSL certificate configured"
+
+    else
+        # Let's Encrypt path
+        log_info "Obtaining Let's Encrypt certificate..."
+        certbot --nginx \
+            -d "$DOMAIN" \
+            --email "$SSL_EMAIL" \
+            --agree-tos \
+            --non-interactive \
+            --redirect
+
+        log_info "Let's Encrypt certificate obtained and auto-renewal configured"
+    fi
+}
+
+configure_systemd() {
+    log_phase "Phase 7: Configuring systemd services"
+
+    # Queue Worker
+    log_info "Creating queue worker service..."
+    cat > /etc/systemd/system/fdcommander-queue.service <<QUEUEEOF
+[Unit]
+Description=FD Commander Queue Worker
+After=network.target mysql.service
+
+[Service]
+User=fdcommander
+Group=${WEB_GROUP}
+WorkingDirectory=${APP_PATH}
+ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+QUEUEEOF
+
+    # Scheduler (oneshot + timer)
+    log_info "Creating scheduler service and timer..."
+    cat > /etc/systemd/system/fdcommander-scheduler.service <<SCHEDEOF
+[Unit]
+Description=FD Commander Task Scheduler
+
+[Service]
+User=fdcommander
+Group=${WEB_GROUP}
+WorkingDirectory=${APP_PATH}
+ExecStart=/usr/bin/php artisan schedule:run --no-interaction
+Type=oneshot
+SCHEDEOF
+
+    cat > /etc/systemd/system/fdcommander-scheduler.timer <<TIMEREOF
+[Unit]
+Description=Run FD Commander scheduler every minute
+
+[Timer]
+OnCalendar=*:*:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+TIMEREOF
+
+    # Reverb WebSocket server
+    log_info "Creating Reverb WebSocket service..."
+    cat > /etc/systemd/system/fdcommander-reverb.service <<REVERBEOF
+[Unit]
+Description=FD Commander Reverb WebSocket Server
+After=network.target
+
+[Service]
+User=fdcommander
+Group=${WEB_GROUP}
+WorkingDirectory=${APP_PATH}
+ExecStart=/usr/bin/php artisan reverb:start --host=127.0.0.1 --port=${REVERB_PORT}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+REVERBEOF
+
+    # Reload and enable
+    systemctl daemon-reload
+    systemctl enable --now fdcommander-queue.service
+    systemctl enable --now fdcommander-scheduler.timer
+    systemctl enable --now fdcommander-reverb.service
+
+    log_info "All systemd services enabled and started"
+}
+
+configure_firewall() {
+    log_phase "Phase 8: Configuring firewall"
+
+    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+        if command -v ufw &>/dev/null && ufw status | grep -q "active"; then
+            log_info "Configuring UFW firewall..."
+            ufw allow 'Nginx Full'
+            log_info "UFW configured: ports 80 and 443 open"
+        else
+            log_warn "UFW not active. Recommend enabling: ufw allow 'Nginx Full' && ufw enable"
+        fi
+    elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+        if systemctl is-active --quiet firewalld; then
+            log_info "Configuring firewalld..."
+            firewall-cmd --permanent --add-service=http
+            if $SSL_ENABLED; then
+                firewall-cmd --permanent --add-service=https
+            fi
+            firewall-cmd --reload
+            log_info "firewalld configured: HTTP/HTTPS open"
+        else
+            log_warn "firewalld not active. Recommend enabling and opening ports 80/443"
+        fi
+    fi
+}
+
+finalize() {
+    log_phase "Phase 9: Caching and finalizing"
+
+    cd "$APP_PATH"
+
+    log_info "Caching configuration..."
+    sudo -u fdcommander php artisan config:cache
+    sudo -u fdcommander php artisan route:cache
+    sudo -u fdcommander php artisan view:cache
+
+    # Print summary
+    echo ""
+    echo -e "${BOLD}============================================${NC}"
+    echo -e "${GREEN}${BOLD}  FD Commander Deployment Complete!${NC}"
+    echo -e "${BOLD}============================================${NC}"
+    echo ""
+    echo -e "${BOLD}Application${NC}"
+    echo "  URL:            ${SCHEME}://${DOMAIN}"
+    echo "  Path:           ${APP_PATH}"
+    echo "  Environment:    production"
+    echo ""
+    echo -e "${BOLD}Database${NC}"
+    echo "  Host:           127.0.0.1"
+    echo "  Name:           ${DB_NAME}"
+    echo "  User:           ${DB_USER}"
+    if $DB_PASSWORD_GENERATED; then
+        echo "  Password:       ${DB_PASSWORD}"
+        echo -e "  ${YELLOW}(auto-generated — save this now, it won't be shown again)${NC}"
+    fi
+    echo ""
+    echo -e "${BOLD}Services${NC}"
+    echo "  Queue Worker:   $(systemctl is-active fdcommander-queue.service)"
+    echo "  Scheduler:      $(systemctl is-active fdcommander-scheduler.timer)"
+    echo "  Reverb:         $(systemctl is-active fdcommander-reverb.service)"
+    echo "  Nginx:          $(systemctl is-active nginx)"
+    echo "  PHP-FPM:        $(systemctl is-active "$FPM_SERVICE")"
+    echo ""
+    echo -e "${BOLD}Logs${NC}"
+    echo "  Deploy log:     ${LOG_FILE}"
+    echo "  App log:        ${APP_PATH}/storage/logs/laravel.log"
+    echo "  Nginx log:      /var/log/nginx/"
+    echo ""
+    echo -e "${BOLD}Next Steps${NC}"
+    echo "  1. Visit ${SCHEME}://${DOMAIN} and complete initial setup"
+    echo "  2. The SystemAdminSeeder created the first admin user"
+    echo "  3. Review firewall settings if not configured"
+    if ! $SSL_ENABLED; then
+        echo "  4. Consider enabling SSL: re-run with --ssl --email you@example.com"
+    fi
+    echo ""
+}
+
 # --- Main entrypoint ---
 main() {
     check_root
@@ -523,8 +896,12 @@ main() {
 
     install_packages
     setup_app
-
-    # Phase functions will be called here in subsequent tasks
+    setup_database
+    configure_nginx
+    configure_ssl
+    configure_systemd
+    configure_firewall
+    finalize
 }
 
 main
