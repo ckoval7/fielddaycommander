@@ -146,7 +146,7 @@ describe('observer integration', function () {
 
         expect($bonus)->not->toBeNull()
             ->and($bonus->calculated_points)->toBe(10);
-    })->skip('Requires Task 6: Observers');
+    });
 
     test('deleting a message auto-syncs bonus via observer', function () {
         $message = Message::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
@@ -157,7 +157,7 @@ describe('observer integration', function () {
             ->first();
 
         expect($bonus)->toBeNull();
-    })->skip('Requires Task 6: Observers');
+    });
 
     test('creating a W1AW bulletin auto-syncs bonus via observer', function () {
         W1awBulletin::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
@@ -168,5 +168,5 @@ describe('observer integration', function () {
 
         expect($bonus)->not->toBeNull()
             ->and($bonus->calculated_points)->toBe(100);
-    })->skip('Requires Task 6: Observers');
+    });
 });

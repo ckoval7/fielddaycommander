@@ -6,12 +6,16 @@ use App\Models\Contact;
 use App\Models\EquipmentEvent;
 use App\Models\GuestbookEntry;
 use App\Models\Image;
+use App\Models\Message;
 use App\Models\OperatingSession;
+use App\Models\W1awBulletin;
 use App\Observers\ContactObserver;
 use App\Observers\EquipmentEventObserver;
 use App\Observers\GuestbookEntryObserver;
 use App\Observers\ImageObserver;
+use App\Observers\MessageObserver;
 use App\Observers\OperatingSessionObserver;
+use App\Observers\W1awBulletinObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -41,13 +45,17 @@ class AppServiceProvider extends ServiceProvider
         // Register policies
         Gate::policy(\App\Models\Image::class, \App\Policies\ImagePolicy::class);
         Gate::policy(\App\Models\GuestbookEntry::class, \App\Policies\GuestbookEntryPolicy::class);
+        Gate::policy(\App\Models\Message::class, \App\Policies\MessagePolicy::class);
+        Gate::policy(\App\Models\W1awBulletin::class, \App\Policies\W1awBulletinPolicy::class);
 
         // Register model observers
         Contact::observe(ContactObserver::class);
         EquipmentEvent::observe(EquipmentEventObserver::class);
         GuestbookEntry::observe(GuestbookEntryObserver::class);
         Image::observe(ImageObserver::class);
+        Message::observe(MessageObserver::class);
         OperatingSession::observe(OperatingSessionObserver::class);
+        W1awBulletin::observe(W1awBulletinObserver::class);
     }
 
     /**
