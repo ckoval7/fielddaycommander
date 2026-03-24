@@ -2,9 +2,8 @@
     <form wire:submit="lockAccount">
         <p class="mb-4">Lock this user account? The user will not be able to log in.</p>
 
-        <x-input
+        <x-flatpickr
             label="Lock Expiry (Optional)"
-            type="datetime-local"
             wire:model="lockExpiry"
             hint="Leave blank for permanent lock"
         />

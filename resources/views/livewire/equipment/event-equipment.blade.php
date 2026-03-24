@@ -272,12 +272,12 @@
             />
 
             {{-- Expected Delivery Date/Time --}}
-            <x-datetime
+            <x-flatpickr
                 label="Expected Delivery"
                 wire:model="expectedDeliveryAt"
+                mode="date"
                 icon="o-calendar"
                 hint="When do you expect to deliver this equipment?"
-                without-time
             />
 
             {{-- Delivery Notes --}}
