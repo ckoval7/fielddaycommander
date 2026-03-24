@@ -183,6 +183,33 @@ else
     DB_PASSWORD_GENERATED=false
 fi
 
+# If DB password was passed via CLI, re-exec with it as an env var to hide from /proc/cmdline
+if [[ -z "${_FDC_DB_PASS_FROM_ENV:-}" ]] && [[ -n "$DB_PASSWORD" ]] && ! $DB_PASSWORD_GENERATED; then
+    export _FDC_DB_PASS_FROM_ENV="$DB_PASSWORD"
+    # Re-exec using saved ORIG_ARGS, stripping --db-password and its value
+    new_args=()
+    skip_next=false
+    for arg in "${ORIG_ARGS[@]}"; do
+        if $skip_next; then
+            skip_next=false
+            continue
+        fi
+        if [[ "$arg" == "--db-password" ]]; then
+            skip_next=true
+            continue
+        fi
+        new_args+=("$arg")
+    done
+    exec "$0" "${new_args[@]}"
+fi
+
+# Pick up password from env if re-exec'd
+if [[ -n "${_FDC_DB_PASS_FROM_ENV:-}" ]]; then
+    DB_PASSWORD="$_FDC_DB_PASS_FROM_ENV"
+    DB_PASSWORD_GENERATED=false
+    unset _FDC_DB_PASS_FROM_ENV
+fi
+
 # --- Derived Values ---
 if $SSL_ENABLED; then
     SCHEME="https"
