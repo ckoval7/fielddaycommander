@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EventConfiguration extends Model
@@ -120,6 +121,16 @@ class EventConfiguration extends Model
     public function shifts(): HasMany
     {
         return $this->hasMany(Shift::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
+    public function w1awBulletin(): HasOne
+    {
+        return $this->hasOne(W1awBulletin::class);
     }
 
     public function getHasGuestbookLocationAttribute(): bool

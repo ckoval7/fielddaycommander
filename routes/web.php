@@ -124,6 +124,26 @@ Route::middleware(['auth', 'can:manage-guestbook'])->group(function () {
     Route::get('/events/{event}/guestbook', \App\Livewire\Guestbook\GuestbookManager::class)->name('events.guestbook');
 });
 
+// Message Traffic — batch print route MUST come before {message} wildcard to avoid capture
+Route::middleware('auth')->group(function () {
+    Route::get('/events/{event}/messages/print-all', function (\App\Models\Event $event) {
+        $messages = \App\Models\Message::where('event_configuration_id', $event->eventConfiguration->id)
+            ->orderBy('message_number')->get();
+        return view('messages.print', ['event' => $event, 'messages' => $messages]);
+    })->name('events.messages.print-all');
+
+    Route::get('/events/{event}/messages/{message}/print', function (\App\Models\Event $event, \App\Models\Message $message) {
+        return view('messages.print', ['event' => $event, 'messages' => collect([$message])]);
+    })->name('events.messages.print');
+});
+
+Route::middleware(['auth', 'can:log-contacts'])->group(function () {
+    Route::get('/events/{event}/messages', \App\Livewire\Messages\MessageTrafficIndex::class)->name('events.messages.index');
+    Route::get('/events/{event}/messages/create', \App\Livewire\Messages\MessageForm::class)->name('events.messages.create');
+    Route::get('/events/{event}/messages/{message}/edit', \App\Livewire\Messages\MessageForm::class)->name('events.messages.edit');
+    Route::get('/events/{event}/w1aw-bulletin', \App\Livewire\Messages\W1awBulletinForm::class)->name('events.w1aw-bulletin');
+});
+
 // Shift Schedule
 Route::middleware('auth')->group(function () {
     Route::get('/schedule', \App\Livewire\Schedule\ScheduleTimeline::class)->name('schedule.index');

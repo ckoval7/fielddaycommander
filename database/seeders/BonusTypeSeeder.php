@@ -155,6 +155,32 @@ class BonusTypeSeeder extends Seeder
                 'requires_proof' => false,
                 'eligible_classes' => null,
             ],
+            [
+                'event_type_id' => $eventTypeId,
+                'code' => 'sm_sec_message',
+                'name' => 'Section Manager Message',
+                'description' => 'Formal message to ARRL Section Manager or Section Emergency Coordinator',
+                'base_points' => 100,
+                'is_per_transmitter' => false,
+                'is_per_occurrence' => false,
+                'max_points' => 100,
+                'max_occurrences' => 1,
+                'requires_proof' => false,
+                'eligible_classes' => null,
+            ],
+            [
+                'event_type_id' => $eventTypeId,
+                'code' => 'w1aw_bulletin',
+                'name' => 'W1AW Field Day Bulletin',
+                'description' => 'Copy of W1AW Field Day bulletin received via amateur radio',
+                'base_points' => 100,
+                'is_per_transmitter' => false,
+                'is_per_occurrence' => false,
+                'max_points' => 100,
+                'max_occurrences' => 1,
+                'requires_proof' => false,
+                'eligible_classes' => null,
+            ],
         ];
     }
 

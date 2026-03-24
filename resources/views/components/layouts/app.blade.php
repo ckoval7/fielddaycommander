@@ -133,6 +133,15 @@
                         @endif
                     @endcan
 
+                    @can('log-contacts')
+                        @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
+                        @if($activeEvent)
+                            <x-menu-item title="Message Traffic" icon="o-envelope"
+                                link="{{ route('events.messages.index', $activeEvent) }}"
+                                :active="request()->routeIs('events.messages.*', 'events.w1aw-bulletin')" />
+                        @endif
+                    @endcan
+
                     @canany(['manage-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs'])
                         <x-menu-separator title="ADMINISTRATION" />
 

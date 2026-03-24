@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('event_configuration_id')->constrained('event_configurations')->cascadeOnDelete();
             $table->foreignId('bonus_type_id')->constrained('bonus_types')->cascadeOnDelete();
-            $table->foreignId('claimed_by_user_id')->constrained('users');
+            $table->foreignId('claimed_by_user_id')->nullable()->constrained('users');
 
             $table->integer('quantity')->default(1);
             $table->integer('calculated_points')->default(0);

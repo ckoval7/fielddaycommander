@@ -227,6 +227,14 @@ return [
             ],
         ],
 
+        'message_traffic_score' => [
+            'component' => 'dashboard.widgets.message-traffic-score',
+            'name' => 'Message Traffic Score',
+            'description' => 'Display SM/SEC message, traffic count, and W1AW bulletin bonus point status',
+            'icon' => 'o-envelope',
+            'config_schema' => [],
+        ],
+
         'feed' => [
             'component' => 'dashboard.widgets.feed',
             'name' => 'Activity Feed',
