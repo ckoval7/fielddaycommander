@@ -78,19 +78,17 @@
                     />
                 </div>
 
-                <x-input
+                <x-flatpickr
                     label="Start Date & Time"
                     wire:model="start_time"
-                    type="datetime-local"
                     required
                     icon="o-play"
                     hint="When the event begins"
                 />
 
-                <x-input
+                <x-flatpickr
                     label="End Date & Time"
                     wire:model="end_time"
-                    type="datetime-local"
                     required
                     icon="o-stop"
                     hint="When the event ends"
