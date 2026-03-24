@@ -13,6 +13,12 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
+# --- Early root check (before log file redirect) ---
+if [[ $EUID -ne 0 ]]; then
+    echo -e "\033[0;31m[ERROR]\033[0m This script must be run as root (or via sudo)"
+    exit 1
+fi
+
 # --- Logging ---
 log_info()    { echo -e "${GREEN}[INFO]${NC} $1" | tee -a "$LOG_FILE"; }
 log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1" | tee -a "$LOG_FILE"; }
@@ -172,7 +178,8 @@ detect_distro() {
 # --- Secret Generation ---
 generate_secret() {
     local length="${1:-32}"
-    tr -dc 'A-Za-z0-9' < /dev/urandom | head -c "$length"
+    # || true needed: head closes pipe early, causing tr to get SIGPIPE (exit 141) under pipefail
+    tr -dc 'A-Za-z0-9' < /dev/urandom | head -c "$length" || true
 }
 
 # Generate DB password if not provided
@@ -509,7 +516,7 @@ setup_app() {
     # Step 4: Install dependencies
     log_info "Installing Composer dependencies..."
     cd "$APP_PATH"
-    sudo -u fdcommander composer install --no-dev --optimize-autoloader --no-interaction
+    sudo -u fdcommander COMPOSER_HOME="$APP_PATH/.composer" composer install --no-dev --optimize-autoloader --no-interaction
 
     # Step 5: Generate app key
     log_info "Generating application key..."
@@ -518,8 +525,8 @@ setup_app() {
     # Step 6: Install Node dependencies and build
     log_info "Installing Node dependencies and building assets..."
     cd "$APP_PATH"
-    sudo -u fdcommander npm ci
-    sudo -u fdcommander npm run build
+    sudo -u fdcommander HOME="$APP_PATH" npm ci --cache "$APP_PATH/.npm"
+    sudo -u fdcommander HOME="$APP_PATH" npm run build
 
     # Step 7: Storage link
     if [[ ! -L "$APP_PATH/public/storage" ]]; then
@@ -547,12 +554,13 @@ setup_database() {
     systemctl enable "$mysql_service"
     systemctl start "$mysql_service"
 
-    # Create database and user
+    # Create database and user (escape single quotes in password for SQL safety)
+    local safe_password="${DB_PASSWORD//\'/\'\'}"
     log_info "Creating database and user..."
     mysql -u root <<SQLEOF
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD}';
-CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${safe_password}';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${safe_password}';
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
@@ -757,12 +765,18 @@ SSLEOF
 configure_systemd() {
     log_phase "Phase 7: Configuring systemd services"
 
+    # Determine MySQL service name for systemd dependency
+    local mysql_unit="mysql.service"
+    if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+        mysql_unit="mysqld.service"
+    fi
+
     # Queue Worker
     log_info "Creating queue worker service..."
     cat > /etc/systemd/system/fdcommander-queue.service <<QUEUEEOF
 [Unit]
 Description=FD Commander Queue Worker
-After=network.target mysql.service
+After=network.target ${mysql_unit}
 
 [Service]
 User=fdcommander
@@ -836,8 +850,13 @@ configure_firewall() {
     if [[ "$DISTRO_FAMILY" == "debian" ]]; then
         if command -v ufw &>/dev/null && ufw status | grep -q "active"; then
             log_info "Configuring UFW firewall..."
-            ufw allow 'Nginx Full'
-            log_info "UFW configured: ports 80 and 443 open"
+            if $SSL_ENABLED; then
+                ufw allow 'Nginx Full'
+                log_info "UFW configured: ports 80 and 443 open"
+            else
+                ufw allow 'Nginx HTTP'
+                log_info "UFW configured: port 80 open"
+            fi
         else
             log_warn "UFW not active. Recommend enabling: ufw allow 'Nginx Full' && ufw enable"
         fi
