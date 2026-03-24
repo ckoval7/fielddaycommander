@@ -380,6 +380,134 @@ install_packages() {
     configure_fpm_pool
 }
 
+configure_env() {
+    local env_file="$APP_PATH/.env"
+
+    if [[ -f "$env_file" ]] && ! grep -q 'APP_ENV=local' "$env_file"; then
+        log_warn ".env already configured for non-local environment, skipping"
+        return
+    fi
+
+    log_info "Configuring .env for production..."
+    cp "$APP_PATH/.env.example" "$env_file"
+
+    # Generate Reverb secrets
+    local reverb_app_key
+    reverb_app_key=$(generate_secret 20)
+    local reverb_app_secret
+    reverb_app_secret=$(generate_secret 20)
+    local reverb_app_id
+    reverb_app_id=$(generate_secret 8)
+
+    # Helper to set env values (handles sed metacharacters safely)
+    set_env() {
+        local key="$1" value="$2"
+        # Remove any existing line (commented or not) for this key
+        sed -i "/^#\?${key}=/d" "$env_file"
+        # Append the new value (avoids sed substitution metacharacter issues)
+        echo "${key}=${value}" >> "$env_file"
+    }
+
+    set_env "APP_NAME" '"FD Commander"'
+    set_env "APP_ENV" "production"
+    set_env "APP_DEBUG" "false"
+    set_env "APP_URL" "${SCHEME}://${DOMAIN}"
+
+    set_env "LOG_LEVEL" "warning"
+    set_env "DEVELOPER_MODE" "false"
+
+    set_env "DB_CONNECTION" "mysql"
+    set_env "DB_HOST" "127.0.0.1"
+    set_env "DB_PORT" "3306"
+    set_env "DB_DATABASE" "$DB_NAME"
+    set_env "DB_USERNAME" "$DB_USER"
+    set_env "DB_PASSWORD" "$DB_PASSWORD"
+
+    set_env "QUEUE_CONNECTION" "database"
+    set_env "BROADCAST_CONNECTION" "reverb"
+
+    set_env "REVERB_SERVER_HOST" "127.0.0.1"
+    set_env "REVERB_SERVER_PORT" "$REVERB_PORT"
+    set_env "REVERB_APP_KEY" "$reverb_app_key"
+    set_env "REVERB_APP_SECRET" "$reverb_app_secret"
+    set_env "REVERB_APP_ID" "$reverb_app_id"
+    set_env "REVERB_HOST" "$DOMAIN"
+    set_env "REVERB_PORT" "$PUBLIC_PORT"
+    set_env "REVERB_SCHEME" "$SCHEME"
+
+    # Vite-prefixed vars (baked into JS bundle at build time)
+    set_env "VITE_REVERB_APP_KEY" "$reverb_app_key"
+    set_env "VITE_REVERB_HOST" "$DOMAIN"
+    set_env "VITE_REVERB_PORT" "$PUBLIC_PORT"
+    set_env "VITE_REVERB_SCHEME" "$SCHEME"
+
+    chown "fdcommander:${WEB_GROUP}" "$env_file"
+    chmod 640 "$env_file"
+
+    log_info ".env configured for production"
+}
+
+setup_app() {
+    log_phase "Phase 3: Setting up application"
+
+    # Step 1: Clone or copy app
+    if [[ -n "$REPO_URL" ]]; then
+        if [[ -d "$APP_PATH/.git" ]]; then
+            log_warn "App directory already contains a git repo, pulling latest..."
+            cd "$APP_PATH"
+            sudo -u fdcommander git fetch origin
+            sudo -u fdcommander git checkout "$BRANCH"
+            sudo -u fdcommander git pull origin "$BRANCH"
+        else
+            log_info "Cloning repository..."
+            git clone --branch "$BRANCH" "$REPO_URL" "$APP_PATH"
+        fi
+    else
+        if [[ -d "$APP_PATH/artisan" ]] || [[ -f "$APP_PATH/artisan" ]]; then
+            log_warn "App already exists at $APP_PATH, skipping copy"
+        else
+            log_info "Copying application to $APP_PATH..."
+            mkdir -p "$APP_PATH"
+            rsync -a --exclude='.git' --exclude='node_modules' --exclude='vendor' --exclude='.env' \
+                "$(pwd)/" "$APP_PATH/"
+        fi
+    fi
+
+    # Step 2: Set ownership
+    chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH"
+
+    # Step 3: Generate .env
+    configure_env
+
+    # Step 4: Install dependencies
+    log_info "Installing Composer dependencies..."
+    cd "$APP_PATH"
+    sudo -u fdcommander composer install --no-dev --optimize-autoloader --no-interaction
+
+    # Step 5: Generate app key
+    log_info "Generating application key..."
+    php artisan key:generate --force
+
+    # Step 6: Install Node dependencies and build
+    log_info "Installing Node dependencies and building assets..."
+    cd "$APP_PATH"
+    sudo -u fdcommander npm ci
+    sudo -u fdcommander npm run build
+
+    # Step 7: Storage link
+    if [[ ! -L "$APP_PATH/public/storage" ]]; then
+        php artisan storage:link
+    else
+        log_warn "Storage link already exists, skipping"
+    fi
+
+    # Step 8: Set permissions
+    chmod -R 775 "$APP_PATH/storage" "$APP_PATH/bootstrap/cache"
+    chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH/storage" "$APP_PATH/bootstrap/cache"
+
+    log_info "Application setup complete"
+}
+
 # --- Main entrypoint ---
 main() {
     check_root
@@ -394,6 +522,7 @@ main() {
     log_phase "Starting FD Commander deployment to ${SCHEME}://${DOMAIN}"
 
     install_packages
+    setup_app
 
     # Phase functions will be called here in subsequent tasks
 }
