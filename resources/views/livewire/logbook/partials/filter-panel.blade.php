@@ -92,18 +92,16 @@
                 />
 
                 {{-- Time From --}}
-                <x-datetime
+                <x-flatpickr
                     label="Time From"
                     wire:model.live="time_from"
-                    type="datetime-local"
                     icon="o-calendar"
                 />
 
                 {{-- Time To --}}
-                <x-datetime
+                <x-flatpickr
                     label="Time To"
                     wire:model.live="time_to"
-                    type="datetime-local"
                     icon="o-calendar"
                 />
 
