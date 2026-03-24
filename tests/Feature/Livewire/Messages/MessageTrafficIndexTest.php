@@ -6,10 +6,18 @@ use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
+    DB::table('system_config')->insert([
+        'key' => 'setup_completed',
+        'value' => 'true',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
 
     Permission::firstOrCreate(['name' => 'log-contacts']);
@@ -68,5 +76,35 @@ describe('deleting messages', function () {
             ->call('deleteMessage', $message->id);
 
         expect($message->fresh()->trashed())->toBeTrue();
+    });
+});
+
+describe('print view', function () {
+    test('renders printable radiogram', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'station_of_origin' => 'W1TEST',
+            'message_text' => 'HELLO WORLD TEST',
+        ]);
+
+        $this->actingAs($this->operator);
+
+        $response = $this->get(route('events.messages.print', [$this->event, $message]));
+        $response->assertOk()
+            ->assertSee('W1TEST')
+            ->assertSee('HELLO WORLD TEST');
+    });
+
+    test('renders batch print', function () {
+        Message::factory()->count(3)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        $this->actingAs($this->operator);
+
+        $response = $this->get(route('events.messages.print-all', $this->event));
+        $response->assertOk();
     });
 });
