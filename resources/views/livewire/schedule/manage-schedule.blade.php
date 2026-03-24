@@ -449,16 +449,14 @@
                     placeholder="Select a role"
                     required
                 />
-                <x-input
+                <x-flatpickr
                     label="Start Time"
                     wire:model="shiftStartTime"
-                    type="datetime-local"
                     required
                 />
-                <x-input
+                <x-flatpickr
                     label="End Time"
                     wire:model="shiftEndTime"
-                    type="datetime-local"
                     required
                 />
                 <x-input
@@ -501,16 +499,14 @@
                     placeholder="Select a role"
                     required
                 />
-                <x-input
+                <x-flatpickr
                     label="Start Time"
                     wire:model="bulkStartTime"
-                    type="datetime-local"
                     required
                 />
-                <x-input
+                <x-flatpickr
                     label="End Time"
                     wire:model="bulkEndTime"
-                    type="datetime-local"
                     required
                 />
                 <x-input
