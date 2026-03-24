@@ -21,12 +21,11 @@
                         <span class="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Working Time (UTC)</span>
                     </div>
                     <div class="flex items-center gap-2 flex-1 min-w-0">
-                        <input
-                            type="datetime-local"
+                        <x-flatpickr
                             wire:model.live="workingTime"
-                            min="{{ $this->event->start_time->subMinutes(5)->format('Y-m-d\TH:i') }}"
-                            max="{{ $this->event->end_time->addMinutes(5)->format('Y-m-d\TH:i') }}"
-                            class="input input-sm input-bordered font-mono w-auto border-amber-300 focus:border-amber-500 text-base-content bg-base-100"
+                            min="{{ $this->event->start_time->subMinutes(5)->format('Y-m-d H:i') }}"
+                            max="{{ $this->event->end_time->addMinutes(5)->format('Y-m-d H:i') }}"
+                            class="input-sm font-mono border-amber-300 focus:border-amber-500 text-base-content bg-base-100"
                         />
                     </div>
                     <p class="text-xs text-amber-600/80 dark:text-amber-400/70 hidden sm:block">
@@ -116,18 +115,13 @@
 
                         {{-- Contact Time --}}
                         <div class="col-span-2">
-                            <label for="transcribe-contact-time" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Contact Time (UTC)</label>
-                            <input
-                                id="transcribe-contact-time"
-                                type="datetime-local"
+                            <x-flatpickr
+                                label="Contact Time (UTC)"
                                 wire:model.live="contactTime"
-                                min="{{ $this->event->start_time->subMinutes(5)->format('Y-m-d\TH:i') }}"
-                                max="{{ $this->event->end_time->addMinutes(5)->format('Y-m-d\TH:i') }}"
-                                class="input input-bordered input-sm w-full font-mono"
+                                min="{{ $this->event->start_time->subMinutes(5)->format('Y-m-d H:i') }}"
+                                max="{{ $this->event->end_time->addMinutes(5)->format('Y-m-d H:i') }}"
+                                class="input-sm font-mono"
                             />
-                            @error('contactTime')
-                                <p class="text-error text-xs mt-1">{{ $message }}</p>
-                            @enderror
                         </div>
                     </div>
 
