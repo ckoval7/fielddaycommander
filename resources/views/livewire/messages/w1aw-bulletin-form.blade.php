@@ -61,10 +61,9 @@
                 />
 
                 {{-- Received At --}}
-                <x-input
+                <x-flatpickr
                     label="Received At"
                     wire:model="receivedAt"
-                    type="datetime-local"
                     icon="o-clock"
                     required
                 />

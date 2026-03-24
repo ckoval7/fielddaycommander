@@ -139,10 +139,9 @@
                 />
 
                 {{-- Filed At --}}
-                <x-input
+                <x-flatpickr
                     label="Filed At"
                     wire:model="filedAt"
-                    type="datetime-local"
                     icon="o-clock"
                 />
             </div>
