@@ -45,17 +45,17 @@
                         searchable
                     />
 
-                    <x-datetime
+                    <x-flatpickr
                         label="Date From"
                         wire:model.live="filters.date_from"
-                        type="date"
+                        mode="date"
                         icon="o-calendar"
                     />
 
-                    <x-datetime
+                    <x-flatpickr
                         label="Date To"
                         wire:model.live="filters.date_to"
-                        type="date"
+                        mode="date"
                         icon="o-calendar"
                     />
                 </div>

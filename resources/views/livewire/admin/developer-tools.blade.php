@@ -22,17 +22,17 @@
         <x-card title="Time Travel" subtitle="Override the application's current time for testing" icon="o-clock">
             <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <x-datetime
+                    <x-flatpickr
                         label="Date"
                         wire:model.live="fakeDate"
-                        type="date"
+                        mode="date"
                         icon="o-calendar"
                     />
 
-                    <x-input
+                    <x-flatpickr
                         label="Time"
                         wire:model.live="fakeTime"
-                        type="time"
+                        mode="time"
                         icon="o-clock"
                     />
 
