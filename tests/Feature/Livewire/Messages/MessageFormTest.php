@@ -124,3 +124,130 @@ describe('editing messages', function () {
         expect($message->fresh()->addressee_name)->toBe('Updated Name');
     });
 });
+
+describe('ICS-213 messages', function () {
+    test('can create an ICS-213 message', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'ics213')
+            ->set('role', 'originated')
+            ->set('messageNumber', 1)
+            ->set('addresseeName', 'John Smith')
+            ->set('icsToPosition', 'Operations Chief')
+            ->set('signature', 'Jane Doe')
+            ->set('icsFromPosition', 'Planning Section')
+            ->set('icsSubject', 'Resource Request')
+            ->set('messageText', 'Need additional radios for sector 5.')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $message = Message::where('event_configuration_id', $this->eventConfig->id)->first();
+        expect($message->format->value)->toBe('ics213')
+            ->and($message->ics_subject)->toBe('Resource Request')
+            ->and($message->ics_to_position)->toBe('Operations Chief')
+            ->and($message->ics_from_position)->toBe('Planning Section')
+            ->and($message->precedence)->toBeNull()
+            ->and($message->station_of_origin)->toBeNull()
+            ->and($message->check)->toBeNull();
+    });
+
+    test('ICS-213 does not require radiogram fields', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'ics213')
+            ->set('role', 'originated')
+            ->set('messageNumber', 1)
+            ->set('addresseeName', 'John Smith')
+            ->set('signature', 'Jane Doe')
+            ->set('icsSubject', 'Test Subject')
+            ->set('messageText', 'Test body')
+            ->call('save')
+            ->assertHasNoErrors();
+    });
+
+    test('ICS-213 requires subject', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'ics213')
+            ->set('role', 'originated')
+            ->set('messageNumber', 1)
+            ->set('addresseeName', 'John Smith')
+            ->set('signature', 'Jane Doe')
+            ->set('icsSubject', '')
+            ->set('messageText', 'Test body')
+            ->call('save')
+            ->assertHasErrors(['icsSubject']);
+    });
+
+    test('ICS-213 message text is not uppercased', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'ics213')
+            ->set('role', 'originated')
+            ->set('messageNumber', 1)
+            ->set('addresseeName', 'John Smith')
+            ->set('signature', 'Jane Doe')
+            ->set('icsSubject', 'Test')
+            ->set('messageText', 'Mixed case message text')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $message = Message::where('event_configuration_id', $this->eventConfig->id)->first();
+        expect($message->message_text)->toBe('Mixed case message text');
+    });
+
+    test('auto word count does not fire for ICS-213', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'ics213')
+            ->set('messageText', 'some words here for testing')
+            ->assertSet('checkCount', '');
+    });
+
+    test('can edit an ICS-213 message', function () {
+        $message = Message::factory()->ics213()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'ics_subject' => 'Original Subject',
+            'ics_to_position' => 'Ops Chief',
+            'ics_from_position' => 'Planning',
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event, 'message' => $message])
+            ->assertSet('format', 'ics213')
+            ->assertSet('icsSubject', 'Original Subject')
+            ->assertSet('icsToPosition', 'Ops Chief')
+            ->assertSet('icsFromPosition', 'Planning')
+            ->set('icsSubject', 'Updated Subject')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        expect($message->fresh()->ics_subject)->toBe('Updated Subject');
+    });
+});
+
+describe('format switching', function () {
+    test('switching to ICS-213 clears radiogram fields', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->assertSet('format', 'radiogram')
+            ->set('checkCount', '12')
+            ->set('placeOfOrigin', 'Hartford, CT')
+            ->set('format', 'ics213')
+            ->assertSet('checkCount', '')
+            ->assertSet('placeOfOrigin', '');
+    });
+
+    test('switching to radiogram clears ICS-213 fields and restores station of origin', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'ics213')
+            ->set('icsSubject', 'Some subject')
+            ->set('icsToPosition', 'Ops Chief')
+            ->set('format', 'radiogram')
+            ->assertSet('icsSubject', null)
+            ->assertSet('icsToPosition', null)
+            ->assertSet('stationOfOrigin', $this->eventConfig->callsign);
+    });
+});
