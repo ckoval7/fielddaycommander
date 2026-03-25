@@ -11,25 +11,25 @@
                 label="New Message"
                 icon="o-plus"
                 class="btn-primary"
-                link="#"
+                link="{{ route('events.messages.create', $event) }}"
             />
             <x-button
                 label="SM/SEC Message"
                 icon="o-star"
                 class="btn-outline btn-sm"
-                link="#?template=sm"
+                link="{{ route('events.messages.create', ['event' => $event, 'template' => 'sm']) }}"
             />
             <x-button
                 label="W1AW Bulletin"
                 icon="o-radio"
                 class="btn-outline btn-sm"
-                link="#"
+                link="{{ route('events.w1aw-bulletin', $event) }}"
             />
             <x-button
                 label="Print All"
                 icon="o-printer"
                 class="btn-ghost btn-sm"
-                link="#"
+                link="{{ route('events.messages.print-all', $event) }}"
             />
         </x-slot:actions>
     </x-header>
@@ -158,7 +158,7 @@
                                 <x-badge value="{{ $roleLabel }}" class="{{ $roleBadge }} badge-sm" />
                             </td>
                             <td>
-                                <span class="font-mono text-sm">{{ $message->station_of_origin }}</span>
+                                <span class="font-mono text-sm">{{ $message->station_of_origin ?? '—' }}</span>
                             </td>
                             <td>
                                 <div class="font-medium">{{ $message->addressee_name }}</div>
@@ -175,13 +175,13 @@
                                         icon="o-pencil"
                                         class="btn-ghost btn-xs"
                                         tooltip="Edit"
-                                        link="#"
+                                        link="{{ route('events.messages.edit', [$event, $message]) }}"
                                     />
                                     <x-button
                                         icon="o-printer"
                                         class="btn-ghost btn-xs"
                                         tooltip="Print"
-                                        link="#"
+                                        link="{{ route('events.messages.print', [$event, $message]) }}"
                                     />
                                     @can('delete', $message)
                                         <x-button
@@ -210,7 +210,7 @@
                                         label="Log First Message"
                                         icon="o-plus"
                                         class="btn-primary btn-sm mt-2"
-                                        link="#"
+                                        link="{{ route('events.messages.create', $event) }}"
                                     />
                                 </div>
                             </td>

@@ -44,6 +44,19 @@ describe('listing messages', function () {
             ->assertSee('Test Addressee');
     });
 
+    test('displays ICS-213 messages on index', function () {
+        $message = Message::factory()->ics213()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'addressee_name' => 'ICS Recipient',
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->assertSee('ICS Recipient')
+            ->assertSee('ICS-213');
+    });
+
     test('filters by role', function () {
         Message::factory()->originated()->create([
             'event_configuration_id' => $this->eventConfig->id,
@@ -94,6 +107,24 @@ describe('print view', function () {
         $response->assertOk()
             ->assertSee('W1TEST')
             ->assertSee('HELLO WORLD TEST');
+    });
+
+    test('renders printable ICS-213', function () {
+        $message = Message::factory()->ics213()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'addressee_name' => 'Ops Chief',
+            'ics_subject' => 'Resource Request',
+            'message_text' => 'Need more radios',
+        ]);
+
+        $this->actingAs($this->operator);
+
+        $response = $this->get(route('events.messages.print', [$this->event, $message]));
+        $response->assertOk()
+            ->assertSee('ICS-213')
+            ->assertSee('Resource Request')
+            ->assertSee('Need more radios');
     });
 
     test('renders batch print', function () {
