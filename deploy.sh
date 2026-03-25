@@ -3,6 +3,7 @@ set -euo pipefail
 
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
+FRANKENPHP_VERSION="1.4.4"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 
 # --- Colors ---
@@ -62,7 +63,7 @@ Optional:
   --branch <branch>       Git branch to deploy (default: main)
   --repo-url <url>        Git repo URL (default: copy current directory)
   --reverb-port <port>    Reverb WebSocket port (default: 8080)
-  --ssl                   Enable HTTPS via Let's Encrypt
+  --ssl                   Enable HTTPS (Caddy auto-SSL or custom cert)
   --email <email>         Email for Let's Encrypt (required with --ssl)
   --ssl-cert <path>       Path to existing SSL certificate
   --ssl-key <path>        Path to existing SSL key
@@ -153,20 +154,10 @@ detect_distro() {
         DISTRO_FAMILY="debian"
         PKG_MANAGER="apt"
         WEB_GROUP="www-data"
-        FPM_POOL_DIR="/etc/php/8.4/fpm/pool.d"
-        FPM_SOCKET="/run/php/fdcommander-fpm.sock"
-        FPM_SERVICE="php8.4-fpm"
-        NGINX_SITES_DIR="/etc/nginx/sites-available"
-        NGINX_ENABLED_DIR="/etc/nginx/sites-enabled"
     elif [[ "$ID" == "rhel" ]] || [[ "$ID" == "almalinux" ]] || [[ "$ID" == "rocky" ]] || [[ "${ID_LIKE:-}" == *"rhel"* ]] || [[ "${ID_LIKE:-}" == *"fedora"* ]]; then
         DISTRO_FAMILY="rhel"
         PKG_MANAGER="dnf"
-        WEB_GROUP="nginx"
-        FPM_POOL_DIR="/etc/php-fpm.d"
-        FPM_SOCKET="/run/php-fpm/fdcommander.sock"
-        FPM_SERVICE="php-fpm"
-        NGINX_SITES_DIR="/etc/nginx/conf.d"
-        NGINX_ENABLED_DIR=""  # RHEL uses conf.d directly
+        WEB_GROUP="www-data"
     else
         log_error "Unsupported distribution: $ID"
         exit 1
@@ -235,7 +226,7 @@ print_dry_run() {
     echo "App Path:       $APP_PATH"
     echo "Distro:         $DISTRO_FAMILY ($PRETTY_NAME)"
     echo "Database:       $DB_NAME (user: $DB_USER)"
-    echo "Reverb Port:    $REVERB_PORT (internal, proxied via Nginx)"
+    echo "Reverb Port:    $REVERB_PORT (internal, proxied via Caddy)"
     echo "SSL:            $( $SSL_ENABLED && echo "Yes" || echo "No" )"
     if $SSL_ENABLED; then
         if [[ -n "$SSL_CERT" ]]; then
@@ -247,7 +238,7 @@ print_dry_run() {
     echo "Source:         $( [[ -n "$REPO_URL" ]] && echo "$REPO_URL (branch: $BRANCH)" || echo "Copy current directory" )"
     echo "Seeders:        $( $NO_SEEDERS && echo "Skipped" || echo "Production seeders" )"
     echo ""
-    echo "Phases: Packages → App Setup → Database → Nginx → SSL → Systemd → Firewall → Cache"
+    echo "Phases: Packages → App Setup → Database → Caddy → SSL → Systemd → Firewall → Cache"
 }
 
 # --- Package Installation ---
@@ -275,15 +266,9 @@ install_packages_debian() {
     log_info "Installing packages..."
     apt-get update -y
     apt-get install -y \
-        php8.4-cli php8.4-fpm php8.4-mysql php8.4-mbstring php8.4-xml \
+        php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
         php8.4-curl php8.4-zip php8.4-bcmath php8.4-gd php8.4-intl php8.4-redis \
-        mysql-server nginx nodejs unzip git
-
-    # Certbot (if SSL with Let's Encrypt)
-    if $SSL_ENABLED && [[ -z "$SSL_CERT" ]]; then
-        log_info "Installing Certbot..."
-        apt-get install -y certbot python3-certbot-nginx
-    fi
+        mysql-server nodejs unzip git
 }
 
 install_packages_rhel() {
@@ -312,20 +297,18 @@ install_packages_rhel() {
 
     log_info "Installing packages..."
     dnf install -y \
-        php-cli php-fpm php-mysqlnd php-mbstring php-xml \
+        php-cli php-mysqlnd php-mbstring php-xml \
         php-curl php-zip php-bcmath php-gd php-intl php-redis \
-        mysql-community-server nginx nodejs unzip git
+        mysql-community-server nodejs unzip git
 
-    # Certbot
-    if $SSL_ENABLED && [[ -z "$SSL_CERT" ]]; then
-        log_info "Installing Certbot..."
-        dnf install -y certbot python3-certbot-nginx
-    fi
-
-    # SELinux: allow Nginx to connect to PHP-FPM socket and Reverb upstream
-    if command -v getenforce &>/dev/null && [[ "$(getenforce)" != "Disabled" ]]; then
-        log_info "Configuring SELinux for Nginx..."
-        setsebool -P httpd_can_network_connect 1
+    # SELinux: allow FrankenPHP network access and set binary context
+    if command -v setsebool &>/dev/null; then
+        log_info "Configuring SELinux for FrankenPHP..."
+        setsebool -P httpd_can_network_connect on
+        if command -v semanage &>/dev/null; then
+            semanage fcontext -a -t httpd_exec_t '/usr/local/bin/frankenphp' 2>/dev/null || true
+            restorecon -v /usr/local/bin/frankenphp 2>/dev/null || true
+        fi
     fi
 }
 
@@ -359,40 +342,33 @@ create_system_user() {
         return
     fi
 
+    # Ensure the web group exists (www-data may not exist on RHEL)
+    if ! getent group www-data &>/dev/null; then
+        groupadd www-data
+    fi
+
     log_info "Creating system user 'fdcommander'..."
     useradd --system --no-create-home --shell /usr/sbin/nologin -g "$WEB_GROUP" fdcommander
 }
 
-configure_fpm_pool() {
-    local pool_file="${FPM_POOL_DIR}/fdcommander.conf"
-
-    log_info "Configuring PHP-FPM pool..."
-
-    # Disable default www pool
-    local default_pool="${FPM_POOL_DIR}/www.conf"
-    if [[ -f "$default_pool" ]]; then
-        mv "$default_pool" "${default_pool}.bak"
-        log_info "Disabled default www pool"
+install_frankenphp() {
+    log_info "Installing FrankenPHP ${FRANKENPHP_VERSION}..."
+    local arch
+    case "$(uname -m)" in
+        x86_64)  arch="linux-x86_64" ;;
+        aarch64) arch="linux-aarch64" ;;
+        *)       log_error "Unsupported architecture: $(uname -m)"; exit 1 ;;
+    esac
+    local url="https://github.com/dunglas/frankenphp/releases/download/v${FRANKENPHP_VERSION}/frankenphp-${arch}"
+    local dest="/usr/local/bin/frankenphp"
+    log_info "Downloading FrankenPHP from ${url}..."
+    curl -fSL -o "$dest" "$url"
+    chmod +x "$dest"
+    if ! "$dest" version &>/dev/null; then
+        log_error "FrankenPHP binary verification failed"
+        exit 1
     fi
-
-    cat > "$pool_file" <<FPMEOF
-[fdcommander]
-user = fdcommander
-group = ${WEB_GROUP}
-listen = ${FPM_SOCKET}
-listen.owner = ${WEB_GROUP}
-listen.group = ${WEB_GROUP}
-listen.mode = 0660
-pm = dynamic
-pm.max_children = 10
-pm.start_servers = 2
-pm.min_spare_servers = 1
-pm.max_spare_servers = 3
-FPMEOF
-
-    systemctl enable "$FPM_SERVICE"
-    systemctl restart "$FPM_SERVICE"
-    log_info "PHP-FPM pool configured and started"
+    log_info "FrankenPHP $("$dest" version) installed to ${dest}"
 }
 
 install_packages() {
@@ -403,7 +379,18 @@ install_packages() {
 
     install_composer
     create_system_user
-    configure_fpm_pool
+    install_frankenphp
+}
+
+# Helper to set env values (handles sed metacharacters safely)
+# Must be defined at top level so configure_ssl() can also use it
+set_env() {
+    local env_file="$APP_PATH/.env"
+    local key="$1" value="$2"
+    # Remove any existing line (commented or not) for this key
+    sed -i "/^#\?${key}=/d" "$env_file"
+    # Append the new value (avoids sed substitution metacharacter issues)
+    echo "${key}=${value}" >> "$env_file"
 }
 
 configure_env() {
@@ -424,15 +411,6 @@ configure_env() {
     reverb_app_secret=$(generate_secret 20)
     local reverb_app_id
     reverb_app_id=$(generate_secret 8)
-
-    # Helper to set env values (handles sed metacharacters safely)
-    set_env() {
-        local key="$1" value="$2"
-        # Remove any existing line (commented or not) for this key
-        sed -i "/^#\?${key}=/d" "$env_file"
-        # Append the new value (avoids sed substitution metacharacter issues)
-        echo "${key}=${value}" >> "$env_file"
-    }
 
     set_env "APP_NAME" '"FD Commander"'
     set_env "APP_ENV" "production"
@@ -466,6 +444,13 @@ configure_env() {
     set_env "VITE_REVERB_HOST" "$DOMAIN"
     set_env "VITE_REVERB_PORT" "$PUBLIC_PORT"
     set_env "VITE_REVERB_SCHEME" "$SCHEME"
+
+    # Octane / FrankenPHP
+    set_env "OCTANE_SERVER" "frankenphp"
+    set_env "OCTANE_WORKERS" "auto"
+    set_env "OCTANE_MAX_REQUESTS" "500"
+    set_env "DOMAIN" "$DOMAIN"
+    set_env "APP_PATH" "$APP_PATH"
 
     chown "fdcommander:${WEB_GROUP}" "$env_file"
     chmod 640 "$env_file"
@@ -590,167 +575,44 @@ SQLEOF
     log_info "Database setup complete"
 }
 
-configure_nginx() {
-    log_phase "Phase 5: Configuring Nginx"
+configure_caddy() {
+    log_phase "Phase 5: Configuring FrankenPHP/Caddy"
 
-    local config_file
-    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
-        config_file="${NGINX_SITES_DIR}/fd-commander"
-    else
-        config_file="${NGINX_SITES_DIR}/fd-commander.conf"
+    local caddyfile="${APP_PATH}/Caddyfile"
+    if [[ ! -f "$caddyfile" ]]; then
+        log_error "Caddyfile not found at ${caddyfile}"
+        exit 1
     fi
 
-    log_info "Writing Nginx vhost config..."
-    cat > "$config_file" <<NGINXEOF
-server {
-    listen 80;
-    server_name ${DOMAIN};
-    root ${APP_PATH}/public;
+    log_info "Caddyfile found at ${caddyfile}"
 
-    index index.php;
-    client_max_body_size 20M;
+    mkdir -p /var/lib/caddy/.config/caddy
+    mkdir -p /var/lib/caddy/.local/share/caddy
+    chown -R fdcommander:${WEB_GROUP} /var/lib/caddy
 
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-
-    charset utf-8;
-
-    location / {
-        try_files \$uri \$uri/ /index.php?\$query_string;
-    }
-
-    location /app {
-        proxy_pass http://127.0.0.1:${REVERB_PORT};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_connect_timeout 60s;
-        proxy_read_timeout 3600s;
-        proxy_send_timeout 3600s;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:${FPM_SOCKET};
-        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    location ~ /\.(?!well-known) {
-        deny all;
-    }
-}
-NGINXEOF
-
-    # Enable site (Debian-specific)
-    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
-        ln -sf "$config_file" "${NGINX_ENABLED_DIR}/fd-commander"
-        # Remove default site if present
-        rm -f "${NGINX_ENABLED_DIR}/default"
-    fi
-
-    # Test and reload
-    nginx -t
-    systemctl enable nginx
-    systemctl reload nginx
-
-    log_info "Nginx configured and reloaded"
+    log_info "FrankenPHP/Caddy configured"
 }
 
 configure_ssl() {
     if ! $SSL_ENABLED; then
-        log_warn "SSL not enabled, skipping Phase 6"
+        log_warn "SSL not enabled — Caddy will serve HTTP only"
+        log_warn "To enable automatic HTTPS, set DOMAIN to a real domain name"
         return
     fi
 
     log_phase "Phase 6: Configuring SSL"
 
     if [[ -n "$SSL_CERT" ]]; then
-        # Custom certificate path
-        log_info "Configuring Nginx with custom SSL certificate..."
-
-        local config_file
-        if [[ "$DISTRO_FAMILY" == "debian" ]]; then
-            config_file="${NGINX_SITES_DIR}/fd-commander"
-        else
-            config_file="${NGINX_SITES_DIR}/fd-commander.conf"
-        fi
-
-        # Rewrite config with SSL
-        cat > "$config_file" <<SSLEOF
-server {
-    listen 80;
-    server_name ${DOMAIN};
-    return 301 https://\$host\$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    server_name ${DOMAIN};
-    root ${APP_PATH}/public;
-
-    ssl_certificate ${SSL_CERT};
-    ssl_certificate_key ${SSL_KEY};
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-
-    index index.php;
-    client_max_body_size 20M;
-
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-
-    charset utf-8;
-
-    location / {
-        try_files \$uri \$uri/ /index.php?\$query_string;
-    }
-
-    location /app {
-        proxy_pass http://127.0.0.1:${REVERB_PORT};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_connect_timeout 60s;
-        proxy_read_timeout 3600s;
-        proxy_send_timeout 3600s;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:${FPM_SOCKET};
-        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    location ~ /\.(?!well-known) {
-        deny all;
-    }
-}
-SSLEOF
-
-        nginx -t
-        systemctl reload nginx
-        log_info "Custom SSL certificate configured"
-
+        log_info "Custom SSL certificate configured via environment variables"
+        log_info "Certificate: ${SSL_CERT}"
+        log_info "Key: ${SSL_KEY}"
+        # SSL_CERT and SSL_KEY are passed to Caddy via the .env EnvironmentFile
+        set_env "SSL_CERT" "$SSL_CERT"
+        set_env "SSL_KEY" "$SSL_KEY"
     else
-        # Let's Encrypt path
-        log_info "Obtaining Let's Encrypt certificate..."
-        certbot --nginx \
-            -d "$DOMAIN" \
-            --email "$SSL_EMAIL" \
-            --agree-tos \
-            --non-interactive \
-            --redirect
-
-        log_info "Let's Encrypt certificate obtained and auto-renewal configured"
+        log_info "Caddy will automatically obtain and renew Let's Encrypt certificates"
+        log_info "Ensure DNS for ${DOMAIN} points to this server"
+        log_info "Caddy handles ACME challenges automatically — no certbot needed"
     fi
 }
 
@@ -762,6 +624,29 @@ configure_systemd() {
     if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
         mysql_unit="mysqld.service"
     fi
+
+    # FrankenPHP/Octane Web Server
+    log_info "Creating FrankenPHP/Octane service..."
+    cat > /etc/systemd/system/fdcommander.service <<WEBEOF
+[Unit]
+Description=FD Commander Web Server (FrankenPHP/Octane)
+After=network.target ${mysql_unit}
+
+[Service]
+User=fdcommander
+Group=${WEB_GROUP}
+WorkingDirectory=${APP_PATH}
+EnvironmentFile=${APP_PATH}/.env
+ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=80
+Restart=always
+RestartSec=5
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+Environment=XDG_CONFIG_HOME=/var/lib/caddy/.config
+Environment=XDG_DATA_HOME=/var/lib/caddy/.local/share
+
+[Install]
+WantedBy=multi-user.target
+WEBEOF
 
     # Queue Worker
     log_info "Creating queue worker service..."
@@ -829,6 +714,7 @@ REVERBEOF
 
     # Reload and enable
     systemctl daemon-reload
+    systemctl enable --now fdcommander.service
     systemctl enable --now fdcommander-queue.service
     systemctl enable --now fdcommander-scheduler.timer
     systemctl enable --now fdcommander-reverb.service
@@ -842,15 +728,13 @@ configure_firewall() {
     if [[ "$DISTRO_FAMILY" == "debian" ]]; then
         if command -v ufw &>/dev/null && ufw status | grep -q "active"; then
             log_info "Configuring UFW firewall..."
+            ufw allow 80/tcp
             if $SSL_ENABLED; then
-                ufw allow 'Nginx Full'
-                log_info "UFW configured: ports 80 and 443 open"
-            else
-                ufw allow 'Nginx HTTP'
-                log_info "UFW configured: port 80 open"
+                ufw allow 443/tcp
             fi
+            log_info "UFW configured: HTTP$( $SSL_ENABLED && echo "/HTTPS" ) open"
         else
-            log_warn "UFW not active. Recommend enabling: ufw allow 'Nginx Full' && ufw enable"
+            log_warn "UFW not active. Recommend enabling: ufw allow 80/tcp && ufw enable"
         fi
     elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
         if systemctl is-active --quiet firewalld; then
@@ -901,20 +785,19 @@ finalize() {
     echo "  Queue Worker:   $(systemctl is-active fdcommander-queue.service)"
     echo "  Scheduler:      $(systemctl is-active fdcommander-scheduler.timer)"
     echo "  Reverb:         $(systemctl is-active fdcommander-reverb.service)"
-    echo "  Nginx:          $(systemctl is-active nginx)"
-    echo "  PHP-FPM:        $(systemctl is-active "$FPM_SERVICE")"
+    echo "  FrankenPHP:     $(systemctl is-active fdcommander.service)"
     echo ""
     echo -e "${BOLD}Logs${NC}"
     echo "  Deploy log:     ${LOG_FILE}"
     echo "  App log:        ${APP_PATH}/storage/logs/laravel.log"
-    echo "  Nginx log:      /var/log/nginx/"
+    echo "  Caddy log:      journalctl -u fdcommander.service"
     echo ""
     echo -e "${BOLD}Next Steps${NC}"
     echo "  1. Visit ${SCHEME}://${DOMAIN} and complete initial setup"
     echo "  2. The SystemAdminSeeder created the first admin user"
     echo "  3. Review firewall settings if not configured"
     if ! $SSL_ENABLED; then
-        echo "  4. Consider enabling SSL: re-run with --ssl --email you@example.com"
+        echo "  4. For HTTPS: set DOMAIN to a real domain and Caddy handles SSL automatically"
     fi
     echo ""
 }
@@ -934,7 +817,7 @@ main() {
     install_packages
     setup_app
     setup_database
-    configure_nginx
+    configure_caddy
     configure_ssl
     configure_systemd
     configure_firewall
