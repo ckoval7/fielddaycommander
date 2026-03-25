@@ -39,6 +39,13 @@ class Message extends Model
         'sent_to',
         'received_from',
         'notes',
+        'ics_to_position',
+        'ics_from_position',
+        'ics_subject',
+        'ics_reply_text',
+        'ics_reply_date',
+        'ics_reply_name',
+        'ics_reply_position',
     ];
 
     protected function casts(): array
@@ -50,6 +57,7 @@ class Message extends Model
             'hx_code' => HxCode::class,
             'is_sm_message' => 'boolean',
             'filed_at' => 'datetime',
+            'ics_reply_date' => 'datetime',
         ];
     }
 

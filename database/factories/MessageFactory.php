@@ -52,6 +52,22 @@ class MessageFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'format' => MessageFormat::Ics213,
+            'precedence' => null,
+            'hx_code' => null,
+            'station_of_origin' => null,
+            'check' => null,
+            'place_of_origin' => null,
+            'addressee_address' => null,
+            'addressee_city' => null,
+            'addressee_state' => null,
+            'addressee_zip' => null,
+            'addressee_phone' => null,
+            'sent_to' => null,
+            'received_from' => null,
+            'ics_to_position' => fake()->jobTitle(),
+            'ics_from_position' => fake()->jobTitle(),
+            'ics_subject' => fake()->sentence(4),
+            'message_text' => fake()->paragraph(),
         ]);
     }
 
