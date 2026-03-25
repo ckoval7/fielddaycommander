@@ -24,10 +24,61 @@ test('getContextEvent returns active event when no session override', function (
         ->and($result->id)->toBe($event->id);
 });
 
-test('getContextEvent returns null when no active event and no session', function () {
+test('getContextEvent returns nearest upcoming event when no active or grace period event', function () {
+    $farEvent = Event::factory()->create([
+        'start_time' => now()->addDays(60),
+        'end_time' => now()->addDays(61),
+    ]);
+
+    $nearEvent = Event::factory()->create([
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(11),
+    ]);
+
+    $result = $this->service->getContextEvent();
+
+    expect($result)->toBeInstanceOf(Event::class)
+        ->and($result->id)->toBe($nearEvent->id);
+});
+
+test('getContextEvent returns null when no events exist', function () {
     $result = $this->service->getContextEvent();
 
     expect($result)->toBeNull();
+});
+
+test('active event takes priority over upcoming event', function () {
+    $activeEvent = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $activeEvent->id]);
+
+    $upcomingEvent = Event::factory()->create([
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(11),
+    ]);
+
+    $result = $this->service->getContextEvent();
+
+    expect($result->id)->toBe($activeEvent->id);
+});
+
+test('grace period event takes priority over upcoming event', function () {
+    $graceEvent = Event::factory()->create([
+        'start_time' => now()->subDays(10),
+        'end_time' => now()->subDays(9),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $graceEvent->id]);
+
+    $upcomingEvent = Event::factory()->create([
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(11),
+    ]);
+
+    $result = $this->service->getContextEvent();
+
+    expect($result->id)->toBe($graceEvent->id);
 });
 
 test('getContextEvent returns session-selected event when set', function () {
@@ -222,11 +273,18 @@ test('getContextEventId returns event ID or no-event', function () {
     expect($this->service->getContextEventId())->toBe($event->id);
 });
 
-test('service is registered as singleton', function () {
+test('service is registered as scoped binding', function () {
     $instance1 = app(EventContextService::class);
     $instance2 = app(EventContextService::class);
 
     expect($instance1)->toBe($instance2);
+});
+
+it('is registered as a scoped binding, not singleton', function () {
+    $service1 = app(\App\Services\EventContextService::class);
+    app()->forgetScopedInstances();
+    $service2 = app(\App\Services\EventContextService::class);
+    expect($service1)->not->toBe($service2);
 });
 
 test('existing ActiveEventService alias resolves to EventContextService', function () {

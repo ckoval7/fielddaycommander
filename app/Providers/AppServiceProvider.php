@@ -29,8 +29,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register EventContextService as a singleton (extends ActiveEventService)
-        $this->app->singleton(\App\Services\EventContextService::class);
+        // Register EventContextService as a scoped binding (extends ActiveEventService)
+        // Scoped ensures mutable state resets between Octane requests while sharing within a request
+        $this->app->scoped(\App\Services\EventContextService::class);
         $this->app->alias(\App\Services\EventContextService::class, \App\Services\ActiveEventService::class);
     }
 
