@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\NotificationCategory;
+use App\Events\NewNotification;
 use App\Models\User;
 use App\Notifications\InAppNotification;
 
@@ -28,6 +29,7 @@ class NotificationService
 
         if ($debounceSeconds > 0 && $this->shouldDebounce($user, $effectiveGroupKey, $debounceSeconds)) {
             $this->updateExistingNotification($user, $effectiveGroupKey, $message, $category);
+            NewNotification::dispatch($user->id);
 
             return;
         }
@@ -39,6 +41,8 @@ class NotificationService
             url: $url,
             groupKey: $effectiveGroupKey,
         ));
+
+        NewNotification::dispatch($user->id);
     }
 
     /**

@@ -135,7 +135,7 @@ test('load notifications responds to event', function () {
 
     createNotification($user, ['title' => 'New one']);
 
-    $component->dispatch('notification-created')
+    $component->call('loadNotifications')
         ->assertSet('unreadCount', 1);
 });
 

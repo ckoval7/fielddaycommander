@@ -4,7 +4,6 @@ namespace App\Livewire\Components;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 class NotificationBell extends Component
@@ -19,7 +18,18 @@ class NotificationBell extends Component
         $this->loadNotifications();
     }
 
-    #[On('notification-created')]
+    /**
+     * @return array<string, string>
+     */
+    public function getListeners(): array
+    {
+        $userId = auth()->id();
+
+        return $userId ? [
+            "echo-private:user.{$userId},NewNotification" => 'loadNotifications',
+        ] : [];
+    }
+
     public function loadNotifications(): void
     {
         $user = auth()->user();
