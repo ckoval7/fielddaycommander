@@ -1,3 +1,4 @@
+<div>
 <div x-data="contactQueue({{ $operatingSession->id }}, '{{ csrf_token() }}')"
      @contact-queued.window="enqueue($event.detail)">
     {{-- Sticky Session Info Bar --}}
@@ -244,4 +245,5 @@
             </div>
         </x-card>
     </div>
+</div>
 </div>

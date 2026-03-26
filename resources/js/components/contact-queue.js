@@ -27,10 +27,6 @@ export default function contactQueue(sessionId, csrfToken) {
             });
 
             this.syncIntervalId = setInterval(() => this.syncNext(), 3000);
-
-            this.$el.addEventListener('contact-queued', (e) => {
-                this.enqueue(e.detail);
-            });
         },
 
         destroy() {
