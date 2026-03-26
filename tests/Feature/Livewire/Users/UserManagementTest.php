@@ -455,6 +455,22 @@ test('shows success message after updating user', function () {
         ->assertDispatched('toast');
 });
 
+test('user list refreshes after role change', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['call_sign' => 'W1TST']);
+    $user->assignRole('Operator');
+
+    $component = Livewire::test(UserManagement::class)
+        ->assertSee('Operator');
+
+    $component
+        ->call('openEditModal', $user->id)
+        ->set('role_id', $this->roles['Event Manager']->id)
+        ->call('saveUser')
+        ->assertSee('Event Manager');
+});
+
 // =============================================================================
 // Lock/Unlock Account (5 tests)
 // =============================================================================

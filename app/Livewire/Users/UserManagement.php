@@ -242,6 +242,7 @@ class UserManagement extends Component
 
                 $this->showModal = false;
                 $this->reset(['selectedUsers', 'selectAll']);
+                unset($this->users);
                 $this->dispatch('toast', title: 'Success', description: 'User created and invitation email sent', icon: 'o-envelope', css: 'alert-success');
             } catch (\Exception $e) {
                 Log::error('Failed to send user invitation email', [
@@ -257,6 +258,7 @@ class UserManagement extends Component
         } else {
             $this->showModal = false;
             $this->reset(['selectedUsers', 'selectAll']);
+            unset($this->users);
             $this->dispatch('toast', title: 'Success', description: 'User created successfully', icon: 'o-check-circle', css: 'alert-success');
         }
     }
@@ -301,6 +303,9 @@ class UserManagement extends Component
         ]);
 
         $this->showModal = false;
+
+        unset($this->users);
+
         $this->dispatch('toast', title: 'Success', description: 'User updated successfully', icon: 'o-check-circle', css: 'alert-success');
     }
 

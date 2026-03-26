@@ -79,8 +79,8 @@ class User extends Authenticatable
      */
     public function getRolesAttribute()
     {
-        // In dev mode with role override, return the overridden role instead
-        if (config('developer.enabled') && session()->has('dev_role_override')) {
+        // In dev mode with role override, return the overridden role for the logged-in user only
+        if (config('developer.enabled') && session()->has('dev_role_override') && auth()->check() && $this->id === auth()->id()) {
             try {
                 $role = \Spatie\Permission\Models\Role::findByName(session('dev_role_override'), 'web');
 

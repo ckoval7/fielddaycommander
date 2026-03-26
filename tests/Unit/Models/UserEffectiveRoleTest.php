@@ -30,3 +30,26 @@ it('ignores callsign override when dev mode is off', function () {
     $user = User::factory()->create(['call_sign' => 'W1AW']);
     expect($user->effectiveCallSign())->toBe('W1AW');
 });
+
+it('role override only applies to the authenticated user', function () {
+    config(['developer.enabled' => true]);
+
+    $operatorRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'System Administrator', 'guard_name' => 'web']);
+
+    $loggedInUser = User::factory()->create();
+    $loggedInUser->assignRole('Operator');
+
+    $otherUser = User::factory()->create();
+    $otherUser->assignRole('Operator');
+
+    $this->actingAs($loggedInUser);
+    session(['dev_role_override' => 'System Administrator']);
+
+    // Logged-in user should see the override
+    expect($loggedInUser->roles->first()->name)->toBe('System Administrator');
+
+    // Other user should show their real role, not the override
+    $otherUser->unsetRelation('roles');
+    expect($otherUser->roles->first()->name)->toBe('Operator');
+});
