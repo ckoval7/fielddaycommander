@@ -4,8 +4,7 @@
         mode_id: {{ $operatingSession->mode_id }},
         power_watts: {{ $operatingSession->power_watts }},
         sections: {{ Js::from(\App\Models\Section::where('is_active', true)->pluck('id', 'code')->toArray()) }}
-     })"
-     @contact-queued.window="enqueue($event.detail)">
+     })">
     {{-- Sticky Session Info Bar --}}
     <div class="sticky top-0 z-30 bg-base-100 border-b border-base-300 shadow-sm">
         <div class="px-4 py-2.5 flex items-center justify-between gap-3">
@@ -113,8 +112,8 @@
                         wire:model.live.debounce.300ms="exchangeInput"
                         x-ref="exchangeInput"
                         @input="si = -1"
-                        @keydown.enter.prevent="si >= 0 && $wire.suggestions?.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : logContactResilient($wire, $refs.exchangeInput)"
-                        @keydown.escape.prevent="si >= 0 ? (si = -1) : $wire.clearInput()"
+                        @keydown.enter.prevent="si >= 0 && $wire.suggestions?.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : logContact($refs.exchangeInput)"
+                        @keydown.escape.prevent="si >= 0 ? (si = -1) : (($refs.exchangeInput.value = ''), $wire.clearInput())"
                         @keydown.arrow-down.prevent="si = Math.min(si + 1, {{ count($suggestions) }} - 1)"
                         @keydown.arrow-up.prevent="si = Math.max(si - 1, -1)"
                         @keydown.tab.prevent="si >= 0 && $wire.suggestions.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : null"
@@ -147,7 +146,7 @@
                     label="Log"
                     icon="o-check"
                     class="btn-primary btn-lg"
-                    @click="logContactResilient($wire, $refs.exchangeInput)"
+                    @click="logContact($refs.exchangeInput)"
                     tooltip="Enter"
                     tooltip-position="tooltip-bottom"
                 />
@@ -161,11 +160,14 @@
                 />
             </div>
 
-            @if($parseError)
-                <x-alert icon="o-exclamation-triangle" class="alert-error">
-                    {{ $parseError }}
-                </x-alert>
-            @endif
+            <template x-if="parseError">
+                <div class="alert alert-error">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-text="parseError"></span>
+                </div>
+            </template>
 
             @if($isDuplicate)
                 <x-alert icon="o-exclamation-triangle" class="alert-warning">

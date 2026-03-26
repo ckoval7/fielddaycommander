@@ -113,60 +113,77 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         /**
-         * Try Livewire logContact first; fall back to client-side parsing if server is unreachable.
+         * Parse exchange client-side and queue to localStorage immediately.
+         * No server round-trip — sync happens in the background.
          */
-        async logContactResilient($wire, inputEl) {
-            const rawInput = inputEl?.value?.trim() || '';
-            if (!rawInput) return;
-
-            try {
-                await $wire.logContact();
-            } catch (e) {
-                // Server unreachable — parse and queue locally
-                const parsed = this.parseExchangeLocally(rawInput);
-                if (!parsed) return; // unparseable — can't queue
-
-                this.enqueue({
-                    band_id: sessionContext.band_id,
-                    mode_id: sessionContext.mode_id,
-                    callsign: parsed.callsign,
-                    section_id: parsed.section_id,
-                    section_code: parsed.section_code,
-                    received_exchange: rawInput.toUpperCase(),
-                    power_watts: sessionContext.power_watts,
-                });
-
-                // Clear input manually since Livewire couldn't
-                inputEl.value = '';
-                $wire.$set('exchangeInput', '');
-                inputEl.focus();
-
-                this.$dispatch('contact-logged');
+        logContact(inputEl) {
+            const rawInput = (inputEl?.value || '').trim();
+            if (!rawInput) {
+                this.parseError = 'Exchange is empty';
+                return;
             }
+
+            const parsed = this.parseExchange(rawInput);
+            if (!parsed) return; // parseError already set
+
+            this.enqueue({
+                band_id: sessionContext.band_id,
+                mode_id: sessionContext.mode_id,
+                callsign: parsed.callsign,
+                section_id: parsed.section_id,
+                section_code: parsed.section_code,
+                received_exchange: rawInput.toUpperCase(),
+                power_watts: sessionContext.power_watts,
+            });
+
+            // Clear input and refocus
+            inputEl.value = '';
+            this.parseError = '';
+            // Sync Livewire state if server is reachable (best-effort, fire-and-forget)
+            try { inputEl.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { /* ignore */ }
+            inputEl.focus();
+            inputEl.select();
         },
 
+        parseError: '',
+
         /**
-         * Minimal client-side exchange parser for offline fallback.
+         * Client-side exchange parser.
          * Format: CALLSIGN CLASS SECTION (e.g. "W1AW 3A CT")
          */
-        parseExchangeLocally(input) {
+        parseExchange(input) {
             const tokens = input.toUpperCase().trim().split(/\s+/);
-            if (tokens.length !== 3) return null;
+
+            if (tokens.length < 3) {
+                this.parseError = 'Exchange must contain callsign, class, and section (e.g. W1AW 3A CT)';
+                return null;
+            }
+            if (tokens.length > 3) {
+                this.parseError = 'Too many parts in exchange';
+                return null;
+            }
 
             const callsign = tokens[0];
-            // Callsign: 3-10 chars, at least one digit and one letter
-            if (callsign.length < 3 || callsign.length > 10) return null;
-            if (!/\d/.test(callsign) || !/[A-Z]/.test(callsign)) return null;
-            if (!/^[A-Z0-9/]+$/.test(callsign)) return null;
+            if (callsign.length < 3 || callsign.length > 10 ||
+                !/\d/.test(callsign) || !/[A-Z]/.test(callsign) ||
+                !/^[A-Z0-9/]+$/.test(callsign)) {
+                this.parseError = `Invalid callsign: ${callsign}`;
+                return null;
+            }
 
-            // Class: digit(s) + letter A-F (e.g. "3A", "1D")
-            if (!/^\d{1,2}[A-F]$/i.test(tokens[1])) return null;
+            if (!/^\d{1,2}[A-F]$/i.test(tokens[1])) {
+                this.parseError = `Invalid class: ${tokens[1]} (expected format like 3A, 1D)`;
+                return null;
+            }
 
-            // Section: look up in the sections map
             const sectionCode = tokens[2];
             const sectionId = sessionContext.sections?.[sectionCode];
-            if (!sectionId) return null;
+            if (!sectionId) {
+                this.parseError = `Unknown section: ${sectionCode}`;
+                return null;
+            }
 
+            this.parseError = '';
             return { callsign, section_id: sectionId, section_code: sectionCode };
         },
 
