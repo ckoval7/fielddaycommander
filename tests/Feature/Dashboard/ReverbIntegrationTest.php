@@ -179,19 +179,22 @@ test('BandModeGrid handleContactLogged does not error', function () {
 
 // --- ContactLogged event integration tests ---
 
-test('ContactLogged event is dispatched with correct event ID on QSO log', function () {
+test('ContactLogged event is dispatched with correct event ID on contact sync', function () {
     EventFacade::fake([ContactLogged::class]);
-
-    $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'log-contacts']);
-    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
-    $role->givePermissionTo($permission);
-    $this->user->assignRole($role);
 
     $this->actingAs($this->user);
 
-    Livewire::test(\App\Livewire\Logging\LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact');
+    $this->postJson('/api/logging/contacts', [
+        'uuid' => fake()->uuid(),
+        'operating_session_id' => $this->session->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'W1AW',
+        'section_id' => $this->section->id,
+        'received_exchange' => 'W1AW 3A CT',
+        'power_watts' => 100,
+        'qso_time' => now()->toISOString(),
+    ])->assertCreated();
 
     EventFacade::assertDispatched(ContactLogged::class, function (ContactLogged $event) {
         return $event->event->id === $this->event->id;

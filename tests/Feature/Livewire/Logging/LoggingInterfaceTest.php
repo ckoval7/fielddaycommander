@@ -139,27 +139,19 @@ test('phonetic exchange is displayed', function () {
         ->assertSee('Sierra Tango X-ray');
 });
 
-test('logging a valid contact creates a contact record', function () {
+test('logging a valid contact dispatches contact-queued event with parsed data', function () {
     $this->actingAs($this->user);
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact');
+        ->call('logContact')
+        ->assertDispatched('contact-queued');
 
-    $this->assertDatabaseHas('contacts', [
-        'operating_session_id' => $this->session->id,
-        'callsign' => 'W1AW',
-        'section_id' => $this->section->id,
-        'band_id' => $this->band->id,
-        'mode_id' => $this->phoneMode->id,
-        'logger_user_id' => $this->user->id,
-        'event_configuration_id' => $this->config->id,
-        'is_duplicate' => false,
-        'points' => 1,
-    ]);
+    // Contact should NOT be saved directly — the API endpoint handles that
+    expect(Contact::where('callsign', 'W1AW')->count())->toBe(0);
 });
 
-test('logging increments qso count', function () {
+test('logging does not directly increment qso count (API handles this)', function () {
     $this->actingAs($this->user);
 
     expect($this->session->qso_count)->toBe(0);
@@ -168,8 +160,9 @@ test('logging increments qso count', function () {
         ->set('exchangeInput', 'W1AW 3A CT')
         ->call('logContact');
 
+    // QSO count should NOT change — the API endpoint increments it on sync
     $this->session->refresh();
-    expect($this->session->qso_count)->toBe(1);
+    expect($this->session->qso_count)->toBe(0);
 });
 
 test('parse error shown for invalid exchange', function () {
@@ -209,7 +202,7 @@ test('duplicate warning appears for dupe callsign', function () {
         ->assertSee('W1AW already worked on 20m Phone');
 });
 
-test('duplicate contact is saved with is_duplicate flag and zero points', function () {
+test('duplicate contact detection is handled by API on sync, not Livewire', function () {
     $this->actingAs($this->user);
 
     // Create the original contact
@@ -223,20 +216,14 @@ test('duplicate contact is saved with is_duplicate flag and zero points', functi
         'is_duplicate' => false,
     ]);
 
+    // logContact dispatches contact-queued event; dupe detection happens server-side on sync
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact');
+        ->call('logContact')
+        ->assertDispatched('contact-queued');
 
-    // Get the second contact (the duplicate)
-    $dupeContact = Contact::query()
-        ->where('operating_session_id', $this->session->id)
-        ->where('callsign', 'W1AW')
-        ->where('is_duplicate', true)
-        ->first();
-
-    expect($dupeContact)->not->toBeNull();
-    expect($dupeContact->points)->toBe(0);
-    expect($dupeContact->is_duplicate)->toBeTrue();
+    // No second contact saved directly — the API will handle dupe detection
+    expect(Contact::where('callsign', 'W1AW')->count())->toBe(1);
 });
 
 test('clear input resets fields', function () {
@@ -335,7 +322,7 @@ test('end session sets end time and redirects', function () {
     expect($this->session->end_time)->not->toBeNull();
 });
 
-test('cw mode gives 2 points', function () {
+test('cw mode points are assigned by API on sync', function () {
     $this->actingAs($this->user);
 
     // Create a CW session
@@ -348,30 +335,39 @@ test('cw mode gives 2 points', function () {
         'qso_count' => 0,
     ]);
 
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $cwSession])
-        ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact');
+    // Sync a CW contact via API to verify points
+    $this->postJson('/api/logging/contacts', [
+        'uuid' => fake()->uuid(),
+        'operating_session_id' => $cwSession->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->cwMode->id,
+        'callsign' => 'W1AW',
+        'section_id' => $this->section->id,
+        'received_exchange' => 'W1AW 3A CT',
+        'power_watts' => 100,
+        'qso_time' => now()->toISOString(),
+    ])->assertCreated();
 
-    $contact = Contact::query()
-        ->where('operating_session_id', $cwSession->id)
-        ->where('callsign', 'W1AW')
-        ->first();
-
+    $contact = Contact::where('callsign', 'W1AW')->first();
     expect($contact->points)->toBe(2);
 });
 
-test('phone mode gives 1 point', function () {
+test('phone mode points are assigned by API on sync', function () {
     $this->actingAs($this->user);
 
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact');
+    $this->postJson('/api/logging/contacts', [
+        'uuid' => fake()->uuid(),
+        'operating_session_id' => $this->session->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1AW',
+        'section_id' => $this->section->id,
+        'received_exchange' => 'W1AW 3A CT',
+        'power_watts' => 100,
+        'qso_time' => now()->toISOString(),
+    ])->assertCreated();
 
-    $contact = Contact::query()
-        ->where('operating_session_id', $this->session->id)
-        ->where('callsign', 'W1AW')
-        ->first();
-
+    $contact = Contact::where('callsign', 'W1AW')->first();
     expect($contact->points)->toBe(1);
 });
 
@@ -480,18 +476,13 @@ test('selectSuggestion fills full exchange and clears suggestions', function () 
         ->assertDispatched('suggestion-selected');
 });
 
-test('selecting suggestion then logging creates contact', function () {
+test('selecting suggestion then logging dispatches contact-queued', function () {
     $this->actingAs($this->user);
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->call('selectSuggestion', 'W1AW 3A CT')
-        ->call('logContact');
-
-    $this->assertDatabaseHas('contacts', [
-        'operating_session_id' => $this->session->id,
-        'callsign' => 'W1AW',
-        'section_id' => $this->section->id,
-    ]);
+        ->call('logContact')
+        ->assertDispatched('contact-queued');
 });
 
 test('suggestions show full exchange and worked-on bands', function () {
@@ -519,11 +510,12 @@ test('suggestions show full exchange and worked-on bands', function () {
         ->assertSee('40m Phone');
 });
 
-test('logContact dispatches notification-created event so bell refreshes', function () {
+test('logContact dispatches contact-queued and contact-logged events', function () {
     $this->actingAs($this->user);
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->set('exchangeInput', 'W1AW 3A CT')
         ->call('logContact')
-        ->assertDispatched('notification-created');
+        ->assertDispatched('contact-queued')
+        ->assertDispatched('contact-logged');
 });

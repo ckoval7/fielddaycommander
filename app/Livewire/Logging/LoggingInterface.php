@@ -109,6 +109,18 @@ class LoggingInterface extends Component
         $this->clearDuplicateState();
     }
 
+    #[\Livewire\Attributes\On('contact-synced')]
+    public function onContactSynced(): void
+    {
+        unset($this->recentContacts);
+    }
+
+    #[\Livewire\Attributes\On('contact-discarded')]
+    public function onContactDiscarded(): void
+    {
+        unset($this->recentContacts);
+    }
+
     public function selectSuggestion(string $exchange): void
     {
         $this->exchangeInput = strtoupper(trim($exchange));

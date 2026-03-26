@@ -1,4 +1,5 @@
-<div>
+<div x-data="contactQueue({{ $operatingSession->id }}, '{{ csrf_token() }}')"
+     @contact-queued.window="enqueue($event.detail[0] ?? $event.detail)">
     {{-- Sticky Session Info Bar --}}
     <div class="sticky top-0 z-30 bg-base-100 border-b border-base-300 shadow-sm">
         <div class="px-4 py-2.5 flex items-center justify-between gap-3">
@@ -16,12 +17,54 @@
                 <span class="text-base-content/70">{{ $operatingSession->power_watts }}W</span>
             </div>
 
-            {{-- Right: QSO counter + End button --}}
+            {{-- Right: QSO counter + Sync status + End button --}}
             <div class="flex items-center gap-3 flex-shrink-0">
                 <div class="flex items-center gap-1">
                     <span class="text-xs uppercase tracking-wider text-base-content/50 hidden sm:inline">QSOs</span>
-                    <span class="font-mono font-bold text-xl sm:text-2xl tabular-nums">{{ $operatingSession->qso_count }}</span>
+                    <span class="font-mono font-bold text-xl sm:text-2xl tabular-nums" x-text="parseInt({{ $operatingSession->qso_count }}) + pendingCount + failedCount">{{ $operatingSession->qso_count }}</span>
                 </div>
+
+                {{-- Sync Status Indicator --}}
+                <div class="flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full" :class="statusDotClass"></span>
+                    <span x-show="statusLabel" x-text="statusLabel" x-cloak class="text-xs text-base-content/60 hidden sm:inline"></span>
+                </div>
+
+                {{-- Failed Contacts Dropdown --}}
+                <template x-if="failedCount > 0">
+                    <div class="dropdown dropdown-end">
+                        <button tabindex="0" class="btn btn-ghost btn-xs text-error gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                            <span x-text="failedCount + ' failed'"></span>
+                        </button>
+                        <div tabindex="0" class="dropdown-content z-50 bg-base-100 border border-base-300 rounded-box shadow-lg p-3 w-72 mt-2">
+                            <div class="text-sm font-semibold mb-2">Failed Contacts</div>
+                            <template x-for="contact in failedContacts" :key="contact.uuid">
+                                <div class="flex items-center justify-between py-1.5 border-b border-base-200 last:border-0">
+                                    <div>
+                                        <span class="font-mono font-bold text-sm" x-text="contact.callsign"></span>
+                                        <span class="text-xs text-error block" x-text="contact.last_error"></span>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <button @click="retryFailed(contact.uuid)" class="btn btn-ghost btn-xs" title="Retry">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                        <button @click="discardFailed(contact.uuid)" class="btn btn-ghost btn-xs text-error" title="Discard">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
                 <x-button
                     label="End Session"
                     icon="o-stop"
@@ -136,45 +179,69 @@
 
         {{-- Recent QSOs --}}
         <x-card title="Recent QSOs" subtitle="This session only">
-            @if($this->recentContacts->isEmpty())
+            {{-- Empty state: no server contacts and no queued contacts --}}
+            <div x-show="queue.length === 0 && {{ $this->recentContacts->count() }} === 0">
                 <div class="text-center py-4 text-base-content/50 space-y-1">
                     <p>No contacts logged yet.</p>
                     <p class="text-xs">Type the other station's exchange above, e.g. <span class="font-mono font-bold">W1AW 3A CT</span></p>
                 </div>
-            @else
-                <div class="overflow-x-auto">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Time</th>
-                                <th>Callsign</th>
-                                <th>Exchange</th>
-                                <th>Section</th>
-                                <th>Pts</th>
+            </div>
+
+            <div class="overflow-x-auto" x-show="queue.length > 0 || {{ $this->recentContacts->count() }} > 0" x-cloak>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Time</th>
+                            <th>Callsign</th>
+                            <th>Exchange</th>
+                            <th>Section</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{-- Pending/Failed contacts from local queue --}}
+                        <template x-for="contact in queue" :key="contact.uuid">
+                            <tr :class="{
+                                'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
+                                'bg-error/5': contact.status === 'failed'
+                            }">
+                                <td class="font-mono">-</td>
+                                <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
+                                <td class="font-bold font-mono uppercase" x-text="contact.callsign"></td>
+                                <td class="font-mono" x-text="contact.received_exchange"></td>
+                                <td x-text="contact.section_code || '-'"></td>
+                                <td class="font-mono">
+                                    <template x-if="contact.status === 'failed'">
+                                        <span class="badge badge-xs badge-error cursor-help" :title="contact.last_error">FAIL</span>
+                                    </template>
+                                    <template x-if="contact.status !== 'failed'">
+                                        <span class="badge badge-xs badge-info">SYNC</span>
+                                    </template>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($this->recentContacts as $contact)
-                                <tr wire:key="contact-{{ $contact->id }}" @class(['opacity-50' => $contact->is_duplicate])>
-                                    <td class="font-mono">{{ $operatingSession->qso_count - $loop->index }}</td>
-                                    <td class="font-mono">{{ $contact->qso_time->format('H:i') }}</td>
-                                    <td class="font-bold font-mono uppercase">{{ $contact->callsign }}</td>
-                                    <td class="font-mono">{{ $contact->received_exchange }}</td>
-                                    <td>{{ $contact->section->code ?? '-' }}</td>
-                                    <td class="font-mono">
-                                        @if($contact->is_duplicate)
-                                            <x-badge value="DUPE" class="badge-xs badge-warning" />
-                                        @else
-                                            {{ $contact->points }}
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
+                        </template>
+
+                        {{-- Server-confirmed contacts --}}
+                        @foreach($this->recentContacts as $contact)
+                            <tr wire:key="contact-{{ $contact->id }}" @class(['opacity-50' => $contact->is_duplicate])>
+                                <td class="font-mono">{{ $operatingSession->qso_count - $loop->index }}</td>
+                                <td class="font-mono">{{ $contact->qso_time->format('H:i') }}</td>
+                                <td class="font-bold font-mono uppercase">{{ $contact->callsign }}</td>
+                                <td class="font-mono">{{ $contact->received_exchange }}</td>
+                                <td>{{ $contact->section->code ?? '-' }}</td>
+                                <td class="font-mono">
+                                    @if($contact->is_duplicate)
+                                        <x-badge value="DUPE" class="badge-xs badge-warning" />
+                                    @else
+                                        {{ $contact->points }}
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </x-card>
     </div>
 </div>
