@@ -85,15 +85,15 @@ class LoggingInterface extends Component
         }
 
         // Dispatch to browser for client-side queueing and async sync
-        $this->dispatch('contact-queued', [
-            'band_id' => $this->operatingSession->band_id,
-            'mode_id' => $this->operatingSession->mode_id,
-            'callsign' => $parsed['callsign'],
-            'section_id' => $parsed['section_id'],
-            'section_code' => $parsed['section_code'],
-            'received_exchange' => $this->exchangeInput,
-            'power_watts' => $this->operatingSession->power_watts,
-        ]);
+        $this->dispatch('contact-queued',
+            band_id: $this->operatingSession->band_id,
+            mode_id: $this->operatingSession->mode_id,
+            callsign: $parsed['callsign'],
+            section_id: $parsed['section_id'],
+            section_code: $parsed['section_code'],
+            received_exchange: $this->exchangeInput,
+            power_watts: $this->operatingSession->power_watts,
+        );
 
         $this->clearInput();
         $this->clearDuplicateState();

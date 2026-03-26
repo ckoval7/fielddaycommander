@@ -1,5 +1,5 @@
 <div x-data="contactQueue({{ $operatingSession->id }}, '{{ csrf_token() }}')"
-     @contact-queued.window="enqueue($event.detail[0] ?? $event.detail)">
+     @contact-queued.window="enqueue($event.detail)">
     {{-- Sticky Session Info Bar --}}
     <div class="sticky top-0 z-30 bg-base-100 border-b border-base-300 shadow-sm">
         <div class="px-4 py-2.5 flex items-center justify-between gap-3">
