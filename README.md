@@ -41,8 +41,8 @@ The interactive script handles installing dependencies, configuring the database
 
 If you prefer to configure things yourself, or need to adapt the install to your environment, follow the step-by-step deployment guides in the `docs/guides/` directory:
 
-1. **Environment Preparation,** install PHP 8.3+, MySQL/MariaDB, Nginx, and Node.js
-2. **Application Deployment,** deploy the app, configure SSL, and start background services
+1. **Environment Preparation,** install PHP 8.4+, MySQL/MariaDB, FrankenPHP, and Node.js
+2. **Application Deployment,** deploy the app, configure Caddy/SSL, and start background services
 3. **Quick Start Guide,** first login, initial configuration, and creating your first event
 
 ### System Requirements
@@ -66,7 +66,7 @@ Full documentation lives in the `docs/guides/` directory:
 
 ## Technology
 
-Built with Laravel 12, Livewire, and Mary UI. Real-time updates powered by Laravel Reverb (WebSockets). See the [System Overview](docs/04-system-overview.md) for architecture details.
+Built with Laravel 12, Livewire, and Mary UI. Served by FrankenPHP (Caddy + Laravel Octane) for persistent-process performance with automatic HTTPS. Real-time updates powered by Laravel Reverb (WebSockets). See the [System Overview](docs/04-system-overview.md) for architecture details.
 
 ## Contributing
 
