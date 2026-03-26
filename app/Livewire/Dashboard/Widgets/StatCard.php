@@ -6,6 +6,7 @@ use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
+use App\Models\GuestbookEntry;
 use App\Services\EventContextService;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -24,7 +25,7 @@ use Livewire\Component;
  *
  * Config structure:
  * [
- *   'metric' => 'total_score|qso_count|sections_worked|operators_count'
+ *   'metric' => 'total_score|qso_count|sections_worked|operators_count|guestbook_count'
  * ]
  */
 class StatCard extends Component
@@ -98,6 +99,7 @@ class StatCard extends Component
             'contacts_last_hour' => $this->getContactsLastHour($event),
             'hours_remaining' => $this->getHoursRemaining($event),
             'bonus_points_earned' => $this->getBonusPointsEarned($event),
+            'guestbook_count' => $this->getGuestbookCount($event),
             default => $this->emptyMetric($metric),
         };
     }
@@ -293,6 +295,24 @@ class StatCard extends Component
     }
 
     /**
+     * Get guestbook entry count metric.
+     */
+    protected function getGuestbookCount(Event $event): array
+    {
+        $count = GuestbookEntry::query()
+            ->where('event_configuration_id', $event->eventConfiguration->id)
+            ->count();
+
+        return [
+            'value' => number_format($count),
+            'label' => 'Guestbook Entries',
+            'icon' => 'o-book-open',
+            'color' => 'text-info',
+            'last_updated_at' => appNow(),
+        ];
+    }
+
+    /**
      * Return empty metric data.
      */
     protected function emptyMetric(string $metric): array
@@ -307,6 +327,7 @@ class StatCard extends Component
             'contacts_last_hour' => ['Contacts Last Hour', 'o-clock', 'text-success'],
             'hours_remaining' => ['Hours Remaining', 'o-clock', 'text-warning'],
             'bonus_points_earned' => ['Bonus Points', 'o-star', 'text-accent'],
+            'guestbook_count' => ['Guestbook Entries', 'o-book-open', 'text-info'],
         ];
 
         [$label, $icon, $color] = $labels[$metric] ?? ['Unknown', 'o-question-mark-circle', 'text-base-content'];

@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
+use App\Models\GuestbookEntry;
 use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Section;
@@ -546,12 +547,71 @@ test('stat card bonus points earned only counts current event', function () {
     expect($data['value'])->toBe('100'); // Only current event bonuses
 });
 
+test('stat card calculates guestbook count correctly', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $eventConfig = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    // Create 5 guestbook entries for this event
+    GuestbookEntry::factory()->count(5)->create([
+        'event_configuration_id' => $eventConfig->id,
+    ]);
+
+    $component = Livewire::test(StatCard::class, [
+        'config' => ['metric' => 'guestbook_count'],
+        'size' => 'normal',
+    ]);
+
+    $data = $component->viewData('data');
+
+    expect($data)
+        ->toBeArray()
+        ->and($data['value'])->toBe('5')
+        ->and($data['label'])->toBe('Guestbook Entries')
+        ->and($data['icon'])->toBe('o-book-open')
+        ->and($data['color'])->toBe('text-info');
+});
+
+test('stat card guestbook count only counts current event', function () {
+    $currentEvent = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $currentConfig = EventConfiguration::factory()->create(['event_id' => $currentEvent->id]);
+
+    $pastEvent = Event::factory()->create([
+        'start_time' => now()->subDays(30),
+        'end_time' => now()->subDays(29),
+    ]);
+    $pastConfig = EventConfiguration::factory()->create(['event_id' => $pastEvent->id]);
+
+    GuestbookEntry::factory()->count(3)->create([
+        'event_configuration_id' => $currentConfig->id,
+    ]);
+
+    GuestbookEntry::factory()->count(10)->create([
+        'event_configuration_id' => $pastConfig->id,
+    ]);
+
+    $component = Livewire::test(StatCard::class, [
+        'config' => ['metric' => 'guestbook_count'],
+        'size' => 'normal',
+    ]);
+
+    $data = $component->viewData('data');
+
+    expect($data['value'])->toBe('3');
+});
+
 test('stat card returns empty metric for new metrics when no active event', function () {
     $metrics = [
         'avg_qso_rate_4h' => ['Avg QSO Rate (4h)', 'o-chart-bar', 'text-info'],
         'contacts_last_hour' => ['Contacts Last Hour', 'o-clock', 'text-success'],
         'hours_remaining' => ['Hours Remaining', 'o-clock', 'text-warning'],
         'bonus_points_earned' => ['Bonus Points', 'o-star', 'text-accent'],
+        'guestbook_count' => ['Guestbook Entries', 'o-book-open', 'text-info'],
     ];
 
     foreach ($metrics as $metricName => [$label, $icon, $color]) {

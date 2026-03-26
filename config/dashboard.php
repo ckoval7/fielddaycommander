@@ -36,6 +36,7 @@ return [
                         'hours_remaining' => 'Hours Remaining',
                         'bonus_points_earned' => 'Bonus Points Earned',
                         'multipliers' => 'Total Multipliers',
+                        'guestbook_count' => 'Guestbook Entries',
                     ],
                     'default' => 'total_score',
                     'required' => true,

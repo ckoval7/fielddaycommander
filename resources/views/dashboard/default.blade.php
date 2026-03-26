@@ -15,22 +15,8 @@ Props from controller:
 
     <div class="container mx-auto px-4 sm:px-6 py-4 sm:py-6" x-data="{
         editMode: false,
-        fullscreen: $persist(false).as('dashboard-fullscreen'),
 
         init() {
-            // Global fullscreen keyboard shortcut (F key)
-            document.addEventListener('keydown', (e) => {
-                // Ignore if in input/textarea or modifier keys pressed
-                if (e.target.matches('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) {
-                    return;
-                }
-
-                if (e.key === 'f' || e.key === 'F') {
-                    e.preventDefault();
-                    this.fullscreen = !this.fullscreen;
-                }
-            });
-
             // Listen for edit mode changes from DashboardEditor component
             window.addEventListener('edit-mode-changed', (e) => {
                 this.editMode = e.detail.enabled;
@@ -41,10 +27,10 @@ Props from controller:
                 window.location.reload();
             });
         }
-    }" :class="{ 'fullscreen-mode': fullscreen }">
+    }">
 
         {{-- Dashboard Header (hidden in edit mode) --}}
-        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4 sm:mb-6" x-show="!fullscreen && !editMode" x-transition>
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4 sm:mb-6" x-show="!editMode" x-transition>
             <div class="min-w-0">
                 <h1 class="text-2xl sm:text-3xl font-bold text-base-content truncate">
                     {{ $dashboard->title }}
@@ -90,22 +76,6 @@ Props from controller:
                     @click="$dispatch('open-modal', { modalId: 'dashboard-manager' })"
                 />
 
-                {{-- Fullscreen Toggle --}}
-                <x-button
-                    x-show="!fullscreen"
-                    @click="fullscreen = true"
-                    icon="o-arrows-pointing-out"
-                    class="btn-ghost btn-sm btn-square"
-                    title="Fullscreen (F key)"
-                />
-                <x-button
-                    x-show="fullscreen"
-                    @click="fullscreen = false"
-                    icon="o-arrows-pointing-in"
-                    class="btn-ghost btn-sm btn-square"
-                    title="Exit Fullscreen (F key)"
-                    x-transition
-                />
             </div>
         </div>
 
@@ -240,15 +210,6 @@ Props from controller:
 
     @push('styles')
     <style>
-        /* Fullscreen mode hides nav/header */
-        .fullscreen-mode {
-            position: fixed;
-            inset: 0;
-            z-index: 50;
-            background: oklch(var(--b1));
-            overflow-y: auto;
-        }
-
         /* Widget animations */
         .widget-item {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
