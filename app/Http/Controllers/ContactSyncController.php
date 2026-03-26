@@ -7,6 +7,7 @@ use App\Http\Requests\StoreContactSyncRequest;
 use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Services\DuplicateCheckService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 
 class ContactSyncController extends Controller
@@ -16,15 +17,18 @@ class ContactSyncController extends Controller
         // Idempotency: if this UUID already exists, return the existing contact
         $existing = Contact::where('uuid', $request->uuid)->first();
         if ($existing) {
-            return response()->json([
-                'uuid' => $existing->uuid,
-                'contact_id' => $existing->id,
-                'points' => $existing->points,
-                'is_duplicate' => $existing->is_duplicate,
-            ], 200);
+            return $this->idempotentResponse($existing);
         }
 
         $session = OperatingSession::findOrFail($request->operating_session_id);
+
+        if ($session->operator_user_id !== $request->user()->id) {
+            abort(403, 'You are not the operator of this session.');
+        }
+
+        if ($session->end_time !== null) {
+            return response()->json(['message' => 'This operating session has ended.'], 422);
+        }
 
         $dupeCheck = $dupeService->check(
             $request->callsign,
@@ -35,22 +39,26 @@ class ContactSyncController extends Controller
 
         $mode = $session->mode;
 
-        $contact = Contact::create([
-            'uuid' => $request->uuid,
-            'event_configuration_id' => $session->station->event_configuration_id,
-            'operating_session_id' => $session->id,
-            'logger_user_id' => $request->user()->id,
-            'band_id' => $request->band_id,
-            'mode_id' => $request->mode_id,
-            'qso_time' => $request->qso_time,
-            'callsign' => $request->callsign,
-            'section_id' => $request->section_id,
-            'received_exchange' => $request->received_exchange,
-            'power_watts' => $request->power_watts,
-            'points' => $dupeCheck['is_duplicate'] ? 0 : $mode->points_fd,
-            'is_duplicate' => $dupeCheck['is_duplicate'],
-            'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
-        ]);
+        try {
+            $contact = Contact::create([
+                'uuid' => $request->uuid,
+                'event_configuration_id' => $session->station->event_configuration_id,
+                'operating_session_id' => $session->id,
+                'logger_user_id' => $request->user()->id,
+                'band_id' => $request->band_id,
+                'mode_id' => $request->mode_id,
+                'qso_time' => $request->qso_time,
+                'callsign' => $request->callsign,
+                'section_id' => $request->section_id,
+                'received_exchange' => $request->received_exchange,
+                'power_watts' => $request->power_watts,
+                'points' => $dupeCheck['is_duplicate'] ? 0 : $mode->points_fd,
+                'is_duplicate' => $dupeCheck['is_duplicate'],
+                'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            return $this->idempotentResponse(Contact::where('uuid', $request->uuid)->firstOrFail());
+        }
 
         $session->increment('qso_count');
 
@@ -63,5 +71,15 @@ class ContactSyncController extends Controller
             'points' => $contact->points,
             'is_duplicate' => $contact->is_duplicate,
         ], 201);
+    }
+
+    private function idempotentResponse(Contact $contact): JsonResponse
+    {
+        return response()->json([
+            'uuid' => $contact->uuid,
+            'contact_id' => $contact->id,
+            'points' => $contact->points,
+            'is_duplicate' => $contact->is_duplicate,
+        ], 200);
     }
 }

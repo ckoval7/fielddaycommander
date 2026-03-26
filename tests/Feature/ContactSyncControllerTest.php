@@ -169,3 +169,39 @@ test('syncing a contact with invalid data returns validation error', function ()
         ])
         ->assertUnprocessable();
 });
+
+test('cannot sync contacts to another users session', function () {
+    $otherUser = User::factory()->create();
+
+    $this->actingAs($otherUser)
+        ->postJson('/api/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $this->session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'received_exchange' => 'W1AW 3A CT',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+        ])
+        ->assertForbidden();
+});
+
+test('cannot sync contacts to an ended session', function () {
+    $this->session->update(['end_time' => now()]);
+
+    $this->actingAs($this->user)
+        ->postJson('/api/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $this->session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'received_exchange' => 'W1AW 3A CT',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+        ])
+        ->assertUnprocessable();
+});
