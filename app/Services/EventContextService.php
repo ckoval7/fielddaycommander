@@ -44,13 +44,25 @@ class EventContextService extends ActiveEventService
                     ->first();
             } else {
                 $this->contextEvent = $this->getActiveEvent()
-                    ?? $this->getGracePeriodEvent();
+                    ?? $this->getGracePeriodEvent()
+                    ?? $this->getNearestUpcomingEvent();
             }
 
             $this->contextLoaded = true;
         }
 
         return $this->contextEvent;
+    }
+
+    /**
+     * Get the nearest upcoming event (earliest future start_time).
+     */
+    protected function getNearestUpcomingEvent(): ?Event
+    {
+        return Event::upcoming()
+            ->orderBy('start_time')
+            ->with('eventConfiguration')
+            ->first();
     }
 
     /**
