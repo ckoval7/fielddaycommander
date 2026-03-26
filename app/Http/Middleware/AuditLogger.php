@@ -9,37 +9,64 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AuditLogger
 {
-    protected array $auditableRoutes = [
-        'POST /login' => 'user.login.attempt',
-        'POST /logout' => 'user.logout',
-        'POST /two-factor-challenge' => 'user.2fa.challenge',
-        'POST /register' => 'user.register',
-        'POST /password/reset' => 'user.password.reset',
-    ];
-
     public function handle(Request $request, Closure $next): Response
     {
+        $preAuthUserId = auth()->id();
+
         $response = $next($request);
 
-        $this->logIfAuditable($request, $response);
+        $this->logIfAuditable($request, $response, $preAuthUserId);
 
         return $response;
     }
 
-    protected function logIfAuditable(Request $request, Response $response): void
+    protected function logIfAuditable(Request $request, Response $response, ?int $preAuthUserId): void
     {
         $method = $request->method();
         $path = $request->path();
         $routeKey = "{$method} /{$path}";
 
-        if (isset($this->auditableRoutes[$routeKey])) {
-            $action = $this->auditableRoutes[$routeKey];
+        match ($routeKey) {
+            'POST /login' => $this->logLogin($response),
+            'POST /logout' => $this->logAction('user.logout', $preAuthUserId, isCritical: true),
+            'POST /two-factor-challenge' => $this->logTwoFactorChallenge($response),
+            'POST /register' => $this->logRegister(),
+            'POST /password/reset' => $this->logAction('user.password.reset', auth()->id()),
+            default => null,
+        };
+    }
 
+    protected function logLogin(Response $response): void
+    {
+        if (auth()->check()) {
+            AuditLog::log(action: 'user.login.success', isCritical: true);
+        } else {
             AuditLog::log(
-                action: $action,
-                userId: auth()->id(),
-                isCritical: str_contains($action, 'login') || str_contains($action, '2fa')
+                action: 'user.login.failed',
+                newValues: ['email' => request()->input('email')],
+                isCritical: true
             );
         }
+    }
+
+    protected function logTwoFactorChallenge(Response $response): void
+    {
+        if (auth()->check()) {
+            AuditLog::log(action: 'user.login.success', isCritical: true);
+        } else {
+            AuditLog::log(action: 'user.login.2fa_failed', isCritical: true);
+        }
+    }
+
+    protected function logRegister(): void
+    {
+        if (auth()->check()) {
+            AuditLog::log(action: 'user.register', auditable: auth()->user());
+        }
+    }
+
+    protected function logAction(string $action, ?int $userId, bool $isCritical = false): void
+    {
+        AuditLog::log(action: $action, userId: $userId, isCritical: $isCritical);
     }
 }

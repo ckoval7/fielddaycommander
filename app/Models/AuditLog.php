@@ -12,24 +12,32 @@ class AuditLog extends Model
     public const UPDATED_AT = null; // Only created_at, no updated_at
 
     public const ACTION_LABELS = [
+        // Authentication
         'user.login.success' => 'Logged in',
         'user.login.failed' => 'Failed login attempt',
-        'user.login.attempt' => 'Login attempt',
         'user.login.2fa_failed' => 'Failed 2FA verification',
         'user.2fa.challenge' => '2FA challenge',
         'user.logout' => 'Logged out',
         'user.register' => 'User registered',
+
+        // User Management
         'user.created' => 'User created',
         'user.updated' => 'User updated',
         'user.deleted' => 'User deleted',
+        'user.locked' => 'Account locked',
+        'user.unlocked' => 'Account unlocked',
         'user.password.changed' => 'Password changed',
         'user.password.reset' => 'Password reset',
         'user.password.reset_by_admin' => 'Password reset by admin',
+        'user.password.force_reset' => 'Force password reset required',
+        'user.invitation.sent' => 'Invitation sent',
         'user.profile.updated' => 'Profile updated',
         'user.2fa.enabled' => '2FA enabled',
         'user.2fa.disabled' => '2FA disabled',
         'user.2fa.recovery_code_used' => 'Recovery code used',
         'user.2fa.reset_by_admin' => '2FA reset by admin',
+
+        // Roles & Permissions
         'role.created' => 'Role created',
         'role.updated' => 'Role updated',
         'role.deleted' => 'Role deleted',
@@ -37,8 +45,23 @@ class AuditLog extends Model
         'role.removed' => 'Role removed',
         'permission.granted' => 'Permission granted',
         'permission.revoked' => 'Permission revoked',
+
+        // Settings
+        'settings.updated' => 'Settings updated',
+        'settings.branding.updated' => 'Branding updated',
+
+        // System
         'system.setup.completed' => 'System setup completed',
         'config.security.changed' => 'Security config changed',
+
+        // Events
+        'event.created' => 'Event created',
+        'event.updated' => 'Event updated',
+        'event.deleted' => 'Event deleted',
+        'event.activated' => 'Event activated',
+        'event.deactivated' => 'Event deactivated',
+
+        // Developer Tools
         'developer.time_travel.set' => 'Time travel set',
         'developer.time_travel.clear' => 'Time travel cleared',
         'developer.database.full_reset' => 'Database full reset',
