@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
@@ -435,6 +436,12 @@ class EventForm extends Component
             'guestbook_detection_radius' => $validated['guestbook_detection_radius'] ?? 500,
             'guestbook_local_subnets' => $subnets,
         ]);
+
+        AuditLog::log('event.created', newValues: [
+            'name' => $event->name,
+            'year' => $event->year,
+            'callsign' => $validated['callsign'],
+        ], auditable: $event);
     }
 
     private function updateEvent(array $validated): void
@@ -444,6 +451,11 @@ class EventForm extends Component
             $this->event = Event::with('eventConfiguration')->findOrFail($this->eventId);
             $this->configuration = $this->event->eventConfiguration;
         }
+
+        $oldValues = [
+            'name' => $this->event->name,
+            'callsign' => $this->configuration->callsign,
+        ];
 
         $this->event->update([
             'name' => $validated['name'],
@@ -494,6 +506,11 @@ class EventForm extends Component
         }
 
         $this->configuration->update($configData);
+
+        AuditLog::log('event.updated', oldValues: $oldValues, newValues: [
+            'name' => $validated['name'],
+            'callsign' => $validated['callsign'],
+        ], auditable: $this->event);
     }
 
     protected function rules(): array

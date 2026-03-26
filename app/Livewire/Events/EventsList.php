@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Models\AuditLog;
 use App\Models\Event;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -66,6 +67,12 @@ class EventsList extends Component
 
         // Check if event has contacts
         $hasContacts = $event->eventConfiguration?->hasContacts() ?? false;
+
+        AuditLog::log('event.deleted', auditable: $event, oldValues: [
+            'name' => $event->name,
+            'year' => $event->year,
+            'has_contacts' => $hasContacts,
+        ]);
 
         if ($hasContacts) {
             // Soft delete if has contacts

@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Events\EventForm;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
@@ -745,4 +746,65 @@ test('loads guestbook settings when editing event', function () {
     expect($component->guestbook_longitude)->toBe(-104.9903);
     expect($component->guestbook_detection_radius)->toBe(750);
     expect($component->guestbook_local_subnets)->toBe("192.168.1.0/24\n10.0.0.0/8");
+});
+
+test('creating an event logs to audit log', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Field Day 2025')
+        ->set('event_type_id', $this->eventType->id)
+        ->set('start_time', '2025-06-28 18:00:00')
+        ->set('end_time', '2025-06-29 20:59:00')
+        ->set('callsign', 'W1AW')
+        ->set('club_name', 'Test Radio Club')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $this->operatingClassA->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $event = Event::where('name', 'Field Day 2025')->first();
+
+    $auditLog = AuditLog::where('action', 'event.created')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->user_id)->toBe($this->user->id);
+    expect($auditLog->auditable_type)->toBe(Event::class);
+    expect($auditLog->auditable_id)->toBe($event->id);
+    expect($auditLog->new_values)->toMatchArray([
+        'name' => 'Field Day 2025',
+        'callsign' => 'W1AW',
+    ]);
+});
+
+test('updating an event logs to audit log with old and new values', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create(['name' => 'Original Name']);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1OLD',
+    ]);
+
+    Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])
+        ->set('name', 'Updated Name')
+        ->set('callsign', 'W1NEW')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $auditLog = AuditLog::where('action', 'event.updated')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->user_id)->toBe($this->user->id);
+    expect($auditLog->auditable_type)->toBe(Event::class);
+    expect($auditLog->auditable_id)->toBe($event->id);
+    expect($auditLog->old_values)->toMatchArray([
+        'name' => 'Original Name',
+        'callsign' => 'W1OLD',
+    ]);
+    expect($auditLog->new_values)->toMatchArray([
+        'name' => 'Updated Name',
+        'callsign' => 'W1NEW',
+    ]);
 });
