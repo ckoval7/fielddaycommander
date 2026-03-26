@@ -139,10 +139,12 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             // Clear input and refocus
             inputEl.value = '';
             this.parseError = '';
-            // Sync Livewire state if server is reachable (best-effort, fire-and-forget)
-            try { inputEl.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { /* ignore */ }
+            // Sync Livewire state so wire:model.live stays in sync
+            const wire = window.Livewire?.find(inputEl.closest('[wire\\:id]')?.getAttribute('wire:id'));
+            if (wire) {
+                try { wire.set('exchangeInput', ''); } catch (e) { /* server may be down */ }
+            }
             inputEl.focus();
-            inputEl.select();
         },
 
         parseError: '',
