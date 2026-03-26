@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Users;
 
+use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
@@ -215,6 +216,12 @@ class UserManagement extends Component
         $role = Role::find($validated['role_id']);
         $user->assignRole($role);
 
+        AuditLog::log('user.created', auditable: $user, newValues: [
+            'call_sign' => $user->call_sign,
+            'email' => $user->email,
+            'role' => $role->name,
+        ]);
+
         if ($this->inviteMode) {
             try {
                 $token = Str::random(64);
@@ -228,6 +235,10 @@ class UserManagement extends Component
                 ]);
 
                 $user->notify(new UserInvitationNotification($token, $adminName));
+
+                AuditLog::log('user.invitation.sent', auditable: $user, newValues: [
+                    'email' => $user->email,
+                ]);
 
                 $this->showModal = false;
                 $this->reset(['selectedUsers', 'selectAll']);
@@ -266,6 +277,12 @@ class UserManagement extends Component
 
         $user = User::findOrFail($this->editingUserId);
 
+        $oldValues = [
+            'call_sign' => $user->call_sign,
+            'email' => $user->email,
+            'role' => $user->roles->first()?->name,
+        ];
+
         $user->update([
             'call_sign' => $validated['call_sign'],
             'first_name' => $validated['first_name'],
@@ -276,6 +293,12 @@ class UserManagement extends Component
 
         $role = Role::find($validated['role_id']);
         $user->syncRoles([$role]);
+
+        AuditLog::log('user.updated', auditable: $user, oldValues: $oldValues, newValues: [
+            'call_sign' => $validated['call_sign'],
+            'email' => $validated['email'],
+            'role' => $role->name,
+        ]);
 
         $this->showModal = false;
         $this->dispatch('toast', title: 'Success', description: 'User updated successfully', icon: 'o-check-circle', css: 'alert-success');
@@ -309,6 +332,11 @@ class UserManagement extends Component
             'account_locked_at' => $this->lockExpiry ?? now(),
         ]);
 
+        AuditLog::log('user.locked', auditable: $user, newValues: [
+            'call_sign' => $user->call_sign,
+            'expires_at' => $this->lockExpiry,
+        ], isCritical: true);
+
         $this->showLockModal = false;
         $this->reset(['lockingUserId', 'lockExpiry']);
         $this->dispatch('toast', title: 'Success', description: 'Account locked', icon: 'o-lock-closed', css: 'alert-success');
@@ -321,6 +349,10 @@ class UserManagement extends Component
         $user = User::findOrFail($userId);
         $user->update(['account_locked_at' => null]);
 
+        AuditLog::log('user.unlocked', auditable: $user, newValues: [
+            'call_sign' => $user->call_sign,
+        ]);
+
         $this->dispatch('toast', title: 'Success', description: 'Account unlocked', icon: 'o-lock-open', css: 'alert-success');
     }
 
@@ -330,6 +362,10 @@ class UserManagement extends Component
 
         $user = User::findOrFail($userId);
         $user->update(['requires_password_change' => true]);
+
+        AuditLog::log('user.password.force_reset', auditable: $user, newValues: [
+            'call_sign' => $user->call_sign,
+        ]);
 
         $this->dispatch('toast', title: 'Success', description: 'User will be prompted to change password on next login', icon: 'o-key', css: 'alert-success');
     }
@@ -357,6 +393,10 @@ class UserManagement extends Component
                 'password' => Hash::make($this->resetPassword),
                 'requires_password_change' => true,
             ]);
+
+            AuditLog::log('user.password.reset_by_admin', auditable: $user, newValues: [
+                'call_sign' => $user->call_sign,
+            ], isCritical: true);
 
             $this->showResetModal = false;
             $this->dispatch('toast', title: 'Success', description: 'Password reset successfully', icon: 'o-key', css: 'alert-success');
@@ -386,6 +426,12 @@ class UserManagement extends Component
         }
 
         $user = User::findOrFail($this->deletingUserId);
+
+        AuditLog::log('user.deleted', auditable: $user, oldValues: [
+            'call_sign' => $user->call_sign,
+            'email' => $user->email,
+        ], isCritical: true);
+
         $user->delete();
 
         $this->showDeleteModal = false;
@@ -408,14 +454,23 @@ class UserManagement extends Component
         }
 
         $role = Role::find($this->bulk_role_id);
-        User::whereIn('id', $this->selectedUsers)
+        $userIds = $this->selectedUsers;
+        User::whereIn('id', $userIds)
             ->with('roles')
             ->get()
             ->each(function ($user) use ($role) {
+                $oldRole = $user->roles->first()?->name;
                 $user->syncRoles([$role]);
+
+                AuditLog::log('role.assigned', auditable: $user, oldValues: [
+                    'role' => $oldRole,
+                ], newValues: [
+                    'role' => $role->name,
+                    'call_sign' => $user->call_sign,
+                ]);
             });
 
-        $count = count($this->selectedUsers);
+        $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll', 'bulk_role_id']);
         $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} users", icon: 'o-check-circle', css: 'alert-success');
     }
@@ -440,11 +495,22 @@ class UserManagement extends Component
             return;
         }
 
-        User::whereIn('id', $this->selectedUsers)->update([
+        $userIds = $this->selectedUsers;
+
+        User::whereIn('id', $userIds)->update([
             'account_locked_at' => $this->bulkLockExpiry ?? now(),
         ]);
 
-        $count = count($this->selectedUsers);
+        $users = User::whereIn('id', $userIds)->get();
+        foreach ($users as $user) {
+            AuditLog::log('user.locked', auditable: $user, newValues: [
+                'call_sign' => $user->call_sign,
+                'expires_at' => $this->bulkLockExpiry,
+                'bulk_action' => true,
+            ], isCritical: true);
+        }
+
+        $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll', 'bulkLockExpiry']);
         $this->dispatch('toast', title: 'Success', description: "{$count} accounts locked", icon: 'o-lock-closed', css: 'alert-success');
     }
@@ -463,11 +529,21 @@ class UserManagement extends Component
             return;
         }
 
-        User::whereIn('id', $this->selectedUsers)->update([
+        $userIds = $this->selectedUsers;
+
+        User::whereIn('id', $userIds)->update([
             'account_locked_at' => null,
         ]);
 
-        $count = count($this->selectedUsers);
+        $users = User::whereIn('id', $userIds)->get();
+        foreach ($users as $user) {
+            AuditLog::log('user.unlocked', auditable: $user, newValues: [
+                'call_sign' => $user->call_sign,
+                'bulk_action' => true,
+            ]);
+        }
+
+        $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll']);
         $this->dispatch('toast', title: 'Success', description: "{$count} accounts unlocked", icon: 'o-lock-open', css: 'alert-success');
     }
@@ -492,9 +568,20 @@ class UserManagement extends Component
             return;
         }
 
-        User::whereIn('id', $this->selectedUsers)->delete();
+        $userIds = $this->selectedUsers;
 
-        $count = count($this->selectedUsers);
+        $users = User::whereIn('id', $userIds)->get();
+        foreach ($users as $user) {
+            AuditLog::log('user.deleted', auditable: $user, oldValues: [
+                'call_sign' => $user->call_sign,
+                'email' => $user->email,
+                'bulk_action' => true,
+            ], isCritical: true);
+        }
+
+        User::whereIn('id', $userIds)->delete();
+
+        $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll']);
         $this->dispatch('toast', title: 'Success', description: "{$count} users deleted", icon: 'o-trash', css: 'alert-success');
     }

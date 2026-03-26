@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Users\UserManagement;
+use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
@@ -830,4 +831,142 @@ test('can navigate to next page', function () {
     Livewire::test(UserManagement::class)
         ->call('gotoPage', 2)
         ->assertSet('paginators.page', 2);
+});
+
+// =============================================================================
+// Audit Logging (7 tests)
+// =============================================================================
+
+test('creating user logs to audit log', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->set('call_sign', 'W1AW')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('role_id', $this->roles['Operator']->id)
+        ->set('inviteMode', false)
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->call('saveUser');
+
+    $auditLog = AuditLog::where('action', 'user.created')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->user_id)->toBe($this->admin->id);
+    expect($auditLog->new_values)->toMatchArray([
+        'call_sign' => 'W1AW',
+        'email' => 'test@example.com',
+        'role' => 'Operator',
+    ]);
+});
+
+test('updating user logs to audit log with old and new values', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create([
+        'call_sign' => 'W1AW',
+        'email' => 'old@example.com',
+    ]);
+    $user->assignRole('Operator');
+
+    Livewire::test(UserManagement::class)
+        ->call('openEditModal', $user->id)
+        ->set('call_sign', 'K2XYZ')
+        ->set('email', 'new@example.com')
+        ->set('role_id', $this->roles['Event Manager']->id)
+        ->call('saveUser');
+
+    $auditLog = AuditLog::where('action', 'user.updated')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->old_values)->toMatchArray([
+        'call_sign' => 'W1AW',
+        'email' => 'old@example.com',
+        'role' => 'Operator',
+    ]);
+    expect($auditLog->new_values)->toMatchArray([
+        'call_sign' => 'K2XYZ',
+        'email' => 'new@example.com',
+        'role' => 'Event Manager',
+    ]);
+});
+
+test('locking account logs to audit log as critical', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['call_sign' => 'W1AW', 'account_locked_at' => null]);
+
+    Livewire::test(UserManagement::class)
+        ->call('openLockModal', $user->id)
+        ->call('lockAccount');
+
+    $auditLog = AuditLog::where('action', 'user.locked')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->is_critical)->toBeTrue();
+    expect($auditLog->new_values['call_sign'])->toBe('W1AW');
+});
+
+test('unlocking account logs to audit log', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['call_sign' => 'W1AW', 'account_locked_at' => now()]);
+
+    Livewire::test(UserManagement::class)
+        ->call('unlockAccount', $user->id);
+
+    $auditLog = AuditLog::where('action', 'user.unlocked')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->new_values['call_sign'])->toBe('W1AW');
+});
+
+test('deleting user logs to audit log as critical', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['call_sign' => 'W1AW', 'email' => 'delete@example.com']);
+
+    Livewire::test(UserManagement::class)
+        ->call('openDeleteModal', $user->id)
+        ->call('deleteUser');
+
+    $auditLog = AuditLog::where('action', 'user.deleted')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->is_critical)->toBeTrue();
+    expect($auditLog->old_values)->toMatchArray([
+        'call_sign' => 'W1AW',
+        'email' => 'delete@example.com',
+    ]);
+});
+
+test('admin password reset logs to audit log as critical', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['call_sign' => 'W1AW']);
+
+    Livewire::test(UserManagement::class)
+        ->call('openResetModal', $user->id)
+        ->set('sendResetEmail', false)
+        ->set('resetPassword', 'newpassword123')
+        ->set('resetPassword_confirmation', 'newpassword123')
+        ->call('resetPassword');
+
+    $auditLog = AuditLog::where('action', 'user.password.reset_by_admin')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->is_critical)->toBeTrue();
+    expect($auditLog->new_values['call_sign'])->toBe('W1AW');
+});
+
+test('bulk delete logs individual audit entries for each user', function () {
+    $this->actingAs($this->admin);
+
+    $user1 = User::factory()->create(['call_sign' => 'W1AW']);
+    $user2 = User::factory()->create(['call_sign' => 'K2XYZ']);
+
+    Livewire::test(UserManagement::class)
+        ->set('selectedUsers', [$user1->id, $user2->id])
+        ->call('bulkDeleteUsers');
+
+    $auditLogs = AuditLog::where('action', 'user.deleted')->get();
+    expect($auditLogs)->toHaveCount(2);
+    expect($auditLogs->pluck('old_values.call_sign')->sort()->values()->toArray())->toBe(['K2XYZ', 'W1AW']);
 });
