@@ -186,6 +186,11 @@ test('BandModeGrid handleContactLogged does not error', function () {
 test('ContactLogged event is dispatched with correct event ID on contact sync', function () {
     EventFacade::fake([ContactLogged::class]);
 
+    $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'log-contacts']);
+    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $role->givePermissionTo($permission);
+    $this->user->assignRole($role);
+
     $this->actingAs($this->user);
 
     $this->postJson('/logging/contacts', [

@@ -66,41 +66,6 @@ class LoggingInterface extends Component
         );
     }
 
-    public function logContact(): void
-    {
-        $this->parseError = '';
-
-        if (trim($this->exchangeInput) === '') {
-            $this->parseError = 'Exchange is empty';
-
-            return;
-        }
-
-        $parsed = $this->parseExchange();
-
-        if (! $parsed['success']) {
-            $this->parseError = implode('. ', $parsed['errors']);
-
-            return;
-        }
-
-        // Dispatch to browser for client-side queueing and async sync
-        $this->dispatch('contact-queued',
-            band_id: $this->operatingSession->band_id,
-            mode_id: $this->operatingSession->mode_id,
-            callsign: $parsed['callsign'],
-            section_id: $parsed['section_id'],
-            section_code: $parsed['section_code'],
-            received_exchange: $this->exchangeInput,
-            power_watts: $this->operatingSession->power_watts,
-        );
-
-        $this->clearInput();
-        $this->clearDuplicateState();
-
-        $this->dispatch('contact-logged');
-    }
-
     public function clearInput(): void
     {
         $this->exchangeInput = '';
@@ -112,6 +77,7 @@ class LoggingInterface extends Component
     #[\Livewire\Attributes\On('contact-synced')]
     public function onContactSynced(): void
     {
+        $this->operatingSession->refresh();
         unset($this->recentContacts);
     }
 

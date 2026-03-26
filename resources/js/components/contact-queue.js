@@ -2,7 +2,7 @@
  * Contact Queue - Alpine.js store-and-forward component for contact logging.
  *
  * Manages a localStorage-backed queue of contacts. Contacts are queued locally
- * and synced to the server via the /api/logging/contacts endpoint. Handles
+ * and synced to the server via the /logging/contacts endpoint. Handles
  * offline detection, retry with exponential backoff, and sync status display.
  *
  * Usage in Blade:
@@ -217,7 +217,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || csrfToken,
                     },
                     body: JSON.stringify({
                         uuid: candidate.uuid,
@@ -251,9 +251,10 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     candidate.lastAttemptTime = Date.now();
                     candidate.last_error = errorData.message || 'Validation failed';
                     this.saveQueue();
-                } else if (response.status === 401) {
-                    // Session expired - mark failed with clear message
+                } else if (response.status === 401 || response.status === 419) {
+                    // Session or CSRF expired - stop retrying, user must refresh
                     candidate.status = 'failed';
+                    candidate.attempts = 999;
                     candidate.last_error = 'Session expired - please refresh the page';
                     this.saveQueue();
                 } else {

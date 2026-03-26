@@ -44,8 +44,8 @@ Route::middleware(['auth', 'can:log-contacts'])->group(function () {
     Route::get('/logging/transcribe/{station}', \App\Livewire\Logging\TranscribeInterface::class)->name('logging.transcribe.session');
 });
 
-// Contact sync endpoint (auth only — controller checks session ownership)
-Route::middleware('auth')->group(function () {
+// Contact sync endpoint (controller also checks session ownership)
+Route::middleware(['auth', 'can:log-contacts'])->group(function () {
     Route::post('/logging/contacts', [\App\Http\Controllers\ContactSyncController::class, 'store'])->name('logging.contacts.store');
 });
 

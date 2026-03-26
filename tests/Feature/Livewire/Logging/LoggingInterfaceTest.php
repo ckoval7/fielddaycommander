@@ -143,49 +143,6 @@ test('phonetic exchange is displayed', function () {
         ->assertSee('Sierra Tango X-ray');
 });
 
-test('logging a valid contact dispatches contact-queued event with parsed data', function () {
-    $this->actingAs($this->user);
-
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact')
-        ->assertDispatched('contact-queued');
-
-    // Contact should NOT be saved directly — the API endpoint handles that
-    expect(Contact::where('callsign', 'W1AW')->count())->toBe(0);
-});
-
-test('logging does not directly increment qso count (API handles this)', function () {
-    $this->actingAs($this->user);
-
-    expect($this->session->qso_count)->toBe(0);
-
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact');
-
-    // QSO count should NOT change — the API endpoint increments it on sync
-    $this->session->refresh();
-    expect($this->session->qso_count)->toBe(0);
-});
-
-test('parse error shown for invalid exchange', function () {
-    $this->actingAs($this->user);
-
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'BADCALL')
-        ->call('logContact')
-        ->assertSet('parseError', 'Exchange must contain callsign, class, and section (e.g. W1AW 3A CT)');
-});
-
-test('parse error for empty input', function () {
-    $this->actingAs($this->user);
-
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->call('logContact')
-        ->assertSet('parseError', 'Exchange is empty');
-});
-
 test('duplicate warning appears for dupe callsign', function () {
     $this->actingAs($this->user);
 
@@ -204,30 +161,6 @@ test('duplicate warning appears for dupe callsign', function () {
         ->set('exchangeInput', 'W1AW 3A CT')
         ->assertSet('isDuplicate', true)
         ->assertSee('W1AW already worked on 20m Phone');
-});
-
-test('duplicate contact detection is handled by API on sync, not Livewire', function () {
-    $this->actingAs($this->user);
-
-    // Create the original contact
-    Contact::factory()->create([
-        'event_configuration_id' => $this->config->id,
-        'operating_session_id' => $this->session->id,
-        'logger_user_id' => $this->user->id,
-        'band_id' => $this->band->id,
-        'mode_id' => $this->phoneMode->id,
-        'callsign' => 'W1AW',
-        'is_duplicate' => false,
-    ]);
-
-    // logContact dispatches contact-queued event; dupe detection happens server-side on sync
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact')
-        ->assertDispatched('contact-queued');
-
-    // No second contact saved directly — the API will handle dupe detection
-    expect(Contact::where('callsign', 'W1AW')->count())->toBe(1);
 });
 
 test('clear input resets fields', function () {
@@ -375,26 +308,6 @@ test('phone mode points are assigned by API on sync', function () {
     expect($contact->points)->toBe(1);
 });
 
-test('input is cleared after successful log', function () {
-    $this->actingAs($this->user);
-
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact')
-        ->assertSet('exchangeInput', '')
-        ->assertSet('isDuplicate', false)
-        ->assertSet('parseError', '');
-});
-
-test('contact logged event is dispatched after logging', function () {
-    $this->actingAs($this->user);
-
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact')
-        ->assertDispatched('contact-logged');
-});
-
 test('suggestions appear for callsign worked on different band', function () {
     $this->actingAs($this->user);
 
@@ -480,15 +393,6 @@ test('selectSuggestion fills full exchange and clears suggestions', function () 
         ->assertDispatched('suggestion-selected');
 });
 
-test('selecting suggestion then logging dispatches contact-queued', function () {
-    $this->actingAs($this->user);
-
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->call('selectSuggestion', 'W1AW 3A CT')
-        ->call('logContact')
-        ->assertDispatched('contact-queued');
-});
-
 test('suggestions show full exchange and worked-on bands', function () {
     $this->actingAs($this->user);
 
@@ -512,14 +416,4 @@ test('suggestions show full exchange and worked-on bands', function () {
         ->set('exchangeInput', 'K5')
         ->assertSee('K5ABC 1D STX')
         ->assertSee('40m Phone');
-});
-
-test('logContact dispatches contact-queued and contact-logged events', function () {
-    $this->actingAs($this->user);
-
-    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'W1AW 3A CT')
-        ->call('logContact')
-        ->assertDispatched('contact-queued')
-        ->assertDispatched('contact-logged');
 });

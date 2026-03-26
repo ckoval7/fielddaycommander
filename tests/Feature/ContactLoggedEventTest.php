@@ -50,6 +50,11 @@ beforeEach(function () {
 
     $this->user = User::factory()->create();
 
+    $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'log-contacts']);
+    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $role->givePermissionTo($permission);
+    $this->user->assignRole($role);
+
     $this->session = OperatingSession::factory()->active()->create([
         'station_id' => $this->station->id,
         'operator_user_id' => $this->user->id,
