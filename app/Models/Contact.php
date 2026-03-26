@@ -13,6 +13,7 @@ class Contact extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'uuid',
         'event_configuration_id',
         'operating_session_id',
         'logger_user_id',
