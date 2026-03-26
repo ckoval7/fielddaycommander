@@ -2,12 +2,9 @@
 
 namespace App\Livewire\Logging;
 
-use App\Events\ContactLogged;
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
-use App\Models\Contact;
 use App\Models\OperatingSession;
-use App\Services\DuplicateCheckService;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -87,40 +84,16 @@ class LoggingInterface extends Component
             return;
         }
 
-        $dupeService = app(DuplicateCheckService::class);
-        $dupeCheck = $dupeService->check(
-            $parsed['callsign'],
-            $this->operatingSession->band_id,
-            $this->operatingSession->mode_id,
-            $this->operatingSession->station->event_configuration_id,
-        );
-
-        $mode = $this->operatingSession->mode;
-
-        $contact = Contact::create([
-            'event_configuration_id' => $this->operatingSession->station->event_configuration_id,
-            'operating_session_id' => $this->operatingSession->id,
-            'logger_user_id' => auth()->id(),
+        // Dispatch to browser for client-side queueing and async sync
+        $this->dispatch('contact-queued', [
             'band_id' => $this->operatingSession->band_id,
             'mode_id' => $this->operatingSession->mode_id,
-            'qso_time' => appNow(),
             'callsign' => $parsed['callsign'],
             'section_id' => $parsed['section_id'],
+            'section_code' => $parsed['section_code'],
             'received_exchange' => $this->exchangeInput,
             'power_watts' => $this->operatingSession->power_watts,
-            'points' => $dupeCheck['is_duplicate'] ? 0 : $mode->points_fd,
-            'is_duplicate' => $dupeCheck['is_duplicate'],
-            'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
         ]);
-
-        $this->operatingSession->increment('qso_count');
-
-        // Refresh notification bell for the logging user
-        $this->dispatch('notification-created');
-
-        // Broadcast for real-time dashboard updates
-        $event = $this->operatingSession->station->eventConfiguration->event;
-        ContactLogged::dispatch($contact->load(['band', 'mode', 'section']), $event);
 
         $this->clearInput();
         $this->clearDuplicateState();

@@ -108,20 +108,22 @@ test('ContactLogged broadcastWith includes accurate qso count', function () {
     expect($data['qso_count'])->toBe(4);
 });
 
-test('ContactLogged event is dispatched when logging a contact', function () {
+test('ContactLogged event is dispatched when syncing a contact via API', function () {
     EventFacade::fake([ContactLogged::class]);
 
     $this->actingAs($this->user);
 
-    // Give user permission to log contacts
-    $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'log-contacts']);
-    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
-    $role->givePermissionTo($permission);
-    $this->user->assignRole($role);
-
-    \Livewire\Livewire::test(\App\Livewire\Logging\LoggingInterface::class, ['operatingSession' => $this->session])
-        ->set('exchangeInput', 'K5ABC 3A CT')
-        ->call('logContact');
+    $this->postJson('/api/logging/contacts', [
+        'uuid' => fake()->uuid(),
+        'operating_session_id' => $this->session->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'K5ABC',
+        'section_id' => $this->section->id,
+        'received_exchange' => 'K5ABC 3A CT',
+        'power_watts' => 100,
+        'qso_time' => now()->toISOString(),
+    ])->assertCreated();
 
     EventFacade::assertDispatched(ContactLogged::class, function (ContactLogged $event) {
         return $event->contact->callsign === 'K5ABC'
