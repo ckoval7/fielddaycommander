@@ -19,6 +19,10 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    \Illuminate\Support\Facades\DB::table('system_config')->insert(
+        ['key' => 'setup_completed', 'value' => 'true'],
+    );
+
     // Register the route temporarily for testing
     Route::middleware(['web', 'auth'])->get('/logging/session/{operatingSession}', LoggingInterface::class)->name('logging.session');
 
@@ -336,7 +340,7 @@ test('cw mode points are assigned by API on sync', function () {
     ]);
 
     // Sync a CW contact via API to verify points
-    $this->postJson('/api/logging/contacts', [
+    $this->postJson('/logging/contacts', [
         'uuid' => fake()->uuid(),
         'operating_session_id' => $cwSession->id,
         'band_id' => $this->band->id,
@@ -355,7 +359,7 @@ test('cw mode points are assigned by API on sync', function () {
 test('phone mode points are assigned by API on sync', function () {
     $this->actingAs($this->user);
 
-    $this->postJson('/api/logging/contacts', [
+    $this->postJson('/logging/contacts', [
         'uuid' => fake()->uuid(),
         'operating_session_id' => $this->session->id,
         'band_id' => $this->band->id,

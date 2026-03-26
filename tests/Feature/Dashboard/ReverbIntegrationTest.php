@@ -22,6 +22,10 @@ use Livewire\Livewire;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    \Illuminate\Support\Facades\DB::table('system_config')->insert(
+        ['key' => 'setup_completed', 'value' => 'true'],
+    );
+
     $this->eventType = EventType::firstOrCreate(
         ['code' => 'FD'],
         ['name' => 'Field Day', 'description' => 'ARRL Field Day'],
@@ -184,7 +188,7 @@ test('ContactLogged event is dispatched with correct event ID on contact sync', 
 
     $this->actingAs($this->user);
 
-    $this->postJson('/api/logging/contacts', [
+    $this->postJson('/logging/contacts', [
         'uuid' => fake()->uuid(),
         'operating_session_id' => $this->session->id,
         'band_id' => $this->band->id,

@@ -44,6 +44,11 @@ Route::middleware(['auth', 'can:log-contacts'])->group(function () {
     Route::get('/logging/transcribe/{station}', \App\Livewire\Logging\TranscribeInterface::class)->name('logging.transcribe.session');
 });
 
+// Contact sync endpoint (auth only — controller checks session ownership)
+Route::middleware('auth')->group(function () {
+    Route::post('/logging/contacts', [\App\Http\Controllers\ContactSyncController::class, 'store'])->name('logging.contacts.store');
+});
+
 // Logbook Browser
 Route::middleware('auth')->group(function () {
     Route::get('/logbook', [\App\Http\Controllers\LogbookController::class, 'index'])->name('logbook.index');
@@ -129,6 +134,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/{event}/messages/print-all', function (\App\Models\Event $event) {
         $messages = \App\Models\Message::where('event_configuration_id', $event->eventConfiguration->id)
             ->orderBy('message_number')->get();
+
         return view('messages.print', ['event' => $event, 'messages' => $messages]);
     })->name('events.messages.print-all');
 

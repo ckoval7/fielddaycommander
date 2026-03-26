@@ -137,7 +137,7 @@ export default function contactQueue(sessionId, csrfToken) {
             this.saveQueue();
 
             try {
-                const response = await fetch('/api/logging/contacts', {
+                const response = await fetch('/logging/contacts', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

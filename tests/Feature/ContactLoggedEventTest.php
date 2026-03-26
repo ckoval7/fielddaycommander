@@ -12,11 +12,15 @@ use App\Models\Station;
 use App\Models\User;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event as EventFacade;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    DB::table('system_config')->insert(
+        ['key' => 'setup_completed', 'value' => 'true'],
+    );
     $this->band = Band::first() ?? Band::create([
         'name' => '20m', 'meters' => 20, 'frequency_mhz' => 14.175,
         'allowed_fd' => true, 'sort_order' => 4,
@@ -113,7 +117,7 @@ test('ContactLogged event is dispatched when syncing a contact via API', functio
 
     $this->actingAs($this->user);
 
-    $this->postJson('/api/logging/contacts', [
+    $this->postJson('/logging/contacts', [
         'uuid' => fake()->uuid(),
         'operating_session_id' => $this->session->id,
         'band_id' => $this->band->id,

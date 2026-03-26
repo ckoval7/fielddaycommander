@@ -10,10 +10,15 @@ use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    DB::table('system_config')->insert(
+        ['key' => 'setup_completed', 'value' => 'true'],
+    );
+
     $this->band = Band::first() ?? Band::create([
         'name' => '20m', 'meters' => 20, 'frequency_mhz' => 14.175,
         'allowed_fd' => true, 'sort_order' => 4,
@@ -43,6 +48,11 @@ beforeEach(function () {
 
     $this->user = User::factory()->create();
 
+    $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'log-contacts']);
+    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $role->givePermissionTo($permission);
+    $this->user->assignRole($role);
+
     $this->session = OperatingSession::factory()->active()->create([
         'station_id' => $this->station->id,
         'operator_user_id' => $this->user->id,
@@ -53,7 +63,7 @@ beforeEach(function () {
 });
 
 test('unauthenticated users cannot sync contacts', function () {
-    $this->postJson('/api/logging/contacts', [])
+    $this->postJson('/logging/contacts', [])
         ->assertUnauthorized();
 });
 
@@ -61,7 +71,7 @@ test('syncing a contact creates it in the database', function () {
     $uuid = fake()->uuid();
 
     $this->actingAs($this->user)
-        ->postJson('/api/logging/contacts', [
+        ->postJson('/logging/contacts', [
             'uuid' => $uuid,
             'operating_session_id' => $this->session->id,
             'band_id' => $this->band->id,
@@ -96,8 +106,8 @@ test('duplicate uuid returns success without creating a second contact', functio
         'qso_time' => now()->toISOString(),
     ];
 
-    $this->actingAs($this->user)->postJson('/api/logging/contacts', $payload)->assertCreated();
-    $this->actingAs($this->user)->postJson('/api/logging/contacts', $payload)->assertOk();
+    $this->actingAs($this->user)->postJson('/logging/contacts', $payload)->assertCreated();
+    $this->actingAs($this->user)->postJson('/logging/contacts', $payload)->assertOk();
 
     expect(Contact::where('uuid', $uuid)->count())->toBe(1);
 });
@@ -117,7 +127,7 @@ test('syncing a duplicate callsign marks it as duplicate', function () {
     ]);
 
     $response = $this->actingAs($this->user)
-        ->postJson('/api/logging/contacts', [
+        ->postJson('/logging/contacts', [
             'uuid' => fake()->uuid(),
             'operating_session_id' => $this->session->id,
             'band_id' => $this->band->id,
@@ -138,7 +148,7 @@ test('syncing a contact increments session qso_count', function () {
     $initialCount = $this->session->qso_count;
 
     $this->actingAs($this->user)
-        ->postJson('/api/logging/contacts', [
+        ->postJson('/logging/contacts', [
             'uuid' => fake()->uuid(),
             'operating_session_id' => $this->session->id,
             'band_id' => $this->band->id,
@@ -156,7 +166,7 @@ test('syncing a contact increments session qso_count', function () {
 
 test('syncing a contact with invalid data returns validation error', function () {
     $this->actingAs($this->user)
-        ->postJson('/api/logging/contacts', [
+        ->postJson('/logging/contacts', [
             'uuid' => fake()->uuid(),
             'operating_session_id' => $this->session->id,
             'band_id' => $this->band->id,
@@ -172,9 +182,10 @@ test('syncing a contact with invalid data returns validation error', function ()
 
 test('cannot sync contacts to another users session', function () {
     $otherUser = User::factory()->create();
+    $otherUser->assignRole('Operator');
 
     $this->actingAs($otherUser)
-        ->postJson('/api/logging/contacts', [
+        ->postJson('/logging/contacts', [
             'uuid' => fake()->uuid(),
             'operating_session_id' => $this->session->id,
             'band_id' => $this->band->id,
@@ -192,7 +203,7 @@ test('cannot sync contacts to an ended session', function () {
     $this->session->update(['end_time' => now()]);
 
     $this->actingAs($this->user)
-        ->postJson('/api/logging/contacts', [
+        ->postJson('/logging/contacts', [
             'uuid' => fake()->uuid(),
             'operating_session_id' => $this->session->id,
             'band_id' => $this->band->id,
