@@ -15,6 +15,8 @@ class AppBrand extends Component
 
     public string $logoPath;
 
+    public bool $hasCustomLogo = false;
+
     public string $callsign;
 
     public string $eventName;
@@ -41,10 +43,14 @@ class AppBrand extends Component
     protected function resolveLogoPath(?string $siteLogoPath): string
     {
         if ($siteLogoPath && Storage::disk('public')->exists($siteLogoPath)) {
+            $this->hasCustomLogo = true;
+
             return Storage::url($siteLogoPath);
         }
 
         if ($this->activeEvent && $this->activeEvent->logo_path) {
+            $this->hasCustomLogo = true;
+
             return $this->activeEvent->logo_path;
         }
 

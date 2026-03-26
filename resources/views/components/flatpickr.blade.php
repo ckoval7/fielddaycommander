@@ -14,6 +14,7 @@
 @endphp
 
 <div
+    wire:ignore
     x-data="{!! $xData !!}"
     class="w-full"
 >

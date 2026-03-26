@@ -126,13 +126,6 @@
                     <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
                     <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
 
-                    @can('manage-guestbook')
-                        @php $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
-                        @if($activeEvent)
-                            <x-menu-item title="Manage Guestbook" icon="o-clipboard-document-list" link="{{ route('events.guestbook', $activeEvent->id) }}" :active="request()->routeIs('events.guestbook')" />
-                        @endif
-                    @endcan
-
                     @can('log-contacts')
                         @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
                         @if($activeEvent)
@@ -142,7 +135,7 @@
                         @endif
                     @endcan
 
-                    @canany(['manage-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs'])
+                    @canany(['manage-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook'])
                         <x-menu-separator title="ADMINISTRATION" />
 
                         @can('manage-events')
@@ -155,6 +148,13 @@
 
                         @can('manage-shifts')
                             <x-menu-item title="Manage Safety Checklist" icon="o-clipboard-document-check" link="{{ route('site-safety.manage') }}" :active="request()->routeIs('site-safety.manage')" />
+                        @endcan
+
+                        @can('manage-guestbook')
+                            @php $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
+                            @if($activeEvent)
+                                <x-menu-item title="Manage Guestbook" icon="o-book-open" link="{{ route('events.guestbook', $activeEvent->id) }}" :active="request()->routeIs('events.guestbook')" />
+                            @endif
                         @endcan
 
                         @can('manage-users')
@@ -204,7 +204,7 @@
             <p class="text-center mb-2">{{ $footerText }}</p>
         @endif
         <div class="flex flex-col sm:flex-row items-center justify-center gap-x-3 gap-y-1">
-            <span>FD Log DB v{{ config('app.version') }}</span>
+            <span>Field Day Commander v{{ config('app.version') }}</span>
             <span class="hidden sm:inline text-base-content/30">&middot;</span>
             <span>Powered by Laravel {{ app()->version() }}</span>
         </div>

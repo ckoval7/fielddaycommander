@@ -27,12 +27,14 @@
     {{-- Validation Error Summary --}}
     @if($errors->any())
         <x-alert icon="o-exclamation-triangle" class="alert-error mb-4">
-            <x-slot:title>Please fix the following errors:</x-slot:title>
-            <ul class="list-disc list-inside text-sm">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+            <div>
+                <div class="font-bold">Please fix the following errors:</div>
+                <ul class="list-disc list-inside text-sm mt-1">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
         </x-alert>
     @endif
 

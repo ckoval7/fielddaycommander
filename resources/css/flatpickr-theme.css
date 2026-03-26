@@ -1,10 +1,12 @@
 /* Flatpickr base styles */
 @import 'flatpickr/dist/flatpickr.css';
 
-/* daisyUI theme overrides */
+/* daisyUI 5 theme overrides
+ * Variables are --color-base-100, --color-base-200, etc.
+ * Values already include oklch(), so use var() directly. */
 .flatpickr-calendar {
-    background: oklch(var(--b1));
-    border-color: oklch(var(--b3));
+    background: var(--color-base-100);
+    border-color: var(--color-base-300);
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     border-radius: var(--radius-box, 0.5rem);
     font-family: inherit;
@@ -14,74 +16,74 @@
 .flatpickr-current-month .flatpickr-monthDropdown-months,
 .flatpickr-weekdays,
 span.flatpickr-weekday {
-    background: oklch(var(--b2));
-    color: oklch(var(--bc));
+    background: var(--color-base-200);
+    color: var(--color-base-content);
 }
 
 .flatpickr-current-month input.cur-year,
 .flatpickr-current-month .numInputWrapper {
-    color: oklch(var(--bc));
+    color: var(--color-base-content);
 }
 
 .flatpickr-day {
-    color: oklch(var(--bc));
+    color: var(--color-base-content);
     border-radius: var(--radius-btn, 0.25rem);
 }
 
 .flatpickr-day:hover,
 .flatpickr-day:focus {
-    background: oklch(var(--b3));
-    border-color: oklch(var(--b3));
+    background: var(--color-base-300);
+    border-color: var(--color-base-300);
 }
 
 .flatpickr-day.selected,
 .flatpickr-day.selected:hover {
-    background: oklch(var(--p));
-    border-color: oklch(var(--p));
-    color: oklch(var(--pc));
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-content);
 }
 
 .flatpickr-day.today {
-    border-color: oklch(var(--p));
+    border-color: var(--color-primary);
 }
 
 .flatpickr-day.today:hover {
-    background: oklch(var(--p) / 0.1);
-    border-color: oklch(var(--p));
-    color: oklch(var(--bc));
+    background: color-mix(in oklch, var(--color-primary) 10%, transparent);
+    border-color: var(--color-primary);
+    color: var(--color-base-content);
 }
 
 .flatpickr-time input,
 .flatpickr-time .flatpickr-am-pm {
-    color: oklch(var(--bc));
+    color: var(--color-base-content);
 }
 
 .flatpickr-time input:hover,
 .flatpickr-time input:focus,
 .flatpickr-time .flatpickr-am-pm:hover,
 .flatpickr-time .flatpickr-am-pm:focus {
-    background: oklch(var(--b2));
+    background: var(--color-base-200);
 }
 
 /* Prev/next navigation arrows */
 .flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
-    color: oklch(var(--bc));
-    fill: oklch(var(--bc));
+    color: var(--color-base-content);
+    fill: var(--color-base-content);
 }
 
 .flatpickr-months .flatpickr-prev-month:hover svg,
 .flatpickr-months .flatpickr-next-month:hover svg {
-    fill: oklch(var(--p));
+    fill: var(--color-primary);
 }
 
 /* Disabled days */
 .flatpickr-day.flatpickr-disabled,
 .flatpickr-day.flatpickr-disabled:hover {
-    color: oklch(var(--bc) / 0.3);
+    color: color-mix(in oklch, var(--color-base-content) 30%, transparent);
 }
 
 /* Time separator */
 .flatpickr-time .flatpickr-time-separator {
-    color: oklch(var(--bc));
+    color: var(--color-base-content);
 }
