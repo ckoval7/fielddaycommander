@@ -12,7 +12,7 @@ test('calculates 5x power multiplier for QRP with natural power', function () {
         'uses_generator' => false,
     ]);
 
-    expect($config->calculatePowerMultiplier())->toBe(5);
+    expect($config->calculatePowerMultiplier())->toBe('5');
 });
 
 test('calculates 5x power multiplier for QRP with solar power', function () {
@@ -23,7 +23,7 @@ test('calculates 5x power multiplier for QRP with solar power', function () {
         'uses_generator' => false,
     ]);
 
-    expect($config->calculatePowerMultiplier())->toBe(5);
+    expect($config->calculatePowerMultiplier())->toBe('5');
 });
 
 test('calculates 2x power multiplier for QRP with commercial power', function () {
@@ -32,7 +32,7 @@ test('calculates 2x power multiplier for QRP with commercial power', function ()
         'uses_commercial_power' => true,
     ]);
 
-    expect($config->calculatePowerMultiplier())->toBe(2);
+    expect($config->calculatePowerMultiplier())->toBe('2');
 });
 
 test('calculates 2x power multiplier for 6-100W regardless of power source', function () {
@@ -41,7 +41,7 @@ test('calculates 2x power multiplier for 6-100W regardless of power source', fun
         'uses_battery' => true,
     ]);
 
-    expect($config->calculatePowerMultiplier())->toBe(2);
+    expect($config->calculatePowerMultiplier())->toBe('2');
 });
 
 test('calculates 1x power multiplier for over 100W', function () {
@@ -50,7 +50,7 @@ test('calculates 1x power multiplier for over 100W', function () {
         'uses_battery' => true,
     ]);
 
-    expect($config->calculatePowerMultiplier())->toBe(1);
+    expect($config->calculatePowerMultiplier())->toBe('1');
 });
 
 test('hasContacts returns true when configuration has contacts', function () {

@@ -124,22 +124,22 @@ test('event form calculates power multiplier correctly', function () {
         ->set('uses_commercial_power', false)
         ->set('uses_generator', false);
 
-    expect($component->get('powerMultiplier'))->toBe(5);
+    expect($component->get('powerMultiplier'))->toBe('5');
 
     // Test 2x multiplier: ≤5W + commercial power
     $component->set('uses_commercial_power', true);
-    expect($component->get('powerMultiplier'))->toBe(2);
+    expect($component->get('powerMultiplier'))->toBe('2');
 
     // Test 2x multiplier: 6-100W
     $component->set('max_power_watts', 50)
         ->set('uses_battery', false)
         ->set('uses_commercial_power', false)
         ->set('uses_generator', false);
-    expect($component->get('powerMultiplier'))->toBe(2);
+    expect($component->get('powerMultiplier'))->toBe('2');
 
     // Test 1x multiplier: >100W
     $component->set('max_power_watts', 150);
-    expect($component->get('powerMultiplier'))->toBe(1);
+    expect($component->get('powerMultiplier'))->toBe('1');
 });
 
 test('event form locks fields when event has contacts', function () {

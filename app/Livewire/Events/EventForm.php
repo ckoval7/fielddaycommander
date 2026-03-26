@@ -217,18 +217,18 @@ class EventForm extends Component
     }
 
     #[Computed]
-    public function powerMultiplier(): int
+    public function powerMultiplier(): string
     {
         if ($this->max_power_watts > 100) {
-            return 1;
+            return '1';
         }
 
         if ($this->max_power_watts <= 5 && $this->hasQrpNaturalPowerBonus()) {
-            return 5;
+            return '5';
         }
 
         // 6-100W or QRP without natural power bonus gets 2x
-        return 2;
+        return '2';
     }
 
     /**
