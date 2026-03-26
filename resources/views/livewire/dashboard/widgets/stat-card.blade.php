@@ -50,36 +50,34 @@ Props from component:
             <div class="text-xs text-base-content/40 text-right mt-auto pt-2">Updated {{ formatTimeAgo($data['last_updated_at'] ?? null) }}</div>
         </x-card>
     @else
-        {{-- Normal Mode: Compact stat display with animated value --}}
+        {{-- Normal Mode: Big number stat display with animated value --}}
         <x-card class="h-full flex flex-col" shadow>
-            <div class="flex items-center gap-4 flex-1">
+            <div class="flex flex-col items-center justify-center flex-1 py-2">
                 <x-icon
                     :name="$data['icon']"
-                    class="w-12 h-12 {{ $data['color'] }} transition-transform duration-200"
+                    class="w-10 h-10 {{ $data['color'] }} mb-1 transition-transform duration-200"
                     ::class="{ 'scale-110': isAnimating }"
                 />
-                <div class="flex-1">
-                    <div
-                        class="text-3xl font-bold {{ $data['color'] }} transition-all duration-200"
-                        ::class="{ 'scale-105': isAnimating }"
-                        x-text="displayValue"
-                    ></div>
-                    <div class="text-sm text-base-content/70">
-                        {{ $data['label'] }}
-                    </div>
-                    @if(isset($data['trend']) && $data['trend'] !== 'stable')
-                        <div class="flex items-center gap-1 text-sm mt-1">
-                            @if($data['trend'] === 'up')
-                                <x-icon name="o-arrow-trending-up" class="w-4 h-4 text-success" />
-                                <span class="text-success">+{{ number_format($data['change_amount']) }}</span>
-                            @else
-                                <x-icon name="o-arrow-trending-down" class="w-4 h-4 text-error" />
-                                <span class="text-error">{{ number_format($data['change_amount']) }}</span>
-                            @endif
-                            <span class="text-base-content/60 text-xs">{{ $data['comparison_label'] }}</span>
-                        </div>
-                    @endif
+                <div
+                    class="text-5xl font-bold {{ $data['color'] }} transition-all duration-200"
+                    ::class="{ 'scale-105': isAnimating }"
+                    x-text="displayValue"
+                ></div>
+                <div class="text-sm text-base-content/70 mt-1">
+                    {{ $data['label'] }}
                 </div>
+                @if(isset($data['trend']) && $data['trend'] !== 'stable')
+                    <div class="flex items-center gap-1 text-sm mt-1">
+                        @if($data['trend'] === 'up')
+                            <x-icon name="o-arrow-trending-up" class="w-4 h-4 text-success" />
+                            <span class="text-success">+{{ number_format($data['change_amount']) }}</span>
+                        @else
+                            <x-icon name="o-arrow-trending-down" class="w-4 h-4 text-error" />
+                            <span class="text-error">{{ number_format($data['change_amount']) }}</span>
+                        @endif
+                        <span class="text-base-content/60 text-xs">{{ $data['comparison_label'] }}</span>
+                    </div>
+                @endif
             </div>
             <div class="text-xs text-base-content/40 text-right mt-auto pt-2 border-t border-base-content/5">Updated {{ formatTimeAgo($data['last_updated_at'] ?? null) }}</div>
         </x-card>
