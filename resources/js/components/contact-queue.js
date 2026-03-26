@@ -8,7 +8,7 @@
  * Usage in Blade:
  *   <div x-data="contactQueue(sessionId, csrfToken)">
  */
-export default function contactQueue(sessionId, csrfToken) {
+export default function contactQueue(sessionId, csrfToken, sessionContext) {
     return {
         queue: [],
         isOnline: navigator.onLine,
@@ -110,6 +110,64 @@ export default function contactQueue(sessionId, csrfToken) {
             this.queue.unshift(entry);
             this.saveQueue();
             this.syncNext();
+        },
+
+        /**
+         * Try Livewire logContact first; fall back to client-side parsing if server is unreachable.
+         */
+        async logContactResilient($wire, inputEl) {
+            const rawInput = inputEl?.value?.trim() || '';
+            if (!rawInput) return;
+
+            try {
+                await $wire.logContact();
+            } catch (e) {
+                // Server unreachable — parse and queue locally
+                const parsed = this.parseExchangeLocally(rawInput);
+                if (!parsed) return; // unparseable — can't queue
+
+                this.enqueue({
+                    band_id: sessionContext.band_id,
+                    mode_id: sessionContext.mode_id,
+                    callsign: parsed.callsign,
+                    section_id: parsed.section_id,
+                    section_code: parsed.section_code,
+                    received_exchange: rawInput.toUpperCase(),
+                    power_watts: sessionContext.power_watts,
+                });
+
+                // Clear input manually since Livewire couldn't
+                inputEl.value = '';
+                $wire.$set('exchangeInput', '');
+                inputEl.focus();
+
+                this.$dispatch('contact-logged');
+            }
+        },
+
+        /**
+         * Minimal client-side exchange parser for offline fallback.
+         * Format: CALLSIGN CLASS SECTION (e.g. "W1AW 3A CT")
+         */
+        parseExchangeLocally(input) {
+            const tokens = input.toUpperCase().trim().split(/\s+/);
+            if (tokens.length !== 3) return null;
+
+            const callsign = tokens[0];
+            // Callsign: 3-10 chars, at least one digit and one letter
+            if (callsign.length < 3 || callsign.length > 10) return null;
+            if (!/\d/.test(callsign) || !/[A-Z]/.test(callsign)) return null;
+            if (!/^[A-Z0-9/]+$/.test(callsign)) return null;
+
+            // Class: digit(s) + letter A-F (e.g. "3A", "1D")
+            if (!/^\d{1,2}[A-F]$/i.test(tokens[1])) return null;
+
+            // Section: look up in the sections map
+            const sectionCode = tokens[2];
+            const sectionId = sessionContext.sections?.[sectionCode];
+            if (!sectionId) return null;
+
+            return { callsign, section_id: sectionId, section_code: sectionCode };
         },
 
         async syncNext() {

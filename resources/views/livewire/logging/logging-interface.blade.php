@@ -1,5 +1,10 @@
 <div>
-<div x-data="contactQueue({{ $operatingSession->id }}, '{{ csrf_token() }}')"
+<div x-data="contactQueue({{ $operatingSession->id }}, '{{ csrf_token() }}', {
+        band_id: {{ $operatingSession->band_id }},
+        mode_id: {{ $operatingSession->mode_id }},
+        power_watts: {{ $operatingSession->power_watts }},
+        sections: {{ Js::from(\App\Models\Section::where('is_active', true)->pluck('id', 'code')->toArray()) }}
+     })"
      @contact-queued.window="enqueue($event.detail)">
     {{-- Sticky Session Info Bar --}}
     <div class="sticky top-0 z-30 bg-base-100 border-b border-base-300 shadow-sm">
@@ -108,7 +113,7 @@
                         wire:model.live.debounce.300ms="exchangeInput"
                         x-ref="exchangeInput"
                         @input="si = -1"
-                        @keydown.enter.prevent="si >= 0 && $wire.suggestions.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : $wire.logContact()"
+                        @keydown.enter.prevent="si >= 0 && $wire.suggestions?.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : logContactResilient($wire, $refs.exchangeInput)"
                         @keydown.escape.prevent="si >= 0 ? (si = -1) : $wire.clearInput()"
                         @keydown.arrow-down.prevent="si = Math.min(si + 1, {{ count($suggestions) }} - 1)"
                         @keydown.arrow-up.prevent="si = Math.max(si - 1, -1)"
@@ -142,8 +147,7 @@
                     label="Log"
                     icon="o-check"
                     class="btn-primary btn-lg"
-                    wire:click="logContact"
-                    spinner="logContact"
+                    @click="logContactResilient($wire, $refs.exchangeInput)"
                     tooltip="Enter"
                     tooltip-position="tooltip-bottom"
                 />
