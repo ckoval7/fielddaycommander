@@ -271,7 +271,7 @@
                 <x-button
                     label="Sign Again"
                     wire:click="hideSuccess"
-                    class="btn-outline btn-primary"
+                    class="btn-primary"
                     icon="o-plus"
                 />
             </div>
