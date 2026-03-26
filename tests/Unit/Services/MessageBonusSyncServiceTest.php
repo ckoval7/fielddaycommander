@@ -20,8 +20,11 @@ beforeEach(function () {
 });
 
 describe('SM/SEC message bonus', function () {
-    test('creates bonus when SM message exists', function () {
-        Message::factory()->smMessage()->create(['event_configuration_id' => $this->eventConfig->id]);
+    test('creates bonus when sent SM message exists', function () {
+        Message::factory()->smMessage()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => now(),
+        ]);
 
         $this->service->sync($this->eventConfig);
 
@@ -34,8 +37,26 @@ describe('SM/SEC message bonus', function () {
             ->and($bonus->is_verified)->toBeTrue();
     });
 
+    test('does not create bonus for unsent SM message', function () {
+        Message::factory()->smMessage()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => null,
+        ]);
+
+        $this->service->sync($this->eventConfig);
+
+        $bonus = EventBonus::where('event_configuration_id', $this->eventConfig->id)
+            ->whereHas('bonusType', fn ($q) => $q->where('code', 'sm_sec_message'))
+            ->first();
+
+        expect($bonus)->toBeNull();
+    });
+
     test('removes bonus when SM message is deleted', function () {
-        $message = Message::factory()->smMessage()->create(['event_configuration_id' => $this->eventConfig->id]);
+        $message = Message::factory()->smMessage()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => now(),
+        ]);
         $this->service->sync($this->eventConfig);
 
         $message->delete();
@@ -50,8 +71,11 @@ describe('SM/SEC message bonus', function () {
 });
 
 describe('message handling bonus', function () {
-    test('calculates points from message count', function () {
-        Message::factory()->count(5)->create(['event_configuration_id' => $this->eventConfig->id]);
+    test('calculates points from sent message count', function () {
+        Message::factory()->count(5)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => now(),
+        ]);
 
         $this->service->sync($this->eventConfig);
 
@@ -64,8 +88,43 @@ describe('message handling bonus', function () {
             ->and($bonus->quantity)->toBe(5);
     });
 
+    test('unsent messages do not count for points', function () {
+        Message::factory()->count(3)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => null,
+        ]);
+
+        $this->service->sync($this->eventConfig);
+
+        $bonus = EventBonus::where('event_configuration_id', $this->eventConfig->id)
+            ->whereHas('bonusType', fn ($q) => $q->where('code', 'nts_message'))
+            ->first();
+
+        expect($bonus)->toBeNull();
+    });
+
+    test('received_delivered messages count without being marked sent', function () {
+        Message::factory()->receivedDelivered()->count(3)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => null,
+        ]);
+
+        $this->service->sync($this->eventConfig);
+
+        $bonus = EventBonus::where('event_configuration_id', $this->eventConfig->id)
+            ->whereHas('bonusType', fn ($q) => $q->where('code', 'nts_message'))
+            ->first();
+
+        expect($bonus)->not->toBeNull()
+            ->and($bonus->quantity)->toBe(3)
+            ->and($bonus->calculated_points)->toBe(30);
+    });
+
     test('caps at 100 points for 10+ messages', function () {
-        Message::factory()->count(15)->create(['event_configuration_id' => $this->eventConfig->id]);
+        Message::factory()->count(15)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => now(),
+        ]);
 
         $this->service->sync($this->eventConfig);
 
@@ -78,8 +137,14 @@ describe('message handling bonus', function () {
     });
 
     test('excludes SM message from traffic count', function () {
-        Message::factory()->smMessage()->create(['event_configuration_id' => $this->eventConfig->id]);
-        Message::factory()->count(3)->create(['event_configuration_id' => $this->eventConfig->id]);
+        Message::factory()->smMessage()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => now(),
+        ]);
+        Message::factory()->count(3)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => now(),
+        ]);
 
         $this->service->sync($this->eventConfig);
 
@@ -92,7 +157,10 @@ describe('message handling bonus', function () {
     });
 
     test('removes bonus when all messages deleted', function () {
-        $message = Message::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => now(),
+        ]);
         $this->service->sync($this->eventConfig);
 
         $message->delete();
@@ -137,8 +205,11 @@ describe('W1AW bulletin bonus', function () {
 });
 
 describe('observer integration', function () {
-    test('creating a message auto-syncs bonus via observer', function () {
-        Message::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+    test('creating a sent message auto-syncs bonus via observer', function () {
+        Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => now(),
+        ]);
 
         $bonus = EventBonus::where('event_configuration_id', $this->eventConfig->id)
             ->whereHas('bonusType', fn ($q) => $q->where('code', 'nts_message'))
@@ -148,8 +219,24 @@ describe('observer integration', function () {
             ->and($bonus->calculated_points)->toBe(10);
     });
 
+    test('creating an unsent message does not create bonus via observer', function () {
+        Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => null,
+        ]);
+
+        $bonus = EventBonus::where('event_configuration_id', $this->eventConfig->id)
+            ->whereHas('bonusType', fn ($q) => $q->where('code', 'nts_message'))
+            ->first();
+
+        expect($bonus)->toBeNull();
+    });
+
     test('deleting a message auto-syncs bonus via observer', function () {
-        $message = Message::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'sent_at' => now(),
+        ]);
         $message->delete();
 
         $bonus = EventBonus::where('event_configuration_id', $this->eventConfig->id)

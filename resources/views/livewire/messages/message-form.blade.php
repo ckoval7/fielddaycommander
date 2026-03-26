@@ -2,7 +2,7 @@
     {{-- Header --}}
     <x-header
         title="{{ $isEditing ? 'Edit Message' : 'Log Message' }}"
-        subtitle="{{ $isEditing ? 'Update message details' : 'Enter a new radiogram or ICS-213 message' }}"
+        subtitle="{{ $isEditing ? 'Update message details' : ($ics213Enabled ? 'Enter a new radiogram or ICS-213 message' : 'Enter a new radiogram message') }}"
         separator
         progress-indicator
     >
@@ -26,18 +26,20 @@
             <x-slot:title>Message Type</x-slot:title>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <x-select
-                    label="Format"
-                    wire:model.live="format"
-                    :options="[
-                        ['id' => 'radiogram', 'name' => 'ARRL Radiogram'],
-                        ['id' => 'ics213', 'name' => 'ICS-213'],
-                    ]"
-                    option-value="id"
-                    option-label="name"
-                    icon="o-document-text"
-                    required
-                />
+                @if($ics213Enabled)
+                    <x-select
+                        label="Format"
+                        wire:model.live="format"
+                        :options="[
+                            ['id' => 'radiogram', 'name' => 'ARRL Radiogram'],
+                            ['id' => 'ics213', 'name' => 'ICS-213'],
+                        ]"
+                        option-value="id"
+                        option-label="name"
+                        icon="o-document-text"
+                        required
+                    />
+                @endif
 
                 <x-select
                     label="Role"

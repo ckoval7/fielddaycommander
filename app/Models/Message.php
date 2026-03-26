@@ -38,6 +38,8 @@ class Message extends Model
         'signature',
         'sent_to',
         'received_from',
+        'sent_at',
+        'sent_by_user_id',
         'notes',
         'ics_to_position',
         'ics_from_position',
@@ -57,6 +59,7 @@ class Message extends Model
             'hx_code' => HxCode::class,
             'is_sm_message' => 'boolean',
             'filed_at' => 'datetime',
+            'sent_at' => 'datetime',
             'ics_reply_date' => 'datetime',
         ];
     }
@@ -69,5 +72,10 @@ class Message extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function sentByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sent_by_user_id');
     }
 }

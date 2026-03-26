@@ -25,6 +25,7 @@ class MessageBonusSyncService
 
         $hasSmMessage = $eventConfiguration->messages()
             ->where('is_sm_message', true)
+            ->where(fn ($q) => $q->whereNotNull('sent_at')->orWhere('role', 'received_delivered'))
             ->exists();
 
         if ($hasSmMessage) {
@@ -56,6 +57,7 @@ class MessageBonusSyncService
 
         $count = $eventConfiguration->messages()
             ->where('is_sm_message', false)
+            ->where(fn ($q) => $q->whereNotNull('sent_at')->orWhere('role', 'received_delivered'))
             ->count();
 
         if ($count > 0) {
@@ -80,11 +82,13 @@ class MessageBonusSyncService
 
     public function bonusSummary(EventConfiguration $eventConfiguration): array
     {
-        $messages = $eventConfiguration->messages()->get();
+        $eligibleMessages = $eventConfiguration->messages()
+            ->where(fn ($q) => $q->whereNotNull('sent_at')->orWhere('role', 'received_delivered'))
+            ->get();
         $hasBulletin = W1awBulletin::where('event_configuration_id', $eventConfiguration->id)->exists();
 
-        $smMessage = $messages->where('is_sm_message', true)->first();
-        $trafficCount = $messages->where('is_sm_message', false)->count();
+        $smMessage = $eligibleMessages->where('is_sm_message', true)->first();
+        $trafficCount = $eligibleMessages->where('is_sm_message', false)->count();
 
         return [
             'sm_message' => (bool) $smMessage,

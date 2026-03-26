@@ -4,6 +4,7 @@ namespace App\Livewire\Messages;
 
 use App\Models\Event;
 use App\Models\Message;
+use App\Models\Setting;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
 
@@ -262,6 +263,7 @@ class MessageForm extends Component
     {
         return view('livewire.messages.message-form', [
             'isEditing' => $this->message && $this->message->exists,
+            'ics213Enabled' => Setting::getBoolean('enable_ics213', false),
         ])->layout('layouts.app');
     }
 

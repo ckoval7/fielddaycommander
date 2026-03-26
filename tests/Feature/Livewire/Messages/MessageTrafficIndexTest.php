@@ -5,6 +5,7 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\Message;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -44,7 +45,9 @@ describe('listing messages', function () {
             ->assertSee('Test Addressee');
     });
 
-    test('displays ICS-213 messages on index', function () {
+    test('displays ICS-213 messages on index when enabled', function () {
+        Setting::set('enable_ics213', '1');
+
         $message = Message::factory()->ics213()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'user_id' => $this->operator->id,
@@ -55,6 +58,17 @@ describe('listing messages', function () {
             ->test(MessageTrafficIndex::class, ['event' => $this->event])
             ->assertSee('ICS Recipient')
             ->assertSee('ICS-213');
+    });
+
+    test('hides format column when ICS-213 is disabled', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->assertDontSee('Format');
     });
 
     test('filters by role', function () {
@@ -89,6 +103,98 @@ describe('deleting messages', function () {
             ->call('deleteMessage', $message->id);
 
         expect($message->fresh()->trashed())->toBeTrue();
+    });
+});
+
+describe('sent tracking', function () {
+    test('operator can mark a message as sent', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('markAsSent', $message->id);
+
+        $message->refresh();
+        expect($message->sent_at)->not->toBeNull()
+            ->and($message->sent_by_user_id)->toBe($this->operator->id);
+    });
+
+    test('operator can clear sent status', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'sent_at' => now(),
+            'sent_by_user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('unmarkAsSent', $message->id);
+
+        $message->refresh();
+        expect($message->sent_at)->toBeNull()
+            ->and($message->sent_by_user_id)->toBeNull();
+    });
+
+    test('can change who sent a message', function () {
+        $otherOp = User::factory()->create(['call_sign' => 'K2XYZ']);
+        $otherOp->givePermissionTo('log-contacts');
+
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'sent_at' => now(),
+            'sent_by_user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('editSentBy', $message->id)
+            ->assertSet('showSentByModal', true)
+            ->assertSet('editingSentMessageId', $message->id)
+            ->set('selectedSentByUserId', $otherOp->id)
+            ->call('saveSentBy');
+
+        $message->refresh();
+        expect($message->sent_by_user_id)->toBe($otherOp->id)
+            ->and($message->sent_at)->not->toBeNull();
+    });
+
+    test('mark sent via modal defaults to current user', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('openSentByModal', $message->id)
+            ->assertSet('showSentByModal', true)
+            ->assertSet('selectedSentByUserId', $this->operator->id)
+            ->call('saveSentBy');
+
+        $message->refresh();
+        expect($message->sent_by_user_id)->toBe($this->operator->id)
+            ->and($message->sent_at)->not->toBeNull();
+    });
+
+    test('displays sent status on index', function () {
+        $sender = User::factory()->create(['call_sign' => 'N1ABC']);
+        $sender->givePermissionTo('log-contacts');
+
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'sent_at' => now(),
+            'sent_by_user_id' => $sender->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->assertSee('N1ABC');
     });
 });
 

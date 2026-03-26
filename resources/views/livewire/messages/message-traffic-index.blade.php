@@ -2,7 +2,7 @@
     {{-- Header --}}
     <x-header
         title="Message Traffic"
-        subtitle="Track radiograms and NTS message handling"
+        subtitle="Track {{ $ics213Enabled ? 'radiograms, ICS-213 messages, and' : 'radiograms and' }} NTS message handling"
         separator
         progress-indicator
     >
@@ -30,6 +30,7 @@
                 icon="o-printer"
                 class="btn-ghost btn-sm"
                 link="{{ route('events.messages.print-all', $event) }}"
+                external
             />
         </x-slot:actions>
     </x-header>
@@ -120,11 +121,14 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Format</th>
+                        @if($ics213Enabled)
+                            <th>Format</th>
+                        @endif
                         <th>Role</th>
                         <th>Station of Origin</th>
                         <th>Addressee</th>
                         <th>Date</th>
+                        <th>Sent / Delivered</th>
                         <th class="text-right">Actions</th>
                     </tr>
                 </thead>
@@ -137,9 +141,11 @@
                                     <x-badge value="SM" class="badge-warning badge-sm ml-1" />
                                 @endif
                             </td>
-                            <td>
-                                <span class="text-sm">{{ $message->format->value === 'radiogram' ? 'Radiogram' : 'ICS-213' }}</span>
-                            </td>
+                            @if($ics213Enabled)
+                                <td>
+                                    <span class="text-sm">{{ $message->format->value === 'radiogram' ? 'Radiogram' : 'ICS-213' }}</span>
+                                </td>
+                            @endif
                             <td>
                                 @php
                                     $roleLabel = match($message->role->value) {
@@ -155,7 +161,7 @@
                                         default => 'badge-neutral',
                                     };
                                 @endphp
-                                <x-badge value="{{ $roleLabel }}" class="{{ $roleBadge }} badge-sm" />
+                                <x-badge :value="$roleLabel" class="{{ $roleBadge }} badge-sm" />
                             </td>
                             <td>
                                 <span class="font-mono text-sm">{{ $message->station_of_origin ?? '—' }}</span>
@@ -168,6 +174,36 @@
                             </td>
                             <td>
                                 <span class="text-sm">{{ $message->filed_at?->format('M j, Y') ?? '—' }}</span>
+                            </td>
+                            <td>
+                                @if($message->sent_at)
+                                    <div class="flex items-center gap-1">
+                                        <x-icon name="o-check-circle" class="w-4 h-4 text-success" />
+                                        <div>
+                                            <div class="text-xs">{{ $message->sent_at->format('M j, g:ia') }}</div>
+                                            @if($message->sentByUser)
+                                                <button
+                                                    class="text-xs text-base-content/60 hover:text-primary hover:underline cursor-pointer"
+                                                    wire:click="editSentBy({{ $message->id }})"
+                                                    title="Change sender"
+                                                >{{ $message->sentByUser->call_sign ?? $message->sentByUser->name }}</button>
+                                            @endif
+                                        </div>
+                                        <x-button
+                                            icon="o-x-mark"
+                                            class="btn-ghost btn-xs"
+                                            tooltip="Clear {{ $message->role->value === 'received_delivered' ? 'delivered' : 'sent' }} status"
+                                            wire:click="unmarkAsSent({{ $message->id }})"
+                                        />
+                                    </div>
+                                @else
+                                    <x-button
+                                        label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
+                                        icon="o-paper-airplane"
+                                        class="btn-ghost btn-xs"
+                                        wire:click="openSentByModal({{ $message->id }})"
+                                    />
+                                @endif
                             </td>
                             <td class="text-right">
                                 <div class="flex items-center justify-end gap-1">
@@ -182,6 +218,7 @@
                                         class="btn-ghost btn-xs"
                                         tooltip="Print"
                                         link="{{ route('events.messages.print', [$event, $message]) }}"
+                                        external
                                     />
                                     @can('delete', $message)
                                         <x-button
@@ -197,7 +234,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-10 text-base-content/60">
+                            <td colspan="8" class="text-center py-10 text-base-content/60">
                                 <div class="flex flex-col items-center gap-2">
                                     <x-icon name="o-envelope" class="w-12 h-12 opacity-30" />
                                     <p class="font-medium">No messages found</p>
@@ -220,4 +257,29 @@
             </table>
         </div>
     </x-card>
+
+    {{-- Sent By Modal --}}
+    <x-modal wire:model="showSentByModal" :title="$isDeliveryModal ? 'Mark as Delivered' : 'Mark as Sent'" class="backdrop-blur">
+        <x-select
+            :label="$isDeliveryModal ? 'Delivered by' : 'Sent by'"
+            wire:model="selectedSentByUserId"
+            :options="$this->operators"
+            option-value="id"
+            option-label="name"
+            icon="o-user"
+            placeholder="Select operator"
+        />
+
+        <x-slot:actions>
+            <x-button
+                label="Cancel"
+                wire:click="$set('showSentByModal', false)"
+            />
+            <x-button
+                label="Save"
+                class="btn-primary"
+                wire:click="saveSentBy"
+            />
+        </x-slot:actions>
+    </x-modal>
 </div>
