@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Settings\SystemPreferences;
+use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Models\User;
 use Livewire\Livewire;
@@ -93,4 +94,30 @@ test('grace period setting loads from database', function () {
 
     Livewire::test(SystemPreferences::class)
         ->assertSet('post_event_grace_period_days', 7);
+});
+
+test('ICS-213 setting defaults to disabled', function () {
+    Livewire::test(SystemPreferences::class)
+        ->assertSet('enable_ics213', false);
+});
+
+test('ICS-213 setting can be enabled', function () {
+    Livewire::test(SystemPreferences::class)
+        ->set('enable_ics213', true)
+        ->call('save')
+        ->assertDispatched('notify');
+
+    expect(Setting::getBoolean('enable_ics213'))->toBeTrue();
+});
+
+test('saving preferences logs to audit log', function () {
+    Livewire::test(SystemPreferences::class)
+        ->set('timezone', 'America/Chicago')
+        ->set('date_format', 'd/m/Y')
+        ->call('save');
+
+    $auditLog = AuditLog::where('action', 'settings.updated')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->new_values['timezone'])->toBe('America/Chicago');
+    expect($auditLog->new_values['date_format'])->toBe('d/m/Y');
 });

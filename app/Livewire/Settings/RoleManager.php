@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings;
 
+use App\Models\AuditLog;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -58,7 +59,16 @@ class RoleManager extends Component
             return;
         }
 
+        $oldPermissions = $role->permissions->pluck('name')->toArray();
+
         $role->syncPermissions($this->selectedPermissions);
+
+        AuditLog::log('role.updated', newValues: [
+            'role' => $role->name,
+            'permissions' => $this->selectedPermissions,
+        ], oldValues: [
+            'permissions' => $oldPermissions,
+        ]);
 
         $this->dispatch('notify', title: 'Success', description: 'Permissions updated successfully.');
     }
@@ -84,6 +94,11 @@ class RoleManager extends Component
         if (! empty($this->initialPermissions)) {
             $role->givePermissionTo($this->initialPermissions);
         }
+
+        AuditLog::log('role.created', newValues: [
+            'role' => $role->name,
+            'permissions' => $this->initialPermissions,
+        ]);
 
         $this->showCreateModal = false;
         $this->dispatch('notify', title: 'Success', description: 'Role created successfully.');
@@ -118,6 +133,11 @@ class RoleManager extends Component
         }
 
         $role = Role::findById($this->roleToDelete);
+
+        AuditLog::log('role.deleted', oldValues: [
+            'role' => $role->name,
+        ]);
+
         $role->delete();
 
         $this->showDeleteModal = false;

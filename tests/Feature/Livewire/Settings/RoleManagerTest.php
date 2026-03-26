@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Settings\RoleManager;
+use App\Models\AuditLog;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -102,4 +103,48 @@ test('deletes role without users', function () {
         ->assertDispatched('notify');
 
     expect(Role::where('name', 'Empty Role')->exists())->toBeFalse();
+});
+
+// =============================================================================
+// Audit Logging
+// =============================================================================
+
+test('creating role logs to audit log', function () {
+    Livewire::test(RoleManager::class)
+        ->set('roleName', 'New Role')
+        ->set('initialPermissions', ['log-contacts'])
+        ->call('createRole');
+
+    $auditLog = AuditLog::where('action', 'role.created')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->new_values['role'])->toBe('New Role');
+    expect($auditLog->new_values['permissions'])->toContain('log-contacts');
+});
+
+test('updating role permissions logs to audit log', function () {
+    $role = Role::create(['name' => 'Test Role', 'guard_name' => 'web']);
+    $role->givePermissionTo('log-contacts');
+
+    Livewire::test(RoleManager::class)
+        ->call('selectRole', $role->id)
+        ->set('selectedPermissions', ['log-contacts', 'manage-users'])
+        ->call('savePermissions');
+
+    $auditLog = AuditLog::where('action', 'role.updated')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->old_values['permissions'])->toBe(['log-contacts']);
+    expect($auditLog->new_values['role'])->toBe('Test Role');
+    expect($auditLog->new_values['permissions'])->toContain('manage-users');
+});
+
+test('deleting role logs to audit log', function () {
+    $role = Role::create(['name' => 'Temp Role', 'guard_name' => 'web']);
+
+    Livewire::test(RoleManager::class)
+        ->call('confirmDelete', $role->id)
+        ->call('deleteRole');
+
+    $auditLog = AuditLog::where('action', 'role.deleted')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->old_values['role'])->toBe('Temp Role');
 });

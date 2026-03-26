@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings;
 
+use App\Models\AuditLog;
 use App\Models\Setting;
 use Livewire\Component;
 
@@ -19,6 +20,8 @@ class SystemPreferences extends Component
 
     public int $post_event_grace_period_days = 30;
 
+    public bool $enable_ics213 = false;
+
     public function mount(): void
     {
         $this->timezone = Setting::get('timezone', 'America/New_York');
@@ -27,6 +30,7 @@ class SystemPreferences extends Component
         $this->contact_email = Setting::get('contact_email');
         $this->api_key = Setting::get('callsign_api_key');
         $this->post_event_grace_period_days = (int) Setting::get('post_event_grace_period_days', 30);
+        $this->enable_ics213 = Setting::getBoolean('enable_ics213', false);
     }
 
     public function save(): void
@@ -39,6 +43,13 @@ class SystemPreferences extends Component
             'api_key' => ['nullable', 'string', 'max:255'],
             'post_event_grace_period_days' => ['required', 'integer', 'min:0', 'max:365'],
         ]);
+
+        $oldValues = [
+            'timezone' => Setting::get('timezone'),
+            'date_format' => Setting::get('date_format'),
+            'time_format' => Setting::get('time_format'),
+            'post_event_grace_period_days' => Setting::get('post_event_grace_period_days'),
+        ];
 
         Setting::set('timezone', $this->timezone);
         Setting::set('date_format', $this->date_format);
@@ -54,6 +65,14 @@ class SystemPreferences extends Component
         }
 
         Setting::set('post_event_grace_period_days', $this->post_event_grace_period_days);
+        Setting::set('enable_ics213', $this->enable_ics213 ? '1' : '0');
+
+        AuditLog::log('settings.updated', oldValues: $oldValues, newValues: [
+            'timezone' => $this->timezone,
+            'date_format' => $this->date_format,
+            'time_format' => $this->time_format,
+            'post_event_grace_period_days' => $this->post_event_grace_period_days,
+        ]);
 
         $this->dispatch('notify', title: 'Success', description: 'System preferences saved successfully.');
     }

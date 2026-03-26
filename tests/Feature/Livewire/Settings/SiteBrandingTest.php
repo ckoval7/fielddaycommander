@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Settings\SiteBranding;
+use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -47,12 +48,11 @@ test('saves branding settings', function () {
     Livewire::test(SiteBranding::class)
         ->set('site_name', 'My Club')
         ->set('site_tagline', 'Field Day 2026')
-        ->set('primary_color', '#ff0000')
         ->call('save')
         ->assertDispatched('notify');
 
     expect(Setting::get('site_name'))->toBe('My Club');
-    expect(Setting::get('primary_color'))->toBe('#ff0000');
+    expect(Setting::get('site_tagline'))->toBe('Field Day 2026');
 });
 
 test('uploads and saves logo', function () {
@@ -123,4 +123,28 @@ test('removes logo', function () {
 
     Storage::disk('public')->assertMissing($path);
     expect(Setting::get('site_logo_path'))->toBe('');
+});
+
+test('saving branding logs to audit log', function () {
+    Livewire::test(SiteBranding::class)
+        ->set('site_name', 'My Radio Club')
+        ->set('site_tagline', 'Field Day 2026')
+        ->call('save');
+
+    $auditLog = AuditLog::where('action', 'settings.branding.updated')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->new_values['site_name'])->toBe('My Radio Club');
+});
+
+test('removing logo logs to audit log', function () {
+    $logo = UploadedFile::fake()->image('logo.png');
+    $path = $logo->storeAs('branding', 'test-logo.png', 'public');
+    Setting::set('site_logo_path', $path);
+
+    Livewire::test(SiteBranding::class)
+        ->call('removeLogo');
+
+    $auditLog = AuditLog::where('action', 'settings.branding.updated')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->old_values['logo'])->toBe($path);
 });

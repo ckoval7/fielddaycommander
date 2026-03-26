@@ -40,15 +40,23 @@
     <x-card>
         <x-slot:title>Event Settings</x-slot:title>
 
-        <x-input
-            label="Post-Event Grace Period (days)"
-            type="number"
-            wire:model="post_event_grace_period_days"
-            icon="o-clock"
-            hint="Number of days after an event ends that operators can still enter late contacts (e.g., paper logs). Set to 0 to disable."
-            min="0"
-            max="365"
-        />
+        <div class="space-y-4">
+            <x-input
+                label="Post-Event Grace Period (days)"
+                type="number"
+                wire:model="post_event_grace_period_days"
+                icon="o-clock"
+                hint="Number of days after an event ends that operators can still enter late contacts (e.g., paper logs). Set to 0 to disable."
+                min="0"
+                max="365"
+            />
+
+            <x-toggle
+                label="Enable ICS-213 Message Format"
+                wire:model="enable_ics213"
+                hint="Allow logging ICS-213 General Messages in addition to ARRL Radiograms. Most Field Day operations only need radiograms."
+            />
+        </div>
     </x-card>
 
     <x-card>
@@ -60,18 +68,6 @@
             wire:model="contact_email"
             icon="o-envelope"
             hint="Public contact email for the site"
-        />
-    </x-card>
-
-    <x-card>
-        <x-slot:title>API Settings</x-slot:title>
-
-        <x-input
-            label="Callsign Lookup API Key"
-            type="text"
-            wire:model="api_key"
-            icon="o-key"
-            hint="Optional - API key for callook.info integration (future feature)"
         />
     </x-card>
 
