@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\EventConfiguration;
+use App\Models\Station;
 
 uses()->group('unit', 'models');
 
@@ -51,6 +52,91 @@ test('calculates 1x power multiplier for over 100W', function () {
     ]);
 
     expect($config->calculatePowerMultiplier())->toBe('1');
+});
+
+test('station with higher power overrides event config for multiplier', function () {
+    $config = EventConfiguration::factory()->create([
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 100,
+    ]);
+
+    expect($config->calculatePowerMultiplier())->toBe('2')
+        ->and($config->effectiveMaxPowerWatts())->toBe(100);
+});
+
+test('station with higher power over 100W gives 1x multiplier', function () {
+    $config = EventConfiguration::factory()->create([
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 150,
+    ]);
+
+    expect($config->calculatePowerMultiplier())->toBe('1')
+        ->and($config->effectiveMaxPowerWatts())->toBe(150);
+});
+
+test('station at or below event config power does not affect multiplier', function () {
+    $config = EventConfiguration::factory()->create([
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+    ]);
+
+    expect($config->calculatePowerMultiplier())->toBe('5')
+        ->and($config->effectiveMaxPowerWatts())->toBe(5);
+});
+
+test('highest station power among multiple stations determines multiplier', function () {
+    $config = EventConfiguration::factory()->create([
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 100,
+    ]);
+
+    expect($config->calculatePowerMultiplier())->toBe('2')
+        ->and($config->effectiveMaxPowerWatts())->toBe(100);
+});
+
+test('event config with no stations uses event power for multiplier', function () {
+    $config = EventConfiguration::factory()->create([
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+
+    expect($config->calculatePowerMultiplier())->toBe('5')
+        ->and($config->effectiveMaxPowerWatts())->toBe(5);
 });
 
 test('hasContacts returns true when configuration has contacts', function () {

@@ -218,14 +218,83 @@ test('validates power output range', function () {
         ->assertHasErrors(['max_power_watts' => 'max']);
 });
 
-test('warns when power exceeds operating class limit', function () {
+test('allows saving station with power exceeding event limit', function () {
+    // Station can be saved with power above the limit — it's a warning, not a block
     Livewire::test(StationForm::class)
         ->set('name', 'High Power Station')
         ->set('event_configuration_id', $this->eventConfig->id)
         ->set('radio_equipment_id', $this->radio->id)
         ->set('max_power_watts', 200) // Exceeds 150W limit
         ->call('save')
-        ->assertHasErrors(['max_power_watts']);
+        ->assertHasNoErrors(['max_power_watts'])
+        ->assertDispatched('toast');
+
+    $this->assertDatabaseHas('stations', [
+        'name' => 'High Power Station',
+        'max_power_watts' => 200,
+    ]);
+});
+
+test('maxPowerLimit falls back to event config power when operating class has no limit', function () {
+    $noLimitClass = OperatingClass::create([
+        'event_type_id' => $this->event->event_type_id,
+        'code' => '1B',
+        'name' => 'Class 1B',
+        'allows_gota' => false,
+        'max_power_watts' => null,
+        'requires_emergency_power' => true,
+    ]);
+
+    $newEvent = Event::factory()->create([
+        'event_type_id' => $this->event->event_type_id,
+        'is_active' => true,
+    ]);
+
+    $configWith5W = EventConfiguration::factory()->create([
+        'event_id' => $newEvent->id,
+        'operating_class_id' => $noLimitClass->id,
+        'section_id' => Section::first()->id,
+        'max_power_watts' => 5,
+    ]);
+
+    // When operating class has no power limit, warning uses event config power
+    Livewire::test(StationForm::class)
+        ->set('event_configuration_id', $configWith5W->id)
+        ->set('radio_equipment_id', $this->radio->id)
+        ->set('max_power_watts', 5)
+        ->assertSee('within')
+        ->assertDontSee('Scoring impact')
+        ->set('max_power_watts', 100)
+        ->assertSee('Scoring impact');
+});
+
+test('power warning displays when station exceeds event config power', function () {
+    $noLimitClass = OperatingClass::create([
+        'event_type_id' => $this->event->event_type_id,
+        'code' => '1C',
+        'name' => 'Class 1C',
+        'allows_gota' => false,
+        'max_power_watts' => null,
+        'requires_emergency_power' => false,
+    ]);
+
+    $newEvent = Event::factory()->create([
+        'event_type_id' => $this->event->event_type_id,
+        'is_active' => true,
+    ]);
+
+    $configWith5W = EventConfiguration::factory()->create([
+        'event_id' => $newEvent->id,
+        'operating_class_id' => $noLimitClass->id,
+        'section_id' => Section::first()->id,
+        'max_power_watts' => 5,
+    ]);
+
+    Livewire::test(StationForm::class)
+        ->set('event_configuration_id', $configWith5W->id)
+        ->set('radio_equipment_id', $this->radio->id)
+        ->set('max_power_watts', 100)
+        ->assertSee('Scoring impact');
 });
 
 test('auto-populates max power from selected radio', function () {

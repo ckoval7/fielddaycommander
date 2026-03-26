@@ -114,7 +114,8 @@ class StationForm extends Component
     #[Computed]
     public function maxPowerLimit(): ?int
     {
-        return $this->selectedEvent?->operatingClass?->max_power_watts;
+        return $this->selectedEvent?->operatingClass?->max_power_watts
+            ?? $this->selectedEvent?->max_power_watts;
     }
 
     #[Computed]
@@ -331,12 +332,6 @@ class StationForm extends Component
                 'integer',
                 'min:1',
                 'max:5000',
-                function ($attribute, $value, $fail) {
-                    $maxLimit = $this->maxPowerLimit;
-                    if ($maxLimit && $value > $maxLimit) {
-                        $fail("Warning: The power ({$value}W) exceeds the event's operating class limit of {$maxLimit}W.");
-                    }
-                },
             ],
             'power_source_description' => ['nullable', 'string', 'max:1000'],
         ];

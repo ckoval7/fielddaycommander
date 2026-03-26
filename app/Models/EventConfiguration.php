@@ -141,22 +141,41 @@ class EventConfiguration extends Model
     /**
      * Calculate power multiplier based on 2025 Field Day rules.
      *
+     * Uses the higher of the event config power and the highest station power,
+     * since any station exceeding the event power level affects the entire entry.
+     *
      * 5× = ≤5W + (battery OR solar OR wind OR water) + NOT (commercial OR generator)
      * 2× = (≤5W + commercial/generator) OR (6-100W)
      * 1× = >100W
      */
     public function calculatePowerMultiplier(): string
     {
-        if ($this->max_power_watts > 100) {
+        $effectivePower = $this->effectiveMaxPowerWatts();
+
+        if ($effectivePower > 100) {
             return '1';
         }
 
-        if ($this->max_power_watts <= 5 && $this->hasQrpNaturalPowerBonus()) {
+        if ($effectivePower <= 5 && $this->hasQrpNaturalPowerBonus()) {
             return '5';
         }
 
         // 6-100W or QRP without natural power bonus gets 2x
         return '2';
+    }
+
+    /**
+     * Get the effective max power considering both event config and station power levels.
+     *
+     * Per ARRL Field Day rules, the power multiplier applies to the entire entry.
+     * If any station uses higher power than the event config, that becomes the
+     * effective power for scoring purposes.
+     */
+    public function effectiveMaxPowerWatts(): int
+    {
+        $stationMaxPower = $this->stations()->max('max_power_watts') ?? 0;
+
+        return max($this->max_power_watts, $stationMaxPower);
     }
 
     /**

@@ -334,14 +334,19 @@ class Scoring extends Component
             return 'No active event configuration.';
         }
 
-        $watts = $config->max_power_watts;
+        $effectiveWatts = $config->effectiveMaxPowerWatts();
+        $configWatts = $config->max_power_watts;
+        $stationOverride = $effectiveWatts > $configWatts;
+        $stationNote = $stationOverride
+            ? " A station is configured at {$effectiveWatts}W, which overrides the event setting of {$configWatts}W."
+            : '';
 
-        if ($watts > 100) {
-            return "Operating at {$watts}W (over 100W) gives a 1\u{00d7} multiplier.";
+        if ($effectiveWatts > 100) {
+            return "Operating at {$effectiveWatts}W (over 100W) gives a 1\u{00d7} multiplier.{$stationNote}";
         }
 
-        if ($watts > 5) {
-            return "Operating at {$watts}W (6\u{2013}100W) gives a 2\u{00d7} multiplier.";
+        if ($effectiveWatts > 5) {
+            return "Operating at {$effectiveWatts}W (6\u{2013}100W) gives a 2\u{00d7} multiplier.{$stationNote}";
         }
 
         // QRP (5W or less) - determine reason based on power sources
@@ -349,9 +354,9 @@ class Scoring extends Component
         $hasDisqualifyingPower = $config->uses_commercial_power || $config->uses_generator;
 
         return match (true) {
-            $hasNaturalPower && ! $hasDisqualifyingPower => "Operating at {$watts}W with natural power and no commercial/generator power qualifies for the 5\u{00d7} QRP natural power bonus.",
-            $hasDisqualifyingPower => "Operating at {$watts}W (QRP) gives a 2\u{00d7} multiplier. Switch to natural power only to qualify for 5\u{00d7}.",
-            default => "Operating at {$watts}W (QRP) gives a 2\u{00d7} multiplier.",
+            $hasNaturalPower && ! $hasDisqualifyingPower => "Operating at {$effectiveWatts}W with natural power and no commercial/generator power qualifies for the 5\u{00d7} QRP natural power bonus.",
+            $hasDisqualifyingPower => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier. Switch to natural power only to qualify for 5\u{00d7}.",
+            default => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier.",
         };
     }
 

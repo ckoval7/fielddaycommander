@@ -119,12 +119,19 @@
         @if($this->maxPowerLimit && $max_power_watts)
             @if($max_power_watts > $this->maxPowerLimit)
                 <x-alert icon="o-exclamation-triangle" class="alert-warning">
-                    Warning: Power ({{ $max_power_watts }}W) exceeds event's operating class limit of {{ $this->maxPowerLimit }}W.
-                    This may affect scoring.
+                    <span class="font-semibold">Scoring impact:</span> This station's power ({{ $max_power_watts }}W) exceeds the event's {{ $this->maxPowerLimit }}W setting.
+                    Per Field Day rules, the highest station power determines the multiplier for the <span class="font-semibold">entire entry</span>
+                    @if($max_power_watts > 100)
+                        &mdash; this will reduce it to 1&times;.
+                    @elseif($this->maxPowerLimit <= 5)
+                        &mdash; this will reduce it from 5&times; to 2&times;.
+                    @else
+                        &mdash; this may reduce your power multiplier.
+                    @endif
                 </x-alert>
             @else
                 <x-alert icon="o-check-circle" class="alert-success">
-                    Power level is within the event's operating class limit of {{ $this->maxPowerLimit }}W.
+                    Power level is within the event's {{ $this->maxPowerLimit }}W limit.
                 </x-alert>
             @endif
         @endif
