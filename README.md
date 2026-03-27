@@ -10,7 +10,7 @@ Field Day Commander runs on modest hardware (including a Raspberry Pi 4) and is 
 
 **For event organizers:** Plan stations, schedule operator shifts, track equipment, manage safety checklists, and generate post-event reports and Cabrillo exports, all from one place.
 
-**For operators:** A clean logging interface with realtime dupe detection. Just sit down and start making contacts.
+**For operators:** A clean logging interface with realtime dupe detection. If the network hiccups, your contacts queue locally and sync when the connection comes back. Just sit down and start making contacts.
 
 ## Key Features
 
@@ -22,6 +22,7 @@ Field Day Commander runs on modest hardware (including a Raspberry Pi 4) and is 
 - **Role-based access,** four roles (System Admin, Event Manager, Station Captain, Operator) with appropriate permissions at each level
 - **Safety compliance,** built-in site safety checklist with completion tracking
 - **Cabrillo export,** generate submission-ready files when the event wraps up
+- **Store-and-forward logging,** if the server connection drops, contacts queue in the browser and sync automatically when connectivity returns
 - **Air-gapped operation,** zero external dependencies at runtime; everything runs locally
 - **Runs on a Pi,** tested on Raspberry Pi 4 (4GB), Intel NUC, and standard Linux servers
 
@@ -32,7 +33,7 @@ Field Day Commander runs on modest hardware (including a Raspberry Pi 4) and is 
 The fastest path to a running instance. On a fresh Ubuntu 22.04+ or Debian 12 server:
 
 ```bash
-# Setup Script COming Soon
+sudo bash deploy.sh --domain yourdomain.com
 ```
 
 The interactive script handles installing dependencies, configuring the database, building assets, and setting up the web server.
