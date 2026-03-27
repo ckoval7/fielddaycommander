@@ -38,6 +38,7 @@ APP_PATH="/var/www/fd-commander"
 BRANCH="main"
 REPO_URL=""
 REVERB_PORT="8080"
+APP_PORT=""
 SSL_ENABLED=false
 SSL_EMAIL=""
 SSL_CERT=""
@@ -56,13 +57,14 @@ Required:
   --domain <domain>       Domain name or IP for the application
 
 Optional:
-  --db-password <pass>    MySQL password (default: randomly generated)
+  --db-password <pass>    Database password (default: randomly generated)
   --db-name <name>        Database name (default: fd_commander)
   --db-user <user>        Database user (default: fd_commander)
   --app-path <path>       Install path (default: /var/www/fd-commander)
   --branch <branch>       Git branch to deploy (default: main)
   --repo-url <url>        Git repo URL (default: copy current directory)
   --reverb-port <port>    Reverb WebSocket port (default: 8080)
+  --port <port>           App port (default: 443 with SSL, 80 without)
   --ssl                   Enable HTTPS (Caddy auto-SSL or custom cert)
   --email <email>         Email for Let's Encrypt (required with --ssl)
   --ssl-cert <path>       Path to existing SSL certificate
@@ -84,6 +86,7 @@ while [[ $# -gt 0 ]]; do
         --branch)       BRANCH="$2"; shift 2 ;;
         --repo-url)     REPO_URL="$2"; shift 2 ;;
         --reverb-port)  REVERB_PORT="$2"; shift 2 ;;
+        --port)         APP_PORT="$2"; shift 2 ;;
         --ssl)          SSL_ENABLED=true; shift ;;
         --email)        SSL_EMAIL="$2"; shift 2 ;;
         --ssl-cert)     SSL_CERT="$2"; shift 2 ;;
@@ -211,10 +214,20 @@ fi
 # --- Derived Values ---
 if $SSL_ENABLED; then
     SCHEME="https"
-    PUBLIC_PORT="443"
+    DEFAULT_PORT="443"
 else
     SCHEME="http"
-    PUBLIC_PORT="80"
+    DEFAULT_PORT="80"
+fi
+# Use explicit --port if given, otherwise the protocol default
+APP_PORT="${APP_PORT:-$DEFAULT_PORT}"
+# PUBLIC_PORT is what browsers connect to (used for Reverb/Vite env vars)
+PUBLIC_PORT="$APP_PORT"
+# Whether to append :port to URLs (omit for standard 80/443)
+if [[ "$APP_PORT" == "80" || "$APP_PORT" == "443" ]]; then
+    PORT_SUFFIX=""
+else
+    PORT_SUFFIX=":${APP_PORT}"
 fi
 
 # --- Dry Run ---
@@ -222,7 +235,8 @@ print_dry_run() {
     echo -e "\n${BOLD}FD Commander Deployment Plan${NC}"
     echo "=============================="
     echo "Domain:         $DOMAIN"
-    echo "App URL:        ${SCHEME}://${DOMAIN}"
+    echo "App URL:        ${SCHEME}://${DOMAIN}${PORT_SUFFIX}"
+    echo "App Port:       $APP_PORT"
     echo "App Path:       $APP_PATH"
     echo "Distro:         $DISTRO_FAMILY ($PRETTY_NAME)"
     echo "Database:       $DB_NAME (user: $DB_USER)"
@@ -289,17 +303,11 @@ install_packages_rhel() {
         log_warn "Node.js already installed, skipping NodeSource"
     fi
 
-    # MySQL 8 community repo
-    if ! command -v mysqld &>/dev/null; then
-        log_info "Adding MySQL community repo..."
-        dnf install -y https://dev.mysql.com/get/mysql80-community-release-el$(rpm -E %rhel)-1.noarch.rpm || true
-    fi
-
     log_info "Installing packages..."
     dnf install -y \
         php-cli php-mysqlnd php-mbstring php-xml \
         php-curl php-zip php-bcmath php-gd php-intl php-redis \
-        mysql-community-server nodejs unzip git
+        mariadb-server nodejs unzip git
 
     # SELinux: allow FrankenPHP network access and set binary context
     if command -v setsebool &>/dev/null; then
@@ -321,7 +329,7 @@ install_composer() {
     log_info "Installing Composer..."
     local expected_sig
     expected_sig=$(curl -fsSL https://composer.github.io/installer.sig)
-    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    curl -fsSL -o composer-setup.php https://getcomposer.org/installer
     local actual_sig
     actual_sig=$(php -r "echo hash_file('sha384', 'composer-setup.php');")
 
@@ -416,7 +424,7 @@ configure_env() {
     set_env "APP_NAME" '"FD Commander"'
     set_env "APP_ENV" "production"
     set_env "APP_DEBUG" "false"
-    set_env "APP_URL" "${SCHEME}://${DOMAIN}"
+    set_env "APP_URL" "${SCHEME}://${DOMAIN}${PORT_SUFFIX}"
 
     set_env "LOG_LEVEL" "warning"
     set_env "DEVELOPER_MODE" "false"
@@ -450,7 +458,7 @@ configure_env() {
     set_env "OCTANE_SERVER" "frankenphp"
     set_env "OCTANE_WORKERS" "auto"
     set_env "OCTANE_MAX_REQUESTS" "500"
-    set_env "DOMAIN" "$DOMAIN"
+    set_env "DOMAIN" "${DOMAIN}${PORT_SUFFIX}"
     set_env "APP_PATH" "$APP_PATH"
 
     chown "fdcommander:${WEB_GROUP}" "$env_file"
@@ -494,7 +502,7 @@ setup_app() {
     # Step 4: Install dependencies
     log_info "Installing Composer dependencies..."
     cd "$APP_PATH"
-    sudo -u fdcommander COMPOSER_HOME="$APP_PATH/.composer" composer install --no-dev --optimize-autoloader --no-interaction
+    sudo -u fdcommander COMPOSER_HOME="$APP_PATH/.composer" /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction
 
     # Step 5: Generate app key
     log_info "Generating application key..."
@@ -523,10 +531,10 @@ setup_app() {
 setup_database() {
     log_phase "Phase 4: Setting up database"
 
-    # Start and enable MySQL
+    # Start and enable database service
     local mysql_service="mysql"
     if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
-        mysql_service="mysqld"
+        mysql_service="mariadb"
     fi
 
     systemctl enable "$mysql_service"
@@ -620,10 +628,10 @@ configure_ssl() {
 configure_systemd() {
     log_phase "Phase 7: Configuring systemd services"
 
-    # Determine MySQL service name for systemd dependency
+    # Determine database service name for systemd dependency
     local mysql_unit="mysql.service"
     if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
-        mysql_unit="mysqld.service"
+        mysql_unit="mariadb.service"
     fi
 
     # FrankenPHP/Octane Web Server
@@ -638,11 +646,10 @@ User=fdcommander
 Group=${WEB_GROUP}
 WorkingDirectory=${APP_PATH}
 EnvironmentFile=${APP_PATH}/.env
-ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=80
+ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=${APP_PORT}
 Restart=always
 RestartSec=5
-CapabilityBoundingSet=CAP_NET_BIND_SERVICE
-AmbientCapabilities=CAP_NET_BIND_SERVICE
+$( [[ "$APP_PORT" -lt 1024 ]] && printf 'CapabilityBoundingSet=CAP_NET_BIND_SERVICE\nAmbientCapabilities=CAP_NET_BIND_SERVICE' || echo '# No privileged port capabilities needed' )
 Environment=XDG_CONFIG_HOME=/var/lib/caddy/.config
 Environment=XDG_DATA_HOME=/var/lib/caddy/.local/share
 
@@ -730,25 +737,25 @@ configure_firewall() {
     if [[ "$DISTRO_FAMILY" == "debian" ]]; then
         if command -v ufw &>/dev/null && ufw status | grep -q "active"; then
             log_info "Configuring UFW firewall..."
-            ufw allow 80/tcp
-            if $SSL_ENABLED; then
-                ufw allow 443/tcp
-            fi
-            log_info "UFW configured: HTTP$( $SSL_ENABLED && echo "/HTTPS" ) open"
+            ufw allow "${APP_PORT}/tcp"
+            log_info "UFW configured: port ${APP_PORT} open"
         else
-            log_warn "UFW not active. Recommend enabling: ufw allow 80/tcp && ufw enable"
+            log_warn "UFW not active. Recommend enabling: ufw allow ${APP_PORT}/tcp && ufw enable"
         fi
     elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
         if systemctl is-active --quiet firewalld; then
             log_info "Configuring firewalld..."
-            firewall-cmd --permanent --add-service=http
-            if $SSL_ENABLED; then
+            if [[ "$APP_PORT" == "80" ]]; then
+                firewall-cmd --permanent --add-service=http
+            elif [[ "$APP_PORT" == "443" ]]; then
                 firewall-cmd --permanent --add-service=https
+            else
+                firewall-cmd --permanent --add-port="${APP_PORT}/tcp"
             fi
             firewall-cmd --reload
-            log_info "firewalld configured: HTTP/HTTPS open"
+            log_info "firewalld configured: port ${APP_PORT} open"
         else
-            log_warn "firewalld not active. Recommend enabling and opening ports 80/443"
+            log_warn "firewalld not active. Recommend enabling and opening port ${APP_PORT}"
         fi
     fi
 }
@@ -770,7 +777,7 @@ finalize() {
     echo -e "${BOLD}============================================${NC}"
     echo ""
     echo -e "${BOLD}Application${NC}"
-    echo "  URL:            ${SCHEME}://${DOMAIN}"
+    echo "  URL:            ${SCHEME}://${DOMAIN}${PORT_SUFFIX}"
     echo "  Path:           ${APP_PATH}"
     echo "  Environment:    production"
     echo ""
@@ -795,7 +802,7 @@ finalize() {
     echo "  Caddy log:      journalctl -u fdcommander.service"
     echo ""
     echo -e "${BOLD}Next Steps${NC}"
-    echo "  1. Visit ${SCHEME}://${DOMAIN} and complete initial setup"
+    echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} and complete initial setup"
     echo "  2. The SystemAdminSeeder created the first admin user"
     echo "  3. Review firewall settings if not configured"
     if ! $SSL_ENABLED; then
