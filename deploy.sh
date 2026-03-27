@@ -3,7 +3,7 @@ set -euo pipefail
 
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
-FRANKENPHP_VERSION="1.4.4"
+FRANKENPHP_VERSION="1.12.1"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 
 # --- Colors ---
@@ -359,11 +359,12 @@ install_frankenphp() {
         aarch64) arch="linux-aarch64" ;;
         *)       log_error "Unsupported architecture: $(uname -m)"; exit 1 ;;
     esac
-    local url="https://github.com/dunglas/frankenphp/releases/download/v${FRANKENPHP_VERSION}/frankenphp-${arch}"
+    local url="https://github.com/php/frankenphp/releases/download/v${FRANKENPHP_VERSION}/frankenphp-${arch}"
     local dest="/usr/local/bin/frankenphp"
     log_info "Downloading FrankenPHP from ${url}..."
     curl -fSL -o "$dest" "$url"
     chmod +x "$dest"
+    setcap cap_net_bind_service=+ep "$dest"
     if ! "$dest" version &>/dev/null; then
         log_error "FrankenPHP binary verification failed"
         exit 1
@@ -640,6 +641,7 @@ EnvironmentFile=${APP_PATH}/.env
 ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=80
 Restart=always
 RestartSec=5
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 Environment=XDG_CONFIG_HOME=/var/lib/caddy/.config
 Environment=XDG_DATA_HOME=/var/lib/caddy/.local/share
