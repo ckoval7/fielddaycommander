@@ -25,7 +25,7 @@ class SiteBranding extends Component
 
     public function mount(): void
     {
-        $this->site_name = Setting::get('site_name', 'Field Day Log Database');
+        $this->site_name = Setting::get('site_name', 'Field Day Commander');
         $this->site_tagline = Setting::get('site_tagline');
         $this->logo_path = Setting::get('site_logo_path');
         $this->footer_text = Setting::get('site_footer_text');

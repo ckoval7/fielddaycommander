@@ -19,7 +19,7 @@
             <x-input
                 label="Site Name"
                 name="site_name"
-                value="{{ old('site_name', 'Field Day Log Database') }}"
+                value="{{ old('site_name', 'Field Day Commander') }}"
                 required
                 icon="o-building-office"
                 hint="Your organization or club name"
