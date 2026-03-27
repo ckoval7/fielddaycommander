@@ -32,3 +32,4 @@ sonar-project.properties
 boost.json
 /frankenphp
 /tests/e2e/screenshots/
+/tests/Browser/
