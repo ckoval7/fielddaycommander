@@ -14,17 +14,17 @@ Field Day Commander runs on modest hardware (including a Raspberry Pi 4) and is 
 
 ## Key Features
 
-- **Real-time contact logging,** multiple operators log QSOs simultaneously with live dupe checking
-- **Live scoring,** scores update automatically as contacts are logged, with power multipliers and bonus tracking
-- **Station management,** define operating positions, assign equipment, and track which stations are active
-- **Volunteer scheduling,** build shift schedules and assign volunteers to stations and other roles
-- **Equipment tracking,** catalog personal and club-owned gear, commit it to events, and track status through the event lifecycle
-- **Role-based access,** four roles (System Admin, Event Manager, Station Captain, Operator) with appropriate permissions at each level
-- **Safety compliance,** built-in site safety checklist with completion tracking
-- **Cabrillo export,** generate submission-ready files when the event wraps up
-- **Store-and-forward logging,** if the server connection drops, contacts queue in the browser and sync automatically when connectivity returns
-- **Air-gapped operation,** zero external dependencies at runtime; everything runs locally
-- **Runs on a Pi,** tested on Raspberry Pi 4 (4GB), Intel NUC, and standard Linux servers
+- **Real-time contact logging:** multiple operators log QSOs simultaneously with live dupe checking
+- **Live scoring:** scores update automatically as contacts are logged, with power multipliers and bonus tracking
+- **Station management:** define operating positions, assign equipment, and track which stations are active
+- **Volunteer scheduling:** build shift schedules and assign volunteers to stations and other roles
+- **Equipment tracking:** catalog personal and club-owned gear, commit it to events, and track status through the event lifecycle
+- **Role-based access:** four roles (System Admin, Event Manager, Station Captain, Operator) with appropriate permissions at each level
+- **Safety compliance:** built-in site safety checklist with completion tracking
+- **Cabrillo export:** generate submission-ready files when the event wraps up
+- **Store-and-forward logging:** if the server connection drops, contacts queue in the browser and sync automatically when connectivity returns
+- **Air-gapped operation:** zero external dependencies at runtime; everything runs locally after initial install
+- **Runs on a Pi:** tested on Raspberry Pi 4 (4GB), Intel NUC, and standard Linux servers
 
 ## Getting Started
 
