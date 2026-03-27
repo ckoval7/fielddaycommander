@@ -13,6 +13,19 @@ beforeEach(function () {
     Setting::where('key', 'setup_completed')->delete();
 });
 
+test('setup routes redirect to home when setup is already complete', function () {
+    Setting::set('setup_completed', 'true');
+
+    $this->get(route('setup.welcome'))->assertRedirect('/');
+    $this->get(route('setup.branding'))->assertRedirect('/');
+    $this->get(route('setup.preferences'))->assertRedirect('/');
+    $this->post(route('setup.step-1'), [
+        'admin_password' => 'StrongPass123!@#',
+        'admin_password_confirmation' => 'StrongPass123!@#',
+    ])->assertRedirect('/');
+    $this->post(route('setup.complete'), [])->assertRedirect('/');
+});
+
 test('step 1 displays admin password form', function () {
     // View rendering has a known issue with Mary UI icon parsing
     // Backend logic is fully tested in other tests

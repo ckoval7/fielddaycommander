@@ -11,8 +11,8 @@ class CheckSystemSetupComplete
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Allow setup routes and invitation routes through
-        if ($request->is('setup/*') || $request->is('register/invite/*')) {
+        // Allow invitation routes through regardless of setup state
+        if ($request->is('register/invite/*')) {
             return $next($request);
         }
 
@@ -20,6 +20,11 @@ class CheckSystemSetupComplete
         $setupComplete = DB::table('system_config')
             ->where('key', 'setup_completed')
             ->value('value') === 'true';
+
+        if ($request->is('setup/*')) {
+            // Block setup routes after setup is complete
+            return $setupComplete ? redirect('/') : $next($request);
+        }
 
         if (! $setupComplete) {
             return redirect('/setup/welcome');
