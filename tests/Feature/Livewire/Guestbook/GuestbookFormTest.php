@@ -32,11 +32,8 @@ describe('rendering', function () {
     });
 
     test('shows message when no active event', function () {
-        // Move event out of current date range
-        $this->event->update([
-            'start_time' => now()->addDays(10),
-            'end_time' => now()->addDays(11),
-        ]);
+        // Remove event entirely so no context event is found
+        $this->event->forceDelete();
 
         $component = Livewire::test(GuestbookForm::class);
 

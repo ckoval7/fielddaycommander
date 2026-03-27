@@ -34,25 +34,25 @@ class StationPolicyTest extends TestCase
         $this->policy = new StationPolicy;
     }
 
-    public function test_users_with_manage_stations_permission_can_view_any_stations(): void
+    public function test_users_with_view_stations_permission_can_view_any_stations(): void
     {
         $authorizedUser = User::factory()->create();
         $unauthorizedUser = User::factory()->create();
 
-        // Mock the manage-stations gate for testing
-        Gate::define('manage-stations', fn (User $user) => $user->id === $authorizedUser->id);
+        // Mock the view-stations gate for testing
+        Gate::define('view-stations', fn (User $user) => $user->id === $authorizedUser->id);
 
         expect($this->policy->viewAny($authorizedUser))->toBeTrue();
         expect($this->policy->viewAny($unauthorizedUser))->toBeFalse();
     }
 
-    public function test_users_with_manage_stations_permission_can_view_individual_stations(): void
+    public function test_users_with_view_stations_permission_can_view_individual_stations(): void
     {
         $authorizedUser = User::factory()->create();
         $unauthorizedUser = User::factory()->create();
         $station = Station::factory()->create();
 
-        Gate::define('manage-stations', fn (User $user) => $user->id === $authorizedUser->id);
+        Gate::define('view-stations', fn (User $user) => $user->id === $authorizedUser->id);
 
         expect($this->policy->view($authorizedUser, $station))->toBeTrue();
         expect($this->policy->view($unauthorizedUser, $station))->toBeFalse();

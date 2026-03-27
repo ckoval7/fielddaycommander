@@ -37,7 +37,8 @@ test('can create equipment_event record with all required relationships', functi
     $user = User::factory()->create();
     $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
-    $station = Station::factory()->create(['event_id' => $event->id]);
+    $eventConfig = \App\Models\EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
 
     $pivotData = [
         'equipment_id' => $equipment->id,
@@ -90,7 +91,7 @@ test('cascades delete when equipment is deleted', function () {
         'status' => 'committed',
     ]);
 
-    $equipment->delete();
+    $equipment->forceDelete();
 
     $this->assertDatabaseMissing('equipment_event', [
         'equipment_id' => $equipment->id,
@@ -109,7 +110,7 @@ test('cascades delete when event is deleted', function () {
         'status' => 'committed',
     ]);
 
-    $event->delete();
+    $event->forceDelete();
 
     $this->assertDatabaseMissing('equipment_event', [
         'equipment_id' => $equipment->id,
@@ -121,7 +122,8 @@ test('nulls station_id when station is deleted', function () {
     $user = User::factory()->create();
     $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
-    $station = Station::factory()->create(['event_id' => $event->id]);
+    $eventConfig = \App\Models\EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
 
     \DB::table('equipment_event')->insert([
         'equipment_id' => $equipment->id,
@@ -130,7 +132,7 @@ test('nulls station_id when station is deleted', function () {
         'status' => 'committed',
     ]);
 
-    $station->delete();
+    $station->forceDelete();
 
     $this->assertDatabaseHas('equipment_event', [
         'equipment_id' => $equipment->id,
@@ -139,19 +141,20 @@ test('nulls station_id when station is deleted', function () {
     ]);
 });
 
-test('nulls assigned_by_user_id when user is deleted', function () {
-    $user = User::factory()->create();
-    $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
+test('nulls assigned_by_user_id when user is force deleted', function () {
+    $owner = User::factory()->create();
+    $assignedBy = User::factory()->create();
+    $equipment = Equipment::factory()->create(['owner_user_id' => $owner->id]);
     $event = Event::factory()->create();
 
     \DB::table('equipment_event')->insert([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
-        'assigned_by_user_id' => $user->id,
+        'assigned_by_user_id' => $assignedBy->id,
         'status' => 'committed',
     ]);
 
-    $user->delete();
+    $assignedBy->forceDelete();
 
     $this->assertDatabaseHas('equipment_event', [
         'equipment_id' => $equipment->id,

@@ -88,10 +88,7 @@ describe('cabrillo endpoint', function () {
     });
 
     test('returns 404 when no active event exists', function () {
-        $this->event->update([
-            'start_time' => now()->addDays(10),
-            'end_time' => now()->addDays(11),
-        ]);
+        $this->event->forceDelete();
 
         $this->actingAs($this->user)
             ->get(route('reports.cabrillo'))
@@ -113,10 +110,7 @@ describe('club-summary endpoint', function () {
     });
 
     test('returns 404 when no active event exists', function () {
-        $this->event->update([
-            'start_time' => now()->addDays(10),
-            'end_time' => now()->addDays(11),
-        ]);
+        $this->event->forceDelete();
 
         $this->actingAs($this->user)
             ->get(route('reports.club-summary'))

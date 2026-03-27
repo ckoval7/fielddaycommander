@@ -45,10 +45,10 @@ it('displays countdown for active event', function () {
         });
 });
 
-it('returns no active event when event has passed', function () {
+it('returns ended state when event has passed', function () {
     $eventType = EventType::where('code', 'FD')->first();
 
-    // Event that ended 1 hour ago (not active anymore)
+    // Event that ended 1 hour ago (still returned via grace period)
     Event::factory()->create([
         'name' => '2025 Field Day',
         'event_type_id' => $eventType->id,
@@ -63,7 +63,7 @@ it('returns no active event when event has passed', function () {
         ->assertOk()
         ->assertViewHas('data', function ($data) {
             return $data['is_ended'] === true
-                && $data['label'] === 'No Active Event';
+                && $data['label'] === 'Event Ended';
         });
 });
 

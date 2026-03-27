@@ -108,7 +108,7 @@ describe('event integration', function () {
         expect($event->fresh()->status)->toBe('upcoming');
     });
 
-    test('event shows as in_progress when fake time is during event', function () {
+    test('event shows as active when fake time is during event', function () {
         // Create event
         $event = Event::factory()->create([
             'start_time' => Carbon::parse('2025-06-28 18:00:00'),
@@ -120,7 +120,7 @@ describe('event integration', function () {
         $service = app(DeveloperClockService::class);
         $service->setFakeTime($fakeTime);
 
-        expect($event->fresh()->status)->toBe('in_progress');
+        expect($event->fresh()->status)->toBe('active');
     });
 
     test('event shows as completed when fake time is after event', function () {
@@ -153,7 +153,7 @@ describe('event integration', function () {
 
         // During event
         $service->setFakeTime(Carbon::parse('2025-06-29 12:00:00'));
-        expect($event->fresh()->status)->toBe('in_progress');
+        expect($event->fresh()->status)->toBe('active');
 
         // After event
         $service->setFakeTime(Carbon::parse('2025-06-30 12:00:00'));

@@ -87,12 +87,9 @@ describe('Permission Tests', function () {
         $clockService = app(DeveloperClockService::class);
         $clockService->setFakeTime(Carbon::parse('2025-06-28 18:00:00'), frozen: true);
 
-        // NOTE: There's a bug in AppServiceProvider - Gates check for 'ADMIN' (uppercase)
-        // but the database enum values are lowercase. Using uppercase here to test
-        // the Gate behavior, even though it doesn't match the migration.
         $adminUser = User::factory()->create();
-        // Bypass database constraint by setting value directly in memory
-        $adminUser->user_role = 'ADMIN';
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'manage-settings']);
+        $adminUser->givePermissionTo('manage-settings');
         $this->actingAs($adminUser);
 
         Livewire::test(DeveloperBanner::class)

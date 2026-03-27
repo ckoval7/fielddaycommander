@@ -72,7 +72,7 @@ test('createDashboard does not set subsequent dashboards as default', function (
 
 test('createDashboard throws OverflowException when max dashboards reached', function () {
     Dashboard::factory()
-        ->count(config('dashboard.max_dashboards_per_user'))
+        ->count(config('dashboard.limits.max_dashboards_per_user', 10))
         ->for($this->user)
         ->create();
 
@@ -89,7 +89,7 @@ test('createDashboard throws InvalidArgumentException for invalid config', funct
 
 test('createDashboard throws OverflowException when config exceeds max widgets', function () {
     $widgets = [];
-    $max = config('dashboard.max_widgets_per_dashboard');
+    $max = config('dashboard.limits.max_widgets_per_dashboard', 20);
 
     for ($i = 1; $i <= $max + 1; $i++) {
         $widgets[] = [
@@ -150,7 +150,7 @@ test('updateDashboard saves valid config', function () {
 
 test('updateDashboard throws OverflowException when config exceeds max widgets', function () {
     $dashboard = Dashboard::factory()->for($this->user)->create();
-    $max = config('dashboard.max_widgets_per_dashboard');
+    $max = config('dashboard.limits.max_widgets_per_dashboard', 20);
 
     $widgets = [];
     for ($i = 1; $i <= $max + 1; $i++) {
@@ -215,7 +215,7 @@ test('duplicateDashboard creates a copy with new title', function () {
 
 test('duplicateDashboard throws OverflowException when max dashboards reached', function () {
     $dashboards = Dashboard::factory()
-        ->count(config('dashboard.max_dashboards_per_user'))
+        ->count(config('dashboard.limits.max_dashboards_per_user', 10))
         ->for($this->user)
         ->create();
 

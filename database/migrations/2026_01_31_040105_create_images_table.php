@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('storage_path', 500);
             $table->string('mime_type', 50);
             $table->integer('file_size_bytes')->nullable();
+            $table->string('file_hash', 64)->nullable()->unique();
             $table->text('description')->nullable();
             $table->text('caption')->nullable();
 

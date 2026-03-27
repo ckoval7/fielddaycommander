@@ -249,7 +249,7 @@ test('equipment count badge shows correct count', function () {
     // Attach additional equipment via pivot table
     $equipment1 = Equipment::factory()->create(['type' => 'antenna']);
     $equipment2 = Equipment::factory()->create(['type' => 'antenna']);
-    $equipment3 = Equipment::factory()->create(['type' => 'tuner']);
+    $equipment3 = Equipment::factory()->create(['type' => 'accessory']);
 
     $station->additionalEquipment()->attach($equipment1->id, [
         'event_id' => $this->event->id,

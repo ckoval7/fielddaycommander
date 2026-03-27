@@ -4,6 +4,8 @@ use App\Livewire\Dashboard\Widgets\ProgressBar;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\OperatingSession;
+use App\Models\Station;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
@@ -133,6 +135,9 @@ describe('getData method', function () {
             'end_time' => now()->addHours(23),
         ]);
         $config = EventConfiguration::factory()->for($event)->create();
+        $station = Station::factory()->create(['event_configuration_id' => $config->id]);
+        $session = OperatingSession::factory()->create(['station_id' => $station->id]);
+        $contactAttrs = ['operating_session_id' => $session->id];
 
         $widget = Livewire::test(ProgressBar::class);
 
@@ -142,25 +147,25 @@ describe('getData method', function () {
 
         // Not a milestone: 37 QSOs
         Cache::flush();
-        Contact::factory()->count(37)->for($config, 'eventConfiguration')->create();
+        Contact::factory()->count(37)->for($config, 'eventConfiguration')->create($contactAttrs);
         $data = $widget->instance()->getData();
         expect($data['is_milestone'])->toBe(false);
 
         // Milestone: 50 QSOs
         Cache::flush();
-        Contact::factory()->count(13)->for($config, 'eventConfiguration')->create();
+        Contact::factory()->count(13)->for($config, 'eventConfiguration')->create($contactAttrs);
         $data = $widget->instance()->getData();
         expect($data['is_milestone'])->toBe(true);
 
         // Not a milestone: 75 QSOs
         Cache::flush();
-        Contact::factory()->count(25)->for($config, 'eventConfiguration')->create();
+        Contact::factory()->count(25)->for($config, 'eventConfiguration')->create($contactAttrs);
         $data = $widget->instance()->getData();
         expect($data['is_milestone'])->toBe(false);
 
         // Milestone: 100 QSOs
         Cache::flush();
-        Contact::factory()->count(25)->for($config, 'eventConfiguration')->create();
+        Contact::factory()->count(25)->for($config, 'eventConfiguration')->create($contactAttrs);
         $data = $widget->instance()->getData();
         expect($data['is_milestone'])->toBe(true);
     });
@@ -395,6 +400,9 @@ describe('real-world scenarios', function () {
             'end_time' => now()->addHours(23),
         ]);
         $config = EventConfiguration::factory()->for($event)->create();
+        $station = Station::factory()->create(['event_configuration_id' => $config->id]);
+        $session = OperatingSession::factory()->create(['station_id' => $station->id]);
+        $contactAttrs = ['operating_session_id' => $session->id];
 
         $widget = Livewire::test(ProgressBar::class)->instance();
 
@@ -407,7 +415,7 @@ describe('real-world scenarios', function () {
 
         // Add 25 QSOs (halfway to 50)
         Cache::flush();
-        Contact::factory()->count(25)->for($config, 'eventConfiguration')->create();
+        Contact::factory()->count(25)->for($config, 'eventConfiguration')->create($contactAttrs);
         expect($widget->getData())->toMatchArray([
             'current' => 25,
             'target' => 50,
@@ -416,7 +424,7 @@ describe('real-world scenarios', function () {
 
         // Reach first milestone - target advances to 100
         Cache::flush();
-        Contact::factory()->count(25)->for($config, 'eventConfiguration')->create();
+        Contact::factory()->count(25)->for($config, 'eventConfiguration')->create($contactAttrs);
         expect($widget->getData())->toMatchArray([
             'current' => 50,
             'target' => 100,
@@ -430,12 +438,16 @@ describe('real-world scenarios', function () {
             'end_time' => now()->addHours(23),
         ]);
         $config = EventConfiguration::factory()->for($event)->create();
+        $station = Station::factory()->create(['event_configuration_id' => $config->id]);
+        $session = OperatingSession::factory()->create(['station_id' => $station->id]);
 
         $widget = Livewire::test(ProgressBar::class)->instance();
 
         // 187 QSOs scenario from requirements
         Cache::flush();
-        Contact::factory()->count(187)->for($config, 'eventConfiguration')->create();
+        Contact::factory()->count(187)->for($config, 'eventConfiguration')->create([
+            'operating_session_id' => $session->id,
+        ]);
 
         $data = $widget->getData();
 

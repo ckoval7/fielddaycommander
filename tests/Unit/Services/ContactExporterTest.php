@@ -154,7 +154,12 @@ class ContactExporterTest extends TestCase
 
     public function test_large_collection_completes_successfully(): void
     {
-        $contacts = Contact::factory()->count(150)->create();
+        $eventConfig = \App\Models\EventConfiguration::factory()->create();
+        $session = \App\Models\OperatingSession::factory()->create();
+        $contacts = Contact::factory()->count(150)->create([
+            'event_configuration_id' => $eventConfig->id,
+            'operating_session_id' => $session->id,
+        ]);
 
         $response = $this->exporter->exportCsv($contacts);
 

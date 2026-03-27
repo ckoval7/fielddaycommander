@@ -35,7 +35,7 @@ test('index loads user default dashboard', function () {
     $response->assertStatus(200);
     $response->assertViewIs('dashboard.default');
     $response->assertViewHas('dashboard', $dashboard);
-    $response->assertViewHas('widgets', $dashboard->config);
+    $response->assertViewHas('widgets', collect($dashboard->config));
 });
 
 test('index creates default dashboard for new user', function () {
@@ -69,7 +69,7 @@ test('tv dashboard loads config from file', function () {
 
     $response->assertStatus(200);
     $response->assertViewHas('title', config('dashboard.default_dashboards.tv.title'));
-    $response->assertViewHas('widgets', config('dashboard.default_dashboards.tv.widgets'));
+    $response->assertViewHas('widgets', collect(config('dashboard.default_dashboards.tv.widgets')));
     $response->assertViewHas('layout_type', 'tv');
 });
 
@@ -118,5 +118,5 @@ test('dashboard widgets config matches user default', function () {
     $widgets = $response->viewData('widgets');
     $expectedWidgets = config('dashboard.default_dashboards.user.widgets');
 
-    expect($widgets)->toBe($expectedWidgets);
+    expect($widgets->toArray())->toBe($expectedWidgets);
 });

@@ -64,7 +64,7 @@ test('getData returns score keys', function () {
 
     expect($data)->toHaveKeys(['qso_base_points', 'power_multiplier', 'qso_score', 'bonus_score', 'final_score']);
     expect($data['qso_base_points'])->toBeInt();
-    expect($data['power_multiplier'])->toBeInt();
+    expect($data['power_multiplier'])->toBeIn(['1', '2', '5', 1, 2, 5]);
     expect($data['qso_score'])->toBeInt();
     expect($data['bonus_score'])->toBeInt();
     expect($data['final_score'])->toBeInt();

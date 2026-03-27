@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('contacts', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->nullable()->unique();
             $table->foreignId('event_configuration_id')->constrained('event_configurations')->cascadeOnDelete();
             $table->foreignId('operating_session_id')->constrained('operating_sessions')->cascadeOnDelete();
             $table->foreignId('logger_user_id')->constrained('users');
@@ -41,6 +42,7 @@ return new class extends Migration
             // Scoring
             $table->integer('points')->default(1);
             $table->boolean('is_duplicate')->default(false);
+            $table->boolean('is_transcribed')->default(false);
             $table->foreignId('duplicate_of_contact_id')->nullable()->constrained('contacts');
 
             // Notes
@@ -55,6 +57,7 @@ return new class extends Migration
             $table->index(['callsign', 'band_id', 'mode_id']);
             $table->index('qso_time');
             $table->index('is_duplicate');
+            $table->index('is_transcribed');
             $table->index('is_gota_contact');
         });
     }

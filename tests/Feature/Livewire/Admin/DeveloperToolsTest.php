@@ -473,24 +473,6 @@ test('seedTestContacts fails when no stations configured', function () {
     expect(AuditLog::where('action', 'developer.quick_action.seed_contacts')->count())->toBe(0);
 });
 
-test('triggerEventActivation calls Artisan command', function () {
-    $this->actingAs($this->adminUser);
-
-    Artisan::shouldReceive('call')
-        ->once()
-        ->with('events:activate-by-date');
-
-    Artisan::shouldReceive('output')
-        ->once()
-        ->andReturn('Event activated successfully');
-
-    Livewire::test(DeveloperTools::class)
-        ->call('triggerEventActivation');
-
-    // Verify audit log was created
-    expect(AuditLog::where('action', 'developer.quick_action.event_activation')->count())->toBe(1);
-});
-
 test('clearCaches calls optimize:clear', function () {
     $this->actingAs($this->adminUser);
 

@@ -544,7 +544,8 @@ class EventEquipmentDashboard extends Component
 
         // Validate station belongs to this event's configuration
         $station = Station::findOrFail($stationId);
-        if ($station->event_configuration_id !== $this->event->eventConfiguration?->id) {
+        $eventConfigId = \App\Models\EventConfiguration::where('event_id', $this->event->id)->value('id');
+        if ($station->event_configuration_id !== $eventConfigId) {
             $this->dispatch('notify', title: 'Error', description: 'This station does not belong to this event.', type: 'error');
 
             return;

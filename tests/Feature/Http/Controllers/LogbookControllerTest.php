@@ -89,11 +89,8 @@ describe('export route', function () {
     test('returns 404 when no active event exists', function () {
         $this->actingAs($this->user);
 
-        // Move event out of active date range
-        $this->event->update([
-            'start_time' => now()->addDays(10),
-            'end_time' => now()->addDays(11),
-        ]);
+        // Delete event entirely so no context event is found
+        $this->event->forceDelete();
 
         $response = $this->get(route('logbook.export'));
 

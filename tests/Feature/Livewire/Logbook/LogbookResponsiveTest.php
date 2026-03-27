@@ -84,11 +84,13 @@ describe('responsive layout patterns', function () {
     });
 
     test('component handles no active event gracefully', function () {
-        // Move event out of active range
-        $this->event->update([
-            'start_time' => now()->addDays(10),
-            'end_time' => now()->addDays(11),
-        ]);
+        // Delete all events and event configurations so no context event is found
+        \App\Models\Contact::query()->forceDelete();
+        \App\Models\OperatingSession::query()->forceDelete();
+        \App\Models\Station::query()->forceDelete();
+        \App\Models\EventConfiguration::query()->forceDelete();
+        \App\Models\Event::query()->forceDelete();
+        app(\App\Services\EventContextService::class)->clearCache();
 
         Livewire::test(LogbookBrowser::class)
             ->assertSee('No Active Event')
@@ -111,11 +113,11 @@ describe('responsive class validation', function () {
 
     test('filter panel has reset functionality', function () {
         Livewire::test(LogbookBrowser::class)
-            ->set('band_id', 1)
-            ->set('mode_id', 1)
+            ->set('band_ids', [1])
+            ->set('mode_ids', [1])
             ->call('resetFilters')
-            ->assertSet('band_id', null)
-            ->assertSet('mode_id', null);
+            ->assertSet('band_ids', [])
+            ->assertSet('mode_ids', []);
     });
 
     test('contacts are filtered by band', function () {
@@ -132,7 +134,7 @@ describe('responsive class validation', function () {
         ]);
 
         $component = Livewire::test(LogbookBrowser::class)
-            ->set('band_id', $band->id);
+            ->set('band_ids', [$band->id]);
 
         $contacts = $component->get('contacts');
         expect($contacts->every(fn ($contact) => $contact->band_id === $band->id))->toBeTrue();
@@ -152,7 +154,7 @@ describe('responsive class validation', function () {
         ]);
 
         $component = Livewire::test(LogbookBrowser::class)
-            ->set('mode_id', $mode->id);
+            ->set('mode_ids', [$mode->id]);
 
         $contacts = $component->get('contacts');
         expect($contacts->every(fn ($contact) => $contact->mode_id === $mode->id))->toBeTrue();

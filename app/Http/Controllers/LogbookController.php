@@ -45,14 +45,14 @@ class LogbookController extends Controller
         // Build filters from request
         $filters = [
             'event_configuration_id' => $activeEvent->eventConfiguration->id,
-            'band_id' => $request->input('band_id'),
-            'mode_id' => $request->input('mode_id'),
-            'station_id' => $request->input('station_id'),
-            'operator_id' => $request->input('operator_id'),
+            'band_ids' => array_filter([$request->input('band_id')]),
+            'mode_ids' => array_filter([$request->input('mode_id')]),
+            'station_ids' => array_filter([$request->input('station_id')]),
+            'operator_ids' => array_filter([$request->input('operator_id')]),
             'time_from' => $request->input('time_from'),
             'time_to' => $request->input('time_to'),
             'callsign' => $request->input('callsign'),
-            'section_id' => $request->input('section_id'),
+            'section_ids' => array_filter([$request->input('section_id')]),
             'duplicate_filter' => $request->input('duplicate_filter'),
         ];
 

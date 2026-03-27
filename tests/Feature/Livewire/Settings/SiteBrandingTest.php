@@ -108,7 +108,7 @@ test('footer always shows project info', function () {
 
     $this->get('/')
         ->assertOk()
-        ->assertSee('FD Log DB v'.config('app.version'))
+        ->assertSee('Field Day Commander v'.config('app.version'))
         ->assertSee('Powered by Laravel');
 });
 

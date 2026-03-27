@@ -19,6 +19,9 @@ return new class extends Migration
             // Core Configuration
             $table->string('callsign', 20);
             $table->string('club_name', 100)->nullable();
+            $table->string('logo_path')->nullable();
+            $table->string('tagline')->nullable();
+            $table->boolean('is_active')->default(false);
             $table->foreignId('section_id')->constrained('sections');
             $table->foreignId('operating_class_id')->constrained('operating_classes');
             $table->integer('transmitter_count')->default(1);
@@ -41,10 +44,18 @@ return new class extends Migration
             $table->boolean('uses_methane')->default(false);
             $table->string('uses_other_power', 100)->nullable();
 
+            // Guestbook Settings
+            $table->boolean('guestbook_enabled')->default(false);
+            $table->decimal('guestbook_latitude', 10, 7)->nullable();
+            $table->decimal('guestbook_longitude', 10, 7)->nullable();
+            $table->integer('guestbook_detection_radius')->default(500);
+            $table->json('guestbook_local_subnets')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
 
             $table->index('event_id');
+            $table->index('is_active');
             $table->unique(['event_id', 'callsign']);
         });
     }

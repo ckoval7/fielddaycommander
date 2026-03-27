@@ -23,6 +23,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->boolean('is_current')->default(false);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('is_current');
             $table->index(['event_type_id', 'year']);

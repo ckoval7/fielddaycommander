@@ -15,18 +15,21 @@ return new class extends Migration
             $table->id();
             $table->foreignId('station_id')->constrained('stations')->cascadeOnDelete();
             $table->foreignId('operator_user_id')->constrained('users');
-            $table->foreignId('band_id')->constrained('bands');
-            $table->foreignId('mode_id')->constrained('modes');
+            $table->foreignId('band_id')->nullable()->constrained('bands');
+            $table->foreignId('mode_id')->nullable()->constrained('modes');
 
             $table->timestamp('start_time')->nullable();
             $table->timestamp('end_time')->nullable();
             $table->integer('qso_count')->default(0);
+            $table->boolean('is_transcription')->default(false);
+            $table->integer('power_watts')->nullable();
 
             $table->timestamps();
 
             $table->index('station_id');
             $table->index('operator_user_id');
             $table->index(['start_time', 'end_time']);
+            $table->index('power_watts');
         });
     }
 

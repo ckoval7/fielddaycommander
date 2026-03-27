@@ -26,6 +26,7 @@ Thumbs.db
 .playwright-mcp/
 test-results/
 .scannerwork/
+sonar-project.properties
 .claude/
 .mcp.json
 boost.json
