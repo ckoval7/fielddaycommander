@@ -2,6 +2,10 @@
 
 namespace App\Livewire\Profile;
 
+use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
+use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
+use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
+use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -45,6 +49,13 @@ class UserProfile extends Component
     public string $password = '';
 
     public string $password_confirmation = '';
+
+    // 2FA properties
+    public bool $showingQrCode = false;
+
+    public bool $showingRecoveryCodes = false;
+
+    public string $twoFactorCode = '';
 
     public function mount(): void
     {
@@ -168,6 +179,86 @@ class UserProfile extends Component
         $this->current_password = '';
 
         $this->dispatch('toast', type: 'success', message: 'Logged out of all other devices.');
+    }
+
+    public function enableTwoFactor(): void
+    {
+        $this->validate([
+            'current_password' => ['required', 'string', 'current_password:web'],
+        ]);
+
+        app(EnableTwoFactorAuthentication::class)(auth()->user());
+
+        auth()->user()->refresh();
+
+        $this->showingQrCode = true;
+        $this->showingRecoveryCodes = false;
+        $this->current_password = '';
+    }
+
+    public function cancelTwoFactorSetup(): void
+    {
+        app(DisableTwoFactorAuthentication::class)(auth()->user());
+
+        auth()->user()->refresh();
+
+        $this->showingQrCode = false;
+        $this->twoFactorCode = '';
+    }
+
+    public function confirmTwoFactor(): void
+    {
+        $this->validate([
+            'twoFactorCode' => ['required', 'string'],
+        ]);
+
+        app(ConfirmTwoFactorAuthentication::class)(auth()->user(), $this->twoFactorCode);
+
+        auth()->user()->refresh();
+
+        $this->showingQrCode = false;
+        $this->showingRecoveryCodes = true;
+        $this->twoFactorCode = '';
+
+        $this->dispatch('toast', type: 'success', message: 'Two-factor authentication enabled.');
+    }
+
+    public function disableTwoFactor(): void
+    {
+        $this->validate([
+            'current_password' => ['required', 'string', 'current_password:web'],
+        ]);
+
+        app(DisableTwoFactorAuthentication::class)(auth()->user());
+
+        auth()->user()->refresh();
+
+        $this->showingQrCode = false;
+        $this->showingRecoveryCodes = false;
+        $this->current_password = '';
+
+        $this->dispatch('toast', type: 'success', message: 'Two-factor authentication disabled.');
+    }
+
+    public function showRecoveryCodes(): void
+    {
+        $this->validate([
+            'current_password' => ['required', 'string', 'current_password:web'],
+        ]);
+
+        $this->showingRecoveryCodes = true;
+        $this->current_password = '';
+    }
+
+    public function regenerateRecoveryCodes(): void
+    {
+        app(GenerateNewRecoveryCodes::class)(auth()->user());
+
+        auth()->user()->refresh();
+
+        $this->showingRecoveryCodes = true;
+
+        $this->dispatch('toast', type: 'success', message: 'Recovery codes regenerated.');
     }
 
     public function render()

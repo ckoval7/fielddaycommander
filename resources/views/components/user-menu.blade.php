@@ -60,14 +60,14 @@
 
         <div class="divider my-1"></div>
 
-        <li x-data>
-            <form x-ref="logoutForm" method="POST" action="{{ route('logout') }}" class="hidden">
+        <li>
+            <form method="POST" action="{{ route('logout') }}" data-navigate-ignore>
                 @csrf
+                <button type="submit" class="text-error">
+                    <x-icon name="o-arrow-right-on-rectangle" class="w-4 h-4" />
+                    Logout
+                </button>
             </form>
-            <a @click.prevent="$refs.logoutForm.submit()" class="text-error cursor-pointer">
-                <x-icon name="o-arrow-right-on-rectangle" class="w-4 h-4" />
-                Logout
-            </a>
         </li>
     </ul>
 </div>

@@ -50,7 +50,39 @@
         <div class="card-body">
             <h3 class="card-title">Two-Factor Authentication</h3>
 
-            @if($user->has2FAEnabled())
+            @if($showingQrCode)
+                <x-alert icon="o-device-phone-mobile" class="alert-info">
+                    Scan the QR code below with your authenticator app
+                </x-alert>
+
+                <div class="flex justify-center my-4">
+                    <div class="bg-white p-4 rounded-lg inline-block">
+                        {!! auth()->user()->twoFactorQrCodeSvg() !!}
+                    </div>
+                </div>
+
+                <p class="text-xs text-base-content/60 text-center mb-4">
+                    Or enter this key manually: <code class="text-sm">{{ decrypt(auth()->user()->two_factor_secret) }}</code>
+                </p>
+
+                <x-form wire:submit="confirmTwoFactor">
+                    <x-input
+                        label="Verification Code"
+                        wire:model="twoFactorCode"
+                        placeholder="Enter the 6-digit code from your app"
+                        required
+                    />
+
+                    <div class="card-actions justify-end">
+                        <x-button wire:click="cancelTwoFactorSetup" class="btn-ghost">
+                            Cancel
+                        </x-button>
+                        <x-button type="submit" spinner="confirmTwoFactor" class="btn-primary">
+                            Confirm & Enable
+                        </x-button>
+                    </div>
+                </x-form>
+            @elseif($user->hasEnabledTwoFactorAuthentication())
                 <x-alert icon="o-check-circle" class="alert-success">
                     Two-factor authentication is enabled
                 </x-alert>
@@ -59,10 +91,60 @@
                     Your account is protected with two-factor authentication.
                 </p>
 
-                {{-- Placeholder for 2FA management buttons --}}
+                {{-- Recovery codes display --}}
+                @if($showingRecoveryCodes)
+                    <div class="mt-4 p-4 bg-base-200 rounded-lg">
+                        <p class="text-sm font-semibold mb-2">Recovery Codes</p>
+                        <p class="text-xs text-base-content/60 mb-3">
+                            Store these codes in a secure location. Each code can only be used once.
+                        </p>
+                        <div class="grid grid-cols-2 gap-1 font-mono text-sm">
+                            @foreach($user->recoveryCodes() as $code)
+                                <div class="p-1">{{ $code }}</div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <div class="card-actions justify-end mt-4">
-                    <x-button class="btn-outline">View Recovery Codes</x-button>
-                    <x-button class="btn-outline">Regenerate Codes</x-button>
+                    @if(! $showingRecoveryCodes)
+                        <div class="flex items-end gap-2 w-full">
+                            <div class="flex-1">
+                                <x-input
+                                    label="Current Password"
+                                    type="password"
+                                    wire:model="current_password"
+                                    placeholder="Confirm password to view codes"
+                                />
+                            </div>
+                            <x-button wire:click="showRecoveryCodes" spinner="showRecoveryCodes" class="btn-outline">
+                                View Recovery Codes
+                            </x-button>
+                        </div>
+                    @else
+                        <x-button wire:click="regenerateRecoveryCodes" spinner="regenerateRecoveryCodes" class="btn-outline">
+                            Regenerate Codes
+                        </x-button>
+                        <x-button wire:click="$set('showingRecoveryCodes', false)" class="btn-ghost">
+                            Hide Codes
+                        </x-button>
+                    @endif
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="flex items-end gap-2">
+                    <div class="flex-1">
+                        <x-input
+                            label="Current Password"
+                            type="password"
+                            wire:model="current_password"
+                            placeholder="Confirm password to disable"
+                        />
+                    </div>
+                    <x-button wire:click="disableTwoFactor" spinner="disableTwoFactor" class="btn-error btn-outline">
+                        Disable 2FA
+                    </x-button>
                 </div>
             @else
                 <x-alert icon="o-exclamation-triangle" class="alert-warning">
@@ -73,8 +155,18 @@
                     Enable two-factor authentication to add an extra layer of security to your account.
                 </p>
 
-                <div class="card-actions justify-end mt-4">
-                    <x-button class="btn-primary">Enable 2FA</x-button>
+                <div class="flex items-end gap-2 mt-4">
+                    <div class="flex-1">
+                        <x-input
+                            label="Current Password"
+                            type="password"
+                            wire:model="current_password"
+                            placeholder="Confirm password to enable"
+                        />
+                    </div>
+                    <x-button wire:click="enableTwoFactor" spinner="enableTwoFactor" class="btn-primary">
+                        Enable 2FA
+                    </x-button>
                 </div>
             @endif
         </div>
