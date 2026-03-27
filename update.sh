@@ -85,6 +85,8 @@ else
 fi
 
 # --- Fetch and check for updates ---
+DEPLOYED_REV_FILE="$APP_PATH/.deployed-revision"
+
 fetch_updates() {
     log_phase "Checking for updates"
 
@@ -93,19 +95,43 @@ fetch_updates() {
         sudo -u fdcommander git fetch origin "$BRANCH"
         LOCAL=$(sudo -u fdcommander git rev-parse HEAD)
         REMOTE=$(sudo -u fdcommander git rev-parse "origin/$BRANCH")
+
+        if [[ "$LOCAL" == "$REMOTE" ]]; then
+            log_info "Already up to date (${LOCAL:0:8}). Nothing to do."
+            exit 0
+        fi
+
+        log_info "Updates available: ${LOCAL:0:8} → ${REMOTE:0:8}"
     else
         cd "$SCRIPT_DIR"
         git fetch origin "$BRANCH"
+
+        # Pull source to latest if behind remote
         LOCAL=$(git rev-parse HEAD)
         REMOTE=$(git rev-parse "origin/$BRANCH")
-    fi
+        if [[ "$LOCAL" != "$REMOTE" ]]; then
+            log_info "Source repo is behind remote, pulling..."
+            git pull origin "$BRANCH"
+        fi
 
-    if [[ "$LOCAL" == "$REMOTE" ]]; then
-        log_info "Already up to date (${LOCAL:0:8}). Nothing to do."
-        exit 0
-    fi
+        # Compare source HEAD against last deployed revision
+        SOURCE_REV=$(git rev-parse HEAD)
+        DEPLOYED_REV=""
+        if [[ -f "$DEPLOYED_REV_FILE" ]]; then
+            DEPLOYED_REV=$(cat "$DEPLOYED_REV_FILE")
+        fi
 
-    log_info "Updates available: ${LOCAL:0:8} → ${REMOTE:0:8}"
+        if [[ "$SOURCE_REV" == "$DEPLOYED_REV" ]]; then
+            log_info "Already up to date (${SOURCE_REV:0:8}). Nothing to do."
+            exit 0
+        fi
+
+        if [[ -n "$DEPLOYED_REV" ]]; then
+            log_info "Updates available: ${DEPLOYED_REV:0:8} → ${SOURCE_REV:0:8}"
+        else
+            log_info "No deployment revision tracked yet — will sync current source (${SOURCE_REV:0:8})"
+        fi
+    fi
 }
 
 # --- Pull and sync ---
@@ -117,20 +143,22 @@ pull_updates() {
         sudo -u fdcommander git pull origin "$BRANCH"
         chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH"
     else
-        cd "$SCRIPT_DIR"
-        git pull origin "$BRANCH"
-
         log_info "Syncing files to $APP_PATH..."
         rsync -a --delete \
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='vendor' \
             --exclude='.env' \
+            --exclude='.deployed-revision' \
             --exclude='storage/app' \
             --exclude='storage/logs' \
             --exclude='storage/framework/sessions' \
             --exclude='storage/framework/cache/data' \
             "$SCRIPT_DIR/" "$APP_PATH/"
+
+        # Record the deployed revision
+        cd "$SCRIPT_DIR"
+        git rev-parse HEAD > "$DEPLOYED_REV_FILE"
 
         chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH"
     fi
