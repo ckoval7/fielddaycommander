@@ -11,16 +11,18 @@ globalThis.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 globalThis.Pusher = Pusher;
 
 try {
-    // Only initialize Echo if Reverb configuration exists
-    // This will prevent connection errors during development
-    if (import.meta.env.VITE_REVERB_APP_KEY) {
+    // Read Reverb config from server-injected meta tag (runtime-configurable)
+    const reverbMeta = document.querySelector('meta[name="reverb-config"]');
+    const reverbConfig = reverbMeta ? JSON.parse(reverbMeta.content) : {};
+
+    if (reverbConfig.key) {
         globalThis.Echo = new Echo({
             broadcaster: 'reverb',
-            key: import.meta.env.VITE_REVERB_APP_KEY,
-            wsHost: import.meta.env.VITE_REVERB_HOST ?? globalThis.location.hostname,
-            wsPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
-            wssPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
-            forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+            key: reverbConfig.key,
+            wsHost: reverbConfig.host || globalThis.location.hostname,
+            wsPort: reverbConfig.port || 8080,
+            wssPort: reverbConfig.port || 8080,
+            forceTLS: (reverbConfig.scheme || 'https') === 'https',
             enabledTransports: ['ws', 'wss'],
         });
     }
