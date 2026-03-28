@@ -250,7 +250,7 @@ class EventEquipmentDashboard extends Component
         return [
             'committed' => $commitments->where('status', 'committed')->count(),
             'delivered' => $commitments->where('status', 'delivered')->count(),
-            'in_use' => $commitments->where('status', 'in_use')->count(),
+            // 'in_use' => $commitments->where('status', 'in_use')->count(), // Not yet auto-set from station sessions
             'returned' => $commitments->where('status', 'returned')->count(),
             'issues' => $commitments->whereIn('status', ['cancelled', 'lost', 'damaged'])->count(),
             'total' => $commitments->count(),

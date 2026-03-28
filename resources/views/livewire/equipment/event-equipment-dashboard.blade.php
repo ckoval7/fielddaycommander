@@ -126,6 +126,7 @@
             </div>
         </x-card>
 
+        {{-- In Use card hidden — equipment status doesn't auto-update from station sessions yet
         <x-card class="bg-warning/10 cursor-pointer hover:bg-warning/20 transition-colors" wire:click="$set('statusFilter', 'in_use')">
             <div class="text-center">
                 <div class="text-3xl font-bold text-warning">{{ $this->statsCards['in_use'] }}</div>
@@ -135,6 +136,7 @@
                 </div>
             </div>
         </x-card>
+        --}}
 
         <x-card class="bg-neutral/10 cursor-pointer hover:bg-neutral/20 transition-colors" wire:click="$set('statusFilter', 'returned')">
             <div class="text-center">
