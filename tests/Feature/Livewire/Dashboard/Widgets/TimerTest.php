@@ -175,7 +175,7 @@ it('supports tv size variant', function () {
     ])
         ->assertOk()
         ->assertSee('Time Remaining')
-        ->assertSee('lg:text-7xl'); // TV-specific class
+        ->assertSee('lg:text-8xl'); // TV-specific class
 });
 
 it('renders Alpine.js countdown component', function () {

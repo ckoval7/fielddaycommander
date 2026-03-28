@@ -326,14 +326,14 @@ describe('rendering and display', function () {
 
     it('applies TV size styling when size is tv', function () {
         Livewire::test(ProgressBar::class, ['size' => 'tv'])
-            ->assertSeeHtml('text-4xl') // Larger numbers
-            ->assertSeeHtml('h-8'); // Larger progress bar
+            ->assertSeeHtml('text-5xl') // Larger numbers
+            ->assertSeeHtml('h-10'); // Larger progress bar
     });
 
     it('applies normal size styling by default', function () {
         Livewire::test(ProgressBar::class)
-            ->assertSeeHtml('text-2xl') // Standard numbers
-            ->assertSeeHtml('h-4'); // Standard progress bar
+            ->assertSeeHtml('text-4xl') // Standard numbers
+            ->assertSeeHtml('h-5'); // Standard progress bar
     });
 
     it('includes celebration overlay elements', function () {
