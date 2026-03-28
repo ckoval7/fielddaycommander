@@ -31,5 +31,5 @@ sonar-project.properties
 .mcp.json
 boost.json
 /frankenphp
-/tests/e2e/screenshots/
+/tests/e2e/
 /tests/Browser/
