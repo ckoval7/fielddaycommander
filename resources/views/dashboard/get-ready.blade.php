@@ -95,6 +95,19 @@
                     </div>
                 </div>
             </div>
+            {{-- Invite Participants CTA --}}
+            @can('manage-users')
+                <div class="card bg-primary/5 border border-primary/20 mt-6">
+                    <div class="card-body text-center py-6">
+                        <h3 class="text-lg font-bold mb-1">Invite participants</h3>
+                        <p class="text-sm text-base-content/60 mb-4">Get operators signed up so they can claim shifts and log contacts.</p>
+                        <a href="{{ route('register') }}" class="btn btn-primary btn-sm">
+                            <x-icon name="o-user-plus" class="w-4 h-4" />
+                            Share Sign-Up Link
+                        </a>
+                    </div>
+                </div>
+            @endcan
         </div>
     </div>
 </x-layouts.app>

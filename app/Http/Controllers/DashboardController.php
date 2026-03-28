@@ -74,18 +74,23 @@ class DashboardController extends Controller
     {
         $event->load('eventConfiguration');
 
+        $eventConfig = $event->eventConfiguration;
+
         $checklist = [
             [
                 'label' => 'Event configuration created',
-                'done' => $event->eventConfiguration !== null,
-                'route' => $event->eventConfiguration
-                    ? route('events.show', $event)
-                    : route('events.show', $event),
+                'done' => $eventConfig !== null,
+                'route' => route('events.show', $event),
             ],
             [
                 'label' => 'Stations set up',
-                'done' => $event->eventConfiguration?->stations()->exists() ?? false,
+                'done' => $eventConfig?->stations()->exists() ?? false,
                 'route' => route('stations.index'),
+            ],
+            [
+                'label' => 'Shifts scheduled',
+                'done' => $eventConfig?->shifts()->exists() ?? false,
+                'route' => route('schedule.manage'),
             ],
             [
                 'label' => 'Equipment ready',
