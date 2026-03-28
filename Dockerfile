@@ -13,7 +13,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction --prefer-dist
 
 COPY . .
-RUN composer dump-autoload --optimize --no-dev
+RUN composer dump-autoload --optimize --no-dev --no-scripts
 
 # ---------------------------------------------------------------------------
 # Stage 2: Build frontend assets (Vite + Tailwind)
@@ -35,7 +35,7 @@ RUN npm run build
 # ---------------------------------------------------------------------------
 # Stage 3: Production runtime
 # ---------------------------------------------------------------------------
-FROM dunglas/frankenphp:latest-php8.4 AS production
+FROM dunglas/frankenphp:1-php8.4 AS production
 
 LABEL maintainer="FD Commander"
 LABEL description="Field Day Commander - Amateur Radio Field Day Logging"
@@ -66,6 +66,9 @@ COPY . .
 # Copy built artifacts from previous stages
 COPY --from=composer /app/vendor ./vendor
 COPY --from=node /app/public/build ./public/build
+
+# Run package discovery (needs pdo_mysql available, so must run in production stage)
+RUN php artisan package:discover --ansi
 
 # Use Docker-specific Caddyfile (plain HTTP, no TLS)
 COPY docker/Caddyfile ./Caddyfile

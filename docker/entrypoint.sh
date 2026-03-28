@@ -17,21 +17,53 @@ chmod -R 775 /app/storage /app/bootstrap/cache
 chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
 # 2. Create storage symlink (idempotent)
-php artisan storage:link 2>/dev/null || true
+if [ ! -L /app/public/storage ]; then
+    php artisan storage:link
+fi
 
-# 3. Wait for database
+# 3. Build .env inside container from environment variables
+#    Docker Compose injects env vars from env_file + environment directives.
+#    Laravel commands like key:generate expect a .env file to exist.
+echo "Writing .env from container environment..."
+: > /app/.env
+env | grep -E '^[A-Z_]+=' | sort | while IFS='=' read -r key value; do
+    echo "${key}=\"${value}\"" >> /app/.env
+done
+
+# 4. Generate APP_KEY if not set
+if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
+    echo "Generating application key..."
+    php artisan key:generate --force
+    # Re-export so downstream commands see it
+    export APP_KEY=$(grep '^APP_KEY=' /app/.env | cut -d= -f2-)
+fi
+
+# 5. Generate Reverb credentials if not set
+if [ -z "$REVERB_APP_KEY" ]; then
+    echo "Generating Reverb credentials..."
+    REVERB_APP_KEY=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 20 || true)
+    REVERB_APP_SECRET=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 20 || true)
+    REVERB_APP_ID=$(tr -dc '0-9' < /dev/urandom | head -c 8 || true)
+    export REVERB_APP_KEY REVERB_APP_SECRET REVERB_APP_ID
+    # Append to .env so artisan commands pick them up
+    echo "REVERB_APP_KEY=$REVERB_APP_KEY" >> /app/.env
+    echo "REVERB_APP_SECRET=$REVERB_APP_SECRET" >> /app/.env
+    echo "REVERB_APP_ID=$REVERB_APP_ID" >> /app/.env
+fi
+
+# 6. Wait for database
 echo "Waiting for database connection..."
-until php artisan migrate:status > /dev/null 2>&1; do
+until php artisan db:show > /dev/null 2>&1; do
     echo "  Database not ready, retrying in 3s..."
     sleep 3
 done
 echo "Database connected."
 
-# 4. Run migrations
+# 7. Run migrations
 echo "Running migrations..."
 php artisan migrate --force
 
-# 5. Run production seeders on first run
+# 8. Run production seeders on first run
 SEEDER_MARKER="/app/storage/.seeders-complete"
 if [ ! -f "$SEEDER_MARKER" ]; then
     echo "First run detected — running production seeders..."
@@ -50,22 +82,7 @@ else
     echo "Seeders already ran (marker exists), skipping."
 fi
 
-# 6. Generate app key if not set
-if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
-    echo "Generating application key..."
-    php artisan key:generate --force
-fi
-
-# 7. Generate Reverb credentials if not set
-if [ -z "$REVERB_APP_KEY" ]; then
-    echo "Generating Reverb credentials..."
-    REVERB_APP_KEY=$(head -c 20 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 20)
-    REVERB_APP_SECRET=$(head -c 20 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 20)
-    REVERB_APP_ID=$(head -c 8 /dev/urandom | base64 | tr -dc '0-9' | head -c 8)
-    export REVERB_APP_KEY REVERB_APP_SECRET REVERB_APP_ID
-fi
-
-# 8. Cache configuration
+# 9. Cache configuration
 echo "Caching configuration..."
 php artisan config:cache
 php artisan route:cache
