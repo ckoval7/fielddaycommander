@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Messages - {{ $event->eventConfiguration->callsign ?? 'Field Day' }}</title>
     <style>

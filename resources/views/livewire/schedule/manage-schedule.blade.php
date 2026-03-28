@@ -378,8 +378,8 @@
                 />
                 {{-- Icon Picker --}}
                 <div x-data="{ selectedIcon: $wire.entangle('roleIcon') }">
-                    <label class="label label-text font-semibold">Icon</label>
-                    <div class="grid grid-cols-6 gap-2 mt-1">
+                    <label for="role-icon" class="label label-text font-semibold">Icon</label>
+                    <div id="role-icon" class="grid grid-cols-6 gap-2 mt-1">
                         @php
                             $iconOptions = [
                                 'o-shield-check' => 'Shield',
@@ -419,8 +419,9 @@
 
                 {{-- Color Picker --}}
                 <div x-data="{ selectedColor: $wire.entangle('roleColor') }" class="flex items-center gap-3">
-                    <label class="label label-text font-semibold">Color</label>
+                    <label for="role-color" class="label label-text font-semibold">Color</label>
                     <input
+                        id="role-color"
                         type="color"
                         x-model="selectedColor"
                         class="w-10 h-10 rounded cursor-pointer border border-base-300"

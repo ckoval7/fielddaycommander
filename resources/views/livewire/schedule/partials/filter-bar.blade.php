@@ -59,8 +59,9 @@
             {{-- Search --}}
             @if($showSearch)
                 <div>
-                    <label class="label label-text text-xs font-semibold">Search by name / call sign</label>
+                    <label for="schedule-search" class="label label-text text-xs font-semibold">Search by name / call sign</label>
                     <input
+                        id="schedule-search"
                         type="text"
                         wire:model.live.debounce.300ms="search"
                         placeholder="Search..."
@@ -71,8 +72,8 @@
 
             {{-- Role dropdown --}}
             <div>
-                <label class="label label-text text-xs font-semibold">Role</label>
-                <select wire:model.live="role" class="select select-bordered select-sm w-full">
+                <label for="schedule-role" class="label label-text text-xs font-semibold">Role</label>
+                <select id="schedule-role" wire:model.live="role" class="select select-bordered select-sm w-full">
                     <option value="">All Roles</option>
                     @foreach($this->filterRoles as $filterRole)
                         <option value="{{ $filterRole->id }}">{{ $filterRole->name }}</option>
@@ -83,8 +84,8 @@
             {{-- Status dropdown --}}
             @if($showStatusFilter && count($statuses) > 0)
                 <div>
-                    <label class="label label-text text-xs font-semibold">Status</label>
-                    <select wire:model.live="status" class="select select-bordered select-sm w-full">
+                    <label for="schedule-status" class="label label-text text-xs font-semibold">Status</label>
+                    <select id="schedule-status" wire:model.live="status" class="select select-bordered select-sm w-full">
                         <option value="">All Statuses</option>
                         @foreach($statuses as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
@@ -96,8 +97,8 @@
             {{-- Availability dropdown --}}
             @if($showAvailability)
                 <div>
-                    <label class="label label-text text-xs font-semibold">Availability</label>
-                    <select wire:model.live="availability" class="select select-bordered select-sm w-full">
+                    <label for="schedule-availability" class="label label-text text-xs font-semibold">Availability</label>
+                    <select id="schedule-availability" wire:model.live="availability" class="select select-bordered select-sm w-full">
                         <option value="">All</option>
                         <option value="unfilled">Unfilled Only</option>
                         <option value="full">Full Only</option>
@@ -108,8 +109,8 @@
             {{-- Time filter --}}
             @if($showTimeFilter)
                 <div>
-                    <label class="label label-text text-xs font-semibold">Time</label>
-                    <select wire:model.live="timeFilter" class="select select-bordered select-sm w-full">
+                    <label for="schedule-time" class="label label-text text-xs font-semibold">Time</label>
+                    <select id="schedule-time" wire:model.live="timeFilter" class="select select-bordered select-sm w-full">
                         <option value="">All Times</option>
                         <option value="current">Current</option>
                         <option value="upcoming">Upcoming</option>
@@ -120,9 +121,9 @@
 
             {{-- Sort --}}
             <div>
-                <label class="label label-text text-xs font-semibold">Sort by</label>
+                <label for="schedule-sort" class="label label-text text-xs font-semibold">Sort by</label>
                 <div class="flex gap-1">
-                    <select wire:model.live="sortBy" class="select select-bordered select-sm flex-1">
+                    <select id="schedule-sort" wire:model.live="sortBy" class="select select-bordered select-sm flex-1">
                         <option value="time">Time</option>
                         <option value="role">Role</option>
                         @if($showAvailability)
