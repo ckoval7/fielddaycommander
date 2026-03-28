@@ -167,8 +167,18 @@
 >
     <x-card
         class="h-full flex flex-col {{ $size === 'tv' ? 'shadow-lg' : 'shadow-sm' }}"
-        :title="$chartData['title'] ?? 'Chart'"
     >
+        {{-- Header with title and summary value --}}
+        <div class="flex items-baseline justify-between mb-2">
+            <h3 class="{{ $size === 'tv' ? 'text-xl font-bold' : 'text-sm font-semibold' }} text-base-content">
+                {{ $chartData['title'] ?? 'Chart' }}
+            </h3>
+            @if(!empty($chartData['summary_value']))
+                <span class="{{ $size === 'tv' ? 'text-2xl' : 'text-lg' }} font-bold tabular-nums text-primary">
+                    {{ $chartData['summary_value'] }}
+                </span>
+            @endif
+        </div>
         {{-- Chart container --}}
         <div
             class="relative flex-1 {{ $size === 'tv' ? 'min-h-[280px]' : 'min-h-[200px]' }}"

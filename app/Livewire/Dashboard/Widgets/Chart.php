@@ -323,6 +323,7 @@ class Chart extends Component
             'title' => $title,
             'description' => $description,
             'data_source' => $dataSource,
+            'summary_value' => $this->formatSummaryValue($rawData, $dataSource),
             'last_updated_at' => appNow(),
         ];
     }
@@ -346,5 +347,26 @@ class Chart extends Component
 
         return "{$title} chart showing {$totalQsos} total QSOs. Top entries: "
             .implode(', ', $topDescriptions).'.';
+    }
+
+    /**
+     * Generate a concise summary value for at-a-glance display.
+     *
+     * @param  array<array{label: string, value: int}>  $rawData
+     */
+    protected function formatSummaryValue(array $rawData, string $dataSource): string
+    {
+        if (empty($rawData)) {
+            return '0';
+        }
+
+        $total = array_sum(array_column($rawData, 'value'));
+
+        return match ($dataSource) {
+            'qsos_per_hour' => number_format($total / max(count($rawData), 1), 1).'/hr',
+            'qsos_per_band' => number_format($total).' Qs',
+            'qsos_per_mode' => number_format($total).' Qs',
+            default => number_format($total),
+        };
     }
 }
