@@ -15,12 +15,11 @@ Props from component:
             @if ($data['is_ended'])
                 {{-- Event has ended --}}
                 <div class="text-center">
-                    <x-icon
-                        name="o-clock"
-                        class="w-12 h-12 sm:w-16 sm:h-16 {{ $size === 'tv' ? 'lg:w-24 lg:h-24' : '' }} text-base-content/50 mb-4"
-                    />
-                    <div class="text-2xl sm:text-3xl {{ $size === 'tv' ? 'lg:text-5xl' : '' }} font-bold text-base-content/70">
+                    <div class="text-sm text-base-content/60 mb-2 {{ $size === 'tv' ? 'text-xl' : '' }}">
                         {{ $data['label'] }}
+                    </div>
+                    <div class="font-mono font-black {{ $size === 'tv' ? 'text-5xl lg:text-7xl' : 'text-3xl sm:text-4xl' }} text-base-content/70">
+                        00:00:00
                     </div>
                 </div>
             @else
@@ -30,24 +29,19 @@ Props from component:
                     x-init="init()"
                     class="text-center w-full"
                 >
-                    <x-icon
-                        name="o-clock"
-                        class="w-12 h-12 sm:w-16 sm:h-16 {{ $size === 'tv' ? 'lg:w-24 lg:h-24' : '' }} text-primary mb-4"
-                        ::class="{ 'text-warning': isWarning, 'text-error': isCritical }"
-                    />
+                    {{-- Small label --}}
+                    <div class="text-sm text-base-content/60 mb-2 {{ $size === 'tv' ? 'text-xl' : '' }}">
+                        {{ $data['label'] }}
+                    </div>
 
-                    <div class="mb-2">
+                    <div>
                         <div
-                            class="text-3xl sm:text-4xl xl:text-3xl 2xl:text-4xl {{ $size === 'tv' ? 'lg:text-7xl' : '' }} font-mono font-bold text-primary"
+                            class="font-mono font-black text-primary {{ $size === 'tv' ? 'text-6xl lg:text-8xl' : 'text-4xl sm:text-5xl' }}"
                             ::class="{ 'text-warning': isWarning, 'text-error': isCritical }"
                             x-text="formattedTime"
                         >
                             --:--:--
                         </div>
-                    </div>
-
-                    <div class="text-lg sm:text-xl {{ $size === 'tv' ? 'lg:text-3xl' : '' }} text-base-content/70">
-                        {{ $data['label'] }}
                     </div>
                 </div>
             @endif
