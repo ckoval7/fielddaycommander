@@ -739,6 +739,46 @@ test('available club equipment excludes already committed items', function () {
     ]);
 });
 
+test('can recommit cancelled club equipment to same event', function () {
+    $this->actingAs($this->manager);
+
+    $org = \App\Models\Organization::factory()->create();
+    $clubEquipment = Equipment::factory()->create([
+        'owner_user_id' => null,
+        'owner_organization_id' => $org->id,
+        'type' => 'radio',
+        'make' => 'Kenwood',
+        'model' => 'TS-590S',
+    ]);
+
+    // Create an existing cancelled commitment for this equipment+event
+    EquipmentEvent::factory()->create([
+        'equipment_id' => $clubEquipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'cancelled',
+    ]);
+
+    // Recommitting the same equipment should succeed by reactivating the record
+    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
+        ->set('commitEquipmentId', $clubEquipment->id)
+        ->set('commitDeliveryNotes', 'Recommitted after cancellation')
+        ->call('commitClubEquipment')
+        ->assertSet('showCommitModal', false)
+        ->assertDispatched('notify', title: 'Success');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $clubEquipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Recommitted after cancellation',
+    ]);
+
+    // Should still be only one record for this equipment+event, not two
+    $this->assertEquals(1, EquipmentEvent::where('equipment_id', $clubEquipment->id)
+        ->where('event_id', $this->event->id)
+        ->count());
+});
+
 test('photo modal can be closed in event equipment', function () {
     $this->actingAs($this->manager);
 

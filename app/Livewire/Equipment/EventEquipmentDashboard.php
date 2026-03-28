@@ -736,16 +736,23 @@ class EventEquipmentDashboard extends Component
             return;
         }
 
-        EquipmentEvent::create([
-            'equipment_id' => $this->commitEquipmentId,
-            'event_id' => $this->event->id,
-            'status' => 'committed',
-            'committed_at' => now(),
-            'expected_delivery_at' => $this->commitExpectedDeliveryAt ? Carbon::parse($this->commitExpectedDeliveryAt) : null,
-            'delivery_notes' => $this->commitDeliveryNotes,
-            'status_changed_at' => now(),
-            'status_changed_by_user_id' => auth()->id(),
-        ]);
+        EquipmentEvent::updateOrCreate(
+            [
+                'equipment_id' => $this->commitEquipmentId,
+                'event_id' => $this->event->id,
+            ],
+            [
+                'status' => 'committed',
+                'committed_at' => now(),
+                'expected_delivery_at' => $this->commitExpectedDeliveryAt ? Carbon::parse($this->commitExpectedDeliveryAt) : null,
+                'delivery_notes' => $this->commitDeliveryNotes,
+                'station_id' => null,
+                'assigned_by_user_id' => null,
+                'manager_notes' => null,
+                'status_changed_at' => now(),
+                'status_changed_by_user_id' => auth()->id(),
+            ]
+        );
 
         $this->dispatch('notify', title: 'Success', description: 'Club equipment committed to event.', type: 'success');
 
