@@ -35,7 +35,7 @@ class EquipmentStatus extends Component
         }
 
         return Station::where('event_configuration_id', $this->event->eventConfiguration->id)
-            ->with(['radioEquipment', 'operatingSessions'])
+            ->with(['primaryRadio', 'operatingSessions'])
             ->get();
     }
 
