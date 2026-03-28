@@ -29,7 +29,7 @@ test('setup routes redirect to home when setup is already complete', function ()
 test('step 1 displays admin password form', function () {
     // View rendering has a known issue with Mary UI icon parsing
     // Backend logic is fully tested in other tests
-    expect(route('setup.welcome'))->toBe('http://172.16.30.226:8000');
+    expect(route('setup.welcome'))->toBe(url('/'));
 })->skip('View rendering issue with Mary UI - backend logic tested separately');
 
 test('step 1 validates password requirements', function () {
@@ -63,7 +63,7 @@ test('step 1 stores password in session and redirects to step 2', function () {
 test('step 2 displays branding form', function () {
     // View rendering has a known issue with Mary UI icon parsing
     // Backend logic is fully tested in other tests
-    expect(route('setup.branding'))->toBe('http://172.16.30.226:8000/setup/branding');
+    expect(route('setup.branding'))->toBe(url('/setup/branding'));
 })->skip('View rendering issue with Mary UI - backend logic tested separately');
 
 test('step 2 validates site name required', function () {
@@ -98,7 +98,7 @@ test('step 2 stores data in session and redirects to step 3', function () {
 test('step 3 displays preferences form', function () {
     // View rendering has a known issue with Mary UI icon parsing
     // Backend logic is fully tested in other tests
-    expect(route('setup.preferences'))->toBe('http://172.16.30.226:8000/setup/preferences');
+    expect(route('setup.preferences'))->toBe(url('/setup/preferences'));
 })->skip('View rendering issue with Mary UI - backend logic tested separately');
 
 test('step 3 validates timezone required', function () {

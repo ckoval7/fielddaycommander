@@ -9,7 +9,7 @@ export default defineConfig({
     reporter: 'list',
     timeout: 30_000,
     use: {
-        baseURL: process.env.APP_URL || 'http://172.16.30.226:8000',
+        baseURL: process.env.APP_URL || 'http://localhost:8000',
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
         launchOptions: {
