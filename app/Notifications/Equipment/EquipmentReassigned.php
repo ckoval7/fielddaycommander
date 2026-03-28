@@ -61,7 +61,7 @@ class EquipmentReassigned extends Notification implements ShouldQueue
         $reassignedByCallsign = $this->reassignedBy->call_sign ?? 'N/A';
         $timestamp = now()->format('M j, Y g:i A');
 
-        $url = route('stations.list');
+        $url = route('stations.index');
 
         $message = (new MailMessage)
             ->subject("Equipment Reassigned: {$equipmentName}")
