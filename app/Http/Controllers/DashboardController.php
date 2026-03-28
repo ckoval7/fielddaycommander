@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dashboard;
+use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Services\EventContextService;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class DashboardController extends Controller
         $event = $eventContext->getContextEvent();
 
         // If there's a context event that hasn't started yet, show get-ready
-        if ($event && $event->start_time && $event->start_time->isFuture()) {
+        if ($event && $event->start_time && $event->start_time->isAfter(appNow())) {
             return $this->getReadyView($event);
         }
 
@@ -84,7 +85,7 @@ class DashboardController extends Controller
             ],
             [
                 'label' => 'Equipment inventoried',
-                'done' => false,
+                'done' => EquipmentEvent::where('event_id', $event->id)->exists(),
                 'route' => route('events.equipment.dashboard', $event),
             ],
             [
