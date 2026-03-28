@@ -23,8 +23,42 @@
 
             {{-- Countdown --}}
             <div class="text-center mb-8"
-                 x-data="countdown(@js($event->start_time->toIso8601String()), @js(appNow()->toIso8601String()))"
-                 x-init="init()">
+                 x-data="{
+                     endTime: new Date(@js($event->start_time->toIso8601String())),
+                     now: new Date(@js(appNow()->toIso8601String())),
+                     formattedTime: '--:--:--',
+                     intervalId: null,
+
+                     init() {
+                         this.updateCountdown();
+                         this.intervalId = setInterval(() => {
+                             this.now = new Date(this.now.getTime() + 1000);
+                             this.updateCountdown();
+                         }, 1000);
+                     },
+
+                     destroy() {
+                         if (this.intervalId) clearInterval(this.intervalId);
+                     },
+
+                     updateCountdown() {
+                         const diff = this.endTime - this.now;
+                         if (diff <= 0) {
+                             this.formattedTime = '00:00:00';
+                             if (this.intervalId) clearInterval(this.intervalId);
+                             return;
+                         }
+                         const totalSeconds = Math.floor(diff / 1000);
+                         const days = Math.floor(totalSeconds / 86400);
+                         const hours = Math.floor((totalSeconds % 86400) / 3600);
+                         const minutes = Math.floor((totalSeconds % 3600) / 60);
+                         const seconds = totalSeconds % 60;
+                         const pad = n => String(n).padStart(2, '0');
+                         this.formattedTime = days > 0
+                             ? `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+                             : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+                     }
+                 }">
                 <div class="text-sm text-base-content/60 uppercase tracking-wide mb-1">Starts in</div>
                 <div class="text-4xl font-mono font-black text-primary"
                      x-text="formattedTime">
