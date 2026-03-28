@@ -84,11 +84,26 @@ Props from controller:
 
         {{-- Widget Grid (Normal Display Mode) --}}
         @if($widgets && $widgets->isNotEmpty())
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 widget-grid">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 grid-flow-row-dense gap-4 sm:gap-6 widget-grid">
                 @foreach($widgets as $widget)
                     @if($widget['visible'] ?? true)
+                        @php
+                            $colSpan = $widget['col_span'] ?? 1;
+                            $rowSpan = $widget['row_span'] ?? 1;
+                            $spanClasses = match($colSpan) {
+                                2 => 'sm:col-span-2',
+                                3 => 'sm:col-span-3',
+                                4 => 'sm:col-span-4',
+                                default => '',
+                            };
+                            $rowSpanClasses = match($rowSpan) {
+                                2 => 'row-span-2',
+                                3 => 'row-span-3',
+                                default => '',
+                            };
+                        @endphp
                         <div
-                            class="widget-item animate-fade-in"
+                            class="widget-item animate-fade-in {{ $spanClasses }} {{ $rowSpanClasses }}"
                             wire:key="widget-{{ $widget['id'] }}"
                             x-data="{ updating: false }"
                             @widget-updating.window="if ($event.detail.id === '{{ $widget['id'] }}') updating = true"

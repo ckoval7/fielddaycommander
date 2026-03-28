@@ -152,6 +152,51 @@ describe('Config Validation', function () {
 
         expect($dashboard->hasValidConfig())->toBeTrue();
     });
+
+    it('validates config with valid col_span and row_span', function () {
+        $dashboard = Dashboard::factory()->create([
+            'config' => [
+                [
+                    'id' => 'widget-1',
+                    'type' => 'stat_card',
+                    'col_span' => 2,
+                    'row_span' => 1,
+                    'order' => 1,
+                    'visible' => true,
+                ],
+            ],
+        ]);
+
+        expect($dashboard->hasValidConfig())->toBeTrue();
+    });
+
+    it('returns false for config with non-numeric col_span', function () {
+        $dashboard = Dashboard::factory()->create([
+            'config' => [
+                [
+                    'id' => 'widget-1',
+                    'type' => 'stat_card',
+                    'col_span' => 'wide',
+                ],
+            ],
+        ]);
+
+        expect($dashboard->hasValidConfig())->toBeFalse();
+    });
+
+    it('returns false for config with non-numeric row_span', function () {
+        $dashboard = Dashboard::factory()->create([
+            'config' => [
+                [
+                    'id' => 'widget-1',
+                    'type' => 'stat_card',
+                    'row_span' => 'tall',
+                ],
+            ],
+        ]);
+
+        expect($dashboard->hasValidConfig())->toBeFalse();
+    });
 });
 
 describe('Config Validation Rules', function () {

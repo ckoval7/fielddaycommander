@@ -125,6 +125,8 @@ class Dashboard extends Model
             'config' => fn ($v) => is_array($v),
             'order' => fn ($v) => is_numeric($v),
             'visible' => fn ($v) => is_bool($v),
+            'col_span' => fn ($v) => is_numeric($v),
+            'row_span' => fn ($v) => is_numeric($v),
         ];
 
         foreach ($optionalTypeChecks as $field => $check) {
@@ -150,6 +152,8 @@ class Dashboard extends Model
             'config.*.config' => ['sometimes', 'array'],
             'config.*.order' => ['sometimes', 'integer', 'min:0'],
             'config.*.visible' => ['sometimes', 'boolean'],
+            'config.*.col_span' => ['sometimes', 'integer', 'min:1', 'max:4'],
+            'config.*.row_span' => ['sometimes', 'integer', 'min:1', 'max:3'],
         ];
     }
 
