@@ -30,9 +30,9 @@ Celebration features:
 <div class="flex-1 flex flex-col gap-3 relative">
     {{-- Numbers Display --}}
     <div class="flex items-baseline justify-between">
-        <div class="@if($size === 'tv') text-4xl @else text-2xl @endif font-bold">
+        <div class="@if($size === 'tv') text-5xl @else text-4xl @endif font-black tabular-nums">
             <span x-text="displayCurrent"></span>
-            <span class="@if($size === 'tv') text-2xl @else text-base @endif font-normal text-base-content/70">
+            <span class="@if($size === 'tv') text-xl @else text-base @endif font-normal text-base-content/50">
                 / {{ $data['target'] }}
             </span>
         </div>
@@ -42,7 +42,7 @@ Celebration features:
     </div>
 
     {{-- Progress Bar with Smooth Transition --}}
-    <div class="relative @if($size === 'tv') h-8 @else h-4 @endif bg-base-200 rounded-full overflow-hidden">
+    <div class="relative @if($size === 'tv') h-10 @else h-5 @endif bg-base-200 rounded-full overflow-hidden">
         <div
             class="h-full bg-primary rounded-full @if($size === 'tv') transition-all duration-800 @else transition-all duration-500 @endif ease-out"
             :style="`width: ${displayPercentage}%`"
