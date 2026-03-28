@@ -136,7 +136,7 @@
                         @endif
                     @endcan
 
-                    @canany(['manage-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook'])
+                    @canany(['manage-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment'])
                         <x-menu-separator title="ADMINISTRATION" />
 
                         @can('manage-events')
@@ -157,6 +157,13 @@
                                 <x-menu-item title="Manage Guestbook" icon="o-book-open" link="{{ route('events.guestbook', $activeEvent->id) }}" :active="request()->routeIs('events.guestbook')" />
                             @endif
                         @endcan
+
+                        @canany(['manage-event-equipment', 'view-all-equipment'])
+                            @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
+                            @if($activeEvent)
+                                <x-menu-item title="Event Equipment" icon="o-wrench-screwdriver" link="{{ route('events.equipment.dashboard', $activeEvent) }}" :active="request()->routeIs('events.equipment.dashboard')" />
+                            @endif
+                        @endcanany
 
                         @can('manage-users')
                             <x-menu-item title="Users" icon="o-user-group" link="/users" />
