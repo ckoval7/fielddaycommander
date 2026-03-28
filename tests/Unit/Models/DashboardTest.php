@@ -207,7 +207,7 @@ describe('Config Validation Rules', function () {
             ->and($rules)->toHaveKey('config')
             ->and($rules)->toHaveKey('config.*.id')
             ->and($rules)->toHaveKey('config.*.type')
-            ->and($rules['config.*.type'])->toContain('in:stat_card,chart,progress_bar,list_widget,timer,info_card,feed');
+            ->and($rules['config.*.type'])->toContain('in:stat_card,chart,progress_bar,list_widget,timer,info_card,feed,message_traffic_score');
     });
 });
 
