@@ -83,6 +83,11 @@ class DashboardController extends Controller
                 'route' => route('events.show', $event),
             ],
             [
+                'label' => 'Equipment inventoried',
+                'done' => false,
+                'route' => route('events.equipment.dashboard', $event),
+            ],
+            [
                 'label' => 'Stations set up',
                 'done' => $eventConfig?->stations()->exists() ?? false,
                 'route' => route('stations.index'),
@@ -91,11 +96,6 @@ class DashboardController extends Controller
                 'label' => 'Shifts scheduled',
                 'done' => $eventConfig?->shifts()->exists() ?? false,
                 'route' => route('schedule.manage'),
-            ],
-            [
-                'label' => 'Equipment ready',
-                'done' => false,
-                'route' => route('events.equipment.dashboard', $event),
             ],
         ];
 
