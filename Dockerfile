@@ -40,7 +40,7 @@ FROM dunglas/frankenphp:1-php8.4 AS production
 LABEL maintainer="FD Commander"
 LABEL description="Field Day Commander - Amateur Radio Field Day Logging"
 
-# Install PHP extensions
+# Install PHP extensions and supervisor
 RUN install-php-extensions \
     pdo_mysql \
     mbstring \
@@ -51,12 +51,10 @@ RUN install-php-extensions \
     gd \
     intl \
     redis \
-    pcntl
-
-# Install supervisor
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends supervisor && \
-    rm -rf /var/lib/apt/lists/*
+    pcntl \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends supervisor \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -76,13 +74,13 @@ COPY docker/Caddyfile ./Caddyfile
 # Copy Docker support files
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Create storage structure and set permissions
-RUN mkdir -p storage/{app/public,framework/{cache/data,sessions,views,testing},logs} \
-    bootstrap/cache && \
-    chmod -R 775 storage bootstrap/cache && \
-    chown -R www-data:www-data storage bootstrap/cache
+# Set entrypoint permissions and create storage structure
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+    && mkdir -p storage/{app/public,framework/{cache/data,sessions,views,testing},logs} \
+        bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
 

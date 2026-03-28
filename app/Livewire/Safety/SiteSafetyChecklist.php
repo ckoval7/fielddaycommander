@@ -44,7 +44,7 @@ class SiteSafetyChecklist extends Component
         }
 
         $operatingClass = $this->eventConfig->operatingClass;
-        $classLetter = $operatingClass ? preg_replace('/[0-9]+/', '', $operatingClass->code) : null;
+        $classLetter = $operatingClass ? preg_replace('/\d+/', '', $operatingClass->code) : null;
 
         return match ($classLetter) {
             'A' => [ChecklistType::SafetyOfficer],

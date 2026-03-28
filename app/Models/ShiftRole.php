@@ -223,7 +223,7 @@ class ShiftRole extends Model
     public static function seedDefaults(EventConfiguration $eventConfiguration): void
     {
         $operatingClass = $eventConfiguration->operatingClass;
-        $classLetter = $operatingClass ? preg_replace('/[0-9]+/', '', $operatingClass->code) : null;
+        $classLetter = $operatingClass ? preg_replace('/\d+/', '', $operatingClass->code) : null;
 
         $sortOrder = 0;
         foreach (self::DEFAULTS as $name => $config) {

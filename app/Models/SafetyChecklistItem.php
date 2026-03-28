@@ -138,7 +138,7 @@ class SafetyChecklistItem extends Model
     public static function seedDefaults(EventConfiguration $eventConfiguration): void
     {
         $operatingClass = $eventConfiguration->operatingClass;
-        $classLetter = $operatingClass ? preg_replace('/[0-9]+/', '', $operatingClass->code) : null;
+        $classLetter = $operatingClass ? preg_replace('/\d+/', '', $operatingClass->code) : null;
 
         $typesToSeed = match ($classLetter) {
             'A' => [ChecklistType::SafetyOfficer],
