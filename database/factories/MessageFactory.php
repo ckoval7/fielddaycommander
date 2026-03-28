@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 /** @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Message> */
 class MessageFactory extends Factory
 {
+    private const CALLSIGN_PATTERN = '??#???';
+
     public function definition(): array
     {
         return [
@@ -23,7 +25,7 @@ class MessageFactory extends Factory
             'message_number' => fake()->numberBetween(1, 999),
             'precedence' => MessagePrecedence::Routine,
             'hx_code' => null,
-            'station_of_origin' => strtoupper(fake()->bothify('??#???')),
+            'station_of_origin' => strtoupper(fake()->bothify(self::CALLSIGN_PATTERN)),
             'check' => (string) fake()->numberBetween(5, 25),
             'place_of_origin' => fake()->city().', '.fake()->stateAbbr(),
             'filed_at' => now(),
@@ -35,7 +37,7 @@ class MessageFactory extends Factory
             'addressee_phone' => fake()->phoneNumber(),
             'message_text' => strtoupper(implode(' X ', fake()->words(10))),
             'signature' => fake()->name(),
-            'sent_to' => strtoupper(fake()->bothify('??#???')),
+            'sent_to' => strtoupper(fake()->bothify(self::CALLSIGN_PATTERN)),
             'received_from' => null,
         ];
     }
@@ -83,7 +85,7 @@ class MessageFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => MessageRole::Relayed,
-            'received_from' => strtoupper(fake()->bothify('??#???')),
+            'received_from' => strtoupper(fake()->bothify(self::CALLSIGN_PATTERN)),
         ]);
     }
 
@@ -91,7 +93,7 @@ class MessageFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => MessageRole::ReceivedDelivered,
-            'received_from' => strtoupper(fake()->bothify('??#???')),
+            'received_from' => strtoupper(fake()->bothify(self::CALLSIGN_PATTERN)),
             'sent_to' => null,
         ]);
     }

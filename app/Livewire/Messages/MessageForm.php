@@ -12,6 +12,8 @@ class MessageForm extends Component
 {
     use AuthorizesRequests;
 
+    private const DATETIME_LOCAL_FORMAT = 'Y-m-d\TH:i';
+
     public Event $event;
 
     public ?Message $message = null;
@@ -85,7 +87,7 @@ class MessageForm extends Component
             $this->message = null;
             $this->authorize('create', Message::class);
             $this->stationOfOrigin = $this->event->eventConfiguration->callsign ?? '';
-            $this->filedAt = now()->format('Y-m-d\TH:i');
+            $this->filedAt = now()->format(self::DATETIME_LOCAL_FORMAT);
         }
 
         if ($template === 'sm' && (! $this->message || ! $this->message->exists)) {
@@ -273,7 +275,7 @@ class MessageForm extends Component
         $this->role = $message->role->value;
         $this->isSmMessage = $message->is_sm_message;
         $this->messageNumber = $message->message_number;
-        $this->filedAt = $message->filed_at?->format('Y-m-d\TH:i');
+        $this->filedAt = $message->filed_at?->format(self::DATETIME_LOCAL_FORMAT);
         $this->addresseeName = $message->addressee_name;
         $this->messageText = $message->message_text;
         $this->signature = $message->signature;
@@ -298,7 +300,7 @@ class MessageForm extends Component
         $this->icsFromPosition = $message->ics_from_position;
         $this->icsSubject = $message->ics_subject;
         $this->icsReplyText = $message->ics_reply_text;
-        $this->icsReplyDate = $message->ics_reply_date?->format('Y-m-d\TH:i');
+        $this->icsReplyDate = $message->ics_reply_date?->format(self::DATETIME_LOCAL_FORMAT);
         $this->icsReplyName = $message->ics_reply_name;
         $this->icsReplyPosition = $message->ics_reply_position;
     }

@@ -22,6 +22,12 @@ use Spatie\Permission\Models\Permission;
 
 class SeedPlaywrightData extends Command
 {
+    private const TEST_EMAIL = 'playwright-test@example.com';
+
+    private const TEST_FIELD_DAY_NAME = 'PW Test Field Day';
+
+    private const OPERATOR_EMAIL = 'playwright-operator@example.com';
+
     protected $signature = 'app:seed-playwright-data {scenario}';
 
     protected $description = 'Seed test data for Playwright E2E tests and output JSON with IDs';
@@ -29,7 +35,7 @@ class SeedPlaywrightData extends Command
     public function handle(): int
     {
         // Clear ALL login rate limiters to avoid 429 during rapid test runs
-        $email = 'playwright-test@example.com';
+        $email = self::TEST_EMAIL;
         RateLimiter::clear($email);
         RateLimiter::clear(strtolower($email).'|'.request()?->ip());
         // Fortify uses SHA-256 hash of email|ip
@@ -87,7 +93,7 @@ class SeedPlaywrightData extends Command
         }
 
         $user = User::factory()->create([
-            'email' => 'playwright-test@example.com',
+            'email' => self::TEST_EMAIL,
             'password' => Hash::make('playwright-test-password'),
             'call_sign' => 'PW1TST',
             'first_name' => 'Playwright',
@@ -131,7 +137,7 @@ class SeedPlaywrightData extends Command
             'event_type_id' => $eventType->id,
             'is_active' => true,
             'is_current' => true,
-            'name' => 'PW Test Field Day',
+            'name' => self::TEST_FIELD_DAY_NAME,
             'start_time' => appNow()->subHours(6),
             'end_time' => appNow()->addHours(21),
         ]);
@@ -214,7 +220,7 @@ class SeedPlaywrightData extends Command
         ]);
 
         return [
-            'user_email' => 'playwright-test@example.com',
+            'user_email' => self::TEST_EMAIL,
             'user_password' => 'playwright-test-password',
             'station_id' => $infra['station']->id,
             'equipment_id' => $antenna->id,
@@ -247,7 +253,7 @@ class SeedPlaywrightData extends Command
         ]);
 
         return [
-            'user_email' => 'playwright-test@example.com',
+            'user_email' => self::TEST_EMAIL,
             'user_password' => 'playwright-test-password',
             'station_id' => $infra['station']->id,
             'equipment_id' => $amplifier->id,
@@ -279,7 +285,7 @@ class SeedPlaywrightData extends Command
         ]);
 
         return [
-            'user_email' => 'playwright-test@example.com',
+            'user_email' => self::TEST_EMAIL,
             'user_password' => 'playwright-test-password',
             'station_id' => $infra['station']->id,
             'equipment_id' => $accessory->id,
@@ -295,7 +301,7 @@ class SeedPlaywrightData extends Command
         $infra = $this->createInfrastructure();
 
         return [
-            'user_email' => 'playwright-test@example.com',
+            'user_email' => self::TEST_EMAIL,
             'user_password' => 'playwright-test-password',
             'station_id' => $infra['station']->id,
         ];
@@ -316,7 +322,7 @@ class SeedPlaywrightData extends Command
 
         // Create a second user to assign
         $operator = User::factory()->create([
-            'email' => 'playwright-operator@example.com',
+            'email' => self::OPERATOR_EMAIL,
             'password' => Hash::make('playwright-test-password'),
             'call_sign' => 'PW2OPR',
             'first_name' => 'Operator',
@@ -324,7 +330,7 @@ class SeedPlaywrightData extends Command
         ]);
 
         return [
-            'user_email' => 'playwright-test@example.com',
+            'user_email' => self::TEST_EMAIL,
             'user_password' => 'playwright-test-password',
             'operator_id' => $operator->id,
             'operator_name' => 'Operator Bob',
@@ -373,7 +379,7 @@ class SeedPlaywrightData extends Command
         ]);
 
         $otherUser = User::factory()->create([
-            'email' => 'playwright-operator@example.com',
+            'email' => self::OPERATOR_EMAIL,
             'password' => Hash::make('playwright-test-password'),
             'call_sign' => 'PW2OPR',
             'first_name' => 'Operator',
@@ -388,7 +394,7 @@ class SeedPlaywrightData extends Command
         ]);
 
         return [
-            'user_email' => 'playwright-test@example.com',
+            'user_email' => self::TEST_EMAIL,
             'user_password' => 'playwright-test-password',
             'open_shift_id' => $shift->id,
             'full_shift_id' => $fullShift->id,
@@ -445,7 +451,7 @@ class SeedPlaywrightData extends Command
         ]);
 
         $operator = User::factory()->create([
-            'email' => 'playwright-operator@example.com',
+            'email' => self::OPERATOR_EMAIL,
             'password' => Hash::make('playwright-test-password'),
             'call_sign' => 'PW2OPR',
             'first_name' => 'Operator',
@@ -461,7 +467,7 @@ class SeedPlaywrightData extends Command
         ]);
 
         return [
-            'user_email' => 'playwright-test@example.com',
+            'user_email' => self::TEST_EMAIL,
             'user_password' => 'playwright-test-password',
             'assignment_id' => $assignment->id,
             'bonus_assignment_id' => $bonusAssignment->id,
@@ -475,11 +481,11 @@ class SeedPlaywrightData extends Command
      */
     private function cleanup(): array
     {
-        $user = User::where('email', 'playwright-test@example.com')->first();
+        $user = User::where('email', self::TEST_EMAIL)->first();
 
         if ($user) {
             // Clean shift data
-            Event::where('name', 'PW Test Field Day')->each(function (Event $event) {
+            Event::where('name', self::TEST_FIELD_DAY_NAME)->each(function (Event $event) {
                 $config = $event->eventConfiguration;
                 if ($config) {
                     ShiftAssignment::whereHas('shift', fn ($q) => $q->where('event_configuration_id', $config->id))->forceDelete();
@@ -495,10 +501,10 @@ class SeedPlaywrightData extends Command
             });
 
             Station::whereHas('eventConfiguration.event', function ($q) {
-                $q->where('name', 'PW Test Field Day');
+                $q->where('name', self::TEST_FIELD_DAY_NAME);
             })->delete();
 
-            Event::where('name', 'PW Test Field Day')->each(function (Event $event) {
+            Event::where('name', self::TEST_FIELD_DAY_NAME)->each(function (Event $event) {
                 $event->eventConfiguration()?->delete();
                 $event->delete();
             });
@@ -507,10 +513,10 @@ class SeedPlaywrightData extends Command
         }
 
         // Also clean the second test user
-        User::where('email', 'playwright-operator@example.com')->delete();
+        User::where('email', self::OPERATOR_EMAIL)->delete();
 
         // Restore the most recent non-test event as current
-        $lastEvent = Event::where('name', '!=', 'PW Test Field Day')
+        $lastEvent = Event::where('name', '!=', self::TEST_FIELD_DAY_NAME)
             ->orderByDesc('id')
             ->first();
         if ($lastEvent) {

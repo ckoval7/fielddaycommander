@@ -22,6 +22,10 @@ class ManageSchedule extends Component
 {
     use WithScheduleFilters;
 
+    private const DATETIME_LOCAL_FORMAT = 'Y-m-d\TH:i';
+
+    private const DEFAULT_ROLE_COLOR = '#64748b';
+
     public ?Event $event = null;
 
     public ?EventConfiguration $eventConfig = null;
@@ -44,7 +48,7 @@ class ManageSchedule extends Component
 
     public string $roleIcon = 'o-user-group';
 
-    public string $roleColor = '#64748b';
+    public string $roleColor = self::DEFAULT_ROLE_COLOR;
 
     // Shift modal
     public bool $showShiftModal = false;
@@ -198,7 +202,7 @@ class ManageSchedule extends Component
             $this->roleBonusPoints = $role->bonus_points;
             $this->roleRequiresConfirmation = $role->requires_confirmation;
             $this->roleIcon = $role->icon ?? 'o-user-group';
-            $this->roleColor = $role->color ?? '#64748b';
+            $this->roleColor = $role->color ?? self::DEFAULT_ROLE_COLOR;
         }
 
         $this->showRoleModal = true;
@@ -294,8 +298,8 @@ class ManageSchedule extends Component
             $shift = Shift::findOrFail($shiftId);
             $this->editingShiftId = $shift->id;
             $this->shiftRoleId = $shift->shift_role_id;
-            $this->shiftStartTime = $shift->start_time->format('Y-m-d\TH:i');
-            $this->shiftEndTime = $shift->end_time->format('Y-m-d\TH:i');
+            $this->shiftStartTime = $shift->start_time->format(self::DATETIME_LOCAL_FORMAT);
+            $this->shiftEndTime = $shift->end_time->format(self::DATETIME_LOCAL_FORMAT);
             $this->shiftCapacity = $shift->capacity;
             $this->shiftIsOpen = $shift->is_open;
             $this->shiftNotes = $shift->notes ?? '';
@@ -376,8 +380,8 @@ class ManageSchedule extends Component
 
         // Pre-fill with event start/end times
         if ($this->event) {
-            $this->bulkStartTime = $this->event->start_time?->format('Y-m-d\TH:i') ?? '';
-            $this->bulkEndTime = $this->event->end_time?->format('Y-m-d\TH:i') ?? '';
+            $this->bulkStartTime = $this->event->start_time?->format(self::DATETIME_LOCAL_FORMAT) ?? '';
+            $this->bulkEndTime = $this->event->end_time?->format(self::DATETIME_LOCAL_FORMAT) ?? '';
         }
 
         $this->showBulkModal = true;
@@ -568,7 +572,7 @@ class ManageSchedule extends Component
         $this->roleBonusPoints = null;
         $this->roleRequiresConfirmation = false;
         $this->roleIcon = 'o-user-group';
-        $this->roleColor = '#64748b';
+        $this->roleColor = self::DEFAULT_ROLE_COLOR;
     }
 
     protected function resetShiftForm(): void
