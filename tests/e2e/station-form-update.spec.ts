@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { execFileSync } from 'child_process';
+import { execFileSync } from 'node:child_process';
 
 interface ScenarioData {
     user_email: string;
@@ -66,7 +66,7 @@ test.describe('Station Form Update', () => {
 
         // Verify DB was updated
         const dbCheck = execFileSync('php', ['artisan', 'tinker', '--execute',
-            `echo App\\Models\\Station::find(${data.station_id})->power_source_description;`
+            String.raw`echo App\Models\Station::find(${data.station_id})->power_source_description;`
         ], { cwd: process.cwd(), encoding: 'utf-8' });
 
         const dbValue = dbCheck.trim();

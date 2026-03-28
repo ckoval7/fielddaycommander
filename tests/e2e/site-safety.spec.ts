@@ -26,8 +26,8 @@ test.describe('Site Safety Checklist', () => {
         await expect(requiredBadges.first()).toBeVisible({ timeout: 10000 });
 
         // Should show completion summary badges
-        await expect(page.locator('text=/\\d+ of \\d+ complete/')).toBeVisible();
-        await expect(page.locator('text=/\\d+ of \\d+ required/')).toBeVisible();
+        await expect(page.locator(String.raw`text=/\d+ of \d+ complete/`)).toBeVisible();
+        await expect(page.locator(String.raw`text=/\d+ of \d+ required/`)).toBeVisible();
 
         // Should show bonus point badges
         await expect(page.locator('text=/bonus pts/')).toBeVisible();
@@ -88,7 +88,7 @@ test.describe('Manage Safety Checklist', () => {
 
         // Delete button should be disabled for default items
         const defaultCard = page.locator('.card', { has: page.locator('text=Default') }).first();
-        const deleteBtn = defaultCard.locator('button[wire\\:click*="deleteItem"]');
+        const deleteBtn = defaultCard.locator(String.raw`button[wire\:click*="deleteItem"]`);
         await expect(deleteBtn).toBeDisabled();
     });
 
@@ -101,12 +101,12 @@ test.describe('Manage Safety Checklist', () => {
         await page.getByRole('button', { name: 'Add Item' }).click();
 
         // Fill in the modal form
-        const labelInput = page.locator('input[wire\\:model="itemLabel"]');
+        const labelInput = page.locator(String.raw`input[wire\:model="itemLabel"]`);
         await expect(labelInput).toBeVisible({ timeout: 5000 });
         await labelInput.fill('E2E Test Custom Safety Item');
 
         // Select checklist type from the select dropdown
-        const typeSelect = page.locator('select[wire\\:model="itemChecklistType"]');
+        const typeSelect = page.locator(String.raw`select[wire\:model="itemChecklistType"]`);
         if (await typeSelect.isVisible()) {
             await typeSelect.selectOption('safety_officer');
         }
@@ -121,7 +121,7 @@ test.describe('Manage Safety Checklist', () => {
         // Now delete the custom item to clean up
         const card = page.locator('.card', { has: page.locator('text=E2E Test Custom Safety Item') });
         page.on('dialog', dialog => dialog.accept());
-        const deleteBtn = card.locator('button[wire\\:click*="deleteItem"]');
+        const deleteBtn = card.locator(String.raw`button[wire\:click*="deleteItem"]`);
         await deleteBtn.click();
         await page.waitForLoadState('networkidle');
 

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { execFileSync } from 'child_process';
+import { execFileSync } from 'node:child_process';
 
 interface ScenarioData {
     user_email: string;
