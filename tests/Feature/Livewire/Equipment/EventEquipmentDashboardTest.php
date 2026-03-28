@@ -594,6 +594,151 @@ test('clicking on equipment photo opens photo modal in event equipment', functio
         ->assertSet('photoDescription', 'Yaesu FT-991A');
 });
 
+// Commit Club Equipment Tests
+
+test('manager can open commit club equipment modal', function () {
+    $this->actingAs($this->manager);
+
+    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
+        ->call('openCommitModal')
+        ->assertSet('showCommitModal', true)
+        ->assertSet('commitEquipmentId', null)
+        ->assertSet('commitExpectedDeliveryAt', null)
+        ->assertSet('commitDeliveryNotes', null);
+});
+
+test('manager can commit club equipment to event', function () {
+    $this->actingAs($this->manager);
+
+    $org = \App\Models\Organization::factory()->create();
+    $clubEquipment = Equipment::factory()->create([
+        'owner_user_id' => null,
+        'owner_organization_id' => $org->id,
+        'type' => 'radio',
+        'make' => 'Kenwood',
+        'model' => 'TS-590S',
+    ]);
+
+    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
+        ->set('commitEquipmentId', $clubEquipment->id)
+        ->set('commitDeliveryNotes', 'Club radio for 20m station')
+        ->call('commitClubEquipment')
+        ->assertSet('showCommitModal', false)
+        ->assertDispatched('notify', title: 'Success');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $clubEquipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Club radio for 20m station',
+    ]);
+});
+
+test('cannot commit non-club equipment from dashboard', function () {
+    $this->actingAs($this->manager);
+
+    $personalEquipment = Equipment::factory()->create([
+        'owner_user_id' => $this->regularUser->id,
+        'owner_organization_id' => null,
+    ]);
+
+    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
+        ->set('commitEquipmentId', $personalEquipment->id)
+        ->call('commitClubEquipment')
+        ->assertHasErrors('commitEquipmentId');
+});
+
+test('cannot commit club equipment already committed to overlapping event', function () {
+    $this->actingAs($this->manager);
+
+    $org = \App\Models\Organization::factory()->create();
+    $clubEquipment = Equipment::factory()->create([
+        'owner_user_id' => null,
+        'owner_organization_id' => $org->id,
+    ]);
+
+    // Create overlapping event with existing commitment
+    $overlappingEvent = Event::factory()->create([
+        'start_time' => $this->event->start_time->copy()->addDay(),
+        'end_time' => $this->event->end_time->copy()->addDay(),
+    ]);
+
+    EquipmentEvent::factory()->create([
+        'equipment_id' => $clubEquipment->id,
+        'event_id' => $overlappingEvent->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
+        ->set('commitEquipmentId', $clubEquipment->id)
+        ->call('commitClubEquipment')
+        ->assertHasErrors('commitEquipmentId');
+});
+
+test('viewer cannot commit club equipment', function () {
+    $this->actingAs($this->viewer);
+
+    $org = \App\Models\Organization::factory()->create();
+    $clubEquipment = Equipment::factory()->create([
+        'owner_user_id' => null,
+        'owner_organization_id' => $org->id,
+    ]);
+
+    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
+        ->set('commitEquipmentId', $clubEquipment->id)
+        ->call('commitClubEquipment')
+        ->assertDispatched('notify', title: 'Error');
+
+    $this->assertDatabaseMissing('equipment_event', [
+        'equipment_id' => $clubEquipment->id,
+        'event_id' => $this->event->id,
+    ]);
+});
+
+test('available club equipment excludes already committed items', function () {
+    $this->actingAs($this->manager);
+
+    $org = \App\Models\Organization::factory()->create();
+
+    $committedClubEquipment = Equipment::factory()->create([
+        'owner_user_id' => null,
+        'owner_organization_id' => $org->id,
+        'make' => 'Committed',
+        'model' => 'Radio',
+    ]);
+
+    $availableClubEquipment = Equipment::factory()->create([
+        'owner_user_id' => null,
+        'owner_organization_id' => $org->id,
+        'make' => 'Available',
+        'model' => 'Radio',
+    ]);
+
+    EquipmentEvent::factory()->create([
+        'equipment_id' => $committedClubEquipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+    ]);
+
+    // Already-committed club equipment should not be committable again
+    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
+        ->set('commitEquipmentId', $availableClubEquipment->id)
+        ->call('commitClubEquipment')
+        ->assertDispatched('notify', title: 'Success');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $availableClubEquipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+    ]);
+
+    // The already-committed one should fail overlap check (same event)
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $committedClubEquipment->id,
+        'event_id' => $this->event->id,
+    ]);
+});
+
 test('photo modal can be closed in event equipment', function () {
     $this->actingAs($this->manager);
 

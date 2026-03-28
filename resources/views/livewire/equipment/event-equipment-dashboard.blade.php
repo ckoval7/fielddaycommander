@@ -14,6 +14,13 @@
         {{-- Quick Actions --}}
         <div class="flex flex-wrap gap-2">
             @if($this->canManage)
+                <x-button
+                    label="Commit Club Equipment"
+                    icon="o-plus"
+                    class="btn-primary"
+                    wire:click="openCommitModal"
+                />
+
                 <x-dropdown>
                     <x-slot:trigger>
                         <x-button label="Export" icon="o-document-arrow-down" class="btn-outline" />
@@ -780,7 +787,7 @@
                     @if(count($availableStatuses) > 0)
                         <x-select
                             label="New Status"
-                            wire:model="newStatus"
+                            wire:model.live="newStatus"
                             :options="$availableStatuses"
                             option-value="id"
                             option-label="name"
@@ -873,6 +880,60 @@
                 </x-slot:actions>
             @endif
         @endif
+    </x-modal>
+
+    {{-- Commit Club Equipment Modal --}}
+    <x-modal wire:model="showCommitModal" title="Commit Club Equipment" class="backdrop-blur">
+        <x-form wire:submit="commitClubEquipment" class="space-y-4">
+            @if($this->availableClubEquipment->count() > 0)
+                <x-select
+                    label="Equipment"
+                    wire:model="commitEquipmentId"
+                    icon="o-wrench-screwdriver"
+                    placeholder="Select club equipment..."
+                    :options="$this->availableClubEquipment->map(fn($eq) => [
+                        'id' => $eq->id,
+                        'name' => $eq->make . ' ' . $eq->model . ' (' . ucfirst(str_replace('_', ' ', $eq->type)) . ')'
+                    ])->toArray()"
+                    option-value="id"
+                    option-label="name"
+                />
+
+                <x-datetime
+                    label="Expected Delivery (optional)"
+                    wire:model="commitExpectedDeliveryAt"
+                    icon="o-calendar"
+                />
+
+                <x-textarea
+                    label="Delivery Notes (optional)"
+                    wire:model="commitDeliveryNotes"
+                    placeholder="Add any notes about delivery..."
+                    rows="3"
+                />
+            @else
+                <div class="text-center py-4 text-base-content/60">
+                    <x-icon name="o-check-circle" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                    <p>All club equipment is already committed to this event.</p>
+                </div>
+            @endif
+
+            <x-slot:actions>
+                <x-button
+                    label="Cancel"
+                    wire:click="$set('showCommitModal', false)"
+                    class="btn-ghost"
+                />
+                @if($this->availableClubEquipment->count() > 0)
+                    <x-button
+                        label="Commit Equipment"
+                        type="submit"
+                        class="btn-primary"
+                        spinner="commitClubEquipment"
+                    />
+                @endif
+            </x-slot:actions>
+        </x-form>
     </x-modal>
 
     {{-- Hidden Test Elements --}}

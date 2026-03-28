@@ -6,7 +6,9 @@ use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\Station;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -102,6 +104,26 @@ class EventEquipmentDashboard extends Component
      * Station ID to assign.
      */
     public ?int $assignStationId = null;
+
+    /**
+     * Show commit club equipment modal.
+     */
+    public bool $showCommitModal = false;
+
+    /**
+     * Selected club equipment ID for commitment.
+     */
+    public ?int $commitEquipmentId = null;
+
+    /**
+     * Expected delivery date for commitment.
+     */
+    public ?string $commitExpectedDeliveryAt = null;
+
+    /**
+     * Delivery notes for commitment.
+     */
+    public ?string $commitDeliveryNotes = null;
 
     /**
      * Mount the component with the event.
@@ -623,6 +645,125 @@ class EventEquipmentDashboard extends Component
         unset($this->recentActivity);
         unset($this->commitmentsByOwner);
         unset($this->commitmentsByStation);
+    }
+
+    /**
+     * Get club equipment available to commit (not already committed to this event).
+     *
+     * @return Collection<int, Equipment>
+     */
+    #[Computed]
+    public function availableClubEquipment(): Collection
+    {
+        $alreadyCommittedIds = $this->allCommitments
+            ->whereNotIn('status', ['cancelled', 'returned'])
+            ->pluck('equipment_id')
+            ->toArray();
+
+        return Equipment::query()
+            ->whereNotNull('owner_organization_id')
+            ->whereNotIn('id', $alreadyCommittedIds)
+            ->orderBy('make')
+            ->orderBy('model')
+            ->get();
+    }
+
+    /**
+     * Open the commit club equipment modal.
+     */
+    public function openCommitModal(): void
+    {
+        $this->commitEquipmentId = null;
+        $this->commitExpectedDeliveryAt = null;
+        $this->commitDeliveryNotes = null;
+        $this->showCommitModal = true;
+
+        unset($this->availableClubEquipment);
+    }
+
+    /**
+     * Commit club equipment to this event.
+     */
+    public function commitClubEquipment(): void
+    {
+        if (! auth()->user()->can('manage-event-equipment')) {
+            $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
+
+            return;
+        }
+
+        $this->validate([
+            'commitEquipmentId' => [
+                'required',
+                'exists:equipment,id',
+                function ($attribute, $value, $fail) {
+                    $equipment = Equipment::find($value);
+                    if (! $equipment || ! $equipment->is_club_equipment) {
+                        $fail('Only club equipment can be committed from the dashboard.');
+                    }
+                },
+            ],
+            'commitExpectedDeliveryAt' => [
+                'nullable',
+                'date',
+            ],
+            'commitDeliveryNotes' => [
+                'nullable',
+                'string',
+                'max:500',
+            ],
+        ]);
+
+        // Check for overlapping commitments
+        $hasOverlap = EquipmentEvent::query()
+            ->where('equipment_id', $this->commitEquipmentId)
+            ->whereNotIn('status', ['cancelled', 'returned'])
+            ->whereHas('event', function (Builder $query) {
+                $query->where(function (Builder $q) {
+                    $q->whereBetween('start_time', [$this->event->start_time, $this->event->end_time])
+                        ->orWhereBetween('end_time', [$this->event->start_time, $this->event->end_time])
+                        ->orWhere(function (Builder $q2) {
+                            $q2->where('start_time', '<=', $this->event->start_time)
+                                ->where('end_time', '>=', $this->event->end_time);
+                        });
+                });
+            })
+            ->exists();
+
+        if ($hasOverlap) {
+            $this->addError('commitEquipmentId', 'This equipment is already committed to an overlapping event.');
+
+            return;
+        }
+
+        EquipmentEvent::create([
+            'equipment_id' => $this->commitEquipmentId,
+            'event_id' => $this->event->id,
+            'status' => 'committed',
+            'committed_at' => now(),
+            'expected_delivery_at' => $this->commitExpectedDeliveryAt ? Carbon::parse($this->commitExpectedDeliveryAt) : null,
+            'delivery_notes' => $this->commitDeliveryNotes,
+            'status_changed_at' => now(),
+            'status_changed_by_user_id' => auth()->id(),
+        ]);
+
+        $this->dispatch('notify', title: 'Success', description: 'Club equipment committed to event.', type: 'success');
+
+        // Close modal and reset
+        $this->showCommitModal = false;
+        $this->commitEquipmentId = null;
+        $this->commitExpectedDeliveryAt = null;
+        $this->commitDeliveryNotes = null;
+
+        // Clear cached computed properties
+        unset($this->allCommitments);
+        unset($this->filteredCommitments);
+        unset($this->statsCards);
+        unset($this->equipmentByType);
+        unset($this->recentActivity);
+        unset($this->commitmentsByOwner);
+        unset($this->commitmentsByStation);
+        unset($this->availableClubEquipment);
     }
 
     /**
