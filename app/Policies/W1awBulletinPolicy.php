@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\W1awBulletin;
+use App\Policies\Traits\OwnerOrManagerPolicy;
 
 class W1awBulletinPolicy
 {
+    use OwnerOrManagerPolicy;
+
     public function viewAny(User $user): bool
     {
         return true;
@@ -24,19 +27,11 @@ class W1awBulletinPolicy
 
     public function update(User $user, W1awBulletin $bulletin): bool
     {
-        if ($user->can('manage-bonuses')) {
-            return true;
-        }
-
-        return $user->can('log-contacts') && $bulletin->user_id === $user->id;
+        return $this->canManageOrOwns($user, $bulletin);
     }
 
     public function delete(User $user, W1awBulletin $bulletin): bool
     {
-        if ($user->can('manage-bonuses')) {
-            return true;
-        }
-
-        return $user->can('log-contacts') && $bulletin->user_id === $user->id;
+        return $this->canManageOrOwns($user, $bulletin);
     }
 }

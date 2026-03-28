@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\Message;
 use App\Models\User;
+use App\Policies\Traits\OwnerOrManagerPolicy;
 
 class MessagePolicy
 {
+    use OwnerOrManagerPolicy;
+
     public function viewAny(User $user): bool
     {
         return true;
@@ -24,19 +27,11 @@ class MessagePolicy
 
     public function update(User $user, Message $message): bool
     {
-        if ($user->can('manage-bonuses')) {
-            return true;
-        }
-
-        return $user->can('log-contacts') && $message->user_id === $user->id;
+        return $this->canManageOrOwns($user, $message);
     }
 
     public function delete(User $user, Message $message): bool
     {
-        if ($user->can('manage-bonuses')) {
-            return true;
-        }
-
-        return $user->can('log-contacts') && $message->user_id === $user->id;
+        return $this->canManageOrOwns($user, $message);
     }
 }
