@@ -19,11 +19,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
+    'allowed_origins' => array_filter([
         'http://localhost:5173',
         'http://127.0.0.1:5173',
-        'http://172.16.30.226:5173',
-    ],
+        env('VITE_DEV_HOST') ? 'http://'.env('VITE_DEV_HOST').':5173' : null,
+    ]),
 
     'allowed_origins_patterns' => [],
 

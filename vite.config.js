@@ -13,7 +13,7 @@ export default defineConfig({
     server: {
         host: '0.0.0.0',
         hmr: {
-            host: '172.16.30.226',
+            host: process.env.VITE_DEV_HOST || 'localhost',
         },
         cors: {
             origin: '*',
