@@ -27,7 +27,7 @@ class DashboardController extends Controller
             return $this->getReadyView($event);
         }
 
-        // No context event at all — check for upcoming events
+        // No context event at all — check for upcoming events or show empty state
         if (! $event) {
             $upcoming = Event::upcoming()->orderBy('start_time')->first();
 
@@ -35,7 +35,9 @@ class DashboardController extends Controller
                 return $this->getReadyView($upcoming);
             }
 
-            // No events at all — show widget dashboard (existing behavior)
+            return view('dashboard-no-event', [
+                'upcomingEvents' => collect(),
+            ]);
         }
 
         // Active or grace-period event (or no event fallback) — show widget dashboard

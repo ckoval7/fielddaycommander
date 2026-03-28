@@ -18,6 +18,17 @@ beforeEach(function () {
     ]);
 });
 
+/**
+ * Create an active event so the dashboard controller shows the widget grid.
+ */
+function createActiveEvent(): Event
+{
+    return Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+}
+
 test('index requires authentication', function () {
     $response = $this->get(route('dashboard'));
 
@@ -25,6 +36,7 @@ test('index requires authentication', function () {
 });
 
 test('index loads user default dashboard', function () {
+    createActiveEvent();
     $user = User::factory()->create();
     $dashboard = Dashboard::factory()->create([
         'user_id' => $user->id,
@@ -40,6 +52,7 @@ test('index loads user default dashboard', function () {
 });
 
 test('index creates default dashboard for new user', function () {
+    createActiveEvent();
     $user = User::factory()->create();
 
     expect(Dashboard::forUser($user)->count())->toBe(0);
@@ -89,6 +102,7 @@ test('tv dashboard defaults kiosk to false', function () {
 });
 
 test('dashboard.alt route also works', function () {
+    createActiveEvent();
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->get(route('dashboard.alt'));
@@ -111,6 +125,7 @@ test('shows get-ready view when upcoming event exists', function () {
 });
 
 test('only creates one default dashboard per user', function () {
+    createActiveEvent();
     $user = User::factory()->create();
 
     // First request creates dashboard
@@ -123,6 +138,7 @@ test('only creates one default dashboard per user', function () {
 });
 
 test('dashboard widgets config matches user default', function () {
+    createActiveEvent();
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->get(route('dashboard'));
