@@ -33,3 +33,4 @@ boost.json
 /frankenphp
 /tests/e2e/
 /tests/Browser/
+coverage.xml
