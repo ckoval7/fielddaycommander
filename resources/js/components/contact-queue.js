@@ -18,11 +18,11 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         init() {
             this.loadQueue();
 
-            window.addEventListener('online', () => {
+            globalThis.addEventListener('online', () => {
                 this.isOnline = true;
                 this.syncNext();
             });
-            window.addEventListener('offline', () => {
+            globalThis.addEventListener('offline', () => {
                 this.isOnline = false;
             });
 
@@ -92,7 +92,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
         enqueue(contactData) {
             const entry = {
-                uuid: crypto.randomUUID?.() ?? ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)),
+                uuid: crypto.randomUUID?.() ?? ([1e7]+-1e3+-4e3+-8e3+-1e11).toString().replaceAll(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)),
                 operating_session_id: sessionId,
                 band_id: contactData.band_id,
                 mode_id: contactData.mode_id,
@@ -140,9 +140,14 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             inputEl.value = '';
             this.parseError = '';
             // Sync Livewire state so wire:model.live stays in sync
-            const wire = window.Livewire?.find(inputEl.closest('[wire\\:id]')?.getAttribute('wire:id'));
+            const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
             if (wire) {
-                try { wire.set('exchangeInput', ''); } catch (e) { /* server may be down */ }
+                try {
+                    wire.set('exchangeInput', '');
+                } catch (e) {
+                    // Silently ignored - Livewire state sync is best-effort; input is already cleared in the DOM
+                    console.warn('Failed to sync Livewire exchangeInput state:', e);
+                }
             }
             inputEl.focus();
         },
@@ -267,7 +272,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     this.saveQueue();
                 }
             } catch (e) {
-                // Network error - retry
+                // Network error (fetch threw) - queue contact for retry with backoff
+                console.warn('Contact sync failed due to network error; will retry:', e);
                 candidate.status = 'pending';
                 candidate.attempts++;
                 candidate.lastAttemptTime = Date.now();
@@ -306,6 +312,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     this.saveQueue();
                 }
             } catch (e) {
+                // Corrupted or unparseable localStorage data - start with an empty queue
+                console.warn('Failed to load contact queue from localStorage; starting fresh:', e);
                 this.queue = [];
             }
         },
@@ -314,7 +322,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             try {
                 localStorage.setItem(this.storageKey, JSON.stringify(this.queue));
             } catch (e) {
-                // localStorage full or unavailable - queue lives in memory only
+                // localStorage full or unavailable - queue lives in memory only for this session
+                console.warn('Failed to persist contact queue to localStorage:', e);
             }
         },
     };
