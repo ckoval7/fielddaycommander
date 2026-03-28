@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Dashboard;
+use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -94,6 +95,19 @@ test('dashboard.alt route also works', function () {
 
     $response->assertStatus(200);
     $response->assertViewIs('dashboard.default');
+});
+
+test('shows get-ready view when upcoming event exists', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertStatus(200);
+    $response->assertViewIs('dashboard.get-ready');
 });
 
 test('only creates one default dashboard per user', function () {
