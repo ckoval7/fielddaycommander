@@ -34,7 +34,7 @@ test('canTransitionTo validates committed can transition to delivered or cancell
     expect($commitment->canTransitionTo('damaged'))->toBeFalse();
 });
 
-test('canTransitionTo validates delivered can transition to in_use, cancelled, lost, or damaged', function () {
+test('canTransitionTo validates delivered can transition to in_use, returned, cancelled, lost, or damaged', function () {
     $commitment = EquipmentEvent::factory()->create([
         'equipment_id' => $this->equipment->id,
         'event_id' => $this->event->id,
@@ -42,11 +42,11 @@ test('canTransitionTo validates delivered can transition to in_use, cancelled, l
     ]);
 
     expect($commitment->canTransitionTo('in_use'))->toBeTrue();
+    expect($commitment->canTransitionTo('returned'))->toBeTrue();
     expect($commitment->canTransitionTo('cancelled'))->toBeTrue();
     expect($commitment->canTransitionTo('lost'))->toBeTrue();
     expect($commitment->canTransitionTo('damaged'))->toBeTrue();
     expect($commitment->canTransitionTo('committed'))->toBeFalse();
-    expect($commitment->canTransitionTo('returned'))->toBeFalse();
 });
 
 test('canTransitionTo validates in_use can transition to returned, lost, or damaged', function () {

@@ -770,6 +770,7 @@
                             ],
                             'delivered' => [
                                 ['id' => 'in_use', 'name' => 'In Use'],
+                                ['id' => 'returned', 'name' => 'Returned'],
                                 ['id' => 'cancelled', 'name' => 'Cancelled'],
                                 ['id' => 'lost', 'name' => 'Lost'],
                                 ['id' => 'damaged', 'name' => 'Damaged'],

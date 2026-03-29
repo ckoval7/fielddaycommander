@@ -37,7 +37,7 @@ class EquipmentEvent extends Model
      */
     protected const VALID_TRANSITIONS = [
         'committed' => ['delivered', 'cancelled'],
-        'delivered' => ['in_use', 'cancelled', 'lost', 'damaged'],
+        'delivered' => ['in_use', 'returned', 'cancelled', 'lost', 'damaged'],
         'in_use' => ['returned', 'lost', 'damaged'],
         'returned' => [],
         'cancelled' => [],
