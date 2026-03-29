@@ -1,4 +1,4 @@
-{$CADDY_SITE_ADDRESS:http://localhost} {
+{$CADDY_SITE_ADDRESS::80} {
 	root * {$APP_PATH:/var/www/fd-commander}/public
 	encode zstd gzip
 
