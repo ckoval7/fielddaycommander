@@ -153,7 +153,7 @@ detect_distro() {
 
     source /etc/os-release
 
-    if [[ "$ID" == "ubuntu" ]] || [[ "$ID" == "debian" ]]; then
+    if [[ "$ID" == "ubuntu" ]] || [[ "$ID" == "debian" ]] || [[ "$ID" == "raspbian" ]]; then
         DISTRO_FAMILY="debian"
         PKG_MANAGER="apt"
         WEB_GROUP="www-data"
@@ -259,14 +259,23 @@ print_dry_run() {
 install_packages_debian() {
     log_phase "Phase 2: Installing system packages (Debian/Ubuntu)"
 
-    # Add PHP 8.4 PPA
+    # Add Ondrej PHP repo (PPA on Ubuntu, DEB repo on Debian/Raspbian)
     if ! command -v php8.4 &>/dev/null; then
-        log_info "Adding Ondrej PHP PPA..."
         apt-get update -y
-        apt-get install -y software-properties-common
-        add-apt-repository -y ppa:ondrej/php
+        source /etc/os-release
+        if [[ "$ID" == "ubuntu" ]]; then
+            log_info "Adding Ondrej PHP PPA (Ubuntu)..."
+            apt-get install -y software-properties-common
+            add-apt-repository -y ppa:ondrej/php
+        else
+            log_info "Adding Ondrej PHP DEB repo (Debian)..."
+            apt-get install -y lsb-release ca-certificates curl
+            curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+            echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" \
+                > /etc/apt/sources.list.d/sury-php.list
+        fi
     else
-        log_warn "PHP 8.4 already installed, skipping PPA"
+        log_warn "PHP 8.4 already installed, skipping repo setup"
     fi
 
     # Add NodeSource repo
