@@ -109,10 +109,7 @@ class StatCard extends Component
      */
     protected function getTotalScore(Event $event): array
     {
-        $score = Contact::query()
-            ->where('event_configuration_id', $event->eventConfiguration->id)
-            ->notDuplicate()
-            ->sum('points') ?? 0;
+        $score = $event->eventConfiguration->calculateFinalScore();
 
         return [
             'value' => number_format($score),
