@@ -16,16 +16,13 @@ try {
     const reverbConfig = reverbMeta ? JSON.parse(reverbMeta.content) : {};
 
     if (reverbConfig.key) {
-        const currentPort = globalThis.location.port || (globalThis.location.protocol === 'https:' ? 443 : 80);
-        const currentScheme = globalThis.location.protocol === 'https:' ? 'https' : 'http';
-
         globalThis.Echo = new Echo({
             broadcaster: 'reverb',
             key: reverbConfig.key,
             wsHost: reverbConfig.host || globalThis.location.hostname,
-            wsPort: reverbConfig.port || currentPort,
-            wssPort: reverbConfig.port || currentPort,
-            forceTLS: (reverbConfig.scheme || currentScheme) === 'https',
+            wsPort: reverbConfig.port || 8080,
+            wssPort: reverbConfig.port || 8080,
+            forceTLS: (reverbConfig.scheme || 'https') === 'https',
             enabledTransports: ['ws', 'wss'],
         });
     }
