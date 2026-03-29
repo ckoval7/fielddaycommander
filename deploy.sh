@@ -45,6 +45,7 @@ SSL_CERT=""
 SSL_KEY=""
 NO_SEEDERS=false
 DRY_RUN=false
+DB_SERVICE="mariadb"
 
 # Save original args for potential re-exec (password sanitization)
 ORIG_ARGS=("$@")
@@ -286,18 +287,12 @@ install_packages_debian() {
         log_warn "Node.js already installed, skipping NodeSource"
     fi
 
-    # Determine database package (Raspbian/some Debian versions only have MariaDB)
-    local db_pkg="mysql-server"
-    if ! apt-cache show mysql-server &>/dev/null 2>&1; then
-        db_pkg="mariadb-server"
-    fi
-
-    log_info "Installing packages (database: ${db_pkg})..."
+    log_info "Installing packages..."
     apt-get update -y
     apt-get install -y \
         php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
         php8.4-curl php8.4-zip php8.4-bcmath php8.4-gd php8.4-intl php8.4-redis \
-        "$db_pkg" nodejs unzip git
+        mariadb-server nodejs unzip git
 }
 
 install_packages_rhel() {
@@ -546,14 +541,9 @@ setup_app() {
 setup_database() {
     log_phase "Phase 4: Setting up database"
 
-    # Start and enable database service (MariaDB on RHEL and some Debian derivatives)
-    local mysql_service="mysql"
-    if [[ "$DISTRO_FAMILY" == "rhel" ]] || systemctl list-unit-files mariadb.service &>/dev/null 2>&1 && ! systemctl list-unit-files mysql.service &>/dev/null 2>&1; then
-        mysql_service="mariadb"
-    fi
-
-    systemctl enable "$mysql_service"
-    systemctl start "$mysql_service"
+    # Start and enable database service
+    systemctl enable "$DB_SERVICE"
+    systemctl start "$DB_SERVICE"
 
     # Create database and user (escape single quotes in password for SQL safety)
     local safe_password="${DB_PASSWORD//\'/\'\'}"
@@ -643,18 +633,12 @@ configure_ssl() {
 configure_systemd() {
     log_phase "Phase 7: Configuring systemd services"
 
-    # Determine database service name for systemd dependency
-    local mysql_unit="mysql.service"
-    if [[ "$DISTRO_FAMILY" == "rhel" ]] || systemctl list-unit-files mariadb.service &>/dev/null 2>&1 && ! systemctl list-unit-files mysql.service &>/dev/null 2>&1; then
-        mysql_unit="mariadb.service"
-    fi
-
     # FrankenPHP/Octane Web Server
     log_info "Creating FrankenPHP/Octane service..."
     cat > /etc/systemd/system/fdcommander.service <<WEBEOF
 [Unit]
 Description=FD Commander Web Server (FrankenPHP/Octane)
-After=network.target ${mysql_unit}
+After=network.target ${DB_SERVICE}.service
 
 [Service]
 User=fdcommander
@@ -677,7 +661,7 @@ WEBEOF
     cat > /etc/systemd/system/fdcommander-queue.service <<QUEUEEOF
 [Unit]
 Description=FD Commander Queue Worker
-After=network.target ${mysql_unit}
+After=network.target ${DB_SERVICE}.service
 
 [Service]
 User=fdcommander
