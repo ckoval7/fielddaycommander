@@ -286,12 +286,18 @@ install_packages_debian() {
         log_warn "Node.js already installed, skipping NodeSource"
     fi
 
-    log_info "Installing packages..."
+    # Determine database package (Raspbian/some Debian versions only have MariaDB)
+    local db_pkg="mysql-server"
+    if ! apt-cache show mysql-server &>/dev/null 2>&1; then
+        db_pkg="mariadb-server"
+    fi
+
+    log_info "Installing packages (database: ${db_pkg})..."
     apt-get update -y
     apt-get install -y \
         php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
         php8.4-curl php8.4-zip php8.4-bcmath php8.4-gd php8.4-intl php8.4-redis \
-        mysql-server nodejs unzip git
+        "$db_pkg" nodejs unzip git
 }
 
 install_packages_rhel() {
@@ -540,9 +546,9 @@ setup_app() {
 setup_database() {
     log_phase "Phase 4: Setting up database"
 
-    # Start and enable database service
+    # Start and enable database service (MariaDB on RHEL and some Debian derivatives)
     local mysql_service="mysql"
-    if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+    if [[ "$DISTRO_FAMILY" == "rhel" ]] || systemctl list-unit-files mariadb.service &>/dev/null 2>&1 && ! systemctl list-unit-files mysql.service &>/dev/null 2>&1; then
         mysql_service="mariadb"
     fi
 
@@ -639,7 +645,7 @@ configure_systemd() {
 
     # Determine database service name for systemd dependency
     local mysql_unit="mysql.service"
-    if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+    if [[ "$DISTRO_FAMILY" == "rhel" ]] || systemctl list-unit-files mariadb.service &>/dev/null 2>&1 && ! systemctl list-unit-files mysql.service &>/dev/null 2>&1; then
         mysql_unit="mariadb.service"
     fi
 
