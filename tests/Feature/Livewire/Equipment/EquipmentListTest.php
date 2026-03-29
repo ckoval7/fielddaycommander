@@ -529,7 +529,7 @@ test('clicking on equipment photo opens photo modal', function () {
     Livewire::test(EquipmentList::class)
         ->assertSet('showPhotoModal', false)
         ->assertSet('photoPath', null)
-        ->call('viewPhoto', $equipment->photo_path, $equipment->make . ' ' . $equipment->model)
+        ->call('viewPhoto', $equipment->photo_path, $equipment->make.' '.$equipment->model)
         ->assertSet('showPhotoModal', true)
         ->assertSet('photoPath', 'equipment/test-photo.jpg')
         ->assertSet('photoDescription', 'Yaesu FT-991A');
@@ -548,7 +548,7 @@ test('photo modal displays correct equipment information', function () {
     Livewire::test(EquipmentList::class)
         ->set('showPhotoModal', true)
         ->set('photoPath', $equipment->photo_path)
-        ->set('photoDescription', $equipment->make . ' ' . $equipment->model)
+        ->set('photoDescription', $equipment->make.' '.$equipment->model)
         ->assertSee('Icom IC-7300')
         ->assertSee($equipment->photo_path);
 });
@@ -583,6 +583,31 @@ test('equipment without photo shows placeholder', function () {
         ->assertSee('bg-base-300');
 });
 
+test('equipment list shows only own equipment even with view-all-equipment permission', function () {
+    Permission::create(['name' => 'view-all-equipment']);
+    $this->user->givePermissionTo('view-all-equipment');
+    $this->actingAs($this->user);
+
+    $ownEquipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'make' => 'Yaesu',
+        'model' => 'FT-991A',
+    ]);
+
+    $otherUser = User::factory()->create();
+    Equipment::factory()->create([
+        'owner_user_id' => $otherUser->id,
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->assertSee('Yaesu')
+        ->assertSee('FT-991A')
+        ->assertDontSee('Icom')
+        ->assertDontSee('IC-7300');
+});
+
 test('multiple equipment photos can be viewed in modal', function () {
     $this->actingAs($this->user);
 
@@ -603,12 +628,12 @@ test('multiple equipment photos can be viewed in modal', function () {
     $component = Livewire::test(EquipmentList::class);
 
     // View first photo
-    $component->call('viewPhoto', $equipment1->photo_path, $equipment1->make . ' ' . $equipment1->model)
+    $component->call('viewPhoto', $equipment1->photo_path, $equipment1->make.' '.$equipment1->model)
         ->assertSet('photoPath', 'equipment/yaesu.jpg')
         ->assertSet('photoDescription', 'Yaesu FT-991A');
 
     // View second photo
-    $component->call('viewPhoto', $equipment2->photo_path, $equipment2->make . ' ' . $equipment2->model)
+    $component->call('viewPhoto', $equipment2->photo_path, $equipment2->make.' '.$equipment2->model)
         ->assertSet('photoPath', 'equipment/icom.jpg')
         ->assertSet('photoDescription', 'Icom IC-7300');
 });

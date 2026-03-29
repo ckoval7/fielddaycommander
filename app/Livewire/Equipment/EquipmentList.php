@@ -20,8 +20,6 @@ class EquipmentList extends Component
 
     public ?string $statusFilter = null;
 
-    public ?string $ownerFilter = null;
-
     public string $sortBy = 'created_at';
 
     public string $sortDirection = 'desc';
@@ -38,11 +36,6 @@ class EquipmentList extends Component
     public function mount(): void
     {
         $this->authorize('viewAny', Equipment::class);
-
-        // Set default owner filter based on permissions
-        if (! $this->ownerFilter) {
-            $this->ownerFilter = auth()->user()->can('view-all-equipment') ? 'all' : 'my';
-        }
     }
 
     /**
@@ -70,14 +63,6 @@ class EquipmentList extends Component
     }
 
     /**
-     * Reset to page 1 when owner filter changes.
-     */
-    public function updatedOwnerFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
      * Get the filtered and sorted equipment query.
      *
      * Returns only the authenticated user's equipment, filtered by search query,
@@ -88,13 +73,7 @@ class EquipmentList extends Component
     {
         return Equipment::query()
             ->with('manager')
-            ->when($this->ownerFilter === 'my', function (Builder $query) {
-                $query->where('owner_user_id', auth()->id());
-            })
-            ->when($this->ownerFilter === 'club', function (Builder $query) {
-                $query->whereNotNull('owner_organization_id');
-            })
-            // 'all' - no additional filter
+            ->where('owner_user_id', auth()->id())
             ->when($this->search, function (Builder $query) {
                 $query->where(function (Builder $q) {
                     $q->where('make', 'like', "%{$this->search}%")

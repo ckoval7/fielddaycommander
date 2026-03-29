@@ -14,7 +14,7 @@
         </div>
 
         {{-- Search and Filters --}}
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <x-input
                 label="Search"
                 placeholder="Search by make, model, or serial number..."
@@ -46,19 +46,6 @@
                 option-label="label"
             />
 
-            @can('view-all-equipment')
-                <x-select
-                    label="Owner"
-                    wire:model.live="ownerFilter"
-                    :options="[
-                        ['value' => 'my', 'label' => 'My Equipment'],
-                        ['value' => 'club', 'label' => 'Club Equipment'],
-                        ['value' => 'all', 'label' => 'All Equipment'],
-                    ]"
-                    option-value="value"
-                    option-label="label"
-                />
-            @endcan
         </div>
 
         {{-- Equipment Card --}}
