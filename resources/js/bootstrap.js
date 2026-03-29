@@ -18,6 +18,7 @@ try {
     if (reverbConfig.key) {
         const currentPort = globalThis.location.port || (globalThis.location.protocol === 'https:' ? 443 : 80);
         const currentScheme = globalThis.location.protocol === 'https:' ? 'https' : 'http';
+        const useTLS = (reverbConfig.scheme || currentScheme) === 'https';
 
         globalThis.Echo = new Echo({
             broadcaster: 'reverb',
@@ -25,8 +26,8 @@ try {
             wsHost: reverbConfig.host || globalThis.location.hostname,
             wsPort: reverbConfig.port || currentPort,
             wssPort: reverbConfig.port || currentPort,
-            forceTLS: (reverbConfig.scheme || currentScheme) === 'https',
-            enabledTransports: ['ws', 'wss'],
+            forceTLS: useTLS,
+            enabledTransports: [useTLS ? 'wss' : 'ws'],
         });
     }
 } catch (error) {

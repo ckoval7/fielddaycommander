@@ -1,20 +1,16 @@
-{$DOMAIN:localhost} {
+{$CADDY_SITE_ADDRESS:http://localhost} {
 	root * {$APP_PATH:/var/www/fd-commander}/public
 	encode zstd gzip
 
-	# Reverb WebSocket proxy
-	# Caddy handles WebSocket upgrades automatically — no explicit
-	# Upgrade/Connection headers needed, unlike Nginx.
-	reverse_proxy /app {$REVERB_SERVER_HOST:127.0.0.1}:{$REVERB_SERVER_PORT:8080} {
-		header_up Host {host}
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Forwarded-Proto {scheme}
+	# Reverb WebSocket proxy — route block enforces top-to-bottom ordering
+	# so reverse_proxy runs before php_server intercepts /app/* requests.
+	route /app/* {
+		reverse_proxy {$REVERB_SERVER_HOST:127.0.0.1}:{$REVERB_SERVER_PORT:8080} {
+			header_up Host {host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
 	}
 
-	# Custom SSL certificate support (no-op when env vars are empty)
-	tls {$SSL_CERT:internal} {$SSL_KEY:}
-
-	# php_server is a Caddy shorthand that combines file_server + php + try_files.
-	# Static assets are served directly without hitting PHP.
 	php_server
 }

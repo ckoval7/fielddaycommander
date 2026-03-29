@@ -469,6 +469,7 @@ configure_env() {
     set_env "OCTANE_WORKERS" "auto"
     set_env "OCTANE_MAX_REQUESTS" "500"
     set_env "DOMAIN" "${DOMAIN}${PORT_SUFFIX}"
+    set_env "CADDY_SITE_ADDRESS" "${SCHEME}://${DOMAIN}${PORT_SUFFIX}"
     set_env "APP_PATH" "$APP_PATH"
 
     chown "fdcommander:${WEB_GROUP}" "$env_file"
@@ -645,7 +646,7 @@ User=fdcommander
 Group=${WEB_GROUP}
 WorkingDirectory=${APP_PATH}
 EnvironmentFile=${APP_PATH}/.env
-ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=${APP_PORT}
+ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=${APP_PORT} --caddyfile=${APP_PATH}/Caddyfile
 Restart=always
 RestartSec=5
 $( [[ "$APP_PORT" -lt 1024 ]] && printf 'CapabilityBoundingSet=CAP_NET_BIND_SERVICE\nAmbientCapabilities=CAP_NET_BIND_SERVICE' || echo '# No privileged port capabilities needed' )
