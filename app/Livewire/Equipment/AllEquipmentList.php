@@ -76,14 +76,14 @@ class AllEquipmentList extends Component
     /**
      * Get users who own at least one equipment item, for the filter dropdown.
      *
-     * @return array<int, array{value: int|string, label: string}>
+     * @return array<int, array{id: int|string, name: string}>
      */
     #[Computed]
     public function userOptions(): array
     {
         $options = [
-            ['value' => '', 'label' => 'All Users'],
-            ['value' => 'club', 'label' => 'Club Equipment'],
+            ['id' => '', 'name' => 'All Users'],
+            ['id' => 'club', 'name' => 'Club Equipment'],
         ];
 
         $users = User::query()
@@ -96,7 +96,7 @@ class AllEquipmentList extends Component
             if ($user->first_name || $user->last_name) {
                 $label .= ' — '.trim($user->first_name.' '.$user->last_name);
             }
-            $options[] = ['value' => $user->id, 'label' => $label];
+            $options[] = ['id' => $user->id, 'name' => $label];
         }
 
         return $options;

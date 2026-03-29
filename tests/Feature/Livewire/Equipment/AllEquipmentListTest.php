@@ -188,7 +188,7 @@ test('all equipment list user filter options include only users with equipment',
     $component = Livewire::test(AllEquipmentList::class);
     $userOptions = $component->get('userOptions');
 
-    $userIds = collect($userOptions)->pluck('value')->toArray();
+    $userIds = collect($userOptions)->pluck('id')->toArray();
     expect($userIds)->toContain($userWithEquipment->id);
     expect($userIds)->not->toContain($userWithoutEquipment->id);
 });

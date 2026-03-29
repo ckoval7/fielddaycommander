@@ -17,12 +17,13 @@
                 clearable
             />
 
-            <x-select
+            <x-choices-offline
                 label="Owner"
                 wire:model.live="userFilter"
                 :options="$this->userOptions"
-                option-value="value"
-                option-label="label"
+                placeholder="Search owner..."
+                single
+                searchable
             />
 
             <x-select
