@@ -5,6 +5,7 @@ use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
 
 uses(RefreshDatabase::class);
 
@@ -122,6 +123,53 @@ test('shows get-ready view when upcoming event exists', function () {
 
     $response->assertStatus(200);
     $response->assertViewIs('dashboard.get-ready');
+});
+
+test('get-ready checklist hides routes for unprivileged users', function () {
+    Permission::create(['name' => 'view-events']);
+    Permission::create(['name' => 'manage-event-equipment']);
+    Permission::create(['name' => 'view-all-equipment']);
+    Permission::create(['name' => 'view-stations']);
+    Permission::create(['name' => 'manage-shifts']);
+
+    $user = User::factory()->create();
+    Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertStatus(200);
+    $checklist = $response->viewData('checklist');
+
+    foreach ($checklist as $item) {
+        expect($item['route'])->toBeNull("Button for '{$item['label']}' should be hidden for unprivileged users");
+    }
+});
+
+test('get-ready checklist shows routes for privileged users', function () {
+    Permission::create(['name' => 'view-events']);
+    Permission::create(['name' => 'manage-event-equipment']);
+    Permission::create(['name' => 'view-all-equipment']);
+    Permission::create(['name' => 'view-stations']);
+    Permission::create(['name' => 'manage-shifts']);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo(['view-events', 'manage-event-equipment', 'view-stations', 'manage-shifts']);
+    Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertStatus(200);
+    $checklist = $response->viewData('checklist');
+
+    foreach ($checklist as $item) {
+        expect($item['route'])->not->toBeNull("Button for '{$item['label']}' should be visible for privileged users");
+    }
 });
 
 test('only creates one default dashboard per user', function () {

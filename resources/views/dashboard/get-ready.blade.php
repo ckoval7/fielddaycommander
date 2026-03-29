@@ -96,29 +96,29 @@
                 </div>
             </div>
             {{-- Invite Participants CTA --}}
-            @can('manage-users')
-                <div class="card bg-primary/5 border border-primary/20 mt-6" x-data="{ copied: false }">
-                    <div class="card-body text-center py-6">
-                        <h3 class="text-lg font-bold mb-1">Invite participants</h3>
-                        <p class="text-sm text-base-content/60 mb-3">Share this link so operators can create accounts, claim shifts, and log contacts.</p>
-                        <div class="flex items-center gap-2 justify-center mb-4">
-                            <code class="text-sm bg-base-200 px-3 py-1.5 rounded-lg select-all">{{ route('register') }}</code>
-                            <button
-                                class="btn btn-ghost btn-sm btn-square"
-                                @click="navigator.clipboard.writeText('{{ route('register') }}'); copied = true; setTimeout(() => copied = false, 2000)"
-                                :title="copied ? 'Copied!' : 'Copy link'"
-                            >
-                                <x-icon x-show="!copied" name="o-clipboard-document" class="w-4 h-4" />
-                                <x-icon x-show="copied" x-cloak name="o-check" class="w-4 h-4 text-success" />
-                            </button>
-                        </div>
+            <div class="card bg-primary/5 border border-primary/20 mt-6" x-data="{ copied: false }">
+                <div class="card-body text-center py-6">
+                    <h3 class="text-lg font-bold mb-1">Invite participants</h3>
+                    <p class="text-sm text-base-content/60 mb-3">Share this link so operators can create accounts, claim shifts, and log contacts.</p>
+                    <div class="flex items-center gap-2 justify-center mb-4">
+                        <code class="text-sm bg-base-200 px-3 py-1.5 rounded-lg select-all">{{ route('register') }}</code>
+                        <button
+                            class="btn btn-ghost btn-sm btn-square"
+                            @click="navigator.clipboard.writeText('{{ route('register') }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                            :title="copied ? 'Copied!' : 'Copy link'"
+                        >
+                            <x-icon x-show="!copied" name="o-clipboard-document" class="w-4 h-4" />
+                            <x-icon x-show="copied" x-cloak name="o-check" class="w-4 h-4 text-success" />
+                        </button>
+                    </div>
+                    @can('manage-users')
                         <a href="{{ route('users.index') }}" class="btn btn-ghost btn-sm text-base-content/60">
                             <x-icon name="o-users" class="w-4 h-4" />
                             Manage Users
                         </a>
-                    </div>
+                    @endcan
                 </div>
-            @endcan
+            </div>
         </div>
     </div>
 </x-layouts.app>

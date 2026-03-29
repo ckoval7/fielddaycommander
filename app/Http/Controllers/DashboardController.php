@@ -77,26 +77,30 @@ class DashboardController extends Controller
 
         $eventConfig = $event->eventConfiguration;
 
+        $user = Auth::user();
+
         $checklist = [
             [
                 'label' => 'Event configuration created',
                 'done' => $eventConfig !== null,
-                'route' => route('events.show', $event),
+                'route' => $user->can('view-events') ? route('events.show', $event) : null,
             ],
             [
                 'label' => 'Equipment inventoried',
                 'done' => EquipmentEvent::where('event_id', $event->id)->exists(),
-                'route' => route('events.equipment.dashboard', $event),
+                'route' => ($user->can('manage-event-equipment') || $user->can('view-all-equipment'))
+                    ? route('events.equipment.dashboard', $event)
+                    : null,
             ],
             [
                 'label' => 'Stations set up',
                 'done' => $eventConfig?->stations()->exists() ?? false,
-                'route' => route('stations.index'),
+                'route' => $user->can('view-stations') ? route('stations.index') : null,
             ],
             [
                 'label' => 'Shifts scheduled',
                 'done' => $eventConfig?->shifts()->exists() ?? false,
-                'route' => route('schedule.manage'),
+                'route' => $user->can('manage-shifts') ? route('schedule.manage') : null,
             ],
         ];
 
