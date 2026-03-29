@@ -150,6 +150,7 @@ pull_updates() {
             --exclude='vendor' \
             --exclude='.env' \
             --exclude='.deployed-revision' \
+            --exclude='public/storage' \
             --exclude='storage/app' \
             --exclude='storage/logs' \
             --exclude='storage/framework/sessions' \
@@ -161,6 +162,13 @@ pull_updates() {
         git rev-parse HEAD > "$DEPLOYED_REV_FILE"
 
         chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH"
+    fi
+
+    # Ensure storage symlink exists
+    if [[ ! -L "$APP_PATH/public/storage" ]]; then
+        cd "$APP_PATH"
+        sudo -u fdcommander php artisan storage:link
+        log_info "Recreated storage symlink"
     fi
 
     log_info "Code updated"
