@@ -38,7 +38,7 @@
         </x-alert>
     @endif
 
-    <form wire:submit="save">
+    <form wire:submit="save" novalidate>
         <!-- Section 1: Event Information -->
         <x-card class="mb-6">
             <x-slot:title>Event Information</x-slot:title>
