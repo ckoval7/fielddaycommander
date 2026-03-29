@@ -229,6 +229,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's equipment.
+     */
+    public function equipment(): HasMany
+    {
+        return $this->hasMany(Equipment::class, 'owner_user_id');
+    }
+
+    /**
      * Get the user's shift assignments.
      */
     public function shiftAssignments(): HasMany
