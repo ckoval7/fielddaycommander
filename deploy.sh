@@ -390,6 +390,21 @@ install_frankenphp() {
     log_info "FrankenPHP $("$dest" version) installed to ${dest}"
 }
 
+configure_php_ini() {
+    local ini_dir="/etc/frankenphp"
+    local ini_file="${ini_dir}/php.ini"
+    log_info "Configuring PHP settings for FrankenPHP..."
+    mkdir -p "$ini_dir"
+    cat > "$ini_file" <<'PHPEOF'
+; FD Commander PHP configuration for FrankenPHP
+upload_max_filesize = 30M
+post_max_size = 35M
+memory_limit = 256M
+max_execution_time = 60
+PHPEOF
+    log_info "PHP configuration written to ${ini_file}"
+}
+
 install_packages() {
     case "$DISTRO_FAMILY" in
         debian) install_packages_debian ;;
@@ -399,6 +414,7 @@ install_packages() {
     install_composer
     create_system_user
     install_frankenphp
+    configure_php_ini
 }
 
 # Helper to set env values (handles sed metacharacters safely)
@@ -652,6 +668,7 @@ RestartSec=5
 $( [[ "$APP_PORT" -lt 1024 ]] && printf 'CapabilityBoundingSet=CAP_NET_BIND_SERVICE\nAmbientCapabilities=CAP_NET_BIND_SERVICE' || echo '# No privileged port capabilities needed' )
 Environment=XDG_CONFIG_HOME=/var/lib/caddy/.config
 Environment=XDG_DATA_HOME=/var/lib/caddy/.local/share
+Environment=PHPRC=/etc/frankenphp
 
 [Install]
 WantedBy=multi-user.target
