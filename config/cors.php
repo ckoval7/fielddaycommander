@@ -19,11 +19,13 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
+    'allowed_origins' => array_values(array_unique(array_filter([
         'http://localhost:5173',
         'http://127.0.0.1:5173',
-        'http://172.16.30.226:5173',
-    ],
+        parse_url(env('APP_URL', ''), PHP_URL_HOST)
+            ? 'http://'.parse_url(env('APP_URL'), PHP_URL_HOST).':5173'
+            : null,
+    ]))),
 
     'allowed_origins_patterns' => [],
 
