@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAQ - FD Commander</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fd-commander.css">
+<style>
+  .faq-section {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+  .faq-category {
+    margin-bottom: 3.5rem;
+  }
+  .faq-category-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-sky);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .faq-item {
+    margin-bottom: 2.25rem;
+  }
+  .faq-item:last-child {
+    margin-bottom: 0;
+  }
+  .faq-question {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.6rem;
+    line-height: 1.4;
+  }
+  .faq-answer {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+  .faq-answer code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .faq-answer strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .faq-honest {
+    display: inline-block;
+    margin-top: 0.5rem;
+    color: var(--accent-orange);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  /* ── CTA ── */
+  .cta {
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    padding-top: 3rem;
+  }
+  .cta-box {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 3.5rem 2rem;
+    max-width: 700px; margin: 0 auto;
+  }
+  .cta .section-title { margin-bottom: 1rem; }
+  .cta .section-desc { margin: 0 auto 2.5rem; }
+  .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  @media (max-width: 768px) {
+    .faq-question { font-size: 1.05rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav>
+  <div class="nav-inner">
+    <a href="fd-commander-homepage.html" class="logo">
+      <img src="fdlogdb.png" alt="Field Day Commander" class="logo-icon">
+      Field Day Commander
+    </a>
+    <div class="nav-links">
+      <a href="fd-commander-features.html">Features</a>
+      <a href="fd-commander-docs.html">Documentation</a>
+      <a href="fd-commander-faq.html" class="active">FAQ</a>
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Frequently Asked <span class="gradient">Questions</span></h1>
+    <p>Honest answers for hams who've been doing Field Day just fine without this, thank you very much.</p>
+  </div>
+</section>
+
+<section style="padding-top:1rem;">
+  <div class="container">
+    <div class="faq-section">
+
+      <!-- WHY BOTHER -->
+      <div class="faq-category">
+        <div class="faq-category-title">Why Bother</div>
+
+        <div class="faq-item">
+          <div class="faq-question">My favorite logging software works fine. Why would I switch?</div>
+          <div class="faq-answer">
+            If all you need is a contact logger, keep using what works. FD Commander exists because Field Day involves a lot more than logging: volunteer scheduling, equipment tracking, safety checklists, guestbooks, NTS message handling, and scoring with all 12 ARRL bonus categories. If your club coordinates all of that with spreadsheets, paper sign-ups, and group texts, FD Commander puts it in one place. If you genuinely only need a logger, this is more tool than you need.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">My club uses paper logs and a spreadsheet. We do fine.</div>
+          <div class="faq-answer">
+            Plenty of clubs do, and there's nothing wrong with that. But if your club has ever had duplicate contacts across stations that nobody caught until Cabrillo review, or an empty operator chair at 2 AM because two people thought the other one had that shift, or the safety checklist didn't get done because everyone assumed someone else handled it... those are the problems FD Commander solves. If none of that has ever happened to you, you're either very organized or very lucky.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Is this just another logger with a web UI?</div>
+          <div class="faq-answer">
+            No. The contact logger is one piece of it. FD Commander also handles pre-event planning (stations, equipment, schedules, safety checklists), a visitor guestbook, NTS radiogram tracking, photo uploads, role-based access control, and live scoring with the full ARRL bonus point formula. The logging part is intentionally simple: a single-field entry flow designed for speed. The rest of the platform is what makes it different.
+          </div>
+        </div>
+      </div>
+
+      <!-- TECHNICAL CONCERNS -->
+      <div class="faq-category">
+        <div class="faq-category-title">Technical Concerns</div>
+
+        <div class="faq-item">
+          <div class="faq-question">What do I need to run it?</div>
+          <div class="faq-answer">
+            Operators use it from any device with a web browser: Windows, Mac, Linux, a tablet, a phone, whatever. It's just a website on your local network. The <em>server</em> runs on Linux, which is only one machine. That could be a Raspberry Pi, the old PC in the ham shack, or any spare box. Linux is free, runs on nearly anything, and most hams with any tech background have touched it. The deploy script targets Ubuntu/Debian and setup takes about 5 minutes.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Do I need to know Linux to set it up?</div>
+          <div class="faq-answer">
+            You need to be able to clone a git repo and run a shell script. The deploy command is literally <code>sudo ./deploy.sh --domain fd.local</code> and it handles everything: dependencies, database, web server. You don't need to configure Apache, edit PHP files, or touch a database. But if the phrase "SSH into the Pi" makes you uncomfortable, you'll want to recruit your club's tech person.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Can it actually run on a Raspberry Pi?</div>
+          <div class="faq-answer">
+            Yes. It's been tested on a Raspberry Pi 4 with 2 GB of RAM running off a battery pack. FrankenPHP and Laravel Octane keep the memory footprint small. A Pi is actually a great Field Day server: low power draw, fits in a pelican case, and you can prep it at home weeks before the event.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">What happens if the server goes down during the event?</div>
+          <div class="faq-answer">
+            Operators keep logging. If a browser loses its connection to the server, contacts queue locally on the device. When the connection comes back, they sync automatically. You don't lose contacts because someone tripped over the ethernet cable. If the server goes down entirely and you need to log on paper for a while, FD Commander has a paper log transcription feature so you can enter those contacts with the correct timestamps once you're back up. Either way, bring a spare SD card with a known-good image.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Does it need internet access?</div>
+          <div class="faq-answer">
+            <strong>To deploy:</strong> yes. The install script downloads dependencies, so do this at home on your regular internet connection before the event.
+            <br><br>
+            <strong>To run:</strong> no. Once deployed, the entire platform is fully air-gapped. Zero external calls, zero cloud dependencies. This is by design. Many Field Day sites have no internet at all.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Does it do CAT control or talk to my radio?</div>
+          <div class="faq-answer">
+            <strong>No.</strong> FD Commander is a web application, not a rig control program. It doesn't key your radio, decode digital modes, or read frequency from CAT. If you need rig integration, you'll still use your existing setup (WSJT-X, fldigi, etc.) for the RF side and log contacts in FD Commander for the scoring and coordination side.
+            <span class="faq-honest">This isn't on the roadmap. It's a different kind of tool.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOGGING & SCORING -->
+      <div class="faq-category">
+        <div class="faq-category-title">Logging &amp; Scoring</div>
+
+        <div class="faq-item">
+          <div class="faq-question">Does it export Cabrillo?</div>
+          <div class="faq-answer">
+            Yes. Cabrillo export is a core feature. When the event ends, you generate a Cabrillo file ready to upload to the ARRL submission page.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Does it export ADIF?</div>
+          <div class="faq-answer">
+            FD Commander is focused on the Cabrillo format that ARRL requires for Field Day submissions. If you need ADIF for importing into your personal logging software, that's not currently a built-in feature.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">How does dupe checking work across multiple stations?</div>
+          <div class="faq-answer">
+            All contacts go into a single shared database in real time. When an operator enters a callsign, FD Commander checks it against every contact logged by every station on every band. Dupes are flagged instantly before the contact is saved. No post-event deduplication needed.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Is a browser-based logger fast enough for a busy station?</div>
+          <div class="faq-answer">
+            It's a single input field. Type the callsign, the exchange info populates, hit Enter, and you're on to the next one. Dupe checks and section validation happen as you type, not after you submit. It's not going to beat dedicated contest software at a multi-multi, but for Field Day rates it's more than fast enough.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">How does scoring and bonus point tracking work?</div>
+          <div class="faq-answer">
+            Scoring is automatic. Each contact is weighted by mode (CW and digital are 2 points, phone is 1) and the power multiplier is applied based on your configured power source. All 12 ARRL bonus categories are built in. Some are tracked automatically (like the safety checklist completion or visitor guestbook count), others are claimed manually by the event manager (like media publicity or satellite QSO). Each bonus shows its status (claimed, verified, or unclaimed) so you can see at a glance what points you're leaving on the table.
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERATIONS -->
+      <div class="faq-category">
+        <div class="faq-category-title">Operations</div>
+
+        <div class="faq-item">
+          <div class="faq-question">Do operators need accounts?</div>
+          <div class="faq-answer">
+            Yes. Every operator registers with a callsign and gets an account. This is how the system knows who logged what, enforces role-based permissions, and lets operators sign up for schedule slots. The admin or event manager can pre-create accounts, or operators can self-register before the event.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">What about visitors? Do they need accounts too?</div>
+          <div class="faq-answer">
+            No. The guestbook is open. Visitors sign in with just a name and optionally a callsign. No account, no password. You can hand someone a tablet and they sign themselves in. Licensed hams and general public are tracked separately for bonus point purposes.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Can I use this for contests other than Field Day?</div>
+          <div class="faq-answer">
+            FD Commander supports ARRL Field Day and Winter Field Day (run by the Winter Field Day Association). The scoring, bonus categories, exchange format, and Cabrillo export are specific to those events. If you're looking for a general contest logger, this isn't it.
+            <span class="faq-honest">Focus is a feature, not a limitation.</span>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">How many simultaneous operators can it handle?</div>
+          <div class="faq-answer">
+            More than you'll need. The server uses persistent workers (Laravel Octane on FrankenPHP) and a dedicated WebSocket process (Laravel Reverb) for real-time updates. Even on a Raspberry Pi 4, the stack can handle dozens of simultaneous connections without breaking a sweat. A typical Field Day site runs maybe 5 to 15 stations. That's nowhere near the limit.
+          </div>
+        </div>
+      </div>
+
+      <!-- TRUST & PROJECT -->
+      <div class="faq-category">
+        <div class="faq-category-title">Trust &amp; Project</div>
+
+        <div class="faq-item">
+          <div class="faq-question">Is it really free? What's the catch?</div>
+          <div class="faq-answer">
+            It's free and open source under the GPL v3 license. No paid tiers, no "premium" features, no telemetry, no accounts on someone else's server. The code is on GitHub. The catch is that it's maintained by a ham in their spare time, not a company with a support department. File issues on GitHub, and be patient.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Who maintains this?</div>
+          <div class="faq-answer">
+            K3CPK. Licensed for over 10 years, organizer for several Field Day events, and tired of Field Day software that felt outdated and only ran on one OS. FD Commander grew out of <a href="https://github.com/ckoval7/fdlogdb" target="_blank" rel="noopener">fdlogdb</a>, an earlier Field Day logging tool that proved the concept but hit its limits. FD Commander is the full rebuild with everything that project taught him. It's open source and the code is on GitHub for anyone to fork, contribute to, or audit.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">What if it breaks during Field Day and there's no support?</div>
+          <div class="faq-answer">
+            This is a real concern with any self-hosted open-source tool. Mitigate it: test your deployment at home well before the event, do a dry run with your club, keep a backup SD card imaged and ready, and make sure at least one person in the club is comfortable reading a log file. If all else fails, you can always fall back to paper for a while. When the server comes back up, FD Commander has a paper log transcription feature that lets you enter those contacts with the correct timestamps so nothing is lost.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container">
+    <div class="cta-box">
+      <div class="section-label">Try It</div>
+      <h2 class="section-title">See for yourself</h2>
+      <p class="section-desc" style="margin-left:auto;margin-right:auto">
+        Clone the repo, deploy it on a spare Pi or any Linux box, and kick the tires before Field Day.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener" class="btn-primary">View on GitHub</a>
+        <a href="fd-commander-docs.html" class="btn-secondary">Read the Docs &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <span class="logo" style="font-size:0.95rem; display:inline-flex;">
+        <img src="fdlogdb.png" alt="Field Day Commander" style="width:24px;height:24px;object-fit:contain;">
+        Field Day Commander
+      </span>
+      <span style="margin-left:1rem;">Open source under GPL v3</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+      <a href="fd-commander-docs.html">Documentation</a>
+      <a href="https://github.com/ckoval7/fd-commander/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+      <span class="footer-call">73 de Field Day Commander</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

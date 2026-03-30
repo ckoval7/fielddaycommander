@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FD Commander - Field Day Operations Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fd-commander.css">
+<style>
+  /* ── HERO ── */
+  .hero {
+    padding: 10rem 2rem 6rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-photo {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; z-index: 0;
+  }
+  .hero-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center bottom;
+    filter: saturate(0.3) brightness(0.35);
+  }
+  .hero-photo::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      /* Center vignette - keeps text area dark */
+      radial-gradient(ellipse 60% 50% at 50% 40%, rgba(25,30,36,0.85) 0%, transparent 100%),
+      /* Bottom fade into page */
+      linear-gradient(to bottom, transparent 60%, var(--bg-primary) 100%),
+      /* Top fade */
+      linear-gradient(to bottom, rgba(25,30,36,0.6) 0%, transparent 30%);
+  }
+  .hero::after {
+    content: '';
+    position: absolute; top: 50%; right: -100px; transform: translateY(-60%);
+    width: 400px; height: 400px;
+    border: 1px solid rgba(60,131,246,0.06);
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 40px rgba(60,131,246,0.03),
+      0 0 0 80px rgba(60,131,246,0.02),
+      0 0 0 120px rgba(60,131,246,0.01);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+    position: relative; z-index: 1;
+  }
+  .hero h1 .gradient {
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    max-width: 620px; margin: 0 auto 2.5rem;
+    font-size: 1.15rem; color: var(--accent-ice); line-height: 1.7;
+    position: relative; z-index: 1;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+  }
+  .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+
+  /* ── HERO TERMINAL ── */
+  .hero-terminal {
+    max-width: 700px; margin: 4rem auto 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    text-align: left;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    position: relative; z-index: 1;
+  }
+  .terminal-header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+  }
+  .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .terminal-dot.red { background: #ef4444; }
+  .terminal-dot.yellow { background: #eab308; }
+  .terminal-dot.green { background: #22c55e; }
+  .terminal-title { font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem; font-family: 'JetBrains Mono', monospace; }
+  .terminal-body {
+    padding: 1.25rem 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .terminal-body .prompt { color: var(--accent-green); }
+  .terminal-body .cmd { color: var(--text-primary); user-select: text; -webkit-user-select: text; }
+  .terminal-body .comment { color: var(--text-muted); }
+  .terminal-body .output { color: var(--accent-sky); }
+
+  /* ── FEATURES GRID ── */
+  .features { background: var(--bg-secondary); }
+  .features-header { text-align: center; margin-bottom: 4rem; }
+  .features-header .section-desc { margin: 0.5rem auto 0; }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card:hover {
+    border-color: var(--accent-green);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+  .feature-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-sky), var(--accent-green), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .feature-card:hover::after { opacity: 1; }
+  .feature-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; margin-bottom: 1.25rem;
+  }
+  .feature-icon.amber  { background: rgba(60,131,246,0.12); color: var(--accent-sky); }
+  .feature-icon.green  { background: rgba(76,175,80,0.12); color: var(--accent-green); }
+  .feature-icon.emerald { background: rgba(52,211,153,0.12); color: var(--accent-emerald); }
+  .feature-icon.teal   { background: rgba(45,212,191,0.12); color: var(--accent-teal); }
+  .feature-icon.orange { background: rgba(251,146,60,0.12); color: var(--accent-orange); }
+  .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.6rem; }
+  .feature-card p { color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; }
+
+  /* ── HOW IT WORKS ── */
+  .how-it-works-header { text-align: center; margin-bottom: 3rem; }
+  .how-it-works-header .section-desc { margin: 0.5rem auto 0; }
+  .how-it-works-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 2rem;
+  }
+  .step-card { position: relative; text-align: center; }
+  .step-number {
+    font-size: 3.5rem; font-weight: 800;
+    color: var(--accent-sky);
+    opacity: 0.6;
+    line-height: 1;
+    margin-bottom: 0.75rem;
+  }
+  .step-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .step-card p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; }
+
+  /* ── ROLES SECTION ── */
+  .roles { background: var(--bg-secondary); }
+  .roles-header { text-align: center; margin-bottom: 3rem; }
+  .roles-header .section-desc { margin: 0.5rem auto 0; }
+  .roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+  .role-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 2rem;
+    transition: all 0.3s;
+  }
+  .role-card:hover { border-color: var(--border); transform: translateY(-2px); }
+  .role-tag {
+    display: inline-block;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.25rem 0.75rem; border-radius: 100px;
+    margin-bottom: 1rem;
+  }
+  .role-tag.admin { background: rgba(60,131,246,0.15); color: var(--accent-sky); }
+  .role-tag.manager { background: rgba(52,211,153,0.15); color: var(--accent-emerald); }
+  .role-tag.captain { background: rgba(251,146,60,0.15); color: var(--accent-orange); }
+  .role-tag.operator { background: rgba(45,212,191,0.15); color: var(--accent-teal); }
+  .role-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .role-card p { color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; }
+
+  /* ── TECH SECTION ── */
+  .tech-stack { padding-bottom: 3rem; }
+  .tech-header { text-align: center; margin-bottom: 2rem; }
+  .tech-header .section-desc { margin: 0.5rem auto 0; }
+  .tech-grid {
+    display: flex; flex-wrap: wrap; gap: 1rem;
+    margin-top: 2rem;
+    justify-content: center;
+  }
+  .tech-pill {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 100px; padding: 0.6rem 1.25rem;
+    font-size: 0.88rem; font-weight: 500; color: var(--text-primary);
+    transition: all 0.2s;
+  }
+  .tech-pill:hover { border-color: var(--accent-green); background: var(--bg-card-hover); }
+  .tech-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ── CTA ── */
+  .cta {
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    padding-top: 3rem;
+  }
+  .cta::before {
+    content: '';
+    position: absolute; bottom: -200px; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(60,131,246,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta .section-title { margin-bottom: 1rem; }
+  .cta .section-desc { margin: 0 auto 2.5rem; }
+  .cta-box {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 3.5rem 2rem;
+    max-width: 700px; margin: 0 auto;
+  }
+
+  /* ── SIGNAL STRENGTH DIVIDER ── */
+  .signal-divider {
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 4px; padding: 2rem 0; opacity: 0.15;
+    position: relative; z-index: 1;
+  }
+  .signal-bar {
+    width: 4px; border-radius: 2px;
+    background: var(--accent-gold);
+  }
+
+  @media (max-width: 768px) {
+    .hero { padding: 8rem 1.5rem 4rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav>
+  <div class="nav-inner">
+    <a href="fd-commander-homepage.html" class="logo">
+      <img src="fdlogdb.png" alt="Field Day Commander" class="logo-icon">
+      Field Day Commander
+    </a>
+    <div class="nav-links">
+      <a href="fd-commander-features.html">Features</a>
+      <a href="fd-commander-docs.html">Documentation</a>
+      <a href="fd-commander-faq.html">FAQ</a>
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-photo"><img src="IMG_20170625_072945-PANO.jpg" alt=""></div>
+  <div class="container">
+    <h1>
+      The complete<br><span class="gradient">Field Day operations platform.</span>
+    </h1>
+    <p>
+      FD Commander handles the whole event, not just logging.
+      Schedule volunteers, assign stations and equipment, run safety checklists,
+      then log contacts across multiple operators in real time. All from any device on your LAN.
+    </p>
+    <div class="hero-actions">
+      <a href="fd-commander-docs.html" class="btn-primary">Get Started</a>
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener" class="btn-secondary">View on GitHub &rarr;</a>
+    </div>
+
+    <div class="hero-terminal">
+      <div class="terminal-header">
+        <span class="terminal-dot red"></span>
+        <span class="terminal-dot yellow"></span>
+        <span class="terminal-dot green"></span>
+        <span class="terminal-title">fd-commander - deploy</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="comment"># Clone and deploy in minutes</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git clone https://github.com/ckoval7/fd-commander.git</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">cd fd-commander</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">sudo ./deploy.sh --domain fd.local</span></div>
+        <div><span class="output">&#10003; Dependencies installed</span></div>
+        <div><span class="output">&#10003; Database configured</span></div>
+        <div><span class="output">&#10003; FD Commander running at http://fd.local</span></div>
+        <div style="margin-top:0.5rem"><span class="comment"># Ready for Field Day. 73!</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="signal-divider">
+  <div class="signal-bar" style="height:6px"></div>
+  <div class="signal-bar" style="height:12px"></div>
+  <div class="signal-bar" style="height:20px"></div>
+  <div class="signal-bar" style="height:30px"></div>
+  <div class="signal-bar" style="height:42px"></div>
+  <div class="signal-bar" style="height:30px"></div>
+  <div class="signal-bar" style="height:20px"></div>
+  <div class="signal-bar" style="height:12px"></div>
+  <div class="signal-bar" style="height:6px"></div>
+</div>
+
+<section class="features">
+  <div class="container">
+    <div class="features-header">
+      <div class="section-label">More Than a Logger</div>
+      <h2 class="section-title">Plan the event, then run it</h2>
+      <p class="section-desc">
+        Most Field Day software starts and ends at contact logging. FD Commander covers the whole operation, from weeks-before planning to the final Cabrillo export.
+      </p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon orange">&#128197;</div>
+        <h3>Volunteer Scheduling</h3>
+        <p>Build the full 24-hour schedule before the event. Operators sign themselves up for open slots, managers spot coverage gaps, and everyone knows when they're on.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon emerald">&#9881;</div>
+        <h3>Equipment Management</h3>
+        <p>Catalog personal and club-owned radios, antennas, and accessories. Assign gear to stations, track availability, and search by type, owner, or status.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon green">&#9745;</div>
+        <h3>Safety Checklists</h3>
+        <p>The full 15-item ARRL safety checklist, built in. Check off items as you go, track required-vs-complete progress, and earn the 100-point Safety Officer bonus when everything's verified.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon amber">&#9889;</div>
+        <h3>Real-Time Contact Logging</h3>
+        <p>Every operator logs from their own device with a fast single-field entry flow. Dupes are caught instantly across all stations, and contacts queue locally if a device loses its connection.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon green">&#9776;</div>
+        <h3>Live Scoring &amp; Cabrillo Export</h3>
+        <p>Your score updates in real time as contacts come in: QSO points, power multiplier, bonus points, the whole formula. When the event ends, export a clean Cabrillo file for ARRL submission.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon orange">&#128221;</div>
+        <h3>Visitor Guestbook</h3>
+        <p>Let visitors sign in when they stop by your site. Distinguish between general public and licensed hams, record in-person and remote entries, and track attendance for bonus points.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon teal">&#9993;</div>
+        <h3>NTS Message Traffic</h3>
+        <p>Log radiograms and track NTS message handling: originated, relayed, and received. Capture the Section Manager message and W1AW bulletin for bonus points, and print formal radiogram copies.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon amber">&#128101;</div>
+        <h3>Role-Based Access</h3>
+        <p>Built-in roles for Event Manager, Safety Officer, Public Information Table, and Operator. Permissions are fully customizable, so you can tailor access to fit how your club actually operates.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon teal">&#128268;</div>
+        <h3>Runs on Your LAN, No Internet</h3>
+        <p>The entire platform runs air-gapped on your local network. Set up a server in the field (even on a Raspberry Pi) with zero external dependencies.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how-it-works">
+  <div class="container">
+    <div class="how-it-works-header">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">From setup to submission</h2>
+      <p class="section-desc">FD Commander follows the natural arc of a Field Day event: deploy the server, plan your operation, run the contest, and submit your results.</p>
+    </div>
+    <div class="how-it-works-grid">
+      <div class="step-card">
+        <div class="step-number">01</div>
+        <h3>Deploy</h3>
+        <p>Install FD Commander on any Linux machine and connect it to your LAN. Clone the repo, run the deploy script, and you're up.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">02</div>
+        <h3>Plan</h3>
+        <p>Define stations, schedule operators, assign equipment, and run through safety checklists. Do this weeks before or the morning of.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">03</div>
+        <h3>Operate</h3>
+        <p>Operators open a browser and start logging. Scores, dupes, and band activity update live across every device.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">04</div>
+        <h3>Submit</h3>
+        <p>Export a clean Cabrillo file and submit to ARRL. Your score, contacts, and bonus points are all accounted for.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="roles">
+  <div class="container">
+    <div class="roles-header">
+      <div class="section-label">Who It's For</div>
+      <h2 class="section-title">One platform, every role at Field Day</h2>
+      <p class="section-desc">FD Commander ships with sensible default roles, and every permission is fully customizable to match how your club operates.</p>
+    </div>
+    <div class="roles-grid">
+      <div class="role-card">
+        <span class="role-tag admin">Admin</span>
+        <h3>Deploys and Configures</h3>
+        <p>Gets the server running, sets up the database, and creates accounts. Handles the infrastructure so everyone else can focus on the event.</p>
+      </div>
+      <div class="role-card">
+        <span class="role-tag manager">Event Manager</span>
+        <h3>Plans and Coordinates</h3>
+        <p>Builds the schedule, assigns stations, runs through safety checklists, watches the live score, and handles the Cabrillo export at the end.</p>
+      </div>
+      <div class="role-card">
+        <span class="role-tag captain">Station Captain</span>
+        <h3>Runs a Station</h3>
+        <p>Manages a single operating position. Tracks equipment, coordinates band and mode usage, and keeps operators on schedule.</p>
+      </div>
+      <div class="role-card">
+        <span class="role-tag operator">Operator</span>
+        <h3>Logs Contacts</h3>
+        <p>Opens a browser, sits down, and starts logging. A clean single-field entry flow with instant dupe checks and live band activity. No distractions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tech-stack">
+  <div class="container">
+    <div class="tech-header">
+      <div class="section-label">Under the Hood</div>
+      <h2 class="section-title">Modern stack, field-ready footprint</h2>
+      <p class="section-desc">Built on proven technologies. Light enough to run on a Raspberry Pi powered by a portable battery.</p>
+    </div>
+    <div class="tech-grid">
+      <div class="tech-pill"><span class="dot" style="background:var(--accent-rose)"></span> Laravel 12</div>
+      <div class="tech-pill"><span class="dot" style="background:var(--accent-emerald)"></span> Livewire</div>
+      <div class="tech-pill"><span class="dot" style="background:var(--accent-sky)"></span> Mary UI</div>
+      <div class="tech-pill"><span class="dot" style="background:var(--accent-green)"></span> FrankenPHP</div>
+      <div class="tech-pill"><span class="dot" style="background:var(--accent-orange)"></span> Laravel Octane</div>
+      <div class="tech-pill"><span class="dot" style="background:var(--accent-teal)"></span> Laravel Reverb</div>
+      <div class="tech-pill"><span class="dot" style="background:var(--accent-green)"></span> MySQL / MariaDB</div>
+      <div class="tech-pill"><span class="dot" style="background:var(--accent-sky)"></span> WebSockets</div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container">
+    <div class="cta-box">
+      <div class="section-label">Ready?</div>
+      <h2 class="section-title">Stop juggling spreadsheets and clipboards</h2>
+      <p class="section-desc" style="margin-left:auto;margin-right:auto">
+        FD Commander replaces the patchwork of separate tools with one platform that handles planning, operations, and logging together. Free, open source, built by hams.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener" class="btn-primary">View on GitHub</a>
+        <a href="fd-commander-docs.html" class="btn-secondary">Read the Docs &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <span class="logo" style="font-size:0.95rem; display:inline-flex;">
+        <img src="fdlogdb.png" alt="Field Day Commander" style="width:24px;height:24px;object-fit:contain;">
+        Field Day Commander
+      </span>
+      <span style="margin-left:1rem;">Open source under GPL v3</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+      <a href="fd-commander-docs.html">Documentation</a>
+      <a href="https://github.com/ckoval7/fd-commander/blob/main/LICENSE">License</a>
+      <span class="footer-call">73 de Field Day Commander</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

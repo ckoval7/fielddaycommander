@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Features - FD Commander</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fd-commander.css">
+<style>
+  /* ── FEATURE DEEP DIVE ── */
+  .feature-deep {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    padding: 4rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .feature-deep:last-child { border-bottom: none; }
+  .feature-deep.reverse { direction: rtl; }
+  .feature-deep.reverse > * { direction: ltr; }
+
+  .feature-deep-text .feature-tag {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 1rem;
+    padding: 0.3rem 0.8rem; border-radius: 100px;
+  }
+  .feature-tag.amber  { background: rgba(74,173,232,0.12); color: var(--accent-sky); }
+  .feature-tag.green  { background: rgba(76,175,80,0.12); color: var(--accent-green); }
+  .feature-tag.orange { background: rgba(251,146,60,0.12); color: var(--accent-orange); }
+  .feature-tag.rose   { background: rgba(251,113,133,0.12); color: var(--accent-rose); }
+  .feature-tag.emerald { background: rgba(52,211,153,0.12); color: var(--accent-emerald); }
+  .feature-tag.teal   { background: rgba(45,212,191,0.12); color: var(--accent-teal); }
+
+  .feature-deep-text h2 {
+    font-size: 1.8rem; font-weight: 800; margin-bottom: 1rem;
+    line-height: 1.2; letter-spacing: -0.01em;
+  }
+  .feature-deep-text p {
+    color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7;
+    margin-bottom: 1.25rem;
+  }
+  .feature-bullets { list-style: none; padding: 0; }
+  .feature-bullets li {
+    display: flex; align-items: flex-start; gap: 0.65rem;
+    color: var(--text-secondary); font-size: 0.9rem;
+    margin-bottom: 0.75rem; line-height: 1.5;
+  }
+  .feature-bullets li .check {
+    color: var(--accent-green); font-weight: 700; flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .feature-visual {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+  }
+  .mock-header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem; color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .mock-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .mock-body { padding: 1.5rem; }
+
+  .mock-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .mock-table th {
+    text-align: left; color: var(--text-muted); font-weight: 600;
+    padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .mock-table td {
+    padding: 0.6rem 0.75rem; border-bottom: 1px solid rgba(42,63,52,0.5);
+    color: var(--text-secondary);
+  }
+  .mock-table .callsign { color: var(--accent-sky); font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+  .mock-table .band { color: var(--accent-green); }
+  .mock-table .mode { color: var(--accent-emerald); }
+  .mock-table .dupe {
+    color: var(--accent-rose); font-size: 0.7rem; font-weight: 600;
+    background: rgba(251,113,133,0.12); padding: 0.15rem 0.5rem; border-radius: 4px;
+  }
+
+  .mock-score-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+  }
+  .mock-score-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem; text-align: center;
+  }
+  .mock-score-card .value {
+    font-size: 1.6rem; font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .mock-score-card .value.amber { color: var(--accent-sky); }
+  .mock-score-card .value.green { color: var(--accent-green); }
+  .mock-score-card .value.emerald { color: var(--accent-emerald); }
+  .mock-score-card .label {
+    font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .mock-bar-chart { display: flex; align-items: flex-end; gap: 0.5rem; height: 80px; margin-top: 1.25rem; }
+  .mock-bar {
+    flex: 1; border-radius: 4px 4px 0 0; position: relative;
+  }
+  .mock-bar-label {
+    position: absolute; bottom: -1.5rem; left: 50%; transform: translateX(-50%);
+    font-size: 0.65rem; color: var(--text-muted); white-space: nowrap;
+  }
+
+  .mock-schedule-row {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(42,63,52,0.5);
+    font-size: 0.82rem;
+  }
+  .mock-schedule-row:last-child { border-bottom: none; }
+  .mock-time {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted); font-size: 0.75rem;
+    min-width: 80px;
+  }
+  .mock-operator { color: var(--text-primary); font-weight: 500; flex: 1; }
+  .mock-station-tag {
+    font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem;
+    border-radius: 100px;
+  }
+  .mock-station-tag.a { background: rgba(74,173,232,0.12); color: var(--accent-sky); }
+  .mock-station-tag.b { background: rgba(52,211,153,0.12); color: var(--accent-emerald); }
+  .mock-station-tag.c { background: rgba(76,175,80,0.12); color: var(--accent-green); }
+  .mock-status {
+    font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+  }
+  .mock-status.active { background: rgba(76,175,80,0.12); color: var(--accent-green); }
+  .mock-status.upcoming { background: rgba(251,146,60,0.12); color: var(--accent-orange); }
+
+  .mock-offline-demo { display: flex; flex-direction: column; gap: 1rem; }
+  .mock-status-bar {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.8rem; padding: 0.6rem 1rem;
+    border-radius: 8px;
+  }
+  .mock-status-bar.offline {
+    background: rgba(251,146,60,0.1); border: 1px solid rgba(251,146,60,0.3);
+    color: var(--accent-orange);
+  }
+  .mock-status-bar.syncing {
+    background: rgba(74,173,232,0.1); border: 1px solid rgba(74,173,232,0.3);
+    color: var(--accent-sky);
+  }
+  .mock-status-bar.synced {
+    background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3);
+    color: var(--accent-green);
+  }
+  .mock-queue-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
+  .mock-queue-item .callsign { color: var(--accent-sky); font-family: 'JetBrains Mono', monospace; }
+
+  /* ── CTA ── */
+  .cta {
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    padding-top: 3rem;
+  }
+  .cta-box {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 3.5rem 2rem;
+    max-width: 700px; margin: 0 auto;
+  }
+  .cta .section-title { margin-bottom: 1rem; }
+  .cta .section-desc { margin: 0 auto 2.5rem; }
+  .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  @media (max-width: 768px) {
+    .feature-deep { grid-template-columns: 1fr; gap: 2rem; }
+    .feature-deep.reverse { direction: ltr; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav>
+  <div class="nav-inner">
+    <a href="fd-commander-homepage.html" class="logo">
+      <img src="fdlogdb.png" alt="Field Day Commander" class="logo-icon">
+      Field Day Commander
+    </a>
+    <div class="nav-links">
+      <a href="fd-commander-features.html" class="active">Features</a>
+      <a href="fd-commander-docs.html">Documentation</a>
+      <a href="fd-commander-faq.html">FAQ</a>
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Every detail handled, <span class="gradient">from planning to final submission.</span></h1>
+    <p>Other Field Day tools are just loggers. FD Commander handles the whole operation: volunteer coordination, station setup, safety compliance, and then contact logging with real-time scoring.</p>
+  </div>
+</section>
+
+<section style="padding-top:2rem;padding-bottom:2rem;">
+  <div class="container">
+
+    <!-- Planning features first -->
+    <div class="feature-deep">
+      <div class="feature-deep-text">
+        <span class="feature-tag orange">Planning</span>
+        <h2>The event starts weeks before the first QSO</h2>
+        <p>Define your stations, assign equipment, build the volunteer schedule, and run through safety checklists, all in one place. When Field Day arrives, your club shows up and everything is already organized.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Station definitions with band and mode configuration</li>
+          <li><span class="check">&#10003;</span> Volunteer scheduling with shift blocks and gap detection</li>
+          <li><span class="check">&#10003;</span> 15-item ARRL safety checklist with required/complete tracking</li>
+          <li><span class="check">&#10003;</span> Event readiness dashboard to see what's done and what's left at a glance</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Event Planning - Field Day 2026
+        </div>
+        <div class="mock-body">
+          <div class="mock-schedule-row">
+            <span class="mock-time" style="min-width:100px;color:var(--accent-green);">&#9745; Complete</span>
+            <span class="mock-operator">Station definitions (3 stations configured)</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-time" style="min-width:100px;color:var(--accent-green);">&#9745; Complete</span>
+            <span class="mock-operator">Equipment inventory (12 items, all assigned)</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-time" style="min-width:100px;color:var(--accent-green);">&#9745; Complete</span>
+            <span class="mock-operator">Operator schedule (24hr coverage, no gaps)</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-time" style="min-width:100px;color:var(--accent-orange);">&#9744; Pending</span>
+            <span class="mock-operator">Safety checklist (8 of 15 items verified)</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-time" style="min-width:100px;color:var(--text-muted);">&#9744; Not started</span>
+            <span class="mock-operator">Cabrillo header info</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep reverse">
+      <div class="feature-deep-text">
+        <span class="feature-tag amber">Core Logging</span>
+        <h2>Real-time logging across every station</h2>
+        <p>Multiple operators on multiple devices entering contacts at the same time. FD Commander merges everything into a single, unified log in real time. No conflicts, no manual deduplication after the event.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Dupes flagged instantly across all stations and bands</li>
+          <li><span class="check">&#10003;</span> Section and exchange validation catches typos before they're saved</li>
+          <li><span class="check">&#10003;</span> Cabrillo export ready for ARRL submission</li>
+          <li><span class="check">&#10003;</span> Single-field entry flow designed for speed: type the exchange, hit Enter, done</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          <span style="font-weight:600;">Station 1</span>
+          <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">20m &nbsp;|&nbsp; Phone &nbsp;|&nbsp; 100W</span>
+          <span style="margin-left:0.5rem;font-size:0.7rem;color:var(--accent-green);">&#9679; QSOs: 5</span>
+        </div>
+        <div class="mock-body">
+          <div style="text-align:center;padding:0.3rem 0 0.5rem;">
+            <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Your Exchange</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;letter-spacing:2px;">W1ABC 3A GA</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin:0.4rem 0;padding:0.5rem;background:var(--bg-primary);border:1px solid var(--accent-sky);border-radius:6px;">
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--text-primary);font-size:0.95rem;">K1TTT 2A CT</span>
+            <span style="margin-left:auto;background:var(--accent-green);color:#15191e;font-size:0.7rem;font-weight:700;padding:0.25rem 0.7rem;border-radius:4px;">&#10003; Log</span>
+          </div>
+          <div style="font-size:0.65rem;color:var(--text-muted);text-align:center;margin-bottom:0.5rem;">Enter &middot; Log contact &nbsp;&nbsp; Esc &middot; Clear &nbsp;&nbsp; Tab &middot; Accept suggestion</div>
+          <div style="border-top:1px solid var(--border);margin-top:0.3rem;padding-top:0.4rem;">
+            <div style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.3rem;">Recent QSOs</div>
+            <table class="mock-table">
+              <thead><tr><th>UTC</th><th>Callsign</th><th>Section</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>18:48</td><td class="callsign">VE3DZ</td><td>ON</td><td></td></tr>
+                <tr><td>18:45</td><td class="callsign">N3FJP</td><td>MDC</td><td></td></tr>
+                <tr><td>18:44</td><td class="callsign">K5ZD</td><td>EMA</td><td></td></tr>
+                <tr><td>18:42</td><td class="callsign">W1AW</td><td>CT</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep">
+      <div class="feature-deep-text">
+        <span class="feature-tag green">Scoring</span>
+        <h2>Know your score without doing math</h2>
+        <p>Power multipliers, bonus points, and band breakdowns are all calculated as contacts come in. Put the dashboard on a big screen so the whole club can see where things stand.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Power multiplier auto-calculated from your configured power sources</li>
+          <li><span class="check">&#10003;</span> All 12 ARRL bonus categories tracked (claimed, verified, or unclaimed)</li>
+          <li><span class="check">&#10003;</span> QSO points weighted by mode: CW/Digital = 2 pts, Phone = 1 pt</li>
+          <li><span class="check">&#10003;</span> Everyone sees the same live score, on every screen</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Live Score Dashboard
+        </div>
+        <div class="mock-body">
+          <div style="text-align:center;padding:0.5rem 0 0.3rem;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;letter-spacing:2px;color:var(--text-primary);">W1ABC</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);letter-spacing:1px;margin-top:0.15rem;">CLASS A &middot; GEORGIA &middot; 3 TRANSMITTERS</div>
+          </div>
+          <div style="border-top:1px solid var(--border);margin:0.4rem 0;"></div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:0.3rem;padding:0.6rem 0;font-family:'JetBrains Mono',monospace;">
+            <span style="color:var(--text-muted);font-size:1.1rem;">(</span>
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem;font-weight:700;color:var(--accent-gold);">2,847</div>
+              <div style="font-size:0.55rem;color:var(--text-muted);letter-spacing:1px;">QSO BASE PTS</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:1.1rem;">&times;</span>
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem;font-weight:700;color:var(--accent-gold);">2&times;</div>
+              <div style="font-size:0.55rem;color:var(--text-muted);letter-spacing:1px;">POWER MULTI.</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:1.1rem;">)</span>
+            <span style="color:var(--text-muted);font-size:1.1rem;">+</span>
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem;font-weight:700;color:var(--accent-gold);">550</div>
+              <div style="font-size:0.55rem;color:var(--text-muted);letter-spacing:1px;">BONUS PTS</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:1.1rem;">=</span>
+            <div style="text-align:center;">
+              <div style="font-size:1.8rem;font-weight:800;color:var(--accent-gold);">6,244</div>
+              <div style="font-size:0.55rem;color:var(--text-muted);letter-spacing:1px;">FINAL SCORE</div>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border);margin:0.3rem 0;"></div>
+          <div class="mock-bar-chart">
+            <div class="mock-bar" style="height:45%;background:var(--accent-sky);"><span class="mock-bar-label">80m</span></div>
+            <div class="mock-bar" style="height:30%;background:var(--accent-emerald);"><span class="mock-bar-label">40m</span></div>
+            <div class="mock-bar" style="height:90%;background:var(--accent-green);"><span class="mock-bar-label">20m</span></div>
+            <div class="mock-bar" style="height:60%;background:var(--accent-orange);"><span class="mock-bar-label">15m</span></div>
+            <div class="mock-bar" style="height:25%;background:var(--accent-teal);"><span class="mock-bar-label">10m</span></div>
+            <div class="mock-bar" style="height:15%;background:var(--text-muted);"><span class="mock-bar-label">6m</span></div>
+            <div class="mock-bar" style="height:55%;background:var(--accent-sky);"><span class="mock-bar-label">2m</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep reverse">
+      <div class="feature-deep-text">
+        <span class="feature-tag orange">Scheduling</span>
+        <h2>No more clipboard sign-up sheets</h2>
+        <p>Build the full 24-hour schedule before the event starts. Operators sign themselves up for open slots, and managers can see coverage gaps at a glance.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Operators self-sign-up for open time slots</li>
+          <li><span class="check">&#10003;</span> Fill-status indicators show gaps before they become problems</li>
+          <li><span class="check">&#10003;</span> Schedule any role: operators, safety officers, public information table</li>
+          <li><span class="check">&#10003;</span> "My Shifts" view so every volunteer knows when they're up</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Operator Schedule
+        </div>
+        <div class="mock-body">
+          <div class="mock-schedule-row">
+            <span style="background:var(--accent-sky);color:#15191e;font-size:0.65rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;white-space:nowrap;">Operator</span>
+            <span class="mock-time">Sat 14:00&ndash;16:00</span>
+            <span style="background:var(--accent-green);color:#15191e;font-size:0.6rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:3px;">2/2 filled</span>
+            <span class="mock-operator">Mike (KD2ABC), Sarah (N2DEF)</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span style="background:var(--accent-sky);color:#15191e;font-size:0.65rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;white-space:nowrap;">Operator</span>
+            <span class="mock-time">Sat 16:00&ndash;18:00</span>
+            <span style="background:var(--accent-green);color:#15191e;font-size:0.6rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:3px;">2/2 filled</span>
+            <span class="mock-operator">Tom (W2GHI), Jen (KC2JKL)</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span style="background:var(--accent-sky);color:#15191e;font-size:0.65rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;white-space:nowrap;">Operator</span>
+            <span class="mock-time">Sat 18:00&ndash;20:00</span>
+            <span style="background:var(--accent-orange);color:#15191e;font-size:0.6rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:3px;">1/2 filled</span>
+            <span class="mock-operator">Dave (WA2MNO)</span>
+            <span style="background:var(--accent-green);color:#15191e;font-size:0.65rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;cursor:pointer;">+ Sign Up</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span style="background:var(--accent-emerald);color:#15191e;font-size:0.65rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;white-space:nowrap;">Safety Officer</span>
+            <span class="mock-time">Sat 14:00&ndash;20:00</span>
+            <span style="background:var(--accent-green);color:#15191e;font-size:0.6rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:3px;">1/1 filled</span>
+            <span class="mock-operator">Pat (KB2QRS)</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span style="background:var(--accent-sky);color:#15191e;font-size:0.65rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;white-space:nowrap;">Operator</span>
+            <span class="mock-time">Sat 20:00&ndash;22:00</span>
+            <span style="background:var(--accent-rose);color:#15191e;font-size:0.6rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:3px;">0/2 filled</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">No one signed up yet</span>
+            <span style="background:var(--accent-green);color:#15191e;font-size:0.65rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;cursor:pointer;">+ Sign Up</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep">
+      <div class="feature-deep-text">
+        <span class="feature-tag emerald">Equipment</span>
+        <h2>Know where every piece of gear is</h2>
+        <p>Every operator has a personal "My Catalog" for their own gear. Commit equipment to upcoming events, assign gear to stations, and track availability across the whole operation.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Personal catalogs with photo, make/model, serial number, and tags</li>
+          <li><span class="check">&#10003;</span> Event Commitments to pledge your gear ahead of time</li>
+          <li><span class="check">&#10003;</span> Searchable and filterable by type, status, and owner</li>
+          <li><span class="check">&#10003;</span> Assign gear to specific stations before the event</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Equipment Inventory
+        </div>
+        <div class="mock-body">
+          <table class="mock-table">
+            <thead><tr><th>Make/Model</th><th>Type</th><th>Assigned To</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Icom IC-7300</td><td><span style="background:#6366f1;color:#fff;font-size:0.6rem;font-weight:600;padding:0.1rem 0.4rem;border-radius:3px;">Radio</span></td><td>Station 1</td><td><span style="border:1px solid var(--accent-green);color:var(--accent-green);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Delivered</span></td></tr>
+              <tr><td>Yaesu FT-991A</td><td><span style="background:#6366f1;color:#fff;font-size:0.6rem;font-weight:600;padding:0.1rem 0.4rem;border-radius:3px;">Radio</span></td><td>Station 2</td><td><span style="border:1px solid var(--accent-green);color:var(--accent-green);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Delivered</span></td></tr>
+              <tr><td>Fan Dipole (80/40/20)</td><td><span style="background:#0ea5e9;color:#fff;font-size:0.6rem;font-weight:600;padding:0.1rem 0.4rem;border-radius:3px;">Antenna</span></td><td>Station 1</td><td><span style="border:1px solid var(--accent-sky);color:var(--accent-sky);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Committed</span></td></tr>
+              <tr><td>Hex Beam</td><td><span style="background:#0ea5e9;color:#fff;font-size:0.6rem;font-weight:600;padding:0.1rem 0.4rem;border-radius:3px;">Antenna</span></td><td>Station 3</td><td><span style="border:1px solid var(--accent-sky);color:var(--accent-sky);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Committed</span></td></tr>
+              <tr><td>TH-D75A</td><td><span style="background:#6366f1;color:#fff;font-size:0.6rem;font-weight:600;padding:0.1rem 0.4rem;border-radius:3px;">Radio</span></td><td>-</td><td><span style="border:1px solid var(--text-muted);color:var(--text-muted);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Returned</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep reverse">
+      <div class="feature-deep-text">
+        <span class="feature-tag amber">Guestbook</span>
+        <h2>A guestbook for everyone who stops by</h2>
+        <p>Field Day is a public event. When visitors come to check out your operation, they can sign the digital guestbook right from any device on the network. Track guest count for ARRL bonus points and build a record of community engagement.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Visitors sign in with name and optional callsign</li>
+          <li><span class="check">&#10003;</span> Guest count tracked for public information bonus points</li>
+          <li><span class="check">&#10003;</span> Visitors can sign themselves in, no account or password needed</li>
+          <li><span class="check">&#10003;</span> Exportable log of all visitors for club records</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Visitor Guestbook
+        </div>
+        <div class="mock-body">
+          <div class="mock-schedule-row">
+            <span class="mock-time" style="min-width:60px;">14:22</span>
+            <span class="mock-operator">John &amp; family</span>
+            <span style="background:var(--bg-primary);color:var(--text-muted);font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:3px;border:1px solid var(--border);">General Public</span>
+            <span style="color:var(--accent-green);font-size:0.7rem;">&#9679; In Person</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-time" style="min-width:60px;">14:45</span>
+            <span class="mock-operator">Maria (KD2XYZ)</span>
+            <span style="background:var(--bg-primary);color:var(--accent-sky);font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:3px;border:1px solid var(--accent-sky);">Licensed Ham</span>
+            <span style="color:var(--accent-green);font-size:0.7rem;">&#9679; In Person</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-time" style="min-width:60px;">15:10</span>
+            <span class="mock-operator">Scout Troop 42</span>
+            <span style="background:var(--bg-primary);color:var(--text-muted);font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:3px;border:1px solid var(--border);">General Public</span>
+            <span style="color:var(--accent-green);font-size:0.7rem;">&#9679; In Person</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-time" style="min-width:60px;">15:38</span>
+            <span class="mock-operator">Parks Dept. ranger</span>
+            <span style="background:var(--bg-primary);color:var(--text-muted);font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:3px;border:1px solid var(--border);">General Public</span>
+            <span style="color:var(--accent-green);font-size:0.7rem;">&#9679; In Person</span>
+          </div>
+          <div style="text-align:center;padding:0.75rem 0;color:var(--accent-sky);font-size:0.85rem;font-weight:600;">Recent visitors: 4 &nbsp;&#183;&nbsp; <span style="color:var(--accent-green);">+ Sign the Guestbook</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep">
+      <div class="feature-deep-text">
+        <span class="feature-tag green">Photos</span>
+        <h2>Capture the event in photos</h2>
+        <p>Upload photos as the event unfolds: antenna raises, station setups, the team working pileups at 2 AM. Everything is stored on the local server, and operators can contribute from any device on the network.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Upload photos from any connected device</li>
+          <li><span class="check">&#10003;</span> Everything stays on your network. No cloud accounts or uploads to third parties</li>
+          <li><span class="check">&#10003;</span> Browse the gallery to see the full event timeline</li>
+          <li><span class="check">&#10003;</span> Great for club newsletters, social media, and ARRL submissions</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Event Photos
+        </div>
+        <div class="mock-body">
+          <div class="mock-schedule-row" style="border-bottom:1px solid var(--border);padding-bottom:0.6rem;">
+            <span style="color:var(--accent-sky);font-size:0.85rem;min-width:80px;">14:15 UTC</span>
+            <span class="mock-operator">Antenna raise - Station A hex beam</span>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Mike (KD2ABC)</span>
+          </div>
+          <div class="mock-schedule-row" style="border-bottom:1px solid var(--border);padding-bottom:0.6rem;">
+            <span style="color:var(--accent-sky);font-size:0.85rem;min-width:80px;">16:30 UTC</span>
+            <span class="mock-operator">Generator and power distribution setup</span>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Sarah (N2DEF)</span>
+          </div>
+          <div class="mock-schedule-row" style="border-bottom:1px solid var(--border);padding-bottom:0.6rem;">
+            <span style="color:var(--accent-sky);font-size:0.85rem;min-width:80px;">18:02 UTC</span>
+            <span class="mock-operator">First QSO of the event!</span>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Tom (W2GHI)</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span style="color:var(--accent-sky);font-size:0.85rem;min-width:80px;">02:45 UTC</span>
+            <span class="mock-operator">Late night 40m pileup crew</span>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Jen (KC2JKL)</span>
+          </div>
+          <div style="text-align:center;padding:0.75rem 0 0;border-top:1px solid var(--border);margin-top:0.6rem;color:var(--text-secondary);font-size:0.8rem;">12 photos &nbsp;&#183;&nbsp; 5 contributors &nbsp;&#183;&nbsp; <span style="color:var(--accent-sky);">+ Upload</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep reverse">
+      <div class="feature-deep-text">
+        <span class="feature-tag emerald">Reliability</span>
+        <h2>Built for real field conditions</h2>
+        <p>Two layers of resilience. First: the entire platform runs on your LAN with no internet dependency at all, fully air-gapped. Second: if a browser temporarily loses its connection to the server, contacts queue locally and sync when it reconnects.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Air-gapped operation with no cloud and no external services</li>
+          <li><span class="check">&#10003;</span> If a device loses connection, operators keep logging without interruption</li>
+          <li><span class="check">&#10003;</span> Queued contacts shown with a clear status indicator</li>
+          <li><span class="check">&#10003;</span> Queued contacts sync automatically when the connection comes back</li>
+          <li><span class="check">&#10003;</span> Paper log transcription with correct timestamps if you need to go fully manual</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Connection Status
+        </div>
+        <div class="mock-body">
+          <div class="mock-offline-demo">
+            <div class="mock-status-bar offline">&#9888; Server connection lost - contacts queuing locally (3 queued)</div>
+            <div class="mock-queue-item">
+              <span><span class="callsign">W3LPL</span> &middot; 40m CW &middot; MDC</span>
+              <span style="color:var(--accent-orange);font-size:0.75rem;">Queued</span>
+            </div>
+            <div class="mock-queue-item">
+              <span><span class="callsign">K1TTT</span> &middot; 40m CW &middot; WMA</span>
+              <span style="color:var(--accent-orange);font-size:0.75rem;">Queued</span>
+            </div>
+            <div class="mock-queue-item">
+              <span><span class="callsign">N1MM</span> &middot; 20m SSB &middot; CT</span>
+              <span style="color:var(--accent-orange);font-size:0.75rem;">Queued</span>
+            </div>
+            <div style="margin-top:0.5rem;">
+              <div class="mock-status-bar syncing">&#8635; Server reconnected - syncing 3 contacts...</div>
+            </div>
+            <div class="mock-status-bar synced">&#10003; All contacts synced successfully</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container">
+    <div class="cta-box">
+      <div class="section-label">Ready?</div>
+      <h2 class="section-title">Ready to run a better Field Day?</h2>
+      <p class="section-desc" style="margin-left:auto;margin-right:auto">
+        FD Commander is free, open source, and built by hams. Clone the repo and deploy in minutes.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener" class="btn-primary">View on GitHub</a>
+        <a href="fd-commander-docs.html" class="btn-secondary">Read the Docs &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <span class="logo" style="font-size:0.95rem; display:inline-flex;">
+        <img src="fdlogdb.png" alt="Field Day Commander" style="width:24px;height:24px;object-fit:contain;">
+        Field Day Commander
+      </span>
+      <span style="margin-left:1rem;">Open source under GPL v3</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+      <a href="fd-commander-docs.html">Documentation</a>
+      <a href="https://github.com/ckoval7/fd-commander/blob/main/LICENSE">License</a>
+      <span class="footer-call">73 de Field Day Commander</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
