@@ -251,7 +251,10 @@
   .docs-nav-card.next { text-align: right; }
 
   @media (max-width: 768px) {
-    .docs-layout { grid-template-columns: 1fr; padding-top: 0; }
+    .docs-layout {
+      grid-template-columns: 1fr;
+      padding-top: 64px;
+    }
 
     .sidebar {
       position: relative; top: auto;
@@ -293,14 +296,31 @@
     }
     .docs-content h1 { font-size: 1.6rem; }
     .docs-content h2 { font-size: 1.15rem; }
+    .docs-content .subtitle { font-size: 0.95rem; }
+    .docs-content p { font-size: 0.88rem; }
 
     .req-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .flag-table td:first-child { white-space: normal; }
+    .req-table, .flag-table { font-size: 0.8rem; }
+    .req-table th, .req-table td,
+    .flag-table th, .flag-table td { padding: 0.5rem 0.6rem; }
+    .flag-table td:first-child { white-space: normal; font-size: 0.75rem; }
+
+    code {
+      font-size: 0.78em;
+      word-break: break-all;
+    }
+
+    .step-item { gap: 0.75rem; }
 
     .docs-nav { flex-direction: column; }
     .docs-nav-card.next { text-align: left; }
 
-    .code-body { font-size: 0.75rem; padding: 0.75rem 1rem; }
+    .code-block { margin: 1rem 0; }
+    .code-body { font-size: 0.72rem; padding: 0.75rem 1rem; }
+
+    .callout { font-size: 0.82rem; padding: 0.85rem 1rem; }
+
+    ul { margin-left: 1rem; }
   }
 </style>
 </head>
