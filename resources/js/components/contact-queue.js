@@ -244,13 +244,18 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     this.queue = this.queue.filter(c => c.uuid !== candidate.uuid);
                     this.saveQueue();
 
-                    // Tell Livewire to refresh the recent contacts list
-                    this.$dispatch('contact-synced', {
-                        uuid: candidate.uuid,
-                        contact_id: data.contact_id,
-                        points: data.points,
-                        is_duplicate: data.is_duplicate,
-                    });
+                    // Directly call the Livewire component to refresh
+                    // the recent contacts list after a successful sync.
+                    try {
+                        this.$wire.onContactSynced();
+                    } catch {
+                        // Fallback: find the component manually
+                        const wireEl = this.$el?.closest('[wire\\:id]');
+                        const wireId = wireEl?.getAttribute('wire:id');
+                        if (wireId) {
+                            globalThis.Livewire?.find(wireId)?.call('onContactSynced');
+                        }
+                    }
                 } else if (response.status === 422) {
                     const errorData = await response.json();
                     candidate.status = 'failed';
@@ -295,7 +300,15 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         discardFailed(uuid) {
             this.queue = this.queue.filter(c => c.uuid !== uuid);
             this.saveQueue();
-            this.$dispatch('contact-discarded');
+            try {
+                this.$wire.onContactDiscarded();
+            } catch {
+                const wireEl = this.$el?.closest('[wire\\:id]');
+                const wireId = wireEl?.getAttribute('wire:id');
+                if (wireId) {
+                    globalThis.Livewire?.find(wireId)?.call('onContactDiscarded');
+                }
+            }
         },
 
         loadQueue() {

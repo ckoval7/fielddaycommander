@@ -393,6 +393,30 @@ test('selectSuggestion fills full exchange and clears suggestions', function () 
         ->assertDispatched('suggestion-selected');
 });
 
+test('contact-synced event refreshes recent contacts list', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertDontSee('K5NEW');
+
+    // Simulate a contact being synced via the API (as the JS queue does)
+    Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'K5NEW',
+        'qso_time' => now(),
+    ]);
+
+    $this->session->update(['qso_count' => 1]);
+
+    // Fire the Livewire event that the JS queue dispatches after sync
+    $component->dispatch('contact-synced')
+        ->assertSee('K5NEW');
+});
+
 test('suggestions show full exchange and worked-on bands', function () {
     $this->actingAs($this->user);
 
