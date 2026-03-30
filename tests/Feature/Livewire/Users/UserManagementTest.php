@@ -571,6 +571,8 @@ test('can force password reset on user', function () {
 });
 
 test('can send password reset email', function () {
+    Notification::fake();
+
     $this->actingAs($this->admin);
 
     $user = User::factory()->create();
@@ -578,30 +580,36 @@ test('can send password reset email', function () {
     Livewire::test(UserManagement::class)
         ->call('openResetModal', $user->id)
         ->assertSet('resettingUserId', $user->id)
-        ->assertSet('sendResetEmail', true)
+        ->assertSet('resetMethod', 'manual')
         ->assertSet('showResetModal', true)
+        ->set('resetMethod', 'email')
         ->call('resetPassword')
         ->assertSet('showResetModal', false)
         ->assertDispatched('toast');
+
+    Notification::assertSentTo($user, \Illuminate\Auth\Notifications\ResetPassword::class);
 });
 
-test('can manually set new password for user', function () {
+test('can reset password with auto-generated password', function () {
     $this->actingAs($this->admin);
 
     $user = User::factory()->create();
     $oldPassword = $user->password;
 
-    Livewire::test(UserManagement::class)
+    $component = Livewire::test(UserManagement::class)
         ->call('openResetModal', $user->id)
-        ->set('sendResetEmail', false)
-        ->set('resetPassword', 'newpassword123')
-        ->set('resetPassword_confirmation', 'newpassword123')
+        ->assertSet('resetMethod', 'manual');
+
+    $generatedPassword = $component->get('newPassword');
+    expect($generatedPassword)->toBeString()->not->toBeEmpty();
+
+    $component
         ->call('resetPassword')
         ->assertSet('showResetModal', false)
         ->assertDispatched('toast');
 
     $user->refresh();
-    expect(Hash::check('newpassword123', $user->password))->toBeTrue()
+    expect(Hash::check($generatedPassword, $user->password))->toBeTrue()
         ->and($user->password)->not->toBe($oldPassword)
         ->and($user->requires_password_change)->toBeTrue();
 });
@@ -961,9 +969,6 @@ test('admin password reset logs to audit log as critical', function () {
 
     Livewire::test(UserManagement::class)
         ->call('openResetModal', $user->id)
-        ->set('sendResetEmail', false)
-        ->set('resetPassword', 'newpassword123')
-        ->set('resetPassword_confirmation', 'newpassword123')
         ->call('resetPassword');
 
     $auditLog = AuditLog::where('action', 'user.password.reset_by_admin')->first();

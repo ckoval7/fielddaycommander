@@ -9,6 +9,7 @@ use App\Notifications\UserInvitation as UserInvitationNotification;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -68,11 +69,11 @@ class UserManagement extends Component
     // Reset password modal
     public ?int $resettingUserId = null;
 
-    public bool $sendResetEmail = true;
+    public string $resetMethod = 'manual';
 
-    public string $resetPassword = '';
+    public string $newPassword = '';
 
-    public string $resetPassword_confirmation = '';
+    public string $newPassword_confirmation = '';
 
     // Delete confirmation
     public ?int $deletingUserId = null;
@@ -378,9 +379,9 @@ class UserManagement extends Component
     public function openResetModal(int $userId): void
     {
         $this->resettingUserId = $userId;
-        $this->sendResetEmail = true;
-        $this->resetPassword = '';
-        $this->resetPassword_confirmation = '';
+        $this->resetMethod = 'manual';
+        $this->newPassword = Str::password(16);
+        $this->newPassword_confirmation = '';
         $this->showResetModal = true;
     }
 
@@ -388,14 +389,14 @@ class UserManagement extends Component
     {
         Gate::authorize('manage-users');
 
-        if (! $this->sendResetEmail) {
+        if ($this->resetMethod === 'manual') {
             $this->validate([
-                'resetPassword' => ['required', 'confirmed', Password::defaults()],
+                'newPassword' => ['required', 'string', 'min:8'],
             ]);
 
             $user = User::findOrFail($this->resettingUserId);
             $user->update([
-                'password' => Hash::make($this->resetPassword),
+                'password' => Hash::make($this->newPassword),
                 'requires_password_change' => true,
             ]);
 
@@ -406,12 +407,25 @@ class UserManagement extends Component
             $this->showResetModal = false;
             $this->dispatch('toast', title: 'Success', description: 'Password reset successfully', icon: 'o-key', css: 'alert-success');
         } else {
-            // TODO: Send password reset email
-            $this->showResetModal = false;
-            $this->dispatch('toast', title: 'Success', description: 'Password reset email sent', icon: 'o-envelope', css: 'alert-success');
+            $user = User::findOrFail($this->resettingUserId);
+
+            $status = PasswordBroker::sendResetLink(['email' => $user->email]);
+
+            if ($status === PasswordBroker::RESET_LINK_SENT) {
+                AuditLog::log('user.password.reset_email_sent', auditable: $user, newValues: [
+                    'call_sign' => $user->call_sign,
+                ]);
+
+                $this->showResetModal = false;
+                $this->dispatch('toast', title: 'Success', description: 'Password reset email sent', icon: 'o-envelope', css: 'alert-success');
+            } else {
+                $this->dispatch('toast', title: 'Error', description: __($status), icon: 'o-x-circle', css: 'alert-error');
+
+                return;
+            }
         }
 
-        $this->reset(['resettingUserId', 'sendResetEmail', 'resetPassword', 'resetPassword_confirmation']);
+        $this->reset(['resettingUserId', 'resetMethod', 'newPassword', 'newPassword_confirmation']);
     }
 
     public function openDeleteModal(int $userId): void
