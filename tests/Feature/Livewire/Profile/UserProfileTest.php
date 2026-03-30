@@ -65,7 +65,7 @@ test('can update profile information', function () {
         ->set('license_class', 'General')
         ->set('preferred_timezone', 'America/Los_Angeles')
         ->call('saveProfile')
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     expect($this->user->first_name)->toBe('Jane')
@@ -80,7 +80,7 @@ test('can update notification preferences', function () {
         ->set('event_notifications', false)
         ->set('system_announcements', false)
         ->call('saveProfile')
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     expect($this->user->notification_preferences['event_notifications'])->toBeFalse()
@@ -125,7 +125,7 @@ test('can change password with valid credentials', function () {
         ->set('password', 'newpassword456')
         ->set('password_confirmation', 'newpassword456')
         ->call('changePassword')
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     expect(Hash::check('newpassword456', $this->user->password))->toBeTrue();
@@ -258,7 +258,7 @@ test('can logout from other sessions', function () {
     Livewire::test(UserProfile::class)
         ->set('current_password', 'password123')
         ->call('logoutOtherSessions')
-        ->assertDispatched('toast')
+        ->assertHasNoErrors()
         ->assertSet('current_password', '');
 });
 

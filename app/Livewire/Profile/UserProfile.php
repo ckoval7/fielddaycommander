@@ -11,6 +11,8 @@ use Livewire\Component;
 
 class UserProfile extends Component
 {
+    use \Mary\Traits\Toast;
+
     public string $activeTab = 'profile';
 
     // Profile tab properties
@@ -124,7 +126,7 @@ class UserProfile extends Component
             ]
         );
 
-        $this->dispatch('toast', type: 'success', message: 'Profile updated successfully.');
+        $this->success('Profile updated successfully.');
     }
 
     public function toggleAllCategories(bool $enabled): void
@@ -170,9 +172,10 @@ class UserProfile extends Component
             $this->password = '';
             $this->password_confirmation = '';
 
-            $this->dispatch('toast', type: 'success', message: 'Password changed successfully.');
+            $this->success('Password changed successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->addError('current_password', 'The current password is incorrect.');
+            $this->error('Password change failed.', 'The current password is incorrect.');
         }
     }
 
@@ -182,7 +185,7 @@ class UserProfile extends Component
 
         $this->current_password = '';
 
-        $this->dispatch('toast', type: 'success', message: 'Logged out of all other devices.');
+        $this->success('Logged out of all other devices.');
     }
 
     public function enableTwoFactor(): void
@@ -224,7 +227,7 @@ class UserProfile extends Component
         $this->showingRecoveryCodes = true;
         $this->twoFactorCode = '';
 
-        $this->dispatch('toast', type: 'success', message: 'Two-factor authentication enabled.');
+        $this->success('Two-factor authentication enabled.');
     }
 
     public function disableTwoFactor(): void
@@ -241,7 +244,7 @@ class UserProfile extends Component
         $this->showingRecoveryCodes = false;
         $this->current_password = '';
 
-        $this->dispatch('toast', type: 'success', message: 'Two-factor authentication disabled.');
+        $this->success('Two-factor authentication disabled.');
     }
 
     public function showRecoveryCodes(): void
@@ -262,7 +265,7 @@ class UserProfile extends Component
 
         $this->showingRecoveryCodes = true;
 
-        $this->dispatch('toast', type: 'success', message: 'Recovery codes regenerated.');
+        $this->success('Recovery codes regenerated.');
     }
 
     public function render()
