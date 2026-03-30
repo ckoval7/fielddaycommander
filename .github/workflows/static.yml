@@ -2,7 +2,7 @@ name: Deploy Pages Folder
 
 on:
   push:
-    branches: ["github.io"] # Change this if your default branch is 'master'
+    branches: ["github.io"]
   workflow_dispatch:
 
 permissions:
@@ -18,7 +18,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps: deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,7 +30,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # This is the magic line that points to your folder
           path: './pages'
 
       - name: Deploy to GitHub Pages
