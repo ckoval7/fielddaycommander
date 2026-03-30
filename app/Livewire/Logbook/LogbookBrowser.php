@@ -249,7 +249,7 @@ class LogbookBrowser extends Component
             'transcribed_filter' => $this->show_transcribed,
         ];
 
-        $query = $queryBuilder->applyFilters($filters);
+        $query = $queryBuilder->applyFilters($filters)->reorder();
 
         // Get aggregated stats
         $totalQsos = $query->count();
@@ -257,7 +257,7 @@ class LogbookBrowser extends Component
         $uniqueSections = $query->distinct('section_id')->count('section_id');
 
         // Stats by band
-        $byBand = $queryBuilder->applyFilters($filters)
+        $byBand = $queryBuilder->applyFilters($filters)->reorder()
             ->select('band_id', \DB::raw('count(*) as count'))
             ->groupBy('band_id')
             ->with('band')
@@ -268,7 +268,7 @@ class LogbookBrowser extends Component
             ->toArray();
 
         // Stats by mode
-        $byMode = $queryBuilder->applyFilters($filters)
+        $byMode = $queryBuilder->applyFilters($filters)->reorder()
             ->select('mode_id', \DB::raw('count(*) as count'))
             ->groupBy('mode_id')
             ->with('mode')
