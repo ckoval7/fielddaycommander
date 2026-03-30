@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="fd-commander.css">
 <style>
   /* ── DOCS LAYOUT ── */
+  .docs-toc-toggle { display: none; }
   .docs-layout {
     display: grid;
     grid-template-columns: 240px 1fr;
@@ -250,9 +251,56 @@
   .docs-nav-card.next { text-align: right; }
 
   @media (max-width: 768px) {
-    .docs-layout { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .docs-content { padding: 2rem 1.5rem; }
+    .docs-layout { grid-template-columns: 1fr; padding-top: 0; }
+
+    .sidebar {
+      position: relative; top: auto;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: none;
+    }
+    .sidebar.open { display: block; }
+    .sidebar-section { margin-bottom: 1rem; }
+
+    .docs-toc-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      background: var(--bg-secondary);
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent-sky);
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .docs-toc-toggle .arrow {
+      transition: transform 0.2s;
+      font-size: 0.7rem;
+    }
+    .docs-toc-toggle.open .arrow {
+      transform: rotate(180deg);
+    }
+
+    .docs-content {
+      padding: 1.5rem 1rem;
+      max-width: 100%;
+    }
+    .docs-content h1 { font-size: 1.6rem; }
+    .docs-content h2 { font-size: 1.15rem; }
+
+    .req-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .flag-table td:first-child { white-space: normal; }
+
+    .docs-nav { flex-direction: column; }
+    .docs-nav-card.next { text-align: left; }
+
+    .code-body { font-size: 0.75rem; padding: 0.75rem 1rem; }
   }
 </style>
 </head>
@@ -280,6 +328,9 @@
 
 <div class="docs-layout">
 
+  <button class="docs-toc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')" aria-label="Toggle table of contents">
+    <span class="arrow">&#9660;</span> Table of Contents
+  </button>
   <aside class="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-section-title">Getting Started</div>
@@ -872,6 +923,18 @@
 
   window.addEventListener('scroll', update);
   update();
+
+  // Close mobile TOC when a sidebar link is tapped
+  links.forEach(function(link) {
+    link.addEventListener('click', function() {
+      var sidebar = document.querySelector('.sidebar');
+      var toggle = document.querySelector('.docs-toc-toggle');
+      if (sidebar && toggle && window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+        toggle.classList.remove('open');
+      }
+    });
+  });
 })();
 </script>
 </body>
