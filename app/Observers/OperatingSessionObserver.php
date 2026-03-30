@@ -16,6 +16,10 @@ class OperatingSessionObserver
      */
     public function created(OperatingSession $session): void
     {
+        if ($session->is_transcription) {
+            return;
+        }
+
         try {
             $operator = $session->operator;
             $station = $session->station;
@@ -42,6 +46,10 @@ class OperatingSessionObserver
      */
     public function updated(OperatingSession $session): void
     {
+        if ($session->is_transcription) {
+            return;
+        }
+
         if (! $session->wasChanged('end_time') || $session->end_time === null) {
             return;
         }
