@@ -51,7 +51,7 @@ class FortifyServiceProvider extends ServiceProvider
             $user = User::where('email', $request->email)->first();
 
             if ($user && Hash::check($request->password, $user->password)) {
-                if ($user->is_locked) {
+                if ($user->isLocked()) {
                     throw ValidationException::withMessages([
                         'email' => ['This account has been locked. Please contact an administrator.'],
                     ]);

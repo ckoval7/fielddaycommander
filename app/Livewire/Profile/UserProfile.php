@@ -59,6 +59,10 @@ class UserProfile extends Component
 
     public function mount(): void
     {
+        if (request()->query('tab') === 'security') {
+            $this->activeTab = 'security';
+        }
+
         $user = auth()->user();
 
         // Load profile data

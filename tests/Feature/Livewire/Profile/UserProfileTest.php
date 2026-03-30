@@ -131,6 +131,19 @@ test('can change password with valid credentials', function () {
     expect(Hash::check('newpassword456', $this->user->password))->toBeTrue();
 });
 
+test('password change clears requires_password_change flag', function () {
+    $this->user->update(['requires_password_change' => true]);
+
+    Livewire::test(UserProfile::class)
+        ->set('current_password', 'password123')
+        ->set('password', 'newpassword456')
+        ->set('password_confirmation', 'newpassword456')
+        ->call('changePassword');
+
+    $this->user->refresh();
+    expect($this->user->requires_password_change)->toBeFalse();
+});
+
 test('password change validates current password', function () {
     Livewire::test(UserProfile::class)
         ->set('current_password', 'wrongpassword')

@@ -5,6 +5,12 @@
         <p class="text-gray-600 mt-1">Manage your account settings and preferences</p>
     </div>
 
+    @if(auth()->user()->requires_password_change)
+        <x-alert icon="o-exclamation-triangle" class="alert-warning mb-6">
+            You must change your password before you can access the rest of the application.
+        </x-alert>
+    @endif
+
     {{-- Tab Navigation --}}
     <div role="tablist" class="tabs tabs-border mb-6">
         <a role="tab"
