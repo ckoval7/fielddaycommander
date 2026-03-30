@@ -30,6 +30,7 @@
                     name="admin_password"
                     required
                     icon="o-lock-closed"
+                    errorField="admin_password"
                     hint="Minimum 12 characters with uppercase, lowercase, numbers, and symbols"
                 />
 
@@ -39,6 +40,7 @@
                     name="admin_password_confirmation"
                     required
                     icon="o-lock-closed"
+                    errorField="admin_password_confirmation"
                 />
             </div>
 

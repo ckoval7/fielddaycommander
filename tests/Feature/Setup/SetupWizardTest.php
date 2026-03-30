@@ -41,6 +41,25 @@ test('step 1 validates password requirements', function () {
     $response->assertSessionHasErrors('admin_password');
 });
 
+test('step 1 validation errors redirect back to step 1', function () {
+    $response = $this->post(route('setup.step-1'), [
+        'admin_password' => 'nouppercase1!',
+        'admin_password_confirmation' => 'nouppercase1!',
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasErrors('admin_password');
+});
+
+test('step 1 rejects password missing symbols', function () {
+    $response = $this->post(route('setup.step-1'), [
+        'admin_password' => 'NoSymbols12345',
+        'admin_password_confirmation' => 'NoSymbols12345',
+    ]);
+
+    $response->assertSessionHasErrors('admin_password');
+});
+
 test('step 1 requires password confirmation', function () {
     $response = $this->post(route('setup.step-1'), [
         'admin_password' => 'StrongPass123!@#',

@@ -22,6 +22,7 @@
                 value="{{ old('site_name', 'Field Day Commander') }}"
                 required
                 icon="o-building-office"
+                errorField="site_name"
                 hint="Your organization or club name"
             />
 
@@ -30,6 +31,7 @@
                 name="site_tagline"
                 value="{{ old('site_tagline', 'ARRL Field Day Logging System') }}"
                 icon="o-chat-bubble-left-ellipsis"
+                errorField="site_tagline"
                 hint="Optional subtitle or motto"
             />
 

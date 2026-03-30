@@ -40,6 +40,7 @@
                     icon="o-building-office"
                     placeholder="e.g., Springfield Amateur Radio Club"
                     required
+                    errorField="organization_name"
                 />
 
                 <x-input
@@ -48,6 +49,7 @@
                     icon="o-signal"
                     placeholder="e.g., W1ABC"
                     hint="Optional - Club station callsign (3-10 uppercase letters/numbers)"
+                    errorField="organization_callsign"
                 />
 
                 <x-input
@@ -57,6 +59,7 @@
                     icon="o-envelope"
                     placeholder="e.g., info@example.org"
                     hint="Optional - Club contact email"
+                    errorField="organization_email"
                 />
 
                 <x-input
@@ -66,6 +69,7 @@
                     icon="o-phone"
                     placeholder="e.g., (555) 123-4567"
                     hint="Optional - Club contact phone number"
+                    errorField="organization_phone"
                 />
             </div>
 
@@ -162,6 +166,7 @@
                     name="contact_email"
                     icon="o-envelope"
                     hint="Optional - for public contact information"
+                    errorField="contact_email"
                 />
             </div>
 
