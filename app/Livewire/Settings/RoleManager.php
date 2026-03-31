@@ -30,11 +30,12 @@ class RoleManager extends Component
 
     protected array $categories = [
         'Contact Logging' => ['log-contacts', 'edit-contacts'],
-        'Event Management' => ['manage-events', 'manage-event-config', 'verify-bonuses'],
-        'Station & Equipment' => ['manage-stations', 'manage-equipment'],
-        'User Administration' => ['manage-users', 'manage-roles'],
-        'Content Management' => ['manage-guestbook', 'manage-images'],
+        'Event Management' => ['view-events', 'create-events', 'edit-events', 'delete-events', 'activate-events', 'manage-events', 'manage-event-config', 'verify-bonuses'],
+        'Station & Equipment' => ['view-stations', 'manage-stations', 'manage-equipment', 'manage-own-equipment', 'view-all-equipment', 'manage-event-equipment', 'edit-any-equipment'],
+        'User Administration' => ['manage-users', 'manage-roles', 'manage-settings'],
+        'Content Management' => ['sign-guestbook', 'manage-guestbook', 'manage-shifts', 'manage-images'],
         'Reporting' => ['view-reports'],
+        'Security' => ['view-security-logs'],
     ];
 
     public function selectRole(int $roleId): void
