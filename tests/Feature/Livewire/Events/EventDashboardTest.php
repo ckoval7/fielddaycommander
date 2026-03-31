@@ -581,6 +581,48 @@ test('bonusList returns all bonus types with claimed status', function () {
     expect($media['status'])->toBe('unclaimed');
 });
 
+test('scoring tab displays band/mode grid and bonus checklist', function () {
+    $this->actingAs($this->user);
+
+    $eventType = EventType::firstOrCreate(
+        ['code' => 'FD'],
+        ['name' => 'Field Day', 'description' => 'ARRL Field Day', 'is_active' => true],
+    );
+    $event = Event::factory()->create(['event_type_id' => $eventType->id]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'max_power_watts' => 100,
+    ]);
+
+    $cwMode = Mode::factory()->cw()->create();
+    $band = Band::factory()->create(['name' => '20m', 'allowed_fd' => true, 'sort_order' => 4]);
+
+    Contact::factory()->count(3)->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $cwMode->id,
+        'is_duplicate' => false,
+        'points' => 2,
+    ]);
+
+    $bonusType = BonusType::factory()->create([
+        'event_type_id' => $eventType->id,
+        'name' => 'Emergency Power',
+        'base_points' => 100,
+        'is_active' => true,
+    ]);
+
+    Livewire::test(EventDashboard::class, ['event' => $event])
+        ->set('activeTab', 'scoring')
+        ->assertSee('QSO Points')
+        ->assertSee('20m')
+        ->assertSee('CW')
+        ->assertSee('Bonus Points')
+        ->assertSee('Emergency Power')
+        ->assertSee('Final Score');
+});
+
 test('scoringTotals returns correct QSO and bonus scores', function () {
     $this->actingAs($this->user);
 

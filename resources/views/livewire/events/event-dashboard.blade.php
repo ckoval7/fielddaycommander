@@ -280,29 +280,151 @@
             </div>
         </x-tab>
 
-        <!-- Tab 3 - Band/Mode Grid -->
-        <x-tab name="bandmode" label="Band/Mode Grid" icon="o-table-cells">
-            <div class="mt-6">
-                <x-card shadow>
-                    <div class="text-center py-12 text-base-content/60">
-                        <x-icon name="o-table-cells" class="w-16 h-16 mx-auto opacity-50 mb-4" />
-                        <p class="text-lg font-semibold mb-2">Band/Mode Grid</p>
-                        <p>This section will display a grid of contacts by band and mode.</p>
-                    </div>
-                </x-card>
-            </div>
-        </x-tab>
+        <!-- Tab 3 - Scoring (combines Band/Mode Grid + Bonuses) -->
+        <x-tab name="scoring" label="Scoring" icon="o-trophy">
+            <div class="mt-6 space-y-6">
 
-        <!-- Tab 4 - Bonuses -->
-        <x-tab name="bonuses" label="Bonuses" icon="o-trophy">
-            <div class="mt-6">
+                {{-- Score Headline --}}
                 <x-card shadow>
-                    <div class="text-center py-12 text-base-content/60">
-                        <x-icon name="o-trophy" class="w-16 h-16 mx-auto opacity-50 mb-4" />
-                        <p class="text-lg font-semibold mb-2">Bonus Points</p>
-                        <p>This section will display claimed and verified bonus points.</p>
+                    <div class="flex flex-wrap items-center justify-center gap-4 md:gap-8 py-4">
+                        <div class="text-center">
+                            <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['qso_base_points']) }}</div>
+                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">QSO Base Pts</div>
+                        </div>
+                        <span class="text-2xl font-light text-base-content/30">&times;</span>
+                        <div class="text-center">
+                            <div class="text-3xl font-black tabular-nums">{{ $this->scoringTotals['power_multiplier'] }}&times;</div>
+                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">Power Multi.</div>
+                        </div>
+                        <span class="text-2xl font-light text-base-content/30">+</span>
+                        <div class="text-center">
+                            <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['bonus_score']) }}</div>
+                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">Bonus Pts</div>
+                        </div>
+                        <span class="text-2xl font-light text-base-content/30">=</span>
+                        <div class="text-center">
+                            <div class="text-4xl font-black tabular-nums text-primary">{{ number_format($this->scoringTotals['final_score']) }}</div>
+                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1 font-bold">Final Score</div>
+                        </div>
                     </div>
                 </x-card>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    {{-- Column 1: QSO Points + Band/Mode Grid --}}
+                    <x-card title="QSO Points" shadow class="lg:col-span-2">
+                        {{-- Mode scoring key --}}
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            @foreach($this->modes as $mode)
+                                <span class="badge badge-outline badge-sm">
+                                    {{ $mode->name }} = {{ $mode->points_fd }} {{ $mode->points_fd === 1 ? 'pt' : 'pts' }}
+                                </span>
+                            @endforeach
+                        </div>
+
+                        @if(count($this->bandModeGrid) > 0 && collect($this->bandModeGrid)->sum('total_count') > 0)
+                            <div class="overflow-x-auto">
+                                <table class="table table-xs">
+                                    <thead>
+                                        <tr>
+                                            <th>Mode</th>
+                                            @foreach($this->bands as $band)
+                                                <th class="text-center">{{ $band->name }}</th>
+                                            @endforeach
+                                            <th class="text-right">QSOs</th>
+                                            <th class="text-right">Pts</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($this->bandModeGrid as $row)
+                                            <tr>
+                                                <td class="font-semibold">{{ $row['mode']->name }}</td>
+                                                @foreach($this->bands as $band)
+                                                    <td class="text-center tabular-nums">
+                                                        @if($row['cells'][$band->id] > 0)
+                                                            <span class="font-bold">{{ $row['cells'][$band->id] }}</span>
+                                                        @else
+                                                            <span class="text-base-content/20">&mdash;</span>
+                                                        @endif
+                                                    </td>
+                                                @endforeach
+                                                <td class="text-right font-bold tabular-nums">{{ $row['total_count'] ?: '—' }}</td>
+                                                <td class="text-right tabular-nums text-base-content/60">{{ $row['total_points'] ?: '—' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="font-bold">
+                                            <td>Total</td>
+                                            @foreach($this->bands as $band)
+                                                <td class="text-center tabular-nums">{{ ($this->bandColumnTotals[$band->id] ?? 0) ?: '—' }}</td>
+                                            @endforeach
+                                            <td class="text-right tabular-nums">{{ collect($this->bandModeGrid)->sum('total_count') }}</td>
+                                            <td class="text-right tabular-nums">{{ number_format($this->scoringTotals['qso_base_points']) }}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-6 text-base-content/40">
+                                No contacts logged yet.
+                            </div>
+                        @endif
+                    </x-card>
+
+                    {{-- Column 2: Bonus Points --}}
+                    <x-card title="Bonus Points" shadow>
+                        {{-- Summary row --}}
+                        <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                            <div>
+                                <div class="text-xs uppercase tracking-wide text-base-content/60">Verified</div>
+                                <div class="text-lg font-bold tabular-nums text-success">{{ number_format($this->bonusSummary['verified_pts']) }}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs uppercase tracking-wide text-base-content/60">Claimed</div>
+                                <div class="text-lg font-bold tabular-nums text-warning">{{ number_format($this->bonusSummary['claimed_pts']) }}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs uppercase tracking-wide text-base-content/60">Unclaimed</div>
+                                <div class="text-lg font-bold tabular-nums text-base-content/40">{{ $this->bonusSummary['unclaimed_count'] }}</div>
+                            </div>
+                        </div>
+
+                        {{-- Bonus checklist --}}
+                        <div class="divide-y divide-base-200">
+                            @foreach($this->bonusList as $item)
+                                <div class="flex items-center justify-between gap-2 py-2">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm font-medium truncate">{{ $item['type']->name }}</div>
+                                        @if($item['type']->is_per_occurrence && $item['bonus'])
+                                            <div class="text-xs text-base-content/60">
+                                                {{ $item['bonus']->quantity }} &times; {{ $item['type']->base_points }} pts
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <span class="text-xs tabular-nums font-semibold {{ $item['status'] !== 'unclaimed' ? 'text-base-content' : 'text-base-content/40' }}">
+                                            @if($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
+                                        </span>
+                                        @if($item['status'] === 'verified')
+                                            <x-badge value="Verified" class="badge-success badge-xs" />
+                                        @elseif($item['status'] === 'claimed')
+                                            <x-badge value="Claimed" class="badge-warning badge-xs" />
+                                        @else
+                                            <x-badge value="Unclaimed" class="badge-ghost badge-xs" />
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+
+                            @if(empty($this->bonusList))
+                                <div class="text-center py-4 text-base-content/40">
+                                    No bonus types configured.
+                                </div>
+                            @endif
+                        </div>
+                    </x-card>
+                </div>
             </div>
         </x-tab>
 
