@@ -233,9 +233,11 @@
         @apply transition-opacity duration-100;
     }
 
-    /* When sidebar is collapsed, hide separators and their lines */
-    .drawer-side > div[class*="w-[62px]"] .menu-title,
-    .drawer-side > div[class*="w-[62px]"] hr {
+    /* When sidebar is collapsed, hide separators and their lines.
+       Target Alpine's !w-[62px] (with ! prefix) which toggles correctly,
+       not the server-rendered w-[62px] which persists after expand. */
+    .drawer-side > div[class*="!w-[62px]"] .menu-title,
+    .drawer-side > div[class*="!w-[62px]"] hr {
         display: none !important;
     }
 

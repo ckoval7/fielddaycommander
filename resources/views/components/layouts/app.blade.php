@@ -84,7 +84,7 @@
         {{-- SIDEBAR --}}
         <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
             @auth
-                <div class="px-4 pt-2 pb-3">
+                <div class="mary-hideable px-4 pt-2 pb-3">
                     <livewire:components.event-context-selector />
                 </div>
                 <x-menu-separator />
