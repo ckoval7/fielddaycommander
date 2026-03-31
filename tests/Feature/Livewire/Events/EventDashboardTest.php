@@ -4,6 +4,8 @@ use App\Livewire\Events\EventDashboard;
 use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
+use App\Models\Equipment;
+use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
@@ -651,4 +653,83 @@ test('scoringTotals returns correct QSO and bonus scores', function () {
     expect($totals['power_multiplier'])->toBe(2);  // 100W = 2×
     expect($totals['qso_score'])->toBe(20);        // 10 × 2
     expect($totals['final_score'])->toBe(20);      // 20 + 0 bonus
+});
+
+test('equipment tab shows dashboard link for active events', function () {
+    Permission::create(['name' => 'manage-event-equipment']);
+    $this->user->givePermissionTo('manage-event-equipment');
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(22),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    Livewire::test(EventDashboard::class, ['event' => $event])
+        ->set('activeTab', 'equipment')
+        ->assertSee('Go to Equipment Dashboard');
+});
+
+test('equipment tab shows historical equipment list for completed events', function () {
+    Permission::create(['name' => 'manage-event-equipment']);
+    $this->user->givePermissionTo('manage-event-equipment');
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subDays(30),
+        'end_time' => now()->subDays(29),
+    ]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $equipment = Equipment::factory()->create([
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+        'type' => 'radio',
+    ]);
+    EquipmentEvent::create([
+        'equipment_id' => $equipment->id,
+        'event_id' => $event->id,
+        'status' => 'returned',
+        'committed_at' => now()->subDays(31),
+        'status_changed_at' => now()->subDays(29),
+    ]);
+
+    Livewire::test(EventDashboard::class, ['event' => $event])
+        ->set('activeTab', 'equipment')
+        ->assertSee('IC-7300')
+        ->assertSee('Icom')
+        ->assertDontSee('Go to Equipment Dashboard');
+});
+
+test('equipmentCommitments returns commitments for the event', function () {
+    Permission::create(['name' => 'manage-event-equipment']);
+    $this->user->givePermissionTo('manage-event-equipment');
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subDays(30),
+        'end_time' => now()->subDays(29),
+    ]);
+
+    $equipment = Equipment::factory()->create(['type' => 'radio']);
+    EquipmentEvent::create([
+        'equipment_id' => $equipment->id,
+        'event_id' => $event->id,
+        'status' => 'returned',
+        'committed_at' => now()->subDays(31),
+        'status_changed_at' => now()->subDays(29),
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+    $commitments = $component->get('equipmentCommitments');
+
+    expect($commitments)->toHaveCount(1);
+    expect($commitments->first()->equipment->type)->toBe('radio');
 });

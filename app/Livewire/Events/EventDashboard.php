@@ -5,6 +5,7 @@ namespace App\Livewire\Events;
 use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
+use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
@@ -276,6 +277,15 @@ class EventDashboard extends Component
         }
 
         return $list;
+    }
+
+    #[Computed]
+    public function equipmentCommitments(): Collection
+    {
+        return EquipmentEvent::where('event_id', $this->event->id)
+            ->with(['equipment.owner', 'equipment.owningOrganization', 'station'])
+            ->orderBy('status')
+            ->get();
     }
 
     #[Computed]

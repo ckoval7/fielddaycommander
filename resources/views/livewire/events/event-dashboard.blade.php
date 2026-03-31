@@ -428,45 +428,112 @@
             </div>
         </x-tab>
 
-        <!-- Tab 5 - Equipment -->
-        @can('manage-event-equipment')
+        <!-- Tab 4 - Equipment -->
+        @canany(['manage-event-equipment', 'view-all-equipment'])
             <x-tab name="equipment" label="Equipment" icon="o-wrench-screwdriver">
                 <div class="mt-6">
-                    <x-card shadow>
-                        <div class="flex flex-col items-center justify-center py-12 text-center">
-                            <x-icon name="o-wrench-screwdriver" class="w-16 h-16 mx-auto opacity-50 mb-4 text-base-content/60" />
-                            <p class="text-lg font-semibold mb-2">Equipment Management</p>
-                            <p class="text-base-content/60 mb-6">Manage all equipment commitments and assignments for this event.</p>
-                            <x-button
-                                label="Go to Equipment Dashboard"
-                                icon="o-arrow-right"
-                                class="btn-primary"
-                                link="{{ route('events.equipment.dashboard', ['event' => $event->id]) }}"
-                                wire:navigate
-                            />
-                        </div>
-                    </x-card>
+                    @if($event->status !== 'completed')
+                        {{-- Active/Upcoming: summary + link to dashboard --}}
+                        <x-card shadow>
+                            @if($this->equipmentCommitments->isNotEmpty())
+                                @php
+                                    $statuses = $this->equipmentCommitments->groupBy('status');
+                                @endphp
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                    <div>
+                                        <div class="text-sm text-base-content/60">Total</div>
+                                        <div class="text-2xl font-bold">{{ $this->equipmentCommitments->count() }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-base-content/60">Committed</div>
+                                        <div class="text-2xl font-bold text-info">{{ $statuses->get('committed', collect())->count() }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-base-content/60">Delivered</div>
+                                        <div class="text-2xl font-bold text-success">{{ $statuses->get('delivered', collect())->count() }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-base-content/60">In Use</div>
+                                        <div class="text-2xl font-bold">{{ $statuses->get('in_use', collect())->count() }}</div>
+                                    </div>
+                                </div>
+                            @endif
+                            <div class="flex justify-center">
+                                <x-button
+                                    label="{{ auth()->user()->can('manage-event-equipment') ? 'Go to Equipment Dashboard' : 'View Equipment Dashboard' }}"
+                                    icon="o-arrow-right"
+                                    class="btn-primary"
+                                    link="{{ route('events.equipment.dashboard', ['event' => $event->id]) }}"
+                                    wire:navigate
+                                />
+                            </div>
+                        </x-card>
+                    @else
+                        {{-- Completed: historical read-only list --}}
+                        <x-card title="Equipment Used" shadow>
+                            @if($this->equipmentCommitments->isEmpty())
+                                <div class="text-center py-8 text-base-content/60">
+                                    <x-icon name="o-wrench-screwdriver" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                                    <p>No equipment was committed to this event.</p>
+                                </div>
+                            @else
+                                <div class="overflow-x-auto">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Equipment</th>
+                                                <th>Type</th>
+                                                <th>Owner</th>
+                                                <th>Station</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($this->equipmentCommitments as $commitment)
+                                                <tr>
+                                                    <td>
+                                                        <div class="font-semibold">
+                                                            @if($commitment->equipment->make || $commitment->equipment->model)
+                                                                {{ $commitment->equipment->make }} {{ $commitment->equipment->model }}
+                                                            @else
+                                                                {{ $commitment->equipment->name ?? 'Unknown' }}
+                                                            @endif
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <x-badge value="{{ ucfirst($commitment->equipment->type) }}" class="badge-outline badge-sm" />
+                                                    </td>
+                                                    <td class="text-base-content/60">
+                                                        {{ $commitment->equipment->owner?->name ?? $commitment->equipment->owningOrganization?->name ?? '—' }}
+                                                    </td>
+                                                    <td class="text-base-content/60">
+                                                        {{ $commitment->station?->name ?? 'Unassigned' }}
+                                                    </td>
+                                                    <td>
+                                                        @php
+                                                            $statusColor = match($commitment->status) {
+                                                                'returned' => 'badge-success',
+                                                                'in_use' => 'badge-info',
+                                                                'delivered' => 'badge-info',
+                                                                'committed' => 'badge-neutral',
+                                                                'cancelled' => 'badge-ghost',
+                                                                'lost' => 'badge-error',
+                                                                'damaged' => 'badge-warning',
+                                                                default => 'badge-ghost',
+                                                            };
+                                                        @endphp
+                                                        <x-badge value="{{ ucfirst($commitment->status) }}" class="{{ $statusColor }} badge-sm" />
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+                        </x-card>
+                    @endif
                 </div>
             </x-tab>
-        @elsecan('view-all-equipment')
-            <x-tab name="equipment" label="Equipment" icon="o-wrench-screwdriver">
-                <div class="mt-6">
-                    <x-card shadow>
-                        <div class="flex flex-col items-center justify-center py-12 text-center">
-                            <x-icon name="o-wrench-screwdriver" class="w-16 h-16 mx-auto opacity-50 mb-4 text-base-content/60" />
-                            <p class="text-lg font-semibold mb-2">Equipment Management</p>
-                            <p class="text-base-content/60 mb-6">View all equipment commitments and assignments for this event.</p>
-                            <x-button
-                                label="View Equipment Dashboard"
-                                icon="o-arrow-right"
-                                class="btn-primary"
-                                link="{{ route('events.equipment.dashboard', ['event' => $event->id]) }}"
-                                wire:navigate
-                            />
-                        </div>
-                    </x-card>
-                </div>
-            </x-tab>
-        @endcan
+        @endcanany
     </x-tabs>
 </div>
