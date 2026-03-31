@@ -24,6 +24,7 @@ class Message extends Model
         'message_number',
         'precedence',
         'hx_code',
+        'hx_value',
         'station_of_origin',
         'check',
         'place_of_origin',

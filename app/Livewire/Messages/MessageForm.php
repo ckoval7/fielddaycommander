@@ -31,6 +31,8 @@ class MessageForm extends Component
 
     public ?string $hxCode = null;
 
+    public ?string $hxValue = null;
+
     public string $stationOfOrigin = '';
 
     public string $checkCount = '';
@@ -107,11 +109,19 @@ class MessageForm extends Component
         }
     }
 
+    public function updatedHxCode(): void
+    {
+        if (! in_array($this->hxCode, ['hxb', 'hxc', 'hxd', 'hxe', 'hxf'])) {
+            $this->hxValue = null;
+        }
+    }
+
     public function updatedFormat(): void
     {
         if ($this->format === 'ics213') {
             $this->precedence = 'routine';
             $this->hxCode = null;
+            $this->hxValue = null;
             $this->checkCount = '';
             $this->placeOfOrigin = '';
             $this->addresseeAddress = null;
@@ -168,6 +178,7 @@ class MessageForm extends Component
             ? [
                 'precedence' => 'required|in:routine,welfare,priority,emergency',
                 'hxCode' => 'nullable|in:hxa,hxb,hxc,hxd,hxe,hxf,hxg',
+                'hxValue' => 'nullable|string|max:20',
                 'stationOfOrigin' => 'required|string|max:20',
                 'checkCount' => 'required|string|max:20',
                 'placeOfOrigin' => 'required|string|max:255',
@@ -210,6 +221,7 @@ class MessageForm extends Component
             $data = array_merge($sharedData, [
                 'precedence' => $this->precedence,
                 'hx_code' => $this->hxCode,
+                'hx_value' => in_array($this->hxCode, ['hxb', 'hxc', 'hxd', 'hxe', 'hxf']) ? $this->hxValue : null,
                 'station_of_origin' => strtoupper($this->stationOfOrigin),
                 'check' => $this->checkCount,
                 'place_of_origin' => $this->placeOfOrigin,
@@ -243,6 +255,7 @@ class MessageForm extends Component
                 // Null out radiogram fields
                 'precedence' => null,
                 'hx_code' => null,
+                'hx_value' => null,
                 'station_of_origin' => null,
                 'check' => null,
                 'place_of_origin' => null,
@@ -292,6 +305,7 @@ class MessageForm extends Component
         // Radiogram fields
         $this->precedence = $message->precedence?->value ?? 'routine';
         $this->hxCode = $message->hx_code?->value;
+        $this->hxValue = $message->hx_value;
         $this->stationOfOrigin = $message->station_of_origin ?? '';
         $this->checkCount = $message->check ?? '';
         $this->placeOfOrigin = $message->place_of_origin ?? '';

@@ -103,9 +103,8 @@
 
                     <x-select
                         label="HX Code (Optional)"
-                        wire:model="hxCode"
+                        wire:model.live="hxCode"
                         :options="[
-                            ['id' => '', 'name' => 'None'],
                             ['id' => 'hxa', 'name' => 'HXA - Collect delivery authorized'],
                             ['id' => 'hxb', 'name' => 'HXB - Cancel if not delivered in time'],
                             ['id' => 'hxc', 'name' => 'HXC - Report delivery date/time'],
@@ -119,6 +118,23 @@
                         icon="o-tag"
                         placeholder="None"
                     />
+
+                    @if(in_array($hxCode, ['hxb', 'hxc', 'hxd', 'hxe', 'hxf']))
+                        <x-input
+                            label="HX Value"
+                            wire:model="hxValue"
+                            icon="o-hashtag"
+                            placeholder="{{ match($hxCode) {
+                                'hxb' => 'Hours (e.g., 3)',
+                                'hxc' => 'Date/time',
+                                'hxd' => 'Date/time',
+                                'hxe' => 'Days (e.g., 3)',
+                                'hxf' => 'Date (e.g., 04/15)',
+                                default => '',
+                            } }}"
+                            maxlength="20"
+                        />
+                    @endif
 
                     <x-input
                         label="Station of Origin"

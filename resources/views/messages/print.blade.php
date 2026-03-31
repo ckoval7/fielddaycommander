@@ -51,7 +51,7 @@
                     </div>
                     <div class="preamble-item">
                         <div class="preamble-label">HX</div>
-                        <div class="preamble-value">{{ $message->hx_code?->label() ?? '—' }}</div>
+                        <div class="preamble-value">{{ $message->hx_code ? $message->hx_code->label() . ($message->hx_value ? ' ' . $message->hx_value : '') : '—' }}</div>
                     </div>
                     <div class="preamble-item">
                         <div class="preamble-label">Station of Origin</div>

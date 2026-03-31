@@ -227,6 +227,84 @@ describe('ICS-213 messages', function () {
     });
 });
 
+describe('HX value', function () {
+    test('saves hx_value with applicable HX codes', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'radiogram')
+            ->set('role', 'originated')
+            ->set('messageNumber', 1)
+            ->set('stationOfOrigin', 'W1TEST')
+            ->set('checkCount', '5')
+            ->set('placeOfOrigin', 'Hartford, CT')
+            ->set('addresseeName', 'John Smith')
+            ->set('messageText', 'TEST MESSAGE TEXT HERE MORE')
+            ->set('signature', 'Jane Doe')
+            ->set('hxCode', 'hxb')
+            ->set('hxValue', '3')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $message = Message::where('event_configuration_id', $this->eventConfig->id)->first();
+        expect($message->hx_code->value)->toBe('hxb')
+            ->and($message->hx_value)->toBe('3');
+    });
+
+    test('does not save hx_value for HXA', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'radiogram')
+            ->set('role', 'originated')
+            ->set('messageNumber', 1)
+            ->set('stationOfOrigin', 'W1TEST')
+            ->set('checkCount', '5')
+            ->set('placeOfOrigin', 'Hartford, CT')
+            ->set('addresseeName', 'John Smith')
+            ->set('messageText', 'TEST MESSAGE TEXT HERE MORE')
+            ->set('signature', 'Jane Doe')
+            ->set('hxCode', 'hxa')
+            ->set('hxValue', 'should be ignored')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $message = Message::where('event_configuration_id', $this->eventConfig->id)->first();
+        expect($message->hx_code->value)->toBe('hxa')
+            ->and($message->hx_value)->toBeNull();
+    });
+
+    test('clears hx_value when HX code changes to one that does not use it', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('hxCode', 'hxb')
+            ->set('hxValue', '3')
+            ->set('hxCode', 'hxa')
+            ->assertSet('hxValue', null);
+    });
+
+    test('clears hx_value when HX code is removed', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('hxCode', 'hxf')
+            ->set('hxValue', '04/15')
+            ->set('hxCode', null)
+            ->assertSet('hxValue', null);
+    });
+
+    test('loads hx_value when editing a message', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'hx_code' => 'hxf',
+            'hx_value' => '04/15',
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event, 'message' => $message])
+            ->assertSet('hxCode', 'hxf')
+            ->assertSet('hxValue', '04/15');
+    });
+});
+
 describe('frequency and mode', function () {
     test('received/delivered message saves frequency and mode_category', function () {
         Livewire::actingAs($this->operator)

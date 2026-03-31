@@ -25,6 +25,7 @@ class MessageFactory extends Factory
             'message_number' => fake()->numberBetween(1, 999),
             'precedence' => MessagePrecedence::Routine,
             'hx_code' => null,
+            'hx_value' => null,
             'station_of_origin' => strtoupper(fake()->bothify(self::CALLSIGN_PATTERN)),
             'check' => (string) fake()->numberBetween(5, 25),
             'place_of_origin' => fake()->city().', '.fake()->stateAbbr(),
