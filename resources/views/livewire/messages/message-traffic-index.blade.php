@@ -152,6 +152,8 @@
                             <th>Station of Origin</th>
                             <th>Addressee</th>
                             <th>Date</th>
+                            <th>Freq</th>
+                            <th>Mode</th>
                             <th>Sent / Delivered</th>
                             <th class="text-right">Actions</th>
                         </tr>
@@ -198,6 +200,12 @@
                                 </td>
                                 <td>
                                     <span class="text-sm">{{ $message->filed_at?->format('M j, Y') ?? '—' }}</span>
+                                </td>
+                                <td>
+                                    <span class="font-mono text-sm">{{ $message->frequency ?? '' }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-sm">{{ $message->mode_category ?? '' }}</span>
                                 </td>
                                 <td>
                                     @if($message->sent_at)
@@ -312,6 +320,18 @@
                                 </div>
                             </div>
 
+                            {{-- Frequency & Mode --}}
+                            @if($message->frequency || $message->mode_category)
+                                <div class="flex items-center gap-2 text-sm">
+                                    @if($message->frequency)
+                                        <span class="font-mono">{{ $message->frequency }}</span>
+                                    @endif
+                                    @if($message->mode_category)
+                                        <x-badge :value="$message->mode_category" class="badge-sm badge-outline" />
+                                    @endif
+                                </div>
+                            @endif
+
                             {{-- Date & Sent Status --}}
                             <div class="flex items-center justify-between pt-2 border-t border-base-300 text-sm">
                                 <div class="flex items-center gap-3">
@@ -375,15 +395,43 @@
 
     {{-- Sent By Modal --}}
     <x-modal wire:model="showSentByModal" :title="$isDeliveryModal ? 'Mark as Delivered' : 'Mark as Sent'" class="backdrop-blur">
-        <x-select
-            :label="$isDeliveryModal ? 'Delivered by' : 'Sent by'"
-            wire:model="selectedSentByUserId"
-            :options="$this->operators"
-            option-value="id"
-            option-label="name"
-            icon="o-user"
-            placeholder="Select operator"
-        />
+        <div class="space-y-4">
+            <x-select
+                :label="$isDeliveryModal ? 'Delivered by' : 'Sent by'"
+                wire:model="selectedSentByUserId"
+                :options="$this->operators"
+                option-value="id"
+                option-label="name"
+                icon="o-user"
+                placeholder="Select operator"
+            />
+
+            @unless($isDeliveryModal)
+                <div class="grid grid-cols-2 gap-4">
+                    <x-input
+                        label="Frequency"
+                        wire:model="sentFrequency"
+                        icon="o-signal"
+                        placeholder="e.g., 7.228"
+                        maxlength="15"
+                    />
+
+                    <x-select
+                        label="Mode"
+                        wire:model="sentModeCategory"
+                        :options="[
+                            ['id' => '', 'name' => '—'],
+                            ['id' => 'CW', 'name' => 'CW'],
+                            ['id' => 'Phone', 'name' => 'Phone'],
+                            ['id' => 'Digital', 'name' => 'Digital'],
+                        ]"
+                        option-value="id"
+                        option-label="name"
+                        icon="o-radio"
+                    />
+                </div>
+            @endunless
+        </div>
 
         <x-slot:actions>
             <x-button

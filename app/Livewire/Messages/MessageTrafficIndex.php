@@ -28,6 +28,10 @@ class MessageTrafficIndex extends Component
 
     public bool $isDeliveryModal = false;
 
+    public ?string $sentFrequency = null;
+
+    public ?string $sentModeCategory = null;
+
     public function mount(Event $event): void
     {
         $this->event = $event;
@@ -73,6 +77,8 @@ class MessageTrafficIndex extends Component
         $this->editingSentMessageId = $messageId;
         $this->selectedSentByUserId = auth()->id();
         $this->isDeliveryModal = $message->role->value === 'received_delivered';
+        $this->sentFrequency = $message->frequency;
+        $this->sentModeCategory = $message->mode_category;
         $this->showSentByModal = true;
     }
 
@@ -82,6 +88,8 @@ class MessageTrafficIndex extends Component
         $this->editingSentMessageId = $messageId;
         $this->selectedSentByUserId = $message->sent_by_user_id;
         $this->isDeliveryModal = $message->role->value === 'received_delivered';
+        $this->sentFrequency = $message->frequency;
+        $this->sentModeCategory = $message->mode_category;
         $this->showSentByModal = true;
     }
 
@@ -92,6 +100,8 @@ class MessageTrafficIndex extends Component
         $message->update([
             'sent_at' => $message->sent_at ?? now(),
             'sent_by_user_id' => $this->selectedSentByUserId,
+            'frequency' => $this->sentFrequency ?: null,
+            'mode_category' => $this->sentModeCategory ?: null,
         ]);
 
         $label = $this->isDeliveryModal ? 'delivered' : 'sent';
@@ -99,6 +109,8 @@ class MessageTrafficIndex extends Component
         $this->showSentByModal = false;
         $this->editingSentMessageId = null;
         $this->selectedSentByUserId = null;
+        $this->sentFrequency = null;
+        $this->sentModeCategory = null;
         $this->isDeliveryModal = false;
 
         unset($this->messages);
@@ -129,6 +141,8 @@ class MessageTrafficIndex extends Component
         $message->update([
             'sent_at' => null,
             'sent_by_user_id' => null,
+            'frequency' => null,
+            'mode_category' => null,
         ]);
 
         unset($this->messages);

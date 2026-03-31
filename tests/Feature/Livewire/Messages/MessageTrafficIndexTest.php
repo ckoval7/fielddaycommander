@@ -71,6 +71,22 @@ describe('listing messages', function () {
             ->assertDontSee('Format');
     });
 
+    test('displays frequency and mode on index', function () {
+        Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'frequency' => '7.228',
+            'mode_category' => 'Phone',
+            'sent_at' => now(),
+            'sent_by_user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->assertSee('7.228')
+            ->assertSee('Phone');
+    });
+
     test('filters by role', function () {
         Message::factory()->originated()->create([
             'event_configuration_id' => $this->eventConfig->id,
@@ -179,6 +195,45 @@ describe('sent tracking', function () {
         $message->refresh();
         expect($message->sent_by_user_id)->toBe($this->operator->id)
             ->and($message->sent_at)->not->toBeNull();
+    });
+
+    test('saveSentBy saves frequency and mode_category', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('openSentByModal', $message->id)
+            ->set('sentFrequency', '7.228')
+            ->set('sentModeCategory', 'Phone')
+            ->call('saveSentBy');
+
+        $message->refresh();
+        expect($message->frequency)->toBe('7.228')
+            ->and($message->mode_category)->toBe('Phone');
+    });
+
+    test('unmarkAsSent clears frequency and mode_category', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'sent_at' => now(),
+            'sent_by_user_id' => $this->operator->id,
+            'frequency' => '14.300',
+            'mode_category' => 'Phone',
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('unmarkAsSent', $message->id);
+
+        $message->refresh();
+        expect($message->sent_at)->toBeNull()
+            ->and($message->sent_by_user_id)->toBeNull()
+            ->and($message->frequency)->toBeNull()
+            ->and($message->mode_category)->toBeNull();
     });
 
     test('displays sent status on index', function () {
