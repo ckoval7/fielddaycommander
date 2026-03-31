@@ -6,10 +6,12 @@ use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use App\Models\Mode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -20,6 +22,11 @@ class EventDashboard extends Component
     public Event $event;
 
     public string $activeTab = 'overview';
+
+    protected function config(): ?EventConfiguration
+    {
+        return $this->event->eventConfiguration;
+    }
 
     public function mount(Event $event): void
     {
@@ -37,7 +44,7 @@ class EventDashboard extends Component
     #[Computed]
     public function qsoBreakdown(): array
     {
-        $config = $this->event->eventConfiguration;
+        $config = $this->config();
 
         if (! $config) {
             return [
@@ -68,7 +75,7 @@ class EventDashboard extends Component
     #[Computed]
     public function participants(): array
     {
-        $config = $this->event->eventConfiguration;
+        $config = $this->config();
 
         if (! $config) {
             return [];
@@ -89,9 +96,9 @@ class EventDashboard extends Component
     }
 
     #[Computed]
-    public function recentContacts(): \Illuminate\Support\Collection
+    public function recentContacts(): Collection
     {
-        $config = $this->event->eventConfiguration;
+        $config = $this->config();
 
         if (! $config) {
             return collect();
@@ -107,7 +114,7 @@ class EventDashboard extends Component
     #[Computed]
     public function guestbookStats(): array
     {
-        if (! $this->event->eventConfiguration?->guestbook_enabled) {
+        if (! $this->config()?->guestbook_enabled) {
             return [
                 'total' => 0,
                 'verified_bonus_eligible' => 0,
@@ -115,7 +122,7 @@ class EventDashboard extends Component
             ];
         }
 
-        $configId = $this->event->eventConfiguration->id;
+        $configId = $this->config()->id;
 
         $total = GuestbookEntry::where('event_configuration_id', $configId)->count();
 
@@ -136,7 +143,7 @@ class EventDashboard extends Component
     #[Computed]
     public function scoringTotals(): array
     {
-        $config = $this->event->eventConfiguration;
+        $config = $this->config();
 
         if (! $config) {
             return [
@@ -158,13 +165,13 @@ class EventDashboard extends Component
     }
 
     #[Computed]
-    public function bands(): \Illuminate\Support\Collection
+    public function bands(): Collection
     {
         return Band::allowedForFieldDay()->ordered()->get();
     }
 
     #[Computed]
-    public function modes(): \Illuminate\Support\Collection
+    public function modes(): Collection
     {
         return Mode::orderBy('name')->get();
     }
@@ -172,7 +179,7 @@ class EventDashboard extends Component
     #[Computed]
     public function bandModeGrid(): array
     {
-        $config = $this->event->eventConfiguration;
+        $config = $this->config();
 
         if (! $config) {
             return [];
@@ -239,7 +246,7 @@ class EventDashboard extends Component
 
         $bonusTypes = $query->orderByDesc('base_points')->get();
 
-        $config = $this->event->eventConfiguration;
+        $config = $this->config();
         $claimedBonuses = $config
             ? $config->bonuses->keyBy('bonus_type_id')
             : collect();
