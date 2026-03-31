@@ -412,6 +412,74 @@ test('openNotesModal rejects commitment not owned by user', function () {
         ->assertDispatched('notify');
 });
 
+test('openDetailsModal loads commitment with relationships', function () {
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Detail test notes',
+        'manager_notes' => 'Manager note log',
+    ]);
+
+    Livewire::test(EventEquipment::class)
+        ->call('openDetailsModal', $commitment->id)
+        ->assertSet('showDetailsModal', true)
+        ->assertSet('detailCommitment.id', $commitment->id);
+});
+
+test('openDetailsModal rejects commitment not owned by user', function () {
+    $otherEquipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $otherEquipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EventEquipment::class)
+        ->call('openDetailsModal', $commitment->id)
+        ->assertSet('showDetailsModal', false)
+        ->assertDispatched('notify');
+});
+
+test('markAsDelivered from details modal closes modal and updates status', function () {
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EventEquipment::class)
+        ->call('openDetailsModal', $commitment->id)
+        ->call('markAsDelivered', $commitment->id)
+        ->assertSet('showDetailsModal', false);
+
+    $this->assertDatabaseHas('equipment_event', [
+        'id' => $commitment->id,
+        'status' => 'delivered',
+    ]);
+});
+
+test('cancelCommitment from details modal closes modal', function () {
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EventEquipment::class)
+        ->call('openDetailsModal', $commitment->id)
+        ->call('cancelCommitment', $commitment->id)
+        ->assertSet('showDetailsModal', false);
+
+    $this->assertDatabaseHas('equipment_event', [
+        'id' => $commitment->id,
+        'status' => 'cancelled',
+    ]);
+});
+
 test('first tab is active on page load showing event details and commitments', function () {
     // Create a commitment for the upcoming event
     $commitment = EquipmentEvent::factory()->create([

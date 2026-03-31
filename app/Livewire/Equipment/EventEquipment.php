@@ -42,6 +42,10 @@ class EventEquipment extends Component
 
     public ?string $photoDescription = null;
 
+    public bool $showDetailsModal = false;
+
+    public ?EquipmentEvent $detailCommitment = null;
+
     /**
      * Mount the component and set default selected event.
      */
@@ -155,6 +159,29 @@ class EventEquipment extends Component
     }
 
     /**
+     * Open modal to view full commitment details.
+     */
+    public function openDetailsModal(int $commitmentId): void
+    {
+        $commitment = EquipmentEvent::with([
+            'equipment.bands',
+            'equipment.owner',
+            'station',
+            'assignedBy',
+            'statusChangedBy',
+        ])->findOrFail($commitmentId);
+
+        if ($commitment->equipment->owner_user_id !== auth()->id()) {
+            $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
+
+            return;
+        }
+
+        $this->detailCommitment = $commitment;
+        $this->showDetailsModal = true;
+    }
+
+    /**
      * Create new EquipmentEvent record.
      */
     public function commitEquipment(): void
@@ -251,6 +278,7 @@ class EventEquipment extends Component
 
         if ($commitment->changeStatus('delivered', auth()->user())) {
             $this->dispatch('notify', title: 'Success', description: 'Equipment marked as delivered.', type: 'success');
+            $this->showDetailsModal = false;
             unset($this->commitments);
         } else {
             $this->dispatch('notify', title: 'Error', description: 'Unable to change status. Invalid transition.', type: 'error');
@@ -279,6 +307,7 @@ class EventEquipment extends Component
 
         if ($commitment->changeStatus('cancelled', auth()->user())) {
             $this->dispatch('notify', title: 'Success', description: 'Commitment cancelled.', type: 'success');
+            $this->showDetailsModal = false;
             unset($this->commitments);
         } else {
             $this->dispatch('notify', title: 'Error', description: 'Unable to cancel commitment. Invalid transition.', type: 'error');
