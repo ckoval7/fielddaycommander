@@ -32,12 +32,31 @@ class EventDashboard extends Component
     #[Computed]
     public function qsoBreakdown(): array
     {
-        // Placeholder: Will be populated when Contact model is fully implemented
+        $config = $this->event->eventConfiguration;
+
+        if (! $config) {
+            return [
+                'total_contacts' => 0,
+                'phone_contacts' => 0,
+                'cw_contacts' => 0,
+                'digital_contacts' => 0,
+            ];
+        }
+
+        $totalContacts = $config->contacts()->count();
+
+        $categoryCounts = $config->contacts()
+            ->where('is_duplicate', false)
+            ->join('modes', 'contacts.mode_id', '=', 'modes.id')
+            ->selectRaw('modes.category, count(*) as count')
+            ->groupBy('modes.category')
+            ->pluck('count', 'category');
+
         return [
-            'total_contacts' => 0,
-            'phone_contacts' => 0,
-            'cw_contacts' => 0,
-            'digital_contacts' => 0,
+            'total_contacts' => $totalContacts,
+            'phone_contacts' => (int) ($categoryCounts['Phone'] ?? 0),
+            'cw_contacts' => (int) ($categoryCounts['CW'] ?? 0),
+            'digital_contacts' => (int) ($categoryCounts['Digital'] ?? 0),
         ];
     }
 

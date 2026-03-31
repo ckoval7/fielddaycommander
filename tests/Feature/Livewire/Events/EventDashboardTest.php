@@ -172,8 +172,8 @@ test('event dashboard eager loads relationships', function () {
 
     // Should have minimal queries due to eager loading
     // Expect: main event query with eager loads, setting query for active_event_id
-    // With all the relationships and computed properties, expect fewer than 20 queries
-    expect(count($queries))->toBeLessThan(20);
+    // With all the relationships and computed properties, expect fewer than 25 queries
+    expect(count($queries))->toBeLessThan(25);
 });
 
 test('event dashboard displays guestbook stats when guestbook is enabled', function () {
@@ -308,4 +308,67 @@ test('event dashboard hides manage guestbook button without permission', functio
     Livewire::test(EventDashboard::class, ['event' => $event])
         ->assertStatus(200)
         ->assertDontSee('Manage Guestbook');
+});
+
+test('qsoBreakdown returns real contact counts by mode category', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $cwMode = \App\Models\Mode::factory()->cw()->create();
+    $phoneMode = \App\Models\Mode::factory()->phone()->create();
+    $digitalMode = \App\Models\Mode::factory()->digital()->create();
+
+    // Create contacts: 3 CW, 2 Phone, 1 Digital, 1 duplicate (should be excluded from category counts but included in total)
+    \App\Models\Contact::factory()->count(3)->create([
+        'event_configuration_id' => $config->id,
+        'mode_id' => $cwMode->id,
+        'is_duplicate' => false,
+    ]);
+    \App\Models\Contact::factory()->count(2)->create([
+        'event_configuration_id' => $config->id,
+        'mode_id' => $phoneMode->id,
+        'is_duplicate' => false,
+    ]);
+    \App\Models\Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'mode_id' => $digitalMode->id,
+        'is_duplicate' => false,
+    ]);
+    \App\Models\Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'mode_id' => $cwMode->id,
+        'is_duplicate' => true,
+        'points' => 0,
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+    $breakdown = $component->get('qsoBreakdown');
+
+    expect($breakdown['total_contacts'])->toBe(7);
+    expect($breakdown['cw_contacts'])->toBe(3);
+    expect($breakdown['phone_contacts'])->toBe(2);
+    expect($breakdown['digital_contacts'])->toBe(1);
+});
+
+test('qsoBreakdown returns zeros when no contacts exist', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+    $breakdown = $component->get('qsoBreakdown');
+
+    expect($breakdown['total_contacts'])->toBe(0);
+    expect($breakdown['cw_contacts'])->toBe(0);
+    expect($breakdown['phone_contacts'])->toBe(0);
+    expect($breakdown['digital_contacts'])->toBe(0);
 });
