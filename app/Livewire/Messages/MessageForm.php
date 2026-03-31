@@ -59,6 +59,10 @@ class MessageForm extends Component
 
     public ?string $receivedFrom = null;
 
+    public ?string $frequency = null;
+
+    public ?string $modeCategory = null;
+
     public ?string $notes = null;
 
     // ICS-213 fields
@@ -156,6 +160,8 @@ class MessageForm extends Component
             'signature' => 'required|string|max:255',
             'filedAt' => 'nullable|date',
             'notes' => 'nullable|string',
+            'frequency' => 'nullable|string|max:15',
+            'modeCategory' => 'nullable|in:CW,Phone,Digital',
         ];
 
         $formatRules = $this->format === 'radiogram'
@@ -196,6 +202,8 @@ class MessageForm extends Component
             'addressee_name' => $this->addresseeName,
             'signature' => $this->signature,
             'notes' => $this->notes,
+            'frequency' => $this->role === 'received_delivered' ? ($this->frequency ?: null) : null,
+            'mode_category' => $this->role === 'received_delivered' ? ($this->modeCategory ?: null) : null,
         ];
 
         if ($this->format === 'radiogram') {
@@ -294,6 +302,10 @@ class MessageForm extends Component
         $this->addresseePhone = $message->addressee_phone;
         $this->sentTo = $message->sent_to;
         $this->receivedFrom = $message->received_from;
+
+        // Frequency & mode
+        $this->frequency = $message->frequency;
+        $this->modeCategory = $message->mode_category;
 
         // ICS-213 fields
         $this->icsToPosition = $message->ics_to_position;

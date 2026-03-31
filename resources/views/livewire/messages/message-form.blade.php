@@ -43,7 +43,7 @@
 
                 <x-select
                     label="Role"
-                    wire:model="role"
+                    wire:model.live="role"
                     :options="[
                         ['id' => 'originated', 'name' => 'Originated'],
                         ['id' => 'relayed', 'name' => 'Relayed'],
@@ -385,6 +385,37 @@
                         placeholder="Callsign (optional)"
                         maxlength="20"
                         hint="Station this message was received from"
+                    />
+                </div>
+            </x-card>
+        @endif
+
+        {{-- Frequency & Mode (Received/Delivered only) --}}
+        @if($role === 'received_delivered')
+            <x-card>
+                <x-slot:title>Reception Details</x-slot:title>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <x-input
+                        label="Frequency"
+                        wire:model="frequency"
+                        icon="o-signal"
+                        placeholder="e.g., 7.228"
+                        maxlength="15"
+                    />
+
+                    <x-select
+                        label="Mode"
+                        wire:model="modeCategory"
+                        :options="[
+                            ['id' => '', 'name' => '— Select —'],
+                            ['id' => 'CW', 'name' => 'CW'],
+                            ['id' => 'Phone', 'name' => 'Phone'],
+                            ['id' => 'Digital', 'name' => 'Digital'],
+                        ]"
+                        option-value="id"
+                        option-label="name"
+                        icon="o-radio"
                     />
                 </div>
             </x-card>

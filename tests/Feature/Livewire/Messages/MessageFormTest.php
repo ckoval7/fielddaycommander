@@ -227,6 +227,67 @@ describe('ICS-213 messages', function () {
     });
 });
 
+describe('frequency and mode', function () {
+    test('received/delivered message saves frequency and mode_category', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'radiogram')
+            ->set('role', 'received_delivered')
+            ->set('messageNumber', 1)
+            ->set('stationOfOrigin', 'W1TEST')
+            ->set('checkCount', '5')
+            ->set('placeOfOrigin', 'Hartford, CT')
+            ->set('addresseeName', 'John Smith')
+            ->set('messageText', 'TEST MESSAGE TEXT HERE MORE')
+            ->set('signature', 'Jane Doe')
+            ->set('receivedFrom', 'K1ABC')
+            ->set('frequency', '7.228')
+            ->set('modeCategory', 'Phone')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $message = Message::where('event_configuration_id', $this->eventConfig->id)->first();
+        expect($message->frequency)->toBe('7.228')
+            ->and($message->mode_category)->toBe('Phone');
+    });
+
+    test('originated message does not save frequency or mode_category', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->set('format', 'radiogram')
+            ->set('role', 'originated')
+            ->set('messageNumber', 1)
+            ->set('stationOfOrigin', 'W1TEST')
+            ->set('checkCount', '5')
+            ->set('placeOfOrigin', 'Hartford, CT')
+            ->set('addresseeName', 'John Smith')
+            ->set('messageText', 'TEST MESSAGE TEXT HERE MORE')
+            ->set('signature', 'Jane Doe')
+            ->set('frequency', '7.228')
+            ->set('modeCategory', 'Phone')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $message = Message::where('event_configuration_id', $this->eventConfig->id)->first();
+        expect($message->frequency)->toBeNull()
+            ->and($message->mode_category)->toBeNull();
+    });
+
+    test('editing a received message populates frequency and mode', function () {
+        $message = Message::factory()->receivedDelivered()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'frequency' => '14.300',
+            'mode_category' => 'Phone',
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageForm::class, ['event' => $this->event, 'message' => $message])
+            ->assertSet('frequency', '14.300')
+            ->assertSet('modeCategory', 'Phone');
+    });
+});
+
 describe('format switching', function () {
     test('switching to ICS-213 clears radiogram fields', function () {
         Livewire::actingAs($this->operator)
