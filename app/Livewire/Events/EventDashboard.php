@@ -2,8 +2,12 @@
 
 namespace App\Livewire\Events;
 
+use App\Models\Band;
+use App\Models\BonusType;
+use App\Models\Contact;
 use App\Models\Event;
 use App\Models\GuestbookEntry;
+use App\Models\Mode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
@@ -26,6 +30,7 @@ class EventDashboard extends Component
             'eventType',
             'eventConfiguration.section',
             'eventConfiguration.operatingClass',
+            'eventConfiguration.bonuses',
         ]);
     }
 
@@ -125,6 +130,156 @@ class EventDashboard extends Component
             'total' => $total,
             'verified_bonus_eligible' => $verifiedBonusEligible,
             'bonus_points' => $bonusPoints,
+        ];
+    }
+
+    #[Computed]
+    public function scoringTotals(): array
+    {
+        $config = $this->event->eventConfiguration;
+
+        if (! $config) {
+            return [
+                'qso_base_points' => 0,
+                'power_multiplier' => 1,
+                'qso_score' => 0,
+                'bonus_score' => 0,
+                'final_score' => 0,
+            ];
+        }
+
+        return [
+            'qso_base_points' => (int) $config->contacts()->notDuplicate()->sum('points'),
+            'power_multiplier' => (int) $config->calculatePowerMultiplier(),
+            'qso_score' => $config->calculateQsoScore(),
+            'bonus_score' => $config->calculateBonusScore(),
+            'final_score' => $config->calculateFinalScore(),
+        ];
+    }
+
+    #[Computed]
+    public function bands(): \Illuminate\Support\Collection
+    {
+        return Band::allowedForFieldDay()->ordered()->get();
+    }
+
+    #[Computed]
+    public function modes(): \Illuminate\Support\Collection
+    {
+        return Mode::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function bandModeGrid(): array
+    {
+        $config = $this->event->eventConfiguration;
+
+        if (! $config) {
+            return [];
+        }
+
+        $counts = Contact::where('event_configuration_id', $config->id)
+            ->notDuplicate()
+            ->selectRaw('band_id, mode_id, count(*) as contact_count, sum(points) as total_points')
+            ->groupBy('band_id', 'mode_id')
+            ->get()
+            ->groupBy('mode_id');
+
+        $data = [];
+
+        foreach ($this->modes as $mode) {
+            $modeCounts = $counts->get($mode->id, collect());
+            $cells = [];
+            $totalCount = 0;
+            $totalPoints = 0;
+
+            foreach ($this->bands as $band) {
+                $entry = $modeCounts->firstWhere('band_id', $band->id);
+                $count = $entry ? (int) $entry->contact_count : 0;
+                $cells[$band->id] = $count;
+                $totalCount += $count;
+                $totalPoints += $entry ? (int) $entry->total_points : 0;
+            }
+
+            $data[] = [
+                'mode' => $mode,
+                'cells' => $cells,
+                'total_count' => $totalCount,
+                'total_points' => $totalPoints,
+            ];
+        }
+
+        return $data;
+    }
+
+    #[Computed]
+    public function bandColumnTotals(): array
+    {
+        $totals = [];
+
+        foreach ($this->bandModeGrid as $row) {
+            foreach ($row['cells'] as $bandId => $count) {
+                $totals[$bandId] = ($totals[$bandId] ?? 0) + $count;
+            }
+        }
+
+        return $totals;
+    }
+
+    #[Computed]
+    public function bonusList(): array
+    {
+        $eventTypeId = $this->event->event_type_id;
+
+        $query = BonusType::where('is_active', true);
+
+        if ($eventTypeId) {
+            $query->where('event_type_id', $eventTypeId);
+        }
+
+        $bonusTypes = $query->orderByDesc('base_points')->get();
+
+        $config = $this->event->eventConfiguration;
+        $claimedBonuses = $config
+            ? $config->bonuses->keyBy('bonus_type_id')
+            : collect();
+
+        $list = [];
+
+        foreach ($bonusTypes as $bonusType) {
+            $eventBonus = $claimedBonuses->get($bonusType->id);
+
+            if ($eventBonus && $eventBonus->is_verified) {
+                $status = 'verified';
+                $points = (int) $eventBonus->calculated_points;
+            } elseif ($eventBonus) {
+                $status = 'claimed';
+                $points = (int) $eventBonus->calculated_points;
+            } else {
+                $status = 'unclaimed';
+                $points = 0;
+            }
+
+            $list[] = [
+                'type' => $bonusType,
+                'bonus' => $eventBonus,
+                'status' => $status,
+                'points' => $points,
+            ];
+        }
+
+        return $list;
+    }
+
+    #[Computed]
+    public function bonusSummary(): array
+    {
+        $list = collect($this->bonusList);
+
+        return [
+            'verified_pts' => (int) $list->where('status', 'verified')->sum('points'),
+            'claimed_pts' => (int) $list->where('status', 'claimed')->sum('points'),
+            'unclaimed_count' => $list->where('status', 'unclaimed')->count(),
         ];
     }
 

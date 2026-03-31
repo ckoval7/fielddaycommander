@@ -2,8 +2,10 @@
 
 use App\Livewire\Events\EventDashboard;
 use App\Models\Band;
+use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\GuestbookEntry;
@@ -481,4 +483,130 @@ test('qsoBreakdown returns zeros when no contacts exist', function () {
     expect($breakdown['cw_contacts'])->toBe(0);
     expect($breakdown['phone_contacts'])->toBe(0);
     expect($breakdown['digital_contacts'])->toBe(0);
+});
+
+test('bandModeGrid returns contact counts grouped by band and mode', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $cwMode = Mode::factory()->cw()->create();
+    $phoneMode = Mode::factory()->phone()->create();
+    $band20m = Band::factory()->create(['name' => '20m', 'allowed_fd' => true, 'sort_order' => 4]);
+    $band40m = Band::factory()->create(['name' => '40m', 'allowed_fd' => true, 'sort_order' => 3]);
+
+    Contact::factory()->count(3)->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band20m->id,
+        'mode_id' => $cwMode->id,
+        'is_duplicate' => false,
+        'points' => 2,
+    ]);
+    Contact::factory()->count(2)->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band40m->id,
+        'mode_id' => $phoneMode->id,
+        'is_duplicate' => false,
+        'points' => 1,
+    ]);
+    // Duplicate should be excluded
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band20m->id,
+        'mode_id' => $cwMode->id,
+        'is_duplicate' => true,
+        'points' => 0,
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+    $grid = $component->get('bandModeGrid');
+
+    expect($grid)->not->toBeEmpty();
+
+    // Find CW row
+    $cwRow = collect($grid)->first(fn ($row) => $row['mode']->id === $cwMode->id);
+    expect($cwRow['cells'][$band20m->id])->toBe(3);
+    expect($cwRow['total_count'])->toBe(3);
+    expect($cwRow['total_points'])->toBe(6); // 3 × 2 pts
+});
+
+test('bonusList returns all bonus types with claimed status', function () {
+    $this->actingAs($this->user);
+
+    $eventType = EventType::firstOrCreate(
+        ['code' => 'FD'],
+        ['name' => 'Field Day', 'description' => 'ARRL Field Day', 'is_active' => true],
+    );
+    $event = Event::factory()->create(['event_type_id' => $eventType->id]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $bonusType1 = BonusType::factory()->create([
+        'event_type_id' => $eventType->id,
+        'name' => 'Emergency Power',
+        'base_points' => 100,
+        'is_active' => true,
+    ]);
+    $bonusType2 = BonusType::factory()->create([
+        'event_type_id' => $eventType->id,
+        'name' => 'Media Publicity',
+        'base_points' => 100,
+        'is_active' => true,
+    ]);
+
+    // Claim and verify one bonus
+    EventBonus::factory()->create([
+        'event_configuration_id' => $config->id,
+        'bonus_type_id' => $bonusType1->id,
+        'calculated_points' => 100,
+        'is_verified' => true,
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+    $list = $component->get('bonusList');
+
+    expect($list)->toHaveCount(2);
+
+    $emergencyPower = collect($list)->first(fn ($b) => $b['type']->id === $bonusType1->id);
+    expect($emergencyPower['status'])->toBe('verified');
+    expect($emergencyPower['points'])->toBe(100);
+
+    $media = collect($list)->first(fn ($b) => $b['type']->id === $bonusType2->id);
+    expect($media['status'])->toBe('unclaimed');
+});
+
+test('scoringTotals returns correct QSO and bonus scores', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'max_power_watts' => 100,
+    ]);
+
+    $cwMode = Mode::factory()->cw()->create();
+    $band = Band::factory()->create(['allowed_fd' => true]);
+
+    Contact::factory()->count(5)->create([
+        'event_configuration_id' => $config->id,
+        'mode_id' => $cwMode->id,
+        'band_id' => $band->id,
+        'is_duplicate' => false,
+        'points' => 2,
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+    $totals = $component->get('scoringTotals');
+
+    expect($totals['qso_base_points'])->toBe(10); // 5 × 2
+    expect($totals['power_multiplier'])->toBe(2);  // 100W = 2×
+    expect($totals['qso_score'])->toBe(20);        // 10 × 2
+    expect($totals['final_score'])->toBe(20);      // 20 + 0 bonus
 });
