@@ -480,6 +480,48 @@ test('cancelCommitment from details modal closes modal', function () {
     ]);
 });
 
+test('details modal shows equipment and commitment info', function () {
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'delivered',
+        'delivery_notes' => 'Bring extra cables',
+        'manager_notes' => '[2026-03-30 14:00] Status changed to delivered',
+    ]);
+
+    Livewire::test(EventEquipment::class)
+        ->call('openDetailsModal', $commitment->id)
+        ->assertSee($this->equipment->make)
+        ->assertSee($this->equipment->model)
+        ->assertSee('Bring extra cables')
+        ->assertSee('Status changed to delivered');
+});
+
+test('details modal actions respect status transitions', function () {
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EventEquipment::class)
+        ->call('openDetailsModal', $commitment->id)
+        ->assertSee('Mark as Delivered')
+        ->assertSee('Cancel Commitment');
+});
+
+test('details modal hides mark delivered for non-committed status', function () {
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'delivered',
+    ]);
+
+    Livewire::test(EventEquipment::class)
+        ->call('openDetailsModal', $commitment->id)
+        ->assertDontSee('Mark as Delivered');
+});
+
 test('first tab is active on page load showing event details and commitments', function () {
     // Create a commitment for the upcoming event
     $commitment = EquipmentEvent::factory()->create([
