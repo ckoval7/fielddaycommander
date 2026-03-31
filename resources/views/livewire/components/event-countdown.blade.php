@@ -39,7 +39,7 @@
         },
 
         tick() {
-            const now = new Date();
+            const now = new Date(this.effectiveNow() * 1000);
             try {
                 this.localTime = now.toLocaleTimeString('en-US', {
                     timeZone: this.tz, hour12: false,

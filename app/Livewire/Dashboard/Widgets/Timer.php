@@ -43,7 +43,7 @@ class Timer extends Component
 
         $now = appNow();
         $endTime = $event->end_time;
-        $isEnded = $endTime->isPast();
+        $isEnded = $now->greaterThan($endTime);
 
         return [
             'end_time' => $endTime->toIso8601String(),
