@@ -264,13 +264,26 @@ install_packages_debian() {
     if ! command -v php8.4 &>/dev/null; then
         apt-get update -y
         source /etc/os-release
+        apt-get install -y lsb-release ca-certificates curl software-properties-common
         if [[ "$ID" == "ubuntu" ]]; then
             log_info "Adding Ondrej PHP PPA (Ubuntu)..."
-            apt-get install -y software-properties-common
-            add-apt-repository -y ppa:ondrej/php
+            if ! add-apt-repository -y ppa:ondrej/php 2>/dev/null; then
+                log_warn "PPA not available for $(lsb_release -sc), falling back to Sury DEB repo..."
+                curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+                # Use noble (24.04 LTS) as fallback when current codename isn't supported
+                local sury_codename
+                sury_codename=$(lsb_release -sc)
+                echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${sury_codename} main" \
+                    > /etc/apt/sources.list.d/sury-php.list
+                # Verify the repo is reachable; if not, fall back to latest LTS codename
+                if ! apt-get update -o Dir::Etc::sourcelist=/etc/apt/sources.list.d/sury-php.list -o Dir::Etc::sourceparts=- -q 2>/dev/null; then
+                    log_warn "Sury repo unavailable for '${sury_codename}', using 'noble' (24.04 LTS) packages..."
+                    echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ noble main" \
+                        > /etc/apt/sources.list.d/sury-php.list
+                fi
+            fi
         else
             log_info "Adding Ondrej PHP DEB repo (Debian)..."
-            apt-get install -y lsb-release ca-certificates curl
             curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
             echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" \
                 > /etc/apt/sources.list.d/sury-php.list
