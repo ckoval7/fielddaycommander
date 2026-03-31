@@ -308,6 +308,9 @@ class EventForm extends Component
     {
         // Prevent updates to locked fields BEFORE the value changes
         if ($this->isLocked && in_array($property, [
+            'event_type_id',
+            'start_time',
+            'callsign',
             'operating_class_id',
             'transmitter_count',
             'max_power_watts',
@@ -320,6 +323,7 @@ class EventForm extends Component
             'uses_methane',
             'uses_alternate_power',
             'uses_other_power',
+            'has_gota_station',
             'gota_callsign',
         ])) {
             $this->dispatch('notify', title: 'Field Locked', description: 'This field cannot be modified because the event has contacts.');
@@ -363,15 +367,14 @@ class EventForm extends Component
     {
         $validated = $this->validate();
 
-        // STRICT VALIDATION: If editing currently active event, ensure new dates still include NOW()
+        // STRICT VALIDATION: If editing currently active event, ensure end date doesn't exclude current time
         if ($this->mode === 'edit' && $this->eventId) {
             $isCurrentlyActive = Event::active()->where('id', $this->eventId)->exists();
             if ($isCurrentlyActive) {
-                $newStartTime = \Carbon\Carbon::parse($validated['start_time']);
                 $newEndTime = \Carbon\Carbon::parse($validated['end_time']);
 
-                if (now() < $newStartTime || now() > $newEndTime) {
-                    $this->addError('dates', 'Cannot modify dates on the currently active event to exclude the current time.');
+                if (appNow() > $newEndTime) {
+                    $this->addError('end_time', 'Cannot set the end date before the current time on an active event.');
 
                     return;
                 }
@@ -457,13 +460,18 @@ class EventForm extends Component
             'callsign' => $this->configuration->callsign,
         ];
 
-        $this->event->update([
+        $eventData = [
             'name' => $validated['name'],
-            'event_type_id' => $validated['event_type_id'],
             'year' => $this->year,
-            'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
-        ]);
+        ];
+
+        if (! $this->isLocked) {
+            $eventData['event_type_id'] = $validated['event_type_id'];
+            $eventData['start_time'] = $validated['start_time'];
+        }
+
+        $this->event->update($eventData);
 
         // Convert subnets string to array
         $subnets = null;
@@ -475,7 +483,6 @@ class EventForm extends Component
         }
 
         $configData = [
-            'callsign' => $validated['callsign'],
             'club_name' => $validated['club_name'] ?? null,
             'section_id' => $validated['section_id'],
             'power_multiplier' => $this->powerMultiplier,
@@ -489,6 +496,7 @@ class EventForm extends Component
         // Only update locked fields if not locked
         if (! $this->isLocked) {
             $configData = array_merge($configData, [
+                'callsign' => $validated['callsign'],
                 'operating_class_id' => $validated['operating_class_id'],
                 'transmitter_count' => $validated['transmitter_count'],
                 'has_gota_station' => $validated['has_gota_station'] ?? false,

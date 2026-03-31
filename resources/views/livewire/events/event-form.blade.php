@@ -20,7 +20,7 @@
     @if($isLocked)
         <x-alert icon="o-lock-closed" class="alert-warning">
             <strong>Some fields are locked</strong> because this event has contacts or has already started.
-            You can still update the event name, club name, section, and end date.
+            You can still update the event name, club name, section, end date, and guestbook settings.
         </x-alert>
     @endif
 
@@ -65,6 +65,7 @@
                     icon="o-tag"
                     placeholder="Select event type"
                     hint="Field Day, Winter Field Day, etc."
+                    :disabled="$isLocked"
                 />
 
                 <div class="flex items-center gap-2">
@@ -86,6 +87,7 @@
                     required
                     icon="o-play"
                     hint="When the event begins, in UTC"
+                    :disabled="$isLocked"
                 />
 
                 <x-flatpickr
@@ -110,6 +112,7 @@
                     icon="o-radio"
                     placeholder="W1AW"
                     hint="Primary station callsign"
+                    :disabled="$isLocked"
                 />
 
                 <x-input

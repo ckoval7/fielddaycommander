@@ -5,6 +5,7 @@
     'hint' => null,
     'min' => null,
     'max' => null,
+    'disabled' => false,
 ])
 
 @php
@@ -33,8 +34,9 @@
         id="{{ $uuid }}"
         type="text"
         placeholder="{{ $mode === 'time' ? 'HH:MM' : ($mode === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:MM') }}"
-        {{ $attributes->class(['input input-bordered w-full']) }}
+        {{ $attributes->except('disabled')->class(['input input-bordered w-full']) }}
         autocomplete="off"
+        @if($disabled) disabled @endif
     />
 
     {{-- Hint --}}

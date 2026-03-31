@@ -360,7 +360,7 @@ test('event form prevents GOTA callsign when class does not allow GOTA', functio
         ->assertHasErrors(['has_gota_station']);
 });
 
-test('event form prevents changing dates on active event to exclude current time', function () {
+test('event form prevents setting end time before current time on active event', function () {
     $this->actingAs($this->user);
 
     // Create an active event
@@ -380,15 +380,14 @@ test('event form prevents changing dates on active event to exclude current time
     // Set as active event
     \App\Models\Setting::set('active_event_id', $event->id);
 
-    // Try to change dates to exclude current time
+    // Try to set end time before current time (should fail)
     Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])
-        ->set('start_time', now()->addDays(7)->format('Y-m-d H:i:s'))
-        ->set('end_time', now()->addDays(8)->format('Y-m-d H:i:s'))
+        ->set('end_time', now()->subHours(1)->format('Y-m-d H:i:s'))
         ->call('save')
-        ->assertHasErrors(['dates']);
+        ->assertHasErrors(['end_time']);
 
-    // Verify event dates were not changed
-    expect($event->fresh()->start_time->diffInHours(now()->subHours(6), false))->toBeLessThan(1);
+    // Verify end time was not changed
+    expect($event->fresh()->end_time->diffInHours(now()->addHours(6), false))->toBeLessThan(1);
 });
 
 test('event form allows extending end time on active event', function () {
@@ -421,6 +420,46 @@ test('event form allows extending end time on active event', function () {
 
     // Verify end time was extended
     expect($event->fresh()->end_time->diffInHours($newEndTime, false))->toBeLessThan(1);
+});
+
+test('event form locks event type, callsign, and start time on active event', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'name' => 'Active Event',
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->subHours(6),
+        'end_time' => now()->addHours(6),
+    ]);
+
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+    ]);
+
+    // Set as active event
+    \App\Models\Setting::set('active_event_id', $event->id);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
+
+    // Verify the form is locked
+    expect($component->get('isLocked'))->toBeTrue();
+
+    // Attempt to change locked fields - they should remain unchanged after save
+    $component
+        ->set('name', 'Updated Name')
+        ->set('end_time', now()->addHours(12)->format('Y-m-d H:i:s'))
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Verify unlocked fields were updated
+    expect($event->fresh()->name)->toBe('Updated Name');
+
+    // Verify locked fields were NOT changed
+    expect($config->fresh()->callsign)->toBe('W1AW');
+    expect($event->fresh()->event_type_id)->toBe($this->eventType->id);
 });
 
 test('event form requires at least one power source', function () {
