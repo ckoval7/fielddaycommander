@@ -380,6 +380,38 @@ test('detects currently active event using appNow for developer mode time travel
         ->assertSee($futureEvent->name);
 });
 
+test('openNotesModal loads commitment data and shows modal', function () {
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Existing notes for modal',
+    ]);
+
+    Livewire::test(EventEquipment::class)
+        ->call('openNotesModal', $commitment->id)
+        ->assertSet('showNotesModal', true)
+        ->assertSet('updateNoteId', $commitment->id)
+        ->assertSet('tempNotes', 'Existing notes for modal');
+});
+
+test('openNotesModal rejects commitment not owned by user', function () {
+    $otherEquipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $otherEquipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EventEquipment::class)
+        ->call('openNotesModal', $commitment->id)
+        ->assertSet('showNotesModal', false)
+        ->assertDispatched('notify');
+});
+
 test('first tab is active on page load showing event details and commitments', function () {
     // Create a commitment for the upcoming event
     $commitment = EquipmentEvent::factory()->create([

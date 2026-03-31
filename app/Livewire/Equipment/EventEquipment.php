@@ -137,6 +137,24 @@ class EventEquipment extends Component
     }
 
     /**
+     * Open modal to update delivery notes for a commitment.
+     */
+    public function openNotesModal(int $commitmentId): void
+    {
+        $commitment = EquipmentEvent::with('equipment')->findOrFail($commitmentId);
+
+        if ($commitment->equipment->owner_user_id !== auth()->id()) {
+            $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
+
+            return;
+        }
+
+        $this->updateNoteId = $commitmentId;
+        $this->tempNotes = $commitment->delivery_notes;
+        $this->showNotesModal = true;
+    }
+
+    /**
      * Create new EquipmentEvent record.
      */
     public function commitEquipment(): void

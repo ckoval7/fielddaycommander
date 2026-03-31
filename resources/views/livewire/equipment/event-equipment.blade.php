@@ -182,7 +182,7 @@
                                                             <x-menu-item
                                                                 title="Update Notes"
                                                                 icon="o-pencil"
-                                                                @click="$dispatch('open-notes-modal', { commitmentId: {{ $commitment->id }}, notes: {{ json_encode($commitment->delivery_notes) }} })"
+                                                                wire:click="openNotesModal({{ $commitment->id }})"
                                                             />
 
                                                             {{-- View Details --}}
@@ -311,7 +311,6 @@
         wire:model="showNotesModal"
         title="Update Delivery Notes"
         class="backdrop-blur"
-        @open-notes-modal="showNotesModal = true; updateNoteId = $event.detail.commitmentId; tempNotes = $event.detail.notes"
     >
         <x-form wire:submit="updateNotes" class="space-y-4">
             <x-textarea
@@ -333,7 +332,7 @@
                     type="submit"
                     class="btn-primary"
                     spinner="updateNotes"
-                    wire:click="updateNotes({{ $updateNoteId }}, tempNotes)"
+                    wire:click="updateNotes({{ $updateNoteId }}, $wire.tempNotes)"
                 />
             </x-slot:actions>
         </x-form>
