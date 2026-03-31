@@ -1,14 +1,14 @@
 <?php
 
 use App\Livewire\Events\EventDashboard;
+use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\GuestbookEntry;
+use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
-use App\Models\Contact;
-use App\Models\Mode;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -355,6 +355,53 @@ test('qsoBreakdown returns real contact counts by mode category', function () {
     expect($breakdown['cw_contacts'])->toBe(3);
     expect($breakdown['phone_contacts'])->toBe(2);
     expect($breakdown['digital_contacts'])->toBe(1);
+});
+
+test('participants returns users who logged contacts with counts', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $operator1 = User::factory()->create(['call_sign' => 'W1AAA']);
+    $operator2 = User::factory()->create(['call_sign' => 'W1BBB']);
+
+    Contact::factory()->count(5)->create([
+        'event_configuration_id' => $config->id,
+        'logger_user_id' => $operator1->id,
+    ]);
+    Contact::factory()->count(3)->create([
+        'event_configuration_id' => $config->id,
+        'logger_user_id' => $operator2->id,
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+    $participants = $component->get('participants');
+
+    expect($participants)->toHaveCount(2);
+    // Sorted by contact_count descending
+    expect($participants[0]['name'])->toBe('W1AAA');
+    expect($participants[0]['contact_count'])->toBe(5);
+    expect($participants[1]['name'])->toBe('W1BBB');
+    expect($participants[1]['contact_count'])->toBe(3);
+});
+
+test('participants returns empty array when no contacts exist', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+    $participants = $component->get('participants');
+
+    expect($participants)->toBeEmpty();
 });
 
 test('qsoBreakdown returns zeros when no contacts exist', function () {

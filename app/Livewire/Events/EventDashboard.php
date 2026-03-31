@@ -63,8 +63,23 @@ class EventDashboard extends Component
     #[Computed]
     public function participants(): array
     {
-        // Placeholder: Will be populated when Contact model is fully implemented
-        return [];
+        $config = $this->event->eventConfiguration;
+
+        if (! $config) {
+            return [];
+        }
+
+        return $config->contacts()
+            ->join('users', 'contacts.logger_user_id', '=', 'users.id')
+            ->selectRaw('users.id, users.call_sign, count(*) as contact_count')
+            ->groupBy('users.id', 'users.call_sign')
+            ->orderByDesc('contact_count')
+            ->get()
+            ->map(fn ($row) => [
+                'name' => $row->call_sign,
+                'contact_count' => (int) $row->contact_count,
+            ])
+            ->toArray();
     }
 
     #[Computed]
