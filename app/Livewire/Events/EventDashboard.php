@@ -46,7 +46,7 @@ class EventDashboard extends Component
         $totalContacts = $config->contacts()->count();
 
         $categoryCounts = $config->contacts()
-            ->where('is_duplicate', false)
+            ->notDuplicate()
             ->join('modes', 'contacts.mode_id', '=', 'modes.id')
             ->selectRaw('modes.category, count(*) as count')
             ->groupBy('modes.category')

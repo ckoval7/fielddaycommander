@@ -7,6 +7,8 @@ use App\Models\EventType;
 use App\Models\GuestbookEntry;
 use App\Models\OperatingClass;
 use App\Models\Section;
+use App\Models\Contact;
+use App\Models\Mode;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -319,27 +321,27 @@ test('qsoBreakdown returns real contact counts by mode category', function () {
         'callsign' => 'W1AW',
     ]);
 
-    $cwMode = \App\Models\Mode::factory()->cw()->create();
-    $phoneMode = \App\Models\Mode::factory()->phone()->create();
-    $digitalMode = \App\Models\Mode::factory()->digital()->create();
+    $cwMode = Mode::factory()->cw()->create();
+    $phoneMode = Mode::factory()->phone()->create();
+    $digitalMode = Mode::factory()->digital()->create();
 
     // Create contacts: 3 CW, 2 Phone, 1 Digital, 1 duplicate (should be excluded from category counts but included in total)
-    \App\Models\Contact::factory()->count(3)->create([
+    Contact::factory()->count(3)->create([
         'event_configuration_id' => $config->id,
         'mode_id' => $cwMode->id,
         'is_duplicate' => false,
     ]);
-    \App\Models\Contact::factory()->count(2)->create([
+    Contact::factory()->count(2)->create([
         'event_configuration_id' => $config->id,
         'mode_id' => $phoneMode->id,
         'is_duplicate' => false,
     ]);
-    \App\Models\Contact::factory()->create([
+    Contact::factory()->create([
         'event_configuration_id' => $config->id,
         'mode_id' => $digitalMode->id,
         'is_duplicate' => false,
     ]);
-    \App\Models\Contact::factory()->create([
+    Contact::factory()->create([
         'event_configuration_id' => $config->id,
         'mode_id' => $cwMode->id,
         'is_duplicate' => true,
