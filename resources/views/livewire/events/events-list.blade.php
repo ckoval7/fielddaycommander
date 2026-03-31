@@ -72,8 +72,8 @@
                             <td>{{ $event->eventType->name ?? 'N/A' }}</td>
                             <td>
                                 <div class="text-sm">
-                                    <div>{{ $event->start_time?->format('M j, Y H:i') ?? 'Not set' }}</div>
-                                    <div class="text-xs opacity-60">to {{ $event->end_time?->format('M j, Y H:i') ?? 'Not set' }}</div>
+                                    <div>{{ $event->start_time ? toLocalTime($event->start_time)->format('M j, Y H:i T') : 'Not set' }}</div>
+                                    <div class="text-xs opacity-60">to {{ $event->end_time ? toLocalTime($event->end_time)->format('M j, Y H:i T') : 'Not set' }}</div>
                                 </div>
                             </td>
                             <td>

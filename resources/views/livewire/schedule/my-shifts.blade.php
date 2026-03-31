@@ -81,7 +81,7 @@
 
                                         {{-- Time Range --}}
                                         <div class="text-sm text-base-content/70">
-                                            {{ $shift->start_time->format('g:i A') }} - {{ $shift->end_time->format('g:i A') }}
+                                            {{ toLocalTime($shift->start_time)->format('g:i A') }} - {{ toLocalTime($shift->end_time)->format('g:i A T') }}
                                         </div>
 
                                         {{-- Status & Confirmation --}}
@@ -122,7 +122,7 @@
                                                         spinner="checkIn"
                                                     />
                                                 @else
-                                                    <x-badge value="Check-in opens {{ $shift->start_time->copy()->subMinutes(15)->format('g:i A') }}" class="badge-ghost badge-sm" />
+                                                    <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format('g:i A T') }}" class="badge-ghost badge-sm" />
                                                 @endif
                                             @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_IN)
                                                 <x-button
@@ -180,7 +180,7 @@
 
                                         {{-- Time Range --}}
                                         <div class="text-sm text-base-content/70">
-                                            {{ $shift->start_time->format('M j, g:i A') }} - {{ $shift->end_time->format('g:i A') }}
+                                            {{ toLocalTime($shift->start_time)->format('M j, g:i A') }} - {{ toLocalTime($shift->end_time)->format('g:i A T') }}
                                         </div>
 
                                         {{-- Actions --}}
@@ -242,7 +242,7 @@
 
                                         {{-- Time Range --}}
                                         <div class="text-sm text-base-content/70">
-                                            {{ $shift->start_time->format('M j, g:i A') }} - {{ $shift->end_time->format('g:i A') }}
+                                            {{ toLocalTime($shift->start_time)->format('M j, g:i A') }} - {{ toLocalTime($shift->end_time)->format('g:i A T') }}
                                         </div>
 
                                         {{-- Status --}}

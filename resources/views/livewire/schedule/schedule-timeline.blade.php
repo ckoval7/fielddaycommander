@@ -85,10 +85,10 @@
                             {{-- Time Range --}}
                             <div class="flex-shrink-0 min-w-[160px]">
                                 <div class="font-medium text-sm">
-                                    {{ $shift->start_time->format('M j, g:i A') }}
+                                    {{ toLocalTime($shift->start_time)->format('M j, g:i A T') }}
                                 </div>
                                 <div class="text-xs text-base-content/60">
-                                    to {{ $shift->end_time->format('g:i A') }}
+                                    to {{ toLocalTime($shift->end_time)->format('g:i A T') }}
                                 </div>
                             </div>
 
@@ -159,7 +159,7 @@
                                                     spinner="checkIn"
                                                 />
                                             @else
-                                                <x-badge value="Check-in opens {{ $shift->start_time->copy()->subMinutes(15)->format('g:i A') }}" class="badge-ghost badge-sm" />
+                                                <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format('g:i A T') }}" class="badge-ghost badge-sm" />
                                             @endif
                                             @if($myAssignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
                                                 <x-button
@@ -233,10 +233,10 @@
                                             {{-- Time Range --}}
                                             <div class="flex-shrink-0 min-w-[160px]">
                                                 <div class="font-medium text-sm">
-                                                    {{ $shift->start_time->format('M j, g:i A') }}
+                                                    {{ toLocalTime($shift->start_time)->format('M j, g:i A T') }}
                                                 </div>
                                                 <div class="text-xs text-base-content/60">
-                                                    to {{ $shift->end_time->format('g:i A') }}
+                                                    to {{ toLocalTime($shift->end_time)->format('g:i A T') }}
                                                 </div>
                                             </div>
 
@@ -308,7 +308,7 @@
                                                                     spinner="checkIn"
                                                                 />
                                                             @else
-                                                                <x-badge value="Check-in opens {{ $shift->start_time->copy()->subMinutes(15)->format('g:i A') }}" class="badge-ghost badge-sm" />
+                                                                <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format('g:i A T') }}" class="badge-ghost badge-sm" />
                                                             @endif
                                                             @if($myAssignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
                                                                 <x-button

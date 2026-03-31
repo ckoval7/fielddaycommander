@@ -65,8 +65,8 @@
                                     <td>{{ $session->station->name ?? 'N/A' }}</td>
                                     <td>{{ $session->band->name ?? 'N/A' }}</td>
                                     <td>{{ $session->mode->name ?? 'N/A' }}</td>
-                                    <td>{{ $session->start_time?->format('M j, g:i A') }}</td>
-                                    <td>{{ $session->end_time?->format('M j, g:i A') ?? 'Active' }}</td>
+                                    <td>{{ $session->start_time ? toLocalTime($session->start_time)->format('M j, g:i A T') : '' }}</td>
+                                    <td>{{ $session->end_time ? toLocalTime($session->end_time)->format('M j, g:i A T') : 'Active' }}</td>
                                     <td>{{ $session->duration ?? 'N/A' }}</td>
                                     <td>{{ $session->qso_count ?? 0 }}</td>
                                 </tr>

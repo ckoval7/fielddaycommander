@@ -82,6 +82,15 @@ test('event form requires edit-events permission for edit mode', function () {
         ->assertForbidden();
 });
 
+test('event form labels time fields as UTC', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->assertSee('Start Date & Time (UTC)')
+        ->assertSee('End Date & Time (UTC)')
+        ->assertSee('in UTC');
+});
+
 test('event form can create new event with configuration', function () {
     $this->actingAs($this->user);
 

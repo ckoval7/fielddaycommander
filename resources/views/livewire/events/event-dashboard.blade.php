@@ -14,9 +14,9 @@
                 @endif
             </div>
             <p class="text-base-content/60">
-                {{ $event->start_time?->format('F j, Y g:i A') ?? 'Start not set' }}
+                {{ $event->start_time ? toLocalTime($event->start_time)->format('F j, Y g:i A T') : 'Start not set' }}
                 -
-                {{ $event->end_time?->format('F j, Y g:i A') ?? 'End not set' }}
+                {{ $event->end_time ? toLocalTime($event->end_time)->format('F j, Y g:i A T') : 'End not set' }}
             </p>
         </div>
 

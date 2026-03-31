@@ -81,19 +81,19 @@
                 </div>
 
                 <x-flatpickr
-                    label="Start Date & Time"
+                    label="Start Date & Time (UTC)"
                     wire:model="start_time"
                     required
                     icon="o-play"
-                    hint="When the event begins"
+                    hint="When the event begins, in UTC"
                 />
 
                 <x-flatpickr
-                    label="End Date & Time"
+                    label="End Date & Time (UTC)"
                     wire:model="end_time"
                     required
                     icon="o-stop"
-                    hint="When the event ends"
+                    hint="When the event ends, in UTC"
                 />
             </div>
         </x-card>

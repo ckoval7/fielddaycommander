@@ -28,11 +28,11 @@
                                 </div>
                                 <div>
                                     <div class="text-sm text-base-content/60">Start Date</div>
-                                    <div class="font-semibold">{{ $event->start_time?->format('M j, Y g:i A') ?? 'TBD' }}</div>
+                                    <div class="font-semibold">{{ $event->start_time ? toLocalTime($event->start_time)->format('M j, Y g:i A T') : 'TBD' }}</div>
                                 </div>
                                 <div>
                                     <div class="text-sm text-base-content/60">End Date</div>
-                                    <div class="font-semibold">{{ $event->end_time?->format('M j, Y g:i A') ?? 'TBD' }}</div>
+                                    <div class="font-semibold">{{ $event->end_time ? toLocalTime($event->end_time)->format('M j, Y g:i A T') : 'TBD' }}</div>
                                 </div>
                                 <div>
                                     <div class="text-sm text-base-content/60">Status</div>

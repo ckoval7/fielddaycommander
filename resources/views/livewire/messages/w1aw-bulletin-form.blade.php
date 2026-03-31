@@ -62,7 +62,7 @@
 
                 {{-- Received At --}}
                 <x-flatpickr
-                    label="Received At"
+                    label="Received At (UTC)"
                     wire:model="receivedAt"
                     icon="o-clock"
                     required

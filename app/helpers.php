@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Setting;
 use App\Services\DeveloperClockService;
 use Carbon\Carbon;
 
@@ -23,6 +24,31 @@ if (! function_exists('appNow')) {
     function appNow(): Carbon
     {
         return app(DeveloperClockService::class)->now();
+    }
+}
+
+if (! function_exists('toLocalTime')) {
+    /**
+     * Convert a UTC Carbon instance to the user's preferred timezone (or system default).
+     *
+     * Returns the Carbon instance shifted to the display timezone so you can
+     * call ->format() on it.  Append ->format('T') to get the abbreviation.
+     *
+     * @param  \Carbon\Carbon|string|null  $timestamp
+     */
+    function toLocalTime($timestamp): ?Carbon
+    {
+        if (! $timestamp) {
+            return null;
+        }
+
+        $time = $timestamp instanceof Carbon ? $timestamp->copy() : Carbon::parse($timestamp);
+
+        $timezone = auth()->check() && auth()->user()->preferred_timezone
+            ? auth()->user()->preferred_timezone
+            : Setting::get('timezone', config('app.timezone'));
+
+        return $time->timezone($timezone);
     }
 }
 

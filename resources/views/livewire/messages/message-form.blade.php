@@ -73,7 +73,7 @@
                 />
 
                 <x-flatpickr
-                    label="Filed At"
+                    label="Filed At (UTC)"
                     wire:model="filedAt"
                     icon="o-clock"
                 />
@@ -419,7 +419,7 @@
                         />
 
                         <x-flatpickr
-                            label="Reply Date/Time"
+                            label="Reply Date/Time (UTC)"
                             wire:model="icsReplyDate"
                             icon="o-clock"
                         />
