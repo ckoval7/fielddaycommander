@@ -71,6 +71,7 @@ class EventDashboard extends Component
 
         return $config->contacts()
             ->join('users', 'contacts.logger_user_id', '=', 'users.id')
+            ->whereNull('users.deleted_at')
             ->selectRaw('users.id, users.call_sign, count(*) as contact_count')
             ->groupBy('users.id', 'users.call_sign')
             ->orderByDesc('contact_count')
