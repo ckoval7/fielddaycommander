@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Events\EventDashboard;
+use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
@@ -402,6 +403,66 @@ test('participants returns empty array when no contacts exist', function () {
     $participants = $component->get('participants');
 
     expect($participants)->toBeEmpty();
+});
+
+test('recentContacts returns last 25 contacts in reverse chronological order', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $mode = Mode::factory()->cw()->create();
+    $band = Band::factory()->create(['name' => '20m']);
+
+    // Create 30 contacts with staggered times
+    for ($i = 0; $i < 30; $i++) {
+        Contact::factory()->create([
+            'event_configuration_id' => $config->id,
+            'callsign' => 'K'.str_pad($i, 4, '0', STR_PAD_LEFT),
+            'qso_time' => now()->subMinutes(30 - $i),
+            'mode_id' => $mode->id,
+            'band_id' => $band->id,
+        ]);
+    }
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+    $contacts = $component->get('recentContacts');
+
+    expect($contacts)->toHaveCount(25);
+    // Most recent first
+    expect($contacts->first()->callsign)->toBe('K0029');
+    // Oldest of the 25 (skips the first 5)
+    expect($contacts->last()->callsign)->toBe('K0005');
+});
+
+test('recentContacts tab displays contact data', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $mode = Mode::factory()->phone()->create();
+    $band = Band::factory()->create(['name' => '40m']);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'callsign' => 'N3XYZ',
+        'qso_time' => now()->subMinutes(5),
+        'mode_id' => $mode->id,
+        'band_id' => $band->id,
+    ]);
+
+    Livewire::test(EventDashboard::class, ['event' => $event])
+        ->set('activeTab', 'contacts')
+        ->assertSee('N3XYZ')
+        ->assertSee('40m')
+        ->assertSee('Phone');
 });
 
 test('qsoBreakdown returns zeros when no contacts exist', function () {

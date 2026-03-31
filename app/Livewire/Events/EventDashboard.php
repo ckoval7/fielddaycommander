@@ -84,6 +84,22 @@ class EventDashboard extends Component
     }
 
     #[Computed]
+    public function recentContacts(): \Illuminate\Support\Collection
+    {
+        $config = $this->event->eventConfiguration;
+
+        if (! $config) {
+            return collect();
+        }
+
+        return $config->contacts()
+            ->with(['band', 'mode', 'logger'])
+            ->latest('qso_time')
+            ->limit(25)
+            ->get();
+    }
+
+    #[Computed]
     public function guestbookStats(): array
     {
         if (! $this->event->eventConfiguration?->guestbook_enabled) {

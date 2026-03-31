@@ -242,11 +242,40 @@
         <x-tab name="contacts" label="Recent Contacts" icon="o-radio">
             <div class="mt-6">
                 <x-card shadow>
-                    <div class="text-center py-12 text-base-content/60">
-                        <x-icon name="o-radio" class="w-16 h-16 mx-auto opacity-50 mb-4" />
-                        <p class="text-lg font-semibold mb-2">Recent Contacts</p>
-                        <p>This section will display recent QSOs once the contact logging is implemented.</p>
-                    </div>
+                    @if($this->recentContacts->isEmpty())
+                        <div class="text-center py-8 text-base-content/60">
+                            <x-icon name="o-radio" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                            <p>No contacts logged yet.</p>
+                        </div>
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Callsign</th>
+                                        <th>Band</th>
+                                        <th>Mode</th>
+                                        <th>Operator</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($this->recentContacts as $contact)
+                                        <tr>
+                                            <td class="tabular-nums text-base-content/60">{{ toLocalTime($contact->qso_time)->format('H:i') }}</td>
+                                            <td class="font-mono font-semibold">{{ $contact->callsign }}</td>
+                                            <td>{{ $contact->band?->name }}</td>
+                                            <td>{{ $contact->mode?->name }}</td>
+                                            <td class="text-base-content/60">{{ $contact->logger?->call_sign }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-xs text-base-content/40 mt-3">
+                            Showing last {{ $this->recentContacts->count() }} contacts
+                        </div>
+                    @endif
                 </x-card>
             </div>
         </x-tab>
