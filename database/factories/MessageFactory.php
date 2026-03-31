@@ -95,6 +95,8 @@ class MessageFactory extends Factory
             'role' => MessageRole::ReceivedDelivered,
             'received_from' => strtoupper(fake()->bothify(self::CALLSIGN_PATTERN)),
             'sent_to' => null,
+            'frequency' => fake()->randomElement(['3.543', '7.228', '14.300', '146.520', '146.940']),
+            'mode_category' => fake()->randomElement(['CW', 'Phone', 'Digital']),
         ]);
     }
 }

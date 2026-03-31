@@ -40,6 +40,8 @@ class Message extends Model
         'received_from',
         'sent_at',
         'sent_by_user_id',
+        'frequency',
+        'mode_category',
         'notes',
         'ics_to_position',
         'ics_from_position',
