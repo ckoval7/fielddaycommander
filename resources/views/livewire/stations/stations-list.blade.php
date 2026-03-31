@@ -7,7 +7,7 @@
                     label="Clone from Event"
                     icon="o-arrow-path"
                     class="btn-outline"
-                    @click="$dispatch('open-clone-modal')"
+                    wire:click="$dispatch('open-clone-modal')"
                     responsive
                 />
                 <x-button label="Add Station" icon="o-plus" class="btn-primary" link="{{ route('stations.create') }}" wire:navigate responsive />
