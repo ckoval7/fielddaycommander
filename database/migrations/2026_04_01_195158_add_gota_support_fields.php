@@ -16,7 +16,7 @@ return new class extends Migration
         });
 
         Schema::table('contacts', function (Blueprint $table) {
-            $table->foreignId('gota_operator_user_id')->nullable()->after('gota_coach_user_id')->constrained('users');
+            $table->foreignId('gota_operator_user_id')->nullable()->after('gota_coach_user_id')->constrained('users')->nullOnDelete();
         });
     }
 

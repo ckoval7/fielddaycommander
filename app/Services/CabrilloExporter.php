@@ -37,6 +37,41 @@ class CabrilloExporter
             $lines[] = 'CLUB: '.$config->club_name;
         }
 
+        // GOTA SOAPBOX lines
+        if ($config->has_gota_station && $config->gota_callsign) {
+            $gotaCount = $config->contacts()
+                ->where('is_gota_contact', true)
+                ->where('is_duplicate', false)
+                ->count();
+
+            $supervisedCount = $config->contacts()
+                ->where('is_gota_contact', true)
+                ->where('is_duplicate', false)
+                ->whereHas('operatingSession', fn ($q) => $q->where('is_supervised', true))
+                ->count();
+
+            $lines[] = 'SOAPBOX: GOTA Station Callsign: '.$config->gota_callsign;
+            $lines[] = 'SOAPBOX: GOTA Contacts: '.$gotaCount.' (Supervised: '.$supervisedCount.')';
+
+            // List unique GOTA operators
+            $gotaOperators = $config->contacts()
+                ->where('is_gota_contact', true)
+                ->where('is_duplicate', false)
+                ->whereNotNull('gota_operator_first_name')
+                ->select('gota_operator_first_name', 'gota_operator_last_name', 'gota_operator_callsign')
+                ->distinct()
+                ->get();
+
+            if ($gotaOperators->isNotEmpty()) {
+                $opList = $gotaOperators->map(function ($op) {
+                    $name = trim($op->gota_operator_first_name.' '.$op->gota_operator_last_name);
+
+                    return $op->gota_operator_callsign ? "{$name} ({$op->gota_operator_callsign})" : $name;
+                })->implode(', ');
+                $lines[] = 'SOAPBOX: GOTA Operators: '.$opList;
+            }
+        }
+
         $contacts = $config->contacts()
             ->notDuplicate()
             ->with(['band', 'mode'])
@@ -88,6 +123,11 @@ class CabrilloExporter
         $sentClass = $config->transmitter_count.$config->operatingClass->code;
         $sentSection = $config->section->code;
 
+        // Use GOTA callsign for GOTA contacts
+        $sentCallsign = ($contact->is_gota_contact && $config->gota_callsign)
+            ? $config->gota_callsign
+            : $config->callsign;
+
         // received_exchange stores "CALLSIGN CLASS SECTION" — skip the callsign
         $receivedTokens = preg_split('/\s+/', trim($contact->received_exchange ?? ''));
         $rcvdClass = $receivedTokens[1] ?? '';
@@ -99,7 +139,7 @@ class CabrilloExporter
             $mode,
             $date,
             $time,
-            $config->callsign,
+            $sentCallsign,
             $sentClass,
             $sentSection,
             $contact->callsign,

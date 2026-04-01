@@ -144,7 +144,9 @@ class Scoring extends Component
             return 0;
         }
 
-        return $this->config()->contacts()->count();
+        return $this->config()->contacts()
+            ->where('is_gota_contact', false)
+            ->count();
     }
 
     #[Computed]
@@ -169,6 +171,7 @@ class Scoring extends Component
 
         return $this->config()->contacts()
             ->where('is_duplicate', true)
+            ->where('is_gota_contact', false)
             ->count();
     }
 
@@ -192,6 +195,7 @@ class Scoring extends Component
         }
 
         return $this->config()->contacts()
+            ->where('is_duplicate', false)
             ->where('is_gota_contact', true)
             ->count();
     }

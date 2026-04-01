@@ -29,7 +29,7 @@ class ClubSummaryReportService
             'event_end' => $config->event->end_time,
 
             // Score components
-            'qso_base_points' => (int) $config->contacts()->notDuplicate()->sum('points'),
+            'qso_base_points' => (int) $config->contacts()->notDuplicate()->where('is_gota_contact', false)->sum('points'),
             'power_multiplier' => $config->calculatePowerMultiplier(),
             'qso_score' => $config->calculateQsoScore(),
             'bonus_score' => $config->calculateBonusScore(),
@@ -49,6 +49,14 @@ class ClubSummaryReportService
             // Operator roster
             'operators' => $this->operatorRoster($config),
 
+            // GOTA
+            'has_gota_station' => $config->has_gota_station,
+            'gota_callsign' => $config->gota_callsign,
+            'gota_contact_count' => $config->contacts()->where('is_gota_contact', true)->notDuplicate()->count(),
+            'gota_bonus' => $config->calculateGotaBonus(),
+            'gota_coach_bonus' => $config->calculateGotaCoachBonus(),
+            'gota_operators' => $this->gotaOperatorRoster($config),
+
             // Metadata
             'generated_at' => now(),
         ];
@@ -61,6 +69,7 @@ class ClubSummaryReportService
     {
         $counts = Contact::where('event_configuration_id', $config->id)
             ->notDuplicate()
+            ->where('is_gota_contact', false)
             ->selectRaw('band_id, mode_id, count(*) as contact_count')
             ->groupBy('band_id', 'mode_id')
             ->get()
@@ -118,6 +127,47 @@ class ClubSummaryReportService
                 'valid_qsos' => (int) $row->valid_qsos,
             ])
             ->sortByDesc('valid_qsos')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{name: string, callsign: ?string, contacts: int}>
+     */
+    private function gotaOperatorRoster(EventConfiguration $config): array
+    {
+        // Registered GOTA operators
+        $registered = Contact::where('event_configuration_id', $config->id)
+            ->where('is_gota_contact', true)
+            ->notDuplicate()
+            ->whereNotNull('gota_operator_user_id')
+            ->selectRaw('gota_operator_user_id, count(*) as contact_count')
+            ->groupBy('gota_operator_user_id')
+            ->with('gotaOperator')
+            ->get()
+            ->map(fn ($row) => [
+                'name' => trim(($row->gotaOperator?->first_name ?? '').' '.($row->gotaOperator?->last_name ?? '')),
+                'callsign' => $row->gotaOperator?->call_sign,
+                'contacts' => (int) $row->contact_count,
+            ]);
+
+        // Non-registered GOTA operators (free-text fields)
+        $unregistered = Contact::where('event_configuration_id', $config->id)
+            ->where('is_gota_contact', true)
+            ->notDuplicate()
+            ->whereNull('gota_operator_user_id')
+            ->whereNotNull('gota_operator_first_name')
+            ->selectRaw('gota_operator_first_name, gota_operator_last_name, gota_operator_callsign, count(*) as contact_count')
+            ->groupBy('gota_operator_first_name', 'gota_operator_last_name', 'gota_operator_callsign')
+            ->get()
+            ->map(fn ($row) => [
+                'name' => trim($row->gota_operator_first_name.' '.$row->gota_operator_last_name),
+                'callsign' => $row->gota_operator_callsign,
+                'contacts' => (int) $row->contact_count,
+            ]);
+
+        return $registered->toBase()->merge($unregistered->toBase())
+            ->sortByDesc('contacts')
             ->values()
             ->all();
     }

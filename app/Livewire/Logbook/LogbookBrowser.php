@@ -50,6 +50,9 @@ class LogbookBrowser extends Component
     #[Url]
     public ?string $show_transcribed = null;
 
+    #[Url]
+    public ?string $show_gota = null;
+
     public ?int $eventConfigurationId = null;
 
     public int $perPage = 50;
@@ -90,6 +93,7 @@ class LogbookBrowser extends Component
             'section_ids',
             'show_duplicates',
             'show_transcribed',
+            'show_gota',
         ]);
         $this->resetPage();
     }
@@ -144,6 +148,11 @@ class LogbookBrowser extends Component
         $this->resetPage();
     }
 
+    public function updatedShowGota(): void
+    {
+        $this->resetPage();
+    }
+
     #[Computed]
     public function contacts(): CursorPaginator
     {
@@ -165,6 +174,7 @@ class LogbookBrowser extends Component
             'section_ids' => $this->section_ids,
             'duplicate_filter' => $this->show_duplicates,
             'transcribed_filter' => $this->show_transcribed,
+            'gota_filter' => $this->show_gota,
         ];
 
         $query = $queryBuilder->applyFilters($filters);
@@ -247,6 +257,7 @@ class LogbookBrowser extends Component
             'section_ids' => $this->section_ids,
             'duplicate_filter' => $this->show_duplicates,
             'transcribed_filter' => $this->show_transcribed,
+            'gota_filter' => $this->show_gota,
         ];
 
         $query = $queryBuilder->applyFilters($filters)->reorder();

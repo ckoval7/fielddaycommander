@@ -41,18 +41,21 @@ trait HasContactForm
         int $bandId,
         int $modeId,
         int $eventConfigId,
+        bool $isGotaContact = false,
     ): array {
         $alreadyWorked = Contact::query()
             ->where('event_configuration_id', $eventConfigId)
             ->where('band_id', $bandId)
             ->where('mode_id', $modeId)
             ->where('is_duplicate', false)
+            ->where('is_gota_contact', $isGotaContact)
             ->pluck('callsign');
 
         return Contact::query()
             ->where('event_configuration_id', $eventConfigId)
             ->where('callsign', 'LIKE', strtoupper($partial).'%')
             ->where('is_duplicate', false)
+            ->where('is_gota_contact', $isGotaContact)
             ->whereNotIn('callsign', $alreadyWorked)
             ->with(['band:id,name', 'mode:id,name'])
             ->latest('qso_time')

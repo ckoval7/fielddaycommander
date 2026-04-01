@@ -194,3 +194,51 @@ test('omits club line when club name is not set', function () {
     $output = app(CabrilloExporter::class)->export($config);
     expect($output)->not->toContain('CLUB:');
 });
+
+test('gota contacts use gota callsign in qso line', function () {
+    $config = makeCabrilloExporterConfig([
+        'callsign' => 'W1AW',
+        'has_gota_station' => true,
+        'gota_callsign' => 'K1GOT',
+    ]);
+
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'callsign' => 'N1ABC',
+        'received_exchange' => 'N1ABC 2A CT',
+        'is_duplicate' => false,
+    ]);
+
+    $exporter = new \App\Services\CabrilloExporter;
+    $output = $exporter->export($config);
+
+    // QSO line should use GOTA callsign
+    $qsoLines = collect(explode("\r\n", $output))->filter(fn ($l) => str_starts_with($l, 'QSO:'));
+    expect($qsoLines->first())->toContain('K1GOT');
+
+    // SOAPBOX should mention GOTA
+    expect($output)->toContain('SOAPBOX: GOTA Station Callsign: K1GOT');
+});
+
+test('non-gota contacts use primary callsign in qso line', function () {
+    $config = makeCabrilloExporterConfig([
+        'callsign' => 'W1AW',
+        'has_gota_station' => true,
+        'gota_callsign' => 'K1GOT',
+    ]);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'callsign' => 'N1ABC',
+        'received_exchange' => 'N1ABC 2A CT',
+        'is_gota_contact' => false,
+        'is_duplicate' => false,
+    ]);
+
+    $exporter = new \App\Services\CabrilloExporter;
+    $output = $exporter->export($config);
+
+    $qsoLines = collect(explode("\r\n", $output))->filter(fn ($l) => str_starts_with($l, 'QSO:'));
+    expect($qsoLines->first())->toContain('W1AW');
+    expect($qsoLines->first())->not->toContain('K1GOT');
+});

@@ -74,6 +74,20 @@
                 </div>
             </a>
 
+            @if($this->event?->eventConfiguration?->has_gota_station)
+                <span class="text-3xl md:text-4xl font-light select-none" style="color: var(--score-text-muted);">+</span>
+
+                <a href="#col-bonus" class="text-center group no-underline">
+                    <div class="font-black tabular-nums transition-opacity group-hover:opacity-75"
+                         style="font-size: clamp(2.5rem, 5vw, 4rem); color: var(--score-headline);">
+                        {{ number_format($this->gotaTotalBonus) }}
+                    </div>
+                    <div class="text-xs uppercase tracking-widest mt-1" style="color: var(--score-text-muted);">
+                        GOTA Bonus
+                    </div>
+                </a>
+            @endif
+
             <span class="text-3xl md:text-4xl font-light select-none" style="color: var(--score-text-muted);">=</span>
 
             <div class="text-center">
@@ -350,7 +364,7 @@
             </div>
 
             {{-- GOTA Bonus Section --}}
-            @if ($this->event->eventConfiguration->has_gota_station)
+            @if ($this->event?->eventConfiguration?->has_gota_station)
                 <div class="mt-4" style="border-top: 1px solid var(--score-divider); padding-top: 0.75rem;">
                     <div class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--score-text-muted);">
                         GOTA Station Bonus

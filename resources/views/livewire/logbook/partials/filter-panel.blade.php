@@ -134,6 +134,21 @@
                     </div>
                 </fieldset>
 
+                {{-- GOTA Filter --}}
+                <fieldset class="flex flex-col gap-2">
+                    <legend class="text-sm font-medium text-base-content/70">GOTA Status</legend>
+                    <div class="flex flex-col gap-2">
+                        <x-radio
+                            wire:model.live="show_gota"
+                            :options="[
+                                ['id' => null, 'name' => 'All Contacts'],
+                                ['id' => 'only', 'name' => 'GOTA Only'],
+                                ['id' => 'exclude', 'name' => 'Exclude GOTA']
+                            ]"
+                        />
+                    </div>
+                </fieldset>
+
             </div>
 
             {{-- Active Filters Summary --}}
@@ -148,6 +163,7 @@
                     'Time Range' => ($time_from || $time_to) ? 'Active' : null,
                     'Duplicates' => $show_duplicates,
                     'Transcribed' => $show_transcribed,
+                    'GOTA' => $show_gota,
                 ])->filter()->count();
             @endphp
 

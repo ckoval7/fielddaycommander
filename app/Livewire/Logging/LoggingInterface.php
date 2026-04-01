@@ -58,6 +58,7 @@ class LoggingInterface extends Component
                 $this->operatingSession->band_id,
                 $this->operatingSession->mode_id,
                 $this->operatingSession->station->event_configuration_id,
+                $this->operatingSession->station->is_gota,
             );
         }
 

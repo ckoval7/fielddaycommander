@@ -95,6 +95,19 @@
                             <x-badge value="GOTA" class="badge-xs badge-info" />
                         @endif
                     </div>
+                    @if($contact->is_gota_contact && ($contact->gota_operator_first_name || $contact->gotaOperator))
+                        <div class="text-xs text-base-content/60 mt-0.5">
+                            @if($contact->gotaOperator)
+                                Op: {{ $contact->gotaOperator->first_name }} {{ $contact->gotaOperator->last_name }}
+                                ({{ $contact->gotaOperator->call_sign }})
+                            @else
+                                Op: {{ $contact->gota_operator_first_name }} {{ $contact->gota_operator_last_name }}
+                                @if($contact->gota_operator_callsign)
+                                    ({{ $contact->gota_operator_callsign }})
+                                @endif
+                            @endif
+                        </div>
+                    @endif
                 @endscope
 
                 @scope('cell_logger', $contact)
@@ -128,6 +141,16 @@
                                 @endif
                             </div>
                         </div>
+                        @if($contact->is_gota_contact && ($contact->gota_operator_first_name || $contact->gotaOperator))
+                            <div class="text-xs text-base-content/60">
+                                GOTA Op:
+                                @if($contact->gotaOperator)
+                                    {{ $contact->gotaOperator->first_name }} {{ $contact->gotaOperator->last_name }}
+                                @else
+                                    {{ $contact->gota_operator_first_name }} {{ $contact->gota_operator_last_name }}
+                                @endif
+                            </div>
+                        @endif
 
                         {{-- Band, Mode, Class, Section --}}
                         @php

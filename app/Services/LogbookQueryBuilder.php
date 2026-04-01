@@ -19,6 +19,7 @@ class LogbookQueryBuilder
                 'section',
                 'logger',
                 'operatingSession.station',
+                'gotaOperator',
             ]);
     }
 
@@ -163,6 +164,24 @@ class LogbookQueryBuilder
     }
 
     /**
+     * Filter by GOTA status.
+     *
+     * @param  string|null  $gotaFilter  'only' = GOTA only, 'exclude' = exclude GOTA, null = show all
+     */
+    public function forGotaStatus(Builder $query, ?string $gotaFilter): Builder
+    {
+        if ($gotaFilter === 'only') {
+            return $query->where('is_gota_contact', true);
+        }
+
+        if ($gotaFilter === 'exclude') {
+            return $query->where('is_gota_contact', false);
+        }
+
+        return $query;
+    }
+
+    /**
      * Apply chronological ordering (most recent first).
      */
     public function chronological(Builder $query): Builder
@@ -184,7 +203,8 @@ class LogbookQueryBuilder
      *     callsign?: ?string,
      *     section_ids?: int[],
      *     duplicate_filter?: ?string,
-     *     transcribed_filter?: ?string
+     *     transcribed_filter?: ?string,
+     *     gota_filter?: ?string
      * }  $filters
      */
     public function applyFilters(array $filters): Builder
@@ -201,6 +221,7 @@ class LogbookQueryBuilder
         $query = $this->forSection($query, $filters['section_ids'] ?? []);
         $query = $this->forDuplicateStatus($query, $filters['duplicate_filter'] ?? null);
         $query = $this->forTranscribed($query, $filters['transcribed_filter'] ?? null);
+        $query = $this->forGotaStatus($query, $filters['gota_filter'] ?? null);
         $query = $this->chronological($query);
 
         return $query;

@@ -62,6 +62,12 @@ describe('buildQuery', function () {
             ->and($query->getEagerLoads())->toHaveKeys(['band', 'mode', 'section', 'logger', 'operatingSession.station']);
     });
 
+    test('eager loads gotaOperator relationship', function () {
+        $query = $this->builder->buildQuery();
+
+        expect($query->getEagerLoads())->toHaveKey('gotaOperator');
+    });
+
     test('eager loading prevents N+1 queries', function () {
         // Create contacts with relationships
         $session = OperatingSession::factory()->create([
@@ -645,6 +651,61 @@ describe('forDuplicateStatus', function () {
 
         $query = $this->builder->buildQuery();
         $query = $this->builder->forDuplicateStatus($query, null);
+        $results = $query->get();
+
+        expect($results)->toHaveCount(2);
+    });
+});
+
+describe('forGotaStatus', function () {
+    test('filters to show only GOTA contacts', function () {
+        Contact::factory(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_gota_contact' => true,
+        ]);
+        Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_gota_contact' => false,
+        ]);
+
+        $query = $this->builder->buildQuery();
+        $query = $this->builder->forGotaStatus($query, 'only');
+        $results = $query->get();
+
+        expect($results)->toHaveCount(2)
+            ->and($results->every(fn ($contact) => $contact->is_gota_contact === true))->toBeTrue();
+    });
+
+    test('filters to exclude GOTA contacts', function () {
+        Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_gota_contact' => true,
+        ]);
+        Contact::factory(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_gota_contact' => false,
+        ]);
+
+        $query = $this->builder->buildQuery();
+        $query = $this->builder->forGotaStatus($query, 'exclude');
+        $results = $query->get();
+
+        expect($results)->toHaveCount(2)
+            ->and($results->every(fn ($contact) => $contact->is_gota_contact === false))->toBeTrue();
+    });
+
+    test('shows all contacts when GOTA filter is null', function () {
+        Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_gota_contact' => true,
+        ]);
+        Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_gota_contact' => false,
+        ]);
+
+        $query = $this->builder->buildQuery();
+        $query = $this->builder->forGotaStatus($query, null);
         $results = $query->get();
 
         expect($results)->toHaveCount(2);

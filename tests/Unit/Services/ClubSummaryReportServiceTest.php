@@ -155,3 +155,136 @@ test('getData returns operators with valid qso counts', function () {
     expect($operator['valid_qsos'])->toBe(3);
     expect($operator['call_sign'])->toBe('KD7TEST');
 });
+
+test('getData returns GOTA data fields', function () {
+    $config = makeClubSummaryConfig([
+        'has_gota_station' => true,
+        'gota_callsign' => 'W7ARC/GOTA',
+    ]);
+
+    $data = app(ClubSummaryReportService::class)->getData($config);
+
+    expect($data)->toHaveKeys([
+        'has_gota_station',
+        'gota_callsign',
+        'gota_contact_count',
+        'gota_bonus',
+        'gota_coach_bonus',
+        'gota_operators',
+    ]);
+    expect($data['has_gota_station'])->toBeTrue();
+    expect($data['gota_callsign'])->toBe('W7ARC/GOTA');
+    expect($data['gota_operators'])->toBeArray();
+});
+
+test('qso_base_points excludes GOTA contacts', function () {
+    $config = makeClubSummaryConfig();
+    $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.2, 'allowed_fd' => true, 'sort_order' => 2]);
+    $mode = Mode::factory()->create(['name' => 'CW', 'category' => 'CW']);
+
+    // Regular contacts worth 2 points each
+    Contact::factory()->count(2)->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'is_duplicate' => false,
+        'is_gota_contact' => false,
+        'points' => 2,
+    ]);
+
+    // GOTA contact worth 2 points — should NOT count
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'is_duplicate' => false,
+        'points' => 2,
+    ]);
+
+    $data = app(ClubSummaryReportService::class)->getData($config);
+
+    expect($data['qso_base_points'])->toBe(4);
+});
+
+test('band_mode_grid excludes GOTA contacts', function () {
+    $config = makeClubSummaryConfig();
+    $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.2, 'allowed_fd' => true, 'sort_order' => 2]);
+    $mode = Mode::factory()->create(['name' => 'CW', 'category' => 'CW']);
+
+    Contact::factory()->count(3)->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'is_duplicate' => false,
+        'is_gota_contact' => false,
+        'points' => 2,
+    ]);
+
+    // GOTA contact should not appear in grid
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'is_duplicate' => false,
+        'points' => 2,
+    ]);
+
+    $data = app(ClubSummaryReportService::class)->getData($config);
+
+    $cwRow = collect($data['band_mode_grid'])->firstWhere('mode', 'CW');
+    expect($cwRow)->not->toBeNull();
+    expect($cwRow['total'])->toBe(3);
+    expect($cwRow['cells'][$band->id])->toBe(3);
+});
+
+test('gota_operators includes registered and unregistered operators', function () {
+    $config = makeClubSummaryConfig(['has_gota_station' => true]);
+    $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.2, 'allowed_fd' => true, 'sort_order' => 2]);
+    $mode = Mode::factory()->create(['name' => 'SSB', 'category' => 'Phone']);
+    $registeredUser = User::factory()->create([
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'call_sign' => 'KD7JD',
+    ]);
+
+    // 2 contacts by registered GOTA operator
+    Contact::factory()->count(2)->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'is_duplicate' => false,
+        'is_gota_contact' => true,
+        'gota_operator_user_id' => $registeredUser->id,
+        'gota_operator_first_name' => null,
+        'gota_operator_last_name' => null,
+        'gota_operator_callsign' => null,
+        'points' => 1,
+    ]);
+
+    // 1 contact by unregistered GOTA operator
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'is_duplicate' => false,
+        'is_gota_contact' => true,
+        'gota_operator_user_id' => null,
+        'gota_operator_first_name' => 'Bob',
+        'gota_operator_last_name' => 'Smith',
+        'gota_operator_callsign' => null,
+        'points' => 1,
+    ]);
+
+    $data = app(ClubSummaryReportService::class)->getData($config);
+
+    expect($data['gota_operators'])->toHaveCount(2);
+
+    $jane = collect($data['gota_operators'])->firstWhere('name', 'Jane Doe');
+    expect($jane)->not->toBeNull();
+    expect($jane['callsign'])->toBe('KD7JD');
+    expect($jane['contacts'])->toBe(2);
+
+    $bob = collect($data['gota_operators'])->firstWhere('name', 'Bob Smith');
+    expect($bob)->not->toBeNull();
+    expect($bob['contacts'])->toBe(1);
+});

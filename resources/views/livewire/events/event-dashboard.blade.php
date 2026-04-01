@@ -304,6 +304,13 @@
                             <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['bonus_score']) }}</div>
                             <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">Bonus Pts</div>
                         </div>
+                        @if($this->scoringTotals['has_gota'])
+                            <span class="text-2xl font-light text-base-content/30">+</span>
+                            <div class="text-center">
+                                <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['gota_bonus']) }}</div>
+                                <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">GOTA Bonus</div>
+                            </div>
+                        @endif
                         <span class="text-2xl font-light text-base-content/30">=</span>
                         <div class="text-center">
                             <div class="text-4xl font-black tabular-nums text-primary">{{ number_format($this->scoringTotals['final_score']) }}</div>

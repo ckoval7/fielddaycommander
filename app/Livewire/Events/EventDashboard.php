@@ -152,15 +152,19 @@ class EventDashboard extends Component
                 'power_multiplier' => 1,
                 'qso_score' => 0,
                 'bonus_score' => 0,
+                'gota_bonus' => 0,
+                'has_gota' => false,
                 'final_score' => 0,
             ];
         }
 
         return [
-            'qso_base_points' => (int) $config->contacts()->notDuplicate()->sum('points'),
+            'qso_base_points' => (int) $config->contacts()->notDuplicate()->where('is_gota_contact', false)->sum('points'),
             'power_multiplier' => (int) $config->calculatePowerMultiplier(),
             'qso_score' => $config->calculateQsoScore(),
             'bonus_score' => $config->calculateBonusScore(),
+            'gota_bonus' => $config->calculateGotaBonus() + $config->calculateGotaCoachBonus(),
+            'has_gota' => $config->has_gota_station,
             'final_score' => $config->calculateFinalScore(),
         ];
     }
