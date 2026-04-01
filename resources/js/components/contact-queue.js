@@ -244,18 +244,10 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     this.queue = this.queue.filter(c => c.uuid !== candidate.uuid);
                     this.saveQueue();
 
-                    // Directly call the Livewire component to refresh
-                    // the recent contacts list after a successful sync.
-                    try {
-                        this.$wire.onContactSynced();
-                    } catch {
-                        // Fallback: find the component manually
-                        const wireEl = this.$el?.closest('[wire\\:id]');
-                        const wireId = wireEl?.getAttribute('wire:id');
-                        if (wireId) {
-                            globalThis.Livewire?.find(wireId)?.call('onContactSynced');
-                        }
-                    }
+                    // Notify the Livewire component to refresh the recent
+                    // contacts list. Uses Livewire's event dispatch which is
+                    // reliable after wire:navigate SPA transitions.
+                    globalThis.Livewire?.dispatch('contact-synced');
                 } else if (response.status === 422) {
                     const errorData = await response.json();
                     candidate.status = 'failed';
@@ -300,15 +292,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         discardFailed(uuid) {
             this.queue = this.queue.filter(c => c.uuid !== uuid);
             this.saveQueue();
-            try {
-                this.$wire.onContactDiscarded();
-            } catch {
-                const wireEl = this.$el?.closest('[wire\\:id]');
-                const wireId = wireEl?.getAttribute('wire:id');
-                if (wireId) {
-                    globalThis.Livewire?.find(wireId)?.call('onContactDiscarded');
-                }
-            }
+            globalThis.Livewire?.dispatch('contact-discarded');
         },
 
         loadQueue() {

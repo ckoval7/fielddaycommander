@@ -187,14 +187,16 @@
         {{-- Recent QSOs --}}
         <x-card title="Recent QSOs" subtitle="This session only">
             {{-- Empty state: no server contacts and no queued contacts --}}
-            <div x-show="queue.length === 0 && {{ $this->recentContacts->count() }} === 0">
-                <div class="text-center py-4 text-base-content/50 space-y-1">
-                    <p>No contacts logged yet.</p>
-                    <p class="text-xs">Type the other station's exchange above, e.g. <span class="font-mono font-bold">W1AW 3A CT</span></p>
+            @if($this->recentContacts->isEmpty())
+                <div x-show="queue.length === 0">
+                    <div class="text-center py-4 text-base-content/50 space-y-1">
+                        <p>No contacts logged yet.</p>
+                        <p class="text-xs">Type the other station's exchange above, e.g. <span class="font-mono font-bold">W1AW 3A CT</span></p>
+                    </div>
                 </div>
-            </div>
+            @endif
 
-            <div class="overflow-x-auto" x-show="queue.length > 0 || {{ $this->recentContacts->count() }} > 0" x-cloak>
+            <div class="overflow-x-auto" @if($this->recentContacts->isEmpty()) x-show="queue.length > 0" x-cloak @endif>
                 <table class="table table-sm">
                     <thead>
                         <tr>
