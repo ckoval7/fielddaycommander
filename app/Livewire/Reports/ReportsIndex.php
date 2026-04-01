@@ -5,6 +5,7 @@ namespace App\Livewire\Reports;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Services\EventContextService;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -12,11 +13,10 @@ class ReportsIndex extends Component
 {
     public ?Event $event = null;
 
-    public function mount(): void
+    public function mount(EventContextService $eventContext): void
     {
-        $this->event = Event::active()
-            ->with(['eventConfiguration.section', 'eventConfiguration.operatingClass'])
-            ->first();
+        $this->event = $eventContext->getContextEvent();
+        $this->event?->load(['eventConfiguration.section', 'eventConfiguration.operatingClass']);
     }
 
     protected function config(): ?EventConfiguration

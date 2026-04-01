@@ -37,6 +37,10 @@ class ContactFactory extends Factory
         // Get a random active section if available
         $section = \App\Models\Section::where('is_active', true)->inRandomOrder()->first();
 
+        $callsign = strtoupper(fake()->bothify('??#???'));
+        $fdClass = fake()->numberBetween(1, 5).fake()->randomElement(['A', 'B', 'C', 'D', 'E', 'F']);
+        $sectionCode = $section?->code ?? 'CT';
+
         return [
             'event_configuration_id' => \App\Models\EventConfiguration::factory(),
             'operating_session_id' => \App\Models\OperatingSession::factory(),
@@ -44,9 +48,9 @@ class ContactFactory extends Factory
             'band_id' => $band->id,
             'mode_id' => $mode->id,
             'qso_time' => appNow(),
-            'callsign' => strtoupper(fake()->bothify('??#???')),
+            'callsign' => $callsign,
             'section_id' => $section?->id,
-            'received_exchange' => fake()->word(),
+            'received_exchange' => "{$callsign} {$fdClass} {$sectionCode}",
             'power_watts' => fake()->numberBetween(5, 100),
             'is_gota_contact' => false,
             'is_natural_power' => false,

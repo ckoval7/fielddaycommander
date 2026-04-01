@@ -21,12 +21,15 @@ class CabrilloExporter
 
         $lines = [
             'START-OF-LOG: 3.0',
-            'CREATED-BY: FD Log DB',
-            'CONTEST: ARRL-FIELD-DAY',
+            'CREATED-BY: FD Commander',
+            'CONTEST: ARRL-FD',
             'CALLSIGN: '.$config->callsign,
             'LOCATION: '.$config->section->code,
-            'CATEGORY-OPERATOR: '.$config->operatingClass->code,
+            'CATEGORY-OPERATOR: MULTI-OP',
+            'CATEGORY-BAND: ALL',
+            'CATEGORY-MODE: MIXED',
             'CATEGORY-POWER: '.$this->powerCategory($config->max_power_watts),
+            'CATEGORY-STATION: '.$this->stationCategory($config->operatingClass->code),
             'CLAIMED-SCORE: '.$config->calculateFinalScore(),
         ];
 
@@ -82,18 +85,26 @@ class CabrilloExporter
         $mode = $this->cabrilloMode($contact->mode->category);
         $date = $contact->qso_time->format('Y-m-d');
         $time = $contact->qso_time->format('Hi');
-        $sentExchange = $config->operatingClass->code.' '.$config->section->code;
+        $sentClass = $config->transmitter_count.$config->operatingClass->code;
+        $sentSection = $config->section->code;
+
+        // received_exchange stores "CALLSIGN CLASS SECTION" — skip the callsign
+        $receivedTokens = preg_split('/\s+/', trim($contact->received_exchange ?? ''));
+        $rcvdClass = $receivedTokens[1] ?? '';
+        $rcvdSection = $receivedTokens[2] ?? '';
 
         return sprintf(
-            'QSO: %5d %s %s %s %s %s %s %s',
+            'QSO: %5d %s %s %s %-13s %-4s %-5s %-13s %-4s %-5s',
             $freqKhz,
             $mode,
             $date,
             $time,
             $config->callsign,
-            $sentExchange,
+            $sentClass,
+            $sentSection,
             $contact->callsign,
-            $contact->received_exchange ?? ''
+            $rcvdClass,
+            $rcvdSection
         );
     }
 
@@ -103,6 +114,15 @@ class CabrilloExporter
             'CW' => 'CW',
             'Phone' => 'PH',
             default => 'DG',
+        };
+    }
+
+    private function stationCategory(string $classCode): string
+    {
+        return match ($classCode) {
+            'C', 'M' => 'MOBILE',
+            'B', 'D', 'E', 'F', 'H', 'I' => 'FIXED',
+            default => 'PORTABLE',
         };
     }
 }

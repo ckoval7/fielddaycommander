@@ -20,10 +20,10 @@ function makeCabrilloExporterConfig(array $configOverrides = [], array $eventOve
     $eventType = EventType::factory()->create(['code' => 'FD', 'name' => 'Field Day', 'is_active' => true]);
 
     $opClass = OperatingClass::create([
-        'code' => '2A',
+        'code' => 'A',
         'event_type_id' => $eventType->id,
-        'name' => 'Class 2A',
-        'description' => 'Two transmitters',
+        'name' => 'Class A',
+        'description' => 'Portable emergency power',
         'allows_gota' => false,
         'allows_free_vhf' => false,
         'requires_emergency_power' => false,
@@ -40,6 +40,7 @@ function makeCabrilloExporterConfig(array $configOverrides = [], array $eventOve
         'club_name' => 'Anytown ARC',
         'section_id' => $section->id,
         'operating_class_id' => $opClass->id,
+        'transmitter_count' => 2,
         'max_power_watts' => 100,
     ], $configOverrides));
 }
@@ -50,11 +51,14 @@ test('includes required cabrillo header fields', function () {
 
     expect($output)
         ->toContain('START-OF-LOG: 3.0')
-        ->toContain('CREATED-BY: FD Log DB')
-        ->toContain('CONTEST: ARRL-FIELD-DAY')
+        ->toContain('CREATED-BY: FD Commander')
+        ->toContain('CONTEST: ARRL-FD')
         ->toContain('CALLSIGN: W1AW')
         ->toContain('LOCATION: CT')
-        ->toContain('CATEGORY-OPERATOR: 2A')
+        ->toContain('CATEGORY-OPERATOR: MULTI-OP')
+        ->toContain('CATEGORY-BAND: ALL')
+        ->toContain('CATEGORY-MODE: MIXED')
+        ->toContain('CATEGORY-STATION: PORTABLE')
         ->toContain('CLUB: Anytown ARC')
         ->toContain('END-OF-LOG:');
 });
@@ -88,13 +92,13 @@ test('formats a CW qso line correctly', function () {
         'mode_id' => $mode->id,
         'qso_time' => '2025-06-28 14:23:00',
         'callsign' => 'K1ABC',
-        'received_exchange' => '1A ME',
+        'received_exchange' => 'K1ABC 1A ME',
         'is_duplicate' => false,
     ]);
 
     $output = app(CabrilloExporter::class)->export($config);
 
-    expect($output)->toContain('QSO: 14000 CW 2025-06-28 1423 W1AW 2A CT K1ABC 1A ME');
+    expect($output)->toContain('QSO: 14000 CW 2025-06-28 1423 W1AW          2A   CT    K1ABC         1A   ME');
 });
 
 test('maps phone mode to PH', function () {
@@ -108,12 +112,12 @@ test('maps phone mode to PH', function () {
         'mode_id' => $mode->id,
         'qso_time' => '2025-06-28 14:23:00',
         'callsign' => 'K1ABC',
-        'received_exchange' => '1A ME',
+        'received_exchange' => 'K1ABC 1A ME',
         'is_duplicate' => false,
     ]);
 
     $output = app(CabrilloExporter::class)->export($config);
-    expect($output)->toContain('QSO: 14000 PH 2025-06-28 1423');
+    expect($output)->toContain('QSO: 14000 PH 2025-06-28 1423 W1AW          2A   CT    K1ABC         1A   ME');
 });
 
 test('maps digital mode to DG', function () {
@@ -127,12 +131,12 @@ test('maps digital mode to DG', function () {
         'mode_id' => $mode->id,
         'qso_time' => '2025-06-28 14:30:00',
         'callsign' => 'N2XYZ',
-        'received_exchange' => '3A NNY',
+        'received_exchange' => 'N2XYZ 3A NNY',
         'is_duplicate' => false,
     ]);
 
     $output = app(CabrilloExporter::class)->export($config);
-    expect($output)->toContain('QSO: 14000 DG 2025-06-28 1430');
+    expect($output)->toContain('QSO: 14000 DG 2025-06-28 1430 W1AW          2A   CT    N2XYZ         3A   NNY');
 });
 
 test('excludes duplicate contacts from qso lines', function () {
