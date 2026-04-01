@@ -31,12 +31,10 @@
                         </div>
 
                         @if($claimed && $bonus?->notes)
-                            <div class="mt-2 ml-9 text-xs text-base-content/60 italic">
+                            <div class="mt-2 ml-9 text-xs text-base-content/60">
                                 {{ $bonus->notes }}
                             </div>
-                        @endif
-
-                        @if(! $claimed)
+                        @elseif(! $claimed)
                             <div class="mt-2 ml-9">
                                 <input
                                     type="text"
