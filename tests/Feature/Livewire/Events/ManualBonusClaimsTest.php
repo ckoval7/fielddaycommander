@@ -151,6 +151,32 @@ test('cannot claim a bonus type not in the manual list', function () {
         ->count())->toBe(0);
 });
 
+test('cannot unclaim a bonus type not in the manual list', function () {
+    $nonManualBonus = BonusType::where('code', 'emergency_power')
+        ->where('event_type_id', $this->eventType->id)
+        ->first();
+
+    // Create a bonus record directly (simulating an auto-synced bonus)
+    EventBonus::create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'bonus_type_id' => $nonManualBonus->id,
+        'claimed_by_user_id' => $this->user->id,
+        'quantity' => 1,
+        'calculated_points' => $nonManualBonus->base_points,
+        'is_verified' => true,
+        'verified_by_user_id' => $this->user->id,
+        'verified_at' => now(),
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->call('unclaim', $nonManualBonus->id);
+
+    expect(EventBonus::where('event_configuration_id', $this->eventConfig->id)
+        ->where('bonus_type_id', $nonManualBonus->id)
+        ->count())->toBe(1);
+});
+
 test('does not render when event has no configuration', function () {
     $eventNoCfg = Event::factory()->create(['event_type_id' => $this->eventType->id]);
 

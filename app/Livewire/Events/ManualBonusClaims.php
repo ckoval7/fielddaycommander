@@ -127,6 +127,12 @@ class ManualBonusClaims extends Component
             return;
         }
 
+        $bonusType = $this->eligibleBonusTypes->firstWhere('id', $bonusTypeId);
+
+        if (! $bonusType) {
+            return;
+        }
+
         EventBonus::where('event_configuration_id', $config->id)
             ->where('bonus_type_id', $bonusTypeId)
             ->delete();

@@ -18,6 +18,7 @@
                                     wire:click="{{ $claimed
                                         ? "unclaim({$bonusType->id})"
                                         : "claim({$bonusType->id}, \$wire.notes[{$bonusType->id}])" }}"
+                                    @if($claimed) wire:confirm="Remove this bonus claim?" @endif
                                 />
                                 <div class="min-w-0">
                                     <div class="text-sm font-medium">{{ $bonusType->name }}</div>
