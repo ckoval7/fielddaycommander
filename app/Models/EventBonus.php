@@ -41,4 +41,14 @@ class EventBonus extends Model
     {
         return $this->belongsTo(BonusType::class);
     }
+
+    public function claimedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'claimed_by_user_id');
+    }
+
+    public function verifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by_user_id');
+    }
 }
