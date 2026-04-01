@@ -100,6 +100,11 @@ class W1awBulletinForm extends Component
             ->get();
     }
 
+    public function getNextScheduleEntryProperty(): ?BulletinScheduleEntry
+    {
+        return $this->scheduleEntries->where('scheduled_at', '>', appNow())->first();
+    }
+
     public function addScheduleEntry(): void
     {
         if (! auth()->user()->can('manage-event-config')) {

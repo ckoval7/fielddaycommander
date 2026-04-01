@@ -152,7 +152,8 @@ class UserProfile extends Component
             && $this->notify_photos
             && $this->notify_station_status
             && $this->notify_qso_milestone
-            && $this->notify_equipment;
+            && $this->notify_equipment
+            && $this->notify_bulletin_reminder;
     }
 
     public function changePassword(): void

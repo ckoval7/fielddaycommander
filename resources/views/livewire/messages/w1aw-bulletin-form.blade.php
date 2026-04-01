@@ -39,18 +39,15 @@
 
         @if($this->scheduleEntries->isNotEmpty())
             {{-- Next transmission countdown --}}
-            @php
-                $nextEntry = $this->scheduleEntries->where('scheduled_at', '>', now())->first();
-            @endphp
-            @if($nextEntry)
+            @if($this->nextScheduleEntry)
                 <div
                     class="mb-4 p-3 bg-info/10 border border-info/20 rounded-lg"
-                    x-data="bulletinCountdown('{{ $nextEntry->scheduled_at->toIso8601String() }}')"
+                    x-data="bulletinCountdown('{{ $this->nextScheduleEntry->scheduled_at->toIso8601String() }}')"
                 >
                     <div class="flex items-center gap-2 text-info">
                         <x-icon name="o-clock" class="w-4 h-4" />
                         <span class="text-sm font-medium">
-                            Next: {{ $nextEntry->mode_label }} on {{ $nextEntry->frequencies }} MHz
+                            Next: {{ $this->nextScheduleEntry->mode_label }} on {{ $this->nextScheduleEntry->frequencies }} MHz
                             — <span x-text="countdown">loading...</span>
                         </span>
                     </div>
@@ -73,7 +70,7 @@
                     </thead>
                     <tbody>
                         @foreach($this->scheduleEntries as $entry)
-                            <tr class="{{ $entry->scheduled_at->isPast() ? 'opacity-40' : '' }} {{ $nextEntry && $entry->id === $nextEntry->id ? 'bg-info/5 font-medium' : '' }}">
+                            <tr class="{{ $entry->scheduled_at->isPast() ? 'opacity-40' : '' }} {{ $this->nextScheduleEntry && $entry->id === $this->nextScheduleEntry->id ? 'bg-info/5 font-medium' : '' }}">
                                 <td>{{ $entry->scheduled_at->format('D M j, H:i') }}</td>
                                 <td>{{ $entry->mode_label }}</td>
                                 <td class="font-mono text-sm">{{ $entry->frequencies }}</td>
