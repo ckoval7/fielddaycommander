@@ -10,6 +10,7 @@ enum NotificationCategory: string
     case StationStatus = 'station_status';
     case QsoMilestone = 'qso_milestone';
     case Equipment = 'equipment';
+    case BulletinReminder = 'bulletin_reminder';
 
     /**
      * Get the human-readable label for the category.
@@ -23,6 +24,7 @@ enum NotificationCategory: string
             self::StationStatus => 'Station Status',
             self::QsoMilestone => 'QSO Milestone',
             self::Equipment => 'Equipment',
+            self::BulletinReminder => 'Bulletin Reminder',
         };
     }
 
@@ -38,6 +40,7 @@ enum NotificationCategory: string
             self::StationStatus => 'o-signal',
             self::QsoMilestone => 'o-trophy',
             self::Equipment => 'o-wrench-screwdriver',
+            self::BulletinReminder => 'o-radio',
         };
     }
 
@@ -53,6 +56,7 @@ enum NotificationCategory: string
             self::StationStatus => 120,
             self::QsoMilestone => 0,
             self::Equipment => 300,
+            self::BulletinReminder => 0,
         };
     }
 
@@ -79,6 +83,7 @@ enum NotificationCategory: string
             self::StationStatus => 'Station becomes available or occupied',
             self::QsoMilestone => 'QSO count milestones (every 50)',
             self::Equipment => 'Equipment status changes',
+            self::BulletinReminder => 'W1AW bulletin transmission reminders',
         };
     }
 }
