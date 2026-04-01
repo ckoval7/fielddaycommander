@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Messages;
 
+use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\W1awBulletin;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -22,6 +23,17 @@ class W1awBulletinForm extends Component
     public ?string $receivedAt = null;
 
     public string $bulletinText = '';
+
+    // Schedule management properties
+    public string $scheduleMode = '';
+
+    public string $scheduleFrequencies = '';
+
+    public string $scheduleSource = 'W1AW';
+
+    public ?string $scheduleScheduledAt = null;
+
+    public ?int $editingEntryId = null;
 
     public function mount(Event $event): void
     {
@@ -79,6 +91,98 @@ class W1awBulletinForm extends Component
             $this->reset(['frequency', 'mode', 'receivedAt', 'bulletinText']);
             $this->dispatch('toast', title: 'Bulletin removed', type: 'success');
         }
+    }
+
+    public function getScheduleEntriesProperty(): \Illuminate\Database\Eloquent\Collection
+    {
+        return BulletinScheduleEntry::forEvent($this->event->id)
+            ->orderBy('scheduled_at')
+            ->get();
+    }
+
+    public function addScheduleEntry(): void
+    {
+        if (! auth()->user()->can('manage-event-config')) {
+            abort(403);
+        }
+
+        $this->validate([
+            'scheduleMode' => 'required|in:cw,digital,phone',
+            'scheduleFrequencies' => 'required|string|max:255',
+            'scheduleScheduledAt' => 'required|date',
+            'scheduleSource' => 'required|in:W1AW,K6KPH',
+        ]);
+
+        BulletinScheduleEntry::create([
+            'event_id' => $this->event->id,
+            'scheduled_at' => $this->scheduleScheduledAt,
+            'mode' => $this->scheduleMode,
+            'frequencies' => $this->scheduleFrequencies,
+            'source' => $this->scheduleSource,
+            'created_by' => auth()->id(),
+        ]);
+
+        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
+        $this->scheduleSource = 'W1AW';
+        $this->dispatch('toast', title: 'Transmission added', type: 'success');
+    }
+
+    public function editScheduleEntry(int $entryId): void
+    {
+        if (! auth()->user()->can('manage-event-config')) {
+            abort(403);
+        }
+
+        $entry = BulletinScheduleEntry::findOrFail($entryId);
+        $this->editingEntryId = $entry->id;
+        $this->scheduleMode = $entry->mode;
+        $this->scheduleFrequencies = $entry->frequencies;
+        $this->scheduleSource = $entry->source;
+        $this->scheduleScheduledAt = $entry->scheduled_at->format('Y-m-d\TH:i');
+    }
+
+    public function updateScheduleEntry(): void
+    {
+        if (! auth()->user()->can('manage-event-config')) {
+            abort(403);
+        }
+
+        $this->validate([
+            'scheduleMode' => 'required|in:cw,digital,phone',
+            'scheduleFrequencies' => 'required|string|max:255',
+            'scheduleScheduledAt' => 'required|date',
+            'scheduleSource' => 'required|in:W1AW,K6KPH',
+        ]);
+
+        $entry = BulletinScheduleEntry::findOrFail($this->editingEntryId);
+        $entry->update([
+            'scheduled_at' => $this->scheduleScheduledAt,
+            'mode' => $this->scheduleMode,
+            'frequencies' => $this->scheduleFrequencies,
+            'source' => $this->scheduleSource,
+        ]);
+
+        $this->editingEntryId = null;
+        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
+        $this->scheduleSource = 'W1AW';
+        $this->dispatch('toast', title: 'Transmission updated', type: 'success');
+    }
+
+    public function cancelEditScheduleEntry(): void
+    {
+        $this->editingEntryId = null;
+        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
+        $this->scheduleSource = 'W1AW';
+    }
+
+    public function deleteScheduleEntry(int $entryId): void
+    {
+        if (! auth()->user()->can('manage-event-config')) {
+            abort(403);
+        }
+
+        BulletinScheduleEntry::findOrFail($entryId)->delete();
+        $this->dispatch('toast', title: 'Transmission removed', type: 'success');
     }
 
     public function render(): \Illuminate\Contracts\View\View
