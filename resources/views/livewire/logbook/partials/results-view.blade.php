@@ -32,6 +32,7 @@
                     ['key' => 'callsign', 'label' => 'Callsign', 'class' => 'w-32'],
                     ['key' => 'band', 'label' => 'Band', 'class' => 'w-24'],
                     ['key' => 'mode', 'label' => 'Mode', 'class' => 'w-24'],
+                    ['key' => 'class', 'label' => 'Class', 'class' => 'w-20'],
                     ['key' => 'section', 'label' => 'Section', 'class' => 'w-24'],
                     ['key' => 'points', 'label' => 'Points', 'class' => 'w-20'],
                     ['key' => 'station', 'label' => 'Station', 'class' => 'w-32'],
@@ -62,6 +63,19 @@
 
                 @scope('cell_mode', $contact)
                     <span class="text-sm">{{ $contact->mode?->name ?? 'N/A' }}</span>
+                @endscope
+
+                @scope('cell_class', $contact)
+                    @php
+                        $class = null;
+                        if ($contact->received_exchange) {
+                            $tokens = preg_split('/\s+/', trim($contact->received_exchange));
+                            if (count($tokens) >= 2) {
+                                $class = $tokens[1];
+                            }
+                        }
+                    @endphp
+                    <span class="text-sm font-mono">{{ $class ?? 'N/A' }}</span>
                 @endscope
 
                 @scope('cell_section', $contact)
@@ -115,7 +129,16 @@
                             </div>
                         </div>
 
-                        {{-- Band, Mode, Section --}}
+                        {{-- Band, Mode, Class, Section --}}
+                        @php
+                            $mobileClass = null;
+                            if ($contact->received_exchange) {
+                                $mobileTokens = preg_split('/\s+/', trim($contact->received_exchange));
+                                if (count($mobileTokens) >= 2) {
+                                    $mobileClass = $mobileTokens[1];
+                                }
+                            }
+                        @endphp
                         <div class="flex items-center gap-2 text-sm flex-wrap">
                             <div class="flex items-center gap-1">
                                 <x-icon name="o-signal" class="w-4 h-4 text-base-content/50" />
@@ -127,6 +150,7 @@
                                 <span>{{ $contact->mode?->name ?? 'N/A' }}</span>
                             </div>
                             <span class="text-base-content/30">•</span>
+                            <span class="font-mono">{{ $mobileClass ?? 'N/A' }}</span>
                             <x-badge :value="$contact->section?->code ?? 'N/A'" class="badge-sm badge-primary" />
                         </div>
 
