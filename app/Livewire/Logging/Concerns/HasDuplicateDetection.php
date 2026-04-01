@@ -27,8 +27,9 @@ trait HasDuplicateDetection
         int $eventConfigId,
         string $bandName = '',
         string $modeName = '',
+        bool $isGotaContact = false,
     ): void {
-        $result = app(DuplicateCheckService::class)->check($callsign, $bandId, $modeId, $eventConfigId);
+        $result = app(DuplicateCheckService::class)->check($callsign, $bandId, $modeId, $eventConfigId, $isGotaContact);
 
         $this->isDuplicate = $result['is_duplicate'];
         $this->dupeWarning = $result['is_duplicate']

@@ -29,6 +29,7 @@ class Contact extends Model
         'gota_operator_last_name',
         'gota_operator_callsign',
         'gota_coach_user_id',
+        'gota_operator_user_id',
         'is_natural_power',
         'is_satellite',
         'satellite_name',
@@ -84,6 +85,16 @@ class Contact extends Model
     public function duplicateOf(): BelongsTo
     {
         return $this->belongsTo(Contact::class, 'duplicate_of_contact_id');
+    }
+
+    public function gotaOperator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'gota_operator_user_id');
+    }
+
+    public function gotaCoach(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'gota_coach_user_id');
     }
 
     // Scopes

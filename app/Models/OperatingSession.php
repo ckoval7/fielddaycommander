@@ -24,6 +24,7 @@ class OperatingSession extends Model
         'power_watts',
         'qso_count',
         'is_transcription',
+        'is_supervised',
     ];
 
     protected function casts(): array
@@ -33,6 +34,7 @@ class OperatingSession extends Model
             'end_time' => 'datetime',
             'power_watts' => 'integer',
             'is_transcription' => 'boolean',
+            'is_supervised' => 'boolean',
         ];
     }
 
@@ -79,6 +81,11 @@ class OperatingSession extends Model
     public function scopeTranscription(Builder $query): Builder
     {
         return $query->where('is_transcription', true);
+    }
+
+    public function scopeSupervised(Builder $query): Builder
+    {
+        return $query->where('is_supervised', true);
     }
 
     protected function isActive(): Attribute

@@ -88,6 +88,7 @@ class TranscribeInterface extends Component
             $this->station->event_configuration_id,
             $band?->name ?? '',
             $mode?->name ?? '',
+            $this->station->is_gota,
         );
     }
 
@@ -140,6 +141,7 @@ class TranscribeInterface extends Component
             $this->selectedBandId,
             $this->selectedModeId,
             $this->station->event_configuration_id,
+            $this->station->is_gota,
         );
 
         $session = $this->getOrCreateTranscriptionSession();
@@ -187,6 +189,7 @@ class TranscribeInterface extends Component
                 $this->station->event_configuration_id,
                 $band?->name ?? '',
                 $mode?->name ?? '',
+                $this->station->is_gota,
             );
         }
 

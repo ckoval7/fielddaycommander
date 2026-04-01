@@ -35,6 +35,7 @@ class ContactSyncController extends Controller
             $request->band_id,
             $request->mode_id,
             $session->station->event_configuration_id,
+            $session->station->is_gota,
         );
 
         $mode = $session->mode;

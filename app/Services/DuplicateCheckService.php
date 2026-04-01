@@ -14,13 +14,14 @@ class DuplicateCheckService
      *
      * @return array{is_duplicate: bool, duplicate_of_contact_id: ?int}
      */
-    public function check(string $callsign, int $bandId, int $modeId, int $eventConfigurationId): array
+    public function check(string $callsign, int $bandId, int $modeId, int $eventConfigurationId, bool $isGotaContact = false): array
     {
         $existing = Contact::query()
             ->where('event_configuration_id', $eventConfigurationId)
             ->where('callsign', strtoupper(trim($callsign)))
             ->where('band_id', $bandId)
             ->where('mode_id', $modeId)
+            ->where('is_gota_contact', $isGotaContact)
             ->where('is_duplicate', false)
             ->first();
 

@@ -73,6 +73,7 @@ class Scoring extends Component
 
         return (int) $this->config()->contacts()
             ->where('is_duplicate', false)
+            ->where('is_gota_contact', false)
             ->sum('points');
     }
 
@@ -86,6 +87,38 @@ class Scoring extends Component
     public function qsoScore(): int
     {
         return $this->config()?->calculateQsoScore() ?? 0;
+    }
+
+    #[Computed]
+    public function gotaBonus(): int
+    {
+        return $this->config()?->calculateGotaBonus() ?? 0;
+    }
+
+    #[Computed]
+    public function gotaCoachBonus(): int
+    {
+        return $this->config()?->calculateGotaCoachBonus() ?? 0;
+    }
+
+    #[Computed]
+    public function gotaTotalBonus(): int
+    {
+        return $this->gotaBonus + $this->gotaCoachBonus;
+    }
+
+    #[Computed]
+    public function gotaSupervisedCount(): int
+    {
+        if (! $this->config()) {
+            return 0;
+        }
+
+        return $this->config()->contacts()
+            ->where('is_duplicate', false)
+            ->where('is_gota_contact', true)
+            ->whereHas('operatingSession', fn ($q) => $q->where('is_supervised', true))
+            ->count();
     }
 
     #[Computed]
@@ -123,6 +156,7 @@ class Scoring extends Component
 
         return $this->config()->contacts()
             ->where('is_duplicate', false)
+            ->where('is_gota_contact', false)
             ->count();
     }
 
@@ -171,6 +205,7 @@ class Scoring extends Component
 
         return $this->config()->contacts()
             ->where('is_duplicate', false)
+            ->where('is_gota_contact', false)
             ->where('points', 0)
             ->count();
     }
@@ -189,6 +224,7 @@ class Scoring extends Component
         // Single aggregation query grouped by mode_id and band_id
         $counts = Contact::where('event_configuration_id', $this->config()->id)
             ->notDuplicate()
+            ->where('is_gota_contact', false)
             ->selectRaw('band_id, mode_id, count(*) as contact_count, sum(points) as total_points')
             ->groupBy('band_id', 'mode_id')
             ->get()
@@ -530,6 +566,10 @@ class Scoring extends Component
             $this->duplicateRate,
             $this->gotaContactCount,
             $this->zeroPointContactCount,
+            $this->gotaBonus,
+            $this->gotaCoachBonus,
+            $this->gotaTotalBonus,
+            $this->gotaSupervisedCount,
             $this->bandModeGrid,
             $this->bandColumnTotals,
             $this->bonusList,

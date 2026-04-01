@@ -69,6 +69,17 @@ class ContactFactory extends Factory
         ]);
     }
 
+    public function gota(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_gota_contact' => true,
+            'points' => 0,
+            'gota_operator_first_name' => fake()->firstName(),
+            'gota_operator_last_name' => fake()->lastName(),
+            'gota_operator_callsign' => strtoupper(fake()->bothify('??#???')),
+        ]);
+    }
+
     public function withSection(string $code = 'CT'): static
     {
         return $this->state(function (array $attributes) use ($code) {

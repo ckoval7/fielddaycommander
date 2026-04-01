@@ -63,6 +63,7 @@ class LoggingInterface extends Component
             $this->operatingSession->station->event_configuration_id,
             $this->operatingSession->band->name ?? '',
             $this->operatingSession->mode->name ?? '',
+            $this->operatingSession->station->is_gota,
         );
     }
 
@@ -102,6 +103,7 @@ class LoggingInterface extends Component
                 $this->operatingSession->station->event_configuration_id,
                 $this->operatingSession->band->name,
                 $this->operatingSession->mode->name,
+                $this->operatingSession->station->is_gota,
             );
         }
 

@@ -206,9 +206,46 @@ class EventConfiguration extends Model
 
         $basePoints = $this->contacts()
             ->where('is_duplicate', false)
+            ->where('is_gota_contact', false)
             ->sum('points');
 
         return $basePoints * $this->calculatePowerMultiplier();
+    }
+
+    /**
+     * Calculate GOTA bonus: 5 points per non-duplicate GOTA contact.
+     * Not multiplied by power multiplier.
+     */
+    public function calculateGotaBonus(): int
+    {
+        if (! $this->has_gota_station) {
+            return 0;
+        }
+
+        $gotaContactCount = $this->contacts()
+            ->where('is_duplicate', false)
+            ->where('is_gota_contact', true)
+            ->count();
+
+        return $gotaContactCount * 5;
+    }
+
+    /**
+     * Calculate GOTA coach bonus: 100 points if 10+ supervised contacts.
+     */
+    public function calculateGotaCoachBonus(): int
+    {
+        if (! $this->has_gota_station) {
+            return 0;
+        }
+
+        $supervisedGotaCount = $this->contacts()
+            ->where('is_duplicate', false)
+            ->where('is_gota_contact', true)
+            ->whereHas('operatingSession', fn ($q) => $q->where('is_supervised', true))
+            ->count();
+
+        return $supervisedGotaCount >= 10 ? 100 : 0;
     }
 
     /**
@@ -230,7 +267,10 @@ class EventConfiguration extends Model
      */
     public function calculateFinalScore(): int
     {
-        return $this->calculateQsoScore() + $this->calculateBonusScore();
+        return $this->calculateQsoScore()
+            + $this->calculateBonusScore()
+            + $this->calculateGotaBonus()
+            + $this->calculateGotaCoachBonus();
     }
 
     /**

@@ -348,6 +348,41 @@
                     </div>
                 @endforeach
             </div>
+
+            {{-- GOTA Bonus Section --}}
+            @if ($this->event->eventConfiguration->has_gota_station)
+                <div class="mt-4" style="border-top: 1px solid var(--score-divider); padding-top: 0.75rem;">
+                    <div class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--score-text-muted);">
+                        GOTA Station Bonus
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-start justify-between py-1.5" style="border-bottom: 1px solid var(--score-divider);">
+                            <div>
+                                <div class="text-sm font-medium" style="color: var(--score-text);">GOTA QSO Bonus</div>
+                                <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
+                                    {{ $this->gotaContactCount }} contacts × 5 pts
+                                </div>
+                            </div>
+                            <span class="text-xs tabular-nums font-semibold" style="color: var(--score-headline);">
+                                +{{ $this->gotaBonus }}
+                            </span>
+                        </div>
+                        <div class="flex items-start justify-between py-1.5" style="border-bottom: 1px solid var(--score-divider);">
+                            <div>
+                                <div class="text-sm font-medium" style="color: var(--score-text);">GOTA Coach Bonus</div>
+                                <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
+                                    {{ $this->gotaSupervisedCount }} supervised contacts (need 10+)
+                                </div>
+                            </div>
+                            @if ($this->gotaCoachBonus > 0)
+                                <span class="text-xs tabular-nums font-semibold" style="color: var(--score-headline);">+100</span>
+                            @else
+                                <span class="text-xs tabular-nums" style="color: var(--score-text-muted);">0</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
 
     </div>

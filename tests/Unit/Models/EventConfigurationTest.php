@@ -286,3 +286,55 @@ test('calculateFinalScore returns QSO score plus bonus score', function () {
     // 4 QSO points + 100 bonus = 104
     expect($config->calculateFinalScore())->toBe(104);
 });
+
+test('calculateQsoScore excludes GOTA contacts', function () {
+    $config = EventConfiguration::factory()->create(['max_power_watts' => 100]);
+    \App\Models\Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'is_gota_contact' => false,
+        'points' => 2,
+        'is_duplicate' => false,
+    ]);
+    \App\Models\Contact::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'is_duplicate' => false,
+    ]);
+    expect($config->calculateQsoScore())->toBe(4); // 2 points x 2 multiplier
+});
+
+test('calculateGotaBonus returns 5 points per non-duplicate GOTA contact', function () {
+    $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
+    \App\Models\Contact::factory()->gota()->count(3)->create([
+        'event_configuration_id' => $config->id,
+        'is_duplicate' => false,
+    ]);
+    \App\Models\Contact::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'is_duplicate' => true,
+    ]);
+    expect($config->calculateGotaBonus())->toBe(15);
+});
+
+test('calculateGotaCoachBonus returns 100 when 10+ supervised contacts exist', function () {
+    $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
+    $station = Station::factory()->gota()->create(['event_configuration_id' => $config->id]);
+    $session = \App\Models\OperatingSession::factory()->supervised()->create(['station_id' => $station->id]);
+    \App\Models\Contact::factory()->gota()->count(10)->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $session->id,
+        'is_duplicate' => false,
+    ]);
+    expect($config->calculateGotaCoachBonus())->toBe(100);
+});
+
+test('calculateGotaCoachBonus returns 0 when fewer than 10 supervised contacts', function () {
+    $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
+    $station = Station::factory()->gota()->create(['event_configuration_id' => $config->id]);
+    $session = \App\Models\OperatingSession::factory()->supervised()->create(['station_id' => $station->id]);
+    \App\Models\Contact::factory()->gota()->count(9)->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $session->id,
+        'is_duplicate' => false,
+    ]);
+    expect($config->calculateGotaCoachBonus())->toBe(0);
+});

@@ -61,4 +61,11 @@ class OperatingSessionFactory extends Factory
             'end_time' => now()->subHour(),
         ]);
     }
+
+    public function supervised(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_supervised' => true,
+        ]);
+    }
 }

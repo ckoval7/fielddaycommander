@@ -156,6 +156,68 @@ test('ignores soft deleted contacts', function () {
     expect($result['is_duplicate'])->toBeFalse();
 });
 
+test('gota contact does not dupe against non-gota contact', function () {
+    Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $this->session->id,
+        'callsign' => 'W1AW',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_gota_contact' => false,
+        'is_duplicate' => false,
+    ]);
+
+    $result = $this->service->check('W1AW', $this->band->id, $this->mode->id, $this->eventConfig->id, isGotaContact: true);
+
+    expect($result['is_duplicate'])->toBeFalse();
+});
+
+test('non-gota contact does not dupe against gota contact', function () {
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $this->session->id,
+        'callsign' => 'W1AW',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_duplicate' => false,
+    ]);
+
+    $result = $this->service->check('W1AW', $this->band->id, $this->mode->id, $this->eventConfig->id, isGotaContact: false);
+
+    expect($result['is_duplicate'])->toBeFalse();
+});
+
+test('gota contact dupes against other gota contact on same band mode', function () {
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $this->session->id,
+        'callsign' => 'W1AW',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_duplicate' => false,
+    ]);
+
+    $result = $this->service->check('W1AW', $this->band->id, $this->mode->id, $this->eventConfig->id, isGotaContact: true);
+
+    expect($result['is_duplicate'])->toBeTrue();
+});
+
+test('non-gota contact dupes against other non-gota contact on same band mode', function () {
+    Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $this->session->id,
+        'callsign' => 'W1AW',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_gota_contact' => false,
+        'is_duplicate' => false,
+    ]);
+
+    $result = $this->service->check('W1AW', $this->band->id, $this->mode->id, $this->eventConfig->id, isGotaContact: false);
+
+    expect($result['is_duplicate'])->toBeTrue();
+});
+
 test('ignores contacts already marked as duplicates', function () {
     Contact::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
