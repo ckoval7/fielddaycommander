@@ -28,7 +28,6 @@ beforeEach(function () {
 });
 
 describe('schedule display', function () {
-    // These three tests verify blade template rendering and will pass after Task 5 adds the schedule UI.
     test('all users see the bulletin schedule', function () {
         BulletinScheduleEntry::factory()->create([
             'event_id' => $this->event->id,
@@ -41,19 +40,19 @@ describe('schedule display', function () {
             ->test(W1awBulletinForm::class, ['event' => $this->event])
             ->assertSee('7.0475, 14.0475')
             ->assertSee('CW');
-    })->skip('Blade template schedule UI added in Task 5');
+    });
 
     test('operator cannot see schedule management controls', function () {
         Livewire::actingAs($this->operator)
             ->test(W1awBulletinForm::class, ['event' => $this->event])
             ->assertDontSee('Add Transmission');
-    })->skip('Blade template schedule UI added in Task 5');
+    });
 
     test('manager can see schedule management controls', function () {
         Livewire::actingAs($this->manager)
             ->test(W1awBulletinForm::class, ['event' => $this->event])
             ->assertSee('Add Transmission');
-    })->skip('Blade template schedule UI added in Task 5');
+    });
 });
 
 describe('schedule management', function () {
