@@ -123,7 +123,7 @@
                                             <x-menu-item title="Lock Account" icon="o-lock-closed" wire:click="openLockModal({{ $user->id }})" />
                                         @endif
 
-                                        <x-menu-item title="Force Password Reset" icon="o-key" wire:click="forcePasswordReset({{ $user->id }})" />
+                                        <x-menu-item title="Force Password Change" icon="o-key" wire:click="forcePasswordReset({{ $user->id }})" />
                                         <x-menu-item title="Reset Password" icon="o-key" wire:click="openResetModal({{ $user->id }})" />
                                         <x-menu-separator />
                                         <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
@@ -176,7 +176,7 @@
                                     <x-menu-item title="Lock Account" icon="o-lock-closed" wire:click="openLockModal({{ $user->id }})" />
                                 @endif
 
-                                <x-menu-item title="Force Password Reset" icon="o-key" wire:click="forcePasswordReset({{ $user->id }})" />
+                                <x-menu-item title="Force Password Change" icon="o-key" wire:click="forcePasswordReset({{ $user->id }})" />
                                 <x-menu-item title="Reset Password" icon="o-key" wire:click="openResetModal({{ $user->id }})" />
                                 <x-menu-separator />
                                 <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
