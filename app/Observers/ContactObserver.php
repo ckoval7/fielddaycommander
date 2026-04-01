@@ -51,11 +51,12 @@ class ContactObserver
         $sectionName = $section?->code ?? 'Unknown';
         $band = $contact->band?->name ?? '';
         $mode = $contact->mode?->name ?? '';
+        $opCall = $contact->operatingSession?->operator?->call_sign ?? 'Unknown';
 
         $this->notificationService->notifyAll(
             category: NotificationCategory::NewSection,
             title: 'New Section Worked!',
-            message: "{$contact->callsign} worked {$sectionName} on {$band} {$mode}",
+            message: "{$opCall} worked {$sectionName} on {$band} {$mode}",
             url: '/logbook',
             groupKey: "new_section_event_{$eventConfigId}",
         );

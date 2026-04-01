@@ -37,9 +37,11 @@ test('new section contact fires new_section notification', function () {
         'callsign' => 'W1AW',
     ]);
 
-    Notification::assertSentTo($user, InAppNotification::class, function ($notification) {
+    Notification::assertSentTo($user, InAppNotification::class, function ($notification) use ($user) {
         return $notification->category === NotificationCategory::NewSection
-            && str_contains($notification->message, 'CT');
+            && str_contains($notification->message, 'CT')
+            && str_contains($notification->message, $user->call_sign)
+            && ! str_contains($notification->message, 'W1AW');
     });
 });
 
