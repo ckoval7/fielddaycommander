@@ -185,6 +185,7 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     overflow: hidden;
+    overflow-x: auto;
   }
 
   .step-list { margin: 1.5rem 0; }
@@ -591,60 +592,379 @@
       <table class="req-table">
         <thead><tr><th>Role</th><th>What They Can Do</th></tr></thead>
         <tbody>
-          <tr><td>System Administrator</td><td>Full access to all settings, events, users, roles, stations, equipment, scheduling, safety, reports, and audit logs. Cannot log contacts by default (to keep the admin role distinct from operators).</td></tr>
-          <tr><td>Event Manager</td><td>Manage events, stations, equipment, schedules, bonuses, guestbook, safety checklists, photos, and view reports. The person running your Field Day operation.</td></tr>
-          <tr><td>Station Captain</td><td>Log and edit contacts, view and manage stations, manage equipment. Runs a single operating position and keeps their operators on task.</td></tr>
-          <tr><td>Operator</td><td>Log contacts, view stations, manage their own personal equipment catalog. The default role for new registrations.</td></tr>
+          <tr><td>System Administrator</td><td>24 permissions. Full access to all settings, events, users, roles, stations, equipment, scheduling, safety, reports, security logs, and audit logs. Cannot log or edit contacts by default (to keep the admin role distinct from operators). Marked as <em>System Protected</em>, so this role always exists and can't be deleted.</td></tr>
+          <tr><td>Event Manager</td><td>22 permissions. Manage events, stations, equipment, schedules, bonuses, guestbook, photos, security logs, and reports. Has every permission except user administration, system settings, and signing the guestbook. The person running your Field Day operation.</td></tr>
+          <tr><td>Station Captain</td><td>5 permissions. Log and edit contacts, view and manage stations, manage equipment inventory. Runs a single operating position and keeps their operators on task.</td></tr>
+          <tr><td>Operator</td><td>3 permissions. Log contacts, view stations, manage their own personal equipment catalog. The default role for new registrations. Intentionally minimal so new hams can get on the air without seeing admin clutter.</td></tr>
         </tbody>
       </table>
     </div>
 
-    <p>Permissions are fully customizable. You can modify what each role can do, or adjust individual user permissions to fit how your club actually operates.</p>
+    <h3>Permissions Reference</h3>
+    <p>The permission system is organized into seven categories with 26 individual permissions. Each permission controls access to a specific area of FD Commander. The table below shows what each default role gets out of the box.</p>
+
+    <div class="req-table-wrapper">
+      <table class="req-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Permission</th>
+            <th>Description</th>
+            <th>Oper.</th>
+            <th>Stn. Capt.</th>
+            <th>Evt. Mgr.</th>
+            <th>Sys. Admin</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Contact Logging (2) -->
+          <tr>
+            <td rowspan="2"><strong>Contact Logging</strong></td>
+            <td>log-contacts</td>
+            <td>Create new QSO entries</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">-</td>
+          </tr>
+          <tr>
+            <td>edit-contacts</td>
+            <td>Edit or delete existing QSOs</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">-</td>
+          </tr>
+          <!-- Event Management (8) -->
+          <tr>
+            <td rowspan="8"><strong>Event Management</strong></td>
+            <td>view-events</td>
+            <td>View events list and details</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>create-events</td>
+            <td>Create new Field Day events</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>edit-events</td>
+            <td>Edit existing Field Day events</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>delete-events</td>
+            <td>Delete Field Day events</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>activate-events</td>
+            <td>Activate or deactivate events</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-events</td>
+            <td>Create and edit Field Day events</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-event-config</td>
+            <td>Configure event settings</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>verify-bonuses</td>
+            <td>Approve or reject bonus point claims</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <!-- Station & Equipment (7) -->
+          <tr>
+            <td rowspan="7"><strong>Station &amp; Equipment</strong></td>
+            <td>view-stations</td>
+            <td>View stations list and details</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-stations</td>
+            <td>Add and edit operating stations</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-equipment</td>
+            <td>Manage equipment inventory</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-own-equipment</td>
+            <td>Create, edit, and delete personal equipment in catalog</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>view-all-equipment</td>
+            <td>View everyone's equipment catalog</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-event-equipment</td>
+            <td>Manage equipment assignments for events</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>edit-any-equipment</td>
+            <td>Edit equipment details for any user</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <!-- User Administration (3) -->
+          <tr>
+            <td rowspan="3"><strong>User Administration</strong></td>
+            <td>manage-users</td>
+            <td>Create, edit, and delete user accounts</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-roles</td>
+            <td>Create roles and assign permissions</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-settings</td>
+            <td>Configure system settings and preferences</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <!-- Content Management (4) -->
+          <tr>
+            <td rowspan="4"><strong>Content Management</strong></td>
+            <td>sign-guestbook</td>
+            <td>Sign the guestbook for events</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-guestbook</td>
+            <td>Manage guestbook entries (verify, edit, delete, export)</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-shifts</td>
+            <td>Create, edit, and manage shift schedules</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td>manage-images</td>
+            <td>Upload and delete event photos</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <!-- Reporting (1) -->
+          <tr>
+            <td><strong>Reporting</strong></td>
+            <td>view-reports</td>
+            <td>Access detailed score reports</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <!-- Security (1) -->
+          <tr>
+            <td><strong>Security</strong></td>
+            <td>view-security-logs</td>
+            <td>View security logs and activity records</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Notice that System Administrator intentionally lacks contact logging permissions by default. This keeps the admin role separate from operating. If your admin also wants to get on the air, just add log-contacts to their role or assign them a second role.</p>
+
+    <h3>Creating Custom Roles</h3>
+    <p>The four default roles cover most clubs, but you can create your own. Go to <strong>Settings &gt; Role Management</strong> and click <strong>+ Create New Role</strong>. Give the role a name, then check the permissions you want it to have. Permissions are grouped by category with a <em>Select All</em> toggle at the top of each group, so you can quickly grant an entire category at once or pick individual permissions one by one. Click <strong>Save Permissions</strong> when you're done.</p>
+
+    <p>A few ideas for custom roles: a <em>Logger</em> role with log-contacts and edit-contacts for experienced operators who need to fix mistakes, a <em>Safety Officer</em> with just manage-guestbook and view-reports for the person running the public information table, or a <em>Tech Lead</em> with manage-stations and manage-equipment but no event management access.</p>
+
+    <h3>Assigning Roles to Users</h3>
+    <p>Go to <strong>Administration &gt; Users</strong> to see everyone registered in the system. The table shows each user's callsign, name, email, current role (shown as a colored badge), license class, and account status. Click <strong>Edit</strong> on any user to open their profile, where you can change their role from the <em>Role</em> dropdown. You can also update their callsign, email, name, and license class from this same form.</p>
+
+    <p>New registrations default to the Operator role. You can change the default registration role in <strong>Settings &gt; System Preferences</strong>.</p>
+
+    <h3>User Management Actions</h3>
+    <p>The Users page also gives administrators a few account management tools. From the Actions column on any user row, you can <strong>Lock Account</strong> to temporarily disable a user's access, <strong>Force Password Reset</strong> to require them to change their password on next login, <strong>Reset Password</strong> to generate a new one, or <strong>Delete</strong> to remove the account entirely. These actions are only available to users with the manage-users permission.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  STATIONS                                  -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="stations">Stations</h2>
-    <p>Stations represent individual operating positions. Go to <strong>Event Management &gt; Stations</strong> to create them. Each station gets a name, band/mode assignments, and equipment. During the event, operators select which station they're logging for, and FD Commander tracks contacts per station.</p>
+    <p>Stations represent individual operating positions. Each one is a radio, an antenna, and someone in a chair. Go to <strong>Event Management &gt; Stations</strong> to see your station list for the current event. The page shows a summary bar with total stations, how many are active right now, and total equipment items assigned.</p>
 
-    <p>If you're running the same station setup from a previous event, use the <strong>Clone from Event</strong> button to copy your station definitions forward.</p>
+    <h3>Creating a Station</h3>
+    <p>Click <strong>+ Add Station</strong> to open the station form. The Configuration tab has four sections:</p>
+
+    <p><strong>Basic Information:</strong> Give the station a name (must be unique within the event) and confirm which event it belongs to.</p>
+
+    <p><strong>Station Type:</strong> Check any special designations that apply. GOTA (Get On The Air) marks it as the special station for new operators; only one GOTA station is allowed per event. VHF/UHF Only restricts the station to those bands. Satellite marks it for satellite communications.</p>
+
+    <p><strong>Primary Radio:</strong> Select the main transceiver from equipment that's been committed to the event. The dropdown pulls from all user equipment catalogs, showing the radio name, wattage, and owner. Once selected, FD Commander displays the radio's power capability so you can verify it fits your power class.</p>
+
+    <p><strong>Power Configuration:</strong> Set the max power output in watts. FD Commander validates this against the event's power limit and shows a confirmation when it's within range. Describe the power source below (e.g., "Solar + Battery" for the 5x QRP multiplier, "Generator" for backup power, or "Commercial" if you're on grid power). This feeds directly into the scoring engine's power multiplier calculation.</p>
+
+    <h3>Assigning Equipment</h3>
+    <p>Switch to the <strong>Equipment</strong> tab to assign additional gear beyond the primary radio. The left panel shows what's already assigned to the station. The right panel lists available equipment, filterable by type, owner, and whether it's committed to this event or from the general catalog. Drag items from right to left to assign them, or use keyboard navigation with Space/Arrows/Escape.</p>
+
+    <h3>Cloning from a Previous Event</h3>
+    <p>If you're running the same station setup as last time, click <strong>Clone from Event</strong> on the main Stations page. This copies all station definitions (names, types, power configurations) from a previous event into the current one, so you don't have to rebuild everything from scratch.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  SCHEDULING                                -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="scheduling">Volunteer Scheduling</h2>
-    <p>The scheduling system lets you define shift blocks for each station and role, then lets operators self-sign-up for open slots. Go to <strong>Event Management &gt; Schedule</strong> to see the operator view, or <strong>Administration &gt; Manage Schedule</strong> to create and assign shifts.</p>
+    <p>The scheduling system lets you define shift blocks and roles, then lets volunteers self-sign-up for open slots. There are two views: <strong>Event Management &gt; Schedule</strong> is the operator-facing board where people browse and claim shifts, and <strong>Administration &gt; Manage Schedule</strong> is where the event manager builds the schedule.</p>
 
-    <p>Fill-status indicators show which shifts have gaps so you can spot coverage problems before they happen. Each operator sees a "My Shifts" view so they know when they're up. You can schedule any role, not just operators: safety officers, public information table, station captains.</p>
+    <h3>Setting Up Roles</h3>
+    <p>Before creating shifts, define the roles you need. Go to <strong>Administration &gt; Manage Schedule</strong> and click the <strong>Roles</strong> tab. FD Commander ships with sample roles that cover common Field Day positions: Safety Officer, Public Information Table, Public Greeter, GOTA Coach, Message Handler, Event Manager, and Station Captain. Each role has a description, an optional bonus point value, and two key settings:</p>
+
+    <p><strong>Eligibility only</strong> vs. <strong>Auto-awarded on confirmation</strong> controls whether the associated bonus points are granted automatically when the shift is confirmed, or just tracked for eligibility. <strong>Requires Confirmation</strong> means the event manager must approve the sign-up before it counts.</p>
+
+    <p>Click <strong>+ Add Custom Role</strong> to create roles specific to your club, like "Antenna Setup Crew" or "Food Coordinator." You can delete or edit the sample roles if they don't fit.</p>
+
+    <h3>Creating Shifts</h3>
+    <p>Switch to the <strong>Shifts</strong> tab and click <strong>+ Add Shift</strong>. Each shift needs a role (from the dropdown), a start time and end time (entered in UTC, displayed to volunteers in local time), a capacity (how many people can fill the slot), and optionally notes. The <strong>Open for Sign-ups</strong> toggle controls whether operators can self-assign or whether the manager must assign them manually.</p>
+
+    <p>For events with lots of shifts, use the <strong>Bulk Create</strong> button to generate multiple shift blocks at once instead of creating them one at a time.</p>
+
+    <h3>The Operator View</h3>
+    <p>Operators go to <strong>Event Management &gt; Schedule</strong> to see available shifts filtered by role. They can sign up for open slots and check the <strong>My Shifts</strong> button in the top right to see only their own assignments. The <strong>Confirmations</strong> tab on the admin side shows pending sign-ups that need approval.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  EQUIPMENT                                 -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="equipment">Equipment Tracking</h2>
-    <p>Every operator has a personal equipment catalog under <strong>Equipment &gt; My Catalog</strong> where they add their own gear (radios, antennas, power supplies, etc.) with photos, make/model, serial numbers, and tags. Equipment can then be committed to an upcoming event and assigned to specific stations.</p>
+    <p>FD Commander gives every operator a personal equipment catalog and ties it into the event workflow so you always know what gear is where.</p>
 
-    <p>The <strong>Equipment &gt; All User Catalogs</strong> view shows everything across all users. <strong>Equipment &gt; Event Commitments</strong> shows what's been committed for the current event. Equipment moves through four statuses: committed, delivered, returned, and damaged.</p>
+    <h3>Adding Equipment</h3>
+    <p>Go to <strong>Equipment &gt; My Catalog</strong> and click <strong>+ Add Equipment</strong>. The form captures everything you'd want to know about a piece of gear:</p>
+
+    <p><strong>Equipment Details:</strong> Make and model (required), type (Radio, Antenna, Power Supply, etc.), serial number, and a free-text description.</p>
+
+    <p><strong>Technical Specifications:</strong> Power output in watts (used when the radio is selected as a station's primary transceiver) and estimated value in USD.</p>
+
+    <p><strong>Operational Information:</strong> Emergency contact phone, comma-separated tags for easy filtering (e.g., "HF, Portable, Contest"), and maintenance notes.</p>
+
+    <p><strong>Supported Bands:</strong> Check every band the equipment can operate on: 160m through 23cm, plus Satellite. This is used when assigning radios to stations.</p>
+
+    <p><strong>Equipment Photo:</strong> Upload a PNG or JPEG (up to 5 MB) so people can visually identify the gear on-site.</p>
+
+    <p>There's also an <strong>+ Add Club Equipment</strong> button for gear that belongs to the club rather than any individual member. Club equipment shows up in everyone's catalog.</p>
+
+    <h3>Committing to an Event</h3>
+    <p>Once equipment is in your catalog, you commit it to an upcoming event so the event manager knows what's available. Committed gear appears under <strong>Equipment &gt; Event Commitments</strong>. From there, it can be assigned to specific stations on the station's Equipment tab.</p>
+
+    <h3>Status Tracking</h3>
+    <p>Equipment moves through four statuses during an event: <strong>Committed</strong> (pledged for the event), <strong>Delivered</strong> (physically on-site), <strong>Returned</strong> (back with the owner after the event), and <strong>Damaged</strong> (broken or needs repair). The <strong>Equipment &gt; All User Catalogs</strong> view shows everything across all users, filterable by type and status, so the event manager can see at a glance what's arrived and what's still on its way.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  SAFETY                                    -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="safety">Safety Checklists</h2>
-    <p>FD Commander includes the 15-item ARRL Field Day safety checklist, which is worth 100 bonus points when completed. Go to <strong>Event Management &gt; Site Safety</strong> to work through the checklist during setup, or <strong>Administration &gt; Manage Safety Checklist</strong> to customize the items.</p>
+    <p>Completing the safety checklist earns the Safety Officer bonus (100 points). Go to <strong>Event Management &gt; Site Safety</strong> to work through it. The page shows a progress counter ("0 of 15 complete") and lists every item with a checkbox.</p>
 
-    <p>Each item tracks who completed it and when. The scoring page automatically reflects whether the safety bonus has been earned.</p>
+    <h3>The Default Checklist</h3>
+    <p>FD Commander ships with the 15-item ARRL Field Day safety checklist. Items cover the essentials you'd expect at a field site: safety officer on-site for the duration, fuel properly stored, fire extinguisher located, first aid kit on hand, CPR/AED-trained person present, NWS weather monitoring, tent stakes marked, antenna structures secured, tripping hazards cleared, site arranged to reduce hazards, stations and equipment grounded, access to police/fire/rescue, designated safety point of contact, and minimizing risk to the public. Each item is marked Required.</p>
+
+    <h3>Working Through the Checklist</h3>
+    <p>During setup, walk the site and check off each item as you verify it. FD Commander records who completed each item and when. The progress counter updates in real time, and once all required items are checked, the scoring page automatically awards the 100-point Safety Officer bonus.</p>
+
+    <h3>Customizing the Checklist</h3>
+    <p>Go to <strong>Administration &gt; Manage Safety Checklist</strong> to add, edit, or remove items. If your club has additional safety requirements beyond the ARRL defaults (like generator exhaust ventilation or lightning grounding), add them here.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  CONTACT LOGGING                           -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="logging">Contact Logging</h2>
-    <p>Operators log contacts under <strong>Logging &gt; View Log</strong> after selecting their station. The logging interface is a single-field entry flow: type the callsign, the exchange fields populate, and hit Enter. Dupe checks run in real time against every contact logged by every station on every band. Section and class validation catches typos before they're saved.</p>
+    <p>Operators log contacts under <strong>Logging &gt; View Log</strong>. The first step is selecting which station you're operating. This ties every contact to the correct transmitter, band, and power level for scoring purposes.</p>
+
+    <h3>Making Contacts</h3>
+    <p>The logging interface is a single-field entry flow: type the callsign, the exchange fields populate, and hit Enter. Dupe checks run in real time against every contact logged by every station on every band, so you'll see an immediate warning if the callsign has already been worked on that band. Section and class validation catches typos before they're saved.</p>
 
     <p>All contacts go into a shared database via WebSocket (Laravel Reverb), so every connected browser sees updates as they happen. The scoring dashboard, logbook, and band activity all reflect new contacts instantly.</p>
+
+    <h3>Browsing the Logbook</h3>
+    <p>The Logbook Browser at the top of the View Log page shows running totals: total QSOs, total points, unique sections worked, QSOs by band, and QSOs by mode. Below that, a full set of filters lets you slice the log by band, mode, station, operator, ARRL section, callsign, time range, duplicate status (all, exclude dupes, dupes only), and whether the contact was transcribed from paper.</p>
+
+    <h3>Post-Event Editing</h3>
+    <p>After the event, operators with the right permissions can edit contacts to fix exchange errors or delete accidental entries. There's a configurable grace period (default: 30 days) during which late contacts can still be added. This is useful for transcribing paper logs (see <a href="#paper-transcription">Paper Log Transcription</a>).</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  SCORING                                   -->
@@ -655,7 +975,7 @@
 
     <div class="callout info">
       <div class="callout-title">Scoring Formula</div>
-      (QSO Base Points &times; Power Multiplier) + Bonus Points = Final Score
+      (QSO Base Points x Power Multiplier) + Bonus Points = Final Score
     </div>
 
     <p><strong>QSO points</strong> are weighted by mode: CW and digital contacts are worth 2 points each, phone contacts are worth 1. <strong>Power multiplier</strong> is determined automatically from your configured power sources (5x for &le;5W natural power, 2x for &le;5W or 6-100W with commercial/generator, 1x for over 100W). <strong>Bonus points</strong> come from 12 ARRL categories, each worth 100 points (except NTS Messages Handled at 10 points each).</p>
@@ -688,32 +1008,91 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="guestbook">Visitor Guestbook</h2>
-    <p>Field Day is a public event. The guestbook (<strong>Event Management &gt; Guestbook</strong>) lets visitors sign in with just a name and optionally a callsign. No account or password needed. Hand someone a tablet and they sign themselves in.</p>
+    <p>Field Day is a public event, and the ARRL awards bonus points for public outreach. The guestbook (<strong>Event Management &gt; Guestbook</strong>) makes it easy to track who stopped by. It supports location-based check-in so you can verify that visitors are actually at your site, and it categorizes guests for cleaner reporting after the event.</p>
 
-    <p>Licensed hams and general public are tracked separately. Guest counts feed into the Public Information bonus point tracking. The event manager can view and manage all entries under <strong>Administration &gt; Manage Guestbook</strong>.</p>
+    <h3>How It Works</h3>
+    <p>The guestbook page is designed to be handed to a visitor on a tablet. It shows a friendly welcome message and a simple form. No account, no password, no friction. During an active event, visitors fill it out and tap submit. When the event isn't running, the page shows a "No Active Event" notice so nobody signs a stale book.</p>
+
+    <p>The form collects the following information:</p>
+    <ul>
+      <li><strong>Name</strong> (required). The only mandatory field.</li>
+      <li><strong>Callsign</strong> (optional). If provided, the visitor is counted as a licensed ham rather than general public.</li>
+      <li><strong>Email</strong> (optional). Useful for follow-up or club outreach after the event.</li>
+      <li><strong>Visitor Category.</strong> A dropdown with eight options: General Public, Ham Radio Club Member, Youth Visitor, ARES/RACES Member, Media Representative, Agency Representative, ARRL Official, and Elected Official. This helps with reporting and with the Agency/Official Visit bonus point claim.</li>
+      <li><strong>Comments</strong> (optional). A free-text area for anything the visitor wants to say.</li>
+    </ul>
+
+    <p>The form also includes a <strong>Presence Type</strong> selector where the visitor chooses "in-person" or "online." The system pre-selects this based on the location check (see below), but the visitor can change it. This distinction shows up in the guestbook management table so you can see at a glance who was physically present.</p>
+
+    <p>Licensed hams and general public are tracked separately. Guest counts feed into the Public Information bonus point tracking on the scoring page.</p>
+
+    <h3>Setting Up the Guestbook</h3>
+    <p>Guestbook settings live inside the event configuration. Go to <strong>Event Management &gt; Edit Event</strong> and scroll down to the <strong>Guestbook Settings</strong> section. There are four things to configure:</p>
+
+    <p><strong>1. Enable the guestbook.</strong> Toggle the "Enable Guestbook" switch to on. The description reads "Allow visitors to sign in when physically at your event location." When this is off, the guestbook page is hidden entirely.</p>
+
+    <p><strong>2. Set your event coordinates.</strong> Enter the latitude and longitude of your Field Day site. These are labeled "Optional," but they are required if you want the location-based check-in feature to work. For example, a site in Denver might use Latitude <code>39.7392</code> and Longitude <code>-104.9903</code>. You can get these from Google Maps by right-clicking your site and copying the coordinates.</p>
+
+    <p><strong>3. Set the detection radius.</strong> A slider lets you choose how far from your coordinates a visitor can be and still count as "in-person." The range is 100 to 2,000 meters, and the default is 500 meters. The current value displays in both metric and imperial (for example, "500m (1,640 feet)"). If your Field Day site covers a large park or fairground, increase the radius. For a smaller backyard setup, bring it down.</p>
+
+    <p><strong>4. Add local subnets (optional).</strong> If you have a known network at your site, you can enter one or more subnets in CIDR notation, one per line. For example, <code>192.168.1.0/24</code> or <code>10.0.0.0/8</code>. Visitors whose IP address falls within any of these subnets are automatically considered "in-person," even if GPS is unavailable. This is the fallback mechanism described below.</p>
+
+    <h3>Location-Based Check-In</h3>
+    <p>When a visitor opens the guestbook page, the system tries to determine whether they are physically at your event site. It does this in two steps:</p>
+
+    <p><strong>Step 1: Browser geolocation.</strong> The page asks the visitor's browser for their GPS coordinates using the standard Geolocation API. If the visitor allows the location prompt and their device has GPS (most phones do), the system compares the visitor's coordinates against the event coordinates you configured. It calculates the distance using the Haversine formula (great-circle distance on the Earth's surface). If the visitor is within the detection radius, they pass the check and are marked "in-person."</p>
+
+    <p><strong>Step 2: Subnet fallback.</strong> If GPS is not available (the visitor denied the prompt, the device has no GPS hardware, or the browser doesn't support geolocation), the system falls back to checking the visitor's IP address against the local subnets you configured. If their IP matches any of the subnets, they are marked "in-person." This is useful for tablets connected to your site's Wi-Fi router, where you know the IP range but the device may not have GPS.</p>
+
+    <p>If both checks fail, the visitor can still sign the guestbook. They are simply recorded as "online" rather than "in-person."</p>
+
+    <h3>HTTPS and the Location Feature</h3>
+    <p>There is an important caveat with browser geolocation: <strong>modern browsers require HTTPS to use the Geolocation API.</strong> On a plain HTTP connection, the browser will silently block the location request without even showing a permission prompt. The visitor's form will still work, but the GPS check will never fire, and everyone will fall back to subnet matching or be marked "online."</p>
+
+    <p>This matters because FD Commander is a LAN-hosted application and many Field Day setups run it over plain HTTP on a local IP address (like <code>http://192.168.1.50</code>). In that scenario, the GPS-based location check will not function at all. Visitors signing the guestbook on their own phones will never get a location prompt, and the system will fall back to subnet matching or mark them as "online."</p>
+
+    <p>If you want GPS-based location detection to work, serve FD Commander over HTTPS with a certificate the browser trusts. For a standard LAN deployment over plain HTTP, use the <strong>subnet fallback</strong> instead. Configure the local subnets field with your network's CIDR range, and any device on that network will be detected as "in-person" without needing GPS or HTTPS.</p>
+
+    <h3>Managing Entries</h3>
+    <p>The event manager can view and manage all entries under <strong>Administration &gt; Manage Guestbook</strong>. Each entry shows the visitor's name, callsign (if provided), category, presence type (in-person or online), and timestamp. This is useful for cleaning up duplicates, reviewing visitor categories for bonus claims, or exporting totals after the event wraps up.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  NTS MESSAGES                              -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="messages">NTS Messages</h2>
-    <p>FD Commander tracks NTS radiogram handling: originated, relayed, and received. Each message logged counts toward the NTS Messages Handled bonus (10 points each). There are also dedicated forms for capturing the Section Manager message and the W1AW Field Day bulletin, which are separate 100-point bonuses.</p>
+    <p>The National Traffic System (NTS) bonus awards 10 points for every radiogram your station handles during the event. FD Commander tracks three types: originated, relayed, and received. Each one you log adds to your score automatically.</p>
 
-    <p>ICS-213 General Message format is also supported and can be enabled under <strong>Settings &gt; System Preferences &gt; Enable ICS-213 Message Format</strong>.</p>
+    <h3>Logging Messages</h3>
+    <p>Use the NTS message form to record each radiogram with its type and details. The running count shows on the scoring page under "NTS Messages Handled."</p>
+
+    <h3>Special Messages</h3>
+    <p>Two NTS-related bonuses are worth 100 points each and have their own dedicated forms: the <strong>Section Manager message</strong> (sending a message to your ARRL Section Manager) and the <strong>W1AW Field Day bulletin</strong> (copying the official W1AW bulletin during the event). These are tracked separately from the per-radiogram bonus.</p>
+
+    <h3>ICS-213 Support</h3>
+    <p>If your group practices ARES/RACES emergency communications, FD Commander also supports the ICS-213 General Message format. Enable it under <strong>Settings &gt; System Preferences &gt; Enable ICS-213 Message Format</strong> to get the standardized form alongside the traditional radiogram format.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  PHOTOS                                    -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="photos">Photos</h2>
-    <p>Operators can upload photos from any connected device during the event. The gallery (<strong>Event Management &gt; Gallery</strong>) stores everything on the local server with no cloud dependency. Photos are tagged with who uploaded them and when.</p>
+    <p>The photo gallery (<strong>Event Management &gt; Gallery</strong>) gives your group a shared place to collect pictures during the event. Photos are organized into event albums automatically. Each event gets its own album with a cover thumbnail, date, and photo count.</p>
+
+    <h3>Uploading</h3>
+    <p>Any logged-in user can click <strong>Upload Photo</strong> from the gallery page or snap a picture directly from a phone browser. Everything is stored on the local server with no cloud dependency, so uploads work even at sites with no internet. Each photo is tagged with who uploaded it and when.</p>
+
+    <h3>After the Event</h3>
+    <p>The gallery persists after the event ends, so you can browse and download photos later for your club newsletter, social media, or the ARRL Field Day submission page. Photos from previous events stay in their own albums and don't clutter the current one.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  CABRILLO                                  -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="cabrillo">Cabrillo Export</h2>
-    <p>When the event ends, go to <strong>Reports</strong> to generate a Cabrillo file ready to upload to the ARRL submission page. The export includes all your QSO records formatted to the Cabrillo specification for Field Day.</p>
+    <p>When the event wraps up, go to <strong>Reports</strong> to generate your Cabrillo file. FD Commander pulls together every QSO across all stations and formats the output to the Cabrillo specification for ARRL Field Day, including your callsign, class, section, and all contact records with correct timestamps, bands, and modes.</p>
+
+    <p>The exported file is ready to upload directly to the <a href="https://field-day.arrl.org/" target="_blank">ARRL Field Day submission page</a>. If you transcribed paper logs after the event, those contacts are included too. Nothing gets left out.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  OFFLINE RESILIENCE                        -->

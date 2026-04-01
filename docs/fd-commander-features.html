@@ -316,6 +316,50 @@
 
     <div class="feature-deep">
       <div class="feature-deep-text">
+        <span class="feature-tag emerald">Reliability</span>
+        <h2>Built for real field conditions</h2>
+        <p>Two layers of resilience. First: the entire platform runs on your LAN with no internet dependency at all, fully air-gapped. Second: if a browser temporarily loses its connection to the server, contacts queue locally and sync when it reconnects.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Air-gapped operation with no cloud and no external services</li>
+          <li><span class="check">&#10003;</span> If a device loses connection, operators keep logging without interruption</li>
+          <li><span class="check">&#10003;</span> Queued contacts shown with a clear status indicator</li>
+          <li><span class="check">&#10003;</span> Queued contacts sync automatically when the connection comes back</li>
+          <li><span class="check">&#10003;</span> Paper log transcription with correct timestamps if you need to go fully manual</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Connection Status
+        </div>
+        <div class="mock-body">
+          <div class="mock-offline-demo">
+            <div class="mock-status-bar offline">&#9888; Server connection lost - contacts queuing locally (3 queued)</div>
+            <div class="mock-queue-item">
+              <span><span class="callsign">W3LPL</span> &middot; 40m CW &middot; MDC</span>
+              <span style="color:var(--accent-orange);font-size:0.75rem;">Queued</span>
+            </div>
+            <div class="mock-queue-item">
+              <span><span class="callsign">K1TTT</span> &middot; 40m CW &middot; WMA</span>
+              <span style="color:var(--accent-orange);font-size:0.75rem;">Queued</span>
+            </div>
+            <div class="mock-queue-item">
+              <span><span class="callsign">N1MM</span> &middot; 20m SSB &middot; CT</span>
+              <span style="color:var(--accent-orange);font-size:0.75rem;">Queued</span>
+            </div>
+            <div style="margin-top:0.5rem;">
+              <div class="mock-status-bar syncing">&#8635; Server reconnected - syncing 3 contacts...</div>
+            </div>
+            <div class="mock-status-bar synced">&#10003; All contacts synced successfully</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep reverse">
+      <div class="feature-deep-text">
         <span class="feature-tag green">Scoring</span>
         <h2>Know your score without doing math</h2>
         <p>Power multipliers, bonus points, and band breakdowns are all calculated as contacts come in. Put the dashboard on a big screen so the whole club can see where things stand.</p>
@@ -376,7 +420,7 @@
       </div>
     </div>
 
-    <div class="feature-deep reverse">
+    <div class="feature-deep">
       <div class="feature-deep-text">
         <span class="feature-tag orange">Scheduling</span>
         <h2>No more clipboard sign-up sheets</h2>
@@ -432,7 +476,7 @@
       </div>
     </div>
 
-    <div class="feature-deep">
+    <div class="feature-deep reverse">
       <div class="feature-deep-text">
         <span class="feature-tag emerald">Equipment</span>
         <h2>Know where every piece of gear is</h2>
@@ -466,7 +510,7 @@
       </div>
     </div>
 
-    <div class="feature-deep reverse">
+    <div class="feature-deep">
       <div class="feature-deep-text">
         <span class="feature-tag amber">Guestbook</span>
         <h2>A guestbook for everyone who stops by</h2>
@@ -515,7 +559,7 @@
       </div>
     </div>
 
-    <div class="feature-deep">
+    <div class="feature-deep reverse">
       <div class="feature-deep-text">
         <span class="feature-tag green">Photos</span>
         <h2>Capture the event in photos</h2>
@@ -556,50 +600,6 @@
             <span style="color:var(--text-muted);font-size:0.75rem;">Jen (KC2JKL)</span>
           </div>
           <div style="text-align:center;padding:0.75rem 0 0;border-top:1px solid var(--border);margin-top:0.6rem;color:var(--text-secondary);font-size:0.8rem;">12 photos &nbsp;&#183;&nbsp; 5 contributors &nbsp;&#183;&nbsp; <span style="color:var(--accent-sky);">+ Upload</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="feature-deep reverse">
-      <div class="feature-deep-text">
-        <span class="feature-tag emerald">Reliability</span>
-        <h2>Built for real field conditions</h2>
-        <p>Two layers of resilience. First: the entire platform runs on your LAN with no internet dependency at all, fully air-gapped. Second: if a browser temporarily loses its connection to the server, contacts queue locally and sync when it reconnects.</p>
-        <ul class="feature-bullets">
-          <li><span class="check">&#10003;</span> Air-gapped operation with no cloud and no external services</li>
-          <li><span class="check">&#10003;</span> If a device loses connection, operators keep logging without interruption</li>
-          <li><span class="check">&#10003;</span> Queued contacts shown with a clear status indicator</li>
-          <li><span class="check">&#10003;</span> Queued contacts sync automatically when the connection comes back</li>
-          <li><span class="check">&#10003;</span> Paper log transcription with correct timestamps if you need to go fully manual</li>
-        </ul>
-      </div>
-      <div class="feature-visual">
-        <div class="mock-header">
-          <span class="mock-dot" style="background:var(--accent-rose)"></span>
-          <span class="mock-dot" style="background:var(--accent-orange)"></span>
-          <span class="mock-dot" style="background:var(--accent-green)"></span>
-          Connection Status
-        </div>
-        <div class="mock-body">
-          <div class="mock-offline-demo">
-            <div class="mock-status-bar offline">&#9888; Server connection lost - contacts queuing locally (3 queued)</div>
-            <div class="mock-queue-item">
-              <span><span class="callsign">W3LPL</span> &middot; 40m CW &middot; MDC</span>
-              <span style="color:var(--accent-orange);font-size:0.75rem;">Queued</span>
-            </div>
-            <div class="mock-queue-item">
-              <span><span class="callsign">K1TTT</span> &middot; 40m CW &middot; WMA</span>
-              <span style="color:var(--accent-orange);font-size:0.75rem;">Queued</span>
-            </div>
-            <div class="mock-queue-item">
-              <span><span class="callsign">N1MM</span> &middot; 20m SSB &middot; CT</span>
-              <span style="color:var(--accent-orange);font-size:0.75rem;">Queued</span>
-            </div>
-            <div style="margin-top:0.5rem;">
-              <div class="mock-status-bar syncing">&#8635; Server reconnected - syncing 3 contacts...</div>
-            </div>
-            <div class="mock-status-bar synced">&#10003; All contacts synced successfully</div>
-          </div>
         </div>
       </div>
     </div>
