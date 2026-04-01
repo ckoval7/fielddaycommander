@@ -49,10 +49,16 @@ class BulletinScheduleEntry extends Model
         return $query->where('event_id', $eventId);
     }
 
+    /**
+     * Entries due for a 15-minute reminder that haven't been sent yet.
+     *
+     * Looks up to 5 minutes in the past to catch entries if the scheduler
+     * was slightly delayed, and up to 15 minutes in the future.
+     */
     public function scopePendingNotification(Builder $query): Builder
     {
         return $query->where('notification_sent', false)
-            ->whereBetween('scheduled_at', [appNow(), appNow()->addMinutes(15)]);
+            ->whereBetween('scheduled_at', [appNow()->subMinutes(5), appNow()->addMinutes(15)]);
     }
 
     /**

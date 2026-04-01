@@ -56,26 +56,41 @@ describe('scopes', function () {
         expect($entries)->toHaveCount(1);
     });
 
-    test('pendingNotification scope finds entries within 15 minute window', function () {
+    test('pendingNotification scope finds entries within window', function () {
+        // Within future window (10 min out) — should match
         BulletinScheduleEntry::factory()->create([
             'event_id' => $this->event->id,
             'scheduled_at' => now()->addMinutes(10),
             'notification_sent' => false,
         ]);
+        // Too far in future (20 min out) — should not match
         BulletinScheduleEntry::factory()->create([
             'event_id' => $this->event->id,
             'scheduled_at' => now()->addMinutes(20),
             'notification_sent' => false,
         ]);
+        // Within window but already sent — should not match
         BulletinScheduleEntry::factory()->create([
             'event_id' => $this->event->id,
             'scheduled_at' => now()->addMinutes(5),
             'notification_sent' => true,
         ]);
+        // Recently past (3 min ago, within 5-min grace) — should match
+        BulletinScheduleEntry::factory()->create([
+            'event_id' => $this->event->id,
+            'scheduled_at' => now()->subMinutes(3),
+            'notification_sent' => false,
+        ]);
+        // Too far in past (10 min ago, outside grace) — should not match
+        BulletinScheduleEntry::factory()->create([
+            'event_id' => $this->event->id,
+            'scheduled_at' => now()->subMinutes(10),
+            'notification_sent' => false,
+        ]);
 
         $pending = BulletinScheduleEntry::pendingNotification()->get();
 
-        expect($pending)->toHaveCount(1);
+        expect($pending)->toHaveCount(2);
     });
 });
 
