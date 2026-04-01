@@ -178,6 +178,9 @@
                     </div>
                 </x-card>
 
+                <!-- Manual Bonus Claims -->
+                <livewire:events.manual-bonus-claims :event="$event" />
+
                 <!-- Participants Card -->
                 <x-card title="Participants" shadow>
                     @if(count($this->participants) > 0)
