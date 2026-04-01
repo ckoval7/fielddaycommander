@@ -156,27 +156,18 @@
                                                                 <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost" />
                                                             </x-slot:trigger>
 
-                                                            {{-- Mark as Delivered (only if committed) --}}
-                                                            @if($commitment->status === 'committed')
-                                                                <x-menu-item
-                                                                    title="Mark as Delivered"
-                                                                    icon="o-check-circle"
-                                                                    wire:click="markAsDelivered({{ $commitment->id }})"
-                                                                    spinner="markAsDelivered({{ $commitment->id }})"
-                                                                />
-                                                            @endif
+                                                            {{-- Change Status --}}
+                                                            @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
+                                                                @if($status !== $commitment->status)
+                                                                    <x-menu-item
+                                                                        title="{{ ucfirst(str_replace('_', ' ', $status)) }}"
+                                                                        wire:click="changeStatus({{ $commitment->id }}, '{{ $status }}')"
+                                                                        spinner="changeStatus({{ $commitment->id }}, '{{ $status }}')"
+                                                                    />
+                                                                @endif
+                                                            @endforeach
 
-                                                            {{-- Cancel (only if not in_use) --}}
-                                                            @if($commitment->status !== 'in_use' && !in_array($commitment->status, ['cancelled', 'returned', 'lost', 'damaged']))
-                                                                <x-menu-item
-                                                                    title="Cancel"
-                                                                    icon="o-x-mark"
-                                                                    class="text-warning"
-                                                                    wire:click="cancelCommitment({{ $commitment->id }})"
-                                                                    wire:confirm="Are you sure you want to cancel this commitment?"
-                                                                    spinner="cancelCommitment({{ $commitment->id }})"
-                                                                />
-                                                            @endif
+                                                            <x-menu-separator />
 
                                                             {{-- Update Notes --}}
                                                             <x-menu-item
@@ -470,28 +461,21 @@
             {{-- Action Buttons --}}
             <x-slot:actions>
                 <div class="flex flex-wrap gap-2 w-full justify-end">
-                    {{-- Mark as Delivered (only if committed) --}}
-                    @if($detailCommitment->status === 'committed')
-                        <x-button
-                            label="Mark as Delivered"
-                            icon="o-check-circle"
-                            class="btn-success btn-sm"
-                            wire:click="markAsDelivered({{ $detailCommitment->id }})"
-                            spinner="markAsDelivered({{ $detailCommitment->id }})"
-                        />
-                    @endif
-
-                    {{-- Cancel (only if not in_use and not terminal) --}}
-                    @if($detailCommitment->status !== 'in_use' && !in_array($detailCommitment->status, ['cancelled', 'returned', 'lost', 'damaged']))
-                        <x-button
-                            label="Cancel Commitment"
-                            icon="o-x-mark"
-                            class="btn-warning btn-sm"
-                            wire:click="cancelCommitment({{ $detailCommitment->id }})"
-                            wire:confirm="Are you sure you want to cancel this commitment?"
-                            spinner="cancelCommitment({{ $detailCommitment->id }})"
-                        />
-                    @endif
+                    {{-- Change Status dropdown --}}
+                    <x-dropdown>
+                        <x-slot:trigger>
+                            <x-button label="Change Status" icon="o-arrows-right-left" class="btn-primary btn-sm" />
+                        </x-slot:trigger>
+                        @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
+                            @if($status !== $detailCommitment->status)
+                                <x-menu-item
+                                    title="{{ ucfirst(str_replace('_', ' ', $status)) }}"
+                                    wire:click="changeStatus({{ $detailCommitment->id }}, '{{ $status }}')"
+                                    spinner="changeStatus({{ $detailCommitment->id }}, '{{ $status }}')"
+                                />
+                            @endif
+                        @endforeach
+                    </x-dropdown>
 
                     {{-- Update Notes (always available) --}}
                     <x-button

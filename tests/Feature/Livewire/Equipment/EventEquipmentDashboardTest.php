@@ -286,18 +286,17 @@ test('viewer cannot change equipment status', function () {
     ]);
 });
 
-test('invalid status transition fails', function () {
+test('any valid status change succeeds', function () {
     $this->actingAs($this->manager);
 
-    // Try to transition from committed directly to in_use (invalid)
+    // Transition from committed directly to in_use (now allowed)
     Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
         ->call('changeEquipmentStatus', $this->commitment1->id, 'in_use', null)
         ->assertDispatched('notify');
 
-    // Status should not change
     $this->assertDatabaseHas('equipment_event', [
         'id' => $this->commitment1->id,
-        'status' => 'committed',
+        'status' => 'in_use',
     ]);
 });
 
@@ -387,7 +386,7 @@ test('viewer cannot assign equipment to station', function () {
     expect($viewerCommitment->station_id)->toBeNull();
 });
 
-test('cannot assign committed equipment to station', function () {
+test('can assign committed equipment to station', function () {
     $this->actingAs($this->manager);
 
     // Create new equipment and commitment specifically for this test
@@ -413,9 +412,10 @@ test('cannot assign committed equipment to station', function () {
         ->call('assignToStation', $committedCommitment->id, $this->station1->id)
         ->assertDispatched('notify');
 
-    // Refresh and verify station was NOT assigned (transition from committed to in_use should fail)
+    // Refresh and verify station was assigned (any status can be assigned now)
     $committedCommitment->refresh();
-    expect($committedCommitment->station_id)->toBeNull();
+    expect($committedCommitment->station_id)->toBe($this->station1->id);
+    expect($committedCommitment->status)->toBe('in_use');
 });
 
 test('cannot assign to station from different event', function () {

@@ -263,9 +263,9 @@ class EventEquipment extends Component
     }
 
     /**
-     * Change status from 'committed' to 'delivered'.
+     * Change equipment commitment status to any valid status.
      */
-    public function markAsDelivered(int $commitmentId): void
+    public function changeStatus(int $commitmentId, string $newStatus): void
     {
         $commitment = EquipmentEvent::with('equipment')->findOrFail($commitmentId);
 
@@ -276,41 +276,13 @@ class EventEquipment extends Component
             return;
         }
 
-        if ($commitment->changeStatus('delivered', auth()->user())) {
-            $this->dispatch('notify', title: 'Success', description: 'Equipment marked as delivered.', type: 'success');
+        if ($commitment->changeStatus($newStatus, auth()->user())) {
+            $statusLabel = ucfirst(str_replace('_', ' ', $newStatus));
+            $this->dispatch('notify', title: 'Success', description: "Status changed to {$statusLabel}.", type: 'success');
             $this->showDetailsModal = false;
             unset($this->commitments);
         } else {
-            $this->dispatch('notify', title: 'Error', description: 'Unable to change status. Invalid transition.', type: 'error');
-        }
-    }
-
-    /**
-     * Change status to 'cancelled'.
-     */
-    public function cancelCommitment(int $commitmentId): void
-    {
-        $commitment = EquipmentEvent::with('equipment')->findOrFail($commitmentId);
-
-        // Authorize (user owns equipment and status not 'in_use')
-        if ($commitment->equipment->owner_user_id !== auth()->id()) {
-            $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
-
-            return;
-        }
-
-        if ($commitment->status === 'in_use') {
-            $this->dispatch('notify', title: 'Error', description: 'Cannot cancel equipment that is currently in use.', type: 'error');
-
-            return;
-        }
-
-        if ($commitment->changeStatus('cancelled', auth()->user())) {
-            $this->dispatch('notify', title: 'Success', description: 'Commitment cancelled.', type: 'success');
-            $this->showDetailsModal = false;
-            unset($this->commitments);
-        } else {
-            $this->dispatch('notify', title: 'Error', description: 'Unable to cancel commitment. Invalid transition.', type: 'error');
+            $this->dispatch('notify', title: 'Error', description: 'Invalid status.', type: 'error');
         }
     }
 

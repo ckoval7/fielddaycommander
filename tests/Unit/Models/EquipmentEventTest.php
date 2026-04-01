@@ -18,91 +18,28 @@ beforeEach(function () {
     ]);
 });
 
-// Status Transition Tests
-test('canTransitionTo validates committed can transition to delivered or cancelled', function () {
+// Status Validation Tests
+test('canTransitionTo allows any valid status from any state', function () {
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'returned',
+    ]);
+
+    foreach (EquipmentEvent::STATUSES as $status) {
+        expect($commitment->canTransitionTo($status))->toBeTrue();
+    }
+});
+
+test('canTransitionTo rejects invalid status values', function () {
     $commitment = EquipmentEvent::factory()->create([
         'equipment_id' => $this->equipment->id,
         'event_id' => $this->event->id,
         'status' => 'committed',
     ]);
 
-    expect($commitment->canTransitionTo('delivered'))->toBeTrue();
-    expect($commitment->canTransitionTo('cancelled'))->toBeTrue();
-    expect($commitment->canTransitionTo('in_use'))->toBeFalse();
-    expect($commitment->canTransitionTo('returned'))->toBeFalse();
-    expect($commitment->canTransitionTo('lost'))->toBeFalse();
-    expect($commitment->canTransitionTo('damaged'))->toBeFalse();
-});
-
-test('canTransitionTo validates delivered can transition to in_use, returned, cancelled, lost, or damaged', function () {
-    $commitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $this->equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'delivered',
-    ]);
-
-    expect($commitment->canTransitionTo('in_use'))->toBeTrue();
-    expect($commitment->canTransitionTo('returned'))->toBeTrue();
-    expect($commitment->canTransitionTo('cancelled'))->toBeTrue();
-    expect($commitment->canTransitionTo('lost'))->toBeTrue();
-    expect($commitment->canTransitionTo('damaged'))->toBeTrue();
-    expect($commitment->canTransitionTo('committed'))->toBeFalse();
-});
-
-test('canTransitionTo validates in_use can transition to returned, lost, or damaged', function () {
-    $commitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $this->equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'in_use',
-    ]);
-
-    expect($commitment->canTransitionTo('returned'))->toBeTrue();
-    expect($commitment->canTransitionTo('lost'))->toBeTrue();
-    expect($commitment->canTransitionTo('damaged'))->toBeTrue();
-    expect($commitment->canTransitionTo('committed'))->toBeFalse();
-    expect($commitment->canTransitionTo('delivered'))->toBeFalse();
-    expect($commitment->canTransitionTo('cancelled'))->toBeFalse();
-});
-
-test('canTransitionTo validates lost and damaged can transition to returned', function () {
-    $lostCommitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $this->equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'lost',
-    ]);
-
-    expect($lostCommitment->canTransitionTo('returned'))->toBeTrue();
-    expect($lostCommitment->canTransitionTo('committed'))->toBeFalse();
-
-    $damagedCommitment = EquipmentEvent::factory()->create([
-        'equipment_id' => Equipment::factory()->create(['owner_user_id' => $this->user->id])->id,
-        'event_id' => $this->event->id,
-        'status' => 'damaged',
-    ]);
-
-    expect($damagedCommitment->canTransitionTo('returned'))->toBeTrue();
-    expect($damagedCommitment->canTransitionTo('in_use'))->toBeFalse();
-});
-
-test('canTransitionTo validates returned and cancelled are terminal states', function () {
-    $returnedCommitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $this->equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'returned',
-    ]);
-
-    expect($returnedCommitment->canTransitionTo('committed'))->toBeFalse();
-    expect($returnedCommitment->canTransitionTo('delivered'))->toBeFalse();
-    expect($returnedCommitment->canTransitionTo('in_use'))->toBeFalse();
-
-    $cancelledCommitment = EquipmentEvent::factory()->create([
-        'equipment_id' => Equipment::factory()->create(['owner_user_id' => $this->user->id])->id,
-        'event_id' => $this->event->id,
-        'status' => 'cancelled',
-    ]);
-
-    expect($cancelledCommitment->canTransitionTo('committed'))->toBeFalse();
-    expect($cancelledCommitment->canTransitionTo('delivered'))->toBeFalse();
+    expect($commitment->canTransitionTo('invalid'))->toBeFalse();
+    expect($commitment->canTransitionTo(''))->toBeFalse();
 });
 
 // changeStatus Method Tests
@@ -122,7 +59,7 @@ test('changeStatus updates status and tracks who changed it', function () {
     expect($commitment->status_changed_at)->not->toBeNull();
 });
 
-test('changeStatus rejects invalid transitions', function () {
+test('changeStatus allows any valid status from any state', function () {
     $commitment = EquipmentEvent::factory()->create([
         'equipment_id' => $this->equipment->id,
         'event_id' => $this->event->id,
@@ -131,9 +68,23 @@ test('changeStatus rejects invalid transitions', function () {
 
     $result = $commitment->changeStatus('committed', $this->user);
 
+    expect($result)->toBeTrue();
+    $commitment->refresh();
+    expect($commitment->status)->toBe('committed');
+});
+
+test('changeStatus rejects invalid status values', function () {
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $this->equipment->id,
+        'event_id' => $this->event->id,
+        'status' => 'returned',
+    ]);
+
+    $result = $commitment->changeStatus('bogus', $this->user);
+
     expect($result)->toBeFalse();
     $commitment->refresh();
-    expect($commitment->status)->toBe('returned'); // Status unchanged
+    expect($commitment->status)->toBe('returned');
 });
 
 test('changeStatus stores manager notes when provided', function () {

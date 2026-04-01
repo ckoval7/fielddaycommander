@@ -763,28 +763,11 @@
                     </div>
 
                     @php
-                        $availableStatuses = match($commitment->status) {
-                            'committed' => [
-                                ['id' => 'delivered', 'name' => 'Delivered'],
-                                ['id' => 'cancelled', 'name' => 'Cancelled'],
-                            ],
-                            'delivered' => [
-                                ['id' => 'in_use', 'name' => 'In Use'],
-                                ['id' => 'returned', 'name' => 'Returned'],
-                                ['id' => 'cancelled', 'name' => 'Cancelled'],
-                                ['id' => 'lost', 'name' => 'Lost'],
-                                ['id' => 'damaged', 'name' => 'Damaged'],
-                            ],
-                            'in_use' => [
-                                ['id' => 'returned', 'name' => 'Returned'],
-                                ['id' => 'lost', 'name' => 'Lost'],
-                                ['id' => 'damaged', 'name' => 'Damaged'],
-                            ],
-                            'lost', 'damaged' => [
-                                ['id' => 'returned', 'name' => 'Returned'],
-                            ],
-                            default => []
-                        };
+                        $availableStatuses = collect(\App\Models\EquipmentEvent::STATUSES)
+                            ->reject(fn ($s) => $s === $commitment->status)
+                            ->map(fn ($s) => ['id' => $s, 'name' => ucfirst(str_replace('_', ' ', $s))])
+                            ->values()
+                            ->toArray();
                     @endphp
 
                     @if(count($availableStatuses) > 0)

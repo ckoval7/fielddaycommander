@@ -33,16 +33,16 @@ class EquipmentEvent extends Model
     protected $table = 'equipment_event';
 
     /**
-     * Valid status transitions for equipment.
+     * All valid equipment statuses.
      */
-    protected const VALID_TRANSITIONS = [
-        'committed' => ['delivered', 'cancelled'],
-        'delivered' => ['in_use', 'returned', 'cancelled', 'lost', 'damaged'],
-        'in_use' => ['returned', 'lost', 'damaged'],
-        'returned' => [],
-        'cancelled' => [],
-        'lost' => ['returned'],
-        'damaged' => ['returned'],
+    public const STATUSES = [
+        'committed',
+        'delivered',
+        'in_use',
+        'returned',
+        'cancelled',
+        'lost',
+        'damaged',
     ];
 
     protected $fillable = [
@@ -176,7 +176,7 @@ class EquipmentEvent extends Model
      */
     public function changeStatus(string $newStatus, User $user, ?string $notes = null): bool
     {
-        if (! $this->canTransitionTo($newStatus)) {
+        if (! in_array($newStatus, self::STATUSES, true)) {
             return false;
         }
 
@@ -208,10 +208,6 @@ class EquipmentEvent extends Model
      */
     public function assignToStation(int $stationId, User $user): bool
     {
-        if (! $this->canTransitionTo('in_use')) {
-            return false;
-        }
-
         $this->station_id = $stationId;
         $this->assigned_by_user_id = $user->id;
         $this->status = 'in_use';
@@ -222,16 +218,14 @@ class EquipmentEvent extends Model
     }
 
     /**
-     * Validate if the equipment can transition to a new status.
+     * Check if a status value is valid.
      *
-     * @param  string  $newStatus  The status to validate the transition to
-     * @return bool True if the transition is allowed, false otherwise
+     * @param  string  $newStatus  The status to validate
+     * @return bool True if the status is valid
      */
     public function canTransitionTo(string $newStatus): bool
     {
-        $validTransitions = self::VALID_TRANSITIONS[$this->status] ?? [];
-
-        return in_array($newStatus, $validTransitions, true);
+        return in_array($newStatus, self::STATUSES, true);
     }
 
     /**

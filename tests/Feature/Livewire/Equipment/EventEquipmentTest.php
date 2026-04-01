@@ -161,7 +161,7 @@ test('allows commitment to non-overlapping events', function () {
     ]);
 });
 
-test('user can mark commitment as delivered', function () {
+test('user can change commitment status to any valid status', function () {
     $commitment = EquipmentEvent::factory()->create([
         'equipment_id' => $this->equipment->id,
         'event_id' => $this->event->id,
@@ -169,7 +169,7 @@ test('user can mark commitment as delivered', function () {
     ]);
 
     Livewire::test(EventEquipment::class)
-        ->call('markAsDelivered', $commitment->id)
+        ->call('changeStatus', $commitment->id, 'delivered')
         ->assertDispatched('notify');
 
     $this->assertDatabaseHas('equipment_event', [
@@ -178,64 +178,24 @@ test('user can mark commitment as delivered', function () {
     ]);
 });
 
-test('cannot mark as delivered if not owner', function () {
-    $otherEquipment = Equipment::factory()->create([
-        'owner_user_id' => User::factory()->create()->id,
-    ]);
-
-    $commitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $otherEquipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'committed',
-    ]);
-
-    Livewire::test(EventEquipment::class)
-        ->call('markAsDelivered', $commitment->id)
-        ->assertDispatched('notify');
-
-    // Status should not change
-    $this->assertDatabaseHas('equipment_event', [
-        'id' => $commitment->id,
-        'status' => 'committed',
-    ]);
-});
-
-test('cannot mark as delivered if invalid transition', function () {
+test('user can change status from returned to committed', function () {
     $commitment = EquipmentEvent::factory()->create([
         'equipment_id' => $this->equipment->id,
         'event_id' => $this->event->id,
-        'status' => 'returned', // Cannot transition from returned to delivered
-    ]);
-
-    Livewire::test(EventEquipment::class)
-        ->call('markAsDelivered', $commitment->id)
-        ->assertDispatched('notify');
-
-    // Status should not change
-    $this->assertDatabaseHas('equipment_event', [
-        'id' => $commitment->id,
         'status' => 'returned',
     ]);
-});
-
-test('user can cancel commitment', function () {
-    $commitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $this->equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'committed',
-    ]);
 
     Livewire::test(EventEquipment::class)
-        ->call('cancelCommitment', $commitment->id)
+        ->call('changeStatus', $commitment->id, 'committed')
         ->assertDispatched('notify');
 
     $this->assertDatabaseHas('equipment_event', [
         'id' => $commitment->id,
-        'status' => 'cancelled',
+        'status' => 'committed',
     ]);
 });
 
-test('cannot cancel if not owner', function () {
+test('cannot change status if not owner', function () {
     $otherEquipment = Equipment::factory()->create([
         'owner_user_id' => User::factory()->create()->id,
     ]);
@@ -247,31 +207,13 @@ test('cannot cancel if not owner', function () {
     ]);
 
     Livewire::test(EventEquipment::class)
-        ->call('cancelCommitment', $commitment->id)
+        ->call('changeStatus', $commitment->id, 'delivered')
         ->assertDispatched('notify');
 
     // Status should not change
     $this->assertDatabaseHas('equipment_event', [
         'id' => $commitment->id,
         'status' => 'committed',
-    ]);
-});
-
-test('cannot cancel equipment in use', function () {
-    $commitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $this->equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'in_use',
-    ]);
-
-    Livewire::test(EventEquipment::class)
-        ->call('cancelCommitment', $commitment->id)
-        ->assertDispatched('notify');
-
-    // Status should not change
-    $this->assertDatabaseHas('equipment_event', [
-        'id' => $commitment->id,
-        'status' => 'in_use',
     ]);
 });
 
@@ -444,7 +386,7 @@ test('openDetailsModal rejects commitment not owned by user', function () {
         ->assertDispatched('notify');
 });
 
-test('markAsDelivered from details modal closes modal and updates status', function () {
+test('changeStatus from details modal closes modal and updates status', function () {
     $commitment = EquipmentEvent::factory()->create([
         'equipment_id' => $this->equipment->id,
         'event_id' => $this->event->id,
@@ -453,30 +395,12 @@ test('markAsDelivered from details modal closes modal and updates status', funct
 
     Livewire::test(EventEquipment::class)
         ->call('openDetailsModal', $commitment->id)
-        ->call('markAsDelivered', $commitment->id)
+        ->call('changeStatus', $commitment->id, 'delivered')
         ->assertSet('showDetailsModal', false);
 
     $this->assertDatabaseHas('equipment_event', [
         'id' => $commitment->id,
         'status' => 'delivered',
-    ]);
-});
-
-test('cancelCommitment from details modal closes modal', function () {
-    $commitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $this->equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'committed',
-    ]);
-
-    Livewire::test(EventEquipment::class)
-        ->call('openDetailsModal', $commitment->id)
-        ->call('cancelCommitment', $commitment->id)
-        ->assertSet('showDetailsModal', false);
-
-    $this->assertDatabaseHas('equipment_event', [
-        'id' => $commitment->id,
-        'status' => 'cancelled',
     ]);
 });
 
@@ -497,7 +421,7 @@ test('details modal shows equipment and commitment info', function () {
         ->assertSee('Status changed to delivered');
 });
 
-test('details modal actions respect status transitions', function () {
+test('details modal shows change status dropdown', function () {
     $commitment = EquipmentEvent::factory()->create([
         'equipment_id' => $this->equipment->id,
         'event_id' => $this->event->id,
@@ -506,20 +430,7 @@ test('details modal actions respect status transitions', function () {
 
     Livewire::test(EventEquipment::class)
         ->call('openDetailsModal', $commitment->id)
-        ->assertSee('Mark as Delivered')
-        ->assertSee('Cancel Commitment');
-});
-
-test('details modal hides mark delivered for non-committed status', function () {
-    $commitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $this->equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'delivered',
-    ]);
-
-    Livewire::test(EventEquipment::class)
-        ->call('openDetailsModal', $commitment->id)
-        ->assertDontSee('Mark as Delivered');
+        ->assertSee('Change Status');
 });
 
 test('first tab is active on page load showing event details and commitments', function () {
