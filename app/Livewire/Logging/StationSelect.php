@@ -60,8 +60,8 @@ class StationSelect extends Component
 
         $status = $service->getGracePeriodStatus($contextEvent);
 
-        // Allow logging during active and grace periods only
-        if (in_array($status, ['active', 'grace'])) {
+        // Allow logging only during active events — use transcription for post-event entry
+        if ($status === 'active') {
             return $contextEvent->load('eventConfiguration.stations.operatingSessions.operator');
         }
 

@@ -199,6 +199,25 @@ test('cannot sync contacts to another users session', function () {
         ->assertForbidden();
 });
 
+test('cannot sync contacts after event has ended', function () {
+    $this->event->update(['end_time' => now()->subHours(1)]);
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $this->session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'received_exchange' => 'W1AW 3A CT',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+        ])
+        ->assertUnprocessable()
+        ->assertJson(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.']);
+});
+
 test('cannot sync contacts to an ended session', function () {
     $this->session->update(['end_time' => now()]);
 

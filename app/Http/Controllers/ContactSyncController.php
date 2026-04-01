@@ -9,6 +9,7 @@ use App\Models\OperatingSession;
 use App\Services\DuplicateCheckService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Carbon;
 
 class ContactSyncController extends Controller
 {
@@ -28,6 +29,11 @@ class ContactSyncController extends Controller
 
         if ($session->end_time !== null) {
             return response()->json(['message' => 'This operating session has ended.'], 422);
+        }
+
+        $event = $session->station->eventConfiguration?->event;
+        if (! $event || Carbon::parse($event->end_time)->lt(appNow())) {
+            return response()->json(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.'], 422);
         }
 
         $isGotaContact = $session->station->is_gota;

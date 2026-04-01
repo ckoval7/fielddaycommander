@@ -6,6 +6,7 @@ use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
 use App\Models\OperatingSession;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -32,6 +33,14 @@ class LoggingInterface extends Component
         }
 
         if ($operatingSession->end_time !== null) {
+            $this->redirect(route('logging.station-select'), navigate: true);
+
+            return;
+        }
+
+        $event = $operatingSession->station->eventConfiguration?->event;
+        if (! $event || Carbon::parse($event->end_time)->lt(appNow())) {
+            $operatingSession->update(['end_time' => $event?->end_time ?? appNow()]);
             $this->redirect(route('logging.station-select'), navigate: true);
 
             return;
