@@ -204,6 +204,18 @@
                         </div>
                         <x-toggle wire:model="notify_equipment" />
                     </div>
+
+                    {{-- Bulletin Reminders --}}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <x-icon name="o-radio" class="w-5 h-5 text-primary shrink-0" />
+                            <div class="min-w-0">
+                                <div class="font-medium">Bulletin Reminders</div>
+                                <div class="text-sm text-base-content/60">W1AW bulletin transmission reminders</div>
+                            </div>
+                        </div>
+                        <x-toggle wire:model="notify_bulletin_reminder" />
+                    </div>
                 </div>
 
                 <div class="card-actions justify-end mt-4">

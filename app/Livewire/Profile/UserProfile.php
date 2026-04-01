@@ -45,6 +45,8 @@ class UserProfile extends Component
 
     public bool $notify_equipment = true;
 
+    public bool $notify_bulletin_reminder = true;
+
     // Security tab properties
     public string $current_password = '';
 
@@ -88,6 +90,7 @@ class UserProfile extends Component
         $this->notify_station_status = $categories['station_status'] ?? true;
         $this->notify_qso_milestone = $categories['qso_milestone'] ?? true;
         $this->notify_equipment = $categories['equipment'] ?? true;
+        $this->notify_bulletin_reminder = $categories['bulletin_reminder'] ?? true;
     }
 
     public function saveProfile(): void
@@ -121,6 +124,7 @@ class UserProfile extends Component
                         'station_status' => $this->notify_station_status,
                         'qso_milestone' => $this->notify_qso_milestone,
                         'equipment' => $this->notify_equipment,
+                        'bulletin_reminder' => $this->notify_bulletin_reminder,
                     ],
                 ],
             ]
@@ -137,6 +141,7 @@ class UserProfile extends Component
         $this->notify_station_status = $enabled;
         $this->notify_qso_milestone = $enabled;
         $this->notify_equipment = $enabled;
+        $this->notify_bulletin_reminder = $enabled;
     }
 
     #[Computed]
