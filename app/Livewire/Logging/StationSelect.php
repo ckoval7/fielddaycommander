@@ -26,6 +26,8 @@ class StationSelect extends Component
 
     public ?int $powerWatts = 100;
 
+    public bool $isSupervisedSession = false;
+
     public bool $showTakeoverModal = false;
 
     public ?int $takeoverStationId = null;
@@ -188,6 +190,8 @@ class StationSelect extends Component
             'powerWatts' => 'required|integer|min:1|max:1500',
         ]);
 
+        $station = Station::find($this->selectedStationId);
+
         $session = OperatingSession::create([
             'station_id' => $this->selectedStationId,
             'operator_user_id' => auth()->id(),
@@ -196,6 +200,7 @@ class StationSelect extends Component
             'power_watts' => $this->powerWatts,
             'start_time' => appNow(),
             'qso_count' => 0,
+            'is_supervised' => $station?->is_gota ? $this->isSupervisedSession : false,
         ]);
 
         $this->redirect(route('logging.session', $session), navigate: true);
@@ -226,6 +231,7 @@ class StationSelect extends Component
         $this->selectedBandId = null;
         $this->selectedModeId = null;
         $this->powerWatts = 100;
+        $this->isSupervisedSession = false;
     }
 
     public function cancelTakeover(): void

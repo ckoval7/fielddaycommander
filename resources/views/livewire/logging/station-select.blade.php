@@ -141,6 +141,18 @@
                 max="1500"
                 suffix="W"
             />
+
+            @php $selectedStation = $this->stations?->firstWhere('id', $selectedStationId); @endphp
+            @if($selectedStation?->is_gota)
+                <div class="divider text-xs text-base-content/50">GOTA Station Options</div>
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" wire:model="isSupervisedSession" class="toggle toggle-sm toggle-primary" />
+                    <div>
+                        <span class="label-text font-medium">Supervised Session (GOTA Coach present)</span>
+                        <span class="label-text-alt block text-xs text-base-content/60">Earn 100-point coach bonus if 10+ contacts are supervised</span>
+                    </div>
+                </label>
+            @endif
         </div>
 
         <x-slot:actions>

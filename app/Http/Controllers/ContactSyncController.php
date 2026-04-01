@@ -30,12 +30,14 @@ class ContactSyncController extends Controller
             return response()->json(['message' => 'This operating session has ended.'], 422);
         }
 
+        $isGotaContact = $session->station->is_gota;
+
         $dupeCheck = $dupeService->check(
             $request->callsign,
             $request->band_id,
             $request->mode_id,
             $session->station->event_configuration_id,
-            $session->station->is_gota,
+            $isGotaContact,
         );
 
         $mode = $session->mode;
@@ -53,9 +55,15 @@ class ContactSyncController extends Controller
                 'section_id' => $request->section_id,
                 'received_exchange' => $request->received_exchange,
                 'power_watts' => $request->power_watts,
-                'points' => $dupeCheck['is_duplicate'] ? 0 : $mode->points_fd,
+                'points' => $dupeCheck['is_duplicate'] ? 0 : ($isGotaContact ? 0 : $mode->points_fd),
                 'is_duplicate' => $dupeCheck['is_duplicate'],
                 'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
+                'is_gota_contact' => $isGotaContact,
+                'gota_operator_first_name' => $isGotaContact ? $request->gota_operator_first_name : null,
+                'gota_operator_last_name' => $isGotaContact ? $request->gota_operator_last_name : null,
+                'gota_operator_callsign' => $isGotaContact ? $request->gota_operator_callsign : null,
+                'gota_operator_user_id' => $isGotaContact ? $request->gota_operator_user_id : null,
+                'gota_coach_user_id' => ($isGotaContact && $session->is_supervised) ? $session->operator_user_id : null,
             ]);
         } catch (UniqueConstraintViolationException) {
             return $this->idempotentResponse(Contact::where('uuid', $request->uuid)->firstOrFail());

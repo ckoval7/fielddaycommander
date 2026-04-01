@@ -417,6 +417,174 @@ test('contact-synced event refreshes recent contacts list', function () {
         ->assertSee('K5NEW');
 });
 
+test('GOTA station shows operator fields', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'power_watts' => 100,
+        'qso_count' => 0,
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $gotaSession])
+        ->assertSee('GOTA Operator')
+        ->assertSee('First Name')
+        ->assertSee('Last Name');
+});
+
+test('non-GOTA station does not show operator fields', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertDontSee('GOTA Operator');
+});
+
+test('GOTA station uses gota_callsign in exchange', function () {
+    $this->actingAs($this->user);
+
+    $this->config->update(['gota_callsign' => 'W5GOT']);
+
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'power_watts' => 100,
+        'qso_count' => 0,
+    ]);
+
+    $classCode = $this->config->operatingClass->code ?? '?';
+    $expectedExchange = "W5GOT {$this->config->transmitter_count}{$classCode} STX";
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $gotaSession])
+        ->assertSee($expectedExchange);
+});
+
+test('selectGotaUser fills operator fields from user record', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'power_watts' => 100,
+        'qso_count' => 0,
+    ]);
+
+    $gotaOperator = User::factory()->create([
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'call_sign' => 'KD5TST',
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $gotaSession])
+        ->call('selectGotaUser', $gotaOperator->id)
+        ->assertSet('gotaOperatorUserId', $gotaOperator->id)
+        ->assertSet('gotaOperatorFirstName', 'Jane')
+        ->assertSet('gotaOperatorLastName', 'Doe')
+        ->assertSet('gotaOperatorCallsign', 'KD5TST');
+});
+
+test('clearGotaUser resets all operator fields', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'power_watts' => 100,
+        'qso_count' => 0,
+    ]);
+
+    $gotaOperator = User::factory()->create([
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'call_sign' => 'KD5TST',
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $gotaSession])
+        ->call('selectGotaUser', $gotaOperator->id)
+        ->call('clearGotaUser')
+        ->assertSet('gotaOperatorUserId', null)
+        ->assertSet('gotaOperatorFirstName', '')
+        ->assertSet('gotaOperatorLastName', '')
+        ->assertSet('gotaOperatorCallsign', '');
+});
+
+test('gotaUserResults returns matching users', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'power_watts' => 100,
+        'qso_count' => 0,
+    ]);
+
+    User::factory()->create([
+        'first_name' => 'Unique',
+        'last_name' => 'SearchTarget',
+        'call_sign' => 'KD5UNQ',
+    ]);
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $gotaSession])
+        ->set('gotaUserSearch', 'SearchTarget');
+
+    $results = $component->get('gotaUserResults');
+    expect($results)->toHaveCount(1)
+        ->and($results[0]['call_sign'])->toBe('KD5UNQ');
+});
+
+test('gotaUserResults returns empty for short search', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'power_watts' => 100,
+        'qso_count' => 0,
+    ]);
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $gotaSession])
+        ->set('gotaUserSearch', 'K');
+
+    $results = $component->get('gotaUserResults');
+    expect($results)->toBeEmpty();
+});
+
 test('suggestions show full exchange and worked-on bands', function () {
     $this->actingAs($this->user);
 

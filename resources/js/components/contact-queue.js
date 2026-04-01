@@ -101,6 +101,11 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 section_code: contactData.section_code || '',
                 received_exchange: contactData.received_exchange,
                 power_watts: contactData.power_watts,
+                is_gota_contact: contactData.is_gota_contact || false,
+                gota_operator_first_name: contactData.gota_operator_first_name || null,
+                gota_operator_last_name: contactData.gota_operator_last_name || null,
+                gota_operator_callsign: contactData.gota_operator_callsign || null,
+                gota_operator_user_id: contactData.gota_operator_user_id || null,
                 qso_time: new Date().toISOString(),
                 status: 'pending',
                 attempts: 0,
@@ -134,6 +139,11 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 section_code: parsed.section_code,
                 received_exchange: rawInput.toUpperCase(),
                 power_watts: sessionContext.power_watts,
+                is_gota_contact: sessionContext.is_gota || false,
+                gota_operator_first_name: sessionContext.gota_operator_first_name || null,
+                gota_operator_last_name: sessionContext.gota_operator_last_name || null,
+                gota_operator_callsign: sessionContext.gota_operator_callsign || null,
+                gota_operator_user_id: sessionContext.gota_operator_user_id || null,
             });
 
             // Clear input and refocus
@@ -236,6 +246,11 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                         received_exchange: candidate.received_exchange,
                         power_watts: candidate.power_watts,
                         qso_time: candidate.qso_time,
+                        is_gota_contact: candidate.is_gota_contact || false,
+                        gota_operator_first_name: candidate.gota_operator_first_name || null,
+                        gota_operator_last_name: candidate.gota_operator_last_name || null,
+                        gota_operator_callsign: candidate.gota_operator_callsign || null,
+                        gota_operator_user_id: candidate.gota_operator_user_id || null,
                     }),
                 });
 

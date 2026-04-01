@@ -33,6 +33,11 @@ class StoreContactSyncRequest extends FormRequest
             'received_exchange' => ['required', 'string', 'max:50'],
             'power_watts' => ['required', 'integer', 'min:1'],
             'qso_time' => ['required', 'date'],
+            'is_gota_contact' => ['sometimes', 'boolean'],
+            'gota_operator_first_name' => ['nullable', 'string', 'max:50'],
+            'gota_operator_last_name' => ['nullable', 'string', 'max:50'],
+            'gota_operator_callsign' => ['nullable', 'string', 'max:20', 'regex:/^[A-Z0-9\/]*$/'],
+            'gota_operator_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ];
     }
 

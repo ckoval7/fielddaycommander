@@ -3,6 +3,11 @@
         band_id: {{ $operatingSession->band_id }},
         mode_id: {{ $operatingSession->mode_id }},
         power_watts: {{ $operatingSession->power_watts }},
+        is_gota: {{ $operatingSession->station->is_gota ? 'true' : 'false' }},
+        get gota_operator_first_name() { return document.querySelector('[wire\\:model=gotaOperatorFirstName]')?.value || null },
+        get gota_operator_last_name() { return document.querySelector('[wire\\:model=gotaOperatorLastName]')?.value || null },
+        get gota_operator_callsign() { return document.querySelector('[wire\\:model=gotaOperatorCallsign]')?.value || null },
+        get gota_operator_user_id() { return @this.gotaOperatorUserId || null },
         sections: {{ Js::from(\App\Models\Section::where('is_active', true)->pluck('id', 'code')->toArray()) }}
      })">
     {{-- Sticky Session Info Bar --}}
@@ -97,6 +102,71 @@
             <div class="text-2xl font-bold font-mono">{{ $this->clubExchange }}</div>
             <div class="text-sm text-base-content/60 italic">{{ $this->phoneticExchange }}</div>
         </div>
+
+        {{-- GOTA Operator Fields --}}
+        @if($this->isGotaStation)
+            <div class="bg-info/10 border border-info/30 rounded-lg p-4 space-y-3">
+                <div class="flex items-center gap-2">
+                    <x-badge value="GOTA" class="badge-info badge-sm" />
+                    <span class="text-sm font-semibold">GOTA Operator</span>
+                    @if($this->gotaCallsign)
+                        <span class="text-xs text-base-content/50 ml-auto">Callsign on air: <span class="font-mono font-bold">{{ $this->gotaCallsign }}</span></span>
+                    @endif
+                </div>
+
+                {{-- User Lookup --}}
+                <div class="relative">
+                    <x-input
+                        label="Search registered user (optional)"
+                        wire:model.live.debounce.300ms="gotaUserSearch"
+                        placeholder="Search by name or callsign..."
+                        class="input-sm"
+                    />
+                    @if(count($this->gotaUserResults) > 0)
+                        <div class="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-box shadow-lg max-h-36 overflow-y-auto">
+                            @foreach($this->gotaUserResults as $user)
+                                <button
+                                    wire:click="selectGotaUser({{ $user['id'] }})"
+                                    class="w-full px-3 py-2 text-left hover:bg-base-200 text-sm"
+                                    type="button"
+                                >
+                                    {{ $user['label'] }}
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                @if($gotaOperatorUserId)
+                    <div class="flex items-center gap-2 text-sm">
+                        <x-badge value="Linked" class="badge-xs badge-success" />
+                        <span>{{ $gotaOperatorFirstName }} {{ $gotaOperatorLastName }} ({{ $gotaOperatorCallsign }})</span>
+                        <button wire:click="clearGotaUser" class="btn btn-ghost btn-xs">Change</button>
+                    </div>
+                @else
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <x-input
+                            label="First Name"
+                            wire:model="gotaOperatorFirstName"
+                            placeholder="First name"
+                            class="input-sm"
+                        />
+                        <x-input
+                            label="Last Name"
+                            wire:model="gotaOperatorLastName"
+                            placeholder="Last name"
+                            class="input-sm"
+                        />
+                        <x-input
+                            label="Callsign (optional)"
+                            wire:model="gotaOperatorCallsign"
+                            placeholder="e.g. W1AW"
+                            class="input-sm uppercase"
+                        />
+                    </div>
+                @endif
+            </div>
+        @endif
 
         {{-- Band/Mode Info --}}
         <div class="text-center text-xs text-base-content/50">

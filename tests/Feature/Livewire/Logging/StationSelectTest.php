@@ -402,6 +402,107 @@ test('band warning shows info when station radio has no bands configured', funct
         ->and($warning['message'])->toContain('no band information configured');
 });
 
+test('cancel setup resets supervised session toggle', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(StationSelect::class)
+        ->set('isSupervisedSession', true)
+        ->set('showSetupModal', true)
+        ->call('cancelSetup')
+        ->assertSet('isSupervisedSession', false);
+});
+
+test('supervised toggle shown for GOTA station in setup modal', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->call('selectStation', $gotaStation->id)
+        ->assertSee('GOTA Station Options')
+        ->assertSee('Supervised Session');
+});
+
+test('supervised toggle not shown for non-GOTA station', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'is_gota' => false,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->call('selectStation', $station->id)
+        ->assertDontSee('GOTA Station Options');
+});
+
+test('starting session on GOTA station with supervised toggle sets is_supervised', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $gotaStation->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->set('isSupervisedSession', true)
+        ->call('startSession')
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('operating_sessions', [
+        'station_id' => $gotaStation->id,
+        'is_supervised' => true,
+    ]);
+});
+
+test('starting session on non-GOTA station ignores supervised toggle', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'is_gota' => false,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->set('isSupervisedSession', true)
+        ->call('startSession')
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('operating_sessions', [
+        'station_id' => $station->id,
+        'is_supervised' => false,
+    ]);
+});
+
 test('band warning is null when no band is selected', function () {
     $this->actingAs($this->user);
 

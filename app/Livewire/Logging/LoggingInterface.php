@@ -15,6 +15,16 @@ class LoggingInterface extends Component
 
     public OperatingSession $operatingSession;
 
+    public string $gotaOperatorFirstName = '';
+
+    public string $gotaOperatorLastName = '';
+
+    public string $gotaOperatorCallsign = '';
+
+    public ?int $gotaOperatorUserId = null;
+
+    public string $gotaUserSearch = '';
+
     public function mount(OperatingSession $operatingSession): void
     {
         if ($operatingSession->operator_user_id !== auth()->id()) {
@@ -118,11 +128,72 @@ class LoggingInterface extends Component
     }
 
     #[Computed]
+    public function isGotaStation(): bool
+    {
+        return $this->operatingSession->station->is_gota;
+    }
+
+    #[Computed]
+    public function gotaCallsign(): ?string
+    {
+        return $this->operatingSession->station->eventConfiguration->gota_callsign;
+    }
+
+    #[Computed]
+    public function gotaUserResults(): array
+    {
+        if (strlen($this->gotaUserSearch) < 2) {
+            return [];
+        }
+
+        return \App\Models\User::query()
+            ->where(function ($q) {
+                $search = '%'.$this->gotaUserSearch.'%';
+                $q->where('call_sign', 'like', $search)
+                    ->orWhere('first_name', 'like', $search)
+                    ->orWhere('last_name', 'like', $search);
+            })
+            ->limit(5)
+            ->get()
+            ->map(fn ($u) => [
+                'id' => $u->id,
+                'label' => trim($u->first_name.' '.$u->last_name).' ('.$u->call_sign.')',
+                'first_name' => $u->first_name ?? '',
+                'last_name' => $u->last_name ?? '',
+                'call_sign' => $u->call_sign ?? '',
+            ])
+            ->toArray();
+    }
+
+    public function selectGotaUser(int $userId): void
+    {
+        $user = \App\Models\User::find($userId);
+        if ($user) {
+            $this->gotaOperatorUserId = $user->id;
+            $this->gotaOperatorFirstName = $user->first_name ?? '';
+            $this->gotaOperatorLastName = $user->last_name ?? '';
+            $this->gotaOperatorCallsign = $user->call_sign ?? '';
+            $this->gotaUserSearch = '';
+        }
+    }
+
+    public function clearGotaUser(): void
+    {
+        $this->gotaOperatorUserId = null;
+        $this->gotaOperatorFirstName = '';
+        $this->gotaOperatorLastName = '';
+        $this->gotaOperatorCallsign = '';
+        $this->gotaUserSearch = '';
+    }
+
+    #[Computed]
     public function clubExchange(): string
     {
         $config = $this->operatingSession->station->eventConfiguration;
 
-        $callsign = $config->callsign ?? '?';
+        $callsign = $this->isGotaStation
+            ? ($config->gota_callsign ?? $config->callsign ?? '?')
+            : ($config->callsign ?? '?');
         $transmitterCount = $config->transmitter_count ?? '?';
         $classCode = $config->operatingClass->code ?? '?';
         $sectionCode = $config->section->code ?? '?';
@@ -148,7 +219,11 @@ class LoggingInterface extends Component
 
         $config = $this->operatingSession->station->eventConfiguration;
 
-        $callsign = strtoupper($config->callsign ?? '');
+        $callsign = strtoupper(
+            $this->isGotaStation
+                ? ($config->gota_callsign ?? $config->callsign ?? '')
+                : ($config->callsign ?? '')
+        );
         $transmitterCount = $config->transmitter_count ?? '';
         $classCode = strtoupper($config->operatingClass->code ?? '');
         $sectionCode = strtoupper($config->section->code ?? '');
