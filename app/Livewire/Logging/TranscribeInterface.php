@@ -35,6 +35,17 @@ class TranscribeInterface extends Component
 
     public ?int $powerWatts = 100;
 
+    // GOTA operator fields (sticky between contacts)
+    public string $gotaOperatorFirstName = '';
+
+    public string $gotaOperatorLastName = '';
+
+    public string $gotaOperatorCallsign = '';
+
+    public ?int $gotaOperatorUserId = null;
+
+    public string $gotaUserSearch = '';
+
     public function mount(Station $station): void
     {
         $this->authorize('log-contacts');
@@ -163,6 +174,10 @@ class TranscribeInterface extends Component
             'is_duplicate' => $dupeResult['is_duplicate'],
             'duplicate_of_contact_id' => $dupeResult['duplicate_of_contact_id'],
             'is_transcribed' => true,
+            'gota_operator_first_name' => $this->station->is_gota ? $this->gotaOperatorFirstName : null,
+            'gota_operator_last_name' => $this->station->is_gota ? $this->gotaOperatorLastName : null,
+            'gota_operator_callsign' => $this->station->is_gota ? $this->gotaOperatorCallsign : null,
+            'gota_operator_user_id' => $this->station->is_gota ? $this->gotaOperatorUserId : null,
         ]);
 
         ContactLogged::dispatch($contact->load(['band', 'mode', 'section']), $this->event);
@@ -196,6 +211,65 @@ class TranscribeInterface extends Component
         }
 
         $this->dispatch('suggestion-selected');
+    }
+
+    #[Computed]
+    public function isGotaStation(): bool
+    {
+        return $this->station->is_gota;
+    }
+
+    #[Computed]
+    public function gotaCallsign(): ?string
+    {
+        return $this->station->eventConfiguration->gota_callsign;
+    }
+
+    #[Computed]
+    public function gotaUserResults(): array
+    {
+        if (strlen($this->gotaUserSearch) < 2) {
+            return [];
+        }
+
+        return \App\Models\User::query()
+            ->where(function ($q) {
+                $search = '%'.$this->gotaUserSearch.'%';
+                $q->where('call_sign', 'like', $search)
+                    ->orWhere('first_name', 'like', $search)
+                    ->orWhere('last_name', 'like', $search);
+            })
+            ->limit(5)
+            ->get()
+            ->map(fn ($u) => [
+                'id' => $u->id,
+                'label' => trim($u->first_name.' '.$u->last_name).' ('.$u->call_sign.')',
+                'first_name' => $u->first_name ?? '',
+                'last_name' => $u->last_name ?? '',
+                'call_sign' => $u->call_sign ?? '',
+            ])
+            ->toArray();
+    }
+
+    public function selectGotaUser(int $userId): void
+    {
+        $user = \App\Models\User::find($userId);
+        if ($user) {
+            $this->gotaOperatorUserId = $user->id;
+            $this->gotaOperatorFirstName = $user->first_name ?? '';
+            $this->gotaOperatorLastName = $user->last_name ?? '';
+            $this->gotaOperatorCallsign = $user->call_sign ?? '';
+            $this->gotaUserSearch = '';
+        }
+    }
+
+    public function clearGotaUser(): void
+    {
+        $this->gotaOperatorUserId = null;
+        $this->gotaOperatorFirstName = '';
+        $this->gotaOperatorLastName = '';
+        $this->gotaOperatorCallsign = '';
+        $this->gotaUserSearch = '';
     }
 
     #[Computed]
