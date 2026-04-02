@@ -103,7 +103,6 @@
                                                             $statusClasses = match($commitment->status) {
                                                                 'committed' => 'badge-info',
                                                                 'delivered' => 'badge-success',
-                                                                'in_use' => 'badge-warning',
                                                                 'returned' => 'badge-neutral',
                                                                 'cancelled' => 'badge-error',
                                                                 'lost' => 'badge-error',
@@ -385,7 +384,6 @@
                                 $statusClasses = match($detailCommitment->status) {
                                     'committed' => 'badge-info',
                                     'delivered' => 'badge-success',
-                                    'in_use' => 'badge-warning',
                                     'returned' => 'badge-neutral',
                                     'cancelled' => 'badge-error',
                                     'lost' => 'badge-error',

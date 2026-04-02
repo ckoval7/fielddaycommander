@@ -462,10 +462,6 @@
                                         <div class="text-sm text-base-content/60">Delivered</div>
                                         <div class="text-2xl font-bold text-success">{{ $statuses->get('delivered', collect())->count() }}</div>
                                     </div>
-                                    <div>
-                                        <div class="text-sm text-base-content/60">In Use</div>
-                                        <div class="text-2xl font-bold">{{ $statuses->get('in_use', collect())->count() }}</div>
-                                    </div>
                                 </div>
                             @endif
                             <div class="flex justify-center">
@@ -523,7 +519,6 @@
                                                         @php
                                                             $statusColor = match($commitment->status) {
                                                                 'returned' => 'badge-success',
-                                                                'in_use' => 'badge-info',
                                                                 'delivered' => 'badge-info',
                                                                 'committed' => 'badge-neutral',
                                                                 'cancelled' => 'badge-ghost',

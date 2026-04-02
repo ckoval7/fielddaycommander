@@ -567,7 +567,7 @@
     {{-- Unassign Confirmation Modal --}}
     <x-modal wire:model="showUnassignConfirmModal" title="Confirm Unassign" persistent>
         <x-alert icon="o-exclamation-triangle" class="alert-warning">
-            This equipment is currently marked as "In Use". Are you sure you want to unassign it?
+            Are you sure you want to unassign this equipment?
         </x-alert>
         <p class="mt-4 text-xs sm:text-sm text-base-content/70">
             The equipment will remain committed to this event but will no longer be assigned to this station.

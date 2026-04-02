@@ -125,7 +125,6 @@
                                         $statusClasses = match($item->status ?? 'available') {
                                             'committed' => 'badge-info',
                                             'delivered' => 'badge-success',
-                                            'in_use' => 'badge-warning',
                                             'returned' => 'badge-neutral',
                                             'cancelled' => 'badge-error',
                                             'lost' => 'badge-error',
@@ -135,7 +134,6 @@
                                         $statusIcon = match($item->status ?? 'available') {
                                             'committed' => 'o-clipboard-document-list',
                                             'delivered' => 'o-truck',
-                                            'in_use' => 'o-bolt',
                                             'returned' => 'o-check-circle',
                                             'cancelled' => 'o-x-circle',
                                             'lost' => 'o-exclamation-triangle',
