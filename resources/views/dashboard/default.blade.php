@@ -64,7 +64,7 @@ Props from controller:
                     label="Edit Layout"
                     icon="o-pencil-square"
                     class="btn-outline btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
-                    wire:click="$dispatch('toggle-edit-mode')"
+                    @click="Livewire.dispatch('toggle-edit-mode')"
                 />
 
                 {{-- Dashboard Management Button --}}
@@ -72,7 +72,7 @@ Props from controller:
                     label="Manage"
                     icon="o-cog-6-tooth"
                     class="btn-ghost btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
-                    wire:click="$dispatch('open-modal', { modalId: 'dashboard-manager' })"
+                    @click="Livewire.dispatch('open-modal', { modalId: 'dashboard-manager' })"
                 />
 
             </div>
@@ -222,7 +222,7 @@ Props from controller:
                     label="Add Your First Widget"
                     icon="o-plus"
                     class="btn-primary"
-                    wire:click="$dispatch('toggle-edit-mode')"
+                    @click="Livewire.dispatch('toggle-edit-mode')"
                 />
             </div>
         @endif
