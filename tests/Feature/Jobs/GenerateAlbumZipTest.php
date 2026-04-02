@@ -129,3 +129,22 @@ test('job skips soft-deleted images', function () {
     expect($names)->toContain('active.jpg');
     expect($names)->not->toContain('deleted.jpg');
 });
+
+test('failed method sends error notification and cleans up partial zip', function () {
+    $eventConfig = EventConfiguration::factory()->create();
+    $user = User::factory()->create();
+
+    // Simulate a partial zip left behind
+    $exportDir = "exports/gallery/{$eventConfig->id}";
+    Storage::disk('local')->put("{$exportDir}/album-partial.zip", 'partial-content');
+
+    $job = new GenerateAlbumZip($eventConfig->id, $user->id);
+    $job->failed(new \RuntimeException('Something went wrong'));
+
+    Notification::assertSentTo($user, \App\Notifications\InAppNotification::class, function ($notification) {
+        return str_contains($notification->message, 'Failed to create');
+    });
+
+    // Partial zip should be cleaned up
+    expect(Storage::disk('local')->files($exportDir))->toBeEmpty();
+});

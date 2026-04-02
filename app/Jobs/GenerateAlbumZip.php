@@ -95,6 +95,36 @@ class GenerateAlbumZip implements ShouldQueue
     }
 
     /**
+     * Handle job failure — notify user and clean up partial zip.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::error("Album export failed for event config {$this->eventConfigurationId}: {$exception->getMessage()}");
+
+        $user = User::find($this->userId);
+        if (! $user) {
+            return;
+        }
+
+        $eventConfig = EventConfiguration::with('event')->find($this->eventConfigurationId);
+        $eventName = $eventConfig?->event?->name ?? 'unknown event';
+
+        // Clean up any partial zip files
+        $exportDir = "exports/gallery/{$this->eventConfigurationId}";
+        if (Storage::disk('local')->exists($exportDir)) {
+            foreach (Storage::disk('local')->files($exportDir) as $file) {
+                Storage::disk('local')->delete($file);
+            }
+        }
+
+        $user->notify(new InAppNotification(
+            category: NotificationCategory::Photos,
+            title: 'Album Export Failed',
+            message: "Failed to create the photo album for {$eventName}. Please try again.",
+        ));
+    }
+
+    /**
      * Resolve duplicate filenames by appending a counter suffix.
      */
     protected function resolveFilename(string $filename, array $usedNames): string
