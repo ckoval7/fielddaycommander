@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set Up a LAN for Field Operations - FD Commander</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .cmd { color: var(--text-primary); }
+  .code-block .output { color: var(--accent-sky); }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Set Up a LAN for <span class="gradient">Field Operations</span></h1>
+    <p>Build a reliable local network for your Field Day site so every station can reach FD Commander.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; LAN Setup
+      </div>
+
+      <!-- WHAT YOU NEED -->
+      <h2>What You Need</h2>
+
+      <p>FD Commander runs on your local network. Every device that needs to log contacts, view scores, or sign the guestbook connects to the same LAN. No internet required.</p>
+
+      <ul>
+        <li>A <strong>Wi-Fi router.</strong> A cheap home router works fine.</li>
+        <li>The <strong>server</strong> running FD Commander (a Raspberry Pi, laptop, or any Linux box).</li>
+        <li><strong>Client devices</strong> with a web browser (laptops, tablets, phones).</li>
+        <li>An <strong>ethernet cable</strong> to connect the server to the router.</li>
+      </ul>
+
+      <!-- SETTING IT UP -->
+      <h2>Setting It Up</h2>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Power on the router. Leave the WAN/internet port empty. You don't need upstream connectivity.</p>
+        <p><span class="step-number">2</span> Plug the FD Commander server into a LAN port on the router with an ethernet cable.</p>
+        <p><span class="step-number">3</span> Connect client devices to the router's Wi-Fi network.</p>
+        <p><span class="step-number">4</span> Open a browser on any client and go to the server's IP address.</p>
+      </div>
+
+      <p>That's the whole setup. The router handles DHCP (assigning IP addresses) and Wi-Fi. The server runs FD Commander. Clients open a browser and connect.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Tip</div>
+        <p>If your router has an "AP mode" or "bridge mode," use it. Some routers get confused when their WAN port has no link and will periodically stall trying to reach an upstream gateway.</p>
+      </div>
+
+      <!-- GIVE THE SERVER A STATIC IP -->
+      <h2>Give the Server a Static IP</h2>
+
+      <p>Your router hands out IP addresses automatically, but the server's address could change if it reboots. Give it a fixed address so every browser tab pointed at it keeps working.</p>
+
+      <p>The easiest way is a <strong>DHCP reservation</strong>. Log into your router's admin page and assign a fixed IP to the server's MAC address. The server still gets its address from the router, but the router always gives it the same one. Most routers support this under a "DHCP reservation" or "address reservation" setting.</p>
+
+      <p>If your router doesn't support reservations, you can set a static IP on the server itself. On a Raspberry Pi or Ubuntu system:</p>
+
+      <div class="code-block">
+<span class="comment"># Find your interface name (usually eth0)</span>
+<span class="cmd">ip link show</span>
+
+<span class="comment"># Set a static IP</span>
+<span class="cmd">sudo nmcli con mod "Wired connection 1" \
+  ipv4.addresses 192.168.1.50/24 \
+  ipv4.gateway 192.168.1.1 \
+  ipv4.method manual</span>
+
+<span class="comment"># Apply the change</span>
+<span class="cmd">sudo nmcli con up "Wired connection 1"</span>
+      </div>
+
+      <p>Pick an address outside your router's DHCP range so it won't conflict with automatically assigned addresses. Check your router's admin page to see what range it uses.</p>
+
+      <!-- ACCESSING FD COMMANDER -->
+      <h2>Accessing FD Commander</h2>
+
+      <p>Once the server has a static IP, clients just type it into a browser: <code>http://192.168.1.50</code> (or whatever address you chose). That's it.</p>
+
+      <p>If you're running FD Commander on a Raspberry Pi, mDNS may already be working, which means devices can reach it at <code>http://raspberrypi.local</code> without knowing the IP. If you want a custom name, change the Pi's hostname.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Tip</div>
+        <p>Write the server's address on a piece of paper and tape it to the table at each station. Simple works.</p>
+      </div>
+
+      <!-- WI-FI TIPS -->
+      <h2>Wi-Fi Tips</h2>
+
+      <p>Wi-Fi at a Field Day site is fighting against HF transmitters, generators, and whatever else is producing RF. A few things help:</p>
+
+      <ul>
+        <li><strong>Use 5 GHz if you can.</strong> Less congested and less susceptible to interference than 2.4 GHz.</li>
+        <li><strong>Keep the router central and elevated.</strong> Don't bury it behind a generator or under a table.</li>
+        <li><strong>Use a simple SSID and password.</strong> You'll be telling people what they are all day. Something like <code>FieldDay</code> with a short password works.</li>
+        <li><strong>Bring a spare ethernet cable.</strong> If Wi-Fi gets flaky, plugging a laptop directly into the router keeps that station running.</li>
+      </ul>
+
+      <!-- TEST IT FIRST -->
+      <h2>Test It First</h2>
+
+      <p>Set everything up at home before Field Day and make sure it works:</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Power on the router and server. Wait for FD Commander to start.</p>
+        <p><span class="step-number">2</span> Connect a phone or laptop to the Wi-Fi.</p>
+        <p><span class="step-number">3</span> Open a browser and go to the server's address. You should see the login page.</p>
+        <p><span class="step-number">4</span> Try a second device. Log a test contact from each and make sure they both see it.</p>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-title">Watch out</div>
+        <p>If you're using a Raspberry Pi, make sure it has a reliable power supply. A Pi that brown-outs under load will corrupt its SD card and take your server down mid-event.</p>
+      </div>
+
+      <!-- QUICK REFERENCE -->
+      <h2>Quick Reference</h2>
+
+      <p>Fill this in before you leave the house and bring it to the site:</p>
+
+      <div class="step-box">
+        <p><strong>Router SSID:</strong> _______________</p>
+        <p><strong>Wi-Fi Password:</strong> _______________</p>
+        <p><strong>Server IP:</strong> _______________</p>
+        <p><strong>Router Admin:</strong> _______________</p>
+      </div>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <span class="logo" style="font-size:0.95rem; display:inline-flex;">
+        <img src="../fdlogdb.png" alt="Field Day Commander" style="width:24px;height:24px;object-fit:contain;">
+        Field Day Commander
+      </span>
+      <span style="margin-left:1rem;">Open source under GPL v3</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+      <a href="../fd-commander-docs.html">Documentation</a>
+      <a href="https://github.com/ckoval7/fd-commander/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+      <span class="footer-call">73 de Field Day Commander</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How-To Guides - FD Commander</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guides-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .guide-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    transition: all 0.25s;
+    display: flex;
+    flex-direction: column;
+  }
+  .guide-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-sky);
+    transform: translateY(-2px);
+  }
+  .guide-card-category {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-sky);
+    margin-bottom: 0.75rem;
+  }
+  .guide-card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .guide-card h3 a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .guide-card h3 a:hover {
+    color: inherit;
+  }
+  .guide-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    flex: 1;
+  }
+  .guide-card-meta {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .cta {
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    padding-top: 3rem;
+  }
+  .cta-box {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 3.5rem 2rem;
+    max-width: 700px; margin: 0 auto;
+  }
+  .cta .section-title { margin-bottom: 1rem; }
+  .cta .section-desc { margin: 0 auto 2.5rem; }
+  .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  @media (max-width: 768px) {
+    .guides-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>How-To <span class="gradient">Guides</span></h1>
+    <p>Step-by-step walkthroughs for common tasks. Pick a guide and follow along.</p>
+  </div>
+</section>
+
+<section style="padding-top:1rem;">
+  <div class="container">
+    <div class="guides-grid">
+
+      <div class="guide-card">
+        <div class="guide-card-category">Networking</div>
+        <h3><a href="lan-setup.html">Set Up a LAN for Field Operations</a></h3>
+        <p>Build a reliable local network for your Field Day site using a router, switch, or a Raspberry Pi. Covers wired and wireless setups, IP addressing, and DNS.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container">
+    <div class="cta-box">
+      <div class="section-label">Need More?</div>
+      <h2 class="section-title">Check the full documentation</h2>
+      <p class="section-desc" style="margin-left:auto;margin-right:auto">
+        These guides cover specific tasks. For a complete reference of every feature, head to the docs.
+      </p>
+      <div class="hero-actions">
+        <a href="../fd-commander-docs.html" class="btn-primary">Read the Docs</a>
+        <a href="../fd-commander-faq.html" class="btn-secondary">FAQ &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <span class="logo" style="font-size:0.95rem; display:inline-flex;">
+        <img src="../fdlogdb.png" alt="Field Day Commander" style="width:24px;height:24px;object-fit:contain;">
+        Field Day Commander
+      </span>
+      <span style="margin-left:1rem;">Open source under GPL v3</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+      <a href="../fd-commander-docs.html">Documentation</a>
+      <a href="https://github.com/ckoval7/fd-commander/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+      <span class="footer-call">73 de Field Day Commander</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
