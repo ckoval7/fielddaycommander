@@ -318,6 +318,45 @@ test('searches radios by make and model', function () {
         ->and($component->availableRadios->pluck('name')->join(' '))->toContain('Icom');
 });
 
+test('hides radios already assigned to other stations in the same event', function () {
+    // Assign the default radio to an existing station
+    Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'radio_equipment_id' => $this->radio->id,
+        'name' => 'Existing Station',
+    ]);
+
+    // Create an unassigned radio
+    $freeRadio = Equipment::factory()->create([
+        'type' => 'radio',
+        'make' => 'Kenwood',
+        'model' => 'TS-590SG',
+    ]);
+
+    $component = Livewire::test(StationForm::class)
+        ->set('event_configuration_id', $this->eventConfig->id);
+
+    $component->call('searchRadios', '');
+
+    $radioIds = $component->availableRadios->pluck('id')->all();
+    expect($radioIds)->toContain($freeRadio->id)
+        ->and($radioIds)->not->toContain($this->radio->id);
+});
+
+test('shows current stations own radio in the list when editing', function () {
+    $station = Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'radio_equipment_id' => $this->radio->id,
+        'name' => 'My Station',
+    ]);
+
+    $component = Livewire::test(StationForm::class, ['station' => $station]);
+    $component->call('searchRadios', '');
+
+    $radioIds = $component->availableRadios->pluck('id')->all();
+    expect($radioIds)->toContain($this->radio->id);
+});
+
 test('requires manage-stations permission', function () {
     $userWithoutPermission = User::factory()->create();
     $this->actingAs($userWithoutPermission);
@@ -338,6 +377,65 @@ test('emits station-saved event on success', function () {
 test('defaults to active event when creating station', function () {
     Livewire::test(StationForm::class)
         ->assertSet('event_configuration_id', $this->eventConfig->id);
+});
+
+test('prevents assigning same radio to multiple stations in same event', function () {
+    // Create a station with the radio
+    Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'radio_equipment_id' => $this->radio->id,
+        'name' => 'Existing Station',
+    ]);
+
+    // Try to create another station with the same radio in the same event
+    Livewire::test(StationForm::class)
+        ->set('name', 'New Station')
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->set('radio_equipment_id', $this->radio->id)
+        ->call('save')
+        ->assertHasErrors(['radio_equipment_id' => 'unique']);
+});
+
+test('allows same radio on stations in different events', function () {
+    // Create a station with the radio in the current event
+    Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'radio_equipment_id' => $this->radio->id,
+        'name' => 'Existing Station',
+    ]);
+
+    // Create a different event
+    $otherEvent = Event::factory()->create([
+        'event_type_id' => $this->event->event_type_id,
+        'is_active' => true,
+    ]);
+    $otherConfig = EventConfiguration::factory()->create([
+        'event_id' => $otherEvent->id,
+        'section_id' => Section::first()->id,
+        'operating_class_id' => OperatingClass::first()->id,
+    ]);
+
+    // Same radio in a different event should be fine
+    Livewire::test(StationForm::class)
+        ->set('name', 'Station In Other Event')
+        ->set('event_configuration_id', $otherConfig->id)
+        ->set('radio_equipment_id', $this->radio->id)
+        ->call('save')
+        ->assertHasNoErrors(['radio_equipment_id']);
+});
+
+test('allows updating station without radio uniqueness error on itself', function () {
+    $station = Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'radio_equipment_id' => $this->radio->id,
+        'name' => 'My Station',
+    ]);
+
+    // Editing the same station, keeping the same radio, should not trigger uniqueness error
+    Livewire::test(StationForm::class, ['station' => $station])
+        ->set('name', 'My Updated Station')
+        ->call('save')
+        ->assertHasNoErrors(['radio_equipment_id']);
 });
 
 test('clears gota flag when event does not allow gota', function () {

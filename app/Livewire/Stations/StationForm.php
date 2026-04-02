@@ -130,8 +130,18 @@ class StationForm extends Component
      */
     public function searchRadios(string $value = ''): void
     {
+        // Get IDs of radios already assigned as primary to other stations in this event
+        $assignedRadioIds = collect();
+        if ($this->event_configuration_id) {
+            $assignedRadioIds = Station::where('event_configuration_id', $this->event_configuration_id)
+                ->whereNotNull('radio_equipment_id')
+                ->when($this->stationId, fn ($q) => $q->where('id', '!=', $this->stationId))
+                ->pluck('radio_equipment_id');
+        }
+
         $query = Equipment::query()
             ->where('type', 'radio')
+            ->whereNotIn('id', $assignedRadioIds)
             ->where(function ($q) use ($value) {
                 $q->where('make', 'like', "%{$value}%")
                     ->orWhere('model', 'like', "%{$value}%");
@@ -316,7 +326,13 @@ class StationForm extends Component
                     ->ignore($this->stationId),
             ],
             'event_configuration_id' => ['required', 'exists:event_configurations,id'],
-            'radio_equipment_id' => ['required', 'exists:equipment,id'],
+            'radio_equipment_id' => [
+                'required',
+                'exists:equipment,id',
+                Rule::unique('stations', 'radio_equipment_id')
+                    ->where('event_configuration_id', $this->event_configuration_id)
+                    ->ignore($this->stationId),
+            ],
             'is_gota' => [
                 'boolean',
                 function ($attribute, $value, $fail) {
@@ -344,6 +360,7 @@ class StationForm extends Component
             'name.unique' => 'A station with this name already exists for this event.',
             'event_configuration_id.required' => 'Please select an event.',
             'radio_equipment_id.required' => 'Please select a primary radio.',
+            'radio_equipment_id.unique' => 'This radio is already assigned as the primary radio for another station in this event.',
             'max_power_watts.min' => 'Power output must be at least 1 watt.',
             'max_power_watts.max' => 'Power output cannot exceed 5000 watts.',
         ];
