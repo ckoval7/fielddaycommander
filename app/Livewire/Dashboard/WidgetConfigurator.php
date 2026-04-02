@@ -41,10 +41,11 @@ class WidgetConfigurator extends Component
 
     public function save(): void
     {
-        $this->validate(
-            $this->buildValidationRules(),
-            $this->messages()
-        );
+        $rules = $this->buildValidationRules();
+
+        if (! empty($rules)) {
+            $this->validate($rules, $this->messages());
+        }
 
         $this->dispatch('widget-configured',
             type: $this->widgetType,
