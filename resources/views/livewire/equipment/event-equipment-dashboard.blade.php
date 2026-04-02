@@ -297,6 +297,13 @@
                                                             (GOTA)
                                                         @endif
                                                     </span>
+                                                @elseif($primaryRadioStation = $this->primaryRadioStations->get($commitment->equipment_id))
+                                                    <span class="badge badge-primary badge-outline badge-sm" title="Primary radio">
+                                                        {{ $primaryRadioStation->name }}
+                                                        @if($primaryRadioStation->is_gota)
+                                                            (GOTA)
+                                                        @endif
+                                                    </span>
                                                 @else
                                                     <span class="text-xs text-base-content/60">Not assigned</span>
                                                 @endif
@@ -479,6 +486,8 @@
                                                 <td>
                                                     @if($commitment->station)
                                                         {{ $commitment->station->name }}
+                                                    @elseif($primaryRadioStation = $this->primaryRadioStations->get($commitment->equipment_id))
+                                                        {{ $primaryRadioStation->name }}
                                                     @else
                                                         <span class="text-base-content/50">-</span>
                                                     @endif

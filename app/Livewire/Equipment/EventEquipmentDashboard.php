@@ -406,6 +406,28 @@ class EventEquipmentDashboard extends Component
     }
 
     /**
+     * Map of equipment_id => Station for primary radios in this event.
+     *
+     * Used to show station assignment for radios that are tracked via
+     * stations.radio_equipment_id rather than equipment_event.station_id.
+     *
+     * @return Collection<int, Station>
+     */
+    #[Computed]
+    public function primaryRadioStations(): Collection
+    {
+        if (! $this->event->eventConfiguration) {
+            return collect();
+        }
+
+        return Station::query()
+            ->where('event_configuration_id', $this->event->eventConfiguration->id)
+            ->whereNotNull('radio_equipment_id')
+            ->get()
+            ->keyBy('radio_equipment_id');
+    }
+
+    /**
      * Check if the current user can manage equipment.
      *
      * Only users with manage-event-equipment can change status/assign stations.

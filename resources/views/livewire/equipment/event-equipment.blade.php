@@ -132,6 +132,10 @@
                                                             <span class="badge badge-primary badge-sm">
                                                                 {{ $commitment->station->name ?? 'Unknown' }}
                                                             </span>
+                                                        @elseif($primaryRadioStation = $this->primaryRadioStations->get($commitment->equipment_id))
+                                                            <span class="badge badge-primary badge-outline badge-sm" title="Primary radio">
+                                                                {{ $primaryRadioStation->name }}
+                                                            </span>
                                                         @else
                                                             <span class="text-xs text-base-content/60">Not assigned</span>
                                                         @endif
@@ -411,6 +415,8 @@
                             <div class="mt-1">
                                 @if($detailCommitment->station)
                                     <x-badge :value="$detailCommitment->station->name" class="badge-primary badge-sm" />
+                                @elseif($primaryRadioStation = $this->primaryRadioStations->get($detailCommitment->equipment_id))
+                                    <x-badge :value="$primaryRadioStation->name" class="badge-primary badge-outline badge-sm" />
                                 @else
                                     <span class="text-sm text-base-content/40">Not assigned</span>
                                 @endif

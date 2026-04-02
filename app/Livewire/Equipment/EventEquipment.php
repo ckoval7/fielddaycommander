@@ -5,6 +5,7 @@ namespace App\Livewire\Equipment;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
+use App\Models\Station;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -96,6 +97,30 @@ class EventEquipment extends Component
             ->orderBy('make')
             ->orderBy('model')
             ->get();
+    }
+
+    /**
+     * Map of equipment_id => Station for primary radios in the selected event.
+     *
+     * @return Collection<int, Station>
+     */
+    #[Computed]
+    public function primaryRadioStations(): Collection
+    {
+        if (! $this->selectedEventId) {
+            return collect();
+        }
+
+        $event = Event::find($this->selectedEventId);
+        if (! $event?->eventConfiguration) {
+            return collect();
+        }
+
+        return Station::query()
+            ->where('event_configuration_id', $event->eventConfiguration->id)
+            ->whereNotNull('radio_equipment_id')
+            ->get()
+            ->keyBy('radio_equipment_id');
     }
 
     /**
