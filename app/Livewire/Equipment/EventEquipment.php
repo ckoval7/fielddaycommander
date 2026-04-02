@@ -225,12 +225,12 @@ class EventEquipment extends Component
                     }
                 },
             ],
-            'expectedDeliveryAt' => [
+            'expectedDeliveryAt' => array_filter([
                 'nullable',
                 'date',
-                "after_or_equal:{$event->setup_allowed_from}",
+                $event->setup_allowed_from ? "after_or_equal:{$event->setup_allowed_from}" : null,
                 "before_or_equal:{$event->end_time}",
-            ],
+            ]),
             'deliveryNotes' => [
                 'nullable',
                 'string',
