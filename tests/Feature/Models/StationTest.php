@@ -49,7 +49,7 @@ describe('Station Relationships', function () {
             'equipment_id' => $equipment1->id,
             'event_id' => $event->id,
             'station_id' => $station->id,
-            'status' => 'in_use',
+            'status' => 'delivered',
         ]);
 
         EquipmentEvent::factory()->create([

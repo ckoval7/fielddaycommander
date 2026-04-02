@@ -143,9 +143,9 @@ test('EquipmentDelivered sends notification to manager', function () {
 test('EquipmentStatusChanged sends notification with status change details', function () {
     Notification::fake();
 
-    $previousStatus = 'delivered';
+    $previousStatus = 'committed';
     $this->equipmentEvent->update([
-        'status' => 'in_use',
+        'status' => 'delivered',
         'status_changed_at' => now(),
         'status_changed_by_user_id' => $this->manager->id,
         'manager_notes' => 'Equipment checked and working properly',
@@ -168,16 +168,16 @@ test('EquipmentStatusChanged sends notification with status change details', fun
     );
 });
 
-test('EquipmentStatusChanged includes station assignment when status is in_use', function () {
+test('EquipmentStatusChanged includes station assignment when station is assigned', function () {
     Notification::fake();
 
     $station = \App\Models\Station::factory()->create([
         'name' => 'Station 1A',
     ]);
 
-    $previousStatus = 'delivered';
+    $previousStatus = 'committed';
     $this->equipmentEvent->update([
-        'status' => 'in_use',
+        'status' => 'delivered',
         'station_id' => $station->id,
         'status_changed_at' => now(),
         'status_changed_by_user_id' => $this->manager->id,

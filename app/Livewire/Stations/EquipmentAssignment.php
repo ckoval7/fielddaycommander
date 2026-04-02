@@ -265,7 +265,7 @@ class EquipmentAssignment extends Component
             ->with(['owner', 'owningOrganization', 'bands'])
             ->whereDoesntHave('commitments', function ($q) {
                 $q->where('event_id', $this->eventModel->id)
-                    ->whereIn('status', ['committed', 'delivered', 'in_use']);
+                    ->whereIn('status', ['committed', 'delivered']);
             })
             ->availableForEvent($this->eventModel->id);
 

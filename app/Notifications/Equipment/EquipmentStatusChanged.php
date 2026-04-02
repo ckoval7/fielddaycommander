@@ -76,8 +76,8 @@ class EquipmentStatusChanged extends Notification implements ShouldQueue
             ->line("Changed by: {$changedByName}")
             ->line("Timestamp: {$timestamp}");
 
-        // Add station assignment details if status is 'in_use'
-        if ($this->equipmentEvent->status === 'in_use' && $station) {
+        // Add station assignment details if station is assigned
+        if ($station) {
             $message->line('')
                 ->line('**Station Assignment:**')
                 ->line("Station: {$station->name}")
@@ -97,8 +97,8 @@ class EquipmentStatusChanged extends Notification implements ShouldQueue
         // Add contextual footer based on status
         if ($this->equipmentEvent->status === 'returned') {
             $message->line('Thank you for your contribution to our Field Day event!');
-        } elseif ($this->equipmentEvent->status === 'in_use') {
-            $message->line('Your equipment is now actively being used at the event.');
+        } elseif ($this->equipmentEvent->status === 'delivered') {
+            $message->line('Your equipment has been delivered and is ready for use at the event.');
         }
 
         return $message;

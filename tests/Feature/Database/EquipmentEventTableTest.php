@@ -171,7 +171,6 @@ test('status enum accepts all valid values', function () {
     $validStatuses = [
         'committed',
         'delivered',
-        'in_use',
         'returned',
         'cancelled',
         'lost',

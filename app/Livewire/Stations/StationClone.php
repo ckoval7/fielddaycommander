@@ -140,8 +140,7 @@ class StationClone extends Component
                 'primaryRadio',
                 'additionalEquipment' => function ($query) {
                     $query->wherePivot('status', 'committed')
-                        ->orWherePivot('status', 'delivered')
-                        ->orWherePivot('status', 'in_use');
+                        ->orWherePivot('status', 'delivered');
                 },
             ])
             ->withCount('additionalEquipment')
