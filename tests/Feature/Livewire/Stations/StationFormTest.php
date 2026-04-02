@@ -465,3 +465,56 @@ test('clears gota flag when event does not allow gota', function () {
         ->set('event_configuration_id', $newEventConfig->id)
         ->assertSet('is_gota', false);
 });
+
+test('selecting gota clears vhf_only and satellite', function () {
+    Livewire::test(StationForm::class)
+        ->set('is_vhf_only', true)
+        ->set('is_satellite', true)
+        ->set('is_gota', true)
+        ->assertSet('is_gota', true)
+        ->assertSet('is_vhf_only', false)
+        ->assertSet('is_satellite', false);
+});
+
+test('selecting vhf_only clears gota and satellite', function () {
+    Livewire::test(StationForm::class)
+        ->set('is_gota', true)
+        ->set('is_satellite', true)
+        ->set('is_vhf_only', true)
+        ->assertSet('is_vhf_only', true)
+        ->assertSet('is_gota', false)
+        ->assertSet('is_satellite', false);
+});
+
+test('selecting satellite clears gota and vhf_only', function () {
+    Livewire::test(StationForm::class)
+        ->set('is_gota', true)
+        ->set('is_vhf_only', true)
+        ->set('is_satellite', true)
+        ->assertSet('is_satellite', true)
+        ->assertSet('is_gota', false)
+        ->assertSet('is_vhf_only', false);
+});
+
+test('validation rejects multiple station type flags', function () {
+    $newRadio = Equipment::factory()->create(['type' => 'radio']);
+
+    // Create a station directly with invalid state, then try to update it
+    $station = Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'radio_equipment_id' => $newRadio->id,
+        'name' => 'Bad Station',
+        'is_vhf_only' => true,
+        'is_satellite' => true,
+    ]);
+
+    // Loading the station should have both flags; saving should fail validation
+    $component = Livewire::test(StationForm::class, ['station' => $station]);
+
+    // Confirm both flags loaded from DB
+    expect($component->get('is_vhf_only'))->toBeTrue()
+        ->and($component->get('is_satellite'))->toBeTrue();
+
+    $component->call('save')
+        ->assertHasErrors(['is_vhf_only', 'is_satellite']);
+});

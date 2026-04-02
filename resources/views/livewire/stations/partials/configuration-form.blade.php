@@ -35,10 +35,12 @@
     <x-slot:title>Station Type</x-slot:title>
 
     <div class="space-y-3">
+        <p class="text-sm text-base-content/70">Select at most one station type, or leave all unchecked for a standard HF station.</p>
+
         {{-- GOTA Station --}}
         <x-checkbox
             label="GOTA Station (Get On The Air)"
-            wire:model="is_gota"
+            wire:model.live="is_gota"
             hint="Special station for new operators. Only one GOTA station allowed per event."
             :disabled="!$this->allowsGota"
         />
@@ -52,14 +54,14 @@
         {{-- VHF/UHF Only --}}
         <x-checkbox
             label="VHF/UHF Only"
-            wire:model="is_vhf_only"
+            wire:model.live="is_vhf_only"
             hint="Station operates exclusively on VHF/UHF bands"
         />
 
         {{-- Satellite Station --}}
         <x-checkbox
             label="Satellite Station"
-            wire:model="is_satellite"
+            wire:model.live="is_satellite"
             hint="Station configured for satellite communications"
         />
     </div>

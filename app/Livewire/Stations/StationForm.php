@@ -192,6 +192,20 @@ class StationForm extends Component
             $this->is_gota = false;
         }
 
+        // Mutual exclusivity: only one of GOTA, VHF-only, Satellite can be set
+        if ($property === 'is_gota' && $this->is_gota) {
+            $this->is_vhf_only = false;
+            $this->is_satellite = false;
+        }
+        if ($property === 'is_vhf_only' && $this->is_vhf_only) {
+            $this->is_gota = false;
+            $this->is_satellite = false;
+        }
+        if ($property === 'is_satellite' && $this->is_satellite) {
+            $this->is_gota = false;
+            $this->is_vhf_only = false;
+        }
+
         // Auto-populate max power from selected radio
         if ($property === 'radio_equipment_id' && $this->radio_equipment_id) {
             $radio = Equipment::find($this->radio_equipment_id);
@@ -209,23 +223,6 @@ class StationForm extends Component
             $this->activeTab = 'configuration';
 
             throw $e;
-        }
-
-        // Check for only one GOTA station per event
-        if ($validated['is_gota']) {
-            $existingGota = Station::where('event_configuration_id', $validated['event_configuration_id'])
-                ->where('is_gota', true);
-
-            // Exclude current station if editing
-            if ($this->stationId) {
-                $existingGota->where('id', '!=', $this->stationId);
-            }
-
-            if ($existingGota->exists()) {
-                $this->addError('is_gota', 'This event already has a GOTA station. Only one GOTA station is allowed per event.');
-
-                return;
-            }
         }
 
         $stationData = [
@@ -339,10 +336,36 @@ class StationForm extends Component
                     if ($value && ! $this->allowsGota) {
                         $fail('The selected event\'s operating class does not allow a GOTA station.');
                     }
+                    if ($value && ($this->is_vhf_only || $this->is_satellite)) {
+                        $fail('A station can only be one type: GOTA, VHF/UHF Only, or Satellite.');
+                    }
+                    if ($value && $this->event_configuration_id) {
+                        $exists = Station::where('event_configuration_id', $this->event_configuration_id)
+                            ->where('is_gota', true)
+                            ->when($this->stationId, fn ($q) => $q->where('id', '!=', $this->stationId))
+                            ->exists();
+                        if ($exists) {
+                            $fail('This event already has a GOTA station. Only one GOTA station is allowed per event.');
+                        }
+                    }
                 },
             ],
-            'is_vhf_only' => ['boolean'],
-            'is_satellite' => ['boolean'],
+            'is_vhf_only' => [
+                'boolean',
+                function ($attribute, $value, $fail) {
+                    if ($value && ($this->is_gota || $this->is_satellite)) {
+                        $fail('A station can only be one type: GOTA, VHF/UHF Only, or Satellite.');
+                    }
+                },
+            ],
+            'is_satellite' => [
+                'boolean',
+                function ($attribute, $value, $fail) {
+                    if ($value && ($this->is_gota || $this->is_vhf_only)) {
+                        $fail('A station can only be one type: GOTA, VHF/UHF Only, or Satellite.');
+                    }
+                },
+            ],
             'max_power_watts' => [
                 'nullable',
                 'integer',
