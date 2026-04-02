@@ -20,7 +20,7 @@
 
     <!-- Events Table -->
     <x-card shadow>
-        <div class="overflow-x-auto pb-64">
+        <div>
             <table class="table table-zebra">
                 <thead>
                     <tr>

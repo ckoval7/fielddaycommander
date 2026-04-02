@@ -60,7 +60,7 @@
                             @endphp
 
                             @if($eventCommitments && count($eventCommitments) > 0)
-                                <div class="overflow-x-auto">
+                                <div>
                                     <table class="table table-zebra">
                                         <thead>
                                             <tr>

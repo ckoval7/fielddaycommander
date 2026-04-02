@@ -50,7 +50,7 @@
 
         {{-- Equipment Card --}}
         <x-card shadow>
-            <div class="overflow-x-auto">
+            <div>
                 <table class="table table-zebra">
                     <thead>
                         <tr>
