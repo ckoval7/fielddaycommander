@@ -23,6 +23,13 @@
         @endauth
     </x-header>
 
+    @if(session('status'))
+        <div class="alert alert-info mb-4">
+            <x-icon name="o-information-circle" class="w-5 h-5" />
+            <span>{{ session('status') }}</span>
+        </div>
+    @endif
+
     @if($this->events->isEmpty())
         <x-card class="shadow-md">
             <div class="text-center py-12">

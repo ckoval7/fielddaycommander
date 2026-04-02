@@ -6,6 +6,7 @@ use App\Enums\NotificationCategory;
 use App\Models\EventConfiguration;
 use App\Models\User;
 use App\Notifications\InAppNotification;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -13,16 +14,23 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
-class GenerateAlbumZip implements ShouldQueue
+class GenerateAlbumZip implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     public int $tries = 1;
 
+    public int $timeout = 300;
+
     public function __construct(
         public int $eventConfigurationId,
         public int $userId,
     ) {}
+
+    public function uniqueId(): string
+    {
+        return (string) $this->eventConfigurationId;
+    }
 
     public function handle(): void
     {
