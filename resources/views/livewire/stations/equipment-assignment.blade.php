@@ -32,6 +32,15 @@
         @endif
     </div>
 
+    @if($this->hasCommittedEquipmentDuringSession)
+        <x-alert
+            title="Equipment Not Delivered"
+            description="This station is operating but some equipment hasn't been marked as delivered."
+            icon="o-exclamation-triangle"
+            class="alert-warning"
+        />
+    @endif
+
     {{-- Two Column Layout (Single on mobile, two on lg+) --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {{-- Left Column: Assigned Equipment --}}
@@ -567,7 +576,7 @@
     {{-- Unassign Confirmation Modal --}}
     <x-modal wire:model="showUnassignConfirmModal" title="Confirm Unassign" persistent>
         <x-alert icon="o-exclamation-triangle" class="alert-warning">
-            Are you sure you want to unassign this equipment?
+            This station has an active operating session. Unassigning equipment while the station is in use may cause issues.
         </x-alert>
         <p class="mt-4 text-xs sm:text-sm text-base-content/70">
             The equipment will remain committed to this event but will no longer be assigned to this station.

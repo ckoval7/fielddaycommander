@@ -5,6 +5,7 @@ namespace App\Livewire\Stations;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
+use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Models\User;
 use App\Notifications\Equipment\EquipmentReassigned;
@@ -269,6 +270,39 @@ class EquipmentAssignment extends Component
             ->availableForEvent($this->eventModel->id);
 
         return $this->applyEquipmentFilters($query)->take(50)->get();
+    }
+
+    /**
+     * Check if the station has an active operating session.
+     */
+    #[Computed]
+    public function hasActiveSession(): bool
+    {
+        if (! $this->stationId) {
+            return false;
+        }
+
+        return OperatingSession::query()
+            ->where('station_id', $this->stationId)
+            ->whereNull('end_time')
+            ->exists();
+    }
+
+    /**
+     * Check if station has committed (not yet delivered) equipment during an active session.
+     */
+    #[Computed]
+    public function hasCommittedEquipmentDuringSession(): bool
+    {
+        if (! $this->hasActiveSession || ! $this->eventModel) {
+            return false;
+        }
+
+        return EquipmentEvent::query()
+            ->where('station_id', $this->stationId)
+            ->where('event_id', $this->eventModel->id)
+            ->where('status', 'committed')
+            ->exists();
     }
 
     /**
@@ -874,6 +908,14 @@ class EquipmentAssignment extends Component
             return;
         }
 
+        // Warn if station has an active operating session
+        if ($this->hasActiveSession) {
+            $this->unassignEquipmentId = $equipmentId;
+            $this->showUnassignConfirmModal = true;
+
+            return;
+        }
+
         $this->unassignEquipment($equipmentId);
     }
 
@@ -992,6 +1034,8 @@ class EquipmentAssignment extends Component
         unset($this->catalogEquipment);
         unset($this->assignedCount);
         unset($this->assignedTotalValue);
+        unset($this->hasActiveSession);
+        unset($this->hasCommittedEquipmentDuringSession);
     }
 
     /**
