@@ -35,7 +35,7 @@ class SectionSeeder extends Seeder
             ['code' => 'MDC', 'name' => 'Maryland-DC', 'region' => 'W3', 'country' => 'US'],
             ['code' => 'WPA', 'name' => 'Western Pennsylvania', 'region' => 'W3', 'country' => 'US'],
 
-            // W4 - Southeast (12 sections)
+            // W4 - Southeast (10 sections)
             ['code' => 'AL', 'name' => 'Alabama', 'region' => 'W4', 'country' => 'US'],
             ['code' => 'GA', 'name' => 'Georgia', 'region' => 'W4', 'country' => 'US'],
             ['code' => 'KY', 'name' => 'Kentucky', 'region' => 'W4', 'country' => 'US'],
@@ -46,8 +46,10 @@ class SectionSeeder extends Seeder
             ['code' => 'WCF', 'name' => 'West Central Florida', 'region' => 'W4', 'country' => 'US'],
             ['code' => 'TN', 'name' => 'Tennessee', 'region' => 'W4', 'country' => 'US'],
             ['code' => 'VA', 'name' => 'Virginia', 'region' => 'W4', 'country' => 'US'],
-            ['code' => 'PR', 'name' => 'Puerto Rico', 'region' => 'W4', 'country' => 'US'],
-            ['code' => 'VI', 'name' => 'Virgin Islands', 'region' => 'W4', 'country' => 'US'],
+
+            // KP4 - Puerto Rico & Virgin Islands (2 sections)
+            ['code' => 'PR', 'name' => 'Puerto Rico', 'region' => 'KP4', 'country' => 'US'],
+            ['code' => 'VI', 'name' => 'Virgin Islands', 'region' => 'KP4', 'country' => 'US'],
 
             // W5 - South Central (8 sections)
             ['code' => 'AR', 'name' => 'Arkansas', 'region' => 'W5', 'country' => 'US'],
@@ -59,7 +61,7 @@ class SectionSeeder extends Seeder
             ['code' => 'STX', 'name' => 'South Texas', 'region' => 'W5', 'country' => 'US'],
             ['code' => 'WTX', 'name' => 'West Texas', 'region' => 'W5', 'country' => 'US'],
 
-            // W6 - California (10 sections)
+            // W6 - California (9 sections)
             ['code' => 'EB', 'name' => 'East Bay', 'region' => 'W6', 'country' => 'US'],
             ['code' => 'LAX', 'name' => 'Los Angeles', 'region' => 'W6', 'country' => 'US'],
             ['code' => 'ORG', 'name' => 'Orange', 'region' => 'W6', 'country' => 'US'],
@@ -69,7 +71,9 @@ class SectionSeeder extends Seeder
             ['code' => 'SF', 'name' => 'San Francisco', 'region' => 'W6', 'country' => 'US'],
             ['code' => 'SJV', 'name' => 'San Joaquin Valley', 'region' => 'W6', 'country' => 'US'],
             ['code' => 'SV', 'name' => 'Sacramento Valley', 'region' => 'W6', 'country' => 'US'],
-            ['code' => 'PAC', 'name' => 'Pacific', 'region' => 'W6', 'country' => 'US'],
+
+            // KH6 - Hawaii/Pacific (1 section)
+            ['code' => 'PAC', 'name' => 'Pacific', 'region' => 'KH6', 'country' => 'US'],
 
             // W7 - Mountain (9 sections)
             ['code' => 'AZ', 'name' => 'Arizona', 'region' => 'W7', 'country' => 'US'],
