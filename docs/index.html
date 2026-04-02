@@ -22,30 +22,16 @@
     width: 100%; height: 100%;
     object-fit: cover;
     object-position: center bottom;
-    filter: saturate(0.3) brightness(0.35);
+    /* brightness/saturation pre-baked into homepagebg-dark.webp */
   }
   .hero-photo::after {
     content: '';
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     background:
-      /* Center vignette - keeps text area dark */
-      radial-gradient(ellipse 60% 50% at 50% 40%, rgba(25,30,36,0.85) 0%, transparent 100%),
       /* Bottom fade into page */
-      linear-gradient(to bottom, transparent 60%, var(--bg-primary) 100%),
+      linear-gradient(to bottom, transparent 50%, var(--bg-primary) 100%),
       /* Top fade */
       linear-gradient(to bottom, rgba(25,30,36,0.6) 0%, transparent 30%);
-  }
-  .hero::after {
-    content: '';
-    position: absolute; top: 50%; right: -100px; transform: translateY(-60%);
-    width: 400px; height: 400px;
-    border: 1px solid rgba(60,131,246,0.06);
-    border-radius: 50%;
-    box-shadow:
-      0 0 0 40px rgba(60,131,246,0.03),
-      0 0 0 80px rgba(60,131,246,0.02),
-      0 0 0 120px rgba(60,131,246,0.01);
-    pointer-events: none;
   }
   .hero h1 {
     font-size: clamp(2.5rem, 6vw, 4.2rem);
@@ -117,7 +103,7 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 2rem;
-    transition: all 0.3s;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
     position: relative;
     overflow: hidden;
   }
@@ -178,7 +164,7 @@
   .role-card {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 14px; padding: 2rem;
-    transition: all 0.3s;
+    transition: transform 0.3s, border-color 0.3s;
   }
   .role-card:hover { border-color: var(--border); transform: translateY(-2px); }
   .role-tag {
@@ -209,7 +195,7 @@
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 100px; padding: 0.6rem 1.25rem;
     font-size: 0.88rem; font-weight: 500; color: var(--text-primary);
-    transition: all 0.2s;
+    transition: border-color 0.2s, background 0.2s;
   }
   .tech-pill:hover { border-color: var(--accent-green); background: var(--bg-card-hover); }
   .tech-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -259,7 +245,7 @@
 <script src="nav.js"></script>
 
 <section class="hero">
-  <div class="hero-photo"><img src="homepagebg.webp" alt=""></div>
+  <div class="hero-photo"><img src="homepagebg-dark.webp" alt=""></div>
   <div class="container">
     <h1>
       The complete<br><span class="gradient">Field Day operations platform.</span>
