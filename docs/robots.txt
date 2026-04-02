@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://fielddaycommander.org/sitemap.xml
