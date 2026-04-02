@@ -428,7 +428,7 @@ describe('Equipment Status List', function () {
             'equipment_id' => $equipment->id,
             'event_id' => $this->event->id,
             'station_id' => $station->id,
-            'status' => 'in_use',
+            'status' => 'delivered',
         ]);
 
         $component = Livewire::test(ListWidget::class, [
@@ -443,8 +443,8 @@ describe('Equipment Status List', function () {
             ->and($data['items'][0])->toHaveKeys(['type', 'equipment_name', 'status', 'status_color', 'assigned_to'])
             ->and($data['items'][0]['type'])->toBe('equipment')
             ->and($data['items'][0]['equipment_name'])->toBe('Yaesu FT-991A')
-            ->and($data['items'][0]['status'])->toBe('In_use')
-            ->and($data['items'][0]['status_color'])->toBe('success')
+            ->and($data['items'][0]['status'])->toBe('Delivered')
+            ->and($data['items'][0]['status_color'])->toBe('info')
             ->and($data['items'][0]['assigned_to'])->toBe('Station Charlie');
     });
 
@@ -480,7 +480,7 @@ describe('Equipment Status List', function () {
         EquipmentEvent::factory()->create([
             'equipment_id' => $equipment1->id,
             'event_id' => $this->event->id,
-            'status' => 'in_use',
+            'status' => 'committed',
         ]);
 
         EquipmentEvent::factory()->create([
@@ -507,8 +507,7 @@ describe('Equipment Status List', function () {
 
     it('orders equipment by priority status', function () {
         $equipment1 = Equipment::factory()->create(['make' => 'A', 'model' => 'Committed']);
-        $equipment2 = Equipment::factory()->create(['make' => 'B', 'model' => 'In Use']);
-        $equipment3 = Equipment::factory()->create(['make' => 'C', 'model' => 'Delivered']);
+        $equipment2 = Equipment::factory()->create(['make' => 'B', 'model' => 'Delivered']);
 
         // Create in non-priority order
         EquipmentEvent::factory()->create([
@@ -520,12 +519,6 @@ describe('Equipment Status List', function () {
         EquipmentEvent::factory()->create([
             'equipment_id' => $equipment2->id,
             'event_id' => $this->event->id,
-            'status' => 'in_use',
-        ]);
-
-        EquipmentEvent::factory()->create([
-            'equipment_id' => $equipment3->id,
-            'event_id' => $this->event->id,
             'status' => 'delivered',
         ]);
 
@@ -535,11 +528,10 @@ describe('Equipment Status List', function () {
 
         $data = $component->instance()->getData();
 
-        // Should be ordered: in_use, delivered, committed
-        expect($data['items'])->toHaveCount(3)
-            ->and($data['items'][0]['equipment_name'])->toContain('In Use')
-            ->and($data['items'][1]['equipment_name'])->toContain('Delivered')
-            ->and($data['items'][2]['equipment_name'])->toContain('Committed');
+        // Should be ordered: delivered, committed
+        expect($data['items'])->toHaveCount(2)
+            ->and($data['items'][0]['equipment_name'])->toContain('Delivered')
+            ->and($data['items'][1]['equipment_name'])->toContain('Committed');
     });
 
     it('limits equipment to 15 for normal size', function () {
@@ -549,7 +541,7 @@ describe('Equipment Status List', function () {
             EquipmentEvent::factory()->create([
                 'equipment_id' => $equipment->id,
                 'event_id' => $this->event->id,
-                'status' => 'in_use',
+                'status' => 'delivered',
             ]);
         }
 
@@ -570,7 +562,7 @@ describe('Equipment Status List', function () {
             EquipmentEvent::factory()->create([
                 'equipment_id' => $equipment->id,
                 'event_id' => $this->event->id,
-                'status' => 'in_use',
+                'status' => 'delivered',
             ]);
         }
 
@@ -587,22 +579,15 @@ describe('Equipment Status List', function () {
     it('maps status to correct colors', function () {
         $equipment1 = Equipment::factory()->create(['make' => 'A', 'model' => '1']);
         $equipment2 = Equipment::factory()->create(['make' => 'B', 'model' => '2']);
-        $equipment3 = Equipment::factory()->create(['make' => 'C', 'model' => '3']);
 
         EquipmentEvent::factory()->create([
             'equipment_id' => $equipment1->id,
-            'event_id' => $this->event->id,
-            'status' => 'in_use',
-        ]);
-
-        EquipmentEvent::factory()->create([
-            'equipment_id' => $equipment2->id,
             'event_id' => $this->event->id,
             'status' => 'delivered',
         ]);
 
         EquipmentEvent::factory()->create([
-            'equipment_id' => $equipment3->id,
+            'equipment_id' => $equipment2->id,
             'event_id' => $this->event->id,
             'status' => 'committed',
         ]);
@@ -613,9 +598,8 @@ describe('Equipment Status List', function () {
 
         $data = $component->instance()->getData();
 
-        expect($data['items'][0]['status_color'])->toBe('success') // in_use
-            ->and($data['items'][1]['status_color'])->toBe('info') // delivered
-            ->and($data['items'][2]['status_color'])->toBe('warning'); // committed
+        expect($data['items'][0]['status_color'])->toBe('info') // delivered
+            ->and($data['items'][1]['status_color'])->toBe('warning'); // committed
     });
 });
 
@@ -745,7 +729,7 @@ describe('View Rendering', function () {
             'equipment_id' => $equipment->id,
             'event_id' => $this->event->id,
             'station_id' => $station->id,
-            'status' => 'in_use',
+            'status' => 'delivered',
         ]);
 
         Livewire::test(ListWidget::class, [

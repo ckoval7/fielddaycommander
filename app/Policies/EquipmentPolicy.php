@@ -98,7 +98,7 @@ class EquipmentPolicy
 
         // Equipment must not have active commitments
         $hasActiveCommitments = $equipment->commitments()
-            ->whereIn('status', ['committed', 'delivered', 'in_use'])
+            ->whereIn('status', ['committed', 'delivered'])
             ->exists();
 
         return ! $hasActiveCommitments;

@@ -69,7 +69,7 @@ test('observer sends notifications when equipment is delivered', function () {
     Notification::assertSentTo($manager, EquipmentDelivered::class);
 });
 
-test('observer sends notifications when equipment status changes to in_use', function () {
+test('observer sends notifications when equipment status changes to returned', function () {
     $owner = User::factory()->create();
 
     $equipment = Equipment::factory()->create(['owner_user_id' => $owner->id]);
@@ -83,33 +83,11 @@ test('observer sends notifications when equipment status changes to in_use', fun
 
     Notification::fake();
 
-    $equipmentEvent->status = 'in_use';
-    $equipmentEvent->save();
-
-    Notification::assertSentTo($owner, EquipmentStatusChanged::class, function ($notification) {
-        return $notification->previousStatus === 'delivered';
-    });
-});
-
-test('observer sends notifications when equipment status changes to returned', function () {
-    $owner = User::factory()->create();
-
-    $equipment = Equipment::factory()->create(['owner_user_id' => $owner->id]);
-    $event = Event::factory()->create();
-
-    $equipmentEvent = EquipmentEvent::factory()->create([
-        'equipment_id' => $equipment->id,
-        'event_id' => $event->id,
-        'status' => 'in_use',
-    ]);
-
-    Notification::fake();
-
     $equipmentEvent->status = 'returned';
     $equipmentEvent->save();
 
     Notification::assertSentTo($owner, EquipmentStatusChanged::class, function ($notification) {
-        return $notification->previousStatus === 'in_use';
+        return $notification->previousStatus === 'delivered';
     });
 });
 
@@ -126,7 +104,7 @@ test('observer sends incident notifications when equipment is lost', function ()
     $equipmentEvent = EquipmentEvent::factory()->create([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
-        'status' => 'in_use',
+        'status' => 'delivered',
     ]);
 
     Notification::fake();
@@ -155,7 +133,7 @@ test('observer sends incident notifications when equipment is damaged', function
     $equipmentEvent = EquipmentEvent::factory()->create([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
-        'status' => 'in_use',
+        'status' => 'delivered',
     ]);
 
     Notification::fake();

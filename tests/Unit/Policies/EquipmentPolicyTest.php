@@ -191,16 +191,6 @@ describe('forceDelete', function () {
         expect($this->policy->forceDelete($user, $equipment))->toBeFalse();
     });
 
-    it('denies force delete when equipment has an in_use status commitment', function () {
-        $equipment = Equipment::factory()->create();
-        EquipmentEvent::factory()->inUse()->create(['equipment_id' => $equipment->id]);
-
-        $user = User::factory()->create();
-        $user->givePermissionTo('edit-any-equipment');
-
-        expect($this->policy->forceDelete($user, $equipment))->toBeFalse();
-    });
-
     it('allows force delete when equipment only has cancelled commitments', function () {
         $equipment = Equipment::factory()->create();
         EquipmentEvent::factory()->cancelled()->create(['equipment_id' => $equipment->id]);

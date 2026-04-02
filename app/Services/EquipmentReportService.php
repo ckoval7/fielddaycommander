@@ -199,7 +199,7 @@ class EquipmentReportService
         // Get equipment commitments grouped by station
         $commitments = \App\Models\EquipmentEvent::query()
             ->where('event_id', $eventId)
-            ->whereIn('status', ['committed', 'delivered', 'in_use'])
+            ->whereIn('status', ['committed', 'delivered'])
             ->with([
                 'equipment.owner',
                 'equipment.bands',
@@ -315,7 +315,7 @@ class EquipmentReportService
     /**
      * Generate post-event return tracking checklist.
      *
-     * Returns equipment needing return (status: delivered or in_use),
+     * Returns equipment needing return (status: delivered),
      * with checkboxes, owner signature lines, and special instructions.
      *
      * @param  int  $eventId  The event ID to generate return checklist for
@@ -331,7 +331,7 @@ class EquipmentReportService
 
         $returnItems = \App\Models\EquipmentEvent::query()
             ->where('event_id', $eventId)
-            ->whereIn('status', ['delivered', 'in_use'])
+            ->whereIn('status', ['delivered'])
             ->with([
                 'equipment.owner',
                 'station',
@@ -485,8 +485,8 @@ class EquipmentReportService
         $totalValue = $equipmentRecords->sum('value_usd');
         $statusBreakdown = $equipmentRecords->groupBy('final_status')->map->count();
 
-        // Calculate success rate (returned + in_use / total)
-        $successfulItems = $equipmentRecords->whereIn('final_status', ['returned', 'in_use'])->count();
+        // Calculate success rate (returned / total)
+        $successfulItems = $equipmentRecords->whereIn('final_status', ['returned'])->count();
         $total = $equipmentRecords->count();
         $successRate = $total > 0 ? ($successfulItems / $total) * 100 : 0;
 

@@ -355,7 +355,7 @@ class StationCloneService
         // Get equipment assigned to the source station
         $sourceEquipmentEvents = EquipmentEvent::query()
             ->where('station_id', $sourceStation->id)
-            ->whereIn('status', ['committed', 'delivered', 'in_use'])
+            ->whereIn('status', ['committed', 'delivered'])
             ->with(['equipment.owner', 'equipment.owningOrganization'])
             ->get();
 
@@ -478,7 +478,7 @@ class StationCloneService
         $overlappingCommitment = EquipmentEvent::query()
             ->where('equipment_id', $equipmentId)
             ->where('event_id', '!=', $targetEventId)
-            ->whereIn('status', ['committed', 'delivered', 'in_use'])
+            ->whereIn('status', ['committed', 'delivered'])
             ->whereHas('event', function ($query) use ($targetEvent) {
                 $query->where(function ($q) use ($targetEvent) {
                     // Event starts during target event
@@ -523,7 +523,7 @@ class StationCloneService
 
         $equipmentEvents = EquipmentEvent::query()
             ->where('station_id', $sourceStation->id)
-            ->whereIn('status', ['committed', 'delivered', 'in_use'])
+            ->whereIn('status', ['committed', 'delivered'])
             ->with('equipment')
             ->get();
 

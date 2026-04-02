@@ -174,14 +174,13 @@ class ListWidget extends Component
         $commitments = \App\Models\EquipmentEvent::query()
             ->where('event_id', $event->id)
             ->with(['equipment', 'station'])
-            ->whereIn('status', ['committed', 'delivered', 'in_use'])
+            ->whereIn('status', ['committed', 'delivered'])
             ->get()
             ->sortBy(function ($commitment) {
-                // Sort by status priority: in_use, delivered, committed
+                // Sort by status priority: delivered, committed
                 return match ($commitment->status) {
-                    'in_use' => 1,
-                    'delivered' => 2,
-                    'committed' => 3,
+                    'delivered' => 1,
+                    'committed' => 2,
                     default => 99,
                 };
             })
@@ -226,7 +225,6 @@ class ListWidget extends Component
     protected function getStatusColor(string $status): string
     {
         return match ($status) {
-            'in_use' => 'success',
             'delivered' => 'info',
             'committed' => 'warning',
             'cancelled', 'lost', 'damaged' => 'error',

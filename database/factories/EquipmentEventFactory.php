@@ -45,18 +45,6 @@ class EquipmentEventFactory extends Factory
     }
 
     /**
-     * Set the equipment event status to in_use.
-     */
-    public function inUse(): static
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'status' => 'in_use',
-            ];
-        });
-    }
-
-    /**
      * Set the equipment event status to returned.
      */
     public function returned(): static

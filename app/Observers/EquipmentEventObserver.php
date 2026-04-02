@@ -67,7 +67,7 @@ class EquipmentEventObserver
             // Handle different status transitions
             match ($newStatus) {
                 'delivered' => $this->handleDelivered($equipmentEvent, $operator),
-                'in_use', 'returned' => $this->handleStatusChange($equipmentEvent, $operator, $oldStatus),
+                'returned' => $this->handleStatusChange($equipmentEvent, $operator, $oldStatus),
                 'lost', 'damaged' => $this->handleIncident($equipmentEvent, $operator, $newStatus),
                 'cancelled' => $this->handleCancelled($equipmentEvent),
                 default => null,
@@ -127,7 +127,7 @@ class EquipmentEventObserver
     }
 
     /**
-     * Handle general status changes (in_use, returned).
+     * Handle general status changes (returned).
      *
      * @param  EquipmentEvent  $equipmentEvent  The equipment event
      * @param  User|null  $operator  The equipment owner

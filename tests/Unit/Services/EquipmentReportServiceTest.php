@@ -124,7 +124,7 @@ class EquipmentReportServiceTest extends TestCase
             'equipment_id' => $equipment1->id,
             'event_id' => $this->event->id,
             'station_id' => $this->station->id,
-            'status' => 'in_use',
+            'status' => 'delivered',
         ]);
 
         EquipmentEvent::factory()->create([
@@ -164,11 +164,10 @@ class EquipmentReportServiceTest extends TestCase
             ->and($report['contacts'][0]['equipment_count'])->toBe(2);
     }
 
-    public function test_generate_return_checklist_includes_only_delivered_and_in_use(): void
+    public function test_generate_return_checklist_includes_only_delivered(): void
     {
         $equipment1 = Equipment::factory()->create(['owner_user_id' => $this->owner->id]);
         $equipment2 = Equipment::factory()->create(['owner_user_id' => $this->owner->id]);
-        $equipment3 = Equipment::factory()->create(['owner_user_id' => $this->owner->id]);
 
         EquipmentEvent::factory()->create([
             'equipment_id' => $equipment1->id,
@@ -179,20 +178,14 @@ class EquipmentReportServiceTest extends TestCase
         EquipmentEvent::factory()->create([
             'equipment_id' => $equipment2->id,
             'event_id' => $this->event->id,
-            'status' => 'in_use',
-        ]);
-
-        EquipmentEvent::factory()->create([
-            'equipment_id' => $equipment3->id,
-            'event_id' => $this->event->id,
             'status' => 'returned',
         ]);
 
         $report = $this->service->generateReturnChecklist($this->event->id);
 
         expect($report)->toHaveKeys(['event', 'return_items', 'summary'])
-            ->and($report['return_items'])->toHaveCount(2)
-            ->and($report['summary']['total_items'])->toBe(2);
+            ->and($report['return_items'])->toHaveCount(1)
+            ->and($report['summary']['total_items'])->toBe(1);
     }
 
     public function test_generate_incident_report_includes_lost_damaged_cancelled(): void
@@ -243,7 +236,7 @@ class EquipmentReportServiceTest extends TestCase
         EquipmentEvent::factory()->create([
             'equipment_id' => $equipment2->id,
             'event_id' => $this->event->id,
-            'status' => 'in_use',
+            'status' => 'delivered',
         ]);
 
         EquipmentEvent::factory()->create([
