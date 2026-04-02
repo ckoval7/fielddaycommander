@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notification;
 /**
  * Equipment Status Changed notification.
  *
- * Sent when equipment status changes to: assigned to station, returned.
+ * Sent when equipment status changes to returned.
  * Includes old/new status comparison and relevant details.
  */
 class EquipmentStatusChanged extends Notification implements ShouldQueue
