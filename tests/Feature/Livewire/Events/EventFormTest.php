@@ -257,9 +257,9 @@ test('event form can clone existing event', function () {
     // Should increment year in name
     expect($component->get('name'))->toBe('Field Day 2026');
 
-    // Should clear dates
-    expect($component->get('start_time'))->toBeNull();
-    expect($component->get('end_time'))->toBeNull();
+    // Should autofill Field Day dates for the new year (4th Saturday in June 2026)
+    expect($component->get('start_time'))->toBe('2026-06-27 18:00:00');
+    expect($component->get('end_time'))->toBe('2026-06-28 20:59:00');
 
     // Should copy configuration
     expect($component->get('callsign'))->toBe('W1AW');
@@ -501,6 +501,74 @@ test('event form requires at least one power source', function () {
         ->set('uses_battery', true)
         ->call('save')
         ->assertHasNoErrors();
+});
+
+// Field Day Date Autofill Tests
+
+test('selecting Field Day event type autofills start and end dates', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Field Day 2025')
+        ->set('event_type_id', $this->eventType->id);
+
+    // 2025: June 1 is Sunday, so Saturdays are 7, 14, 21, 28. 4th Saturday = June 28.
+    expect($component->get('start_time'))->toBe('2025-06-28 18:00:00');
+    expect($component->get('end_time'))->toBe('2025-06-29 20:59:00');
+});
+
+test('changing year in event name recalculates Field Day dates', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('name', 'Field Day 2025');
+
+    expect($component->get('start_time'))->toBe('2025-06-28 18:00:00');
+
+    // Change year to 2027 — June 1 2027 is Tuesday, Saturdays: 5, 12, 19, 26
+    $component->set('name', 'Field Day 2027');
+
+    expect($component->get('start_time'))->toBe('2027-06-26 18:00:00');
+    expect($component->get('end_time'))->toBe('2027-06-27 20:59:00');
+});
+
+test('non-Field Day event type does not autofill dates', function () {
+    $this->actingAs($this->user);
+
+    $wfdType = EventType::create([
+        'code' => 'WFD',
+        'name' => 'Winter Field Day',
+        'description' => 'Winter Field Day',
+        'is_active' => true,
+    ]);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Winter Field Day 2025')
+        ->set('event_type_id', $wfdType->id);
+
+    expect($component->get('start_time'))->toBeNull();
+    expect($component->get('end_time'))->toBeNull();
+});
+
+test('Field Day date autofill does not apply in edit mode', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'name' => 'Field Day 2025',
+        'start_time' => '2025-06-28 18:00:00',
+        'end_time' => '2025-06-29 20:59:00',
+    ]);
+
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+    ]);
+
+    // In edit mode, manually change dates — they should not be overwritten
+    $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])
+        ->set('end_time', '2025-06-29 21:00:00');
+
+    expect($component->get('end_time'))->toBe('2025-06-29 21:00:00');
 });
 
 // Guestbook Settings Tests

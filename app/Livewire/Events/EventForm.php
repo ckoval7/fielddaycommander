@@ -8,6 +8,7 @@ use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\OperatingClass;
 use App\Models\Section;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
@@ -206,15 +207,43 @@ class EventForm extends Component
             $this->year = $newYear;
         }
 
-        // Clear dates
-        $this->start_time = null;
-        $this->end_time = null;
-
         // Reset event ID so we create a new one
         $this->eventId = null;
 
         // Not locked for clone
         $this->isLocked = false;
+
+        // Clear dates, then autofill if Field Day
+        $this->start_time = null;
+        $this->end_time = null;
+        $this->autofillFieldDayDates();
+    }
+
+    /**
+     * Autofill start/end times if the selected event type is Field Day.
+     * Field Day is the 4th full weekend of June: 1800 UTC Saturday to 2059 UTC Sunday.
+     */
+    private function autofillFieldDayDates(): void
+    {
+        if (! $this->event_type_id) {
+            return;
+        }
+
+        $eventType = EventType::find($this->event_type_id);
+
+        if (! $eventType || $eventType->code !== 'FD') {
+            return;
+        }
+
+        $year = $this->year ?? (int) now()->year;
+
+        // Find the 4th Saturday in June
+        $june1 = Carbon::create($year, 6, 1);
+        $firstSaturday = $june1->isSaturday() ? $june1->copy() : $june1->copy()->next(Carbon::SATURDAY);
+        $fourthSaturday = $firstSaturday->copy()->addWeeks(3);
+
+        $this->start_time = $fourthSaturday->copy()->setTime(18, 0, 0)->format('Y-m-d H:i:s');
+        $this->end_time = $fourthSaturday->copy()->addDay()->setTime(20, 59, 0)->format('Y-m-d H:i:s');
     }
 
     #[Computed]
@@ -333,11 +362,26 @@ class EventForm extends Component
         }
     }
 
+    public function updatedEventTypeId($value): void
+    {
+        if (! $value || $this->mode === 'edit') {
+            return;
+        }
+
+        $this->autofillFieldDayDates();
+    }
+
     public function updated($property): void
     {
         // Auto-calculate year from name if it contains a year
         if ($property === 'name' && preg_match('/\d{4}/', $this->name, $matches)) {
+            $previousYear = $this->year;
             $this->year = (int) $matches[0];
+
+            // Recalculate Field Day dates when year changes
+            if ($this->year !== $previousYear && $this->mode !== 'edit') {
+                $this->autofillFieldDayDates();
+            }
         }
 
         // Clear GOTA fields if class doesn't allow GOTA
