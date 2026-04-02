@@ -269,7 +269,7 @@ class Equipment extends Model
                     });
             })
                 // Only consider active commitments
-                ->whereIn('status', ['committed', 'delivered', 'in_use']);
+                ->whereIn('status', ['committed', 'delivered']);
         });
     }
 
@@ -313,7 +313,7 @@ class Equipment extends Model
         return Attribute::make(
             get: function (): ?EquipmentEvent {
                 return $this->commitments()
-                    ->whereIn('status', ['committed', 'delivered', 'in_use'])
+                    ->whereIn('status', ['committed', 'delivered'])
                     ->whereHas('event', function (Builder $query) {
                         $query->where('start_time', '<=', now()->addDays(30))
                             ->where('end_time', '>=', now());
