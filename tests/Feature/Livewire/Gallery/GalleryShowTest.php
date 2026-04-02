@@ -102,3 +102,34 @@ test('admin can delete any photo', function () {
 
     expect(Image::find($image->id))->toBeNull();
 });
+
+test('download button visible for users with manage-images permission', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-images');
+    $eventConfig = EventConfiguration::factory()->create();
+    Image::factory()->create(['event_configuration_id' => $eventConfig->id]);
+
+    Livewire::actingAs($user)
+        ->test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
+        ->assertSee('Download Album');
+});
+
+test('download button hidden for users without manage-images permission', function () {
+    $user = User::factory()->create();
+    $eventConfig = EventConfiguration::factory()->create();
+    Image::factory()->create(['event_configuration_id' => $eventConfig->id]);
+
+    Livewire::actingAs($user)
+        ->test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
+        ->assertDontSee('Download Album');
+});
+
+test('download button hidden when no images exist', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-images');
+    $eventConfig = EventConfiguration::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
+        ->assertDontSee('Download Album');
+});

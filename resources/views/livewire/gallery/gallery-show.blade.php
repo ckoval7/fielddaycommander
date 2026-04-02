@@ -3,10 +3,25 @@
         <x-slot:actions>
             <x-button label="Back to Gallery" icon="o-arrow-left" link="{{ route('gallery.index') }}" />
             @auth
+                @can('manage-images')
+                    @if($this->images->isNotEmpty())
+                        <form method="POST" action="{{ route('album-export.store', $eventConfiguration) }}" class="inline">
+                            @csrf
+                            <x-button type="submit" label="Download Album" icon="o-arrow-down-tray" class="btn-secondary" />
+                        </form>
+                    @endif
+                @endcan
                 <x-button label="Upload Photo" icon="o-arrow-up-tray" link="{{ route('gallery.upload', $eventConfiguration) }}" class="btn-primary" />
             @endauth
         </x-slot:actions>
     </x-header>
+
+    @if(session('status'))
+        <div class="alert alert-info mb-4">
+            <x-icon name="o-information-circle" class="w-5 h-5" />
+            <span>{{ session('status') }}</span>
+        </div>
+    @endif
 
     @if($this->images->isEmpty())
         <x-card>
