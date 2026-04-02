@@ -13,7 +13,7 @@ class Admin2FAStatus extends Command
 
     public function handle(): int
     {
-        $admin = User::where('call_sign', 'SYSTEM')->first();
+        $admin = User::where('call_sign', User::SYSTEM_CALL_SIGN)->first();
 
         if (! $admin) {
             $this->error('System admin account not found!');

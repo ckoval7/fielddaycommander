@@ -71,7 +71,7 @@ class SetupController extends Controller
 
         DB::transaction(function () use ($step1, $step2, $step3) {
             // Update admin password
-            $admin = User::where('call_sign', 'SYSTEM')->firstOrFail();
+            $admin = User::where('call_sign', User::SYSTEM_CALL_SIGN)->firstOrFail();
             $admin->update([
                 'password' => Hash::make($step1['admin_password']),
             ]);

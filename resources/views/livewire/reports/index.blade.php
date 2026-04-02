@@ -159,8 +159,8 @@
                 </div>
             </a>
 
-            {{-- CLUB SUMMARY PDF — blue border --}}
-            <a href="{{ route('reports.club-summary') }}"
+            {{-- ARRL SUBMISSION SHEET — blue border --}}
+            <a href="{{ route('reports.submission-sheet') }}"
                class="group no-underline block rounded-lg p-5 transition-shadow hover:shadow-md"
                style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
                 <div class="flex items-start gap-4">
@@ -170,10 +170,10 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
-                            Club Summary PDF
+                            Submission Sheet
                         </div>
                         <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
-                            Printable score report · .pdf file
+                            ARRL entry form reference · .pdf with dupe sheet
                         </div>
                         <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
                              style="color: var(--reports-pdf-icon);">

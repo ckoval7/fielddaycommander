@@ -11,7 +11,7 @@ class SystemAdminSeeder extends Seeder
     public function run(): void
     {
         $admin = User::create([
-            'call_sign' => 'SYSTEM',
+            'call_sign' => User::SYSTEM_CALL_SIGN,
             'first_name' => 'System',
             'last_name' => 'Administrator',
             'email' => 'admin@localhost',

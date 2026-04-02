@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\CabrilloExporter;
 use App\Services\ClubSummaryReportService;
 use App\Services\EventContextService;
+use App\Services\SubmissionReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -12,13 +13,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * Controller for generating and downloading Field Day report files.
  *
- * Handles Cabrillo log export and the club summary PDF for the active event.
+ * Handles Cabrillo log export, ARRL submission sheet, and the club summary PDF for the active event.
  */
 class ReportController extends Controller
 {
     public function __construct(
         protected CabrilloExporter $cabrilloExporter,
         protected ClubSummaryReportService $clubSummaryReportService,
+        protected SubmissionReportService $submissionReportService,
         protected EventContextService $eventContextService,
     ) {}
 
@@ -64,6 +66,29 @@ class ReportController extends Controller
         $filename = "{$callsign}-{$year}-club-summary.pdf";
 
         $pdf = Pdf::loadView('reports.club-summary-pdf', $data)
+            ->setPaper('letter', 'portrait');
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Download the ARRL submission sheet PDF for the active event.
+     */
+    public function submissionSheet(): Response
+    {
+        $config = $this->eventContextService->getEventConfiguration();
+
+        if ($config === null) {
+            abort(404);
+        }
+
+        $data = $this->submissionReportService->getData($config);
+
+        $callsign = strtolower($config->callsign);
+        $year = $config->event->start_time->year;
+        $filename = "{$callsign}-{$year}-submission-sheet.pdf";
+
+        $pdf = Pdf::loadView('reports.submission-sheet-pdf', $data)
             ->setPaper('letter', 'portrait');
 
         return $pdf->download($filename);

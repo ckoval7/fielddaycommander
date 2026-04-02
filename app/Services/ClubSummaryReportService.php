@@ -117,6 +117,7 @@ class ClubSummaryReportService
         return Contact::where('event_configuration_id', $config->id)
             ->notDuplicate()
             ->whereNotNull('logger_user_id')
+            ->whereHas('logger', fn ($q) => $q->excludeSystem())
             ->selectRaw('logger_user_id, count(*) as valid_qsos')
             ->groupBy('logger_user_id')
             ->with('logger')

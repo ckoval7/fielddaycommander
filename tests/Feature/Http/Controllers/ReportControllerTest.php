@@ -117,3 +117,35 @@ describe('club-summary endpoint', function () {
             ->assertNotFound();
     });
 });
+
+describe('submission-sheet endpoint', function () {
+    test('redirects unauthenticated user to login', function () {
+        $this->get(route('reports.submission-sheet'))
+            ->assertRedirect(route('login'));
+    });
+
+    test('returns 200 with application/pdf content type for authorised user', function () {
+        $this->actingAs($this->user)
+            ->get(route('reports.submission-sheet'))
+            ->assertSuccessful()
+            ->assertHeader('Content-Type', 'application/pdf');
+    });
+
+    test('filename header contains callsign and submission-sheet', function () {
+        $disposition = $this->actingAs($this->user)
+            ->get(route('reports.submission-sheet'))
+            ->headers->get('Content-Disposition');
+
+        expect($disposition)
+            ->toContain('w1aw')
+            ->toContain('submission-sheet');
+    });
+
+    test('returns 404 when no active event exists', function () {
+        $this->event->forceDelete();
+
+        $this->actingAs($this->user)
+            ->get(route('reports.submission-sheet'))
+            ->assertNotFound();
+    });
+});

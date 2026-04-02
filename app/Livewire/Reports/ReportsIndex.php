@@ -82,6 +82,7 @@ class ReportsIndex extends Component
 
         return Contact::where('event_configuration_id', $this->config()->id)
             ->whereNotNull('logger_user_id')
+            ->whereHas('logger', fn ($q) => $q->excludeSystem())
             ->selectRaw('logger_user_id,
                 count(*) as total_logged,
                 sum(case when is_duplicate = 0 then 1 else 0 end) as valid_qsos,

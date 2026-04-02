@@ -98,6 +98,24 @@ class User extends Authenticatable
         return $this->getRelation('roles');
     }
 
+    public const SYSTEM_CALL_SIGN = 'SYSTEM';
+
+    /**
+     * Check if this is the built-in system user account.
+     */
+    public function isSystemUser(): bool
+    {
+        return $this->call_sign === self::SYSTEM_CALL_SIGN;
+    }
+
+    /**
+     * Exclude the built-in system user from query results.
+     */
+    public function scopeExcludeSystem($query)
+    {
+        return $query->where('call_sign', '!=', self::SYSTEM_CALL_SIGN);
+    }
+
     /**
      * Check if the user is a system administrator.
      */
