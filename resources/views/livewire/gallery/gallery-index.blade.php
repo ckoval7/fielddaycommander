@@ -50,30 +50,40 @@
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             @foreach($this->events as $eventConfig)
-                <a wire:key="event-{{ $eventConfig->id }}" href="{{ route('gallery.show', $eventConfig) }}" class="block">
-                    <x-card class="shadow-md hover:shadow-lg transition-shadow cursor-pointer h-full">
-                        <div class="aspect-video bg-base-300 rounded-lg overflow-hidden mb-4">
-                            @if($eventConfig->images->first())
-                                <img
-                                    src="{{ route('gallery.thumb', $eventConfig->images->first()) }}"
-                                    alt="Preview"
-                                    class="w-full h-full object-cover"
-                                >
-                            @else
-                                <div class="w-full h-full flex items-center justify-center">
-                                    <x-icon name="o-photo" class="w-12 h-12 text-base-content/30" />
-                                </div>
-                            @endif
-                        </div>
-                        <h3 class="font-semibold text-lg">{{ $eventConfig->event->name }}</h3>
-                        <p class="text-sm text-base-content/70">
-                            {{ $eventConfig->event->start_time->format('F Y') }}
-                        </p>
-                        <p class="text-sm text-base-content/50 mt-1">
-                            {{ $eventConfig->images_count }} {{ Str::plural('photo', $eventConfig->images_count) }}
-                        </p>
+                <div wire:key="event-{{ $eventConfig->id }}">
+                    <x-card class="shadow-md hover:shadow-lg transition-shadow h-full">
+                        <a href="{{ route('gallery.show', $eventConfig) }}" class="block cursor-pointer">
+                            <div class="aspect-video bg-base-300 rounded-lg overflow-hidden mb-4">
+                                @if($eventConfig->images->first())
+                                    <img
+                                        src="{{ route('gallery.thumb', $eventConfig->images->first()) }}"
+                                        alt="Preview"
+                                        class="w-full h-full object-cover"
+                                    >
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center">
+                                        <x-icon name="o-photo" class="w-12 h-12 text-base-content/30" />
+                                    </div>
+                                @endif
+                            </div>
+                            <h3 class="font-semibold text-lg">{{ $eventConfig->event->name }}</h3>
+                            <p class="text-sm text-base-content/70">
+                                {{ $eventConfig->event->start_time->format('F Y') }}
+                            </p>
+                            <p class="text-sm text-base-content/50 mt-1">
+                                {{ $eventConfig->images_count }} {{ Str::plural('photo', $eventConfig->images_count) }}
+                            </p>
+                        </a>
+                        @can('manage-images')
+                            <div class="mt-3 pt-3 border-t border-base-200">
+                                <form method="POST" action="{{ route('album-export.store', $eventConfig) }}">
+                                    @csrf
+                                    <x-button type="submit" label="Download" icon="o-arrow-down-tray" class="btn-sm btn-ghost w-full" />
+                                </form>
+                            </div>
+                        @endcan
                     </x-card>
-                </a>
+                </div>
             @endforeach
         </div>
     @endif

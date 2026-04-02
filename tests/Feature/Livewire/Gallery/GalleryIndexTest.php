@@ -6,6 +6,7 @@ use App\Models\Image;
 use App\Models\Setting;
 use App\Models\User;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 
 test('gallery index is accessible to guests', function () {
     Livewire::test(GalleryIndex::class)
@@ -100,4 +101,26 @@ test('gallery index redirects to upload when event selected', function () {
         ->set('selectedEventId', $eventConfig->id)
         ->call('uploadToEvent')
         ->assertRedirect(route('gallery.upload', $eventConfig->id));
+});
+
+test('download button visible on event cards for users with manage-images permission', function () {
+    Permission::create(['name' => 'manage-images']);
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-images');
+    $eventConfig = EventConfiguration::factory()->create();
+    Image::factory()->create(['event_configuration_id' => $eventConfig->id]);
+
+    Livewire::actingAs($user)
+        ->test(GalleryIndex::class)
+        ->assertSee('Download');
+});
+
+test('download button hidden on event cards for users without manage-images permission', function () {
+    $user = User::factory()->create();
+    $eventConfig = EventConfiguration::factory()->create();
+    Image::factory()->create(['event_configuration_id' => $eventConfig->id]);
+
+    Livewire::actingAs($user)
+        ->test(GalleryIndex::class)
+        ->assertDontSee('Download');
 });
