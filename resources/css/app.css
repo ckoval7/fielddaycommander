@@ -15,6 +15,17 @@
     themes: light --default, dark --prefersdark;
 }
 
+/* Override DaisyUI's pink secondary with slate */
+[data-theme="light"], :root {
+    --color-secondary: oklch(44.6% 0.043 257.281);       /* slate-600 */
+    --color-secondary-content: oklch(92.9% 0.006 264.531); /* slate-100 */
+}
+
+[data-theme="dark"] {
+    --color-secondary: oklch(55.4% 0.046 257.417);       /* slate-500 */
+    --color-secondary-content: oklch(92.9% 0.006 264.531); /* slate-100 */
+}
+
 /* maryUI */
 @source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";
 
