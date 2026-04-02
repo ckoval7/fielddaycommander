@@ -236,6 +236,14 @@ return [
             'config_schema' => [],
         ],
 
+        'sections_worked' => [
+            'component' => 'dashboard.widgets.sections-worked',
+            'name' => 'Sections Worked',
+            'description' => 'All ARRL sections grouped by call area, showing worked vs not worked',
+            'icon' => 'o-map',
+            'config_schema' => [],
+        ],
+
         'feed' => [
             'component' => 'dashboard.widgets.feed',
             'name' => 'Activity Feed',

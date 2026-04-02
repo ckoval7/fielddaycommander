@@ -190,6 +190,15 @@ Props from controller:
                                         />
                                         @break
 
+                                    @case('sections_worked')
+                                        <livewire:dashboard.widgets.sections-worked
+                                            :config="$widget['config']"
+                                            :widget-id="$widget['id']"
+                                            size="normal"
+                                            wire:key="sections-{{ $widget['id'] }}"
+                                        />
+                                        @break
+
                                     @default
                                         <x-card class="h-full">
                                             <div class="flex flex-col items-center justify-center py-8 text-base-content/50">

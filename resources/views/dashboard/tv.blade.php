@@ -249,6 +249,15 @@ Props from controller:
                                         />
                                         @break
 
+                                    @case('sections_worked')
+                                        <livewire:dashboard.widgets.sections-worked
+                                            :config="$widget['config']"
+                                            :widget-id="$widget['id']"
+                                            size="tv"
+                                            wire:key="tv-sections-{{ $widget['id'] }}"
+                                        />
+                                        @break
+
                                     @default
                                         <x-card class="h-full flex items-center justify-center">
                                             <div class="text-center text-base-content/50">
