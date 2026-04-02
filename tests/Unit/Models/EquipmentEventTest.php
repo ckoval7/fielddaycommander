@@ -18,6 +18,17 @@ beforeEach(function () {
     ]);
 });
 
+it('defines valid statuses without in_use', function () {
+    expect(EquipmentEvent::STATUSES)->toBe([
+        'committed',
+        'delivered',
+        'returned',
+        'cancelled',
+        'lost',
+        'damaged',
+    ]);
+});
+
 // Status Validation Tests
 test('canTransitionTo allows any valid status from any state', function () {
     $commitment = EquipmentEvent::factory()->create([
@@ -218,17 +229,11 @@ test('hasIssues scope returns lost and damaged equipment', function () {
     expect($results->pluck('status')->toArray())->toContain('lost', 'damaged');
 });
 
-test('needsReturn scope returns delivered and in_use equipment', function () {
+test('needsReturn scope returns delivered equipment', function () {
     EquipmentEvent::factory()->create([
         'equipment_id' => $this->equipment->id,
         'event_id' => $this->event->id,
         'status' => 'delivered',
-    ]);
-
-    EquipmentEvent::factory()->create([
-        'equipment_id' => Equipment::factory()->create(['owner_user_id' => $this->user->id])->id,
-        'event_id' => $this->event->id,
-        'status' => 'in_use',
     ]);
 
     EquipmentEvent::factory()->create([
@@ -239,8 +244,8 @@ test('needsReturn scope returns delivered and in_use equipment', function () {
 
     $results = EquipmentEvent::needsReturn()->get();
 
-    expect($results)->toHaveCount(2);
-    expect($results->pluck('status')->toArray())->toContain('delivered', 'in_use');
+    expect($results)->toHaveCount(1);
+    expect($results->pluck('status')->toArray())->toContain('delivered');
 });
 
 test('byOwner scope filters by equipment owner', function () {
@@ -281,23 +286,4 @@ test('assignedToStation scope filters by station assignment', function () {
 
     expect($results)->toHaveCount(1);
     expect($results->first()->station_id)->toBe($station->id);
-});
-
-// assignToStation Method Test
-test('assignToStation assigns equipment and updates status to in_use', function () {
-    $station = Station::factory()->create(['event_configuration_id' => $this->event->eventConfiguration->id ?? \App\Models\EventConfiguration::factory()->create(['event_id' => $this->event->id])->id]);
-
-    $commitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $this->equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'delivered',
-    ]);
-
-    $result = $commitment->assignToStation($station->id, $this->user);
-
-    expect($result)->toBeTrue();
-    $commitment->refresh();
-    expect($commitment->station_id)->toBe($station->id);
-    expect($commitment->status)->toBe('in_use');
-    expect($commitment->assigned_by_user_id)->toBe($this->user->id);
 });

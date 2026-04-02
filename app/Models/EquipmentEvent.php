@@ -38,7 +38,6 @@ class EquipmentEvent extends Model
     public const STATUSES = [
         'committed',
         'delivered',
-        'in_use',
         'returned',
         'cancelled',
         'lost',
@@ -141,7 +140,7 @@ class EquipmentEvent extends Model
      */
     public function scopeNeedsReturn(Builder $query): Builder
     {
-        return $query->whereIn('status', ['delivered', 'in_use']);
+        return $query->whereIn('status', ['delivered']);
     }
 
     /**
@@ -195,24 +194,6 @@ class EquipmentEvent extends Model
                 $this->manager_notes = $noteEntry;
             }
         }
-
-        return $this->save();
-    }
-
-    /**
-     * Assign the equipment to a station and mark it as in use.
-     *
-     * @param  int  $stationId  The ID of the station to assign to
-     * @param  User  $user  The user performing the assignment
-     * @return bool True if the assignment was successful, false if transition to 'in_use' is invalid
-     */
-    public function assignToStation(int $stationId, User $user): bool
-    {
-        $this->station_id = $stationId;
-        $this->assigned_by_user_id = $user->id;
-        $this->status = 'in_use';
-        $this->status_changed_at = now();
-        $this->status_changed_by_user_id = $user->id;
 
         return $this->save();
     }
