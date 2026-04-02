@@ -194,8 +194,7 @@ test('can unassign equipment', function () {
     ]);
 });
 
-test('shows confirmation when unassigning in_use equipment', function () {
-    // Create equipment with in_use status
+test('requestUnassign directly unassigns equipment', function () {
     $computer = Equipment::factory()->create([
         'type' => 'computer',
         'make' => 'Dell',
@@ -207,7 +206,7 @@ test('shows confirmation when unassigning in_use equipment', function () {
         'equipment_id' => $computer->id,
         'event_id' => $this->event->id,
         'station_id' => $this->station->id,
-        'status' => 'in_use',
+        'status' => 'delivered',
         'committed_at' => now(),
         'status_changed_at' => now(),
         'assigned_by_user_id' => $this->user->id,
@@ -215,8 +214,13 @@ test('shows confirmation when unassigning in_use equipment', function () {
 
     Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
         ->call('requestUnassign', $computer->id)
-        ->assertSet('showUnassignConfirmModal', true)
-        ->assertSet('unassignEquipmentId', $computer->id);
+        ->assertDispatched('toast');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $computer->id,
+        'event_id' => $this->event->id,
+        'station_id' => null,
+    ]);
 });
 
 test('detects conflict when equipment assigned to another station', function () {
@@ -549,7 +553,7 @@ test('checkEquipmentConflict detects conflict with committed equipment', functio
     expect($result['conflict_message'])->toContain('Other Station');
 });
 
-test('checkEquipmentConflict prevents reassignment of in_use equipment', function () {
+test('checkEquipmentConflict always allows reassignment', function () {
     // Create another station
     $anotherRadio = Equipment::factory()->create(['type' => 'radio', 'owner_user_id' => $this->user->id]);
     $anotherStation = Station::factory()->create([
@@ -558,10 +562,9 @@ test('checkEquipmentConflict prevents reassignment of in_use equipment', functio
         'name' => 'Active Station',
     ]);
 
-    // Create equipment in use at another station
     $computer = Equipment::factory()->create([
         'type' => 'computer',
-        'make' => 'In Use Test',
+        'make' => 'Conflict Test',
         'model' => 'PC',
         'owner_user_id' => $this->user->id,
     ]);
@@ -570,7 +573,7 @@ test('checkEquipmentConflict prevents reassignment of in_use equipment', functio
         'equipment_id' => $computer->id,
         'event_id' => $this->event->id,
         'station_id' => $anotherStation->id,
-        'status' => 'in_use',
+        'status' => 'delivered',
         'committed_at' => now(),
         'status_changed_at' => now(),
         'assigned_by_user_id' => $this->user->id,
@@ -581,8 +584,8 @@ test('checkEquipmentConflict prevents reassignment of in_use equipment', functio
     $result = $component->checkEquipmentConflict($computer->id, $this->station->id);
 
     expect($result)->toHaveKey('is_conflicted', true);
-    expect($result)->toHaveKey('can_reassign', false);
-    expect($result['conflict_message'])->toContain('actively in use');
+    expect($result)->toHaveKey('can_reassign', true);
+    expect($result['conflict_message'])->toContain('Active Station');
 });
 
 test('validateBandCompatibility passes for compatible antenna', function () {
@@ -932,8 +935,8 @@ test('cancelling warning modal does not assign equipment', function () {
     ]);
 });
 
-test('validation integration prevents assigning conflicted in_use equipment', function () {
-    // Create another station with equipment in use
+test('validation integration shows conflict modal for equipment assigned to another station', function () {
+    // Create another station with committed equipment
     $anotherRadio = Equipment::factory()->create(['type' => 'radio', 'owner_user_id' => $this->user->id]);
     $anotherStation = Station::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
@@ -952,18 +955,19 @@ test('validation integration prevents assigning conflicted in_use equipment', fu
         'equipment_id' => $amplifier->id,
         'event_id' => $this->event->id,
         'station_id' => $anotherStation->id,
-        'status' => 'in_use',
+        'status' => 'delivered',
         'committed_at' => now(),
         'status_changed_at' => now(),
         'assigned_by_user_id' => $this->user->id,
     ]);
 
-    // Attempt to assign should fail with error toast
+    // Attempt to assign should show conflict modal (reassignable)
     Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
         ->call('assignEquipment', $amplifier->id, false)
-        ->assertDispatched('toast');
+        ->assertSet('showConflictModal', true)
+        ->assertSet('conflictEquipmentId', $amplifier->id);
 
-    // Verify equipment was NOT reassigned
+    // Verify equipment was NOT reassigned yet (pending confirmation)
     $this->assertDatabaseHas('equipment_event', [
         'equipment_id' => $amplifier->id,
         'event_id' => $this->event->id,

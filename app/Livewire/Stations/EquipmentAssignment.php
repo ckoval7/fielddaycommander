@@ -112,7 +112,7 @@ class EquipmentAssignment extends Component
     public bool $pendingFromCatalog = false;
 
     /**
-     * Show unassign confirmation modal (for in_use equipment).
+     * Show unassign confirmation modal.
      */
     public bool $showUnassignConfirmModal = false;
 
@@ -197,7 +197,7 @@ class EquipmentAssignment extends Component
         $commitments = EquipmentEvent::query()
             ->where('station_id', $this->stationId)
             ->where('event_id', $this->eventModel->id)
-            ->whereIn('status', ['committed', 'delivered', 'in_use'])
+            ->whereIn('status', ['committed', 'delivered'])
             ->with([
                 'equipment.owner',
                 'equipment.owningOrganization',
@@ -320,7 +320,7 @@ class EquipmentAssignment extends Component
      * - Whether the equipment is conflicted
      * - Current station details
      * - Assignment metadata (user, timestamp)
-     * - Whether reassignment is allowed (false if status is 'in_use')
+     * - Whether reassignment is allowed (always true)
      *
      * @param  int  $equipmentId  The equipment to check
      * @param  int  $stationId  The target station ID
@@ -341,7 +341,7 @@ class EquipmentAssignment extends Component
             ->where('event_id', $this->eventModel->id)
             ->whereNotNull('station_id')
             ->where('station_id', '!=', $stationId)
-            ->whereIn('status', ['committed', 'delivered', 'in_use'])
+            ->whereIn('status', ['committed', 'delivered'])
             ->with(['station', 'assignedBy'])
             ->first();
 
@@ -357,14 +357,8 @@ class EquipmentAssignment extends Component
             ];
         }
 
-        $canReassign = $existingCommitment->status !== 'in_use';
         $statusLabel = ucfirst($existingCommitment->status);
-
-        if ($canReassign) {
-            $conflictMessage = "This equipment is currently assigned to {$existingCommitment->station->name} ({$statusLabel}). You can reassign it to this station.";
-        } else {
-            $conflictMessage = "This equipment is actively in use at {$existingCommitment->station->name}. It cannot be reassigned while in use.";
-        }
+        $conflictMessage = "This equipment is currently assigned to {$existingCommitment->station->name} ({$statusLabel}). You can reassign it to this station.";
 
         return [
             'is_conflicted' => true,
@@ -372,7 +366,7 @@ class EquipmentAssignment extends Component
             'current_station_id' => $existingCommitment->station_id,
             'assigned_by_user' => $existingCommitment->assignedBy,
             'assigned_at' => $existingCommitment->updated_at,
-            'can_reassign' => $canReassign,
+            'can_reassign' => true,
             'conflict_message' => $conflictMessage,
         ];
     }
@@ -880,21 +874,6 @@ class EquipmentAssignment extends Component
             return;
         }
 
-        // Check if equipment is in_use - requires confirmation
-        $commitment = EquipmentEvent::query()
-            ->where('equipment_id', $equipmentId)
-            ->where('event_id', $this->eventModel->id)
-            ->where('station_id', $this->stationId)
-            ->first();
-
-        if ($commitment && $commitment->status === 'in_use') {
-            $this->unassignEquipmentId = $equipmentId;
-            $this->showUnassignConfirmModal = true;
-
-            return;
-        }
-
-        // Otherwise, just unassign
         $this->unassignEquipment($equipmentId);
     }
 
@@ -1065,7 +1044,6 @@ class EquipmentAssignment extends Component
         return match ($status) {
             'committed' => 'badge-info',
             'delivered' => 'badge-warning',
-            'in_use' => 'badge-success',
             default => 'badge-neutral',
         };
     }

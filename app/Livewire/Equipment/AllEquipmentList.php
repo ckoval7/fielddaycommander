@@ -130,14 +130,14 @@ class AllEquipmentList extends Component
             ->when($this->statusFilter, function (Builder $query) {
                 match ($this->statusFilter) {
                     'available' => $query->whereDoesntHave('commitments', function (Builder $q) {
-                        $q->whereIn('status', ['committed', 'delivered', 'in_use'])
+                        $q->whereIn('status', ['committed', 'delivered'])
                             ->whereHas('event', function (Builder $eventQuery) {
                                 $eventQuery->where('start_time', '<=', now()->addDays(30))
                                     ->where('end_time', '>=', now());
                             });
                     }),
                     'committed' => $query->whereHas('commitments', function (Builder $q) {
-                        $q->whereIn('status', ['committed', 'delivered', 'in_use'])
+                        $q->whereIn('status', ['committed', 'delivered'])
                             ->whereHas('event', function (Builder $eventQuery) {
                                 $eventQuery->where('start_time', '<=', now()->addDays(30))
                                     ->where('end_time', '>=', now());
