@@ -76,6 +76,11 @@ Route::get('/gallery/{eventConfiguration}/upload', \App\Livewire\Gallery\Gallery
 Route::get('/gallery/thumb/{image}', [\App\Http\Controllers\GalleryController::class, 'thumbnail'])->name('gallery.thumb');
 Route::get('/gallery/image/{image}', [\App\Http\Controllers\GalleryController::class, 'image'])->name('gallery.image');
 
+Route::middleware(['auth', 'can:manage-images'])->group(function () {
+    Route::post('/gallery/{eventConfiguration}/export', [\App\Http\Controllers\AlbumExportController::class, 'store'])->name('album-export.store');
+    Route::get('/gallery/{eventConfiguration}/export/{filename}', [\App\Http\Controllers\AlbumExportController::class, 'download'])->name('album-export.download');
+});
+
 Route::middleware(['auth', 'can:manage-bonuses'])->group(function () {
     Route::get('/bonuses', function () {
         return view('bonuses.index');
