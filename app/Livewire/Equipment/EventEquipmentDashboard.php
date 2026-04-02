@@ -23,12 +23,11 @@ use Livewire\Component;
  *
  * @property-read Collection $allCommitments All equipment commitments for the event
  * @property-read Collection $filteredCommitments Filtered equipment commitments
- * @property-read array $statsCards Stats cards data (committed, delivered, in_use, returned, issues)
+ * @property-read array $statsCards Stats cards data (committed, delivered, returned, issues)
  * @property-read Collection $equipmentByType Equipment grouped by type
  * @property-read Collection $recentActivity Recent status changes
  * @property-read Collection $commitmentsByOwner Equipment grouped by owner
  * @property-read Collection $commitmentsByStation Equipment grouped by station
- * @property-read Collection $availableStations Stations available for assignment
  * @property-read array $equipmentTypes Available equipment types for filtering
  * @property-read array $statusOptions Status options for filtering
  */
@@ -89,21 +88,6 @@ class EventEquipmentDashboard extends Component
      * Notes for status change.
      */
     public string $statusChangeNotes = '';
-
-    /**
-     * Show station assignment modal.
-     */
-    public bool $showAssignModal = false;
-
-    /**
-     * Commitment ID for station assignment.
-     */
-    public ?int $assignCommitmentId = null;
-
-    /**
-     * Station ID to assign.
-     */
-    public ?int $assignStationId = null;
 
     /**
      * Show commit club equipment modal.
@@ -231,12 +215,11 @@ class EventEquipmentDashboard extends Component
     /**
      * Get stats cards data.
      *
-     * Returns counts for committed, delivered, in_use, returned, and issues.
+     * Returns counts for committed, delivered, returned, and issues.
      *
      * @return array{
      *     committed: int,
      *     delivered: int,
-     *     in_use: int,
      *     returned: int,
      *     issues: int,
      *     total: int
@@ -250,7 +233,6 @@ class EventEquipmentDashboard extends Component
         return [
             'committed' => $commitments->where('status', 'committed')->count(),
             'delivered' => $commitments->where('status', 'delivered')->count(),
-            // 'in_use' => $commitments->where('status', 'in_use')->count(), // Not yet auto-set from station sessions
             'returned' => $commitments->where('status', 'returned')->count(),
             'issues' => $commitments->whereIn('status', ['cancelled', 'lost', 'damaged'])->count(),
             'total' => $commitments->count(),
@@ -385,24 +367,6 @@ class EventEquipmentDashboard extends Component
     }
 
     /**
-     * Get available stations for assignment.
-     *
-     * @return Collection<int, Station>
-     */
-    #[Computed]
-    public function availableStations(): Collection
-    {
-        if (! $this->event->eventConfiguration) {
-            return collect();
-        }
-
-        return Station::query()
-            ->where('event_configuration_id', $this->event->eventConfiguration->id)
-            ->orderBy('name')
-            ->get();
-    }
-
-    /**
      * Get unique equipment types for filtering.
      *
      * @return array<int, array{id: string, name: string}>
@@ -434,7 +398,6 @@ class EventEquipmentDashboard extends Component
         return [
             ['id' => 'committed', 'name' => 'Committed'],
             ['id' => 'delivered', 'name' => 'Delivered'],
-            ['id' => 'in_use', 'name' => 'In Use'],
             ['id' => 'returned', 'name' => 'Returned'],
             ['id' => 'cancelled', 'name' => 'Cancelled'],
             ['id' => 'lost', 'name' => 'Lost'],
@@ -526,125 +489,6 @@ class EventEquipmentDashboard extends Component
                 $this->statusChangeNotes !== '' ? $this->statusChangeNotes : null
             );
         }
-    }
-
-    /**
-     * Open the station assignment modal for a commitment.
-     */
-    public function openAssignModal(int $commitmentId): void
-    {
-        $this->assignCommitmentId = $commitmentId;
-        $this->assignStationId = null;
-        $this->showAssignModal = true;
-    }
-
-    /**
-     * Assign equipment to a station.
-     *
-     * This will also change the status to 'in_use' if currently 'delivered'.
-     *
-     * @param  int  $commitmentId  The ID of the EquipmentEvent record
-     * @param  int  $stationId  The ID of the station to assign
-     */
-    public function assignToStation(int $commitmentId, int $stationId): void
-    {
-        // Authorize - must have manage-event-equipment permission
-        if (! auth()->user()->can('manage-event-equipment')) {
-            $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
-
-            return;
-        }
-
-        $commitment = EquipmentEvent::with('equipment')->findOrFail($commitmentId);
-
-        // Validate this commitment belongs to this event
-        if ($commitment->event_id !== $this->event->id) {
-            $this->dispatch('notify', title: 'Error', description: self::NOT_COMMITTED_ERROR, type: 'error');
-
-            return;
-        }
-
-        // Validate station belongs to this event's configuration
-        $station = Station::findOrFail($stationId);
-        $eventConfigId = \App\Models\EventConfiguration::where('event_id', $this->event->id)->value('id');
-        if ($station->event_configuration_id !== $eventConfigId) {
-            $this->dispatch('notify', title: 'Error', description: 'This station does not belong to this event.', type: 'error');
-
-            return;
-        }
-
-        // Attempt assignment (includes status change to in_use)
-        if ($commitment->assignToStation($stationId, auth()->user())) {
-            $this->dispatch('notify', title: 'Success', description: "Equipment assigned to {$station->name}.", type: 'success');
-
-            // Clear cached computed properties
-            unset($this->allCommitments);
-            unset($this->filteredCommitments);
-            unset($this->statsCards);
-            unset($this->equipmentByType);
-            unset($this->recentActivity);
-            unset($this->commitmentsByOwner);
-            unset($this->commitmentsByStation);
-
-            // Close modal
-            $this->showAssignModal = false;
-            $this->assignCommitmentId = null;
-            $this->assignStationId = null;
-        } else {
-            $this->dispatch('notify', title: 'Error', description: 'Unable to assign equipment. Equipment must be delivered first.', type: 'error');
-        }
-    }
-
-    /**
-     * Confirm and execute station assignment from modal.
-     */
-    public function confirmAssignment(): void
-    {
-        if ($this->assignCommitmentId && $this->assignStationId) {
-            $this->assignToStation($this->assignCommitmentId, $this->assignStationId);
-        }
-    }
-
-    /**
-     * Remove equipment from station assignment.
-     *
-     * This will remove the station_id but keep the status as is.
-     *
-     * @param  int  $commitmentId  The ID of the EquipmentEvent record
-     */
-    public function unassignFromStation(int $commitmentId): void
-    {
-        // Authorize - must have manage-event-equipment permission
-        if (! auth()->user()->can('manage-event-equipment')) {
-            $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
-
-            return;
-        }
-
-        $commitment = EquipmentEvent::with('equipment')->findOrFail($commitmentId);
-
-        // Validate this commitment belongs to this event
-        if ($commitment->event_id !== $this->event->id) {
-            $this->dispatch('notify', title: 'Error', description: self::NOT_COMMITTED_ERROR, type: 'error');
-
-            return;
-        }
-
-        // Remove station assignment
-        $commitment->station_id = null;
-        $commitment->assigned_by_user_id = null;
-        $commitment->save();
-
-        $this->dispatch('notify', title: 'Success', description: 'Equipment unassigned from station.', type: 'success');
-
-        // Clear cached computed properties
-        unset($this->allCommitments);
-        unset($this->filteredCommitments);
-        unset($this->statsCards);
-        unset($this->equipmentByType);
-        unset($this->recentActivity);
-        unset($this->commitmentsByOwner);
-        unset($this->commitmentsByStation);
     }
 
     /**

@@ -98,7 +98,7 @@
     </div>
 
     {{-- Stats Cards --}}
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <x-card class="bg-base-200 cursor-pointer hover:bg-base-300 transition-colors" wire:click="$set('statusFilter', null)">
             <div class="text-center">
                 <div class="text-3xl font-bold text-primary">{{ $this->statsCards['total'] }}</div>
@@ -125,18 +125,6 @@
                 </div>
             </div>
         </x-card>
-
-        {{-- In Use card hidden — equipment status doesn't auto-update from station sessions yet
-        <x-card class="bg-warning/10 cursor-pointer hover:bg-warning/20 transition-colors" wire:click="$set('statusFilter', 'in_use')">
-            <div class="text-center">
-                <div class="text-3xl font-bold text-warning">{{ $this->statsCards['in_use'] }}</div>
-                <div class="text-sm text-base-content/60 flex items-center justify-center">
-                    <x-icon name="o-bolt" class="w-4 h-4 mr-2" />
-                    In Use
-                </div>
-            </div>
-        </x-card>
-        --}}
 
         <x-card class="bg-neutral/10 cursor-pointer hover:bg-neutral/20 transition-colors" wire:click="$set('statusFilter', 'returned')">
             <div class="text-center">
@@ -186,7 +174,7 @@
                 />
                 <x-select
                     wire:model.live="stationFilter"
-                    :options="collect([['id' => 0, 'name' => 'Unassigned']])->concat($this->availableStations->map(fn($s) => ['id' => $s->id, 'name' => $s->name]))->toArray()"
+                    :options="collect([['id' => 0, 'name' => 'Unassigned']])->concat($this->commitmentsByStation->filter(fn($g) => $g['station_id'] !== null)->map(fn($g) => ['id' => $g['station_id'], 'name' => $g['station_name']]))->toArray()"
                     placeholder="All Stations"
                     option-value="id"
                     option-label="name"
@@ -275,7 +263,6 @@
                                                     $statusClasses = match($commitment->status) {
                                                         'committed' => 'badge-info',
                                                         'delivered' => 'badge-success',
-                                                        'in_use' => 'badge-warning',
                                                         'returned' => 'badge-neutral',
                                                         'cancelled' => 'badge-error',
                                                         'lost' => 'badge-error',
@@ -285,7 +272,6 @@
                                                     $statusIcon = match($commitment->status) {
                                                         'committed' => 'o-clipboard-document-list',
                                                         'delivered' => 'o-truck',
-                                                        'in_use' => 'o-bolt',
                                                         'returned' => 'o-check-circle',
                                                         'cancelled' => 'o-x-circle',
                                                         'lost' => 'o-exclamation-triangle',
@@ -327,34 +313,12 @@
                                             {{-- Actions --}}
                                             @if($this->canManage)
                                                 <td class="text-right">
-                                                    <x-dropdown>
-                                                        <x-slot:trigger>
-                                                            <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost" />
-                                                        </x-slot:trigger>
-
-                                                        <x-menu-item
-                                                            title="Change Status"
-                                                            icon="o-arrow-path"
-                                                            wire:click="openStatusModal({{ $commitment->id }})"
-                                                        />
-
-                                                        @if(in_array($commitment->status, ['delivered']))
-                                                            <x-menu-item
-                                                                title="Assign to Station"
-                                                                icon="o-building-office"
-                                                                wire:click="openAssignModal({{ $commitment->id }})"
-                                                            />
-                                                        @endif
-
-                                                        @if($commitment->station_id)
-                                                            <x-menu-item
-                                                                title="Unassign from Station"
-                                                                icon="o-x-circle"
-                                                                wire:click="unassignFromStation({{ $commitment->id }})"
-                                                                wire:confirm="Are you sure you want to unassign this equipment from its station?"
-                                                            />
-                                                        @endif
-                                                    </x-dropdown>
+                                                    <x-button
+                                                        icon="o-arrow-path"
+                                                        class="btn-sm btn-ghost"
+                                                        wire:click="openStatusModal({{ $commitment->id }})"
+                                                        title="Change Status"
+                                                    />
                                                 </td>
                                             @endif
                                         </tr>
@@ -388,7 +352,6 @@
                                             $statusIcon = match($activity->status) {
                                                 'committed' => 'o-clock',
                                                 'delivered' => 'o-check-circle',
-                                                'in_use' => 'o-play',
                                                 'returned' => 'o-arrow-uturn-left',
                                                 'cancelled' => 'o-x-circle',
                                                 'lost' => 'o-exclamation-triangle',
@@ -398,7 +361,6 @@
                                             $statusColor = match($activity->status) {
                                                 'committed' => 'text-info',
                                                 'delivered' => 'text-success',
-                                                'in_use' => 'text-warning',
                                                 'returned' => 'text-neutral',
                                                 'cancelled', 'lost', 'damaged' => 'text-error',
                                                 default => 'text-base-content/60'
@@ -492,7 +454,6 @@
                                                         $statusClasses = match($commitment->status) {
                                                             'committed' => 'badge-info',
                                                             'delivered' => 'badge-success',
-                                                            'in_use' => 'badge-warning',
                                                             'returned' => 'badge-neutral',
                                                             'cancelled', 'lost', 'damaged' => 'badge-error',
                                                             default => 'badge-ghost'
@@ -500,7 +461,6 @@
                                                         $statusIcon = match($commitment->status) {
                                                             'committed' => 'o-clipboard-document-list',
                                                             'delivered' => 'o-truck',
-                                                            'in_use' => 'o-bolt',
                                                             'returned' => 'o-check-circle',
                                                             'cancelled' => 'o-x-circle',
                                                             'lost' => 'o-exclamation-triangle',
@@ -580,7 +540,6 @@
                                                     $statusClasses = match($commitment->status) {
                                                         'committed' => 'badge-info',
                                                         'delivered' => 'badge-success',
-                                                        'in_use' => 'badge-warning',
                                                         'returned' => 'badge-neutral',
                                                         'cancelled', 'lost', 'damaged' => 'badge-error',
                                                         default => 'badge-ghost'
@@ -588,7 +547,6 @@
                                                     $statusIcon = match($commitment->status) {
                                                         'committed' => 'o-clipboard-document-list',
                                                         'delivered' => 'o-truck',
-                                                        'in_use' => 'o-bolt',
                                                         'returned' => 'o-check-circle',
                                                         'cancelled' => 'o-x-circle',
                                                         'lost' => 'o-exclamation-triangle',
@@ -677,7 +635,6 @@
                                                         $statusClasses = match($commitment->status) {
                                                             'committed' => 'badge-info',
                                                             'delivered' => 'badge-success',
-                                                            'in_use' => 'badge-warning',
                                                             'returned' => 'badge-neutral',
                                                             'cancelled', 'lost', 'damaged' => 'badge-error',
                                                             default => 'badge-ghost'
@@ -685,7 +642,6 @@
                                                         $statusIcon = match($commitment->status) {
                                                             'committed' => 'o-clipboard-document-list',
                                                             'delivered' => 'o-truck',
-                                                            'in_use' => 'o-bolt',
                                                             'returned' => 'o-check-circle',
                                                             'cancelled' => 'o-x-circle',
                                                             'lost' => 'o-exclamation-triangle',
@@ -703,30 +659,12 @@
                                                 </td>
                                                 @if($this->canManage)
                                                     <td class="text-right">
-                                                        <div class="flex justify-end gap-1">
-                                                            @if(!$stationGroup['station_id'] && $commitment->status === 'delivered')
-                                                                <x-button
-                                                                    icon="o-building-office"
-                                                                    class="btn-xs btn-ghost"
-                                                                    wire:click="openAssignModal({{ $commitment->id }})"
-                                                                    title="Assign to Station"
-                                                                />
-                                                            @elseif($stationGroup['station_id'])
-                                                                <x-button
-                                                                    icon="o-x-circle"
-                                                                    class="btn-xs btn-ghost text-error"
-                                                                    wire:click="unassignFromStation({{ $commitment->id }})"
-                                                                    wire:confirm="Unassign this equipment from {{ $stationGroup['station_name'] }}?"
-                                                                    title="Unassign"
-                                                                />
-                                                            @endif
-                                                            <x-button
-                                                                icon="o-arrow-path"
-                                                                class="btn-xs btn-ghost"
-                                                                wire:click="openStatusModal({{ $commitment->id }})"
-                                                                title="Change Status"
-                                                            />
-                                                        </div>
+                                                        <x-button
+                                                            icon="o-arrow-path"
+                                                            class="btn-xs btn-ghost"
+                                                            wire:click="openStatusModal({{ $commitment->id }})"
+                                                            title="Change Status"
+                                                        />
                                                     </td>
                                                 @endif
                                             </tr>
@@ -807,60 +745,6 @@
                             class="btn-primary"
                             spinner="confirmStatusChange"
                             :disabled="!$newStatus"
-                        />
-                    @endif
-                </x-slot:actions>
-            @endif
-        @endif
-    </x-modal>
-
-    {{-- Station Assignment Modal --}}
-    <x-modal wire:model="showAssignModal" title="Assign to Station" class="backdrop-blur">
-        @if($assignCommitmentId)
-            @php
-                $commitment = $this->allCommitments->firstWhere('id', $assignCommitmentId);
-            @endphp
-            @if($commitment)
-                <div class="space-y-4">
-                    <div class="p-4 bg-base-200 rounded-lg">
-                        <div class="font-semibold">{{ $commitment->equipment->make }} {{ $commitment->equipment->model }}</div>
-                        <div class="text-sm text-base-content/60">Owner: {{ $commitment->equipment->owner_name }}</div>
-                    </div>
-
-                    @if($this->availableStations->count() > 0)
-                        <x-select
-                            label="Select Station"
-                            wire:model="assignStationId"
-                            :options="$this->availableStations->map(fn($s) => ['id' => $s->id, 'name' => $s->name . ($s->is_gota ? ' (GOTA)' : '')])->toArray()"
-                            option-value="id"
-                            option-label="name"
-                            placeholder="Select a station..."
-                        />
-
-                        <x-alert title="Note" icon="o-information-circle" class="alert-info">
-                            Assigning equipment to a station will automatically change its status to "In Use".
-                        </x-alert>
-                    @else
-                        <div class="text-center py-4 text-base-content/60">
-                            <x-icon name="o-building-office" class="w-12 h-12 mx-auto opacity-50 mb-2" />
-                            <p>No stations have been configured for this event.</p>
-                        </div>
-                    @endif
-                </div>
-
-                <x-slot:actions>
-                    <x-button
-                        label="Cancel"
-                        wire:click="$set('showAssignModal', false)"
-                        class="btn-ghost"
-                    />
-                    @if($this->availableStations->count() > 0)
-                        <x-button
-                            label="Assign"
-                            wire:click="confirmAssignment"
-                            class="btn-primary"
-                            spinner="confirmAssignment"
-                            :disabled="!$assignStationId"
                         />
                     @endif
                 </x-slot:actions>

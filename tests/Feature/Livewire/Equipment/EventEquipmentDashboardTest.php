@@ -161,10 +161,12 @@ test('displays equipment types in view', function () {
 test('displays stations in by-station tab', function () {
     $this->actingAs($this->manager);
 
+    // Assign commitment2 to station1 so it appears in the by-station tab
+    $this->commitment2->update(['station_id' => $this->station1->id]);
+
     Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
         ->set('activeTab', 'by-station')
         ->assertSee('Station A')
-        ->assertSee('GOTA Station')
         ->assertSee('Unassigned');
 });
 
@@ -289,14 +291,14 @@ test('viewer cannot change equipment status', function () {
 test('any valid status change succeeds', function () {
     $this->actingAs($this->manager);
 
-    // Transition from committed directly to in_use (now allowed)
+    // Transition from committed to delivered
     Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->call('changeEquipmentStatus', $this->commitment1->id, 'in_use', null)
+        ->call('changeEquipmentStatus', $this->commitment1->id, 'delivered', null)
         ->assertDispatched('notify');
 
     $this->assertDatabaseHas('equipment_event', [
         'id' => $this->commitment1->id,
-        'status' => 'in_use',
+        'status' => 'delivered',
     ]);
 });
 
@@ -318,171 +320,6 @@ test('cannot change status for commitment from different event', function () {
     $this->assertDatabaseHas('equipment_event', [
         'id' => $otherCommitment->id,
         'status' => 'committed',
-    ]);
-});
-
-// Station Assignment Tests
-
-test('manager can assign equipment to station', function () {
-    $this->actingAs($this->manager);
-
-    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->call('assignToStation', $this->commitment2->id, $this->station1->id)
-        ->assertDispatched('notify');
-
-    $this->assertDatabaseHas('equipment_event', [
-        'id' => $this->commitment2->id,
-        'station_id' => $this->station1->id,
-        'status' => 'in_use',
-    ]);
-});
-
-test('manager can assign via modal', function () {
-    $this->actingAs($this->manager);
-
-    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->call('openAssignModal', $this->commitment2->id)
-        ->assertSet('showAssignModal', true)
-        ->assertSet('assignCommitmentId', $this->commitment2->id)
-        ->set('assignStationId', $this->station1->id)
-        ->call('confirmAssignment')
-        ->assertSet('showAssignModal', false);
-
-    $this->assertDatabaseHas('equipment_event', [
-        'id' => $this->commitment2->id,
-        'station_id' => $this->station1->id,
-    ]);
-});
-
-test('viewer cannot assign equipment to station', function () {
-    $this->actingAs($this->viewer);
-
-    // Verify viewer doesn't have manage permission
-    expect($this->viewer->can('manage-event-equipment'))->toBeFalse();
-    expect($this->viewer->can('view-all-equipment'))->toBeTrue();
-
-    // Create fresh commitment for this test to ensure clean state
-    $viewerEquipment = Equipment::factory()->create([
-        'owner_user_id' => $this->viewer->id,
-        'type' => 'other',
-    ]);
-
-    $viewerCommitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $viewerEquipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'delivered', // Status that allows assignment normally
-        'station_id' => null,
-    ]);
-
-    // Verify commitment has no station assignment
-    expect($viewerCommitment->station_id)->toBeNull();
-
-    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->call('assignToStation', $viewerCommitment->id, $this->station1->id)
-        ->assertDispatched('notify');
-
-    // Station should NOT be assigned because viewer lacks manage permission
-    $viewerCommitment->refresh();
-    expect($viewerCommitment->station_id)->toBeNull();
-});
-
-test('can assign committed equipment to station', function () {
-    $this->actingAs($this->manager);
-
-    // Create new equipment and commitment specifically for this test
-    $newEquipment = Equipment::factory()->create([
-        'owner_user_id' => $this->manager->id,
-        'type' => 'other',
-        'make' => 'TestMake',
-        'model' => 'TestModel',
-    ]);
-
-    $committedCommitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $newEquipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'committed',
-        'station_id' => null,
-    ]);
-
-    // Verify status
-    expect($committedCommitment->status)->toBe('committed');
-    expect($committedCommitment->station_id)->toBeNull();
-
-    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->call('assignToStation', $committedCommitment->id, $this->station1->id)
-        ->assertDispatched('notify');
-
-    // Refresh and verify station was assigned (any status can be assigned now)
-    $committedCommitment->refresh();
-    expect($committedCommitment->station_id)->toBe($this->station1->id);
-    expect($committedCommitment->status)->toBe('in_use');
-});
-
-test('cannot assign to station from different event', function () {
-    $this->actingAs($this->manager);
-
-    $otherEvent = Event::factory()->create();
-    $otherConfig = EventConfiguration::factory()->create([
-        'event_id' => $otherEvent->id,
-    ]);
-    $otherStation = Station::factory()->create([
-        'event_configuration_id' => $otherConfig->id,
-    ]);
-
-    // Verify the station belongs to a different event's configuration
-    $thisEventConfigId = \App\Models\EventConfiguration::where('event_id', $this->event->id)->value('id');
-    expect($otherStation->event_configuration_id)->not->toBe($thisEventConfigId);
-
-    // Record the station_id before the call
-    $stationIdBefore = EquipmentEvent::find($this->commitment2->id)->station_id;
-
-    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->call('assignToStation', $this->commitment2->id, $otherStation->id)
-        ->assertDispatched('notify');
-
-    // Station should not be assigned to the other event's station
-    $this->commitment2->refresh();
-    expect($this->commitment2->station_id)->not->toBe($otherStation->id);
-});
-
-// Unassign Tests
-
-test('manager can unassign equipment from station', function () {
-    $this->actingAs($this->manager);
-
-    // First assign to station
-    $this->commitment2->update([
-        'station_id' => $this->station1->id,
-        'assigned_by_user_id' => $this->manager->id,
-    ]);
-
-    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->call('unassignFromStation', $this->commitment2->id)
-        ->assertDispatched('notify');
-
-    $this->assertDatabaseHas('equipment_event', [
-        'id' => $this->commitment2->id,
-        'station_id' => null,
-        'assigned_by_user_id' => null,
-    ]);
-});
-
-test('viewer cannot unassign equipment from station', function () {
-    $this->actingAs($this->viewer);
-
-    // First assign to station
-    $this->commitment2->update([
-        'station_id' => $this->station1->id,
-    ]);
-
-    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
-        ->call('unassignFromStation', $this->commitment2->id)
-        ->assertDispatched('notify');
-
-    // Should still be assigned
-    $this->assertDatabaseHas('equipment_event', [
-        'id' => $this->commitment2->id,
-        'station_id' => $this->station1->id,
     ]);
 });
 
