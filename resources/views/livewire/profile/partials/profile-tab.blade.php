@@ -116,7 +116,9 @@
         </div>
 
         {{-- In-App Notification Categories --}}
-        <div class="card bg-base-100 shadow">
+        <div id="notification-categories" class="card bg-base-100 shadow scroll-mt-20"
+            x-init="if (window.location.hash === '#notification-categories') $el.scrollIntoView({ behavior: 'smooth' })"
+        >
             <div class="card-body">
                 <div class="flex items-center justify-between">
                     <div>

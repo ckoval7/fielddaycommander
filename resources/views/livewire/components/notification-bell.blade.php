@@ -96,7 +96,7 @@
         {{-- Footer --}}
         <div class="border-t border-base-300 px-4 py-2">
             <a
-                href="{{ route('profile') }}"
+                href="{{ route('profile') }}#notification-categories"
                 wire:navigate
                 class="text-xs text-primary hover:text-primary-focus font-medium"
             >
