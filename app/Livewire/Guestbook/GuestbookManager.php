@@ -5,6 +5,7 @@ namespace App\Livewire\Guestbook;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
+use App\Services\GuestbookBonusSyncService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -232,6 +233,9 @@ class GuestbookManager extends Component
 
         $entry->update($updateData);
 
+        app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
+        $this->dispatch('bonus-claimed');
+
         $this->closeVerifyModal();
         $this->dispatch('toast', title: 'Success', description: 'Entry updated successfully', icon: 'o-check-circle', css: 'alert-success');
     }
@@ -297,6 +301,9 @@ class GuestbookManager extends Component
                 'verified_at' => now(),
             ]);
 
+        app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
+        $this->dispatch('bonus-claimed');
+
         $count = count($this->selectedIds);
         $this->selectedIds = [];
         $this->dispatch('toast', title: 'Success', description: "{$count} entries verified", icon: 'o-check-circle', css: 'alert-success');
@@ -323,6 +330,9 @@ class GuestbookManager extends Component
                 'verified_by' => null,
                 'verified_at' => null,
             ]);
+
+        app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
+        $this->dispatch('bonus-claimed');
 
         $count = count($this->selectedIds);
         $this->selectedIds = [];

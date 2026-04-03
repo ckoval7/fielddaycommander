@@ -25,15 +25,6 @@ class BonusPointsSidebar extends Component
     }
 
     #[Computed]
-    public function arrlOfficialCount(): int
-    {
-        return GuestbookEntry::where('event_configuration_id', $this->eventConfigId)
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL)
-            ->where('is_verified', true)
-            ->count();
-    }
-
-    #[Computed]
     public function agencyCount(): int
     {
         return GuestbookEntry::where('event_configuration_id', $this->eventConfigId)
@@ -52,30 +43,61 @@ class BonusPointsSidebar extends Component
     }
 
     #[Computed]
-    public function totalBonusEligible(): int
+    public function arrlOfficialCount(): int
     {
         return GuestbookEntry::where('event_configuration_id', $this->eventConfigId)
+            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL)
             ->where('is_verified', true)
-            ->bonusEligible()
             ->count();
     }
 
+    /**
+     * @return array<string, array{label: string, icon: string, iconColor: string, count: int, earned: bool, points: int, rule: string}>
+     */
     #[Computed]
-    public function bonusPoints(): int
+    public function bonusItems(): array
     {
-        return min($this->totalBonusEligible, 10) * 100;
+        return [
+            'elected_official' => [
+                'label' => 'Elected Official Visit',
+                'icon' => 'o-building-library',
+                'iconColor' => 'text-primary',
+                'count' => $this->electedOfficialCount,
+                'earned' => $this->electedOfficialCount > 0,
+                'points' => 100,
+                'rule' => '7.3.11',
+            ],
+            'agency' => [
+                'label' => 'Served Agency Visit',
+                'icon' => 'o-shield-check',
+                'iconColor' => 'text-info',
+                'count' => $this->agencyCount,
+                'earned' => $this->agencyCount > 0,
+                'points' => 100,
+                'rule' => '7.3.12',
+            ],
+            'media' => [
+                'label' => 'Media Publicity',
+                'icon' => 'o-tv',
+                'iconColor' => 'text-secondary',
+                'count' => $this->mediaCount,
+                'earned' => $this->mediaCount > 0,
+                'points' => 100,
+                'rule' => '7.3.2',
+            ],
+        ];
     }
 
     #[Computed]
-    public function progressPercentage(): int
+    public function totalBonusPoints(): int
     {
-        return min(($this->totalBonusEligible / 10) * 100, 100);
+        return collect($this->bonusItems)->where('earned', true)->sum('points');
     }
 
     #[Computed]
-    public function isMaxBonusReached(): bool
+    public function maxBonusPoints(): int
     {
-        return $this->totalBonusEligible >= 10;
+        return collect($this->bonusItems)->sum('points');
     }
 
     public function render()

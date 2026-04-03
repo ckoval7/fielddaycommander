@@ -1,90 +1,66 @@
 <div wire:poll.10s>
-    <x-card title="PR Bonus Points" shadow separator>
+    <x-card title="Guestbook Bonuses" shadow separator>
         <div class="space-y-4">
-            {{-- Category Counts --}}
+            {{-- Bonus Items --}}
             <div class="space-y-3">
-                {{-- Elected Officials --}}
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-icon name="o-building-library" class="w-5 h-5 text-primary" />
-                        <span class="text-sm">Elected Officials</span>
+                @foreach($this->bonusItems as $key => $item)
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            @if($item['earned'])
+                                <x-icon name="o-check-circle" class="w-5 h-5 text-success shrink-0" />
+                            @else
+                                <x-icon name="{{ $item['icon'] }}" class="w-5 h-5 {{ $item['iconColor'] }} shrink-0" />
+                            @endif
+                            <div class="min-w-0">
+                                <span class="text-sm">{{ $item['label'] }}</span>
+                                <span class="text-xs text-base-content/50 ml-1">({{ $item['rule'] }})</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <x-badge :value="$item['count']" class="{{ $item['earned'] ? 'badge-success' : 'badge-ghost' }} badge-sm" />
+                            <span class="text-sm tabular-nums font-semibold {{ $item['earned'] ? 'text-success' : 'text-base-content/40' }}">
+                                {{ $item['earned'] ? '+' : '' }}{{ $item['points'] }}
+                            </span>
+                        </div>
                     </div>
-                    <x-badge :value="$this->electedOfficialCount" class="badge-primary badge-sm" />
-                </div>
+                @endforeach
+            </div>
 
-                {{-- ARRL Officials --}}
-                <div class="flex items-center justify-between">
+            {{-- ARRL Officials (tracked but not bonus-eligible) --}}
+            @if($this->arrlOfficialCount > 0)
+                <div class="flex items-center justify-between text-base-content/60">
                     <div class="flex items-center gap-2">
                         <x-icon name="o-star" class="w-5 h-5 text-warning" />
                         <span class="text-sm">ARRL Officials</span>
                     </div>
                     <x-badge :value="$this->arrlOfficialCount" class="badge-warning badge-sm" />
                 </div>
-
-                {{-- Agency (FEMA, Red Cross) --}}
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-icon name="o-shield-check" class="w-5 h-5 text-info" />
-                        <span class="text-sm">Agency</span>
-                    </div>
-                    <x-badge :value="$this->agencyCount" class="badge-info badge-sm" />
-                </div>
-
-                {{-- Media --}}
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-icon name="o-tv" class="w-5 h-5 text-secondary" />
-                        <span class="text-sm">Media</span>
-                    </div>
-                    <x-badge :value="$this->mediaCount" class="badge-secondary badge-sm" />
-                </div>
-            </div>
+                <div class="text-xs text-base-content/50 -mt-2 ml-7">Tracked but not bonus-eligible per rules</div>
+            @endif
 
             <div class="divider my-2"></div>
 
-            {{-- Progress Bar --}}
-            <div class="space-y-2">
-                <div class="flex items-center justify-between text-sm">
-                    <span class="font-medium">Verified Visitors</span>
-                    <span class="font-mono">{{ $this->totalBonusEligible }} / 10</span>
-                </div>
-
-                <x-progress
-                    :value="$this->totalBonusEligible"
-                    max="10"
-                    :class="$this->isMaxBonusReached ? 'progress-success' : 'progress-warning'"
-                />
-
-                <div class="text-xs text-base-content/60 text-center">
-                    @if($this->isMaxBonusReached)
-                        Maximum bonus reached!
-                    @else
-                        {{ 10 - $this->totalBonusEligible }} more needed for max bonus
-                    @endif
-                </div>
-            </div>
-
-            <div class="divider my-2"></div>
-
-            {{-- Points Display --}}
+            {{-- Points Summary --}}
             <div class="bg-base-200 rounded-lg p-4 text-center">
-                <div class="text-xs text-base-content/60 uppercase font-semibold mb-1">Total Bonus Points</div>
-                <div class="text-4xl font-bold {{ $this->isMaxBonusReached ? 'text-success' : 'text-warning' }}">
-                    {{ $this->bonusPoints }}
+                <div class="text-xs text-base-content/60 uppercase font-semibold mb-1">Guestbook Bonus Points</div>
+                <div class="text-4xl font-bold {{ $this->totalBonusPoints === $this->maxBonusPoints ? 'text-success' : 'text-warning' }}">
+                    {{ $this->totalBonusPoints }}
                 </div>
                 <div class="text-xs text-base-content/60 mt-1">
-                    100 points per verified visitor (max 10)
+                    of {{ $this->maxBonusPoints }} possible
                 </div>
             </div>
 
-            {{-- Info Alert --}}
-            @if(!$this->isMaxBonusReached && $this->totalBonusEligible > 0)
+            @if($this->totalBonusPoints < $this->maxBonusPoints)
+                @php
+                    $missing = collect($this->bonusItems)->where('earned', false)->pluck('label')->join(', ');
+                @endphp
                 <x-alert icon="o-information-circle" class="alert-info text-xs">
-                    Verify {{ 10 - $this->totalBonusEligible }} more bonus-eligible visitor(s) to maximize points.
+                    Still needed: {{ $missing }}
                 </x-alert>
-            @elseif($this->isMaxBonusReached)
+            @elseif($this->totalBonusPoints === $this->maxBonusPoints)
                 <x-alert icon="o-check-circle" class="alert-success text-xs">
-                    Maximum PR bonus points achieved!
+                    All guestbook bonuses earned!
                 </x-alert>
             @endif
         </div>

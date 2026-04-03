@@ -60,7 +60,6 @@ class GuestbookEntry extends Model
      */
     public const BONUS_ELIGIBLE_CATEGORIES = [
         self::VISITOR_CATEGORY_ELECTED_OFFICIAL,
-        self::VISITOR_CATEGORY_ARRL_OFFICIAL,
         self::VISITOR_CATEGORY_AGENCY,
         self::VISITOR_CATEGORY_MEDIA,
     ];
