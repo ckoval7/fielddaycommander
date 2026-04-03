@@ -160,6 +160,11 @@ class SubmissionReportService
             $claimed['_gota'] = ['points' => $gotaBonus, 'is_verified' => true];
         }
 
+        $youthBonus = $config->calculateYouthBonus();
+        if ($youthBonus > 0) {
+            $claimed['youth_participation'] = ['points' => $youthBonus, 'is_verified' => true];
+        }
+
         $checklist = [];
         foreach ($arrlOrder as $item) {
             $code = $item['code'];

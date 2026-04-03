@@ -179,7 +179,7 @@ test('event dashboard eager loads relationships', function () {
 
     // Should have minimal queries due to eager loading
     // Expect: event + eager loads + computed properties (qsoBreakdown, participants, scoring)
-    expect(count($queries))->toBeLessThan(40);
+    expect(count($queries))->toBeLessThan(45);
 });
 
 test('event dashboard displays guestbook stats when guestbook is enabled', function () {
@@ -213,11 +213,9 @@ test('event dashboard displays guestbook stats when guestbook is enabled', funct
         ->assertStatus(200)
         ->assertSee('Guestbook Visitors')
         ->assertSee('Total Visitors')
-        ->assertSee('3') // Total visitors
-        ->assertSee('Verified Bonus Eligible')
-        ->assertSee('2 / 10') // 2 verified bonus-eligible
-        ->assertSee('PR Bonus')
-        ->assertSee('200 pts'); // 2 × 100 = 200 points
+        ->assertSee('Elected Official')
+        ->assertSee('Media Publicity')
+        ->assertSee('200 pts'); // elected official + media = 200
 });
 
 test('event dashboard hides guestbook stats when guestbook is disabled', function () {
@@ -261,8 +259,8 @@ test('event dashboard calculates correct bonus points with max cap', function ()
 
     $stats = $component->get('guestbookStats');
     expect($stats['total'])->toBe(15);
-    expect($stats['verified_bonus_eligible'])->toBe(15);
-    expect($stats['bonus_points'])->toBe(1000); // Capped at 10 × 100 = 1000
+    expect($stats['elected_official'])->toBeTrue();
+    expect($stats['bonus_points'])->toBe(100); // Only elected official = 100 pts
 });
 
 test('event dashboard guestbook stats returns zeros when guestbook is disabled', function () {
@@ -279,7 +277,7 @@ test('event dashboard guestbook stats returns zeros when guestbook is disabled',
 
     $stats = $component->get('guestbookStats');
     expect($stats['total'])->toBe(0);
-    expect($stats['verified_bonus_eligible'])->toBe(0);
+    expect($stats['elected_official'])->toBeFalse();
     expect($stats['bonus_points'])->toBe(0);
 });
 

@@ -118,7 +118,9 @@ class EventDashboard extends Component
         if (! $this->config()?->guestbook_enabled) {
             return [
                 'total' => 0,
-                'verified_bonus_eligible' => 0,
+                'elected_official' => false,
+                'agency' => false,
+                'media' => false,
                 'bonus_points' => 0,
             ];
         }
@@ -127,16 +129,28 @@ class EventDashboard extends Component
 
         $total = GuestbookEntry::where('event_configuration_id', $configId)->count();
 
-        $verifiedBonusEligible = GuestbookEntry::where('event_configuration_id', $configId)
+        $hasElected = GuestbookEntry::where('event_configuration_id', $configId)
+            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL)
             ->where('is_verified', true)
-            ->bonusEligible()
-            ->count();
+            ->exists();
 
-        $bonusPoints = min($verifiedBonusEligible, 10) * 100;
+        $hasAgency = GuestbookEntry::where('event_configuration_id', $configId)
+            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_AGENCY)
+            ->where('is_verified', true)
+            ->exists();
+
+        $hasMedia = GuestbookEntry::where('event_configuration_id', $configId)
+            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_MEDIA)
+            ->where('is_verified', true)
+            ->exists();
+
+        $bonusPoints = ($hasElected ? 100 : 0) + ($hasAgency ? 100 : 0) + ($hasMedia ? 100 : 0);
 
         return [
             'total' => $total,
-            'verified_bonus_eligible' => $verifiedBonusEligible,
+            'elected_official' => $hasElected,
+            'agency' => $hasAgency,
+            'media' => $hasMedia,
             'bonus_points' => $bonusPoints,
         ];
     }
