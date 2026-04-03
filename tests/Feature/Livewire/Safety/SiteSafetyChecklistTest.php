@@ -208,6 +208,87 @@ describe('editing', function () {
         expect(EventBonus::find($bonus->id))->toBeNull();
     });
 
+    test('completing all safety officer items auto-claims the bonus', function () {
+        $bonusType = BonusType::factory()->create([
+            'code' => 'safety_officer',
+            'base_points' => 100,
+        ]);
+
+        $item1 = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Item A',
+        ]);
+        SafetyChecklistEntry::factory()->completed()->create([
+            'safety_checklist_item_id' => $item1->id,
+        ]);
+
+        $item2 = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Item B',
+        ]);
+        SafetyChecklistEntry::factory()->create([
+            'safety_checklist_item_id' => $item2->id,
+        ]);
+
+        $this->actingAs($this->safetyOfficer);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->call('toggleItem', $item2->id)
+            ->assertDispatched('bonus-claimed')
+            ->assertDispatched('toast', title: 'Bonus Earned');
+
+        $bonus = EventBonus::where('event_configuration_id', $this->eventConfig->id)
+            ->where('bonus_type_id', $bonusType->id)
+            ->first();
+
+        expect($bonus)->not->toBeNull()
+            ->and($bonus->calculated_points)->toBe(100)
+            ->and($bonus->is_verified)->toBeTrue()
+            ->and($bonus->claimed_by_user_id)->toBe($this->safetyOfficer->id);
+    });
+
+    test('unchecking an item after all complete revokes the auto-claimed bonus', function () {
+        $bonusType = BonusType::factory()->create([
+            'code' => 'safety_officer',
+            'base_points' => 100,
+        ]);
+
+        $item1 = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Item A',
+        ]);
+        SafetyChecklistEntry::factory()->completed()->create([
+            'safety_checklist_item_id' => $item1->id,
+        ]);
+
+        $item2 = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Item B',
+        ]);
+        SafetyChecklistEntry::factory()->create([
+            'safety_checklist_item_id' => $item2->id,
+        ]);
+
+        $this->actingAs($this->safetyOfficer);
+
+        // Complete all items to claim bonus
+        $component = Livewire::test(SiteSafetyChecklist::class)
+            ->call('toggleItem', $item2->id)
+            ->assertDispatched('bonus-claimed');
+
+        expect(EventBonus::where('event_configuration_id', $this->eventConfig->id)
+            ->where('bonus_type_id', $bonusType->id)
+            ->exists())->toBeTrue();
+
+        // Uncheck to revoke bonus
+        $component->call('toggleItem', $item2->id)
+            ->assertDispatched('toast', title: 'Bonus Revoked');
+
+        expect(EventBonus::where('event_configuration_id', $this->eventConfig->id)
+            ->where('bonus_type_id', $bonusType->id)
+            ->exists())->toBeFalse();
+    });
+
     test('regular user cannot update notes', function () {
         $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
             'event_configuration_id' => $this->eventConfig->id,

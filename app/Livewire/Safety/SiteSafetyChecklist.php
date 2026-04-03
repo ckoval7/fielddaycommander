@@ -125,6 +125,7 @@ class SiteSafetyChecklist extends Component
             $this->revokeIfGateNotMet($item->checklist_type);
         } else {
             $entry->markComplete(Auth::user());
+            $this->claimIfGateMet($item->checklist_type);
         }
 
         unset($this->items);
@@ -176,6 +177,53 @@ class SiteSafetyChecklist extends Component
             'required_total' => $requiredTotal,
             'required_completed' => $requiredCompleted,
         ];
+    }
+
+    /**
+     * Auto-claim the bonus if the checklist gate is met after completing an item.
+     */
+    protected function claimIfGateMet(ChecklistType $checklistType): void
+    {
+        if (! $this->checklistGateMet($checklistType)) {
+            return;
+        }
+
+        $bonusTypeCode = match ($checklistType) {
+            ChecklistType::SafetyOfficer => 'safety_officer',
+            ChecklistType::SiteResponsibilities => 'site_responsibilities',
+        };
+
+        $bonusType = BonusType::where('code', $bonusTypeCode)->first();
+        if (! $bonusType) {
+            return;
+        }
+
+        $exists = EventBonus::where('event_configuration_id', $this->eventConfig->id)
+            ->where('bonus_type_id', $bonusType->id)
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        EventBonus::create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'bonus_type_id' => $bonusType->id,
+            'claimed_by_user_id' => Auth::id(),
+            'quantity' => 1,
+            'calculated_points' => $bonusType->base_points,
+            'is_verified' => true,
+            'verified_by_user_id' => Auth::id(),
+            'verified_at' => now(),
+        ]);
+
+        $this->dispatch('bonus-claimed');
+        $this->dispatch('toast',
+            title: 'Bonus Earned',
+            description: 'The '.$checklistType->label().' bonus ('.$bonusType->base_points.' pts) has been awarded.',
+            icon: 'o-check-circle',
+            css: 'alert-success'
+        );
     }
 
     /**
