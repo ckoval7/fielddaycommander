@@ -503,6 +503,210 @@ test('starting session on non-GOTA station ignores supervised toggle', function 
     ]);
 });
 
+test('prevents starting session with band/mode already active on another station', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $station1 = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'Station Alpha',
+    ]);
+    $station2 = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'Station Bravo',
+    ]);
+
+    // Station Alpha already has an active session on 20m Phone
+    $otherUser = User::factory()->create();
+    OperatingSession::factory()->create([
+        'station_id' => $station1->id,
+        'operator_user_id' => $otherUser->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now(),
+        'end_time' => null,
+    ]);
+
+    // Try to start same band/mode on Station Bravo
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station2->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->call('startSession')
+        ->assertHasErrors('selectedBandId');
+
+    // No new session should be created for station2
+    expect(OperatingSession::where('station_id', $station2->id)->count())->toBe(0);
+});
+
+test('GOTA station is exempt from band/mode exclusivity rule', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $station1 = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'Phone Station',
+        'is_gota' => false,
+    ]);
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'GOTA Station',
+    ]);
+
+    // Station 1 already active on 20m Phone
+    $otherUser = User::factory()->create();
+    OperatingSession::factory()->create([
+        'station_id' => $station1->id,
+        'operator_user_id' => $otherUser->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now(),
+        'end_time' => null,
+    ]);
+
+    // GOTA station on same band/mode should be allowed (FD Rule 6.9 exception)
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $gotaStation->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->call('startSession')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+});
+
+test('GOTA session does not block non-GOTA station from same band/mode', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'GOTA Station',
+    ]);
+    $station2 = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'Phone Station',
+        'is_gota' => false,
+    ]);
+
+    // GOTA already active on 20m Phone
+    $otherUser = User::factory()->create();
+    OperatingSession::factory()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $otherUser->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now(),
+        'end_time' => null,
+    ]);
+
+    // Non-GOTA station on same band/mode should be allowed (GOTA sessions don't count)
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station2->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->call('startSession')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+});
+
+test('allows same band/mode after previous session ended', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $station1 = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+    $station2 = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    // Station Alpha had a session on 20m Phone but it ended
+    $otherUser = User::factory()->create();
+    OperatingSession::factory()->create([
+        'station_id' => $station1->id,
+        'operator_user_id' => $otherUser->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now()->subHour(),
+        'end_time' => now()->subMinutes(10),
+    ]);
+
+    // Should be allowed since the other session ended
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station2->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->call('startSession')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+});
+
+test('allows different band/mode on another station', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $cwMode = Mode::create([
+        'name' => 'CW', 'category' => 'CW', 'points_fd' => 2, 'points_wfd' => 2,
+    ]);
+
+    $station1 = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+    $station2 = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    // Station 1 active on 20m Phone
+    $otherUser = User::factory()->create();
+    OperatingSession::factory()->create([
+        'station_id' => $station1->id,
+        'operator_user_id' => $otherUser->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now(),
+        'end_time' => null,
+    ]);
+
+    // Station 2 on 20m CW — different mode, should be allowed
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station2->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $cwMode->id)
+        ->set('powerWatts', 100)
+        ->call('startSession')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+});
+
 test('band warning is null when no band is selected', function () {
     $this->actingAs($this->user);
 

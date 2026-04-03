@@ -192,6 +192,25 @@ class StationSelect extends Component
 
         $station = Station::find($this->selectedStationId);
 
+        // Per FD Rule 6.9: no two transmitters on the same band-mode at the same time.
+        // Exception: GOTA stations may operate on any band-mode (Rule 4.1).
+        if (! $station?->is_gota) {
+            $conflictingSession = OperatingSession::query()
+                ->active()
+                ->where('band_id', $this->selectedBandId)
+                ->where('mode_id', $this->selectedModeId)
+                ->whereHas('station', fn ($q) => $q->where('is_gota', false))
+                ->with('station')
+                ->first();
+
+            if ($conflictingSession) {
+                $stationName = $conflictingSession->station?->name ?? 'another station';
+                $this->addError('selectedBandId', "This band/mode combination is already in use at {$stationName}.");
+
+                return;
+            }
+        }
+
         $session = OperatingSession::create([
             'station_id' => $this->selectedStationId,
             'operator_user_id' => auth()->id(),
