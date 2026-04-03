@@ -94,4 +94,24 @@ class OperatingSession extends Model
             get: fn (): bool => $this->end_time === null,
         );
     }
+
+    protected function duration(): Attribute
+    {
+        return Attribute::make(
+            get: function (): ?string {
+                if (! $this->start_time) {
+                    return null;
+                }
+
+                $end = $this->end_time ?? now();
+                $diff = $this->start_time->diff($end);
+
+                if ($diff->h > 0) {
+                    return $diff->h.'h '.$diff->i.'m';
+                }
+
+                return $diff->i.'m';
+            },
+        );
+    }
 }

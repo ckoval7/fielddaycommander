@@ -1,6 +1,10 @@
 <div class="space-y-6">
     {{-- Current Operating Session (if active) --}}
-    @if(false) {{-- Placeholder - will implement when OperatingSession model exists --}}
+    @php
+        $activeSession = $operatingSessions->first(fn ($s) => $s->is_active);
+    @endphp
+
+    @if($activeSession)
         <div class="card bg-base-100 shadow border-2 border-error">
             <div class="card-body">
                 <div class="flex items-center gap-2">
@@ -13,21 +17,18 @@
 
                 <div class="mt-2 space-y-1">
                     <p class="text-sm">
-                        <span class="font-semibold">Station:</span> Station 1 (20m Phone)
+                        <span class="font-semibold">Station:</span> {{ $activeSession->station->name ?? 'N/A' }}
+                        ({{ $activeSession->band->name ?? '' }} {{ $activeSession->mode->name ?? '' }})
                     </p>
                     <p class="text-sm">
-                        <span class="font-semibold">Event:</span> Field Day 2025
+                        <span class="font-semibold">Event:</span> {{ $activeSession->station->eventConfiguration->event->name ?? 'N/A' }}
                     </p>
                     <p class="text-sm">
-                        <span class="font-semibold">Started:</span> 2 hours ago
+                        <span class="font-semibold">Started:</span> {{ $activeSession->start_time->diffForHumans() }}
                     </p>
                     <p class="text-sm">
-                        <span class="font-semibold">QSOs Logged:</span> 47
+                        <span class="font-semibold">QSOs Logged:</span> {{ $activeSession->qso_count ?? 0 }}
                     </p>
-                </div>
-
-                <div class="card-actions justify-end mt-4">
-                    <x-button class="btn-error">End Session</x-button>
                 </div>
             </div>
         </div>
@@ -61,7 +62,7 @@
                         <tbody>
                             @foreach($operatingSessions as $session)
                                 <tr>
-                                    <td>{{ $session->event->name ?? 'N/A' }}</td>
+                                    <td>{{ $session->station->eventConfiguration->event->name ?? 'N/A' }}</td>
                                     <td>{{ $session->station->name ?? 'N/A' }}</td>
                                     <td>{{ $session->band->name ?? 'N/A' }}</td>
                                     <td>{{ $session->mode->name ?? 'N/A' }}</td>

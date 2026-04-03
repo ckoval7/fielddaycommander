@@ -49,11 +49,13 @@
                 </div>
 
                 {{-- Load More Button --}}
-                <div class="card-actions justify-center mt-6">
-                    <x-button class="btn-outline" wire:click="loadMoreActivity">
-                        Load More
-                    </x-button>
-                </div>
+                @if($activityLog->count() >= $activityLimit)
+                    <div class="card-actions justify-center mt-6">
+                        <x-button class="btn-outline" wire:click="loadMoreActivity">
+                            Load More
+                        </x-button>
+                    </div>
+                @endif
             @endif
         </div>
     </div>

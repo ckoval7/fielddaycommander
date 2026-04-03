@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Profile;
 
+use App\Models\AuditLog;
+use App\Models\OperatingSession;
 use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
@@ -48,6 +50,9 @@ class UserProfile extends Component
     public bool $notify_equipment = true;
 
     public bool $notify_bulletin_reminder = true;
+
+    // Activity tab properties
+    public int $activityLimit = 15;
 
     // Security tab properties
     public string $current_password = '';
@@ -279,6 +284,11 @@ class UserProfile extends Component
         $this->success('Recovery codes regenerated.');
     }
 
+    public function loadMoreActivity(): void
+    {
+        $this->activityLimit += 15;
+    }
+
     public function render()
     {
         $user = auth()->user();
@@ -289,11 +299,20 @@ class UserProfile extends Component
             ->orderBy('last_activity', 'desc')
             ->get();
 
-        // Get operating sessions (if OperatingSession model exists)
-        $operatingSessions = collect(); // Placeholder - implement when OperatingSession model is ready
+        // Get operating sessions for this user
+        $operatingSessions = OperatingSession::query()
+            ->forUser($user->id)
+            ->with(['station.eventConfiguration.event', 'band', 'mode'])
+            ->latest('start_time')
+            ->limit(20)
+            ->get();
 
-        // Get activity log
-        $activityLog = collect(); // Placeholder - implement when audit logging is ready
+        // Get activity log for this user
+        $activityLog = AuditLog::query()
+            ->where('user_id', $user->id)
+            ->latest('created_at')
+            ->limit($this->activityLimit)
+            ->get();
 
         return view('livewire.profile.user-profile', [
             'user' => $user,

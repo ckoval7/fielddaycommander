@@ -273,11 +273,42 @@ test('displays operating sessions for user', function () {
     expect($operatingSessions)->toBeInstanceOf(\Illuminate\Support\Collection::class);
 });
 
-test('operating sessions are empty placeholder when no data', function () {
+test('operating sessions are empty when no data', function () {
     $component = Livewire::test(UserProfile::class);
     $operatingSessions = $component->viewData('operatingSessions');
 
     expect($operatingSessions)->toBeEmpty();
+});
+
+test('operating sessions returns real data for user', function () {
+    \App\Models\OperatingSession::factory()
+        ->ended()
+        ->create([
+            'operator_user_id' => $this->user->id,
+            'qso_count' => 25,
+        ]);
+
+    $component = Livewire::test(UserProfile::class);
+    $operatingSessions = $component->viewData('operatingSessions');
+
+    expect($operatingSessions)->toHaveCount(1)
+        ->and($operatingSessions->first()->qso_count)->toBe(25);
+});
+
+test('operating sessions excludes other users', function () {
+    $otherUser = \App\Models\User::factory()->create();
+
+    \App\Models\OperatingSession::factory()->ended()->create([
+        'operator_user_id' => $this->user->id,
+    ]);
+    \App\Models\OperatingSession::factory()->ended()->create([
+        'operator_user_id' => $otherUser->id,
+    ]);
+
+    $component = Livewire::test(UserProfile::class);
+    $operatingSessions = $component->viewData('operatingSessions');
+
+    expect($operatingSessions)->toHaveCount(1);
 });
 
 // =============================================================================
@@ -291,9 +322,94 @@ test('displays activity log for user', function () {
     expect($activityLog)->toBeInstanceOf(\Illuminate\Support\Collection::class);
 });
 
-test('activity log is empty placeholder when no data', function () {
+test('activity log is empty when no data', function () {
     $component = Livewire::test(UserProfile::class);
     $activityLog = $component->viewData('activityLog');
 
     expect($activityLog)->toBeEmpty();
+});
+
+test('activity log returns real audit entries for user', function () {
+    \App\Models\AuditLog::create([
+        'user_id' => $this->user->id,
+        'action' => 'user.login.success',
+        'ip_address' => '127.0.0.1',
+    ]);
+
+    $component = Livewire::test(UserProfile::class);
+    $activityLog = $component->viewData('activityLog');
+
+    expect($activityLog)->toHaveCount(1)
+        ->and($activityLog->first()->action)->toBe('user.login.success')
+        ->and($activityLog->first()->action_label)->toBe('Logged in');
+});
+
+test('activity log excludes other users', function () {
+    $otherUser = \App\Models\User::factory()->create();
+
+    \App\Models\AuditLog::create([
+        'user_id' => $this->user->id,
+        'action' => 'user.login.success',
+        'ip_address' => '127.0.0.1',
+    ]);
+    \App\Models\AuditLog::create([
+        'user_id' => $otherUser->id,
+        'action' => 'user.login.success',
+        'ip_address' => '127.0.0.1',
+    ]);
+
+    $component = Livewire::test(UserProfile::class);
+    $activityLog = $component->viewData('activityLog');
+
+    expect($activityLog)->toHaveCount(1);
+});
+
+test('load more activity increases limit', function () {
+    // Create 20 audit entries
+    for ($i = 0; $i < 20; $i++) {
+        \App\Models\AuditLog::create([
+            'user_id' => $this->user->id,
+            'action' => 'user.login.success',
+            'ip_address' => '127.0.0.1',
+        ]);
+    }
+
+    $component = Livewire::test(UserProfile::class);
+
+    // Initial limit is 15
+    expect($component->viewData('activityLog'))->toHaveCount(15);
+
+    // After loading more, should show all 20
+    $component->call('loadMoreActivity');
+    expect($component->viewData('activityLog'))->toHaveCount(20);
+});
+
+test('load more button hidden when all entries are shown', function () {
+    // Create fewer entries than the limit
+    for ($i = 0; $i < 5; $i++) {
+        \App\Models\AuditLog::create([
+            'user_id' => $this->user->id,
+            'action' => 'user.login.success',
+            'ip_address' => '127.0.0.1',
+        ]);
+    }
+
+    Livewire::test(UserProfile::class)
+        ->set('activeTab', 'activity')
+        ->assertDontSee('Load More');
+});
+
+test('load more button shown when more entries may exist', function () {
+    // Create exactly the limit number of entries
+    for ($i = 0; $i < 15; $i++) {
+        \App\Models\AuditLog::create([
+            'user_id' => $this->user->id,
+            'action' => 'user.login.success',
+            'ip_address' => '127.0.0.1',
+        ]);
+    }
+
+    Livewire::test(UserProfile::class)
+        ->set('activeTab', 'activity')
+        ->assertSee('Load More');
 });
