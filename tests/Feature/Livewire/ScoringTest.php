@@ -88,6 +88,16 @@ beforeEach(function () {
         'is_per_transmitter' => false,
         'is_active' => true,
     ]);
+
+    BonusType::create([
+        'event_type_id' => $this->eventType->id,
+        'code' => 'web_submission',
+        'name' => 'Web Submission',
+        'description' => 'Submit Field Day log via ARRL web submission',
+        'base_points' => 50,
+        'is_per_transmitter' => false,
+        'is_active' => true,
+    ]);
 });
 
 // Helper to create an active event with a config
@@ -279,7 +289,7 @@ it('computes the band/mode grid', function () {
 it('lists bonuses with verified status', function () {
     $config = makeActiveEvent();
     $bonusType = BonusType::where('event_type_id', $this->eventType->id)
-        ->where('code', 'satellite_qso')
+        ->where('code', 'web_submission')
         ->first();
 
     EventBonus::factory()->create([
@@ -301,7 +311,7 @@ it('lists bonuses with verified status', function () {
 it('lists bonuses with claimed-unverified status', function () {
     $config = makeActiveEvent();
     $bonusType = BonusType::where('event_type_id', $this->eventType->id)
-        ->where('code', 'satellite_qso')
+        ->where('code', 'web_submission')
         ->first();
 
     EventBonus::factory()->create([
@@ -414,6 +424,77 @@ it('includes emergency power bonus in final score', function () {
     // No QSOs, so final score = bonus only = 300 (3 × 100)
     expect($component->bonusScore)->toBe(300);
     expect($component->finalScore)->toBe(300);
+});
+
+// ============================================================================
+// SATELLITE QSO BONUS
+// ============================================================================
+
+it('auto-computes satellite bonus when satellite contact exists', function () {
+    $config = makeActiveEvent();
+
+    $eligibleClass = OperatingClass::first();
+    $eligibleClass->update(['code' => 'A']);
+    $config->update(['operating_class_id' => $eligibleClass->id]);
+    $config->refresh();
+
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => Band::first()->id,
+        'mode_id' => Mode::first()->id,
+        'is_satellite' => true,
+        'is_duplicate' => false,
+    ]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $entry = collect($component->bonusList)
+        ->first(fn ($b) => $b['type']->code === 'satellite_qso');
+
+    expect($entry['status'])->toBe('verified');
+    expect($entry['points'])->toBe(100);
+});
+
+it('does not award satellite bonus when no satellite contacts exist', function () {
+    $config = makeActiveEvent();
+
+    $eligibleClass = OperatingClass::first();
+    $eligibleClass->update(['code' => 'A']);
+    $config->update(['operating_class_id' => $eligibleClass->id]);
+    $config->refresh();
+
+    $component = Livewire::test(Scoring::class);
+
+    $entry = collect($component->bonusList)
+        ->first(fn ($b) => $b['type']->code === 'satellite_qso');
+
+    expect($entry['status'])->toBe('unclaimed');
+    expect($entry['points'])->toBe(0);
+});
+
+it('does not award satellite bonus for duplicate satellite contacts', function () {
+    $config = makeActiveEvent();
+
+    $eligibleClass = OperatingClass::first();
+    $eligibleClass->update(['code' => 'A']);
+    $config->update(['operating_class_id' => $eligibleClass->id]);
+    $config->refresh();
+
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => Band::first()->id,
+        'mode_id' => Mode::first()->id,
+        'is_satellite' => true,
+        'is_duplicate' => true,
+    ]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $entry = collect($component->bonusList)
+        ->first(fn ($b) => $b['type']->code === 'satellite_qso');
+
+    expect($entry['status'])->toBe('unclaimed');
+    expect($entry['points'])->toBe(0);
 });
 
 // ============================================================================
@@ -556,7 +637,7 @@ it('shows 5x multiplier in power column for QRP with natural power', function ()
 it('shows bonus column with status chips', function () {
     $config = makeActiveEvent();
     $bonusType = BonusType::where('event_type_id', $this->eventType->id)
-        ->where('code', 'satellite_qso')
+        ->where('code', 'web_submission')
         ->first();
 
     \App\Models\EventBonus::factory()->create([

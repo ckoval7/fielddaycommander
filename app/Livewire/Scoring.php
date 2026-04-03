@@ -295,12 +295,14 @@ class Scoring extends Component
 
         $youthPoints = $this->config()?->calculateYouthBonus() ?? 0;
         $emergencyPowerPoints = $this->config()?->calculateEmergencyPowerBonus() ?? 0;
+        $satellitePoints = $this->config()?->calculateSatelliteBonus() ?? 0;
 
         $list = [];
 
         $computedPoints = [
             'youth_participation' => $youthPoints,
             'emergency_power' => $emergencyPowerPoints,
+            'satellite_qso' => $satellitePoints,
         ];
 
         foreach ($bonusTypes as $bonusType) {
@@ -520,20 +522,6 @@ class Scoring extends Component
                 'severity' => 'warning',
                 'section' => 'bonus',
                 'message' => "{$unverifiedCount} bonus(es) claimed but not yet verified.",
-            ];
-        }
-
-        // Satellite contacts exist but satellite_qso bonus unclaimed
-        $hasSatelliteContacts = $this->config()->contacts()
-            ->where('is_satellite', true)
-            ->exists();
-        $satelliteBonusStatus = collect($this->bonusList)
-            ->first(fn ($b) => $b['type']->code === 'satellite_qso');
-        if ($hasSatelliteContacts && $satelliteBonusStatus && $satelliteBonusStatus['status'] === 'unclaimed') {
-            $notices[] = [
-                'severity' => 'opportunity',
-                'section' => 'bonus',
-                'message' => 'Satellite contacts detected but satellite QSO bonus has not been claimed.',
             ];
         }
 

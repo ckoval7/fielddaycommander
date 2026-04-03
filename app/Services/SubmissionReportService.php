@@ -170,6 +170,11 @@ class SubmissionReportService
             $claimed['emergency_power'] = ['points' => $emergencyPowerBonus, 'is_verified' => true];
         }
 
+        $satelliteBonus = $config->calculateSatelliteBonus();
+        if ($satelliteBonus > 0) {
+            $claimed['satellite_qso'] = ['points' => $satelliteBonus, 'is_verified' => true];
+        }
+
         $checklist = [];
         foreach ($arrlOrder as $item) {
             $code = $item['code'];

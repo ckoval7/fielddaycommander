@@ -332,7 +332,40 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Calculate total bonus points (verified event_bonuses + computed youth + computed emergency power).
+     * Calculate satellite QSO bonus: 100 pts if any non-duplicate satellite contact exists.
+     *
+     * Only eligible for classes A, B, F (per bonus type eligible_classes).
+     */
+    public function calculateSatelliteBonus(): int
+    {
+        $bonusType = BonusType::where('code', 'satellite_qso')->first();
+
+        if (! $bonusType || ! $bonusType->is_active) {
+            return 0;
+        }
+
+        $classCode = $this->operatingClass?->code;
+        $eligibleClasses = $bonusType->eligible_classes;
+
+        if ($eligibleClasses !== null) {
+            if (is_string($eligibleClasses)) {
+                $eligibleClasses = json_decode($eligibleClasses, true) ?? [];
+            }
+            if (! in_array($classCode, $eligibleClasses)) {
+                return 0;
+            }
+        }
+
+        $hasSatelliteContact = $this->contacts()
+            ->notDuplicate()
+            ->where('is_satellite', true)
+            ->exists();
+
+        return $hasSatelliteContact ? (int) $bonusType->base_points : 0;
+    }
+
+    /**
+     * Calculate total bonus points (verified event_bonuses + computed bonuses).
      */
     public function calculateBonusScore(): int
     {
@@ -342,10 +375,10 @@ class EventConfiguration extends Model
 
         $storedBonuses = (int) $this->bonuses()
             ->where('is_verified', true)
-            ->whereHas('bonusType', fn ($q) => $q->whereNotIn('code', ['youth_participation', 'emergency_power']))
+            ->whereHas('bonusType', fn ($q) => $q->whereNotIn('code', ['youth_participation', 'emergency_power', 'satellite_qso']))
             ->sum('calculated_points');
 
-        return $storedBonuses + $this->calculateYouthBonus() + $this->calculateEmergencyPowerBonus();
+        return $storedBonuses + $this->calculateYouthBonus() + $this->calculateEmergencyPowerBonus() + $this->calculateSatelliteBonus();
     }
 
     /**
