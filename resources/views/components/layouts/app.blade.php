@@ -82,7 +82,7 @@
     {{-- MAIN --}}
     <x-main full-width with-nav>
         {{-- SIDEBAR --}}
-        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
+        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-base-200">
             @auth
                 <div class="mary-hideable px-4 pt-2 pb-3">
                     <livewire:components.event-context-selector />
