@@ -122,23 +122,24 @@ class SubmissionReportService
     {
         // Canonical ARRL form order with display names matching the entry form
         $arrlOrder = [
-            ['code' => 'emergency_power',  'name' => '100% emergency power'],
-            ['code' => 'media_publicity',  'name' => 'Media publicity'],
-            ['code' => 'public_location',  'name' => 'Public location'],
-            ['code' => 'public_info_booth', 'name' => 'Public information table'],
-            ['code' => 'sm_sec_message',   'name' => 'Formal message to ARRL SM/SEC'],
-            ['code' => 'w1aw_bulletin',    'name' => 'W1AW Field Day message'],
-            ['code' => 'nts_message',      'name' => 'Formal messages handled'],
-            ['code' => 'satellite_qso',    'name' => 'Satellite QSO', 'auto' => true],
-            ['code' => 'natural_power',    'name' => 'Natural power QSOs completed'],
-            ['code' => 'site_visit',       'name' => 'Site visit by invited official'],
-            ['code' => '_educational',     'name' => 'Educational activity'],
-            ['code' => '_youth',           'name' => 'Youth participation'],
-            ['code' => '_gota',            'name' => 'GOTA bonus', 'auto' => true],
-            ['code' => '_web_submit',      'name' => 'Submitted entry online', 'auto' => true],
-            ['code' => 'safety_officer',   'name' => 'Safety officer'],
-            ['code' => 'social_media',     'name' => 'Social media'],
-            ['code' => '_site_resp',       'name' => 'Site responsibilities'],
+            ['code' => 'emergency_power',         'name' => '100% emergency power'],
+            ['code' => 'media_publicity',         'name' => 'Media publicity'],
+            ['code' => 'public_location',         'name' => 'Public location'],
+            ['code' => 'public_info_booth',       'name' => 'Public information table'],
+            ['code' => 'sm_sec_message',          'name' => 'Formal message to ARRL SM/SEC'],
+            ['code' => 'w1aw_bulletin',           'name' => 'W1AW Field Day message'],
+            ['code' => 'nts_message',             'name' => 'Formal messages handled'],
+            ['code' => 'satellite_qso',           'name' => 'Satellite QSO', 'auto' => true],
+            ['code' => 'natural_power',           'name' => 'Natural power QSOs completed'],
+            ['code' => 'elected_official_visit',  'name' => 'Elected official site visit'],
+            ['code' => 'agency_visit',            'name' => 'Served agency site visit'],
+            ['code' => 'educational_activity',    'name' => 'Educational activity'],
+            ['code' => 'youth_participation',     'name' => 'Youth participation'],
+            ['code' => '_gota',                   'name' => 'GOTA bonus', 'auto' => true],
+            ['code' => 'web_submission',          'name' => 'Submitted entry online'],
+            ['code' => 'safety_officer',          'name' => 'Safety officer'],
+            ['code' => 'site_responsibilities',   'name' => 'Site responsibilities'],
+            ['code' => 'social_media',            'name' => 'Social media'],
         ];
 
         // Index claimed bonuses by bonus_type code
@@ -158,9 +159,6 @@ class SubmissionReportService
         if ($gotaBonus > 0) {
             $claimed['_gota'] = ['points' => $gotaBonus, 'is_verified' => true];
         }
-
-        // Web submission is always true since they're using this tool
-        $claimed['_web_submit'] = ['points' => 50, 'is_verified' => true];
 
         $checklist = [];
         foreach ($arrlOrder as $item) {
