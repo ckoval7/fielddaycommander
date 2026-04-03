@@ -977,6 +977,44 @@ test('admin password reset logs to audit log as critical', function () {
     expect($auditLog->new_values['call_sign'])->toBe('W1AW');
 });
 
+// =============================================================================
+// Youth Flag (2 tests)
+// =============================================================================
+
+test('can set is_youth flag when creating a user', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->set('call_sign', 'KD2ZZZ')
+        ->set('first_name', 'Young')
+        ->set('last_name', 'Operator')
+        ->set('email', 'young@example.com')
+        ->set('is_youth', true)
+        ->set('role_id', $this->roles['Operator']->id)
+        ->set('inviteMode', false)
+        ->set('password', 'Password123!')
+        ->set('password_confirmation', 'Password123!')
+        ->call('saveUser');
+
+    $user = User::where('call_sign', 'KD2ZZZ')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->is_youth)->toBeTrue();
+});
+
+test('can toggle is_youth flag when editing a user', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['is_youth' => false]);
+    $user->assignRole('Operator');
+
+    Livewire::test(UserManagement::class)
+        ->call('openEditModal', $user->id)
+        ->set('is_youth', true)
+        ->call('saveUser');
+
+    expect($user->fresh()->is_youth)->toBeTrue();
+});
+
 test('bulk delete logs individual audit entries for each user', function () {
     $this->actingAs($this->admin);
 

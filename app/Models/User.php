@@ -40,6 +40,7 @@ class User extends Authenticatable
         'two_factor_secret',
         'preferred_timezone',
         'notification_preferences',
+        'is_youth',
     ];
 
     /**
@@ -71,6 +72,7 @@ class User extends Authenticatable
             'two_factor_bypass_enabled' => 'boolean',
             'two_factor_bypass_expires_at' => 'datetime',
             'notification_preferences' => 'array',
+            'is_youth' => 'boolean',
         ];
     }
 

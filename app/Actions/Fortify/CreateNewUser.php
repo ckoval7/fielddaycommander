@@ -42,6 +42,7 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::unique(User::class)->withoutTrashed(),
             ],
             'password' => $this->passwordRules(),
+            'is_youth' => ['sometimes', 'boolean'],
         ])->validate();
 
         $user = User::create([
@@ -50,6 +51,7 @@ class CreateNewUser implements CreatesNewUsers
             'last_name' => $input['last_name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
+            'is_youth' => ! empty($input['is_youth']),
         ]);
 
         // Assign default "Operator" role to new users

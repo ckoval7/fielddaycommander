@@ -28,6 +28,8 @@ class UserProfile extends Component
 
     public ?string $preferred_timezone = null;
 
+    public bool $is_youth = false;
+
     public bool $event_notifications = true;
 
     public bool $system_announcements = true;
@@ -76,6 +78,7 @@ class UserProfile extends Component
         $this->email = $user->email;
         $this->license_class = $user->license_class;
         $this->preferred_timezone = $user->preferred_timezone ?? \App\Models\Setting::get('timezone', config('app.timezone'));
+        $this->is_youth = (bool) $user->is_youth;
 
         // Load notification preferences
         $preferences = $user->notification_preferences ?? [];
@@ -101,6 +104,7 @@ class UserProfile extends Component
             'email' => ['required', 'email', 'max:255'],
             'license_class' => ['nullable', 'string', 'in:Technician,General,Advanced,Extra'],
             'preferred_timezone' => ['nullable', 'string', 'timezone:all'],
+            'is_youth' => ['boolean'],
         ]);
 
         $user = auth()->user();
@@ -114,6 +118,7 @@ class UserProfile extends Component
                 'email' => $this->email,
                 'license_class' => $this->license_class,
                 'preferred_timezone' => $this->preferred_timezone,
+                'is_youth' => $this->is_youth,
                 'notification_preferences' => [
                     'event_notifications' => $this->event_notifications,
                     'system_announcements' => $this->system_announcements,

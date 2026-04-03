@@ -52,6 +52,12 @@
                     option-value="value"
                     option-label="label"
                 />
+
+                {{-- Youth Flag --}}
+                <label class="label cursor-pointer justify-start gap-3 mt-2">
+                    <input type="checkbox" class="checkbox checkbox-sm" wire:model="is_youth" />
+                    <span class="label-text">Youth (age 18 or younger)</span>
+                </label>
             </div>
         </div>
 

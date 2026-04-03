@@ -71,6 +71,11 @@
             />
         </div>
 
+        <label class="label cursor-pointer justify-start gap-3">
+            <input type="checkbox" class="checkbox checkbox-sm" wire:model="is_youth" />
+            <span class="label-text">Youth (age 18 or younger)</span>
+        </label>
+
         @if(!$editingUserId)
             {{-- Invitation Mode Toggle (only for new users) --}}
             <div class="form-control mt-4">
