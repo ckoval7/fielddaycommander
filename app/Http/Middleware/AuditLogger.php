@@ -28,7 +28,7 @@ class AuditLogger
 
         match ($routeKey) {
             'POST /login' => $this->logLogin($response),
-            'POST /logout' => $this->logAction('user.logout', $preAuthUserId, isCritical: true),
+            'POST /logout' => $this->logAction('user.logout', $preAuthUserId),
             'POST /two-factor-challenge' => $this->logTwoFactorChallenge($response),
             'POST /register' => $this->logRegister(),
             'POST /password/reset' => $this->logAction('user.password.reset', auth()->id()),
@@ -39,7 +39,7 @@ class AuditLogger
     protected function logLogin(Response $response): void
     {
         if (auth()->check()) {
-            AuditLog::log(action: 'user.login.success', isCritical: true);
+            AuditLog::log(action: 'user.login.success');
         } else {
             AuditLog::log(
                 action: 'user.login.failed',
@@ -52,7 +52,7 @@ class AuditLogger
     protected function logTwoFactorChallenge(Response $response): void
     {
         if (auth()->check()) {
-            AuditLog::log(action: 'user.login.success', isCritical: true);
+            AuditLog::log(action: 'user.login.success');
         } else {
             AuditLog::log(action: 'user.login.2fa_failed', isCritical: true);
         }

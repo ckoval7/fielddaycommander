@@ -21,7 +21,7 @@ test('successful login logs user.login.success', function () {
 
     $auditLog = AuditLog::where('action', 'user.login.success')->first();
     expect($auditLog)->not->toBeNull();
-    expect($auditLog->is_critical)->toBeTrue();
+    expect($auditLog->is_critical)->toBeFalse();
     expect($auditLog->user_id)->toBe($user->id);
 });
 
@@ -49,6 +49,6 @@ test('logout logs user.logout', function () {
 
     $auditLog = AuditLog::where('action', 'user.logout')->first();
     expect($auditLog)->not->toBeNull();
-    expect($auditLog->is_critical)->toBeTrue();
+    expect($auditLog->is_critical)->toBeFalse();
     expect($auditLog->user_id)->toBe($user->id);
 });
