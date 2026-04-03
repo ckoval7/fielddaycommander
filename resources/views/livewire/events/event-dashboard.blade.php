@@ -291,7 +291,13 @@
                                             <td class="font-mono font-semibold">{{ $contact->callsign }}</td>
                                             <td>{{ $contact->band?->name }}</td>
                                             <td>{{ $contact->mode?->name }}</td>
-                                            <td class="text-base-content/60">{{ $contact->logger?->call_sign }}</td>
+                                            <td class="text-base-content/60">
+                                                @if($contact->is_gota_contact)
+                                                    {{ $contact->gotaOperator?->call_sign ?? $contact->gota_operator_callsign ?? $contact->gota_operator_first_name . ' ' . $contact->gota_operator_last_name }}
+                                                @else
+                                                    {{ $contact->logger?->call_sign }}
+                                                @endif
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>

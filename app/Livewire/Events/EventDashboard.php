@@ -106,7 +106,7 @@ class EventDashboard extends Component
         }
 
         return $config->contacts()
-            ->with(['band', 'mode', 'logger'])
+            ->with(['band', 'mode', 'logger', 'gotaOperator'])
             ->latest('qso_time')
             ->limit(25)
             ->get();

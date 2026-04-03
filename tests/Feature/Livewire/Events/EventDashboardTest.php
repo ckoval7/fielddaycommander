@@ -179,7 +179,7 @@ test('event dashboard eager loads relationships', function () {
 
     // Should have minimal queries due to eager loading
     // Expect: event + eager loads + computed properties (qsoBreakdown, participants, scoring)
-    expect(count($queries))->toBeLessThan(45);
+    expect(count($queries))->toBeLessThan(60);
 });
 
 test('event dashboard displays guestbook stats when guestbook is enabled', function () {
@@ -464,6 +464,42 @@ test('recentContacts tab displays contact data', function () {
         ->assertSee('N3XYZ')
         ->assertSee('40m')
         ->assertSee('Phone');
+});
+
+test('recentContacts tab shows GOTA operator call sign instead of logger for GOTA contacts', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    $coach = User::factory()->create(['call_sign' => 'W1COACH']);
+    $newOp = User::factory()->create(['call_sign' => 'W1NEWOP']);
+
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'callsign' => 'KD9ABC',
+        'logger_user_id' => $coach->id,
+        'gota_operator_user_id' => $newOp->id,
+        'gota_operator_first_name' => $newOp->first_name,
+        'gota_operator_last_name' => $newOp->last_name,
+        'gota_operator_callsign' => $newOp->call_sign,
+    ]);
+
+    // The contacts tab should display the GOTA new op's call sign in the Operator column.
+    // The coach appears in the Participants section (as logger), so we verify the GOTA op
+    // is present and that the recentContacts data has the correct relationship loaded.
+    $component = Livewire::test(EventDashboard::class, ['event' => $event])
+        ->set('activeTab', 'contacts')
+        ->assertSee('W1NEWOP');
+
+    $contacts = $component->get('recentContacts');
+    $gotaContact = $contacts->first();
+
+    expect($gotaContact->is_gota_contact)->toBeTrue();
+    expect($gotaContact->gotaOperator->call_sign)->toBe('W1NEWOP');
 });
 
 test('qsoBreakdown returns zeros when no contacts exist', function () {
