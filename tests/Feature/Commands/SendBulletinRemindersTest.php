@@ -99,6 +99,24 @@ describe('sending bulletin reminders', function () {
         Notification::assertNothingSent();
     });
 
+    test('notification url is a relative path', function () {
+        Notification::fake();
+
+        BulletinScheduleEntry::factory()->create([
+            'event_id' => $this->event->id,
+            'scheduled_at' => now()->addMinutes(10),
+            'notification_sent' => false,
+        ]);
+
+        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+
+        Notification::assertSentTo($this->user, \App\Notifications\InAppNotification::class, function ($notification) {
+            $data = $notification->toArray($this->user);
+
+            return $data['url'] === "/events/{$this->event->id}/w1aw-bulletin";
+        });
+    });
+
     test('notification message includes mode, frequencies, and time', function () {
         Notification::fake();
 

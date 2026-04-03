@@ -42,7 +42,7 @@ class SendBulletinReminders extends Command
                 category: NotificationCategory::BulletinReminder,
                 title: 'W1AW Bulletin in 15 minutes',
                 message: "{$entry->mode_label} on {$entry->frequencies} MHz at {$timeFormatted}",
-                url: route('events.w1aw-bulletin', $activeEvent),
+                url: "/events/{$activeEvent->id}/w1aw-bulletin",
                 groupKey: "bulletin_reminder_{$entry->id}",
             );
 
