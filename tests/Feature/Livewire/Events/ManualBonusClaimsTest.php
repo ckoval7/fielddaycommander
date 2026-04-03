@@ -60,8 +60,8 @@ test('shows public_location bonus for class A', function () {
 });
 
 test('hides public_location bonus for ineligible class', function () {
-    $classB = OperatingClass::where('code', 'B')->where('event_type_id', $this->eventType->id)->first();
-    $this->eventConfig->update(['operating_class_id' => $classB->id]);
+    $classD = OperatingClass::where('code', 'D')->where('event_type_id', $this->eventType->id)->first();
+    $this->eventConfig->update(['operating_class_id' => $classD->id]);
 
     Livewire::actingAs($this->user)
         ->test(ManualBonusClaims::class, ['event' => $this->event])
@@ -183,4 +183,51 @@ test('does not render when event has no configuration', function () {
     Livewire::actingAs($this->user)
         ->test(ManualBonusClaims::class, ['event' => $eventNoCfg])
         ->assertDontSee('Manual Bonus Claims');
+});
+
+test('shows educational_activity bonus for class A', function () {
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->assertSee('Educational Activity');
+});
+
+test('shows web_submission bonus for any class', function () {
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->assertSee('Web Submission');
+});
+
+test('shows youth participation section for class A', function () {
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->assertSee('Youth Participation');
+});
+
+test('saveAdditionalYouth dispatches bonus-claimed event', function () {
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->set('additionalYouth', 3)
+        ->call('saveAdditionalYouth')
+        ->assertDispatched('bonus-claimed');
+});
+
+test('youth section shows auto-detected youth count', function () {
+    $youthUser = User::factory()->create(['is_youth' => true]);
+    \App\Models\Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'logger_user_id' => $youthUser->id,
+        'is_duplicate' => false,
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->assertSee('Registered youth with QSOs')
+        ->assertSee('20 pts');
+});
+
+test('shows elected_official_visit and agency_visit as manual claims', function () {
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->assertSee('Elected Official Visit')
+        ->assertSee('Served Agency Visit');
 });

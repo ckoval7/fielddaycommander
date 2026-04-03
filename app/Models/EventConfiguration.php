@@ -249,7 +249,61 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Calculate total bonus points (verified only).
+     * Count distinct registered youth users who completed at least one non-duplicate QSO.
+     */
+    public function countYouthWithQsos(): int
+    {
+        $youthUserIds = User::where('is_youth', true)->pluck('id');
+
+        if ($youthUserIds->isEmpty()) {
+            return 0;
+        }
+
+        $loggerIds = $this->contacts()
+            ->notDuplicate()
+            ->whereIn('logger_user_id', $youthUserIds)
+            ->distinct()
+            ->pluck('logger_user_id');
+
+        $gotaOperatorIds = $this->contacts()
+            ->notDuplicate()
+            ->where('is_gota_contact', true)
+            ->whereIn('gota_operator_user_id', $youthUserIds)
+            ->distinct()
+            ->pluck('gota_operator_user_id');
+
+        return $loggerIds->merge($gotaOperatorIds)->unique()->count();
+    }
+
+    /**
+     * Calculate youth participation bonus: 20 pts per youth, max 100.
+     *
+     * Combines auto-counted registered youth with QSOs and any manual
+     * additional youth stored in the EventBonus notes field.
+     */
+    public function calculateYouthBonus(): int
+    {
+        $autoCount = $this->countYouthWithQsos();
+
+        $bonusType = BonusType::where('code', 'youth_participation')->first();
+        $maxOccurrences = $bonusType->max_occurrences ?? 5;
+        $basePoints = $bonusType->base_points ?? 20;
+
+        $additional = 0;
+        if ($bonusType) {
+            $bonus = $this->bonuses()
+                ->where('bonus_type_id', $bonusType->id)
+                ->first();
+            $additional = $bonus ? (int) ($bonus->notes ?? 0) : 0;
+        }
+
+        $total = min($autoCount + $additional, $maxOccurrences);
+
+        return $total * $basePoints;
+    }
+
+    /**
+     * Calculate total bonus points (verified event_bonuses + computed youth).
      */
     public function calculateBonusScore(): int
     {
@@ -257,9 +311,12 @@ class EventConfiguration extends Model
             return 0;
         }
 
-        return $this->bonuses()
+        $storedBonuses = (int) $this->bonuses()
             ->where('is_verified', true)
+            ->whereHas('bonusType', fn ($q) => $q->where('code', '!=', 'youth_participation'))
             ->sum('calculated_points');
+
+        return $storedBonuses + $this->calculateYouthBonus();
     }
 
     /**

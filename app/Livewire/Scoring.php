@@ -293,9 +293,23 @@ class Scoring extends Component
             ? $this->config()->bonuses->keyBy('bonus_type_id')
             : collect();
 
+        $youthPoints = $this->config()?->calculateYouthBonus() ?? 0;
+
         $list = [];
 
         foreach ($bonusTypes as $bonusType) {
+            // Youth participation is computed on-demand, not from event_bonuses
+            if ($bonusType->code === 'youth_participation') {
+                $list[] = [
+                    'type' => $bonusType,
+                    'bonus' => null,
+                    'status' => $youthPoints > 0 ? 'verified' : 'unclaimed',
+                    'points' => $youthPoints,
+                ];
+
+                continue;
+            }
+
             $eventBonus = $claimedBonuses->get($bonusType->id);
 
             if ($eventBonus && $eventBonus->is_verified) {
