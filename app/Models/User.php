@@ -210,6 +210,31 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's configured bulletin reminder intervals in minutes.
+     *
+     * @return array<int>
+     */
+    public function getBulletinReminderMinutes(): array
+    {
+        $minutes = $this->notification_preferences['bulletin_reminder_minutes'] ?? [15];
+
+        return array_values(array_map('intval', $minutes));
+    }
+
+    /**
+     * Set the user's bulletin reminder intervals in minutes.
+     *
+     * @param  array<int>  $minutes
+     */
+    public function setBulletinReminderMinutes(array $minutes): void
+    {
+        $preferences = $this->notification_preferences ?? [];
+        $preferences['bulletin_reminder_minutes'] = array_values(array_unique(array_map('intval', $minutes)));
+        $this->notification_preferences = $preferences;
+        $this->save();
+    }
+
+    /**
      * Get user's preferred timezone or system default.
      */
     public function getTimezone(): string

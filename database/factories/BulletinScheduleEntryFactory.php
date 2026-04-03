@@ -21,14 +21,8 @@ class BulletinScheduleEntryFactory extends Factory
                 '1.855, 3.990, 7.290, 14.290',
             ]),
             'source' => fake()->randomElement(['W1AW', 'K6KPH']),
-            'notification_sent' => false,
             'created_by' => User::factory(),
         ];
-    }
-
-    public function sent(): static
-    {
-        return $this->state(fn () => ['notification_sent' => true]);
     }
 
     public function upcoming(): static
@@ -40,7 +34,6 @@ class BulletinScheduleEntryFactory extends Factory
     {
         return $this->state(fn () => [
             'scheduled_at' => now()->subHours(2),
-            'notification_sent' => true,
         ]);
     }
 }

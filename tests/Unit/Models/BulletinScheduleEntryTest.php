@@ -56,41 +56,36 @@ describe('scopes', function () {
         expect($entries)->toHaveCount(1);
     });
 
-    test('pendingNotification scope finds entries within window', function () {
+    test('inReminderWindow scope finds entries within window', function () {
         // Within future window (10 min out) — should match
         BulletinScheduleEntry::factory()->create([
             'event_id' => $this->event->id,
             'scheduled_at' => now()->addMinutes(10),
-            'notification_sent' => false,
         ]);
-        // Too far in future (20 min out) — should not match
+        // Within future window (55 min out) — should match
         BulletinScheduleEntry::factory()->create([
             'event_id' => $this->event->id,
-            'scheduled_at' => now()->addMinutes(20),
-            'notification_sent' => false,
+            'scheduled_at' => now()->addMinutes(55),
         ]);
-        // Within window but already sent — should not match
+        // Too far in future (65 min out) — should not match
         BulletinScheduleEntry::factory()->create([
             'event_id' => $this->event->id,
-            'scheduled_at' => now()->addMinutes(5),
-            'notification_sent' => true,
+            'scheduled_at' => now()->addMinutes(65),
         ]);
         // Recently past (3 min ago, within 5-min grace) — should match
         BulletinScheduleEntry::factory()->create([
             'event_id' => $this->event->id,
             'scheduled_at' => now()->subMinutes(3),
-            'notification_sent' => false,
         ]);
         // Too far in past (10 min ago, outside grace) — should not match
         BulletinScheduleEntry::factory()->create([
             'event_id' => $this->event->id,
             'scheduled_at' => now()->subMinutes(10),
-            'notification_sent' => false,
         ]);
 
-        $pending = BulletinScheduleEntry::pendingNotification()->get();
+        $entries = BulletinScheduleEntry::inReminderWindow()->get();
 
-        expect($pending)->toHaveCount(2);
+        expect($entries)->toHaveCount(3);
     });
 });
 

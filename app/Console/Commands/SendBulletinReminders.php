@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\NotificationCategory;
 use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
+use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Console\Command;
 
@@ -26,32 +27,61 @@ class SendBulletinReminders extends Command
 
         $entries = BulletinScheduleEntry::query()
             ->forEvent($activeEvent->id)
-            ->pendingNotification()
+            ->inReminderWindow()
             ->get();
 
         if ($entries->isEmpty()) {
-            $this->info('No pending bulletin reminders.');
+            $this->info('No bulletin entries in reminder window.');
 
             return self::SUCCESS;
         }
 
+        $users = User::excludeSystem()->get();
+        $sentCount = 0;
+        $windowStart = appNow()->subMinutes(5);
+        $windowEnd = appNow();
+
         foreach ($entries as $entry) {
             $timeFormatted = $entry->scheduled_at->format('Hi').' UTC';
 
-            $notificationService->notifyAll(
-                category: NotificationCategory::BulletinReminder,
-                title: 'W1AW Bulletin in 15 minutes',
-                message: "{$entry->mode_label} on {$entry->frequencies} MHz at {$timeFormatted}",
-                url: "/events/{$activeEvent->id}/w1aw-bulletin",
-                groupKey: "bulletin_reminder_{$entry->id}",
-            );
+            foreach ($users as $user) {
+                $reminderMinutes = $user->getBulletinReminderMinutes();
 
-            $entry->update(['notification_sent' => true]);
+                foreach ($reminderMinutes as $minutes) {
+                    $reminderTime = $entry->scheduled_at->copy()->subMinutes($minutes);
 
-            $this->info("Sent reminder for {$entry->source} {$entry->mode_label} at {$timeFormatted}");
+                    if ($reminderTime->lt($windowStart) || $reminderTime->gt($windowEnd)) {
+                        continue;
+                    }
+
+                    $groupKey = "bulletin_reminder_{$entry->id}_{$minutes}m";
+
+                    $alreadySent = $user->notifications()
+                        ->where('data->group_key', $groupKey)
+                        ->exists();
+
+                    if ($alreadySent) {
+                        continue;
+                    }
+
+                    $minuteLabel = $minutes === 1 ? '1 minute' : "{$minutes} minutes";
+
+                    $notificationService->notify(
+                        user: $user,
+                        category: NotificationCategory::BulletinReminder,
+                        title: "W1AW Bulletin in {$minuteLabel}",
+                        message: "{$entry->mode_label} on {$entry->frequencies} MHz at {$timeFormatted}",
+                        url: "/events/{$activeEvent->id}/w1aw-bulletin",
+                        groupKey: $groupKey,
+                    );
+
+                    $sentCount++;
+                    $this->info("Sent {$minutes}min reminder to {$user->call_sign} for {$entry->source} {$entry->mode_label} at {$timeFormatted}");
+                }
+            }
         }
 
-        $this->info("Sent {$entries->count()} bulletin reminder(s).");
+        $this->info("Sent {$sentCount} bulletin reminder(s).");
 
         return self::SUCCESS;
     }

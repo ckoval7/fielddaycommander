@@ -17,7 +17,6 @@ class BulletinScheduleEntry extends Model
         'mode',
         'frequencies',
         'source',
-        'notification_sent',
         'created_by',
     ];
 
@@ -25,7 +24,6 @@ class BulletinScheduleEntry extends Model
     {
         return [
             'scheduled_at' => 'datetime',
-            'notification_sent' => 'boolean',
         ];
     }
 
@@ -50,15 +48,12 @@ class BulletinScheduleEntry extends Model
     }
 
     /**
-     * Entries due for a 15-minute reminder that haven't been sent yet.
-     *
-     * Looks up to 5 minutes in the past to catch entries if the scheduler
-     * was slightly delayed, and up to 15 minutes in the future.
+     * Entries scheduled within the reminder window (up to 60 minutes ahead,
+     * with a 5-minute grace period for delayed scheduler runs).
      */
-    public function scopePendingNotification(Builder $query): Builder
+    public function scopeInReminderWindow(Builder $query): Builder
     {
-        return $query->where('notification_sent', false)
-            ->whereBetween('scheduled_at', [appNow()->subMinutes(5), appNow()->addMinutes(15)]);
+        return $query->whereBetween('scheduled_at', [appNow()->subMinutes(5), appNow()->addMinutes(60)]);
     }
 
     /**
