@@ -28,7 +28,7 @@
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
         x-cloak
-        class="absolute right-0 mt-2 w-80 bg-base-100 rounded-box shadow-xl border border-base-300 z-[100] overflow-hidden"
+        class="fixed inset-x-0 top-16 mx-auto w-[calc(100vw-2rem)] max-w-80 sm:absolute sm:inset-auto sm:right-0 sm:top-auto sm:mx-0 sm:mt-2 sm:w-80 bg-base-100 rounded-box shadow-xl border border-base-300 z-[100] overflow-hidden"
     >
         {{-- Header --}}
         <div class="flex items-center justify-between px-4 py-3 border-b border-base-300">
