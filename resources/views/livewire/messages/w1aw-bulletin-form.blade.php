@@ -7,15 +7,13 @@
         progress-indicator
     >
         <x-slot:actions>
-            @if(\Illuminate\Support\Facades\Route::has('events.messages.index'))
-                <x-button
-                    label="Back to Messages"
-                    icon="o-arrow-left"
-                    class="btn-ghost"
-                    link="{{ route('events.messages.index', $event) }}"
-                    wire:navigate
-                />
-            @endif
+            <x-button
+                label="Back to Dashboard"
+                icon="o-arrow-left"
+                class="btn-ghost"
+                link="/"
+                wire:navigate
+            />
         </x-slot:actions>
     </x-header>
 

@@ -135,7 +135,10 @@
                         @if($activeEvent)
                             <x-menu-item title="Message Traffic" icon="o-envelope"
                                 link="{{ route('events.messages.index', $activeEvent) }}"
-                                :active="request()->routeIs('events.messages.*', 'events.w1aw-bulletin')" />
+                                :active="request()->routeIs('events.messages.*')" />
+                            <x-menu-item title="W1AW Bulletin" icon="o-radio"
+                                link="{{ route('events.w1aw-bulletin', $activeEvent) }}"
+                                :active="request()->routeIs('events.w1aw-bulletin')" />
                         @endif
                     @endcan
 

@@ -22,12 +22,6 @@
                     link="{{ route('events.messages.create', ['event' => $event, 'template' => 'sm']) }}"
                 />
                 <x-button
-                    label="W1AW Bulletin"
-                    icon="o-radio"
-                    class="btn-outline btn-sm"
-                    link="{{ route('events.w1aw-bulletin', $event) }}"
-                />
-                <x-button
                     label="Print All"
                     icon="o-printer"
                     class="btn-ghost btn-sm"
