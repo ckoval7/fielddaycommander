@@ -7,7 +7,7 @@
             <div class="flex items-center gap-2">
                 <button
                     @click="showFilters = !showFilters"
-                    class="lg:hidden btn btn-sm btn-ghost min-h-[2.75rem] sm:min-h-[1.75rem]"
+                    class="btn btn-sm btn-ghost min-h-[2.75rem] sm:min-h-[1.75rem]"
                     type="button"
                 >
                     <x-icon x-show="!showFilters" name="o-chevron-down" class="w-5 h-5" />
