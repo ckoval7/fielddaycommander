@@ -310,13 +310,9 @@ class EventConfiguration extends Model
      */
     public function calculateEmergencyPowerBonus(): int
     {
-        if ($this->uses_commercial_power) {
-            return 0;
-        }
-
         $bonusType = BonusType::where('code', 'emergency_power')->first();
 
-        if (! $bonusType || ! $bonusType->is_active) {
+        if ($this->uses_commercial_power || ! $bonusType || ! $bonusType->is_active) {
             return 0;
         }
 
@@ -332,9 +328,7 @@ class EventConfiguration extends Model
             }
         }
 
-        $countedTransmitters = min($this->transmitter_count, 20);
-
-        return $countedTransmitters * $bonusType->base_points;
+        return min($this->transmitter_count, 20) * $bonusType->base_points;
     }
 
     /**

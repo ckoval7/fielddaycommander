@@ -20,6 +20,8 @@ class EventForm extends Component
 {
     use AuthorizesRequests;
 
+    private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+
     // Form mode: 'create', 'edit', or 'clone'
     public string $mode = 'create';
 
@@ -155,8 +157,8 @@ class EventForm extends Component
         // Load event fields
         $this->name = $this->event->name;
         $this->event_type_id = $this->event->event_type_id;
-        $this->start_time = $this->event->start_time?->format('Y-m-d H:i:s');
-        $this->end_time = $this->event->end_time?->format('Y-m-d H:i:s');
+        $this->start_time = $this->event->start_time?->format(self::DATETIME_FORMAT);
+        $this->end_time = $this->event->end_time?->format(self::DATETIME_FORMAT);
         $this->year = $this->event->year;
 
         // Load configuration fields if they exist
@@ -242,8 +244,8 @@ class EventForm extends Component
         $firstSaturday = $june1->isSaturday() ? $june1->copy() : $june1->copy()->next(Carbon::SATURDAY);
         $fourthSaturday = $firstSaturday->copy()->addWeeks(3);
 
-        $this->start_time = $fourthSaturday->copy()->setTime(18, 0, 0)->format('Y-m-d H:i:s');
-        $this->end_time = $fourthSaturday->copy()->addDay()->setTime(20, 59, 0)->format('Y-m-d H:i:s');
+        $this->start_time = $fourthSaturday->copy()->setTime(18, 0, 0)->format(self::DATETIME_FORMAT);
+        $this->end_time = $fourthSaturday->copy()->addDay()->setTime(20, 59, 0)->format(self::DATETIME_FORMAT);
     }
 
     #[Computed]

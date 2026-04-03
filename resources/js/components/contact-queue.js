@@ -255,7 +255,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 });
 
                 if (response.ok) {
-                    const data = await response.json();
+                    await response.json();
                     this.queue = this.queue.filter(c => c.uuid !== candidate.uuid);
                     this.saveQueue();
 

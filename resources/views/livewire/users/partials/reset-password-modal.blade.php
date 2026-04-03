@@ -13,9 +13,10 @@
         @if($resetMethod === 'manual')
             <div class="space-y-4">
                 <div>
-                    <label class="label label-text font-semibold">Generated Password</label>
+                    <label for="generated-password" class="label label-text font-semibold">Generated Password</label>
                     <div class="flex gap-2">
                         <x-input
+                            id="generated-password"
                             wire:model="newPassword"
                             icon="o-lock-closed"
                             class="font-mono grow"

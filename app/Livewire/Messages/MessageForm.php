@@ -145,22 +145,51 @@ class MessageForm extends Component
 
     public function save(): void
     {
-        // SM uniqueness check
-        if ($this->isSmMessage) {
-            $existingSmQuery = Message::where('event_configuration_id', $this->event->eventConfiguration->id)
-                ->where('is_sm_message', true);
-
-            if ($this->message) {
-                $existingSmQuery->where('id', '!=', $this->message->id);
-            }
-
-            if ($existingSmQuery->exists()) {
-                $this->addError('isSmMessage', 'An SM/SEC message already exists for this event.');
-
-                return;
-            }
+        if (! $this->validateSmUniqueness()) {
+            return;
         }
 
+        $this->validate($this->validationRules());
+
+        $data = $this->buildMessageData();
+
+        if ($this->message) {
+            $this->message->update($data);
+        } else {
+            Message::create($data);
+        }
+
+        $this->dispatch('toast', title: 'Message saved', type: 'success');
+
+        if (\Illuminate\Support\Facades\Route::has('events.messages.index')) {
+            $this->redirect(route('events.messages.index', $this->event), navigate: true);
+        }
+    }
+
+    private function validateSmUniqueness(): bool
+    {
+        if (! $this->isSmMessage) {
+            return true;
+        }
+
+        $existingSmQuery = Message::where('event_configuration_id', $this->event->eventConfiguration->id)
+            ->where('is_sm_message', true);
+
+        if ($this->message) {
+            $existingSmQuery->where('id', '!=', $this->message->id);
+        }
+
+        if ($existingSmQuery->exists()) {
+            $this->addError('isSmMessage', 'An SM/SEC message already exists for this event.');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function validationRules(): array
+    {
         $sharedRules = [
             'format' => 'required|in:radiogram,ics213',
             'role' => 'required|in:originated,relayed,received_delivered',
@@ -200,7 +229,12 @@ class MessageForm extends Component
                 'icsReplyPosition' => 'nullable|string|max:255',
             ];
 
-        $this->validate(array_merge($sharedRules, $formatRules));
+        return array_merge($sharedRules, $formatRules);
+    }
+
+    private function buildMessageData(): array
+    {
+        $isReceivedDelivered = $this->role === 'received_delivered';
 
         $sharedData = [
             'event_configuration_id' => $this->event->eventConfiguration->id,
@@ -213,73 +247,71 @@ class MessageForm extends Component
             'addressee_name' => $this->addresseeName,
             'signature' => $this->signature,
             'notes' => $this->notes,
-            'frequency' => $this->role === 'received_delivered' ? ($this->frequency ?: null) : null,
-            'mode_category' => $this->role === 'received_delivered' ? ($this->modeCategory ?: null) : null,
+            'frequency' => $isReceivedDelivered && $this->frequency ? $this->frequency : null,
+            'mode_category' => $isReceivedDelivered && $this->modeCategory ? $this->modeCategory : null,
         ];
 
-        if ($this->format === 'radiogram') {
-            $data = array_merge($sharedData, [
-                'precedence' => $this->precedence,
-                'hx_code' => $this->hxCode,
-                'hx_value' => in_array($this->hxCode, ['hxb', 'hxc', 'hxd', 'hxe', 'hxf']) ? $this->hxValue : null,
-                'station_of_origin' => strtoupper($this->stationOfOrigin),
-                'check' => $this->checkCount,
-                'place_of_origin' => $this->placeOfOrigin,
-                'addressee_address' => $this->addresseeAddress,
-                'addressee_city' => $this->addresseeCity,
-                'addressee_state' => $this->addresseeState,
-                'addressee_zip' => $this->addresseeZip,
-                'addressee_phone' => $this->addresseePhone,
-                'message_text' => strtoupper($this->messageText),
-                'sent_to' => $this->sentTo ? strtoupper($this->sentTo) : null,
-                'received_from' => $this->receivedFrom ? strtoupper($this->receivedFrom) : null,
-                // Null out ICS-213 fields
-                'ics_to_position' => null,
-                'ics_from_position' => null,
-                'ics_subject' => null,
-                'ics_reply_text' => null,
-                'ics_reply_date' => null,
-                'ics_reply_name' => null,
-                'ics_reply_position' => null,
-            ]);
-        } else {
-            $data = array_merge($sharedData, [
-                'message_text' => $this->messageText,
-                'ics_to_position' => $this->icsToPosition,
-                'ics_from_position' => $this->icsFromPosition,
-                'ics_subject' => $this->icsSubject,
-                'ics_reply_text' => $this->icsReplyText,
-                'ics_reply_date' => $this->icsReplyDate,
-                'ics_reply_name' => $this->icsReplyName,
-                'ics_reply_position' => $this->icsReplyPosition,
-                // Null out radiogram fields
-                'precedence' => null,
-                'hx_code' => null,
-                'hx_value' => null,
-                'station_of_origin' => null,
-                'check' => null,
-                'place_of_origin' => null,
-                'addressee_address' => null,
-                'addressee_city' => null,
-                'addressee_state' => null,
-                'addressee_zip' => null,
-                'addressee_phone' => null,
-                'sent_to' => null,
-                'received_from' => null,
-            ]);
-        }
+        $formatData = $this->format === 'radiogram'
+            ? $this->buildRadiogramData()
+            : $this->buildIcsData();
 
-        if ($this->message) {
-            $this->message->update($data);
-        } else {
-            Message::create($data);
-        }
+        return array_merge($sharedData, $formatData);
+    }
 
-        $this->dispatch('toast', title: 'Message saved', type: 'success');
+    private function buildRadiogramData(): array
+    {
+        return [
+            'precedence' => $this->precedence,
+            'hx_code' => $this->hxCode,
+            'hx_value' => in_array($this->hxCode, ['hxb', 'hxc', 'hxd', 'hxe', 'hxf']) ? $this->hxValue : null,
+            'station_of_origin' => strtoupper($this->stationOfOrigin),
+            'check' => $this->checkCount,
+            'place_of_origin' => $this->placeOfOrigin,
+            'addressee_address' => $this->addresseeAddress,
+            'addressee_city' => $this->addresseeCity,
+            'addressee_state' => $this->addresseeState,
+            'addressee_zip' => $this->addresseeZip,
+            'addressee_phone' => $this->addresseePhone,
+            'message_text' => strtoupper($this->messageText),
+            'sent_to' => $this->sentTo ? strtoupper($this->sentTo) : null,
+            'received_from' => $this->receivedFrom ? strtoupper($this->receivedFrom) : null,
+            // Null out ICS-213 fields
+            'ics_to_position' => null,
+            'ics_from_position' => null,
+            'ics_subject' => null,
+            'ics_reply_text' => null,
+            'ics_reply_date' => null,
+            'ics_reply_name' => null,
+            'ics_reply_position' => null,
+        ];
+    }
 
-        if (\Illuminate\Support\Facades\Route::has('events.messages.index')) {
-            $this->redirect(route('events.messages.index', $this->event), navigate: true);
-        }
+    private function buildIcsData(): array
+    {
+        return [
+            'message_text' => $this->messageText,
+            'ics_to_position' => $this->icsToPosition,
+            'ics_from_position' => $this->icsFromPosition,
+            'ics_subject' => $this->icsSubject,
+            'ics_reply_text' => $this->icsReplyText,
+            'ics_reply_date' => $this->icsReplyDate,
+            'ics_reply_name' => $this->icsReplyName,
+            'ics_reply_position' => $this->icsReplyPosition,
+            // Null out radiogram fields
+            'precedence' => null,
+            'hx_code' => null,
+            'hx_value' => null,
+            'station_of_origin' => null,
+            'check' => null,
+            'place_of_origin' => null,
+            'addressee_address' => null,
+            'addressee_city' => null,
+            'addressee_state' => null,
+            'addressee_zip' => null,
+            'addressee_phone' => null,
+            'sent_to' => null,
+            'received_from' => null,
+        ];
     }
 
     public function render(): \Illuminate\Contracts\View\View

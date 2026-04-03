@@ -298,53 +298,50 @@ class Scoring extends Component
 
         $list = [];
 
+        $computedPoints = [
+            'youth_participation' => $youthPoints,
+            'emergency_power' => $emergencyPowerPoints,
+        ];
+
         foreach ($bonusTypes as $bonusType) {
-            // Youth participation is computed on-demand, not from event_bonuses
-            if ($bonusType->code === 'youth_participation') {
+            if (isset($computedPoints[$bonusType->code])) {
+                $pts = $computedPoints[$bonusType->code];
                 $list[] = [
                     'type' => $bonusType,
                     'bonus' => null,
-                    'status' => $youthPoints > 0 ? 'verified' : 'unclaimed',
-                    'points' => $youthPoints,
-                ];
-
-                continue;
-            }
-
-            // Emergency power is computed on-demand from config (per-transmitter)
-            if ($bonusType->code === 'emergency_power') {
-                $list[] = [
-                    'type' => $bonusType,
-                    'bonus' => null,
-                    'status' => $emergencyPowerPoints > 0 ? 'verified' : 'unclaimed',
-                    'points' => $emergencyPowerPoints,
+                    'status' => $pts > 0 ? 'verified' : 'unclaimed',
+                    'points' => $pts,
                 ];
 
                 continue;
             }
 
             $eventBonus = $claimedBonuses->get($bonusType->id);
-
-            if ($eventBonus && $eventBonus->is_verified) {
-                $status = 'verified';
-                $points = (int) $eventBonus->calculated_points;
-            } elseif ($eventBonus) {
-                $status = 'claimed';
-                $points = (int) $eventBonus->calculated_points;
-            } else {
-                $status = 'unclaimed';
-                $points = 0;
-            }
-
-            $list[] = [
-                'type' => $bonusType,
-                'bonus' => $eventBonus,
-                'status' => $status,
-                'points' => $points,
-            ];
+            $list[] = $this->buildBonusEntry($bonusType, $eventBonus);
         }
 
         return $list;
+    }
+
+    private function buildBonusEntry(mixed $bonusType, mixed $eventBonus): array
+    {
+        if ($eventBonus && $eventBonus->is_verified) {
+            $status = 'verified';
+            $points = (int) $eventBonus->calculated_points;
+        } elseif ($eventBonus) {
+            $status = 'claimed';
+            $points = (int) $eventBonus->calculated_points;
+        } else {
+            $status = 'unclaimed';
+            $points = 0;
+        }
+
+        return [
+            'type' => $bonusType,
+            'bonus' => $eventBonus,
+            'status' => $status,
+            'points' => $points,
+        ];
     }
 
     /**

@@ -17,6 +17,8 @@ class StationForm extends Component
 {
     use AuthorizesRequests;
 
+    private const STATION_TYPE_ERROR = 'A station can only be one type: GOTA, VHF/UHF Only, or Satellite.';
+
     // Modal state
     public bool $showModal = false;
 
@@ -311,6 +313,38 @@ class StationForm extends Component
         }
     }
 
+    private function validateGota(mixed $value, \Closure $fail): void
+    {
+        if (! $value) {
+            return;
+        }
+
+        if (! $this->allowsGota) {
+            $fail('The selected event\'s operating class does not allow a GOTA station.');
+        }
+
+        if ($this->is_vhf_only || $this->is_satellite) {
+            $fail(self::STATION_TYPE_ERROR);
+        }
+
+        if ($this->event_configuration_id) {
+            $exists = Station::where('event_configuration_id', $this->event_configuration_id)
+                ->where('is_gota', true)
+                ->when($this->stationId, fn ($q) => $q->where('id', '!=', $this->stationId))
+                ->exists();
+            if ($exists) {
+                $fail('This event already has a GOTA station. Only one GOTA station is allowed per event.');
+            }
+        }
+    }
+
+    private function validateStationTypeExclusivity(mixed $value, bool $hasConflict, \Closure $fail): void
+    {
+        if ($value && $hasConflict) {
+            $fail(self::STATION_TYPE_ERROR);
+        }
+    }
+
     protected function rules(): array
     {
         return [
@@ -330,42 +364,9 @@ class StationForm extends Component
                     ->where('event_configuration_id', $this->event_configuration_id)
                     ->ignore($this->stationId),
             ],
-            'is_gota' => [
-                'boolean',
-                function ($attribute, $value, $fail) {
-                    if ($value && ! $this->allowsGota) {
-                        $fail('The selected event\'s operating class does not allow a GOTA station.');
-                    }
-                    if ($value && ($this->is_vhf_only || $this->is_satellite)) {
-                        $fail('A station can only be one type: GOTA, VHF/UHF Only, or Satellite.');
-                    }
-                    if ($value && $this->event_configuration_id) {
-                        $exists = Station::where('event_configuration_id', $this->event_configuration_id)
-                            ->where('is_gota', true)
-                            ->when($this->stationId, fn ($q) => $q->where('id', '!=', $this->stationId))
-                            ->exists();
-                        if ($exists) {
-                            $fail('This event already has a GOTA station. Only one GOTA station is allowed per event.');
-                        }
-                    }
-                },
-            ],
-            'is_vhf_only' => [
-                'boolean',
-                function ($attribute, $value, $fail) {
-                    if ($value && ($this->is_gota || $this->is_satellite)) {
-                        $fail('A station can only be one type: GOTA, VHF/UHF Only, or Satellite.');
-                    }
-                },
-            ],
-            'is_satellite' => [
-                'boolean',
-                function ($attribute, $value, $fail) {
-                    if ($value && ($this->is_gota || $this->is_vhf_only)) {
-                        $fail('A station can only be one type: GOTA, VHF/UHF Only, or Satellite.');
-                    }
-                },
-            ],
+            'is_gota' => ['boolean', fn ($attribute, $value, $fail) => $this->validateGota($value, $fail)],
+            'is_vhf_only' => ['boolean', fn ($attribute, $value, $fail) => $this->validateStationTypeExclusivity($value, $this->is_gota || $this->is_satellite, $fail)],
+            'is_satellite' => ['boolean', fn ($attribute, $value, $fail) => $this->validateStationTypeExclusivity($value, $this->is_gota || $this->is_vhf_only, $fail)],
             'max_power_watts' => [
                 'nullable',
                 'integer',

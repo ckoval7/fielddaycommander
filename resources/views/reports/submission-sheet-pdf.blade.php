@@ -263,15 +263,15 @@
         <table style="font-size: 9px;">
             <thead>
                 <tr>
-                    <th rowspan="2" style="vertical-align: bottom;">Band</th>
+                    <th scope="col" rowspan="2" style="vertical-align: bottom;">Band</th>
                     @foreach ($cats as $cat)
-                        <th class="c" colspan="2" style="border-bottom: none;">{{ $cat }}</th>
+                        <th scope="col" class="c" colspan="2" style="border-bottom: none;">{{ $cat }}</th>
                     @endforeach
                 </tr>
                 <tr>
                     @foreach ($cats as $cat)
-                        <th class="r" style="font-size: 7px; border-top: none;">QSOs</th>
-                        <th class="r" style="font-size: 7px; border-top: none;">Pwr(W)</th>
+                        <th scope="col" class="r" style="font-size: 7px; border-top: none;">QSOs</th>
+                        <th scope="col" class="r" style="font-size: 7px; border-top: none;">Pwr(W)</th>
                     @endforeach
                 </tr>
             </thead>
@@ -343,16 +343,16 @@
             <table style="font-size: 9px;">
                 <thead>
                     <tr>
-                        <th rowspan="2" style="vertical-align: bottom;">Name</th>
-                        <th rowspan="2" style="vertical-align: bottom;">Call</th>
+                        <th scope="col" rowspan="2" style="vertical-align: bottom;">Name</th>
+                        <th scope="col" rowspan="2" style="vertical-align: bottom;">Call</th>
                         @foreach ($cats as $cat)
-                            <th class="c" colspan="2" style="border-bottom: none;">{{ $cat }}</th>
+                            <th scope="col" class="c" colspan="2" style="border-bottom: none;">{{ $cat }}</th>
                         @endforeach
                     </tr>
                     <tr>
                         @foreach ($cats as $cat)
-                            <th class="r" style="font-size: 7px; border-top: none;">QSOs</th>
-                            <th class="r" style="font-size: 7px; border-top: none;">Pwr(W)</th>
+                            <th scope="col" class="r" style="font-size: 7px; border-top: none;">QSOs</th>
+                            <th scope="col" class="r" style="font-size: 7px; border-top: none;">Pwr(W)</th>
                         @endforeach
                     </tr>
                 </thead>
