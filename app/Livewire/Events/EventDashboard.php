@@ -270,9 +270,23 @@ class EventDashboard extends Component
             ? $config->bonuses->keyBy('bonus_type_id')
             : collect();
 
+        $emergencyPowerPoints = $config?->calculateEmergencyPowerBonus() ?? 0;
+
         $list = [];
 
         foreach ($bonusTypes as $bonusType) {
+            // Emergency power is computed on-demand from config (per-transmitter)
+            if ($bonusType->code === 'emergency_power') {
+                $list[] = [
+                    'type' => $bonusType,
+                    'bonus' => null,
+                    'status' => $emergencyPowerPoints > 0 ? 'verified' : 'unclaimed',
+                    'points' => $emergencyPowerPoints,
+                ];
+
+                continue;
+            }
+
             $eventBonus = $claimedBonuses->get($bonusType->id);
 
             if ($eventBonus && $eventBonus->is_verified) {

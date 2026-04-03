@@ -279,7 +279,7 @@ it('computes the band/mode grid', function () {
 it('lists bonuses with verified status', function () {
     $config = makeActiveEvent();
     $bonusType = BonusType::where('event_type_id', $this->eventType->id)
-        ->where('is_active', true)
+        ->where('code', 'satellite_qso')
         ->first();
 
     EventBonus::factory()->create([
@@ -301,7 +301,7 @@ it('lists bonuses with verified status', function () {
 it('lists bonuses with claimed-unverified status', function () {
     $config = makeActiveEvent();
     $bonusType = BonusType::where('event_type_id', $this->eventType->id)
-        ->where('is_active', true)
+        ->where('code', 'satellite_qso')
         ->first();
 
     EventBonus::factory()->create([
@@ -328,6 +328,92 @@ it('lists unclaimed bonuses', function () {
         ->filter(fn ($b) => $b['status'] === 'unclaimed');
 
     expect($unclaimed->count())->toBeGreaterThan(0);
+});
+
+// ============================================================================
+// EMERGENCY POWER BONUS
+// ============================================================================
+
+it('auto-computes emergency power bonus as 100 pts per transmitter', function () {
+    $config = makeActiveEvent([
+        'transmitter_count' => 5,
+        'uses_commercial_power' => false,
+        'uses_generator' => true,
+    ]);
+
+    // Set operating class to one eligible for emergency power
+    $eligibleClass = OperatingClass::first();
+    $eligibleClass->update(['code' => 'A']);
+    $config->update(['operating_class_id' => $eligibleClass->id]);
+    $config->refresh();
+
+    $component = Livewire::test(Scoring::class);
+
+    $entry = collect($component->bonusList)
+        ->first(fn ($b) => $b['type']->code === 'emergency_power');
+
+    expect($entry['status'])->toBe('verified');
+    expect($entry['points'])->toBe(500); // 5 transmitters × 100 pts
+});
+
+it('caps emergency power bonus at 20 transmitters', function () {
+    $config = makeActiveEvent([
+        'transmitter_count' => 25,
+        'uses_commercial_power' => false,
+        'uses_generator' => true,
+    ]);
+
+    $eligibleClass = OperatingClass::first();
+    $eligibleClass->update(['code' => 'A']);
+    $config->update(['operating_class_id' => $eligibleClass->id]);
+    $config->refresh();
+
+    $component = Livewire::test(Scoring::class);
+
+    $entry = collect($component->bonusList)
+        ->first(fn ($b) => $b['type']->code === 'emergency_power');
+
+    expect($entry['points'])->toBe(2000); // capped at 20 × 100
+});
+
+it('does not award emergency power bonus when using commercial power', function () {
+    $config = makeActiveEvent([
+        'transmitter_count' => 5,
+        'uses_commercial_power' => true,
+    ]);
+
+    $eligibleClass = OperatingClass::first();
+    $eligibleClass->update(['code' => 'A']);
+    $config->update(['operating_class_id' => $eligibleClass->id]);
+    $config->refresh();
+
+    $component = Livewire::test(Scoring::class);
+
+    $entry = collect($component->bonusList)
+        ->first(fn ($b) => $b['type']->code === 'emergency_power');
+
+    expect($entry['status'])->toBe('unclaimed');
+    expect($entry['points'])->toBe(0);
+});
+
+it('includes emergency power bonus in final score', function () {
+    $config = makeActiveEvent([
+        'transmitter_count' => 3,
+        'uses_commercial_power' => false,
+        'uses_generator' => true,
+        'max_power_watts' => 200, // 1x multiplier
+    ]);
+
+    $eligibleClass = OperatingClass::first();
+    $eligibleClass->update(['code' => 'A']);
+    $config->update(['operating_class_id' => $eligibleClass->id]);
+    $config->refresh();
+
+    $component = Livewire::test(Scoring::class);
+
+    // No QSOs, so final score = bonus only = 300 (3 × 100)
+    expect($component->bonusScore)->toBe(300);
+    expect($component->finalScore)->toBe(300);
 });
 
 // ============================================================================
@@ -470,7 +556,7 @@ it('shows 5x multiplier in power column for QRP with natural power', function ()
 it('shows bonus column with status chips', function () {
     $config = makeActiveEvent();
     $bonusType = BonusType::where('event_type_id', $this->eventType->id)
-        ->where('is_active', true)
+        ->where('code', 'satellite_qso')
         ->first();
 
     \App\Models\EventBonus::factory()->create([

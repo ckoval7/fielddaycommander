@@ -165,6 +165,11 @@ class SubmissionReportService
             $claimed['youth_participation'] = ['points' => $youthBonus, 'is_verified' => true];
         }
 
+        $emergencyPowerBonus = $config->calculateEmergencyPowerBonus();
+        if ($emergencyPowerBonus > 0) {
+            $claimed['emergency_power'] = ['points' => $emergencyPowerBonus, 'is_verified' => true];
+        }
+
         $checklist = [];
         foreach ($arrlOrder as $item) {
             $code = $item['code'];

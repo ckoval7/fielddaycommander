@@ -303,7 +303,42 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Calculate total bonus points (verified event_bonuses + computed youth).
+     * Calculate emergency power bonus: 100 pts × min(transmitter_count, 20).
+     *
+     * Awarded when the station runs 100% on emergency power (no commercial power)
+     * and the operating class is eligible for the bonus.
+     */
+    public function calculateEmergencyPowerBonus(): int
+    {
+        if ($this->uses_commercial_power) {
+            return 0;
+        }
+
+        $bonusType = BonusType::where('code', 'emergency_power')->first();
+
+        if (! $bonusType || ! $bonusType->is_active) {
+            return 0;
+        }
+
+        $classCode = $this->operatingClass?->code;
+        $eligibleClasses = $bonusType->eligible_classes;
+
+        if ($eligibleClasses !== null) {
+            if (is_string($eligibleClasses)) {
+                $eligibleClasses = json_decode($eligibleClasses, true) ?? [];
+            }
+            if (! in_array($classCode, $eligibleClasses)) {
+                return 0;
+            }
+        }
+
+        $countedTransmitters = min($this->transmitter_count, 20);
+
+        return $countedTransmitters * $bonusType->base_points;
+    }
+
+    /**
+     * Calculate total bonus points (verified event_bonuses + computed youth + computed emergency power).
      */
     public function calculateBonusScore(): int
     {
@@ -313,10 +348,10 @@ class EventConfiguration extends Model
 
         $storedBonuses = (int) $this->bonuses()
             ->where('is_verified', true)
-            ->whereHas('bonusType', fn ($q) => $q->where('code', '!=', 'youth_participation'))
+            ->whereHas('bonusType', fn ($q) => $q->whereNotIn('code', ['youth_participation', 'emergency_power']))
             ->sum('calculated_points');
 
-        return $storedBonuses + $this->calculateYouthBonus();
+        return $storedBonuses + $this->calculateYouthBonus() + $this->calculateEmergencyPowerBonus();
     }
 
     /**

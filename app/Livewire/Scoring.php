@@ -294,6 +294,7 @@ class Scoring extends Component
             : collect();
 
         $youthPoints = $this->config()?->calculateYouthBonus() ?? 0;
+        $emergencyPowerPoints = $this->config()?->calculateEmergencyPowerBonus() ?? 0;
 
         $list = [];
 
@@ -305,6 +306,18 @@ class Scoring extends Component
                     'bonus' => null,
                     'status' => $youthPoints > 0 ? 'verified' : 'unclaimed',
                     'points' => $youthPoints,
+                ];
+
+                continue;
+            }
+
+            // Emergency power is computed on-demand from config (per-transmitter)
+            if ($bonusType->code === 'emergency_power') {
+                $list[] = [
+                    'type' => $bonusType,
+                    'bonus' => null,
+                    'status' => $emergencyPowerPoints > 0 ? 'verified' : 'unclaimed',
+                    'points' => $emergencyPowerPoints,
                 ];
 
                 continue;

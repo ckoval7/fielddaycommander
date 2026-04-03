@@ -334,6 +334,10 @@
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
                                     {{ $item['bonus']->quantity }} × {{ $item['type']->base_points }} pts
                                 </div>
+                            @elseif ($item['type']->is_per_transmitter && $item['points'] > 0)
+                                <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
+                                    {{ min($this->event->eventConfiguration->transmitter_count, 20) }} {{ Str::plural('transmitter', min($this->event->eventConfiguration->transmitter_count, 20)) }} × {{ $item['type']->base_points }} pts
+                                </div>
                             @endif
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
