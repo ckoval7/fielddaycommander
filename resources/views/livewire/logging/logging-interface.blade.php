@@ -275,7 +275,6 @@
                             <th>Callsign</th>
                             <th>Exchange</th>
                             <th>Section</th>
-                            <th>Pts</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -287,17 +286,17 @@
                             }">
                                 <td class="font-mono">-</td>
                                 <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
-                                <td class="font-bold font-mono uppercase" x-text="contact.callsign"></td>
-                                <td class="font-mono" x-text="contact.received_exchange"></td>
-                                <td x-text="contact.section_code || '-'"></td>
-                                <td class="font-mono">
+                                <td class="font-bold font-mono uppercase">
+                                    <span x-text="contact.callsign"></span>
                                     <template x-if="contact.status === 'failed'">
-                                        <span class="badge badge-xs badge-error cursor-help" :title="contact.last_error">FAIL</span>
+                                        <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span>
                                     </template>
                                     <template x-if="contact.status !== 'failed'">
-                                        <span class="badge badge-xs badge-info">SYNC</span>
+                                        <span class="badge badge-xs badge-info ml-1">SYNC</span>
                                     </template>
                                 </td>
+                                <td class="font-mono" x-text="contact.received_exchange"></td>
+                                <td x-text="contact.section_code || '-'"></td>
                             </tr>
                         </template>
 
@@ -306,16 +305,14 @@
                             <tr wire:key="contact-{{ $contact->id }}" @class(['opacity-50' => $contact->is_duplicate])>
                                 <td class="font-mono">{{ $operatingSession->qso_count - $loop->index }}</td>
                                 <td class="font-mono">{{ $contact->qso_time->format('H:i') }}</td>
-                                <td class="font-bold font-mono uppercase">{{ $contact->callsign }}</td>
-                                <td class="font-mono">{{ $contact->received_exchange }}</td>
-                                <td>{{ $contact->section->code ?? '-' }}</td>
-                                <td class="font-mono">
+                                <td class="font-bold font-mono uppercase">
+                                    {{ $contact->callsign }}
                                     @if($contact->is_duplicate)
-                                        <x-badge value="DUPE" class="badge-xs badge-warning" />
-                                    @else
-                                        {{ $contact->points }}
+                                        <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
                                     @endif
                                 </td>
+                                <td class="font-mono">{{ $contact->received_exchange }}</td>
+                                <td>{{ $contact->section->code ?? '-' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
