@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prepare a Raspberry Pi - FD Commander</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .cmd { color: var(--text-primary); }
+  .code-block .output { color: var(--accent-sky); }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Prepare a <span class="gradient">Raspberry Pi</span></h1>
+    <p>Flash an SD card, set a hostname, and get your Pi on the network so it's ready for FD Commander.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; Pi Setup
+      </div>
+
+      <h2>What You Need</h2>
+
+      <ul>
+        <li>A <strong>Raspberry Pi</strong> (Pi 4 or Pi 5 recommended, 2 GB RAM minimum).</li>
+        <li>A <strong>micro SD card</strong> (16 GB minimum, 32 GB recommended). Class 10 or better.</li>
+        <li>An <strong>SD card reader</strong> for your computer. Most laptops have one built in, otherwise use a USB adapter.</li>
+        <li>A computer (Windows, Mac, or Linux) with <strong>Raspberry Pi Imager</strong> installed.</li>
+        <li>For Ethernet: an <strong>ethernet cable</strong> and access to a router or switch.</li>
+        <li>For Wi-Fi: your <strong>network name and password</strong>.</li>
+      </ul>
+
+      <h2>Install Raspberry Pi Imager</h2>
+
+      <p>Download <a href="https://www.raspberrypi.com/software/" target="_blank" rel="noopener">Raspberry Pi Imager</a> and install it. It runs on Windows, macOS, and Linux. This is the official tool from the Raspberry Pi Foundation and it handles everything: downloading the OS, writing it to the card, and pre-configuring settings like hostname, user accounts, and Wi-Fi.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Why Imager?</div>
+        <p>You could download an OS image and flash it manually with another tool, but Imager lets you set the hostname, create a user account, and configure Wi-Fi before the Pi ever boots. That means no monitor, no keyboard, and no extra setup steps.</p>
+      </div>
+
+      <h2>Flash the SD Card</h2>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> <strong>Insert your micro SD card</strong> into your computer's card reader.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">2</span> <strong>Open Raspberry Pi Imager.</strong></p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">3</span> <strong>Choose device.</strong> Select your Pi model (Pi 4, Pi 5, etc.). This filters the OS list to compatible options.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">4</span> <strong>Choose OS.</strong> Select <strong>Raspberry Pi OS (64-bit)</strong> under "Raspberry Pi OS (other)." Pick the <strong>Lite</strong> version &mdash; it has no desktop environment, which is exactly what you want for a headless server. FD Commander doesn't need a GUI.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">5</span> <strong>Choose storage.</strong> Select your SD card. Double-check you're picking the right drive &mdash; Imager will erase whatever you select.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">6</span> <strong>Click Next.</strong> Imager will ask if you want to customize the OS settings. Click <strong>Edit Settings</strong>. This is where you configure everything.</p>
+      </div>
+
+      <h2>Configure OS Settings</h2>
+
+      <p>The settings screen has two tabs that matter: <strong>General</strong> and <strong>Services</strong>.</p>
+
+      <h3>General Tab</h3>
+
+      <p><strong>Set hostname.</strong> This is the name your Pi will advertise on the network. Other devices can reach it at <code>hostname.local</code> instead of memorizing an IP address. Pick something short and descriptive, like <code>fd-commander</code> or <code>fdpi</code>. Use only lowercase letters, numbers, and hyphens.</p>
+
+      <p><strong>Set username and password.</strong> Create a user account you'll use to SSH in. The old default <code>pi</code>/<code>raspberry</code> login no longer works on new installs. Pick a username and a real password.</p>
+
+      <p><strong>Configure Wi-Fi</strong> (if you're using Wi-Fi). Enter your network name (SSID) and password. Select your country under "Wireless LAN country" so the Pi uses the right regulatory channels. If you're only using Ethernet, skip this.</p>
+
+      <p><strong>Set locale.</strong> Pick your time zone and keyboard layout.</p>
+
+      <h3>Services Tab</h3>
+
+      <p><strong>Enable SSH.</strong> Check the box to enable SSH and choose "Use password authentication." This lets you connect to the Pi remotely from another computer without plugging in a monitor and keyboard.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Tip</div>
+        <p>If you use SSH key authentication, you can paste your public key here instead. But password auth is fine for a Field Day server on a local network.</p>
+      </div>
+
+      <p>Click <strong>Save</strong>, then <strong>Yes</strong> to apply the settings, and <strong>Yes</strong> again to confirm erasing the SD card. Imager will download the OS image (if it hasn't already), write it, and verify the card. This takes a few minutes depending on your internet speed and SD card.</p>
+
+      <h2>Boot the Pi</h2>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> <strong>Remove the SD card</strong> from your computer and insert it into the Pi.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">2</span> <strong>Connect the network.</strong></p>
+        <p>For <strong>Ethernet</strong>: plug an ethernet cable from the Pi to your router or switch. This is the most reliable option. The Pi will get an IP address automatically via DHCP.</p>
+        <p>For <strong>Wi-Fi</strong>: if you configured Wi-Fi in Imager, the Pi will connect automatically on boot. No cable needed.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">3</span> <strong>Plug in power.</strong> The Pi will boot. Give it about 30&ndash;60 seconds for the first boot &mdash; it resizes the filesystem and applies your settings.</p>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-title">Ethernet vs. Wi-Fi</div>
+        <p>For a Field Day server, Ethernet is the better choice. It's faster, more reliable, and one less thing that can go wrong in a field environment. Use Wi-Fi when running a cable to the Pi isn't practical.</p>
+      </div>
+
+      <h2>Connect to the Pi</h2>
+
+      <p>From another computer on the same network, SSH into the Pi using the hostname you set:</p>
+
+      <div class="code-block"><span class="cmd">ssh your-username@fd-commander.local</span></div>
+
+      <p>Replace <code>your-username</code> with the username you created in Imager, and <code>fd-commander</code> with whatever hostname you chose. Type <code>yes</code> to accept the host key the first time, then enter your password.</p>
+
+      <div class="callout warning">
+        <div class="callout-title">Can't find the Pi?</div>
+        <p>If <code>.local</code> doesn't resolve, the Pi may not have connected to the network. Check that the ethernet cable is plugged in, or that you entered the Wi-Fi credentials correctly in Imager. You can also check your router's admin page for a list of connected devices and find the Pi's IP address there. Then connect with <code>ssh your-username@192.168.x.x</code> using whatever IP the router assigned.</p>
+      </div>
+
+      <h3>Verify the Network</h3>
+
+      <p>Once you're in, confirm the Pi is online:</p>
+
+      <div class="code-block"><span class="cmd">hostname</span>
+<span class="output">fd-commander</span>
+
+<span class="cmd">hostname -I</span>
+<span class="output">192.168.1.42</span>
+
+<span class="cmd">ping -c 3 google.com</span>
+<span class="output">3 packets transmitted, 3 received, 0% packet loss</span></div>
+
+      <p>The first command confirms your hostname. The second shows the Pi's IP address on the network. The third confirms internet access, which you need to run the FD Commander deploy script.</p>
+
+      <h2>Update the System</h2>
+
+      <p>Before installing anything, update the OS packages:</p>
+
+      <div class="code-block"><span class="cmd">sudo apt update && sudo apt upgrade -y</span></div>
+
+      <p>This pulls the latest security patches and package lists. It can take a few minutes on a fresh install. Once it finishes, the Pi is ready for the FD Commander deploy script.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Next Step</div>
+        <p>Your Pi is now online and accessible over SSH. From here, follow the <a href="../fd-commander-docs.html#installation">Installation</a> guide to deploy FD Commander.</p>
+      </div>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="lan-setup.html">LAN Setup &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <span class="logo" style="font-size:0.95rem; display:inline-flex;">
+        <img src="../fdlogdb.png" alt="Field Day Commander" style="width:24px;height:24px;object-fit:contain;">
+        Field Day Commander
+      </span>
+      <span style="margin-left:1rem;">Open source under GPL v3</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+      <a href="../fd-commander-docs.html">Documentation</a>
+      <a href="https://github.com/ckoval7/fd-commander/blob/main/LICENSE">License</a>
+      <span class="footer-call">73 de Field Day Commander</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

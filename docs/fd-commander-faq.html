@@ -108,7 +108,7 @@
         <div class="faq-item">
           <div class="faq-question">My favorite logging software works fine. Why would I switch?</div>
           <div class="faq-answer">
-            If all you need is a contact logger, keep using what works. FD Commander exists because Field Day involves a lot more than logging: volunteer scheduling, equipment tracking, safety checklists, guestbooks, NTS message handling, and scoring with all 12 ARRL bonus categories. If your club coordinates all of that with spreadsheets, paper sign-ups, and group texts, FD Commander puts it in one place. If you genuinely only need a logger, this is more tool than you need.
+            If all you need is a contact logger, keep using what works. FD Commander exists because Field Day involves a lot more than logging: volunteer scheduling, equipment tracking, safety checklists, guestbooks, NTS message handling, and scoring with all 18 ARRL bonus categories. If your club coordinates all of that with spreadsheets, paper sign-ups, and group texts, FD Commander puts it in one place. If you genuinely only need a logger, this is more tool than you need.
           </div>
         </div>
 
@@ -169,6 +169,15 @@
         </div>
 
         <div class="faq-item">
+          <div class="faq-question">Can I put it on the internet so remote operators can log in?</div>
+          <div class="faq-answer">
+            Yes. FD Commander is a full Laravel application with role-based authentication, CSRF protection, and input validation. It's built the same way any production web app is, so exposing it to the internet is fine if your setup calls for it. This is especially useful in the weeks before the event: club members can register their equipment, sign up for operating shifts, and review station assignments from home instead of waiting until setup day. During the event, people who can't make it to the site can follow the live score, and you can make the guestbook accessible from a public URL.
+            <br><br>
+            <strong>If you do this, use TLS.</strong> Running over plain HTTP on a LAN is one thing. Running over plain HTTP on the open internet means passwords and session tokens travel in cleartext, which anyone on the path can read. Set up a TLS certificate (Let's Encrypt is free) and make sure all traffic goes through HTTPS. The deploy script supports this. There is no good reason to skip it.
+          </div>
+        </div>
+
+        <div class="faq-item">
           <div class="faq-question">Does it do CAT control or talk to my radio?</div>
           <div class="faq-answer">
             <strong>No.</strong> FD Commander is a web application, not a rig control program. It doesn't key your radio, decode digital modes, or read frequency from CAT. If you need rig integration, you'll still use your existing setup (WSJT-X, fldigi, etc.) for the RF side and log contacts in FD Commander for the scoring and coordination side.
@@ -212,7 +221,7 @@
         <div class="faq-item">
           <div class="faq-question">How does scoring and bonus point tracking work?</div>
           <div class="faq-answer">
-            Scoring is automatic. Each contact is weighted by mode (CW and digital are 2 points, phone is 1) and the power multiplier is applied based on your configured power source. All 12 ARRL bonus categories are built in. Some are tracked automatically (like the safety checklist completion or visitor guestbook count), others are claimed manually by the event manager (like media publicity or satellite QSO). Each bonus shows its status (claimed, verified, or unclaimed) so you can see at a glance what points you're leaving on the table.
+            Scoring is automatic. Each contact is weighted by mode (CW and digital are 2 points, phone is 1) and the power multiplier is applied based on your configured power source. All 18 ARRL bonus categories are built in, including variable-point bonuses like Emergency Power (per transmitter), GOTA (per contact), Youth Participation, and NTS Messages. Some are tracked automatically (like the safety checklist completion or visitor guestbook count), others are claimed manually by the event manager (like media publicity or satellite QSO). Each bonus shows its status (claimed, verified, or unclaimed) so you can see at a glance what points you're leaving on the table.
           </div>
         </div>
       </div>

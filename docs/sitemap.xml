@@ -21,6 +21,10 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://fielddaycommander.org/how-to/pi-setup.html</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://fielddaycommander.org/how-to/lan-setup.html</loc>
     <priority>0.7</priority>
   </url>
