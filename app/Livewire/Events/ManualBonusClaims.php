@@ -26,6 +26,7 @@ class ManualBonusClaims extends Component
         'social_media',
         'public_location',
         'public_location_wfd',
+        'public_info_booth',
         'educational_activity',
         'web_submission',
         'elected_official_visit',

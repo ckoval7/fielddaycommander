@@ -231,3 +231,9 @@ test('shows elected_official_visit and agency_visit as manual claims', function 
         ->assertSee('Elected Official Visit')
         ->assertSee('Served Agency Visit');
 });
+
+test('shows public_info_booth bonus for class A', function () {
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->assertSee('Information Booth');
+});
