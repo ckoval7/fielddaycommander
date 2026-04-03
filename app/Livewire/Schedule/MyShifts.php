@@ -163,7 +163,7 @@ class MyShifts extends Component
     }
 
     /**
-     * Cancel a self-signup assignment that is still in scheduled status.
+     * Drop a self-signup assignment that is still in scheduled status.
      */
     public function cancelSignUp(int $assignmentId): void
     {
@@ -179,7 +179,7 @@ class MyShifts extends Component
         unset($this->upcomingShifts);
         unset($this->pastShifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'Your sign-up has been cancelled.', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Shift has been dropped.', icon: 'o-check-circle', css: 'alert-success');
     }
 
     /**

@@ -153,7 +153,7 @@ test('user can check out of a checked-in shift', function () {
     expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
 });
 
-test('user can cancel a self-signup', function () {
+test('user can drop a self-signup', function () {
     $shift = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'shift_role_id' => $this->role->id,
@@ -172,12 +172,12 @@ test('user can cancel a self-signup', function () {
 
     Livewire::test(MyShifts::class)
         ->call('cancelSignUp', $assignment->id)
-        ->assertDispatched('toast', title: 'Success', description: 'Your sign-up has been cancelled.');
+        ->assertDispatched('toast', title: 'Success', description: 'Shift has been dropped.');
 
     expect($assignment->fresh()->trashed())->toBeTrue();
 });
 
-test('user cannot cancel an assigned shift', function () {
+test('user cannot drop an assigned shift', function () {
     $shift = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'shift_role_id' => $this->role->id,

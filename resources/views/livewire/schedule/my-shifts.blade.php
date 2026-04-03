@@ -187,11 +187,11 @@
                                         <div class="flex gap-2">
                                             @if($assignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP && $assignment->status === \App\Models\ShiftAssignment::STATUS_SCHEDULED)
                                                 <x-button
-                                                    label="Cancel"
+                                                    label="Drop"
                                                     icon="o-x-mark"
                                                     class="btn-ghost btn-sm text-error"
                                                     wire:click="cancelSignUp({{ $assignment->id }})"
-                                                    wire:confirm="Are you sure you want to cancel this sign-up?"
+                                                    wire:confirm="Are you sure you want to drop this shift?"
                                                     spinner="cancelSignUp"
                                                 />
                                             @endif
