@@ -132,6 +132,14 @@ class Contact extends Model
     }
 
     /**
+     * Normalize received exchange to uppercase.
+     */
+    protected function setReceivedExchangeAttribute(?string $value): void
+    {
+        $this->attributes['received_exchange'] = $value ? mb_strtoupper($value) : null;
+    }
+
+    /**
      * Normalize GOTA operator callsign to uppercase.
      */
     protected function setGotaOperatorCallsignAttribute(?string $value): void

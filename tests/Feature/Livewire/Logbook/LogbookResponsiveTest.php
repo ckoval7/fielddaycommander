@@ -254,6 +254,17 @@ describe('accessibility and usability', function () {
     });
 });
 
+describe('class display formatting', function () {
+    test('received exchange is normalized to uppercase on save', function () {
+        $contact = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'received_exchange' => 'w1aw 3a ct',
+        ]);
+
+        expect($contact->received_exchange)->toBe('W1AW 3A CT');
+    });
+});
+
 describe('manual testing checklist documentation', function () {
     test('responsive breakpoints reference', function () {
         // This test documents the manual testing requirements
