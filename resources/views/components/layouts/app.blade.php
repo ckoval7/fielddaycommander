@@ -130,17 +130,17 @@
                     <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
                     <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
 
-                    @can('log-contacts')
-                        @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
-                        @if($activeEvent)
+                    @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
+                    @if($activeEvent)
+                        @can('log-contacts')
                             <x-menu-item title="Message Traffic" icon="o-envelope"
                                 link="{{ route('events.messages.index', $activeEvent) }}"
                                 :active="request()->routeIs('events.messages.*')" />
-                            <x-menu-item title="W1AW Bulletin" icon="o-radio"
-                                link="{{ route('events.w1aw-bulletin', $activeEvent) }}"
-                                :active="request()->routeIs('events.w1aw-bulletin')" />
-                        @endif
-                    @endcan
+                        @endcan
+                        <x-menu-item title="W1AW Bulletin" icon="o-radio"
+                            link="{{ route('events.w1aw-bulletin', $activeEvent) }}"
+                            :active="request()->routeIs('events.w1aw-bulletin')" />
+                    @endif
 
                     @canany(['manage-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment'])
                         <x-menu-separator title="ADMINISTRATION" />

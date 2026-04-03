@@ -156,6 +156,10 @@ Route::middleware(['auth', 'can:log-contacts'])->group(function () {
     Route::get('/events/{event}/messages', \App\Livewire\Messages\MessageTrafficIndex::class)->name('events.messages.index');
     Route::get('/events/{event}/messages/create', \App\Livewire\Messages\MessageForm::class)->name('events.messages.create');
     Route::get('/events/{event}/messages/{message}/edit', \App\Livewire\Messages\MessageForm::class)->name('events.messages.edit');
+});
+
+// W1AW Bulletin — accessible to all authenticated users (schedule viewing pre-event)
+Route::middleware('auth')->group(function () {
     Route::get('/events/{event}/w1aw-bulletin', \App\Livewire\Messages\W1awBulletinForm::class)->name('events.w1aw-bulletin');
 });
 

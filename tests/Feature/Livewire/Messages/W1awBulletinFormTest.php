@@ -23,11 +23,24 @@ beforeEach(function () {
 });
 
 describe('access control', function () {
-    test('requires log-contacts permission', function () {
+    test('allows viewing page without log-contacts permission', function () {
         $user = User::factory()->create();
 
         Livewire::actingAs($user)
             ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->assertSuccessful();
+    });
+
+    test('requires log-contacts permission to save', function () {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->set('frequency', '7.0475')
+            ->set('mode', 'cw')
+            ->set('receivedAt', now()->format('Y-m-d\TH:i'))
+            ->set('bulletinText', 'ARRL FIELD DAY MESSAGE TEST')
+            ->call('save')
             ->assertForbidden();
     });
 });

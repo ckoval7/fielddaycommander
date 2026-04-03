@@ -172,85 +172,87 @@
         @endcan
     </x-card>
 
-    <form wire:submit="save" class="space-y-6">
+    @can('log-contacts')
+        <form wire:submit="save" class="space-y-6">
 
-        <x-card>
-            <x-slot:title>Bulletin Details</x-slot:title>
+            <x-card>
+                <x-slot:title>Bulletin Details</x-slot:title>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {{-- Frequency --}}
-                <x-input
-                    label="Frequency (MHz)"
-                    wire:model="frequency"
-                    icon="o-signal"
-                    placeholder="e.g., 14.0475"
-                    maxlength="20"
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {{-- Frequency --}}
+                    <x-input
+                        label="Frequency (MHz)"
+                        wire:model="frequency"
+                        icon="o-signal"
+                        placeholder="e.g., 14.0475"
+                        maxlength="20"
+                        required
+                    />
+
+                    {{-- Mode --}}
+                    <x-select
+                        label="Mode"
+                        wire:model="mode"
+                        :options="[
+                            ['id' => 'cw', 'name' => 'CW'],
+                            ['id' => 'digital', 'name' => 'Digital'],
+                            ['id' => 'phone', 'name' => 'Phone'],
+                        ]"
+                        option-value="id"
+                        option-label="name"
+                        icon="o-radio"
+                        placeholder="Select mode"
+                        required
+                    />
+
+                    {{-- Received At --}}
+                    <x-flatpickr
+                        label="Received At (UTC)"
+                        wire:model="receivedAt"
+                        icon="o-clock"
+                        required
+                    />
+                </div>
+            </x-card>
+
+            {{-- Bulletin Text --}}
+            <x-card>
+                <x-slot:title>Bulletin Text</x-slot:title>
+
+                <x-textarea
+                    label="Bulletin Text"
+                    wire:model="bulletinText"
+                    placeholder="Enter the W1AW bulletin text as received..."
+                    rows="10"
                     required
+                    class="font-mono"
                 />
+            </x-card>
 
-                {{-- Mode --}}
-                <x-select
-                    label="Mode"
-                    wire:model="mode"
-                    :options="[
-                        ['id' => 'cw', 'name' => 'CW'],
-                        ['id' => 'digital', 'name' => 'Digital'],
-                        ['id' => 'phone', 'name' => 'Phone'],
-                    ]"
-                    option-value="id"
-                    option-label="name"
-                    icon="o-radio"
-                    placeholder="Select mode"
-                    required
-                />
-
-                {{-- Received At --}}
-                <x-flatpickr
-                    label="Received At (UTC)"
-                    wire:model="receivedAt"
-                    icon="o-clock"
-                    required
-                />
-            </div>
-        </x-card>
-
-        {{-- Bulletin Text --}}
-        <x-card>
-            <x-slot:title>Bulletin Text</x-slot:title>
-
-            <x-textarea
-                label="Bulletin Text"
-                wire:model="bulletinText"
-                placeholder="Enter the W1AW bulletin text as received..."
-                rows="10"
-                required
-                class="font-mono"
-            />
-        </x-card>
-
-        {{-- Actions --}}
-        <div class="flex gap-3">
-            <x-button
-                label="{{ $bulletinId ? 'Update Bulletin' : 'Save Bulletin' }}"
-                type="submit"
-                class="btn-primary"
-                icon="o-check"
-                spinner="save"
-            />
-
-            @if($bulletinId)
+            {{-- Actions --}}
+            <div class="flex gap-3">
                 <x-button
-                    label="Delete Bulletin"
-                    wire:click="deleteBulletin"
-                    wire:confirm="Are you sure you want to delete this bulletin? This cannot be undone."
-                    class="btn-error"
-                    icon="o-trash"
-                    spinner="deleteBulletin"
+                    label="{{ $bulletinId ? 'Update Bulletin' : 'Save Bulletin' }}"
+                    type="submit"
+                    class="btn-primary"
+                    icon="o-check"
+                    spinner="save"
                 />
-            @endif
-        </div>
 
-    </form>
+                @if($bulletinId)
+                    <x-button
+                        label="Delete Bulletin"
+                        wire:click="deleteBulletin"
+                        wire:confirm="Are you sure you want to delete this bulletin? This cannot be undone."
+                        class="btn-error"
+                        icon="o-trash"
+                        spinner="deleteBulletin"
+                    />
+                @endif
+            </div>
+
+        </form>
+    @endcan
 </div>
 
 @script

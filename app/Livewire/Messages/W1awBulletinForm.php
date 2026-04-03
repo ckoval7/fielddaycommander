@@ -37,13 +37,10 @@ class W1awBulletinForm extends Component
 
     public function mount(Event $event): void
     {
-        $this->authorize('create', W1awBulletin::class);
-
         $this->event = $event;
         $bulletin = W1awBulletin::where('event_configuration_id', $event->eventConfiguration->id)->first();
 
         if ($bulletin) {
-            $this->authorize('update', $bulletin);
             $this->bulletinId = $bulletin->id;
             $this->frequency = $bulletin->frequency;
             $this->mode = $bulletin->mode;
@@ -54,6 +51,8 @@ class W1awBulletinForm extends Component
 
     public function save(): void
     {
+        $this->authorize('create', W1awBulletin::class);
+
         $this->validate([
             'frequency' => 'required|string|max:20',
             'mode' => 'required|in:cw,digital,phone',
