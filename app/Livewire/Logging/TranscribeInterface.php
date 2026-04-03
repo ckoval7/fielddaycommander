@@ -33,7 +33,7 @@ class TranscribeInterface extends Component
 
     public ?int $selectedModeId = null;
 
-    public ?int $powerWatts = 100;
+    public ?int $powerWatts = null;
 
     // GOTA operator fields (sticky between contacts)
     public string $gotaOperatorFirstName = '';
@@ -50,6 +50,8 @@ class TranscribeInterface extends Component
     {
         $this->authorize('log-contacts');
         $this->station = $station;
+
+        $this->powerWatts = $station->max_power_watts ?? 100;
 
         $event = $this->event;
         if ($event) {
