@@ -143,9 +143,15 @@ test('get-ready checklist hides routes for unprivileged users', function () {
     $response->assertStatus(200);
     $checklist = $response->viewData('checklist');
 
-    foreach ($checklist as $item) {
+    // Items gated by permissions should have null routes for unprivileged users
+    $gatedItems = array_filter($checklist, fn ($item) => $item['label'] !== 'W1AW bulletin schedule set up');
+    foreach ($gatedItems as $item) {
         expect($item['route'])->toBeNull("Button for '{$item['label']}' should be hidden for unprivileged users");
     }
+
+    // W1AW bulletin schedule is accessible to all authenticated users
+    $bulletinItem = collect($checklist)->firstWhere('label', 'W1AW bulletin schedule set up');
+    expect($bulletinItem['route'])->not->toBeNull();
 });
 
 test('get-ready checklist shows routes for privileged users', function () {

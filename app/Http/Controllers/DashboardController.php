@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BulletinScheduleEntry;
 use App\Models\Dashboard;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
@@ -101,6 +102,11 @@ class DashboardController extends Controller
                 'label' => 'Shifts scheduled',
                 'done' => $eventConfig?->shifts()->exists() ?? false,
                 'route' => $user->can('manage-shifts') ? route('schedule.manage') : null,
+            ],
+            [
+                'label' => 'W1AW bulletin schedule set up',
+                'done' => BulletinScheduleEntry::forEvent($event->id)->exists(),
+                'route' => route('events.w1aw-bulletin', $event),
             ],
         ];
 
