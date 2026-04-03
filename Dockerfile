@@ -72,6 +72,7 @@ RUN php artisan package:discover --ansi
 COPY docker/Caddyfile ./Caddyfile
 
 # Copy Docker support files
+COPY docker/php.ini /usr/local/etc/php/conf.d/99-fd-commander.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 

@@ -2,6 +2,11 @@
 	root * {$APP_PATH:/var/www/fd-commander}/public
 	encode zstd gzip
 
+	# Allow uploads up to 35MB (matches PHP post_max_size)
+	request_body {
+		max_size 35MB
+	}
+
 	# Reverb WebSocket proxy — route block enforces top-to-bottom ordering
 	# so reverse_proxy runs before php_server intercepts /app/* requests.
 	route /app/* {
