@@ -50,6 +50,15 @@
                 $canEdit = $this->canEdit;
             @endphp
 
+            @if(!$canEdit)
+                @php
+                    $requiredRoles = collect($checklistTypes)->map(fn($t) => $t->label())->join(' or ');
+                @endphp
+                <x-alert icon="o-lock-closed" class="alert-warning">
+                    You must be signed on to a <strong>{{ $requiredRoles }}</strong> shift to check off items.
+                </x-alert>
+            @endif
+
             <div class="space-y-6">
                 @foreach($checklistTypes as $type)
                     @php
