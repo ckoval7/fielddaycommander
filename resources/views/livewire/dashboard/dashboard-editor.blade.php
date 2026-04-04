@@ -90,13 +90,14 @@
 
             <div
                 x-bind="sortableContainer"
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-[1800px]:grid-cols-4 grid-flow-row-dense gap-4 sm:gap-6 widget-grid"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-[1800px]:grid-cols-4 grid-flow-row-dense gap-5 widget-grid"
+                style="grid-auto-rows: 90px;"
             >
                 @foreach($widgets as $index => $widget)
                     @php
                         $isVisible = $widget['visible'] ?? true;
                         $colSpan = $widget['col_span'] ?? 1;
-                        $rowSpan = $widget['row_span'] ?? 1;
+                        $rowSpan = $widget['row_span'] ?? 2;
                         $spanClasses = match($colSpan) {
                             2 => 'sm:col-span-2',
                             3 => 'sm:col-span-3',
@@ -106,7 +107,10 @@
                         $rowSpanClasses = match($rowSpan) {
                             2 => 'row-span-2',
                             3 => 'row-span-3',
-                            default => '',
+                            4 => 'row-span-4',
+                            5 => 'row-span-5',
+                            6 => 'row-span-6',
+                            default => 'row-span-2',
                         };
                     @endphp
                     <div
@@ -168,23 +172,28 @@
                                             x-cloak
                                             class="absolute right-0 top-full mt-1 z-30 bg-base-100 border border-base-300 rounded-lg shadow-lg p-3 min-w-[180px]"
                                         >
-                                            <p class="text-xs font-medium text-base-content/60 mb-2">Size (cols x rows)</p>
-                                            <div class="grid grid-cols-4 gap-1">
-                                                @foreach([
-                                                    [1,1], [2,1], [3,1], [4,1],
-                                                    [1,2], [2,2], [3,2], [null,null],
-                                                ] as [$c, $r])
-                                                    @if($c !== null)
-                                                        <button
-                                                            wire:click="resizeWidget('{{ $widget['id'] }}', {{ $c }}, {{ $r }})"
-                                                            @click="showSizePicker = false"
-                                                            class="btn btn-xs {{ ($colSpan === $c && $rowSpan === $r) ? 'btn-primary' : 'btn-ghost' }}"
-                                                        >
-                                                            {{ $c }}x{{ $r }}
-                                                        </button>
-                                                    @else
-                                                        <div></div>
-                                                    @endif
+                                            <p class="text-xs font-medium text-base-content/60 mb-2">Width</p>
+                                            <div class="flex gap-1 mb-3">
+                                                @foreach([1, 2, 3, 4] as $c)
+                                                    <button
+                                                        wire:click="resizeWidget('{{ $widget['id'] }}', {{ $c }}, {{ $rowSpan }})"
+                                                        @click="showSizePicker = false"
+                                                        class="btn btn-xs flex-1 {{ $colSpan === $c ? 'btn-primary' : 'btn-ghost' }}"
+                                                    >
+                                                        {{ $c }} col{{ $c > 1 ? 's' : '' }}
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                            <p class="text-xs font-medium text-base-content/60 mb-2">Height</p>
+                                            <div class="flex gap-1">
+                                                @foreach([['Short', 2], ['Medium', 3], ['Tall', 6]] as [$label, $r])
+                                                    <button
+                                                        wire:click="resizeWidget('{{ $widget['id'] }}', {{ $colSpan }}, {{ $r }})"
+                                                        @click="showSizePicker = false"
+                                                        class="btn btn-xs flex-1 {{ $rowSpan === $r ? 'btn-primary' : 'btn-ghost' }}"
+                                                    >
+                                                        {{ $label }}
+                                                    </button>
                                                 @endforeach
                                             </div>
                                         </div>
@@ -224,7 +233,7 @@
                         </div>
 
                         {{-- Widget Content --}}
-                        <div class="relative h-full" :class="{ 'pt-10': editMode }">
+                        <div class="relative h-full overflow-y-auto" :class="{ 'pt-10': editMode }">
                             {{-- Loading indicator overlay --}}
                             <div
                                 x-show="updating"
@@ -336,7 +345,7 @@
                 @endforeach
 
                 {{-- Add Widget Card (edit mode only) --}}
-                <div x-show="editMode" x-cloak role="listitem">
+                <div x-show="editMode" x-cloak role="listitem" class="row-span-2">
                     <button
                         wire:click="openWidgetPicker"
                         class="w-full h-full min-h-[120px] border-2 border-dashed border-base-300 rounded-lg p-6 text-center text-base-content/50 hover:border-primary hover:text-primary transition-colors"

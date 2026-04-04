@@ -67,7 +67,7 @@ Size variants:
     >
         @if(count($data['items'] ?? []) > 0)
         {{-- Scrollable List Container --}}
-        <div class="overflow-y-auto @if($size === 'tv') max-h-[600px] @else max-h-96 @endif">
+        <div class="overflow-y-auto @if($size === 'tv') max-h-[600px] @endif">
             <div class="@if($size === 'tv') space-y-4 @else space-y-3 @endif">
                 @foreach($data['items'] ?? [] as $item)
                     @php
