@@ -78,9 +78,11 @@
 
         @if(!$editingUserId)
             {{-- Invitation Mode Toggle (only for new users) --}}
-            <div class="form-control mt-4">
-                <x-checkbox label="Send invitation email (user sets own password)" wire:model.live="inviteMode" />
-            </div>
+            @if(config('mail.email_configured'))
+                <div class="form-control mt-4">
+                    <x-checkbox label="Send invitation email (user sets own password)" wire:model.live="inviteMode" />
+                </div>
+            @endif
 
             {{-- Password Fields (only if not inviting) --}}
             @if(!$inviteMode)

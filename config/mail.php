@@ -4,6 +4,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Email Configured
+    |--------------------------------------------------------------------------
+    |
+    | Whether a real mail transport is configured. When false (log or array
+    | mailer), email-dependent features like "Forgot password" and email
+    | shift reminders are hidden from the UI.
+    |
+    */
+
+    'email_configured' => ! in_array(env('MAIL_MAILER', 'log'), ['log', 'array']),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Mailer
     |--------------------------------------------------------------------------
     |

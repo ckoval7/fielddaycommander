@@ -1,14 +1,16 @@
 <x-modal wire:model="showResetModal" title="Reset Password">
     <form wire:submit="resetPassword">
-        <div class="mb-4">
-            <x-radio
-                wire:model.live="resetMethod"
-                :options="[
-                    ['id' => 'manual', 'name' => 'Set new password manually'],
-                    ['id' => 'email', 'name' => 'Send password reset email'],
-                ]"
-            />
-        </div>
+        @if(config('mail.email_configured'))
+            <div class="mb-4">
+                <x-radio
+                    wire:model.live="resetMethod"
+                    :options="[
+                        ['id' => 'manual', 'name' => 'Set new password manually'],
+                        ['id' => 'email', 'name' => 'Send password reset email'],
+                    ]"
+                />
+            </div>
+        @endif
 
         @if($resetMethod === 'manual')
             <div class="space-y-4">

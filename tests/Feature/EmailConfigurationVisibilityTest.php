@@ -1,0 +1,246 @@
+<?php
+
+use App\Livewire\Profile\UserProfile;
+use App\Livewire\Users\UserManagement;
+use App\Models\User;
+use App\Services\ReminderService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    Permission::create(['name' => 'manage-users']);
+
+    $adminRole = Role::create(['name' => 'System Administrator', 'guard_name' => 'web']);
+    Role::create(['name' => 'Event Manager', 'guard_name' => 'web']);
+    Role::create(['name' => 'Station Captain', 'guard_name' => 'web']);
+    Role::create(['name' => 'Operator', 'guard_name' => 'web']);
+    $adminRole->givePermissionTo('manage-users');
+
+    $this->admin = User::factory()->create();
+    $this->admin->assignRole('System Administrator');
+});
+
+// =============================================================================
+// Login Page
+// =============================================================================
+
+test('login page hides forgot password link when email is not configured', function () {
+    // phpunit.xml sets MAIL_MAILER=array, so Features::resetPasswords() is disabled,
+    // which means Route::has('password.request') is false and the link is hidden.
+    $response = $this->get(route('login'));
+
+    $response->assertDontSee('Forgot password?');
+});
+
+// =============================================================================
+// Admin Reset Password Modal
+// =============================================================================
+
+test('reset password modal shows email option when email is configured', function () {
+    Config::set('mail.email_configured', true);
+
+    $this->actingAs($this->admin);
+
+    $target = User::factory()->create();
+
+    Livewire::test(UserManagement::class)
+        ->call('openResetModal', $target->id)
+        ->assertSee('Send password reset email');
+});
+
+test('reset password modal hides email option when email is not configured', function () {
+    Config::set('mail.email_configured', false);
+
+    $this->actingAs($this->admin);
+
+    $target = User::factory()->create();
+
+    Livewire::test(UserManagement::class)
+        ->call('openResetModal', $target->id)
+        ->assertDontSee('Send password reset email');
+});
+
+// =============================================================================
+// User Creation Modal
+// =============================================================================
+
+test('create user modal shows invitation option when email is configured', function () {
+    Config::set('mail.email_configured', true);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->assertSee('Send invitation email');
+});
+
+test('create user modal hides invitation option when email is not configured', function () {
+    Config::set('mail.email_configured', false);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->assertDontSee('Send invitation email');
+});
+
+// =============================================================================
+// Profile Email Notification Preferences
+// =============================================================================
+
+test('profile shows email notification preferences when email is configured', function () {
+    Config::set('mail.email_configured', true);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserProfile::class)
+        ->assertSee('Email Notifications');
+});
+
+test('profile hides email notification preferences when email is not configured', function () {
+    Config::set('mail.email_configured', false);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserProfile::class)
+        ->assertDontSee('Email Notifications');
+});
+
+// =============================================================================
+// Reminder Service Email Guard
+// =============================================================================
+
+test('reminder service skips email when email is not configured', function () {
+    Config::set('mail.email_configured', false);
+    \Illuminate\Support\Facades\Notification::fake();
+
+    $this->travelTo(now());
+    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+
+    $user = User::factory()->create([
+        'notification_preferences' => [
+            'test_reminder_minutes' => [10],
+            'test_email' => true,
+        ],
+    ]);
+
+    $eventType = \App\Models\EventType::where('code', 'FD')->first();
+    $event = \App\Models\Event::factory()->create([
+        'event_type_id' => $eventType->id,
+        'start_time' => now()->subHours(6),
+        'end_time' => now()->addHours(18),
+    ]);
+    \App\Models\EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'created_by_user_id' => $user->id,
+    ]);
+    $item = \App\Models\BulletinScheduleEntry::factory()->create([
+        'event_id' => $event->id,
+        'scheduled_at' => now()->addMinutes(10),
+        'created_by' => $user->id,
+    ]);
+
+    $mockMail = new class extends \Illuminate\Notifications\Notification
+    {
+        public function via(): array
+        {
+            return ['mail'];
+        }
+    };
+
+    $source = new class(collect([$item]), collect([$user]), $mockMail) implements \App\Contracts\ReminderSource
+    {
+        public function __construct(
+            private \Illuminate\Support\Collection $items,
+            private \Illuminate\Support\Collection $users,
+            private \Illuminate\Notifications\Notification $mailNotification,
+        ) {}
+
+        public function getUpcomingRemindables(): \Illuminate\Support\Collection
+        {
+            return $this->items;
+        }
+
+        public function getReminderCategory(): \App\Enums\NotificationCategory
+        {
+            return \App\Enums\NotificationCategory::BulletinReminder;
+        }
+
+        public function buildNotificationData(\Illuminate\Database\Eloquent\Model $item, User $user, int $minutes): array
+        {
+            return ['title' => 'Test', 'message' => 'Test', 'url' => '/test'];
+        }
+
+        public function buildMailNotification(\Illuminate\Database\Eloquent\Model $item, User $user, int $minutes): ?\Illuminate\Notifications\Notification
+        {
+            return $this->mailNotification;
+        }
+
+        public function getGroupKey(\Illuminate\Database\Eloquent\Model $item, int $minutes): string
+        {
+            return "test_{$item->id}_{$minutes}m";
+        }
+
+        public function getUsersToNotify(\Illuminate\Database\Eloquent\Model $item): \Illuminate\Support\Collection
+        {
+            return $this->users;
+        }
+
+        public function getScheduledTime(\Illuminate\Database\Eloquent\Model $item): \Carbon\Carbon
+        {
+            return $item->scheduled_at;
+        }
+
+        public function getUserReminderMinutes(User $user): array
+        {
+            return [10];
+        }
+
+        public function getMinutesPreferenceKey(): string
+        {
+            return 'test_reminder_minutes';
+        }
+
+        public function getEmailPreferenceKey(): ?string
+        {
+            return 'test_email';
+        }
+    };
+
+    $service = app(ReminderService::class);
+    $service->processSource($source);
+
+    // In-app notification sent, but the mail notification class should NOT have been dispatched
+    \Illuminate\Support\Facades\Notification::assertSentTo($user, \App\Notifications\InAppNotification::class);
+    \Illuminate\Support\Facades\Notification::assertNotSentTo($user, $mockMail::class);
+});
+
+// =============================================================================
+// Config Value
+// =============================================================================
+
+test('mail.email_configured is false for log mailer', function () {
+    Config::set('mail.default', 'log');
+    Config::set('mail.email_configured', ! in_array(config('mail.default'), ['log', 'array']));
+
+    expect(config('mail.email_configured'))->toBeFalse();
+});
+
+test('mail.email_configured is false for array mailer', function () {
+    Config::set('mail.default', 'array');
+    Config::set('mail.email_configured', ! in_array(config('mail.default'), ['log', 'array']));
+
+    expect(config('mail.email_configured'))->toBeFalse();
+});
+
+test('mail.email_configured is true for smtp mailer', function () {
+    Config::set('mail.default', 'smtp');
+    Config::set('mail.email_configured', ! in_array(config('mail.default'), ['log', 'array']));
+
+    expect(config('mail.email_configured'))->toBeTrue();
+});

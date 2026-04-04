@@ -143,9 +143,9 @@ return [
     |
     */
 
-    'features' => [
+    'features' => array_values(array_filter([
         Features::registration(),
-        Features::resetPasswords(),
+        ! in_array(env('MAIL_MAILER', 'log'), ['log', 'array']) ? Features::resetPasswords() : null,
         // Features::emailVerification(),
         Features::updateProfileInformation(),
         Features::updatePasswords(),
@@ -154,6 +154,6 @@ return [
             'confirmPassword' => true,
             // 'window' => 0,
         ]),
-    ],
+    ])),
 
 ];

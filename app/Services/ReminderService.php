@@ -96,6 +96,10 @@ class ReminderService
         User $user,
         int $minutes,
     ): void {
+        if (! config('mail.email_configured')) {
+            return;
+        }
+
         $emailKey = $source->getEmailPreferenceKey();
 
         if ($emailKey === null) {

@@ -78,34 +78,36 @@
                 />
 
                 {{-- Email Notifications --}}
-                <div>
-                    <div class="text-sm font-semibold mb-2">Email Notifications</div>
+                @if(config('mail.email_configured'))
+                    <div>
+                        <div class="text-sm font-semibold mb-2">Email Notifications</div>
 
-                    <div class="space-y-2">
-                        {{-- Security Alerts (Always enabled) --}}
-                        <div class="flex items-center gap-2">
-                            <x-checkbox checked disabled />
-                            <span>Security Alerts <span class="text-xs text-base-content/60">(always enabled)</span></span>
-                            <div class="tooltip" data-tip="Security notifications cannot be disabled for your protection">
-                                <x-icon name="o-information-circle" class="w-4 h-4 text-base-content/40 cursor-help" />
+                        <div class="space-y-2">
+                            {{-- Security Alerts (Always enabled) --}}
+                            <div class="flex items-center gap-2">
+                                <x-checkbox checked disabled />
+                                <span>Security Alerts <span class="text-xs text-base-content/60">(always enabled)</span></span>
+                                <div class="tooltip" data-tip="Security notifications cannot be disabled for your protection">
+                                    <x-icon name="o-information-circle" class="w-4 h-4 text-base-content/40 cursor-help" />
+                                </div>
                             </div>
+
+                            {{-- Event Notifications --}}
+                            <x-checkbox
+                                label="Event Notifications"
+                                wire:model="event_notifications"
+                                hint="Event starting/ending reminders and station assignments"
+                            />
+
+                            {{-- System Announcements --}}
+                            <x-checkbox
+                                label="System Announcements"
+                                wire:model="system_announcements"
+                                hint="System maintenance and important updates"
+                            />
                         </div>
-
-                        {{-- Event Notifications --}}
-                        <x-checkbox
-                            label="Event Notifications"
-                            wire:model="event_notifications"
-                            hint="Event starting/ending reminders and station assignments"
-                        />
-
-                        {{-- System Announcements --}}
-                        <x-checkbox
-                            label="System Announcements"
-                            wire:model="system_announcements"
-                            hint="System maintenance and important updates"
-                        />
                     </div>
-                </div>
+                @endif
 
                 <div class="card-actions justify-end mt-4">
                     <x-button type="submit" spinner="saveProfile" class="btn-primary">
@@ -246,11 +248,13 @@
                         <h4 class="text-sm font-semibold">Shift Reminder Settings</h4>
 
                         {{-- Email toggle --}}
-                        <x-checkbox
-                            label="Email shift reminders"
-                            wire:model="shift_reminder_email"
-                            hint="Send an email in addition to the in-app notification"
-                        />
+                        @if(config('mail.email_configured'))
+                            <x-checkbox
+                                label="Email shift reminders"
+                                wire:model="shift_reminder_email"
+                                hint="Send an email in addition to the in-app notification"
+                            />
+                        @endif
 
                         {{-- Reminder intervals --}}
                         <div>
