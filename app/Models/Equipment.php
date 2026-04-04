@@ -228,6 +228,41 @@ class Equipment extends Model
     }
 
     /**
+     * Scope a query to search equipment by make, model, description, or serial number.
+     */
+    public function scopeSearch(Builder $query, string $search): Builder
+    {
+        return $query->where(function (Builder $q) use ($search) {
+            $q->where('make', 'like', "%{$search}%")
+                ->orWhere('model', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhere('serial_number', 'like', "%{$search}%");
+        });
+    }
+
+    /**
+     * Scope a query to filter equipment by commitment status relative to active/upcoming events.
+     *
+     * @param  string  $status  One of 'available' or 'committed'
+     */
+    public function scopeWithCommitmentStatus(Builder $query, string $status): Builder
+    {
+        $commitmentConstraint = function (Builder $q) {
+            $q->whereIn('status', ['committed', 'delivered'])
+                ->whereHas('event', function (Builder $eventQuery) {
+                    $eventQuery->where('start_time', '<=', now()->addDays(30))
+                        ->where('end_time', '>=', now());
+                });
+        };
+
+        return match ($status) {
+            'available' => $query->whereDoesntHave('commitments', $commitmentConstraint),
+            'committed' => $query->whereHas('commitments', $commitmentConstraint),
+            default => $query,
+        };
+    }
+
+    /**
      * Scope a query to only include equipment that supports a specific band.
      */
     public function scopeWithBand(Builder $query, int $bandId): Builder

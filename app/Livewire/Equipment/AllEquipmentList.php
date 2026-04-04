@@ -116,36 +116,9 @@ class AllEquipmentList extends Component
             ->when($this->userFilter && $this->userFilter !== 'club', function (Builder $query) {
                 $query->where('owner_user_id', (int) $this->userFilter);
             })
-            ->when($this->search, function (Builder $query) {
-                $query->where(function (Builder $q) {
-                    $q->where('make', 'like', "%{$this->search}%")
-                        ->orWhere('model', 'like', "%{$this->search}%")
-                        ->orWhere('description', 'like', "%{$this->search}%")
-                        ->orWhere('serial_number', 'like', "%{$this->search}%");
-                });
-            })
-            ->when($this->typeFilter, function (Builder $query) {
-                $query->where('type', $this->typeFilter);
-            })
-            ->when($this->statusFilter, function (Builder $query) {
-                match ($this->statusFilter) {
-                    'available' => $query->whereDoesntHave('commitments', function (Builder $q) {
-                        $q->whereIn('status', ['committed', 'delivered'])
-                            ->whereHas('event', function (Builder $eventQuery) {
-                                $eventQuery->where('start_time', '<=', now()->addDays(30))
-                                    ->where('end_time', '>=', now());
-                            });
-                    }),
-                    'committed' => $query->whereHas('commitments', function (Builder $q) {
-                        $q->whereIn('status', ['committed', 'delivered'])
-                            ->whereHas('event', function (Builder $eventQuery) {
-                                $eventQuery->where('start_time', '<=', now()->addDays(30))
-                                    ->where('end_time', '>=', now());
-                            });
-                    }),
-                    default => $query,
-                };
-            })
+            ->when($this->search, fn (Builder $query) => $query->search($this->search))
+            ->when($this->typeFilter, fn (Builder $query) => $query->ofType($this->typeFilter))
+            ->when($this->statusFilter, fn (Builder $query) => $query->withCommitmentStatus($this->statusFilter))
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(25);
     }

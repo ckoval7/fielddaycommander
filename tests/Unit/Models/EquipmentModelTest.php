@@ -163,6 +163,115 @@ describe('Scopes', function () {
             ]);
     });
 
+    test('scopeSearch filters by make', function () {
+        Equipment::factory()->create(['make' => 'Yaesu', 'model' => 'FT-991A']);
+        Equipment::factory()->create(['make' => 'Icom', 'model' => 'IC-7300']);
+
+        $results = Equipment::search('Yaesu')->get();
+
+        expect($results)->toHaveCount(1)
+            ->and($results->first()->make)->toBe('Yaesu');
+    });
+
+    test('scopeSearch filters by model', function () {
+        Equipment::factory()->create(['make' => 'Yaesu', 'model' => 'FT-991A']);
+        Equipment::factory()->create(['make' => 'Icom', 'model' => 'IC-7300']);
+
+        $results = Equipment::search('IC-7300')->get();
+
+        expect($results)->toHaveCount(1)
+            ->and($results->first()->model)->toBe('IC-7300');
+    });
+
+    test('scopeSearch filters by description', function () {
+        Equipment::factory()->create(['description' => 'Portable HF transceiver']);
+        Equipment::factory()->create(['description' => 'Base station amplifier']);
+
+        $results = Equipment::search('transceiver')->get();
+
+        expect($results)->toHaveCount(1)
+            ->and($results->first()->description)->toBe('Portable HF transceiver');
+    });
+
+    test('scopeSearch filters by serial number', function () {
+        Equipment::factory()->create(['serial_number' => 'SN-12345']);
+        Equipment::factory()->create(['serial_number' => 'SN-67890']);
+
+        $results = Equipment::search('12345')->get();
+
+        expect($results)->toHaveCount(1)
+            ->and($results->first()->serial_number)->toBe('SN-12345');
+    });
+
+    test('scopeWithCommitmentStatus filters available equipment', function () {
+        $available = Equipment::factory()->create();
+        $committed = Equipment::factory()->create();
+
+        $activeEvent = Event::factory()->create([
+            'start_time' => now()->addDays(5),
+            'end_time' => now()->addDays(7),
+        ]);
+
+        EquipmentEvent::factory()->create([
+            'equipment_id' => $committed->id,
+            'event_id' => $activeEvent->id,
+            'status' => 'committed',
+        ]);
+
+        $results = Equipment::withCommitmentStatus('available')->get();
+
+        expect($results->pluck('id')->toArray())->toContain($available->id)
+            ->and($results->pluck('id')->toArray())->not->toContain($committed->id);
+    });
+
+    test('scopeWithCommitmentStatus filters committed equipment', function () {
+        $available = Equipment::factory()->create();
+        $committed = Equipment::factory()->create();
+
+        $activeEvent = Event::factory()->create([
+            'start_time' => now()->addDays(5),
+            'end_time' => now()->addDays(7),
+        ]);
+
+        EquipmentEvent::factory()->create([
+            'equipment_id' => $committed->id,
+            'event_id' => $activeEvent->id,
+            'status' => 'committed',
+        ]);
+
+        $results = Equipment::withCommitmentStatus('committed')->get();
+
+        expect($results->pluck('id')->toArray())->toContain($committed->id)
+            ->and($results->pluck('id')->toArray())->not->toContain($available->id);
+    });
+
+    test('scopeWithCommitmentStatus ignores cancelled commitments', function () {
+        $equipment = Equipment::factory()->create();
+
+        $activeEvent = Event::factory()->create([
+            'start_time' => now()->addDays(5),
+            'end_time' => now()->addDays(7),
+        ]);
+
+        EquipmentEvent::factory()->create([
+            'equipment_id' => $equipment->id,
+            'event_id' => $activeEvent->id,
+            'status' => 'cancelled',
+        ]);
+
+        $results = Equipment::withCommitmentStatus('available')->get();
+
+        expect($results->pluck('id')->toArray())->toContain($equipment->id);
+    });
+
+    test('scopeWithCommitmentStatus returns all for unknown status', function () {
+        Equipment::factory()->count(3)->create();
+
+        $results = Equipment::withCommitmentStatus('unknown')->get();
+
+        expect($results)->toHaveCount(3);
+    });
+
     test('scopeAvailableForEvent excludes equipment with overlapping commitments', function () {
         // Create events with different time ranges
         $targetEvent = Event::factory()->create([
