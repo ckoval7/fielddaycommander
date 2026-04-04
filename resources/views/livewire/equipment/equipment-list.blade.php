@@ -3,50 +3,17 @@
 
     <div class="p-6">
         {{-- Header --}}
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
             <h1 class="text-3xl font-bold">My Equipment</h1>
             <div class="flex gap-2">
-                <x-button label="Add Equipment" icon="o-plus" class="btn-primary" link="{{ route('equipment.create') }}" wire:navigate />
+                <x-button label="Add Equipment" icon="o-plus" class="btn-primary btn-sm sm:btn-md" link="{{ route('equipment.create') }}" wire:navigate />
                 @can('edit-any-equipment')
-                    <x-button label="Add Club Equipment" icon="o-building-office" class="btn-club" link="{{ route('equipment.create', ['club' => true]) }}" wire:navigate />
+                    <x-button label="Add Club Equipment" icon="o-building-office" class="btn-club btn-sm sm:btn-md" link="{{ route('equipment.create', ['club' => true]) }}" wire:navigate />
                 @endcan
             </div>
         </div>
 
-        {{-- Search and Filters --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <x-input
-                label="Search"
-                placeholder="Search by make, model, or serial number..."
-                wire:model.live.debounce.300ms="search"
-                icon="o-magnifying-glass"
-                clearable
-            />
-
-            <x-select
-                label="Type"
-                wire:model.live="typeFilter"
-                :options="array_merge(
-                    [['value' => null, 'label' => 'All Types']],
-                    \App\Models\Equipment::typeOptions()
-                )"
-                option-value="value"
-                option-label="label"
-            />
-
-            <x-select
-                label="Status"
-                wire:model.live="statusFilter"
-                :options="[
-                    ['value' => null, 'label' => 'All Status'],
-                    ['value' => 'available', 'label' => 'Available'],
-                    ['value' => 'committed', 'label' => 'Committed'],
-                ]"
-                option-value="value"
-                option-label="label"
-            />
-
-        </div>
+        <x-equipment.filters />
 
         {{-- Bulk Action Bar --}}
         @if(count($selectedIds) > 0)
@@ -89,8 +56,84 @@
             </div>
         @endif
 
-        {{-- Equipment Card --}}
-        <x-card shadow>
+        {{-- Mobile Card View --}}
+        <div class="md:hidden space-y-3">
+            @forelse($equipment as $item)
+                <x-card wire:key="equipment-card-{{ $item->id }}" shadow class="!p-4">
+                    <div class="flex items-start gap-3">
+                        <label class="flex items-center pt-1">
+                            <span class="sr-only">Select {{ $item->make }} {{ $item->model }}</span>
+                            <input type="checkbox" class="checkbox checkbox-sm" value="{{ $item->id }}" wire:model.live="selectedIds" />
+                        </label>
+                        <x-equipment.photo-thumbnail :item="$item" size="lg" />
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <div class="font-semibold">{{ $item->make }}</div>
+                                    <div class="text-sm opacity-60">{{ $item->model }}</div>
+                                </div>
+                                <x-dropdown>
+                                    <x-slot:trigger>
+                                        <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost" />
+                                    </x-slot:trigger>
+                                    <x-menu-item title="Edit" icon="o-pencil" link="{{ route('equipment.edit', $item) }}" wire:navigate />
+                                    @if($item->currentCommitment)
+                                        <x-menu-separator />
+                                        <x-menu-item title="View Commitment" icon="o-eye" wire:click="openDetailsModal({{ $item->currentCommitment->id }})" />
+                                        <x-menu-item title="Update Notes" icon="o-pencil-square" wire:click="openNotesModal({{ $item->currentCommitment->id }})" />
+                                        <x-menu-separator />
+                                        @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
+                                            @if($status !== $item->currentCommitment->status)
+                                                <x-menu-item
+                                                    title="{{ ucfirst(str_replace('_', ' ', $status)) }}"
+                                                    wire:click="changeStatus({{ $item->currentCommitment->id }}, '{{ $status }}')"
+                                                />
+                                            @endif
+                                        @endforeach
+                                    @else
+                                        <x-menu-item title="Commit to Event" icon="o-calendar" wire:click="openCommitModal({{ $item->id }})" />
+                                    @endif
+                                    <x-menu-separator />
+                                    <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="deleteEquipment({{ $item->id }})" wire:confirm="Are you sure you want to delete this equipment?" />
+                                </x-dropdown>
+                            </div>
+                            @if($item->is_club_equipment)
+                                <span class="badge badge-club badge-xs mt-1">
+                                    <x-icon name="o-building-office" class="w-3 h-3 mr-0.5" />
+                                    Club Equipment
+                                </span>
+                                @if($item->managed_by_user_id && $item->manager)
+                                    <div class="text-xs opacity-70">Managed by {{ $item->manager->full_name }}</div>
+                                @endif
+                            @endif
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-base-200">
+                        <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $item->type)) }}</span>
+                        <x-equipment.status-badge :status="$item->currentCommitment?->status ?? 'available'" />
+                        @if($item->serial_number)
+                            <code class="text-xs opacity-70">{{ $item->serial_number }}</code>
+                        @endif
+                    </div>
+                    @if($item->tags && is_array($item->tags) && count($item->tags))
+                        <div class="mt-2">
+                            <x-equipment.tags :tags="$item->tags" size="xs" />
+                        </div>
+                    @endif
+                </x-card>
+            @empty
+                <x-equipment.empty-state message="No equipment found" action-label="Create First Equipment" :action-route="route('equipment.create')" />
+            @endforelse
+
+            @if($equipment->hasPages())
+                <div class="pt-4">
+                    {{ $equipment->links() }}
+                </div>
+            @endif
+        </div>
+
+        {{-- Desktop Table View --}}
+        <x-card shadow class="hidden md:block">
             <div>
                 <table class="table table-zebra">
                     <thead>
@@ -137,18 +180,7 @@
                                     </label>
                                 </td>
                                 <td>
-                                    @if($item->photo_path)
-                                        <img
-                                            src="{{ asset('storage/' . $item->photo_path) }}"
-                                            alt="{{ $item->make }} {{ $item->model }}"
-                                            class="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                            wire:click="viewPhoto('{{ $item->photo_path }}', '{{ $item->make }} {{ $item->model }}')"
-                                        />
-                                    @else
-                                        <div class="w-12 h-12 bg-base-300 rounded flex items-center justify-center">
-                                            <x-icon name="o-camera" class="w-6 h-6 text-base-content/50" />
-                                        </div>
-                                    @endif
+                                    <x-equipment.photo-thumbnail :item="$item" />
                                 </td>
                                 <td class="font-semibold">
                                     <div>{{ $item->make }}</div>
@@ -179,46 +211,10 @@
                                     <code class="text-xs">{{ $item->serial_number ?? '-' }}</code>
                                 </td>
                                 <td>
-                                    @php
-                                        $equipmentStatus = $item->currentCommitment?->status ?? 'available';
-                                        $statusClasses = match($equipmentStatus) {
-                                            'committed' => 'badge-info',
-                                            'delivered' => 'badge-success',
-                                            'returned' => 'badge-neutral',
-                                            'cancelled' => 'badge-error',
-                                            'lost' => 'badge-error',
-                                            'damaged' => 'badge-error',
-                                            default => 'badge-success badge-outline'
-                                        };
-                                        $statusIcon = match($equipmentStatus) {
-                                            'committed' => 'o-clipboard-document-list',
-                                            'delivered' => 'o-truck',
-                                            'returned' => 'o-check-circle',
-                                            'cancelled' => 'o-x-circle',
-                                            'lost' => 'o-exclamation-triangle',
-                                            'damaged' => 'o-exclamation-triangle',
-                                            default => 'o-check-circle'
-                                        };
-                                    @endphp
-                                    <x-badge
-                                        value="{{ ucfirst(str_replace('_', ' ', $equipmentStatus)) }}"
-                                        class="{{ $statusClasses }}"
-                                    >
-                                        <x-slot:icon>
-                                            <x-icon name="{{ $statusIcon }}" class="w-4 h-4 mr-2" />
-                                        </x-slot:icon>
-                                    </x-badge>
+                                    <x-equipment.status-badge :status="$item->currentCommitment?->status ?? 'available'" />
                                 </td>
                                 <td>
-                                    <div class="flex flex-wrap gap-1">
-                                        @if($item->tags && is_array($item->tags))
-                                            @foreach($item->tags as $tag)
-                                                <span class="badge badge-outline badge-sm">{{ $tag }}</span>
-                                            @endforeach
-                                        @else
-                                            <span class="text-xs opacity-50">-</span>
-                                        @endif
-                                    </div>
+                                    <x-equipment.tags :tags="$item->tags" />
                                 </td>
                                 <td class="text-right">
                                     <x-dropdown>
@@ -251,13 +247,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="9" class="text-center py-8 text-base-content/60">
-                                    <x-icon name="o-wrench-screwdriver" class="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                    <p>No equipment found</p>
-                                    <x-button label="Create First Equipment" icon="o-plus" class="btn-primary btn-sm mt-2" link="{{ route('equipment.create') }}" wire:navigate />
-                                </td>
-                            </tr>
+                            <x-equipment.empty-state colspan="9" message="No equipment found" action-label="Create First Equipment" :action-route="route('equipment.create')" />
                         @endforelse
                     </tbody>
                 </table>
@@ -272,22 +262,7 @@
         </x-card>
     </div>
 
-    {{-- Photo Viewer Modal --}}
-    <x-modal wire:model="showPhotoModal" title="{{ $photoDescription ?? 'Equipment Detail' }}" class="backdrop-blur" box-class="max-w-4xl">
-        @if($photoPath)
-            <div class="flex justify-center items-center">
-                <img
-                    src="{{ asset('storage/' . $photoPath) }}"
-                    alt="{{ $photoDescription ?? 'Equipment' }}"
-                    class="max-w-full max-h-[70vh] object-contain rounded"
-                />
-            </div>
-        @endif
-
-        <x-slot:actions>
-            <x-button label="Close" @click="$wire.showPhotoModal = false" class="btn-ghost" />
-        </x-slot:actions>
-    </x-modal>
+    <x-equipment.photo-modal :photoPath="$photoPath" :photoDescription="$photoDescription" />
 
     {{-- Commit Equipment Modal --}}
     <x-modal wire:model="showCommitModal" title="Commit Equipment to Event" class="backdrop-blur">

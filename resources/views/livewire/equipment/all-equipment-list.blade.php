@@ -7,16 +7,7 @@
             <h1 class="text-3xl font-bold">All User Catalogs</h1>
         </div>
 
-        {{-- Search and Filters --}}
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <x-input
-                label="Search"
-                placeholder="Search by make, model, or serial number..."
-                wire:model.live.debounce.300ms="search"
-                icon="o-magnifying-glass"
-                clearable
-            />
-
+        <x-equipment.filters :filterCols="4">
             <x-choices-offline
                 label="Owner"
                 wire:model.live="userFilter"
@@ -25,33 +16,61 @@
                 single
                 searchable
             />
+        </x-equipment.filters>
 
-            <x-select
-                label="Type"
-                wire:model.live="typeFilter"
-                :options="array_merge(
-                    [['value' => null, 'label' => 'All Types']],
-                    \App\Models\Equipment::typeOptions()
-                )"
-                option-value="value"
-                option-label="label"
-            />
+        {{-- Mobile Card View --}}
+        <div class="md:hidden space-y-3">
+            @forelse($equipment as $item)
+                <x-card wire:key="equipment-card-{{ $item->id }}" shadow class="!p-4">
+                    <div class="flex items-start gap-3">
+                        <x-equipment.photo-thumbnail :item="$item" size="lg" />
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold">{{ $item->make }}</div>
+                            <div class="text-sm opacity-60">{{ $item->model }}</div>
+                            <div class="mt-1">
+                                @if($item->is_club_equipment)
+                                    <span class="badge badge-club badge-xs">
+                                        <x-icon name="o-building-office" class="w-3 h-3 mr-0.5" />
+                                        Club
+                                    </span>
+                                    @if($item->managed_by_user_id && $item->manager)
+                                        <span class="text-xs opacity-70 ml-1">Mgr: {{ $item->manager->call_sign }}</span>
+                                    @endif
+                                @elseif($item->owner)
+                                    <span class="text-sm font-semibold">{{ $item->owner->call_sign }}</span>
+                                    @if($item->owner->first_name || $item->owner->last_name)
+                                        <span class="text-xs opacity-70 ml-1">{{ trim($item->owner->first_name . ' ' . $item->owner->last_name) }}</span>
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-base-200">
+                        <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $item->type)) }}</span>
+                        <x-equipment.status-badge :status="$item->activeCommitments->first()?->status ?? 'available'" />
+                        @if($item->serial_number)
+                            <code class="text-xs opacity-70">{{ $item->serial_number }}</code>
+                        @endif
+                    </div>
+                    @if($item->tags && is_array($item->tags) && count($item->tags))
+                        <div class="mt-2">
+                            <x-equipment.tags :tags="$item->tags" size="xs" />
+                        </div>
+                    @endif
+                </x-card>
+            @empty
+                <x-equipment.empty-state />
+            @endforelse
 
-            <x-select
-                label="Status"
-                wire:model.live="statusFilter"
-                :options="[
-                    ['value' => null, 'label' => 'All Status'],
-                    ['value' => 'available', 'label' => 'Available'],
-                    ['value' => 'committed', 'label' => 'Committed'],
-                ]"
-                option-value="value"
-                option-label="label"
-            />
+            @if($equipment->hasPages())
+                <div class="pt-4">
+                    {{ $equipment->links() }}
+                </div>
+            @endif
         </div>
 
-        {{-- Equipment Card --}}
-        <x-card shadow>
+        {{-- Desktop Table View --}}
+        <x-card shadow class="hidden md:block">
             <div class="overflow-x-auto">
                 <table class="table table-zebra">
                     <thead>
@@ -70,18 +89,7 @@
                         @forelse($equipment as $item)
                             <tr wire:key="equipment-{{ $item->id }}">
                                 <td>
-                                    @if($item->photo_path)
-                                        <img
-                                            src="{{ asset('storage/' . $item->photo_path) }}"
-                                            alt="{{ $item->make }} {{ $item->model }}"
-                                            class="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                            wire:click="viewPhoto('{{ $item->photo_path }}', '{{ $item->make }} {{ $item->model }}')"
-                                        />
-                                    @else
-                                        <div class="w-12 h-12 bg-base-300 rounded flex items-center justify-center">
-                                            <x-icon name="o-camera" class="w-6 h-6 text-base-content/50" />
-                                        </div>
-                                    @endif
+                                    <x-equipment.photo-thumbnail :item="$item" />
                                 </td>
                                 <td>
                                     @if($item->is_club_equipment)
@@ -121,55 +129,14 @@
                                     <code class="text-xs">{{ $item->serial_number ?? '-' }}</code>
                                 </td>
                                 <td>
-                                    @php
-                                        $commitmentStatus = $item->activeCommitments->first()?->status ?? 'available';
-                                        $statusClasses = match($commitmentStatus) {
-                                            'committed' => 'badge-info',
-                                            'delivered' => 'badge-success',
-                                            'returned' => 'badge-neutral',
-                                            'cancelled' => 'badge-error',
-                                            'lost' => 'badge-error',
-                                            'damaged' => 'badge-error',
-                                            default => 'badge-success badge-outline'
-                                        };
-                                        $statusIcon = match($commitmentStatus) {
-                                            'committed' => 'o-clipboard-document-list',
-                                            'delivered' => 'o-truck',
-                                            'returned' => 'o-check-circle',
-                                            'cancelled' => 'o-x-circle',
-                                            'lost' => 'o-exclamation-triangle',
-                                            'damaged' => 'o-exclamation-triangle',
-                                            default => 'o-check-circle'
-                                        };
-                                    @endphp
-                                    <x-badge
-                                        value="{{ ucfirst(str_replace('_', ' ', $commitmentStatus)) }}"
-                                        class="{{ $statusClasses }}"
-                                    >
-                                        <x-slot:icon>
-                                            <x-icon name="{{ $statusIcon }}" class="w-4 h-4 mr-2" />
-                                        </x-slot:icon>
-                                    </x-badge>
+                                    <x-equipment.status-badge :status="$item->activeCommitments->first()?->status ?? 'available'" />
                                 </td>
                                 <td>
-                                    <div class="flex flex-wrap gap-1">
-                                        @if($item->tags && is_array($item->tags))
-                                            @foreach($item->tags as $tag)
-                                                <span class="badge badge-outline badge-sm">{{ $tag }}</span>
-                                            @endforeach
-                                        @else
-                                            <span class="text-xs opacity-50">-</span>
-                                        @endif
-                                    </div>
+                                    <x-equipment.tags :tags="$item->tags" />
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="8" class="text-center py-8 text-base-content/60">
-                                    <x-icon name="o-wrench-screwdriver" class="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                    <p>No equipment found</p>
-                                </td>
-                            </tr>
+                            <x-equipment.empty-state colspan="8" />
                         @endforelse
                     </tbody>
                 </table>
@@ -184,20 +151,5 @@
         </x-card>
     </div>
 
-    {{-- Photo Viewer Modal --}}
-    <x-modal wire:model="showPhotoModal" title="{{ $photoDescription ?? 'Equipment Detail' }}" class="backdrop-blur" box-class="max-w-4xl">
-        @if($photoPath)
-            <div class="flex justify-center items-center">
-                <img
-                    src="{{ asset('storage/' . $photoPath) }}"
-                    alt="{{ $photoDescription ?? 'Equipment' }}"
-                    class="max-w-full max-h-[70vh] object-contain rounded"
-                />
-            </div>
-        @endif
-
-        <x-slot:actions>
-            <x-button label="Close" @click="$wire.showPhotoModal = false" class="btn-ghost" />
-        </x-slot:actions>
-    </x-modal>
+    <x-equipment.photo-modal :photoPath="$photoPath" :photoDescription="$photoDescription" />
 </div>
