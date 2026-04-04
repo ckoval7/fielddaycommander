@@ -223,12 +223,15 @@
                                             />
                                         </div>
                                     @else
-                                        <x-button
-                                            label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
-                                            icon="o-paper-airplane"
-                                            class="btn-ghost btn-xs"
-                                            wire:click="openSentByModal({{ $message->id }})"
-                                        />
+                                        <div class="flex items-center gap-1">
+                                            <x-badge value="Draft" class="badge-warning badge-outline badge-sm" />
+                                            <x-button
+                                                label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
+                                                icon="o-paper-airplane"
+                                                class="btn-ghost btn-xs"
+                                                wire:click="openSentByModal({{ $message->id }})"
+                                            />
+                                        </div>
                                     @endif
                                 </td>
                                 <td class="text-right">
@@ -342,12 +345,15 @@
                                             @endif
                                         </div>
                                     @else
-                                        <x-button
-                                            label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
-                                            icon="o-paper-airplane"
-                                            class="btn-ghost btn-xs"
-                                            wire:click="openSentByModal({{ $message->id }})"
-                                        />
+                                        <div class="flex items-center gap-1">
+                                            <x-badge value="Draft" class="badge-warning badge-outline badge-sm" />
+                                            <x-button
+                                                label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
+                                                icon="o-paper-airplane"
+                                                class="btn-ghost btn-xs"
+                                                wire:click="openSentByModal({{ $message->id }})"
+                                            />
+                                        </div>
                                     @endif
                                 </div>
                                 <div class="flex items-center gap-1">

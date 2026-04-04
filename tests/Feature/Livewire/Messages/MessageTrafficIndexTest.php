@@ -236,6 +236,31 @@ describe('sent tracking', function () {
             ->and($message->mode_category)->toBeNull();
     });
 
+    test('unsent messages show draft badge', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'sent_at' => null,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->assertSee('Draft');
+    });
+
+    test('sent messages do not show draft badge', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'sent_at' => now(),
+            'sent_by_user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->assertDontSee('Draft');
+    });
+
     test('displays sent status on index', function () {
         $sender = User::factory()->create(['call_sign' => 'N1ABC']);
         $sender->givePermissionTo('log-contacts');
