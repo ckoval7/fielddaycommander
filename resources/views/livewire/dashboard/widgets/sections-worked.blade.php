@@ -38,7 +38,7 @@
                             />
 
                             {{-- Call Area Label --}}
-                            <span class="font-bold text-sm min-w-[7rem]">
+                            <span class="font-bold text-sm whitespace-nowrap">
                                 {{ $group['label'] }}
                             </span>
 

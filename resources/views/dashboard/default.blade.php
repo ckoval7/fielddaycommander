@@ -83,7 +83,7 @@ Props from controller:
 
         {{-- Widget Grid (Normal Display Mode) --}}
         @if($widgets && $widgets->isNotEmpty())
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 grid-flow-row-dense gap-4 sm:gap-6 widget-grid">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-[1800px]:grid-cols-4 grid-flow-row-dense gap-4 sm:gap-6 widget-grid">
                 @foreach($widgets as $widget)
                     @if($widget['visible'] ?? true)
                         @php
