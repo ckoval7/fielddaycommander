@@ -2,53 +2,10 @@
 
 namespace App\Livewire\Dashboard\Widgets;
 
-use App\Livewire\Dashboard\Concerns\HasErrorBoundary;
-use App\Models\Event;
 use Livewire\Attributes\Computed;
-use Livewire\Component;
 
-class Score extends Component
+class Score extends AbstractContactWidget
 {
-    use HasErrorBoundary;
-
-    public bool $tvMode = false;
-
-    public ?Event $event = null;
-
-    public function mount(bool $tvMode = false): void
-    {
-        $this->tvMode = $tvMode;
-        $this->event = Event::active()->with('eventConfiguration')->first();
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function getListeners(): array
-    {
-        if (! $this->event) {
-            return [];
-        }
-
-        return [
-            "echo-private:event.{$this->event->id},ContactLogged" => 'handleContactLogged',
-        ];
-    }
-
-    /**
-     * Handle real-time ContactLogged broadcast.
-     *
-     * @param  array<string, mixed>  $payload
-     */
-    public function handleContactLogged(array $payload): void
-    {
-        try {
-            unset($this->qsoScore, $this->bonusScore, $this->finalScore);
-        } catch (\Throwable $e) {
-            $this->handleWidgetError($e);
-        }
-    }
-
     #[Computed]
     public function qsoScore(): int
     {
@@ -73,20 +30,18 @@ class Score extends Component
         return $this->event?->eventConfiguration?->calculatePowerMultiplier() ?? 1;
     }
 
+    protected function computedPropertiesToClear(): array
+    {
+        return ['qsoScore', 'bonusScore', 'finalScore'];
+    }
+
     protected function getWidgetName(): string
     {
         return 'Current Score';
     }
 
-    public function render()
+    protected function getViewName(): string
     {
-        if ($this->hasError) {
-            return view('livewire.dashboard.widgets.error-fallback', [
-                'widgetName' => $this->getWidgetName(),
-                'errorMessage' => $this->errorMessage,
-            ]);
-        }
-
-        return view('livewire.dashboard.widgets.score');
+        return 'livewire.dashboard.widgets.score';
     }
 }

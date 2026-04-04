@@ -2,57 +2,14 @@
 
 namespace App\Livewire\Dashboard\Widgets;
 
-use App\Livewire\Dashboard\Concerns\HasErrorBoundary;
 use App\Models\Band;
 use App\Models\Contact;
-use App\Models\Event;
 use App\Models\Mode;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
-use Livewire\Component;
 
-class BandModeGrid extends Component
+class BandModeGrid extends AbstractContactWidget
 {
-    use HasErrorBoundary;
-
-    public bool $tvMode = false;
-
-    public ?Event $event = null;
-
-    public function mount(bool $tvMode = false): void
-    {
-        $this->tvMode = $tvMode;
-        $this->event = Event::active()->with('eventConfiguration')->first();
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function getListeners(): array
-    {
-        if (! $this->event) {
-            return [];
-        }
-
-        return [
-            "echo-private:event.{$this->event->id},ContactLogged" => 'handleContactLogged',
-        ];
-    }
-
-    /**
-     * Handle real-time ContactLogged broadcast.
-     *
-     * @param  array<string, mixed>  $payload
-     */
-    public function handleContactLogged(array $payload): void
-    {
-        try {
-            unset($this->gridData);
-        } catch (\Throwable $e) {
-            $this->handleWidgetError($e);
-        }
-    }
-
     #[Computed]
     public function bands(): Collection
     {
@@ -97,20 +54,18 @@ class BandModeGrid extends Component
         return $data;
     }
 
+    protected function computedPropertiesToClear(): array
+    {
+        return ['gridData'];
+    }
+
     protected function getWidgetName(): string
     {
         return 'Band/Mode Activity Grid';
     }
 
-    public function render()
+    protected function getViewName(): string
     {
-        if ($this->hasError) {
-            return view('livewire.dashboard.widgets.error-fallback', [
-                'widgetName' => $this->getWidgetName(),
-                'errorMessage' => $this->errorMessage,
-            ]);
-        }
-
-        return view('livewire.dashboard.widgets.band-mode-grid');
+        return 'livewire.dashboard.widgets.band-mode-grid';
     }
 }
