@@ -172,59 +172,6 @@
         @endcan
     </x-card>
 
-    {{-- My Reminder Settings --}}
-    <x-card>
-        <x-slot:title>
-            <div class="flex items-center gap-2">
-                <x-icon name="o-bell" class="w-5 h-5" />
-                My Reminder Settings
-            </div>
-        </x-slot:title>
-
-        @if(count($this->reminderMinutes) > 0)
-            <div class="flex flex-wrap gap-2 mb-4">
-                @foreach($this->reminderMinutes as $minutes)
-                    <span class="badge badge-primary gap-1">
-                        {{ $minutes }} min
-                        <button
-                            wire:click="removeReminderMinute({{ $minutes }})"
-                            class="btn btn-ghost btn-xs p-0 min-h-0 h-auto"
-                            title="Remove"
-                        >
-                            <x-icon name="o-x-mark" class="w-3 h-3" />
-                        </button>
-                    </span>
-                @endforeach
-            </div>
-        @else
-            <p class="text-sm text-base-content/50 mb-4">No reminders configured. You won't receive bulletin notifications.</p>
-        @endif
-
-        @if(count($this->reminderMinutes) < 5)
-            <div class="flex items-end gap-2">
-                <x-input
-                    label="Minutes before"
-                    wire:model="reminderMinute"
-                    type="number"
-                    min="1"
-                    max="60"
-                    placeholder="e.g., 15"
-                    class="w-32"
-                />
-                <x-button
-                    label="Add"
-                    wire:click="addReminderMinute"
-                    class="btn-primary btn-sm"
-                    icon="o-plus"
-                    spinner="addReminderMinute"
-                />
-            </div>
-            @error('reminderMinute')
-                <p class="text-error text-xs mt-1">{{ $message }}</p>
-            @enderror
-        @endif
-    </x-card>
-
     @can('log-contacts')
         <form wire:submit="save" class="space-y-6">
 

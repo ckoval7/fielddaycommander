@@ -235,6 +235,41 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's configured shift check-in reminder intervals in minutes.
+     *
+     * @return array<int>
+     */
+    public function getShiftReminderMinutes(): array
+    {
+        $minutes = $this->notification_preferences['shift_reminder_minutes'] ?? [15];
+
+        return array_values(array_map('intval', $minutes));
+    }
+
+    /**
+     * Set the user's shift check-in reminder intervals in minutes.
+     *
+     * @param  array<int>  $minutes
+     */
+    public function setShiftReminderMinutes(array $minutes): void
+    {
+        $preferences = $this->notification_preferences ?? [];
+        $deduplicated = array_unique(array_map('intval', $minutes));
+        sort($deduplicated);
+        $preferences['shift_reminder_minutes'] = array_values($deduplicated);
+        $this->notification_preferences = $preferences;
+        $this->save();
+    }
+
+    /**
+     * Check if the user has shift reminder email notifications enabled.
+     */
+    public function hasShiftReminderEmailEnabled(): bool
+    {
+        return $this->notification_preferences['shift_reminder_email'] ?? false;
+    }
+
+    /**
      * Get user's preferred timezone or system default.
      */
     public function getTimezone(): string

@@ -11,6 +11,7 @@ enum NotificationCategory: string
     case QsoMilestone = 'qso_milestone';
     case Equipment = 'equipment';
     case BulletinReminder = 'bulletin_reminder';
+    case ShiftCheckinReminder = 'shift_checkin_reminder';
 
     /**
      * Get the human-readable label for the category.
@@ -25,6 +26,7 @@ enum NotificationCategory: string
             self::QsoMilestone => 'QSO Milestone',
             self::Equipment => 'Equipment',
             self::BulletinReminder => 'Bulletin Reminder',
+            self::ShiftCheckinReminder => 'Shift Check-in Reminders',
         };
     }
 
@@ -41,6 +43,7 @@ enum NotificationCategory: string
             self::QsoMilestone => 'o-trophy',
             self::Equipment => 'o-wrench-screwdriver',
             self::BulletinReminder => 'o-radio',
+            self::ShiftCheckinReminder => 'o-clock',
         };
     }
 
@@ -57,6 +60,7 @@ enum NotificationCategory: string
             self::QsoMilestone => 0,
             self::Equipment => 300,
             self::BulletinReminder => 0,
+            self::ShiftCheckinReminder => 0,
         };
     }
 
@@ -84,6 +88,7 @@ enum NotificationCategory: string
             self::QsoMilestone => 'QSO count milestones (every 50)',
             self::Equipment => 'Equipment status changes',
             self::BulletinReminder => 'W1AW bulletin transmission reminders',
+            self::ShiftCheckinReminder => 'Reminders before your scheduled shifts',
         };
     }
 }

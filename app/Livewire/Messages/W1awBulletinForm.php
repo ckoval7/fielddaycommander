@@ -35,8 +35,6 @@ class W1awBulletinForm extends Component
 
     public ?int $editingEntryId = null;
 
-    public ?int $reminderMinute = null;
-
     public function mount(Event $event): void
     {
         $this->event = $event;
@@ -189,47 +187,6 @@ class W1awBulletinForm extends Component
 
         BulletinScheduleEntry::findOrFail($entryId)->delete();
         $this->dispatch('toast', title: 'Transmission removed', type: 'success');
-    }
-
-    public function getReminderMinutesProperty(): array
-    {
-        return auth()->user()->getBulletinReminderMinutes();
-    }
-
-    public function addReminderMinute(): void
-    {
-        $this->validate([
-            'reminderMinute' => 'required|integer|min:1|max:60',
-        ]);
-
-        $current = auth()->user()->getBulletinReminderMinutes();
-
-        if (count($current) >= 5) {
-            $this->addError('reminderMinute', 'Maximum of 5 reminders allowed.');
-
-            return;
-        }
-
-        if (in_array((int) $this->reminderMinute, $current, true)) {
-            $this->addError('reminderMinute', 'This reminder time already exists.');
-
-            return;
-        }
-
-        $current[] = (int) $this->reminderMinute;
-        sort($current);
-        auth()->user()->setBulletinReminderMinutes($current);
-
-        $this->reminderMinute = null;
-        $this->dispatch('toast', title: 'Reminder added', type: 'success');
-    }
-
-    public function removeReminderMinute(int $minutes): void
-    {
-        $current = auth()->user()->getBulletinReminderMinutes();
-        $current = array_values(array_filter($current, fn ($m) => $m !== $minutes));
-        auth()->user()->setBulletinReminderMinutes($current);
-        $this->dispatch('toast', title: 'Reminder removed', type: 'success');
     }
 
     public function render(): \Illuminate\Contracts\View\View

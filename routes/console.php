@@ -14,8 +14,8 @@ Schedule::command('events:activate-by-date')->everyFifteenMinutes();
 // Close operating sessions for events that have ended
 Schedule::command('sessions:close-expired')->everyFifteenMinutes();
 
-// Send W1AW bulletin transmission reminders
-Schedule::command('bulletins:send-reminders')->everyMinute();
+// Send all scheduled reminders (bulletins, shift check-ins, etc.)
+Schedule::command('reminders:send')->everyMinute();
 
 // Clean up expired album exports
 Schedule::command('exports:clean')->daily();

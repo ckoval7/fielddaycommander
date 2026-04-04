@@ -56,6 +56,16 @@ test('category icons match specification', function () {
     expect(NotificationCategory::BulletinReminder->icon())->toBe('o-radio');
 });
 
-test('there are exactly seven categories', function () {
-    expect(NotificationCategory::cases())->toHaveCount(7);
+test('there are exactly eight categories', function () {
+    expect(NotificationCategory::cases())->toHaveCount(8);
+});
+
+test('shift checkin reminder has correct properties', function () {
+    $category = NotificationCategory::ShiftCheckinReminder;
+
+    expect($category->value)->toBe('shift_checkin_reminder')
+        ->and($category->label())->toBe('Shift Check-in Reminders')
+        ->and($category->icon())->toBe('o-clock')
+        ->and($category->debounceSeconds())->toBe(0)
+        ->and($category->description())->toBe('Reminders before your scheduled shifts');
 });

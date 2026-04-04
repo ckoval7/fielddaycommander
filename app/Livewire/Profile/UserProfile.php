@@ -51,6 +51,16 @@ class UserProfile extends Component
 
     public bool $notify_bulletin_reminder = true;
 
+    public bool $notify_shift_checkin_reminder = true;
+
+    // Shift reminder settings
+    public bool $shift_reminder_email = false;
+
+    public ?int $shiftReminderMinute = null;
+
+    // Bulletin reminder settings (relocated from W1awBulletinForm)
+    public ?int $bulletinReminderMinute = null;
+
     // Activity tab properties
     public int $activityLimit = 15;
 
@@ -99,6 +109,8 @@ class UserProfile extends Component
         $this->notify_qso_milestone = $categories['qso_milestone'] ?? true;
         $this->notify_equipment = $categories['equipment'] ?? true;
         $this->notify_bulletin_reminder = $categories['bulletin_reminder'] ?? true;
+        $this->notify_shift_checkin_reminder = $categories['shift_checkin_reminder'] ?? true;
+        $this->shift_reminder_email = $preferences['shift_reminder_email'] ?? false;
     }
 
     public function saveProfile(): void
@@ -127,6 +139,7 @@ class UserProfile extends Component
                 'notification_preferences' => [
                     'event_notifications' => $this->event_notifications,
                     'system_announcements' => $this->system_announcements,
+                    'shift_reminder_email' => $this->shift_reminder_email,
                     'categories' => [
                         'new_section' => $this->notify_new_section,
                         'guestbook' => $this->notify_guestbook,
@@ -135,6 +148,7 @@ class UserProfile extends Component
                         'qso_milestone' => $this->notify_qso_milestone,
                         'equipment' => $this->notify_equipment,
                         'bulletin_reminder' => $this->notify_bulletin_reminder,
+                        'shift_checkin_reminder' => $this->notify_shift_checkin_reminder,
                     ],
                 ],
             ]
@@ -152,6 +166,7 @@ class UserProfile extends Component
         $this->notify_qso_milestone = $enabled;
         $this->notify_equipment = $enabled;
         $this->notify_bulletin_reminder = $enabled;
+        $this->notify_shift_checkin_reminder = $enabled;
     }
 
     #[Computed]
@@ -163,7 +178,90 @@ class UserProfile extends Component
             && $this->notify_station_status
             && $this->notify_qso_milestone
             && $this->notify_equipment
-            && $this->notify_bulletin_reminder;
+            && $this->notify_bulletin_reminder
+            && $this->notify_shift_checkin_reminder;
+    }
+
+    public function getShiftReminderMinutesProperty(): array
+    {
+        return auth()->user()->getShiftReminderMinutes();
+    }
+
+    public function addShiftReminderMinute(): void
+    {
+        $this->validate([
+            'shiftReminderMinute' => 'required|integer|min:1|max:60',
+        ]);
+
+        $current = auth()->user()->getShiftReminderMinutes();
+
+        if (count($current) >= 5) {
+            $this->addError('shiftReminderMinute', 'Maximum of 5 reminders allowed.');
+
+            return;
+        }
+
+        if (in_array((int) $this->shiftReminderMinute, $current, true)) {
+            $this->addError('shiftReminderMinute', 'This reminder time already exists.');
+
+            return;
+        }
+
+        $current[] = (int) $this->shiftReminderMinute;
+        sort($current);
+        auth()->user()->setShiftReminderMinutes($current);
+
+        $this->shiftReminderMinute = null;
+        $this->success('Shift reminder added.');
+    }
+
+    public function removeShiftReminderMinute(int $minutes): void
+    {
+        $current = auth()->user()->getShiftReminderMinutes();
+        $current = array_values(array_filter($current, fn ($m) => $m !== $minutes));
+        auth()->user()->setShiftReminderMinutes($current);
+        $this->success('Shift reminder removed.');
+    }
+
+    public function getBulletinReminderMinutesProperty(): array
+    {
+        return auth()->user()->getBulletinReminderMinutes();
+    }
+
+    public function addBulletinReminderMinute(): void
+    {
+        $this->validate([
+            'bulletinReminderMinute' => 'required|integer|min:1|max:60',
+        ]);
+
+        $current = auth()->user()->getBulletinReminderMinutes();
+
+        if (count($current) >= 5) {
+            $this->addError('bulletinReminderMinute', 'Maximum of 5 reminders allowed.');
+
+            return;
+        }
+
+        if (in_array((int) $this->bulletinReminderMinute, $current, true)) {
+            $this->addError('bulletinReminderMinute', 'This reminder time already exists.');
+
+            return;
+        }
+
+        $current[] = (int) $this->bulletinReminderMinute;
+        sort($current);
+        auth()->user()->setBulletinReminderMinutes($current);
+
+        $this->bulletinReminderMinute = null;
+        $this->success('Bulletin reminder added.');
+    }
+
+    public function removeBulletinReminderMinute(int $minutes): void
+    {
+        $current = auth()->user()->getBulletinReminderMinutes();
+        $current = array_values(array_filter($current, fn ($m) => $m !== $minutes));
+        auth()->user()->setBulletinReminderMinutes($current);
+        $this->success('Bulletin reminder removed.');
     }
 
     public function changePassword(): void

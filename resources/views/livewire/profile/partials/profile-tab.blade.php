@@ -224,7 +224,140 @@
                         </div>
                         <x-toggle wire:model="notify_bulletin_reminder" />
                     </div>
+
+                    {{-- Shift Check-in Reminders --}}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <x-icon name="o-clock" class="w-5 h-5 text-primary shrink-0" />
+                            <div class="min-w-0">
+                                <div class="font-medium">Shift Check-in Reminders</div>
+                                <div class="text-sm text-base-content/60">Reminders before your scheduled shifts</div>
+                            </div>
+                        </div>
+                        <x-toggle wire:model="notify_shift_checkin_reminder" />
+                    </div>
                 </div>
+
+                {{-- Shift Reminder Settings --}}
+                @if($notify_shift_checkin_reminder)
+                    <div class="divider my-1"></div>
+
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-semibold">Shift Reminder Settings</h4>
+
+                        {{-- Email toggle --}}
+                        <x-checkbox
+                            label="Email shift reminders"
+                            wire:model="shift_reminder_email"
+                            hint="Send an email in addition to the in-app notification"
+                        />
+
+                        {{-- Reminder intervals --}}
+                        <div>
+                            <div class="text-sm font-medium mb-2">Reminder intervals</div>
+
+                            @if(count($this->shiftReminderMinutes) > 0)
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    @foreach($this->shiftReminderMinutes as $minutes)
+                                        <span class="badge badge-primary gap-1">
+                                            {{ $minutes }} min
+                                            <button
+                                                wire:click="removeShiftReminderMinute({{ $minutes }})"
+                                                class="btn btn-ghost btn-xs p-0 min-h-0 h-auto"
+                                                title="Remove"
+                                            >
+                                                <x-icon name="o-x-mark" class="w-3 h-3" />
+                                            </button>
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-base-content/50 mb-3">No reminders configured. You won't receive shift notifications.</p>
+                            @endif
+
+                            @if(count($this->shiftReminderMinutes) < 5)
+                                <div class="flex items-end gap-2">
+                                    <x-input
+                                        label="Minutes before"
+                                        wire:model="shiftReminderMinute"
+                                        type="number"
+                                        min="1"
+                                        max="60"
+                                        placeholder="e.g., 15"
+                                        class="w-32"
+                                    />
+                                    <x-button
+                                        label="Add"
+                                        wire:click="addShiftReminderMinute"
+                                        class="btn-primary btn-sm"
+                                        icon="o-plus"
+                                        spinner="addShiftReminderMinute"
+                                    />
+                                </div>
+                                @error('shiftReminderMinute')
+                                    <p class="text-error text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Bulletin Reminder Settings --}}
+                @if($notify_bulletin_reminder)
+                    <div class="divider my-1"></div>
+
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-semibold">Bulletin Reminder Settings</h4>
+
+                        {{-- Reminder intervals --}}
+                        <div>
+                            <div class="text-sm font-medium mb-2">Reminder intervals</div>
+
+                            @if(count($this->bulletinReminderMinutes) > 0)
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    @foreach($this->bulletinReminderMinutes as $minutes)
+                                        <span class="badge badge-primary gap-1">
+                                            {{ $minutes }} min
+                                            <button
+                                                wire:click="removeBulletinReminderMinute({{ $minutes }})"
+                                                class="btn btn-ghost btn-xs p-0 min-h-0 h-auto"
+                                                title="Remove"
+                                            >
+                                                <x-icon name="o-x-mark" class="w-3 h-3" />
+                                            </button>
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-base-content/50 mb-3">No reminders configured. You won't receive bulletin notifications.</p>
+                            @endif
+
+                            @if(count($this->bulletinReminderMinutes) < 5)
+                                <div class="flex items-end gap-2">
+                                    <x-input
+                                        label="Minutes before"
+                                        wire:model="bulletinReminderMinute"
+                                        type="number"
+                                        min="1"
+                                        max="60"
+                                        placeholder="e.g., 15"
+                                        class="w-32"
+                                    />
+                                    <x-button
+                                        label="Add"
+                                        wire:click="addBulletinReminderMinute"
+                                        class="btn-primary btn-sm"
+                                        icon="o-plus"
+                                        spinner="addBulletinReminderMinute"
+                                    />
+                                </div>
+                                @error('bulletinReminderMinute')
+                                    <p class="text-error text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            @endif
+                        </div>
+                    </div>
+                @endif
 
                 <div class="card-actions justify-end mt-4">
                     <x-button type="submit" spinner="saveProfile" class="btn-primary">

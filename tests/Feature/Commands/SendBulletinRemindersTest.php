@@ -39,8 +39,8 @@ describe('per-user configurable reminders', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')
-            ->expectsOutputToContain('Sent 1 bulletin reminder(s)')
+        $this->artisan('reminders:send')
+            ->expectsOutputToContain('Sent 1 reminder(s) via BulletinReminderSource')
             ->assertSuccessful();
 
         Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) use ($entry) {
@@ -60,7 +60,7 @@ describe('per-user configurable reminders', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) {
             $data = $notification->toArray($this->user);
@@ -83,7 +83,7 @@ describe('per-user configurable reminders', function () {
         ]);
 
         // At T-15, only the 15-min reminder should fire
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertSentToTimes($this->user, InAppNotification::class, 1);
         Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) use ($entry) {
@@ -106,7 +106,7 @@ describe('per-user configurable reminders', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) use ($entry) {
             $data = $notification->toArray($this->user);
@@ -126,7 +126,7 @@ describe('per-user configurable reminders', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertNothingSent();
     });
@@ -146,7 +146,7 @@ describe('per-user configurable reminders', function () {
             'created_by' => $userA->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         // User A has 5-min reminder, entry is 5 min away — should fire
         Notification::assertSentTo($userA, InAppNotification::class);
@@ -171,7 +171,7 @@ describe('per-user configurable reminders', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertNothingSent();
     });
@@ -190,13 +190,13 @@ describe('deduplication', function () {
         ]);
 
         // First run — sends real notification (not faked)
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         expect($this->user->notifications()->where('data->group_key', "bulletin_reminder_{$entry->id}_10m")->count())->toBe(1);
 
         // Second run — should not duplicate
         Notification::fake();
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertNothingSent();
     });
@@ -218,7 +218,7 @@ describe('edge cases', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertNothingSent();
     });
@@ -232,7 +232,7 @@ describe('edge cases', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) {
             $data = $notification->toArray($this->user);
@@ -252,7 +252,7 @@ describe('edge cases', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) {
             $data = $notification->toArray($this->user);
@@ -273,7 +273,7 @@ describe('edge cases', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) {
             $data = $notification->toArray($this->user);
@@ -293,7 +293,7 @@ describe('edge cases', function () {
             'created_by' => $this->user->id,
         ]);
 
-        $this->artisan('bulletins:send-reminders')->assertSuccessful();
+        $this->artisan('reminders:send')->assertSuccessful();
 
         Notification::assertNothingSent();
     });
