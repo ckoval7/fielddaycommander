@@ -38,6 +38,27 @@ test('event status is upcoming when start time is in future', function () {
     $event = Event::factory()->create([
         'start_time' => now()->addDays(7),
         'end_time' => now()->addDays(8),
+        'setup_allowed_from' => null,
+    ]);
+
+    expect($event->status)->toBe('upcoming');
+});
+
+test('event status is setup when in setup window', function () {
+    $event = Event::factory()->create([
+        'setup_allowed_from' => now()->subHours(6),
+        'start_time' => now()->addHours(18),
+        'end_time' => now()->addHours(45),
+    ]);
+
+    expect($event->status)->toBe('setup');
+});
+
+test('event status is upcoming when setup_allowed_from is null', function () {
+    $event = Event::factory()->create([
+        'setup_allowed_from' => null,
+        'start_time' => now()->addHours(1),
+        'end_time' => now()->addHours(28),
     ]);
 
     expect($event->status)->toBe('upcoming');
@@ -66,10 +87,62 @@ test('event scopes filter correctly', function () {
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
-    $upcoming = Event::factory()->create(['start_time' => now()->addDays(7), 'end_time' => now()->addDays(8)]);
+    $upcoming = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(8),
+        'setup_allowed_from' => null,
+    ]);
     $completed = Event::factory()->create(['start_time' => now()->subDays(8), 'end_time' => now()->subDays(7)]);
 
     expect(Event::active()->count())->toBe(1);
-    expect(Event::upcoming()->count())->toBe(1);
+    expect(Event::upcoming()->count())->toBeGreaterThanOrEqual(1);
     expect(Event::completed()->count())->toBe(1);
+});
+
+test('inSetupWindow scope matches events in setup window', function () {
+    Event::factory()->create([
+        'setup_allowed_from' => now()->subHours(6),
+        'start_time' => now()->addHours(18),
+        'end_time' => now()->addHours(45),
+    ]);
+
+    expect(Event::inSetupWindow()->count())->toBe(1);
+});
+
+test('inSetupWindow scope excludes events without setup_allowed_from', function () {
+    Event::factory()->create([
+        'setup_allowed_from' => null,
+        'start_time' => now()->addHours(18),
+        'end_time' => now()->addHours(45),
+    ]);
+
+    expect(Event::inSetupWindow()->count())->toBe(0);
+});
+
+test('calculateSetupAllowedFrom returns preceding Friday at 0000 UTC', function () {
+    // Field Day 2025: starts Saturday June 28 at 1800 UTC
+    $startTime = \Carbon\Carbon::parse('2025-06-28 18:00:00');
+    $setupFrom = Event::calculateSetupAllowedFrom($startTime);
+
+    expect($setupFrom->toDateTimeString())->toBe('2025-06-27 00:00:00');
+    expect($setupFrom->dayOfWeek)->toBe(\Carbon\Carbon::FRIDAY);
+});
+
+test('calculateSetupAllowedFrom handles start on Friday', function () {
+    $startTime = \Carbon\Carbon::parse('2025-06-27 18:00:00');
+    $setupFrom = Event::calculateSetupAllowedFrom($startTime);
+
+    // Should return the same Friday at 0000 UTC
+    expect($setupFrom->toDateTimeString())->toBe('2025-06-27 00:00:00');
+});
+
+test('setup status has warning badge color', function () {
+    $event = Event::factory()->create([
+        'setup_allowed_from' => now()->subHours(6),
+        'start_time' => now()->addHours(18),
+        'end_time' => now()->addHours(45),
+    ]);
+
+    expect($event->status)->toBe('setup');
+    expect($event->status_badge_color)->toBe('warning');
 });

@@ -248,6 +248,27 @@ class EventForm extends Component
         $this->end_time = $fourthSaturday->copy()->addDay()->setTime(20, 59, 0)->format(self::DATETIME_FORMAT);
     }
 
+    /**
+     * Computed setup window start time for display in the form.
+     * Only applies to Field Day events with a start time set.
+     */
+    #[Computed]
+    public function setupAllowedFrom(): ?string
+    {
+        if (! $this->start_time || ! $this->event_type_id) {
+            return null;
+        }
+
+        $eventType = EventType::find($this->event_type_id);
+
+        if (! $eventType || $eventType->code !== 'FD') {
+            return null;
+        }
+
+        return Event::calculateSetupAllowedFrom(Carbon::parse($this->start_time))
+            ->format('l, F j, Y \a\t Hi\z');
+    }
+
     #[Computed]
     public function powerMultiplier(): string
     {
@@ -441,12 +462,18 @@ class EventForm extends Component
 
     private function createEvent(array $validated): void
     {
+        $startTime = Carbon::parse($validated['start_time']);
+        $eventType = EventType::find($validated['event_type_id']);
+
         $event = Event::create([
             'name' => $validated['name'],
             'event_type_id' => $validated['event_type_id'],
             'year' => $this->year,
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
+            'setup_allowed_from' => $eventType?->code === 'FD'
+                ? Event::calculateSetupAllowedFrom($startTime)
+                : null,
             'is_active' => true,
         ]);
 
@@ -515,6 +542,11 @@ class EventForm extends Component
         if (! $this->isLocked) {
             $eventData['event_type_id'] = $validated['event_type_id'];
             $eventData['start_time'] = $validated['start_time'];
+
+            $eventType = EventType::find($validated['event_type_id']);
+            $eventData['setup_allowed_from'] = $eventType?->code === 'FD'
+                ? Event::calculateSetupAllowedFrom(Carbon::parse($validated['start_time']))
+                : null;
         }
 
         $this->event->update($eventData);

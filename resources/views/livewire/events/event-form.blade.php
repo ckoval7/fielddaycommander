@@ -97,6 +97,16 @@
                     icon="o-stop"
                     hint="When the event ends, in UTC"
                 />
+
+                @if($this->setupAllowedFrom)
+                    <div class="col-span-full">
+                        <div class="flex items-center gap-2 text-sm text-warning">
+                            <x-icon name="o-wrench-screwdriver" class="w-4 h-4" />
+                            <span>Setup window opens: <strong>{{ $this->setupAllowedFrom }}</strong></span>
+                            <span class="text-base-content/50">(per ARRL Rule 3.3)</span>
+                        </div>
+                    </div>
+                @endif
             </div>
         </x-card>
 

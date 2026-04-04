@@ -7,6 +7,8 @@
                 <x-badge value="{{ $event->eventType->name ?? 'N/A' }}" class="badge-outline" />
                 @if($event->status === 'active')
                     <x-badge value="Active" class="badge-success" />
+                @elseif($event->status === 'setup')
+                    <x-badge value="Setup" class="badge-warning" />
                 @elseif($event->status === 'upcoming')
                     <x-badge value="Upcoming" class="badge-info" />
                 @else

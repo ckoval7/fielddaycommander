@@ -39,6 +39,25 @@ describe('rendering', function () {
 
         expect($component->get('eventConfig'))->toBeNull();
     });
+
+    test('loads event config during pre-event setup window', function () {
+        // Replace the active event with one that hasn't started yet but is in the setup window
+        $this->event->forceDelete();
+
+        $setupEvent = Event::factory()->create([
+            'setup_allowed_from' => now()->subHours(2),
+            'start_time' => now()->addHours(12),
+            'end_time' => now()->addHours(39),
+        ]);
+        $setupConfig = EventConfiguration::factory()->create([
+            'event_id' => $setupEvent->id,
+            'guestbook_enabled' => true,
+        ]);
+
+        $component = Livewire::test(GuestbookForm::class);
+
+        expect($component->get('eventConfig.id'))->toBe($setupConfig->id);
+    });
 });
 
 describe('pre-fill', function () {

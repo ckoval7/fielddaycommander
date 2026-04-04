@@ -95,6 +95,7 @@ class EventCountdown extends Component
 
         return match (true) {
             $this->event->start_time <= $now && $this->event->end_time >= $now => 'active',
+            $this->event->setup_allowed_from && $this->event->setup_allowed_from <= $now && $this->event->start_time > $now => 'setup',
             $this->event->start_time > $now => 'upcoming',
             $this->event->end_time < $now => 'ended',
             default => '',
@@ -110,7 +111,7 @@ class EventCountdown extends Component
         }
 
         $targetTime = match ($this->state) {
-            'upcoming' => $this->event->start_time,
+            'upcoming', 'setup' => $this->event->start_time,
             'active' => $this->event->end_time,
             'ended' => $this->event->end_time,
             default => null,
@@ -161,6 +162,11 @@ class EventCountdown extends Component
     protected function setStateStyles(): void
     {
         match ($this->state) {
+            'setup' => [
+                $this->label = 'Setup Open · Starts in',
+                $this->badgeClass = 'badge-warning',
+                $this->textClass = 'text-warning',
+            ],
             'upcoming' => [
                 $this->label = 'Starts in',
                 $this->badgeClass = 'badge-info',

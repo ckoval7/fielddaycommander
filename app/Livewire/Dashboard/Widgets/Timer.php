@@ -42,7 +42,22 @@ class Timer extends Component
         }
 
         $now = appNow();
+        $startTime = $event->start_time;
         $endTime = $event->end_time;
+        $isSetup = $event->setup_allowed_from
+            && $startTime->isAfter($now)
+            && $event->setup_allowed_from->lte($now);
+
+        if ($isSetup) {
+            return [
+                'end_time' => $startTime->toIso8601String(),
+                'now' => $now->toIso8601String(),
+                'is_ended' => false,
+                'label' => 'Event Starts In',
+                'last_updated_at' => appNow(),
+            ];
+        }
+
         $isEnded = $now->greaterThan($endTime);
 
         return [

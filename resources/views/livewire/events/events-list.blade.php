@@ -57,6 +57,8 @@
                                     <div class="flex items-center gap-2">
                                         @if($event->status === 'active')
                                             <span class="badge badge-success badge-sm"><x-icon name="o-play-circle" class="w-4 h-4 mr-2" />Active</span>
+                                        @elseif($event->status === 'setup')
+                                            <span class="badge badge-warning badge-sm"><x-icon name="o-wrench-screwdriver" class="w-4 h-4 mr-2" />Setup</span>
                                         @elseif($event->status === 'upcoming')
                                             <span class="badge badge-info badge-sm"><x-icon name="o-calendar" class="w-4 h-4 mr-2" />Upcoming</span>
                                         @else

@@ -172,6 +172,7 @@ class EventContextService extends ActiveEventService
         $now = appNow();
 
         return match (true) {
+            $event->setup_allowed_from && $event->start_time && $event->setup_allowed_from->lte($now) && $event->start_time->gt($now) => 'setup',
             $event->start_time && $event->start_time->gt($now) => 'upcoming',
             $event->start_time && $event->end_time && $event->start_time->lte($now) && $event->end_time->gte($now) => 'active',
             $event->end_time && $event->end_time->lt($now) => $this->resolvePostEventStatus($event, $now),

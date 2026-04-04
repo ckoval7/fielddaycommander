@@ -39,6 +39,8 @@
                                     <div class="mt-1">
                                         @if($event->status === 'upcoming')
                                             <x-badge value="Upcoming" class="badge-info" />
+                                        @elseif($event->status === 'setup')
+                                            <x-badge value="Setup" class="badge-warning" />
                                         @elseif($event->status === 'active')
                                             <x-badge value="Active" class="badge-success" />
                                         @elseif($event->status === 'in_progress')

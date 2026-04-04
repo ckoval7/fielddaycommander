@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -79,12 +80,35 @@ class Event extends Model
         return $this->scopeActive($query);
     }
 
+    public function scopeInSetupWindow($query)
+    {
+        return $query->whereNotNull('setup_allowed_from')
+            ->where('setup_allowed_from', '<=', appNow())
+            ->where('start_time', '>', appNow());
+    }
+
+    /**
+     * Calculate setup_allowed_from per ARRL Field Day Rule 3.3:
+     * 0000 UTC on the Friday preceding the event start.
+     */
+    public static function calculateSetupAllowedFrom(Carbon $startTime): Carbon
+    {
+        $friday = $startTime->copy()->startOfDay();
+
+        if ($friday->dayOfWeek !== Carbon::FRIDAY) {
+            $friday = $friday->previous(Carbon::FRIDAY);
+        }
+
+        return $friday;
+    }
+
     // Accessors
     public function getStatusAttribute(): string
     {
         $now = appNow();
 
         return match (true) {
+            $this->setup_allowed_from && $this->start_time && $this->setup_allowed_from <= $now && $this->start_time > $now => 'setup',
             $this->start_time && $this->start_time > $now => 'upcoming',
             $this->start_time && $this->end_time && $this->start_time <= $now && $this->end_time >= $now => 'active',
             $this->end_time && $this->end_time < $now => 'completed',
@@ -96,6 +120,7 @@ class Event extends Model
     {
         return match ($this->status) {
             'active' => 'success',
+            'setup' => 'warning',
             'upcoming' => 'info',
             'completed' => 'neutral',
         };

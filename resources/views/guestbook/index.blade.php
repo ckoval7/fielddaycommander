@@ -1,5 +1,6 @@
 @php
-    $activeEvent = \App\Models\Event::active()->with('eventConfiguration')->first();
+    $activeEvent = \App\Models\Event::active()->with('eventConfiguration')->first()
+        ?? \App\Models\Event::inSetupWindow()->orderBy('start_time')->with('eventConfiguration')->first();
 @endphp
 
 <x-layouts.app>
