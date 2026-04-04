@@ -10,7 +10,7 @@
                         icon="o-arrow-left"
                         class="btn-ghost btn-sm"
                         link="{{ route('schedule.index') }}"
-                        tooltip="Back to Schedule"
+                        tooltip="Back to Shift Schedule"
                     />
                     <h1 class="text-2xl md:text-3xl font-bold">Manage Schedule</h1>
                 </div>

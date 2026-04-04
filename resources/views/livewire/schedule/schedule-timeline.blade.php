@@ -1,11 +1,11 @@
 <div>
-    <x-slot:title>Schedule{{ $event ? ' - ' . $event->name : '' }}</x-slot:title>
+    <x-slot:title>Shift Schedule{{ $event ? ' - ' . $event->name : '' }}</x-slot:title>
 
     <div class="p-6">
         {{-- Header --}}
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold">Schedule</h1>
+                <h1 class="text-2xl md:text-3xl font-bold">Shift Schedule</h1>
                 @if($event)
                     <p class="text-base-content/60">{{ $event->name }}</p>
                 @endif

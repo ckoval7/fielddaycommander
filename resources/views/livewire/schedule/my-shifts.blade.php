@@ -12,7 +12,7 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <x-button
-                    label="Full Schedule"
+                    label="Full Shift Schedule"
                     icon="o-calendar"
                     class="btn-outline"
                     link="{{ route('schedule.index') }}"
