@@ -124,3 +124,90 @@ test('equipment form can be created without photo', function () {
     expect($equipment)->not->toBeNull()
         ->and($equipment->photo_path)->toBeNull();
 });
+
+test('manager with edit-any-equipment can create equipment for another user', function () {
+    $manager = User::factory()->create();
+    $managerRole = Role::create(['name' => 'Manager', 'guard_name' => 'web']);
+    Permission::findOrCreate('view-all-equipment');
+    $managerRole->givePermissionTo(['manage-own-equipment', 'edit-any-equipment', 'view-all-equipment']);
+    $manager->assignRole($managerRole);
+
+    $targetUser = User::factory()->create([
+        'call_sign' => 'W1BOB',
+        'first_name' => 'Bob',
+        'last_name' => 'Smith',
+    ]);
+
+    $this->actingAs($manager);
+
+    Livewire::test(EquipmentForm::class, ['equipment' => null])
+        ->set('owner_user_id', $targetUser->id)
+        ->set('make', 'Kenwood')
+        ->set('model', 'TS-590SG')
+        ->set('type', 'radio')
+        ->call('save');
+
+    $equipment = Equipment::where('make', 'Kenwood')
+        ->where('model', 'TS-590SG')
+        ->first();
+
+    expect($equipment)->not->toBeNull()
+        ->and($equipment->owner_user_id)->toBe($targetUser->id);
+});
+
+test('for_user query param pre-selects owner_user_id', function () {
+    $manager = User::factory()->create();
+    $managerRole = Role::create(['name' => 'Manager', 'guard_name' => 'web']);
+    Permission::findOrCreate('view-all-equipment');
+    $managerRole->givePermissionTo(['manage-own-equipment', 'edit-any-equipment', 'view-all-equipment']);
+    $manager->assignRole($managerRole);
+
+    $targetUser = User::factory()->create();
+
+    $this->actingAs($manager);
+
+    Livewire::withQueryParams(['for_user' => $targetUser->id])
+        ->test(EquipmentForm::class, ['equipment' => null])
+        ->assertSet('owner_user_id', $targetUser->id);
+});
+
+test('regular user cannot create equipment owned by another user', function () {
+    $this->actingAs($this->user);
+
+    $otherUser = User::factory()->create();
+
+    Livewire::test(EquipmentForm::class, ['equipment' => null])
+        ->set('owner_user_id', $otherUser->id)
+        ->set('make', 'Yaesu')
+        ->set('model', 'FT-891')
+        ->set('type', 'radio')
+        ->call('save');
+
+    $equipment = Equipment::where('make', 'Yaesu')
+        ->where('model', 'FT-891')
+        ->first();
+
+    expect($equipment)->not->toBeNull()
+        ->and($equipment->owner_user_id)->toBe($this->user->id);
+});
+
+test('owner dropdown is visible for managers creating personal equipment', function () {
+    $manager = User::factory()->create();
+    $managerRole = Role::create(['name' => 'Manager', 'guard_name' => 'web']);
+    Permission::findOrCreate('view-all-equipment');
+    $managerRole->givePermissionTo(['manage-own-equipment', 'edit-any-equipment', 'view-all-equipment']);
+    $manager->assignRole($managerRole);
+
+    $this->actingAs($manager);
+
+    Livewire::test(EquipmentForm::class, ['equipment' => null])
+        ->assertSee('Owner')
+        ->assertSee('Select equipment owner');
+});
+
+test('owner dropdown is hidden for regular users', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EquipmentForm::class, ['equipment' => null])
+        ->assertDontSee('Select equipment owner');
+});

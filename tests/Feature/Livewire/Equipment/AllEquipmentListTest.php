@@ -251,3 +251,22 @@ test('setting user filter resets pagination', function () {
 
     expect($component->get('userFilter'))->toBe($this->user->id);
 });
+
+test('add equipment for user button is visible to users with edit-any-equipment permission', function () {
+    $manager = User::factory()->create();
+    $managerRole = Role::create(['name' => 'Manager', 'guard_name' => 'web']);
+    $managerRole->givePermissionTo(['manage-own-equipment', 'view-all-equipment', 'edit-any-equipment']);
+    $manager->assignRole($managerRole);
+
+    $this->actingAs($manager);
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertSee('Add Equipment for User');
+});
+
+test('add equipment for user button is hidden from users without edit-any-equipment permission', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertDontSee('Add Equipment for User');
+});

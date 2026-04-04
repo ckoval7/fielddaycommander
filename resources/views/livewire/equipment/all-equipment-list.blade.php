@@ -3,8 +3,17 @@
 
     <div class="p-6">
         {{-- Header --}}
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
             <h1 class="text-3xl font-bold">All User Catalogs</h1>
+            @can('edit-any-equipment')
+                <x-button
+                    label="Add Equipment for User"
+                    icon="o-plus"
+                    class="btn-primary btn-sm sm:btn-md"
+                    link="{{ route('equipment.create', $userFilter && $userFilter !== 'club' ? ['for_user' => $userFilter] : []) }}"
+                    wire:navigate
+                />
+            @endcan
         </div>
 
         <x-equipment.filters :filterCols="4">

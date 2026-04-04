@@ -67,6 +67,23 @@
                 />
             </div>
 
+            {{-- Owner (On-behalf-of Creation, Non-Club Only) --}}
+            @if(!$isClubEquipment && !$equipmentId && auth()->user()->can('edit-any-equipment'))
+                <div class="mt-4">
+                    <x-select
+                        label="Owner"
+                        wire:model="owner_user_id"
+                        :options="$this->availableOwners"
+                        option-value="id"
+                        option-label="name"
+                        placeholder="Select equipment owner"
+                        hint="Choose who this equipment belongs to"
+                        icon="o-user"
+                        required
+                    />
+                </div>
+            @endif
+
             {{-- Description --}}
             <div class="mt-4">
                 <x-textarea

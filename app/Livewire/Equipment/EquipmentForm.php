@@ -31,6 +31,9 @@ class EquipmentForm extends Component
     // Manager for club equipment
     public ?int $managed_by_user_id = null;
 
+    // Owner for "on behalf of" creation
+    public ?int $owner_user_id = null;
+
     // Form fields
     public string $make = '';
 
@@ -76,6 +79,16 @@ class EquipmentForm extends Component
                 $this->authorize('edit-any-equipment');
             } else {
                 $this->authorize('create', Equipment::class);
+
+                // Allow managers to create equipment on behalf of another user
+                if (auth()->user()->can('edit-any-equipment')) {
+                    $forUser = request()->query('for_user');
+                    $this->owner_user_id = ($forUser && User::where('id', (int) $forUser)->exists())
+                        ? (int) $forUser
+                        : auth()->id();
+                } else {
+                    $this->owner_user_id = auth()->id();
+                }
             }
         }
     }
@@ -131,6 +144,22 @@ class EquipmentForm extends Component
             ]);
     }
 
+    #[Computed]
+    public function availableOwners()
+    {
+        if (! auth()->user()->can('edit-any-equipment')) {
+            return collect();
+        }
+
+        return User::query()
+            ->orderBy('call_sign')
+            ->get()
+            ->map(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->call_sign.' — '.trim($user->first_name.' '.$user->last_name),
+            ]);
+    }
+
     public function save()
     {
         $validated = $this->validate();
@@ -178,7 +207,9 @@ class EquipmentForm extends Component
             $equipmentData['owner_user_id'] = null;
             $equipmentData['managed_by_user_id'] = $this->managed_by_user_id;
         } else {
-            $equipmentData['owner_user_id'] = auth()->id();
+            $equipmentData['owner_user_id'] = auth()->user()->can('edit-any-equipment')
+                ? $this->owner_user_id
+                : auth()->id();
             $equipmentData['owner_organization_id'] = null;
             $equipmentData['managed_by_user_id'] = null;
         }
@@ -208,8 +239,12 @@ class EquipmentForm extends Component
             'css' => 'alert-success',
         ]);
 
-        // Redirect to list after saving
-        return $this->redirect(route('equipment.index'), navigate: true);
+        // Redirect back to the appropriate list
+        $redirectRoute = (! $this->equipmentId && auth()->user()->can('edit-any-equipment') && $this->owner_user_id !== auth()->id())
+            ? route('equipment.all')
+            : route('equipment.index');
+
+        return $this->redirect($redirectRoute, navigate: true);
     }
 
     public function closeModal(): void
@@ -236,6 +271,7 @@ class EquipmentForm extends Component
             'selectedBands',
             'photo',
             'existingPhotoPath',
+            'owner_user_id',
         ]);
 
         $this->type = 'radio'; // Reset to default
@@ -258,6 +294,7 @@ class EquipmentForm extends Component
             'selectedBands.*' => ['exists:bands,id'],
             'photo' => ['nullable', 'image', 'max:5120'], // 5MB max
             'managed_by_user_id' => ['nullable', 'exists:users,id'],
+            'owner_user_id' => [! $this->isClubEquipment && ! $this->equipmentId ? 'required' : 'nullable', 'exists:users,id'],
         ];
     }
 
