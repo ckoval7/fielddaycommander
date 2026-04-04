@@ -172,7 +172,7 @@ class TranscribeInterface extends Component
             'received_exchange' => $this->exchangeInput,
             'power_watts' => $this->powerWatts,
             'is_gota_contact' => $this->station->is_gota,
-            'points' => ($dupeResult['is_duplicate'] || $this->station->is_gota) ? 0 : $mode->points_fd,
+            'points' => $dupeResult['is_duplicate'] ? 0 : ($this->station->is_gota ? 5 : $mode->points_fd),
             'is_duplicate' => $dupeResult['is_duplicate'],
             'duplicate_of_contact_id' => $dupeResult['duplicate_of_contact_id'],
             'is_transcribed' => true,

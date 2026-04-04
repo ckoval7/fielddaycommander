@@ -218,6 +218,88 @@ test('cannot sync contacts after event has ended', function () {
         ->assertJson(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.']);
 });
 
+test('syncing a gota contact assigns 5 bonus points', function () {
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'is_gota' => true,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'power_watts' => 100,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $gotaSession->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'received_exchange' => 'W1AW 3A CT',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+            'gota_operator_first_name' => 'John',
+            'gota_operator_last_name' => 'Doe',
+        ])
+        ->assertCreated();
+
+    expect($response->json('points'))->toBe(5);
+    expect($response->json('is_duplicate'))->toBeFalse();
+});
+
+test('syncing a duplicate gota contact assigns 0 points', function () {
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'is_gota' => true,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'power_watts' => 100,
+    ]);
+
+    // Create existing GOTA contact for same callsign/band/mode
+    Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $gotaSession->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'W1AW',
+        'section_id' => $this->section->id,
+        'is_duplicate' => false,
+        'is_gota_contact' => true,
+        'points' => 5,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $gotaSession->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'received_exchange' => 'W1AW 3A CT',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+            'gota_operator_first_name' => 'Jane',
+            'gota_operator_last_name' => 'Doe',
+        ])
+        ->assertCreated();
+
+    expect($response->json('points'))->toBe(0);
+    expect($response->json('is_duplicate'))->toBeTrue();
+});
+
 test('cannot sync contacts to an ended session', function () {
     $this->session->update(['end_time' => now()]);
 
