@@ -189,8 +189,9 @@ class Equipment extends Model
         return $this->hasMany(EquipmentEvent::class)
             ->whereIn('status', ['committed', 'delivered'])
             ->whereHas('event', function (Builder $query) {
-                $query->where('start_time', '<=', now()->addDays(30))
-                    ->where('end_time', '>=', now());
+                $now = appNow();
+                $query->where('start_time', '<=', $now->copy()->addDays(30))
+                    ->where('end_time', '>=', $now);
             });
     }
 
@@ -360,11 +361,13 @@ class Equipment extends Model
     {
         return Attribute::make(
             get: function (): ?EquipmentEvent {
+                $now = appNow();
+
                 return $this->commitments()
                     ->whereIn('status', ['committed', 'delivered'])
-                    ->whereHas('event', function (Builder $query) {
-                        $query->where('start_time', '<=', now()->addDays(30))
-                            ->where('end_time', '>=', now());
+                    ->whereHas('event', function (Builder $query) use ($now) {
+                        $query->where('start_time', '<=', $now->copy()->addDays(30))
+                            ->where('end_time', '>=', $now);
                     })
                     ->with('event')
                     ->first();

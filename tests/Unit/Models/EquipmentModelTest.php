@@ -6,6 +6,7 @@ use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\Organization;
 use App\Models\User;
+use App\Services\DeveloperClockService;
 
 beforeEach(function () {
     $this->user = User::factory()->create([
@@ -450,5 +451,72 @@ describe('Accessors', function () {
         $equipment->refresh();
 
         expect($equipment->current_commitment)->toBeNull();
+    });
+});
+
+describe('Time Travel Support', function () {
+    test('activeCommitments uses appNow for past events with time travel', function () {
+        $equipment = Equipment::factory()->create([
+            'owner_user_id' => $this->user->id,
+        ]);
+
+        // Event that ended yesterday in real time
+        $pastEvent = Event::factory()->create([
+            'start_time' => now()->subDays(2),
+            'end_time' => now()->subDay(),
+        ]);
+
+        EquipmentEvent::factory()->create([
+            'equipment_id' => $equipment->id,
+            'event_id' => $pastEvent->id,
+            'status' => 'delivered',
+        ]);
+
+        // Without time travel, should be empty
+        expect($equipment->activeCommitments)->toHaveCount(0);
+
+        // Mock DeveloperClockService to return time during the event
+        $duringEvent = now()->subDays(2)->addHours(6);
+        $this->mock(DeveloperClockService::class, function ($mock) use ($duringEvent) {
+            $mock->shouldReceive('isEnabled')->andReturn(true);
+            $mock->shouldReceive('now')->andReturnUsing(fn () => $duringEvent->copy());
+        });
+
+        // With time travel to during the event, should find the commitment
+        $equipment->unsetRelation('activeCommitments');
+        expect($equipment->activeCommitments)->toHaveCount(1)
+            ->and($equipment->activeCommitments->first()->status)->toBe('delivered');
+    });
+
+    test('currentCommitment uses appNow for past events with time travel', function () {
+        $equipment = Equipment::factory()->create([
+            'owner_user_id' => $this->user->id,
+        ]);
+
+        $pastEvent = Event::factory()->create([
+            'start_time' => now()->subDays(2),
+            'end_time' => now()->subDay(),
+        ]);
+
+        EquipmentEvent::factory()->create([
+            'equipment_id' => $equipment->id,
+            'event_id' => $pastEvent->id,
+            'status' => 'committed',
+        ]);
+
+        // Without time travel
+        expect($equipment->current_commitment)->toBeNull();
+
+        // Mock time travel to during the event
+        $duringEvent = now()->subDays(2)->addHours(6);
+        $this->mock(DeveloperClockService::class, function ($mock) use ($duringEvent) {
+            $mock->shouldReceive('isEnabled')->andReturn(true);
+            $mock->shouldReceive('now')->andReturn($duringEvent->copy(), $duringEvent->copy());
+        });
+
+        // Clear cached attribute
+        $equipment = Equipment::find($equipment->id);
+        expect($equipment->current_commitment)->not->toBeNull()
+            ->and($equipment->current_commitment->status)->toBe('committed');
     });
 });

@@ -8,6 +8,7 @@ use App\Models\GuestbookEntry;
 use App\Models\Image;
 use App\Models\Message;
 use App\Models\OperatingSession;
+use App\Models\Station;
 use App\Models\W1awBulletin;
 use App\Observers\ContactObserver;
 use App\Observers\EquipmentEventObserver;
@@ -15,6 +16,7 @@ use App\Observers\GuestbookEntryObserver;
 use App\Observers\ImageObserver;
 use App\Observers\MessageObserver;
 use App\Observers\OperatingSessionObserver;
+use App\Observers\StationObserver;
 use App\Observers\W1awBulletinObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -56,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         Image::observe(ImageObserver::class);
         Message::observe(MessageObserver::class);
         OperatingSession::observe(OperatingSessionObserver::class);
+        Station::observe(StationObserver::class);
         W1awBulletin::observe(W1awBulletinObserver::class);
     }
 
