@@ -65,9 +65,7 @@ class MessageTrafficIndex extends Component
             ->get()
             ->map(fn (User $user) => [
                 'id' => $user->id,
-                'name' => $user->call_sign
-                    ? "{$user->call_sign} — {$user->name}"
-                    : $user->name,
+                'name' => collect([$user->call_sign, trim("{$user->first_name} {$user->last_name}")])->filter()->implode(' — '),
             ]);
     }
 

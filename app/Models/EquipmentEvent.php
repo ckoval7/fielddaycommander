@@ -185,7 +185,7 @@ class EquipmentEvent extends Model
 
         if ($notes !== null) {
             $timestamp = now()->format('Y-m-d H:i:s');
-            $userName = $user->callsign ?? $user->name;
+            $userName = $user->call_sign ?? trim("{$user->first_name} {$user->last_name}");
             $noteEntry = "[{$timestamp}] {$userName}: {$notes}";
 
             if ($this->manager_notes) {

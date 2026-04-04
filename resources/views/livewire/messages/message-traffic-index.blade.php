@@ -212,7 +212,7 @@
                                                         class="text-xs text-base-content/60 hover:text-primary hover:underline cursor-pointer"
                                                         wire:click="editSentBy({{ $message->id }})"
                                                         title="Change sender"
-                                                    >{{ $message->sentByUser->call_sign ?? $message->sentByUser->name }}</button>
+                                                    >{{ $message->sentByUser->call_sign ?? trim($message->sentByUser->first_name . ' ' . $message->sentByUser->last_name) }}</button>
                                                 @endif
                                             </div>
                                             <x-button
@@ -341,7 +341,7 @@
                                                 <button
                                                     class="text-xs text-base-content/60 hover:text-primary hover:underline cursor-pointer"
                                                     wire:click="editSentBy({{ $message->id }})"
-                                                >{{ $message->sentByUser->call_sign ?? $message->sentByUser->name }}</button>
+                                                >{{ $message->sentByUser->call_sign ?? trim($message->sentByUser->first_name . ' ' . $message->sentByUser->last_name) }}</button>
                                             @endif
                                         </div>
                                     @else
