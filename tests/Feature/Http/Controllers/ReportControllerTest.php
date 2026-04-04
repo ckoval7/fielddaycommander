@@ -96,28 +96,6 @@ describe('cabrillo endpoint', function () {
     });
 });
 
-describe('club-summary endpoint', function () {
-    test('redirects unauthenticated user to login', function () {
-        $this->get(route('reports.club-summary'))
-            ->assertRedirect(route('login'));
-    });
-
-    test('returns 200 with application/pdf content type for authorised user', function () {
-        $this->actingAs($this->user)
-            ->get(route('reports.club-summary'))
-            ->assertSuccessful()
-            ->assertHeader('Content-Type', 'application/pdf');
-    });
-
-    test('returns 404 when no active event exists', function () {
-        $this->event->forceDelete();
-
-        $this->actingAs($this->user)
-            ->get(route('reports.club-summary'))
-            ->assertNotFound();
-    });
-});
-
 describe('submission-sheet endpoint', function () {
     test('redirects unauthenticated user to login', function () {
         $this->get(route('reports.submission-sheet'))

@@ -212,7 +212,6 @@ Route::middleware(['auth', 'can:manage-settings'])->group(function () {
 Route::middleware(['auth', 'can:view-reports'])->group(function () {
     Route::get('/reports', \App\Livewire\Reports\ReportsIndex::class)->name('reports.index');
     Route::get('/reports/cabrillo', [\App\Http\Controllers\ReportController::class, 'cabrillo'])->name('reports.cabrillo');
-    Route::get('/reports/club-summary', [\App\Http\Controllers\ReportController::class, 'clubSummary'])->name('reports.club-summary');
     Route::get('/reports/submission-sheet', [\App\Http\Controllers\ReportController::class, 'submissionSheet'])->name('reports.submission-sheet');
 });
 
