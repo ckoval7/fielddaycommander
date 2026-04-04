@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PowerSource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,6 +23,7 @@ class Station extends Model
         'radio_equipment_id',
         'name',
         'power_source_description',
+        'power_source',
         'is_gota',
         'is_vhf_only',
         'is_satellite',
@@ -31,6 +33,7 @@ class Station extends Model
     protected function casts(): array
     {
         return [
+            'power_source' => PowerSource::class,
             'is_gota' => 'boolean',
             'is_vhf_only' => 'boolean',
             'is_satellite' => 'boolean',

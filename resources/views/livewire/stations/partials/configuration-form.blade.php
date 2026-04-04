@@ -138,23 +138,45 @@
             @endif
         @endif
 
-        {{-- Power Source Description --}}
-        <x-textarea
-            label="Power Source Description"
-            wire:model.live.debounce.500ms="power_source_description"
-            placeholder="e.g., Solar + Battery Bank, Commercial + Generator Backup, 100% Solar"
-            hint="Optional - Describe the power sources for this station"
-            rows="3"
+        {{-- Power Source Selector --}}
+        <x-select
+            label="Power Source"
+            wire:model.live="power_source"
+            :options="collect(\App\Enums\PowerSource::cases())->map(fn($ps) => ['id' => $ps->value, 'name' => $ps->label()])"
+            option-value="id"
+            option-label="name"
+            placeholder="Select power source..."
+            icon="o-battery-100"
+            hint="Primary power source for this station"
         />
 
-        <div class="text-sm text-base-content/70">
-            <span class="font-medium">Examples:</span>
-            <ul class="list-disc list-inside ml-2 mt-1 space-y-1">
-                <li>Solar + Battery (for 5x QRP multiplier)</li>
-                <li>Generator (backup power)</li>
-                <li>Commercial (if available)</li>
-                <li>Battery Bank (emergency power)</li>
-            </ul>
-        </div>
+        @if($power_source)
+            @php
+                $ps = \App\Enums\PowerSource::tryFrom($power_source);
+            @endphp
+            @if($ps)
+                <x-alert
+                    icon="{{ $ps->isNaturalPower() ? 'o-sun' : ($ps->isEmergencyPower() ? 'o-bolt' : 'o-building-office') }}"
+                    class="{{ $ps->isNaturalPower() ? 'alert-success' : ($ps->isEmergencyPower() ? 'alert-info' : 'alert-warning') }}"
+                >
+                    @if($ps->isNaturalPower())
+                        Qualifies for emergency power bonus and natural power (5&times; QRP) multiplier.
+                    @elseif($ps->isEmergencyPower())
+                        Qualifies for emergency power bonus. Does not qualify for natural power (5&times; QRP) multiplier.
+                    @else
+                        Does not qualify for emergency power bonus or natural power multiplier.
+                    @endif
+                </x-alert>
+            @endif
+        @endif
+
+        {{-- Power Source Notes --}}
+        <x-textarea
+            label="Power Source Notes"
+            wire:model.live.debounce.500ms="power_source_description"
+            placeholder="e.g., 200Ah LiFePO4 bank, Honda EU2200i, rooftop solar array details"
+            hint="Optional details about the power setup"
+            rows="2"
+        />
     </div>
 </x-card>

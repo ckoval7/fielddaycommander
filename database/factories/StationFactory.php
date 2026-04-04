@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PowerSource;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -26,22 +27,14 @@ class StationFactory extends Factory
             'Emergency Net',
         ];
 
-        $powerSources = [
-            'Solar + Battery',
-            'Generator',
-            'Commercial Power',
-            'Battery Pack',
-            'Solar Panel Array',
-            'Portable Generator',
-        ];
-
         return [
             'event_configuration_id' => \App\Models\EventConfiguration::factory(),
             'radio_equipment_id' => \App\Models\Equipment::factory()->state(function () {
                 return ['type' => 'radio'];
             }),
             'name' => fake()->randomElement($stationNames),
-            'power_source_description' => fake()->randomElement($powerSources),
+            'power_source' => fake()->randomElement(PowerSource::cases()),
+            'power_source_description' => fake()->optional(0.5)->sentence(),
             'is_gota' => false,
             'is_vhf_only' => false,
             'is_satellite' => false,

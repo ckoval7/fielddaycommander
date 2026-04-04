@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PowerSource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -181,7 +182,8 @@ class EventConfiguration extends Model
     /**
      * Check if station qualifies for QRP natural power bonus (5x multiplier).
      *
-     * Requires natural power sources and no commercial/generator power.
+     * Requires natural power sources at event level and no commercial/generator power.
+     * Also checks that all stations with a power_source set use natural power.
      */
     protected function hasQrpNaturalPowerBonus(): bool
     {
@@ -192,7 +194,22 @@ class EventConfiguration extends Model
 
         $hasDisqualifyingPower = $this->uses_commercial_power || $this->uses_generator;
 
-        return $hasNaturalPower && ! $hasDisqualifyingPower;
+        if (! $hasNaturalPower || $hasDisqualifyingPower) {
+            return false;
+        }
+
+        // Check station-level power sources: any non-natural station disqualifies
+        $naturalValues = collect(PowerSource::cases())
+            ->filter(fn (PowerSource $ps) => $ps->isNaturalPower())
+            ->map(fn (PowerSource $ps) => $ps->value)
+            ->all();
+
+        $hasDisqualifyingStation = $this->stations()
+            ->whereNotNull('power_source')
+            ->whereNotIn('power_source', $naturalValues)
+            ->exists();
+
+        return ! $hasDisqualifyingStation;
     }
 
     /**
@@ -305,14 +322,25 @@ class EventConfiguration extends Model
     /**
      * Calculate emergency power bonus: 100 pts × min(transmitter_count, 20).
      *
-     * Awarded when the station runs 100% on emergency power (no commercial power)
+     * Awarded when running 100% on emergency power (no commercial power)
      * and the operating class is eligible for the bonus.
+     * Disqualified if the event config uses commercial power OR any station
+     * has its power_source set to CommercialMains.
      */
     public function calculateEmergencyPowerBonus(): int
     {
         $bonusType = BonusType::where('code', 'emergency_power')->first();
 
         if ($this->uses_commercial_power || ! $bonusType || ! $bonusType->is_active) {
+            return 0;
+        }
+
+        // Check if any station uses commercial mains
+        $hasCommercialStation = $this->stations()
+            ->where('power_source', PowerSource::CommercialMains->value)
+            ->exists();
+
+        if ($hasCommercialStation) {
             return 0;
         }
 

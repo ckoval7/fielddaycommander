@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Stations;
 
+use App\Enums\PowerSource;
 use App\Models\Equipment;
 use App\Models\Event;
 use App\Models\EventConfiguration;
@@ -45,6 +46,8 @@ class StationForm extends Component
 
     public ?string $power_source_description = null;
 
+    public ?string $power_source = null;
+
     // Available radios for searchable select
     public Collection $availableRadios;
 
@@ -87,6 +90,7 @@ class StationForm extends Component
         $this->is_satellite = $station->is_satellite;
         $this->max_power_watts = $station->max_power_watts;
         $this->power_source_description = $station->power_source_description;
+        $this->power_source = $station->power_source?->value;
     }
 
     #[Computed]
@@ -238,6 +242,7 @@ class StationForm extends Component
                 ?? Equipment::find($validated['radio_equipment_id'])?->power_output_watts
                 ?? 100,
             'power_source_description' => $validated['power_source_description'],
+            'power_source' => $validated['power_source'],
         ];
 
         if ($this->stationId) {
@@ -306,6 +311,7 @@ class StationForm extends Component
             'is_satellite',
             'max_power_watts',
             'power_source_description',
+            'power_source',
         ]);
 
         // Reset to context event (session-overridden or active event)
@@ -376,6 +382,7 @@ class StationForm extends Component
                 'max:5000',
             ],
             'power_source_description' => ['nullable', 'string', 'max:1000'],
+            'power_source' => ['nullable', Rule::in(array_column(PowerSource::cases(), 'value'))],
         ];
     }
 

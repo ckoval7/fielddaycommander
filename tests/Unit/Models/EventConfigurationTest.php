@@ -99,6 +99,7 @@ test('station at or below event config power does not affect multiplier', functi
     Station::factory()->create([
         'event_configuration_id' => $config->id,
         'max_power_watts' => 5,
+        'power_source' => \App\Enums\PowerSource::Battery,
     ]);
 
     expect($config->calculatePowerMultiplier())->toBe('5')
@@ -337,4 +338,129 @@ test('calculateGotaCoachBonus returns 0 when fewer than 10 supervised contacts',
         'is_duplicate' => false,
     ]);
     expect($config->calculateGotaCoachBonus())->toBe(0);
+});
+
+test('emergency power bonus disqualified when any station uses commercial mains', function () {
+    $operatingClass = \App\Models\OperatingClass::factory()->create(['code' => 'A']);
+    $config = EventConfiguration::factory()->create([
+        'uses_commercial_power' => false,
+        'transmitter_count' => 2,
+        'operating_class_id' => $operatingClass->id,
+    ]);
+
+    \App\Models\BonusType::factory()->create([
+        'code' => 'emergency_power',
+        'base_points' => 100,
+        'is_active' => true,
+        'eligible_classes' => ['A', 'B', 'C', 'E', 'F'],
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'power_source' => \App\Enums\PowerSource::Battery,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'power_source' => \App\Enums\PowerSource::CommercialMains,
+    ]);
+
+    expect($config->calculateEmergencyPowerBonus())->toBe(0);
+});
+
+test('emergency power bonus awarded when all stations use emergency power sources', function () {
+    $operatingClass = \App\Models\OperatingClass::factory()->create(['code' => 'A']);
+    $config = EventConfiguration::factory()->create([
+        'uses_commercial_power' => false,
+        'transmitter_count' => 2,
+        'operating_class_id' => $operatingClass->id,
+    ]);
+
+    \App\Models\BonusType::factory()->create([
+        'code' => 'emergency_power',
+        'base_points' => 100,
+        'is_active' => true,
+        'eligible_classes' => ['A', 'B', 'C', 'E', 'F'],
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'power_source' => \App\Enums\PowerSource::Generator,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'power_source' => \App\Enums\PowerSource::Battery,
+    ]);
+
+    expect($config->calculateEmergencyPowerBonus())->toBe(200);
+});
+
+test('natural power bonus lost when any station uses generator', function () {
+    $config = EventConfiguration::factory()->create([
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+        'power_source' => \App\Enums\PowerSource::Battery,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+        'power_source' => \App\Enums\PowerSource::Generator,
+    ]);
+
+    expect($config->calculatePowerMultiplier())->toBe('2');
+});
+
+test('natural power bonus retained when all stations use natural power', function () {
+    $config = EventConfiguration::factory()->create([
+        'max_power_watts' => 5,
+        'uses_solar' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+        'power_source' => \App\Enums\PowerSource::Solar,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+        'power_source' => \App\Enums\PowerSource::Other,
+    ]);
+
+    expect($config->calculatePowerMultiplier())->toBe('5');
+});
+
+test('natural power bonus lost when any station uses commercial mains', function () {
+    $config = EventConfiguration::factory()->create([
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+        'power_source' => \App\Enums\PowerSource::Battery,
+    ]);
+
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+        'power_source' => \App\Enums\PowerSource::CommercialMains,
+    ]);
+
+    expect($config->calculatePowerMultiplier())->toBe('2');
 });

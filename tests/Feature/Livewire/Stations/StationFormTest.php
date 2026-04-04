@@ -518,3 +518,62 @@ test('validation rejects multiple station type flags', function () {
     $component->call('save')
         ->assertHasErrors(['is_vhf_only', 'is_satellite']);
 });
+
+test('can create station with power source', function () {
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+
+    Livewire::test(StationForm::class)
+        ->set('name', 'Solar Station')
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->set('radio_equipment_id', $radio->id)
+        ->set('power_source', 'solar')
+        ->set('power_source_description', '200W panel array')
+        ->call('save');
+
+    $this->assertDatabaseHas('stations', [
+        'name' => 'Solar Station',
+        'power_source' => 'solar',
+        'power_source_description' => '200W panel array',
+    ]);
+});
+
+test('can update station power source', function () {
+    $station = Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'power_source' => \App\Enums\PowerSource::Generator,
+    ]);
+
+    Livewire::test(StationForm::class, ['station' => $station])
+        ->set('power_source', 'battery')
+        ->call('save');
+
+    expect($station->fresh()->power_source)->toBe(\App\Enums\PowerSource::Battery);
+});
+
+test('power source is optional', function () {
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+
+    Livewire::test(StationForm::class)
+        ->set('name', 'No Power Source')
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->set('radio_equipment_id', $radio->id)
+        ->set('power_source', null)
+        ->call('save');
+
+    $this->assertDatabaseHas('stations', [
+        'name' => 'No Power Source',
+        'power_source' => null,
+    ]);
+});
+
+test('rejects invalid power source value', function () {
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+
+    Livewire::test(StationForm::class)
+        ->set('name', 'Bad Power')
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->set('radio_equipment_id', $radio->id)
+        ->set('power_source', 'nuclear')
+        ->call('save')
+        ->assertHasErrors(['power_source']);
+});

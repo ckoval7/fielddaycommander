@@ -134,10 +134,17 @@
                     </div>
 
                     {{-- Power Source --}}
-                    @if($station->power_source_description)
+                    @if($station->power_source || $station->power_source_description)
                         <div class="mb-4">
                             <div class="text-xs text-base-content/60 mb-1">Power Source</div>
-                            <p class="text-xs sm:text-sm line-clamp-2">{{ $station->power_source_description }}</p>
+                            @if($station->power_source)
+                                <span class="badge badge-sm {{ $station->power_source->isNaturalPower() ? 'badge-success' : ($station->power_source->isEmergencyPower() ? 'badge-info' : 'badge-warning') }}">
+                                    {{ $station->power_source->label() }}
+                                </span>
+                            @endif
+                            @if($station->power_source_description)
+                                <p class="text-xs sm:text-sm line-clamp-2 mt-1">{{ $station->power_source_description }}</p>
+                            @endif
                         </div>
                     @endif
 
