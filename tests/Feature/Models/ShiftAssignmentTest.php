@@ -67,6 +67,20 @@ describe('Check-in/out', function () {
 
         expect($assignment->status)->toBe(ShiftAssignment::STATUS_NO_SHOW);
     });
+
+    test('checkBackIn reverts to checked_in, clears checked_out_at, and preserves checked_in_at', function () {
+        $originalCheckedInAt = now()->subHours(2);
+        $assignment = ShiftAssignment::factory()->checkedOut()->create([
+            'checked_in_at' => $originalCheckedInAt,
+        ]);
+
+        $assignment->checkBackIn();
+        $assignment->refresh();
+
+        expect($assignment->status)->toBe(ShiftAssignment::STATUS_CHECKED_IN)
+            ->and($assignment->checked_out_at)->toBeNull()
+            ->and($assignment->checked_in_at->timestamp)->toBe($originalCheckedInAt->timestamp);
+    });
 });
 
 describe('Confirmation & Bonus Sync', function () {

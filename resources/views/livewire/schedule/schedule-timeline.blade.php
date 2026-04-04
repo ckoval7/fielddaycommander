@@ -163,22 +163,33 @@
                                             @endif
                                             @if($myAssignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
                                                 <x-button
-                                                    label="Cancel"
+                                                    label="Drop"
                                                     icon="o-x-mark"
                                                     class="btn-ghost btn-sm text-error"
                                                     wire:click="cancelSignUp({{ $myAssignment->id }})"
-                                                    wire:confirm="Are you sure you want to cancel this sign-up?"
+                                                    wire:confirm="Are you sure you want to drop this shift?"
                                                     spinner="cancelSignUp"
                                                 />
                                             @endif
                                             @break
                                         @case(\App\Models\ShiftAssignment::STATUS_CHECKED_IN)
+                                            @php $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time); @endphp
                                             <x-button
                                                 label="Check Out"
                                                 icon="o-arrow-left-on-rectangle"
                                                 class="btn-warning btn-sm"
                                                 wire:click="checkOut({{ $myAssignment->id }})"
+                                                wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
                                                 spinner="checkOut"
+                                            />
+                                            @break
+                                        @case(\App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
+                                            <x-button
+                                                label="Check In Again"
+                                                icon="o-arrow-right-on-rectangle"
+                                                class="btn-ghost btn-sm"
+                                                wire:click="reCheckIn({{ $myAssignment->id }})"
+                                                spinner="reCheckIn"
                                             />
                                             @break
                                     @endswitch
@@ -312,22 +323,35 @@
                                                             @endif
                                                             @if($myAssignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
                                                                 <x-button
-                                                                    label="Cancel"
+                                                                    label="Drop"
                                                                     icon="o-x-mark"
                                                                     class="btn-ghost btn-sm text-error"
                                                                     wire:click="cancelSignUp({{ $myAssignment->id }})"
-                                                                    wire:confirm="Are you sure you want to cancel this sign-up?"
+                                                                    wire:confirm="Are you sure you want to drop this shift?"
                                                                     spinner="cancelSignUp"
                                                                 />
                                                             @endif
                                                             @break
                                                         @case(\App\Models\ShiftAssignment::STATUS_CHECKED_IN)
+                                                            @php $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time); @endphp
                                                             <x-button
                                                                 label="Check Out"
                                                                 icon="o-arrow-left-on-rectangle"
                                                                 class="btn-warning btn-sm"
                                                                 wire:click="checkOut({{ $myAssignment->id }})"
+                                                                @if($minutesLeft >= 1)
+                                                                    wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
+                                                                @endif
                                                                 spinner="checkOut"
+                                                            />
+                                                            @break
+                                                        @case(\App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
+                                                            <x-button
+                                                                label="Check In Again"
+                                                                icon="o-arrow-right-on-rectangle"
+                                                                class="btn-ghost btn-sm"
+                                                                wire:click="reCheckIn({{ $myAssignment->id }})"
+                                                                spinner="reCheckIn"
                                                             />
                                                             @break
                                                     @endswitch

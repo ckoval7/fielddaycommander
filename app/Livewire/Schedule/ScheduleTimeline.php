@@ -185,7 +185,7 @@ class ScheduleTimeline extends Component
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 
-        $this->dispatch('toast', title: 'Success', description: 'Your sign-up has been cancelled.', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Shift has been dropped.', icon: 'o-check-circle', css: 'alert-success');
     }
 
     /**
@@ -230,6 +230,31 @@ class ScheduleTimeline extends Component
         unset($this->myAssignments);
 
         $this->dispatch('toast', title: 'Success', description: 'You have checked out.', icon: 'o-check-circle', css: 'alert-success');
+    }
+
+    /**
+     * Re-check-in to a checked-out shift, only while the shift is still active.
+     */
+    public function reCheckIn(int $assignmentId): void
+    {
+        $assignment = ShiftAssignment::where('id', $assignmentId)
+            ->where('user_id', auth()->id())
+            ->where('status', ShiftAssignment::STATUS_CHECKED_OUT)
+            ->firstOrFail();
+
+        if (! $assignment->shift->is_current) {
+            $this->dispatch('toast', title: 'Too Late', description: 'This shift has already ended.', icon: 'o-clock', css: 'alert-warning');
+
+            return;
+        }
+
+        $assignment->checkBackIn();
+
+        unset($this->filteredShifts);
+        unset($this->shiftsByRole);
+        unset($this->myAssignments);
+
+        $this->dispatch('toast', title: 'Success', description: 'You have checked back in.', icon: 'o-check-circle', css: 'alert-success');
     }
 
     /**

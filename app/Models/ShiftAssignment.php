@@ -131,6 +131,17 @@ class ShiftAssignment extends Model
     }
 
     /**
+     * Revert a checked-out assignment back to checked-in, preserving checked_in_at.
+     */
+    public function checkBackIn(): void
+    {
+        $this->update([
+            'status' => self::STATUS_CHECKED_IN,
+            'checked_out_at' => null,
+        ]);
+    }
+
+    /**
      * Confirm this shift assignment and sync any associated event bonus.
      */
     public function confirm(User $manager): void

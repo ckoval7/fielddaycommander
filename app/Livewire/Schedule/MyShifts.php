@@ -163,6 +163,31 @@ class MyShifts extends Component
     }
 
     /**
+     * Re-check-in to a checked-out shift, only while the shift is still active.
+     */
+    public function reCheckIn(int $assignmentId): void
+    {
+        $assignment = ShiftAssignment::where('id', $assignmentId)
+            ->where('user_id', Auth::id())
+            ->where('status', ShiftAssignment::STATUS_CHECKED_OUT)
+            ->firstOrFail();
+
+        if (! $assignment->shift->is_current) {
+            $this->dispatch('toast', title: 'Too Late', description: 'This shift has already ended.', icon: 'o-clock', css: 'alert-warning');
+
+            return;
+        }
+
+        $assignment->checkBackIn();
+
+        unset($this->currentShifts);
+        unset($this->upcomingShifts);
+        unset($this->pastShifts);
+
+        $this->dispatch('toast', title: 'Success', description: 'You have checked back in.', icon: 'o-check-circle', css: 'alert-success');
+    }
+
+    /**
      * Drop a self-signup assignment that is still in scheduled status.
      */
     public function cancelSignUp(int $assignmentId): void

@@ -377,3 +377,74 @@ test('my shifts does not show other users shifts', function () {
     Livewire::test(MyShifts::class)
         ->assertSee('You have no upcoming shifts scheduled.');
 });
+
+test('user can re-check-in to a checked-out shift while still active', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHour(),
+        'end_time' => appNow()->addHour(),
+    ]);
+
+    $checkedInAt = appNow()->subHour();
+    $assignment = ShiftAssignment::factory()->checkedOut()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'checked_in_at' => $checkedInAt,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->call('reCheckIn', $assignment->id)
+        ->assertDispatched('toast', title: 'Success', description: 'You have checked back in.');
+
+    $assignment->refresh();
+    expect($assignment->status)->toBe(ShiftAssignment::STATUS_CHECKED_IN)
+        ->and($assignment->checked_out_at)->toBeNull()
+        ->and($assignment->checked_in_at->timestamp)->toBe($checkedInAt->timestamp);
+});
+
+test('user cannot re-check-in after shift has ended', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(4),
+        'end_time' => appNow()->subHours(1),
+    ]);
+
+    $assignment = ShiftAssignment::factory()->checkedOut()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->call('reCheckIn', $assignment->id)
+        ->assertDispatched('toast', title: 'Too Late');
+
+    expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
+});
+
+test('user cannot re-check-in to another users assignment', function () {
+    $otherUser = User::factory()->create();
+
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHour(),
+        'end_time' => appNow()->addHour(),
+    ]);
+
+    $assignment = ShiftAssignment::factory()->checkedOut()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $otherUser->id,
+    ]);
+
+    $this->actingAs($this->user);
+
+    expect(fn () => Livewire::test(MyShifts::class)
+        ->call('reCheckIn', $assignment->id)
+    )->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+});

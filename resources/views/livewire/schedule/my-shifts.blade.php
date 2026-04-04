@@ -125,12 +125,22 @@
                                                     <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format('g:i A T') }}" class="badge-ghost badge-sm" />
                                                 @endif
                                             @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_IN)
+                                                @php $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time); @endphp
                                                 <x-button
                                                     label="Check Out"
                                                     icon="o-arrow-left-on-rectangle"
                                                     class="btn-warning btn-sm"
                                                     wire:click="checkOut({{ $assignment->id }})"
+                                                    wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
                                                     spinner="checkOut"
+                                                />
+                                            @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
+                                                <x-button
+                                                    label="Check In Again"
+                                                    icon="o-arrow-right-on-rectangle"
+                                                    class="btn-ghost btn-sm"
+                                                    wire:click="reCheckIn({{ $assignment->id }})"
+                                                    spinner="reCheckIn"
                                                 />
                                             @endif
                                         </div>
