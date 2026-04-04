@@ -124,22 +124,30 @@
                             </div>
                         </div>
                         <div>
-                            <label class="label"><span class="label-text text-sm">Rows (1-3)</span></label>
+                            <label class="label"><span class="label-text text-sm">Height</span></label>
                             <div class="flex gap-1">
-                                @foreach(range(1, 3) as $r)
+                                @foreach([['Short', 2], ['Medium', 3], ['Tall', 6]] as [$label, $r])
                                     <button
                                         type="button"
                                         wire:click="$set('rowSpan', {{ $r }})"
                                         class="btn btn-sm flex-1 {{ $rowSpan === $r ? 'btn-primary' : 'btn-ghost' }}"
                                     >
-                                        {{ $r }}
+                                        {{ $label }}
                                     </button>
                                 @endforeach
                             </div>
                         </div>
                     </div>
+                    @php
+                        $heightLabel = match($rowSpan) {
+                            2 => 'Short',
+                            3 => 'Medium',
+                            6 => 'Tall',
+                            default => $rowSpan . ' rows',
+                        };
+                    @endphp
                     <p class="text-xs text-base-content/60 mt-2">
-                        Current: {{ $colSpan }} column{{ $colSpan > 1 ? 's' : '' }} x {{ $rowSpan }} row{{ $rowSpan > 1 ? 's' : '' }}
+                        Current: {{ $colSpan }} column{{ $colSpan > 1 ? 's' : '' }}, {{ $heightLabel }}
                     </p>
                 </div>
             @endif

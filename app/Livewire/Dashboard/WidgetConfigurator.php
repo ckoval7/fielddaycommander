@@ -18,7 +18,7 @@ class WidgetConfigurator extends Component
 
     public int $colSpan = 1;
 
-    public int $rowSpan = 1;
+    public int $rowSpan = 2;
 
     public function mount(?string $widgetType = null, ?array $config = []): void
     {
@@ -72,7 +72,7 @@ class WidgetConfigurator extends Component
      * Handle the open-widget-configurator event from the DashboardEditor.
      */
     #[On('open-widget-configurator')]
-    public function handleOpenConfigurator(string $mode = 'add', ?string $widgetType = null, ?array $config = [], int $colSpan = 1, int $rowSpan = 1): void
+    public function handleOpenConfigurator(string $mode = 'add', ?string $widgetType = null, ?array $config = [], int $colSpan = 1, int $rowSpan = 2): void
     {
         $this->colSpan = $colSpan;
         $this->rowSpan = $rowSpan;
