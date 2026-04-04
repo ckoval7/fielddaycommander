@@ -182,6 +182,19 @@ class Equipment extends Model
     }
 
     /**
+     * Get active commitments (committed/delivered for current or upcoming events).
+     */
+    public function activeCommitments(): HasMany
+    {
+        return $this->hasMany(EquipmentEvent::class)
+            ->whereIn('status', ['committed', 'delivered'])
+            ->whereHas('event', function (Builder $query) {
+                $query->where('start_time', '<=', now()->addDays(30))
+                    ->where('end_time', '>=', now());
+            });
+    }
+
+    /**
      * Get all events this equipment is assigned to via the equipment_event pivot.
      */
     public function events(): BelongsToMany

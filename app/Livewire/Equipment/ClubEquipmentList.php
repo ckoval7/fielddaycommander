@@ -61,7 +61,7 @@ class ClubEquipmentList extends Component
     public function equipment()
     {
         return Equipment::query()
-            ->with(['manager'])
+            ->with(['manager', 'activeCommitments'])
             ->whereNotNull('owner_organization_id')
             ->when($this->search, fn (Builder $query) => $query->search($this->search))
             ->when($this->typeFilter, fn (Builder $query) => $query->ofType($this->typeFilter))

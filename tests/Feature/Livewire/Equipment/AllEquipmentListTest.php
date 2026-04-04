@@ -2,6 +2,8 @@
 
 use App\Livewire\Equipment\AllEquipmentList;
 use App\Models\Equipment;
+use App\Models\EquipmentEvent;
+use App\Models\Event;
 use App\Models\Organization;
 use App\Models\User;
 use Livewire\Livewire;
@@ -204,6 +206,37 @@ test('all equipment list paginates results', function () {
     $equipment = $component->get('equipment');
     expect($equipment->total())->toBe(30);
     expect($equipment->perPage())->toBe(25);
+});
+
+test('all equipment list shows committed status for equipment with active commitment', function () {
+    $this->actingAs($this->user);
+
+    $committedEquipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'make' => 'Icom',
+        'model' => 'Committed Radio',
+    ]);
+
+    $availableEquipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'make' => 'Yaesu',
+        'model' => 'Available Radio',
+    ]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(22),
+    ]);
+
+    EquipmentEvent::factory()->create([
+        'equipment_id' => $committedEquipment->id,
+        'event_id' => $event->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertSeeInOrder(['Committed Radio', 'Committed'])
+        ->assertSeeInOrder(['Available Radio', 'Available']);
 });
 
 test('setting user filter resets pagination', function () {

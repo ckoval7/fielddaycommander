@@ -122,7 +122,8 @@
                                 </td>
                                 <td>
                                     @php
-                                        $statusClasses = match($item->status ?? 'available') {
+                                        $commitmentStatus = $item->activeCommitments->first()?->status ?? 'available';
+                                        $statusClasses = match($commitmentStatus) {
                                             'committed' => 'badge-info',
                                             'delivered' => 'badge-success',
                                             'returned' => 'badge-neutral',
@@ -131,7 +132,7 @@
                                             'damaged' => 'badge-error',
                                             default => 'badge-success badge-outline'
                                         };
-                                        $statusIcon = match($item->status ?? 'available') {
+                                        $statusIcon = match($commitmentStatus) {
                                             'committed' => 'o-clipboard-document-list',
                                             'delivered' => 'o-truck',
                                             'returned' => 'o-check-circle',
@@ -142,7 +143,7 @@
                                         };
                                     @endphp
                                     <x-badge
-                                        value="{{ ucfirst(str_replace('_', ' ', $item->status ?? 'available')) }}"
+                                        value="{{ ucfirst(str_replace('_', ' ', $commitmentStatus)) }}"
                                         class="{{ $statusClasses }}"
                                     >
                                         <x-slot:icon>

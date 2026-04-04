@@ -109,7 +109,7 @@ class AllEquipmentList extends Component
     public function equipment()
     {
         return Equipment::query()
-            ->with(['owner', 'manager'])
+            ->with(['owner', 'manager', 'activeCommitments'])
             ->when($this->userFilter === 'club', function (Builder $query) {
                 $query->whereNotNull('owner_organization_id');
             })
