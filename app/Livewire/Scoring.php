@@ -283,11 +283,15 @@ class Scoring extends Component
     {
         $eventTypeId = $this->event?->event_type_id;
 
+        $classCode = $this->config()?->operatingClass?->code;
+
         $query = BonusType::where('is_active', true);
         if ($eventTypeId) {
             $query->where('event_type_id', $eventTypeId);
         }
-        $bonusTypes = $query->orderByDesc('base_points')->get();
+        $bonusTypes = $query->orderByDesc('base_points')->get()
+            ->filter(fn (BonusType $bt) => $bt->eligible_classes === null
+                || ($classCode !== null && in_array($classCode, $bt->eligible_classes, true)));
 
         $claimedBonuses = $this->config()
             ? $this->config()->bonuses->keyBy('bonus_type_id')

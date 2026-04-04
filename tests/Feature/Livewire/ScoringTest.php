@@ -341,6 +341,70 @@ it('lists unclaimed bonuses', function () {
 });
 
 // ============================================================================
+// BONUS LIST — CLASS ELIGIBILITY FILTERING
+// ============================================================================
+
+it('excludes bonus types not applicable to the current operating class', function () {
+    // site_responsibilities is eligible for B, C, D, E, F — NOT A
+    BonusType::create([
+        'event_type_id' => $this->eventType->id,
+        'code' => 'site_responsibilities',
+        'name' => 'Site Responsibilities',
+        'description' => 'Operator assumes all site responsibilities',
+        'base_points' => 50,
+        'is_per_transmitter' => false,
+        'is_active' => true,
+        'eligible_classes' => ['B', 'C', 'D', 'E', 'F'],
+    ]);
+
+    $config = makeActiveEvent();
+    $classA = OperatingClass::first();
+    $classA->update(['code' => 'A']);
+    $config->update(['operating_class_id' => $classA->id]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $codes = collect($component->bonusList)->pluck('type.code');
+    expect($codes)->not->toContain('site_responsibilities');
+});
+
+it('includes bonus types applicable to the current operating class', function () {
+    BonusType::create([
+        'event_type_id' => $this->eventType->id,
+        'code' => 'site_responsibilities',
+        'name' => 'Site Responsibilities',
+        'description' => 'Operator assumes all site responsibilities',
+        'base_points' => 50,
+        'is_per_transmitter' => false,
+        'is_active' => true,
+        'eligible_classes' => ['B', 'C', 'D', 'E', 'F'],
+    ]);
+
+    $config = makeActiveEvent();
+    $classB = OperatingClass::first();
+    $classB->update(['code' => 'B']);
+    $config->update(['operating_class_id' => $classB->id]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $codes = collect($component->bonusList)->pluck('type.code');
+    expect($codes)->toContain('site_responsibilities');
+});
+
+it('always includes bonus types with null eligible_classes regardless of class', function () {
+    // web_submission has null eligible_classes (created in beforeEach)
+    $config = makeActiveEvent();
+    $classC = OperatingClass::first();
+    $classC->update(['code' => 'C']);
+    $config->update(['operating_class_id' => $classC->id]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $codes = collect($component->bonusList)->pluck('type.code');
+    expect($codes)->toContain('web_submission');
+});
+
+// ============================================================================
 // EMERGENCY POWER BONUS
 // ============================================================================
 
