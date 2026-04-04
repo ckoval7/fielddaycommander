@@ -23,12 +23,15 @@ class SiteBranding extends Component
 
     public ?string $footer_text = null;
 
+    public ?string $welcome_message = null;
+
     public function mount(): void
     {
         $this->site_name = Setting::get('site_name', 'Field Day Commander');
         $this->site_tagline = Setting::get('site_tagline');
         $this->logo_path = Setting::get('site_logo_path');
         $this->footer_text = Setting::get('site_footer_text');
+        $this->welcome_message = Setting::get('site_welcome_message');
     }
 
     public function updatedNewLogo(): void
@@ -62,6 +65,7 @@ class SiteBranding extends Component
             'site_tagline' => ['nullable', 'string', 'max:200'],
             'new_logo' => ['nullable', 'image', 'max:2048', 'mimes:png,jpg,jpeg,svg'],
             'footer_text' => ['nullable', 'string', 'max:500'],
+            'welcome_message' => ['nullable', 'string', 'max:2000'],
         ]);
 
         Setting::set('site_name', $this->site_name);
@@ -102,6 +106,7 @@ class SiteBranding extends Component
         }
 
         Setting::set('site_footer_text', $this->footer_text ?? '');
+        Setting::set('site_welcome_message', $this->welcome_message ?? '');
 
         Setting::clearCache();
 

@@ -136,6 +136,24 @@ test('saving branding logs to audit log', function () {
     expect($auditLog->new_values['site_name'])->toBe('My Radio Club');
 });
 
+test('can save a welcome message', function () {
+    Livewire::test(SiteBranding::class)
+        ->set('site_name', 'Test Site')
+        ->set('welcome_message', 'Welcome to our Field Day site!')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Setting::get('site_welcome_message'))->toBe('Welcome to our Field Day site!');
+});
+
+test('validates welcome message max length', function () {
+    Livewire::test(SiteBranding::class)
+        ->set('site_name', 'Test Site')
+        ->set('welcome_message', str_repeat('a', 2001))
+        ->call('save')
+        ->assertHasErrors(['welcome_message']);
+});
+
 test('removing logo logs to audit log', function () {
     $logo = UploadedFile::fake()->image('logo.png');
     $path = $logo->storeAs('branding', 'test-logo.png', 'public');

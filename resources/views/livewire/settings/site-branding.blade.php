@@ -75,6 +75,17 @@
         />
     </x-card>
 
+    <x-card>
+        <x-slot:title>Public Landing Page</x-slot:title>
+
+        <x-textarea
+            label="Welcome Message"
+            wire:model="welcome_message"
+            rows="4"
+            hint="Displayed on the public landing page. Tell visitors about your club or operation. (max 2000 characters)"
+        />
+    </x-card>
+
     <div class="flex justify-end">
         <x-button
             wire:click="save"
