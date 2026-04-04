@@ -377,6 +377,7 @@
       <a class="sidebar-link" href="#offline">Offline Resilience</a>
       <a class="sidebar-link" href="#paper-transcription">Paper Log Transcription</a>
       <a class="sidebar-link" href="#network">Network Setup</a>
+      <a class="sidebar-link" href="#email">Email</a>
       <a class="sidebar-link" href="#docker">Docker</a>
       <a class="sidebar-link" href="#updating">Updating</a>
     </div>
@@ -1158,6 +1159,50 @@
       <div class="callout-title">Firewall Ports</div>
       The deploy script opens ports automatically via UFW (Debian/Ubuntu) or firewalld (RHEL). If you're managing your firewall manually, open port 80 (or 443 for HTTPS) for the web interface and port 8080 for WebSocket connections.
     </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  EMAIL                                     -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="email">Email</h2>
+    <p>Email is entirely optional. By default, FD Commander detects that no mail transport is configured and hides every email-related feature from the UI. Admins set passwords manually, and operators manage their shifts through the web interface. Nobody sees broken links or grayed-out options.</p>
+
+    <p>When email is configured, five features appear automatically: the "Forgot password?" link on the login page, a "Send password reset email" option in the admin panel, a "Send invitation email" checkbox when creating users, an "Email Notifications" section on user profiles (security alerts, event notifications, system announcements), and an "Email shift reminders" toggle on user profiles.</p>
+
+    <h3>Enabling Email</h3>
+    <p>Set <code>MAIL_MAILER</code> to a real transport (like <code>smtp</code>) in your <code>.env</code> file and provide SMTP credentials:</p>
+
+    <div class="code-block">
+      <div class="code-header">.env <span class="code-copy">Copy</span></div>
+      <div class="code-body">
+        <div>MAIL_MAILER=smtp</div>
+        <div>MAIL_HOST=smtp.example.com</div>
+        <div>MAIL_PORT=587</div>
+        <div>MAIL_USERNAME=your-smtp-username</div>
+        <div>MAIL_PASSWORD=your-smtp-password</div>
+        <div>MAIL_ENCRYPTION=tls</div>
+        <div>MAIL_FROM_ADDRESS=fieldday@yourcallsign.com</div>
+        <div>MAIL_FROM_NAME="FD Commander"</div>
+      </div>
+    </div>
+
+    <p>Then clear the config cache:</p>
+
+    <div class="code-block">
+      <div class="code-header">bash <span class="code-copy">Copy</span></div>
+      <div class="code-body">
+        <div><span class="prompt">$</span> <span class="cmd">cd /var/www/fd-commander && sudo php artisan config:cache</span></div>
+      </div>
+    </div>
+
+    <p>The email features will appear on the next page load. To disable them again, set <code>MAIL_MAILER=log</code> and re-run the cache command.</p>
+
+    <div class="callout info">
+      <div class="callout-title">How detection works</div>
+      FD Commander checks the <code>MAIL_MAILER</code> value. If it's <code>log</code> or <code>array</code> (the defaults), all email features are disabled and hidden. Any real transport enables them. A backend guard in <code>ReminderService</code> also prevents email sends even if a preference is set in the database while email is unconfigured.
+    </div>
+
+    <p>For a detailed walkthrough with provider-specific settings (Gmail, SES, Mailgun), see the <a href="how-to/email-setup.html">Email Setup how-to guide</a>.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  DOCKER                                    -->

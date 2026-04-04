@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Setup - FD Commander</title>
+<meta name="description" content="Enable email notifications in FD Commander: password resets, invitation emails, shift reminders, and security alerts. Just add SMTP credentials to your .env file.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/email-setup.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Email Setup - FD Commander">
+<meta property="og:description" content="Enable email features in FD Commander: password resets, invitations, shift reminders, and security alerts via SMTP.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/email-setup.html">
+<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Email Setup - FD Commander">
+<meta name="twitter:description" content="Enable email notifications in FD Commander with SMTP credentials.">
+<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .cmd { color: var(--text-primary); }
+  .code-block .output { color: var(--accent-sky); }
+  .code-block .prompt { color: var(--text-muted); }
+
+  .feature-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  .feature-list li {
+    padding-left: 1.5rem;
+    position: relative;
+  }
+  .feature-list li::before {
+    content: "~";
+    position: absolute;
+    left: 0;
+    color: var(--accent-emerald);
+    font-weight: 700;
+  }
+  .feature-list li.hidden::before {
+    content: "~";
+    color: var(--text-muted);
+  }
+
+  .badge-advanced {
+    display: inline-block;
+    background: rgba(251, 146, 60, 0.15);
+    color: var(--accent-orange);
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Email <span class="gradient">Setup</span></h1>
+    <p>Enable password resets, invitation emails, shift reminders, and notifications.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; Email Setup
+      </div>
+
+      <div class="badge-advanced">Advanced &middot; Optional</div>
+
+      <p>FD Commander works fine without email. By default, all email features are hidden from the UI so nobody sees broken "forgot password" links or grayed-out notification checkboxes. The admin creates accounts and sets passwords manually, and operators manage their own shifts through the web interface.</p>
+
+      <p>If your club wants password resets, invitation emails, shift reminders, or security alerts, you just need to point FD Commander at an SMTP server. Once configured, the hidden features appear automatically.</p>
+
+      <h2>What Gets Unlocked</h2>
+
+      <p>When email is not configured, five pieces of the UI are hidden. Once you add SMTP credentials, they all appear:</p>
+
+      <ol>
+        <li><strong>Forgot password link</strong> on the login page. Without email, the link doesn't exist because there's no way to deliver a reset token. With email, operators can reset their own passwords without bothering the admin.</li>
+        <li><strong>Send password reset email</strong> option in the admin panel. When an admin resets a user's password, they can choose to email a reset link instead of setting a password manually.</li>
+        <li><strong>Send invitation email</strong> checkbox when creating a new user. The admin can have FD Commander email the new user with a link to set their password, instead of handing them a temporary password in person.</li>
+        <li><strong>Email notifications</strong> section on each user's profile page. This includes toggles for security alerts, event notifications, and system announcements.</li>
+        <li><strong>Email shift reminders</strong> checkbox on the profile page. When enabled, operators get an email before their scheduled shifts.</li>
+      </ol>
+
+      <p>If email is never configured, none of these elements appear in the UI. Operators never see features they can't use.</p>
+
+      <div class="callout info">
+        <div class="callout-title">How detection works</div>
+        <p>FD Commander checks the <code>MAIL_MAILER</code> value in your <code>.env</code> file. If it's set to <code>log</code> or <code>array</code> (the defaults when email isn't configured), all email features are disabled. Any real transport like <code>smtp</code>, <code>ses</code>, or <code>mailgun</code> enables them.</p>
+      </div>
+
+      <h2>Configuring SMTP</h2>
+
+      <p>SSH into the server and edit the <code>.env</code> file in the FD Commander directory:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo nano /var/www/fd-commander/.env</span></div>
+
+      <p>Find the mail section and update it with your SMTP credentials:</p>
+
+      <div class="code-block"><span class="comment"># Mail configuration</span>
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=your-smtp-username
+MAIL_PASSWORD=your-smtp-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=fieldday@yourcallsign.com
+MAIL_FROM_NAME="FD Commander"</div>
+
+      <p>After saving the file, clear the config cache so the changes take effect:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">cd /var/www/fd-commander && sudo php artisan config:cache</span></div>
+
+      <p>That's it. The email features will appear in the UI on the next page load.</p>
+
+      <h2>Common SMTP Providers</h2>
+
+      <p>Any SMTP-capable service works. Here are settings for a few common options:</p>
+
+      <h3>Gmail (Google Workspace or personal)</h3>
+
+      <div class="code-block">MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_ENCRYPTION=tls</div>
+
+      <p>You'll need to generate an <strong>App Password</strong> in your Google account settings. Regular passwords won't work if 2FA is enabled (and it should be).</p>
+
+      <h3>Amazon SES</h3>
+
+      <div class="code-block">MAIL_MAILER=ses</div>
+
+      <p>If you're already running on AWS, SES is the simplest option. Set your AWS credentials in the <code>.env</code> file and change <code>MAIL_MAILER</code> to <code>ses</code> instead of <code>smtp</code>.</p>
+
+      <h3>Mailgun / Postmark / SendGrid</h3>
+
+      <p>All of these offer free tiers that cover more email than a Field Day event will ever need. Use their SMTP relay credentials with the standard <code>smtp</code> mailer.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Keep it simple</div>
+        <p>For a club running one event a year, Gmail with an App Password is the easiest setup. You don't need a dedicated email service unless you're sending hundreds of messages.</p>
+      </div>
+
+      <h2>Verify It Works</h2>
+
+      <p>The quickest way to confirm email is working is to test a password reset. Log out, click the "Forgot password?" link on the login page (it should now be visible), enter an email address, and check for the reset email. If it arrives, everything is wired up.</p>
+
+      <p>If the email doesn't arrive, check the application log for errors:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo tail -50 /var/www/fd-commander/storage/logs/laravel.log</span></div>
+
+      <p>Common problems: wrong SMTP port (try 465 with <code>MAIL_ENCRYPTION=ssl</code> if 587 doesn't work), incorrect App Password, or the "from" address not being verified with your email provider.</p>
+
+      <div class="callout warning">
+        <div class="callout-title">Backend guard</div>
+        <p>Even if a notification preference is somehow set in the database while email is unconfigured, FD Commander won't try to send it. The <code>ReminderService</code> checks whether email is configured before every send and short-circuits if it's not. This prevents queued jobs from failing silently or throwing errors.</p>
+      </div>
+
+      <h2>Disabling Email Again</h2>
+
+      <p>If you want to turn email features back off, set <code>MAIL_MAILER=log</code> in your <code>.env</code> file and clear the config cache. The UI elements will disappear and no emails will be sent.</p>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="dns-tls.html">DNS &amp; TLS &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <span class="logo" style="font-size:0.95rem; display:inline-flex;">
+        <img src="../fdlogdb.png" alt="Field Day Commander" style="width:24px;height:24px;object-fit:contain;">
+        Field Day Commander
+      </span>
+      <span style="margin-left:1rem;">Open source under GPL v3</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+      <a href="../fd-commander-docs.html">Documentation</a>
+      <a href="https://github.com/ckoval7/fd-commander/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+      <span class="footer-call">73 de Field Day Commander</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
