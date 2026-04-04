@@ -422,6 +422,19 @@ class ManageSchedule extends Component
             $createdCount++;
         }
 
+        if ($current->lt($end)) {
+            Shift::create([
+                'event_configuration_id' => $this->eventConfig->id,
+                'shift_role_id' => $this->bulkRoleId,
+                'start_time' => $current->copy(),
+                'end_time' => $end->copy(),
+                'capacity' => $this->bulkCapacity,
+                'is_open' => $this->bulkIsOpen,
+            ]);
+
+            $createdCount++;
+        }
+
         $this->showBulkModal = false;
         $this->resetBulkForm();
         unset($this->shifts);

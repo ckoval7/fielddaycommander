@@ -273,6 +273,33 @@ describe('bulk creation', function () {
         expect(Shift::where('shift_role_id', $this->role->id)->count())->toBe(3);
     });
 
+    test('bulk create adds short shift to fill remaining time', function () {
+        $this->actingAs($this->admin);
+
+        $startTime = appNow()->format('Y-m-d\TH:i');
+        $endTime = appNow()->addHours(5)->format('Y-m-d\TH:i');
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openBulkModal')
+            ->set('bulkRoleId', $this->role->id)
+            ->set('bulkStartTime', $startTime)
+            ->set('bulkEndTime', $endTime)
+            ->set('bulkDurationMinutes', 120)
+            ->set('bulkCapacity', 1)
+            ->call('createBulkShifts')
+            ->assertDispatched('toast', title: 'Success', description: '3 shifts created successfully');
+
+        $shifts = Shift::where('shift_role_id', $this->role->id)->orderBy('start_time')->get();
+        expect($shifts)->toHaveCount(3);
+
+        // First two shifts are full 2-hour shifts
+        expect((int) $shifts[0]->start_time->diffInMinutes($shifts[0]->end_time))->toBe(120);
+        expect((int) $shifts[1]->start_time->diffInMinutes($shifts[1]->end_time))->toBe(120);
+
+        // Third shift covers the remaining 1 hour
+        expect((int) $shifts[2]->start_time->diffInMinutes($shifts[2]->end_time))->toBe(60);
+    });
+
     test('bulk creation pre-fills event times', function () {
         $this->actingAs($this->admin);
 
