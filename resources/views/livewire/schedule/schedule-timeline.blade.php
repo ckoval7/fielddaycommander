@@ -74,7 +74,7 @@
                         <div class="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg bg-base-200/50 border border-base-300">
                             {{-- Role Badge --}}
                             <div class="flex-shrink-0">
-                                <span class="badge badge-outline badge-sm gap-1">
+                                <span class="badge badge-sm text-white gap-1" style="background-color: {{ $shift->shiftRole?->color ?? '#64748b' }}">
                                     @if($shift->shiftRole?->icon)
                                         <x-icon :name="$shift->shiftRole->icon" class="w-3 h-3" />
                                     @endif
@@ -205,12 +205,12 @@
 
                         <x-card>
                             <x-slot:title>
-                                <div class="flex items-center gap-2">
+                                <span class="badge text-white" style="background-color: {{ $role->color ?? '#64748b' }}">
                                     @if($role->icon)
                                         <x-icon :name="$role->icon" class="w-5 h-5" />
                                     @endif
-                                    <span>{{ $role->name }}</span>
-                                </div>
+                                    {{ $role->name }}
+                                </span>
                             </x-slot:title>
 
                             @if($role->description)
