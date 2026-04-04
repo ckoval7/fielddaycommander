@@ -276,6 +276,14 @@
                 });
             });
         });
+
+        {{-- Show flash-based toasts that survived a redirect --}}
+        @if(session('toast'))
+            document.addEventListener('livewire:initialized', () => {
+                const data = @json(session('toast'));
+                Livewire.dispatch('toast', [data]);
+            });
+        @endif
     </script>
 </body>
 </html>

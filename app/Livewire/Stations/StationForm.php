@@ -251,25 +251,27 @@ class StationForm extends Component
             $successMessage = 'Station created successfully';
         }
 
-        // Success notification
-        $this->dispatch('toast', [
+        // Emit event to refresh parent list
+        $this->dispatch('station-saved');
+
+        $toastData = [
             'title' => 'Success',
             'description' => $successMessage,
             'icon' => 'o-check-circle',
             'css' => 'alert-success',
-        ]);
+        ];
 
-        // Emit event to refresh parent list
-        $this->dispatch('station-saved');
-
-        // Close modal or redirect
+        // Close modal, redirect, or stay on page
         if ($this->showModal) {
+            $this->dispatch('toast', $toastData);
             $this->closeModal();
-        } elseif (! $this->stationId && isset($station)) {
-            // After creation, redirect to edit page on Equipment tab
-            $this->redirect(route('stations.edit', $station).'?tab=equipment', navigate: true);
+        } elseif ($this->stationId) {
+            // Update: stay on edit page, show toast
+            $this->dispatch('toast', $toastData);
         } else {
-            $this->redirect(route('stations.index'), navigate: true);
+            // Create: redirect to edit page on Equipment tab
+            session()->flash('toast', $toastData);
+            $this->redirect(route('stations.edit', $station).'?tab=equipment', navigate: true);
         }
     }
 

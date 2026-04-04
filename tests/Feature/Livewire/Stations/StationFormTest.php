@@ -98,7 +98,7 @@ test('can create a station', function () {
         ->set('is_satellite', false)
         ->call('save')
         ->assertHasNoErrors()
-        ->assertDispatched('toast');
+        ->assertSessionHas('toast');
 
     $this->assertDatabaseHas('stations', [
         'name' => 'Phone Station',
@@ -227,7 +227,7 @@ test('allows saving station with power exceeding event limit', function () {
         ->set('max_power_watts', 200) // Exceeds 150W limit
         ->call('save')
         ->assertHasNoErrors(['max_power_watts'])
-        ->assertDispatched('toast');
+        ->assertSessionHas('toast');
 
     $this->assertDatabaseHas('stations', [
         'name' => 'High Power Station',
