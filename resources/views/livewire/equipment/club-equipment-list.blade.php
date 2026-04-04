@@ -46,7 +46,6 @@
 
         {{-- Equipment Card --}}
         <x-card shadow>
-            <div class="overflow-x-auto">
                 <table class="table table-zebra">
                     <thead>
                         <tr>
@@ -168,8 +167,6 @@
                         @endforelse
                     </tbody>
                 </table>
-            </div>
-
             {{-- Pagination --}}
             @if($equipment->hasPages())
                 <div class="p-4">
