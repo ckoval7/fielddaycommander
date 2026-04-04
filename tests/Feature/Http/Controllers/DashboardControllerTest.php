@@ -131,6 +131,7 @@ test('get-ready checklist hides routes for unprivileged users', function () {
     Permission::create(['name' => 'view-all-equipment']);
     Permission::create(['name' => 'view-stations']);
     Permission::create(['name' => 'manage-shifts']);
+    Permission::create(['name' => 'manage-own-equipment']);
 
     $user = User::factory()->create();
     Event::factory()->create([
@@ -143,15 +144,20 @@ test('get-ready checklist hides routes for unprivileged users', function () {
     $response->assertStatus(200);
     $checklist = $response->viewData('checklist');
 
+    // Items accessible to all users (no permission gating)
+    $alwaysVisible = ['W1AW bulletin schedule set up', 'Equipment inventoried'];
+
     // Items gated by permissions should have null routes for unprivileged users
-    $gatedItems = array_filter($checklist, fn ($item) => $item['label'] !== 'W1AW bulletin schedule set up');
+    $gatedItems = array_filter($checklist, fn ($item) => ! in_array($item['label'], $alwaysVisible));
     foreach ($gatedItems as $item) {
         expect($item['route'])->toBeNull("Button for '{$item['label']}' should be hidden for unprivileged users");
     }
 
-    // W1AW bulletin schedule is accessible to all authenticated users
-    $bulletinItem = collect($checklist)->firstWhere('label', 'W1AW bulletin schedule set up');
-    expect($bulletinItem['route'])->not->toBeNull();
+    // Equipment and W1AW bulletin schedule are accessible to all authenticated users
+    foreach ($alwaysVisible as $label) {
+        $item = collect($checklist)->firstWhere('label', $label);
+        expect($item['route'])->not->toBeNull("Button for '{$label}' should be visible for all users");
+    }
 });
 
 test('get-ready checklist shows routes for privileged users', function () {

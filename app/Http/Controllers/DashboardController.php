@@ -88,10 +88,8 @@ class DashboardController extends Controller
             ],
             [
                 'label' => 'Equipment inventoried',
-                'done' => EquipmentEvent::where('event_id', $event->id)->exists(),
-                'route' => ($user->can('manage-event-equipment') || $user->can('view-all-equipment'))
-                    ? route('events.equipment.dashboard', $event)
-                    : null,
+                'done' => EquipmentEvent::forEvent($event->id)->byOwner($user->id)->exists(),
+                'route' => route('equipment.index'),
             ],
             [
                 'label' => 'Stations set up',
