@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FAQ - FD Commander</title>
+<meta name="description" content="Common questions about FD Commander: hardware requirements, licensing, how scoring works, internet access, supported modes, and how it compares to other Field Day logging software.">
+<link rel="canonical" href="https://fielddaycommander.org/fd-commander-faq.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="FAQ - FD Commander">
+<meta property="og:description" content="Common questions about FD Commander: hardware, licensing, scoring, internet access, supported modes, and comparisons to other Field Day software.">
+<meta property="og:url" content="https://fielddaycommander.org/fd-commander-faq.html">
+<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FAQ - FD Commander">
+<meta name="twitter:description" content="Common questions about FD Commander: hardware, licensing, scoring, internet access, and supported modes.">
+<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fd-commander.css">
 <style>
@@ -83,6 +94,94 @@
     .faq-question { font-size: 1.05rem; }
   }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What do I need to run FD Commander?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Operators use it from any device with a web browser: Windows, Mac, Linux, a tablet, or a phone. The server runs on Linux (a Raspberry Pi, old PC, or any spare box). The deploy script targets Ubuntu/Debian and setup takes about 5 minutes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can FD Commander run on a Raspberry Pi?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. It has been tested on a Raspberry Pi 4 with 2 GB of RAM running off a battery pack. FrankenPHP and Laravel Octane keep the memory footprint small. A Pi is a great Field Day server: low power draw, fits in a pelican case, and you can prep it at home weeks before the event."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does FD Commander need internet access?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "To deploy: yes, the install script downloads dependencies. To run: no. Once deployed, the entire platform is fully air-gapped with zero external calls and zero cloud dependencies. Many Field Day sites have no internet at all."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does FD Commander export Cabrillo?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Cabrillo export is a core feature. When the event ends, you generate a Cabrillo file ready to upload to the ARRL submission page."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does dupe checking work across multiple stations?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "All contacts go into a single shared database in real time. When an operator enters a callsign, FD Commander checks it against every contact logged by every station on every band. Dupes are flagged instantly before the contact is saved."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if the server goes down during the event?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Operators keep logging. If a browser loses its connection to the server, contacts queue locally on the device and sync automatically when the connection comes back. FD Commander also has a paper log transcription feature for entering contacts with correct timestamps if needed."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is FD Commander really free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. It is free and open source under the GPL v3 license. No paid tiers, no premium features, no telemetry, and no accounts on someone else's server. The code is on GitHub."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use FD Commander for contests other than Field Day?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "FD Commander supports ARRL Field Day and Winter Field Day. The scoring, bonus categories, exchange format, and Cabrillo export are specific to those events. It is not a general contest logger."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does scoring and bonus point tracking work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Scoring is automatic. Each contact is weighted by mode (CW and digital are 2 points, phone is 1) and the power multiplier is applied. All 18 ARRL bonus categories are built in, including Emergency Power, GOTA, Youth Participation, and NTS Messages. Each bonus shows its status so you can see what points you are leaving on the table."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How many simultaneous operators can FD Commander handle?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "More than you will need. The server uses persistent workers (Laravel Octane on FrankenPHP) and a dedicated WebSocket process for real-time updates. Even on a Raspberry Pi 4, the stack can handle dozens of simultaneous connections. A typical Field Day site runs 5 to 15 stations, which is nowhere near the limit."
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <div class="topo-bg"></div>
