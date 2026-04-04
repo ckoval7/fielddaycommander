@@ -145,6 +145,16 @@ a.logo:hover { color: var(--text-primary); }
   color: var(--text-primary);
   background: var(--bg-card-hover);
 }
+.nav-dropdown-section {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  padding: 0.6rem 1.25rem 0.2rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
 .nav-dropdown:hover .nav-dropdown-menu {
   display: block;
 }

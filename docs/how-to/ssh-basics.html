@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSH &amp; Command Line Basics - FD Commander</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .cmd { color: var(--text-primary); }
+  .code-block .output { color: var(--accent-sky); }
+  .code-block .prompt { color: var(--accent-green); }
+
+  .cmd-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+  .cmd-table th {
+    text-align: left;
+    padding: 0.6rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+  }
+  .cmd-table td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  .cmd-table td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent-emerald);
+    white-space: nowrap;
+  }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>SSH &amp; <span class="gradient">Command Line Basics</span></h1>
+    <p>Connect to your Pi remotely and learn the essential commands for managing FD Commander.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; SSH &amp; CLI Basics
+      </div>
+
+      <h2>What Is SSH?</h2>
+
+      <p>SSH (Secure Shell) lets you control your Pi from another computer over the network. Instead of plugging a monitor and keyboard into the Pi, you open a terminal on your laptop, type a command, and you're in. Everything you type runs on the Pi. This is how you'll install FD Commander, check on the server, and fix things if something goes wrong during the event.</p>
+
+      <h2>Connecting from Your Computer</h2>
+
+      <h3>Windows</h3>
+
+      <p>Windows 10 and 11 have SSH built in. Open <strong>PowerShell</strong> or <strong>Command Prompt</strong> (search for either in the Start menu) and type:</p>
+
+      <div class="code-block"><span class="cmd">ssh your-username@fd-commander.local</span></div>
+
+      <p>Replace <code>your-username</code> with the account you created in Raspberry Pi Imager, and <code>fd-commander</code> with your Pi's hostname.</p>
+
+      <p>If you prefer a graphical tool, <a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html" target="_blank" rel="noopener">PuTTY</a> is a free SSH client. Enter your Pi's hostname or IP address, make sure the port is 22 and the connection type is SSH, then click Open.</p>
+
+      <h3>Mac and Linux</h3>
+
+      <p>Open <strong>Terminal</strong> (on Mac it's in Applications &gt; Utilities, or search for it with Spotlight). The command is the same:</p>
+
+      <div class="code-block"><span class="cmd">ssh your-username@fd-commander.local</span></div>
+
+      <h3>First Connection</h3>
+
+      <p>The first time you connect, you'll see a message about the host's authenticity:</p>
+
+      <div class="code-block"><span class="output">The authenticity of host 'fd-commander.local' can't be established.
+ED25519 key fingerprint is SHA256:xxxxxxxxxxxxxxxxxxx.
+Are you sure you want to continue connecting (yes/no/[fingerprint])?</span></div>
+
+      <p>Type <code>yes</code> and press Enter. This is normal. Your computer is recording the Pi's identity so it can verify it next time. You won't see this again unless you reinstall the Pi.</p>
+
+      <p>Then enter your password. The cursor won't move while you type it. That's a security feature, not a bug. Press Enter when done.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Using an IP address instead</div>
+        <p>If <code>.local</code> doesn't resolve, use the Pi's IP address directly: <code>ssh your-username@192.168.1.42</code>. You can find the IP on your router's admin page under connected devices.</p>
+      </div>
+
+      <h2>Finding Your Way Around</h2>
+
+      <p>Once you're connected, you're sitting in your home directory on the Pi. Here's what you need to know.</p>
+
+      <h3>Where Am I?</h3>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">pwd</span>
+<span class="output">/home/your-username</span></div>
+
+      <p><code>pwd</code> prints the current directory. Think of directories like folders on your computer. The <code>/</code> separates levels, like <code>C:\Users\You</code> on Windows but with forward slashes.</p>
+
+      <h3>What's Here?</h3>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">ls</span>
+<span class="output">fd-commander</span>
+
+<span class="prompt">$</span> <span class="cmd">ls -la</span>
+<span class="output">total 12
+drwxr-xr-x 3 pi pi 4096 Jun 25 09:00 .
+drwxr-xr-x 3 root root 4096 Jun 25 08:45 ..
+drwxr-xr-x 15 pi pi 4096 Jun 25 09:02 fd-commander</span></div>
+
+      <p><code>ls</code> lists files and folders. Add <code>-la</code> to see hidden files (ones starting with a dot) and details like permissions and dates.</p>
+
+      <h3>Moving Around</h3>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">cd fd-commander</span>      <span class="comment"># go into a folder</span>
+<span class="prompt">$</span> <span class="cmd">cd ..</span>                  <span class="comment"># go up one level</span>
+<span class="prompt">$</span> <span class="cmd">cd ~</span>                   <span class="comment"># go back to your home directory</span>
+<span class="prompt">$</span> <span class="cmd">cd /var/log</span>            <span class="comment"># go to an absolute path</span></div>
+
+      <h2>Essential Commands</h2>
+
+      <p>You don't need to memorize a lot. These are the commands you'll actually use with FD Commander.</p>
+
+      <table class="cmd-table">
+        <thead><tr><th>Command</th><th>What It Does</th></tr></thead>
+        <tbody>
+          <tr><td>ls</td><td>List files in the current directory</td></tr>
+          <tr><td>cd folder</td><td>Change into a directory</td></tr>
+          <tr><td>pwd</td><td>Print the current directory path</td></tr>
+          <tr><td>cat file.txt</td><td>Display the contents of a file</td></tr>
+          <tr><td>nano file.txt</td><td>Open a file in a simple text editor (Ctrl+O to save, Ctrl+X to exit)</td></tr>
+          <tr><td>cp file.txt backup.txt</td><td>Copy a file</td></tr>
+          <tr><td>mv old.txt new.txt</td><td>Rename or move a file</td></tr>
+          <tr><td>rm file.txt</td><td>Delete a file (no undo, be careful)</td></tr>
+          <tr><td>sudo command</td><td>Run a command as administrator</td></tr>
+          <tr><td>clear</td><td>Clear the screen</td></tr>
+          <tr><td>exit</td><td>Disconnect from SSH</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <div class="callout-title">About sudo</div>
+        <p>Some commands need administrator access, like installing software or restarting services. Put <code>sudo</code> in front of the command and enter your password when prompted. Don't use <code>sudo</code> for everything. Only use it when a command tells you "permission denied" or the instructions specifically say to.</p>
+      </div>
+
+      <h2>Checking on FD Commander</h2>
+
+      <p>Once FD Commander is deployed, here are the commands you'll reach for most often.</p>
+
+      <h3>Is the server running?</h3>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo systemctl status fd-commander</span>
+<span class="output">● fd-commander.service - FD Commander Web Server
+     Active: active (running) since Sat 2025-06-28 17:55:00 EDT</span></div>
+
+      <p>If it says <code>active (running)</code>, you're good. If it says <code>inactive</code> or <code>failed</code>, restart it:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo systemctl restart fd-commander</span></div>
+
+      <h3>Check disk space</h3>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">df -h /</span>
+<span class="output">Filesystem      Size  Used Avail Use% Mounted on
+/dev/mmcblk0p2   29G  4.2G   24G  15% /</span></div>
+
+      <p>This shows how much space is left on the SD card. If you're uploading a lot of photos during the event, keep an eye on this.</p>
+
+      <h3>Check memory usage</h3>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">free -h</span>
+<span class="output">               total        used        free
+Mem:           1.8Gi       512Mi       1.1Gi
+Swap:           99Mi         0B        99Mi</span></div>
+
+      <h3>View recent logs</h3>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo journalctl -u fd-commander --since "1 hour ago" --no-pager</span></div>
+
+      <p>This shows the last hour of FD Commander logs. Useful if something isn't working and you want to see error messages.</p>
+
+      <h2>Copying Files To and From the Pi</h2>
+
+      <p>Sometimes you need to pull a file off the Pi (like a log file or database backup) or push one to it. Use <code>scp</code> from your local computer, not from the SSH session.</p>
+
+      <h3>Download a file from the Pi</h3>
+
+      <div class="code-block"><span class="comment"># Run this on your computer, not on the Pi</span>
+<span class="prompt">$</span> <span class="cmd">scp your-username@fd-commander.local:/path/to/file.log .</span></div>
+
+      <p>The <code>.</code> at the end means "put it in my current directory."</p>
+
+      <h3>Upload a file to the Pi</h3>
+
+      <div class="code-block"><span class="comment"># Run this on your computer, not on the Pi</span>
+<span class="prompt">$</span> <span class="cmd">scp myfile.txt your-username@fd-commander.local:~/</span></div>
+
+      <p>The <code>~/</code> means "put it in my home directory on the Pi."</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Windows users</div>
+        <p><code>scp</code> works in PowerShell and Command Prompt on Windows 10+. If you're using PuTTY, the equivalent tool is called <a href="https://winscp.net/" target="_blank" rel="noopener">WinSCP</a>, which gives you a drag-and-drop file browser.</p>
+      </div>
+
+      <h2>Staying Connected</h2>
+
+      <h3>Keep your session alive</h3>
+
+      <p>If your SSH connection drops after sitting idle, your terminal or SSH client may be timing out. On Mac/Linux, add this to <code>~/.ssh/config</code> on your local machine:</p>
+
+      <div class="code-block"><span class="cmd">Host *
+    ServerAliveInterval 60</span></div>
+
+      <p>This sends a keepalive signal every 60 seconds. In PuTTY, go to Connection and set "Seconds between keepalives" to 60.</p>
+
+      <h3>Run something that survives disconnection</h3>
+
+      <p>If you need to run a long command (like a system update) and don't want it to die if your SSH connection drops, use <code>tmux</code>:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">tmux</span>                    <span class="comment"># start a new session</span>
+<span class="comment"># run your long command here</span>
+<span class="comment"># press Ctrl+B, then D to detach</span>
+<span class="prompt">$</span> <span class="cmd">tmux attach</span>             <span class="comment"># reconnect to the session later</span></div>
+
+      <p>The command keeps running even if you close your laptop. When you SSH back in, <code>tmux attach</code> picks up right where you left off.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">That's the essentials</div>
+        <p>You don't need to be a Linux expert to run FD Commander. These commands cover connecting, checking status, and basic troubleshooting. If something comes up that isn't covered here, the <a href="../fd-commander-docs.html">full documentation</a> has more detail.</p>
+      </div>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="pi-setup.html">Pi Setup &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <span class="logo" style="font-size:0.95rem; display:inline-flex;">
+        <img src="../fdlogdb.png" alt="Field Day Commander" style="width:24px;height:24px;object-fit:contain;">
+        Field Day Commander
+      </span>
+      <span style="margin-left:1rem;">Open source under GPL v3</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+      <a href="../fd-commander-docs.html">Documentation</a>
+      <a href="https://github.com/ckoval7/fd-commander/blob/main/LICENSE">License</a>
+      <span class="footer-call">73 de Field Day Commander</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

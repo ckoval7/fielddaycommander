@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNS &amp; TLS Setup - FD Commander</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+  .callout.danger {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+  }
+  .callout.danger .callout-title { color: #ef4444; }
+
+  .code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .cmd { color: var(--text-primary); }
+  .code-block .output { color: var(--accent-sky); }
+  .code-block .prompt { color: var(--text-muted); }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .badge-advanced {
+    display: inline-block;
+    background: rgba(251, 146, 60, 0.15);
+    color: var(--accent-orange);
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>DNS &amp; <span class="gradient">TLS Setup</span></h1>
+    <p>Point a domain name at your FD Commander server and secure it with HTTPS.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; DNS &amp; TLS
+      </div>
+
+      <div class="badge-advanced">Advanced &middot; Optional</div>
+
+      <p>This guide is only necessary if you want to make FD Commander accessible over the internet. If you're running it on a LAN at your Field Day site with no outside access, you can skip this entirely. FD Commander works perfectly on a local network over plain HTTP.</p>
+
+      <p>But if you want club members to register equipment and sign up for shifts before the event, or let people follow the live score from home during the event, you need a domain name and TLS. There is no good reason to put FD Commander on the public internet without HTTPS.</p>
+
+      <div class="callout danger">
+        <div class="callout-title">Do not skip TLS</div>
+        <p>Running over plain HTTP on a LAN is fine. Running over plain HTTP on the open internet means passwords and session tokens travel in cleartext, and anyone on the path can read them. If you're exposing FD Commander to the internet, use TLS. <a href="https://letsencrypt.org/" target="_blank" rel="noopener">Let's Encrypt</a> is free.</p>
+      </div>
+
+      <h2>What You Need</h2>
+
+      <ul>
+        <li>A <strong>domain name</strong> you control. You can register one from any registrar (<a href="https://www.namecheap.com/" target="_blank" rel="noopener">Namecheap</a>, <a href="https://www.cloudflare.com/products/registrar/" target="_blank" rel="noopener">Cloudflare</a>, <a href="https://www.porkbun.com/" target="_blank" rel="noopener">Porkbun</a>, etc.). Something like <code>yourcallsign.com</code> works well.</li>
+        <li>A <strong>public IP address</strong> at the location where FD Commander will run, or the ability to set one up (most home/club internet connections have one).</li>
+        <li>Access to your <strong>router</strong> to set up port forwarding.</li>
+        <li>FD Commander already <strong>deployed and running</strong> on your Pi or server.</li>
+      </ul>
+
+      <h2>How It Fits Together</h2>
+
+      <p>When someone types <code>fd.yourcallsign.com</code> in their browser, three things happen in sequence:</p>
+
+      <ol>
+        <li><strong>DNS</strong> translates the domain name into your public IP address.</li>
+        <li>Your <strong>router</strong> forwards incoming traffic on ports 80 and 443 to the Pi on your local network.</li>
+        <li><strong>TLS</strong> encrypts the connection so passwords and session data can't be intercepted.</li>
+      </ol>
+
+      <p>This guide walks through each piece.</p>
+
+      <h2>Step 1: Get Your Public IP</h2>
+
+      <p>From any computer on the network where FD Commander will run, find your public IP address:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">curl -s ifconfig.me</span>
+<span class="output">203.0.113.42</span></div>
+
+      <p>This is the IP address the rest of the internet uses to reach your network. Write it down. You'll enter it in your DNS settings.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Dynamic IP addresses</div>
+        <p>Most residential internet connections have a dynamic IP that can change periodically. For a weekend event this usually isn't a problem. If you want something more permanent, look into a dynamic DNS service like <a href="https://www.duckdns.org/" target="_blank" rel="noopener">Duck DNS</a> (free) that automatically updates your DNS record when your IP changes.</p>
+      </div>
+
+      <h2>Step 2: Create a DNS Record</h2>
+
+      <p>Log into your domain registrar or DNS provider and create an <strong>A record</strong> pointing your chosen subdomain to your public IP.</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Go to the <strong>DNS management</strong> page for your domain.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">2</span> Add a new <strong>A record</strong>:</p>
+        <p><strong>Name / Host:</strong> the subdomain you want (e.g., <code>fd</code> for <code>fd.yourcallsign.com</code>)</p>
+        <p><strong>Value / Points to:</strong> your public IP address (e.g., <code>203.0.113.42</code>)</p>
+        <p><strong>TTL:</strong> leave the default, or set to 300 (5 minutes) if available.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">3</span> <strong>Save</strong> the record. DNS changes can take a few minutes to propagate, though most providers are nearly instant.</p>
+      </div>
+
+      <h3>Verify DNS</h3>
+
+      <p>After a few minutes, confirm the record is working:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">nslookup fd.yourcallsign.com</span>
+<span class="output">Name:    fd.yourcallsign.com
+Address: 203.0.113.42</span></div>
+
+      <p>If it returns your public IP, DNS is set up correctly.</p>
+
+      <h2>Step 3: Port Forwarding</h2>
+
+      <p>Your router needs to know that incoming web traffic should go to the Pi. Log into your router's admin page (usually <code>192.168.1.1</code> or <code>192.168.0.1</code>) and set up port forwarding rules:</p>
+
+      <ul>
+        <li>Forward <strong>port 80</strong> (HTTP) to your Pi's local IP address, port 80.</li>
+        <li>Forward <strong>port 443</strong> (HTTPS) to your Pi's local IP address, port 443.</li>
+      </ul>
+
+      <p>Port 80 is needed temporarily so Let's Encrypt can verify you own the domain. After TLS is set up, all real traffic goes through port 443.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Finding the Pi's local IP</div>
+        <p>SSH into the Pi and run <code>hostname -I</code>. It'll return something like <code>192.168.1.42</code>. That's the address you forward to.</p>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-title">Every router is different</div>
+        <p>The exact steps depend on your router's make and model. Look for "Port Forwarding," "Virtual Server," or "NAT" in your router's settings. If you're not sure, search for your router model followed by "port forwarding" and you'll find step-by-step instructions.</p>
+      </div>
+
+      <h2>Step 4: Deploy with TLS Enabled</h2>
+
+      <p>FD Commander uses <a href="https://caddyserver.com/" target="_blank" rel="noopener">Caddy</a> as its built-in web server. Caddy automatically obtains and renews TLS certificates from Let's Encrypt. You don't need to install anything extra or manage certificates manually.</p>
+
+      <p>When you run the deploy script, include the <code>--ssl</code> and <code>--email</code> flags:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ./deploy.sh --domain fd.yourcallsign.com --ssl --email you@example.com</span></div>
+
+      <p>If you've already deployed without TLS, you'll need to redeploy with these flags to enable it.</p>
+
+      <p>The script sets <code>APP_URL</code> to <code>https://fd.yourcallsign.com</code>, configures the Caddyfile with your domain, and starts the service on port 443. Caddy contacts Let's Encrypt, proves you own the domain (using the port 80 you forwarded earlier), obtains a TLS certificate, and starts serving HTTPS. It also renews the certificate before it expires, so you never have to think about it again.</p>
+
+      <div class="callout warning">
+        <div class="callout-title">Port 80 must be reachable</div>
+        <p>Caddy uses port 80 to prove domain ownership to Let's Encrypt. If it can't bind to port 80 or the port isn't forwarded, certificate issuance will fail. Check your port forwarding if you see errors in <code>sudo journalctl -u fd-commander</code>.</p>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-title">Already have a certificate?</div>
+        <p>If you have your own certificate files (from your organization or another CA), you can provide them directly instead of using Let's Encrypt: <code>sudo ./deploy.sh --domain fd.yourcallsign.com --ssl --ssl-cert /path/to/cert.pem --ssl-key /path/to/key.pem</code></p>
+      </div>
+
+      <h3>Verify HTTPS</h3>
+
+      <p>Open a browser and go to <code>https://fd.yourcallsign.com</code>. You should see FD Commander load with a padlock icon in the address bar. If you get a certificate warning, check the logs: <code>sudo journalctl -u fd-commander --no-pager</code>.</p>
+
+      <p>Caddy automatically redirects HTTP to HTTPS, so if someone types <code>http://fd.yourcallsign.com</code> they'll be sent to the secure version automatically.</p>
+
+      <h2>Summary</h2>
+
+      <p>Once all the pieces are in place, the setup looks like this:</p>
+
+      <ol>
+        <li><strong>DNS</strong> - an A record points <code>fd.yourcallsign.com</code> to your public IP.</li>
+        <li><strong>Router</strong> - ports 80 and 443 forward to your Pi's local IP.</li>
+        <li><strong>Deploy script</strong> - <code>--ssl --email</code> tells Caddy to obtain a Let's Encrypt certificate automatically.</li>
+        <li><strong>Caddy</strong> - handles HTTPS, certificate renewal, and HTTP-to-HTTPS redirects.</li>
+      </ol>
+
+      <p>Club members can now visit <code>https://fd.yourcallsign.com</code> to register equipment, sign up for shifts, follow the live score, and sign the guestbook, all over an encrypted connection.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Back to LAN for the event?</div>
+        <p>If your Field Day site won't have internet, that's fine. Set everything up ahead of time over the internet, then run the event on a LAN. FD Commander doesn't need internet to operate. It works fully air-gapped. The DNS and TLS setup is just for the pre-event and remote-access use cases.</p>
+      </div>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="ssh-basics.html">SSH Basics &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <span class="logo" style="font-size:0.95rem; display:inline-flex;">
+        <img src="../fdlogdb.png" alt="Field Day Commander" style="width:24px;height:24px;object-fit:contain;">
+        Field Day Commander
+      </span>
+      <span style="margin-left:1rem;">Open source under GPL v3</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener">GitHub</a>
+      <a href="../fd-commander-docs.html">Documentation</a>
+      <a href="https://github.com/ckoval7/fd-commander/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+      <span class="footer-call">73 de Field Day Commander</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
