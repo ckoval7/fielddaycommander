@@ -85,6 +85,14 @@ class ShiftRole extends Model
             'icon' => 'o-radio',
             'color' => '#64748b',
         ],
+        'Operator' => [
+            'description' => 'Licensed amateur radio operator making contacts at a station',
+            'bonus_points' => null,
+            'requires_confirmation' => false,
+            'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
+            'icon' => 'o-signal',
+            'color' => '#0ea5e9',
+        ],
     ];
 
     /**
