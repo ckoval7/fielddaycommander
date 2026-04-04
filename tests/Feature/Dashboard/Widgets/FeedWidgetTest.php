@@ -137,6 +137,8 @@ test('feed items have expected structure', function () {
     $user = createFeedUser();
     sendNotification($user, NotificationCategory::QsoMilestone, 'Milestone!', '50 QSOs logged!');
 
+    $this->actingAs($user);
+
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
     $feed->widgetId = 'test-feed-structure';
@@ -157,6 +159,8 @@ test('read notifications are marked as read in feed items', function () {
     sendNotification($user, NotificationCategory::QsoMilestone, 'Milestone', '100 QSOs!');
 
     $user->notifications()->first()->markAsRead();
+
+    $this->actingAs($user);
 
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
@@ -179,6 +183,8 @@ test('all_activity feed shows all notification categories', function () {
     sendNotification($user, NotificationCategory::NewSection, 'New Section', 'Worked NNY');
     sendNotification($user, NotificationCategory::Guestbook, 'Guestbook', 'New entry');
 
+    $this->actingAs($user);
+
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
     $feed->widgetId = 'test-feed-all';
@@ -199,6 +205,8 @@ test('contacts_only feed shows only qso_milestone and new_section categories', f
     sendNotification($user, NotificationCategory::NewSection, 'New Section', 'Worked NNY');
     sendNotification($user, NotificationCategory::Equipment, 'Equipment', 'Radio online');
     sendNotification($user, NotificationCategory::Guestbook, 'Guestbook', 'New entry');
+
+    $this->actingAs($user);
 
     $feed = new Feed;
     $feed->config = ['feed_type' => 'contacts_only'];
@@ -226,6 +234,8 @@ test('milestones_only feed shows only qso_milestone category', function () {
     sendNotification($user, NotificationCategory::NewSection, 'New Section', 'Worked NNY');
     sendNotification($user, NotificationCategory::Equipment, 'Equipment', 'Radio online');
 
+    $this->actingAs($user);
+
     $feed = new Feed;
     $feed->config = ['feed_type' => 'milestones_only'];
     $feed->widgetId = 'test-feed-milestones';
@@ -246,6 +256,8 @@ test('equipment_events feed shows only equipment category', function () {
     sendNotification($user, NotificationCategory::QsoMilestone, 'Milestone', '50 QSOs');
     sendNotification($user, NotificationCategory::Equipment, 'Equipment Change', 'Radio online');
     sendNotification($user, NotificationCategory::Equipment, 'Equipment Alert', 'Antenna issue');
+
+    $this->actingAs($user);
 
     $feed = new Feed;
     $feed->config = ['feed_type' => 'equipment_events'];
@@ -277,6 +289,8 @@ test('feed items are ordered newest first', function () {
     $this->travel(5)->minutes();
     sendNotification($user, NotificationCategory::QsoMilestone, 'Third', 'Newest item');
 
+    $this->actingAs($user);
+
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
     $feed->widgetId = 'test-feed-order';
@@ -301,6 +315,8 @@ test('normal mode limits to 20 items', function () {
         sendNotification($user, NotificationCategory::QsoMilestone, "Item {$i}", "Message {$i}");
     }
 
+    $this->actingAs($user);
+
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
     $feed->widgetId = 'test-feed-limit-normal';
@@ -317,6 +333,8 @@ test('tv mode limits to 15 items', function () {
     for ($i = 1; $i <= 25; $i++) {
         sendNotification($user, NotificationCategory::QsoMilestone, "Item {$i}", "Message {$i}");
     }
+
+    $this->actingAs($user);
 
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
@@ -373,7 +391,7 @@ test('categories default to enabled when not configured', function () {
     expect($data['items'])->toHaveCount(2);
 });
 
-test('unauthenticated user sees all categories', function () {
+test('unauthenticated user sees empty feed', function () {
     $user = createFeedUser();
     sendNotification($user, NotificationCategory::QsoMilestone, 'Milestone', '50 QSOs');
     sendNotification($user, NotificationCategory::Equipment, 'Equipment', 'Radio online');
@@ -385,7 +403,7 @@ test('unauthenticated user sees all categories', function () {
 
     $data = $feed->getData();
 
-    expect($data['items'])->toHaveCount(2);
+    expect($data['items'])->toBeEmpty();
 });
 
 test('user preferences interact correctly with feed type filter', function () {
@@ -440,6 +458,8 @@ test('feed items use icon from notification category', function (NotificationCat
     $user = createFeedUser();
     sendNotification($user, $category, 'Test', 'Test message');
 
+    $this->actingAs($user);
+
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
     $feed->widgetId = 'test-feed-icon';
@@ -465,6 +485,8 @@ test('time_ago shows just now for recent notifications', function () {
     $user = createFeedUser();
     sendNotification($user, NotificationCategory::QsoMilestone, 'Test', 'Message');
 
+    $this->actingAs($user);
+
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
     $feed->widgetId = 'test-feed-time-now';
@@ -480,6 +502,8 @@ test('time_ago shows minutes for notifications less than an hour old', function 
     sendNotification($user, NotificationCategory::QsoMilestone, 'Test', 'Message');
 
     $this->travel(5)->minutes();
+
+    $this->actingAs($user);
 
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
@@ -497,6 +521,8 @@ test('time_ago shows hours for notifications less than a day old', function () {
 
     $this->travel(3)->hours();
 
+    $this->actingAs($user);
+
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
     $feed->widgetId = 'test-feed-time-hr';
@@ -512,6 +538,8 @@ test('time_ago shows days for older notifications', function () {
     sendNotification($user, NotificationCategory::QsoMilestone, 'Test', 'Message');
 
     $this->travel(2)->days();
+
+    $this->actingAs($user);
 
     $feed = new Feed;
     $feed->config = ['feed_type' => 'all_activity'];
@@ -615,7 +643,7 @@ test('normal mode shows notification title and message', function () {
     $user = createFeedUser();
     sendNotification($user, NotificationCategory::QsoMilestone, '100 QSO Milestone', 'Congratulations! 100 QSOs logged.');
 
-    Livewire::test(Feed::class, [
+    Livewire::actingAs($user)->test(Feed::class, [
         'config' => ['feed_type' => 'all_activity'],
         'size' => 'normal',
     ])
@@ -627,7 +655,7 @@ test('tv mode shows notification title and message', function () {
     $user = createFeedUser();
     sendNotification($user, NotificationCategory::Equipment, 'Antenna Ready', 'The beam antenna is set up.');
 
-    Livewire::test(Feed::class, [
+    Livewire::actingAs($user)->test(Feed::class, [
         'config' => ['feed_type' => 'all_activity'],
         'size' => 'tv',
     ])
@@ -657,7 +685,7 @@ test('view uses wire:key for feed items', function () {
 
     $notificationId = $user->notifications()->first()->id;
 
-    Livewire::test(Feed::class, [
+    Livewire::actingAs($user)->test(Feed::class, [
         'config' => ['feed_type' => 'all_activity'],
         'size' => 'normal',
     ])
@@ -668,7 +696,7 @@ test('item count badge is shown in normal mode', function () {
     $user = createFeedUser();
     sendNotification($user, NotificationCategory::QsoMilestone, 'Test', 'Message');
 
-    Livewire::test(Feed::class, [
+    Livewire::actingAs($user)->test(Feed::class, [
         'config' => ['feed_type' => 'all_activity'],
         'size' => 'normal',
     ])

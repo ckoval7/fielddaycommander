@@ -6,6 +6,7 @@ use App\Enums\NotificationCategory;
 use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -148,7 +149,13 @@ class Feed extends Component
 
         $limit = self::ITEM_COUNTS[$this->size] ?? self::ITEM_COUNTS['normal'];
 
-        $query = DatabaseNotification::query()
+        $user = Auth::user();
+
+        if (! $user) {
+            return [];
+        }
+
+        $query = $user->notifications()
             ->latest()
             ->limit($limit);
 
@@ -201,7 +208,7 @@ class Feed extends Component
     /**
      * Apply category filter to the notification query.
      */
-    protected function applyCategoryFilter(Builder $query, array $categories): void
+    protected function applyCategoryFilter(Builder|MorphMany $query, array $categories): void
     {
         $query->where(function (Builder $q) use ($categories) {
             foreach ($categories as $category) {
