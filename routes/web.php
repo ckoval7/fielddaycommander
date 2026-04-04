@@ -100,6 +100,10 @@ Route::middleware(['auth', 'can:view-all-equipment'])->group(function () {
     Route::get('/equipment/all', \App\Livewire\Equipment\AllEquipmentList::class)->name('equipment.all');
 });
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/equipment/club', \App\Livewire\Equipment\ClubEquipmentList::class)->name('equipment.club');
+});
+
 Route::middleware(['auth', 'can:manage-own-equipment'])->group(function () {
     Route::get('/equipment', \App\Livewire\Equipment\EquipmentList::class)->name('equipment.index');
     Route::get('/equipment/create', \App\Livewire\Equipment\EquipmentForm::class)->name('equipment.create');

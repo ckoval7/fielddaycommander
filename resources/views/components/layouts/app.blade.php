@@ -121,6 +121,7 @@
 
                     <x-menu-sub title="Equipment" icon="o-wrench-screwdriver">
                         <x-menu-item title="My Catalog" link="{{ route('equipment.index') }}" route="equipment.index" />
+                        <x-menu-item title="Club Equipment" link="{{ route('equipment.club') }}" route="equipment.club" />
                         @can('view-all-equipment')
                             <x-menu-item title="All User Catalogs" link="{{ route('equipment.all') }}" route="equipment.all" />
                         @endcan
