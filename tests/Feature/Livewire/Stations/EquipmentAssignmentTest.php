@@ -366,6 +366,48 @@ test('can filter by owner', function () {
         ->assertDontSee('Other Antenna');
 });
 
+test('can filter by specific user', function () {
+    $otherUser = User::factory()->create(['call_sign' => 'W5XYZ', 'first_name' => 'Jane']);
+
+    Equipment::factory()->create([
+        'type' => 'antenna',
+        'make' => 'My Antenna',
+        'model' => 'ANT-MINE',
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    Equipment::factory()->create([
+        'type' => 'antenna',
+        'make' => 'Jane Antenna',
+        'model' => 'ANT-JANE',
+        'owner_user_id' => $otherUser->id,
+    ]);
+
+    Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
+        ->set('ownerFilter', (string) $otherUser->id)
+        ->assertSee('Jane Antenna')
+        ->assertDontSee('My Antenna');
+});
+
+test('owner options includes individual equipment owners', function () {
+    $otherUser = User::factory()->create(['call_sign' => 'W5XYZ', 'first_name' => 'Jane']);
+    Equipment::factory()->create([
+        'type' => 'antenna',
+        'owner_user_id' => $otherUser->id,
+    ]);
+
+    $component = Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id]);
+    $options = $component->get('ownerOptions');
+
+    // Should have standard options plus the other user
+    expect(collect($options)->pluck('id')->toArray())
+        ->toContain('all', 'my', 'club', (string) $otherUser->id);
+
+    // Should show call sign in the label
+    $otherOption = collect($options)->firstWhere('id', (string) $otherUser->id);
+    expect($otherOption['name'])->toContain('W5XYZ');
+});
+
 test('can clear all filters', function () {
     Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
         ->set('searchQuery', 'test')

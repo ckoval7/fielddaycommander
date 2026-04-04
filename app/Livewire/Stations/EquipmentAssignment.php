@@ -337,6 +337,37 @@ class EquipmentAssignment extends Component
     }
 
     /**
+     * Get owner filter options including individual equipment owners.
+     *
+     * @return array<int, array{id: string, name: string}>
+     */
+    #[Computed]
+    public function ownerOptions(): array
+    {
+        $options = [
+            ['id' => 'all', 'name' => 'All Owners'],
+            ['id' => 'my', 'name' => 'My Equipment'],
+            ['id' => 'club', 'name' => 'Club Equipment'],
+        ];
+
+        $owners = User::query()
+            ->whereHas('equipment')
+            ->where('id', '!=', auth()->id())
+            ->orderBy('call_sign')
+            ->get(['id', 'call_sign', 'first_name', 'last_name']);
+
+        foreach ($owners as $owner) {
+            $label = $owner->call_sign;
+            if ($owner->first_name) {
+                $label .= " ({$owner->first_name})";
+            }
+            $options[] = ['id' => (string) $owner->id, 'name' => $label];
+        }
+
+        return $options;
+    }
+
+    /**
      * Check if user can manage equipment assignments.
      */
     #[Computed]
@@ -597,6 +628,10 @@ class EquipmentAssignment extends Component
             $query->whereHas('equipment', function ($q) {
                 $q->whereNotNull('owner_organization_id');
             });
+        } elseif ($this->ownerFilter !== 'all' && is_numeric($this->ownerFilter)) {
+            $query->whereHas('equipment', function ($q) {
+                $q->where('owner_user_id', (int) $this->ownerFilter);
+            });
         }
 
         // Band filter
@@ -637,6 +672,8 @@ class EquipmentAssignment extends Component
             $query->where('owner_user_id', auth()->id());
         } elseif ($this->ownerFilter === 'club') {
             $query->whereNotNull('owner_organization_id');
+        } elseif ($this->ownerFilter !== 'all' && is_numeric($this->ownerFilter)) {
+            $query->where('owner_user_id', (int) $this->ownerFilter);
         }
 
         // Band filter
@@ -1036,6 +1073,7 @@ class EquipmentAssignment extends Component
         unset($this->assignedTotalValue);
         unset($this->hasActiveSession);
         unset($this->hasCommittedEquipmentDuringSession);
+        unset($this->ownerOptions);
     }
 
     /**

@@ -231,11 +231,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-2">
                     <x-select
                         wire:model.live="ownerFilter"
-                        :options="[
-                            ['id' => 'all', 'name' => 'All Owners'],
-                            ['id' => 'my', 'name' => 'My Equipment'],
-                            ['id' => 'club', 'name' => 'Club Equipment'],
-                        ]"
+                        :options="$this->ownerOptions"
                         option-value="id"
                         option-label="name"
                         class="select-sm w-full sm:w-auto sm:min-w-32"
