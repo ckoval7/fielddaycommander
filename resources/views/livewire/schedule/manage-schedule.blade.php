@@ -233,9 +233,6 @@
                                                         <x-icon :name="$role->icon" class="w-5 h-5" />
                                                     @endif
                                                     <span class="font-semibold">{{ $role->name }}</span>
-                                                    @if($role->color)
-                                                        <span class="badge badge-sm text-white" style="background-color: {{ $role->color }}">sample</span>
-                                                    @endif
                                                     @if($role->is_default)
                                                         <x-badge value="Default" class="badge-neutral badge-sm badge-outline" />
                                                     @endif
@@ -249,8 +246,6 @@
                                                             <span>Bonus: {{ $role->bonus_points }} pts</span>
                                                             @if($role->getBonusTypeCode())
                                                                 <x-badge value="Auto-awarded on confirmation" class="badge-success badge-sm badge-outline" />
-                                                            @elseif($role->isBonusEligibilityOnly())
-                                                                <x-badge value="Eligibility only" class="badge-warning badge-sm badge-outline" />
                                                             @endif
                                                         @endif
                                                         @if($role->requires_confirmation)
