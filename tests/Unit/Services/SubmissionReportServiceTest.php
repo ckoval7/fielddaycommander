@@ -138,6 +138,22 @@ test('operator list returns sorted callsigns', function () {
     expect($data['operators'])->toBe(['K1ABC', 'W1AW']);
 });
 
+test('total_pages is 2 without a GOTA station', function () {
+    $config = makeSubmissionConfig(['has_gota_station' => false]);
+
+    $data = app(SubmissionReportService::class)->getData($config);
+
+    expect($data['total_pages'])->toBe(2);
+});
+
+test('total_pages is 3 with a GOTA station', function () {
+    $config = makeSubmissionConfig(['has_gota_station' => true]);
+
+    $data = app(SubmissionReportService::class)->getData($config);
+
+    expect($data['total_pages'])->toBe(3);
+});
+
 test('participant count includes unique loggers and GOTA operators', function () {
     $config = makeSubmissionConfig(['has_gota_station' => true]);
     $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.2, 'allowed_fd' => true, 'sort_order' => 2]);

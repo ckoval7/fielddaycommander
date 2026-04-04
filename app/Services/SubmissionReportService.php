@@ -73,6 +73,7 @@ class SubmissionReportService
             'event_start' => $config->event->start_time,
             'event_end' => $config->event->end_time,
             'generated_at' => now(),
+            'total_pages' => $config->has_gota_station ? 3 : 2,
         ];
     }
 
