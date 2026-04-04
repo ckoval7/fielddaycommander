@@ -122,20 +122,32 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
      * @param {number} index - The positional index of this widget.
      * @returns {Object} Attribute map for x-bind.
      */
+    /**
+     * Returns dynamic class object for a sortable item.
+     * Separated from sortableItem() to avoid x-bind spread `:class`
+     * conflicting with Livewire morphing (which stringifies objects
+     * as [object Object]).
+     *
+     * @param {number} index
+     * @returns {Object} Class map for Alpine :class binding.
+     */
+    sortableItemClasses(index) {
+        return {
+            'opacity-50 scale-95': this.draggedIndex === index,
+            'ring-2 ring-primary ring-offset-2 bg-primary/10': this.dropTargetIndex === index && this.draggedIndex !== index,
+            'ring-2 ring-accent scale-105 shadow-lg': this.keyboardGrabbedIndex === index,
+            'cursor-grab': this.enabled && this.draggedIndex === null && this.keyboardGrabbedIndex === null,
+            'cursor-grabbing': this.draggedIndex === index,
+            'transition-all duration-300 ease-out': true,
+        };
+    },
+
     sortableItem(index) {
         return {
             'role': 'listitem',
             'tabindex': this.enabled ? '0' : '-1',
             ':draggable': String(this.enabled),
             ':aria-grabbed': this.keyboardGrabbedIndex === index ? 'true' : 'false',
-            ':class': JSON.stringify({
-                'opacity-50 scale-95': this.draggedIndex === index,
-                'ring-2 ring-primary ring-offset-2 bg-primary/10': this.dropTargetIndex === index && this.draggedIndex !== index,
-                'ring-2 ring-accent scale-105 shadow-lg': this.keyboardGrabbedIndex === index,
-                'cursor-grab': this.enabled && this.draggedIndex === null && this.keyboardGrabbedIndex === null,
-                'cursor-grabbing': this.draggedIndex === index,
-                'transition-transform duration-200': true,
-            }),
             '@dragstart': (event) => { this.dragStart(event, index); },
             '@dragover.prevent': (event) => { this.dragOver(event, index); },
             '@dragenter.prevent': (event) => { this.dragEnter(event, index); },

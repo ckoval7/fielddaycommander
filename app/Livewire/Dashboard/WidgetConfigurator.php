@@ -16,6 +16,10 @@ class WidgetConfigurator extends Component
 
     public string $mode = 'add';
 
+    public int $colSpan = 1;
+
+    public int $rowSpan = 1;
+
     public function mount(?string $widgetType = null, ?array $config = []): void
     {
         if ($widgetType) {
@@ -50,7 +54,9 @@ class WidgetConfigurator extends Component
         $this->dispatch('widget-configured',
             type: $this->widgetType,
             config: $this->widgetConfig,
-            mode: $this->mode
+            mode: $this->mode,
+            colSpan: $this->colSpan,
+            rowSpan: $this->rowSpan
         );
 
         $this->cancel();
@@ -59,15 +65,17 @@ class WidgetConfigurator extends Component
     public function cancel(): void
     {
         $this->showModal = false;
-        $this->reset(['widgetType', 'widgetConfig', 'mode']);
+        $this->reset(['widgetType', 'widgetConfig', 'mode', 'colSpan', 'rowSpan']);
     }
 
     /**
      * Handle the open-widget-configurator event from the DashboardEditor.
      */
     #[On('open-widget-configurator')]
-    public function handleOpenConfigurator(string $mode = 'add', ?string $widgetType = null, ?array $config = []): void
+    public function handleOpenConfigurator(string $mode = 'add', ?string $widgetType = null, ?array $config = [], int $colSpan = 1, int $rowSpan = 1): void
     {
+        $this->colSpan = $colSpan;
+        $this->rowSpan = $rowSpan;
         $this->openModal($mode, $widgetType, $config);
     }
 

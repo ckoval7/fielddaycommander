@@ -103,6 +103,46 @@
                     <p>Select a widget type to configure</p>
                 </div>
             @endif
+
+            {{-- Size Picker --}}
+            @if($widgetType)
+                <div class="border-t border-base-300 pt-4">
+                    <h3 class="text-lg font-semibold mb-3">Widget Size</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="label"><span class="label-text text-sm">Columns (1-4)</span></label>
+                            <div class="flex gap-1">
+                                @foreach(range(1, 4) as $c)
+                                    <button
+                                        type="button"
+                                        wire:click="$set('colSpan', {{ $c }})"
+                                        class="btn btn-sm flex-1 {{ $colSpan === $c ? 'btn-primary' : 'btn-ghost' }}"
+                                    >
+                                        {{ $c }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div>
+                            <label class="label"><span class="label-text text-sm">Rows (1-3)</span></label>
+                            <div class="flex gap-1">
+                                @foreach(range(1, 3) as $r)
+                                    <button
+                                        type="button"
+                                        wire:click="$set('rowSpan', {{ $r }})"
+                                        class="btn btn-sm flex-1 {{ $rowSpan === $r ? 'btn-primary' : 'btn-ghost' }}"
+                                    >
+                                        {{ $r }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-base-content/60 mt-2">
+                        Current: {{ $colSpan }} column{{ $colSpan > 1 ? 's' : '' }} x {{ $rowSpan }} row{{ $rowSpan > 1 ? 's' : '' }}
+                    </p>
+                </div>
+            @endif
         </div>
 
         <x-slot:actions>

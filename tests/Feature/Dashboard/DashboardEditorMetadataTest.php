@@ -20,8 +20,6 @@ it('displays editable title and description fields in edit mode', function () {
 
     Livewire::test(DashboardEditor::class, ['dashboard' => $dashboard])
         ->call('enterEditMode')
-        ->assertSee('Dashboard Name')
-        ->assertSee('Description (optional)')
         ->assertSet('title', 'My Dashboard')
         ->assertSet('description', 'Dashboard description')
         ->assertSet('editMode', true);

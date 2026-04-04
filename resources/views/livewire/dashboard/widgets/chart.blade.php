@@ -16,6 +16,15 @@
             this.$watch('chartData', (newData) => {
                 this.updateChart(newData);
             });
+
+            // Resize chart when edit mode changes (container padding shifts)
+            window.addEventListener('edit-mode-changed', () => {
+                this.$nextTick(() => {
+                    if (this.chartInstance) {
+                        this.chartInstance.resize();
+                    }
+                });
+            });
         },
 
         destroy() {

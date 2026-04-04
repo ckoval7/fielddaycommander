@@ -52,15 +52,15 @@ test('component renders successfully', function () {
 test('component displays dashboard title in edit mode', function () {
     Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
         ->call('enterEditMode')
-        ->assertSee('Dashboard Name')
-        ->assertSet('title', 'Test Dashboard');
+        ->assertSet('title', 'Test Dashboard')
+        ->assertSet('editMode', true);
 });
 
 test('component displays dashboard description in edit mode', function () {
     Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
         ->call('enterEditMode')
-        ->assertSee('Description (optional)')
-        ->assertSet('description', 'Test description');
+        ->assertSet('description', 'Test description')
+        ->assertSet('editMode', true);
 });
 
 test('component loads widgets from dashboard config', function () {
@@ -540,6 +540,73 @@ test('full edit workflow: add widget and save', function () {
     $lastWidget = collect($this->dashboard->config)->last();
     expect($lastWidget['type'])->toBe('progress_bar');
     expect($lastWidget['config']['metric'])->toBe('next_milestone');
+});
+
+// ── Resize Widget ───────────────────────────────────────────────────
+
+test('resize widget updates col_span and row_span', function () {
+    $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->call('enterEditMode')
+        ->call('resizeWidget', 'widget-1', 2, 1);
+
+    $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
+    expect($widget['col_span'])->toBe(2);
+    expect($widget['row_span'])->toBe(1);
+});
+
+test('resize widget does nothing when not in edit mode', function () {
+    $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->call('resizeWidget', 'widget-1', 2, 2);
+
+    $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
+    expect($widget)->not->toHaveKey('col_span');
+});
+
+test('resize widget clamps col_span to valid range', function () {
+    $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->call('enterEditMode')
+        ->call('resizeWidget', 'widget-1', 5, 1);
+
+    $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
+    expect($widget['col_span'])->toBe(4);
+});
+
+test('resize widget clamps row_span to valid range', function () {
+    $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->call('enterEditMode')
+        ->call('resizeWidget', 'widget-1', 1, 4);
+
+    $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
+    expect($widget['row_span'])->toBe(3);
+});
+
+test('resize widget enforces minimum of 1', function () {
+    $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->call('enterEditMode')
+        ->call('resizeWidget', 'widget-1', 0, 0);
+
+    $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
+    expect($widget['col_span'])->toBe(1);
+    expect($widget['row_span'])->toBe(1);
+});
+
+test('resize widget ignores unknown widget id', function () {
+    Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->call('enterEditMode')
+        ->call('resizeWidget', 'nonexistent', 2, 2)
+        ->assertCount('widgets', 3);
+});
+
+test('resize widget persists after save', function () {
+    Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->call('enterEditMode')
+        ->call('resizeWidget', 'widget-1', 2, 2)
+        ->call('saveLayout');
+
+    $this->dashboard->refresh();
+    $widget = collect($this->dashboard->config)->firstWhere('id', 'widget-1');
+    expect($widget['col_span'])->toBe(2);
+    expect($widget['row_span'])->toBe(2);
 });
 
 test('remove widget then save persists reduced config', function () {

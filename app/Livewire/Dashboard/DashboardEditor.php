@@ -249,6 +249,38 @@ class DashboardEditor extends Component
     }
 
     /**
+     * Resize a widget's column and row span.
+     *
+     * @param  string  $widgetId  The widget to resize
+     * @param  int  $colSpan  Desired column span (clamped to 1-4)
+     * @param  int  $rowSpan  Desired row span (clamped to 1-3)
+     */
+    public function resizeWidget(string $widgetId, int $colSpan, int $rowSpan): void
+    {
+        if (! $this->editMode) {
+            return;
+        }
+
+        $colSpan = max(1, min(4, $colSpan));
+        $rowSpan = max(1, min(3, $rowSpan));
+
+        $found = false;
+        $this->widgets = $this->widgets->map(function ($widget) use ($widgetId, $colSpan, $rowSpan, &$found) {
+            if ($widget['id'] === $widgetId) {
+                $widget['col_span'] = $colSpan;
+                $widget['row_span'] = $rowSpan;
+                $found = true;
+            }
+
+            return $widget;
+        });
+
+        if ($found) {
+            $this->dispatch('edit-mode-changed', enabled: $this->editMode);
+        }
+    }
+
+    /**
      * Confirm widget removal.
      */
     public function confirmRemoveWidget(string $widgetId): void
@@ -306,7 +338,7 @@ class DashboardEditor extends Component
      * @param  string  $type  Widget type from config
      * @param  array<string, mixed>  $config  Widget configuration
      */
-    public function addWidget(string $type, array $config = []): void
+    public function addWidget(string $type, array $config = [], int $colSpan = 1, int $rowSpan = 1): void
     {
         if (! $this->editMode) {
             return;
@@ -331,6 +363,8 @@ class DashboardEditor extends Component
             'config' => $config,
             'order' => $this->widgets->count(),
             'visible' => true,
+            'col_span' => max(1, min(4, $colSpan)),
+            'row_span' => max(1, min(3, $rowSpan)),
         ];
 
         $this->widgets->push($newWidget);
@@ -373,7 +407,9 @@ class DashboardEditor extends Component
         $this->dispatch('open-widget-configurator',
             mode: 'edit',
             widgetType: $widget['type'],
-            config: $widget['config'] ?? []
+            config: $widget['config'] ?? [],
+            colSpan: $widget['col_span'] ?? 1,
+            rowSpan: $widget['row_span'] ?? 1
         );
     }
 
@@ -381,17 +417,18 @@ class DashboardEditor extends Component
      * Handle widget-configured event from WidgetConfigurator.
      */
     #[On('widget-configured')]
-    public function handleWidgetConfigured(string $type, array $config, string $mode): void
+    public function handleWidgetConfigured(string $type, array $config, string $mode, int $colSpan = 1, int $rowSpan = 1): void
     {
         if ($mode === 'add') {
-            $this->addWidget($type, $config);
-            // Re-sync Alpine enabled state after Livewire re-render
+            $this->addWidget($type, $config, $colSpan, $rowSpan);
             $this->dispatch('edit-mode-changed', enabled: $this->editMode);
         } elseif ($mode === 'edit' && $this->configuringWidgetId) {
-            $this->widgets = $this->widgets->map(function ($widget) use ($type, $config) {
+            $this->widgets = $this->widgets->map(function ($widget) use ($type, $config, $colSpan, $rowSpan) {
                 if ($widget['id'] === $this->configuringWidgetId) {
                     $widget['type'] = $type;
                     $widget['config'] = $config;
+                    $widget['col_span'] = max(1, min(4, $colSpan));
+                    $widget['row_span'] = max(1, min(3, $rowSpan));
                 }
 
                 return $widget;
@@ -406,7 +443,6 @@ class DashboardEditor extends Component
                 'css' => 'alert-success',
             ]);
 
-            // Re-sync Alpine enabled state after Livewire re-render
             $this->dispatch('edit-mode-changed', enabled: $this->editMode);
         }
     }
