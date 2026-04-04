@@ -714,4 +714,25 @@
             />
         </x-slot:actions>
     </x-modal>
+
+    {{-- Equipment Suggestions Banner --}}
+    <div x-data="{ dismissed: false }" x-show="!dismissed" x-transition class="bg-info/10 border border-info/30 rounded-lg p-3 sm:p-4">
+        <div class="flex items-start gap-3">
+            <x-icon name="o-light-bulb" class="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
+            <div class="flex-1 min-w-0">
+                <div class="font-medium text-sm">Typical station equipment</div>
+                <ul class="mt-1 text-xs sm:text-sm text-base-content/70 columns-2 gap-x-6 list-disc list-inside">
+                    <li>Power Supply</li>
+                    <li>Antenna & Feedline</li>
+                    <li>Mic / CW Key</li>
+                    <li>Headphones</li>
+                    <li>Logging Computer</li>
+                    <li>Coax & Cables</li>
+                </ul>
+            </div>
+            <button @click="dismissed = true" class="btn btn-ghost btn-xs btn-circle flex-shrink-0" aria-label="Dismiss suggestions">
+                <x-icon name="o-x-mark" class="w-4 h-4" />
+            </button>
+        </div>
+    </div>
 </div>

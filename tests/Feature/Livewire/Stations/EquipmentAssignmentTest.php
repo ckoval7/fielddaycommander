@@ -83,6 +83,17 @@ test('component can render with station', function () {
         ->assertSee('Phone Station 1');
 });
 
+test('shows equipment suggestions banner', function () {
+    Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
+        ->assertSee('Typical station equipment')
+        ->assertSee('Power Supply')
+        ->assertSee('Antenna & Feedline', escape: false)
+        ->assertSee('Mic / CW Key')
+        ->assertSee('Headphones')
+        ->assertSee('Logging Computer')
+        ->assertSee('Coax & Cables', escape: false);
+});
+
 test('shows primary radio in assigned section', function () {
     Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
         ->assertSee('Primary Radio')
