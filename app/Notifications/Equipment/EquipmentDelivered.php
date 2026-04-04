@@ -68,7 +68,7 @@ class EquipmentDelivered extends Notification implements ShouldQueue
         $changedByName = $statusChangedBy ? trim("{$statusChangedBy->first_name} {$statusChangedBy->last_name}") : 'Event Manager';
         $timestamp = $this->equipmentEvent->status_changed_at->format('M j, Y g:i A');
 
-        $url = route('equipment.events');
+        $url = route('equipment.index');
 
         return (new MailMessage)
             ->subject("Equipment Delivered: {$equipmentName} at {$event->name}")

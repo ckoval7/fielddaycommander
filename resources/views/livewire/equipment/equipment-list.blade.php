@@ -48,12 +48,70 @@
 
         </div>
 
+        {{-- Bulk Action Bar --}}
+        @if(count($selectedIds) > 0)
+            <div class="flex items-center gap-4 mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                <span class="text-sm font-semibold">{{ count($selectedIds) }} item(s) selected</span>
+                <div class="flex gap-2">
+                    @php
+                        $allAvailable = \App\Models\Equipment::whereIn('id', $selectedIds)
+                            ->whereDoesntHave('commitments', function ($q) {
+                                $q->whereIn('status', ['committed', 'delivered'])
+                                    ->whereHas('event', function ($eq) {
+                                        $eq->where('start_time', '<=', now()->addDays(30))
+                                            ->where('end_time', '>=', now());
+                                    });
+                            })
+                            ->count() === count($selectedIds);
+                    @endphp
+                    <x-button
+                        label="Commit to Event"
+                        icon="o-calendar"
+                        class="btn-primary btn-sm"
+                        wire:click="openBulkCommitModal"
+                        :disabled="!$allAvailable"
+                        :title="$allAvailable ? '' : 'Some selected items already have active commitments'"
+                    />
+                    <x-button
+                        label="Delete"
+                        icon="o-trash"
+                        class="btn-error btn-sm"
+                        wire:click="bulkDeleteEquipment"
+                        wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} item(s)?"
+                    />
+                </div>
+                <x-button
+                    label="Clear"
+                    icon="o-x-mark"
+                    class="btn-ghost btn-sm ml-auto"
+                    wire:click="deselectAll"
+                />
+            </div>
+        @endif
+
         {{-- Equipment Card --}}
         <x-card shadow>
             <div>
                 <table class="table table-zebra">
                     <thead>
                         <tr>
+                            <th>
+                                <label>
+                                    <span class="sr-only">Select all</span>
+                                    <input
+                                        type="checkbox"
+                                        class="checkbox checkbox-sm"
+                                        x-on:change="
+                                            if ($el.checked) {
+                                                $wire.selectAll();
+                                            } else {
+                                                $wire.deselectAll();
+                                            }
+                                        "
+                                        :checked="$wire.selectedIds.length > 0 && $wire.selectedIds.length === $wire.equipment?.data?.length"
+                                    />
+                                </label>
+                            </th>
                             <th>Photo</th>
                             <th>Make/Model</th>
                             <th>Type</th>
@@ -67,6 +125,17 @@
                     <tbody>
                         @forelse($equipment as $item)
                             <tr wire:key="equipment-{{ $item->id }}">
+                                <td>
+                                    <label>
+                                        <span class="sr-only">Select {{ $item->make }} {{ $item->model }}</span>
+                                        <input
+                                            type="checkbox"
+                                            class="checkbox checkbox-sm"
+                                            value="{{ $item->id }}"
+                                            wire:model.live="selectedIds"
+                                        />
+                                    </label>
+                                </td>
                                 <td>
                                     @if($item->photo_path)
                                         <img
@@ -111,27 +180,28 @@
                                 </td>
                                 <td>
                                     @php
-                                        $statusClasses = match($item->status ?? 'available') {
+                                        $equipmentStatus = $item->currentCommitment?->status ?? 'available';
+                                        $statusClasses = match($equipmentStatus) {
                                             'committed' => 'badge-info',
                                             'delivered' => 'badge-success',
                                             'returned' => 'badge-neutral',
                                             'cancelled' => 'badge-error',
                                             'lost' => 'badge-error',
                                             'damaged' => 'badge-error',
-                                            default => 'badge-success badge-outline'  // Available = ready to use (positive)
+                                            default => 'badge-success badge-outline'
                                         };
-                                        $statusIcon = match($item->status ?? 'available') {
+                                        $statusIcon = match($equipmentStatus) {
                                             'committed' => 'o-clipboard-document-list',
                                             'delivered' => 'o-truck',
                                             'returned' => 'o-check-circle',
                                             'cancelled' => 'o-x-circle',
                                             'lost' => 'o-exclamation-triangle',
                                             'damaged' => 'o-exclamation-triangle',
-                                            default => 'o-check-circle'  // Available = ready (checkmark)
+                                            default => 'o-check-circle'
                                         };
                                     @endphp
                                     <x-badge
-                                        value="{{ ucfirst(str_replace('_', ' ', $item->status ?? 'available')) }}"
+                                        value="{{ ucfirst(str_replace('_', ' ', $equipmentStatus)) }}"
                                         class="{{ $statusClasses }}"
                                     >
                                         <x-slot:icon>
@@ -157,6 +227,24 @@
                                         </x-slot:trigger>
 
                                         <x-menu-item title="Edit" icon="o-pencil" link="{{ route('equipment.edit', $item) }}" wire:navigate />
+
+                                        @if($item->currentCommitment)
+                                            <x-menu-separator />
+                                            <x-menu-item title="View Commitment" icon="o-eye" wire:click="openDetailsModal({{ $item->currentCommitment->id }})" />
+                                            <x-menu-item title="Update Notes" icon="o-pencil-square" wire:click="openNotesModal({{ $item->currentCommitment->id }})" />
+                                            <x-menu-separator />
+                                            @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
+                                                @if($status !== $item->currentCommitment->status)
+                                                    <x-menu-item
+                                                        title="{{ ucfirst(str_replace('_', ' ', $status)) }}"
+                                                        wire:click="changeStatus({{ $item->currentCommitment->id }}, '{{ $status }}')"
+                                                    />
+                                                @endif
+                                            @endforeach
+                                        @else
+                                            <x-menu-item title="Commit to Event" icon="o-calendar" wire:click="openCommitModal({{ $item->id }})" />
+                                        @endif
+
                                         <x-menu-separator />
                                         <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="deleteEquipment({{ $item->id }})" wire:confirm="Are you sure you want to delete this equipment?" />
                                     </x-dropdown>
@@ -164,7 +252,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-8 text-base-content/60">
+                                <td colspan="9" class="text-center py-8 text-base-content/60">
                                     <x-icon name="o-wrench-screwdriver" class="w-12 h-12 mx-auto mb-2 opacity-50" />
                                     <p>No equipment found</p>
                                     <x-button label="Create First Equipment" icon="o-plus" class="btn-primary btn-sm mt-2" link="{{ route('equipment.create') }}" wire:navigate />
@@ -199,5 +287,275 @@
         <x-slot:actions>
             <x-button label="Close" @click="$wire.showPhotoModal = false" class="btn-ghost" />
         </x-slot:actions>
+    </x-modal>
+
+    {{-- Commit Equipment Modal --}}
+    <x-modal wire:model="showCommitModal" title="Commit Equipment to Event" class="backdrop-blur">
+        <x-form wire:submit="commitEquipment" class="space-y-4">
+            <x-select
+                label="Event"
+                wire:model="commitEventId"
+                icon="o-calendar"
+                placeholder="Select an event..."
+                :options="$this->upcomingEvents->map(fn($e) => [
+                    'value' => $e->id,
+                    'label' => $e->name . ' (' . $e->start_time->format('M j, Y') . ')'
+                ])->toArray()"
+                option-value="value"
+                option-label="label"
+            />
+
+            <x-flatpickr
+                label="Expected Delivery"
+                wire:model="commitExpectedDeliveryAt"
+                mode="date"
+                icon="o-calendar"
+                hint="When do you expect to deliver this equipment?"
+            />
+
+            <x-textarea
+                label="Delivery Notes"
+                wire:model="commitDeliveryNotes"
+                placeholder="Add any special instructions or notes about delivery..."
+                hint="Maximum 500 characters"
+                rows="4"
+            />
+
+            <x-slot:actions>
+                <x-button label="Cancel" wire:click="$set('showCommitModal', false)" class="btn-ghost" />
+                <x-button label="Commit Equipment" type="submit" class="btn-primary" spinner="commitEquipment" />
+            </x-slot:actions>
+        </x-form>
+    </x-modal>
+
+    {{-- Bulk Commit Modal --}}
+    <x-modal wire:model="showBulkCommitModal" title="Commit {{ count($selectedIds) }} Item(s) to Event" class="backdrop-blur">
+        <x-form wire:submit="bulkCommitEquipment" class="space-y-4">
+            <x-select
+                label="Event"
+                wire:model="bulkCommitEventId"
+                icon="o-calendar"
+                placeholder="Select an event..."
+                :options="$this->upcomingEvents->map(fn($e) => [
+                    'value' => $e->id,
+                    'label' => $e->name . ' (' . $e->start_time->format('M j, Y') . ')'
+                ])->toArray()"
+                option-value="value"
+                option-label="label"
+            />
+
+            <x-flatpickr
+                label="Expected Delivery"
+                wire:model="bulkCommitExpectedDeliveryAt"
+                mode="date"
+                icon="o-calendar"
+                hint="When do you expect to deliver this equipment?"
+            />
+
+            <x-textarea
+                label="Delivery Notes"
+                wire:model="bulkCommitDeliveryNotes"
+                placeholder="Add any special instructions or notes about delivery..."
+                hint="Maximum 500 characters"
+                rows="4"
+            />
+
+            @error('bulkCommit')
+                <div class="alert alert-error">
+                    <x-icon name="o-exclamation-triangle" class="w-5 h-5" />
+                    <span>{{ $message }}</span>
+                </div>
+            @enderror
+
+            <x-slot:actions>
+                <x-button label="Cancel" wire:click="$set('showBulkCommitModal', false)" class="btn-ghost" />
+                <x-button label="Commit All" type="submit" class="btn-primary" spinner="bulkCommitEquipment" />
+            </x-slot:actions>
+        </x-form>
+    </x-modal>
+
+    {{-- Commitment Details Modal --}}
+    @if($detailCommitment)
+        <x-modal wire:model="showDetailsModal" title="Commitment Details" class="backdrop-blur" box-class="max-w-2xl">
+            <div class="space-y-6">
+                {{-- Equipment Info --}}
+                <div>
+                    <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-3">Equipment</h3>
+                    <div class="flex items-start gap-4">
+                        @if($detailCommitment->equipment->photo_path)
+                            <img
+                                src="{{ asset('storage/' . $detailCommitment->equipment->photo_path) }}"
+                                alt="Equipment"
+                                class="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                wire:click="viewPhoto('{{ $detailCommitment->equipment->photo_path }}', '{{ $detailCommitment->equipment->make }} {{ $detailCommitment->equipment->model }}')"
+                            />
+                        @else
+                            <div class="w-20 h-20 bg-base-300 rounded flex items-center justify-center flex-shrink-0">
+                                <x-icon name="o-wrench-screwdriver" class="w-8 h-8 text-base-content/50" />
+                            </div>
+                        @endif
+                        <div class="space-y-1">
+                            <div class="font-bold text-lg">{{ $detailCommitment->equipment->make }} {{ $detailCommitment->equipment->model }}</div>
+                            <div class="text-sm text-base-content/60">{{ ucfirst(str_replace('_', ' ', $detailCommitment->equipment->type)) }}</div>
+                            @if($detailCommitment->equipment->serial_number)
+                                <div class="text-sm"><span class="text-base-content/60">Serial:</span> {{ $detailCommitment->equipment->serial_number }}</div>
+                            @endif
+                            @if($detailCommitment->equipment->power_output_watts)
+                                <div class="text-sm"><span class="text-base-content/60">Power:</span> {{ $detailCommitment->equipment->power_output_watts }}W</div>
+                            @endif
+                            @if($detailCommitment->equipment->value_usd)
+                                <div class="text-sm"><span class="text-base-content/60">Value:</span> ${{ number_format($detailCommitment->equipment->value_usd, 2) }}</div>
+                            @endif
+                            @if($detailCommitment->equipment->bands && count($detailCommitment->equipment->bands) > 0)
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    @foreach($detailCommitment->equipment->bands as $band)
+                                        <x-badge :value="$band->name" class="badge-sm badge-outline" />
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider my-0"></div>
+
+                {{-- Commitment Info --}}
+                <div>
+                    <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-3">Commitment</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm text-base-content/60">Event</div>
+                            <div class="font-semibold text-sm mt-1">{{ $detailCommitment->event->name }}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-base-content/60">Status</div>
+                            @php
+                                $detailStatusClasses = match($detailCommitment->status) {
+                                    'committed' => 'badge-info',
+                                    'delivered' => 'badge-success',
+                                    'returned' => 'badge-neutral',
+                                    'cancelled' => 'badge-error',
+                                    'lost' => 'badge-error',
+                                    'damaged' => 'badge-error',
+                                    default => 'badge-ghost'
+                                };
+                            @endphp
+                            <x-badge
+                                value="{{ ucfirst(str_replace('_', ' ', $detailCommitment->status)) }}"
+                                class="{{ $detailStatusClasses }} mt-1"
+                            />
+                        </div>
+                        <div>
+                            <div class="text-sm text-base-content/60">Expected Delivery</div>
+                            <div class="font-semibold text-sm mt-1">
+                                @if($detailCommitment->expected_delivery_at)
+                                    {{ $detailCommitment->expected_delivery_at->format('M j, Y g:i A') }}
+                                @else
+                                    <span class="text-base-content/40">Not set</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-base-content/60">Station</div>
+                            <div class="mt-1">
+                                @if($detailCommitment->station)
+                                    <x-badge :value="$detailCommitment->station->name" class="badge-primary badge-sm" />
+                                @else
+                                    <span class="text-sm text-base-content/40">Not assigned</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-base-content/60">Committed</div>
+                            <div class="font-semibold text-sm mt-1">
+                                @if($detailCommitment->committed_at)
+                                    {{ $detailCommitment->committed_at->format('M j, Y g:i A') }}
+                                @else
+                                    <span class="text-base-content/40">Unknown</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Delivery Notes --}}
+                @if($detailCommitment->delivery_notes)
+                    <div>
+                        <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-2">Delivery Notes</h3>
+                        <div class="text-sm bg-base-200 rounded-lg p-3 whitespace-pre-wrap">{{ $detailCommitment->delivery_notes }}</div>
+                    </div>
+                @endif
+
+                {{-- Manager Notes --}}
+                @if($detailCommitment->manager_notes)
+                    <div>
+                        <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-2">Status History</h3>
+                        <div class="text-sm bg-base-200 rounded-lg p-3 whitespace-pre-wrap font-mono text-xs">{{ $detailCommitment->manager_notes }}</div>
+                    </div>
+                @endif
+
+                {{-- Metadata --}}
+                <div class="text-xs text-base-content/50 space-y-1">
+                    @if($detailCommitment->assignedBy)
+                        <div>Assigned by {{ $detailCommitment->assignedBy->call_sign ?? $detailCommitment->assignedBy->first_name }}</div>
+                    @endif
+                    @if($detailCommitment->statusChangedBy && $detailCommitment->status_changed_at)
+                        <div>Last status change by {{ $detailCommitment->statusChangedBy->call_sign ?? $detailCommitment->statusChangedBy->first_name }} on {{ $detailCommitment->status_changed_at->format('M j, Y g:i A') }}</div>
+                    @endif
+                </div>
+            </div>
+
+            <x-slot:actions>
+                <div class="flex flex-wrap gap-2 w-full justify-end">
+                    <x-dropdown>
+                        <x-slot:trigger>
+                            <x-button label="Change Status" icon="o-arrows-right-left" class="btn-primary btn-sm" />
+                        </x-slot:trigger>
+                        @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
+                            @if($status !== $detailCommitment->status)
+                                <x-menu-item
+                                    title="{{ ucfirst(str_replace('_', ' ', $status)) }}"
+                                    wire:click="changeStatus({{ $detailCommitment->id }}, '{{ $status }}')"
+                                    spinner="changeStatus({{ $detailCommitment->id }}, '{{ $status }}')"
+                                />
+                            @endif
+                        @endforeach
+                    </x-dropdown>
+
+                    <x-button
+                        label="Update Notes"
+                        icon="o-pencil"
+                        class="btn-outline btn-sm"
+                        wire:click="openNotesModal({{ $detailCommitment->id }})"
+                    />
+
+                    <x-button label="Close" @click="$wire.showDetailsModal = false" class="btn-ghost btn-sm" />
+                </div>
+            </x-slot:actions>
+        </x-modal>
+    @endif
+
+    {{-- Update Notes Modal --}}
+    <x-modal wire:model="showNotesModal" title="Update Delivery Notes" class="backdrop-blur">
+        <x-form wire:submit="updateNotes" class="space-y-4">
+            <x-textarea
+                label="Delivery Notes"
+                wire:model="tempNotes"
+                placeholder="Add or update delivery notes..."
+                hint="Maximum 500 characters"
+                rows="4"
+            />
+
+            <x-slot:actions>
+                <x-button label="Cancel" wire:click="$set('showNotesModal', false)" class="btn-ghost" />
+                <x-button
+                    label="Update Notes"
+                    type="submit"
+                    class="btn-primary"
+                    spinner="updateNotes"
+                    wire:click="updateNotes({{ $updateNoteId }}, $wire.tempNotes)"
+                />
+            </x-slot:actions>
+        </x-form>
     </x-modal>
 </div>

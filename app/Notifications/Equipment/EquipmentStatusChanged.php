@@ -59,7 +59,7 @@ class EquipmentStatusChanged extends Notification implements ShouldQueue
         $currentStatus = ucfirst(str_replace('_', ' ', $this->equipmentEvent->status));
         $oldStatus = ucfirst(str_replace('_', ' ', $this->previousStatus));
 
-        $url = route('equipment.events');
+        $url = route('equipment.index');
 
         $message = (new MailMessage)
             ->subject("Equipment Status Update: {$equipmentName} - {$currentStatus}")

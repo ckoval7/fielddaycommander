@@ -124,7 +124,6 @@
                         @can('view-all-equipment')
                             <x-menu-item title="All User Catalogs" link="{{ route('equipment.all') }}" route="equipment.all" />
                         @endcan
-                        <x-menu-item title="Event Commitments" link="{{ route('equipment.events') }}" route="equipment.events" />
                     </x-menu-sub>
 
                     <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" :active="request()->routeIs('guestbook.index')" />

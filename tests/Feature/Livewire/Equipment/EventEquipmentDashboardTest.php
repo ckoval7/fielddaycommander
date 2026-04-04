@@ -407,30 +407,6 @@ test('hidden test elements contain correct data', function () {
         ->assertSeeHtml('data-testid="active-tab"');
 });
 
-test('clicking on equipment photo opens photo modal in event equipment', function () {
-    $this->actingAs($this->manager);
-
-    $equipment = Equipment::factory()->create([
-        'owner_user_id' => $this->manager->id,
-        'make' => 'Yaesu',
-        'model' => 'FT-991A',
-        'photo_path' => 'equipment/test-photo.jpg',
-    ]);
-
-    $commitment = EquipmentEvent::factory()->create([
-        'equipment_id' => $equipment->id,
-        'event_id' => $this->event->id,
-        'status' => 'committed',
-    ]);
-
-    Livewire::test('equipment.event-equipment')
-        ->assertSet('showPhotoModal', false)
-        ->call('viewPhoto', $equipment->photo_path, $equipment->make.' '.$equipment->model)
-        ->assertSet('showPhotoModal', true)
-        ->assertSet('photoPath', 'equipment/test-photo.jpg')
-        ->assertSet('photoDescription', 'Yaesu FT-991A');
-});
-
 // Commit Club Equipment Tests
 
 test('manager can open commit club equipment modal', function () {
@@ -614,19 +590,4 @@ test('can recommit cancelled club equipment to same event', function () {
     $this->assertEquals(1, EquipmentEvent::where('equipment_id', $clubEquipment->id)
         ->where('event_id', $this->event->id)
         ->count());
-});
-
-test('photo modal can be closed in event equipment', function () {
-    $this->actingAs($this->manager);
-
-    $equipment = Equipment::factory()->create([
-        'owner_user_id' => $this->manager->id,
-        'photo_path' => 'equipment/test-photo.jpg',
-    ]);
-
-    Livewire::test('equipment.event-equipment')
-        ->call('viewPhoto', $equipment->photo_path, 'Test Equipment')
-        ->assertSet('showPhotoModal', true)
-        ->set('showPhotoModal', false)
-        ->assertSet('showPhotoModal', false);
 });

@@ -637,3 +637,407 @@ test('multiple equipment photos can be viewed in modal', function () {
         ->assertSet('photoPath', 'equipment/icom.jpg')
         ->assertSet('photoDescription', 'Icom IC-7300');
 });
+
+test('user can open commit modal for available equipment', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+        'setup_allowed_from' => now()->addDays(6),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('openCommitModal', $equipment->id)
+        ->assertSet('showCommitModal', true)
+        ->assertSet('commitEquipmentId', $equipment->id);
+});
+
+test('user can commit equipment to event from catalog', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+        'setup_allowed_from' => now()->addDays(6),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('commitEquipmentId', $equipment->id)
+        ->set('commitEventId', $event->id)
+        ->set('commitExpectedDeliveryAt', now()->addDays(7)->format('Y-m-d H:i:s'))
+        ->set('commitDeliveryNotes', 'Will bring on Friday')
+        ->call('commitEquipment')
+        ->assertSet('showCommitModal', false)
+        ->assertDispatched('notify');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $equipment->id,
+        'event_id' => $event->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Will bring on Friday',
+    ]);
+});
+
+test('cannot commit equipment user does not own', function () {
+    $this->actingAs($this->user);
+
+    $otherEquipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+        'setup_allowed_from' => now()->addDays(6),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('commitEquipmentId', $otherEquipment->id)
+        ->set('commitEventId', $event->id)
+        ->call('commitEquipment')
+        ->assertHasErrors(['commitEquipmentId']);
+});
+
+test('prevents overlapping commitments from catalog', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $event1 = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+    ]);
+
+    $event2 = Event::factory()->create([
+        'start_time' => now()->addDays(8),
+        'end_time' => now()->addDays(10),
+        'setup_allowed_from' => now()->addDays(7),
+    ]);
+
+    EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => $event1->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('commitEquipmentId', $equipment->id)
+        ->set('commitEventId', $event2->id)
+        ->call('commitEquipment')
+        ->assertHasErrors(['commitEquipmentId']);
+});
+
+test('validates delivery notes max length on commit', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+        'setup_allowed_from' => now()->addDays(6),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('commitEquipmentId', $equipment->id)
+        ->set('commitEventId', $event->id)
+        ->set('commitDeliveryNotes', str_repeat('a', 501))
+        ->call('commitEquipment')
+        ->assertHasErrors(['commitDeliveryNotes']);
+});
+
+test('user can view commitment details from catalog', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => $event->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Detail test notes',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('openDetailsModal', $commitment->id)
+        ->assertSet('showDetailsModal', true)
+        ->assertSet('detailCommitment.id', $commitment->id);
+});
+
+test('cannot view details for commitment not owned by user', function () {
+    $this->actingAs($this->user);
+
+    $otherEquipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $otherEquipment->id,
+        'event_id' => Event::factory()->create()->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('openDetailsModal', $commitment->id)
+        ->assertSet('showDetailsModal', false)
+        ->assertDispatched('notify');
+});
+
+test('user can change commitment status from catalog', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => Event::factory()->create()->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('changeStatus', $commitment->id, 'delivered')
+        ->assertDispatched('notify');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'id' => $commitment->id,
+        'status' => 'delivered',
+    ]);
+});
+
+test('cannot change status for commitment not owned by user', function () {
+    $this->actingAs($this->user);
+
+    $otherEquipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $otherEquipment->id,
+        'event_id' => Event::factory()->create()->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('changeStatus', $commitment->id, 'delivered')
+        ->assertDispatched('notify');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'id' => $commitment->id,
+        'status' => 'committed',
+    ]);
+});
+
+test('user can open notes modal for commitment', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => Event::factory()->create()->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Existing notes',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('openNotesModal', $commitment->id)
+        ->assertSet('showNotesModal', true)
+        ->assertSet('updateNoteId', $commitment->id)
+        ->assertSet('tempNotes', 'Existing notes');
+});
+
+test('user can update delivery notes from catalog', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => Event::factory()->create()->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Original notes',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('updateNotes', $commitment->id, 'Updated notes')
+        ->assertDispatched('notify');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'id' => $commitment->id,
+        'delivery_notes' => 'Updated notes',
+    ]);
+});
+
+test('cannot update notes for commitment not owned by user', function () {
+    $this->actingAs($this->user);
+
+    $otherEquipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $otherEquipment->id,
+        'event_id' => Event::factory()->create()->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Original notes',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('updateNotes', $commitment->id, 'Hacked notes')
+        ->assertDispatched('notify');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'id' => $commitment->id,
+        'delivery_notes' => 'Original notes',
+    ]);
+});
+
+test('user can bulk commit multiple equipment items', function () {
+    $this->actingAs($this->user);
+
+    $eq1 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+    $eq2 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+        'setup_allowed_from' => now()->addDays(6),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$eq1->id, $eq2->id])
+        ->set('bulkCommitEventId', $event->id)
+        ->set('bulkCommitDeliveryNotes', 'Bulk notes')
+        ->call('bulkCommitEquipment')
+        ->assertSet('showBulkCommitModal', false)
+        ->assertDispatched('notify');
+
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $eq1->id,
+        'event_id' => $event->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Bulk notes',
+    ]);
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $eq2->id,
+        'event_id' => $event->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Bulk notes',
+    ]);
+});
+
+test('bulk commit aborts if any item has overlapping commitment', function () {
+    $this->actingAs($this->user);
+
+    $eq1 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+    $eq2 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+        'setup_allowed_from' => now()->addDays(6),
+    ]);
+
+    // Commit eq2 to overlapping event
+    $overlapping = Event::factory()->create([
+        'start_time' => now()->addDays(8),
+        'end_time' => now()->addDays(10),
+    ]);
+    EquipmentEvent::factory()->create([
+        'equipment_id' => $eq2->id,
+        'event_id' => $overlapping->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$eq1->id, $eq2->id])
+        ->set('bulkCommitEventId', $event->id)
+        ->call('bulkCommitEquipment')
+        ->assertHasErrors(['bulkCommit']);
+
+    // Neither should be committed
+    $this->assertDatabaseMissing('equipment_event', [
+        'equipment_id' => $eq1->id,
+        'event_id' => $event->id,
+    ]);
+});
+
+test('user can bulk delete equipment', function () {
+    $this->actingAs($this->user);
+
+    $eq1 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+    $eq2 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$eq1->id, $eq2->id])
+        ->call('bulkDeleteEquipment')
+        ->assertDispatched('notify');
+
+    expect(Equipment::where('id', $eq1->id)->exists())->toBeFalse();
+    expect(Equipment::where('id', $eq2->id)->exists())->toBeFalse();
+});
+
+test('bulk delete only deletes equipment owned by user', function () {
+    $this->actingAs($this->user);
+
+    $ownEquipment = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+    $otherEquipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$ownEquipment->id, $otherEquipment->id])
+        ->call('bulkDeleteEquipment')
+        ->assertDispatched('notify');
+
+    expect(Equipment::where('id', $ownEquipment->id)->exists())->toBeFalse();
+    expect(Equipment::where('id', $otherEquipment->id)->exists())->toBeTrue();
+});
+
+test('select all toggles all current page ids', function () {
+    $this->actingAs($this->user);
+
+    $eq1 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+    $eq2 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('selectAll')
+        ->assertSet('selectedIds', [$eq2->id, $eq1->id]);
+});
+
+test('deselect all clears selection', function () {
+    $this->actingAs($this->user);
+
+    $eq1 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$eq1->id])
+        ->call('deselectAll')
+        ->assertSet('selectedIds', []);
+});

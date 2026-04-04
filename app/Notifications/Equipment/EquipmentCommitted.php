@@ -67,7 +67,7 @@ class EquipmentCommitted extends Notification implements ShouldQueue
             $equipmentName = ucfirst($equipment->type);
         }
 
-        $url = route('equipment.events');
+        $url = route('equipment.index');
 
         return (new MailMessage)
             ->subject("Equipment Committed: {$equipmentName} to {$event->name}")
