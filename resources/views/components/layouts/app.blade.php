@@ -79,6 +79,11 @@
         @endauth
     @endif
 
+    {{-- Demo Mode Banner --}}
+    @if(config('demo.enabled'))
+        <livewire:components.demo-banner />
+    @endif
+
     {{-- MAIN --}}
     <x-main full-width with-nav>
         {{-- SIDEBAR --}}
