@@ -1015,6 +1015,44 @@ test('can toggle is_youth flag when editing a user', function () {
     expect($user->fresh()->is_youth)->toBeTrue();
 });
 
+// =============================================================================
+// CPR/AED Trained Flag
+// =============================================================================
+
+test('can set is_cpr_aed_trained flag when creating a user', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->set('call_sign', 'KD2CPR')
+        ->set('first_name', 'Medic')
+        ->set('last_name', 'Operator')
+        ->set('email', 'medic@example.com')
+        ->set('is_cpr_aed_trained', true)
+        ->set('role_id', $this->roles['Operator']->id)
+        ->set('inviteMode', false)
+        ->set('password', 'Password123!')
+        ->set('password_confirmation', 'Password123!')
+        ->call('saveUser');
+
+    $user = User::where('call_sign', 'KD2CPR')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->is_cpr_aed_trained)->toBeTrue();
+});
+
+test('can toggle is_cpr_aed_trained flag when editing a user', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['is_cpr_aed_trained' => false]);
+    $user->assignRole('Operator');
+
+    Livewire::test(UserManagement::class)
+        ->call('openEditModal', $user->id)
+        ->set('is_cpr_aed_trained', true)
+        ->call('saveUser');
+
+    expect($user->fresh()->is_cpr_aed_trained)->toBeTrue();
+});
+
 test('bulk delete logs individual audit entries for each user', function () {
     $this->actingAs($this->admin);
 

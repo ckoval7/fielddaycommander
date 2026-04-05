@@ -55,6 +55,8 @@ class UserManagement extends Component
 
     public bool $is_youth = false;
 
+    public bool $is_cpr_aed_trained = false;
+
     public ?int $role_id = null;
 
     public bool $inviteMode = true;
@@ -159,7 +161,7 @@ class UserManagement extends Component
     {
         $this->reset([
             'editingUserId', 'call_sign', 'first_name', 'last_name',
-            'email', 'license_class', 'is_youth', 'role_id', 'password',
+            'email', 'license_class', 'is_youth', 'is_cpr_aed_trained', 'role_id', 'password',
             'password_confirmation', 'inviteMode',
         ]);
         $this->inviteMode = true;
@@ -177,6 +179,7 @@ class UserManagement extends Component
         $this->email = $user->email;
         $this->license_class = $user->license_class;
         $this->is_youth = (bool) $user->is_youth;
+        $this->is_cpr_aed_trained = (bool) $user->is_cpr_aed_trained;
         $this->role_id = $user->roles->first()?->id ?? $this->roles->first()->id;
 
         $this->showModal = true;
@@ -202,6 +205,7 @@ class UserManagement extends Component
             'email' => ['required', 'email', 'max:255', 'unique:users'],
             'license_class' => ['nullable', 'in:Technician,General,Advanced,Extra'],
             'is_youth' => ['boolean'],
+            'is_cpr_aed_trained' => ['boolean'],
             'role_id' => ['required', 'exists:roles,id'],
             'password' => ['required_if:inviteMode,false', 'confirmed', Password::defaults()],
         ], [
@@ -216,6 +220,7 @@ class UserManagement extends Component
             'email' => $validated['email'],
             'license_class' => $validated['license_class'],
             'is_youth' => $this->is_youth,
+            'is_cpr_aed_trained' => $this->is_cpr_aed_trained,
             'password' => $this->inviteMode ? Hash::make(str()->random(32)) : Hash::make($validated['password']),
         ]);
 
@@ -278,6 +283,7 @@ class UserManagement extends Component
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($this->editingUserId)],
             'license_class' => ['nullable', 'in:Technician,General,Advanced,Extra'],
             'is_youth' => ['boolean'],
+            'is_cpr_aed_trained' => ['boolean'],
             'role_id' => ['required', 'exists:roles,id'],
         ], [
             'call_sign.unique' => 'This call sign is already registered',
@@ -299,6 +305,7 @@ class UserManagement extends Component
             'email' => $validated['email'],
             'license_class' => $validated['license_class'],
             'is_youth' => $this->is_youth,
+            'is_cpr_aed_trained' => $this->is_cpr_aed_trained,
         ]);
 
         $role = Role::find($validated['role_id']);
