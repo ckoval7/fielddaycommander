@@ -42,7 +42,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 2000,
                 'max_occurrences' => null,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['A', 'B', 'C', 'E', 'F']),
+                'eligible_classes' => (['A', 'B', 'C', 'E', 'F']),
             ],
             [
                 'event_type_id' => $eventTypeId,
@@ -67,7 +67,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 100,
                 'max_occurrences' => 1,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['A', 'B', 'F']),
+                'eligible_classes' => (['A', 'B', 'F']),
             ],
             [
                 'event_type_id' => $eventTypeId,
@@ -79,7 +79,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 100,
                 'max_occurrences' => 1,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['A', 'B', 'F']),
+                'eligible_classes' => (['A', 'B', 'F']),
             ],
             [
                 'event_type_id' => $eventTypeId,
@@ -116,7 +116,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 100,
                 'max_occurrences' => 1,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['A']),
+                'eligible_classes' => (['A']),
             ],
             [
                 'event_type_id' => $eventTypeId,
@@ -128,7 +128,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 100,
                 'max_occurrences' => 1,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['A', 'B', 'E', 'F']),
+                'eligible_classes' => (['A', 'B', 'E', 'F']),
             ],
             [
                 'event_type_id' => $eventTypeId,
@@ -166,7 +166,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 100,
                 'max_occurrences' => 1,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['A', 'B', 'F']),
+                'eligible_classes' => (['A', 'B', 'F']),
             ],
             [
                 'event_type_id' => $eventTypeId,
@@ -205,7 +205,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 100,
                 'max_occurrences' => 1,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['A', 'F', 'D', 'E']),
+                'eligible_classes' => (['A', 'F', 'D', 'E']),
             ],
             [
                 'event_type_id' => $eventTypeId,
@@ -231,7 +231,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 100,
                 'max_occurrences' => 5,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['A', 'B', 'C', 'D', 'E', 'F']),
+                'eligible_classes' => (['A', 'B', 'C', 'D', 'E', 'F']),
             ],
             [
                 'event_type_id' => $eventTypeId,
@@ -244,7 +244,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 50,
                 'max_occurrences' => 1,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['B', 'C', 'D', 'E', 'F']),
+                'eligible_classes' => (['B', 'C', 'D', 'E', 'F']),
             ],
         ];
     }
@@ -279,7 +279,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 100,
                 'max_occurrences' => 1,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['I', 'O', 'M']),
+                'eligible_classes' => (['I', 'O', 'M']),
             ],
             [
                 'event_type_id' => $eventTypeId,
@@ -291,7 +291,7 @@ class BonusTypeSeeder extends Seeder
                 'max_points' => 100,
                 'max_occurrences' => 1,
                 'requires_proof' => false,
-                'eligible_classes' => json_encode(['I', 'O']),
+                'eligible_classes' => (['I', 'O']),
             ],
         ];
     }
