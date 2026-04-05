@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Event;
+use App\Models\EventConfiguration;
 use App\Models\Setting;
 use App\Models\User;
 
@@ -38,4 +40,27 @@ it('shows the public landing page at /public for authenticated users', function 
 
     $response->assertStatus(200);
     $response->assertViewIs('public-landing');
+});
+
+it('renders live stats widgets when an active event exists', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+    ]);
+
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+    $response->assertSee('Live Stats');
+});
+
+it('shows no-event message when no active event exists', function () {
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+    $response->assertSee('No active event at this time');
 });

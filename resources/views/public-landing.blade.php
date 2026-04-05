@@ -113,9 +113,7 @@
 
                 {{-- Band/Mode Grid --}}
                 <div class="mb-6">
-                    <livewire:dashboard.widgets.band-mode-grid
-                        widget-id="public-band-mode-grid"
-                    />
+                    <livewire:dashboard.widgets.band-mode-grid />
                 </div>
 
                 {{-- Sections Worked --}}
