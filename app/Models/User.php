@@ -41,6 +41,7 @@ class User extends Authenticatable
         'preferred_timezone',
         'notification_preferences',
         'is_youth',
+        'is_cpr_aed_trained',
     ];
 
     /**
@@ -73,6 +74,7 @@ class User extends Authenticatable
             'two_factor_bypass_expires_at' => 'datetime',
             'notification_preferences' => 'array',
             'is_youth' => 'boolean',
+            'is_cpr_aed_trained' => 'boolean',
         ];
     }
 
