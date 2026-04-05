@@ -71,15 +71,17 @@
             />
         </div>
 
-        <label class="label cursor-pointer justify-start gap-3">
-            <input type="checkbox" class="checkbox checkbox-sm" wire:model="is_youth" />
-            <span class="label-text">Youth (age 18 or younger)</span>
-        </label>
+        <div class="flex flex-wrap gap-x-6 gap-y-1 mt-2">
+            <label class="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" class="checkbox checkbox-sm" wire:model="is_youth" />
+                <span class="label-text">Youth (age 18 or younger)</span>
+            </label>
 
-        <label class="label cursor-pointer justify-start gap-3">
-            <input type="checkbox" class="checkbox checkbox-sm" wire:model="is_cpr_aed_trained" />
-            <span class="label-text">CPR / AED trained</span>
-        </label>
+            <label class="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" class="checkbox checkbox-sm" wire:model="is_cpr_aed_trained" />
+                <span class="label-text">CPR / AED trained</span>
+            </label>
+        </div>
 
         @if(!$editingUserId)
             {{-- Invitation Mode Toggle (only for new users) --}}

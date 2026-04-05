@@ -12,15 +12,17 @@
             <x-input label="Password" type="password" name="password" required icon="o-lock-closed" errorField="password" />
             <x-input label="Confirm Password" type="password" name="password_confirmation" required icon="o-lock-closed" errorField="password_confirmation" />
 
-            <label class="label cursor-pointer justify-start gap-3">
-                <input type="checkbox" class="checkbox checkbox-sm" name="is_youth" value="1" @checked(old('is_youth')) />
-                <span class="label-text">Youth (age 18 or younger)</span>
-            </label>
+            <div class="flex flex-wrap gap-x-6 gap-y-1">
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" class="checkbox checkbox-sm" name="is_youth" value="1" @checked(old('is_youth')) />
+                    <span class="label-text">Youth (age 18 or younger)</span>
+                </label>
 
-            <label class="label cursor-pointer justify-start gap-3">
-                <input type="checkbox" class="checkbox checkbox-sm" name="is_cpr_aed_trained" value="1" @checked(old('is_cpr_aed_trained')) />
-                <span class="label-text">CPR / AED trained</span>
-            </label>
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" class="checkbox checkbox-sm" name="is_cpr_aed_trained" value="1" @checked(old('is_cpr_aed_trained')) />
+                    <span class="label-text">CPR / AED trained</span>
+                </label>
+            </div>
 
             <div class="flex items-center justify-end pt-2">
                 <a href="{{ route('login') }}" class="link link-primary text-sm mr-4">
