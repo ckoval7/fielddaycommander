@@ -45,6 +45,7 @@ SSL_CERT=""
 SSL_KEY=""
 NO_SEEDERS=false
 DRY_RUN=false
+DEMO_MODE=false
 DB_SERVICE="mariadb"
 
 # Save original args for potential re-exec (password sanitization)
@@ -71,6 +72,7 @@ Optional:
   --ssl-cert <path>       Path to existing SSL certificate
   --ssl-key <path>        Path to existing SSL key
   --no-seeders            Skip database seeders
+  --demo                  Deploy as a public demo instance (per-visitor sandboxed databases)
   --dry-run               Show plan without executing
   -h, --help              Show this help message
 USAGE
@@ -93,6 +95,7 @@ while [[ $# -gt 0 ]]; do
         --ssl-cert)     SSL_CERT="$2"; shift 2 ;;
         --ssl-key)      SSL_KEY="$2"; shift 2 ;;
         --no-seeders)   NO_SEEDERS=true; shift ;;
+        --demo)         DEMO_MODE=true; NO_SEEDERS=true; shift ;;
         --dry-run)      DRY_RUN=true; shift ;;
         -h|--help)      usage 0 ;;
         *)              log_error "Unknown option: $1"; usage 1 ;;
@@ -185,6 +188,13 @@ else
     DB_PASSWORD_GENERATED=false
 fi
 
+# Generate demo provisioner password when in demo mode
+if $DEMO_MODE; then
+    DEMO_DB_PASSWORD=$(generate_secret 32)
+    DEMO_DB_USER="demo_provisioner"
+    DEMO_DB_NAME="demo_base"
+fi
+
 # If DB password was passed via CLI, re-exec with it as an env var to hide from /proc/cmdline
 if [[ -z "${_FDC_DB_PASS_FROM_ENV:-}" ]] && [[ -n "$DB_PASSWORD" ]] && ! $DB_PASSWORD_GENERATED; then
     export _FDC_DB_PASS_FROM_ENV="$DB_PASSWORD"
@@ -251,6 +261,7 @@ print_dry_run() {
         fi
     fi
     echo "Source:         $( [[ -n "$REPO_URL" ]] && echo "$REPO_URL (branch: $BRANCH)" || echo "Copy current directory" )"
+    echo "Demo Mode:      $( $DEMO_MODE && echo "Yes (per-visitor sandboxed databases)" || echo "No" )"
     echo "Seeders:        $( $NO_SEEDERS && echo "Skipped" || echo "Production seeders" )"
     echo ""
     echo "Phases: Packages → App Setup → Database → Caddy → SSL → Systemd → Firewall → Cache"
@@ -493,6 +504,16 @@ configure_env() {
     set_env "VITE_REVERB_PORT" "$PUBLIC_PORT"
     set_env "VITE_REVERB_SCHEME" "$SCHEME"
 
+    # Demo mode
+    if $DEMO_MODE; then
+        set_env "DEMO_MODE" "true"
+        set_env "DEVELOPER_MODE" "true"
+        set_env "DB_CONNECTION" "demo"
+        set_env "DB_DATABASE" "$DEMO_DB_NAME"
+        set_env "DB_USERNAME" "$DEMO_DB_USER"
+        set_env "DB_PASSWORD" "$DEMO_DB_PASSWORD"
+    fi
+
     # Octane / FrankenPHP
     set_env "OCTANE_SERVER" "frankenphp"
     set_env "OCTANE_WORKERS" "auto"
@@ -588,6 +609,23 @@ FLUSH PRIVILEGES;
 SQLEOF
 
     log_info "Database and user created"
+
+    # Demo mode: create demo_provisioner user and demo_base database
+    if $DEMO_MODE; then
+        local safe_demo_password="${DEMO_DB_PASSWORD//\'/\'\'}"
+        log_info "Creating demo provisioner database and user..."
+        mysql -u root <<DEMOEOF
+CREATE DATABASE IF NOT EXISTS \`${DEMO_DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '${DEMO_DB_USER}'@'127.0.0.1' IDENTIFIED BY '${safe_demo_password}';
+CREATE USER IF NOT EXISTS '${DEMO_DB_USER}'@'localhost' IDENTIFIED BY '${safe_demo_password}';
+GRANT ALL PRIVILEGES ON \`demo\\_%\`.* TO '${DEMO_DB_USER}'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON \`demo\\_%\`.* TO '${DEMO_DB_USER}'@'localhost';
+GRANT ALL PRIVILEGES ON \`${DEMO_DB_NAME}\`.* TO '${DEMO_DB_USER}'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON \`${DEMO_DB_NAME}\`.* TO '${DEMO_DB_USER}'@'localhost';
+FLUSH PRIVILEGES;
+DEMOEOF
+        log_info "Demo provisioner user and database created"
+    fi
 
     # Run migrations
     log_info "Running migrations..."
@@ -831,12 +869,30 @@ finalize() {
     echo "  App log:        ${APP_PATH}/storage/logs/laravel.log"
     echo "  Caddy log:      journalctl -u fdcommander.service"
     echo ""
+    if $DEMO_MODE; then
+        echo -e "${BOLD}Demo Mode${NC}"
+        echo "  Provisioner:    ${DEMO_DB_USER}"
+        echo "  Provisioner PW: ${DEMO_DB_PASSWORD}"
+        echo "  Base Database:  ${DEMO_DB_NAME}"
+        echo "  Max Sessions:   25 (configurable via DEMO_MAX_SESSIONS)"
+        echo "  Session TTL:    24 hours (configurable via DEMO_TTL_HOURS)"
+        echo -e "  ${YELLOW}(save the provisioner password — it won't be shown again)${NC}"
+        echo ""
+    fi
+
     echo -e "${BOLD}Next Steps${NC}"
-    echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} and complete initial setup"
-    echo "  2. The SystemAdminSeeder created the first admin user"
-    echo "  3. Review firewall settings if not configured"
+    if $DEMO_MODE; then
+        echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} — visitors see a role-picker landing page"
+        echo "  2. Each visitor gets an isolated sandbox database automatically"
+        echo "  3. Expired sessions are cleaned up hourly by the scheduler"
+        echo "  4. Live contact simulation runs every minute"
+    else
+        echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} and complete initial setup"
+        echo "  2. The SystemAdminSeeder created the first admin user"
+        echo "  3. Review firewall settings if not configured"
+    fi
     if ! $SSL_ENABLED; then
-        echo "  4. For HTTPS: set DOMAIN to a real domain and Caddy handles SSL automatically"
+        echo "  For HTTPS: set DOMAIN to a real domain and Caddy handles SSL automatically"
     fi
     echo ""
 }
