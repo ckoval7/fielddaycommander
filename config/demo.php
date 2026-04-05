@@ -1,0 +1,40 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Demo Mode
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, each visitor receives an isolated MySQL database provisioned
+    | on demand. This should NEVER be enabled in production environments.
+    |
+    */
+
+    'enabled' => env('DEMO_MODE', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session TTL
+    |--------------------------------------------------------------------------
+    |
+    | How many hours a demo session lives before cleanup removes its database.
+    |
+    */
+
+    'ttl_hours' => env('DEMO_TTL_HOURS', 24),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Maximum Concurrent Sessions
+    |--------------------------------------------------------------------------
+    |
+    | The maximum number of active demo_* databases allowed at one time.
+    | Requests to provision beyond this cap receive a "try again" message.
+    |
+    */
+
+    'max_sessions' => env('DEMO_MAX_SESSIONS', 25),
+
+];
