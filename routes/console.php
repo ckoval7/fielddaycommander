@@ -24,3 +24,8 @@ Schedule::command('exports:clean')->daily();
 Schedule::command('demo:cleanup')
     ->hourly()
     ->when(fn () => config('demo.enabled'));
+
+// Simulate live contacts in demo sessions
+Schedule::command('demo:simulate-activity')
+    ->everyMinute()
+    ->when(fn () => config('demo.enabled'));
