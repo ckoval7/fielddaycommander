@@ -37,7 +37,7 @@ class ContactFactory extends Factory
         // Get a random active section if available
         $section = \App\Models\Section::where('is_active', true)->inRandomOrder()->first();
 
-        $callsign = strtoupper(fake()->bothify('??#???'));
+        $callsign = \App\Support\CallsignGenerator::any();
         $fdClass = fake()->numberBetween(1, 5).fake()->randomElement(['A', 'B', 'C', 'D', 'E', 'F']);
         $sectionCode = $section?->code ?? 'CT';
 
@@ -76,7 +76,7 @@ class ContactFactory extends Factory
             'points' => 0,
             'gota_operator_first_name' => fake()->firstName(),
             'gota_operator_last_name' => fake()->lastName(),
-            'gota_operator_callsign' => strtoupper(fake()->bothify('??#???')),
+            'gota_operator_callsign' => \App\Support\CallsignGenerator::any(),
         ]);
     }
 
