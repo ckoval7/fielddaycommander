@@ -43,6 +43,7 @@ class CreateNewUser implements CreatesNewUsers
             ],
             'password' => $this->passwordRules(),
             'is_youth' => ['sometimes', 'boolean'],
+            'is_cpr_aed_trained' => ['sometimes', 'boolean'],
         ])->validate();
 
         $user = User::create([
@@ -52,6 +53,7 @@ class CreateNewUser implements CreatesNewUsers
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
             'is_youth' => ! empty($input['is_youth']),
+            'is_cpr_aed_trained' => ! empty($input['is_cpr_aed_trained']),
         ]);
 
         // Assign default "Operator" role to new users
