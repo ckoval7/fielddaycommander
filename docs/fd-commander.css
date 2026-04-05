@@ -75,7 +75,7 @@ a.logo, .logo {
 }
 a.logo:hover { color: var(--text-primary); }
 .logo-icon {
-  width: 32px; height: 32px; border-radius: 6px;
+  width: 60px; height: 60px; border-radius: 6px;
   object-fit: contain;
 }
 .nav-links { display: flex; gap: 2rem; align-items: center; }
