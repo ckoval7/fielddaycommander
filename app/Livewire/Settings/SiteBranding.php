@@ -70,9 +70,7 @@ class SiteBranding extends Component
 
         Setting::set('site_name', $this->site_name);
 
-        if ($this->site_tagline) {
-            Setting::set('site_tagline', $this->site_tagline);
-        }
+        Setting::set('site_tagline', $this->site_tagline ?? '');
 
         if ($this->new_logo) {
             // Delete old logo

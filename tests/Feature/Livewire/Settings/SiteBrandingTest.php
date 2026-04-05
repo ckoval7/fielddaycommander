@@ -68,6 +68,23 @@ test('uploads and saves logo', function () {
     Storage::disk('public')->assertExists($logoPath);
 });
 
+test('saves and clears site tagline', function () {
+    Livewire::test(SiteBranding::class)
+        ->set('site_name', 'Test Site')
+        ->set('site_tagline', 'Field Day 2026')
+        ->call('save')
+        ->assertDispatched('notify');
+
+    expect(Setting::get('site_tagline'))->toBe('Field Day 2026');
+
+    Livewire::test(SiteBranding::class)
+        ->set('site_name', 'Test Site')
+        ->set('site_tagline', '')
+        ->call('save');
+
+    expect(Setting::get('site_tagline'))->toBe('');
+});
+
 test('saves and clears footer text', function () {
     Livewire::test(SiteBranding::class)
         ->set('site_name', 'Test Site')
