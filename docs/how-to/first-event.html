@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Event Setup - FD Commander Field Day Software</title>
+<meta name="description" content="Walk through setting up your first Field Day event in FD Commander: create the event, add equipment, configure stations, build the schedule, and invite your club's operators.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/first-event.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="First Event Setup - FD Commander Field Day Software">
+<meta property="og:description" content="Set up your first Field Day event in FD Commander: event configuration, stations, equipment, scheduling, and operator registration.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/first-event.html">
+<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="First Event Setup - FD Commander Field Day Software">
+<meta name="twitter:description" content="Set up your first Field Day event: stations, equipment, scheduling, and operator registration.">
+<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>First Event <span class="gradient">Setup</span></h1>
+    <p>Go from a fresh install to a fully configured Field Day event, ready for operators.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; First Event Setup
+      </div>
+
+      <p>You've deployed FD Commander and can reach it in a browser. Now what? This guide walks through everything between "the server is running" and "operators are logging contacts." The whole process takes about 20 minutes if you have your event details handy.</p>
+
+      <h2>Initial Setup Wizard</h2>
+
+      <p>The first time you open FD Commander in a browser, it launches a three-step setup wizard. The deploy script already created a System Administrator account for you (callsign: <code>SYSTEM</code>, email: <code>admin@localhost</code>). The wizard walks you through configuring it.</p>
+
+      <h3>Step 1: Admin Password</h3>
+
+      <p>Set a secure password for the admin account. The password must be at least 12 characters with uppercase, lowercase, numbers, and symbols. FD Commander checks it against known data breaches and will reject passwords that have appeared in public leaks.</p>
+
+      <div class="callout warning">
+        <div class="callout-title">Write this password down</div>
+        <p>This is the only account with full system access. If you lose it and email isn't configured, there's no self-service recovery. Store it somewhere safe before Field Day.</p>
+      </div>
+
+      <h3>Step 2: Site Branding</h3>
+
+      <p>Customize how FD Commander looks for your club:</p>
+
+      <ul>
+        <li><strong>Site Name</strong> - defaults to "Field Day Commander." You might change it to your club name or something like "W3XYZ Field Day 2026."</li>
+        <li><strong>Site Tagline</strong> - defaults to "ARRL Field Day Logging System." Shows under the site name.</li>
+        <li><strong>Site Logo</strong> - upload your club logo (PNG, JPG, or SVG, max 2 MB, recommended 200x200px). Optional.</li>
+      </ul>
+
+      <h3>Step 3: System Preferences</h3>
+
+      <p>Fill in your organization details and system-wide settings:</p>
+
+      <ul>
+        <li><strong>Organization Name</strong> (required) - your club or group name (e.g., "Springfield Amateur Radio Club").</li>
+        <li><strong>Organization Callsign</strong> - your club's station callsign (1-10 uppercase letters/numbers).</li>
+        <li><strong>Organization Email</strong> and <strong>Phone</strong> - optional contact details.</li>
+        <li><strong>Timezone</strong> (required) - searchable dropdown. Pick the timezone where your event will run.</li>
+        <li><strong>Date Format</strong> (required) - ISO (2026-04-05), US (04/05/2026), or EU (05/04/2026).</li>
+        <li><strong>Time Format</strong> (required) - 24-hour (16:10) or 12-hour (04:10 PM).</li>
+        <li><strong>Contact Email</strong> - optional, shown in system notifications.</li>
+      </ul>
+
+      <p>Click <strong>Complete Setup</strong>. FD Commander saves your settings and redirects you to the login page. Sign in with the email <code>admin@localhost</code> and the password you just created. You'll land on the main dashboard.</p>
+
+      <div class="callout info">
+        <div class="callout-title">You can change all of this later</div>
+        <p>Everything from the setup wizard is editable under <strong>Administration &gt; Settings</strong>. You can update your admin password under your profile, and change branding and preferences any time.</p>
+      </div>
+
+      <h2>Create the Event</h2>
+
+      <p>From the dashboard, click <strong>+ Create Event</strong> (or go to <strong>Administration &gt; Events</strong> and click it there). The form is split into four sections.</p>
+
+      <h3>Event Information</h3>
+
+      <ul>
+        <li><strong>Event Name</strong> (required) - a descriptive name like "Field Day 2026."</li>
+        <li><strong>Event Type</strong> (required) - Field Day or Winter Field Day. This controls which scoring rules, bonus categories, and official schedule apply.</li>
+        <li><strong>Year</strong> - auto-detected from the event name.</li>
+        <li><strong>Start &amp; End Date/Time (UTC)</strong> - auto-populated when you pick an event type and year, based on the official ARRL schedule. Adjust them if your club operates a shorter window. A note below the dates shows when the setup window opens per ARRL Rule 3.3.</li>
+      </ul>
+
+      <h3>Station Configuration</h3>
+
+      <ul>
+        <li><strong>Station Callsign</strong> (required) - the callsign your club will use for the event (e.g., W3XYZ).</li>
+        <li><strong>Club Name</strong> - optional, your club or organization name.</li>
+        <li><strong>ARRL/RAC Section</strong> (required) - searchable dropdown with every ARRL and RAC section.</li>
+        <li><strong>Operating Class</strong> (required) - your class designation (A through F). The options depend on the event type you selected. This determines your QSO multiplier.</li>
+        <li><strong>Number of Transmitters</strong> (required) - how many simultaneous transmitters your club will run (e.g., 3 for a 3A class).</li>
+      </ul>
+
+      <h3>Power Configuration</h3>
+
+      <ul>
+        <li><strong>Maximum Power (Watts)</strong> (required) - the maximum output power across all transmitters.</li>
+        <li><strong>Power Sources</strong> - check all that apply: Commercial Power (Grid), Generator, Battery, Alternate Power (solar, wind, hydro, methane), or Other. This feeds into scoring and determines your power multiplier.</li>
+      </ul>
+
+      <p>The form shows the power multiplier rules as you fill it in: 5&times; for &le;5W with natural power only, 2&times; for &le;5W with commercial/generator or 6&ndash;100W with any power, and 1&times; for >100W.</p>
+
+      <h3>Guestbook Settings</h3>
+
+      <p>Optionally enable the Guestbook, which lets visitors sign in when physically at your event location. See the <a href="../fd-commander-docs.html#guestbook">Visitor Guestbook</a> section of the docs for details on location verification, visitor categories, and bonus tracking.</p>
+
+      <p>Click <strong>Create Event</strong> to save. You'll land on the Events list page, where you can see your new event with its status, countdown timer, and current score.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Get this right the first time</div>
+        <p>The operating class, power source, and maximum wattage directly affect your score multiplier. Double-check these against your club's plan before moving on. You can change them later, but it's easier to get them right now.</p>
+      </div>
+
+      <h2>Add Equipment</h2>
+
+      <p>Before you can create stations, you need radios in the system. Go to <strong>Equipment &gt; My Catalog</strong> — this is where your personal gear lives. There are two ways to add equipment:</p>
+
+      <h3>Personal equipment</h3>
+
+      <p>Click <strong>+ Add Equipment</strong> to catalog gear you own. The form asks for make and model (required), equipment type (Radio, Antenna, Amplifier, Computer, Power Supply, Accessory, Tool, Furniture, or Other), serial number, a description, power output in watts, supported bands, tags, and a photo. As an admin you'll also see an <strong>Owner</strong> dropdown to assign the equipment to any registered user; operators creating their own equipment won't see this — their gear is automatically assigned to them.</p>
+
+      <h3>Club equipment</h3>
+
+      <p>As admin, click <strong>Add Club Equipment</strong> for gear that belongs to the club rather than any individual. The form is the same except there's no owner — instead there's an optional <strong>Managed By</strong> field where you can assign someone to be responsible for it. Club equipment has its own dedicated listing under <strong>Equipment &gt; Club Equipment</strong>. Only admins and event managers can add club equipment; operators won't see this button.</p>
+
+      <h3>Commit equipment to the event</h3>
+
+      <p>Once equipment is in the system, it needs to be <strong>committed</strong> to the event. There are two ways this happens:</p>
+
+      <ul>
+        <li><strong>Operators commit their own gear</strong> from <strong>Equipment &gt; My Catalog</strong>. Click the actions menu (<strong>⋮</strong>) on any item and choose <strong>Commit to Event</strong>. A dialog asks which event, the expected delivery date, and any delivery notes.</li>
+        <li><strong>Admins commit club equipment</strong> from the Equipment Dashboard at <strong>Administration &gt; Event Equipment</strong>. Click <strong>+ Commit Club Equipment</strong> to assign club gear in bulk. The dashboard tracks each item through its lifecycle: committed, delivered on-site, and returned after the event, and flags issues like lost or damaged gear.</li>
+      </ul>
+
+      <div class="callout info">
+        <div class="callout-title">Don't catalog everything</div>
+        <p>You don't need to add every cable and adapter. Focus on radios, antennas, and power supplies — the gear that actually gets assigned to stations. Operators can add their own equipment after they register if they want a more complete inventory.</p>
+      </div>
+
+      <h2>Configure Stations</h2>
+
+      <p>Stations represent individual operating positions. Go to <strong>Event Management &gt; Stations</strong> and click <strong>+ Add Station</strong>.</p>
+
+      <p>For each station, you'll configure:</p>
+
+      <ul>
+        <li><strong>Name</strong> - something descriptive like "HF CW 1" or "VHF/UHF" or "GOTA." Must be unique within the event.</li>
+        <li><strong>Station type</strong> - check any special designations. GOTA marks it as the Get On The Air station (only one per event). VHF/UHF Only restricts it to those bands. Satellite marks it for satellite contacts.</li>
+        <li><strong>Primary radio</strong> - select the main transceiver from equipment that's been committed to the event. FD Commander shows the radio's power capability so you can verify it fits your power class.</li>
+        <li><strong>Power configuration</strong> - max output in watts and the power source description (e.g., "Solar + Battery" or "Generator"). This feeds into the scoring engine.</li>
+      </ul>
+
+      <p>After creating the station, switch to the <strong>Equipment</strong> tab to assign additional gear beyond the primary radio: antennas, power supplies, tuners, and so on.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Ran the same setup last year?</div>
+        <p>Click <strong>Clone from Event</strong> on the main Stations page to copy all station definitions from a previous event. This brings over names, types, and power configurations so you don't have to rebuild from scratch.</p>
+      </div>
+
+      <h2>Build the Schedule</h2>
+
+      <p>Go to <strong>Administration &gt; Manage Schedule</strong>. There are two tabs: <strong>Roles</strong> and <strong>Shifts</strong>.</p>
+
+      <h3>Set up roles</h3>
+
+      <p>FD Commander ships with sample roles for common Field Day positions: Safety Officer, Public Information Table, Public Greeter, GOTA Coach, Message Handler, Event Manager, and Station Captain. Each role has a description and an optional bonus point value.</p>
+
+      <p>Review the defaults and tweak them for your club. You can rename them, delete ones you don't need, or click <strong>+ Add Custom Role</strong> to create your own (e.g., "Antenna Setup Crew" or "Food Coordinator").</p>
+
+      <p>Two settings on each role matter for scoring:</p>
+
+      <ul>
+        <li><strong>Auto-awarded on confirmation</strong> means the associated bonus points are granted when someone's shift is confirmed. <strong>Eligibility only</strong> means it's tracked but the event manager decides when to award it.</li>
+        <li><strong>Requires Confirmation</strong> means the event manager must approve the sign-up before it counts.</li>
+      </ul>
+
+      <h3>Create shifts</h3>
+
+      <p>Switch to the <strong>Shifts</strong> tab and click <strong>+ Add Shift</strong>. Each shift needs a role, a start and end time, a capacity (how many people can fill the slot), and optionally notes. The <strong>Open for Sign-ups</strong> toggle controls whether operators can self-assign or whether you assign them manually.</p>
+
+      <p>For a 24-hour Field Day, you'll probably want shift blocks of 2 to 4 hours per station. Use the <strong>Bulk Create</strong> button to generate multiple blocks at once instead of creating them one by one.</p>
+
+      <div class="callout warning">
+        <div class="callout-title">Times are entered in UTC</div>
+        <p>Shift times are stored in UTC but displayed to operators in their local timezone. ARRL Field Day starts at 1800 UTC Saturday, which is 2:00 PM Eastern, 11:00 AM Pacific. Make sure your shift blocks line up with the official start.</p>
+      </div>
+
+      <h2>Review the Safety Checklist</h2>
+
+      <p>Go to <strong>Event Management &gt; Site Safety</strong>. FD Commander ships with the 15-item ARRL Field Day safety checklist covering fire extinguishers, first aid, weather monitoring, grounding, and other field site essentials. Completing it earns the Safety Officer bonus (100 points).</p>
+
+      <p>You won't complete it now, obviously. But review the items so you know what to bring and what to check off when you arrive at the site. If your club has additional safety requirements, you can add custom items under <strong>Administration &gt; Manage Safety Checklist</strong>.</p>
+
+      <h2>Invite Operators</h2>
+
+      <p>The dashboard shows a registration link that you can share with your club. By default this is a local network address (e.g., <code>http://fd.local/register</code>) — operators need to be on the same LAN or Wi-Fi network as the server to reach it. If you've configured DNS and TLS (<a href="dns-tls.html">see the DNS &amp; TLS guide</a>), operators can register remotely using your public hostname. Send the link out via your club's email list, group chat, or repeater net. Operators visit it, register with their callsign, and they're in the system with the default Operator role.</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Copy the registration link from the dashboard.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">2</span> Share it with your club members.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">3</span> Once they register, they can browse the schedule and sign up for shifts.</p>
+      </div>
+
+      <p>If you've set up email (<a href="email-setup.html">see the Email Setup guide</a>), you can also create accounts manually and send invitation emails with a link to set their password. Otherwise, just share the registration URL and let people sign themselves up.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Promoting key people</div>
+        <p>After your station captains and event manager register, go to <strong>Administration &gt; Users</strong> and change their role. Station Captains can manage their operating position. Event Managers can handle stations, equipment, schedules, bonuses, and reports. Keep the admin role for yourself.</p>
+      </div>
+
+      <h2>The Dashboard Checklist</h2>
+
+      <p>The dashboard tracks five setup milestones. Once all five are checked, your event is ready for Field Day:</p>
+
+      <ol>
+        <li><strong>Event configuration created</strong> - your event exists with callsign, section, class, and power sources defined.</li>
+        <li><strong>Equipment inventoried</strong> - at least one piece of equipment has been added.</li>
+        <li><strong>Stations set up</strong> - at least one station has been defined with band and mode assignments.</li>
+        <li><strong>Shifts scheduled</strong> - operator shifts have been created for your stations.</li>
+        <li><strong>W1AW bulletin schedule set up</strong> - the W1AW bulletin reception schedule has been configured.</li>
+      </ol>
+
+      <p>If you followed this guide in order, all five should be checked. You're ready.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Do a dry run</div>
+        <p>Set up the event at least a month before Field Day and have a few club members register, sign up for shifts, and commit their equipment. This catches configuration problems while there's still time to fix them, and it gets operators familiar with the interface before the event.</p>
+      </div>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="lan-setup.html">LAN Setup &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+
+</body>
+</html>
