@@ -77,7 +77,7 @@
 
                             <div class="space-y-3">
                                 @foreach($typeItems as $item)
-                                    <div wire:key="item-{{ $item->id }}" class="flex flex-col gap-2 p-3 rounded-lg bg-base-200/50 border border-base-300">
+                                    <div wire:key="item-{{ $item->id }}" x-data="{ expanded: false }" class="flex flex-col gap-2 p-3 rounded-lg bg-base-200/50 border border-base-300">
                                         <div class="flex items-start gap-3">
                                             {{-- Checkbox --}}
                                             @if($canEdit)
@@ -105,7 +105,30 @@
                                                     @if($item->is_required)
                                                         <x-badge value="Required" class="badge-error badge-xs" />
                                                     @endif
+                                                    @if($item->help_text)
+                                                        <button
+                                                            type="button"
+                                                            x-on:click="expanded = !expanded"
+                                                            class="btn btn-ghost btn-xs btn-circle text-info hover:text-info-content hover:bg-info"
+                                                            :title="expanded ? 'Hide details' : 'What does this mean?'"
+                                                            :aria-expanded="expanded"
+                                                        >
+                                                            <x-icon name="o-question-mark-circle" class="w-5 h-5" />
+                                                        </button>
+                                                    @endif
                                                 </div>
+
+                                                {{-- Help text (expandable) --}}
+                                                @if($item->help_text)
+                                                    <div
+                                                        x-show="expanded"
+                                                        x-collapse
+                                                        class="mt-2 text-xs text-base-content/70 bg-info/5 border border-info/20 rounded-md px-3 py-2 leading-relaxed"
+                                                    >
+                                                        <x-icon name="o-light-bulb" class="w-3.5 h-3.5 inline text-info mr-1 -mt-0.5" />
+                                                        {{ $item->help_text }}
+                                                    </div>
+                                                @endif
 
                                                 {{-- Completed info --}}
                                                 @if($item->entry?->is_completed)

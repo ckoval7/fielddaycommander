@@ -22,6 +22,7 @@ class SafetyChecklistItemFactory extends Factory
             'event_configuration_id' => EventConfiguration::factory(),
             'checklist_type' => fake()->randomElement(ChecklistType::cases()),
             'label' => fake()->sentence(),
+            'help_text' => null,
             'is_required' => false,
             'is_default' => false,
             'sort_order' => 0,

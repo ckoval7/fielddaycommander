@@ -92,6 +92,54 @@ describe('display', function () {
             ->assertSee('Fire extinguisher on hand');
     });
 
+    test('shows help text toggle button when item has help text', function () {
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Fire extinguisher on hand',
+            'help_text' => 'Place a minimum 5-lb ABC-rated fire extinguisher nearby.',
+        ]);
+        SafetyChecklistEntry::factory()->create([
+            'safety_checklist_item_id' => $item->id,
+        ]);
+
+        $this->actingAs($this->regularUser);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->assertSee('Fire extinguisher on hand')
+            ->assertSee('Place a minimum 5-lb ABC-rated fire extinguisher nearby.');
+    });
+
+    test('does not show help text toggle for items without help text', function () {
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Custom item without help',
+            'help_text' => null,
+        ]);
+        SafetyChecklistEntry::factory()->create([
+            'safety_checklist_item_id' => $item->id,
+        ]);
+
+        $this->actingAs($this->regularUser);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->assertSee('Custom item without help')
+            ->assertDontSeeHtml('o-question-mark-circle');
+    });
+
+    test('seeded defaults include help text', function () {
+        $this->actingAs($this->regularUser);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->assertStatus(200);
+
+        $itemWithHelp = SafetyChecklistItem::forEvent($this->eventConfig->id)
+            ->whereNotNull('help_text')
+            ->first();
+
+        expect($itemWithHelp)->not->toBeNull()
+            ->and($itemWithHelp->help_text)->toBeString()->not->toBeEmpty();
+    });
+
     test('shows completion summary', function () {
         $item1 = SafetyChecklistItem::factory()->safetyOfficer()->required()->create([
             'event_configuration_id' => $this->eventConfig->id,
