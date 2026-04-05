@@ -79,7 +79,8 @@ describe('creating messages', function () {
 describe('SM/SEC template', function () {
     test('pre-fills SM message template', function () {
         Livewire::actingAs($this->operator)
-            ->test(MessageForm::class, ['event' => $this->event, 'template' => 'sm'])
+            ->withQueryParams(['template' => 'sm'])
+            ->test(MessageForm::class, ['event' => $this->event])
             ->assertSet('isSmMessage', true)
             ->assertSet('role', 'originated')
             ->assertSet('precedence', 'routine');

@@ -82,7 +82,7 @@ class MessageForm extends Component
 
     public ?string $icsReplyPosition = null;
 
-    public function mount(Event $event, ?string $template = null): void
+    public function mount(Event $event): void
     {
         $this->event = $event;
 
@@ -96,7 +96,7 @@ class MessageForm extends Component
             $this->filedAt = now()->format(self::DATETIME_LOCAL_FORMAT);
         }
 
-        if ($template === 'sm' && (! $this->message || ! $this->message->exists)) {
+        if (request()->query('template') === 'sm' && (! $this->message || ! $this->message->exists)) {
             $this->applySmTemplate();
         }
     }
