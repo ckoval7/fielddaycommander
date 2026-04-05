@@ -16,6 +16,10 @@ class CheckSystemSetupComplete
             return $next($request);
         }
 
+        if (config('demo.enabled')) {
+            return $next($request);
+        }
+
         // Check if setup is complete
         $setupComplete = DB::table('system_config')
             ->where('key', 'setup_completed')

@@ -10,10 +10,15 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
+        then: function () {
+            \Illuminate\Support\Facades\Route::middleware('web')
+                ->group(base_path('routes/demo.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         $middleware->web(append: [
+            \App\Http\Middleware\DemoMiddleware::class,
             \App\Http\Middleware\DevRoleOverride::class,
             \App\Http\Middleware\CheckSystemSetupComplete::class,
             \App\Http\Middleware\EnsurePasswordChanged::class,
