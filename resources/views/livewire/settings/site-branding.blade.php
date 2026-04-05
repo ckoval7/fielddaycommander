@@ -78,12 +78,19 @@
     <x-card>
         <x-slot:title>Public Landing Page</x-slot:title>
 
-        <x-textarea
-            label="Welcome Message"
-            wire:model="welcome_message"
-            rows="4"
-            hint="Displayed on the public landing page. Tell visitors about your club or operation. (max 2000 characters)"
-        />
+        <div class="space-y-4">
+            <x-textarea
+                label="Welcome Message"
+                wire:model="welcome_message"
+                rows="4"
+                hint="Displayed on the public landing page. Tell visitors about your club or operation. (max 2000 characters)"
+            />
+
+            <a href="{{ route('public.landing') }}" target="_blank" class="btn btn-sm btn-ghost gap-2">
+                <x-icon name="o-arrow-top-right-on-square" class="w-4 h-4" />
+                View Public Landing Page
+            </a>
+        </div>
     </x-card>
 
     <div class="flex justify-end">

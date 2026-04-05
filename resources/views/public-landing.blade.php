@@ -61,9 +61,10 @@
 
             {{-- Event dates --}}
             @if($activeEvent && $activeEvent->start_time && $activeEvent->end_time)
+                @php $tz = \App\Models\Setting::get('timezone', 'America/New_York'); @endphp
                 <p class="text-base text-base-content/50 mb-4">
-                    {{ $activeEvent->start_time->format('F j, Y g:i A') }} &mdash;
-                    {{ $activeEvent->end_time->format('F j, Y g:i A T') }}
+                    {{ $activeEvent->start_time->timezone($tz)->format('F j, Y g:i A') }} &mdash;
+                    {{ $activeEvent->end_time->timezone($tz)->format('F j, Y g:i A T') }}
                 </p>
             @endif
 

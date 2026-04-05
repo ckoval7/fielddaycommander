@@ -14,14 +14,14 @@ use Illuminate\View\View;
 class DashboardController extends Controller
 {
     /**
-     * Display the main dashboard for authenticated users.
+     * Display the main dashboard for authenticated users,
+     * or the public landing page for unauthenticated visitors.
      *
      * Shows the get-ready view for upcoming events, the widget dashboard
      * for active/grace-period events, or the no-event view when no events exist.
      */
     public function index(EventContextService $eventContext): View
     {
-        // Unauthenticated visitors see the public landing page
         if (! Auth::check()) {
             return view('public-landing');
         }
