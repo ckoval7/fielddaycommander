@@ -47,7 +47,7 @@
                     class="file-input file-input-bordered w-full"
                 />
                 <span class="label">
-                    <span class="label-text-alt">PNG, JPG, or SVG. Maximum 2MB. Recommended: 800x200px</span>
+                    <span class="label-text-alt">PNG, JPG, or SVG. Maximum 2MB. Recommended: square image, 200x200px or larger</span>
                 </span>
             </div>
 

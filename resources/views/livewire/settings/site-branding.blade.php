@@ -46,7 +46,7 @@
                 label="Upload New Logo"
                 wire:model="new_logo"
                 accept="image/png,image/jpeg,image/svg+xml"
-                hint="PNG, JPG, or SVG. Maximum 2MB. Recommended: 800x200px"
+                hint="PNG, JPG, or SVG. Maximum 2MB. Recommended: square image, 200x200px or larger"
             >
                 <x-slot:append>
                     <div wire:loading wire:target="new_logo" class="text-sm text-primary">
