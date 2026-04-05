@@ -19,3 +19,8 @@ Schedule::command('reminders:send')->everyMinute();
 
 // Clean up expired album exports
 Schedule::command('exports:clean')->daily();
+
+// Drop expired demo databases
+Schedule::command('demo:cleanup')
+    ->hourly()
+    ->when(fn () => config('demo.enabled'));
