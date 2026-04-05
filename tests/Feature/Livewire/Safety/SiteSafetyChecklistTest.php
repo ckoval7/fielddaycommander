@@ -354,3 +354,67 @@ describe('editing', function () {
         expect($entry->fresh()->notes)->toBeNull();
     });
 });
+
+// =============================================================================
+// CPR/AED Trained Personnel Display
+// =============================================================================
+
+describe('cpr/aed trained personnel', function () {
+    test('shows trained users on CPR/AED checklist item', function () {
+        $trainedUser = User::factory()->create([
+            'call_sign' => 'KD2CPR',
+            'first_name' => 'Medic',
+            'is_cpr_aed_trained' => true,
+        ]);
+
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'First Aid - CPR - AED versed else trained participant/s on site for full Field Day period',
+        ]);
+        SafetyChecklistEntry::factory()->create([
+            'safety_checklist_item_id' => $item->id,
+        ]);
+
+        $this->actingAs($this->regularUser);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->assertSee('KD2CPR')
+            ->assertSee('Medic');
+    });
+
+    test('does not show trained users section when no users are trained', function () {
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'First Aid - CPR - AED versed else trained participant/s on site for full Field Day period',
+        ]);
+        SafetyChecklistEntry::factory()->create([
+            'safety_checklist_item_id' => $item->id,
+        ]);
+
+        $this->actingAs($this->regularUser);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->assertDontSee('Trained personnel');
+    });
+
+    test('does not show trained users on non-CPR checklist items', function () {
+        User::factory()->create([
+            'call_sign' => 'KD2CPR',
+            'first_name' => 'Medic',
+            'is_cpr_aed_trained' => true,
+        ]);
+
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Fire extinguisher on hand',
+        ]);
+        SafetyChecklistEntry::factory()->create([
+            'safety_checklist_item_id' => $item->id,
+        ]);
+
+        $this->actingAs($this->regularUser);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->assertDontSee('Trained personnel');
+    });
+});

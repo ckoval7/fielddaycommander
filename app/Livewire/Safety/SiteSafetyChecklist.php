@@ -8,6 +8,7 @@ use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\SafetyChecklistItem;
 use App\Models\ShiftAssignment;
+use App\Models\User;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -177,6 +178,21 @@ class SiteSafetyChecklist extends Component
             'required_total' => $requiredTotal,
             'required_completed' => $requiredCompleted,
         ];
+    }
+
+    /**
+     * Get users who are CPR/AED trained, for display on the checklist.
+     *
+     * @return Collection<int, User>
+     */
+    #[Computed]
+    public function cprAedTrainedUsers(): Collection
+    {
+        return User::query()
+            ->where('is_cpr_aed_trained', true)
+            ->excludeSystem()
+            ->orderBy('call_sign')
+            ->get(['id', 'call_sign', 'first_name']);
     }
 
     /**
