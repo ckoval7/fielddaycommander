@@ -34,6 +34,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'notification_preferences.system_announcements' => ['boolean'],
             'notification_preferences.categories' => ['nullable', 'array'],
             'notification_preferences.categories.*' => ['boolean'],
+            'is_cpr_aed_trained' => ['sometimes', 'boolean'],
         ])->validateWithBag('updateProfileInformation');
 
         if ($input['email'] !== $user->email &&
@@ -47,6 +48,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'license_class' => $input['license_class'] ?? null,
                 'preferred_timezone' => $input['preferred_timezone'] ?? null,
                 'notification_preferences' => $input['notification_preferences'] ?? null,
+                'is_cpr_aed_trained' => ! empty($input['is_cpr_aed_trained']),
             ])->save();
         }
     }
@@ -66,6 +68,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'license_class' => $input['license_class'] ?? null,
             'preferred_timezone' => $input['preferred_timezone'] ?? null,
             'notification_preferences' => $input['notification_preferences'] ?? null,
+            'is_cpr_aed_trained' => ! empty($input['is_cpr_aed_trained']),
         ])->save();
 
         $user->sendEmailVerificationNotification();

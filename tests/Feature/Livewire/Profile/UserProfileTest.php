@@ -413,3 +413,29 @@ test('load more button shown when more entries may exist', function () {
         ->set('activeTab', 'activity')
         ->assertSee('Load More');
 });
+
+// =============================================================================
+// CPR/AED Trained Flag Tests (2 tests)
+// =============================================================================
+
+test('user can enable cpr_aed_trained flag on profile', function () {
+    $user = User::factory()->create(['is_cpr_aed_trained' => false]);
+    $this->actingAs($user);
+
+    Livewire::test(UserProfile::class)
+        ->set('is_cpr_aed_trained', true)
+        ->call('saveProfile');
+
+    expect($user->fresh()->is_cpr_aed_trained)->toBeTrue();
+});
+
+test('user can disable cpr_aed_trained flag on profile', function () {
+    $user = User::factory()->create(['is_cpr_aed_trained' => true]);
+    $this->actingAs($user);
+
+    Livewire::test(UserProfile::class)
+        ->set('is_cpr_aed_trained', false)
+        ->call('saveProfile');
+
+    expect($user->fresh()->is_cpr_aed_trained)->toBeFalse();
+});

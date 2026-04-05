@@ -32,6 +32,8 @@ class UserProfile extends Component
 
     public bool $is_youth = false;
 
+    public bool $is_cpr_aed_trained = false;
+
     public bool $event_notifications = true;
 
     public bool $system_announcements = true;
@@ -94,6 +96,7 @@ class UserProfile extends Component
         $this->license_class = $user->license_class;
         $this->preferred_timezone = $user->preferred_timezone ?? \App\Models\Setting::get('timezone', config('app.timezone'));
         $this->is_youth = (bool) $user->is_youth;
+        $this->is_cpr_aed_trained = (bool) $user->is_cpr_aed_trained;
 
         // Load notification preferences
         $preferences = $user->notification_preferences ?? [];
@@ -122,6 +125,7 @@ class UserProfile extends Component
             'license_class' => ['nullable', 'string', 'in:Technician,General,Advanced,Extra'],
             'preferred_timezone' => ['nullable', 'string', 'timezone:all'],
             'is_youth' => ['boolean'],
+            'is_cpr_aed_trained' => ['boolean'],
         ]);
 
         $user = auth()->user();
@@ -136,6 +140,7 @@ class UserProfile extends Component
                 'license_class' => $this->license_class,
                 'preferred_timezone' => $this->preferred_timezone,
                 'is_youth' => $this->is_youth,
+                'is_cpr_aed_trained' => $this->is_cpr_aed_trained,
                 'notification_preferences' => [
                     'event_notifications' => $this->event_notifications,
                     'system_announcements' => $this->system_announcements,
