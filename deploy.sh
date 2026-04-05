@@ -275,8 +275,9 @@ install_packages_debian() {
     if ! command -v php8.4 &>/dev/null; then
         apt-get update -y
         source /etc/os-release
-        apt-get install -y lsb-release ca-certificates curl software-properties-common
+        apt-get install -y lsb-release ca-certificates curl
         if [[ "$ID" == "ubuntu" ]]; then
+            apt-get install -y software-properties-common
             log_info "Adding Ondrej PHP PPA (Ubuntu)..."
             if ! add-apt-repository -y ppa:ondrej/php 2>/dev/null; then
                 log_warn "PPA not available for $(lsb_release -sc), falling back to Sury DEB repo..."
