@@ -94,6 +94,7 @@
             <x-menu activate-by-route class="mt-4">
                 @auth
                     <x-menu-item title="Dashboard" icon="o-home" link="/" />
+                    <x-menu-item title="Public Page" icon="o-globe-alt" link="{{ route('public.landing') }}" />
 
                     <x-menu-separator title="LOGGING" />
 
