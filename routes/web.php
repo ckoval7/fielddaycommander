@@ -21,12 +21,14 @@ Route::post('/register/invite/{token}', [InvitationController::class, 'accept'])
 
 // Dashboard System Routes
 Route::get('/', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard.alt');
+
+Route::get('/public', [DashboardController::class, 'publicLanding'])
+    ->name('public.landing');
 
 Route::get('/dashboard/tv', [DashboardController::class, 'tv'])
     ->name('dashboard.tv');

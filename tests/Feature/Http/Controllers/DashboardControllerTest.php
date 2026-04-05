@@ -30,10 +30,11 @@ function createActiveEvent(): Event
     ]);
 }
 
-test('index requires authentication', function () {
+test('index shows public landing page for unauthenticated visitors', function () {
     $response = $this->get(route('dashboard'));
 
-    $response->assertRedirect(route('login'));
+    $response->assertStatus(200);
+    $response->assertViewIs('public-landing');
 });
 
 test('index loads user default dashboard', function () {

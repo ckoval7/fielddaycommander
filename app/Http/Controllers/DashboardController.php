@@ -21,6 +21,11 @@ class DashboardController extends Controller
      */
     public function index(EventContextService $eventContext): View
     {
+        // Unauthenticated visitors see the public landing page
+        if (! Auth::check()) {
+            return view('public-landing');
+        }
+
         $user = Auth::user();
         $event = $eventContext->getContextEvent();
 
@@ -112,6 +117,14 @@ class DashboardController extends Controller
             'event' => $event,
             'checklist' => $checklist,
         ]);
+    }
+
+    /**
+     * Display the public landing page (always, regardless of auth state).
+     */
+    public function publicLanding(): View
+    {
+        return view('public-landing');
     }
 
     /**
