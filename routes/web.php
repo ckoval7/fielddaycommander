@@ -51,11 +51,9 @@ Route::middleware(['auth', 'can:log-contacts'])->group(function () {
     Route::post('/logging/contacts', [\App\Http\Controllers\ContactSyncController::class, 'store'])->name('logging.contacts.store');
 });
 
-// Logbook Browser
-Route::middleware('auth')->group(function () {
-    Route::get('/logbook', [\App\Http\Controllers\LogbookController::class, 'index'])->name('logbook.index');
-    Route::get('/logbook/export', [\App\Http\Controllers\LogbookController::class, 'export'])->name('logbook.export');
-});
+// Logbook Browser (public)
+Route::get('/logbook', [\App\Http\Controllers\LogbookController::class, 'index'])->name('logbook.index');
+Route::get('/logbook/export', [\App\Http\Controllers\LogbookController::class, 'export'])->name('logbook.export');
 
 // Event Management
 Route::middleware('auth')->group(function () {
