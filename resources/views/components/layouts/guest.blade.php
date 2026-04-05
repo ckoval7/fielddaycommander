@@ -42,7 +42,7 @@
             } elseif ($activeEvent && $activeEvent->logo_path) {
                 $logoPath = $activeEvent->logo_path;
             } else {
-                $logoPath = config('branding.default_logo', '/images/logo.svg');
+                $logoPath = config('branding.default_logo', '/images/logo.png');
             }
 
             // Site Name/Callsign: System settings > Event callsign > Default

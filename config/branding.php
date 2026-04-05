@@ -11,7 +11,7 @@ return [
     |
     */
 
-    'default_logo' => env('APP_LOGO', '/images/logo.svg'),
+    'default_logo' => env('APP_LOGO', '/images/logo.png'),
 
     'default_callsign' => env('APP_CALLSIGN', config('app.name')),
 

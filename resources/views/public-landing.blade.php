@@ -16,7 +16,7 @@
     } elseif ($eventConfig && $eventConfig->logo_path) {
         $logoUrl = $eventConfig->logo_path;
     } else {
-        $logoUrl = config('branding.default_logo', '/images/logo.svg');
+        $logoUrl = config('branding.default_logo', '/images/logo.png');
     }
 
     // Callsign / site name

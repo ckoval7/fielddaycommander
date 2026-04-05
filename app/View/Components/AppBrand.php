@@ -54,7 +54,13 @@ class AppBrand extends Component
             return $this->activeEvent->logo_path;
         }
 
-        return config('branding.default_logo', '/images/logo.svg');
+        $defaultLogo = config('branding.default_logo', '/images/logo.png');
+
+        if (file_exists(public_path($defaultLogo))) {
+            $this->hasCustomLogo = true;
+        }
+
+        return $defaultLogo;
     }
 
     /**
