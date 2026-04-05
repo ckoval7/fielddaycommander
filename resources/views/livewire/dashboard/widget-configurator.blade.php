@@ -110,7 +110,7 @@
                     <h3 class="text-lg font-semibold mb-3">Widget Size</h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="label"><span class="label-text text-sm">Columns (1-4)</span></label>
+                            <span class="label"><span class="label-text text-sm">Columns (1-4)</span></span>
                             <div class="flex gap-1">
                                 @foreach(range(1, 4) as $c)
                                     <button
@@ -124,7 +124,7 @@
                             </div>
                         </div>
                         <div>
-                            <label class="label"><span class="label-text text-sm">Height</span></label>
+                            <span class="label"><span class="label-text text-sm">Height</span></span>
                             <div class="flex gap-1">
                                 @foreach([['Short', 2], ['Medium', 3], ['Tall', 6]] as [$label, $r])
                                     <button

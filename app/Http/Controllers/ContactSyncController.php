@@ -47,6 +47,7 @@ class ContactSyncController extends Controller
         );
 
         $mode = $session->mode;
+        $contactPoints = $isGotaContact ? 5 : $mode->points_fd;
 
         try {
             $contact = Contact::create([
@@ -61,7 +62,7 @@ class ContactSyncController extends Controller
                 'section_id' => $request->section_id,
                 'received_exchange' => $request->received_exchange,
                 'power_watts' => $request->power_watts,
-                'points' => $dupeCheck['is_duplicate'] ? 0 : ($isGotaContact ? 5 : $mode->points_fd),
+                'points' => $dupeCheck['is_duplicate'] ? 0 : $contactPoints,
                 'is_duplicate' => $dupeCheck['is_duplicate'],
                 'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
                 'is_gota_contact' => $isGotaContact,

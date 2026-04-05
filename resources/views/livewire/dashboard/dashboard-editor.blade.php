@@ -88,7 +88,7 @@
             {{-- Screen reader live region --}}
             <div aria-live="polite" aria-atomic="true" class="sr-only" x-text="announceMessage"></div>
 
-            <div
+            <ul
                 x-bind="sortableContainer"
                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-[1800px]:grid-cols-4 grid-flow-row-dense gap-5 widget-grid"
                 style="grid-auto-rows: 90px;"
@@ -113,9 +113,8 @@
                             default => 'row-span-2',
                         };
                     @endphp
-                    <div
-                        class="widget-item relative animate-fade-in {{ $spanClasses }} {{ $rowSpanClasses }} {{ !$isVisible && $editMode ? 'opacity-40' : '' }} {{ !$isVisible && !$editMode ? 'hidden' : '' }} {{ $editMode ? 'ring-2 ring-base-300 rounded-lg' : '' }}"
-                        role="listitem"
+                    <li
+                        class="widget-item relative animate-fade-in {{ $spanClasses }} {{ $rowSpanClasses }} {{ !$isVisible && $editMode ? 'opacity-40' : '' }} {{ !$isVisible && !$editMode ? 'hidden' : '' }} {{ $editMode ? 'ring-2 ring-base-300 rounded-lg' : '' }} list-none"
                         :tabindex="enabled ? '0' : '-1'"
                         :draggable="String(enabled)"
                         :aria-grabbed="keyboardGrabbedIndex === {{ $index }} ? 'true' : 'false'"
@@ -341,11 +340,11 @@
                                     </x-card>
                             @endswitch
                         </div>
-                    </div>
+                    </li>
                 @endforeach
 
                 {{-- Add Widget Card (edit mode only) --}}
-                <div x-show="editMode" x-cloak role="listitem" class="row-span-2">
+                <li x-show="editMode" x-cloak class="row-span-2 list-none">
                     <button
                         wire:click="openWidgetPicker"
                         class="w-full h-full min-h-[120px] border-2 border-dashed border-base-300 rounded-lg p-6 text-center text-base-content/50 hover:border-primary hover:text-primary transition-colors"
@@ -353,8 +352,8 @@
                         <x-icon name="o-plus" class="w-8 h-8 mx-auto mb-2" />
                         <p class="text-sm font-medium">Add Widget</p>
                     </button>
-                </div>
-            </div>
+                </li>
+            </ul>
         </div>
     @else
         {{-- Empty State --}}

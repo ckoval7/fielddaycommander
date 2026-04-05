@@ -331,16 +331,12 @@ class EventConfiguration extends Model
     {
         $bonusType = BonusType::where('code', 'emergency_power')->first();
 
-        if ($this->uses_commercial_power || ! $bonusType || ! $bonusType->is_active) {
-            return 0;
-        }
+        $hasCommercialStation = ! $this->uses_commercial_power
+            && $this->stations()
+                ->where('power_source', PowerSource::CommercialMains->value)
+                ->exists();
 
-        // Check if any station uses commercial mains
-        $hasCommercialStation = $this->stations()
-            ->where('power_source', PowerSource::CommercialMains->value)
-            ->exists();
-
-        if ($hasCommercialStation) {
+        if ($this->uses_commercial_power || $hasCommercialStation || ! $bonusType || ! $bonusType->is_active) {
             return 0;
         }
 
