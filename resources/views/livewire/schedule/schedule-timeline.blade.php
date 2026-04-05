@@ -11,6 +11,14 @@
                 @endif
             </div>
             <div class="flex flex-wrap gap-2">
+                @can('manage-shifts')
+                    <x-button
+                        label="Manage Schedule"
+                        icon="o-cog-6-tooth"
+                        class="btn-outline"
+                        link="{{ route('schedule.manage') }}"
+                    />
+                @endcan
                 <x-button
                     label="My Shifts"
                     icon="o-calendar-days"
