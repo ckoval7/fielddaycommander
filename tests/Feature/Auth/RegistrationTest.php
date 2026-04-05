@@ -98,6 +98,41 @@ test('registration prevents duplicate email', function () {
     $this->assertGuest();
 });
 
+test('registration persists cpr_aed_trained flag', function () {
+    $response = $this->post('/register', [
+        'call_sign' => 'KD2CPR',
+        'first_name' => 'Medic',
+        'last_name' => 'Doe',
+        'email' => 'medic@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+        'is_cpr_aed_trained' => '1',
+    ]);
+
+    $this->assertAuthenticated();
+
+    $user = User::where('call_sign', 'KD2CPR')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->is_cpr_aed_trained)->toBeTrue();
+});
+
+test('registration defaults cpr_aed_trained to false', function () {
+    $response = $this->post('/register', [
+        'call_sign' => 'KD2NUL',
+        'first_name' => 'Normal',
+        'last_name' => 'User',
+        'email' => 'normal@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $this->assertAuthenticated();
+
+    $user = User::where('call_sign', 'KD2NUL')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->is_cpr_aed_trained)->toBeFalse();
+});
+
 test('registration prevents duplicate call sign', function () {
     User::factory()->create(['call_sign' => 'W1AW']);
 
