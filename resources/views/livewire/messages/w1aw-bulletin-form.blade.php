@@ -61,7 +61,7 @@
                             <th>Mode</th>
                             <th>Frequencies (MHz)</th>
                             <th>Source</th>
-                            @can('manage-event-config')
+                            @can('manage-bulletins')
                                 <th class="text-right">Actions</th>
                             @endcan
                         </tr>
@@ -73,7 +73,7 @@
                                 <td>{{ $entry->mode_label }}</td>
                                 <td class="font-mono text-sm">{{ $entry->frequencies }}</td>
                                 <td>{{ $entry->source }}</td>
-                                @can('manage-event-config')
+                                @can('manage-bulletins')
                                     <td class="text-right">
                                         <div class="flex gap-1 justify-end">
                                             <x-button
@@ -104,7 +104,7 @@
         @endif
 
         {{-- Add/Edit form (managers only) --}}
-        @can('manage-event-config')
+        @can('manage-bulletins')
             <div class="mt-4 pt-4 border-t border-base-300">
                 <h4 class="text-sm font-semibold mb-3">
                     {{ $editingEntryId ? 'Edit Transmission' : 'Add Transmission' }}

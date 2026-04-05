@@ -14,7 +14,7 @@ beforeEach(function () {
     $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
 
     Permission::firstOrCreate(['name' => 'log-contacts']);
-    Permission::firstOrCreate(['name' => 'manage-event-config']);
+    Permission::firstOrCreate(['name' => 'manage-bulletins']);
 
     $this->eventType = EventType::where('code', 'FD')->first();
     $this->event = Event::factory()->create(['event_type_id' => $this->eventType->id]);
@@ -24,7 +24,7 @@ beforeEach(function () {
     $this->operator->givePermissionTo('log-contacts');
 
     $this->manager = User::factory()->create();
-    $this->manager->givePermissionTo(['log-contacts', 'manage-event-config']);
+    $this->manager->givePermissionTo(['log-contacts', 'manage-bulletins']);
 });
 
 describe('schedule display', function () {

@@ -15,7 +15,7 @@ test('event management permissions exist', function () {
         'create-events',
         'edit-events',
         'delete-events',
-        'activate-events',
+        'manage-bulletins',
     ];
 
     foreach ($permissions as $permission) {
@@ -30,7 +30,7 @@ test('system administrator has all event permissions', function () {
     expect($admin->hasPermissionTo('create-events'))->toBeTrue();
     expect($admin->hasPermissionTo('edit-events'))->toBeTrue();
     expect($admin->hasPermissionTo('delete-events'))->toBeTrue();
-    expect($admin->hasPermissionTo('activate-events'))->toBeTrue();
+    expect($admin->hasPermissionTo('manage-bulletins'))->toBeTrue();
 });
 
 test('event manager role exists with all event permissions', function () {
@@ -41,5 +41,5 @@ test('event manager role exists with all event permissions', function () {
     expect($eventManager->hasPermissionTo('create-events'))->toBeTrue();
     expect($eventManager->hasPermissionTo('edit-events'))->toBeTrue();
     expect($eventManager->hasPermissionTo('delete-events'))->toBeTrue();
-    expect($eventManager->hasPermissionTo('activate-events'))->toBeTrue();
+    expect($eventManager->hasPermissionTo('manage-bulletins'))->toBeTrue();
 });

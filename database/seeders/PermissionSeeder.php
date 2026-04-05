@@ -19,9 +19,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'create-events', 'description' => 'Create new Field Day events'],
             ['name' => 'edit-events', 'description' => 'Edit existing Field Day events'],
             ['name' => 'delete-events', 'description' => 'Delete Field Day events'],
-            ['name' => 'activate-events', 'description' => 'Activate or deactivate events'],
-            ['name' => 'manage-events', 'description' => 'Create and edit Field Day events'],
-            ['name' => 'manage-event-config', 'description' => 'Configure event settings'],
+            ['name' => 'manage-bulletins', 'description' => 'Manage W1AW bulletin schedule'],
             ['name' => 'verify-bonuses', 'description' => 'Approve or reject bonus point claims'],
 
             // Station & Equipment
@@ -60,6 +58,6 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created 26 permissions');
+        $this->command->info('Created 24 permissions');
     }
 }

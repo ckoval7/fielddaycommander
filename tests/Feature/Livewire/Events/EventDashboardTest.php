@@ -26,11 +26,10 @@ beforeEach(function () {
     Permission::create(['name' => 'view-events']);
     Permission::create(['name' => 'edit-events']);
     Permission::create(['name' => 'delete-events']);
-    Permission::create(['name' => 'activate-events']);
     Permission::create(['name' => 'create-events']);
 
     $role = Role::create(['name' => 'Event Manager', 'guard_name' => 'web']);
-    $role->givePermissionTo(['view-events', 'edit-events', 'delete-events', 'activate-events', 'create-events']);
+    $role->givePermissionTo(['view-events', 'edit-events', 'delete-events', 'create-events']);
     $this->user->assignRole($role);
 });
 

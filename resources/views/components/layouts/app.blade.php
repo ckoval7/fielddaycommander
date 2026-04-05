@@ -143,12 +143,12 @@
                             :active="request()->routeIs('events.w1aw-bulletin')" />
                     @endif
 
-                    @canany(['manage-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment'])
+                    @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment'])
                         <x-menu-separator title="ADMINISTRATION" />
 
-                        @can('manage-events')
+                        @canany(['create-events', 'edit-events'])
                             <x-menu-item title="Events" icon="o-calendar-days" link="/events" />
-                        @endcan
+                        @endcanany
 
                         @can('manage-shifts')
                             <x-menu-item title="Manage Schedule" icon="o-cog-6-tooth" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />

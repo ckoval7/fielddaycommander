@@ -106,7 +106,7 @@ class W1awBulletinForm extends Component
 
     public function addScheduleEntry(): void
     {
-        if (! auth()->user()->can('manage-event-config')) {
+        if (! auth()->user()->can('manage-bulletins')) {
             abort(403);
         }
 
@@ -133,7 +133,7 @@ class W1awBulletinForm extends Component
 
     public function editScheduleEntry(int $entryId): void
     {
-        if (! auth()->user()->can('manage-event-config')) {
+        if (! auth()->user()->can('manage-bulletins')) {
             abort(403);
         }
 
@@ -147,7 +147,7 @@ class W1awBulletinForm extends Component
 
     public function updateScheduleEntry(): void
     {
-        if (! auth()->user()->can('manage-event-config')) {
+        if (! auth()->user()->can('manage-bulletins')) {
             abort(403);
         }
 
@@ -181,7 +181,7 @@ class W1awBulletinForm extends Component
 
     public function deleteScheduleEntry(int $entryId): void
     {
-        if (! auth()->user()->can('manage-event-config')) {
+        if (! auth()->user()->can('manage-bulletins')) {
             abort(403);
         }
 
