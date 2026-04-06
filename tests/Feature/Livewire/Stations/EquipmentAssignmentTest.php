@@ -1082,3 +1082,29 @@ it('shows unassign confirmation when station has active session', function () {
         ->call('requestUnassign', $equipment->id)
         ->assertSet('showUnassignConfirmModal', true);
 });
+
+test('primary radio does not appear in assigned equipment list', function () {
+    // The station observer creates an equipment_event record for the primary radio.
+    // It should NOT appear in assignedEquipmentByType (it's shown separately as Primary Radio).
+    $component = Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id]);
+
+    $assigned = $component->get('assignedEquipmentByType') ?? collect();
+    $allEquipmentIds = $assigned->flatten()->map(fn ($c) => $c->equipment_id)->all();
+
+    expect($allEquipmentIds)->not->toContain($this->radio->id);
+});
+
+test('primary radio does not appear in committed equipment list after observer creates record', function () {
+    // Simulate the bad state: observer-created record with station_id nulled out
+    EquipmentEvent::query()
+        ->where('equipment_id', $this->radio->id)
+        ->where('event_id', $this->event->id)
+        ->update(['station_id' => null]);
+
+    $component = Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id]);
+
+    $committed = $component->get('eventCommittedEquipment') ?? collect();
+    $committedEquipmentIds = $committed->map(fn ($c) => $c->equipment_id)->all();
+
+    expect($committedEquipmentIds)->not->toContain($this->radio->id);
+});
