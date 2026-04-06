@@ -91,6 +91,20 @@ test('returnToActive clears session', function () {
     expect(session('viewing_event_id'))->toBeNull();
 });
 
+test('component renders event in setup status without error', function () {
+    $setup = Event::factory()->create([
+        'name' => 'Setup Event',
+        'setup_allowed_from' => now()->subHour(),
+        'start_time' => now()->addHours(12),
+        'end_time' => now()->addHours(36),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $setup->id]);
+
+    Livewire::actingAs($this->user)
+        ->test(EventContextSelector::class)
+        ->assertSee('Setup Event');
+});
+
 test('component groups events by status', function () {
     // Active event
     $active = Event::factory()->create([

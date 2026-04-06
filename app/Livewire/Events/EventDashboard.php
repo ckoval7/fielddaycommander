@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
@@ -330,6 +331,30 @@ class EventDashboard extends Component
             'claimed_pts' => (int) $list->where('status', 'claimed')->sum('points'),
             'unclaimed_count' => $list->where('status', 'unclaimed')->count(),
         ];
+    }
+
+    public function delete(): void
+    {
+        $this->authorize('delete-events');
+
+        $event = $this->event;
+        $hasContacts = $event->eventConfiguration?->hasContacts() ?? false;
+
+        AuditLog::log('event.deleted', auditable: $event, oldValues: [
+            'name' => $event->name,
+            'year' => $event->year,
+            'has_contacts' => $hasContacts,
+        ]);
+
+        if ($hasContacts) {
+            $event->delete();
+            $this->dispatch('notify', title: 'Event Archived', description: "Event '{$event->name}' has been archived (soft deleted) because it has contacts.");
+        } else {
+            $event->forceDelete();
+            $this->dispatch('notify', title: 'Event Deleted', description: "Event '{$event->name}' has been permanently deleted.");
+        }
+
+        $this->redirect(route('events.index'), navigate: true);
     }
 
     public function render(): View

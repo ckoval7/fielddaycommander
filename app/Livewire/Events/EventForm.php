@@ -7,7 +7,9 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\OperatingClass;
+use App\Models\Organization;
 use App\Models\Section;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -146,7 +148,26 @@ class EventForm extends Component
 
         if ($this->mode === 'create') {
             $this->year = now()->year;
+            $this->prefillFromOrganization();
         }
+    }
+
+    private function prefillFromOrganization(): void
+    {
+        $organizationId = Setting::get('default_organization_id');
+
+        if (! $organizationId) {
+            return;
+        }
+
+        $organization = Organization::find($organizationId);
+
+        if (! $organization) {
+            return;
+        }
+
+        $this->callsign = $organization->callsign;
+        $this->club_name = $organization->name;
     }
 
     private function loadEvent(): void

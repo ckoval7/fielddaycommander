@@ -19,6 +19,11 @@
                             Grace Period
                         </span>
                         @break
+                    @case('setup')
+                        <span class="badge badge-secondary badge-sm gap-1">
+                            Setup
+                        </span>
+                        @break
                     @case('upcoming')
                         <span class="badge badge-info badge-sm gap-1">
                             Upcoming
@@ -67,12 +72,14 @@
             $groupLabels = [
                 'active' => 'Active',
                 'grace' => 'Grace Period',
+                'setup' => 'Setup',
                 'upcoming' => 'Upcoming',
                 'archived' => 'Archived',
             ];
             $groupBadgeClasses = [
                 'active' => 'badge-success',
                 'grace' => 'badge-warning',
+                'setup' => 'badge-secondary',
                 'upcoming' => 'badge-info',
                 'archived' => 'badge-ghost',
             ];
@@ -100,7 +107,7 @@
             @endif
         @endforeach
 
-        @if($grouped['active']->isEmpty() && $grouped['grace']->isEmpty() && $grouped['upcoming']->isEmpty() && $grouped['archived']->isEmpty())
+        @if($grouped['active']->isEmpty() && $grouped['grace']->isEmpty() && $grouped['setup']->isEmpty() && $grouped['upcoming']->isEmpty() && $grouped['archived']->isEmpty())
             <div class="text-xs text-base-content/50 px-2 py-2 text-center">
                 No events found
             </div>

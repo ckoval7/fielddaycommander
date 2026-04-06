@@ -6,7 +6,9 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\OperatingClass;
+use App\Models\Organization;
 use App\Models\Section;
+use App\Models\Setting;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -81,6 +83,30 @@ test('event form requires edit-events permission for edit mode', function () {
 
     Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])
         ->assertForbidden();
+});
+
+test('event form pre-populates callsign and club name from default organization', function () {
+    $this->actingAs($this->user);
+
+    $organization = Organization::factory()->create([
+        'callsign' => 'W1XYZ',
+        'name' => 'Springfield Amateur Radio Club',
+    ]);
+    Setting::set('default_organization_id', $organization->id);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create']);
+
+    expect($component->get('callsign'))->toBe('W1XYZ');
+    expect($component->get('club_name'))->toBe('Springfield Amateur Radio Club');
+});
+
+test('event form does not pre-populate when no default organization is set', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create']);
+
+    expect($component->get('callsign'))->toBeNull();
+    expect($component->get('club_name'))->toBeNull();
 });
 
 test('event form labels time fields as UTC', function () {

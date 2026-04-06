@@ -765,3 +765,54 @@ test('equipmentCommitments returns commitments for the event', function () {
     expect($commitments)->toHaveCount(1);
     expect($commitments->first()->equipment->type)->toBe('radio');
 });
+
+test('delete soft deletes event with contacts and redirects to index', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create(['name' => 'Event With Contacts']);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+    Contact::factory()->create(['event_configuration_id' => $config->id]);
+
+    Livewire::test(EventDashboard::class, ['event' => $event])
+        ->call('delete')
+        ->assertRedirect(route('events.index'));
+
+    // Should be soft deleted, not hard deleted
+    expect(Event::withTrashed()->find($event->id))->not->toBeNull();
+    expect(Event::withTrashed()->find($event->id)->deleted_at)->not->toBeNull();
+});
+
+test('delete permanently deletes event without contacts and redirects to index', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create(['name' => 'Event Without Contacts']);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+    ]);
+
+    Livewire::test(EventDashboard::class, ['event' => $event])
+        ->call('delete')
+        ->assertRedirect(route('events.index'));
+
+    expect(Event::withTrashed()->find($event->id))->toBeNull();
+});
+
+test('delete requires delete-events permission', function () {
+    $userWithoutPermission = User::factory()->create();
+    Permission::create(['name' => 'view-events-only']);
+    $role = Role::create(['name' => 'Viewer', 'guard_name' => 'web']);
+    $role->givePermissionTo('view-events');
+    $userWithoutPermission->assignRole($role);
+
+    $this->actingAs($userWithoutPermission);
+
+    $event = Event::factory()->create();
+
+    Livewire::test(EventDashboard::class, ['event' => $event])
+        ->call('delete')
+        ->assertForbidden();
+});
