@@ -165,6 +165,7 @@ class UserManagement extends Component
             'password_confirmation', 'inviteMode',
         ]);
         $this->inviteMode = true;
+        $this->role_id = $this->roles->first()?->id;
         $this->showModal = true;
     }
 

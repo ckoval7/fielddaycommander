@@ -253,7 +253,8 @@ test('validates all required fields', function () {
         ->call('openCreateModal')
         ->set('inviteMode', false)
         ->call('saveUser')
-        ->assertHasErrors(['call_sign', 'first_name', 'last_name', 'email', 'role_id']);
+        ->assertHasErrors(['call_sign', 'first_name', 'last_name', 'email'])
+        ->assertHasNoErrors(['role_id']);
 });
 
 test('prevents duplicate call signs', function () {
