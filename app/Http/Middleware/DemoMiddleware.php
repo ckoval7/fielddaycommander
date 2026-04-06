@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -33,12 +35,15 @@ class DemoMiddleware
 
         $cookie = $request->cookie('demo_session');
 
+        // Cookie format: "uuid|role_slug" (e.g. "abc-123|system_admin")
+        [$uuid, $roleSlug] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
+
         // Missing or malformed cookie → redirect to landing
-        if (! $cookie || ! Str::isUuid($cookie)) {
+        if (! $uuid || ! Str::isUuid($uuid)) {
             return redirect()->route('demo.landing');
         }
 
-        $dbName = 'demo_'.str_replace('-', '_', $cookie);
+        $dbName = 'demo_'.str_replace('-', '_', $uuid);
 
         if (! $this->demoDatabaseExists($dbName)) {
             return redirect()->route('demo.landing')
@@ -52,7 +57,31 @@ class DemoMiddleware
         // Clear Spatie permission cache so it re-loads from the demo DB
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        // Ensure the visitor stays authenticated after DB swap.
+        // The session may lose auth state due to config caching, Octane, or
+        // driver mismatches, so we re-authenticate from the cookie's role slug.
+        if (Auth::guest() && $roleSlug) {
+            $user = User::role($this->resolveRoleName($roleSlug))->first();
+            if ($user) {
+                Auth::login($user);
+                session(['dev_role_override' => $user->roles->first()?->name ?? '']);
+            }
+        }
+
         return $next($request);
+    }
+
+    /**
+     * Map a cookie role slug to a Spatie role name.
+     */
+    protected function resolveRoleName(string $slug): string
+    {
+        return match ($slug) {
+            'system_admin' => 'System Administrator',
+            'event_manager' => 'Event Manager',
+            'station_captain' => 'Station Captain',
+            default => 'Operator',
+        };
     }
 
     /**

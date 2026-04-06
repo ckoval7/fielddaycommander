@@ -63,7 +63,7 @@ class DemoController extends Controller
 
         $cookie = cookie(
             'demo_session',
-            $uuid,
+            $uuid.'|'.$request->role,
             config('demo.ttl_hours', 24) * 60,
             '/',
             null,

@@ -13,6 +13,10 @@ class EnsurePasswordChanged
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (config('demo.enabled')) {
+            return $next($request);
+        }
+
         if (
             $request->user()
             && $request->user()->requires_password_change
