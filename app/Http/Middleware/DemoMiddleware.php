@@ -57,13 +57,14 @@ class DemoMiddleware
         // Clear Spatie permission cache so it re-loads from the demo DB
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        // Ensure the visitor stays authenticated after DB swap.
-        // The session may lose auth state due to config caching, Octane, or
-        // driver mismatches, so we re-authenticate from the cookie's role slug.
-        if (Auth::guest() && $roleSlug) {
+        // Always re-authenticate from the cookie's role slug.
+        // The session guard may resolve a stale user from the wrong database
+        // before DemoMiddleware swaps the connection, so we unconditionally
+        // set the correct user from the visitor's isolated demo DB.
+        if ($roleSlug) {
             $user = User::role($this->resolveRoleName($roleSlug))->first();
             if ($user) {
-                Auth::login($user);
+                Auth::setUser($user);
                 session(['dev_role_override' => $user->roles->first()?->name ?? '']);
             }
         }

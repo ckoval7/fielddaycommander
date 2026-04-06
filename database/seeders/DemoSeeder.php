@@ -206,6 +206,7 @@ class DemoSeeder extends Seeder
                 'has_active' => false,
                 'radio_make' => 'Kenwood',
                 'radio_model' => 'TM-V71A',
+                'historical_count' => [4, 8],
             ],
             [
                 'name' => 'GOTA',
@@ -218,6 +219,8 @@ class DemoSeeder extends Seeder
                 'has_active' => true,
                 'radio_make' => 'Icom',
                 'radio_model' => 'IC-718',
+                'historical_count' => [5, 10],
+                'active_count' => [1, 3],
             ],
         ];
 
@@ -263,7 +266,8 @@ class DemoSeeder extends Seeder
                 'is_supervised' => $def['is_gota'],
             ]);
 
-            $historicalCount = random_int(20, 30);
+            [$histMin, $histMax] = $def['historical_count'] ?? [20, 30];
+            $historicalCount = random_int($histMin, $histMax);
             $this->seedContacts($config, $historicalSession, $historicalCount, $historicalStart, $historicalEnd);
 
             $historicalSession->update(['qso_count' => $historicalCount]);
@@ -284,7 +288,8 @@ class DemoSeeder extends Seeder
                     'is_supervised' => $def['is_gota'],
                 ]);
 
-                $activeCount = random_int(3, 8);
+                [$actMin, $actMax] = $def['active_count'] ?? [3, 8];
+                $activeCount = random_int($actMin, $actMax);
                 $this->seedContacts($config, $activeSession, $activeCount, $activeStart, now());
 
                 $activeSession->update(['qso_count' => $activeCount]);

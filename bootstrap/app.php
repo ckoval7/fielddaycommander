@@ -24,6 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\EnsurePasswordChanged::class,
             \App\Http\Middleware\AuditLogger::class,
         ]);
+
+        // Ensure DemoMiddleware swaps the DB connection before Laravel's
+        // auth middleware tries to resolve the user from the session.
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            prepend: \App\Http\Middleware\DemoMiddleware::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
