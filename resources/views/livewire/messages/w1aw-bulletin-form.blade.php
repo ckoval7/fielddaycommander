@@ -69,7 +69,12 @@
                     <tbody>
                         @foreach($this->scheduleEntries as $entry)
                             <tr class="{{ $entry->scheduled_at->isPast() ? 'opacity-40' : '' }} {{ $this->nextScheduleEntry && $entry->id === $this->nextScheduleEntry->id ? 'bg-info/5 font-medium' : '' }}">
-                                <td>{{ $entry->scheduled_at->format('D M j, H:i') }}</td>
+                                <td>
+                                    {{ $entry->scheduled_at->format('D M j, H:i') }}
+                                    @if($entry->notes)
+                                        <div class="text-xs text-base-content/50 mt-0.5">{{ $entry->notes }}</div>
+                                    @endif
+                                </td>
                                 <td>{{ $entry->mode_label }}</td>
                                 <td class="font-mono text-sm">{{ $entry->frequencies }}</td>
                                 <td>{{ $entry->source }}</td>
@@ -143,6 +148,13 @@
                         option-label="name"
                     />
                 </div>
+                <x-input
+                    label="Notes (optional)"
+                    wire:model="scheduleNotes"
+                    placeholder="e.g., Listen on USB, signal may be weak"
+                    maxlength="500"
+                    class="mt-3"
+                />
                 <div class="flex gap-2 mt-3">
                     @if($editingEntryId)
                         <x-button

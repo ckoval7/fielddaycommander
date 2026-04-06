@@ -17,6 +17,7 @@ class BulletinScheduleEntry extends Model
         'mode',
         'frequencies',
         'source',
+        'notes',
         'created_by',
     ];
 

@@ -35,6 +35,8 @@ class W1awBulletinForm extends Component
 
     public ?int $editingEntryId = null;
 
+    public string $scheduleNotes = '';
+
     public function mount(Event $event): void
     {
         $this->event = $event;
@@ -115,6 +117,7 @@ class W1awBulletinForm extends Component
             'scheduleFrequencies' => 'required|string|max:255',
             'scheduleScheduledAt' => 'required|date',
             'scheduleSource' => 'required|in:W1AW,K6KPH',
+            'scheduleNotes' => 'nullable|string|max:500',
         ]);
 
         BulletinScheduleEntry::create([
@@ -123,10 +126,11 @@ class W1awBulletinForm extends Component
             'mode' => $this->scheduleMode,
             'frequencies' => $this->scheduleFrequencies,
             'source' => $this->scheduleSource,
+            'notes' => $this->scheduleNotes ?: null,
             'created_by' => auth()->id(),
         ]);
 
-        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
+        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt', 'scheduleNotes']);
         $this->scheduleSource = 'W1AW';
         $this->dispatch('toast', title: 'Transmission added', type: 'success');
     }
@@ -143,6 +147,7 @@ class W1awBulletinForm extends Component
         $this->scheduleFrequencies = $entry->frequencies;
         $this->scheduleSource = $entry->source;
         $this->scheduleScheduledAt = $entry->scheduled_at->format('Y-m-d\TH:i');
+        $this->scheduleNotes = $entry->notes ?? '';
     }
 
     public function updateScheduleEntry(): void
@@ -156,6 +161,7 @@ class W1awBulletinForm extends Component
             'scheduleFrequencies' => 'required|string|max:255',
             'scheduleScheduledAt' => 'required|date',
             'scheduleSource' => 'required|in:W1AW,K6KPH',
+            'scheduleNotes' => 'nullable|string|max:500',
         ]);
 
         $entry = BulletinScheduleEntry::findOrFail($this->editingEntryId);
@@ -164,10 +170,11 @@ class W1awBulletinForm extends Component
             'mode' => $this->scheduleMode,
             'frequencies' => $this->scheduleFrequencies,
             'source' => $this->scheduleSource,
+            'notes' => $this->scheduleNotes ?: null,
         ]);
 
         $this->editingEntryId = null;
-        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
+        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt', 'scheduleNotes']);
         $this->scheduleSource = 'W1AW';
         $this->dispatch('toast', title: 'Transmission updated', type: 'success');
     }
@@ -175,7 +182,7 @@ class W1awBulletinForm extends Component
     public function cancelEditScheduleEntry(): void
     {
         $this->editingEntryId = null;
-        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
+        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt', 'scheduleNotes']);
         $this->scheduleSource = 'W1AW';
     }
 
