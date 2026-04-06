@@ -37,6 +37,12 @@ class DemoCleanup extends Command
         foreach ($rows as $row) {
             $dbName = $row->schema_name ?? $row->SCHEMA_NAME;
 
+            if (! preg_match('/^demo_[a-f0-9_]{32,40}$/', $dbName)) {
+                $this->warn("Skipping unexpected schema name: {$dbName}");
+
+                continue;
+            }
+
             try {
                 Config::set('database.connections.demo.database', $dbName);
                 DB::purge('demo');

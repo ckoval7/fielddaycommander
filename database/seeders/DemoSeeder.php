@@ -31,6 +31,8 @@ use Illuminate\Support\Facades\Hash;
 
 class DemoSeeder extends Seeder
 {
+    private const ROLE_STATION_CAPTAIN = 'Station Captain';
+
     public function run(): void
     {
         // 1. Reference data (skip SystemAdminSeeder — we create our own users)
@@ -56,8 +58,8 @@ class DemoSeeder extends Seeder
         // 3. Users: 1 admin, 1 event manager, 2 station captains, 10 operators
         $admin = $this->makeUser('W1SA', 'Sam', 'Anderson', 'admin@demo.example', 'System Administrator', 'Extra');
         $manager = $this->makeUser('K4EM', 'Emma', 'Mitchell', 'manager@demo.example', 'Event Manager', 'Extra');
-        $captain1 = $this->makeUser('N3SC', 'Scott', 'Campbell', 'captain1@demo.example', 'Station Captain', 'General');
-        $captain2 = $this->makeUser('W9SC', 'Sandra', 'Cooper', 'captain2@demo.example', 'Station Captain', 'General');
+        $captain1 = $this->makeUser('N3SC', 'Scott', 'Campbell', 'captain1@demo.example', self::ROLE_STATION_CAPTAIN, 'General');
+        $captain2 = $this->makeUser('W9SC', 'Sandra', 'Cooper', 'captain2@demo.example', self::ROLE_STATION_CAPTAIN, 'General');
 
         $operatorDefs = [
             ['KD8LKQ', 'John', 'Baker'],    ['W4TRX', 'Maria', 'Torres'],
@@ -126,7 +128,7 @@ class DemoSeeder extends Seeder
         $this->seedGuestbook($config);
 
         // 10. Shift schedule
-        $this->seedShifts($config, $event, $admin, $manager, $captain1, $captain2, $operators);
+        $this->seedShifts($config, $admin, $manager, $captain1, $captain2, $operators);
     }
 
     private function makeUser(
@@ -510,7 +512,6 @@ class DemoSeeder extends Seeder
 
     private function seedShifts(
         EventConfiguration $config,
-        Event $event,
         User $admin,
         User $manager,
         User $captain1,
@@ -543,11 +544,11 @@ class DemoSeeder extends Seeder
         }
 
         // ── Station Captain: one long block each, covering the event ─────────
-        if ($roles->has('Station Captain')) {
-            $cap1Shift = $this->makeShift($config, $roles['Station Captain'], now()->subHours(2), now()->addHours(10), 2);
+        if ($roles->has(self::ROLE_STATION_CAPTAIN)) {
+            $cap1Shift = $this->makeShift($config, $roles[self::ROLE_STATION_CAPTAIN], now()->subHours(2), now()->addHours(10), 2);
             $this->assign($cap1Shift, $captain1);
 
-            $cap2Shift = $this->makeShift($config, $roles['Station Captain'], now()->addHours(10), now()->addHours(22), 2);
+            $cap2Shift = $this->makeShift($config, $roles[self::ROLE_STATION_CAPTAIN], now()->addHours(10), now()->addHours(22), 2);
             $this->assign($cap2Shift, $captain2);
         }
 

@@ -510,14 +510,15 @@ configure_env() {
         set_env "DEMO_MODE" "true"
         set_env "DEVELOPER_MODE" "true"
         set_env "DB_CONNECTION" "demo"
-        set_env "DB_DATABASE" "$DEMO_DB_NAME"
-        set_env "DB_USERNAME" "$DEMO_DB_USER"
-        set_env "DB_PASSWORD" "$DEMO_DB_PASSWORD"
+        set_env "DEMO_DB_DATABASE" "$DEMO_DB_NAME"
+        set_env "DEMO_DB_USERNAME" "$DEMO_DB_USER"
+        set_env "DEMO_DB_PASSWORD" "$DEMO_DB_PASSWORD"
         # Sessions and cache must live on the filesystem — the DB connection is swapped
         # per-request by DemoMiddleware, so database-backed sessions/cache would be lost
         # after each connection switch.
         set_env "SESSION_DRIVER" "file"
         set_env "CACHE_STORE" "file"
+        set_env "QUEUE_CONNECTION" "sync"
     fi
 
     # Octane / FrankenPHP

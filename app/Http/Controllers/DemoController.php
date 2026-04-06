@@ -37,7 +37,7 @@ class DemoController extends Controller
         }
 
         $uuid = (string) Str::uuid();
-        $dbName = 'demo_'.str_replace('-', '_', $uuid);
+        $dbName = $this->safeDemoDbName($uuid);
 
         DB::statement("CREATE DATABASE `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
@@ -67,7 +67,7 @@ class DemoController extends Controller
             config('demo.ttl_hours', 24) * 60,
             '/',
             null,
-            secure: false,
+            secure: $request->isSecure(),
             httpOnly: true,
             sameSite: 'Lax'
         );
@@ -79,14 +79,19 @@ class DemoController extends Controller
     {
         abort_unless(config('demo.enabled'), 404);
 
-        $uuid = $request->cookie('demo_session');
+        $cookie = $request->cookie('demo_session');
+        [$uuid] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
 
         if (! $uuid || ! Str::isUuid($uuid)) {
             return redirect()->route('demo.landing');
         }
 
-        $dbName = 'demo_'.str_replace('-', '_', $uuid);
-        $role = $request->input('role', 'event_manager');
+        $request->validate([
+            'role' => 'required|in:operator,station_captain,event_manager,system_admin',
+        ]);
+
+        $dbName = $this->safeDemoDbName($uuid);
+        $role = $request->role;
 
         Config::set('database.connections.demo.database', $dbName);
         DB::purge('demo');
@@ -126,6 +131,15 @@ class DemoController extends Controller
         return count(DB::select(
             "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'demo\_%'"
         ));
+    }
+
+    private function safeDemoDbName(string $uuid): string
+    {
+        $dbName = 'demo_'.str_replace('-', '_', $uuid);
+
+        abort_unless(preg_match('/^demo_[a-f0-9_]{32,40}$/', $dbName), 400, 'Invalid demo session identifier.');
+
+        return $dbName;
     }
 
     private function resolveUserForRole(string $role): User
