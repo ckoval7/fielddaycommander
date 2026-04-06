@@ -122,7 +122,7 @@ class DemoSimulateActivity extends Command
                 'notes' => null,
             ]);
 
-            ContactLogged::dispatch($contact, $event);
+            event(new ContactLogged($contact, $event));
             $logged++;
         }
 
