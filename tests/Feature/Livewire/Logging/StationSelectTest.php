@@ -725,3 +725,156 @@ test('band warning is null when no band is selected', function () {
         ->set('selectedStationId', $station->id)
         ->assertSet('bandWarning', null);
 });
+
+test('stationSupportedBands returns intersecting bands when radio and antenna share bands', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $band40m = Band::factory()->create([
+        'name' => '40m', 'meters' => 40, 'frequency_mhz' => 7.15,
+        'allowed_fd' => true, 'sort_order' => 3,
+    ]);
+
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+    $radio->bands()->attach([$this->band->id, $band40m->id]); // radio supports 20m and 40m
+
+    $antenna = Equipment::factory()->create(['type' => 'antenna']);
+    $antenna->bands()->attach([$this->band->id]); // antenna supports 20m only
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $radio->id,
+    ]);
+    $station->additionalEquipment()->attach($antenna->id, ['event_id' => $event->id]);
+
+    $result = Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->get('stationSupportedBands');
+
+    expect($result)->not->toBeNull()
+        ->and($result->pluck('id')->toArray())->toEqual([$this->band->id]); // only 20m
+});
+
+test('stationSupportedBands returns null when station has no radio', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => null,
+    ]);
+
+    $result = Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->get('stationSupportedBands');
+
+    expect($result)->toBeNull();
+});
+
+test('stationSupportedBands returns null when station has no antennas assigned', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+    $radio->bands()->attach($this->band->id);
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $radio->id,
+    ]);
+    // No additionalEquipment attached
+
+    $result = Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->get('stationSupportedBands');
+
+    expect($result)->toBeNull();
+});
+
+test('stationSupportedBands returns empty collection when radio and antenna share no bands', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $band40m = Band::factory()->create([
+        'name' => '40m', 'meters' => 40, 'frequency_mhz' => 7.15,
+        'allowed_fd' => true, 'sort_order' => 3,
+    ]);
+
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+    $radio->bands()->attach($this->band->id); // radio: 20m
+
+    $antenna = Equipment::factory()->create(['type' => 'antenna']);
+    $antenna->bands()->attach($band40m->id); // antenna: 40m only — no overlap
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $radio->id,
+    ]);
+    $station->additionalEquipment()->attach($antenna->id, ['event_id' => $event->id]);
+
+    $result = Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->get('stationSupportedBands');
+
+    expect($result)->not->toBeNull()
+        ->and($result)->toHaveCount(0);
+});
+
+test('band warning shown when selected band is not covered by any station antenna', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $band40m = Band::factory()->create([
+        'name' => '40m', 'meters' => 40, 'frequency_mhz' => 7.15,
+        'allowed_fd' => true, 'sort_order' => 3,
+    ]);
+
+    // Radio supports 20m (the band we will select)
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+    $radio->bands()->attach($this->band->id);
+
+    // Antenna only covers 40m — no 20m coverage
+    $antenna = Equipment::factory()->create(['type' => 'antenna']);
+    $antenna->bands()->attach($band40m->id);
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $radio->id,
+    ]);
+    $station->additionalEquipment()->attach($antenna->id, ['event_id' => $event->id]);
+
+    $component = Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->set('selectedBandId', $this->band->id);
+
+    $warning = $component->get('bandWarning');
+    expect($warning)->not->toBeNull()
+        ->and($warning['type'])->toBe('warning')
+        ->and($warning['message'])->toContain('20m')
+        ->and($warning['message'])->toContain('antenna');
+});
