@@ -275,11 +275,14 @@
                 return;
             }
 
-            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
             const minutes = Math.floor((diff % 3600000) / 60000);
             const seconds = Math.floor((diff % 60000) / 1000);
 
-            if (hours > 0) {
+            if (days > 0) {
+                this.countdown = `${days}d ${hours}h ${minutes}m`;
+            } else if (hours > 0) {
                 this.countdown = `${hours}h ${minutes}m ${seconds}s`;
             } else if (minutes > 0) {
                 this.countdown = `${minutes}m ${seconds}s`;
