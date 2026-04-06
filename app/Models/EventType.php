@@ -14,6 +14,7 @@ class EventType extends Model
         'name',
         'description',
         'is_active',
+        'setup_offset_hours',
     ];
 
     protected function casts(): array

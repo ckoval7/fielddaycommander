@@ -261,11 +261,11 @@ class EventForm extends Component
 
         $eventType = EventType::find($this->event_type_id);
 
-        if (! $eventType || $eventType->code !== 'FD') {
+        if (! $eventType || $eventType->setup_offset_hours === null) {
             return null;
         }
 
-        return Event::calculateSetupAllowedFrom(Carbon::parse($this->start_time))
+        return Event::calculateSetupAllowedFrom(Carbon::parse($this->start_time), $eventType->setup_offset_hours)
             ->format('l, F j, Y \a\t Hi\z');
     }
 
@@ -471,8 +471,8 @@ class EventForm extends Component
             'year' => $this->year,
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
-            'setup_allowed_from' => $eventType?->code === 'FD'
-                ? Event::calculateSetupAllowedFrom($startTime)
+            'setup_allowed_from' => $eventType?->setup_offset_hours !== null
+                ? Event::calculateSetupAllowedFrom($startTime, $eventType->setup_offset_hours)
                 : null,
             'is_active' => true,
         ]);
@@ -544,8 +544,8 @@ class EventForm extends Component
             $eventData['start_time'] = $validated['start_time'];
 
             $eventType = EventType::find($validated['event_type_id']);
-            $eventData['setup_allowed_from'] = $eventType?->code === 'FD'
-                ? Event::calculateSetupAllowedFrom(Carbon::parse($validated['start_time']))
+            $eventData['setup_allowed_from'] = $eventType?->setup_offset_hours !== null
+                ? Event::calculateSetupAllowedFrom(Carbon::parse($validated['start_time']), $eventType->setup_offset_hours)
                 : null;
         }
 
