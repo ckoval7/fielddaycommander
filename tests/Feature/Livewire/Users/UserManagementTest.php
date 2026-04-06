@@ -537,57 +537,21 @@ test('user list refreshes after role change', function () {
 // Lock/Unlock Account (5 tests)
 // =============================================================================
 
-test('can lock account with expiry date', function () {
+test('can lock account', function () {
     $this->actingAs($this->admin);
 
     $user = User::factory()->create(['account_locked_at' => null]);
-
-    $expiry = now()->addDays(7)->format('Y-m-d H:i:s');
 
     Livewire::test(UserManagement::class)
         ->call('openLockModal', $user->id)
         ->assertSet('lockingUserId', $user->id)
         ->assertSet('showLockModal', true)
-        ->set('lockExpiry', $expiry)
         ->call('lockAccount')
         ->assertSet('showLockModal', false)
         ->assertDispatched('toast');
 
     $user->refresh();
-    expect($user->isLocked())->toBeTrue()
-        ->and($user->account_locked_at->format('Y-m-d H:i:s'))->toBe($expiry);
-});
-
-test('can lock account without expiry (permanent)', function () {
-    $this->actingAs($this->admin);
-
-    $user = User::factory()->create(['account_locked_at' => null]);
-
-    Livewire::test(UserManagement::class)
-        ->call('openLockModal', $user->id)
-        ->set('lockExpiry', null)
-        ->call('lockAccount')
-        ->assertSet('showLockModal', false);
-
-    $user->refresh();
     expect($user->isLocked())->toBeTrue();
-});
-
-test('validates lock expiry is in future', function () {
-    $this->actingAs($this->admin);
-
-    $user = User::factory()->create(['account_locked_at' => null]);
-
-    $pastDate = now()->subDay()->format('Y-m-d H:i:s');
-
-    Livewire::test(UserManagement::class)
-        ->call('openLockModal', $user->id)
-        ->set('lockExpiry', $pastDate)
-        ->call('lockAccount')
-        ->assertHasErrors(['lockExpiry']);
-
-    $user->refresh();
-    expect($user->isLocked())->toBeFalse();
 });
 
 test('can unlock locked account', function () {

@@ -68,8 +68,6 @@ class UserManagement extends Component
     // Lock modal
     public ?int $lockingUserId = null;
 
-    public ?string $lockExpiry = null;
-
     // Reset password modal
     public ?int $resettingUserId = null;
 
@@ -332,7 +330,6 @@ class UserManagement extends Component
     public function openLockModal(int $userId): void
     {
         $this->lockingUserId = $userId;
-        $this->lockExpiry = null;
         $this->showLockModal = true;
     }
 
@@ -346,24 +343,17 @@ class UserManagement extends Component
             return;
         }
 
-        $this->validate([
-            'lockExpiry' => ['nullable', 'date', 'after:now'],
-        ], [
-            'lockExpiry.after' => 'Lock expiry must be in the future',
-        ]);
-
         $user = User::findOrFail($this->lockingUserId);
         $user->update([
-            'account_locked_at' => $this->lockExpiry ?? now(),
+            'account_locked_at' => now(),
         ]);
 
         AuditLog::log('user.locked', auditable: $user, newValues: [
             'call_sign' => $user->call_sign,
-            'expires_at' => $this->lockExpiry,
         ], isCritical: true);
 
         $this->showLockModal = false;
-        $this->reset(['lockingUserId', 'lockExpiry']);
+        $this->reset(['lockingUserId']);
         $this->dispatch('toast', title: 'Success', description: 'Account locked', icon: 'o-lock-closed', css: 'alert-success');
     }
 
