@@ -263,7 +263,7 @@ class DemoSeeder extends Seeder
                 'is_supervised' => $def['is_gota'],
             ]);
 
-            $historicalCount = random_int(40, 60);
+            $historicalCount = random_int(20, 30);
             $this->seedContacts($config, $historicalSession, $historicalCount, $historicalStart, $historicalEnd);
 
             $historicalSession->update(['qso_count' => $historicalCount]);
@@ -284,7 +284,7 @@ class DemoSeeder extends Seeder
                     'is_supervised' => $def['is_gota'],
                 ]);
 
-                $activeCount = random_int(5, 15);
+                $activeCount = random_int(3, 8);
                 $this->seedContacts($config, $activeSession, $activeCount, $activeStart, now());
 
                 $activeSession->update(['qso_count' => $activeCount]);
@@ -299,16 +299,49 @@ class DemoSeeder extends Seeder
         Carbon $windowStart,
         Carbon $windowEnd
     ): void {
-        $sections = Section::where('is_active', true)->get();
+        $allSections = Section::where('is_active', true)->get()->keyBy('code');
         $fdClasses = ['A', 'B', 'C', 'D', 'E'];
         $windowSeconds = max(1, $windowEnd->diffInSeconds($windowStart));
 
+        // Build a weighted section pool. Nearby/populous sections appear more often;
+        // rarer/distant ones appear once. This mimics a real early-event QSO log where
+        // you've worked the easy locals heavily but haven't hit every section yet.
+        $nearbyPool = [
+            'CT', 'CT', 'CT',
+            'EMA', 'EMA', 'WMA', 'WMA',
+            'NH', 'VT', 'ME',
+            'NNJ', 'NNJ', 'SNJ',
+            'ENY', 'ENY', 'WNY',
+            'EPA', 'WPA', 'MDC', 'DE',
+            'RI', 'RI',
+        ];
+
+        $midPool = [
+            'VA', 'VA', 'SVA', 'WCF', 'NFL',
+            'OH', 'OH', 'IN', 'MI', 'MI',
+            'IL', 'WI', 'MN',
+            'NC', 'SC', 'GA', 'TN',
+            'CO', 'AZ', 'UT',
+            'OR', 'WWA', 'EWA',
+            'LAX', 'SCV', 'SDG',
+        ];
+
+        // 65% nearby, 35% mid-range — creates a realistic patchy coverage map
+        $weightedPool = array_merge(
+            array_fill(0, 65, 'nearby'),
+            array_fill(0, 35, 'mid'),
+        );
+
         for ($i = 0; $i < $count; $i++) {
             $callsign = CallsignGenerator::any();
-            $section = $sections->random();
             $fdClass = random_int(1, 5).($fdClasses[array_rand($fdClasses)]);
-            $receivedExchange = "{$callsign} {$fdClass} {$section->code}";
 
+            $bucket = $weightedPool[array_rand($weightedPool)];
+            $pool = $bucket === 'nearby' ? $nearbyPool : $midPool;
+            $code = $pool[array_rand($pool)];
+            $section = $allSections->get($code) ?? $allSections->random();
+
+            $receivedExchange = "{$callsign} {$fdClass} {$section->code}";
             $qsoTime = $windowStart->copy()->addSeconds(random_int(0, $windowSeconds));
 
             Contact::create([

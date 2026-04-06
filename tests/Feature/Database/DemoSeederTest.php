@@ -42,8 +42,9 @@ test('seeder creates exactly 3 open operating sessions', function () {
     expect(OperatingSession::whereNull('end_time')->count())->toBe(3);
 });
 
-test('seeder creates at least 200 contacts', function () {
-    expect(Contact::count())->toBeGreaterThanOrEqual(200);
+test('seeder creates a realistic early-event contact count', function () {
+    // 5 stations × 20–30 historical + 3 active × 3–8 = ~109–158
+    expect(Contact::count())->toBeGreaterThanOrEqual(100)->toBeLessThan(200);
 });
 
 test('seeder creates contacts only on the band and mode of their operating session', function () {
