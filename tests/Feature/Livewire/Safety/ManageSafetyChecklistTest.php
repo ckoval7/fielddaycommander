@@ -67,6 +67,7 @@ describe('item management', function () {
             ->call('openItemModal')
             ->assertSet('showItemModal', true)
             ->set('itemLabel', 'Custom safety item')
+            ->set('itemHelpText', 'Some helpful guidance here.')
             ->set('itemIsRequired', true)
             ->set('itemChecklistType', ChecklistType::SafetyOfficer->value)
             ->call('saveItem')
@@ -77,16 +78,18 @@ describe('item management', function () {
         expect($item)->not->toBeNull();
         expect($item->is_default)->toBeFalse();
         expect($item->is_required)->toBeTrue();
+        expect($item->help_text)->toBe('Some helpful guidance here.');
         expect($item->checklist_type)->toBe(ChecklistType::SafetyOfficer);
 
         // Should also create an entry
         expect(SafetyChecklistEntry::where('safety_checklist_item_id', $item->id)->exists())->toBeTrue();
     });
 
-    test('can edit an item label and required flag', function () {
+    test('can edit an item label, help text, and required flag', function () {
         $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'label' => 'Original label',
+            'help_text' => 'Original help text.',
             'is_required' => false,
         ]);
 
@@ -96,14 +99,34 @@ describe('item management', function () {
             ->call('openItemModal', $item->id)
             ->assertSet('editingItemId', $item->id)
             ->assertSet('itemLabel', 'Original label')
+            ->assertSet('itemHelpText', 'Original help text.')
             ->set('itemLabel', 'Updated label')
+            ->set('itemHelpText', 'Updated help text.')
             ->set('itemIsRequired', true)
             ->call('saveItem')
             ->assertDispatched('toast', title: 'Success', description: 'Item updated successfully');
 
         $item->refresh();
         expect($item->label)->toBe('Updated label');
+        expect($item->help_text)->toBe('Updated help text.');
         expect($item->is_required)->toBeTrue();
+    });
+
+    test('can clear help text when editing', function () {
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Some item',
+            'help_text' => 'Existing help text.',
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSafetyChecklist::class)
+            ->call('openItemModal', $item->id)
+            ->set('itemHelpText', '')
+            ->call('saveItem');
+
+        expect($item->fresh()->help_text)->toBeNull();
     });
 
     test('can soft-delete custom items', function () {

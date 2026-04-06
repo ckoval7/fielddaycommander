@@ -26,6 +26,8 @@ class ManageSafetyChecklist extends Component
 
     public string $itemLabel = '';
 
+    public string $itemHelpText = '';
+
     public bool $itemIsRequired = false;
 
     public string $itemChecklistType = '';
@@ -74,6 +76,7 @@ class ManageSafetyChecklist extends Component
             $item = SafetyChecklistItem::findOrFail($id);
             $this->editingItemId = $item->id;
             $this->itemLabel = $item->label;
+            $this->itemHelpText = $item->help_text ?? '';
             $this->itemIsRequired = $item->is_required;
             $this->itemChecklistType = $item->checklist_type->value;
         }
@@ -87,6 +90,7 @@ class ManageSafetyChecklist extends Component
 
         $this->validate([
             'itemLabel' => ['required', 'string', 'max:500'],
+            'itemHelpText' => ['nullable', 'string', 'max:2000'],
             'itemIsRequired' => ['boolean'],
             'itemChecklistType' => $this->editingItemId ? ['nullable'] : ['required', 'string'],
         ]);
@@ -95,6 +99,7 @@ class ManageSafetyChecklist extends Component
             $item = SafetyChecklistItem::findOrFail($this->editingItemId);
             $item->update([
                 'label' => $this->itemLabel,
+                'help_text' => $this->itemHelpText ?: null,
                 'is_required' => $this->itemIsRequired,
             ]);
             $message = 'Item updated successfully';
@@ -107,6 +112,7 @@ class ManageSafetyChecklist extends Component
                 'event_configuration_id' => $this->eventConfig->id,
                 'checklist_type' => $this->itemChecklistType,
                 'label' => $this->itemLabel,
+                'help_text' => $this->itemHelpText ?: null,
                 'is_required' => $this->itemIsRequired,
                 'is_default' => false,
                 'sort_order' => $maxSortOrder + 1,
@@ -203,6 +209,7 @@ class ManageSafetyChecklist extends Component
     {
         $this->editingItemId = null;
         $this->itemLabel = '';
+        $this->itemHelpText = '';
         $this->itemIsRequired = false;
         $this->itemChecklistType = '';
     }

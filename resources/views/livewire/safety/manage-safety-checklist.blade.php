@@ -119,6 +119,13 @@
                     placeholder="e.g., Fire extinguisher on hand"
                     required
                 />
+                <x-textarea
+                    label="Help Text"
+                    wire:model="itemHelpText"
+                    placeholder="Optional guidance shown when users click the ? button"
+                    rows="4"
+                    hint="Displayed as an expandable tip on the checklist"
+                />
                 <x-toggle
                     label="Required"
                     wire:model="itemIsRequired"
