@@ -50,6 +50,7 @@ class DemoSeeder extends Seeder
             ['key' => 'setup_completed', 'value' => 'true', 'created_at' => now(), 'updated_at' => now()],
             ['key' => 'demo_provisioned_at', 'value' => now()->toIso8601String(), 'created_at' => now(), 'updated_at' => now()],
             ['key' => 'site_name', 'value' => 'Field Day Commander — Demo', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'timezone', 'value' => 'America/New_York', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // 3. Users: 1 admin, 1 event manager, 2 station captains, 10 operators
