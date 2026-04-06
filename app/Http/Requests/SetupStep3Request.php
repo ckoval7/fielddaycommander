@@ -35,7 +35,7 @@ class SetupStep3Request extends FormRequest
             'time_format' => [
                 'required',
                 'string',
-                'in:H:i,h:i A',
+                'in:H:i:s,h:i:s A',
             ],
             'contact_email' => [
                 'nullable',

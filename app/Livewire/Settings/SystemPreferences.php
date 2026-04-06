@@ -26,7 +26,12 @@ class SystemPreferences extends Component
     {
         $this->timezone = Setting::get('timezone', 'America/New_York');
         $this->date_format = Setting::get('date_format', 'Y-m-d');
-        $this->time_format = Setting::get('time_format', 'H:i:s');
+        $savedTimeFormat = Setting::get('time_format', 'H:i:s');
+        $this->time_format = match ($savedTimeFormat) {
+            'H:i' => 'H:i:s',
+            'h:i A' => 'h:i:s A',
+            default => $savedTimeFormat,
+        };
         $this->contact_email = Setting::get('contact_email');
         $this->api_key = Setting::get('callsign_api_key');
         $this->post_event_grace_period_days = (int) Setting::get('post_event_grace_period_days', 30);

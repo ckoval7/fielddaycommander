@@ -24,8 +24,8 @@
                     ['id' => 'd/m/Y', 'name' => now()->format('d/m/Y') . ' (EU)'],
                 ];
                 $timeFormats = [
-                    ['id' => 'H:i', 'name' => now()->format('H:i') . ' (24-hour)'],
-                    ['id' => 'h:i A', 'name' => now()->format('h:i A') . ' (12-hour)'],
+                    ['id' => 'H:i:s', 'name' => now()->format('H:i:s') . ' (24-hour)'],
+                    ['id' => 'h:i:s A', 'name' => now()->format('h:i:s A') . ' (12-hour)'],
                 ];
             @endphp
 
