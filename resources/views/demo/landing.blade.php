@@ -14,7 +14,7 @@
     <span class="loading loading-spinner loading-lg text-primary"></span>
     <div class="text-center">
         <p id="provision-status" class="font-semibold text-lg">Provisioning your sandbox&hellip;</p>
-        <p class="text-base-content/50 text-sm mt-1">This takes about 10&ndash;15 seconds</p>
+        <p class="text-base-content/50 text-sm mt-1">This takes about 30&ndash;40 seconds</p>
     </div>
 </div>
 
@@ -77,10 +77,10 @@
                 if (i < steps.length - 1) {
                     i++;
                     statusEl.textContent = steps[i];
-                    setTimeout(advance, 4000);
+                    setTimeout(advance, 8000);
                 }
             };
-            setTimeout(advance, 2000);
+            setTimeout(advance, 5000);
         });
     });
 }());

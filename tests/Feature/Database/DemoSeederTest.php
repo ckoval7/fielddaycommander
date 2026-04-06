@@ -33,18 +33,20 @@ test('seeder creates one active event in progress', function () {
     expect($event->end_time->isFuture())->toBeTrue();
 });
 
-test('seeder creates 5 stations', function () {
-    expect(Station::count())->toBe(5);
+test('seeder creates 6 stations with correct types', function () {
+    expect(Station::count())->toBe(6);
+    expect(Station::where('is_gota', false)->where('is_vhf_only', false)->count())->toBe(4); // 4A HF stations
     expect(Station::where('is_gota', true)->count())->toBe(1);
+    expect(Station::where('is_vhf_only', true)->count())->toBe(1);
 });
 
-test('seeder creates exactly 3 open operating sessions', function () {
-    expect(OperatingSession::whereNull('end_time')->count())->toBe(3);
+test('seeder creates exactly 4 open operating sessions', function () {
+    expect(OperatingSession::whereNull('end_time')->count())->toBe(4);
 });
 
 test('seeder creates a realistic early-event contact count', function () {
-    // 3 HF stations × 20–30 hist + VHF 4–8 + GOTA 5–10 + active sessions ≈ 76–127
-    expect(Contact::count())->toBeGreaterThanOrEqual(70)->toBeLessThan(150);
+    // 4 HF stations × 20–30 hist + VHF 4–8 + GOTA 5–10 + active sessions ≈ 99–165
+    expect(Contact::count())->toBeGreaterThanOrEqual(95)->toBeLessThan(175);
 });
 
 test('seeder creates contacts only on the band and mode of their operating session', function () {
