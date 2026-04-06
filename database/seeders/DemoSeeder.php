@@ -392,27 +392,65 @@ class DemoSeeder extends Seeder
     private function seedGuestbook(EventConfiguration $config): void
     {
         $entries = [
-            ['W1ABC', 'Alice', 'Brown', 'alice@example.com', 'Great event! Love seeing amateur radio in action.'],
-            ['KD9XYZ', 'Bob', 'Smith', 'bob@example.com', 'My first time visiting Field Day. Very impressive setup!'],
-            ['N4DEF', 'Carol', 'Jones', null, 'Wonderful to see the community come together like this.'],
-            ['WA3GHI', 'David', 'Miller', 'david@example.com', 'The kids loved watching the operators work the bands.'],
-            ['K8JKL', 'Eve', 'Wilson', null, 'I used to be a ham operator years ago. This brings back memories!'],
-            ['VE3MNO', 'Frank', 'Davis', 'frank@example.com', 'Amazing how much you can do with emergency power.'],
-            ['W5PQR', 'Grace', 'Taylor', null, 'Thank you for being out here and serving the community!'],
+            // Licensed hams visiting in person
+            [
+                'callsign' => 'W1ABC', 'first_name' => 'Alice', 'last_name' => 'Brown',
+                'email' => null, 'comments' => 'Great setup! Running 4A is impressive. 73!',
+                'presence_type' => 'in_person', 'visitor_category' => 'ham_club',
+            ],
+            [
+                'callsign' => 'VE3MNO', 'first_name' => 'Frank', 'last_name' => 'Davis',
+                'email' => 'frank@example.com', 'comments' => 'Drove down from across the border to check it out. Beautiful location.',
+                'presence_type' => 'in_person', 'visitor_category' => 'ham_club',
+            ],
+            [
+                'callsign' => 'K8JKL', 'first_name' => 'Eve', 'last_name' => 'Wilson',
+                'email' => null, 'comments' => 'I let my license lapse years ago — this is making me want to get back into it!',
+                'presence_type' => 'in_person', 'visitor_category' => 'ham_club',
+            ],
+            // ARES/RACES
+            [
+                'callsign' => 'N4DEF', 'first_name' => 'Carol', 'last_name' => 'Jones',
+                'email' => 'carol.jones@countyares.org', 'comments' => 'Stopping by on behalf of the county ARES group. Excellent turnout.',
+                'presence_type' => 'in_person', 'visitor_category' => 'ares_races',
+            ],
+            // General public — no callsign
+            [
+                'callsign' => null, 'first_name' => 'David', 'last_name' => 'Miller',
+                'email' => null, 'comments' => 'My son dragged me here and I had no idea what any of this was. Now I want to get my license!',
+                'presence_type' => 'in_person', 'visitor_category' => 'general_public',
+            ],
+            [
+                'callsign' => null, 'first_name' => 'Grace', 'last_name' => 'Taylor',
+                'email' => 'grace@example.com', 'comments' => 'Thank you for being out here. Love seeing the community come together.',
+                'presence_type' => 'in_person', 'visitor_category' => 'general_public',
+            ],
+            // Youth group
+            [
+                'callsign' => null, 'first_name' => 'Troop 214', 'last_name' => '',
+                'email' => null, 'comments' => 'Our scout troop visited and the operators were so patient answering our questions. The kids loved the CW demo!',
+                'presence_type' => 'in_person', 'visitor_category' => 'youth',
+            ],
+            // Online visitor
+            [
+                'callsign' => 'WA3GHI', 'first_name' => 'James', 'last_name' => 'Rodriguez',
+                'email' => 'ja3ghi@example.com', 'comments' => 'Following along on the dashboard from home. Looking good on 20m!',
+                'presence_type' => 'online', 'visitor_category' => 'ham_club',
+            ],
         ];
 
-        foreach ($entries as [$callsign, $firstName, $lastName, $email, $comments]) {
+        foreach ($entries as $entry) {
             GuestbookEntry::create([
                 'event_configuration_id' => $config->id,
-                'callsign' => $callsign,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'email' => $email,
-                'comments' => $comments,
-                'presence_type' => 'in_person',
-                'visitor_category' => 'general_public',
+                'callsign' => $entry['callsign'],
+                'first_name' => $entry['first_name'],
+                'last_name' => $entry['last_name'],
+                'email' => $entry['email'],
+                'comments' => $entry['comments'],
+                'presence_type' => $entry['presence_type'],
+                'visitor_category' => $entry['visitor_category'],
                 'is_verified' => true,
-                'verified_at' => now()->subMinutes(random_int(5, 60)),
+                'verified_at' => now()->subMinutes(random_int(5, 120)),
             ]);
         }
     }
