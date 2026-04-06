@@ -164,7 +164,7 @@ class UserManagement extends Component
             'email', 'license_class', 'is_youth', 'is_cpr_aed_trained', 'role_id', 'password',
             'password_confirmation', 'inviteMode',
         ]);
-        $this->inviteMode = true;
+        $this->inviteMode = (bool) config('mail.email_configured');
         $this->role_id = $this->roles->first()?->id;
         $this->showModal = true;
     }
@@ -199,6 +199,10 @@ class UserManagement extends Component
 
     protected function createUser(): void
     {
+        if (! config('mail.email_configured')) {
+            $this->inviteMode = false;
+        }
+
         $validated = $this->validate([
             'call_sign' => ['required', 'string', 'max:255', 'unique:users'],
             'first_name' => ['required', 'string', 'max:255'],

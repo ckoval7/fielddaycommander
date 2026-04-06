@@ -183,6 +183,7 @@ test('search and filters combine correctly', function () {
 
 test('can create user with invitation email mode', function () {
     Notification::fake();
+    \Illuminate\Support\Facades\Config::set('mail.email_configured', true);
 
     $this->actingAs($this->admin);
 
@@ -243,6 +244,66 @@ test('can create user with manual password mode', function () {
     expect($invitation)->toBeNull();
 
     // Verify no notification was sent
+    Notification::assertNothingSent();
+});
+
+test('create user defaults to manual password when email is not configured', function () {
+    Notification::fake();
+    \Illuminate\Support\Facades\Config::set('mail.email_configured', false);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->assertSet('inviteMode', false)
+        ->set('call_sign', 'W1AW')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('role_id', $this->roles['Operator']->id)
+        ->set('password', 'Password123!')
+        ->set('password_confirmation', 'Password123!')
+        ->call('saveUser')
+        ->assertSet('showModal', false)
+        ->assertDispatched('toast');
+
+    $user = User::where('email', 'test@example.com')->first();
+    expect($user)->not->toBeNull()
+        ->and(Hash::check('Password123!', $user->password))->toBeTrue();
+
+    // No invitation created, no notification sent
+    $invitation = UserInvitation::where('user_id', $user->id)->first();
+    expect($invitation)->toBeNull();
+    Notification::assertNothingSent();
+});
+
+test('create user backend guard prevents invitation when email is not configured', function () {
+    Notification::fake();
+    \Illuminate\Support\Facades\Config::set('mail.email_configured', false);
+
+    $this->actingAs($this->admin);
+
+    // Force inviteMode to true despite email being off (simulates tampered request)
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->set('inviteMode', true)
+        ->set('call_sign', 'W1AW')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('role_id', $this->roles['Operator']->id)
+        ->set('password', 'Password123!')
+        ->set('password_confirmation', 'Password123!')
+        ->call('saveUser')
+        ->assertSet('showModal', false)
+        ->assertDispatched('toast');
+
+    $user = User::where('email', 'test@example.com')->first();
+    expect($user)->not->toBeNull();
+
+    // Backend guard should have overridden inviteMode — no invitation sent
+    $invitation = UserInvitation::where('user_id', $user->id)->first();
+    expect($invitation)->toBeNull();
     Notification::assertNothingSent();
 });
 
