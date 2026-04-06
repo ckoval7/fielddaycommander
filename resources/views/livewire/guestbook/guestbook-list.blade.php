@@ -41,7 +41,13 @@
 
                             {{-- Comments (if present) --}}
                             @if($entry->comments)
-                                <div class="mt-2 text-sm text-base-content/70 italic line-clamp-2">
+                                <div
+                                    x-data="{ expanded: false }"
+                                    @mouseenter="expanded = true"
+                                    @mouseleave="expanded = false"
+                                    class="mt-2 text-sm text-base-content/70 italic cursor-default"
+                                    :class="expanded ? '' : 'line-clamp-2'"
+                                >
                                     "{{ $entry->comments }}"
                                 </div>
                             @endif
