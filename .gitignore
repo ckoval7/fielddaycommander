@@ -34,3 +34,4 @@ boost.json
 /tests/e2e/
 /tests/Browser/
 coverage.xml
+docs/superpowers/
