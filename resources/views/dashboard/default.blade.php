@@ -47,13 +47,14 @@ Props from controller:
                 @endphp
                 @if($userDashboards->count() > 1)
                     <x-select
-                        wire:model.live="selectedDashboardId"
+                        :value="$dashboard->id"
                         :options="$userDashboards"
                         option-value="id"
                         option-label="title"
                         placeholder="Switch Dashboard"
                         icon="o-rectangle-stack"
                         class="select-sm w-full sm:w-auto"
+                        x-on:change="window.location.href = '/?dashboard=' + $event.target.value"
                     />
                 @endif
 
