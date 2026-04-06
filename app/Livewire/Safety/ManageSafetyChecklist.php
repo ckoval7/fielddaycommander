@@ -43,6 +43,10 @@ class ManageSafetyChecklist extends Component
         }
 
         $this->eventConfig = $this->event?->eventConfiguration;
+
+        if ($this->eventConfig && $this->eventConfig->safetyChecklistItems()->count() === 0) {
+            SafetyChecklistItem::seedDefaults($this->eventConfig);
+        }
     }
 
     /**

@@ -25,13 +25,6 @@
                     class="btn-primary btn-sm"
                     wire:click="openItemModal"
                 />
-                <x-button
-                    label="Seed ARRL Defaults"
-                    icon="o-arrow-path"
-                    class="btn-outline btn-sm"
-                    wire:click="seedDefaults"
-                    spinner="seedDefaults"
-                />
             </div>
         </div>
 
@@ -46,7 +39,7 @@
                     <div class="text-center py-8 text-base-content/60">
                         <x-icon name="o-clipboard-document-check" class="w-12 h-12 mx-auto mb-3 opacity-30" />
                         <p class="text-lg font-medium">No checklist items yet</p>
-                        <p class="text-sm">Add custom items or seed ARRL defaults to get started.</p>
+                        <p class="text-sm">Add custom items to get started.</p>
                     </div>
                 </x-card>
             @else

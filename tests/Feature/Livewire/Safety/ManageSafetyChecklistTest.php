@@ -148,27 +148,22 @@ describe('item management', function () {
             ->assertHasErrors('itemLabel');
     });
 
-    test('seed defaults button creates ARRL items', function () {
+    test('auto-seeds defaults on mount when checklist is empty', function () {
         $this->actingAs($this->admin);
 
-        Livewire::test(ManageSafetyChecklist::class)
-            ->call('seedDefaults')
-            ->assertDispatched('toast', title: 'Success', description: 'Default items seeded successfully');
+        Livewire::test(ManageSafetyChecklist::class);
 
+        // Factory defaults to 1A (Class A), which seeds SafetyOfficer items
         expect(SafetyChecklistItem::forEvent($this->eventConfig->id)->count())->toBeGreaterThan(0);
     });
 
-    test('seed defaults does not duplicate', function () {
+    test('auto-seeding does not duplicate on repeated mounts', function () {
         $this->actingAs($this->admin);
 
-        Livewire::test(ManageSafetyChecklist::class)
-            ->call('seedDefaults');
-
+        Livewire::test(ManageSafetyChecklist::class);
         $countAfterFirst = SafetyChecklistItem::forEvent($this->eventConfig->id)->count();
 
-        Livewire::test(ManageSafetyChecklist::class)
-            ->call('seedDefaults');
-
+        Livewire::test(ManageSafetyChecklist::class);
         $countAfterSecond = SafetyChecklistItem::forEvent($this->eventConfig->id)->count();
 
         expect($countAfterSecond)->toBe($countAfterFirst);
