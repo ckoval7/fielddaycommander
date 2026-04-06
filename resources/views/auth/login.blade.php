@@ -23,7 +23,7 @@
                 <x-button label="Log In" type="submit" class="btn-primary" icon="o-arrow-right-end-on-rectangle" />
             </div>
 
-            @if (Route::has('register'))
+            @if (config('auth-security.registration_mode') !== 'disabled')
                 <div class="text-center pt-4 border-t">
                     <span class="text-sm">Need an account?</span>
                     <a href="{{ route('register') }}" class="link link-primary text-sm ml-1">Register</a>

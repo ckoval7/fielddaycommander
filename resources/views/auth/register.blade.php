@@ -4,6 +4,13 @@
     <form method="POST" action="{{ route('register') }}">
         @csrf
 
+        @if(config('auth-security.registration_mode') === 'approval_required')
+            <div class="alert alert-info mb-4">
+                <x-icon name="o-information-circle" class="w-5 h-5" />
+                <span class="text-sm">New accounts require administrator approval before you can log in.</span>
+            </div>
+        @endif
+
         <div class="space-y-4">
             <x-input label="Call Sign" type="text" name="call_sign" :value="old('call_sign')" required autofocus icon="o-megaphone" errorField="call_sign" />
             <x-input label="First Name" type="text" name="first_name" :value="old('first_name')" required icon="o-user" errorField="first_name" />
