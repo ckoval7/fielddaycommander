@@ -6,19 +6,19 @@
     <title>Try Field Day Commander</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-base-200 flex items-center justify-center p-6" x-data="provisioner()">
+<body class="min-h-screen bg-base-200 flex items-center justify-center p-6">
 
-{{-- Loading overlay --}}
-<div x-show="loading" x-cloak
+{{-- Loading overlay (hidden until form submit) --}}
+<div id="provision-overlay" style="display:none"
      class="fixed inset-0 bg-base-100 flex flex-col items-center justify-center z-50 gap-6">
     <span class="loading loading-spinner loading-lg text-primary"></span>
     <div class="text-center">
-        <p class="font-semibold text-lg" x-text="statusLine"></p>
-        <p class="text-base-content/50 text-sm mt-1">This takes about 10–15 seconds</p>
+        <p id="provision-status" class="font-semibold text-lg">Provisioning your sandbox&hellip;</p>
+        <p class="text-base-content/50 text-sm mt-1">This takes about 10&ndash;15 seconds</p>
     </div>
 </div>
 
-<div class="max-w-lg w-full" x-show="!loading">
+<div id="provision-content" class="max-w-lg w-full">
     <div class="text-center mb-8">
         <h1 class="text-3xl font-bold">Field Day Commander</h1>
         <p class="text-base-content/60 mt-2">Pick a role to explore. Your sandbox is private and resets after 24 hours.</p>
@@ -35,10 +35,10 @@
             ['role' => 'event_manager',   'label' => 'Event Manager',   'desc' => 'Full event control — scoring, bonuses, schedule', 'icon' => 'o-trophy'],
             ['role' => 'system_admin',    'label' => 'System Admin',    'desc' => 'Everything, including settings and user management', 'icon' => 'o-cog-6-tooth'],
         ] as $option)
-        <form method="POST" action="{{ route('demo.provision') }}" @submit="start">
+        <form method="POST" action="{{ route('demo.provision') }}">
             @csrf
             <input type="hidden" name="role" value="{{ $option['role'] }}">
-            <button type="submit" class="btn btn-outline w-full justify-start gap-4 h-auto py-4" :disabled="loading">
+            <button type="submit" class="btn btn-outline w-full justify-start gap-4 h-auto py-4">
                 <x-icon name="{{ $option['icon'] }}" class="w-6 h-6 shrink-0" />
                 <div class="text-left">
                     <div class="font-semibold">{{ $option['label'] }}</div>
@@ -55,30 +55,35 @@
 </div>
 
 <script>
-function provisioner() {
-    const steps = [
+(function () {
+    var steps = [
         'Provisioning your sandbox\u2026',
         'Running database migrations\u2026',
         'Seeding demo event data\u2026',
-        'Logging in\u2026 almost there',
+        'Logging in\u2026 almost there'
     ];
-    return {
-        loading: false,
-        statusLine: steps[0],
-        start() {
-            this.loading = true;
-            let i = 0;
-            const advance = () => {
+
+    var overlay  = document.getElementById('provision-overlay');
+    var content  = document.getElementById('provision-content');
+    var statusEl = document.getElementById('provision-status');
+
+    document.querySelectorAll('form').forEach(function (form) {
+        form.addEventListener('submit', function () {
+            overlay.style.display  = 'flex';
+            content.style.display  = 'none';
+
+            var i = 0;
+            var advance = function () {
                 if (i < steps.length - 1) {
                     i++;
-                    this.statusLine = steps[i];
+                    statusEl.textContent = steps[i];
                     setTimeout(advance, 4000);
                 }
             };
             setTimeout(advance, 2000);
-        },
-    };
-}
+        });
+    });
+}());
 </script>
 </body>
 </html>
