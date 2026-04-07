@@ -37,4 +37,15 @@ return [
 
     'max_sessions' => env('DEMO_MAX_SESSIONS', 25),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Analytics Retention
+    |--------------------------------------------------------------------------
+    |
+    | How many days to keep demo analytics data before pruning.
+    |
+    */
+
+    'analytics_retention_days' => env('DEMO_ANALYTICS_RETENTION_DAYS', 90),
+
 ];
