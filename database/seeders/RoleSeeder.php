@@ -13,14 +13,14 @@ class RoleSeeder extends Seeder
         // Clear permission cache to ensure all permissions are available
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // System Administrator - All except contact logging
+        // System Administrator - All permissions
         $systemAdmin = Role::firstOrCreate([
             'name' => 'System Administrator',
         ], [
             'guard_name' => 'web',
         ]);
         $systemAdmin->givePermissionTo(
-            Permission::whereNotIn('name', ['log-contacts', 'edit-contacts'])->pluck('name')
+            Permission::pluck('name')
         );
 
         // Event Manager

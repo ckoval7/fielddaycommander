@@ -124,6 +124,12 @@ class MyShifts extends Component
      */
     public function checkIn(int $assignmentId): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', Auth::id())
             ->where('status', ShiftAssignment::STATUS_SCHEDULED)
@@ -158,6 +164,12 @@ class MyShifts extends Component
      */
     public function checkOut(int $assignmentId): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', Auth::id())
             ->where('status', ShiftAssignment::STATUS_CHECKED_IN)
@@ -186,6 +198,12 @@ class MyShifts extends Component
      */
     public function reCheckIn(int $assignmentId): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', Auth::id())
             ->where('status', ShiftAssignment::STATUS_CHECKED_OUT)
@@ -220,6 +238,12 @@ class MyShifts extends Component
      */
     public function cancelSignUp(int $assignmentId): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', Auth::id())
             ->where('signup_type', ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)

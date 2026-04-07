@@ -159,6 +159,13 @@ class GuestbookForm extends Component
             return;
         }
 
+        // Block the SYSTEM account from signing the guestbook
+        if (auth()->check() && auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot sign the guestbook.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         // Check if guestbook is enabled
         if (! $this->eventConfig || ! $this->eventConfig->guestbook_enabled) {
             $this->addError('form', 'The guestbook is currently not accepting entries.');

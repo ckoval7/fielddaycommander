@@ -131,6 +131,12 @@ class ScheduleTimeline extends Component
      */
     public function signUp(int $shiftId): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $shift = Shift::findOrFail($shiftId);
 
         if (! $shift->is_open) {
@@ -184,6 +190,12 @@ class ScheduleTimeline extends Component
      */
     public function cancelSignUp(int $assignmentId): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', auth()->id())
             ->where('signup_type', ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
@@ -216,6 +228,12 @@ class ScheduleTimeline extends Component
      */
     public function checkIn(int $assignmentId): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', auth()->id())
             ->where('status', ShiftAssignment::STATUS_SCHEDULED)
@@ -250,6 +268,12 @@ class ScheduleTimeline extends Component
      */
     public function checkOut(int $assignmentId): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', auth()->id())
             ->where('status', ShiftAssignment::STATUS_CHECKED_IN)
@@ -278,6 +302,12 @@ class ScheduleTimeline extends Component
      */
     public function reCheckIn(int $assignmentId): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', auth()->id())
             ->where('status', ShiftAssignment::STATUS_CHECKED_OUT)

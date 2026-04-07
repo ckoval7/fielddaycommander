@@ -186,13 +186,15 @@
                 wire:click="cancelSetup"
                 class="w-full sm:w-auto"
             />
-            <x-button
-                label="Start Session"
-                wire:click="startSession"
-                class="btn-primary w-full sm:w-auto"
-                icon="o-play"
-                spinner="startSession"
-            />
+            @unless(auth()->user()->isSystemUser())
+                <x-button
+                    label="Start Session"
+                    wire:click="startSession"
+                    class="btn-primary w-full sm:w-auto"
+                    icon="o-play"
+                    spinner="startSession"
+                />
+            @endunless
         </x-slot:actions>
     </x-modal>
 

@@ -112,37 +112,39 @@
 
                                         {{-- Actions --}}
                                         <div class="flex gap-2">
-                                            @if($assignment->status === \App\Models\ShiftAssignment::STATUS_SCHEDULED)
-                                                @if($shift->can_check_in)
+                                            @unless(auth()->user()->isSystemUser())
+                                                @if($assignment->status === \App\Models\ShiftAssignment::STATUS_SCHEDULED)
+                                                    @if($shift->can_check_in)
+                                                        <x-button
+                                                            label="Check In"
+                                                            icon="o-arrow-right-on-rectangle"
+                                                            class="btn-primary btn-sm"
+                                                            wire:click="checkIn({{ $assignment->id }})"
+                                                            spinner="checkIn"
+                                                        />
+                                                    @else
+                                                        <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format('g:i A T') }}" class="badge-ghost badge-sm" />
+                                                    @endif
+                                                @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_IN)
+                                                    @php $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time); @endphp
                                                     <x-button
-                                                        label="Check In"
-                                                        icon="o-arrow-right-on-rectangle"
-                                                        class="btn-primary btn-sm"
-                                                        wire:click="checkIn({{ $assignment->id }})"
-                                                        spinner="checkIn"
+                                                        label="Check Out"
+                                                        icon="o-arrow-left-on-rectangle"
+                                                        class="btn-warning btn-sm"
+                                                        wire:click="checkOut({{ $assignment->id }})"
+                                                        wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
+                                                        spinner="checkOut"
                                                     />
-                                                @else
-                                                    <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format('g:i A T') }}" class="badge-ghost badge-sm" />
+                                                @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
+                                                    <x-button
+                                                        label="Check In Again"
+                                                        icon="o-arrow-right-on-rectangle"
+                                                        class="btn-ghost btn-sm"
+                                                        wire:click="reCheckIn({{ $assignment->id }})"
+                                                        spinner="reCheckIn"
+                                                    />
                                                 @endif
-                                            @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_IN)
-                                                @php $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time); @endphp
-                                                <x-button
-                                                    label="Check Out"
-                                                    icon="o-arrow-left-on-rectangle"
-                                                    class="btn-warning btn-sm"
-                                                    wire:click="checkOut({{ $assignment->id }})"
-                                                    wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
-                                                    spinner="checkOut"
-                                                />
-                                            @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
-                                                <x-button
-                                                    label="Check In Again"
-                                                    icon="o-arrow-right-on-rectangle"
-                                                    class="btn-ghost btn-sm"
-                                                    wire:click="reCheckIn({{ $assignment->id }})"
-                                                    spinner="reCheckIn"
-                                                />
-                                            @endif
+                                            @endunless
                                         </div>
                                     </div>
                                 </x-card>
@@ -195,16 +197,18 @@
 
                                         {{-- Actions --}}
                                         <div class="flex gap-2">
-                                            @if($assignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP && $assignment->status === \App\Models\ShiftAssignment::STATUS_SCHEDULED)
-                                                <x-button
-                                                    label="Drop"
-                                                    icon="o-x-mark"
-                                                    class="btn-ghost btn-sm text-error"
-                                                    wire:click="cancelSignUp({{ $assignment->id }})"
-                                                    wire:confirm="Are you sure you want to drop this shift?"
-                                                    spinner="cancelSignUp"
-                                                />
-                                            @endif
+                                            @unless(auth()->user()->isSystemUser())
+                                                @if($assignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP && $assignment->status === \App\Models\ShiftAssignment::STATUS_SCHEDULED)
+                                                    <x-button
+                                                        label="Drop"
+                                                        icon="o-x-mark"
+                                                        class="btn-ghost btn-sm text-error"
+                                                        wire:click="cancelSignUp({{ $assignment->id }})"
+                                                        wire:confirm="Are you sure you want to drop this shift?"
+                                                        spinner="cancelSignUp"
+                                                    />
+                                                @endif
+                                            @endunless
                                         </div>
                                     </div>
                                 </x-card>

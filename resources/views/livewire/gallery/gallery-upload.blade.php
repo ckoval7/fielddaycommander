@@ -6,6 +6,12 @@
     </x-header>
 
     <x-card>
+        @if(auth()->user()->isSystemUser())
+            <div class="alert alert-warning">
+                <x-icon name="o-exclamation-triangle" class="w-5 h-5" />
+                <span>The SYSTEM account cannot upload photos. Please use a personal account.</span>
+            </div>
+        @else
         <form wire:submit="save" class="space-y-6">
             <div>
                 <label for="photo-input" class="block text-sm font-medium mb-2">Photo</label>
@@ -75,5 +81,6 @@
                 />
             </div>
         </form>
+        @endif
     </x-card>
 </div>

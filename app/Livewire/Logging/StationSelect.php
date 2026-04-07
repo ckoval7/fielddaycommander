@@ -227,6 +227,12 @@ class StationSelect extends Component
 
     public function startSession(): void
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot start operating sessions.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $this->validate([
             'selectedStationId' => 'required|exists:stations,id',
             'selectedBandId' => 'required|exists:bands,id',

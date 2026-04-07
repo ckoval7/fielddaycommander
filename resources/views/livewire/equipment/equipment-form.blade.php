@@ -23,6 +23,14 @@
         </x-slot:actions>
     </x-header>
 
+    @if(auth()->user()->isSystemUser())
+        <x-alert
+            icon="o-exclamation-triangle"
+            title="Action Not Permitted"
+            description="The SYSTEM account cannot create or edit equipment."
+            class="alert-warning"
+        />
+    @else
     <form wire:submit="save">
         {{-- Equipment Details Card --}}
         <x-card class="mb-6">
@@ -290,4 +298,5 @@
             />
         </div>
     </form>
+    @endif
 </div>

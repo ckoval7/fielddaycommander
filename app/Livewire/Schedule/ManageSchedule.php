@@ -180,6 +180,7 @@ class ManageSchedule extends Component
         }
 
         return User::query()
+            ->excludeSystem()
             ->orderBy('first_name')
             ->get()
             ->map(fn (User $user) => [
@@ -572,6 +573,14 @@ class ManageSchedule extends Component
             'assignShiftId' => ['required', 'exists:shifts,id'],
             'assignUserId' => ['required', 'exists:users,id'],
         ]);
+
+        $assignee = User::findOrFail($this->assignUserId);
+        if ($assignee->isSystemUser()) {
+            $this->showAssignModal = false;
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot be assigned to shifts.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
 
         $shift = Shift::findOrFail($this->assignShiftId);
 

@@ -110,6 +110,12 @@
     @if(!$showSuccess)
         @if($eventConfig)
             <x-card title="Sign the Guestbook" subtitle="Welcome! Please sign our event guestbook.">
+                @if(auth()->check() && auth()->user()->isSystemUser())
+                    <div class="alert alert-warning">
+                        <x-icon name="o-exclamation-triangle" class="w-5 h-5" />
+                        <span>The SYSTEM account cannot sign the guestbook. Please use a personal account.</span>
+                    </div>
+                @else
                 <form wire:submit="save" class="space-y-4">
                     {{-- Honeypot field - hidden from real users, bots will fill it --}}
                     <div class="hidden" aria-hidden="true">
@@ -251,6 +257,7 @@
                         />
                     </div>
                 </form>
+                @endif
             </x-card>
         @else
             {{-- No active event with guestbook enabled --}}

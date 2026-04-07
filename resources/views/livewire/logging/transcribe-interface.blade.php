@@ -64,6 +64,11 @@
         <div class="px-4 py-4 max-w-5xl mx-auto space-y-4">
 
             {{-- Contact Form Card --}}
+            @if(auth()->user()->isSystemUser())
+                <x-alert icon="o-no-symbol" class="alert-warning">
+                    The SYSTEM account cannot transcribe contacts. Please log in as a real user to use this feature.
+                </x-alert>
+            @else
             <x-card title="Log Contact" class="shadow-sm">
                 <div class="space-y-4">
                     {{-- 4-column grid on desktop --}}
@@ -270,6 +275,7 @@
                     </div>
                 </div>
             </x-card>
+            @endif
 
             {{-- Recently Transcribed Contacts --}}
             @if($this->recentContacts->isNotEmpty())

@@ -161,8 +161,14 @@ class EquipmentForm extends Component
             ]);
     }
 
-    public function save()
+    public function save(): mixed
     {
+        if (auth()->user()->isSystemUser()) {
+            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot manage equipment.', icon: 'o-x-circle', css: 'alert-error');
+
+            return null;
+        }
+
         $validated = $this->validate();
 
         // Convert comma-separated tags input to array
