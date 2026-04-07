@@ -3,6 +3,7 @@
 namespace App\Livewire\Schedule;
 
 use App\Livewire\Schedule\Concerns\WithScheduleFilters;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\ShiftAssignment;
@@ -136,6 +137,15 @@ class MyShifts extends Component
 
         $assignment->checkIn();
 
+        AuditLog::log(
+            action: 'shift.checkin',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'role' => $assignment->shift->shiftRole->name,
+            ]
+        );
+
         unset($this->currentShifts);
         unset($this->upcomingShifts);
         unset($this->pastShifts);
@@ -154,6 +164,15 @@ class MyShifts extends Component
             ->firstOrFail();
 
         $assignment->checkOut();
+
+        AuditLog::log(
+            action: 'shift.checkout',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'role' => $assignment->shift->shiftRole->name,
+            ]
+        );
 
         unset($this->currentShifts);
         unset($this->upcomingShifts);
@@ -180,6 +199,15 @@ class MyShifts extends Component
 
         $assignment->checkBackIn();
 
+        AuditLog::log(
+            action: 'shift.checkin',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'role' => $assignment->shift->shiftRole->name,
+            ]
+        );
+
         unset($this->currentShifts);
         unset($this->upcomingShifts);
         unset($this->pastShifts);
@@ -197,6 +225,18 @@ class MyShifts extends Component
             ->where('signup_type', ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
             ->where('status', ShiftAssignment::STATUS_SCHEDULED)
             ->firstOrFail();
+
+        $assignment->load('shift.shiftRole');
+
+        AuditLog::log(
+            action: 'shift.signup.cancelled',
+            auditable: $assignment,
+            oldValues: [
+                'role' => $assignment->shift->shiftRole->name,
+                'start_time' => $assignment->shift->start_time->toIso8601String(),
+                'end_time' => $assignment->shift->end_time->toIso8601String(),
+            ]
+        );
 
         $assignment->delete();
 

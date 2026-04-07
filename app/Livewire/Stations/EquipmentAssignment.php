@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Stations;
 
+use App\Models\AuditLog;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
@@ -827,6 +828,16 @@ class EquipmentAssignment extends Component
                 ]);
         }
 
+        AuditLog::log(
+            action: 'equipment.assigned',
+            auditable: $equipment,
+            newValues: [
+                'station' => $this->stationModel->name,
+                'event' => $this->eventModel->name,
+                'assigned_by' => auth()->user()->call_sign,
+            ]
+        );
+
         // Clear computed caches
         $this->clearCaches();
 
@@ -869,6 +880,19 @@ class EquipmentAssignment extends Component
                 'station_id' => $this->stationId,
                 'assigned_by_user_id' => auth()->id(),
             ]);
+
+        AuditLog::log(
+            action: 'equipment.assigned',
+            auditable: $equipment,
+            oldValues: [
+                'station' => $previousStation?->name,
+            ],
+            newValues: [
+                'station' => $this->stationModel->name,
+                'event' => $this->eventModel->name,
+                'assigned_by' => auth()->user()->call_sign,
+            ]
+        );
 
         // Clear computed caches
         $this->clearCaches();
@@ -984,6 +1008,16 @@ class EquipmentAssignment extends Component
         }
 
         $equipment = Equipment::find($equipmentId);
+
+        AuditLog::log(
+            action: 'equipment.unassigned',
+            auditable: $equipment,
+            oldValues: [
+                'station' => $this->stationModel->name,
+                'event' => $this->eventModel->name,
+                'unassigned_by' => auth()->user()->call_sign,
+            ]
+        );
 
         // Update the equipment_event record - remove station assignment but keep committed
         EquipmentEvent::query()

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Models\AuditLog;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
@@ -342,6 +343,16 @@ class EquipmentList extends Component
         $equipment = Equipment::findOrFail($equipmentId);
 
         $this->authorize('delete', $equipment);
+
+        AuditLog::log(
+            action: 'equipment.deleted',
+            auditable: $equipment,
+            oldValues: [
+                'make' => $equipment->make,
+                'model' => $equipment->model,
+                'type' => $equipment->type,
+            ]
+        );
 
         $equipment->delete();
 

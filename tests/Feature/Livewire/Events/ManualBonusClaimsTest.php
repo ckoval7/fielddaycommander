@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Events\ManualBonusClaims;
+use App\Models\AuditLog;
 use App\Models\BonusType;
 use App\Models\Event;
 use App\Models\EventBonus;
@@ -236,4 +237,52 @@ test('shows public_info_booth bonus for class A', function () {
     Livewire::actingAs($this->user)
         ->test(ManualBonusClaims::class, ['event' => $this->event])
         ->assertSee('Information Booth');
+});
+
+describe('audit logging', function () {
+    test('claiming a bonus logs to audit log', function () {
+        $bonusType = BonusType::where('code', 'social_media')
+            ->where('event_type_id', $this->eventType->id)
+            ->first();
+
+        Livewire::actingAs($this->user)
+            ->test(ManualBonusClaims::class, ['event' => $this->event])
+            ->call('claim', $bonusType->id, 'Posted on Twitter');
+
+        $bonus = EventBonus::where('bonus_type_id', $bonusType->id)->first();
+
+        $auditLog = AuditLog::where('action', 'bonus.claimed')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->user->id);
+        expect($auditLog->auditable_type)->toBe(EventBonus::class);
+        expect($auditLog->auditable_id)->toBe($bonus->id);
+        expect($auditLog->new_values['bonus_type'])->toBe('social_media');
+        expect($auditLog->new_values['points'])->toBe($bonusType->base_points);
+    });
+
+    test('unclaiming a bonus logs to audit log', function () {
+        $bonusType = BonusType::where('code', 'social_media')
+            ->where('event_type_id', $this->eventType->id)
+            ->first();
+
+        $bonus = EventBonus::create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'bonus_type_id' => $bonusType->id,
+            'claimed_by_user_id' => $this->user->id,
+            'quantity' => 1,
+            'calculated_points' => $bonusType->base_points,
+            'is_verified' => true,
+            'verified_by_user_id' => $this->user->id,
+            'verified_at' => now(),
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(ManualBonusClaims::class, ['event' => $this->event])
+            ->call('unclaim', $bonusType->id);
+
+        $auditLog = AuditLog::where('action', 'bonus.unclaimed')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->old_values['bonus_type'])->toBe('social_media');
+        expect($auditLog->old_values['points'])->toBe($bonusType->base_points);
+    });
 });

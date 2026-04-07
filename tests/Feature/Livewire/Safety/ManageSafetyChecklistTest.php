@@ -2,6 +2,7 @@
 
 use App\Enums\ChecklistType;
 use App\Livewire\Safety\ManageSafetyChecklist;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\SafetyChecklistEntry;
@@ -238,5 +239,90 @@ describe('reordering', function () {
 
         expect($item1->fresh()->sort_order)->toBe(1);
         expect($item2->fresh()->sort_order)->toBe(0);
+    });
+});
+
+// =============================================================================
+// Audit Logging
+// =============================================================================
+
+describe('audit logging', function () {
+    test('creating a safety item logs to audit log', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSafetyChecklist::class)
+            ->call('openItemModal')
+            ->set('itemLabel', 'First Aid Kit Check')
+            ->set('itemChecklistType', ChecklistType::SafetyOfficer->value)
+            ->set('itemIsRequired', true)
+            ->call('saveItem');
+
+        $item = SafetyChecklistItem::where('label', 'First Aid Kit Check')->first();
+
+        $auditLog = AuditLog::where('action', 'safety.item.created')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->auditable_type)->toBe(SafetyChecklistItem::class);
+        expect($auditLog->auditable_id)->toBe($item->id);
+        expect($auditLog->new_values)->toMatchArray([
+            'label' => 'First Aid Kit Check',
+            'is_required' => true,
+        ]);
+    });
+
+    test('updating a safety item logs old and new values', function () {
+        $this->actingAs($this->admin);
+
+        $item = SafetyChecklistItem::create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'checklist_type' => ChecklistType::SafetyOfficer,
+            'label' => 'Original Label',
+            'is_required' => false,
+            'is_default' => false,
+            'sort_order' => 0,
+        ]);
+        SafetyChecklistEntry::create([
+            'safety_checklist_item_id' => $item->id,
+            'is_completed' => false,
+        ]);
+
+        Livewire::test(ManageSafetyChecklist::class)
+            ->call('openItemModal', $item->id)
+            ->set('itemLabel', 'Updated Label')
+            ->set('itemIsRequired', true)
+            ->call('saveItem');
+
+        $auditLog = AuditLog::where('action', 'safety.item.updated')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->old_values)->toMatchArray([
+            'label' => 'Original Label',
+            'is_required' => false,
+        ]);
+        expect($auditLog->new_values)->toMatchArray([
+            'label' => 'Updated Label',
+            'is_required' => true,
+        ]);
+    });
+
+    test('deleting a safety item logs to audit log', function () {
+        $this->actingAs($this->admin);
+
+        $item = SafetyChecklistItem::create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'checklist_type' => ChecklistType::SafetyOfficer,
+            'label' => 'Delete Me',
+            'is_required' => false,
+            'is_default' => false,
+            'sort_order' => 0,
+        ]);
+
+        Livewire::test(ManageSafetyChecklist::class)
+            ->call('deleteItem', $item->id);
+
+        $auditLog = AuditLog::where('action', 'safety.item.deleted')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->old_values)->toMatchArray([
+            'label' => 'Delete Me',
+        ]);
     });
 });

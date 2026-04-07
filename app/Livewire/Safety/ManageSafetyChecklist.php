@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Safety;
 
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\SafetyChecklistEntry;
@@ -97,11 +98,36 @@ class ManageSafetyChecklist extends Component
 
         if ($this->editingItemId) {
             $item = SafetyChecklistItem::findOrFail($this->editingItemId);
+
+            $oldValues = [
+                'label' => $item->label,
+                'is_required' => $item->is_required,
+                'help_text' => $item->help_text,
+            ];
+
             $item->update([
                 'label' => $this->itemLabel,
                 'help_text' => $this->itemHelpText ?: null,
                 'is_required' => $this->itemIsRequired,
             ]);
+
+            $newValues = array_filter([
+                'label' => $item->label,
+                'is_required' => $item->is_required,
+                'help_text' => $item->help_text,
+            ], fn ($value, $key) => $value !== $oldValues[$key], ARRAY_FILTER_USE_BOTH);
+
+            $oldValues = array_intersect_key($oldValues, $newValues);
+
+            if (! empty($newValues)) {
+                AuditLog::log(
+                    action: 'safety.item.updated',
+                    auditable: $item,
+                    oldValues: $oldValues,
+                    newValues: $newValues,
+                );
+            }
+
             $message = 'Item updated successfully';
         } else {
             $maxSortOrder = SafetyChecklistItem::query()
@@ -122,6 +148,16 @@ class ManageSafetyChecklist extends Component
                 'safety_checklist_item_id' => $item->id,
                 'is_completed' => false,
             ]);
+
+            AuditLog::log(
+                action: 'safety.item.created',
+                auditable: $item,
+                newValues: [
+                    'label' => $item->label,
+                    'checklist_type' => $item->checklist_type->value,
+                    'is_required' => $item->is_required,
+                ]
+            );
 
             $message = 'Item created successfully';
         }
@@ -144,6 +180,15 @@ class ManageSafetyChecklist extends Component
 
             return;
         }
+
+        AuditLog::log(
+            action: 'safety.item.deleted',
+            auditable: $item,
+            oldValues: [
+                'label' => $item->label,
+                'checklist_type' => $item->checklist_type->value,
+            ]
+        );
 
         $item->delete();
 

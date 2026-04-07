@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Models\AuditLog;
 use App\Models\BonusType;
 use App\Models\Event;
 use App\Models\EventBonus;
@@ -119,7 +120,7 @@ class ManualBonusClaims extends Component
             $points = $quantity * $bonusType->base_points;
         }
 
-        EventBonus::create([
+        $bonus = EventBonus::create([
             'event_configuration_id' => $config->id,
             'bonus_type_id' => $bonusTypeId,
             'claimed_by_user_id' => auth()->id(),
@@ -130,6 +131,17 @@ class ManualBonusClaims extends Component
             'verified_by_user_id' => auth()->id(),
             'verified_at' => now(),
         ]);
+
+        AuditLog::log(
+            action: 'bonus.claimed',
+            auditable: $bonus,
+            newValues: [
+                'bonus_type' => $bonusType->code,
+                'points' => $points,
+                'quantity' => $quantity,
+                'notes' => $notes,
+            ]
+        );
 
         unset($this->claimedBonuses);
 
@@ -154,9 +166,24 @@ class ManualBonusClaims extends Component
             return;
         }
 
-        EventBonus::where('event_configuration_id', $config->id)
+        $bonus = EventBonus::where('event_configuration_id', $config->id)
             ->where('bonus_type_id', $bonusTypeId)
-            ->delete();
+            ->first();
+
+        if (! $bonus) {
+            return;
+        }
+
+        AuditLog::log(
+            action: 'bonus.unclaimed',
+            auditable: $bonus,
+            oldValues: [
+                'bonus_type' => $bonusType->code,
+                'points' => $bonus->calculated_points,
+            ]
+        );
+
+        $bonus->delete();
 
         unset($this->claimedBonuses);
 
@@ -255,10 +282,38 @@ class ManualBonusClaims extends Component
                     'verified_at' => now(),
                 ]
             );
-        } else {
-            EventBonus::where('event_configuration_id', $config->id)
+
+            $bonus = EventBonus::where('event_configuration_id', $config->id)
                 ->where('bonus_type_id', $bonusType->id)
-                ->delete();
+                ->first();
+
+            if ($bonus) {
+                AuditLog::log(
+                    action: 'bonus.claimed',
+                    auditable: $bonus,
+                    newValues: [
+                        'bonus_type' => 'youth_participation',
+                        'points' => $bonus->calculated_points,
+                        'quantity' => $bonus->quantity,
+                    ]
+                );
+            }
+        } else {
+            $existingBonus = EventBonus::where('event_configuration_id', $config->id)
+                ->where('bonus_type_id', $bonusType->id)
+                ->first();
+
+            if ($existingBonus) {
+                AuditLog::log(
+                    action: 'bonus.unclaimed',
+                    auditable: $existingBonus,
+                    oldValues: [
+                        'bonus_type' => 'youth_participation',
+                        'points' => $existingBonus->calculated_points,
+                    ]
+                );
+                $existingBonus->delete();
+            }
         }
 
         unset($this->youthStatus);

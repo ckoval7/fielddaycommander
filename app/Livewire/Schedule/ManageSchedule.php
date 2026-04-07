@@ -3,6 +3,7 @@
 namespace App\Livewire\Schedule;
 
 use App\Livewire\Schedule\Concerns\WithScheduleFilters;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Shift;
@@ -238,18 +239,54 @@ class ManageSchedule extends Component
 
         if ($this->editingRoleId) {
             $role = ShiftRole::findOrFail($this->editingRoleId);
+
+            $oldRoleValues = [
+                'name' => $role->name,
+                'bonus_points' => $role->bonus_points,
+                'requires_confirmation' => $role->requires_confirmation,
+            ];
+
             $role->update($data);
+
+            $newRoleValues = array_filter([
+                'name' => $role->name,
+                'bonus_points' => $role->bonus_points,
+                'requires_confirmation' => $role->requires_confirmation,
+            ], fn ($value, $key) => $value !== $oldRoleValues[$key], ARRAY_FILTER_USE_BOTH);
+
+            $oldRoleValues = array_intersect_key($oldRoleValues, $newRoleValues);
+
+            if (! empty($newRoleValues)) {
+                AuditLog::log(
+                    action: 'shift.role.updated',
+                    auditable: $role,
+                    oldValues: $oldRoleValues,
+                    newValues: $newRoleValues,
+                );
+            }
+
             $message = 'Role updated successfully';
         } else {
             $maxSortOrder = ShiftRole::query()
                 ->forEvent($this->eventConfig->id)
                 ->max('sort_order') ?? -1;
 
-            ShiftRole::create(array_merge($data, [
+            $role = ShiftRole::create(array_merge($data, [
                 'event_configuration_id' => $this->eventConfig->id,
                 'is_default' => false,
                 'sort_order' => $maxSortOrder + 1,
             ]));
+
+            AuditLog::log(
+                action: 'shift.role.created',
+                auditable: $role,
+                newValues: [
+                    'name' => $role->name,
+                    'bonus_points' => $role->bonus_points,
+                    'requires_confirmation' => $role->requires_confirmation,
+                ]
+            );
+
             $message = 'Role created successfully';
         }
 
@@ -280,6 +317,15 @@ class ManageSchedule extends Component
 
         // Delete any shifts without assignments for this role
         $role->shifts()->delete();
+
+        AuditLog::log(
+            action: 'shift.role.deleted',
+            auditable: $role,
+            oldValues: [
+                'name' => $role->name,
+            ]
+        );
+
         $role->delete();
 
         unset($this->roles);
@@ -334,12 +380,55 @@ class ManageSchedule extends Component
 
         if ($this->editingShiftId) {
             $shift = Shift::findOrFail($this->editingShiftId);
+
+            $oldShiftValues = [
+                'role' => $shift->shiftRole->name,
+                'start_time' => $shift->start_time->toIso8601String(),
+                'end_time' => $shift->end_time->toIso8601String(),
+                'capacity' => $shift->capacity,
+                'is_open' => $shift->is_open,
+            ];
+
             $shift->update($data);
+            $shift->load('shiftRole');
+
+            $newShiftValues = [
+                'role' => $shift->shiftRole->name,
+                'start_time' => $shift->start_time->toIso8601String(),
+                'end_time' => $shift->end_time->toIso8601String(),
+                'capacity' => $shift->capacity,
+                'is_open' => $shift->is_open,
+            ];
+
+            $changedValues = array_filter($newShiftValues, fn ($value, $key) => $value !== $oldShiftValues[$key], ARRAY_FILTER_USE_BOTH);
+            $oldChanged = array_intersect_key($oldShiftValues, $changedValues);
+
+            if (! empty($changedValues)) {
+                AuditLog::log(
+                    action: 'shift.updated',
+                    auditable: $shift,
+                    oldValues: $oldChanged,
+                    newValues: $changedValues,
+                );
+            }
+
             $message = 'Shift updated successfully';
         } else {
-            Shift::create(array_merge($data, [
+            $shift = Shift::create(array_merge($data, [
                 'event_configuration_id' => $this->eventConfig->id,
             ]));
+
+            AuditLog::log(
+                action: 'shift.created',
+                auditable: $shift,
+                newValues: [
+                    'role' => ShiftRole::find($this->shiftRoleId)->name,
+                    'start_time' => $shift->start_time->toIso8601String(),
+                    'end_time' => $shift->end_time->toIso8601String(),
+                    'capacity' => $shift->capacity,
+                ]
+            );
+
             $message = 'Shift created successfully';
         }
 
@@ -355,7 +444,19 @@ class ManageSchedule extends Component
         Gate::authorize('manage-shifts');
 
         $shift = Shift::findOrFail($shiftId);
+        $shift->load('shiftRole');
         $assignmentCount = $shift->assignments()->count();
+
+        AuditLog::log(
+            action: 'shift.deleted',
+            auditable: $shift,
+            oldValues: [
+                'role' => $shift->shiftRole->name,
+                'start_time' => $shift->start_time->toIso8601String(),
+                'end_time' => $shift->end_time->toIso8601String(),
+                'assignments_removed' => $assignmentCount,
+            ]
+        );
 
         if ($assignmentCount > 0) {
             $shift->assignments()->delete();
@@ -435,6 +536,18 @@ class ManageSchedule extends Component
             $createdCount++;
         }
 
+        AuditLog::log(
+            action: 'shift.bulk_created',
+            auditable: $this->eventConfig,
+            newValues: [
+                'role' => ShiftRole::find($this->bulkRoleId)->name,
+                'count' => $createdCount,
+                'duration_minutes' => $this->bulkDurationMinutes,
+                'start_time' => $this->bulkStartTime,
+                'end_time' => $this->bulkEndTime,
+            ]
+        );
+
         $this->showBulkModal = false;
         $this->resetBulkForm();
         unset($this->shifts);
@@ -482,12 +595,24 @@ class ManageSchedule extends Component
             return;
         }
 
-        ShiftAssignment::create([
+        $assignment = ShiftAssignment::create([
             'shift_id' => $this->assignShiftId,
             'user_id' => $this->assignUserId,
             'status' => ShiftAssignment::STATUS_SCHEDULED,
             'signup_type' => ShiftAssignment::SIGNUP_TYPE_ASSIGNED,
         ]);
+
+        $user = User::find($this->assignUserId);
+        AuditLog::log(
+            action: 'shift.assigned',
+            auditable: $assignment,
+            newValues: [
+                'assigned_user' => $user->call_sign,
+                'role' => $shift->shiftRole->name,
+                'start_time' => $shift->start_time->toIso8601String(),
+                'end_time' => $shift->end_time->toIso8601String(),
+            ]
+        );
 
         $this->showAssignModal = false;
         $this->assignShiftId = null;
@@ -502,6 +627,17 @@ class ManageSchedule extends Component
         Gate::authorize('manage-shifts');
 
         $assignment = ShiftAssignment::findOrFail($assignmentId);
+        $assignment->load('user', 'shift.shiftRole');
+
+        AuditLog::log(
+            action: 'shift.removed',
+            auditable: $assignment,
+            oldValues: [
+                'removed_user' => $assignment->user->call_sign,
+                'role' => $assignment->shift->shiftRole->name,
+            ]
+        );
+
         $assignment->delete();
 
         unset($this->shifts);
@@ -516,7 +652,18 @@ class ManageSchedule extends Component
         Gate::authorize('manage-shifts');
 
         $assignment = ShiftAssignment::findOrFail($assignmentId);
+        $assignment->load('user');
         $assignment->confirm(Auth::user());
+
+        AuditLog::log(
+            action: 'shift.confirmed',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'confirmed_by' => Auth::user()->call_sign,
+                'user' => $assignment->user->call_sign,
+            ]
+        );
 
         unset($this->pendingConfirmations);
         unset($this->shifts);
@@ -529,7 +676,17 @@ class ManageSchedule extends Component
         Gate::authorize('manage-shifts');
 
         $assignment = ShiftAssignment::findOrFail($assignmentId);
+        $assignment->load('user');
         $assignment->revokeConfirmation();
+
+        AuditLog::log(
+            action: 'shift.revoked',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'user' => $assignment->user->call_sign,
+            ]
+        );
 
         unset($this->pendingConfirmations);
         unset($this->shifts);
@@ -544,7 +701,18 @@ class ManageSchedule extends Component
         Gate::authorize('manage-shifts');
 
         $assignment = ShiftAssignment::findOrFail($assignmentId);
+        $assignment->load('user');
         $assignment->checkIn();
+
+        AuditLog::log(
+            action: 'shift.manager_checkin',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'user' => $assignment->user->call_sign,
+                'managed_by' => Auth::user()->call_sign,
+            ]
+        );
 
         unset($this->shifts);
 
@@ -556,7 +724,18 @@ class ManageSchedule extends Component
         Gate::authorize('manage-shifts');
 
         $assignment = ShiftAssignment::findOrFail($assignmentId);
+        $assignment->load('user');
         $assignment->checkOut();
+
+        AuditLog::log(
+            action: 'shift.manager_checkout',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'user' => $assignment->user->call_sign,
+                'managed_by' => Auth::user()->call_sign,
+            ]
+        );
 
         unset($this->shifts);
 
@@ -568,7 +747,18 @@ class ManageSchedule extends Component
         Gate::authorize('manage-shifts');
 
         $assignment = ShiftAssignment::findOrFail($assignmentId);
+        $assignment->load('user');
         $assignment->markNoShow();
+
+        AuditLog::log(
+            action: 'shift.no_show',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'user' => $assignment->user->call_sign,
+                'marked_by' => Auth::user()->call_sign,
+            ]
+        );
 
         unset($this->shifts);
 

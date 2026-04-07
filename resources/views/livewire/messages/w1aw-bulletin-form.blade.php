@@ -263,6 +263,64 @@
                 @endif
             </div>
 
+            {{-- Edit History --}}
+            @if($this->editHistory->isNotEmpty())
+                <x-card>
+                    <x-slot:title>
+                        <div class="flex items-center gap-2">
+                            <x-icon name="o-clock" class="w-5 h-5" />
+                            Edit History
+                        </div>
+                    </x-slot:title>
+
+                    <div class="space-y-4">
+                        @foreach($this->editHistory as $entry)
+                            <div class="border border-base-300 rounded-lg p-3">
+                                <div class="flex items-center gap-2 text-sm text-base-content/70 mb-2">
+                                    <span class="font-medium">{{ $entry->user?->call_sign ?? $entry->user?->first_name ?? 'System' }}</span>
+                                    <span>&middot;</span>
+                                    <span>{{ $entry->created_at->diffForHumans() }}</span>
+                                    <span class="text-xs text-base-content/50">({{ $entry->created_at->format('M j, Y H:i') }} UTC)</span>
+                                </div>
+
+                                @if($entry->action === 'bulletin.created')
+                                    <div class="text-sm text-success">Created bulletin</div>
+                                @else
+                                    {{-- Metadata changes --}}
+                                    @foreach(['frequency', 'mode', 'received_at'] as $field)
+                                        @if(isset($entry->old_values[$field]) && isset($entry->new_values[$field]) && $entry->old_values[$field] !== $entry->new_values[$field])
+                                            <div class="text-sm mb-1">
+                                                Changed <span class="font-medium">{{ $field }}</span>
+                                                from <code class="text-error">{{ $entry->old_values[$field] }}</code>
+                                                to <code class="text-success">{{ $entry->new_values[$field] }}</code>
+                                            </div>
+                                        @endif
+                                    @endforeach
+
+                                    {{-- Bulletin text diff --}}
+                                    @if(isset($entry->old_values['bulletin_text']) && isset($entry->new_values['bulletin_text']))
+                                        <details class="mt-2">
+                                            <summary class="cursor-pointer text-sm font-medium text-base-content/70 hover:text-base-content">
+                                                Bulletin text changed
+                                            </summary>
+                                            <div class="mt-2 font-mono text-xs leading-relaxed overflow-x-auto">
+                                                @foreach($this->diffLines($entry->old_values['bulletin_text'], $entry->new_values['bulletin_text']) as $line)
+                                                    <div class="{{ match($line['type']) {
+                                                        'added' => 'bg-success/10 text-success border-l-2 border-success pl-2',
+                                                        'removed' => 'bg-error/10 text-error border-l-2 border-error pl-2',
+                                                        default => 'pl-2 text-base-content/60',
+                                                    } }}">{{ $line['type'] === 'added' ? '+ ' : ($line['type'] === 'removed' ? '- ' : '  ') }}{{ $line['text'] }}</div>
+                                                @endforeach
+                                            </div>
+                                        </details>
+                                    @endif
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </x-card>
+            @endif
+
         </form>
     @endcan
 </div>

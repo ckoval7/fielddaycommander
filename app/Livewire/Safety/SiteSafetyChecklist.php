@@ -3,6 +3,7 @@
 namespace App\Livewire\Safety;
 
 use App\Enums\ChecklistType;
+use App\Models\AuditLog;
 use App\Models\BonusType;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
@@ -123,9 +124,26 @@ class SiteSafetyChecklist extends Component
 
         if ($entry->is_completed) {
             $entry->markIncomplete();
+            AuditLog::log(
+                action: 'safety.item.toggled',
+                auditable: $entry,
+                newValues: [
+                    'is_completed' => false,
+                    'label' => $item->label,
+                ]
+            );
             $this->revokeIfGateNotMet($item->checklist_type);
         } else {
             $entry->markComplete(Auth::user());
+            AuditLog::log(
+                action: 'safety.item.toggled',
+                auditable: $entry,
+                newValues: [
+                    'is_completed' => true,
+                    'completed_by' => Auth::user()->call_sign,
+                    'label' => $item->label,
+                ]
+            );
             $this->claimIfGateMet($item->checklist_type);
         }
 

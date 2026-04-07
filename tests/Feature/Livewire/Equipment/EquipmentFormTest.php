@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Equipment\EquipmentForm;
+use App\Models\AuditLog;
 use App\Models\Equipment;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -210,4 +211,56 @@ test('owner dropdown is hidden for regular users', function () {
 
     Livewire::test(EquipmentForm::class, ['equipment' => null])
         ->assertDontSee('Select equipment owner');
+});
+
+describe('audit logging', function () {
+    test('creating equipment logs to audit log', function () {
+        $this->actingAs($this->user);
+
+        Livewire::test(EquipmentForm::class, ['equipment' => null])
+            ->set('make', 'Kenwood')
+            ->set('model', 'TS-590SG')
+            ->set('type', 'radio')
+            ->call('save');
+
+        $equipment = Equipment::where('make', 'Kenwood')->where('model', 'TS-590SG')->first();
+
+        $auditLog = AuditLog::where('action', 'equipment.created')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->user->id);
+        expect($auditLog->auditable_type)->toBe(Equipment::class);
+        expect($auditLog->auditable_id)->toBe($equipment->id);
+        expect($auditLog->new_values)->toMatchArray([
+            'make' => 'Kenwood',
+            'model' => 'TS-590SG',
+            'type' => 'radio',
+        ]);
+    });
+
+    test('updating equipment logs old and new values', function () {
+        $this->actingAs($this->user);
+
+        $equipment = Equipment::factory()->create([
+            'owner_user_id' => $this->user->id,
+            'make' => 'Kenwood',
+            'model' => 'TS-590SG',
+            'type' => 'radio',
+        ]);
+
+        Livewire::test(EquipmentForm::class, ['equipment' => $equipment])
+            ->set('make', 'Icom')
+            ->set('model', 'IC-7300')
+            ->call('save');
+
+        $auditLog = AuditLog::where('action', 'equipment.updated')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->old_values)->toMatchArray([
+            'make' => 'Kenwood',
+            'model' => 'TS-590SG',
+        ]);
+        expect($auditLog->new_values)->toMatchArray([
+            'make' => 'Icom',
+            'model' => 'IC-7300',
+        ]);
+    });
 });
