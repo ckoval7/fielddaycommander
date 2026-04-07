@@ -4,6 +4,46 @@
     @endphp
 
     <x-card>
+        <x-slot:title>Organization Information</x-slot:title>
+
+        <div class="space-y-4">
+            <x-input
+                label="Organization Name"
+                wire:model="organization_name"
+                icon="o-building-office"
+                placeholder="e.g., Springfield Amateur Radio Club"
+                required
+            />
+
+            <x-input
+                label="Organization Callsign"
+                wire:model="organization_callsign"
+                icon="o-signal"
+                placeholder="e.g., W1ABC"
+                hint="Club station callsign (3-10 uppercase letters/numbers)"
+            />
+
+            <x-input
+                label="Organization Email"
+                type="email"
+                wire:model="organization_email"
+                icon="o-envelope"
+                placeholder="e.g., info@example.org"
+                hint="Club contact email"
+            />
+
+            <x-input
+                label="Organization Phone"
+                type="tel"
+                wire:model="organization_phone"
+                icon="o-phone"
+                placeholder="e.g., (555) 123-4567"
+                hint="Club contact phone number"
+            />
+        </div>
+    </x-card>
+
+    <x-card>
         <x-slot:title>Regional Settings</x-slot:title>
 
         <div class="space-y-4">

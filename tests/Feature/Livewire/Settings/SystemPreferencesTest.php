@@ -2,6 +2,7 @@
 
 use App\Livewire\Settings\SystemPreferences;
 use App\Models\AuditLog;
+use App\Models\Organization;
 use App\Models\Setting;
 use App\Models\User;
 use Livewire\Livewire;
@@ -15,6 +16,13 @@ beforeEach(function () {
     $role->givePermissionTo('manage-settings');
     $this->user->assignRole($role);
     $this->actingAs($this->user);
+
+    $this->organization = Organization::factory()->create([
+        'name' => 'Test Radio Club',
+        'callsign' => 'W1TEST',
+        'is_active' => true,
+    ]);
+    Setting::set('default_organization_id', $this->organization->id);
 });
 
 test('component can mount', function () {
@@ -120,4 +128,50 @@ test('saving preferences logs to audit log', function () {
     expect($auditLog)->not->toBeNull();
     expect($auditLog->new_values['timezone'])->toBe('America/Chicago');
     expect($auditLog->new_values['date_format'])->toBe('d/m/Y');
+});
+
+test('loads organization information on mount', function () {
+    Livewire::test(SystemPreferences::class)
+        ->assertSet('organization_name', 'Test Radio Club')
+        ->assertSet('organization_callsign', 'W1TEST');
+});
+
+test('saves organization information', function () {
+    Livewire::test(SystemPreferences::class)
+        ->set('organization_name', 'Updated Club Name')
+        ->set('organization_callsign', 'K2NEW')
+        ->set('organization_email', 'club@example.com')
+        ->set('organization_phone', '555-123-4567')
+        ->call('save')
+        ->assertDispatched('notify');
+
+    $this->organization->refresh();
+    expect($this->organization->name)->toBe('Updated Club Name');
+    expect($this->organization->callsign)->toBe('K2NEW');
+    expect($this->organization->email)->toBe('club@example.com');
+    expect($this->organization->phone)->toBe('555-123-4567');
+});
+
+test('validates organization name is required', function () {
+    Livewire::test(SystemPreferences::class)
+        ->set('organization_name', '')
+        ->call('save')
+        ->assertHasErrors(['organization_name' => 'required']);
+});
+
+test('validates organization callsign format', function () {
+    Livewire::test(SystemPreferences::class)
+        ->set('organization_callsign', 'invalid!')
+        ->call('save')
+        ->assertHasErrors(['organization_callsign' => 'regex']);
+});
+
+test('organization update logs to audit log', function () {
+    Livewire::test(SystemPreferences::class)
+        ->set('organization_name', 'Audit Test Club')
+        ->call('save');
+
+    $auditLog = AuditLog::where('action', 'organization.updated')->first();
+    expect($auditLog)->not->toBeNull();
+    expect($auditLog->new_values['name'])->toBe('Audit Test Club');
 });
