@@ -31,12 +31,6 @@ class GalleryUpload extends Component
 
     public function save(): void
     {
-        if (auth()->user()->isSystemUser()) {
-            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot upload photos.', icon: 'o-x-circle', css: 'alert-error');
-
-            return;
-        }
-
         $this->validate();
 
         $imageService = app(ImageService::class);

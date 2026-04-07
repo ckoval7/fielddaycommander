@@ -61,9 +61,9 @@
                             <th>Mode</th>
                             <th>Frequencies (MHz)</th>
                             <th>Source</th>
-                            @if(auth()->user()->can('manage-bulletins') && ! auth()->user()->isSystemUser())
+                            @can('manage-bulletins')
                                 <th class="text-right">Actions</th>
-                            @endif
+                            @endcan
                         </tr>
                     </thead>
                     <tbody>
@@ -78,7 +78,7 @@
                                 <td>{{ $entry->mode_label }}</td>
                                 <td class="font-mono text-sm">{{ $entry->frequencies }}</td>
                                 <td>{{ $entry->source }}</td>
-                                @if(auth()->user()->can('manage-bulletins') && ! auth()->user()->isSystemUser())
+                                @can('manage-bulletins')
                                     <td class="text-right">
                                         <div class="flex gap-1 justify-end">
                                             <x-button
@@ -98,7 +98,7 @@
                                             />
                                         </div>
                                     </td>
-                                @endif
+                                @endcan
                             </tr>
                         @endforeach
                     </tbody>
@@ -108,8 +108,8 @@
             <p class="text-sm text-base-content/50">No transmissions scheduled yet.</p>
         @endif
 
-        {{-- Add/Edit form (managers only, not SYSTEM) --}}
-        @if(auth()->user()->can('manage-bulletins') && ! auth()->user()->isSystemUser())
+        {{-- Add/Edit form (managers only) --}}
+        @can('manage-bulletins')
             <div class="mt-4 pt-4 border-t border-base-300">
                 <h4 class="text-sm font-semibold mb-3">
                     {{ $editingEntryId ? 'Edit Transmission' : 'Add Transmission' }}
@@ -181,15 +181,10 @@
                     @endif
                 </div>
             </div>
-        @endif
+        @endcan
     </x-card>
 
-    @if(auth()->user()->isSystemUser())
-        <div class="alert alert-warning">
-            <x-icon name="o-exclamation-triangle" class="w-5 h-5" />
-            <span>The SYSTEM account cannot manage bulletins. Please use a personal account.</span>
-        </div>
-    @elsecan('log-contacts')
+    @can('log-contacts')
         <form wire:submit="save" class="space-y-6">
 
             <x-card>
@@ -327,7 +322,7 @@
             @endif
 
         </form>
-    @endif
+    @endcan
 </div>
 
 @script

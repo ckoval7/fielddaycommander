@@ -295,6 +295,16 @@ class UserManagement extends Component
 
         $user = User::findOrFail($this->editingUserId);
 
+        // SYSTEM account role is immutable
+        if ($user->isSystemUser()) {
+            $currentRoleId = $user->roles->first()?->id;
+            if ($currentRoleId && (int) $validated['role_id'] !== $currentRoleId) {
+                $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account role cannot be changed.', icon: 'o-x-circle', css: 'alert-error');
+
+                return;
+            }
+        }
+
         $oldValues = [
             'call_sign' => $user->call_sign,
             'email' => $user->email,
@@ -484,6 +494,7 @@ class UserManagement extends Component
         $role = Role::find($this->bulk_role_id);
         $userIds = $this->selectedUsers;
         User::whereIn('id', $userIds)
+            ->excludeSystem()
             ->with('roles')
             ->get()
             ->each(function ($user) use ($role) {

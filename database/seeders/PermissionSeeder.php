@@ -38,6 +38,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'manage-roles', 'description' => 'Create roles and assign permissions'],
             ['name' => 'manage-settings', 'description' => 'Configure system settings and preferences'],
 
+            // Shift Participation
+            ['name' => 'sign-up-shifts', 'description' => 'Sign up for, check in/out of shifts'],
+
             // Content Management
             ['name' => 'sign-guestbook', 'description' => 'Sign the guestbook for events'],
             ['name' => 'manage-guestbook', 'description' => 'Manage guestbook entries (verify, edit, delete, export)'],
@@ -58,6 +61,6 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created 24 permissions');
+        $this->command->info('Created 25 permissions');
     }
 }

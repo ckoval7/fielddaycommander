@@ -108,12 +108,6 @@ class TranscribeInterface extends Component
 
     public function logContact(): void
     {
-        if (auth()->user()->isSystemUser()) {
-            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot transcribe contacts.', icon: 'o-x-circle', css: 'alert-error');
-
-            return;
-        }
-
         $this->parseError = '';
 
         if (! $this->event) {

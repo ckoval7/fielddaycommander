@@ -201,7 +201,7 @@
                                             />
                                             @break
                                     @endswitch
-                                @elseif($shift->is_open && !$isFull && !$isMyShift && !auth()->user()->isSystemUser())
+                                @elseif($shift->is_open && !$isFull && !$isMyShift)
                                     <x-button
                                         label="Sign Up"
                                         icon="o-plus"
@@ -363,7 +363,7 @@
                                                             />
                                                             @break
                                                     @endswitch
-                                                @elseif($shift->is_open && !$isFull && !$isMyShift && !auth()->user()->isSystemUser())
+                                                @elseif($shift->is_open && !$isFull && !$isMyShift)
                                                     <x-button
                                                         label="Sign Up"
                                                         icon="o-plus"

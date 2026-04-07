@@ -574,14 +574,6 @@ class ManageSchedule extends Component
             'assignUserId' => ['required', 'exists:users,id'],
         ]);
 
-        $assignee = User::findOrFail($this->assignUserId);
-        if ($assignee->isSystemUser()) {
-            $this->showAssignModal = false;
-            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot be assigned to shifts.', icon: 'o-x-circle', css: 'alert-error');
-
-            return;
-        }
-
         $shift = Shift::findOrFail($this->assignShiftId);
 
         // Check capacity

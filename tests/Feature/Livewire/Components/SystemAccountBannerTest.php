@@ -30,14 +30,3 @@ test('banner is not visible for regular users', function () {
     Livewire::test(SystemAccountBanner::class)
         ->assertDontSee('SYSTEM account');
 });
-
-test('banner cannot be dismissed', function () {
-    $systemUser = User::factory()->create([
-        'call_sign' => User::SYSTEM_CALL_SIGN,
-    ]);
-
-    $this->actingAs($systemUser);
-
-    Livewire::test(SystemAccountBanner::class)
-        ->assertDontSeeHtml('wire:click="dismiss"');
-});

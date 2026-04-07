@@ -28,6 +28,9 @@ beforeEach(function () {
         'first_name' => 'Test',
         'last_name' => 'Operator',
     ]);
+
+    \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'sign-up-shifts']);
+    $this->user->givePermissionTo('sign-up-shifts');
 });
 
 describe('rendering', function () {

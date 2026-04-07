@@ -32,6 +32,7 @@ class RoleSeeder extends Seeder
         $eventManager->givePermissionTo([
             'log-contacts',
             'edit-contacts',
+            'sign-up-shifts',
             'view-events',
             'create-events',
             'edit-events',
@@ -60,6 +61,7 @@ class RoleSeeder extends Seeder
         ]);
         $operator->givePermissionTo([
             'log-contacts',
+            'sign-up-shifts',
             'view-stations',
             'manage-own-equipment',
         ]);
@@ -73,11 +75,29 @@ class RoleSeeder extends Seeder
         $stationCaptain->givePermissionTo([
             'log-contacts',
             'edit-contacts',
+            'sign-up-shifts',
             'view-stations',
             'manage-stations',
             'manage-equipment',
         ]);
 
-        $this->command->info('Created or updated 4 roles with permissions');
+        // Config Only - View and admin permissions only (for SYSTEM bootstrap account)
+        $configOnly = Role::firstOrCreate([
+            'name' => 'Config Only',
+        ], [
+            'guard_name' => 'web',
+        ]);
+        $configOnly->givePermissionTo([
+            'manage-users',
+            'manage-roles',
+            'manage-settings',
+            'view-security-logs',
+            'view-events',
+            'view-reports',
+            'view-stations',
+            'view-all-equipment',
+        ]);
+
+        $this->command->info('Created or updated 5 roles with permissions');
     }
 }

@@ -124,11 +124,7 @@ class MyShifts extends Component
      */
     public function checkIn(int $assignmentId): void
     {
-        if (auth()->user()->isSystemUser()) {
-            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
-
-            return;
-        }
+        $this->authorize('sign-up-shifts');
 
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', Auth::id())
@@ -164,11 +160,7 @@ class MyShifts extends Component
      */
     public function checkOut(int $assignmentId): void
     {
-        if (auth()->user()->isSystemUser()) {
-            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
-
-            return;
-        }
+        $this->authorize('sign-up-shifts');
 
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', Auth::id())
@@ -198,11 +190,7 @@ class MyShifts extends Component
      */
     public function reCheckIn(int $assignmentId): void
     {
-        if (auth()->user()->isSystemUser()) {
-            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
-
-            return;
-        }
+        $this->authorize('sign-up-shifts');
 
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', Auth::id())
@@ -238,11 +226,7 @@ class MyShifts extends Component
      */
     public function cancelSignUp(int $assignmentId): void
     {
-        if (auth()->user()->isSystemUser()) {
-            $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account cannot perform shift actions.', icon: 'o-x-circle', css: 'alert-error');
-
-            return;
-        }
+        $this->authorize('sign-up-shifts');
 
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', Auth::id())
