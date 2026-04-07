@@ -83,6 +83,9 @@
     @if(config('demo.enabled'))
         <livewire:components.demo-banner />
     @endif
+    @if(config('demo.enabled'))
+        <x-demo-tracker />
+    @endif
 
     {{-- System Account Banner --}}
     @auth

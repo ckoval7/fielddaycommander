@@ -28,8 +28,10 @@ class DemoMiddleware
             return $next($request);
         }
 
-        // Allow demo landing and provision routes through without a session
-        if ($request->routeIs('demo.landing', 'demo.provision')) {
+        // Allow demo landing, provision, reset, and beacon routes through without a session.
+        // Use path matching instead of routeIs() because DemoMiddleware runs before
+        // SubstituteBindings in the priority list, so route names are not yet available.
+        if ($request->is('demo', 'demo/provision', 'demo/reset', 'demo/analytics/beacon')) {
             return $next($request);
         }
 

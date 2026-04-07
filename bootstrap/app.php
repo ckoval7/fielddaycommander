@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         ]);
         $middleware->trustProxies(at: '*');
+        $middleware->encryptCookies(except: ['demo_session']);
         $middleware->web(append: [
             \App\Http\Middleware\DemoMiddleware::class,
             \App\Http\Middleware\DemoAnalyticsMiddleware::class,
