@@ -13,6 +13,10 @@ use Illuminate\Support\Str;
 
 class DemoEventSubscriber
 {
+    private ?DemoSession $resolvedSession = null;
+
+    private ?string $resolvedUuid = null;
+
     public function subscribe(Dispatcher $events): void
     {
         $events->listen(ContactLogged::class, [$this, 'handleContactLogged']);
@@ -88,7 +92,14 @@ class DemoEventSubscriber
             return null;
         }
 
-        return DemoSession::where('session_uuid', $uuid)->first();
+        if ($this->resolvedUuid === $uuid && $this->resolvedSession !== null) {
+            return $this->resolvedSession;
+        }
+
+        $this->resolvedUuid = $uuid;
+        $this->resolvedSession = DemoSession::where('session_uuid', $uuid)->first();
+
+        return $this->resolvedSession;
     }
 
     private function recordAction(DemoSession $session, string $name, array $metadata = []): void

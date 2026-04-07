@@ -17,7 +17,9 @@ class DemoAnalyticsMiddleware
             return $next($request);
         }
 
-        if ($request->routeIs('demo.landing', 'demo.provision', 'demo.analytics.beacon')) {
+        // Use path matching instead of routeIs() because this middleware runs
+        // before SubstituteBindings in the priority list, so route names are not yet available.
+        if ($request->is('demo', 'demo/provision', 'demo/reset', 'demo/analytics/beacon')) {
             return $next($request);
         }
 
@@ -34,8 +36,7 @@ class DemoAnalyticsMiddleware
             return $next($request);
         }
 
-        $session->increment('total_page_views');
-        $session->update(['last_seen_at' => now()]);
+        $session->increment('total_page_views', 1, ['last_seen_at' => now()]);
 
         DemoEvent::create([
             'demo_session_id' => $session->id,
