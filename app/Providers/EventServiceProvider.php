@@ -9,6 +9,15 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 class EventServiceProvider extends ServiceProvider
 {
     /**
+     * The subscribers to register.
+     *
+     * @var array<int, class-string>
+     */
+    protected $subscribe = [
+        \App\Listeners\DemoEventSubscriber::class,
+    ];
+
+    /**
      * The event to listener mappings for the application.
      *
      * @var array<class-string, array<int, class-string>>
