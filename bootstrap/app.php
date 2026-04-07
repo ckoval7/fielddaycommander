@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->web(append: [
             \App\Http\Middleware\DemoMiddleware::class,
+            \App\Http\Middleware\DemoAnalyticsMiddleware::class,
             \App\Http\Middleware\DevRoleOverride::class,
             \App\Http\Middleware\CheckSystemSetupComplete::class,
             \App\Http\Middleware\EnforceRegistrationMode::class,
