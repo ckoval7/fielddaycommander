@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DemoEvent;
+use App\Models\DemoSession;
 use App\Models\User;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Http\RedirectResponse;
@@ -61,6 +63,18 @@ class DemoController extends Controller
 
         session(['dev_role_override' => $user->roles->first()?->name ?? '']);
 
+        DemoSession::create([
+            'session_uuid' => $uuid,
+            'role' => $request->role,
+            'visitor_hash' => DemoSession::visitorHash($request->ip()),
+            'user_agent' => $request->userAgent() ?? '',
+            'device_type' => DemoSession::parseDeviceType($request->userAgent() ?? ''),
+            'referrer' => $request->headers->get('referer'),
+            'provisioned_at' => now(),
+            'last_seen_at' => now(),
+            'expires_at' => now()->addHours(config('demo.ttl_hours', 24)),
+        ]);
+
         $cookie = cookie(
             'demo_session',
             $uuid.'|'.$request->role,
@@ -118,6 +132,23 @@ class DemoController extends Controller
         Auth::login($user);
 
         session(['dev_role_override' => $user->roles->first()?->name ?? '']);
+
+        $demoSession = DemoSession::where('session_uuid', $uuid)->first();
+        if ($demoSession) {
+            $previousRole = $demoSession->role;
+            $demoSession->update([
+                'was_reset' => true,
+                'role' => $role,
+                'last_seen_at' => now(),
+            ]);
+
+            DemoEvent::create([
+                'demo_session_id' => $demoSession->id,
+                'type' => 'action',
+                'name' => 'role.switched',
+                'metadata' => ['from_role' => $previousRole, 'to_role' => $role],
+            ]);
+        }
 
         return redirect('/');
     }

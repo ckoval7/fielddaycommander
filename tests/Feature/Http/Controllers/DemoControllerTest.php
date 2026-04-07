@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\DemoEvent;
+use App\Models\DemoSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -43,4 +45,44 @@ test('provision redirects back with error when session cap is reached', function
     $response = $this->post(route('demo.provision'), ['role' => 'operator']);
     $response->assertRedirect(route('demo.landing'));
     $response->assertSessionHas('error');
+});
+
+test('reset marks session as reset and logs role switch', function () {
+    $uuid = fake()->uuid();
+    $demoSession = DemoSession::create([
+        'session_uuid' => $uuid,
+        'role' => 'operator',
+        'visitor_hash' => hash('sha256', 'test'),
+        'user_agent' => 'Test',
+        'device_type' => 'desktop',
+        'provisioned_at' => now(),
+        'last_seen_at' => now(),
+        'expires_at' => now()->addHours(24),
+    ]);
+
+    $previousRole = $demoSession->role;
+    $demoSession->update([
+        'was_reset' => true,
+        'role' => 'system_admin',
+        'last_seen_at' => now(),
+    ]);
+
+    DemoEvent::create([
+        'demo_session_id' => $demoSession->id,
+        'type' => 'action',
+        'name' => 'role.switched',
+        'metadata' => ['from_role' => $previousRole, 'to_role' => 'system_admin'],
+    ]);
+
+    $demoSession->refresh();
+    expect($demoSession->was_reset)->toBeTrue()
+        ->and($demoSession->role)->toBe('system_admin');
+
+    expect(DemoEvent::where('demo_session_id', $demoSession->id)
+        ->where('name', 'role.switched')
+        ->exists()
+    )->toBeTrue();
+
+    $event = DemoEvent::where('name', 'role.switched')->first();
+    expect($event->metadata)->toBe(['from_role' => 'operator', 'to_role' => 'system_admin']);
 });
