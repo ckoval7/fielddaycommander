@@ -23,14 +23,10 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 .worktrees
-.playwright-mcp/
-test-results/
 .scannerwork/
 sonar-project.properties
 .claude/
 .mcp.json
 boost.json
 /frankenphp
-/tests/e2e/
-/tests/Browser/
 coverage.xml
