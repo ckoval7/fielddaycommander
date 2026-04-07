@@ -19,6 +19,12 @@ use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
+    /** @var list<string> */
+    private const VALID_REGISTRATION_MODES = ['open', 'approval_required', 'email_verification_required', 'disabled'];
+
+    /** @var list<string> */
+    private const VALID_2FA_MODES = ['required', 'optional', 'disabled'];
+
     /**
      * Register any application services.
      */
@@ -30,14 +36,16 @@ class FortifyServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    /** @var list<string> */
-    private const VALID_REGISTRATION_MODES = ['open', 'approval_required', 'email_verification_required', 'disabled'];
-
     public function boot(): void
     {
         $mode = config('auth-security.registration_mode');
         if (! in_array($mode, self::VALID_REGISTRATION_MODES, true)) {
             throw new \RuntimeException("Invalid REGISTRATION_MODE: '{$mode}'. Must be one of: ".implode(', ', self::VALID_REGISTRATION_MODES));
+        }
+
+        $twoFaMode = config('auth-security.2fa_mode');
+        if (! in_array($twoFaMode, self::VALID_2FA_MODES, true)) {
+            throw new \RuntimeException("Invalid 2FA_MODE: '{$twoFaMode}'. Must be one of: ".implode(', ', self::VALID_2FA_MODES));
         }
 
         $this->app->bind(

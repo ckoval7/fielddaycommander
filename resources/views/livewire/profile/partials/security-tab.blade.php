@@ -46,9 +46,16 @@
     </div>
 
     {{-- Two-Factor Authentication Section --}}
+    @if(config('auth-security.2fa_mode') !== 'disabled')
     <div class="card bg-base-100 shadow">
         <div class="card-body">
             <h3 class="card-title">Two-Factor Authentication</h3>
+
+            @if(config('auth-security.2fa_mode') === 'required' && ! $user->hasEnabledTwoFactorAuthentication() && ! $showingQrCode)
+                <x-alert icon="o-exclamation-triangle" class="alert-error">
+                    Two-factor authentication is required. You must set it up before you can use the application.
+                </x-alert>
+            @endif
 
             @if($showingQrCode)
                 <x-alert icon="o-device-phone-mobile" class="alert-info">
@@ -74,9 +81,11 @@
                     />
 
                     <div class="card-actions justify-end">
+                        @if(config('auth-security.2fa_mode') !== 'required')
                         <x-button wire:click="cancelTwoFactorSetup" class="btn-ghost">
                             Cancel
                         </x-button>
+                        @endif
                         <x-button type="submit" spinner="confirmTwoFactor" class="btn-primary">
                             Confirm & Enable
                         </x-button>
@@ -131,6 +140,7 @@
                     @endif
                 </div>
 
+                @if(config('auth-security.2fa_mode') !== 'required')
                 <div class="divider"></div>
 
                 <div class="flex items-end gap-2">
@@ -146,10 +156,13 @@
                         Disable 2FA
                     </x-button>
                 </div>
+                @endif
             @else
+                @if(config('auth-security.2fa_mode') !== 'required')
                 <x-alert icon="o-exclamation-triangle" class="alert-warning">
                     Two-factor authentication is not enabled
                 </x-alert>
+                @endif
 
                 <p class="text-sm text-base-content/60">
                     Enable two-factor authentication to add an extra layer of security to your account.
@@ -171,4 +184,5 @@
             @endif
         </div>
     </div>
+    @endif
 </div>

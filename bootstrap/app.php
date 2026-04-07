@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\CheckSystemSetupComplete::class,
             \App\Http\Middleware\EnforceRegistrationMode::class,
             \App\Http\Middleware\EnsurePasswordChanged::class,
+            \App\Http\Middleware\Ensure2FAEnabled::class,
             \App\Http\Middleware\AuditLogger::class,
         ]);
     })
