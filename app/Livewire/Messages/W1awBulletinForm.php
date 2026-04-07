@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Messages;
 
+use App\Models\AuditLog;
 use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\W1awBulletin;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class W1awBulletinForm extends Component
@@ -34,6 +36,8 @@ class W1awBulletinForm extends Component
     public ?string $scheduleScheduledAt = null;
 
     public ?int $editingEntryId = null;
+
+    public string $scheduleNotes = '';
 
     public function mount(Event $event): void
     {
@@ -71,10 +75,59 @@ class W1awBulletinForm extends Component
 
         if ($this->bulletinId) {
             $bulletin = W1awBulletin::findOrFail($this->bulletinId);
+
+            $oldValues = [
+                'frequency' => $bulletin->frequency,
+                'mode' => $bulletin->mode,
+                'bulletin_text' => $bulletin->bulletin_text,
+                'received_at' => $bulletin->received_at->toIso8601String(),
+            ];
+
             $bulletin->update($data);
+
+            $newValues = array_filter([
+                'frequency' => $bulletin->frequency,
+                'mode' => $bulletin->mode,
+                'bulletin_text' => $bulletin->bulletin_text,
+                'received_at' => $bulletin->received_at->toIso8601String(),
+            ], fn ($value, $key) => $value !== $oldValues[$key], ARRAY_FILTER_USE_BOTH);
+
+            $oldValues = array_intersect_key($oldValues, $newValues);
+
+            if (! empty($newValues)) {
+                AuditLog::log(
+                    action: 'bulletin.updated',
+                    auditable: $bulletin,
+                    oldValues: $oldValues,
+                    newValues: $newValues,
+                );
+            }
         } else {
-            $bulletin = W1awBulletin::create($data);
+            // Check for a soft-deleted bulletin for this event and restore it
+            $trashed = W1awBulletin::onlyTrashed()
+                ->where('event_configuration_id', $this->event->eventConfiguration->id)
+                ->first();
+
+            if ($trashed) {
+                $trashed->restore();
+                $trashed->update($data);
+                $bulletin = $trashed;
+            } else {
+                $bulletin = W1awBulletin::create($data);
+            }
+
             $this->bulletinId = $bulletin->id;
+
+            AuditLog::log(
+                action: 'bulletin.created',
+                auditable: $bulletin,
+                newValues: [
+                    'frequency' => $bulletin->frequency,
+                    'mode' => $bulletin->mode,
+                    'bulletin_text' => $bulletin->bulletin_text,
+                    'received_at' => $bulletin->received_at->toIso8601String(),
+                ]
+            );
         }
 
         $this->dispatch('toast', title: 'W1AW bulletin saved', type: 'success');
@@ -85,6 +138,17 @@ class W1awBulletinForm extends Component
         if ($this->bulletinId) {
             $bulletin = W1awBulletin::findOrFail($this->bulletinId);
             $this->authorize('delete', $bulletin);
+
+            AuditLog::log(
+                action: 'bulletin.deleted',
+                auditable: $bulletin,
+                oldValues: [
+                    'frequency' => $bulletin->frequency,
+                    'mode' => $bulletin->mode,
+                    'bulletin_text' => $bulletin->bulletin_text,
+                ]
+            );
+
             $bulletin->delete();
             $this->bulletinId = null;
             $this->reset(['frequency', 'mode', 'receivedAt', 'bulletinText']);
@@ -115,6 +179,7 @@ class W1awBulletinForm extends Component
             'scheduleFrequencies' => 'required|string|max:255',
             'scheduleScheduledAt' => 'required|date',
             'scheduleSource' => 'required|in:W1AW,K6KPH',
+            'scheduleNotes' => 'nullable|string|max:500',
         ]);
 
         BulletinScheduleEntry::create([
@@ -123,10 +188,11 @@ class W1awBulletinForm extends Component
             'mode' => $this->scheduleMode,
             'frequencies' => $this->scheduleFrequencies,
             'source' => $this->scheduleSource,
+            'notes' => $this->scheduleNotes ?: null,
             'created_by' => auth()->id(),
         ]);
 
-        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
+        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt', 'scheduleNotes']);
         $this->scheduleSource = 'W1AW';
         $this->dispatch('toast', title: 'Transmission added', type: 'success');
     }
@@ -143,6 +209,7 @@ class W1awBulletinForm extends Component
         $this->scheduleFrequencies = $entry->frequencies;
         $this->scheduleSource = $entry->source;
         $this->scheduleScheduledAt = $entry->scheduled_at->format('Y-m-d\TH:i');
+        $this->scheduleNotes = $entry->notes ?? '';
     }
 
     public function updateScheduleEntry(): void
@@ -156,6 +223,7 @@ class W1awBulletinForm extends Component
             'scheduleFrequencies' => 'required|string|max:255',
             'scheduleScheduledAt' => 'required|date',
             'scheduleSource' => 'required|in:W1AW,K6KPH',
+            'scheduleNotes' => 'nullable|string|max:500',
         ]);
 
         $entry = BulletinScheduleEntry::findOrFail($this->editingEntryId);
@@ -164,10 +232,11 @@ class W1awBulletinForm extends Component
             'mode' => $this->scheduleMode,
             'frequencies' => $this->scheduleFrequencies,
             'source' => $this->scheduleSource,
+            'notes' => $this->scheduleNotes ?: null,
         ]);
 
         $this->editingEntryId = null;
-        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
+        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt', 'scheduleNotes']);
         $this->scheduleSource = 'W1AW';
         $this->dispatch('toast', title: 'Transmission updated', type: 'success');
     }
@@ -175,7 +244,7 @@ class W1awBulletinForm extends Component
     public function cancelEditScheduleEntry(): void
     {
         $this->editingEntryId = null;
-        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
+        $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt', 'scheduleNotes']);
         $this->scheduleSource = 'W1AW';
     }
 
@@ -187,6 +256,54 @@ class W1awBulletinForm extends Component
 
         BulletinScheduleEntry::findOrFail($entryId)->delete();
         $this->dispatch('toast', title: 'Transmission removed', type: 'success');
+    }
+
+    /** @return \Illuminate\Database\Eloquent\Collection<int, AuditLog> */
+    #[Computed]
+    public function editHistory(): \Illuminate\Database\Eloquent\Collection
+    {
+        if (! $this->bulletinId) {
+            return new \Illuminate\Database\Eloquent\Collection;
+        }
+
+        return AuditLog::query()
+            ->where('auditable_type', W1awBulletin::class)
+            ->where('auditable_id', $this->bulletinId)
+            ->whereIn('action', ['bulletin.created', 'bulletin.updated'])
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Compute a line-by-line diff between two strings.
+     *
+     * @return list<array{type: string, text: string}>
+     */
+    protected function diffLines(string $old, string $new): array
+    {
+        $oldLines = explode("\n", $old);
+        $newLines = explode("\n", $new);
+        $diff = [];
+
+        $maxLen = max(count($oldLines), count($newLines));
+        for ($i = 0; $i < $maxLen; $i++) {
+            $oldLine = $oldLines[$i] ?? null;
+            $newLine = $newLines[$i] ?? null;
+
+            if ($oldLine === $newLine) {
+                $diff[] = ['type' => 'unchanged', 'text' => $oldLine];
+            } else {
+                if ($oldLine !== null) {
+                    $diff[] = ['type' => 'removed', 'text' => $oldLine];
+                }
+                if ($newLine !== null) {
+                    $diff[] = ['type' => 'added', 'text' => $newLine];
+                }
+            }
+        }
+
+        return $diff;
     }
 
     public function render(): \Illuminate\Contracts\View\View

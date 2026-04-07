@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\NotificationCategory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -12,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, HasRoles, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
@@ -324,6 +325,30 @@ class User extends Authenticatable
     public function shiftAssignments(): HasMany
     {
         return $this->hasMany(ShiftAssignment::class);
+    }
+
+    /**
+     * Consider email verified unless the email_verification_required mode is active.
+     * This ensures the `verified` middleware is a no-op in open and approval_required modes.
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        if (config('auth-security.registration_mode') !== 'email_verification_required') {
+            return true;
+        }
+
+        return parent::hasVerifiedEmail();
+    }
+
+    /**
+     * Only send the email verification notification when the email_verification_required
+     * registration mode is active. In other modes (open, approval_required), skip it.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        if (config('auth-security.registration_mode') === 'email_verification_required') {
+            parent::sendEmailVerificationNotification();
+        }
     }
 
     /**

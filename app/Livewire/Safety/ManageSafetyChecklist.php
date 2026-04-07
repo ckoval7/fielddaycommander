@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Safety;
 
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\SafetyChecklistEntry;
@@ -26,6 +27,8 @@ class ManageSafetyChecklist extends Component
 
     public string $itemLabel = '';
 
+    public string $itemHelpText = '';
+
     public bool $itemIsRequired = false;
 
     public string $itemChecklistType = '';
@@ -43,6 +46,10 @@ class ManageSafetyChecklist extends Component
         }
 
         $this->eventConfig = $this->event?->eventConfiguration;
+
+        if ($this->eventConfig && $this->eventConfig->safetyChecklistItems()->count() === 0) {
+            SafetyChecklistItem::seedDefaults($this->eventConfig);
+        }
     }
 
     /**
@@ -70,6 +77,7 @@ class ManageSafetyChecklist extends Component
             $item = SafetyChecklistItem::findOrFail($id);
             $this->editingItemId = $item->id;
             $this->itemLabel = $item->label;
+            $this->itemHelpText = $item->help_text ?? '';
             $this->itemIsRequired = $item->is_required;
             $this->itemChecklistType = $item->checklist_type->value;
         }
@@ -83,16 +91,43 @@ class ManageSafetyChecklist extends Component
 
         $this->validate([
             'itemLabel' => ['required', 'string', 'max:500'],
+            'itemHelpText' => ['nullable', 'string', 'max:2000'],
             'itemIsRequired' => ['boolean'],
             'itemChecklistType' => $this->editingItemId ? ['nullable'] : ['required', 'string'],
         ]);
 
         if ($this->editingItemId) {
             $item = SafetyChecklistItem::findOrFail($this->editingItemId);
+
+            $oldValues = [
+                'label' => $item->label,
+                'is_required' => $item->is_required,
+                'help_text' => $item->help_text,
+            ];
+
             $item->update([
                 'label' => $this->itemLabel,
+                'help_text' => $this->itemHelpText ?: null,
                 'is_required' => $this->itemIsRequired,
             ]);
+
+            $newValues = array_filter([
+                'label' => $item->label,
+                'is_required' => $item->is_required,
+                'help_text' => $item->help_text,
+            ], fn ($value, $key) => $value !== $oldValues[$key], ARRAY_FILTER_USE_BOTH);
+
+            $oldValues = array_intersect_key($oldValues, $newValues);
+
+            if (! empty($newValues)) {
+                AuditLog::log(
+                    action: 'safety.item.updated',
+                    auditable: $item,
+                    oldValues: $oldValues,
+                    newValues: $newValues,
+                );
+            }
+
             $message = 'Item updated successfully';
         } else {
             $maxSortOrder = SafetyChecklistItem::query()
@@ -103,6 +138,7 @@ class ManageSafetyChecklist extends Component
                 'event_configuration_id' => $this->eventConfig->id,
                 'checklist_type' => $this->itemChecklistType,
                 'label' => $this->itemLabel,
+                'help_text' => $this->itemHelpText ?: null,
                 'is_required' => $this->itemIsRequired,
                 'is_default' => false,
                 'sort_order' => $maxSortOrder + 1,
@@ -112,6 +148,16 @@ class ManageSafetyChecklist extends Component
                 'safety_checklist_item_id' => $item->id,
                 'is_completed' => false,
             ]);
+
+            AuditLog::log(
+                action: 'safety.item.created',
+                auditable: $item,
+                newValues: [
+                    'label' => $item->label,
+                    'checklist_type' => $item->checklist_type->value,
+                    'is_required' => $item->is_required,
+                ]
+            );
 
             $message = 'Item created successfully';
         }
@@ -134,6 +180,15 @@ class ManageSafetyChecklist extends Component
 
             return;
         }
+
+        AuditLog::log(
+            action: 'safety.item.deleted',
+            auditable: $item,
+            oldValues: [
+                'label' => $item->label,
+                'checklist_type' => $item->checklist_type->value,
+            ]
+        );
 
         $item->delete();
 
@@ -199,6 +254,7 @@ class ManageSafetyChecklist extends Component
     {
         $this->editingItemId = null;
         $this->itemLabel = '';
+        $this->itemHelpText = '';
         $this->itemIsRequired = false;
         $this->itemChecklistType = '';
     }

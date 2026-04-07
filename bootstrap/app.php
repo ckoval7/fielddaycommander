@@ -16,12 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        ]);
         $middleware->trustProxies(at: '*');
         $middleware->web(append: [
             \App\Http\Middleware\DemoMiddleware::class,
             \App\Http\Middleware\DevRoleOverride::class,
             \App\Http\Middleware\CheckSystemSetupComplete::class,
+            \App\Http\Middleware\EnforceRegistrationMode::class,
             \App\Http\Middleware\EnsurePasswordChanged::class,
+            \App\Http\Middleware\Ensure2FAEnabled::class,
             \App\Http\Middleware\AuditLogger::class,
         ]);
 

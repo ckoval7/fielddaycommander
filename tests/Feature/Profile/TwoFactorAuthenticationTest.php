@@ -162,3 +162,123 @@ it('can regenerate recovery codes', function () {
     $this->user->refresh();
     expect($this->user->two_factor_recovery_codes)->not->toBe($originalCodes);
 });
+
+it('prevents enabling 2fa when mode is disabled', function () {
+    config(['auth-security.2fa_mode' => 'disabled']);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->set('current_password', 'password123')
+        ->call('enableTwoFactor')
+        ->assertDispatched('toast');
+
+    $this->user->refresh();
+    expect($this->user->two_factor_secret)->toBeNull();
+});
+
+it('prevents disabling 2fa when mode is required', function () {
+    config(['auth-security.2fa_mode' => 'required']);
+
+    // Enable and confirm 2FA
+    app(\Laravel\Fortify\Actions\EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+    $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->set('current_password', 'password123')
+        ->call('disableTwoFactor')
+        ->assertDispatched('toast');
+
+    $this->user->refresh();
+    expect($this->user->two_factor_secret)->not->toBeNull();
+});
+
+it('allows enabling 2fa when mode is required', function () {
+    config(['auth-security.2fa_mode' => 'required']);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->set('current_password', 'password123')
+        ->call('enableTwoFactor')
+        ->assertSet('showingQrCode', true);
+});
+
+it('allows enabling 2fa when mode is optional', function () {
+    config(['auth-security.2fa_mode' => 'optional']);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->set('current_password', 'password123')
+        ->call('enableTwoFactor')
+        ->assertSet('showingQrCode', true);
+});
+
+it('hides 2fa section when mode is disabled', function () {
+    config(['auth-security.2fa_mode' => 'disabled']);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->assertDontSee('Two-Factor Authentication');
+});
+
+it('shows 2fa required banner when mode is required and 2fa not set up', function () {
+    config(['auth-security.2fa_mode' => 'required']);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->assertSee('Two-factor authentication is required');
+});
+
+it('hides disable button when mode is required and 2fa is enabled', function () {
+    config(['auth-security.2fa_mode' => 'required']);
+
+    app(\Laravel\Fortify\Actions\EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+    $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->assertDontSee('Disable 2FA');
+});
+
+it('shows 2fa section when mode is optional', function () {
+    config(['auth-security.2fa_mode' => 'optional']);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->assertSee('Two-Factor Authentication');
+});
+
+it('shows 2fa section when mode is required', function () {
+    config(['auth-security.2fa_mode' => 'required']);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->assertSee('Two-Factor Authentication');
+});
+
+it('prevents cancelling 2fa setup when mode is required', function () {
+    config(['auth-security.2fa_mode' => 'required']);
+
+    // Start 2FA setup
+    app(\Laravel\Fortify\Actions\EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('showingQrCode', true)
+        ->call('cancelTwoFactorSetup');
+
+    $this->user->refresh();
+    expect($this->user->two_factor_secret)->not->toBeNull();
+});

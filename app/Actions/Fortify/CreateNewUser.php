@@ -54,6 +54,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
             'is_youth' => ! empty($input['is_youth']),
             'is_cpr_aed_trained' => ! empty($input['is_cpr_aed_trained']),
+            'account_locked_at' => config('auth-security.registration_mode') === 'approval_required' ? now() : null,
         ]);
 
         // Assign default "Operator" role to new users

@@ -18,6 +18,8 @@ beforeEach(function () {
         'created_at' => now(),
         'updated_at' => now(),
     ]);
+
+    config(['auth-security.registration_mode' => 'open']);
 });
 
 test('registration screen can be rendered', function () {

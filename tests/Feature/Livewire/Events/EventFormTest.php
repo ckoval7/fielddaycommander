@@ -6,7 +6,9 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\OperatingClass;
+use App\Models\Organization;
 use App\Models\Section;
+use App\Models\Setting;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -29,6 +31,7 @@ beforeEach(function () {
         'name' => 'Field Day',
         'description' => 'ARRL Field Day',
         'is_active' => true,
+        'setup_offset_hours' => 24,
     ]);
 
     $this->section = Section::create([
@@ -80,6 +83,30 @@ test('event form requires edit-events permission for edit mode', function () {
 
     Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])
         ->assertForbidden();
+});
+
+test('event form pre-populates callsign and club name from default organization', function () {
+    $this->actingAs($this->user);
+
+    $organization = Organization::factory()->create([
+        'callsign' => 'W1XYZ',
+        'name' => 'Springfield Amateur Radio Club',
+    ]);
+    Setting::set('default_organization_id', $organization->id);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create']);
+
+    expect($component->get('callsign'))->toBe('W1XYZ');
+    expect($component->get('club_name'))->toBe('Springfield Amateur Radio Club');
+});
+
+test('event form does not pre-populate when no default organization is set', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create']);
+
+    expect($component->get('callsign'))->toBeNull();
+    expect($component->get('club_name'))->toBeNull();
 });
 
 test('event form labels time fields as UTC', function () {
@@ -923,4 +950,88 @@ test('updating an event logs to audit log with old and new values', function () 
         'name' => 'Updated Name',
         'callsign' => 'W1NEW',
     ]);
+});
+
+test('creating an FD event sets setup_allowed_from based on offset hours', function () {
+    // FD starts Saturday 1800Z; offset=24 → setup_allowed_from = Friday 1800Z
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('name', 'Test FD 2026')
+        ->set('start_time', '2026-06-27 18:00')
+        ->set('end_time', '2026-06-28 20:59')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $this->operatingClassA->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->set('uses_commercial_power', false)
+        ->set('uses_generator', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $event = Event::where('name', 'Test FD 2026')->first();
+    expect($event)->not->toBeNull();
+    expect($event->setup_allowed_from->toDateTimeString())->toBe('2026-06-26 18:00:00');
+});
+
+test('creating a WFD event leaves setup_allowed_from null', function () {
+    $wfdType = EventType::create([
+        'code' => 'WFD',
+        'name' => 'Winter Field Day',
+        'description' => 'Winter Field Day event',
+        'is_active' => true,
+        'setup_offset_hours' => null,
+    ]);
+
+    $wfdClass = OperatingClass::create([
+        'event_type_id' => $wfdType->id,
+        'code' => 'I',
+        'name' => 'Indoor',
+        'description' => 'Indoor operation',
+        'allows_gota' => false,
+        'max_power_watts' => 500,
+        'requires_emergency_power' => false,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $wfdType->id)
+        ->set('name', 'Test WFD 2027')
+        ->set('start_time', '2027-01-30 18:00')
+        ->set('end_time', '2027-01-31 20:59')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $wfdClass->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->set('uses_commercial_power', false)
+        ->set('uses_generator', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $event = Event::where('name', 'Test WFD 2027')->first();
+    expect($event)->not->toBeNull();
+    expect($event->setup_allowed_from)->toBeNull();
+});
+
+test('setupAllowedFrom computed property returns null for event type without offset', function () {
+    $wfdType = EventType::create([
+        'code' => 'WFD',
+        'name' => 'Winter Field Day',
+        'description' => 'Winter Field Day event',
+        'is_active' => true,
+        'setup_offset_hours' => null,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $wfdType->id)
+        ->set('start_time', '2027-01-30 18:00')
+        ->assertSet('setupAllowedFrom', null);
 });

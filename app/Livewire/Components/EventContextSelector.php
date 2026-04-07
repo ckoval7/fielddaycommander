@@ -52,6 +52,7 @@ class EventContextSelector extends Component
         $grouped = [
             'active' => collect(),
             'grace' => collect(),
+            'setup' => collect(),
             'upcoming' => collect(),
             'archived' => collect(),
         ];

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\GenerateAlbumZip;
+use App\Models\AuditLog;
 use App\Models\EventConfiguration;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
@@ -13,6 +14,14 @@ class AlbumExportController extends Controller
     public function store(EventConfiguration $eventConfiguration): RedirectResponse
     {
         GenerateAlbumZip::dispatch($eventConfiguration->id, auth()->id());
+
+        AuditLog::log(
+            action: 'album.export.requested',
+            auditable: $eventConfiguration,
+            newValues: [
+                'event' => $eventConfiguration->event->name,
+            ]
+        );
 
         return back()->with('status', 'Your album is being prepared. You\'ll receive a notification when it\'s ready.');
     }
@@ -36,6 +45,15 @@ class AlbumExportController extends Controller
             Storage::disk('local')->delete($path);
             abort(404);
         }
+
+        AuditLog::log(
+            action: 'album.export.downloaded',
+            auditable: $eventConfiguration,
+            newValues: [
+                'event' => $eventConfiguration->event->name,
+                'filename' => $filename,
+            ]
+        );
 
         $eventName = $eventConfiguration->event->name;
         $downloadName = str($eventName)->slug().'-photos.zip';

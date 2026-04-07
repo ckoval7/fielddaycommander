@@ -21,6 +21,7 @@ class BulletinScheduleEntryFactory extends Factory
                 '1.855, 3.990, 7.290, 14.290',
             ]),
             'source' => fake()->randomElement(['W1AW', 'K6KPH']),
+            'notes' => null,
             'created_by' => User::factory(),
         ];
     }
@@ -35,5 +36,10 @@ class BulletinScheduleEntryFactory extends Factory
         return $this->state(fn () => [
             'scheduled_at' => now()->subHours(2),
         ]);
+    }
+
+    public function withNotes(string $notes = 'Test note'): static
+    {
+        return $this->state(fn () => ['notes' => $notes]);
     }
 }

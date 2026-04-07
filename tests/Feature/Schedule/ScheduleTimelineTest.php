@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Schedule\ScheduleTimeline;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Shift;
@@ -27,6 +28,9 @@ beforeEach(function () {
         'first_name' => 'Test',
         'last_name' => 'Operator',
     ]);
+
+    \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'sign-up-shifts']);
+    $this->user->givePermissionTo('sign-up-shifts');
 });
 
 describe('rendering', function () {
@@ -471,5 +475,115 @@ describe('filtering and sorting', function () {
             ->call('resetFilters')
             ->assertSet('role', '')
             ->assertSet('timeFilter', '');
+    });
+});
+
+describe('audit logging', function () {
+    test('signing up for a shift logs to audit log', function () {
+        $this->actingAs($this->user);
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+        ]);
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'is_open' => true,
+            'capacity' => 3,
+        ]);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->call('signUp', $shift->id);
+
+        $assignment = ShiftAssignment::where('shift_id', $shift->id)->where('user_id', $this->user->id)->first();
+
+        $auditLog = AuditLog::where('action', 'shift.signup')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->user->id);
+        expect($auditLog->auditable_type)->toBe(ShiftAssignment::class);
+        expect($auditLog->auditable_id)->toBe($assignment->id);
+        expect($auditLog->new_values['role'])->toBe('Station Operator');
+    });
+
+    test('cancelling a signup logs to audit log', function () {
+        $this->actingAs($this->user);
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+        ]);
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'is_open' => true,
+        ]);
+        $assignment = ShiftAssignment::create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->user->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'signup_type' => ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP,
+        ]);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->call('cancelSignUp', $assignment->id);
+
+        $auditLog = AuditLog::where('action', 'shift.signup.cancelled')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->old_values['role'])->toBe('Station Operator');
+    });
+
+    test('checking in logs to audit log', function () {
+        $this->actingAs($this->user);
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+        ]);
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->subMinutes(5),
+            'end_time' => appNow()->addHours(2),
+        ]);
+        $assignment = ShiftAssignment::create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->user->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'signup_type' => ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP,
+        ]);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->call('checkIn', $assignment->id);
+
+        $auditLog = AuditLog::where('action', 'shift.checkin')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->new_values['status'])->toBe('checked_in');
+    });
+
+    test('checking out logs to audit log', function () {
+        $this->actingAs($this->user);
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+        ]);
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+        ]);
+        $assignment = ShiftAssignment::create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->user->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'signup_type' => ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP,
+        ]);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->call('checkOut', $assignment->id);
+
+        $auditLog = AuditLog::where('action', 'shift.checkout')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->new_values['status'])->toBe('checked_out');
     });
 });

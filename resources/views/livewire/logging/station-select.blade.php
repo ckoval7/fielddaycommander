@@ -103,6 +103,31 @@
     {{-- Session Setup Modal --}}
     <x-modal wire:model="showSetupModal" title="Start Logging Session" persistent>
         <div class="space-y-4">
+            @php $supportedBands = $this->stationSupportedBands; @endphp
+            @if($supportedBands === null)
+                @php $stationForBands = $this->stations?->firstWhere('id', $selectedStationId); @endphp
+                @if($stationForBands && ! $stationForBands->primaryRadio)
+                    <x-alert icon="o-information-circle" class="alert-info text-sm">
+                        No radio assigned — band compatibility unknown.
+                    </x-alert>
+                @elseif($stationForBands)
+                    <x-alert icon="o-information-circle" class="alert-info text-sm">
+                        No antennas assigned — band compatibility unknown.
+                    </x-alert>
+                @endif
+            @elseif($supportedBands->isEmpty())
+                <x-alert icon="o-exclamation-triangle" class="alert-warning text-sm">
+                    No bands are supported by both the radio and antennas at this station.
+                </x-alert>
+            @else
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm text-base-content/70">Station supports:</span>
+                    @foreach($supportedBands as $supportedBand)
+                        <x-badge :value="$supportedBand->name" class="badge-outline badge-sm" />
+                    @endforeach
+                </div>
+            @endif
+
             <x-select
                 label="Band"
                 wire:model.live="selectedBandId"

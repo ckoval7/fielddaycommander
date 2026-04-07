@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Schedule\ManageSchedule;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Setting;
@@ -804,5 +805,153 @@ describe('filtering and sorting', function () {
         Livewire::test(ManageSchedule::class)
             ->set('timeFilter', 'past')
             ->assertSee('No shifts match your filters');
+    });
+});
+
+// =============================================================================
+// Audit Logging
+// =============================================================================
+
+describe('audit logging', function () {
+    test('assigning a user to a shift logs to audit log', function () {
+        $this->actingAs($this->admin);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'capacity' => 3,
+        ]);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openAssignModal', $shift->id)
+            ->set('assignUserId', $this->regularUser->id)
+            ->call('assignUser');
+
+        $assignment = ShiftAssignment::where('shift_id', $shift->id)->where('user_id', $this->regularUser->id)->first();
+
+        $auditLog = AuditLog::where('action', 'shift.assigned')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->auditable_type)->toBe(ShiftAssignment::class);
+        expect($auditLog->new_values['assigned_user'])->toBe($this->regularUser->call_sign);
+        expect($auditLog->new_values['role'])->toBe('Station Operator');
+    });
+
+    test('removing an assignment logs to audit log', function () {
+        $this->actingAs($this->admin);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+        $assignment = ShiftAssignment::create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'signup_type' => ShiftAssignment::SIGNUP_TYPE_ASSIGNED,
+        ]);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('removeAssignment', $assignment->id);
+
+        $auditLog = AuditLog::where('action', 'shift.removed')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->old_values['removed_user'])->toBe($this->regularUser->call_sign);
+    });
+
+    test('manager check-in logs to audit log', function () {
+        $this->actingAs($this->admin);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+        $assignment = ShiftAssignment::create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'signup_type' => ShiftAssignment::SIGNUP_TYPE_ASSIGNED,
+        ]);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('managerCheckIn', $assignment->id);
+
+        $auditLog = AuditLog::where('action', 'shift.manager_checkin')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->new_values['status'])->toBe('checked_in');
+        expect($auditLog->new_values['managed_by'])->toBe($this->admin->call_sign);
+    });
+
+    test('marking no-show logs to audit log', function () {
+        $this->actingAs($this->admin);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+        $assignment = ShiftAssignment::create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'signup_type' => ShiftAssignment::SIGNUP_TYPE_ASSIGNED,
+        ]);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('markNoShow', $assignment->id);
+
+        $auditLog = AuditLog::where('action', 'shift.no_show')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->new_values['user'])->toBe($this->regularUser->call_sign);
+    });
+
+    test('creating a shift role logs to audit log', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openRoleModal')
+            ->set('roleName', 'Safety Officer')
+            ->set('roleDescription', 'Oversees safety')
+            ->call('saveRole');
+
+        $role = ShiftRole::where('name', 'Safety Officer')->first();
+
+        $auditLog = AuditLog::where('action', 'shift.role.created')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->auditable_type)->toBe(ShiftRole::class);
+        expect($auditLog->auditable_id)->toBe($role->id);
+        expect($auditLog->new_values['name'])->toBe('Safety Officer');
+    });
+
+    test('creating a shift logs to audit log', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal')
+            ->set('shiftRoleId', $this->role->id)
+            ->set('shiftStartTime', appNow()->format('Y-m-d\TH:i'))
+            ->set('shiftEndTime', appNow()->addHours(2)->format('Y-m-d\TH:i'))
+            ->set('shiftCapacity', 3)
+            ->call('saveShift');
+
+        $auditLog = AuditLog::where('action', 'shift.created')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->new_values['role'])->toBe('Station Operator');
+        expect($auditLog->new_values['capacity'])->toBe(3);
+    });
+
+    test('deleting a shift logs to audit log', function () {
+        $this->actingAs($this->admin);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+        ]);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('deleteShift', $shift->id);
+
+        $auditLog = AuditLog::where('action', 'shift.deleted')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->old_values['role'])->toBe('Station Operator');
     });
 });

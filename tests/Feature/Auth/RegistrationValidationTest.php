@@ -9,6 +9,8 @@ beforeEach(function () {
         ['key' => 'setup_completed'],
         ['value' => 'true']
     );
+
+    config(['auth-security.registration_mode' => 'open']);
 });
 
 it('displays validation errors for empty registration fields', function () {

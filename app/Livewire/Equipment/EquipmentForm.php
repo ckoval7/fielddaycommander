@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Equipment;
 use App\Models\Organization;
@@ -218,14 +219,53 @@ class EquipmentForm extends Component
             // Update existing equipment
             $equipment = Equipment::findOrFail($this->equipmentId);
 
+            $oldEquipValues = [
+                'make' => $equipment->make,
+                'model' => $equipment->model,
+                'type' => $equipment->type,
+                'description' => $equipment->description,
+                'serial_number' => $equipment->serial_number,
+                'power_output_watts' => $equipment->power_output_watts,
+            ];
+
             // Don't override owner for existing equipment
             unset($equipmentData['owner_user_id']);
             unset($equipmentData['owner_organization_id']);
 
             $equipment->update($equipmentData);
+
+            $newEquipValues = array_filter([
+                'make' => $equipment->make,
+                'model' => $equipment->model,
+                'type' => $equipment->type,
+                'description' => $equipment->description,
+                'serial_number' => $equipment->serial_number,
+                'power_output_watts' => $equipment->power_output_watts,
+            ], fn ($value, $key) => $value !== $oldEquipValues[$key], ARRAY_FILTER_USE_BOTH);
+
+            $oldEquipValues = array_intersect_key($oldEquipValues, $newEquipValues);
+
+            if (! empty($newEquipValues)) {
+                AuditLog::log(
+                    action: 'equipment.updated',
+                    auditable: $equipment,
+                    oldValues: $oldEquipValues,
+                    newValues: $newEquipValues,
+                );
+            }
         } else {
             // Create new equipment
             $equipment = Equipment::create($equipmentData);
+
+            AuditLog::log(
+                action: 'equipment.created',
+                auditable: $equipment,
+                newValues: [
+                    'make' => $equipment->make,
+                    'model' => $equipment->model,
+                    'type' => $equipment->type,
+                ]
+            );
         }
 
         // Sync bands

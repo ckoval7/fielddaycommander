@@ -74,6 +74,52 @@ class AuditLog extends Model
         'developer.quick_action.seed_contacts' => 'Test contacts seeded',
         'developer.quick_action.fast_forward_event' => 'Fast-forwarded to event',
         'developer.quick_action.clear_caches' => 'Caches cleared',
+
+        // Bulletins
+        'bulletin.created' => 'Bulletin created',
+        'bulletin.updated' => 'Bulletin updated',
+        'bulletin.deleted' => 'Bulletin deleted',
+
+        // Safety Checklist
+        'safety.item.created' => 'Safety item created',
+        'safety.item.updated' => 'Safety item updated',
+        'safety.item.deleted' => 'Safety item deleted',
+        'safety.item.toggled' => 'Safety item toggled',
+
+        // Shifts
+        'shift.signup' => 'Shift signup',
+        'shift.signup.cancelled' => 'Shift signup cancelled',
+        'shift.checkin' => 'Shift check-in',
+        'shift.checkout' => 'Shift check-out',
+        'shift.assigned' => 'Shift assigned',
+        'shift.removed' => 'Shift assignment removed',
+        'shift.confirmed' => 'Shift confirmed',
+        'shift.revoked' => 'Shift confirmation revoked',
+        'shift.no_show' => 'Shift no-show',
+        'shift.manager_checkin' => 'Manager check-in',
+        'shift.manager_checkout' => 'Manager check-out',
+        'shift.role.created' => 'Shift role created',
+        'shift.role.updated' => 'Shift role updated',
+        'shift.role.deleted' => 'Shift role deleted',
+        'shift.created' => 'Shift created',
+        'shift.updated' => 'Shift updated',
+        'shift.deleted' => 'Shift deleted',
+        'shift.bulk_created' => 'Shifts bulk created',
+
+        // Bonuses
+        'bonus.claimed' => 'Bonus claimed',
+        'bonus.unclaimed' => 'Bonus unclaimed',
+
+        // Equipment
+        'equipment.created' => 'Equipment created',
+        'equipment.updated' => 'Equipment updated',
+        'equipment.deleted' => 'Equipment deleted',
+        'equipment.assigned' => 'Equipment assigned',
+        'equipment.unassigned' => 'Equipment unassigned',
+
+        // Gallery
+        'album.export.requested' => 'Album export requested',
+        'album.export.downloaded' => 'Album export downloaded',
     ];
 
     protected $fillable = [

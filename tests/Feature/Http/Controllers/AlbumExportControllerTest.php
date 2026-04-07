@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\GenerateAlbumZip;
+use App\Models\AuditLog;
 use App\Models\EventConfiguration;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -120,4 +121,42 @@ test('download rejects path traversal in filename', function () {
         ]));
 
     $response->assertNotFound();
+});
+
+describe('audit logging', function () {
+    test('requesting album export logs to audit log', function () {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $user->givePermissionTo('manage-images');
+        $eventConfig = EventConfiguration::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('album-export.store', $eventConfig));
+
+        $auditLog = AuditLog::where('action', 'album.export.requested')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($user->id);
+        expect($auditLog->auditable_type)->toBe(EventConfiguration::class);
+        expect($auditLog->auditable_id)->toBe($eventConfig->id);
+    });
+
+    test('downloading album export logs to audit log', function () {
+        Storage::fake('local');
+
+        $user = User::factory()->create();
+        $user->givePermissionTo('manage-images');
+        $eventConfig = EventConfiguration::factory()->create();
+
+        $path = "exports/gallery/{$eventConfig->id}/album-{$eventConfig->id}.zip";
+        Storage::disk('local')->put($path, 'fake zip content');
+
+        $this->actingAs($user)
+            ->get(route('album-export.download', [$eventConfig, "album-{$eventConfig->id}.zip"]));
+
+        $auditLog = AuditLog::where('action', 'album.export.downloaded')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($user->id);
+        expect($auditLog->new_values['filename'])->toBe("album-{$eventConfig->id}.zip");
+    });
 });

@@ -127,7 +127,7 @@ test('step 3 validates timezone required', function () {
     $response = $this->post(route('setup.complete'), [
         'organization_name' => 'Test Org',
         'date_format' => 'Y-m-d',
-        'time_format' => 'H:i',
+        'time_format' => 'H:i:s',
     ]);
 
     $response->assertSessionHasErrors('timezone');
@@ -140,7 +140,7 @@ test('step 3 validates organization name required', function () {
     $response = $this->post(route('setup.complete'), [
         'timezone' => 'America/New_York',
         'date_format' => 'Y-m-d',
-        'time_format' => 'H:i',
+        'time_format' => 'H:i:s',
     ]);
 
     $response->assertSessionHasErrors('organization_name');
@@ -155,7 +155,7 @@ test('step 3 validates callsign format', function () {
         'organization_callsign' => 'invalid-callsign',
         'timezone' => 'America/New_York',
         'date_format' => 'Y-m-d',
-        'time_format' => 'H:i',
+        'time_format' => 'H:i:s',
     ]);
 
     $response->assertSessionHasErrors('organization_callsign');
@@ -179,7 +179,7 @@ test('complete wizard saves all settings', function () {
         'organization_phone' => '(555) 123-4567',
         'timezone' => 'America/New_York',
         'date_format' => 'Y-m-d',
-        'time_format' => 'H:i',
+        'time_format' => 'H:i:s',
         'contact_email' => 'contact@example.com',
     ]);
 
@@ -227,7 +227,7 @@ test('complete wizard handles logo upload', function () {
         'organization_name' => 'Test Organization',
         'timezone' => 'America/New_York',
         'date_format' => 'Y-m-d',
-        'time_format' => 'H:i',
+        'time_format' => 'H:i:s',
     ]);
 
     // Verify logo saved to public storage
@@ -248,7 +248,7 @@ test('complete wizard creates organization without optional fields', function ()
         'organization_name' => 'Minimal Org',
         'timezone' => 'America/New_York',
         'date_format' => 'Y-m-d',
-        'time_format' => 'H:i',
+        'time_format' => 'H:i:s',
     ]);
 
     $response->assertRedirect(route('login'));

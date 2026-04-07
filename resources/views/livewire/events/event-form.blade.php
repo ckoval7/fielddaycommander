@@ -83,7 +83,7 @@
 
                 <x-flatpickr
                     label="Start Date & Time (UTC)"
-                    wire:model="start_time"
+                    wire:model.live="start_time"
                     required
                     icon="o-play"
                     hint="When the event begins, in UTC"
@@ -103,7 +103,6 @@
                         <div class="flex items-center gap-2 text-sm text-warning">
                             <x-icon name="o-wrench-screwdriver" class="w-4 h-4" />
                             <span>Setup window opens: <strong>{{ $this->setupAllowedFrom }}</strong></span>
-                            <span class="text-base-content/50">(per ARRL Rule 3.3)</span>
                         </div>
                     </div>
                 @endif

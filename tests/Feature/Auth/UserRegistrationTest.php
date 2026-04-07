@@ -12,6 +12,8 @@ beforeEach(function () {
         ['key' => 'setup_completed'],
         ['value' => 'true', 'updated_at' => now()]
     );
+
+    config(['auth-security.registration_mode' => 'open']);
 });
 
 test('new users are assigned the operator role by default', function () {

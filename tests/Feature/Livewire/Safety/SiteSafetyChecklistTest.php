@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Safety\SiteSafetyChecklist;
+use App\Models\AuditLog;
 use App\Models\BonusType;
 use App\Models\Event;
 use App\Models\EventBonus;
@@ -416,5 +417,37 @@ describe('cpr/aed trained personnel', function () {
 
         Livewire::test(SiteSafetyChecklist::class)
             ->assertDontSee('Trained personnel');
+    });
+});
+
+// =============================================================================
+// Audit Logging
+// =============================================================================
+
+describe('audit logging', function () {
+    test('toggling a safety item logs to audit log', function () {
+        $this->actingAs($this->safetyOfficer);
+
+        $item = SafetyChecklistItem::create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'checklist_type' => \App\Enums\ChecklistType::SafetyOfficer,
+            'label' => 'Fire Extinguisher Check',
+            'is_required' => true,
+            'is_default' => false,
+            'sort_order' => 0,
+        ]);
+        SafetyChecklistEntry::create([
+            'safety_checklist_item_id' => $item->id,
+            'is_completed' => false,
+        ]);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->call('toggleItem', $item->id);
+
+        $auditLog = AuditLog::where('action', 'safety.item.toggled')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->safetyOfficer->id);
+        expect($auditLog->new_values['is_completed'])->toBeTrue();
+        expect($auditLog->new_values['label'])->toBe('Fire Extinguisher Check');
     });
 });

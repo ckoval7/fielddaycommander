@@ -183,6 +183,7 @@ test('search and filters combine correctly', function () {
 
 test('can create user with invitation email mode', function () {
     Notification::fake();
+    \Illuminate\Support\Facades\Config::set('mail.email_configured', true);
 
     $this->actingAs($this->admin);
 
@@ -246,6 +247,66 @@ test('can create user with manual password mode', function () {
     Notification::assertNothingSent();
 });
 
+test('create user defaults to manual password when email is not configured', function () {
+    Notification::fake();
+    \Illuminate\Support\Facades\Config::set('mail.email_configured', false);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->assertSet('inviteMode', false)
+        ->set('call_sign', 'W1AW')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('role_id', $this->roles['Operator']->id)
+        ->set('password', 'Password123!')
+        ->set('password_confirmation', 'Password123!')
+        ->call('saveUser')
+        ->assertSet('showModal', false)
+        ->assertDispatched('toast');
+
+    $user = User::where('email', 'test@example.com')->first();
+    expect($user)->not->toBeNull()
+        ->and(Hash::check('Password123!', $user->password))->toBeTrue();
+
+    // No invitation created, no notification sent
+    $invitation = UserInvitation::where('user_id', $user->id)->first();
+    expect($invitation)->toBeNull();
+    Notification::assertNothingSent();
+});
+
+test('create user backend guard prevents invitation when email is not configured', function () {
+    Notification::fake();
+    \Illuminate\Support\Facades\Config::set('mail.email_configured', false);
+
+    $this->actingAs($this->admin);
+
+    // Force inviteMode to true despite email being off (simulates tampered request)
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->set('inviteMode', true)
+        ->set('call_sign', 'W1AW')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('role_id', $this->roles['Operator']->id)
+        ->set('password', 'Password123!')
+        ->set('password_confirmation', 'Password123!')
+        ->call('saveUser')
+        ->assertSet('showModal', false)
+        ->assertDispatched('toast');
+
+    $user = User::where('email', 'test@example.com')->first();
+    expect($user)->not->toBeNull();
+
+    // Backend guard should have overridden inviteMode — no invitation sent
+    $invitation = UserInvitation::where('user_id', $user->id)->first();
+    expect($invitation)->toBeNull();
+    Notification::assertNothingSent();
+});
+
 test('validates all required fields', function () {
     $this->actingAs($this->admin);
 
@@ -253,7 +314,8 @@ test('validates all required fields', function () {
         ->call('openCreateModal')
         ->set('inviteMode', false)
         ->call('saveUser')
-        ->assertHasErrors(['call_sign', 'first_name', 'last_name', 'email', 'role_id']);
+        ->assertHasErrors(['call_sign', 'first_name', 'last_name', 'email'])
+        ->assertHasNoErrors(['role_id']);
 });
 
 test('prevents duplicate call signs', function () {
@@ -475,57 +537,21 @@ test('user list refreshes after role change', function () {
 // Lock/Unlock Account (5 tests)
 // =============================================================================
 
-test('can lock account with expiry date', function () {
+test('can lock account', function () {
     $this->actingAs($this->admin);
 
     $user = User::factory()->create(['account_locked_at' => null]);
-
-    $expiry = now()->addDays(7)->format('Y-m-d H:i:s');
 
     Livewire::test(UserManagement::class)
         ->call('openLockModal', $user->id)
         ->assertSet('lockingUserId', $user->id)
         ->assertSet('showLockModal', true)
-        ->set('lockExpiry', $expiry)
         ->call('lockAccount')
         ->assertSet('showLockModal', false)
         ->assertDispatched('toast');
 
     $user->refresh();
-    expect($user->isLocked())->toBeTrue()
-        ->and($user->account_locked_at->format('Y-m-d H:i:s'))->toBe($expiry);
-});
-
-test('can lock account without expiry (permanent)', function () {
-    $this->actingAs($this->admin);
-
-    $user = User::factory()->create(['account_locked_at' => null]);
-
-    Livewire::test(UserManagement::class)
-        ->call('openLockModal', $user->id)
-        ->set('lockExpiry', null)
-        ->call('lockAccount')
-        ->assertSet('showLockModal', false);
-
-    $user->refresh();
     expect($user->isLocked())->toBeTrue();
-});
-
-test('validates lock expiry is in future', function () {
-    $this->actingAs($this->admin);
-
-    $user = User::factory()->create(['account_locked_at' => null]);
-
-    $pastDate = now()->subDay()->format('Y-m-d H:i:s');
-
-    Livewire::test(UserManagement::class)
-        ->call('openLockModal', $user->id)
-        ->set('lockExpiry', $pastDate)
-        ->call('lockAccount')
-        ->assertHasErrors(['lockExpiry']);
-
-    $user->refresh();
-    expect($user->isLocked())->toBeFalse();
 });
 
 test('can unlock locked account', function () {

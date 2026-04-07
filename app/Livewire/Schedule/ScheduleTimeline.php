@@ -3,6 +3,7 @@
 namespace App\Livewire\Schedule;
 
 use App\Livewire\Schedule\Concerns\WithScheduleFilters;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Shift;
@@ -130,6 +131,8 @@ class ScheduleTimeline extends Component
      */
     public function signUp(int $shiftId): void
     {
+        $this->authorize('sign-up-shifts');
+
         $shift = Shift::findOrFail($shiftId);
 
         if (! $shift->is_open) {
@@ -154,12 +157,22 @@ class ScheduleTimeline extends Component
             return;
         }
 
-        ShiftAssignment::create([
+        $assignment = ShiftAssignment::create([
             'shift_id' => $shiftId,
             'user_id' => auth()->id(),
             'status' => ShiftAssignment::STATUS_SCHEDULED,
             'signup_type' => ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP,
         ]);
+
+        AuditLog::log(
+            action: 'shift.signup',
+            auditable: $assignment,
+            newValues: [
+                'role' => $shift->shiftRole->name,
+                'start_time' => $shift->start_time->toIso8601String(),
+                'end_time' => $shift->end_time->toIso8601String(),
+            ]
+        );
 
         unset($this->filteredShifts);
         unset($this->shiftsByRole);
@@ -173,11 +186,25 @@ class ScheduleTimeline extends Component
      */
     public function cancelSignUp(int $assignmentId): void
     {
+        $this->authorize('sign-up-shifts');
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', auth()->id())
             ->where('signup_type', ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
             ->where('status', ShiftAssignment::STATUS_SCHEDULED)
             ->firstOrFail();
+
+        $assignment->load('shift.shiftRole');
+
+        AuditLog::log(
+            action: 'shift.signup.cancelled',
+            auditable: $assignment,
+            oldValues: [
+                'role' => $assignment->shift->shiftRole->name,
+                'start_time' => $assignment->shift->start_time->toIso8601String(),
+                'end_time' => $assignment->shift->end_time->toIso8601String(),
+            ]
+        );
 
         $assignment->delete();
 
@@ -193,6 +220,8 @@ class ScheduleTimeline extends Component
      */
     public function checkIn(int $assignmentId): void
     {
+        $this->authorize('sign-up-shifts');
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', auth()->id())
             ->where('status', ShiftAssignment::STATUS_SCHEDULED)
@@ -206,6 +235,15 @@ class ScheduleTimeline extends Component
 
         $assignment->checkIn();
 
+        AuditLog::log(
+            action: 'shift.checkin',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'role' => $assignment->shift->shiftRole->name,
+            ]
+        );
+
         unset($this->filteredShifts);
         unset($this->shiftsByRole);
         unset($this->myAssignments);
@@ -218,12 +256,23 @@ class ScheduleTimeline extends Component
      */
     public function checkOut(int $assignmentId): void
     {
+        $this->authorize('sign-up-shifts');
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', auth()->id())
             ->where('status', ShiftAssignment::STATUS_CHECKED_IN)
             ->firstOrFail();
 
         $assignment->checkOut();
+
+        AuditLog::log(
+            action: 'shift.checkout',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'role' => $assignment->shift->shiftRole->name,
+            ]
+        );
 
         unset($this->filteredShifts);
         unset($this->shiftsByRole);
@@ -237,6 +286,8 @@ class ScheduleTimeline extends Component
      */
     public function reCheckIn(int $assignmentId): void
     {
+        $this->authorize('sign-up-shifts');
+
         $assignment = ShiftAssignment::where('id', $assignmentId)
             ->where('user_id', auth()->id())
             ->where('status', ShiftAssignment::STATUS_CHECKED_OUT)
@@ -249,6 +300,15 @@ class ScheduleTimeline extends Component
         }
 
         $assignment->checkBackIn();
+
+        AuditLog::log(
+            action: 'shift.checkin',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'role' => $assignment->shift->shiftRole->name,
+            ]
+        );
 
         unset($this->filteredShifts);
         unset($this->shiftsByRole);

@@ -45,13 +45,15 @@
             @endcan
 
             @can('delete-events')
-                <x-button
-                    label="Delete"
-                    icon="o-trash"
-                    class="btn-outline btn-error"
-                    link="{{ route('events.index') }}"
-                    wire:navigate
-                />
+                <button
+                    type="button"
+                    class="btn btn-outline btn-error"
+                    wire:click="delete"
+                    wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}"
+                >
+                    <x-icon name="o-trash" class="w-5 h-5" />
+                    Delete
+                </button>
             @endcan
         </div>
     </div>

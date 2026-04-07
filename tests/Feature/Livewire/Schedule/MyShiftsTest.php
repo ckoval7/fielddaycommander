@@ -13,6 +13,9 @@ use Livewire\Livewire;
 beforeEach(function () {
     $this->user = User::factory()->create();
 
+    \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'sign-up-shifts']);
+    $this->user->givePermissionTo('sign-up-shifts');
+
     $this->event = Event::factory()->create([
         'start_time' => appNow()->subHours(12),
         'end_time' => appNow()->addHours(12),

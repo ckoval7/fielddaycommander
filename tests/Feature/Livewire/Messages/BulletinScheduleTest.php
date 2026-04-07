@@ -130,4 +130,49 @@ describe('schedule management', function () {
 
         expect($entry->fresh()->frequencies)->toBe('7.0475, 14.0475');
     });
+
+    test('manager can add a schedule entry with notes', function () {
+        Livewire::actingAs($this->manager)
+            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->set('scheduleMode', 'cw')
+            ->set('scheduleFrequencies', '7.0475, 14.0475')
+            ->set('scheduleSource', 'W1AW')
+            ->set('scheduleScheduledAt', now()->addHours(2)->format('Y-m-d\TH:i'))
+            ->set('scheduleNotes', 'Listen on USB, strong signal expected')
+            ->call('addScheduleEntry')
+            ->assertHasNoErrors();
+
+        expect(BulletinScheduleEntry::where('event_id', $this->event->id)->first()->notes)
+            ->toBe('Listen on USB, strong signal expected');
+    });
+
+    test('manager can edit a schedule entry notes', function () {
+        $entry = BulletinScheduleEntry::factory()->create([
+            'event_id' => $this->event->id,
+            'notes' => 'original note',
+        ]);
+
+        Livewire::actingAs($this->manager)
+            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->call('editScheduleEntry', $entry->id)
+            ->assertSet('scheduleNotes', 'original note')
+            ->set('scheduleNotes', 'updated note')
+            ->call('updateScheduleEntry')
+            ->assertHasNoErrors();
+
+        expect($entry->fresh()->notes)->toBe('updated note');
+    });
+
+    test('notes are optional when adding a schedule entry', function () {
+        Livewire::actingAs($this->manager)
+            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->set('scheduleMode', 'cw')
+            ->set('scheduleFrequencies', '7.0475')
+            ->set('scheduleSource', 'W1AW')
+            ->set('scheduleScheduledAt', now()->addHours(2)->format('Y-m-d\TH:i'))
+            ->call('addScheduleEntry')
+            ->assertHasNoErrors();
+
+        expect(BulletinScheduleEntry::where('event_id', $this->event->id)->first()->notes)->toBeNull();
+    });
 });

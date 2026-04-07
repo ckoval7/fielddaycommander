@@ -211,3 +211,43 @@ test('dashboard widgets config matches user default', function () {
 
     expect($widgets->toArray())->toBe($expectedWidgets);
 });
+
+test('index loads specific dashboard by id query parameter', function () {
+    createActiveEvent();
+    $user = User::factory()->create();
+
+    $default = Dashboard::factory()->create(['user_id' => $user->id, 'is_default' => true]);
+    $other = Dashboard::factory()->create(['user_id' => $user->id, 'is_default' => false]);
+
+    $response = $this->actingAs($user)->get(route('dashboard', ['dashboard' => $other->id]));
+
+    $response->assertStatus(200);
+    $response->assertViewIs('dashboard.default');
+    $response->assertViewHas('dashboard', $other);
+});
+
+test('index falls back to default when dashboard id belongs to another user', function () {
+    createActiveEvent();
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+
+    $myDefault = Dashboard::factory()->create(['user_id' => $user->id, 'is_default' => true]);
+    $theirDashboard = Dashboard::factory()->create(['user_id' => $other->id, 'is_default' => true]);
+
+    $response = $this->actingAs($user)->get(route('dashboard', ['dashboard' => $theirDashboard->id]));
+
+    $response->assertStatus(200);
+    $response->assertViewHas('dashboard', $myDefault);
+});
+
+test('index falls back to default when dashboard id does not exist', function () {
+    createActiveEvent();
+    $user = User::factory()->create();
+
+    $default = Dashboard::factory()->create(['user_id' => $user->id, 'is_default' => true]);
+
+    $response = $this->actingAs($user)->get(route('dashboard', ['dashboard' => 99999]));
+
+    $response->assertStatus(200);
+    $response->assertViewHas('dashboard', $default);
+});

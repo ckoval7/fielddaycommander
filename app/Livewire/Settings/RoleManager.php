@@ -33,7 +33,7 @@ class RoleManager extends Component
         'Event Management' => ['view-events', 'create-events', 'edit-events', 'delete-events', 'manage-bulletins', 'verify-bonuses'],
         'Station & Equipment' => ['view-stations', 'manage-stations', 'manage-equipment', 'manage-own-equipment', 'view-all-equipment', 'manage-event-equipment', 'edit-any-equipment'],
         'User Administration' => ['manage-users', 'manage-roles', 'manage-settings'],
-        'Content Management' => ['sign-guestbook', 'manage-guestbook', 'manage-shifts', 'manage-images'],
+        'Content Management' => ['sign-guestbook', 'manage-guestbook', 'manage-shifts', 'sign-up-shifts', 'manage-images'],
         'Reporting' => ['view-reports'],
         'Security' => ['view-security-logs'],
     ];
@@ -56,6 +56,13 @@ class RoleManager extends Component
         // System Administrator protection
         if ($role->name === 'System Administrator' && empty($this->selectedPermissions)) {
             $this->dispatch('notify', title: 'Error', description: 'System Administrator role must have at least one permission.');
+
+            return;
+        }
+
+        // Config Only role protection - permissions are immutable
+        if ($role->name === 'Config Only') {
+            $this->dispatch('notify', title: 'Error', description: 'Config Only role permissions cannot be modified.');
 
             return;
         }
@@ -112,6 +119,12 @@ class RoleManager extends Component
         // System Administrator protection
         if ($role->name === 'System Administrator') {
             $this->dispatch('notify', title: 'Error', description: 'System Administrator role cannot be deleted.');
+
+            return;
+        }
+
+        if ($role->name === 'Config Only') {
+            $this->dispatch('notify', title: 'Error', description: 'Config Only role cannot be deleted.');
 
             return;
         }

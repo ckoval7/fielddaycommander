@@ -79,6 +79,7 @@ class StationSelect extends Component
         return $event->eventConfiguration->stations()
             ->with([
                 'primaryRadio.bands',
+                'additionalEquipment.bands',
                 'operatingSessions' => function ($query) {
                     $query->active()->with(['operator', 'band', 'mode'])->latest();
                 },
@@ -161,7 +162,50 @@ class StationSelect extends Component
             ];
         }
 
+        $supportedBands = $this->stationSupportedBands;
+        if ($supportedBands !== null && ! $supportedBands->contains('id', $this->selectedBandId)) {
+            $selectedBand = $this->bands->firstWhere('id', $this->selectedBandId);
+            if (! $selectedBand) {
+                return null;
+            }
+
+            return [
+                'type' => 'warning',
+                'message' => "Selected band ({$selectedBand->name}) is not covered by any antenna at this station.",
+            ];
+        }
+
         return null;
+    }
+
+    #[Computed]
+    public function stationSupportedBands(): ?\Illuminate\Support\Collection
+    {
+        if (! $this->selectedStationId) {
+            return null;
+        }
+
+        $station = $this->stations->firstWhere('id', $this->selectedStationId);
+        if (! $station) {
+            return null;
+        }
+
+        if (! $station->primaryRadio) {
+            return null;
+        }
+
+        $antennas = $station->additionalEquipment->where('type', 'antenna');
+        if ($antennas->isEmpty()) {
+            return null;
+        }
+
+        $radioBandIds = $station->primaryRadio->bands->pluck('id');
+        $antennaBandIds = $antennas->flatMap(fn ($antenna) => $antenna->bands->pluck('id'))->unique();
+        $intersectingBandIds = $radioBandIds->intersect($antennaBandIds);
+
+        return $station->primaryRadio->bands
+            ->filter(fn ($band) => $intersectingBandIds->contains($band->id))
+            ->values();
     }
 
     public function selectStation(int $stationId): void

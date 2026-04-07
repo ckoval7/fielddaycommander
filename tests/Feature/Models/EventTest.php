@@ -119,21 +119,26 @@ test('inSetupWindow scope excludes events without setup_allowed_from', function 
     expect(Event::inSetupWindow()->count())->toBe(0);
 });
 
-test('calculateSetupAllowedFrom returns preceding Friday at 0000 UTC', function () {
-    // Field Day 2025: starts Saturday June 28 at 1800 UTC
+test('calculateSetupAllowedFrom subtracts offset hours from start time', function () {
+    // 24 hours before Saturday June 28 2025 at 1800Z = Friday June 27 2025 at 1800Z
     $startTime = \Carbon\Carbon::parse('2025-06-28 18:00:00');
-    $setupFrom = Event::calculateSetupAllowedFrom($startTime);
+    $setupFrom = Event::calculateSetupAllowedFrom($startTime, 24);
 
-    expect($setupFrom->toDateTimeString())->toBe('2025-06-27 00:00:00');
-    expect($setupFrom->dayOfWeek)->toBe(\Carbon\Carbon::FRIDAY);
+    expect($setupFrom->toDateTimeString())->toBe('2025-06-27 18:00:00');
 });
 
-test('calculateSetupAllowedFrom handles start on Friday', function () {
-    $startTime = \Carbon\Carbon::parse('2025-06-27 18:00:00');
-    $setupFrom = Event::calculateSetupAllowedFrom($startTime);
+test('calculateSetupAllowedFrom with 48 hour offset', function () {
+    $startTime = \Carbon\Carbon::parse('2025-06-28 18:00:00');
+    $setupFrom = Event::calculateSetupAllowedFrom($startTime, 48);
 
-    // Should return the same Friday at 0000 UTC
-    expect($setupFrom->toDateTimeString())->toBe('2025-06-27 00:00:00');
+    expect($setupFrom->toDateTimeString())->toBe('2025-06-26 18:00:00');
+});
+
+test('calculateSetupAllowedFrom with 6 hour offset for club meeting', function () {
+    $startTime = \Carbon\Carbon::parse('2025-07-08 23:00:00'); // Tuesday 11pm UTC
+    $setupFrom = Event::calculateSetupAllowedFrom($startTime, 6);
+
+    expect($setupFrom->toDateTimeString())->toBe('2025-07-08 17:00:00');
 });
 
 test('setup status has warning badge color', function () {

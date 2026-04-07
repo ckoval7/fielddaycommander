@@ -21,7 +21,7 @@ class SystemAdminSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
-        $admin->assignRole('System Administrator');
+        $admin->assignRole('Config Only');
 
         $this->command->info('Created system admin account (callsign: SYSTEM)');
         $this->command->warn('⚠️  Default password must be changed via setup wizard!');

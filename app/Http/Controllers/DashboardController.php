@@ -20,7 +20,7 @@ class DashboardController extends Controller
      * Shows the get-ready view for upcoming events, the widget dashboard
      * for active/grace-period events, or the no-event view when no events exist.
      */
-    public function index(EventContextService $eventContext): View
+    public function index(Request $request, EventContextService $eventContext): View
     {
         if (! Auth::check()) {
             return view('public-landing');
@@ -48,8 +48,13 @@ class DashboardController extends Controller
         }
 
         // Active or grace-period event (or no event fallback) — show widget dashboard
-        // Get or create user's default dashboard
-        $dashboard = Dashboard::query()
+        // Load a specific dashboard if requested, falling back to the default
+        $requestedId = $request->integer('dashboard');
+        $dashboard = $requestedId
+            ? Dashboard::query()->forUser($user)->find($requestedId)
+            : null;
+
+        $dashboard ??= Dashboard::query()
             ->forUser($user)
             ->default()
             ->first();

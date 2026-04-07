@@ -28,7 +28,7 @@
                             >
                                 <td>
                                     <div class="font-medium">{{ $role->name }}</div>
-                                    @if($role->name === 'System Administrator')
+                                    @if($role->name === 'System Administrator' || $role->name === 'Config Only')
                                         <x-badge value="System Protected" class="badge-warning badge-sm" />
                                     @endif
                                 </td>

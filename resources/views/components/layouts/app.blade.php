@@ -84,6 +84,11 @@
         <livewire:components.demo-banner />
     @endif
 
+    {{-- System Account Banner --}}
+    @auth
+        <livewire:components.system-account-banner />
+    @endauth
+
     {{-- MAIN --}}
     <x-main full-width with-nav>
         {{-- SIDEBAR --}}

@@ -88,18 +88,11 @@ class Event extends Model
     }
 
     /**
-     * Calculate setup_allowed_from per ARRL Field Day Rule 3.3:
-     * 0000 UTC on the Friday preceding the event start.
+     * Calculate setup_allowed_from by subtracting the given offset from the event start time.
      */
-    public static function calculateSetupAllowedFrom(Carbon $startTime): Carbon
+    public static function calculateSetupAllowedFrom(Carbon $startTime, int $offsetHours): Carbon
     {
-        $friday = $startTime->copy()->startOfDay();
-
-        if ($friday->dayOfWeek !== Carbon::FRIDAY) {
-            $friday = $friday->previous(Carbon::FRIDAY);
-        }
-
-        return $friday;
+        return $startTime->copy()->subHours($offsetHours);
     }
 
     // Accessors

@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Stations\EquipmentAssignment;
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
@@ -1081,4 +1082,85 @@ it('shows unassign confirmation when station has active session', function () {
         ->test(\App\Livewire\Stations\EquipmentAssignment::class, ['stationId' => $station->id])
         ->call('requestUnassign', $equipment->id)
         ->assertSet('showUnassignConfirmModal', true);
+});
+
+test('primary radio does not appear in assigned equipment list', function () {
+    // The station observer creates an equipment_event record for the primary radio.
+    // It should NOT appear in assignedEquipmentByType (it's shown separately as Primary Radio).
+    $component = Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id]);
+
+    $assigned = $component->get('assignedEquipmentByType') ?? collect();
+    $allEquipmentIds = $assigned->flatten()->map(fn ($c) => $c->equipment_id)->all();
+
+    expect($allEquipmentIds)->not->toContain($this->radio->id);
+});
+
+test('primary radio does not appear in committed equipment list after observer creates record', function () {
+    // Simulate the bad state: observer-created record with station_id nulled out
+    EquipmentEvent::query()
+        ->where('equipment_id', $this->radio->id)
+        ->where('event_id', $this->event->id)
+        ->update(['station_id' => null]);
+
+    $component = Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id]);
+
+    $committed = $component->get('eventCommittedEquipment') ?? collect();
+    $committedEquipmentIds = $committed->map(fn ($c) => $c->equipment_id)->all();
+
+    expect($committedEquipmentIds)->not->toContain($this->radio->id);
+});
+
+describe('audit logging', function () {
+    test('assigning equipment logs to audit log', function () {
+        $antenna = Equipment::factory()->create([
+            'type' => 'antenna',
+            'make' => 'Hustler',
+            'model' => '5-BTV',
+            'owner_user_id' => $this->user->id,
+        ]);
+
+        EquipmentEvent::create([
+            'equipment_id' => $antenna->id,
+            'event_id' => $this->event->id,
+            'station_id' => null,
+            'status' => 'committed',
+            'committed_at' => now(),
+        ]);
+
+        Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
+            ->call('assignEquipment', $antenna->id);
+
+        $auditLog = AuditLog::where('action', 'equipment.assigned')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->auditable_type)->toBe(Equipment::class);
+        expect($auditLog->auditable_id)->toBe($antenna->id);
+        expect($auditLog->new_values['station'])->toBe('Phone Station 1');
+    });
+
+    test('unassigning equipment logs to audit log', function () {
+        $antenna = Equipment::factory()->create([
+            'type' => 'antenna',
+            'make' => 'Hustler',
+            'model' => '5-BTV',
+            'owner_user_id' => $this->user->id,
+        ]);
+
+        EquipmentEvent::create([
+            'equipment_id' => $antenna->id,
+            'event_id' => $this->event->id,
+            'station_id' => $this->station->id,
+            'assigned_by_user_id' => $this->user->id,
+            'status' => 'committed',
+            'committed_at' => now(),
+        ]);
+
+        Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
+            ->call('unassignEquipment', $antenna->id);
+
+        $auditLog = AuditLog::where('action', 'equipment.unassigned')->first();
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->auditable_type)->toBe(Equipment::class);
+        expect($auditLog->auditable_id)->toBe($antenna->id);
+        expect($auditLog->old_values['station'])->toBe('Phone Station 1');
+    });
 });

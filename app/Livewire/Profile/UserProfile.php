@@ -309,6 +309,12 @@ class UserProfile extends Component
 
     public function enableTwoFactor(): void
     {
+        if (config('auth-security.2fa_mode') === 'disabled') {
+            $this->dispatch('toast', title: 'Error', description: 'Two-factor authentication is disabled by your administrator.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $this->validate([
             'current_password' => ['required', 'string', 'current_password:web'],
         ]);
@@ -324,6 +330,10 @@ class UserProfile extends Component
 
     public function cancelTwoFactorSetup(): void
     {
+        if (config('auth-security.2fa_mode') === 'required') {
+            return;
+        }
+
         app(DisableTwoFactorAuthentication::class)(auth()->user());
 
         auth()->user()->refresh();
@@ -351,6 +361,12 @@ class UserProfile extends Component
 
     public function disableTwoFactor(): void
     {
+        if (config('auth-security.2fa_mode') === 'required') {
+            $this->dispatch('toast', title: 'Error', description: 'Two-factor authentication is required and cannot be disabled.', icon: 'o-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $this->validate([
             'current_password' => ['required', 'string', 'current_password:web'],
         ]);
