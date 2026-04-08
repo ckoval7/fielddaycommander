@@ -105,7 +105,22 @@ class DemoSimulateActivity extends Command
 
             $section = $sections->random();
             $callsign = CallsignGenerator::any();
-            $fdClass = random_int(1, 5).fake()->randomElement(['A', 'B', 'C', 'D', 'E']);
+            $classPool = array_merge(
+                array_fill(0, 50, 'A'),
+                array_fill(0, 20, 'B'),
+                array_fill(0, 15, 'C'),
+                array_fill(0, 10, 'D'),
+                array_fill(0, 4, 'E'),
+                array_fill(0, 1, 'F'),
+            );
+            $fdClassLetter = $classPool[array_rand($classPool)];
+            $transmitterCount = match ($fdClassLetter) {
+                'A' => random_int(1, 20),
+                'B' => random_int(1, 2),
+                'F' => random_int(2, 10),
+                default => 1,
+            };
+            $fdClass = $transmitterCount.$fdClassLetter;
 
             $contact = Contact::create([
                 'event_configuration_id' => $config->id,
