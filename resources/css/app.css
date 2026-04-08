@@ -404,3 +404,15 @@
         }
     }
 }
+
+/* Mobile-responsive badges — outside any cascade layer so this wins over DaisyUI's
+   layer-scoped height. Allows badge height to grow with content on narrow screens. */
+@media (max-width: 640px) {
+    .badge {
+        height: auto !important;
+        min-height: var(--size-field-xs, 1.25rem);
+        white-space: normal;
+        padding-top: 0.125rem;
+        padding-bottom: 0.125rem;
+    }
+}
