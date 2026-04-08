@@ -5,6 +5,7 @@ use App\Models\DemoSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 
@@ -78,4 +79,20 @@ it('returns no content when session not found', function () {
         ->assertNoContent();
 
     expect(DemoEvent::count())->toBe(0);
+});
+
+it('serves the analytics dashboard via signed URL', function () {
+    $url = URL::temporarySignedRoute('demo.analytics.dashboard', now()->addHour(), ['range' => '7d']);
+
+    $this->get($url)->assertOk()->assertSee('Demo Analytics');
+});
+
+it('rejects unsigned requests to the analytics dashboard', function () {
+    $this->get(route('demo.analytics.dashboard', ['range' => '7d']))->assertForbidden();
+});
+
+it('rejects expired signed URLs for the analytics dashboard', function () {
+    $url = URL::temporarySignedRoute('demo.analytics.dashboard', now()->subMinute(), ['range' => '7d']);
+
+    $this->get($url)->assertForbidden();
 });

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\DemoEvent;
 use App\Models\DemoSession;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -45,5 +47,19 @@ class DemoAnalyticsController extends Controller
         ]);
 
         return response()->noContent();
+    }
+
+    public function dashboard(Request $request): View
+    {
+        abort_unless(config('demo.enabled'), 404);
+
+        return view('demo.analytics', ['range' => '7d']);
+    }
+
+    public function api(Request $request): JsonResponse
+    {
+        abort_unless(config('demo.enabled'), 404);
+
+        return response()->json(['range' => '7d']);
     }
 }

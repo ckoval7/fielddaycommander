@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\DemoAnalyticsController;
 use App\Http\Controllers\DemoController;
-use App\Livewire\Admin\DemoAnalytics;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/demo', [DemoController::class, 'landing'])->name('demo.landing');
@@ -16,6 +15,10 @@ Route::post('/demo/analytics/beacon', [DemoAnalyticsController::class, 'beacon']
     ->name('demo.analytics.beacon')
     ->middleware('throttle:60,1');
 
-Route::middleware(['auth', 'verified'])
-    ->get('/admin/demo-analytics', DemoAnalytics::class)
-    ->name('admin.demo-analytics');
+Route::middleware('signed')
+    ->get('/demo/analytics', [DemoAnalyticsController::class, 'dashboard'])
+    ->name('demo.analytics.dashboard');
+
+Route::middleware('signed')
+    ->get('/demo/analytics/api', [DemoAnalyticsController::class, 'api'])
+    ->name('demo.analytics.api');
