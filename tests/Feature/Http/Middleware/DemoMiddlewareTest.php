@@ -42,7 +42,7 @@ test('allows login page through without demo session', function () {
 });
 
 test('allows admin routes through without demo session', function () {
-    $response = $this->get('/admin/demo-analytics');
+    $response = $this->get('/admin/audit-logs');
     // Should hit auth middleware (302 to login), not demo redirect
     $response->assertRedirect('/login');
 });
