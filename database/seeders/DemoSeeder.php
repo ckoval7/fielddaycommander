@@ -335,6 +335,7 @@ class DemoSeeder extends Seeder
         ?array $gotaOperators = null,
     ): void {
         $allSections = Section::where('is_active', true)->get()->keyBy('code');
+        $canadianSections = $allSections->filter(fn (Section $s) => $s->country === 'CA');
         $windowSeconds = max(1, $windowEnd->diffInSeconds($windowStart));
 
         // Weighted class pool: A most common, F very rare
@@ -377,7 +378,21 @@ class DemoSeeder extends Seeder
         );
 
         for ($i = 0; $i < $count; $i++) {
-            $callsign = CallsignGenerator::any();
+            // Match callsign nationality to section: US callsigns get US sections,
+            // Canadian callsigns get Canadian sections.
+            $isCanadian = random_int(1, 100) > 85;
+
+            if ($isCanadian) {
+                $callsign = CallsignGenerator::canada();
+                $section = $canadianSections->random();
+            } else {
+                $callsign = CallsignGenerator::us();
+                $bucket = $weightedPool[array_rand($weightedPool)];
+                $pool = $bucket === 'nearby' ? $nearbyPool : $midPool;
+                $code = $pool[array_rand($pool)];
+                $section = $allSections->get($code) ?? $allSections->random();
+            }
+
             $fdClassLetter = $classPool[array_rand($classPool)];
             $transmitterCount = match ($fdClassLetter) {
                 'A' => random_int(1, 20),
@@ -386,11 +401,6 @@ class DemoSeeder extends Seeder
                 default => 1,
             };
             $fdClass = $transmitterCount.$fdClassLetter;
-
-            $bucket = $weightedPool[array_rand($weightedPool)];
-            $pool = $bucket === 'nearby' ? $nearbyPool : $midPool;
-            $code = $pool[array_rand($pool)];
-            $section = $allSections->get($code) ?? $allSections->random();
 
             $receivedExchange = "{$callsign} {$fdClass} {$section->code}";
             $qsoTime = $windowStart->copy()->addSeconds(random_int(0, $windowSeconds));

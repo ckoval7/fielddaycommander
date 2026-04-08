@@ -90,6 +90,9 @@ class DemoSimulateActivity extends Command
             return 0;
         }
 
+        $usSections = $sections->filter(fn (Section $s) => $s->country === 'US');
+        $canadianSections = $sections->filter(fn (Section $s) => $s->country === 'CA');
+
         foreach ($activeSessions as $session) {
             // ~40% chance to log a contact this tick per active session
             if (random_int(1, 100) > 40) {
@@ -103,8 +106,16 @@ class DemoSimulateActivity extends Command
                 continue;
             }
 
-            $section = $sections->random();
-            $callsign = CallsignGenerator::any();
+            // Match callsign nationality to section
+            $isCanadian = random_int(1, 100) > 85;
+
+            if ($isCanadian && $canadianSections->isNotEmpty()) {
+                $callsign = CallsignGenerator::canada();
+                $section = $canadianSections->random();
+            } else {
+                $callsign = CallsignGenerator::us();
+                $section = $usSections->isNotEmpty() ? $usSections->random() : $sections->random();
+            }
             $classPool = array_merge(
                 array_fill(0, 50, 'A'),
                 array_fill(0, 20, 'B'),
