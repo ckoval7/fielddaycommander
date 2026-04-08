@@ -283,9 +283,18 @@ class DemoSeeder extends Seeder
                 'is_supervised' => $def['is_gota'],
             ]);
 
+            $gotaOperators = null;
+            if ($def['is_gota']) {
+                $gotaOperators = [
+                    ['first_name' => fake()->firstName(), 'last_name' => fake()->lastName(), 'callsign' => null],
+                    ['first_name' => fake()->firstName(), 'last_name' => fake()->lastName(), 'callsign' => null],
+                    ['first_name' => fake()->firstName(), 'last_name' => fake()->lastName(), 'callsign' => null],
+                ];
+            }
+
             [$histMin, $histMax] = $def['historical_count'] ?? [20, 30];
             $historicalCount = random_int($histMin, $histMax);
-            $this->seedContacts($config, $historicalSession, $historicalCount, $historicalStart, $historicalEnd);
+            $this->seedContacts($config, $historicalSession, $historicalCount, $historicalStart, $historicalEnd, $gotaOperators);
 
             $historicalSession->update(['qso_count' => $historicalCount]);
 
@@ -307,19 +316,23 @@ class DemoSeeder extends Seeder
 
                 [$actMin, $actMax] = $def['active_count'] ?? [3, 8];
                 $activeCount = random_int($actMin, $actMax);
-                $this->seedContacts($config, $activeSession, $activeCount, $activeStart, now());
+                $this->seedContacts($config, $activeSession, $activeCount, $activeStart, now(), $gotaOperators);
 
                 $activeSession->update(['qso_count' => $activeCount]);
             }
         }
     }
 
+    /**
+     * @param  array<int, array{first_name: string, last_name: string, callsign: string|null}>|null  $gotaOperators
+     */
     private function seedContacts(
         EventConfiguration $config,
         OperatingSession $session,
         int $count,
         Carbon $windowStart,
-        Carbon $windowEnd
+        Carbon $windowEnd,
+        ?array $gotaOperators = null,
     ): void {
         $allSections = Section::where('is_active', true)->get()->keyBy('code');
         $fdClasses = ['A', 'B', 'C', 'D', 'E'];
@@ -366,6 +379,8 @@ class DemoSeeder extends Seeder
             $receivedExchange = "{$callsign} {$fdClass} {$section->code}";
             $qsoTime = $windowStart->copy()->addSeconds(random_int(0, $windowSeconds));
 
+            $gotaOp = $gotaOperators ? $gotaOperators[array_rand($gotaOperators)] : null;
+
             Contact::create([
                 'event_configuration_id' => $config->id,
                 'operating_session_id' => $session->id,
@@ -378,6 +393,9 @@ class DemoSeeder extends Seeder
                 'received_exchange' => $receivedExchange,
                 'power_watts' => 100,
                 'is_gota_contact' => $session->is_supervised,
+                'gota_operator_first_name' => $gotaOp['first_name'] ?? null,
+                'gota_operator_last_name' => $gotaOp['last_name'] ?? null,
+                'gota_operator_callsign' => $gotaOp['callsign'] ?? null,
                 'is_natural_power' => false,
                 'is_satellite' => false,
                 'points' => 2,
@@ -599,8 +617,8 @@ class DemoSeeder extends Seeder
     private function makeShift(
         EventConfiguration $config,
         ShiftRole $role,
-        \Carbon\Carbon $start,
-        \Carbon\Carbon $end,
+        Carbon $start,
+        Carbon $end,
         int $capacity
     ): Shift {
         return Shift::create([
