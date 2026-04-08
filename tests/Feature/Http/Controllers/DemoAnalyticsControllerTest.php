@@ -210,3 +210,29 @@ it('returns 404 for API when demo mode is disabled', function () {
 
     $this->getJson($url)->assertNotFound();
 });
+
+it('displays overview metrics in the dashboard', function () {
+    DemoSession::create([
+        'session_uuid' => fake()->uuid(),
+        'role' => 'operator',
+        'visitor_hash' => hash('sha256', 'visitor1'),
+        'user_agent' => 'Test',
+        'device_type' => 'desktop',
+        'provisioned_at' => now()->subHours(2),
+        'last_seen_at' => now()->subHour(),
+        'total_page_views' => 15,
+        'total_actions' => 5,
+        'expires_at' => now()->addHours(22),
+    ]);
+
+    $url = URL::temporarySignedRoute('demo.analytics.dashboard', now()->addHour(), ['range' => '7d']);
+
+    $this->get($url)
+        ->assertOk()
+        ->assertSee('Total Sessions')
+        ->assertSee('Unique Visitors')
+        ->assertSee('Bounce Rate')
+        ->assertSee('Role Distribution')
+        ->assertSee('Session Funnel')
+        ->assertSee('Recent Sessions');
+});
