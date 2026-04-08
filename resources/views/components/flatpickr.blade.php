@@ -11,7 +11,7 @@
 @php
     $uuid = 'fp-' . str()->random(8);
     $modelName = $attributes->whereStartsWith('wire:model')->first();
-    $xData = "flatpickr({ mode: '{$mode}', min: " . ($min ? "'{$min}'" : 'null') . ", max: " . ($max ? "'{$max}'" : 'null') . " })";
+    $xData = "flatpickr({ mode: '{$mode}', min: " . ($min ? "'{$min}'" : 'null') . ", max: " . ($max ? "'{$max}'" : 'null') . ", model: " . ($modelName ? "'{$modelName}'" : 'null') . " })";
 @endphp
 
 <div
