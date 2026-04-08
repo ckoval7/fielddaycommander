@@ -335,8 +335,17 @@ class DemoSeeder extends Seeder
         ?array $gotaOperators = null,
     ): void {
         $allSections = Section::where('is_active', true)->get()->keyBy('code');
-        $fdClasses = ['A', 'B', 'C', 'D', 'E'];
         $windowSeconds = max(1, $windowEnd->diffInSeconds($windowStart));
+
+        // Weighted class pool: A most common, F very rare
+        $classPool = array_merge(
+            array_fill(0, 50, 'A'),
+            array_fill(0, 20, 'B'),
+            array_fill(0, 15, 'C'),
+            array_fill(0, 10, 'D'),
+            array_fill(0, 4, 'E'),
+            array_fill(0, 1, 'F'),
+        );
 
         // Build a weighted section pool. Nearby/populous sections appear more often;
         // rarer/distant ones appear once. This mimics a real early-event QSO log where
@@ -369,7 +378,14 @@ class DemoSeeder extends Seeder
 
         for ($i = 0; $i < $count; $i++) {
             $callsign = CallsignGenerator::any();
-            $fdClass = random_int(1, 5).($fdClasses[array_rand($fdClasses)]);
+            $fdClassLetter = $classPool[array_rand($classPool)];
+            $transmitterCount = match ($fdClassLetter) {
+                'A' => random_int(1, 20),
+                'B' => random_int(1, 2),
+                'F' => random_int(2, 10),
+                default => 1,
+            };
+            $fdClass = $transmitterCount.$fdClassLetter;
 
             $bucket = $weightedPool[array_rand($weightedPool)];
             $pool = $bucket === 'nearby' ? $nearbyPool : $midPool;
