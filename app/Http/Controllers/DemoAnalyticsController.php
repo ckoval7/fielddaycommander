@@ -56,10 +56,7 @@ class DemoAnalyticsController extends Controller
     {
         abort_unless(config('demo.enabled'), 404);
 
-        $range = $this->resolveRange($request->query('range'));
-        $startDate = $this->startDateForRange($range);
-        $sessions = $this->fetchSessions($startDate);
-        $sessionIds = $sessions->pluck('id');
+        [$range, $sessions, $sessionIds] = $this->resolveAnalyticsData($request);
 
         $rangeLinks = [];
         foreach (['today', '7d', '30d', '90d'] as $r) {
@@ -88,10 +85,7 @@ class DemoAnalyticsController extends Controller
     {
         abort_unless(config('demo.enabled'), 404);
 
-        $range = $this->resolveRange($request->query('range'));
-        $startDate = $this->startDateForRange($range);
-        $sessions = $this->fetchSessions($startDate);
-        $sessionIds = $sessions->pluck('id');
+        [$range, $sessions, $sessionIds] = $this->resolveAnalyticsData($request);
 
         return response()->json([
             'range' => $range,
@@ -113,6 +107,19 @@ class DemoAnalyticsController extends Controller
                 'provisioned_at' => $s->provisioned_at->toIso8601String(),
             ]),
         ]);
+    }
+
+    /**
+     * @return array{string, Collection, Collection}
+     */
+    private function resolveAnalyticsData(Request $request): array
+    {
+        $range = $this->resolveRange($request->query('range'));
+        $startDate = $this->startDateForRange($range);
+        $sessions = $this->fetchSessions($startDate);
+        $sessionIds = $sessions->pluck('id');
+
+        return [$range, $sessions, $sessionIds];
     }
 
     private function resolveRange(?string $range): string
@@ -177,7 +184,7 @@ class DemoAnalyticsController extends Controller
     private function buildRoleDistribution(Collection $sessions): array
     {
         $counts = $sessions->groupBy('role')->map->count()->sortDesc();
-        $labels = $counts->keys()->map(fn ($r) => str_replace('_', ' ', ucfirst($r)))->values()->toArray();
+        $labels = $counts->keys()->map(fn ($r) => ucwords(str_replace('_', ' ', $r)))->values()->toArray();
         $data = $counts->values()->toArray();
 
         return ['labels' => $labels, 'data' => $data];
