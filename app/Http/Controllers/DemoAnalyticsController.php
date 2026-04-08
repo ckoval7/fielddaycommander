@@ -230,6 +230,8 @@ class DemoAnalyticsController extends Controller
     {
         return DemoEvent::whereIn('demo_session_id', $sessionIds)
             ->where('type', 'page_view')
+            ->where('route_name', 'not like', 'generated::%')
+            ->whereNotIn('route_name', ['default-livewire.update'])
             ->selectRaw('route_name, COUNT(*) as views, COUNT(DISTINCT demo_session_id) as unique_sessions')
             ->groupBy('route_name')
             ->orderByDesc('views')
