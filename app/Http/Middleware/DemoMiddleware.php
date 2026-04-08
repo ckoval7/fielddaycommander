@@ -28,14 +28,16 @@ class DemoMiddleware
             return $next($request);
         }
 
-        // Allow demo routes and auth pages through without a demo session.
-        // Auth pages (login, register, etc.) must be accessible so real admins can log in.
+        // Allow demo routes, auth pages, and admin pages through without
+        // demo DB switching or user impersonation. Admin pages rely on their
+        // own auth + authorization middleware (e.g. manage-settings gate).
         // Use path matching instead of routeIs() because DemoMiddleware runs before
         // SubstituteBindings in the priority list, so route names are not yet available.
         if ($request->is(
             'demo', 'demo/provision', 'demo/reset', 'demo/analytics/beacon',
             'login', 'logout', 'register', 'register/*', 'forgot-password', 'reset-password/*',
             'two-factor-challenge', 'email/verify', 'email/verify/*',
+            'admin/*',
         )) {
             return $next($request);
         }
@@ -44,19 +46,6 @@ class DemoMiddleware
 
         // Cookie format: "uuid|role_slug" (e.g. "abc-123|system_admin")
         [$uuid, $roleSlug] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
-
-        // Admin routes: block demo-only visitors but let real authenticated
-        // admins through even if they have a stale demo_session cookie.
-        if ($request->is('admin/*')) {
-            $hasDemoCookie = $uuid && Str::isUuid($uuid);
-            $isRealUser = Auth::check() && ! session()->has('dev_role_override');
-
-            if ($hasDemoCookie && ! $isRealUser) {
-                abort(403, 'Demo users cannot access admin pages.');
-            }
-
-            return $next($request);
-        }
 
         // Missing or malformed cookie → redirect to landing
         if (! $uuid || ! Str::isUuid($uuid)) {
