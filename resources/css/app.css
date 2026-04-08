@@ -319,17 +319,6 @@
         display: none !important;
     }
 
-    /* Mobile-responsive badges - allow height to adapt to content on small screens */
-    @media (max-width: 640px) {
-        .badge {
-            height: auto;
-            min-height: var(--size-field-xs, 1.25rem);
-            white-space: normal;
-            padding-top: 0.125rem;
-            padding-bottom: 0.125rem;
-        }
-    }
-
     /* Club Equipment Badge - Custom Styling */
     .badge-club {
         @apply bg-indigo-100 text-indigo-800 border-indigo-200;
@@ -413,5 +402,17 @@
         50% {
             box-shadow: 0 0 40px rgba(96, 165, 250, 1);
         }
+    }
+}
+
+/* Mobile-responsive badges — outside any cascade layer so this wins over DaisyUI's
+   layer-scoped height. Allows badge height to grow with content on narrow screens. */
+@media (max-width: 640px) {
+    .badge {
+        height: auto !important;
+        min-height: var(--size-field-xs, 1.25rem);
+        white-space: normal;
+        padding-top: 0.125rem;
+        padding-bottom: 0.125rem;
     }
 }
