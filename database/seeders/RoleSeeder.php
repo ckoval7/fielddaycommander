@@ -76,9 +76,14 @@ class RoleSeeder extends Seeder
             'log-contacts',
             'edit-contacts',
             'sign-up-shifts',
+            'sign-guestbook',
             'view-stations',
             'manage-stations',
+            'manage-bulletins',
             'manage-equipment',
+            'manage-own-equipment',
+            'view-all-equipment',
+            'manage-event-equipment',
         ]);
 
         // Config Only - View and admin permissions only (for SYSTEM bootstrap account)
