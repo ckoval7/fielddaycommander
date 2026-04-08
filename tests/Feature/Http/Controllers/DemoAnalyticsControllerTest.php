@@ -96,3 +96,9 @@ it('rejects expired signed URLs for the analytics dashboard', function () {
 
     $this->get($url)->assertForbidden();
 });
+
+it('serves the analytics api via signed URL', function () {
+    $url = URL::temporarySignedRoute('demo.analytics.api', now()->addHour(), ['range' => '7d']);
+
+    $this->getJson($url)->assertOk()->assertJson(['range' => '7d']);
+});
