@@ -20,7 +20,7 @@ class DemoMiddleware
      * Validates the demo_session cookie and switches the 'demo' DB connection
      * to the visitor's isolated database on every request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -28,10 +28,15 @@ class DemoMiddleware
             return $next($request);
         }
 
-        // Allow demo landing, provision, reset, and beacon routes through without a session.
+        // Allow demo routes and auth pages through without a demo session.
+        // Auth pages (login, register, etc.) must be accessible so real admins can log in.
         // Use path matching instead of routeIs() because DemoMiddleware runs before
         // SubstituteBindings in the priority list, so route names are not yet available.
-        if ($request->is('demo', 'demo/provision', 'demo/reset', 'demo/analytics/beacon')) {
+        if ($request->is(
+            'demo', 'demo/provision', 'demo/reset', 'demo/analytics/beacon',
+            'login', 'logout', 'register', 'register/*', 'forgot-password', 'reset-password/*',
+            'two-factor-challenge', 'email/verify', 'email/verify/*',
+        )) {
             return $next($request);
         }
 
@@ -39,6 +44,16 @@ class DemoMiddleware
 
         // Cookie format: "uuid|role_slug" (e.g. "abc-123|system_admin")
         [$uuid, $roleSlug] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
+
+        // Admin routes: let non-demo visitors through (auth middleware handles access),
+        // but block demo users — even those with admin roles in their demo DB.
+        if ($request->is('admin/*')) {
+            if ($uuid && Str::isUuid($uuid)) {
+                abort(403, 'Demo users cannot access admin pages.');
+            }
+
+            return $next($request);
+        }
 
         // Missing or malformed cookie → redirect to landing
         if (! $uuid || ! Str::isUuid($uuid)) {
