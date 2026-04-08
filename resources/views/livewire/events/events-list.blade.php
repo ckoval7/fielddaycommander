@@ -41,51 +41,27 @@
                         <div class="font-semibold">{{ $event->name }}</div>
                         <div class="text-xs opacity-60 mt-0.5">{{ $event->eventType->name ?? 'N/A' }}</div>
                     </div>
-                    <div class="dropdown dropdown-end">
-                        <button tabindex="0" class="btn btn-ghost btn-sm btn-square">
-                            <x-icon name="o-ellipsis-vertical" class="w-5 h-5" />
-                        </button>
-                        <ul class="dropdown-content menu menu-sm z-[1000] p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 mt-1">
-                            <li>
-                                <a href="{{ route('events.show', $event) }}" wire:navigate>
-                                    <x-icon name="o-eye" class="w-4 h-4" />
-                                    View Details
-                                </a>
-                            </li>
-                            @can('edit-events')
-                                @if(!$event->deleted_at)
-                                    <li>
-                                        <a href="{{ route('events.edit', ['eventId' => $event->id]) }}" wire:navigate>
-                                            <x-icon name="o-pencil" class="w-4 h-4" />
-                                            Edit
-                                        </a>
-                                    </li>
-                                @endif
-                            @endcan
-                            @can('create-events')
-                                @if(!$event->deleted_at)
-                                    <li>
-                                        <a href="{{ route('events.clone', ['eventId' => $event->id]) }}" wire:navigate>
-                                            <x-icon name="o-document-duplicate" class="w-4 h-4" />
-                                            Clone Event
-                                        </a>
-                                    </li>
-                                @endif
-                            @endcan
-                            @can('delete-events')
-                                @if(!$event->deleted_at)
-                                    <li>
-                                        <a wire:click.prevent="delete({{ $event->id }})"
-                                           wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}"
-                                           class="text-error cursor-pointer">
-                                            <x-icon name="o-trash" class="w-4 h-4" />
-                                            Delete
-                                        </a>
-                                    </li>
-                                @endif
-                            @endcan
-                        </ul>
-                    </div>
+                    <x-dropdown>
+                        <x-slot:trigger>
+                            <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost btn-square" />
+                        </x-slot:trigger>
+                        <x-menu-item title="View Details" icon="o-eye" link="{{ route('events.show', $event) }}" wire:navigate />
+                        @can('edit-events')
+                            @if(!$event->deleted_at)
+                                <x-menu-item title="Edit" icon="o-pencil" link="{{ route('events.edit', ['eventId' => $event->id]) }}" wire:navigate />
+                            @endif
+                        @endcan
+                        @can('create-events')
+                            @if(!$event->deleted_at)
+                                <x-menu-item title="Clone Event" icon="o-document-duplicate" link="{{ route('events.clone', ['eventId' => $event->id]) }}" wire:navigate />
+                            @endif
+                        @endcan
+                        @can('delete-events')
+                            @if(!$event->deleted_at)
+                                <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}" />
+                            @endif
+                        @endcan
+                    </x-dropdown>
                 </div>
 
                 <div class="mt-3 pt-3 border-t border-base-200 space-y-1.5">
@@ -213,54 +189,27 @@
                                 <span class="font-bold text-primary">{{ number_format($event->final_score) }}</span>
                             </td>
                             <td class="text-right">
-                                <div class="dropdown dropdown-end">
-                                    <button tabindex="0" class="btn btn-ghost btn-sm btn-square">
-                                        <x-icon name="o-ellipsis-vertical" class="w-5 h-5" />
-                                    </button>
-                                    <ul class="dropdown-content menu menu-sm z-[1000] p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 mt-1">
-                                        <li>
-                                            <a href="{{ route('events.show', $event) }}" wire:navigate>
-                                                <x-icon name="o-eye" class="w-4 h-4" />
-                                                View Details
-                                            </a>
-                                        </li>
-
-                                        @can('edit-events')
-                                            @if(!$event->deleted_at)
-                                                <li>
-                                                    <a href="{{ route('events.edit', ['eventId' => $event->id]) }}" wire:navigate>
-                                                        <x-icon name="o-pencil" class="w-4 h-4" />
-                                                        Edit
-                                                    </a>
-                                                </li>
-                                            @endif
-                                        @endcan
-
-                                        @can('create-events')
-                                            @if(!$event->deleted_at)
-                                                <li>
-                                                    <a href="{{ route('events.clone', ['eventId' => $event->id]) }}" wire:navigate>
-                                                        <x-icon name="o-document-duplicate" class="w-4 h-4" />
-                                                        Clone Event
-                                                    </a>
-                                                </li>
-                                            @endif
-                                        @endcan
-
-                                        @can('delete-events')
-                                            @if(!$event->deleted_at)
-                                                <li>
-                                                    <a wire:click.prevent="delete({{ $event->id }})"
-                                                       wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}"
-                                                       class="text-error cursor-pointer">
-                                                        <x-icon name="o-trash" class="w-4 h-4" />
-                                                        Delete
-                                                    </a>
-                                                </li>
-                                            @endif
-                                        @endcan
-                                    </ul>
-                                </div>
+                                <x-dropdown>
+                                    <x-slot:trigger>
+                                        <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost btn-square" />
+                                    </x-slot:trigger>
+                                    <x-menu-item title="View Details" icon="o-eye" link="{{ route('events.show', $event) }}" wire:navigate />
+                                    @can('edit-events')
+                                        @if(!$event->deleted_at)
+                                            <x-menu-item title="Edit" icon="o-pencil" link="{{ route('events.edit', ['eventId' => $event->id]) }}" wire:navigate />
+                                        @endif
+                                    @endcan
+                                    @can('create-events')
+                                        @if(!$event->deleted_at)
+                                            <x-menu-item title="Clone Event" icon="o-document-duplicate" link="{{ route('events.clone', ['eventId' => $event->id]) }}" wire:navigate />
+                                        @endif
+                                    @endcan
+                                    @can('delete-events')
+                                        @if(!$event->deleted_at)
+                                            <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}" />
+                                        @endif
+                                    @endcan
+                                </x-dropdown>
                             </td>
                         </tr>
                     @empty
