@@ -53,7 +53,7 @@
                     {{-- Icon --}}
                     <div class="flex-shrink-0 mt-0.5">
                         <x-icon
-                            name="{{ $notification->data['icon'] ?? 'o-bell' }}"
+                            :name="$notification->data['icon'] ?? 'o-bell'"
                             class="w-5 h-5 {{ is_null($notification->read_at) ? 'text-primary' : 'text-base-content/40' }}"
                         />
                     </div>

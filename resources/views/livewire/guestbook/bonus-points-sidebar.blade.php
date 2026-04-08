@@ -9,7 +9,7 @@
                             @if($item['earned'])
                                 <x-icon name="o-check-circle" class="w-5 h-5 text-success shrink-0" />
                             @else
-                                <x-icon name="{{ $item['icon'] }}" class="w-5 h-5 {{ $item['iconColor'] }} shrink-0" />
+                                <x-icon :name="$item['icon']" class="w-5 h-5 {{ $item['iconColor'] }} shrink-0" />
                             @endif
                             <div class="min-w-0">
                                 <span class="text-sm">{{ $item['label'] }}</span>

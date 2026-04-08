@@ -149,7 +149,7 @@
                             <button wire:click="sortBy('name')" class="flex items-center gap-1 hover:underline">
                                 Status & Name
                                 @if($sortField === 'name')
-                                    <x-icon name="{{ $sortDirection === 'asc' ? 'o-chevron-up' : 'o-chevron-down' }}" class="w-4 h-4" />
+                                    <x-icon :name="$sortDirection === 'asc' ? 'o-chevron-up' : 'o-chevron-down'" class="w-4 h-4" />
                                 @endif
                             </button>
                         </th>
@@ -158,7 +158,7 @@
                             <button wire:click="sortBy('start_time')" class="flex items-center gap-1 hover:underline">
                                 Dates
                                 @if($sortField === 'start_time')
-                                    <x-icon name="{{ $sortDirection === 'asc' ? 'o-chevron-up' : 'o-chevron-down' }}" class="w-4 h-4" />
+                                    <x-icon :name="$sortDirection === 'asc' ? 'o-chevron-up' : 'o-chevron-down'" class="w-4 h-4" />
                                 @endif
                             </button>
                         </th>

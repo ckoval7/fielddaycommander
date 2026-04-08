@@ -211,7 +211,7 @@
                                                         ? \App\Models\Equipment::typeIcon($conflict['equipment_type'])
                                                         : 'o-cube';
                                                 @endphp
-                                                <x-icon name="{{ $iconName }}" class="w-5 h-5 text-warning mt-0.5 flex-shrink-0" />
+                                                <x-icon :name="$iconName" class="w-5 h-5 text-warning mt-0.5 flex-shrink-0" />
 
                                                 <div class="flex-1 min-w-0">
                                                     <div class="font-medium">{{ $conflict['make_model'] }}</div>
