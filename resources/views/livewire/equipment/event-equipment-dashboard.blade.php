@@ -280,7 +280,7 @@
                                                     };
                                                 @endphp
                                                 <div class="flex items-center gap-2">
-                                                    <x-icon name="{{ $statusIcon }}" class="w-4 h-4" />
+                                                    <x-icon :name="$statusIcon" class="w-4 h-4" />
                                                     <x-badge
                                                         value="{{ ucfirst(str_replace('_', ' ', $commitment->status)) }}"
                                                         class="{{ $statusClasses }}"
@@ -373,7 +373,7 @@
                                                 default => 'text-base-content/60'
                                             };
                                         @endphp
-                                        <x-icon name="{{ $statusIcon }}" class="w-6 h-6 {{ $statusColor }}" />
+                                        <x-icon :name="$statusIcon" class="w-6 h-6 {{ $statusColor }}" />
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="font-medium">
@@ -476,7 +476,7 @@
                                                         };
                                                     @endphp
                                                     <div class="flex items-center gap-2">
-                                                        <x-icon name="{{ $statusIcon }}" class="w-4 h-4" />
+                                                        <x-icon :name="$statusIcon" class="w-4 h-4" />
                                                         <x-badge
                                                             value="{{ ucfirst(str_replace('_', ' ', $commitment->status)) }}"
                                                             class="{{ $statusClasses }} badge-sm"
@@ -564,7 +564,7 @@
                                                     };
                                                 @endphp
                                                 <div class="flex items-center gap-2">
-                                                    <x-icon name="{{ $statusIcon }}" class="w-4 h-4" />
+                                                    <x-icon :name="$statusIcon" class="w-4 h-4" />
                                                     <x-badge
                                                         value="{{ ucfirst(str_replace('_', ' ', $commitment->status)) }}"
                                                         class="{{ $statusClasses }} badge-sm"
@@ -659,7 +659,7 @@
                                                         };
                                                     @endphp
                                                     <div class="flex items-center gap-2">
-                                                        <x-icon name="{{ $statusIcon }}" class="w-4 h-4" />
+                                                        <x-icon :name="$statusIcon" class="w-4 h-4" />
                                                         <x-badge
                                                             value="{{ ucfirst(str_replace('_', ' ', $commitment->status)) }}"
                                                             class="{{ $statusClasses }} badge-sm"

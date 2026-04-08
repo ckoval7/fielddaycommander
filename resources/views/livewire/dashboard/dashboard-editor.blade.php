@@ -215,7 +215,7 @@
                                         title="{{ $isVisible ? 'Hide widget' : 'Show widget' }}"
                                     >
                                         <x-icon
-                                            name="{{ $isVisible ? 'o-eye' : 'o-eye-slash' }}"
+                                            :name="$isVisible ? 'o-eye' : 'o-eye-slash'"
                                             class="w-4 h-4"
                                         />
                                     </button>

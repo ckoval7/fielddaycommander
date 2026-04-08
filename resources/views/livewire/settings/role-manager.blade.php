@@ -83,16 +83,9 @@
                                         <x-checkbox
                                             value="{{ $permission->name }}"
                                             wire:model.live="selectedPermissions"
-                                        >
-                                            <x-slot:label>
-                                                <div>
-                                                    <div class="font-medium text-sm">{{ $permission->name }}</div>
-                                                    @if($permission->description)
-                                                        <div class="text-xs text-base-content/60">{{ $permission->description }}</div>
-                                                    @endif
-                                                </div>
-                                            </x-slot:label>
-                                        </x-checkbox>
+                                            :label="$permission->name"
+                                            :hint="$permission->description"
+                                        />
                                     @endforeach
                                 </div>
                             </x-slot:content>
