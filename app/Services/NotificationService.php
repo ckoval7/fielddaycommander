@@ -6,6 +6,7 @@ use App\Enums\NotificationCategory;
 use App\Events\NewNotification;
 use App\Models\User;
 use App\Notifications\InAppNotification;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
@@ -29,7 +30,7 @@ class NotificationService
 
         if ($debounceSeconds > 0 && $this->shouldDebounce($user, $effectiveGroupKey, $debounceSeconds)) {
             $this->updateExistingNotification($user, $effectiveGroupKey, $message, $category);
-            NewNotification::dispatch($user->id);
+            $this->broadcastSafely($user->id);
 
             return;
         }
@@ -42,7 +43,7 @@ class NotificationService
             groupKey: $effectiveGroupKey,
         ));
 
-        NewNotification::dispatch($user->id);
+        $this->broadcastSafely($user->id);
     }
 
     /**
@@ -102,5 +103,21 @@ class NotificationService
         $notification->data = $data;
         $notification->read_at = null;
         $notification->save();
+    }
+
+    /**
+     * Broadcast the notification event, swallowing failures so they never
+     * prevent database-stored notifications from being delivered.
+     */
+    protected function broadcastSafely(int $userId): void
+    {
+        try {
+            NewNotification::dispatch($userId);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to broadcast notification', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

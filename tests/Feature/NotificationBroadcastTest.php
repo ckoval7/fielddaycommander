@@ -74,6 +74,43 @@ test('notify does not dispatch broadcast event for unsubscribed user', function 
     Event::assertNotDispatched(NewNotification::class);
 });
 
+test('notifyAll delivers to all users even when broadcasting throws', function () {
+    // Simulate broadcast failure (e.g. Reverb down, sync queue)
+    Event::listen(NewNotification::class, function () {
+        throw new RuntimeException('Reverb connection refused');
+    });
+
+    $users = User::factory()->count(5)->create();
+
+    $this->service->notifyAll(
+        category: NotificationCategory::QsoMilestone,
+        title: '50 QSOs!',
+        message: 'Milestone reached',
+    );
+
+    // ALL users should have the notification despite broadcast failure
+    foreach ($users as $user) {
+        expect($user->fresh()->unreadNotifications()->count())->toBe(1);
+    }
+});
+
+test('notify stores notification even when broadcasting throws', function () {
+    Event::listen(NewNotification::class, function () {
+        throw new RuntimeException('Reverb connection refused');
+    });
+
+    $user = User::factory()->create();
+
+    $this->service->notify(
+        user: $user,
+        category: NotificationCategory::QsoMilestone,
+        title: '50 QSOs!',
+        message: 'Milestone reached',
+    );
+
+    expect($user->fresh()->unreadNotifications()->count())->toBe(1);
+});
+
 test('NewNotification broadcasts on private user channel', function () {
     $event = new NewNotification(userId: 42);
 
