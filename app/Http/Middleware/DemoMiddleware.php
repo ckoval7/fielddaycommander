@@ -45,10 +45,13 @@ class DemoMiddleware
         // Cookie format: "uuid|role_slug" (e.g. "abc-123|system_admin")
         [$uuid, $roleSlug] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
 
-        // Admin routes: let non-demo visitors through (auth middleware handles access),
-        // but block demo users — even those with admin roles in their demo DB.
+        // Admin routes: block demo-only visitors but let real authenticated
+        // admins through even if they have a stale demo_session cookie.
         if ($request->is('admin/*')) {
-            if ($uuid && Str::isUuid($uuid)) {
+            $hasDemoCookie = $uuid && Str::isUuid($uuid);
+            $isRealUser = Auth::check() && ! session()->has('dev_role_override');
+
+            if ($hasDemoCookie && ! $isRealUser) {
                 abort(403, 'Demo users cannot access admin pages.');
             }
 
