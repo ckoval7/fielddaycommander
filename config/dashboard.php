@@ -303,7 +303,7 @@ return [
         |----------------------------------------------------------------------
         |
         | Balanced overview for visitors and unauthenticated users.
-        | 8 widgets providing essential event information.
+        | 9 widgets providing essential event information.
         |
         */
 
@@ -352,6 +352,25 @@ return [
                     'visible' => true,
                 ],
                 [
+                    'id' => 'sections-worked',
+                    'type' => 'sections_worked',
+                    'config' => [],
+                    'row_span' => 6,
+                    'order' => 3,
+                    'visible' => true,
+                ],
+                [
+                    'id' => 'progress-milestone',
+                    'type' => 'progress_bar',
+                    'config' => [
+                        'metric' => 'next_milestone',
+                        'show_percentage' => true,
+                    ],
+                    'row_span' => 2,
+                    'order' => 4,
+                    'visible' => true,
+                ],
+                [
                     'id' => 'timer-countdown',
                     'type' => 'timer',
                     'config' => [
@@ -360,20 +379,7 @@ return [
                         'alert_when_near' => 60,
                     ],
                     'row_span' => 2,
-                    'order' => 3,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'chart-qsos-hour',
-                    'type' => 'chart',
-                    'config' => [
-                        'chart_type' => 'line',
-                        'data_source' => 'qsos_per_hour',
-                        'time_range' => 'last_12_hours',
-                    ],
-                    'col_span' => 2,
-                    'row_span' => 3,
-                    'order' => 4,
+                    'order' => 5,
                     'visible' => true,
                 ],
                 [
@@ -386,38 +392,20 @@ return [
                     ],
                     'col_span' => 2,
                     'row_span' => 3,
-                    'order' => 5,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'list-recent-contacts',
-                    'type' => 'list_widget',
-                    'config' => [
-                        'list_type' => 'recent_contacts',
-                        'item_count' => '15',
-                    ],
-                    'col_span' => 2,
-                    'row_span' => 6,
                     'order' => 6,
                     'visible' => true,
                 ],
                 [
-                    'id' => 'sections-worked',
-                    'type' => 'sections_worked',
-                    'config' => [],
-                    'row_span' => 6,
-                    'order' => 7,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'progress-milestone',
-                    'type' => 'progress_bar',
+                    'id' => 'chart-qsos-hour',
+                    'type' => 'chart',
                     'config' => [
-                        'metric' => 'next_milestone',
-                        'show_percentage' => true,
+                        'chart_type' => 'line',
+                        'data_source' => 'qsos_per_hour',
+                        'time_range' => 'last_12_hours',
                     ],
-                    'row_span' => 2,
-                    'order' => 8,
+                    'col_span' => 2,
+                    'row_span' => 3,
+                    'order' => 7,
                     'visible' => true,
                 ],
                 [
@@ -428,7 +416,7 @@ return [
                         'show_trend' => false,
                     ],
                     'row_span' => 2,
-                    'order' => 9,
+                    'order' => 8,
                     'visible' => true,
                 ],
             ],
@@ -489,6 +477,25 @@ return [
                     'visible' => true,
                 ],
                 [
+                    'id' => 'sections-worked',
+                    'type' => 'sections_worked',
+                    'config' => [],
+                    'row_span' => 6,
+                    'order' => 3,
+                    'visible' => true,
+                ],
+                [
+                    'id' => 'progress-milestone',
+                    'type' => 'progress_bar',
+                    'config' => [
+                        'metric' => 'next_milestone',
+                        'show_percentage' => true,
+                    ],
+                    'row_span' => 2,
+                    'order' => 4,
+                    'visible' => true,
+                ],
+                [
                     'id' => 'timer-countdown',
                     'type' => 'timer',
                     'config' => [
@@ -497,20 +504,7 @@ return [
                         'alert_when_near' => 60,
                     ],
                     'row_span' => 2,
-                    'order' => 3,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'chart-qsos-hour',
-                    'type' => 'chart',
-                    'config' => [
-                        'chart_type' => 'line',
-                        'data_source' => 'qsos_per_hour',
-                        'time_range' => 'last_12_hours',
-                    ],
-                    'col_span' => 2,
-                    'row_span' => 3,
-                    'order' => 4,
+                    'order' => 5,
                     'visible' => true,
                 ],
                 [
@@ -523,38 +517,20 @@ return [
                     ],
                     'col_span' => 2,
                     'row_span' => 3,
-                    'order' => 5,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'list-recent-contacts',
-                    'type' => 'list_widget',
-                    'config' => [
-                        'list_type' => 'recent_contacts',
-                        'item_count' => '15',
-                    ],
-                    'col_span' => 2,
-                    'row_span' => 6,
                     'order' => 6,
                     'visible' => true,
                 ],
                 [
-                    'id' => 'sections-worked',
-                    'type' => 'sections_worked',
-                    'config' => [],
-                    'row_span' => 6,
-                    'order' => 7,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'progress-milestone',
-                    'type' => 'progress_bar',
+                    'id' => 'chart-qsos-hour',
+                    'type' => 'chart',
                     'config' => [
-                        'metric' => 'next_milestone',
-                        'show_percentage' => true,
+                        'chart_type' => 'line',
+                        'data_source' => 'qsos_per_hour',
+                        'time_range' => 'last_12_hours',
                     ],
-                    'row_span' => 2,
-                    'order' => 8,
+                    'col_span' => 2,
+                    'row_span' => 3,
+                    'order' => 7,
                     'visible' => true,
                 ],
                 [
@@ -565,7 +541,7 @@ return [
                         'show_trend' => false,
                     ],
                     'row_span' => 2,
-                    'order' => 9,
+                    'order' => 8,
                     'visible' => true,
                 ],
             ],
