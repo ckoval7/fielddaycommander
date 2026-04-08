@@ -1,6 +1,6 @@
 import flatpickr from 'flatpickr';
 
-export default function flatpickrComponent({ mode = 'datetime', min = null, max = null }) {
+export default function flatpickrComponent({ mode = 'datetime', min = null, max = null, model = null }) {
     return {
         instance: null,
 
@@ -34,6 +34,17 @@ export default function flatpickrComponent({ mode = 'datetime', min = null, max 
             if (max) config.maxDate = max;
 
             this.instance = flatpickr(this.$el.querySelector('input'), config);
+
+            if (model && this.$wire) {
+                const initialValue = this.$wire.get(model);
+                if (initialValue) {
+                    this.instance.setDate(initialValue, true);
+                }
+
+                this.$wire.$watch(model, (value) => {
+                    this.instance.setDate(value || '', true);
+                });
+            }
         },
 
         destroy() {
