@@ -22,10 +22,7 @@
 @endphp
 
 <x-badge
-    value="{{ ucfirst(str_replace('_', ' ', $status)) }}"
+    :value="ucfirst(str_replace('_', ' ', $status))"
     class="{{ $statusClasses }}"
->
-    <x-slot:icon>
-        <x-icon name="{{ $statusIcon }}" class="w-4 h-4 mr-2" />
-    </x-slot:icon>
-</x-badge>
+    :icon="$statusIcon"
+/>
