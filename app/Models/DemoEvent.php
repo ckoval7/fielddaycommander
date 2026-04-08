@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DemoEvent extends Model
 {
+    protected $connection = 'mysql';
+
     public $timestamps = false;
 
     protected $fillable = [

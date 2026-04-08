@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DemoSession extends Model
 {
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'session_uuid',
         'role',
