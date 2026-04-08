@@ -7,6 +7,7 @@ use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\Equipment;
+use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
@@ -34,6 +35,26 @@ class DemoSeeder extends Seeder
     private const ROLE_STATION_CAPTAIN = 'Station Captain';
 
     public function run(): void
+    {
+        // Suppress notification-firing observers during seeding to prevent
+        // broadcast storms that exceed PHP's max_execution_time when Reverb
+        // is unavailable (each failed HTTP round-trip × hundreds of records).
+        $silenced = [Contact::class, GuestbookEntry::class, OperatingSession::class, EquipmentEvent::class];
+        foreach ($silenced as $model) {
+            $model::unsetEventDispatcher();
+        }
+
+        try {
+            $this->seed();
+        } finally {
+            $dispatcher = app('events');
+            foreach ($silenced as $model) {
+                $model::setEventDispatcher($dispatcher);
+            }
+        }
+    }
+
+    private function seed(): void
     {
         // 1. Reference data (skip SystemAdminSeeder — we create our own users)
         $this->call([
