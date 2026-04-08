@@ -20,7 +20,17 @@ class DemoAnalytics extends Component
     public function mount(): void
     {
         abort_unless(config('demo.enabled'), 404);
-        $this->authorize('manage-settings');
+
+        // DEBUG: temporary - remove after diagnosing 403
+        if (! auth()->check()) {
+            abort(403, 'DEBUG: No authenticated user');
+        }
+        $user = auth()->user();
+        $roles = $user->roles->pluck('name')->join(', ');
+        $perms = $user->getAllPermissions()->pluck('name')->join(', ');
+        $can = $user->can('manage-settings');
+        logger("DemoAnalytics DEBUG: user={$user->email} roles=[{$roles}] perms=[{$perms}] can={$can}");
+        abort_unless($can, 403, "DEBUG: user={$user->email} roles=[{$roles}] can=".($can ? 'yes' : 'no'));
     }
 
     #[Computed]
