@@ -319,6 +319,17 @@
         display: none !important;
     }
 
+    /* Mobile-responsive badges - allow height to adapt to content on small screens */
+    @media (max-width: 640px) {
+        .badge {
+            height: auto;
+            min-height: var(--size-field-xs, 1.25rem);
+            white-space: normal;
+            padding-top: 0.125rem;
+            padding-bottom: 0.125rem;
+        }
+    }
+
     /* Club Equipment Badge - Custom Styling */
     .badge-club {
         @apply bg-indigo-100 text-indigo-800 border-indigo-200;
