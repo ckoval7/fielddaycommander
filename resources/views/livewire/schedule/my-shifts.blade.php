@@ -1,7 +1,7 @@
 <div>
     <x-slot:title>My Shifts{{ $event ? ' - ' . $event->name : '' }}</x-slot:title>
 
-    <div class="p-6">
+    <div class="p-4 md:p-6">
         {{-- Header --}}
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
             <div>

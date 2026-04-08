@@ -34,6 +34,7 @@
                         icon="o-check"
                         class="btn-primary btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                         wire:click="saveLayout"
+                        x-on:click="window.__dashboardEditUnsaved = false; window.onbeforeunload = null;"
                         spinner="saveLayout"
                     />
                     <x-button

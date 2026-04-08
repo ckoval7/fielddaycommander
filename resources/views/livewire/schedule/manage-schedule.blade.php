@@ -1,7 +1,7 @@
 <div>
     <x-slot:title>Manage Schedule{{ $event ? ' - ' . $event->name : '' }}</x-slot:title>
 
-    <div class="p-6">
+    <div class="p-4 md:p-6">
         {{-- Header --}}
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
             <div>
@@ -99,34 +99,36 @@
                                             {{-- Assigned users --}}
                                             <div class="flex-1 min-w-0">
                                                 @if($shift->assignments->isNotEmpty())
-                                                    <div class="space-y-1">
+                                                    <div class="space-y-2">
                                                         @foreach($shift->assignments as $assignment)
-                                                            <div class="flex items-center gap-2 text-sm">
-                                                                <span>{{ $assignment->user->first_name }} {{ $assignment->user->last_name }}</span>
-                                                                @if($assignment->user->call_sign)
-                                                                    <span class="text-base-content/50">({{ $assignment->user->call_sign }})</span>
-                                                                @endif
-                                                                {{-- Status badge --}}
-                                                                @switch($assignment->status)
-                                                                    @case('checked_in')
-                                                                        <x-badge value="Checked In" class="badge-success badge-sm" />
-                                                                        @break
-                                                                    @case('checked_out')
-                                                                        <x-badge value="Checked Out" class="badge-info badge-sm" />
-                                                                        @break
-                                                                    @case('no_show')
-                                                                        <x-badge value="No Show" class="badge-error badge-sm" />
-                                                                        @break
-                                                                    @default
-                                                                        <x-badge value="Scheduled" class="badge-neutral badge-sm" />
-                                                                @endswitch
-                                                                {{-- Confirmed badge --}}
-                                                                @if($assignment->confirmed_by_user_id)
-                                                                    <x-badge value="Confirmed" class="badge-success badge-sm badge-outline" />
-                                                                @endif
+                                                            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
+                                                                <div class="flex flex-wrap items-center gap-1.5">
+                                                                    <span>{{ $assignment->user->first_name }} {{ $assignment->user->last_name }}</span>
+                                                                    @if($assignment->user->call_sign)
+                                                                        <span class="text-base-content/50">({{ $assignment->user->call_sign }})</span>
+                                                                    @endif
+                                                                    {{-- Status badge --}}
+                                                                    @switch($assignment->status)
+                                                                        @case('checked_in')
+                                                                            <x-badge value="Checked In" class="badge-success badge-sm" />
+                                                                            @break
+                                                                        @case('checked_out')
+                                                                            <x-badge value="Checked Out" class="badge-info badge-sm" />
+                                                                            @break
+                                                                        @case('no_show')
+                                                                            <x-badge value="No Show" class="badge-error badge-sm" />
+                                                                            @break
+                                                                        @default
+                                                                            <x-badge value="Scheduled" class="badge-neutral badge-sm" />
+                                                                    @endswitch
+                                                                    {{-- Confirmed badge --}}
+                                                                    @if($assignment->confirmed_by_user_id)
+                                                                        <x-badge value="Confirmed" class="badge-success badge-sm badge-outline" />
+                                                                    @endif
+                                                                </div>
 
                                                                 {{-- Assignment action buttons --}}
-                                                                <div class="flex items-center gap-1 ml-auto">
+                                                                <div class="flex items-center gap-1 sm:ml-auto">
                                                                     @if($assignment->status === 'scheduled')
                                                                         <x-button
                                                                             icon="o-arrow-right-on-rectangle"

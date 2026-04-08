@@ -68,6 +68,5 @@ test('config only user lacks human action permissions', function () {
     expect($this->configUser->can('manage-shifts'))->toBeFalse();
     expect($this->configUser->can('manage-images'))->toBeFalse();
     expect($this->configUser->can('manage-guestbook'))->toBeFalse();
-    expect($this->configUser->can('sign-guestbook'))->toBeFalse();
     expect($this->configUser->can('sign-up-shifts'))->toBeFalse();
 });

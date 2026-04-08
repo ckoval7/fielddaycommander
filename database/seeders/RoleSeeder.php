@@ -78,7 +78,11 @@ class RoleSeeder extends Seeder
             'sign-up-shifts',
             'view-stations',
             'manage-stations',
+            'manage-bulletins',
             'manage-equipment',
+            'manage-own-equipment',
+            'view-all-equipment',
+            'manage-event-equipment',
         ]);
 
         // Config Only - View and admin permissions only (for SYSTEM bootstrap account)
