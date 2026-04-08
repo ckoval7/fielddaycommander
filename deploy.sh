@@ -639,6 +639,14 @@ DEMOEOF
     cd "$APP_PATH"
     sudo -u fdcommander php artisan migrate --force
 
+    # In demo mode the default connection is 'demo' (demo_base), so also
+    # migrate the main 'mysql' connection for analytics tables (demo_sessions,
+    # demo_events) that live in the primary database.
+    if $DEMO_MODE; then
+        log_info "Running migrations on main database (analytics tables)..."
+        sudo -u fdcommander php artisan migrate --database=mysql --force
+    fi
+
     # Run production seeders
     if ! $NO_SEEDERS; then
         log_info "Running production seeders..."
