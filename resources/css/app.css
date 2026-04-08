@@ -29,8 +29,8 @@
 /* maryUI */
 @source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";
 
-/* Dark theme variant support */
-@custom-variant dark (&:where(.dark, .dark *));
+/* Dark theme variant support — matches data-theme="dark" set by the theme toggle */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* Laravel defaults */
 @source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
