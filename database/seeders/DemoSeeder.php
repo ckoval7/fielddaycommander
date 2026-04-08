@@ -286,9 +286,9 @@ class DemoSeeder extends Seeder
             $gotaOperators = null;
             if ($def['is_gota']) {
                 $gotaOperators = [
-                    ['first_name' => fake()->firstName(), 'last_name' => fake()->lastName(), 'callsign' => null],
-                    ['first_name' => fake()->firstName(), 'last_name' => fake()->lastName(), 'callsign' => null],
-                    ['first_name' => fake()->firstName(), 'last_name' => fake()->lastName(), 'callsign' => null],
+                    ['first_name' => 'Jamie', 'last_name' => 'Rivera', 'callsign' => null],
+                    ['first_name' => 'Morgan', 'last_name' => 'Chen', 'callsign' => null],
+                    ['first_name' => 'Taylor', 'last_name' => 'Brooks', 'callsign' => null],
                 ];
             }
 
