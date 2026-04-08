@@ -76,7 +76,6 @@ class RoleSeeder extends Seeder
             'log-contacts',
             'edit-contacts',
             'sign-up-shifts',
-            'sign-guestbook',
             'view-stations',
             'manage-stations',
             'manage-bulletins',

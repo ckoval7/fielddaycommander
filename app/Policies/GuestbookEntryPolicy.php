@@ -12,7 +12,6 @@ use App\Models\User;
  * Special handling for guest access via nullable User parameter on create().
  *
  * Permissions:
- * - sign-guestbook: Sign the guestbook (guests allowed, rate limiting handled by middleware)
  * - manage-guestbook: View all guestbook entries
  * - manage-guestbook: Verify, edit, delete, export entries
  */
