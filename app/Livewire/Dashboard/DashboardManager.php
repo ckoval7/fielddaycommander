@@ -87,25 +87,17 @@ class DashboardManager extends Component
             if ($validated['copyFrom']) {
                 // Duplicate existing dashboard
                 $sourceDashboard = Dashboard::findOrFail($validated['copyFrom']);
-                $service->duplicateDashboard($sourceDashboard, $validated['newTitle']);
+                $newDashboard = $service->duplicateDashboard($sourceDashboard, $validated['newTitle']);
             } else {
                 // Create blank dashboard
-                $service->createDashboard(
+                $newDashboard = $service->createDashboard(
                     user: auth()->user(),
                     title: $validated['newTitle'],
                     description: $validated['newDescription']
                 );
             }
 
-            $this->loadDashboards();
-            $this->cancelCreate();
-
-            $this->dispatch('toast', [
-                'title' => 'Success',
-                'description' => 'Dashboard created successfully',
-                'icon' => 'o-check-circle',
-                'css' => 'alert-success',
-            ]);
+            $this->redirect(route('dashboard').'?dashboard='.$newDashboard->id);
         } catch (DashboardAuthorizationException|\OverflowException|\InvalidArgumentException $e) {
             $this->dispatch('toast', [
                 'title' => 'Error',

@@ -63,8 +63,7 @@ test('can create a blank dashboard', function () {
         ->set('newTitle', 'My Test Dashboard')
         ->set('newDescription', 'Test description')
         ->call('createDashboard')
-        ->assertDispatched('toast')
-        ->assertSet('showCreateForm', false);
+        ->assertRedirect();
 
     expect($this->user->dashboards()->count())->toBe(1);
     expect($this->user->dashboards()->first()->title)->toBe('My Test Dashboard');
@@ -214,7 +213,7 @@ test('can copy dashboard from existing dashboard', function () {
         ->set('newTitle', 'My New Dashboard')
         ->set('copyFrom', $existing->id)
         ->call('createDashboard')
-        ->assertDispatched('toast');
+        ->assertRedirect();
 
     expect($this->user->dashboards()->count())->toBe(2);
     $new = $this->user->dashboards()
