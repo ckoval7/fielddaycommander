@@ -955,3 +955,81 @@ describe('audit logging', function () {
         expect($auditLog->old_values['role'])->toBe('Station Operator');
     });
 });
+
+// =============================================================================
+// Timezone Handling
+// =============================================================================
+
+describe('timezone handling', function () {
+    test('saves shift times as UTC when system timezone is non-UTC', function () {
+        Setting::set('timezone', 'America/New_York');
+        $this->actingAs($this->admin);
+
+        // 10:00 AM Eastern Daylight Time = 14:00 UTC
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal')
+            ->set('shiftRoleId', $this->role->id)
+            ->set('shiftStartTime', '2026-06-28T10:00')
+            ->set('shiftEndTime', '2026-06-28T12:00')
+            ->set('shiftCapacity', 1)
+            ->call('saveShift')
+            ->assertDispatched('toast', title: 'Success');
+
+        $shift = Shift::where('shift_role_id', $this->role->id)->first();
+        expect($shift->start_time->utc()->format('Y-m-d H:i:s'))->toBe('2026-06-28 14:00:00');
+        expect($shift->end_time->utc()->format('Y-m-d H:i:s'))->toBe('2026-06-28 16:00:00');
+    });
+
+    test('populates shift edit form with times in local timezone', function () {
+        Setting::set('timezone', 'America/New_York');
+
+        // Shift stored at 14:00 UTC = 10:00 AM EDT
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => '2026-06-28 14:00:00',
+            'end_time' => '2026-06-28 16:00:00',
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal', $shift->id)
+            ->assertSet('shiftStartTime', '2026-06-28T10:00')
+            ->assertSet('shiftEndTime', '2026-06-28T12:00');
+    });
+
+    test('bulk create saves shifts as UTC when system timezone is non-UTC', function () {
+        Setting::set('timezone', 'America/New_York');
+        $this->actingAs($this->admin);
+
+        // 10:00 AM to 12:00 PM Eastern = 14:00 to 16:00 UTC
+        Livewire::test(ManageSchedule::class)
+            ->call('openBulkModal')
+            ->set('bulkRoleId', $this->role->id)
+            ->set('bulkStartTime', '2026-06-28T10:00')
+            ->set('bulkEndTime', '2026-06-28T12:00')
+            ->set('bulkDurationMinutes', 120)
+            ->set('bulkCapacity', 1)
+            ->call('createBulkShifts')
+            ->assertDispatched('toast', title: 'Success');
+
+        $shift = Shift::where('shift_role_id', $this->role->id)->first();
+        expect($shift->start_time->utc()->format('Y-m-d H:i:s'))->toBe('2026-06-28 14:00:00');
+        expect($shift->end_time->utc()->format('Y-m-d H:i:s'))->toBe('2026-06-28 16:00:00');
+    });
+
+    test('bulk modal pre-fills event times in local timezone', function () {
+        Setting::set('timezone', 'America/New_York');
+        $this->actingAs($this->admin);
+
+        // The pre-fill should use the local timezone, not raw UTC
+        $expectedStart = toLocalTime($this->event->start_time)->format('Y-m-d\TH:i');
+        $expectedEnd = toLocalTime($this->event->end_time)->format('Y-m-d\TH:i');
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openBulkModal')
+            ->assertSet('bulkStartTime', $expectedStart)
+            ->assertSet('bulkEndTime', $expectedEnd);
+    });
+});

@@ -27,6 +27,21 @@ if (! function_exists('appNow')) {
     }
 }
 
+if (! function_exists('localTimezone')) {
+    /**
+     * Get the active timezone for the current user (or system default).
+     *
+     * Uses the authenticated user's preferred timezone when set, otherwise
+     * falls back to the system timezone setting.
+     */
+    function localTimezone(): string
+    {
+        return auth()->check() && auth()->user()->preferred_timezone
+            ? auth()->user()->preferred_timezone
+            : Setting::get('timezone', config('app.timezone'));
+    }
+}
+
 if (! function_exists('toLocalTime')) {
     /**
      * Convert a UTC Carbon instance to the user's preferred timezone (or system default).
@@ -34,7 +49,7 @@ if (! function_exists('toLocalTime')) {
      * Returns the Carbon instance shifted to the display timezone so you can
      * call ->format() on it.  Append ->format('T') to get the abbreviation.
      *
-     * @param  \Carbon\Carbon|string|null  $timestamp
+     * @param  Carbon|string|null  $timestamp
      */
     function toLocalTime($timestamp): ?Carbon
     {
@@ -56,7 +71,7 @@ if (! function_exists('formatTimeAgo')) {
     /**
      * Format a timestamp as a human-readable "time ago" string.
      *
-     * @param  \Carbon\Carbon|string|null  $timestamp
+     * @param  Carbon|string|null  $timestamp
      */
     function formatTimeAgo($timestamp): string
     {

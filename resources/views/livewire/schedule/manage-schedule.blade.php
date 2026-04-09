@@ -451,13 +451,13 @@
                     label="Start Time"
                     wire:model="shiftStartTime"
                     required
-                    hint="Enter in UTC — will display in local time to volunteers"
+                    hint="Times are in your local timezone"
                 />
                 <x-flatpickr
                     label="End Time"
                     wire:model="shiftEndTime"
                     required
-                    hint="Enter in UTC — will display in local time to volunteers"
+                    hint="Times are in your local timezone"
                 />
                 <x-input
                     label="Capacity"
@@ -503,13 +503,13 @@
                     label="Start Time"
                     wire:model="bulkStartTime"
                     required
-                    hint="Enter in UTC — will display in local time to volunteers"
+                    hint="Times are in your local timezone"
                 />
                 <x-flatpickr
                     label="End Time"
                     wire:model="bulkEndTime"
                     required
-                    hint="Enter in UTC — will display in local time to volunteers"
+                    hint="Times are in your local timezone"
                 />
                 <x-input
                     label="Shift Duration (minutes)"
