@@ -67,6 +67,19 @@ if (! function_exists('toLocalTime')) {
     }
 }
 
+if (! function_exists('timeFormat')) {
+    /**
+     * Get the configured time format string for display (without seconds).
+     *
+     * Maps the stored time_format setting to a display-appropriate PHP date format.
+     * Use this when formatting shift or event times for display.
+     */
+    function timeFormat(): string
+    {
+        return Setting::get('time_format', 'H:i:s') === 'H:i:s' ? 'H:i' : 'g:i A';
+    }
+}
+
 if (! function_exists('formatTimeAgo')) {
     /**
      * Format a timestamp as a human-readable "time ago" string.
