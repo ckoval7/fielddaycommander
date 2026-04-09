@@ -34,7 +34,7 @@ class DevRoleSwitcher extends Component
         }
 
         $this->updateActiveState();
-        $this->dispatch('role-switched');
+        $this->js('window.location.reload()');
     }
 
     public function updatedCallSign(string $value): void
@@ -54,7 +54,7 @@ class DevRoleSwitcher extends Component
         $this->role = '';
         $this->callSign = '';
         $this->isActive = false;
-        $this->dispatch('role-switched');
+        $this->js('window.location.reload()');
     }
 
     protected function updateActiveState(): void
