@@ -257,6 +257,56 @@ describe('check in and check out', function () {
 
         expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
     });
+
+    test('checkout confirmation warning is shown when shift has not ended', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->subHour(),
+            'end_time' => appNow()->addHour(),
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->user->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow()->subMinutes(30),
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertSee('Are you sure you want to check out?', false);
+    });
+
+    test('checkout confirmation warning is not shown when shift has already ended', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->user->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow()->subHours(2),
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertDontSee('Are you sure you want to check out?', false);
+    });
 });
 
 describe('re-check-in', function () {

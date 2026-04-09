@@ -131,7 +131,9 @@
                                                     icon="o-arrow-left-on-rectangle"
                                                     class="btn-warning btn-sm"
                                                     wire:click="checkOut({{ $assignment->id }})"
-                                                    wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
+                                                    @if($minutesLeft >= 1)
+                                                        wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
+                                                    @endif
                                                     spinner="checkOut"
                                                 />
                                             @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
