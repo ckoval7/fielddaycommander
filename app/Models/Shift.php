@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\ShiftFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Shift extends Model
 {
-    /** @use HasFactory<\Database\Factories\ShiftFactory> */
+    /** @use HasFactory<ShiftFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
@@ -154,6 +155,28 @@ class Shift extends Model
     {
         return Attribute::make(
             get: fn (): bool => appNow()->isBefore($this->start_time)
+        );
+    }
+
+    /**
+     * Check if this shift urgently needs coverage (starts within 2 hours, no assignments).
+     */
+    protected function isUrgentlyEmpty(): Attribute
+    {
+        return Attribute::make(
+            get: function (): bool {
+                if (! $this->is_upcoming || ! $this->is_open) {
+                    return false;
+                }
+
+                if ($this->start_time->gt(appNow()->addHours(2))) {
+                    return false;
+                }
+
+                return $this->relationLoaded('assignments')
+                    ? $this->assignments->isEmpty()
+                    : $this->assignments()->count() === 0;
+            }
         );
     }
 }

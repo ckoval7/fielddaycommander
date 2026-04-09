@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.visible.60s>
     <x-slot:title>Shift Schedule{{ $event ? ' - ' . $event->name : '' }}</x-slot:title>
 
     <div class="p-4 md:p-6">
@@ -77,9 +77,10 @@
                             $isFull = $filledCount >= $shift->capacity;
                             $isMyShift = in_array($shift->id, $myAssignmentIds);
                             $myAssignment = $myAssignmentsKeyed->get($shift->id);
+                            $isUrgentlyEmpty = $shift->is_urgently_empty;
                         @endphp
 
-                        <div class="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg bg-base-200/50 border border-base-300">
+                        <div class="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg {{ $isUrgentlyEmpty ? 'bg-warning/5 border border-warning border-l-4' : 'bg-base-200/50 border border-base-300' }}">
                             {{-- Role Badge --}}
                             <div class="flex-shrink-0">
                                 <span class="badge badge-sm text-white gap-1" style="background-color: {{ $shift->shiftRole?->color ?? '#64748b' }}">
@@ -108,6 +109,9 @@
                                 />
                                 @if(!$shift->is_open)
                                     <x-badge value="Closed" class="badge-neutral badge-sm ml-1" />
+                                @endif
+                                @if($isUrgentlyEmpty)
+                                    <x-badge value="Needs Coverage" class="badge-warning badge-sm ml-1" />
                                 @endif
                             </div>
 
@@ -246,9 +250,10 @@
                                             $isFull = $filledCount >= $shift->capacity;
                                             $isMyShift = in_array($shift->id, $myAssignmentIds);
                                             $myAssignment = $myAssignmentsKeyed->get($shift->id);
+                                            $isUrgentlyEmpty = $shift->is_urgently_empty;
                                         @endphp
 
-                                        <div class="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg bg-base-200/50 border border-base-300">
+                                        <div class="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg {{ $isUrgentlyEmpty ? 'bg-warning/5 border border-warning border-l-4' : 'bg-base-200/50 border border-base-300' }}">
                                             {{-- Time Range --}}
                                             <div class="flex-shrink-0 min-w-[160px]">
                                                 <div class="font-medium text-sm">
@@ -267,6 +272,9 @@
                                                 />
                                                 @if(!$shift->is_open)
                                                     <x-badge value="Closed" class="badge-neutral badge-sm ml-1" />
+                                                @endif
+                                                @if($isUrgentlyEmpty)
+                                                    <x-badge value="Needs Coverage" class="badge-warning badge-sm ml-1" />
                                                 @endif
                                             </div>
 
