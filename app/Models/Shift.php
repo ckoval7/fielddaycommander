@@ -67,7 +67,7 @@ class Shift extends Model
      */
     public function scopeForEvent(Builder $query, int $eventConfigurationId): Builder
     {
-        return $query->where('event_configuration_id', $eventConfigurationId);
+        return $query->where('shifts.event_configuration_id', $eventConfigurationId);
     }
 
     /**

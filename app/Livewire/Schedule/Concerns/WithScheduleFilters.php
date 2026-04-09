@@ -26,7 +26,7 @@ trait WithScheduleFilters
     public string $timeFilter = '';
 
     #[Url]
-    public string $sortBy = 'time';
+    public string $sortBy = 'role';
 
     #[Url]
     public string $sortDir = 'asc';
@@ -139,7 +139,7 @@ trait WithScheduleFilters
         if ($this->timeFilter !== '') {
             $count++;
         }
-        if ($this->sortBy !== 'time' || $this->sortDir !== 'asc') {
+        if ($this->sortBy !== 'role' || $this->sortDir !== 'asc') {
             $count++;
         }
 
@@ -156,7 +156,7 @@ trait WithScheduleFilters
         $this->status = '';
         $this->availability = '';
         $this->timeFilter = '';
-        $this->sortBy = 'time';
+        $this->sortBy = 'role';
         $this->sortDir = 'asc';
     }
 
