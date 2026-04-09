@@ -4,7 +4,7 @@ set -e
 echo "=== FD Commander Docker Entrypoint ==="
 
 # 0. Validate required environment
-if [ -z "$DB_PASSWORD" ]; then
+if [[ -z "$DB_PASSWORD" ]]; then
     echo "ERROR: DB_PASSWORD is not set."
     echo "Run 'bash docker/setup.sh' to generate a .env file with secure defaults."
     exit 1
@@ -17,7 +17,7 @@ chmod -R 775 /app/storage /app/bootstrap/cache
 chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
 # 2. Create storage symlink (idempotent)
-if [ ! -L /app/public/storage ]; then
+if [[ ! -L /app/public/storage ]]; then
     php artisan storage:link
 fi
 
@@ -31,7 +31,7 @@ env | grep -E '^[A-Z_]+=' | sort | while IFS='=' read -r key value; do
 done
 
 # 4. Generate APP_KEY if not set
-if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
+if [[ -z "$APP_KEY" || "$APP_KEY" = "base64:" ]]; then
     echo "Generating application key..."
     php artisan key:generate --force
     # Re-export so downstream commands see it
@@ -39,7 +39,7 @@ if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
 fi
 
 # 5. Generate Reverb credentials if not set
-if [ -z "$REVERB_APP_KEY" ]; then
+if [[ -z "$REVERB_APP_KEY" ]]; then
     echo "Generating Reverb credentials..."
     REVERB_APP_KEY=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 20 || true)
     REVERB_APP_SECRET=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 20 || true)
@@ -65,7 +65,7 @@ php artisan migrate --force
 
 # 8. Run production seeders on first run
 SEEDER_MARKER="/app/storage/.seeders-complete"
-if [ ! -f "$SEEDER_MARKER" ]; then
+if [[ ! -f "$SEEDER_MARKER" ]]; then
     echo "First run detected — running production seeders..."
     php artisan db:seed --class=EventTypeSeeder --force
     php artisan db:seed --class=BandSeeder --force
