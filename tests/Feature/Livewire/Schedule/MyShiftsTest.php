@@ -345,6 +345,104 @@ describe('filtering', function () {
             ->assertDontSee(toLocalTime($shift1->start_time)->format('g:i A'));
     });
 
+    test('sort by time ascending shows earlier shift first', function () {
+        $shiftEarly = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $shiftLate = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(6),
+            'end_time' => appNow()->addHours(8),
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shiftEarly->id, 'user_id' => $this->user->id]);
+        ShiftAssignment::factory()->create(['shift_id' => $shiftLate->id, 'user_id' => $this->user->id]);
+
+        Setting::set('time_format', 'h:i:s A');
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->set('sortBy', 'time')
+            ->set('sortDir', 'asc')
+            ->assertSeeInOrder([
+                toLocalTime($shiftEarly->start_time)->format('g:i A'),
+                toLocalTime($shiftLate->start_time)->format('g:i A'),
+            ]);
+    });
+
+    test('sort by time descending shows later shift first', function () {
+        $shiftEarly = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $shiftLate = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(6),
+            'end_time' => appNow()->addHours(8),
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shiftEarly->id, 'user_id' => $this->user->id]);
+        ShiftAssignment::factory()->create(['shift_id' => $shiftLate->id, 'user_id' => $this->user->id]);
+
+        Setting::set('time_format', 'h:i:s A');
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->set('sortBy', 'time')
+            ->set('sortDir', 'desc')
+            ->assertSeeInOrder([
+                toLocalTime($shiftLate->start_time)->format('g:i A'),
+                toLocalTime($shiftEarly->start_time)->format('g:i A'),
+            ]);
+    });
+
+    test('sort by role orders by role sort_order', function () {
+        $role1 = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Alpha Role',
+            'sort_order' => 0,
+        ]);
+
+        $role2 = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Beta Role',
+            'sort_order' => 1,
+        ]);
+
+        $shiftForRole2 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role2->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $shiftForRole1 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role1->id,
+            'start_time' => appNow()->addHours(3),
+            'end_time' => appNow()->addHours(5),
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shiftForRole2->id, 'user_id' => $this->user->id]);
+        ShiftAssignment::factory()->create(['shift_id' => $shiftForRole1->id, 'user_id' => $this->user->id]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->set('sortBy', 'role')
+            ->set('sortDir', 'asc')
+            ->assertSeeInOrder(['Alpha Role', 'Beta Role']);
+    });
+
     test('can reset filters', function () {
         $this->actingAs($this->user);
 

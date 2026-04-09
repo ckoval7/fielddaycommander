@@ -50,6 +50,7 @@ class MyShifts extends Component
             ->with(['shift.shiftRole']);
 
         $this->applyAssignmentFilters($query);
+        $this->applyAssignmentSorting($query);
 
         return $query->get();
     }
@@ -75,6 +76,7 @@ class MyShifts extends Component
             ->with(['shift.shiftRole']);
 
         $this->applyAssignmentFilters($query);
+        $this->applyAssignmentSorting($query);
 
         return $query->get();
     }
@@ -100,6 +102,7 @@ class MyShifts extends Component
             ->with(['shift.shiftRole']);
 
         $this->applyAssignmentFilters($query);
+        $this->applyAssignmentSorting($query);
 
         return $query->get();
     }
