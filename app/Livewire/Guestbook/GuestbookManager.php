@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Guestbook;
 
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use App\Services\GuestbookBonusSyncService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -217,6 +219,11 @@ class GuestbookManager extends Component
 
         $entry = GuestbookEntry::findOrFail($this->editingEntryId);
 
+        $oldValues = [
+            'visitor_category' => $entry->visitor_category,
+            'is_verified' => $entry->is_verified,
+        ];
+
         $updateData = [
             'visitor_category' => $this->editCategory,
             'is_verified' => $this->editVerified,
@@ -232,6 +239,16 @@ class GuestbookManager extends Component
         }
 
         $entry->update($updateData);
+
+        AuditLog::log(
+            action: 'guestbook.entry.updated',
+            auditable: $entry,
+            oldValues: $oldValues,
+            newValues: [
+                'visitor_category' => $entry->visitor_category,
+                'is_verified' => $entry->is_verified,
+            ],
+        );
 
         app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
         $this->dispatch('bonus-claimed');
@@ -435,7 +452,7 @@ class GuestbookManager extends Component
     /**
      * Get filtered entries for export (no pagination).
      *
-     * @return \Illuminate\Support\Collection<int, GuestbookEntry>
+     * @return Collection<int, GuestbookEntry>
      */
     protected function getFilteredEntriesForExport()
     {

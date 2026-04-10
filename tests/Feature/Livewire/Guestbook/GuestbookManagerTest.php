@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Guestbook\GuestbookManager;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
@@ -8,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 uses(RefreshDatabase::class);
 
@@ -497,7 +499,7 @@ describe('csv export', function () {
 
         $response = $component->exportCsv();
 
-        expect($response)->toBeInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class);
+        expect($response)->toBeInstanceOf(StreamedResponse::class);
         expect($response->headers->get('Content-Type'))->toBe('text/csv');
         expect($response->headers->get('Content-Disposition'))
             ->toContain('guestbook-field-day-2026-'.now()->format('Y-m-d').'.csv');
@@ -655,5 +657,42 @@ describe('csv export', function () {
         $output = ob_get_clean();
 
         expect($output)->toContain('Admin Verifier');
+    });
+});
+
+// =============================================================================
+// Audit Logging Tests (1 test)
+// =============================================================================
+
+describe('audit logging', function () {
+    test('logs guestbook.entry.updated when saveVerification is called', function () {
+        $this->actingAs($this->admin);
+
+        $entry = GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'is_verified' => false,
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->call('openVerifyModal', $entry->id)
+            ->set('editCategory', GuestbookEntry::VISITOR_CATEGORY_MEDIA)
+            ->set('editVerified', true)
+            ->call('saveVerification');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.updated')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->auditable_type)->toBe(GuestbookEntry::class);
+        expect($auditLog->auditable_id)->toBe($entry->id);
+        expect($auditLog->old_values)->toMatchArray([
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'is_verified' => false,
+        ]);
+        expect($auditLog->new_values)->toMatchArray([
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'is_verified' => true,
+        ]);
     });
 });
