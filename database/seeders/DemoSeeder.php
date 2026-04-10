@@ -184,6 +184,7 @@ class DemoSeeder extends Seeder
 
         // 4 HF stations (Alpha–Delta) satisfy the 4A transmitter count.
         // VHF/UHF and GOTA do not count toward that total.
+        // Band names each radio supports (matched to real-world specs)
         $stationDefs = [
             [
                 'name' => 'Station Alpha',
@@ -196,6 +197,7 @@ class DemoSeeder extends Seeder
                 'has_active' => true,
                 'radio_make' => 'Icom',
                 'radio_model' => 'IC-7300',
+                'radio_bands' => ['160m', '80m', '40m', '20m', '15m', '10m', '6m'],
             ],
             [
                 'name' => 'Station Bravo',
@@ -208,6 +210,7 @@ class DemoSeeder extends Seeder
                 'has_active' => true,
                 'radio_make' => 'Yaesu',
                 'radio_model' => 'FT-991A',
+                'radio_bands' => ['160m', '80m', '40m', '20m', '15m', '10m', '6m', '2m', '70cm'],
             ],
             [
                 'name' => 'Station Charlie',
@@ -220,6 +223,7 @@ class DemoSeeder extends Seeder
                 'has_active' => false,
                 'radio_make' => 'Elecraft',
                 'radio_model' => 'K3S',
+                'radio_bands' => ['160m', '80m', '40m', '20m', '15m', '10m', '6m'],
             ],
             [
                 'name' => 'Station Delta',
@@ -232,6 +236,7 @@ class DemoSeeder extends Seeder
                 'has_active' => true,
                 'radio_make' => 'Kenwood',
                 'radio_model' => 'TS-590SG',
+                'radio_bands' => ['160m', '80m', '40m', '20m', '15m', '10m', '6m'],
             ],
             [
                 'name' => 'VHF/UHF',
@@ -244,6 +249,7 @@ class DemoSeeder extends Seeder
                 'has_active' => false,
                 'radio_make' => 'Kenwood',
                 'radio_model' => 'TM-V71A',
+                'radio_bands' => ['2m', '70cm'],
                 'historical_count' => [4, 8],
             ],
             [
@@ -257,6 +263,7 @@ class DemoSeeder extends Seeder
                 'has_active' => true,
                 'radio_make' => 'Icom',
                 'radio_model' => 'IC-718',
+                'radio_bands' => ['160m', '80m', '40m', '20m', '15m', '10m'],
                 'historical_count' => [5, 10],
                 'active_count' => [1, 3],
             ],
@@ -266,7 +273,7 @@ class DemoSeeder extends Seeder
             $band = Band::where('name', $def['band'])->first();
             $mode = Mode::where('name', $def['mode'])->first();
 
-            // Create equipment (radio)
+            // Create equipment (radio) with supported bands
             $equipment = Equipment::create([
                 'owner_user_id' => $def['captain']->id,
                 'make' => $def['radio_make'],
@@ -275,6 +282,11 @@ class DemoSeeder extends Seeder
                 'description' => $def['radio_make'].' '.$def['radio_model'].' HF transceiver',
                 'power_output_watts' => 100,
             ]);
+
+            if (! empty($def['radio_bands'])) {
+                $bandIds = Band::whereIn('name', $def['radio_bands'])->pluck('id');
+                $equipment->bands()->attach($bandIds);
+            }
 
             // Create station
             $station = Station::create([
