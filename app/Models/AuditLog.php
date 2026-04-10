@@ -122,7 +122,7 @@ class AuditLog extends Model
         'album.export.downloaded' => 'Album export downloaded',
 
         // Guestbook
-        'guestbook.signed' => 'Guestbook signed',
+        'guestbook.entry.signed' => 'Guestbook entry signed',
         'guestbook.entry.updated' => 'Guestbook entry updated',
         'guestbook.entry.deleted' => 'Guestbook entry deleted',
         'guestbook.entry.bulk_verified' => 'Guestbook entries bulk verified',
