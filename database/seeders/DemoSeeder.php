@@ -92,6 +92,9 @@ class DemoSeeder extends Seeder
         $captain1 = $this->makeUser('N3SC', 'Scott', 'Campbell', 'captain1@demo.example', self::ROLE_STATION_CAPTAIN, 'General');
         $captain2 = $this->makeUser('W9SC', 'Sandra', 'Cooper', 'captain2@demo.example', self::ROLE_STATION_CAPTAIN, 'General');
 
+        // Mark a captain as CPR/AED trained and one operator as youth
+        $captain1->update(['is_cpr_aed_trained' => true]);
+
         $operatorDefs = [
             ['KD8LKQ', 'John', 'Baker'],    ['W4TRX', 'Maria', 'Torres'],
             ['N5BCF', 'David', 'Wilson'],    ['KA3YJM', 'Lisa', 'Chen'],
@@ -103,6 +106,9 @@ class DemoSeeder extends Seeder
             fn ($d) => $this->makeUser($d[0], $d[1], $d[2], strtolower($d[0]).'@demo.example', 'Operator', 'General'),
             $operatorDefs
         );
+
+        // Patricia Davis (index 7) is a youth operator
+        $operators[7]->update(['is_youth' => true]);
 
         // 5. Event (in progress: started 2h ago, ends 22h from now)
         $fdType = EventType::where('code', 'FD')->first();
