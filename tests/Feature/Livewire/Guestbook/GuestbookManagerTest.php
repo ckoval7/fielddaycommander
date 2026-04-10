@@ -757,4 +757,68 @@ describe('audit logging', function () {
         ]);
         expect($auditLog->new_values)->toBeNull();
     });
+
+    test('logs guestbook.entry.bulk_verified when bulkVerify is called', function () {
+        $this->actingAs($this->admin);
+
+        $entries = GuestbookEntry::factory()->count(3)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_verified' => false,
+        ]);
+        $ids = $entries->pluck('id')->toArray();
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', $ids)
+            ->call('bulkVerify');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.bulk_verified')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->new_values['count'])->toBe(3);
+        expect($auditLog->new_values['entry_ids'])->toEqual($ids);
+    });
+
+    test('logs guestbook.entry.bulk_unverified when bulkUnverify is called', function () {
+        $this->actingAs($this->admin);
+
+        $entries = GuestbookEntry::factory()->count(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_verified' => true,
+            'verified_by' => $this->admin->id,
+            'verified_at' => now(),
+        ]);
+        $ids = $entries->pluck('id')->toArray();
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', $ids)
+            ->call('bulkUnverify');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.bulk_unverified')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->new_values['count'])->toBe(2);
+        expect($auditLog->new_values['entry_ids'])->toEqual($ids);
+    });
+
+    test('logs guestbook.entry.bulk_deleted when bulkDelete is called', function () {
+        $this->actingAs($this->admin);
+
+        $entries = GuestbookEntry::factory()->count(4)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+        $ids = $entries->pluck('id')->toArray();
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', $ids)
+            ->call('bulkDelete');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.bulk_deleted')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->new_values['count'])->toBe(4);
+        expect($auditLog->new_values['entry_ids'])->toEqual($ids);
+    });
 });

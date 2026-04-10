@@ -332,6 +332,14 @@ class GuestbookManager extends Component
                 'verified_at' => now(),
             ]);
 
+        AuditLog::log(
+            action: 'guestbook.entry.bulk_verified',
+            newValues: [
+                'count' => count($this->selectedIds),
+                'entry_ids' => $this->selectedIds,
+            ],
+        );
+
         app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
         $this->dispatch('bonus-claimed');
 
@@ -362,6 +370,14 @@ class GuestbookManager extends Component
                 'verified_at' => null,
             ]);
 
+        AuditLog::log(
+            action: 'guestbook.entry.bulk_unverified',
+            newValues: [
+                'count' => count($this->selectedIds),
+                'entry_ids' => $this->selectedIds,
+            ],
+        );
+
         app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
         $this->dispatch('bonus-claimed');
 
@@ -383,6 +399,14 @@ class GuestbookManager extends Component
 
             return;
         }
+
+        AuditLog::log(
+            action: 'guestbook.entry.bulk_deleted',
+            newValues: [
+                'count' => count($this->selectedIds),
+                'entry_ids' => $this->selectedIds,
+            ],
+        );
 
         GuestbookEntry::whereIn('id', $this->selectedIds)->delete();
 
