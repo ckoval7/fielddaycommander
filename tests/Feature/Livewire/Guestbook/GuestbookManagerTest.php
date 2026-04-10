@@ -661,7 +661,7 @@ describe('csv export', function () {
 });
 
 // =============================================================================
-// Audit Logging Tests (1 test)
+// Audit Logging Tests (6 tests)
 // =============================================================================
 
 describe('audit logging', function () {
