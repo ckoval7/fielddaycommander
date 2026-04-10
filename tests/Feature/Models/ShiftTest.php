@@ -269,3 +269,86 @@ describe('Scopes', function () {
             ->each(fn ($shift) => $shift->shift_role_id->toBe($targetRole->id));
     });
 });
+
+describe('is_urgently_empty', function () {
+    test('is true when shift starts within 2 hours and has no assignments', function () {
+        $shift = Shift::factory()->create([
+            'start_time' => appNow()->addMinutes(90),
+            'end_time' => appNow()->addMinutes(210),
+            'is_open' => true,
+        ]);
+
+        expect($shift->is_urgently_empty)->toBeTrue();
+    });
+
+    test('is false when shift starts within 2 hours but has at least one assignment', function () {
+        $shift = Shift::factory()->create([
+            'start_time' => appNow()->addMinutes(90),
+            'end_time' => appNow()->addMinutes(210),
+            'is_open' => true,
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shift->id]);
+
+        expect($shift->is_urgently_empty)->toBeFalse();
+    });
+
+    test('is false when shift starts more than 2 hours away', function () {
+        $shift = Shift::factory()->create([
+            'start_time' => appNow()->addHours(3),
+            'end_time' => appNow()->addHours(5),
+        ]);
+
+        expect($shift->is_urgently_empty)->toBeFalse();
+    });
+
+    test('is false when shift is currently in progress', function () {
+        $shift = Shift::factory()->create([
+            'start_time' => appNow()->subMinutes(30),
+            'end_time' => appNow()->addMinutes(90),
+        ]);
+
+        expect($shift->is_urgently_empty)->toBeFalse();
+    });
+
+    test('is false when shift has already ended', function () {
+        $shift = Shift::factory()->create([
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        expect($shift->is_urgently_empty)->toBeFalse();
+    });
+
+    test('is true at exactly the 2-hour boundary', function () {
+        $shift = Shift::factory()->create([
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+            'is_open' => true,
+        ]);
+
+        expect($shift->is_urgently_empty)->toBeTrue();
+    });
+
+    test('is false when shift is closed even with no assignments', function () {
+        $shift = Shift::factory()->create([
+            'start_time' => appNow()->addMinutes(90),
+            'end_time' => appNow()->addMinutes(210),
+            'is_open' => false,
+        ]);
+
+        expect($shift->is_urgently_empty)->toBeFalse();
+    });
+
+    test('is false when shift has multiple assignments', function () {
+        $shift = Shift::factory()->create([
+            'start_time' => appNow()->addMinutes(90),
+            'end_time' => appNow()->addMinutes(210),
+            'is_open' => true,
+        ]);
+
+        ShiftAssignment::factory()->count(2)->create(['shift_id' => $shift->id]);
+
+        expect($shift->is_urgently_empty)->toBeFalse();
+    });
+});

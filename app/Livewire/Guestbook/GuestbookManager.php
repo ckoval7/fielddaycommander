@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Guestbook;
 
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use App\Services\GuestbookBonusSyncService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -217,6 +219,13 @@ class GuestbookManager extends Component
 
         $entry = GuestbookEntry::findOrFail($this->editingEntryId);
 
+        $oldValues = [
+            'visitor_category' => $entry->visitor_category,
+            'is_verified' => $entry->is_verified,
+            'verified_by' => $entry->verified_by,
+            'verified_at' => $entry->verified_at,
+        ];
+
         $updateData = [
             'visitor_category' => $this->editCategory,
             'is_verified' => $this->editVerified,
@@ -232,6 +241,18 @@ class GuestbookManager extends Component
         }
 
         $entry->update($updateData);
+
+        AuditLog::log(
+            action: 'guestbook.entry.updated',
+            auditable: $entry,
+            oldValues: $oldValues,
+            newValues: [
+                'visitor_category' => $entry->visitor_category,
+                'is_verified' => $entry->is_verified,
+                'verified_by' => $entry->verified_by,
+                'verified_at' => $entry->verified_at,
+            ],
+        );
 
         app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
         $this->dispatch('bonus-claimed');
@@ -263,6 +284,16 @@ class GuestbookManager extends Component
         }
 
         $entry = GuestbookEntry::findOrFail($this->deletingEntryId);
+
+        AuditLog::log(
+            action: 'guestbook.entry.deleted',
+            auditable: $entry,
+            oldValues: [
+                'name' => trim("{$entry->first_name} {$entry->last_name}"),
+                'callsign' => $entry->callsign,
+            ],
+        );
+
         $entry->delete();
 
         $this->closeDeleteModal();
@@ -293,13 +324,21 @@ class GuestbookManager extends Component
             return;
         }
 
-        GuestbookEntry::whereIn('id', $this->selectedIds)
+        $affected = GuestbookEntry::whereIn('id', $this->selectedIds)
             ->where('is_verified', false)
             ->update([
                 'is_verified' => true,
                 'verified_by' => auth()->id(),
                 'verified_at' => now(),
             ]);
+
+        AuditLog::log(
+            action: 'guestbook.entry.bulk_verified',
+            newValues: [
+                'count' => $affected,
+                'entry_ids' => $this->selectedIds,
+            ],
+        );
 
         app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
         $this->dispatch('bonus-claimed');
@@ -323,13 +362,21 @@ class GuestbookManager extends Component
             return;
         }
 
-        GuestbookEntry::whereIn('id', $this->selectedIds)
+        $affected = GuestbookEntry::whereIn('id', $this->selectedIds)
             ->where('is_verified', true)
             ->update([
                 'is_verified' => false,
                 'verified_by' => null,
                 'verified_at' => null,
             ]);
+
+        AuditLog::log(
+            action: 'guestbook.entry.bulk_unverified',
+            newValues: [
+                'count' => $affected,
+                'entry_ids' => $this->selectedIds,
+            ],
+        );
 
         app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
         $this->dispatch('bonus-claimed');
@@ -352,6 +399,14 @@ class GuestbookManager extends Component
 
             return;
         }
+
+        AuditLog::log(
+            action: 'guestbook.entry.bulk_deleted',
+            newValues: [
+                'count' => count($this->selectedIds),
+                'entry_ids' => $this->selectedIds,
+            ],
+        );
 
         GuestbookEntry::whereIn('id', $this->selectedIds)->delete();
 
@@ -435,7 +490,7 @@ class GuestbookManager extends Component
     /**
      * Get filtered entries for export (no pagination).
      *
-     * @return \Illuminate\Support\Collection<int, GuestbookEntry>
+     * @return Collection<int, GuestbookEntry>
      */
     protected function getFilteredEntriesForExport()
     {

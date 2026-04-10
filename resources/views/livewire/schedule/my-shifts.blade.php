@@ -81,7 +81,7 @@
 
                                         {{-- Time Range --}}
                                         <div class="text-sm text-base-content/70">
-                                            {{ toLocalTime($shift->start_time)->format('g:i A') }} - {{ toLocalTime($shift->end_time)->format('g:i A T') }}
+                                            {{ toLocalTime($shift->start_time)->format(timeFormat()) }} - {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
                                         </div>
 
                                         {{-- Status & Confirmation --}}
@@ -122,7 +122,7 @@
                                                         spinner="checkIn"
                                                     />
                                                 @else
-                                                    <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format('g:i A T') }}" class="badge-ghost badge-sm" />
+                                                    <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format(timeFormat() . ' T') }}" class="badge-ghost badge-sm" />
                                                 @endif
                                             @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_IN)
                                                 @php $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time); @endphp
@@ -131,7 +131,9 @@
                                                     icon="o-arrow-left-on-rectangle"
                                                     class="btn-warning btn-sm"
                                                     wire:click="checkOut({{ $assignment->id }})"
-                                                    wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
+                                                    @if($minutesLeft >= 1)
+                                                        wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
+                                                    @endif
                                                     spinner="checkOut"
                                                 />
                                             @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
@@ -190,7 +192,7 @@
 
                                         {{-- Time Range --}}
                                         <div class="text-sm text-base-content/70">
-                                            {{ toLocalTime($shift->start_time)->format('M j, g:i A') }} - {{ toLocalTime($shift->end_time)->format('g:i A T') }}
+                                            {{ toLocalTime($shift->start_time)->format('M j, ' . timeFormat()) }} - {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
                                         </div>
 
                                         {{-- Actions --}}
@@ -252,7 +254,7 @@
 
                                         {{-- Time Range --}}
                                         <div class="text-sm text-base-content/70">
-                                            {{ toLocalTime($shift->start_time)->format('M j, g:i A') }} - {{ toLocalTime($shift->end_time)->format('g:i A T') }}
+                                            {{ toLocalTime($shift->start_time)->format('M j, ' . timeFormat()) }} - {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
                                         </div>
 
                                         {{-- Status --}}

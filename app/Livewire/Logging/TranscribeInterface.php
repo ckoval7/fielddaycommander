@@ -5,14 +5,17 @@ namespace App\Livewire\Logging;
 use App\Events\ContactLogged;
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Station;
+use App\Models\User;
 use App\Services\DuplicateCheckService;
 use App\Services\EventContextService;
+use App\Services\ExchangeParserService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -25,9 +28,11 @@ class TranscribeInterface extends Component
 
     public Station $station;
 
-    public string $workingTime = '';
+    public string $workingDate = '';
 
     public string $contactTime = '';
+
+    public bool $timeIsLocal = false;
 
     public ?int $selectedBandId = null;
 
@@ -55,14 +60,9 @@ class TranscribeInterface extends Component
 
         $event = $this->event;
         if ($event) {
-            $this->workingTime = $event->start_time->format('Y-m-d\TH:i');
-            $this->contactTime = $this->workingTime;
+            $this->workingDate = $event->start_time->format('Y-m-d');
+            $this->contactTime = $event->start_time->format('H:i');
         }
-    }
-
-    public function updatedWorkingTime(): void
-    {
-        $this->contactTime = $this->workingTime;
     }
 
     public function updatedExchangeInput(): void
@@ -75,9 +75,16 @@ class TranscribeInterface extends Component
             return;
         }
 
-        $tokens = preg_split('/\s+/', trim($this->exchangeInput));
+        // Update contactTime display when inline time is present
+        $inlineTime = $this->extractInlineTime();
+        if ($inlineTime !== null) {
+            $this->contactTime = $inlineTime;
+        }
+
+        $exchange = $this->getExchangeWithoutTime();
+        $tokens = preg_split('/\s+/', trim($exchange));
         $firstToken = strtoupper($tokens[0] ?? '');
-        if (count($tokens) === 1 && ! str_ends_with($this->exchangeInput, ' ') && strlen($firstToken) >= 2) {
+        if (count($tokens) === 1 && ! str_ends_with($exchange, ' ') && strlen($firstToken) >= 2) {
             $this->suggestions = $this->findCallsignSuggestions(
                 $firstToken,
                 $this->selectedBandId,
@@ -116,32 +123,42 @@ class TranscribeInterface extends Component
             return;
         }
 
+        // Extract inline time from exchange (e.g. "1423 W1AW 3A CT")
+        $inlineTime = $this->extractInlineTime();
+        if ($inlineTime !== null) {
+            $this->contactTime = $inlineTime;
+        }
+
+        $resolvedTime = $this->resolveContactDateTime();
+        if ($resolvedTime === null) {
+            $this->parseError = 'Invalid time format. Try 1423, 14:23, or 2:23pm.';
+
+            return;
+        }
+
+        $earliest = $this->event->start_time->copy()->subMinutes(5);
+        $latest = $this->event->end_time->copy()->addMinutes(5);
+
+        if ($resolvedTime->lt($earliest) || $resolvedTime->gt($latest)) {
+            $this->parseError = 'Contact time must be within the event window (±5 minutes).';
+
+            return;
+        }
+
         $this->validate([
             'selectedBandId' => 'required|exists:bands,id',
             'selectedModeId' => 'required|exists:modes,id',
             'powerWatts' => 'required|integer|min:1|max:1500',
-            'contactTime' => [
-                'required',
-                function ($attribute, $value, $fail) {
-                    $event = $this->event;
-                    $time = Carbon::parse($value);
-                    $earliest = $event->start_time->copy()->subMinutes(5);
-                    $latest = $event->end_time->copy()->addMinutes(5);
-
-                    if ($time->lt($earliest) || $time->gt($latest)) {
-                        $fail('Contact time must be within the event window (±5 minutes).');
-                    }
-                },
-            ],
         ]);
 
-        if (trim($this->exchangeInput) === '') {
+        $exchange = $this->getExchangeWithoutTime();
+        if (trim($exchange) === '') {
             $this->parseError = 'Exchange is empty';
 
             return;
         }
 
-        $parsed = $this->parseExchange();
+        $parsed = $this->parseExchangeFromString($exchange);
         if (! $parsed['success']) {
             $this->parseError = implode('. ', $parsed['errors']);
 
@@ -168,10 +185,10 @@ class TranscribeInterface extends Component
             'logger_user_id' => auth()->id(),
             'band_id' => $this->selectedBandId,
             'mode_id' => $this->selectedModeId,
-            'qso_time' => Carbon::parse($this->contactTime),
+            'qso_time' => $resolvedTime,
             'callsign' => $parsed['callsign'],
             'section_id' => $parsed['section_id'],
-            'received_exchange' => $this->exchangeInput,
+            'received_exchange' => $exchange,
             'power_watts' => $this->powerWatts,
             'is_gota_contact' => $this->station->is_gota,
             'points' => $dupeResult['is_duplicate'] ? 0 : $contactPoints,
@@ -188,7 +205,6 @@ class TranscribeInterface extends Component
 
         $this->clearInput();
         $this->clearDuplicateState();
-        $this->contactTime = $this->workingTime;
 
         $this->dispatch('contact-logged');
     }
@@ -236,7 +252,7 @@ class TranscribeInterface extends Component
             return [];
         }
 
-        return \App\Models\User::query()
+        return User::query()
             ->where(function ($q) {
                 $search = '%'.$this->gotaUserSearch.'%';
                 $q->where('call_sign', 'like', $search)
@@ -257,7 +273,7 @@ class TranscribeInterface extends Component
 
     public function selectGotaUser(int $userId): void
     {
-        $user = \App\Models\User::find($userId);
+        $user = User::find($userId);
         if ($user) {
             $this->gotaOperatorUserId = $user->id;
             $this->gotaOperatorFirstName = $user->first_name ?? '';
@@ -307,10 +323,162 @@ class TranscribeInterface extends Component
         return Mode::all();
     }
 
+    public function deleteContact(int $contactId): void
+    {
+        if (! $this->event) {
+            abort(403);
+        }
+
+        $contact = $this->findTranscribedContact($contactId);
+
+        if ($contact === null) {
+            abort(403);
+        }
+
+        AuditLog::log(
+            'contact.deleted',
+            auditable: $contact,
+            oldValues: [
+                'callsign' => $contact->callsign,
+                'received_exchange' => $contact->received_exchange,
+                'session_id' => $contact->operating_session_id,
+            ],
+        );
+
+        $contact->delete();
+        $contact->operatingSession->decrement('qso_count');
+
+        unset($this->recentContacts);
+    }
+
+    public function restoreContact(int $contactId): void
+    {
+        if (! $this->event) {
+            abort(403);
+        }
+
+        $contact = Contact::onlyTrashed()
+            ->where('id', $contactId)
+            ->where('event_configuration_id', $this->station->event_configuration_id)
+            ->where('is_transcribed', true)
+            ->whereHas('operatingSession', fn ($q) => $q->where('station_id', $this->station->id))
+            ->first();
+
+        if ($contact === null) {
+            abort(403);
+        }
+
+        $contact->restore();
+        $contact->operatingSession->increment('qso_count');
+
+        AuditLog::log(
+            'contact.restored',
+            auditable: $contact,
+            newValues: [
+                'callsign' => $contact->callsign,
+                'received_exchange' => $contact->received_exchange,
+                'session_id' => $contact->operating_session_id,
+            ],
+        );
+
+        unset($this->recentContacts);
+    }
+
+    public function updateContact(int $contactId, string $exchangeInput): void
+    {
+        if (! $this->event) {
+            abort(403);
+        }
+
+        $contact = $this->findTranscribedContact($contactId);
+
+        if ($contact === null) {
+            abort(403);
+        }
+
+        // Check for inline time prefix (e.g. "1423 W1AW 3A CT")
+        $inlineTime = null;
+        $exchange = trim($exchangeInput);
+        $tokens = preg_split('/\s+/', $exchange);
+
+        if (count($tokens) >= 2) {
+            $possibleTime = $this->parseFlexibleTime($tokens[0]);
+            if ($possibleTime !== null) {
+                $inlineTime = $possibleTime;
+                $exchange = implode(' ', array_slice($tokens, 1));
+            }
+        }
+
+        $parsed = app(ExchangeParserService::class)->parse($exchange);
+
+        if (! $parsed['success']) {
+            $this->parseError = $parsed['errors'][0] ?? 'Invalid exchange';
+
+            return;
+        }
+
+        $oldValues = [
+            'callsign' => $contact->callsign,
+            'received_exchange' => $contact->received_exchange,
+            'section_id' => $contact->section_id,
+            'qso_time' => $contact->qso_time->toIso8601String(),
+        ];
+
+        $updateData = [
+            'callsign' => $parsed['callsign'],
+            'received_exchange' => strtoupper(trim($exchange)),
+            'section_id' => $parsed['section_id'],
+        ];
+
+        // If inline time provided, update qso_time using original date + new time
+        if ($inlineTime !== null) {
+            $updateData['qso_time'] = Carbon::parse(
+                $contact->qso_time->format('Y-m-d').' '.$inlineTime,
+                'UTC'
+            );
+        }
+
+        $contact->update($updateData);
+
+        // Re-run duplicate detection, excluding this contact itself
+        $isDuplicate = Contact::query()
+            ->where('event_configuration_id', $contact->event_configuration_id)
+            ->where('band_id', $contact->band_id)
+            ->where('mode_id', $contact->mode_id)
+            ->where('callsign', $parsed['callsign'])
+            ->where('is_gota_contact', $contact->is_gota_contact)
+            ->where('id', '!=', $contact->id)
+            ->where('is_duplicate', false)
+            ->exists();
+
+        $contact->update([
+            'is_duplicate' => $isDuplicate,
+            'points' => $isDuplicate ? 0 : ($contact->operatingSession->mode->points_fd ?? 1),
+        ]);
+
+        AuditLog::log(
+            'contact.updated',
+            auditable: $contact,
+            oldValues: $oldValues,
+            newValues: [
+                'callsign' => $contact->callsign,
+                'received_exchange' => $contact->received_exchange,
+                'section_id' => $contact->section_id,
+                'qso_time' => $contact->qso_time->toIso8601String(),
+            ],
+        );
+
+        $this->exchangeInput = '';
+        $this->parseError = '';
+        $this->clearDuplicateState();
+        unset($this->recentContacts);
+    }
+
     #[Computed]
     public function recentContacts()
     {
         return Contact::query()
+            ->withTrashed()
             ->where('event_configuration_id', $this->station->event_configuration_id)
             ->where('is_transcribed', true)
             ->whereHas('operatingSession', fn ($q) => $q->where('station_id', $this->station->id))
@@ -318,6 +486,154 @@ class TranscribeInterface extends Component
             ->latest('qso_time')
             ->limit(50)
             ->get();
+    }
+
+    protected function findTranscribedContact(int $contactId): ?Contact
+    {
+        return Contact::query()
+            ->where('id', $contactId)
+            ->where('event_configuration_id', $this->station->event_configuration_id)
+            ->where('is_transcribed', true)
+            ->whereHas('operatingSession', fn ($q) => $q->where('station_id', $this->station->id))
+            ->first();
+    }
+
+    protected function extractCallsign(): ?string
+    {
+        return app(ExchangeParserService::class)
+            ->extractCallsign($this->getExchangeWithoutTime());
+    }
+
+    protected function parseExchangeFromString(string $exchange): array
+    {
+        return app(ExchangeParserService::class)->parse($exchange);
+    }
+
+    /**
+     * Extract a time from the first token of the exchange input, if present.
+     */
+    private function extractInlineTime(): ?string
+    {
+        $tokens = preg_split('/\s+/', trim($this->exchangeInput));
+        if (count($tokens) >= 2) {
+            return $this->parseFlexibleTime($tokens[0]);
+        }
+
+        return null;
+    }
+
+    /**
+     * Return the exchange input with any leading time token stripped.
+     */
+    private function getExchangeWithoutTime(): string
+    {
+        $input = trim($this->exchangeInput);
+        $tokens = preg_split('/\s+/', $input);
+
+        if (count($tokens) >= 2 && $this->parseFlexibleTime($tokens[0]) !== null) {
+            return implode(' ', array_slice($tokens, 1));
+        }
+
+        return $input;
+    }
+
+    #[Computed]
+    public function timezoneLabel(): string
+    {
+        if (! $this->timeIsLocal) {
+            return 'UTC';
+        }
+
+        return Carbon::now(localTimezone())->format('T');
+    }
+
+    /**
+     * Parse flexible time input into normalized HH:MM format.
+     *
+     * Accepts: 1423, 14:23, 2:23pm, 223p, 0023, 123, 2p, 14, 1423z
+     */
+    private function parseFlexibleTime(string $input): ?string
+    {
+        $input = trim($input);
+        if ($input === '') {
+            return null;
+        }
+
+        // Strip trailing 'z' or 'Z' (UTC indicator)
+        $input = preg_replace('/[zZ]$/', '', $input);
+
+        $hour = null;
+        $minute = null;
+
+        if (preg_match('/^(\d{1,2}):(\d{2})\s*([aApP][mM]?)?$/', $input, $m)) {
+            // H:MM or HH:MM with optional am/pm
+            $hour = (int) $m[1];
+            $minute = (int) $m[2];
+            if (! empty($m[3])) {
+                [$hour, $minute] = $this->applyAmPm($hour, $minute, $m[3]);
+            }
+        } elseif (preg_match('/^(\d{2})(\d{2})\s*([aApP][mM]?)?$/', $input, $m)) {
+            // 4 digits with optional am/pm: 1423, 0223p
+            $hour = (int) $m[1];
+            $minute = (int) $m[2];
+            if (! empty($m[3])) {
+                [$hour, $minute] = $this->applyAmPm($hour, $minute, $m[3]);
+            }
+        } elseif (preg_match('/^(\d)(\d{2})\s*([aApP][mM]?)?$/', $input, $m)) {
+            // 3 digits: 123 → 1:23, with optional am/pm
+            $hour = (int) $m[1];
+            $minute = (int) $m[2];
+            if (! empty($m[3])) {
+                [$hour, $minute] = $this->applyAmPm($hour, $minute, $m[3]);
+            }
+        } elseif (preg_match('/^(\d{1,2})\s*([aApP][mM]?)$/', $input, $m)) {
+            // Hour-only with am/pm: 2p, 2pm, 12a
+            $hour = (int) $m[1];
+            $minute = 0;
+            [$hour, $minute] = $this->applyAmPm($hour, $minute, $m[2]);
+        } elseif (preg_match('/^(\d{1,2})$/', $input, $m)) {
+            // Hour-only: 14, 2
+            $hour = (int) $m[1];
+            $minute = 0;
+        }
+
+        if ($hour === null || $hour < 0 || $hour > 23 || $minute < 0 || $minute > 59) {
+            return null;
+        }
+
+        return sprintf('%02d:%02d', $hour, $minute);
+    }
+
+    /**
+     * @return array{int, int}
+     */
+    private function applyAmPm(int $hour, int $minute, string $suffix): array
+    {
+        $isPm = stripos($suffix, 'p') === 0;
+        if ($isPm && $hour < 12) {
+            $hour += 12;
+        }
+        if (! $isPm && $hour === 12) {
+            $hour = 0;
+        }
+
+        return [$hour, $minute];
+    }
+
+    private function resolveContactDateTime(): ?Carbon
+    {
+        $time = $this->parseFlexibleTime($this->contactTime);
+        if ($time === null) {
+            return null;
+        }
+
+        $dateTimeStr = $this->workingDate.' '.$time;
+
+        if ($this->timeIsLocal) {
+            return Carbon::parse($dateTimeStr, localTimezone())->utc();
+        }
+
+        return Carbon::parse($dateTimeStr, 'UTC');
     }
 
     private function getOrCreateTranscriptionSession(): OperatingSession

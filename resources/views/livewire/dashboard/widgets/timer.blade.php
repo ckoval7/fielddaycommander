@@ -56,34 +56,40 @@ Props from component:
 <script>
 Alpine.data('countdown', (endTimeIso, nowIso) => ({
     endTime: null,
-    now: null,
+    serverClientOffset: 0,
     intervalId: null,
+    visibilityHandler: null,
     formattedTime: '--:--:--',
     isWarning: false,
     isCritical: false,
 
     init() {
         this.endTime = new Date(endTimeIso);
-        this.now = new Date(nowIso);
+        // Anchor to server time at init to account for clock skew
+        this.serverClientOffset = new Date(nowIso).getTime() - Date.now();
 
-        // Calculate initial countdown
         this.updateCountdown();
+        this.intervalId = setInterval(() => this.updateCountdown(), 1000);
 
-        // Update every second
-        this.intervalId = setInterval(() => {
-            this.now = new Date(this.now.getTime() + 1000);
-            this.updateCountdown();
-        }, 1000);
+        // Immediately resync when the tab becomes visible after being hidden,
+        // since browsers throttle setInterval in background tabs
+        this.visibilityHandler = () => {
+            if (!document.hidden) this.updateCountdown();
+        };
+        document.addEventListener('visibilitychange', this.visibilityHandler);
     },
 
     destroy() {
-        if (this.intervalId) {
-            clearInterval(this.intervalId);
-        }
+        if (this.intervalId) clearInterval(this.intervalId);
+        if (this.visibilityHandler) document.removeEventListener('visibilitychange', this.visibilityHandler);
+    },
+
+    effectiveNow() {
+        return Date.now() + this.serverClientOffset;
     },
 
     updateCountdown() {
-        const diff = this.endTime - this.now;
+        const diff = this.endTime.getTime() - this.effectiveNow();
 
         if (diff <= 0) {
             this.formattedTime = 'Event Ended';

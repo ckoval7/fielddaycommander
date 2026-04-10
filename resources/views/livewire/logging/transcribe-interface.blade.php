@@ -12,25 +12,42 @@
             </a>
         </div>
     @else
-        {{-- Working Time Bar — sticky at top --}}
+        {{-- Date & Timezone Bar — sticky at top --}}
         <div class="sticky top-0 z-40 bg-amber-50 dark:bg-amber-900/30 border-b-2 border-amber-300 dark:border-amber-600 shadow-md">
             <div class="px-4 py-2.5 max-w-5xl mx-auto">
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <x-icon name="o-clock" class="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span class="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Working Time (UTC)</span>
+                        <x-icon name="o-calendar" class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span class="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Log Date</span>
                     </div>
-                    <div class="flex items-center gap-2 flex-1 min-w-0">
-                        <x-flatpickr
-                            wire:model.live="workingTime"
-                            min="{{ $this->event->start_time->subMinutes(5)->format('Y-m-d H:i') }}"
-                            max="{{ $this->event->end_time->addMinutes(5)->format('Y-m-d H:i') }}"
-                            class="input-sm font-mono border-amber-300 focus:border-amber-500 text-base-content bg-base-100"
-                        />
+
+                    <input
+                        type="date"
+                        wire:model.live="workingDate"
+                        min="{{ $this->event->start_time->format('Y-m-d') }}"
+                        max="{{ $this->event->end_time->format('Y-m-d') }}"
+                        class="input input-bordered input-sm font-mono border-amber-300 focus:border-amber-500 bg-base-100"
+                    />
+
+                    {{-- UTC / Local toggle --}}
+                    <div class="join">
+                        <button
+                            type="button"
+                            wire:click="$set('timeIsLocal', false)"
+                            @class([
+                                'join-item btn btn-xs',
+                                'btn-active btn-warning' => !$timeIsLocal,
+                            ])
+                        >UTC</button>
+                        <button
+                            type="button"
+                            wire:click="$set('timeIsLocal', true)"
+                            @class([
+                                'join-item btn btn-xs',
+                                'btn-active btn-warning' => $timeIsLocal,
+                            ])
+                        >Local{{ $timeIsLocal ? ' ('.$this->timezoneLabel.')' : '' }}</button>
                     </div>
-                    <p class="text-xs text-amber-600/80 dark:text-amber-400/70 hidden sm:block">
-                        Adjust as you move through your paper log pages
-                    </p>
                 </div>
             </div>
         </div>
@@ -61,13 +78,79 @@
             </div>
         </div>
 
-        <div class="px-4 py-4 max-w-5xl mx-auto space-y-4">
+        <div class="px-4 py-4 max-w-5xl mx-auto space-y-4" x-data="{
+            si: -1,
+            recallIndex: -1,
+            recalledContactId: null,
+
+            get isRecalling() { return this.recallIndex >= 0 },
+
+            get recallableContacts() {
+                const rows = document.querySelectorAll('tr[wire\\:key^=\'contact-\']');
+                const contacts = [];
+                rows.forEach(row => {
+                    if (row.classList.contains('line-through')) return;
+                    const wireKey = row.getAttribute('wire:key');
+                    const contactId = wireKey ? parseInt(wireKey.replace('contact-', '')) : null;
+                    const recallValue = row.getAttribute('data-recall-value');
+                    if (contactId && recallValue) {
+                        contacts.push({ id: contactId, exchange: recallValue });
+                    }
+                });
+                return contacts;
+            },
+
+            recallUp(inputEl) {
+                const contacts = this.recallableContacts;
+                if (contacts.length === 0) return;
+                if (this.recallIndex < contacts.length - 1) this.recallIndex++;
+                const contact = contacts[this.recallIndex];
+                if (contact) {
+                    inputEl.value = contact.exchange;
+                    this.recalledContactId = contact.id;
+                }
+            },
+
+            recallDown(inputEl) {
+                if (this.recallIndex <= 0) { this.exitRecall(inputEl); return; }
+                this.recallIndex--;
+                const contact = this.recallableContacts[this.recallIndex];
+                if (contact) {
+                    inputEl.value = contact.exchange;
+                    this.recalledContactId = contact.id;
+                }
+            },
+
+            exitRecall(inputEl) {
+                this.recallIndex = -1;
+                this.recalledContactId = null;
+                if (inputEl) {
+                    inputEl.value = '';
+                    $wire.set('exchangeInput', '');
+                    inputEl.focus();
+                }
+            },
+
+            deleteRecalled(inputEl) {
+                if (!this.isRecalling || !this.recalledContactId) return;
+                $wire.call('deleteContact', this.recalledContactId);
+                this.exitRecall(inputEl);
+            },
+
+            saveRecalled(inputEl) {
+                if (!this.isRecalling || !this.recalledContactId) return;
+                const exchange = inputEl.value.trim();
+                if (!exchange) return;
+                $wire.call('updateContact', this.recalledContactId, exchange);
+                this.exitRecall(inputEl);
+            },
+        }">
 
             {{-- Contact Form Card --}}
             <x-card title="Log Contact" class="shadow-sm">
                 <div class="space-y-4">
-                    {{-- 4-column grid on desktop --}}
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {{-- Band / Mode / Power --}}
+                    <div class="grid grid-cols-3 gap-3">
                         {{-- Band --}}
                         <div>
                             <label for="transcribe-band" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Band <span class="text-error">*</span></label>
@@ -111,17 +194,6 @@
                             @error('powerWatts')
                                 <p class="text-error text-xs mt-1">{{ $message }}</p>
                             @enderror
-                        </div>
-
-                        {{-- Contact Time --}}
-                        <div class="col-span-2">
-                            <x-flatpickr
-                                label="Contact Time (UTC)"
-                                wire:model.live="contactTime"
-                                min="{{ $this->event->start_time->subMinutes(5)->format('Y-m-d H:i') }}"
-                                max="{{ $this->event->end_time->addMinutes(5)->format('Y-m-d H:i') }}"
-                                class="input-sm font-mono"
-                            />
                         </div>
                     </div>
 
@@ -190,8 +262,12 @@
                         </div>
                     @endif
 
-                    {{-- Exchange Input --}}
-                    <div class="space-y-2" x-data="{ si: -1 }">
+                    {{-- Exchange Input (with optional inline time) --}}
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-xs text-base-content/50">
+                            <span>Time: <span class="font-mono font-semibold text-base-content/70">{{ $contactTime }}</span> {{ $timeIsLocal ? $this->timezoneLabel : 'UTC' }}</span>
+                            <span class="text-base-content/30">&mdash; prepend time to set, e.g. 1423 W1AW 3A CT</span>
+                        </div>
                         <div class="flex gap-2">
                             <div class="relative flex-1">
                                 <input
@@ -199,15 +275,40 @@
                                     wire:model.live.debounce.300ms="exchangeInput"
                                     x-ref="exchangeInput"
                                     @input="si = -1"
-                                    @keydown.enter.prevent="si >= 0 && $wire.suggestions.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : $wire.logContact()"
-                                    @keydown.escape.prevent="si >= 0 ? (si = -1) : $wire.clearInput()"
-                                    @keydown.arrow-down.prevent="si = Math.min(si + 1, {{ count($suggestions) }} - 1)"
-                                    @keydown.arrow-up.prevent="si = Math.max(si - 1, -1)"
-                                    @keydown.tab.prevent="si >= 0 && $wire.suggestions.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : null"
+                                    @keydown.enter.prevent="
+                                        si >= 0 && $wire.suggestions?.length > 0
+                                            ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1)
+                                            : (isRecalling
+                                                ? saveRecalled($refs.exchangeInput)
+                                                : $wire.logContact())
+                                    "
+                                    @keydown.escape.prevent="
+                                        si >= 0
+                                            ? (si = -1)
+                                            : (isRecalling
+                                                ? exitRecall($refs.exchangeInput)
+                                                : $wire.clearInput())
+                                    "
+                                    @keydown.arrow-down.prevent="
+                                        $wire.suggestions?.length > 0
+                                            ? (si = Math.min(si + 1, $wire.suggestions.length - 1))
+                                            : (isRecalling ? recallDown($refs.exchangeInput) : null)
+                                    "
+                                    @keydown.arrow-up.prevent="
+                                        $wire.suggestions?.length > 0
+                                            ? (si = Math.max(si - 1, -1))
+                                            : ($refs.exchangeInput.value.trim() === '' || isRecalling
+                                                ? recallUp($refs.exchangeInput)
+                                                : null)
+                                    "
+                                    @keydown.delete="
+                                        if (isRecalling) { $event.preventDefault(); deleteRecalled($refs.exchangeInput); }
+                                    "
+                                    @keydown.tab.prevent="si >= 0 && $wire.suggestions?.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : null"
                                     @contact-logged.window="$refs.exchangeInput.focus(); $refs.exchangeInput.select(); si = -1"
                                     @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
                                     class="input input-bordered input-lg w-full text-2xl font-mono uppercase tracking-wider"
-                                    placeholder="W1AW 1B CT"
+                                    placeholder="1423 W1AW 3A CT"
                                     autofocus
                                 />
 
@@ -254,18 +355,34 @@
                             </x-alert>
                         @endif
 
+                        {{-- Recall Mode Indicator --}}
+                        <template x-if="isRecalling">
+                            <div class="alert alert-info py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                                </svg>
+                                <span>
+                                    Recalled QSO <span x-text="recallIndex + 1" class="font-bold"></span>
+                                    — <kbd class="kbd kbd-xs text-base-content">Del</kbd> delete
+                                    · <kbd class="kbd kbd-xs text-base-content">Enter</kbd> save edits
+                                    · <kbd class="kbd kbd-xs text-base-content">Esc</kbd> cancel
+                                </span>
+                            </div>
+                        </template>
+
                         @if($isDuplicate)
-                            <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                            <x-alert x-show="!isRecalling" icon="o-exclamation-triangle" class="alert-warning">
                                 Duplicate: {{ $dupeWarning }}
                             </x-alert>
                         @endif
 
                         {{-- Keyboard shortcuts --}}
                         <div class="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-base-content/40">
-                            <span><kbd class="kbd kbd-xs">Enter</kbd> Log contact</span>
-                            <span><kbd class="kbd kbd-xs">Esc</kbd> Clear input</span>
-                            <span><kbd class="kbd kbd-xs">&uarr;</kbd><kbd class="kbd kbd-xs">&darr;</kbd> Navigate suggestions</span>
-                            <span><kbd class="kbd kbd-xs">Tab</kbd> Accept suggestion</span>
+                            <span><kbd class="kbd kbd-xs text-base-content">Enter</kbd> Log contact</span>
+                            <span><kbd class="kbd kbd-xs text-base-content">Esc</kbd> Clear input</span>
+                            <span><kbd class="kbd kbd-xs text-base-content">&uarr;</kbd><kbd class="kbd kbd-xs text-base-content">&darr;</kbd> Recall QSOs</span>
+                            <span><kbd class="kbd kbd-xs text-base-content">Del</kbd> Delete recalled</span>
+                            <span><kbd class="kbd kbd-xs text-base-content">Tab</kbd> Accept suggestion</span>
                         </div>
                     </div>
                 </div>
@@ -280,6 +397,7 @@
                                 <tr>
                                     <th>Time (UTC)</th>
                                     <th>Callsign</th>
+                                    <th>Exchange</th>
                                     <th>Band</th>
                                     <th>Mode</th>
                                     <th>Section</th>
@@ -288,9 +406,31 @@
                             </thead>
                             <tbody>
                                 @foreach($this->recentContacts as $contact)
-                                    <tr wire:key="contact-{{ $contact->id }}" @class(['opacity-40' => $contact->is_duplicate])>
+                                    <tr wire:key="contact-{{ $contact->id }}"
+                                        data-recall-value="{{ $contact->qso_time->format('Hi') }} {{ $contact->received_exchange }}"
+                                        :class="{
+                                            'ring-2 ring-primary': recalledContactId === {{ $contact->id }},
+                                        }"
+                                        @class([
+                                            'opacity-40 line-through' => $contact->trashed(),
+                                            'opacity-50' => ! $contact->trashed() && $contact->is_duplicate,
+                                        ])>
                                         <td class="font-mono text-sm">{{ $contact->qso_time->format('H:i') }}</td>
-                                        <td class="font-bold font-mono uppercase">{{ $contact->callsign }}</td>
+                                        <td class="font-bold font-mono uppercase">
+                                            {{ $contact->callsign }}
+                                            @if($contact->trashed())
+                                                <button
+                                                    wire:click="restoreContact({{ $contact->id }})"
+                                                    class="btn btn-ghost btn-xs ml-1"
+                                                    title="Undo delete"
+                                                >
+                                                    Undo
+                                                </button>
+                                            @elseif($contact->is_duplicate)
+                                                <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
+                                            @endif
+                                        </td>
+                                        <td class="font-mono text-sm exchange-cell">{{ $contact->received_exchange }}</td>
                                         <td class="font-mono text-sm">{{ $contact->band->name ?? '—' }}</td>
                                         <td class="text-sm">{{ $contact->mode->name ?? '—' }}</td>
                                         <td class="text-sm">{{ $contact->section->code ?? '—' }}</td>

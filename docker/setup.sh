@@ -7,12 +7,12 @@ set -e
 ENV_FILE="${1:-.env}"
 EXAMPLE_FILE=".env.example"
 
-if [ ! -f "$EXAMPLE_FILE" ]; then
+if [[ ! -f "$EXAMPLE_FILE" ]]; then
     echo "Error: $EXAMPLE_FILE not found. Run this script from the project root."
     exit 1
 fi
 
-if [ -f "$ENV_FILE" ]; then
+if [[ -f "$ENV_FILE" ]]; then
     echo "Found existing $ENV_FILE — checking for missing secrets..."
     CREATED=false
 else
@@ -28,7 +28,7 @@ set_env() {
         # Key exists — only replace if value is empty
         local current
         current=$(grep "^${key}=" "$ENV_FILE" | head -1 | cut -d'=' -f2-)
-        if [ -z "$current" ] || [ "$current" = '""' ] || [ "$current" = "''" ]; then
+        if [[ -z "$current" || "$current" = '""' || "$current" = "''" ]]; then
             sed -i "s|^${key}=.*|${key}=${value}|" "$ENV_FILE"
             echo "  Generated $key"
         fi

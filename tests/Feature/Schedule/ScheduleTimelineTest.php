@@ -8,8 +8,10 @@ use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 
 uses(RefreshDatabase::class);
 
@@ -29,7 +31,7 @@ beforeEach(function () {
         'last_name' => 'Operator',
     ]);
 
-    \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'sign-up-shifts']);
+    Permission::firstOrCreate(['name' => 'sign-up-shifts']);
     $this->user->givePermissionTo('sign-up-shifts');
 });
 
@@ -255,6 +257,56 @@ describe('check in and check out', function () {
 
         expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
     });
+
+    test('checkout confirmation warning is shown when shift has not ended', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->subHour(),
+            'end_time' => appNow()->addHour(),
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->user->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow()->subMinutes(30),
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertSee('Are you sure you want to check out?', false);
+    });
+
+    test('checkout confirmation warning is not shown when shift has already ended', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->user->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow()->subHours(2),
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertDontSee('Are you sure you want to check out?', false);
+    });
 });
 
 describe('re-check-in', function () {
@@ -338,7 +390,7 @@ describe('re-check-in', function () {
 
         expect(fn () => Livewire::test(ScheduleTimeline::class)
             ->call('reCheckIn', $assignment->id)
-        )->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        )->toThrow(ModelNotFoundException::class);
     });
 });
 
@@ -475,6 +527,121 @@ describe('filtering and sorting', function () {
             ->call('resetFilters')
             ->assertSet('role', '')
             ->assertSet('timeFilter', '');
+    });
+});
+
+describe('urgent empty shift highlighting', function () {
+    test('shows Needs Coverage badge for empty open shift starting within 2 hours', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+            'icon' => 'o-radio',
+        ]);
+
+        Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addMinutes(90),
+            'end_time' => appNow()->addMinutes(210),
+            'capacity' => 2,
+            'is_open' => true,
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertSee('Needs Coverage');
+    });
+
+    test('does not show Needs Coverage badge when shift has an assignment', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+            'icon' => 'o-radio',
+        ]);
+
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addMinutes(90),
+            'end_time' => appNow()->addMinutes(210),
+            'capacity' => 2,
+            'is_open' => true,
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shift->id]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertDontSee('Needs Coverage');
+    });
+
+    test('does not show Needs Coverage badge for empty shift starting in 3 hours', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+            'icon' => 'o-radio',
+        ]);
+
+        Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addHours(3),
+            'end_time' => appNow()->addHours(5),
+            'capacity' => 2,
+            'is_open' => true,
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertDontSee('Needs Coverage');
+    });
+
+    test('does not show Needs Coverage badge for closed empty shift starting within 2 hours', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+            'icon' => 'o-radio',
+        ]);
+
+        Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addMinutes(90),
+            'end_time' => appNow()->addMinutes(210),
+            'capacity' => 2,
+            'is_open' => false,
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertDontSee('Needs Coverage');
+    });
+
+    test('shows Needs Coverage badge in flattened rendering mode', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Station Operator',
+            'icon' => 'o-radio',
+        ]);
+
+        Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addMinutes(90),
+            'end_time' => appNow()->addMinutes(210),
+            'capacity' => 2,
+            'is_open' => true,
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->set('sortBy', 'time')
+            ->assertSee('Needs Coverage');
     });
 });
 

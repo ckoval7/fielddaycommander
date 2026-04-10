@@ -345,8 +345,8 @@ class ManageSchedule extends Component
             $shift = Shift::findOrFail($shiftId);
             $this->editingShiftId = $shift->id;
             $this->shiftRoleId = $shift->shift_role_id;
-            $this->shiftStartTime = $shift->start_time->format(self::DATETIME_LOCAL_FORMAT);
-            $this->shiftEndTime = $shift->end_time->format(self::DATETIME_LOCAL_FORMAT);
+            $this->shiftStartTime = toLocalTime($shift->start_time)->format(self::DATETIME_LOCAL_FORMAT);
+            $this->shiftEndTime = toLocalTime($shift->end_time)->format(self::DATETIME_LOCAL_FORMAT);
             $this->shiftCapacity = $shift->capacity;
             $this->shiftIsOpen = $shift->is_open;
             $this->shiftNotes = $shift->notes ?? '';
@@ -370,10 +370,12 @@ class ManageSchedule extends Component
             'shiftEndTime.after' => 'End time must be after start time.',
         ]);
 
+        $tz = localTimezone();
+
         $data = [
             'shift_role_id' => $this->shiftRoleId,
-            'start_time' => Carbon::parse($this->shiftStartTime),
-            'end_time' => Carbon::parse($this->shiftEndTime),
+            'start_time' => Carbon::parse($this->shiftStartTime, $tz)->utc(),
+            'end_time' => Carbon::parse($this->shiftEndTime, $tz)->utc(),
             'capacity' => $this->shiftCapacity,
             'is_open' => $this->shiftIsOpen,
             'notes' => $this->shiftNotes ?: null,
@@ -482,8 +484,8 @@ class ManageSchedule extends Component
 
         // Pre-fill with event start/end times
         if ($this->event) {
-            $this->bulkStartTime = $this->event->start_time?->format(self::DATETIME_LOCAL_FORMAT) ?? '';
-            $this->bulkEndTime = $this->event->end_time?->format(self::DATETIME_LOCAL_FORMAT) ?? '';
+            $this->bulkStartTime = toLocalTime($this->event->start_time)?->format(self::DATETIME_LOCAL_FORMAT) ?? '';
+            $this->bulkEndTime = toLocalTime($this->event->end_time)?->format(self::DATETIME_LOCAL_FORMAT) ?? '';
         }
 
         $this->showBulkModal = true;
@@ -505,8 +507,9 @@ class ManageSchedule extends Component
             'bulkDurationMinutes.min' => 'Duration must be at least 15 minutes.',
         ]);
 
-        $start = Carbon::parse($this->bulkStartTime);
-        $end = Carbon::parse($this->bulkEndTime);
+        $tz = localTimezone();
+        $start = Carbon::parse($this->bulkStartTime, $tz)->utc();
+        $end = Carbon::parse($this->bulkEndTime, $tz)->utc();
         $createdCount = 0;
 
         $current = $start->copy();

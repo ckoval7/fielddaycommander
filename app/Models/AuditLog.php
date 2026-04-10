@@ -120,6 +120,19 @@ class AuditLog extends Model
         // Gallery
         'album.export.requested' => 'Album export requested',
         'album.export.downloaded' => 'Album export downloaded',
+
+        // Guestbook
+        'guestbook.entry.signed' => 'Guestbook entry signed',
+        'guestbook.entry.updated' => 'Guestbook entry updated',
+        'guestbook.entry.deleted' => 'Guestbook entry deleted',
+        'guestbook.entry.bulk_verified' => 'Guestbook entries bulk verified',
+        'guestbook.entry.bulk_unverified' => 'Guestbook entries bulk unverified',
+        'guestbook.entry.bulk_deleted' => 'Guestbook entries bulk deleted',
+
+        // Contacts
+        'contact.deleted' => 'Contact deleted',
+        'contact.restored' => 'Contact restored',
+        'contact.updated' => 'Contact updated',
     ];
 
     protected $fillable = [

@@ -86,7 +86,7 @@
                                                     @endif
                                                 </div>
                                                 <div class="text-sm text-base-content/70">
-                                                    {{ toLocalTime($shift->start_time)->format('M j, g:i A') }} - {{ toLocalTime($shift->end_time)->format('g:i A T') }}
+                                                    {{ toLocalTime($shift->start_time)->format('M j, ' . timeFormat()) }} - {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
                                                 </div>
                                                 <div class="text-sm text-base-content/50 mt-1">
                                                     Capacity: {{ $shift->assignments->count() }}/{{ $shift->capacity }}
@@ -310,7 +310,7 @@
                                                             <span class="badge badge-sm text-white" style="background-color: {{ $confirmation->shift->shiftRole->color ?? '#64748b' }}">{{ $confirmation->shift->shiftRole->name }}</span>
                                                         @endif
                                                         @if($confirmation->checked_in_at)
-                                                            <span>Checked in: {{ toLocalTime($confirmation->checked_in_at)->format('M j, g:i A T') }}</span>
+                                                            <span>Checked in: {{ toLocalTime($confirmation->checked_in_at)->format('M j, ' . timeFormat() . ' T') }}</span>
                                                         @endif
                                                     </div>
                                                     @if($confirmation->shift?->shiftRole?->getBonusTypeCode())
@@ -451,13 +451,13 @@
                     label="Start Time"
                     wire:model="shiftStartTime"
                     required
-                    hint="Enter in UTC — will display in local time to volunteers"
+                    hint="Times are in your local timezone"
                 />
                 <x-flatpickr
                     label="End Time"
                     wire:model="shiftEndTime"
                     required
-                    hint="Enter in UTC — will display in local time to volunteers"
+                    hint="Times are in your local timezone"
                 />
                 <x-input
                     label="Capacity"
@@ -503,13 +503,13 @@
                     label="Start Time"
                     wire:model="bulkStartTime"
                     required
-                    hint="Enter in UTC — will display in local time to volunteers"
+                    hint="Times are in your local timezone"
                 />
                 <x-flatpickr
                     label="End Time"
                     wire:model="bulkEndTime"
                     required
-                    hint="Enter in UTC — will display in local time to volunteers"
+                    hint="Times are in your local timezone"
                 />
                 <x-input
                     label="Shift Duration (minutes)"

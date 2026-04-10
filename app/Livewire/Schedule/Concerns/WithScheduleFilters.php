@@ -26,7 +26,7 @@ trait WithScheduleFilters
     public string $timeFilter = '';
 
     #[Url]
-    public string $sortBy = 'time';
+    public string $sortBy = 'role';
 
     #[Url]
     public string $sortDir = 'asc';
@@ -118,6 +118,29 @@ trait WithScheduleFilters
     }
 
     /**
+     * Apply sorting to a ShiftAssignment query builder.
+     * Used by MyShifts where queries are on assignments, not shifts.
+     */
+    public function applyAssignmentSorting(Builder $query): Builder
+    {
+        $dir = $this->sortDir === 'desc' ? 'desc' : 'asc';
+
+        if ($this->sortBy === 'role') {
+            $query->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+                ->join('shift_roles', 'shifts.shift_role_id', '=', 'shift_roles.id')
+                ->orderBy('shift_roles.sort_order', $dir)
+                ->orderBy('shifts.start_time', 'asc')
+                ->select('shift_assignments.*');
+        } else {
+            $query->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+                ->orderBy('shifts.start_time', $dir)
+                ->select('shift_assignments.*');
+        }
+
+        return $query;
+    }
+
+    /**
      * Get the number of active filters for the badge display.
      */
     #[Computed]
@@ -139,7 +162,7 @@ trait WithScheduleFilters
         if ($this->timeFilter !== '') {
             $count++;
         }
-        if ($this->sortBy !== 'time' || $this->sortDir !== 'asc') {
+        if ($this->sortBy !== 'role' || $this->sortDir !== 'asc') {
             $count++;
         }
 
@@ -156,7 +179,7 @@ trait WithScheduleFilters
         $this->status = '';
         $this->availability = '';
         $this->timeFilter = '';
-        $this->sortBy = 'time';
+        $this->sortBy = 'role';
         $this->sortDir = 'asc';
     }
 

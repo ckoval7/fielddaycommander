@@ -8,12 +8,15 @@ use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Models\User;
+use App\Services\EventContextService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
 
-    \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'sign-up-shifts']);
+    Permission::firstOrCreate(['name' => 'sign-up-shifts']);
     $this->user->givePermissionTo('sign-up-shifts');
 
     $this->event = Event::factory()->create([
@@ -156,6 +159,48 @@ test('user can check out of a checked-in shift', function () {
     expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
 });
 
+test('checkout confirmation warning is shown when shift has not ended', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHour(),
+        'end_time' => appNow()->addHour(),
+    ]);
+
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_IN,
+        'checked_in_at' => appNow()->subMinutes(30),
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSee('Are you sure you want to check out?', false);
+});
+
+test('checkout confirmation warning is not shown when shift has already ended', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(3),
+        'end_time' => appNow()->subHour(),
+    ]);
+
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_IN,
+        'checked_in_at' => appNow()->subHours(2),
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertDontSee('Are you sure you want to check out?', false);
+});
+
 test('user can drop a self-signup', function () {
     $shift = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
@@ -199,7 +244,7 @@ test('user cannot drop an assigned shift', function () {
 
     expect(fn () => Livewire::test(MyShifts::class)
         ->call('cancelSignUp', $assignment->id)
-    )->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+    )->toThrow(ModelNotFoundException::class);
 });
 
 test('user cannot check in to another users shift', function () {
@@ -222,7 +267,7 @@ test('user cannot check in to another users shift', function () {
 
     expect(fn () => Livewire::test(MyShifts::class)
         ->call('checkIn', $assignment->id)
-    )->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+    )->toThrow(ModelNotFoundException::class);
 });
 
 test('my shifts shows confirmation badge for bonus roles', function () {
@@ -259,7 +304,7 @@ test('my shifts shows no event alert when no event configured', function () {
     // Remove all events so none can be found
     Event::query()->forceDelete();
     Setting::set('active_event_id', null);
-    app(App\Services\EventContextService::class)->clearCache();
+    app(EventContextService::class)->clearCache();
 
     $this->actingAs($this->user);
 
@@ -297,12 +342,13 @@ describe('filtering', function () {
         ShiftAssignment::factory()->create(['shift_id' => $shift1->id, 'user_id' => $this->user->id]);
         ShiftAssignment::factory()->create(['shift_id' => $shift2->id, 'user_id' => $this->user->id]);
 
+        Setting::set('time_format', 'h:i:s A');
         $this->actingAs($this->user);
 
         Livewire::test(MyShifts::class)
             ->set('role', (string) $role2->id)
-            ->assertSee($shift2->start_time->format('g:i A'))
-            ->assertDontSee($shift1->start_time->format('g:i A'));
+            ->assertSee(toLocalTime($shift2->start_time)->format('g:i A'))
+            ->assertDontSee(toLocalTime($shift1->start_time)->format('g:i A'));
     });
 
     test('can filter by assignment status', function () {
@@ -332,12 +378,111 @@ describe('filtering', function () {
             'status' => ShiftAssignment::STATUS_CHECKED_OUT,
         ]);
 
+        Setting::set('time_format', 'h:i:s A');
         $this->actingAs($this->user);
 
         Livewire::test(MyShifts::class)
             ->set('status', 'checked_out')
             ->assertSee('Checked Out')
-            ->assertDontSee($shift1->start_time->format('g:i A'));
+            ->assertDontSee(toLocalTime($shift1->start_time)->format('g:i A'));
+    });
+
+    test('sort by time ascending shows earlier shift first', function () {
+        $shiftEarly = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $shiftLate = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(6),
+            'end_time' => appNow()->addHours(8),
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shiftEarly->id, 'user_id' => $this->user->id]);
+        ShiftAssignment::factory()->create(['shift_id' => $shiftLate->id, 'user_id' => $this->user->id]);
+
+        Setting::set('time_format', 'h:i:s A');
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->set('sortBy', 'time')
+            ->set('sortDir', 'asc')
+            ->assertSeeInOrder([
+                toLocalTime($shiftEarly->start_time)->format('g:i A'),
+                toLocalTime($shiftLate->start_time)->format('g:i A'),
+            ]);
+    });
+
+    test('sort by time descending shows later shift first', function () {
+        $shiftEarly = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $shiftLate = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(6),
+            'end_time' => appNow()->addHours(8),
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shiftEarly->id, 'user_id' => $this->user->id]);
+        ShiftAssignment::factory()->create(['shift_id' => $shiftLate->id, 'user_id' => $this->user->id]);
+
+        Setting::set('time_format', 'h:i:s A');
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->set('sortBy', 'time')
+            ->set('sortDir', 'desc')
+            ->assertSeeInOrder([
+                toLocalTime($shiftLate->start_time)->format('g:i A'),
+                toLocalTime($shiftEarly->start_time)->format('g:i A'),
+            ]);
+    });
+
+    test('sort by role orders by role sort_order', function () {
+        $role1 = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Alpha Role',
+            'sort_order' => 0,
+        ]);
+
+        $role2 = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Beta Role',
+            'sort_order' => 1,
+        ]);
+
+        $shiftForRole2 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role2->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $shiftForRole1 = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role1->id,
+            'start_time' => appNow()->addHours(3),
+            'end_time' => appNow()->addHours(5),
+        ]);
+
+        ShiftAssignment::factory()->create(['shift_id' => $shiftForRole2->id, 'user_id' => $this->user->id]);
+        ShiftAssignment::factory()->create(['shift_id' => $shiftForRole1->id, 'user_id' => $this->user->id]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(MyShifts::class)
+            ->set('sortBy', 'role')
+            ->set('sortDir', 'asc')
+            ->assertSeeInOrder(['Alpha Role', 'Beta Role']);
     });
 
     test('can reset filters', function () {
@@ -430,6 +575,52 @@ test('user cannot re-check-in after shift has ended', function () {
     expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
 });
 
+test('shift times display in 24-hour format when configured', function () {
+    Setting::set('time_format', 'H:i:s');
+
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->addHours(2)->setTime(14, 30),
+        'end_time' => appNow()->addHours(2)->setTime(16, 0),
+    ]);
+
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSee(toLocalTime($shift->start_time)->format('H:i'))
+        ->assertDontSee(toLocalTime($shift->start_time)->format('g:i A'));
+});
+
+test('shift times display in 12-hour format when configured', function () {
+    Setting::set('time_format', 'h:i:s A');
+
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->addHours(2)->setTime(14, 30),
+        'end_time' => appNow()->addHours(2)->setTime(16, 0),
+    ]);
+
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSee(toLocalTime($shift->start_time)->format('g:i A'))
+        ->assertDontSee(toLocalTime($shift->start_time)->format('H:i').' ');
+});
+
 test('user cannot re-check-in to another users assignment', function () {
     $otherUser = User::factory()->create();
 
@@ -449,5 +640,5 @@ test('user cannot re-check-in to another users assignment', function () {
 
     expect(fn () => Livewire::test(MyShifts::class)
         ->call('reCheckIn', $assignment->id)
-    )->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+    )->toThrow(ModelNotFoundException::class);
 });

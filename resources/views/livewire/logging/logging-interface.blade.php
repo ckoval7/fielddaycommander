@@ -182,10 +182,35 @@
                         wire:model.live.debounce.300ms="exchangeInput"
                         x-ref="exchangeInput"
                         @input="si = -1"
-                        @keydown.enter.prevent="si >= 0 && $wire.suggestions?.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : logContact($refs.exchangeInput)"
-                        @keydown.escape.prevent="si >= 0 ? (si = -1) : (($refs.exchangeInput.value = ''), $wire.clearInput())"
-                        @keydown.arrow-down.prevent="si = Math.min(si + 1, {{ count($suggestions) }} - 1)"
-                        @keydown.arrow-up.prevent="si = Math.max(si - 1, -1)"
+                        @keydown.enter.prevent="
+                            si >= 0 && $wire.suggestions?.length > 0
+                                ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1)
+                                : (isRecalling
+                                    ? saveRecalled($refs.exchangeInput)
+                                    : logContact($refs.exchangeInput))
+                        "
+                        @keydown.escape.prevent="
+                            si >= 0
+                                ? (si = -1)
+                                : (isRecalling
+                                    ? exitRecall($refs.exchangeInput)
+                                    : (($refs.exchangeInput.value = ''), $wire.clearInput()))
+                        "
+                        @keydown.arrow-down.prevent="
+                            $wire.suggestions?.length > 0
+                                ? (si = Math.min(si + 1, $wire.suggestions.length - 1))
+                                : (isRecalling ? recallDown($refs.exchangeInput) : null)
+                        "
+                        @keydown.arrow-up.prevent="
+                            $wire.suggestions?.length > 0
+                                ? (si = Math.max(si - 1, -1))
+                                : ($refs.exchangeInput.value.trim() === '' || isRecalling
+                                    ? recallUp($refs.exchangeInput)
+                                    : null)
+                        "
+                        @keydown.delete="
+                            if (isRecalling) { $event.preventDefault(); deleteRecalled($refs.exchangeInput); }
+                        "
                         @keydown.tab.prevent="si >= 0 && $wire.suggestions.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : null"
                         @contact-logged.window="$refs.exchangeInput.focus(); $refs.exchangeInput.select(); si = -1"
                         @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
@@ -239,18 +264,34 @@
                 </div>
             </template>
 
+            {{-- Recall Mode Indicator --}}
+            <template x-if="isRecalling">
+                <div class="alert alert-info py-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                    </svg>
+                    <span>
+                        Recalled QSO <span x-text="recallIndex + 1" class="font-bold"></span>
+                        — <kbd class="kbd kbd-xs text-base-content">Del</kbd> delete
+                        · <kbd class="kbd kbd-xs text-base-content">Enter</kbd> save edits
+                        · <kbd class="kbd kbd-xs text-base-content">Esc</kbd> cancel
+                    </span>
+                </div>
+            </template>
+
             @if($isDuplicate)
-                <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                <x-alert x-show="!isRecalling" icon="o-exclamation-triangle" class="alert-warning">
                     Duplicate: {{ $dupeWarning }}
                 </x-alert>
             @endif
 
             {{-- Keyboard Shortcuts Help --}}
             <div class="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-base-content/40">
-                <span><kbd class="kbd kbd-xs">Enter</kbd> Log contact</span>
-                <span><kbd class="kbd kbd-xs">Esc</kbd> Clear input</span>
-                <span><kbd class="kbd kbd-xs">&uarr;</kbd><kbd class="kbd kbd-xs">&darr;</kbd> Navigate suggestions</span>
-                <span><kbd class="kbd kbd-xs">Tab</kbd> Accept suggestion</span>
+                <span><kbd class="kbd kbd-xs text-base-content">Enter</kbd> Log contact</span>
+                <span><kbd class="kbd kbd-xs text-base-content">Esc</kbd> Clear input</span>
+                <span><kbd class="kbd kbd-xs text-base-content">&uarr;</kbd><kbd class="kbd kbd-xs text-base-content">&darr;</kbd> Recall QSOs</span>
+                <span><kbd class="kbd kbd-xs text-base-content">Del</kbd> Delete recalled</span>
+                <span><kbd class="kbd kbd-xs text-base-content">Tab</kbd> Accept suggestion</span>
             </div>
         </div>
 
@@ -302,12 +343,27 @@
 
                         {{-- Server-confirmed contacts --}}
                         @foreach($this->recentContacts as $contact)
-                            <tr wire:key="contact-{{ $contact->id }}" @class(['opacity-50' => $contact->is_duplicate])>
-                                <td class="font-mono">{{ $operatingSession->qso_count - $loop->index }}</td>
+                            <tr wire:key="contact-{{ $contact->id }}"
+                                :class="{
+                                    'ring-2 ring-primary': recalledContactId === {{ $contact->id }},
+                                }"
+                                @class([
+                                    'opacity-40 line-through' => $contact->trashed(),
+                                    'opacity-50' => ! $contact->trashed() && $contact->is_duplicate,
+                                ])>
+                                <td class="font-mono">{{ $contact->trashed() ? '-' : '' }}</td>
                                 <td class="font-mono">{{ $contact->qso_time->format('H:i') }}</td>
                                 <td class="font-bold font-mono uppercase">
                                     {{ $contact->callsign }}
-                                    @if($contact->is_duplicate)
+                                    @if($contact->trashed())
+                                        <button
+                                            wire:click="restoreContact({{ $contact->id }})"
+                                            class="btn btn-ghost btn-xs ml-1"
+                                            title="Undo delete"
+                                        >
+                                            Undo
+                                        </button>
+                                    @elseif($contact->is_duplicate)
                                         <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
                                     @endif
                                 </td>

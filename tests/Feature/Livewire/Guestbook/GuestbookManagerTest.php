@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Guestbook\GuestbookManager;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
@@ -8,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 uses(RefreshDatabase::class);
 
@@ -497,7 +499,7 @@ describe('csv export', function () {
 
         $response = $component->exportCsv();
 
-        expect($response)->toBeInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class);
+        expect($response)->toBeInstanceOf(StreamedResponse::class);
         expect($response->headers->get('Content-Type'))->toBe('text/csv');
         expect($response->headers->get('Content-Disposition'))
             ->toContain('guestbook-field-day-2026-'.now()->format('Y-m-d').'.csv');
@@ -655,5 +657,168 @@ describe('csv export', function () {
         $output = ob_get_clean();
 
         expect($output)->toContain('Admin Verifier');
+    });
+});
+
+// =============================================================================
+// Audit Logging Tests (6 tests)
+// =============================================================================
+
+describe('audit logging', function () {
+    test('logs guestbook.entry.updated when saveVerification is called', function () {
+        $this->actingAs($this->admin);
+
+        $entry = GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'is_verified' => false,
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->call('openVerifyModal', $entry->id)
+            ->set('editCategory', GuestbookEntry::VISITOR_CATEGORY_MEDIA)
+            ->set('editVerified', true)
+            ->call('saveVerification');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.updated')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->auditable_type)->toBe(GuestbookEntry::class);
+        expect($auditLog->auditable_id)->toBe($entry->id);
+        expect($auditLog->old_values)->toMatchArray([
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'is_verified' => false,
+            'verified_by' => null,
+            'verified_at' => null,
+        ]);
+        expect($auditLog->new_values)->toMatchArray([
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'is_verified' => true,
+            'verified_by' => $this->admin->id,
+        ]);
+    });
+
+    test('logs guestbook.entry.updated when saveVerification unverifies an entry', function () {
+        $this->actingAs($this->admin);
+
+        $entry = GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'is_verified' => true,
+            'verified_by' => $this->admin->id,
+            'verified_at' => now(),
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->call('openVerifyModal', $entry->id)
+            ->set('editVerified', false)
+            ->call('saveVerification');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.updated')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->old_values)->toMatchArray([
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'is_verified' => true,
+            'verified_by' => $this->admin->id,
+        ]);
+        expect($auditLog->new_values)->toMatchArray([
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'is_verified' => false,
+            'verified_by' => null,
+            'verified_at' => null,
+        ]);
+    });
+
+    test('logs guestbook.entry.deleted when deleteEntry is called', function () {
+        $this->actingAs($this->admin);
+
+        $entry = GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'callsign' => 'W1AW',
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->call('openDeleteModal', $entry->id)
+            ->call('deleteEntry');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.deleted')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->auditable_type)->toBe(GuestbookEntry::class);
+        expect($auditLog->auditable_id)->toBe($entry->id);
+        expect($auditLog->old_values)->toMatchArray([
+            'name' => 'John Doe',
+            'callsign' => 'W1AW',
+        ]);
+        expect($auditLog->new_values)->toBeNull();
+    });
+
+    test('logs guestbook.entry.bulk_verified when bulkVerify is called', function () {
+        $this->actingAs($this->admin);
+
+        $entries = GuestbookEntry::factory()->count(3)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_verified' => false,
+        ]);
+        $ids = $entries->pluck('id')->toArray();
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', $ids)
+            ->call('bulkVerify');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.bulk_verified')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->new_values['count'])->toBe(3);
+        expect($auditLog->new_values['entry_ids'])->toEqual($ids);
+    });
+
+    test('logs guestbook.entry.bulk_unverified when bulkUnverify is called', function () {
+        $this->actingAs($this->admin);
+
+        $entries = GuestbookEntry::factory()->count(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_verified' => true,
+            'verified_by' => $this->admin->id,
+            'verified_at' => now(),
+        ]);
+        $ids = $entries->pluck('id')->toArray();
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', $ids)
+            ->call('bulkUnverify');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.bulk_unverified')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->new_values['count'])->toBe(2);
+        expect($auditLog->new_values['entry_ids'])->toEqual($ids);
+    });
+
+    test('logs guestbook.entry.bulk_deleted when bulkDelete is called', function () {
+        $this->actingAs($this->admin);
+
+        $entries = GuestbookEntry::factory()->count(4)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+        $ids = $entries->pluck('id')->toArray();
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', $ids)
+            ->call('bulkDelete');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.bulk_deleted')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->new_values['count'])->toBe(4);
+        expect($auditLog->new_values['entry_ids'])->toEqual($ids);
     });
 });

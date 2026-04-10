@@ -14,6 +14,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         isOnline: navigator.onLine,
         syncIntervalId: null,
         storageKey: `fd-commander-queue-${sessionId}`,
+        recallIndex: -1,
+        recalledContactId: null,
 
         init() {
             this.loadQueue();
@@ -308,6 +310,100 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             this.queue = this.queue.filter(c => c.uuid !== uuid);
             this.saveQueue();
             globalThis.Livewire?.dispatch('contact-discarded');
+        },
+
+        get isRecalling() {
+            return this.recallIndex >= 0;
+        },
+
+        get recallableContacts() {
+            // Get server-confirmed contacts from the DOM table rows
+            const rows = document.querySelectorAll('tr[wire\\:key^="contact-"]');
+            const contacts = [];
+            rows.forEach(row => {
+                // Skip deleted rows (they have line-through class)
+                if (row.classList.contains('line-through')) return;
+                const callsignCell = row.querySelector('td:nth-child(3)');
+                const exchangeCell = row.querySelector('td:nth-child(4)');
+                const wireKey = row.getAttribute('wire:key');
+                const contactId = wireKey ? parseInt(wireKey.replace('contact-', '')) : null;
+                if (contactId && callsignCell && exchangeCell) {
+                    contacts.push({
+                        id: contactId,
+                        callsign: callsignCell.textContent.trim().split('\n')[0].trim(),
+                        exchange: exchangeCell.textContent.trim(),
+                    });
+                }
+            });
+            return contacts;
+        },
+
+        recallUp(inputEl) {
+            const contacts = this.recallableContacts;
+            if (contacts.length === 0) return;
+
+            if (this.recallIndex < contacts.length - 1) {
+                this.recallIndex++;
+            }
+
+            const contact = contacts[this.recallIndex];
+            if (contact) {
+                inputEl.value = contact.exchange;
+                this.recalledContactId = contact.id;
+            }
+        },
+
+        recallDown(inputEl) {
+            if (this.recallIndex <= 0) {
+                this.exitRecall(inputEl);
+                return;
+            }
+
+            this.recallIndex--;
+            const contacts = this.recallableContacts;
+            const contact = contacts[this.recallIndex];
+            if (contact) {
+                inputEl.value = contact.exchange;
+                this.recalledContactId = contact.id;
+            }
+        },
+
+        exitRecall(inputEl) {
+            this.recallIndex = -1;
+            this.recalledContactId = null;
+            if (inputEl) {
+                inputEl.value = '';
+                const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
+                if (wire) {
+                    try { wire.set('exchangeInput', ''); } catch (e) { /* best effort */ }
+                }
+                inputEl.focus();
+            }
+        },
+
+        deleteRecalled(inputEl) {
+            if (!this.isRecalling || !this.recalledContactId) return;
+
+            const contactId = this.recalledContactId;
+            const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
+            if (wire) {
+                wire.call('deleteContact', contactId);
+            }
+            this.exitRecall(inputEl);
+        },
+
+        saveRecalled(inputEl) {
+            if (!this.isRecalling || !this.recalledContactId) return;
+
+            const contactId = this.recalledContactId;
+            const exchange = inputEl.value.trim();
+            if (!exchange) return;
+
+            const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
+            if (wire) {
+                wire.call('updateContact', contactId, exchange);
+            }
+            this.exitRecall(inputEl);
         },
 
         loadQueue() {

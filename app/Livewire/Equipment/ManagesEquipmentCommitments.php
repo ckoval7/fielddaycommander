@@ -2,39 +2,26 @@
 
 namespace App\Livewire\Equipment;
 
-use App\Models\AuditLog;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use Carbon\Carbon;
-use Illuminate\Contracts\View\View;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
-use Livewire\Component;
-use Livewire\WithPagination;
 
-class EquipmentList extends Component
+/**
+ * Shared equipment commitment management for equipment list components.
+ *
+ * Provides commit-to-event, status changes, delivery notes, bulk commit,
+ * and bulk selection. Each consuming component implements the abstract
+ * methods to control authorization and ownership scoping.
+ */
+trait ManagesEquipmentCommitments
 {
-    use AuthorizesRequests, WithPagination;
-
-    public string $search = '';
-
-    public ?string $typeFilter = null;
-
-    public ?string $statusFilter = null;
-
-    public string $sortBy = 'created_at';
-
-    public string $sortDirection = 'desc';
-
-    public bool $showPhotoModal = false;
-
-    public ?string $photoPath = null;
-
-    public ?string $photoDescription = null;
-
+    // Commit modal
     public bool $showCommitModal = false;
 
     public ?int $commitEquipmentId = null;
@@ -72,69 +59,39 @@ class EquipmentList extends Component
     private const PERMISSION_ERROR = 'You do not have permission to modify this commitment.';
 
     /**
-     * Mount the component and authorize the user.
-     */
-    public function mount(): void
-    {
-        $this->authorize('viewAny', Equipment::class);
-    }
-
-    /**
-     * Reset to page 1 when search query changes.
-     */
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Reset to page 1 when type filter changes.
-     */
-    public function updatedTypeFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Reset to page 1 when status filter changes.
-     */
-    public function updatedStatusFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Get the filtered and sorted equipment query.
+     * Authorize the current user for commit/status/notes actions.
      *
-     * Returns only the authenticated user's equipment, filtered by search query,
-     * type, and status, then sorted by the specified column.
+     * Throw an authorization exception if the user lacks permission.
+     * For user-owned equipment this is a no-op (ownership is checked
+     * via canManageCommitment instead). For club equipment this gates
+     * on the edit-any-equipment permission.
      */
-    #[Computed]
-    public function equipment()
-    {
-        return Equipment::query()
-            ->with(['manager', 'commitments.event'])
-            ->where('owner_user_id', auth()->id())
-            ->when($this->search, fn (Builder $query) => $query->search($this->search))
-            ->when($this->typeFilter, fn (Builder $query) => $query->ofType($this->typeFilter))
-            ->when($this->statusFilter, fn (Builder $query) => $query->withCommitmentStatus($this->statusFilter))
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->orderBy('id', $this->sortDirection)
-            ->paginate(25);
-    }
+    abstract protected function authorizeCommitAction(): void;
 
     /**
-     * Open modal to view full-size equipment photo.
+     * Check whether the authenticated user can manage a specific commitment.
      *
-     * @param  string  $photoPath  The storage path of the photo
-     * @param  string  $description  Equipment description
+     * For user-owned equipment: true when the equipment belongs to the user.
+     * For club equipment: true when the equipment is org-owned and user
+     * has the edit-any-equipment permission.
      */
-    public function viewPhoto(string $photoPath, string $description): void
-    {
-        $this->photoPath = $photoPath;
-        $this->photoDescription = $description;
-        $this->showPhotoModal = true;
-    }
+    abstract protected function canManageCommitment(EquipmentEvent $commitment): bool;
+
+    /**
+     * Return a validation closure for the commitEquipmentId field.
+     *
+     * The closure receives ($attribute, $value, $fail) and should call
+     * $fail() when the equipment does not belong to this list's scope.
+     */
+    abstract protected function commitEquipmentValidationRule(): Closure;
+
+    /**
+     * Scope a set of equipment IDs to those manageable in this context.
+     *
+     * For user equipment: filters to owner_user_id = auth()->id().
+     * For club equipment: filters to owner_organization_id IS NOT NULL.
+     */
+    abstract protected function scopeSelectedEquipment(array $ids): EloquentCollection;
 
     /**
      * Get events within next 30 days or currently active.
@@ -153,11 +110,11 @@ class EquipmentList extends Component
 
     /**
      * Open modal to commit a specific equipment item to an event.
-     *
-     * @param  int  $equipmentId  The ID of the equipment to commit
      */
     public function openCommitModal(int $equipmentId): void
     {
+        $this->authorizeCommitAction();
+
         $this->commitEquipmentId = $equipmentId;
         $this->commitEventId = null;
         $this->commitExpectedDeliveryAt = null;
@@ -166,22 +123,19 @@ class EquipmentList extends Component
     }
 
     /**
-     * Create a new EquipmentEvent commitment from the catalog.
+     * Create a new EquipmentEvent commitment.
      */
     public function commitEquipment(): void
     {
+        $this->authorizeCommitAction();
+
         $event = Event::find($this->commitEventId);
 
         $this->validate([
             'commitEquipmentId' => [
                 'required',
                 'exists:equipment,id',
-                function ($attribute, $value, $fail) {
-                    $equipment = Equipment::find($value);
-                    if (! $equipment || $equipment->owner_user_id !== auth()->id()) {
-                        $fail('You do not own this equipment.');
-                    }
-                },
+                $this->commitEquipmentValidationRule(),
             ],
             'commitEventId' => [
                 'required',
@@ -200,23 +154,7 @@ class EquipmentList extends Component
             ],
         ]);
 
-        // Check for overlapping commitments
-        $hasOverlap = EquipmentEvent::query()
-            ->where('equipment_id', $this->commitEquipmentId)
-            ->whereNotIn('status', ['cancelled', 'returned'])
-            ->whereHas('event', function (Builder $query) use ($event) {
-                $query->where(function (Builder $q) use ($event) {
-                    $q->whereBetween('start_time', [$event->start_time, $event->end_time])
-                        ->orWhereBetween('end_time', [$event->start_time, $event->end_time])
-                        ->orWhere(function (Builder $q2) use ($event) {
-                            $q2->where('start_time', '<=', $event->start_time)
-                                ->where('end_time', '>=', $event->end_time);
-                        });
-                });
-            })
-            ->exists();
-
-        if ($hasOverlap) {
+        if ($this->hasOverlappingCommitment($this->commitEquipmentId, $event)) {
             $this->addError('commitEquipmentId', 'This equipment is already committed to an overlapping event.');
 
             return;
@@ -258,7 +196,7 @@ class EquipmentList extends Component
             'statusChangedBy',
         ])->findOrFail($commitmentId);
 
-        if ($commitment->equipment->owner_user_id !== auth()->id()) {
+        if (! $this->canManageCommitment($commitment)) {
             $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
 
             return;
@@ -273,9 +211,11 @@ class EquipmentList extends Component
      */
     public function changeStatus(int $commitmentId, string $newStatus): void
     {
+        $this->authorizeCommitAction();
+
         $commitment = EquipmentEvent::with('equipment')->findOrFail($commitmentId);
 
-        if ($commitment->equipment->owner_user_id !== auth()->id()) {
+        if (! $this->canManageCommitment($commitment)) {
             $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
 
             return;
@@ -296,9 +236,11 @@ class EquipmentList extends Component
      */
     public function openNotesModal(int $commitmentId): void
     {
+        $this->authorizeCommitAction();
+
         $commitment = EquipmentEvent::with('equipment')->findOrFail($commitmentId);
 
-        if ($commitment->equipment->owner_user_id !== auth()->id()) {
+        if (! $this->canManageCommitment($commitment)) {
             $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
 
             return;
@@ -314,9 +256,11 @@ class EquipmentList extends Component
      */
     public function updateNotes(int $commitmentId, ?string $notes): void
     {
+        $this->authorizeCommitAction();
+
         $commitment = EquipmentEvent::with('equipment')->findOrFail($commitmentId);
 
-        if ($commitment->equipment->owner_user_id !== auth()->id()) {
+        if (! $this->canManageCommitment($commitment)) {
             $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
 
             return;
@@ -331,32 +275,6 @@ class EquipmentList extends Component
         $this->updateNoteId = null;
         $this->tempNotes = null;
         unset($this->equipment);
-    }
-
-    /**
-     * Delete equipment after authorization check.
-     *
-     * @param  int  $equipmentId  The ID of the equipment to delete
-     */
-    public function deleteEquipment(int $equipmentId): void
-    {
-        $equipment = Equipment::findOrFail($equipmentId);
-
-        $this->authorize('delete', $equipment);
-
-        AuditLog::log(
-            action: 'equipment.deleted',
-            auditable: $equipment,
-            oldValues: [
-                'make' => $equipment->make,
-                'model' => $equipment->model,
-                'type' => $equipment->type,
-            ]
-        );
-
-        $equipment->delete();
-
-        $this->dispatch('notify', title: 'Success', description: 'Equipment deleted successfully.', type: 'success');
     }
 
     /**
@@ -380,6 +298,8 @@ class EquipmentList extends Component
      */
     public function openBulkCommitModal(): void
     {
+        $this->authorizeCommitAction();
+
         $this->bulkCommitEventId = null;
         $this->bulkCommitExpectedDeliveryAt = null;
         $this->bulkCommitDeliveryNotes = null;
@@ -393,6 +313,8 @@ class EquipmentList extends Component
      */
     public function bulkCommitEquipment(): void
     {
+        $this->authorizeCommitAction();
+
         $event = Event::find($this->bulkCommitEventId);
 
         $this->validate([
@@ -406,30 +328,12 @@ class EquipmentList extends Component
             'bulkCommitDeliveryNotes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $ownedEquipment = Equipment::query()
-            ->whereIn('id', $this->selectedIds)
-            ->where('owner_user_id', auth()->id())
-            ->get();
+        $equipmentItems = $this->scopeSelectedEquipment($this->selectedIds);
 
         $conflicting = [];
 
-        foreach ($ownedEquipment as $equipment) {
-            $hasOverlap = EquipmentEvent::query()
-                ->where('equipment_id', $equipment->id)
-                ->whereNotIn('status', ['cancelled', 'returned'])
-                ->whereHas('event', function (Builder $query) use ($event) {
-                    $query->where(function (Builder $q) use ($event) {
-                        $q->whereBetween('start_time', [$event->start_time, $event->end_time])
-                            ->orWhereBetween('end_time', [$event->start_time, $event->end_time])
-                            ->orWhere(function (Builder $q2) use ($event) {
-                                $q2->where('start_time', '<=', $event->start_time)
-                                    ->where('end_time', '>=', $event->end_time);
-                            });
-                    });
-                })
-                ->exists();
-
-            if ($hasOverlap) {
+        foreach ($equipmentItems as $equipment) {
+            if ($this->hasOverlappingCommitment($equipment->id, $event)) {
                 $conflicting[] = trim("{$equipment->make} {$equipment->model}");
             }
         }
@@ -441,7 +345,7 @@ class EquipmentList extends Component
             return;
         }
 
-        foreach ($ownedEquipment as $equipment) {
+        foreach ($equipmentItems as $equipment) {
             EquipmentEvent::create([
                 'equipment_id' => $equipment->id,
                 'event_id' => $this->bulkCommitEventId,
@@ -454,7 +358,7 @@ class EquipmentList extends Component
             ]);
         }
 
-        $count = $ownedEquipment->count();
+        $count = $equipmentItems->count();
         $this->dispatch('notify', title: 'Success', description: "{$count} item(s) committed to event successfully.", type: 'success');
 
         $this->showBulkCommitModal = false;
@@ -467,35 +371,23 @@ class EquipmentList extends Component
     }
 
     /**
-     * Bulk delete selected equipment items owned by the authenticated user.
+     * Check if equipment has an overlapping commitment for the given event.
      */
-    public function bulkDeleteEquipment(): void
+    private function hasOverlappingCommitment(int $equipmentId, Event $event): bool
     {
-        $ownedEquipment = Equipment::query()
-            ->whereIn('id', $this->selectedIds)
-            ->where('owner_user_id', auth()->id())
-            ->get();
-
-        $count = $ownedEquipment->count();
-
-        foreach ($ownedEquipment as $equipment) {
-            $equipment->delete();
-        }
-
-        $this->dispatch('notify', title: 'Success', description: "{$count} item(s) deleted successfully.", type: 'success');
-
-        $this->selectedIds = [];
-
-        unset($this->equipment);
-    }
-
-    /**
-     * Render the component view.
-     */
-    public function render(): View
-    {
-        return view('livewire.equipment.equipment-list', [
-            'equipment' => $this->equipment,
-        ])->layout('layouts.app');
+        return EquipmentEvent::query()
+            ->where('equipment_id', $equipmentId)
+            ->whereNotIn('status', ['cancelled', 'returned'])
+            ->whereHas('event', function (Builder $query) use ($event) {
+                $query->where(function (Builder $q) use ($event) {
+                    $q->whereBetween('start_time', [$event->start_time, $event->end_time])
+                        ->orWhereBetween('end_time', [$event->start_time, $event->end_time])
+                        ->orWhere(function (Builder $q2) use ($event) {
+                            $q2->where('start_time', '<=', $event->start_time)
+                                ->where('end_time', '>=', $event->end_time);
+                        });
+                });
+            })
+            ->exists();
     }
 }
