@@ -16,9 +16,11 @@ use App\Models\GuestbookEntry;
 use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\OperatingSession;
+use App\Models\Organization;
 use App\Models\SafetyChecklistEntry;
 use App\Models\SafetyChecklistItem;
 use App\Models\Section;
+use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
@@ -27,7 +29,6 @@ use App\Models\User;
 use App\Support\CallsignGenerator;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DemoSeeder extends Seeder
@@ -68,15 +69,24 @@ class DemoSeeder extends Seeder
             RoleSeeder::class,
         ]);
 
-        // 2. System config
-        DB::table('system_config')->insert([
-            ['key' => 'setup_completed', 'value' => 'true', 'created_at' => now(), 'updated_at' => now()],
-            ['key' => 'demo_provisioned_at', 'value' => now()->toIso8601String(), 'created_at' => now(), 'updated_at' => now()],
-            ['key' => 'site_name', 'value' => 'Field Day Commander — Demo', 'created_at' => now(), 'updated_at' => now()],
-            ['key' => 'timezone', 'value' => 'America/New_York', 'created_at' => now(), 'updated_at' => now()],
+        // 2. Organization (club info)
+        $organization = Organization::create([
+            'name' => 'Demo Radio Club',
+            'callsign' => 'W1FDC',
+            'email' => 'info@demoradioclub.example',
+            'phone' => '(860) 555-0173',
+            'address' => '42 Hilltop Park, Hartford, CT 06103',
+            'is_active' => true,
         ]);
 
-        // 3. Users: 1 admin, 1 event manager, 2 station captains, 10 operators
+        // 3. System config
+        Setting::set('setup_completed', 'true');
+        Setting::set('demo_provisioned_at', now()->toIso8601String());
+        Setting::set('site_name', 'Field Day Commander — Demo');
+        Setting::set('timezone', 'America/New_York');
+        Setting::set('default_organization_id', $organization->id);
+
+        // 4. Users: 1 admin, 1 event manager, 2 station captains, 10 operators
         $admin = $this->makeUser('W1SA', 'Sam', 'Anderson', 'admin@demo.example', 'System Administrator', 'Extra');
         $manager = $this->makeUser('K4EM', 'Emma', 'Mitchell', 'manager@demo.example', 'Event Manager', 'Extra');
         $captain1 = $this->makeUser('N3SC', 'Scott', 'Campbell', 'captain1@demo.example', self::ROLE_STATION_CAPTAIN, 'General');
@@ -94,7 +104,7 @@ class DemoSeeder extends Seeder
             $operatorDefs
         );
 
-        // 4. Event (in progress: started 2h ago, ends 22h from now)
+        // 5. Event (in progress: started 2h ago, ends 22h from now)
         $fdType = EventType::where('code', 'FD')->first();
         $event = Event::create([
             'event_type_id' => $fdType->id,
@@ -108,7 +118,7 @@ class DemoSeeder extends Seeder
             'is_current' => true,
         ]);
 
-        // 5. EventConfiguration (4A class)
+        // 6. EventConfiguration (4A class)
         $section = Section::where('code', 'CT')->first() ?? Section::first();
         $class4a = OperatingClass::where('code', 'A')->first();
         $config = EventConfiguration::create([
@@ -136,19 +146,19 @@ class DemoSeeder extends Seeder
         SafetyChecklistItem::seedDefaults($config);
         ShiftRole::seedDefaults($config);
 
-        // 6. Build stations, operating sessions, contacts
+        // 7. Build stations, operating sessions, contacts
         $this->seedStationsAndContacts($config, [$captain1, $captain2], $operators);
 
-        // 7. Bonuses
+        // 8. Bonuses
         $this->seedBonuses($config, $manager);
 
-        // 8. Safety checklist (~60% complete)
+        // 9. Safety checklist (~60% complete)
         $this->seedSafetyChecklist($captain1);
 
-        // 9. Guestbook entries
+        // 10. Guestbook entries
         $this->seedGuestbook($config);
 
-        // 10. Shift schedule
+        // 11. Shift schedule
         $this->seedShifts($config, $admin, $manager, $captain1, $captain2, $operators);
     }
 

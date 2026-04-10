@@ -4,14 +4,19 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\GuestbookEntry;
 use App\Models\OperatingSession;
+use App\Models\Organization;
+use App\Models\Setting;
 use App\Models\Station;
 use App\Models\User;
+use Carbon\Carbon;
+use Database\Seeders\DemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\DemoSeeder::class);
+    $this->seed(DemoSeeder::class);
 });
 
 test('seeder creates 14 users', function () {
@@ -61,9 +66,22 @@ test('seeder creates guestbook entries', function () {
 });
 
 test('seeder stores demo_provisioned_at in system_config', function () {
-    $value = \Illuminate\Support\Facades\DB::table('system_config')
+    $value = DB::table('system_config')
         ->where('key', 'demo_provisioned_at')
         ->value('value');
     expect($value)->not->toBeNull();
-    expect(\Carbon\Carbon::parse($value)->isToday())->toBeTrue();
+    expect(Carbon::parse($value)->isToday())->toBeTrue();
+});
+
+test('seeder creates organization and sets default_organization_id', function () {
+    $org = Organization::active()->first();
+    expect($org)->not->toBeNull();
+    expect($org->name)->toBe('Demo Radio Club');
+    expect($org->callsign)->toBe('W1FDC');
+    expect($org->email)->toBe('info@demoradioclub.example');
+    expect($org->phone)->not->toBeNull();
+    expect($org->address)->not->toBeNull();
+
+    $settingId = Setting::get('default_organization_id');
+    expect((int) $settingId)->toBe($org->id);
 });
