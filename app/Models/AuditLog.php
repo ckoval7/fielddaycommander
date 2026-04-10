@@ -128,6 +128,11 @@ class AuditLog extends Model
         'guestbook.entry.bulk_verified' => 'Guestbook entries bulk verified',
         'guestbook.entry.bulk_unverified' => 'Guestbook entries bulk unverified',
         'guestbook.entry.bulk_deleted' => 'Guestbook entries bulk deleted',
+
+        // Contacts
+        'contact.deleted' => 'Contact deleted',
+        'contact.restored' => 'Contact restored',
+        'contact.updated' => 'Contact updated',
     ];
 
     protected $fillable = [

@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Logging\LoggingInterface;
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
@@ -11,6 +12,7 @@ use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -19,7 +21,7 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    \Illuminate\Support\Facades\DB::table('system_config')->insert(
+    DB::table('system_config')->insert(
         ['key' => 'setup_completed', 'value' => 'true'],
     );
 
@@ -608,4 +610,405 @@ test('suggestions show full exchange and worked-on bands', function () {
         ->set('exchangeInput', 'K5')
         ->assertSee('K5ABC 1D STX')
         ->assertSee('40m Phone');
+});
+
+test('deleteContact soft-deletes contact and decrements qso_count', function () {
+    $this->actingAs($this->user);
+    $this->session->update(['qso_count' => 1]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1DEL',
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('deleteContact', $contact->id);
+
+    expect($contact->fresh()->trashed())->toBeTrue()
+        ->and($this->session->fresh()->qso_count)->toBe(0);
+});
+
+test('deleteContact logs audit entry', function () {
+    $this->actingAs($this->user);
+    $this->session->update(['qso_count' => 1]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1AUD',
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('deleteContact', $contact->id);
+
+    $this->assertDatabaseHas('audit_logs', [
+        'action' => 'contact.deleted',
+        'auditable_type' => Contact::class,
+        'auditable_id' => $contact->id,
+        'user_id' => $this->user->id,
+    ]);
+});
+
+test('deleteContact rejects when session is ended', function () {
+    $this->actingAs($this->user);
+    $this->session->update(['qso_count' => 1]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1END',
+        'qso_time' => now(),
+    ]);
+
+    // Mount while session is active, then end it before calling delete
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session]);
+
+    $this->session->update(['end_time' => now()]);
+
+    $component->call('deleteContact', $contact->id)
+        ->assertForbidden();
+
+    expect($contact->fresh()->trashed())->toBeFalse();
+});
+
+test('deleteContact rejects contact from another session', function () {
+    $this->actingAs($this->user);
+
+    $otherSession = OperatingSession::factory()->active()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => User::factory()->create()->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+    ]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $otherSession->id,
+        'logger_user_id' => $otherSession->operator_user_id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1OTH',
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('deleteContact', $contact->id)
+        ->assertForbidden();
+
+    expect($contact->fresh()->trashed())->toBeFalse();
+});
+
+test('restoreContact restores soft-deleted contact and increments qso_count', function () {
+    $this->actingAs($this->user);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1RST',
+        'qso_time' => now(),
+        'deleted_at' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('restoreContact', $contact->id);
+
+    expect($contact->fresh()->trashed())->toBeFalse()
+        ->and($this->session->fresh()->qso_count)->toBe(1);
+});
+
+test('restoreContact logs audit entry', function () {
+    $this->actingAs($this->user);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1RSA',
+        'qso_time' => now(),
+        'deleted_at' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('restoreContact', $contact->id);
+
+    $this->assertDatabaseHas('audit_logs', [
+        'action' => 'contact.restored',
+        'auditable_type' => Contact::class,
+        'auditable_id' => $contact->id,
+        'user_id' => $this->user->id,
+    ]);
+});
+
+test('restoreContact rejects contact from another session', function () {
+    $this->actingAs($this->user);
+
+    $otherSession = OperatingSession::factory()->active()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => User::factory()->create()->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+    ]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $otherSession->id,
+        'logger_user_id' => $otherSession->operator_user_id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1OTR',
+        'qso_time' => now(),
+        'deleted_at' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('restoreContact', $contact->id)
+        ->assertForbidden();
+
+    expect($contact->fresh()->trashed())->toBeTrue();
+});
+
+test('restoreContact rejects when session is ended', function () {
+    $this->actingAs($this->user);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1RSE',
+        'qso_time' => now(),
+        'deleted_at' => now(),
+    ]);
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session]);
+
+    $this->session->update(['end_time' => now()]);
+
+    $component->call('restoreContact', $contact->id)
+        ->assertForbidden();
+
+    expect($contact->fresh()->trashed())->toBeTrue();
+});
+
+test('updateContact rejects when session is ended', function () {
+    $this->actingAs($this->user);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1UPE',
+        'received_exchange' => 'W1UPE 3A CT',
+        'section_id' => $this->section->id,
+        'qso_time' => now(),
+    ]);
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session]);
+
+    $this->session->update(['end_time' => now()]);
+
+    $component->call('updateContact', $contact->id, 'W1NEW 1D STX')
+        ->assertForbidden();
+
+    expect($contact->fresh()->callsign)->toBe('W1UPE');
+});
+
+test('updateContact updates contact fields', function () {
+    $this->actingAs($this->user);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1OLD',
+        'received_exchange' => 'W1OLD 3A CT',
+        'section_id' => $this->section->id,
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('updateContact', $contact->id, 'W1NEW 1D STX');
+
+    $contact->refresh();
+    expect($contact->callsign)->toBe('W1NEW')
+        ->and($contact->received_exchange)->toBe('W1NEW 1D STX')
+        ->and($contact->section_id)->toBe($this->stxSection->id);
+});
+
+test('updateContact logs audit entry with old and new values', function () {
+    $this->actingAs($this->user);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1OLD',
+        'received_exchange' => 'W1OLD 3A CT',
+        'section_id' => $this->section->id,
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('updateContact', $contact->id, 'W1FIX 1D STX');
+
+    $audit = AuditLog::where('action', 'contact.updated')
+        ->where('auditable_id', $contact->id)
+        ->first();
+
+    expect($audit)->not->toBeNull()
+        ->and($audit->old_values['callsign'])->toBe('W1OLD')
+        ->and($audit->new_values['callsign'])->toBe('W1FIX');
+});
+
+test('updateContact rejects invalid exchange', function () {
+    $this->actingAs($this->user);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1OLD',
+        'received_exchange' => 'W1OLD 3A CT',
+        'section_id' => $this->section->id,
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('updateContact', $contact->id, 'INVALID')
+        ->assertSet('parseError', 'Exchange must contain callsign, class, and section (e.g. W1AW 3A CT)');
+
+    expect($contact->fresh()->callsign)->toBe('W1OLD');
+});
+
+test('updateContact rejects contact from another session', function () {
+    $this->actingAs($this->user);
+
+    $otherSession = OperatingSession::factory()->active()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => User::factory()->create()->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+    ]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $otherSession->id,
+        'logger_user_id' => $otherSession->operator_user_id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1OTH',
+        'received_exchange' => 'W1OTH 3A CT',
+        'section_id' => $this->section->id,
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('updateContact', $contact->id, 'W1NEW 1D STX')
+        ->assertForbidden();
+
+    expect($contact->fresh()->callsign)->toBe('W1OTH');
+});
+
+test('deleted contact shows in recent contacts with undo button', function () {
+    $this->actingAs($this->user);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1DEL',
+        'qso_time' => now(),
+        'deleted_at' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSee('W1DEL')
+        ->assertSeeHtml('Undo');
+});
+
+test('delete then undo restores contact fully', function () {
+    $this->actingAs($this->user);
+    $this->session->update(['qso_count' => 1]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1RND',
+        'qso_time' => now(),
+    ]);
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('deleteContact', $contact->id);
+
+    expect($contact->fresh()->trashed())->toBeTrue()
+        ->and($this->session->fresh()->qso_count)->toBe(0);
+
+    $component->call('restoreContact', $contact->id);
+
+    expect($contact->fresh()->trashed())->toBeFalse()
+        ->and($this->session->fresh()->qso_count)->toBe(1);
+});
+
+test('recentContacts includes trashed contacts during active session', function () {
+    $this->actingAs($this->user);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1ACT',
+        'qso_time' => now(),
+    ]);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1DEL',
+        'qso_time' => now()->subMinute(),
+        'deleted_at' => now(),
+    ]);
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session]);
+
+    $recentContacts = $component->get('recentContacts');
+    $callsigns = $recentContacts->pluck('callsign')->toArray();
+
+    expect($callsigns)->toContain('W1ACT')
+        ->and($callsigns)->toContain('W1DEL');
 });

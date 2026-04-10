@@ -262,10 +262,10 @@
 
                         {{-- Keyboard shortcuts --}}
                         <div class="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-base-content/40">
-                            <span><kbd class="kbd kbd-xs">Enter</kbd> Log contact</span>
-                            <span><kbd class="kbd kbd-xs">Esc</kbd> Clear input</span>
-                            <span><kbd class="kbd kbd-xs">&uarr;</kbd><kbd class="kbd kbd-xs">&darr;</kbd> Navigate suggestions</span>
-                            <span><kbd class="kbd kbd-xs">Tab</kbd> Accept suggestion</span>
+                            <span><kbd class="kbd kbd-xs text-base-content">Enter</kbd> Log contact</span>
+                            <span><kbd class="kbd kbd-xs text-base-content">Esc</kbd> Clear input</span>
+                            <span><kbd class="kbd kbd-xs text-base-content">&uarr;</kbd><kbd class="kbd kbd-xs text-base-content">&darr;</kbd> Navigate suggestions</span>
+                            <span><kbd class="kbd kbd-xs text-base-content">Tab</kbd> Accept suggestion</span>
                         </div>
                     </div>
                 </div>

@@ -4,10 +4,15 @@ namespace App\Livewire\Logging;
 
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
+use App\Models\AuditLog;
+use App\Models\Contact;
 use App\Models\OperatingSession;
+use App\Models\User;
+use App\Services\ExchangeParserService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class LoggingInterface extends Component
@@ -95,14 +100,14 @@ class LoggingInterface extends Component
         $this->clearDuplicateState();
     }
 
-    #[\Livewire\Attributes\On('contact-synced')]
+    #[On('contact-synced')]
     public function onContactSynced(): void
     {
         $this->operatingSession->refresh();
         unset($this->recentContacts);
     }
 
-    #[\Livewire\Attributes\On('contact-discarded')]
+    #[On('contact-discarded')]
     public function onContactDiscarded(): void
     {
         unset($this->recentContacts);
@@ -137,6 +142,144 @@ class LoggingInterface extends Component
         $this->redirect(route('logging.station-select'), navigate: true);
     }
 
+    public function deleteContact(int $contactId): void
+    {
+        $this->operatingSession->refresh();
+
+        if ($this->operatingSession->end_time !== null) {
+            abort(403);
+        }
+
+        $contact = Contact::query()
+            ->where('id', $contactId)
+            ->where('operating_session_id', $this->operatingSession->id)
+            ->first();
+
+        if ($contact === null) {
+            abort(403);
+        }
+
+        AuditLog::log(
+            'contact.deleted',
+            auditable: $contact,
+            oldValues: [
+                'callsign' => $contact->callsign,
+                'received_exchange' => $contact->received_exchange,
+                'session_id' => $this->operatingSession->id,
+            ],
+        );
+
+        $contact->delete();
+        $this->operatingSession->decrement('qso_count');
+
+        $this->operatingSession->refresh();
+        unset($this->recentContacts);
+    }
+
+    public function restoreContact(int $contactId): void
+    {
+        $this->operatingSession->refresh();
+
+        if ($this->operatingSession->end_time !== null) {
+            abort(403);
+        }
+
+        $contact = Contact::onlyTrashed()
+            ->where('id', $contactId)
+            ->where('operating_session_id', $this->operatingSession->id)
+            ->first();
+
+        if ($contact === null) {
+            abort(403);
+        }
+
+        $contact->restore();
+        $this->operatingSession->increment('qso_count');
+
+        AuditLog::log(
+            'contact.restored',
+            auditable: $contact,
+            newValues: [
+                'callsign' => $contact->callsign,
+                'received_exchange' => $contact->received_exchange,
+                'session_id' => $this->operatingSession->id,
+            ],
+        );
+
+        $this->operatingSession->refresh();
+        unset($this->recentContacts);
+    }
+
+    public function updateContact(int $contactId, string $exchangeInput): void
+    {
+        $this->operatingSession->refresh();
+
+        if ($this->operatingSession->end_time !== null) {
+            abort(403);
+        }
+
+        $contact = Contact::query()
+            ->where('id', $contactId)
+            ->where('operating_session_id', $this->operatingSession->id)
+            ->first();
+
+        if ($contact === null) {
+            abort(403);
+        }
+
+        $parsed = app(ExchangeParserService::class)->parse($exchangeInput);
+
+        if (! $parsed['success']) {
+            $this->parseError = $parsed['errors'][0] ?? 'Invalid exchange';
+
+            return;
+        }
+
+        $oldValues = [
+            'callsign' => $contact->callsign,
+            'received_exchange' => $contact->received_exchange,
+            'section_id' => $contact->section_id,
+        ];
+
+        $contact->update([
+            'callsign' => $parsed['callsign'],
+            'received_exchange' => strtoupper(trim($exchangeInput)),
+            'section_id' => $parsed['section_id'],
+        ]);
+
+        // Re-run duplicate detection, excluding this contact itself
+        $isDuplicate = Contact::query()
+            ->where('event_configuration_id', $contact->event_configuration_id)
+            ->where('band_id', $contact->band_id)
+            ->where('mode_id', $contact->mode_id)
+            ->where('callsign', $parsed['callsign'])
+            ->where('is_gota_contact', $contact->is_gota_contact)
+            ->where('id', '!=', $contact->id)
+            ->where('is_duplicate', false)
+            ->exists();
+
+        $contact->update([
+            'is_duplicate' => $isDuplicate,
+            'points' => $isDuplicate ? 0 : ($contact->operatingSession->mode->points_fd ?? 1),
+        ]);
+
+        AuditLog::log(
+            'contact.updated',
+            auditable: $contact,
+            oldValues: $oldValues,
+            newValues: [
+                'callsign' => $contact->callsign,
+                'received_exchange' => $contact->received_exchange,
+                'section_id' => $contact->section_id,
+            ],
+        );
+
+        $this->exchangeInput = '';
+        $this->parseError = '';
+        $this->clearDuplicateState();
+        unset($this->recentContacts);
+    }
+
     #[Computed]
     public function isGotaStation(): bool
     {
@@ -156,7 +299,7 @@ class LoggingInterface extends Component
             return [];
         }
 
-        return \App\Models\User::query()
+        return User::query()
             ->where(function ($q) {
                 $search = '%'.$this->gotaUserSearch.'%';
                 $q->where('call_sign', 'like', $search)
@@ -177,7 +320,7 @@ class LoggingInterface extends Component
 
     public function selectGotaUser(int $userId): void
     {
-        $user = \App\Models\User::find($userId);
+        $user = User::find($userId);
         if ($user) {
             $this->gotaOperatorUserId = $user->id;
             $this->gotaOperatorFirstName = $user->first_name ?? '';
@@ -260,6 +403,7 @@ class LoggingInterface extends Component
     public function recentContacts()
     {
         return $this->operatingSession->contacts()
+            ->withTrashed()
             ->with('section')
             ->latest('qso_time')
             ->limit(50)
