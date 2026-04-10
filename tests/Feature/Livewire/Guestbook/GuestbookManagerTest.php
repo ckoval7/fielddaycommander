@@ -730,4 +730,30 @@ describe('audit logging', function () {
             'verified_at' => null,
         ]);
     });
+
+    test('logs guestbook.entry.deleted when deleteEntry is called', function () {
+        $this->actingAs($this->admin);
+
+        $entry = GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'callsign' => 'W1AW',
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->call('openDeleteModal', $entry->id)
+            ->call('deleteEntry');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.deleted')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($this->admin->id);
+        expect($auditLog->auditable_type)->toBe(GuestbookEntry::class);
+        expect($auditLog->auditable_id)->toBe($entry->id);
+        expect($auditLog->new_values)->toMatchArray([
+            'name' => 'John Doe',
+            'callsign' => 'W1AW',
+        ]);
+    });
 });
