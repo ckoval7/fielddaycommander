@@ -1,8 +1,12 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ckoval7_fd-commander&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ckoval7_fd-commander) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=ckoval7_fd-commander&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=ckoval7_fd-commander)
+
 # Field Day Commander
 
 A web-based operations hub for ham radio clubs running ARRL Field Day. Manage contacts, scoring, stations, operators, and equipment from any device on your local network, no internet required.
 
 Field Day Commander runs on modest hardware (including a Raspberry Pi 4) and is designed for air-gapped field deployments where reliability matters more than cloud connectivity.
+
+[Check out the website](https://fielddaycommander.org) and [Try the live demo](https://demo.fielddaycommander.org/)
 
 ## Why Use It?
 
