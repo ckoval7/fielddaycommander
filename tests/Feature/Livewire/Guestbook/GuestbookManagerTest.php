@@ -751,9 +751,10 @@ describe('audit logging', function () {
         expect($auditLog->user_id)->toBe($this->admin->id);
         expect($auditLog->auditable_type)->toBe(GuestbookEntry::class);
         expect($auditLog->auditable_id)->toBe($entry->id);
-        expect($auditLog->new_values)->toMatchArray([
+        expect($auditLog->old_values)->toMatchArray([
             'name' => 'John Doe',
             'callsign' => 'W1AW',
         ]);
+        expect($auditLog->new_values)->toBeNull();
     });
 });

@@ -284,16 +284,17 @@ class GuestbookManager extends Component
         }
 
         $entry = GuestbookEntry::findOrFail($this->deletingEntryId);
-        $entry->delete();
 
         AuditLog::log(
             action: 'guestbook.entry.deleted',
             auditable: $entry,
-            newValues: [
+            oldValues: [
                 'name' => trim("{$entry->first_name} {$entry->last_name}"),
                 'callsign' => $entry->callsign,
             ],
         );
+
+        $entry->delete();
 
         $this->closeDeleteModal();
         $this->selectedIds = array_diff($this->selectedIds, [$this->deletingEntryId]);
