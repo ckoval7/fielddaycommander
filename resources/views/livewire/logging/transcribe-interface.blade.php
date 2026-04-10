@@ -12,25 +12,42 @@
             </a>
         </div>
     @else
-        {{-- Working Time Bar — sticky at top --}}
+        {{-- Date & Timezone Bar — sticky at top --}}
         <div class="sticky top-0 z-40 bg-amber-50 dark:bg-amber-900/30 border-b-2 border-amber-300 dark:border-amber-600 shadow-md">
             <div class="px-4 py-2.5 max-w-5xl mx-auto">
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <x-icon name="o-clock" class="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span class="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Working Time (UTC)</span>
+                        <x-icon name="o-calendar" class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span class="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Log Date</span>
                     </div>
-                    <div class="flex items-center gap-2 flex-1 min-w-0">
-                        <x-flatpickr
-                            wire:model.live="workingTime"
-                            min="{{ $this->event->start_time->subMinutes(5)->format('Y-m-d H:i') }}"
-                            max="{{ $this->event->end_time->addMinutes(5)->format('Y-m-d H:i') }}"
-                            class="input-sm font-mono border-amber-300 focus:border-amber-500 text-base-content bg-base-100"
-                        />
+
+                    <input
+                        type="date"
+                        wire:model.live="workingDate"
+                        min="{{ $this->event->start_time->format('Y-m-d') }}"
+                        max="{{ $this->event->end_time->format('Y-m-d') }}"
+                        class="input input-bordered input-sm font-mono border-amber-300 focus:border-amber-500 bg-base-100"
+                    />
+
+                    {{-- UTC / Local toggle --}}
+                    <div class="join">
+                        <button
+                            type="button"
+                            wire:click="$set('timeIsLocal', false)"
+                            @class([
+                                'join-item btn btn-xs',
+                                'btn-active btn-warning' => !$timeIsLocal,
+                            ])
+                        >UTC</button>
+                        <button
+                            type="button"
+                            wire:click="$set('timeIsLocal', true)"
+                            @class([
+                                'join-item btn btn-xs',
+                                'btn-active btn-warning' => $timeIsLocal,
+                            ])
+                        >Local{{ $timeIsLocal ? ' ('.$this->timezoneLabel.')' : '' }}</button>
                     </div>
-                    <p class="text-xs text-amber-600/80 dark:text-amber-400/70 hidden sm:block">
-                        Adjust as you move through your paper log pages
-                    </p>
                 </div>
             </div>
         </div>
@@ -66,8 +83,8 @@
             {{-- Contact Form Card --}}
             <x-card title="Log Contact" class="shadow-sm">
                 <div class="space-y-4">
-                    {{-- 4-column grid on desktop --}}
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {{-- Band / Mode / Power --}}
+                    <div class="grid grid-cols-3 gap-3">
                         {{-- Band --}}
                         <div>
                             <label for="transcribe-band" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Band <span class="text-error">*</span></label>
@@ -111,17 +128,6 @@
                             @error('powerWatts')
                                 <p class="text-error text-xs mt-1">{{ $message }}</p>
                             @enderror
-                        </div>
-
-                        {{-- Contact Time --}}
-                        <div class="col-span-2">
-                            <x-flatpickr
-                                label="Contact Time (UTC)"
-                                wire:model.live="contactTime"
-                                min="{{ $this->event->start_time->subMinutes(5)->format('Y-m-d H:i') }}"
-                                max="{{ $this->event->end_time->addMinutes(5)->format('Y-m-d H:i') }}"
-                                class="input-sm font-mono"
-                            />
                         </div>
                     </div>
 
@@ -190,8 +196,12 @@
                         </div>
                     @endif
 
-                    {{-- Exchange Input --}}
+                    {{-- Exchange Input (with optional inline time) --}}
                     <div class="space-y-2" x-data="{ si: -1 }">
+                        <div class="flex items-center gap-2 text-xs text-base-content/50">
+                            <span>Time: <span class="font-mono font-semibold text-base-content/70">{{ $contactTime }}</span> {{ $timeIsLocal ? $this->timezoneLabel : 'UTC' }}</span>
+                            <span class="text-base-content/30">&mdash; prepend time to set, e.g. 1423 W1AW 3A CT</span>
+                        </div>
                         <div class="flex gap-2">
                             <div class="relative flex-1">
                                 <input
@@ -207,7 +217,7 @@
                                     @contact-logged.window="$refs.exchangeInput.focus(); $refs.exchangeInput.select(); si = -1"
                                     @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
                                     class="input input-bordered input-lg w-full text-2xl font-mono uppercase tracking-wider"
-                                    placeholder="W1AW 1B CT"
+                                    placeholder="1423 W1AW 3A CT"
                                     autofocus
                                 />
 
