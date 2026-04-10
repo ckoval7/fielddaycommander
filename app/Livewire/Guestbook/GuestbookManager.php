@@ -324,7 +324,7 @@ class GuestbookManager extends Component
             return;
         }
 
-        GuestbookEntry::whereIn('id', $this->selectedIds)
+        $affected = GuestbookEntry::whereIn('id', $this->selectedIds)
             ->where('is_verified', false)
             ->update([
                 'is_verified' => true,
@@ -335,7 +335,7 @@ class GuestbookManager extends Component
         AuditLog::log(
             action: 'guestbook.entry.bulk_verified',
             newValues: [
-                'count' => count($this->selectedIds),
+                'count' => $affected,
                 'entry_ids' => $this->selectedIds,
             ],
         );
@@ -362,7 +362,7 @@ class GuestbookManager extends Component
             return;
         }
 
-        GuestbookEntry::whereIn('id', $this->selectedIds)
+        $affected = GuestbookEntry::whereIn('id', $this->selectedIds)
             ->where('is_verified', true)
             ->update([
                 'is_verified' => false,
@@ -373,7 +373,7 @@ class GuestbookManager extends Component
         AuditLog::log(
             action: 'guestbook.entry.bulk_unverified',
             newValues: [
-                'count' => count($this->selectedIds),
+                'count' => $affected,
                 'entry_ids' => $this->selectedIds,
             ],
         );
