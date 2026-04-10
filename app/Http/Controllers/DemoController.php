@@ -6,6 +6,7 @@ use App\Models\DemoEvent;
 use App\Models\DemoSession;
 use App\Models\User;
 use Database\Seeders\DemoSeeder;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -16,7 +17,7 @@ use Illuminate\Support\Str;
 
 class DemoController extends Controller
 {
-    public function landing(): \Illuminate\Contracts\View\View
+    public function landing(): View
     {
         abort_unless(config('demo.enabled'), 404);
 
@@ -96,61 +97,33 @@ class DemoController extends Controller
         $cookie = $request->cookie('demo_session');
         [$uuid] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
 
-        if (! $uuid || ! Str::isUuid($uuid)) {
-            return redirect()->route('demo.landing');
+        try {
+            if ($uuid && Str::isUuid($uuid)) {
+                $demoSession = DemoSession::where('session_uuid', $uuid)->first();
+                if ($demoSession) {
+                    DemoEvent::create([
+                        'demo_session_id' => $demoSession->id,
+                        'type' => 'action',
+                        'name' => 'session.reset',
+                        'metadata' => ['role' => $demoSession->role],
+                    ]);
+
+                    $demoSession->update([
+                        'was_reset' => true,
+                        'last_seen_at' => now(),
+                    ]);
+                }
+            }
+        } catch (\Throwable) {
+            // Analytics tracking is best-effort; don't block the reset.
         }
 
-        $request->validate([
-            'role' => 'required|in:operator,station_captain,event_manager,system_admin',
-        ]);
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        $dbName = $this->safeDemoDbName($uuid);
-        $role = $request->role;
-
-        Config::set('database.connections.demo.database', $dbName);
-        DB::purge('demo');
-
-        Artisan::call('db:wipe', [
-            '--database' => 'demo',
-            '--force' => true,
-            '--no-interaction' => true,
-        ]);
-
-        Artisan::call('migrate', [
-            '--database' => 'demo',
-            '--force' => true,
-            '--no-interaction' => true,
-        ]);
-
-        Artisan::call('db:seed', [
-            '--class' => DemoSeeder::class,
-            '--force' => true,
-            '--no-interaction' => true,
-        ]);
-
-        $user = $this->resolveUserForRole($role);
-        Auth::login($user);
-
-        session(['dev_role_override' => $user->roles->first()?->name ?? '']);
-
-        $demoSession = DemoSession::where('session_uuid', $uuid)->first();
-        if ($demoSession) {
-            $previousRole = $demoSession->role;
-            $demoSession->update([
-                'was_reset' => true,
-                'role' => $role,
-                'last_seen_at' => now(),
-            ]);
-
-            DemoEvent::create([
-                'demo_session_id' => $demoSession->id,
-                'type' => 'action',
-                'name' => 'role.switched',
-                'metadata' => ['from_role' => $previousRole, 'to_role' => $role],
-            ]);
-        }
-
-        return redirect('/');
+        return redirect()->route('demo.landing')
+            ->withoutCookie('demo_session');
     }
 
     private function countDemoSessions(): int

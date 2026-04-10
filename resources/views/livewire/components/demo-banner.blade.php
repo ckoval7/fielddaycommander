@@ -14,16 +14,7 @@
 
                 <form method="POST" action="{{ route('demo.reset') }}" class="inline">
                     @csrf
-                    @php
-                    $roleMap = [
-                        'System Administrator' => 'system_admin',
-                        'Event Manager' => 'event_manager',
-                        'Station Captain' => 'station_captain',
-                        'Operator' => 'operator',
-                    ];
-                @endphp
-                <input type="hidden" name="role" value="{{ $roleMap[session('dev_role_override', '')] ?? 'event_manager' }}">
-                    <button type="submit" class="btn btn-xs btn-ghost text-info">Reset data</button>
+                    <button type="submit" class="btn btn-xs btn-ghost text-info">Start over</button>
                 </form>
             </div>
         </div>

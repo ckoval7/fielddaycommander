@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Components\DemoBanner;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -42,7 +43,7 @@ test('banner shows time remaining based on provisioned_at', function () {
 
     Livewire::test(DemoBanner::class)
         ->assertSet('isVisible', true)
-        ->assertSet('expiresAt', fn ($value) => $value instanceof \Carbon\Carbon && $value->diffInHours(now(), true) >= 21);
+        ->assertSet('expiresAt', fn ($value) => $value instanceof Carbon && $value->diffInHours(now(), true) >= 21);
 });
 
 test('banner is hidden when demo mode is disabled', function () {
@@ -61,5 +62,5 @@ test('banner contains reset form', function () {
 
     Livewire::test(DemoBanner::class)
         ->assertSeeHtml('demo/reset')
-        ->assertSee('Reset data');
+        ->assertSee('Start over');
 });
