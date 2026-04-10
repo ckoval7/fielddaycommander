@@ -28,17 +28,13 @@ class DemoMiddleware
             return $next($request);
         }
 
-        // Allow demo routes, auth pages, and admin pages through without
-        // demo DB switching or user impersonation. Admin pages rely on their
-        // own auth + authorization middleware (e.g. manage-settings gate).
+        // Allow demo infrastructure routes through without demo DB switching.
+        // These operate on the main database (landing, provisioning, analytics).
         // Use path matching instead of routeIs() because DemoMiddleware runs before
         // SubstituteBindings in the priority list, so route names are not yet available.
         if ($request->is(
             'demo', 'demo/provision', 'demo/reset', 'demo/analytics/beacon',
             'demo/analytics', 'demo/analytics/api',
-            'login', 'logout', 'register', 'register/*', 'forgot-password', 'reset-password/*',
-            'two-factor-challenge', 'email/verify', 'email/verify/*',
-            'admin/*',
         )) {
             return $next($request);
         }

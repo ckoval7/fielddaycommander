@@ -36,15 +36,14 @@ test('passes through demo landing route without a cookie', function () {
     $response->assertStatus(200);
 });
 
-test('allows login page through without demo session', function () {
+test('redirects login page to demo landing without demo session', function () {
     $response = $this->get('/login');
-    $response->assertOk();
+    $response->assertRedirect(route('demo.landing'));
 });
 
-test('allows admin routes through without demo session', function () {
+test('redirects admin routes to demo landing without demo session', function () {
     $response = $this->get('/admin/audit-logs');
-    // Should hit auth middleware (302 to login), not demo redirect
-    $response->assertRedirect('/login');
+    $response->assertRedirect(route('demo.landing'));
 });
 
 test('middleware is no-op when demo mode is disabled', function () {
