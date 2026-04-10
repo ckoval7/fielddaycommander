@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Guestbook;
 
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
+use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -64,7 +66,7 @@ class GuestbookForm extends Component
     public function mount(): void
     {
         // Get the active event's configuration (if guestbook is enabled)
-        $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
+        $activeEvent = app(EventContextService::class)->getContextEvent();
         $config = $activeEvent?->eventConfiguration;
         $this->eventConfig = ($config && $config->guestbook_enabled) ? $config : null;
 
@@ -184,7 +186,7 @@ class GuestbookForm extends Component
         $nameParts = $this->parseFullName($validated['name']);
 
         // Create the guestbook entry
-        GuestbookEntry::create([
+        $entry = GuestbookEntry::create([
             'event_configuration_id' => $this->eventConfig->id,
             'user_id' => auth()->id(),
             'first_name' => $nameParts['first_name'],
@@ -197,6 +199,17 @@ class GuestbookForm extends Component
             'ip_address' => request()->ip(),
             'is_verified' => false,
         ]);
+
+        AuditLog::log(
+            action: 'guestbook.entry.signed',
+            auditable: $entry,
+            newValues: [
+                'name' => trim("{$entry->first_name} {$entry->last_name}"),
+                'callsign' => $entry->callsign,
+                'presence_type' => $entry->presence_type,
+                'visitor_category' => $entry->visitor_category,
+            ],
+        );
 
         // Hit the rate limiter
         RateLimiter::hit($rateLimitKey, 3600); // 1 hour decay

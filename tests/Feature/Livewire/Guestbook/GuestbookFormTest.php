@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Guestbook\GuestbookForm;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
@@ -358,5 +359,71 @@ describe('events', function () {
             ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
             ->call('save')
             ->assertDispatched('guestbook-entry-created');
+    });
+});
+
+describe('audit logging', function () {
+    test('logs audit entry when guestbook is signed by an authenticated user', function () {
+        $user = User::factory()->create([
+            'first_name' => 'Jane',
+            'last_name' => 'Smith',
+        ]);
+        $this->actingAs($user);
+
+        Livewire::test(GuestbookForm::class)
+            ->set('name', 'Jane Smith')
+            ->set('callsign', 'KC1ABC')
+            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_IN_PERSON)
+            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_MEDIA)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $entry = GuestbookEntry::first();
+        $auditLog = AuditLog::where('action', 'guestbook.entry.signed')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBe($user->id);
+        expect($auditLog->auditable_type)->toBe(GuestbookEntry::class);
+        expect($auditLog->auditable_id)->toBe($entry->id);
+        expect($auditLog->new_values)->toMatchArray([
+            'name' => 'Jane Smith',
+            'callsign' => 'KC1ABC',
+            'presence_type' => GuestbookEntry::PRESENCE_TYPE_IN_PERSON,
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+        ]);
+    });
+
+    test('logs audit entry when guestbook is signed by an anonymous visitor', function () {
+        Livewire::test(GuestbookForm::class)
+            ->set('name', 'John Public')
+            ->set('callsign', '')
+            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
+            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $entry = GuestbookEntry::first();
+        $auditLog = AuditLog::where('action', 'guestbook.entry.signed')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->user_id)->toBeNull();
+        expect($auditLog->auditable_type)->toBe(GuestbookEntry::class);
+        expect($auditLog->auditable_id)->toBe($entry->id);
+        expect($auditLog->new_values)->toMatchArray([
+            'name' => 'John Public',
+            'presence_type' => GuestbookEntry::PRESENCE_TYPE_ONLINE,
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+        ]);
+    });
+
+    test('does not log audit entry when honeypot is triggered', function () {
+        Livewire::test(GuestbookForm::class)
+            ->set('name', 'Bot Name')
+            ->set('honeypot', 'spam-value')
+            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
+            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->call('save');
+
+        expect(AuditLog::where('action', 'guestbook.entry.signed')->count())->toBe(0);
     });
 });
