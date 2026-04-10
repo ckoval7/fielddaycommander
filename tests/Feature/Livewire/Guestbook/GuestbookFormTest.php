@@ -378,7 +378,7 @@ describe('audit logging', function () {
             ->call('save')
             ->assertHasNoErrors();
 
-        $entry = GuestbookEntry::first();
+        $entry = GuestbookEntry::latest()->first();
         $auditLog = AuditLog::where('action', 'guestbook.entry.signed')->first();
 
         expect($auditLog)->not->toBeNull();
@@ -402,7 +402,7 @@ describe('audit logging', function () {
             ->call('save')
             ->assertHasNoErrors();
 
-        $entry = GuestbookEntry::first();
+        $entry = GuestbookEntry::latest()->first();
         $auditLog = AuditLog::where('action', 'guestbook.entry.signed')->first();
 
         expect($auditLog)->not->toBeNull();
@@ -411,6 +411,7 @@ describe('audit logging', function () {
         expect($auditLog->auditable_id)->toBe($entry->id);
         expect($auditLog->new_values)->toMatchArray([
             'name' => 'John Public',
+            'callsign' => null,
             'presence_type' => GuestbookEntry::PRESENCE_TYPE_ONLINE,
             'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
         ]);
