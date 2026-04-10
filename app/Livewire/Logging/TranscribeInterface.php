@@ -5,6 +5,7 @@ namespace App\Livewire\Logging;
 use App\Events\ContactLogged;
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
@@ -322,10 +323,162 @@ class TranscribeInterface extends Component
         return Mode::all();
     }
 
+    public function deleteContact(int $contactId): void
+    {
+        if (! $this->event) {
+            abort(403);
+        }
+
+        $contact = $this->findTranscribedContact($contactId);
+
+        if ($contact === null) {
+            abort(403);
+        }
+
+        AuditLog::log(
+            'contact.deleted',
+            auditable: $contact,
+            oldValues: [
+                'callsign' => $contact->callsign,
+                'received_exchange' => $contact->received_exchange,
+                'session_id' => $contact->operating_session_id,
+            ],
+        );
+
+        $contact->delete();
+        $contact->operatingSession->decrement('qso_count');
+
+        unset($this->recentContacts);
+    }
+
+    public function restoreContact(int $contactId): void
+    {
+        if (! $this->event) {
+            abort(403);
+        }
+
+        $contact = Contact::onlyTrashed()
+            ->where('id', $contactId)
+            ->where('event_configuration_id', $this->station->event_configuration_id)
+            ->where('is_transcribed', true)
+            ->whereHas('operatingSession', fn ($q) => $q->where('station_id', $this->station->id))
+            ->first();
+
+        if ($contact === null) {
+            abort(403);
+        }
+
+        $contact->restore();
+        $contact->operatingSession->increment('qso_count');
+
+        AuditLog::log(
+            'contact.restored',
+            auditable: $contact,
+            newValues: [
+                'callsign' => $contact->callsign,
+                'received_exchange' => $contact->received_exchange,
+                'session_id' => $contact->operating_session_id,
+            ],
+        );
+
+        unset($this->recentContacts);
+    }
+
+    public function updateContact(int $contactId, string $exchangeInput): void
+    {
+        if (! $this->event) {
+            abort(403);
+        }
+
+        $contact = $this->findTranscribedContact($contactId);
+
+        if ($contact === null) {
+            abort(403);
+        }
+
+        // Check for inline time prefix (e.g. "1423 W1AW 3A CT")
+        $inlineTime = null;
+        $exchange = trim($exchangeInput);
+        $tokens = preg_split('/\s+/', $exchange);
+
+        if (count($tokens) >= 2) {
+            $possibleTime = $this->parseFlexibleTime($tokens[0]);
+            if ($possibleTime !== null) {
+                $inlineTime = $possibleTime;
+                $exchange = implode(' ', array_slice($tokens, 1));
+            }
+        }
+
+        $parsed = app(ExchangeParserService::class)->parse($exchange);
+
+        if (! $parsed['success']) {
+            $this->parseError = $parsed['errors'][0] ?? 'Invalid exchange';
+
+            return;
+        }
+
+        $oldValues = [
+            'callsign' => $contact->callsign,
+            'received_exchange' => $contact->received_exchange,
+            'section_id' => $contact->section_id,
+            'qso_time' => $contact->qso_time->toIso8601String(),
+        ];
+
+        $updateData = [
+            'callsign' => $parsed['callsign'],
+            'received_exchange' => strtoupper(trim($exchange)),
+            'section_id' => $parsed['section_id'],
+        ];
+
+        // If inline time provided, update qso_time using original date + new time
+        if ($inlineTime !== null) {
+            $updateData['qso_time'] = Carbon::parse(
+                $contact->qso_time->format('Y-m-d').' '.$inlineTime,
+                'UTC'
+            );
+        }
+
+        $contact->update($updateData);
+
+        // Re-run duplicate detection, excluding this contact itself
+        $isDuplicate = Contact::query()
+            ->where('event_configuration_id', $contact->event_configuration_id)
+            ->where('band_id', $contact->band_id)
+            ->where('mode_id', $contact->mode_id)
+            ->where('callsign', $parsed['callsign'])
+            ->where('is_gota_contact', $contact->is_gota_contact)
+            ->where('id', '!=', $contact->id)
+            ->where('is_duplicate', false)
+            ->exists();
+
+        $contact->update([
+            'is_duplicate' => $isDuplicate,
+            'points' => $isDuplicate ? 0 : ($contact->operatingSession->mode->points_fd ?? 1),
+        ]);
+
+        AuditLog::log(
+            'contact.updated',
+            auditable: $contact,
+            oldValues: $oldValues,
+            newValues: [
+                'callsign' => $contact->callsign,
+                'received_exchange' => $contact->received_exchange,
+                'section_id' => $contact->section_id,
+                'qso_time' => $contact->qso_time->toIso8601String(),
+            ],
+        );
+
+        $this->exchangeInput = '';
+        $this->parseError = '';
+        $this->clearDuplicateState();
+        unset($this->recentContacts);
+    }
+
     #[Computed]
     public function recentContacts()
     {
         return Contact::query()
+            ->withTrashed()
             ->where('event_configuration_id', $this->station->event_configuration_id)
             ->where('is_transcribed', true)
             ->whereHas('operatingSession', fn ($q) => $q->where('station_id', $this->station->id))
@@ -333,6 +486,16 @@ class TranscribeInterface extends Component
             ->latest('qso_time')
             ->limit(50)
             ->get();
+    }
+
+    protected function findTranscribedContact(int $contactId): ?Contact
+    {
+        return Contact::query()
+            ->where('id', $contactId)
+            ->where('event_configuration_id', $this->station->event_configuration_id)
+            ->where('is_transcribed', true)
+            ->whereHas('operatingSession', fn ($q) => $q->where('station_id', $this->station->id))
+            ->first();
     }
 
     protected function extractCallsign(): ?string

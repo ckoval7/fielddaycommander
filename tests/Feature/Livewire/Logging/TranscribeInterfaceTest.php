@@ -6,6 +6,7 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
+use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
@@ -298,4 +299,394 @@ test('archived event shows read-only message', function () {
 
     Livewire::test(TranscribeInterface::class, ['station' => $archivedStation])
         ->assertSee('This event is archived');
+});
+
+// --- QSO Edit / Delete / Restore ---
+
+function createTranscriptionContact(object $test, array $overrides = []): Contact
+{
+    $session = OperatingSession::firstOrCreate(
+        [
+            'station_id' => $test->station->id,
+            'is_transcription' => true,
+        ],
+        [
+            'operator_user_id' => $test->user->id,
+            'start_time' => $test->event->start_time,
+            'end_time' => $test->event->end_time,
+            'is_transcription' => true,
+            'power_watts' => 100,
+            'qso_count' => 0,
+        ]
+    );
+
+    $section = Section::where('code', 'CT')->first();
+
+    $contact = Contact::factory()->create(array_merge([
+        'event_configuration_id' => $test->event->eventConfiguration->id,
+        'operating_session_id' => $session->id,
+        'logger_user_id' => $test->user->id,
+        'band_id' => $test->band->id,
+        'mode_id' => $test->mode->id,
+        'callsign' => 'W1TST',
+        'received_exchange' => 'W1TST 3A CT',
+        'section_id' => $section->id,
+        'is_transcribed' => true,
+        'qso_time' => now(),
+    ], $overrides));
+
+    $session->increment('qso_count');
+
+    return $contact;
+}
+
+test('deleteContact soft-deletes transcribed contact and decrements qso_count', function () {
+    $this->actingAs($this->user);
+
+    $contact = createTranscriptionContact($this);
+    $session = $contact->operatingSession;
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('deleteContact', $contact->id);
+
+    expect($contact->fresh()->trashed())->toBeTrue()
+        ->and($session->fresh()->qso_count)->toBe(0);
+});
+
+test('deleteContact logs audit entry', function () {
+    $this->actingAs($this->user);
+
+    $contact = createTranscriptionContact($this);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('deleteContact', $contact->id);
+
+    $this->assertDatabaseHas('audit_logs', [
+        'action' => 'contact.deleted',
+        'auditable_type' => Contact::class,
+        'auditable_id' => $contact->id,
+        'user_id' => $this->user->id,
+    ]);
+});
+
+test('deleteContact rejects contact from another station', function () {
+    $this->actingAs($this->user);
+
+    $otherEvent = Event::factory()->has(
+        EventConfiguration::factory()->has(Station::factory(), 'stations'),
+        'eventConfiguration'
+    )->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+
+    $otherStation = $otherEvent->eventConfiguration->stations->first();
+    $otherSession = OperatingSession::create([
+        'station_id' => $otherStation->id,
+        'operator_user_id' => $this->user->id,
+        'start_time' => $otherEvent->start_time,
+        'end_time' => $otherEvent->end_time,
+        'is_transcription' => true,
+        'power_watts' => 100,
+        'qso_count' => 1,
+    ]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $otherEvent->eventConfiguration->id,
+        'operating_session_id' => $otherSession->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'W1OTH',
+        'is_transcribed' => true,
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('deleteContact', $contact->id)
+        ->assertForbidden();
+
+    expect($contact->fresh()->trashed())->toBeFalse();
+});
+
+test('deleteContact rejects when event is archived', function () {
+    $this->actingAs($this->user);
+
+    $archivedEvent = Event::factory()->has(
+        EventConfiguration::factory()->has(Station::factory(), 'stations'),
+        'eventConfiguration'
+    )->create([
+        'start_time' => now()->subDays(60),
+        'end_time' => now()->subDays(59),
+    ]);
+
+    $archivedStation = $archivedEvent->eventConfiguration->stations->first();
+    $session = OperatingSession::create([
+        'station_id' => $archivedStation->id,
+        'operator_user_id' => $this->user->id,
+        'start_time' => $archivedEvent->start_time,
+        'end_time' => $archivedEvent->end_time,
+        'is_transcription' => true,
+        'power_watts' => 100,
+        'qso_count' => 1,
+    ]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $archivedEvent->eventConfiguration->id,
+        'operating_session_id' => $session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'W1ARC',
+        'is_transcribed' => true,
+        'qso_time' => $archivedEvent->start_time,
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $archivedStation])
+        ->call('deleteContact', $contact->id)
+        ->assertForbidden();
+
+    expect($contact->fresh()->trashed())->toBeFalse();
+});
+
+test('restoreContact restores soft-deleted contact and increments qso_count', function () {
+    $this->actingAs($this->user);
+
+    $contact = createTranscriptionContact($this, ['deleted_at' => now()]);
+    $session = $contact->operatingSession;
+    // Decrement since the contact is "deleted"
+    $session->decrement('qso_count');
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('restoreContact', $contact->id);
+
+    expect($contact->fresh()->trashed())->toBeFalse()
+        ->and($session->fresh()->qso_count)->toBe(1);
+});
+
+test('restoreContact logs audit entry', function () {
+    $this->actingAs($this->user);
+
+    $contact = createTranscriptionContact($this, ['deleted_at' => now()]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('restoreContact', $contact->id);
+
+    $this->assertDatabaseHas('audit_logs', [
+        'action' => 'contact.restored',
+        'auditable_type' => Contact::class,
+        'auditable_id' => $contact->id,
+        'user_id' => $this->user->id,
+    ]);
+});
+
+test('restoreContact rejects contact from another station', function () {
+    $this->actingAs($this->user);
+
+    $otherEvent = Event::factory()->has(
+        EventConfiguration::factory()->has(Station::factory(), 'stations'),
+        'eventConfiguration'
+    )->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+
+    $otherStation = $otherEvent->eventConfiguration->stations->first();
+    $otherSession = OperatingSession::create([
+        'station_id' => $otherStation->id,
+        'operator_user_id' => $this->user->id,
+        'start_time' => $otherEvent->start_time,
+        'end_time' => $otherEvent->end_time,
+        'is_transcription' => true,
+        'power_watts' => 100,
+        'qso_count' => 0,
+    ]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $otherEvent->eventConfiguration->id,
+        'operating_session_id' => $otherSession->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'W1OTR',
+        'is_transcribed' => true,
+        'qso_time' => now(),
+        'deleted_at' => now(),
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('restoreContact', $contact->id)
+        ->assertForbidden();
+
+    expect($contact->fresh()->trashed())->toBeTrue();
+});
+
+test('updateContact updates contact fields', function () {
+    $this->actingAs($this->user);
+
+    Section::firstOrCreate(
+        ['code' => 'STX'],
+        ['name' => 'South Texas', 'region' => 'W5', 'country' => 'US', 'is_active' => true],
+    );
+
+    $contact = createTranscriptionContact($this, [
+        'callsign' => 'W1OLD',
+        'received_exchange' => 'W1OLD 3A CT',
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, 'W1NEW 1D STX');
+
+    $contact->refresh();
+    $stxSection = Section::where('code', 'STX')->first();
+    expect($contact->callsign)->toBe('W1NEW')
+        ->and($contact->received_exchange)->toBe('W1NEW 1D STX')
+        ->and($contact->section_id)->toBe($stxSection->id);
+});
+
+test('updateContact logs audit entry with old and new values', function () {
+    $this->actingAs($this->user);
+
+    $contact = createTranscriptionContact($this, [
+        'callsign' => 'W1AUD',
+        'received_exchange' => 'W1AUD 3A CT',
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, 'W1NEW 1B CT');
+
+    $this->assertDatabaseHas('audit_logs', [
+        'action' => 'contact.updated',
+        'auditable_type' => Contact::class,
+        'auditable_id' => $contact->id,
+        'user_id' => $this->user->id,
+    ]);
+});
+
+test('updateContact rejects invalid exchange', function () {
+    $this->actingAs($this->user);
+
+    $contact = createTranscriptionContact($this);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, 'INVALID')
+        ->assertSet('parseError', fn ($v) => $v !== '');
+
+    expect($contact->fresh()->callsign)->toBe('W1TST');
+});
+
+test('updateContact rejects contact from another station', function () {
+    $this->actingAs($this->user);
+
+    $otherEvent = Event::factory()->has(
+        EventConfiguration::factory()->has(Station::factory(), 'stations'),
+        'eventConfiguration'
+    )->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+
+    $otherStation = $otherEvent->eventConfiguration->stations->first();
+    $otherSession = OperatingSession::create([
+        'station_id' => $otherStation->id,
+        'operator_user_id' => $this->user->id,
+        'start_time' => $otherEvent->start_time,
+        'end_time' => $otherEvent->end_time,
+        'is_transcription' => true,
+        'power_watts' => 100,
+        'qso_count' => 1,
+    ]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $otherEvent->eventConfiguration->id,
+        'operating_session_id' => $otherSession->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'W1OTH',
+        'received_exchange' => 'W1OTH 3A CT',
+        'is_transcribed' => true,
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, 'W1NEW 1B CT')
+        ->assertForbidden();
+
+    expect($contact->fresh()->callsign)->toBe('W1OTH');
+});
+
+test('updateContact with inline time updates qso_time', function () {
+    $this->actingAs($this->user);
+
+    $originalTime = $this->event->start_time->copy()->addHours(2);
+
+    $contact = createTranscriptionContact($this, [
+        'callsign' => 'W1TST',
+        'received_exchange' => 'W1TST 3A CT',
+        'qso_time' => $originalTime,
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, '1530 W1TST 3A CT');
+
+    $contact->refresh();
+    expect($contact->qso_time->format('H:i'))->toBe('15:30')
+        ->and($contact->qso_time->format('Y-m-d'))->toBe($originalTime->format('Y-m-d'))
+        ->and($contact->received_exchange)->toBe('W1TST 3A CT');
+});
+
+test('updateContact without inline time preserves original qso_time', function () {
+    $this->actingAs($this->user);
+
+    $originalTime = $this->event->start_time->copy()->addHours(2);
+
+    $contact = createTranscriptionContact($this, [
+        'callsign' => 'W1OLD',
+        'received_exchange' => 'W1OLD 3A CT',
+        'qso_time' => $originalTime,
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, 'W1NEW 3A CT');
+
+    $contact->refresh();
+    expect($contact->qso_time->format('H:i'))->toBe($originalTime->format('H:i'))
+        ->and($contact->callsign)->toBe('W1NEW');
+});
+
+test('updateContact with inline time stores exchange without time prefix', function () {
+    $this->actingAs($this->user);
+
+    $contact = createTranscriptionContact($this);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, '1423 K1ABC 1B ME');
+
+    $contact->refresh();
+    expect($contact->received_exchange)->toBe('K1ABC 1B ME')
+        ->and($contact->callsign)->toBe('K1ABC');
+});
+
+test('updateContact re-runs duplicate detection', function () {
+    $this->actingAs($this->user);
+
+    $contact1 = createTranscriptionContact($this, [
+        'callsign' => 'W1DUP',
+        'received_exchange' => 'W1DUP 3A CT',
+    ]);
+
+    $contact2 = createTranscriptionContact($this, [
+        'callsign' => 'K1ABC',
+        'received_exchange' => 'K1ABC 1B ME',
+        'section_id' => Section::where('code', 'ME')->first()->id,
+    ]);
+
+    // Update contact2 to have the same callsign as contact1
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact2->id, 'W1DUP 3A CT');
+
+    $contact2->refresh();
+    expect($contact2->is_duplicate)->toBeTrue()
+        ->and($contact2->points)->toBe(0);
 });
