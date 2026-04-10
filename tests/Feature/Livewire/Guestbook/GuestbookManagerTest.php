@@ -689,10 +689,45 @@ describe('audit logging', function () {
         expect($auditLog->old_values)->toMatchArray([
             'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
             'is_verified' => false,
+            'verified_by' => null,
+            'verified_at' => null,
         ]);
         expect($auditLog->new_values)->toMatchArray([
             'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
             'is_verified' => true,
+            'verified_by' => $this->admin->id,
+        ]);
+    });
+
+    test('logs guestbook.entry.updated when saveVerification unverifies an entry', function () {
+        $this->actingAs($this->admin);
+
+        $entry = GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'is_verified' => true,
+            'verified_by' => $this->admin->id,
+            'verified_at' => now(),
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->call('openVerifyModal', $entry->id)
+            ->set('editVerified', false)
+            ->call('saveVerification');
+
+        $auditLog = AuditLog::where('action', 'guestbook.entry.updated')->first();
+
+        expect($auditLog)->not->toBeNull();
+        expect($auditLog->old_values)->toMatchArray([
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'is_verified' => true,
+            'verified_by' => $this->admin->id,
+        ]);
+        expect($auditLog->new_values)->toMatchArray([
+            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'is_verified' => false,
+            'verified_by' => null,
+            'verified_at' => null,
         ]);
     });
 });

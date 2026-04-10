@@ -222,6 +222,8 @@ class GuestbookManager extends Component
         $oldValues = [
             'visitor_category' => $entry->visitor_category,
             'is_verified' => $entry->is_verified,
+            'verified_by' => $entry->verified_by,
+            'verified_at' => $entry->verified_at,
         ];
 
         $updateData = [
@@ -247,6 +249,8 @@ class GuestbookManager extends Component
             newValues: [
                 'visitor_category' => $entry->visitor_category,
                 'is_verified' => $entry->is_verified,
+                'verified_by' => $entry->verified_by,
+                'verified_at' => $entry->verified_at,
             ],
         );
 
