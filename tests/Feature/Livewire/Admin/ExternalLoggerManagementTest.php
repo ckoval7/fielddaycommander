@@ -268,3 +268,66 @@ test('displays UDP ADIF setup instructions', function () {
     Livewire::test(ExternalLoggerManagement::class)
         ->assertSee('Configure > Config Dialog > Logging > Cloud-UDP');
 });
+
+test('shows last log received section with no-contact placeholder when listener is running but no log yet', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => 12345,
+    ]);
+
+    Cache::put("external-logger:n1mm:{$this->config->id}:heartbeat", [
+        'pid' => 12345,
+        'started_at' => now()->toIso8601String(),
+        'last_heartbeat_at' => now()->toIso8601String(),
+        'packets_received' => 0,
+        'packets_processed' => 0,
+        'errors' => 0,
+        'last_packet_at' => null,
+        'port' => 12060,
+    ], 15);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee('Last Log Received')
+        ->assertSee('No contacts received yet');
+});
+
+test('shows accepted badge and callsign when last log was accepted', function () {
+    Cache::put("external-logger:n1mm:{$this->config->id}:last-log", [
+        'callsign' => 'W1AW',
+        'band' => '20m',
+        'mode' => 'SSB',
+        'qso_time' => now()->toIso8601String(),
+        'section' => 'CT',
+        'source' => 'n1mm',
+        'received_at' => now()->toIso8601String(),
+        'accepted' => true,
+        'rejection_reason' => null,
+    ], 60 * 60 * 24);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee('Last Log Received')
+        ->assertSee('Accepted')
+        ->assertSee('W1AW');
+});
+
+test('shows rejection reason badge and callsign when last log was out of period', function () {
+    Cache::put("external-logger:n1mm:{$this->config->id}:last-log", [
+        'callsign' => 'K1XYZ',
+        'band' => '40m',
+        'mode' => 'CW',
+        'qso_time' => now()->toIso8601String(),
+        'section' => null,
+        'source' => 'n1mm',
+        'received_at' => now()->toIso8601String(),
+        'accepted' => false,
+        'rejection_reason' => 'outside event window',
+    ], 60 * 60 * 24);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee('Last Log Received')
+        ->assertSee('outside event window')
+        ->assertSee('K1XYZ');
+});
