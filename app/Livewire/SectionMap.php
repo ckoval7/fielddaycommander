@@ -48,12 +48,17 @@ class SectionMap extends Component
                 $count = $sectionContacts->count();
                 $bands = $sectionContacts->pluck('band.name')->filter()->unique()->sort()->values()->all();
                 $modes = $sectionContacts->pluck('mode.name')->filter()->unique()->sort()->values()->all();
+                $bandCounts = $sectionContacts->groupBy(fn ($c) => $c->band?->name)
+                    ->filter(fn ($group, $key) => $key !== null && $key !== '')
+                    ->mapWithKeys(fn ($group, $name) => [$name => $group->count()])
+                    ->all();
 
                 $sectionData[$code] = [
                     'name' => $sectionData[$code]['name'] ?? $code,
                     'count' => $count,
                     'bands' => $bands,
                     'modes' => $modes,
+                    'bandCounts' => $bandCounts,
                 ];
 
                 $totalQsos += $count;
