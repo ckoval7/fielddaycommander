@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('listener_type', 20);
             $table->boolean('is_enabled')->default(false);
             $table->integer('port')->default(12060);
+            $table->unsignedInteger('pid')->nullable();
             $table->json('settings')->nullable();
             $table->timestamps();
 
