@@ -96,16 +96,19 @@ class DemoAnalyticsController extends Controller
     {
         abort_unless(config('demo.enabled'), 404);
 
-        $events = $session->events->map(function (DemoEvent $event) use ($session) {
-            return [
-                'type' => $event->type,
-                'name' => $event->name,
-                'route_name' => $event->route_name,
-                'metadata' => $event->metadata,
-                'created_at' => $event->created_at->toIso8601String(),
-                'seconds_from_start' => (int) $session->provisioned_at->diffInSeconds($event->created_at),
-            ];
-        });
+        $events = $session->events
+            ->reject(fn (DemoEvent $event) => $event->route_name === 'default-livewire.update')
+            ->values()
+            ->map(function (DemoEvent $event) use ($session) {
+                return [
+                    'type' => $event->type,
+                    'name' => $event->name,
+                    'route_name' => $event->route_name,
+                    'metadata' => $event->metadata,
+                    'created_at' => $event->created_at->toIso8601String(),
+                    'seconds_from_start' => (int) $session->provisioned_at->diffInSeconds($event->created_at),
+                ];
+            });
 
         return response()->json([
             'session' => [
