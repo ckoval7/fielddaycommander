@@ -10,6 +10,9 @@ use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use Database\Seeders\BandSeeder;
+use Database\Seeders\ModeSeeder;
+use Database\Seeders\SectionSeeder;
 
 describe('Station Relationships', function () {
     test('belongs to event configuration', function () {
@@ -37,9 +40,9 @@ describe('Station Relationships', function () {
     test('can have additional equipment through pivot', function () {
         $eventConfiguration = EventConfiguration::factory()->create();
         $event = $eventConfiguration->event;
-        $station = Station::factory()->create([
+        $station = Station::withoutEvents(fn () => Station::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
-        ]);
+        ]));
 
         $equipment1 = Equipment::factory()->create();
         $equipment2 = Equipment::factory()->create();
@@ -66,7 +69,7 @@ describe('Station Relationships', function () {
     });
 
     test('has many operating sessions', function () {
-        $this->seed([\Database\Seeders\BandSeeder::class, \Database\Seeders\ModeSeeder::class]);
+        $this->seed([BandSeeder::class, ModeSeeder::class]);
 
         $station = Station::factory()->create();
         $band = Band::first();
@@ -86,7 +89,7 @@ describe('Station Relationships', function () {
     });
 
     test('has many contacts through operating sessions', function () {
-        $this->seed([\Database\Seeders\BandSeeder::class, \Database\Seeders\ModeSeeder::class, \Database\Seeders\SectionSeeder::class]);
+        $this->seed([BandSeeder::class, ModeSeeder::class, SectionSeeder::class]);
 
         $eventConfiguration = EventConfiguration::factory()->create();
         $station = Station::factory()->create([
@@ -123,9 +126,9 @@ describe('Station Accessors', function () {
     test('equipment count returns count of additional equipment', function () {
         $eventConfiguration = EventConfiguration::factory()->create();
         $event = $eventConfiguration->event;
-        $station = Station::factory()->create([
+        $station = Station::withoutEvents(fn () => Station::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
-        ]);
+        ]));
 
         // Create additional equipment
         $equipment1 = Equipment::factory()->create();
@@ -154,7 +157,7 @@ describe('Station Accessors', function () {
     });
 
     test('is active returns true when station has active sessions', function () {
-        $this->seed([\Database\Seeders\BandSeeder::class, \Database\Seeders\ModeSeeder::class]);
+        $this->seed([BandSeeder::class, ModeSeeder::class]);
 
         $station = Station::factory()->create();
         $band = Band::first();
@@ -174,7 +177,7 @@ describe('Station Accessors', function () {
     });
 
     test('is active returns false when station has no active sessions', function () {
-        $this->seed([\Database\Seeders\BandSeeder::class, \Database\Seeders\ModeSeeder::class]);
+        $this->seed([BandSeeder::class, ModeSeeder::class]);
 
         $station = Station::factory()->create();
         $band = Band::first();
@@ -194,7 +197,7 @@ describe('Station Accessors', function () {
     });
 
     test('contact count returns total qsos logged', function () {
-        $this->seed([\Database\Seeders\BandSeeder::class, \Database\Seeders\ModeSeeder::class, \Database\Seeders\SectionSeeder::class]);
+        $this->seed([BandSeeder::class, ModeSeeder::class, SectionSeeder::class]);
 
         $eventConfiguration = EventConfiguration::factory()->create();
         $station = Station::factory()->create([

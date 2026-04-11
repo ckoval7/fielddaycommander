@@ -49,10 +49,10 @@ class EquipmentReportServiceTest extends TestCase
             'event_id' => $this->event->id,
         ]);
 
-        $this->station = Station::factory()->create([
+        $this->station = Station::withoutEvents(fn () => Station::factory()->create([
             'event_configuration_id' => $eventConfig->id,
             'name' => 'Station 1A',
-        ]);
+        ]));
 
         $this->owner = User::factory()->create([
             'call_sign' => 'W1AW',

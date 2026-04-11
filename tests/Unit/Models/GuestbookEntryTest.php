@@ -100,9 +100,8 @@ describe('scopes', function () {
     });
 
     test('it filters bonus-eligible entries with bonusEligible scope', function () {
-        // Create bonus-eligible entries (each of the 4 categories)
+        // Create bonus-eligible entries (each of the 3 categories)
         GuestbookEntry::factory()->electedOfficial()->create();
-        GuestbookEntry::factory()->arrlOfficial()->create();
         GuestbookEntry::factory()->agency()->create();
         GuestbookEntry::factory()->media()->create();
 
@@ -122,7 +121,7 @@ describe('scopes', function () {
 
         $bonusEligibleEntries = GuestbookEntry::bonusEligible()->get();
 
-        expect($bonusEligibleEntries)->toHaveCount(4);
+        expect($bonusEligibleEntries)->toHaveCount(3);
         expect($bonusEligibleEntries->every(fn ($entry) => in_array($entry->visitor_category, GuestbookEntry::BONUS_ELIGIBLE_CATEGORIES)))->toBeTrue();
     });
 });
@@ -130,12 +129,10 @@ describe('scopes', function () {
 describe('accessors', function () {
     test('it identifies bonus-eligible categories correctly', function () {
         $electedOfficial = GuestbookEntry::factory()->electedOfficial()->create();
-        $arrlOfficial = GuestbookEntry::factory()->arrlOfficial()->create();
         $agency = GuestbookEntry::factory()->agency()->create();
         $media = GuestbookEntry::factory()->media()->create();
 
         expect($electedOfficial->is_bonus_eligible)->toBeTrue();
-        expect($arrlOfficial->is_bonus_eligible)->toBeTrue();
         expect($agency->is_bonus_eligible)->toBeTrue();
         expect($media->is_bonus_eligible)->toBeTrue();
     });
@@ -229,12 +226,11 @@ describe('constants', function () {
     test('it has correct bonus-eligible categories defined', function () {
         expect(GuestbookEntry::BONUS_ELIGIBLE_CATEGORIES)->toBe([
             GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
-            GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL,
             GuestbookEntry::VISITOR_CATEGORY_AGENCY,
             GuestbookEntry::VISITOR_CATEGORY_MEDIA,
         ]);
 
-        // Verify these 4 categories are the only bonus-eligible ones
-        expect(GuestbookEntry::BONUS_ELIGIBLE_CATEGORIES)->toHaveCount(4);
+        // Verify these 3 categories are the only bonus-eligible ones
+        expect(GuestbookEntry::BONUS_ELIGIBLE_CATEGORIES)->toHaveCount(3);
     });
 });

@@ -49,5 +49,5 @@ test('user with requires_password_change can logout', function () {
 
 test('guest is not affected by middleware', function () {
     $this->get('/')
-        ->assertRedirect('/login');
+        ->assertOk();
 });

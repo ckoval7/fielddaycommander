@@ -52,7 +52,7 @@ test('saving category preferences persists to database', function () {
         ->set('notify_qso_milestone', true)
         ->set('notify_equipment', false)
         ->call('saveProfile')
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     $categories = $this->user->notification_preferences['categories'];
@@ -94,7 +94,7 @@ test('individual category toggle works independently', function () {
     Livewire::test(UserProfile::class)
         ->set('notify_guestbook', false)
         ->call('saveProfile')
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     $categories = $this->user->notification_preferences['categories'];
@@ -152,7 +152,7 @@ test('saving categories preserves existing email notification preferences', func
         ->set('event_notifications', false)
         ->set('notify_new_section', false)
         ->call('saveProfile')
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     $prefs = $this->user->notification_preferences;

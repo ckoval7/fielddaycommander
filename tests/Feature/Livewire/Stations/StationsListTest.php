@@ -241,10 +241,10 @@ test('primary radio details display correctly', function () {
 test('equipment count badge shows correct count', function () {
     $this->actingAs($this->user);
 
-    $station = Station::factory()->create([
+    $station = Station::withoutEvents(fn () => Station::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'name' => 'Multi Equipment Station',
-    ]);
+    ]));
 
     // Attach additional equipment via pivot table
     $equipment1 = Equipment::factory()->create(['type' => 'antenna']);
@@ -516,8 +516,8 @@ test('stats calculate active stations correctly', function () {
 test('stats calculate equipment count correctly', function () {
     $this->actingAs($this->user);
 
-    $station1 = Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
-    $station2 = Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+    $station1 = Station::withoutEvents(fn () => Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]));
+    $station2 = Station::withoutEvents(fn () => Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]));
 
     // Station 1: 2 additional equipment
     $equipment1 = Equipment::factory()->create();

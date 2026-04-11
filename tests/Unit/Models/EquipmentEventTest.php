@@ -3,6 +3,7 @@
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
+use App\Models\EventConfiguration;
 use App\Models\Station;
 use App\Models\User;
 
@@ -268,7 +269,7 @@ test('byOwner scope filters by equipment owner', function () {
 });
 
 test('assignedToStation scope filters by station assignment', function () {
-    $station = Station::factory()->create(['event_configuration_id' => $this->event->eventConfiguration->id ?? \App\Models\EventConfiguration::factory()->create(['event_id' => $this->event->id])->id]);
+    $station = Station::withoutEvents(fn () => Station::factory()->create(['event_configuration_id' => $this->event->eventConfiguration->id ?? EventConfiguration::factory()->create(['event_id' => $this->event->id])->id]));
 
     EquipmentEvent::factory()->create([
         'equipment_id' => $this->equipment->id,
