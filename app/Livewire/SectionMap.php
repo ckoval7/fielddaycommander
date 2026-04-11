@@ -52,6 +52,7 @@ class SectionMap extends Component
                     ->filter(fn ($group, $key) => $key !== null && $key !== '')
                     ->mapWithKeys(fn ($group, $name) => [$name => $group->count()])
                     ->all();
+                $latestQsoTime = $sectionContacts->max('qso_time')?->timestamp;
 
                 $sectionData[$code] = [
                     'name' => $sectionData[$code]['name'] ?? $code,
@@ -59,11 +60,15 @@ class SectionMap extends Component
                     'bands' => $bands,
                     'modes' => $modes,
                     'bandCounts' => $bandCounts,
+                    'latestQsoTime' => $latestQsoTime,
                 ];
 
                 $totalQsos += $count;
                 $sectionsWorked++;
             }
+
+            $minTime = $contacts->min('qso_time')?->timestamp;
+            $maxTime = $contacts->max('qso_time')?->timestamp;
         }
 
         $maxCount = max(array_column($sectionData, 'count') ?: [0]);
@@ -75,6 +80,8 @@ class SectionMap extends Component
             'sectionsWorked' => $sectionsWorked,
             'totalSections' => $allSections->count(),
             'hasEvent' => $eventConfigId !== null,
+            'minTime' => $minTime ?? null,
+            'maxTime' => $maxTime ?? null,
         ]);
     }
 }

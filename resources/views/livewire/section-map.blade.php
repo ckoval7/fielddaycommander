@@ -29,15 +29,28 @@
             <div
                 x-data="{
                     view: 'all',
+                    colorMode: 'band',
                     hoverSection: null,
                     tooltipX: 0,
                     tooltipY: 0,
                     sectionData: @js($sectionData),
                     maxCount: @js($maxCount),
+                    minTime: @js($minTime),
+                    maxTime: @js($maxTime),
+
+                    callAreas: [1,2,3,4,5,6,7,8,9,0],
 
                     getViewBox() {
                         if (this.view === 'us') return '340 425 1200 675';
                         if (this.view === 'ca') return '395 15 1200 675';
+                        if (this.view.startsWith('w')) {
+                            const group = document.getElementById(this.view);
+                            if (group) {
+                                const bbox = group.getBBox();
+                                const pad = 30;
+                                return `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`;
+                            }
+                        }
                         return '0 0 1920 1080';
                     },
 
@@ -65,6 +78,22 @@
                         }
                     },
 
+                    timeAgo(ts) {
+                        if (!ts) return null;
+                        const diff = Math.floor(Date.now() / 1000) - ts;
+                        if (diff < 60) return 'just now';
+                        if (diff < 3600) {
+                            const m = Math.floor(diff / 60);
+                            return m + (m === 1 ? ' minute ago' : ' minutes ago');
+                        }
+                        if (diff < 86400) {
+                            const h = Math.floor(diff / 3600);
+                            return h + (h === 1 ? ' hour ago' : ' hours ago');
+                        }
+                        const d = Math.floor(diff / 86400);
+                        return d + (d === 1 ? ' day ago' : ' days ago');
+                    },
+
                     bandHsl: {
                         '160m': [280, 60, 45],
                         '80m': [250, 55, 50],
@@ -89,8 +118,9 @@
                     getSectionStyle(code) {
                         const data = this.sectionData[code];
                         const isHover = this.hoverSection === code;
+                        const noData = !data || data.count === 0;
 
-                        if (!data || data.count === 0) {
+                        if (noData) {
                             const base = { fill: '#d1d5db' };
                             if (isHover) {
                                 base.stroke = '#fff';
@@ -100,23 +130,40 @@
                             return base;
                         }
 
-                        const bandCounts = data.bandCounts || {};
-                        const entries = Object.entries(bandCounts);
-                        if (entries.length === 0) return { fill: '#d1d5db' };
-
-                        const dominant = entries.reduce((a, b) => b[1] > a[1] ? b : a)[0];
-                        const hsl = this.bandHsl[dominant];
-                        const numBands = entries.length;
-
                         let fill;
-                        if (!hsl) {
-                            fill = '#d1d5db';
-                        } else if (numBands >= 3) {
-                            fill = `hsl(${hsl[0]}, ${hsl[1]}%, ${hsl[2] - 10}%)`;
-                        } else if (numBands >= 2) {
-                            fill = `hsl(${hsl[0]}, ${hsl[1]}%, ${hsl[2]}%)`;
+
+                        if (this.colorMode === 'qso') {
+                            const ratio = this.maxCount > 0 ? data.count / this.maxCount : 0;
+                            const saturation = 20 + ratio * 50;
+                            const lightness = 85 - ratio * 45;
+                            fill = `hsl(130, ${saturation}%, ${lightness}%)`;
+                        } else if (this.colorMode === 'time') {
+                            const t = data.latestQsoTime;
+                            if (!t || !this.minTime || !this.maxTime || this.minTime === this.maxTime) {
+                                fill = 'hsl(60, 50%, 65%)';
+                            } else {
+                                const ratio = (t - this.minTime) / (this.maxTime - this.minTime);
+                                const hue = ratio * 130;
+                                fill = `hsl(${hue}, 65%, 50%)`;
+                            }
                         } else {
-                            fill = `hsl(${hsl[0]}, ${Math.round(hsl[1] * 0.5)}%, ${hsl[2] + 15}%)`;
+                            const bandCounts = data.bandCounts || {};
+                            const entries = Object.entries(bandCounts);
+                            if (entries.length === 0) return { fill: '#d1d5db' };
+
+                            const dominant = entries.reduce((a, b) => b[1] > a[1] ? b : a)[0];
+                            const hsl = this.bandHsl[dominant];
+                            const numBands = entries.length;
+
+                            if (!hsl) {
+                                fill = '#d1d5db';
+                            } else if (numBands >= 3) {
+                                fill = `hsl(${hsl[0]}, ${hsl[1]}%, ${hsl[2] - 10}%)`;
+                            } else if (numBands >= 2) {
+                                fill = `hsl(${hsl[0]}, ${hsl[1]}%, ${hsl[2]}%)`;
+                            } else {
+                                fill = `hsl(${hsl[0]}, ${Math.round(hsl[1] * 0.5)}%, ${hsl[2] + 15}%)`;
+                            }
                         }
 
                         const style = { fill };
@@ -128,30 +175,39 @@
                         }
 
                         return style;
-                    },
-
-                    getActiveBands() {
-                        const bands = new Set();
-                        Object.values(this.sectionData).forEach(d => {
-                            if (d.bands) d.bands.forEach(b => bands.add(b));
-                        });
-                        const order = ['160m', '80m', '40m', '20m', '15m', '10m', '6m', '2m', '1.25m', '70cm', '33cm', '23cm', 'Satellite'];
-                        return order.filter(b => bands.has(b));
                     }
                 }"
             >
-                <div class="flex justify-center mb-3">
+                <div class="flex flex-wrap justify-center gap-2 mb-3">
                     <div class="join">
                         <button class="join-item btn btn-sm" :class="view === 'all' ? 'btn-primary' : 'btn-ghost'" @click="view = 'all'; hoverSection = null">All</button>
                         <button class="join-item btn btn-sm" :class="view === 'us' ? 'btn-primary' : 'btn-ghost'" @click="view = 'us'; hoverSection = null">US</button>
                         <button class="join-item btn btn-sm" :class="view === 'ca' ? 'btn-primary' : 'btn-ghost'" @click="view = 'ca'; hoverSection = null">Canada</button>
                     </div>
+                    <div class="join" x-show="view !== 'ca'" x-cloak>
+                        <template x-for="n in callAreas" :key="n">
+                            <button class="join-item btn btn-sm"
+                                    :class="view === 'w' + n ? 'btn-primary' : 'btn-ghost'"
+                                    @click="view = 'w' + n; hoverSection = null"
+                                    x-text="'W' + n">
+                            </button>
+                        </template>
+                    </div>
                 </div>
 
-                <div class="w-full overflow-x-auto">
+                <div class="flex justify-center gap-1 mb-3">
+                    <span class="text-xs text-base-content/70 self-center mr-1">Color:</span>
+                    <div class="join">
+                        <button class="join-item btn btn-xs" :class="colorMode === 'band' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'band'">Band</button>
+                        <button class="join-item btn btn-xs" :class="colorMode === 'qso' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'qso'">QSO Count</button>
+                        <button class="join-item btn btn-xs" :class="colorMode === 'time' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'time'">Recency</button>
+                    </div>
+                </div>
+
+                <div class="w-full flex justify-center">
                     <svg
-   width="1920"
-   height="1080"
+   class="w-full h-auto transition-[max-width] duration-300"
+   :class="view.startsWith('w') ? 'max-w-3xl' : 'max-w-[1920px]'"
    :view-box.camel="getViewBox()"
    version="1.1"
    id="svg1"
@@ -974,31 +1030,63 @@
                         <span x-text="sectionData[hoverSection]?.bands?.join(', ')"></span> &middot;
                         <span x-text="sectionData[hoverSection]?.modes?.join(', ')"></span>
                     </div>
+                    <div x-show="sectionData[hoverSection]?.latestQsoTime" class="text-base-content/50">
+                        Last worked <span x-text="timeAgo(sectionData[hoverSection]?.latestQsoTime)"></span>
+                    </div>
                     <div x-show="sectionData[hoverSection]?.count === 0" class="text-base-content/50">Not worked</div>
                 </div>
-            </div>
 
-            <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-4 text-sm text-base-content/70">
-                <div class="flex items-center gap-1">
-                    <span class="inline-block w-4 h-4 rounded" style="background:#d1d5db"></span> Not worked
-                </div>
-                <template x-for="band in getActiveBands()" :key="band">
-                    <div class="flex items-center gap-1">
-                        <span class="inline-block w-4 h-4 rounded" :style="{ background: bandColor(band) }"></span>
-                        <span x-text="band"></span>
+                {{-- Band legend --}}
+                <div x-show="colorMode === 'band'" x-cloak>
+                    <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-4 text-xs text-base-content/70">
+                        <div class="flex items-center gap-1">
+                            <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
+                        </div>
+                        <template x-for="band in ['160m','80m','40m','20m','15m','10m','6m','2m','1.25m','70cm','33cm','23cm','Satellite']" :key="band">
+                            <div class="flex items-center gap-1">
+                                <span class="inline-block w-3 h-3 rounded" :style="{ background: bandColor(band) }"></span>
+                                <span x-text="band"></span>
+                            </div>
+                        </template>
                     </div>
-                </template>
-            </div>
-            <div class="flex items-center justify-center gap-4 mt-2 text-xs text-base-content/50">
-                <span>Intensity:</span>
-                <div class="flex items-center gap-1">
-                    <span class="inline-block w-4 h-4 rounded" style="background:hsl(210, 35%, 65%)"></span> 1 band
+                    <div class="flex items-center justify-center gap-3 mt-1 text-xs text-base-content/50">
+                        <span>Intensity:</span>
+                        <span>pastel = 1 band</span>
+                        <span>&middot;</span>
+                        <span>vivid = 2 bands</span>
+                        <span>&middot;</span>
+                        <span>deep = 3+</span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-1">
-                    <span class="inline-block w-4 h-4 rounded" style="background:hsl(210, 70%, 50%)"></span> 2 bands
+
+                {{-- QSO count legend --}}
+                <div x-show="colorMode === 'qso'" x-cloak>
+                    <div class="flex items-center justify-center gap-2 mt-4 text-xs text-base-content/70">
+                        <div class="flex items-center gap-1">
+                            <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="h-3 w-48 rounded" style="background: linear-gradient(to right, hsl(130,20%,85%), hsl(130,70%,40%))"></div>
+                        </div>
+                        <span>Few</span>
+                        <span>&rarr;</span>
+                        <span>Many QSOs</span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-1">
-                    <span class="inline-block w-4 h-4 rounded" style="background:hsl(210, 70%, 40%)"></span> 3+ bands
+
+                {{-- Recency legend --}}
+                <div x-show="colorMode === 'time'" x-cloak>
+                    <div class="flex items-center justify-center gap-2 mt-4 text-xs text-base-content/70">
+                        <div class="flex items-center gap-1">
+                            <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="h-3 w-48 rounded" style="background: linear-gradient(to right, hsl(0,65%,50%), hsl(60,50%,65%), hsl(130,65%,50%))"></div>
+                        </div>
+                        <span>Oldest</span>
+                        <span>&rarr;</span>
+                        <span>Most Recent</span>
+                    </div>
                 </div>
             </div>
         </x-card>

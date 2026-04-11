@@ -27,7 +27,7 @@
 <body class="min-h-screen font-sans antialiased bg-base-200">
 
     {{-- NAVBAR mobile only --}}
-    <x-nav sticky class="lg:hidden z-50">
+    <x-nav sticky class="lg:hidden">
         <x-slot:brand>
             <x-app-brand />
         </x-slot:brand>
@@ -68,7 +68,7 @@
     </div>
 
     {{-- Mobile timer bar - below navbar --}}
-    <div class="lg:hidden sticky top-16 z-40 bg-base-100 border-b border-base-300 px-4 py-2">
+    <div class="lg:hidden sticky top-16 z-10 bg-base-100 border-b border-base-300 px-4 py-2">
         <livewire:components.event-countdown />
     </div>
 
