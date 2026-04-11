@@ -38,7 +38,7 @@ class Contact extends Model
         'is_duplicate',
         'is_transcribed',
         'is_imported',
-        'n1mm_id',
+        'external_id',
         'external_source',
         'duplicate_of_contact_id',
         'notes',

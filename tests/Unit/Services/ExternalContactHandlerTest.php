@@ -64,7 +64,7 @@ test('creates contact from ExternalContactDto', function () {
         ->and($contact->band_id)->toBe($this->band->id)
         ->and($contact->mode_id)->toBe($this->modeCw->id)
         ->and($contact->section_id)->toBe($this->section->id)
-        ->and($contact->n1mm_id)->toBe('abc123def456')
+        ->and($contact->external_id)->toBe('abc123def456')
         ->and($contact->external_source)->toBe('n1mm')
         ->and($contact->logger_user_id)->toBe($this->user->id);
 
@@ -125,7 +125,7 @@ test('runs duplicate check on new contacts', function () {
         ->and($contact->points)->toBe(0);
 });
 
-test('handles contact replace by n1mm_id', function () {
+test('handles contact replace by external_id', function () {
     $session = OperatingSession::factory()->create([
         'station_id' => $this->station->id,
         'operator_user_id' => $this->user->id,
@@ -138,7 +138,7 @@ test('handles contact replace by n1mm_id', function () {
         'callsign' => 'W1AX',
         'band_id' => $this->band->id,
         'mode_id' => $this->modeCw->id,
-        'n1mm_id' => 'replace123',
+        'external_id' => 'replace123',
         'external_source' => 'n1mm',
         'logger_user_id' => $this->user->id,
     ]);
@@ -164,7 +164,7 @@ test('handles contact replace by n1mm_id', function () {
     Event::assertDispatched(ExternalContactUpdated::class);
 });
 
-test('handles contact delete by n1mm_id', function () {
+test('handles contact delete by external_id', function () {
     $session = OperatingSession::factory()->create([
         'station_id' => $this->station->id,
         'operator_user_id' => $this->user->id,
@@ -177,7 +177,7 @@ test('handles contact delete by n1mm_id', function () {
         'callsign' => 'W1AW',
         'band_id' => $this->band->id,
         'mode_id' => $this->modeCw->id,
-        'n1mm_id' => 'delete123',
+        'external_id' => 'delete123',
         'external_source' => 'n1mm',
         'logger_user_id' => $this->user->id,
     ]);
@@ -192,13 +192,13 @@ test('handles contact delete by n1mm_id', function () {
 
     $this->handler->handleDelete($dto, $this->config);
 
-    expect(Contact::where('n1mm_id', 'delete123')->first())->toBeNull()
-        ->and(Contact::withTrashed()->where('n1mm_id', 'delete123')->first())->not->toBeNull();
+    expect(Contact::where('external_id', 'delete123')->first())->toBeNull()
+        ->and(Contact::withTrashed()->where('external_id', 'delete123')->first())->not->toBeNull();
 
     Event::assertDispatched(ExternalContactDeleted::class);
 });
 
-test('ignores delete for unknown n1mm_id', function () {
+test('ignores delete for unknown external_id', function () {
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
         timestamp: Carbon::parse('2026-06-28 18:43:38'),
@@ -212,7 +212,7 @@ test('ignores delete for unknown n1mm_id', function () {
     Event::assertNotDispatched(ExternalContactDeleted::class);
 });
 
-test('treats duplicate contactinfo with same n1mm_id as replace', function () {
+test('treats duplicate contactinfo with same external_id as replace', function () {
     $session = OperatingSession::factory()->create([
         'station_id' => $this->station->id,
         'operator_user_id' => $this->user->id,
@@ -225,7 +225,7 @@ test('treats duplicate contactinfo with same n1mm_id as replace', function () {
         'callsign' => 'W1AW',
         'band_id' => $this->band->id,
         'mode_id' => $this->modeCw->id,
-        'n1mm_id' => 'idempotent123',
+        'external_id' => 'idempotent123',
         'external_source' => 'n1mm',
         'logger_user_id' => $this->user->id,
     ]);
@@ -242,7 +242,7 @@ test('treats duplicate contactinfo with same n1mm_id as replace', function () {
 
     $contact = $this->handler->handleContact($dto, $this->config);
 
-    expect(Contact::where('n1mm_id', 'idempotent123')->count())->toBe(1);
+    expect(Contact::where('external_id', 'idempotent123')->count())->toBe(1);
 });
 
 test('handles RadioInfo by opening new session', function () {

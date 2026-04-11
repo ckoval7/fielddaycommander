@@ -13,9 +13,9 @@ return new class extends Migration
         });
 
         Schema::table('contacts', function (Blueprint $table) {
-            $table->string('n1mm_id', 32)->nullable()->after('is_imported');
-            $table->string('external_source', 20)->nullable()->after('n1mm_id');
-            $table->index('n1mm_id');
+            $table->string('external_id', 32)->nullable()->after('is_imported');
+            $table->string('external_source', 20)->nullable()->after('external_id');
+            $table->index('external_id');
             $table->index('external_source');
         });
 
@@ -32,9 +32,9 @@ return new class extends Migration
         });
 
         Schema::table('contacts', function (Blueprint $table) {
-            $table->dropIndex(['n1mm_id']);
+            $table->dropIndex(['external_id']);
             $table->dropIndex(['external_source']);
-            $table->dropColumn(['n1mm_id', 'external_source']);
+            $table->dropColumn(['external_id', 'external_source']);
         });
 
         Schema::table('operating_sessions', function (Blueprint $table) {

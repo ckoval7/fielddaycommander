@@ -29,7 +29,7 @@ class ExternalContactHandler
     {
         // Idempotency: if we already have this external ID, treat as replace
         if ($dto->externalId !== null) {
-            $existing = Contact::where('n1mm_id', $dto->externalId)->first();
+            $existing = Contact::where('external_id', $dto->externalId)->first();
             if ($existing !== null) {
                 $this->updateContact($existing, $dto, $config);
 
@@ -82,7 +82,7 @@ class ExternalContactHandler
             'points' => $points,
             'is_duplicate' => $dupeCheck['is_duplicate'],
             'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
-            'n1mm_id' => $dto->externalId,
+            'external_id' => $dto->externalId,
             'external_source' => $dto->source,
         ]);
 
@@ -99,7 +99,7 @@ class ExternalContactHandler
             return;
         }
 
-        $contact = Contact::where('n1mm_id', $dto->externalId)->first();
+        $contact = Contact::where('external_id', $dto->externalId)->first();
         if ($contact === null) {
             return;
         }
@@ -113,7 +113,7 @@ class ExternalContactHandler
             return;
         }
 
-        $contact = Contact::where('n1mm_id', $dto->externalId)->first();
+        $contact = Contact::where('external_id', $dto->externalId)->first();
         if ($contact === null) {
             return;
         }

@@ -71,7 +71,7 @@ test('full pipeline: raw XML to contact creation', function () {
         ->and($contact->band->name)->toBe('80m')
         ->and($contact->mode->name)->toBe('CW')
         ->and($contact->section->code)->toBe('CT')
-        ->and($contact->n1mm_id)->toBe('f9ffac4fcd3e479ca86e137df1338531')
+        ->and($contact->external_id)->toBe('f9ffac4fcd3e479ca86e137df1338531')
         ->and($contact->external_source)->toBe('n1mm')
         ->and($contact->logger_user_id)->toBe($this->user->id)
         ->and($contact->operatingSession->station_id)->toBe($this->station->id);
@@ -128,9 +128,9 @@ test('full pipeline: contact then replace updates callsign', function () {
     $replaceDto = $this->parser->parse($xmlReplace);
     $this->handler->handleReplace($replaceDto, $this->config);
 
-    $contact = Contact::where('n1mm_id', 'replace_test_id')->first();
+    $contact = Contact::where('external_id', 'replace_test_id')->first();
     expect($contact->callsign)->toBe('W1AW')
-        ->and(Contact::where('n1mm_id', 'replace_test_id')->count())->toBe(1);
+        ->and(Contact::where('external_id', 'replace_test_id')->count())->toBe(1);
 });
 
 test('full pipeline: contact then delete soft-deletes', function () {
@@ -174,8 +174,8 @@ test('full pipeline: contact then delete soft-deletes', function () {
     $deleteDto = $this->parser->parse($xmlDelete);
     $this->handler->handleDelete($deleteDto, $this->config);
 
-    expect(Contact::where('n1mm_id', 'delete_test_id')->first())->toBeNull()
-        ->and(Contact::withTrashed()->where('n1mm_id', 'delete_test_id')->first())->not->toBeNull();
+    expect(Contact::where('external_id', 'delete_test_id')->first())->toBeNull()
+        ->and(Contact::withTrashed()->where('external_id', 'delete_test_id')->first())->not->toBeNull();
 });
 
 test('full pipeline: RadioInfo creates session before contacts', function () {
