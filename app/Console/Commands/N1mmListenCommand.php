@@ -11,6 +11,7 @@ use App\Services\ExternalContactHandler;
 use App\Services\ExternalLoggerManager;
 use App\Services\N1mmPacketParser;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Socket;
 
@@ -46,9 +47,13 @@ class N1mmListenCommand extends Command implements ExternalLoggerListener
         $port = $setting->port;
         $this->info("Starting N1MM UDP listener on port {$port} for event: {$config->callsign}");
 
+        // Store PID in database
+        $setting->update(['pid' => getmypid()]);
+
         $this->socket = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
         if ($this->socket === false) {
             $this->error('Failed to create UDP socket: '.socket_strerror(socket_last_error()));
+            $setting->update(['pid' => null]);
 
             return self::FAILURE;
         }
@@ -59,6 +64,7 @@ class N1mmListenCommand extends Command implements ExternalLoggerListener
         if (@socket_bind($this->socket, '0.0.0.0', $port) === false) {
             $this->error("Failed to bind to port {$port}: ".socket_strerror(socket_last_error($this->socket)));
             socket_close($this->socket);
+            $setting->update(['pid' => null]);
 
             return self::FAILURE;
         }
@@ -68,7 +74,11 @@ class N1mmListenCommand extends Command implements ExternalLoggerListener
 
         $this->running = true;
         $packetCount = 0;
+        $processedCount = 0;
         $errorCount = 0;
+        $startedAt = now()->toIso8601String();
+        $lastPacketAt = null;
+        $lastHeartbeatTime = 0;
 
         // Handle graceful shutdown
         if (extension_loaded('pcntl')) {
@@ -77,9 +87,27 @@ class N1mmListenCommand extends Command implements ExternalLoggerListener
             pcntl_signal(SIGINT, fn () => $this->running = false);
         }
 
+        $heartbeatKey = "external-logger:n1mm:{$config->id}:heartbeat";
+
         ExternalLoggerStatusChanged::dispatch('n1mm', 'started', $config->id, $port);
 
         while ($this->running) {
+            // Write heartbeat every 5 seconds
+            $now = time();
+            if ($now - $lastHeartbeatTime >= 5) {
+                Cache::put($heartbeatKey, [
+                    'pid' => getmypid(),
+                    'started_at' => $startedAt,
+                    'last_heartbeat_at' => now()->toIso8601String(),
+                    'packets_received' => $packetCount,
+                    'packets_processed' => $processedCount,
+                    'errors' => $errorCount,
+                    'last_packet_at' => $lastPacketAt,
+                    'port' => $port,
+                ], 15);
+                $lastHeartbeatTime = $now;
+            }
+
             // Check if still enabled periodically
             if ($packetCount % 50 === 0 && $packetCount > 0) {
                 if (! $manager->isEnabled($config->id, 'n1mm')) {
@@ -99,6 +127,7 @@ class N1mmListenCommand extends Command implements ExternalLoggerListener
             }
 
             $packetCount++;
+            $lastPacketAt = now()->toIso8601String();
 
             try {
                 $dto = $parser->parse($buffer);
@@ -118,6 +147,8 @@ class N1mmListenCommand extends Command implements ExternalLoggerListener
                 } elseif ($dto instanceof ExternalRadioInfoDto) {
                     $handler->handleRadioInfo($dto, $config);
                 }
+
+                $processedCount++;
             } catch (\Throwable $e) {
                 $errorCount++;
                 Log::warning("N1MM packet processing error: {$e->getMessage()}", [
@@ -130,9 +161,13 @@ class N1mmListenCommand extends Command implements ExternalLoggerListener
         socket_close($this->socket);
         $this->socket = null;
 
+        // Clear PID and heartbeat on graceful shutdown
+        $setting->update(['pid' => null]);
+        Cache::forget($heartbeatKey);
+
         ExternalLoggerStatusChanged::dispatch('n1mm', 'stopped', $config->id, $port);
 
-        $this->info("Stopped. Processed {$packetCount} packets with {$errorCount} errors.");
+        $this->info("Stopped. Processed {$processedCount} packets with {$errorCount} errors.");
 
         return self::SUCCESS;
     }
