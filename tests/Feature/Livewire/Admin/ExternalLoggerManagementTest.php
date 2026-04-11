@@ -110,3 +110,83 @@ test('displays firewall reminder in setup instructions', function () {
     Livewire::test(ExternalLoggerManagement::class)
         ->assertSee('sudo ufw allow');
 });
+
+test('renders WSJTX section with stopped status', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee('WSJTX / JTDX')
+        ->assertSee('Stopped');
+});
+
+test('renders WSJTX with running status when heartbeat exists', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'wsjtx',
+        'is_enabled' => true,
+        'port' => 2237,
+        'pid' => 12345,
+    ]);
+
+    Cache::put("external-logger:wsjtx:{$this->config->id}:heartbeat", [
+        'pid' => 12345,
+        'started_at' => now()->toIso8601String(),
+        'last_heartbeat_at' => now()->toIso8601String(),
+        'packets_received' => 25,
+        'packets_processed' => 24,
+        'errors' => 1,
+        'last_packet_at' => now()->subSeconds(3)->toIso8601String(),
+        'port' => 2237,
+    ], 15);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee('Listening on port 2237')
+        ->assertSee('25 packets')
+        ->assertSee('1 errors');
+});
+
+test('toggleWsjtx enables and starts process', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->call('toggleWsjtx');
+
+    $setting = ExternalLoggerSetting::where('event_configuration_id', $this->config->id)
+        ->where('listener_type', 'wsjtx')
+        ->first();
+
+    expect($setting->is_enabled)->toBeTrue()
+        ->and($setting->pid)->toBeGreaterThan(0);
+
+    // Clean up spawned process
+    if ($setting->pid && posix_kill($setting->pid, 0)) {
+        posix_kill($setting->pid, SIGTERM);
+    }
+});
+
+test('toggleWsjtx disables and stops process', function () {
+    // Start a dummy process to have a PID to kill
+    $process = new Process(['sleep', '60']);
+    $process->start();
+
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'wsjtx',
+        'is_enabled' => true,
+        'port' => 2237,
+        'pid' => $process->getPid(),
+    ]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->set('wsjtxEnabled', true)
+        ->call('toggleWsjtx');
+
+    $setting = ExternalLoggerSetting::where('event_configuration_id', $this->config->id)
+        ->where('listener_type', 'wsjtx')
+        ->first();
+
+    expect($setting->is_enabled)->toBeFalse()
+        ->and($setting->pid)->toBeNull();
+});
+
+test('displays WSJTX setup instructions', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee('File > Settings > Reporting')
+        ->assertSee('Enable logged contact ADIF broadcast');
+});
