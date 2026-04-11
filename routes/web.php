@@ -60,6 +60,11 @@ Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
 Route::get('/logbook', [\App\Http\Controllers\LogbookController::class, 'index'])->name('logbook.index');
 Route::get('/logbook/export', [\App\Http\Controllers\LogbookController::class, 'export'])->name('logbook.export');
 
+// Section Map (public)
+Route::get('/section-map', function () {
+    return view('section-map.index');
+})->name('section-map');
+
 // Event Management
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/scoring', function () {

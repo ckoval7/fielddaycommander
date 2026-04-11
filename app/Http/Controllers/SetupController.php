@@ -70,11 +70,23 @@ class SetupController extends Controller
         }
 
         DB::transaction(function () use ($step1, $step2, $step3) {
-            // Update admin password
-            $admin = User::where('call_sign', User::SYSTEM_CALL_SIGN)->firstOrFail();
-            $admin->update([
-                'password' => Hash::make($step1['admin_password']),
-            ]);
+            // Create or update the system admin account
+            $admin = User::updateOrCreate(
+                ['call_sign' => User::SYSTEM_CALL_SIGN],
+                [
+                    'first_name' => 'System',
+                    'last_name' => 'Administrator',
+                    'email' => 'admin@localhost',
+                    'password' => Hash::make($step1['admin_password']),
+                    'user_role' => 'admin',
+                    'email_verified_at' => now(),
+                ]
+            );
+
+            // Ensure the admin has the Config Only role
+            if (! $admin->hasRole('Config Only')) {
+                $admin->assignRole('Config Only');
+            }
 
             // Create default organization
             $organization = Organization::create([
