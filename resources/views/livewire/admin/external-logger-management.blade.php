@@ -197,6 +197,7 @@
                         <ol class="text-sm text-gray-500 dark:text-gray-400 list-decimal list-inside space-y-1">
                             <li>In WSJTX, go to File &gt; Settings &gt; Reporting &gt; UDP Server</li>
                             <li>Set the UDP server address to this server's IP and port {{ $wsjtxPort }}</li>
+                            <li>Under Outgoing Interfaces, select the network interface that can reach this server</li>
                             <li>Ensure your firewall allows inbound UDP on port {{ $wsjtxPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $wsjtxPort }}/udp</code>)</li>
                         </ol>
                     </div>
