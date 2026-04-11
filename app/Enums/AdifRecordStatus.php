@@ -12,4 +12,5 @@ enum AdifRecordStatus: string
     case Imported = 'imported';
     case Skipped = 'skipped';
     case Merged = 'merged';
+    case Invalid = 'invalid';
 }
