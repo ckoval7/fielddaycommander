@@ -35,9 +35,19 @@
                     sectionData: @js($sectionData),
                     maxCount: @js($maxCount),
 
+                    callAreas: [1,2,3,4,5,6,7,8,9,0],
+
                     getViewBox() {
                         if (this.view === 'us') return '340 425 1200 675';
                         if (this.view === 'ca') return '395 15 1200 675';
+                        if (this.view.startsWith('w')) {
+                            const group = document.getElementById(this.view);
+                            if (group) {
+                                const bbox = group.getBBox();
+                                const pad = 30;
+                                return `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`;
+                            }
+                        }
                         return '0 0 1920 1080';
                     },
 
@@ -131,17 +141,27 @@
                     }
                 }"
             >
-                <div class="flex justify-center mb-3">
+                <div class="flex flex-wrap justify-center gap-2 mb-3">
                     <div class="join">
                         <button class="join-item btn btn-sm" :class="view === 'all' ? 'btn-primary' : 'btn-ghost'" @click="view = 'all'; hoverSection = null">All</button>
                         <button class="join-item btn btn-sm" :class="view === 'us' ? 'btn-primary' : 'btn-ghost'" @click="view = 'us'; hoverSection = null">US</button>
                         <button class="join-item btn btn-sm" :class="view === 'ca' ? 'btn-primary' : 'btn-ghost'" @click="view = 'ca'; hoverSection = null">Canada</button>
                     </div>
+                    <div class="join" x-show="view !== 'ca'" x-cloak>
+                        <template x-for="n in callAreas" :key="n">
+                            <button class="join-item btn btn-sm"
+                                    :class="view === 'w' + n ? 'btn-primary' : 'btn-ghost'"
+                                    @click="view = 'w' + n; hoverSection = null"
+                                    x-text="'W' + n">
+                            </button>
+                        </template>
+                    </div>
                 </div>
 
                 <div class="w-full flex justify-center">
                     <svg
-   class="w-full max-w-[1920px] h-auto"
+   class="w-full h-auto transition-[max-width] duration-300"
+   :class="view.startsWith('w') ? 'max-w-3xl' : 'max-w-[1920px]'"
    :view-box.camel="getViewBox()"
    version="1.1"
    id="svg1"
