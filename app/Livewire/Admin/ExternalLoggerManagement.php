@@ -73,6 +73,6 @@ class ExternalLoggerManagement extends Component
 
         return view('livewire.admin.external-logger-management', [
             'hasActiveEvent' => $config !== null,
-        ]);
+        ])->layout('components.layouts.app');
     }
 }
