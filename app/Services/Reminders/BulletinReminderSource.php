@@ -7,6 +7,7 @@ use App\Enums\NotificationCategory;
 use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
@@ -37,12 +38,11 @@ class BulletinReminderSource implements ReminderSource
         /** @var BulletinScheduleEntry $item */
         $timeFormatted = $item->scheduled_at->format('Hi').' UTC';
         $minuteLabel = $minutes === 1 ? '1 minute' : "{$minutes} minutes";
-        $activeEvent = Event::active()->first();
 
         return [
             'title' => "W1AW Bulletin in {$minuteLabel}",
             'message' => "{$item->mode_label} on {$item->frequencies} MHz at {$timeFormatted}",
-            'url' => $activeEvent ? "/events/{$activeEvent->id}/w1aw-bulletin" : null,
+            'url' => '/w1aw-bulletin',
         ];
     }
 
@@ -61,7 +61,7 @@ class BulletinReminderSource implements ReminderSource
         return User::excludeSystem()->get();
     }
 
-    public function getScheduledTime(Model $item): \Carbon\Carbon
+    public function getScheduledTime(Model $item): Carbon
     {
         /** @var BulletinScheduleEntry $item */
         return $item->scheduled_at;

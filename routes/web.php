@@ -1,8 +1,47 @@
 <?php
 
+use App\Http\Controllers\AlbumExportController;
 use App\Http\Controllers\Auth\InvitationController;
+use App\Http\Controllers\ContactSyncController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Equipment\EquipmentReportController;
+use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\LogbookController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SetupController;
+use App\Livewire\Admin\AuditLogViewer;
+use App\Livewire\Admin\DeveloperTools;
+use App\Livewire\Equipment\AllEquipmentList;
+use App\Livewire\Equipment\ClubEquipmentList;
+use App\Livewire\Equipment\EquipmentForm;
+use App\Livewire\Equipment\EquipmentList;
+use App\Livewire\Equipment\EventEquipmentDashboard;
+use App\Livewire\Events\EventDashboard;
+use App\Livewire\Events\EventForm;
+use App\Livewire\Events\EventsList;
+use App\Livewire\Gallery\GalleryIndex;
+use App\Livewire\Gallery\GalleryShow;
+use App\Livewire\Gallery\GalleryUpload;
+use App\Livewire\Guestbook\GuestbookManager;
+use App\Livewire\Logging\LoggingInterface;
+use App\Livewire\Logging\StationSelect;
+use App\Livewire\Logging\TranscribeInterface;
+use App\Livewire\Logging\TranscribeSelect;
+use App\Livewire\Messages\MessageForm;
+use App\Livewire\Messages\MessageTrafficIndex;
+use App\Livewire\Messages\W1awBulletinForm;
+use App\Livewire\Profile\UserProfile;
+use App\Livewire\Reports\ReportsIndex;
+use App\Livewire\Safety\ManageSafetyChecklist;
+use App\Livewire\Safety\SiteSafetyChecklist;
+use App\Livewire\Schedule\ManageSchedule;
+use App\Livewire\Schedule\MyShifts;
+use App\Livewire\Schedule\ScheduleTimeline;
+use App\Livewire\Stations\StationForm;
+use App\Livewire\Stations\StationsList;
+use App\Livewire\Users\UserManagement;
+use App\Models\Event;
+use App\Models\Message;
 use Illuminate\Support\Facades\Route;
 
 // Setup Wizard Routes (exempt from setup check middleware)
@@ -40,25 +79,25 @@ Route::get('/dashboard/tv', [DashboardController::class, 'tv'])
 
 // Profile Management
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/profile', \App\Livewire\Profile\UserProfile::class)->name('profile');
+    Route::get('/profile', UserProfile::class)->name('profile');
 });
 
 // Contact Logging
 Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
-    Route::get('/logging', \App\Livewire\Logging\StationSelect::class)->name('logging.station-select');
-    Route::get('/logging/session/{operatingSession}', \App\Livewire\Logging\LoggingInterface::class)->name('logging.session');
-    Route::get('/logging/transcribe', \App\Livewire\Logging\TranscribeSelect::class)->name('logging.transcribe.select');
-    Route::get('/logging/transcribe/{station}', \App\Livewire\Logging\TranscribeInterface::class)->name('logging.transcribe.session');
+    Route::get('/logging', StationSelect::class)->name('logging.station-select');
+    Route::get('/logging/session/{operatingSession}', LoggingInterface::class)->name('logging.session');
+    Route::get('/logging/transcribe', TranscribeSelect::class)->name('logging.transcribe.select');
+    Route::get('/logging/transcribe/{station}', TranscribeInterface::class)->name('logging.transcribe.session');
 });
 
 // Contact sync endpoint (controller also checks session ownership)
 Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
-    Route::post('/logging/contacts', [\App\Http\Controllers\ContactSyncController::class, 'store'])->name('logging.contacts.store');
+    Route::post('/logging/contacts', [ContactSyncController::class, 'store'])->name('logging.contacts.store');
 });
 
 // Logbook Browser (public)
-Route::get('/logbook', [\App\Http\Controllers\LogbookController::class, 'index'])->name('logbook.index');
-Route::get('/logbook/export', [\App\Http\Controllers\LogbookController::class, 'export'])->name('logbook.export');
+Route::get('/logbook', [LogbookController::class, 'index'])->name('logbook.index');
+Route::get('/logbook/export', [LogbookController::class, 'export'])->name('logbook.export');
 
 // Section Map (public)
 Route::get('/section-map', function () {
@@ -78,17 +117,17 @@ Route::get('/guestbook', function () {
 })->name('guestbook.index');
 
 // Gallery
-Route::get('/gallery', \App\Livewire\Gallery\GalleryIndex::class)->name('gallery.index');
-Route::get('/gallery/{eventConfiguration}', \App\Livewire\Gallery\GalleryShow::class)->name('gallery.show');
-Route::get('/gallery/{eventConfiguration}/upload', \App\Livewire\Gallery\GalleryUpload::class)
+Route::get('/gallery', GalleryIndex::class)->name('gallery.index');
+Route::get('/gallery/{eventConfiguration}', GalleryShow::class)->name('gallery.show');
+Route::get('/gallery/{eventConfiguration}/upload', GalleryUpload::class)
     ->middleware(['auth', 'verified'])
     ->name('gallery.upload');
-Route::get('/gallery/thumb/{image}', [\App\Http\Controllers\GalleryController::class, 'thumbnail'])->name('gallery.thumb');
-Route::get('/gallery/image/{image}', [\App\Http\Controllers\GalleryController::class, 'image'])->name('gallery.image');
+Route::get('/gallery/thumb/{image}', [GalleryController::class, 'thumbnail'])->name('gallery.thumb');
+Route::get('/gallery/image/{image}', [GalleryController::class, 'image'])->name('gallery.image');
 
 Route::middleware(['auth', 'verified', 'can:manage-images'])->group(function () {
-    Route::post('/gallery/{eventConfiguration}/export', [\App\Http\Controllers\AlbumExportController::class, 'store'])->name('album-export.store');
-    Route::get('/gallery/{eventConfiguration}/export/{filename}', [\App\Http\Controllers\AlbumExportController::class, 'download'])->name('album-export.download');
+    Route::post('/gallery/{eventConfiguration}/export', [AlbumExportController::class, 'store'])->name('album-export.store');
+    Route::get('/gallery/{eventConfiguration}/export/{filename}', [AlbumExportController::class, 'download'])->name('album-export.download');
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-bonuses'])->group(function () {
@@ -98,119 +137,119 @@ Route::middleware(['auth', 'verified', 'can:manage-bonuses'])->group(function ()
 });
 
 Route::middleware(['auth', 'verified', 'can:view-stations'])->group(function () {
-    Route::get('/stations', \App\Livewire\Stations\StationsList::class)->name('stations.index');
+    Route::get('/stations', StationsList::class)->name('stations.index');
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-stations'])->group(function () {
-    Route::get('/stations/create', \App\Livewire\Stations\StationForm::class)->name('stations.create');
-    Route::get('/stations/{station}/edit', \App\Livewire\Stations\StationForm::class)->name('stations.edit');
+    Route::get('/stations/create', StationForm::class)->name('stations.create');
+    Route::get('/stations/{station}/edit', StationForm::class)->name('stations.edit');
 });
 
 Route::middleware(['auth', 'verified', 'can:view-all-equipment'])->group(function () {
-    Route::get('/equipment/all', \App\Livewire\Equipment\AllEquipmentList::class)->name('equipment.all');
+    Route::get('/equipment/all', AllEquipmentList::class)->name('equipment.all');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/equipment/club', \App\Livewire\Equipment\ClubEquipmentList::class)->name('equipment.club');
+    Route::get('/equipment/club', ClubEquipmentList::class)->name('equipment.club');
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-own-equipment'])->group(function () {
-    Route::get('/equipment', \App\Livewire\Equipment\EquipmentList::class)->name('equipment.index');
-    Route::get('/equipment/create', \App\Livewire\Equipment\EquipmentForm::class)->name('equipment.create');
-    Route::get('/equipment/{equipment}/edit', \App\Livewire\Equipment\EquipmentForm::class)->name('equipment.edit');
+    Route::get('/equipment', EquipmentList::class)->name('equipment.index');
+    Route::get('/equipment/create', EquipmentForm::class)->name('equipment.create');
+    Route::get('/equipment/{equipment}/edit', EquipmentForm::class)->name('equipment.edit');
 });
 
 // Administration
 Route::middleware(['auth', 'verified', 'can:view-events'])->group(function () {
-    Route::get('/events', \App\Livewire\Events\EventsList::class)->name('events.index');
+    Route::get('/events', EventsList::class)->name('events.index');
 });
 
 Route::middleware(['auth', 'verified', 'can:create-events'])->group(function () {
-    Route::get('/events/create', \App\Livewire\Events\EventForm::class)->name('events.create');
+    Route::get('/events/create', EventForm::class)->name('events.create');
 });
 
 Route::middleware(['auth', 'verified', 'can:edit-events'])->group(function () {
-    Route::get('/events/{eventId}/edit', \App\Livewire\Events\EventForm::class)->name('events.edit');
+    Route::get('/events/{eventId}/edit', EventForm::class)->name('events.edit');
 });
 
 Route::middleware(['auth', 'verified', 'can:create-events'])->group(function () {
-    Route::get('/events/{eventId}/clone', \App\Livewire\Events\EventForm::class)->name('events.clone');
+    Route::get('/events/{eventId}/clone', EventForm::class)->name('events.clone');
 });
 
 Route::middleware(['auth', 'verified', 'can:view-events'])->group(function () {
-    Route::get('/events/{event}', \App\Livewire\Events\EventDashboard::class)->name('events.show');
+    Route::get('/events/{event}', EventDashboard::class)->name('events.show');
 });
 
 // Equipment Dashboard - requires manage-event-equipment OR view-all-equipment (checked in component)
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/events/{event}/equipment', \App\Livewire\Equipment\EventEquipmentDashboard::class)->name('events.equipment.dashboard');
+    Route::get('/events/{event}/equipment', EventEquipmentDashboard::class)->name('events.equipment.dashboard');
 });
 
 // Guestbook Management - requires manage-guestbook permission for editing/verifying entries
 Route::middleware(['auth', 'verified', 'can:manage-guestbook'])->group(function () {
-    Route::get('/events/{event}/guestbook', \App\Livewire\Guestbook\GuestbookManager::class)->name('events.guestbook');
+    Route::get('/events/{event}/guestbook', GuestbookManager::class)->name('events.guestbook');
 });
 
 // Message Traffic — batch print route MUST come before {message} wildcard to avoid capture
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/events/{event}/messages/print-all', function (\App\Models\Event $event) {
-        $messages = \App\Models\Message::where('event_configuration_id', $event->eventConfiguration->id)
+    Route::get('/events/{event}/messages/print-all', function (Event $event) {
+        $messages = Message::where('event_configuration_id', $event->eventConfiguration->id)
             ->orderBy('message_number')->get();
 
         return view('messages.print', ['event' => $event, 'messages' => $messages]);
     })->name('events.messages.print-all');
 
-    Route::get('/events/{event}/messages/{message}/print', function (\App\Models\Event $event, \App\Models\Message $message) {
+    Route::get('/events/{event}/messages/{message}/print', function (Event $event, Message $message) {
         return view('messages.print', ['event' => $event, 'messages' => collect([$message])]);
     })->name('events.messages.print');
 });
 
 Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
-    Route::get('/events/{event}/messages', \App\Livewire\Messages\MessageTrafficIndex::class)->name('events.messages.index');
-    Route::get('/events/{event}/messages/create', \App\Livewire\Messages\MessageForm::class)->name('events.messages.create');
-    Route::get('/events/{event}/messages/{message}/edit', \App\Livewire\Messages\MessageForm::class)->name('events.messages.edit');
+    Route::get('/events/{event}/messages', MessageTrafficIndex::class)->name('events.messages.index');
+    Route::get('/events/{event}/messages/create', MessageForm::class)->name('events.messages.create');
+    Route::get('/events/{event}/messages/{message}/edit', MessageForm::class)->name('events.messages.edit');
 });
 
 // W1AW Bulletin — accessible to all authenticated users (schedule viewing pre-event)
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/events/{event}/w1aw-bulletin', \App\Livewire\Messages\W1awBulletinForm::class)->name('events.w1aw-bulletin');
+    Route::get('/w1aw-bulletin', W1awBulletinForm::class)->name('events.w1aw-bulletin');
 });
 
 // Shift Schedule
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/schedule', \App\Livewire\Schedule\ScheduleTimeline::class)->name('schedule.index');
-    Route::get('/schedule/my-shifts', \App\Livewire\Schedule\MyShifts::class)->name('schedule.my-shifts');
+    Route::get('/schedule', ScheduleTimeline::class)->name('schedule.index');
+    Route::get('/schedule/my-shifts', MyShifts::class)->name('schedule.my-shifts');
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-shifts'])->group(function () {
-    Route::get('/schedule/manage', \App\Livewire\Schedule\ManageSchedule::class)->name('schedule.manage');
+    Route::get('/schedule/manage', ManageSchedule::class)->name('schedule.manage');
 });
 
 // Site Safety
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/site-safety', \App\Livewire\Safety\SiteSafetyChecklist::class)->name('site-safety.index');
+    Route::get('/site-safety', SiteSafetyChecklist::class)->name('site-safety.index');
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-shifts'])->group(function () {
-    Route::get('/site-safety/manage', \App\Livewire\Safety\ManageSafetyChecklist::class)->name('site-safety.manage');
+    Route::get('/site-safety/manage', ManageSafetyChecklist::class)->name('site-safety.manage');
 });
 
 // Equipment Reports - requires manage-event-equipment permission
 Route::middleware(['auth', 'verified', 'can:manage-event-equipment'])->prefix('events/{event}/equipment/reports')->name('events.equipment.reports.')->group(function () {
-    Route::get('/commitment-summary', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'commitmentSummary'])->name('commitment-summary');
-    Route::get('/delivery-checklist', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'deliveryChecklist'])->name('delivery-checklist');
-    Route::get('/station-inventory-pdf', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'stationInventoryPdf'])->name('station-inventory-pdf');
-    Route::get('/station-inventory-csv', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'stationInventoryCsv'])->name('station-inventory-csv');
-    Route::get('/owner-contacts-pdf', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'ownerContactListPdf'])->name('owner-contacts-pdf');
-    Route::get('/owner-contacts-csv', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'ownerContactListCsv'])->name('owner-contacts-csv');
-    Route::get('/return-checklist', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'returnChecklist'])->name('return-checklist');
-    Route::get('/incident-report-pdf', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'incidentReportPdf'])->name('incident-report-pdf');
-    Route::get('/incident-report-csv', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'incidentReportCsv'])->name('incident-report-csv');
-    Route::get('/historical-record', [\App\Http\Controllers\Equipment\EquipmentReportController::class, 'historicalRecord'])->name('historical-record');
+    Route::get('/commitment-summary', [EquipmentReportController::class, 'commitmentSummary'])->name('commitment-summary');
+    Route::get('/delivery-checklist', [EquipmentReportController::class, 'deliveryChecklist'])->name('delivery-checklist');
+    Route::get('/station-inventory-pdf', [EquipmentReportController::class, 'stationInventoryPdf'])->name('station-inventory-pdf');
+    Route::get('/station-inventory-csv', [EquipmentReportController::class, 'stationInventoryCsv'])->name('station-inventory-csv');
+    Route::get('/owner-contacts-pdf', [EquipmentReportController::class, 'ownerContactListPdf'])->name('owner-contacts-pdf');
+    Route::get('/owner-contacts-csv', [EquipmentReportController::class, 'ownerContactListCsv'])->name('owner-contacts-csv');
+    Route::get('/return-checklist', [EquipmentReportController::class, 'returnChecklist'])->name('return-checklist');
+    Route::get('/incident-report-pdf', [EquipmentReportController::class, 'incidentReportPdf'])->name('incident-report-pdf');
+    Route::get('/incident-report-csv', [EquipmentReportController::class, 'incidentReportCsv'])->name('incident-report-csv');
+    Route::get('/historical-record', [EquipmentReportController::class, 'historicalRecord'])->name('historical-record');
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-users'])->group(function () {
-    Route::get('/users', \App\Livewire\Users\UserManagement::class)->name('users.index');
+    Route::get('/users', UserManagement::class)->name('users.index');
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-settings'])->group(function () {
@@ -220,17 +259,17 @@ Route::middleware(['auth', 'verified', 'can:manage-settings'])->group(function (
 });
 
 Route::middleware(['auth', 'verified', 'can:view-reports'])->group(function () {
-    Route::get('/reports', \App\Livewire\Reports\ReportsIndex::class)->name('reports.index');
-    Route::get('/reports/cabrillo', [\App\Http\Controllers\ReportController::class, 'cabrillo'])->name('reports.cabrillo');
-    Route::get('/reports/submission-sheet', [\App\Http\Controllers\ReportController::class, 'submissionSheet'])->name('reports.submission-sheet');
+    Route::get('/reports', ReportsIndex::class)->name('reports.index');
+    Route::get('/reports/cabrillo', [ReportController::class, 'cabrillo'])->name('reports.cabrillo');
+    Route::get('/reports/submission-sheet', [ReportController::class, 'submissionSheet'])->name('reports.submission-sheet');
 });
 
 // Administration
 Route::middleware(['auth', 'verified', 'can:view-security-logs'])->prefix('admin')->group(function () {
-    Route::get('/audit-logs', \App\Livewire\Admin\AuditLogViewer::class)->name('admin.audit-logs');
+    Route::get('/audit-logs', AuditLogViewer::class)->name('admin.audit-logs');
 });
 
 // Developer Tools (only available when DEVELOPER_MODE=true in .env)
 Route::middleware(['auth', 'verified', 'can:manage-settings'])->prefix('admin')->group(function () {
-    Route::get('/developer', \App\Livewire\Admin\DeveloperTools::class)->name('admin.developer');
+    Route::get('/developer', DeveloperTools::class)->name('admin.developer');
 });

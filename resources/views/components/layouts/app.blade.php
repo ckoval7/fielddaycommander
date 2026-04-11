@@ -145,7 +145,7 @@
                                 :active="request()->routeIs('events.messages.*')" />
                         @endcan
                         <x-menu-item title="W1AW Bulletin" icon="o-radio"
-                            link="{{ route('events.w1aw-bulletin', $activeEvent) }}"
+                            link="{{ route('events.w1aw-bulletin') }}"
                             :active="request()->routeIs('events.w1aw-bulletin')" />
                     @endif
 

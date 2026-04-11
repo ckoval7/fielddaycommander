@@ -6,11 +6,13 @@ use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\User;
 use App\Notifications\InAppNotification;
+use Database\Seeders\BonusTypeSeeder;
+use Database\Seeders\EventTypeSeeder;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
     $this->travelTo(now());
-    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
 
     $this->eventType = EventType::where('code', 'FD')->first();
     $this->user = User::factory()->create();
@@ -237,7 +239,7 @@ describe('edge cases', function () {
         Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) {
             $data = $notification->toArray($this->user);
 
-            return $data['url'] === "/events/{$this->event->id}/w1aw-bulletin";
+            return $data['url'] === '/w1aw-bulletin';
         });
     });
 

@@ -6,6 +6,9 @@ use App\Models\AuditLog;
 use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\W1awBulletin;
+use App\Services\EventContextService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -39,8 +42,14 @@ class W1awBulletinForm extends Component
 
     public string $scheduleNotes = '';
 
-    public function mount(Event $event): void
+    public function mount(): void
     {
+        $event = app(EventContextService::class)->getContextEvent();
+
+        if (! $event?->eventConfiguration) {
+            abort(404);
+        }
+
         $this->event = $event;
         $bulletin = W1awBulletin::where('event_configuration_id', $event->eventConfiguration->id)->first();
 
@@ -156,7 +165,7 @@ class W1awBulletinForm extends Component
         }
     }
 
-    public function getScheduleEntriesProperty(): \Illuminate\Database\Eloquent\Collection
+    public function getScheduleEntriesProperty(): Collection
     {
         return BulletinScheduleEntry::forEvent($this->event->id)
             ->orderBy('scheduled_at')
@@ -258,12 +267,12 @@ class W1awBulletinForm extends Component
         $this->dispatch('toast', title: 'Transmission removed', type: 'success');
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, AuditLog> */
+    /** @return Collection<int, AuditLog> */
     #[Computed]
-    public function editHistory(): \Illuminate\Database\Eloquent\Collection
+    public function editHistory(): Collection
     {
         if (! $this->bulletinId) {
-            return new \Illuminate\Database\Eloquent\Collection;
+            return new Collection;
         }
 
         return AuditLog::query()
@@ -306,7 +315,7 @@ class W1awBulletinForm extends Component
         return $diff;
     }
 
-    public function render(): \Illuminate\Contracts\View\View
+    public function render(): View
     {
         return view('livewire.messages.w1aw-bulletin-form')
             ->layout('components.layouts.app');

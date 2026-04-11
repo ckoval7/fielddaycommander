@@ -6,12 +6,14 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\User;
+use Database\Seeders\BonusTypeSeeder;
+use Database\Seeders\EventTypeSeeder;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     $this->travelTo(now());
-    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
 
     Permission::firstOrCreate(['name' => 'log-contacts']);
     Permission::firstOrCreate(['name' => 'manage-bulletins']);
@@ -25,6 +27,8 @@ beforeEach(function () {
 
     $this->manager = User::factory()->create();
     $this->manager->givePermissionTo(['log-contacts', 'manage-bulletins']);
+
+    session(['viewing_event_id' => $this->event->id]);
 });
 
 describe('schedule display', function () {
@@ -37,20 +41,20 @@ describe('schedule display', function () {
         ]);
 
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->assertSee('7.0475, 14.0475')
             ->assertSee('CW');
     });
 
     test('operator cannot see schedule management controls', function () {
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->assertDontSee('Add Transmission');
     });
 
     test('manager can see schedule management controls', function () {
         Livewire::actingAs($this->manager)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->assertSee('Add Transmission');
     });
 });
@@ -58,7 +62,7 @@ describe('schedule display', function () {
 describe('schedule management', function () {
     test('manager can add a schedule entry', function () {
         Livewire::actingAs($this->manager)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->set('scheduleMode', 'cw')
             ->set('scheduleFrequencies', '7.0475, 14.0475')
             ->set('scheduleSource', 'W1AW')
@@ -71,7 +75,7 @@ describe('schedule management', function () {
 
     test('operator cannot add a schedule entry', function () {
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->set('scheduleMode', 'cw')
             ->set('scheduleFrequencies', '7.0475')
             ->set('scheduleSource', 'W1AW')
@@ -87,7 +91,7 @@ describe('schedule management', function () {
         ]);
 
         Livewire::actingAs($this->manager)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->call('deleteScheduleEntry', $entry->id)
             ->assertHasNoErrors();
 
@@ -100,14 +104,14 @@ describe('schedule management', function () {
         ]);
 
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->call('deleteScheduleEntry', $entry->id)
             ->assertForbidden();
     });
 
     test('validates required fields when adding entry', function () {
         Livewire::actingAs($this->manager)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->call('addScheduleEntry')
             ->assertHasErrors(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt']);
     });
@@ -120,7 +124,7 @@ describe('schedule management', function () {
         ]);
 
         Livewire::actingAs($this->manager)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->call('editScheduleEntry', $entry->id)
             ->assertSet('scheduleMode', 'cw')
             ->assertSet('scheduleFrequencies', '7.0475')
@@ -133,7 +137,7 @@ describe('schedule management', function () {
 
     test('manager can add a schedule entry with notes', function () {
         Livewire::actingAs($this->manager)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->set('scheduleMode', 'cw')
             ->set('scheduleFrequencies', '7.0475, 14.0475')
             ->set('scheduleSource', 'W1AW')
@@ -153,7 +157,7 @@ describe('schedule management', function () {
         ]);
 
         Livewire::actingAs($this->manager)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->call('editScheduleEntry', $entry->id)
             ->assertSet('scheduleNotes', 'original note')
             ->set('scheduleNotes', 'updated note')
@@ -165,7 +169,7 @@ describe('schedule management', function () {
 
     test('notes are optional when adding a schedule entry', function () {
         Livewire::actingAs($this->manager)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->set('scheduleMode', 'cw')
             ->set('scheduleFrequencies', '7.0475')
             ->set('scheduleSource', 'W1AW')
