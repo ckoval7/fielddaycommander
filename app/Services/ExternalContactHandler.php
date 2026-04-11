@@ -8,6 +8,7 @@ use App\Events\ExternalContactDeleted;
 use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
 use App\Events\ExternalStationStatusChanged;
+use App\Exceptions\OutOfPeriodContactException;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
@@ -34,6 +35,16 @@ class ExternalContactHandler
                 $this->updateContact($existing, $dto, $config);
 
                 return $existing;
+            }
+        }
+
+        $event = $config->event;
+        if ($event?->start_time !== null && $event?->end_time !== null) {
+            if ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time)) {
+                throw new OutOfPeriodContactException(
+                    "QSO time {$dto->timestamp->toIso8601String()} is outside event window "
+                    ."{$event->start_time->toIso8601String()} – {$event->end_time->toIso8601String()}"
+                );
             }
         }
 
@@ -102,6 +113,13 @@ class ExternalContactHandler
         $contact = Contact::where('external_id', $dto->externalId)->first();
         if ($contact === null) {
             return;
+        }
+
+        $event = $config->event;
+        if ($event?->start_time !== null && $event?->end_time !== null) {
+            if ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time)) {
+                return;
+            }
         }
 
         $this->updateContact($contact, $dto, $config);
