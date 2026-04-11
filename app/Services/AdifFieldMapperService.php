@@ -14,25 +14,6 @@ use App\Models\User;
 class AdifFieldMapperService
 {
     /**
-     * ADIF mode names that map to FD Commander's "Phone" mode.
-     *
-     * @var array<string>
-     */
-    private const PHONE_MODES = ['SSB', 'USB', 'LSB', 'FM', 'AM', 'PM'];
-
-    /**
-     * ADIF mode names that map to FD Commander's "Digital" mode.
-     *
-     * @var array<string>
-     */
-    private const DIGITAL_MODES = [
-        'RTTY', 'PSK', 'PSK31', 'PSK63', 'FT8', 'FT4', 'JS8', 'JT65',
-        'JT9', 'MFSK', 'OLIVIA', 'CONTESTI', 'DOMINO', 'FSK', 'HELL',
-        'ROS', 'THROB', 'SSTV', 'FAX', 'PKT', 'DSTAR', 'DMR', 'C4FM',
-        'FREEDV', 'ARDOP', 'WINMOR', 'VARA',
-    ];
-
-    /**
      * Auto-map staged records against the database.
      *
      * @return array{unmapped_bands: array<string>, unmapped_modes: array<string>, unmapped_sections: array<string>, unmapped_stations: array<string>, unmapped_operators: array<string>}
@@ -225,14 +206,9 @@ class AdifFieldMapperService
             return;
         }
 
-        $adifMode = strtoupper($record->mode_name);
-
-        if ($adifMode === 'CW') {
-            $record->mode_id = $modes['CW'] ?? null;
-        } elseif (in_array($adifMode, self::PHONE_MODES, true)) {
-            $record->mode_id = $modes['Phone'] ?? null;
-        } elseif (in_array($adifMode, self::DIGITAL_MODES, true)) {
-            $record->mode_id = $modes['Digital'] ?? null;
+        $modeId = app(ModeResolverService::class)->resolve($record->mode_name);
+        if ($modeId !== null) {
+            $record->mode_id = $modeId;
         } else {
             $report['unmapped_modes'][] = $record->mode_name;
         }
