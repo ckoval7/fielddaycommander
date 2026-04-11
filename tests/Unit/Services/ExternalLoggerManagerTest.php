@@ -6,7 +6,6 @@ use App\Services\ExternalLoggerManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\Process\Process;
 
 uses(RefreshDatabase::class);
 
@@ -141,9 +140,9 @@ test('startProcess spawns background process and stores pid', function () {
 
 test('stopProcess sends SIGTERM and clears pid', function () {
     // Start a dummy sleep process to get a real PID
-    $process = new Process(['sleep', '60']);
-    $process->start();
-    $dummyPid = $process->getPid();
+    $output = [];
+    exec('sleep 60 & echo $!', $output);
+    $dummyPid = (int) $output[0];
 
     $setting = ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
@@ -158,8 +157,8 @@ test('stopProcess sends SIGTERM and clears pid', function () {
     $setting->refresh();
     expect($setting->pid)->toBeNull();
 
-    // Reap the zombie so posix_kill(pid, 0) returns false
-    pcntl_waitpid($dummyPid, $status, WNOHANG);
+    // Give process time to terminate
+    usleep(50000);
 
     // Verify the process was killed
     expect(posix_kill($dummyPid, 0))->toBeFalse();

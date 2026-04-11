@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\ExternalLoggerSetting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Symfony\Component\Process\Process;
 
 use function Illuminate\Support\php_binary;
 
@@ -62,20 +61,26 @@ class ExternalLoggerManager
             return null;
         }
 
-        $process = new Process([
-            php_binary(),
-            base_path('artisan'),
-            'external-logger:n1mm',
-            '--event='.$eventConfigurationId,
-        ]);
-        $process->setWorkingDirectory(base_path());
-        $process->disableOutput();
-        $process->start();
+        // Start as a detached background process. Using exec() with & instead of
+        // Symfony Process because its __destruct() kills the child on GC.
+        $command = sprintf(
+            '%s %s external-logger:n1mm --event=%d > /dev/null 2>&1 & echo $!',
+            escapeshellarg(php_binary()),
+            escapeshellarg(base_path('artisan')),
+            $eventConfigurationId,
+        );
 
-        $pid = $process->getPid();
-        $setting->update(['pid' => $pid]);
+        $output = [];
+        exec($command, $output);
+        $pid = (int) ($output[0] ?? 0);
 
-        return $pid;
+        if ($pid > 0) {
+            $setting->update(['pid' => $pid]);
+
+            return $pid;
+        }
+
+        return null;
     }
 
     public function stopProcess(int $eventConfigurationId, string $listenerType): void
