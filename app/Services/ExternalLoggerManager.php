@@ -7,6 +7,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Process\Process;
 
+use function Illuminate\Support\php_binary;
+
 class ExternalLoggerManager
 {
     public function enable(int $eventConfigurationId, string $listenerType, int $port): ExternalLoggerSetting
@@ -61,7 +63,7 @@ class ExternalLoggerManager
         }
 
         $process = new Process([
-            PHP_BINARY,
+            php_binary(),
             base_path('artisan'),
             'external-logger:n1mm',
             '--event='.$eventConfigurationId,
