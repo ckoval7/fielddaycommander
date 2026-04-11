@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
@@ -36,24 +37,7 @@ class AuditLogViewer extends Component
 
     public function render()
     {
-        $query = AuditLog::query()->with('user');
-
-        // Apply filters using model scopes
-        if (! empty($this->filters['user_ids'])) {
-            $query->forUser($this->filters['user_ids']);
-        }
-
-        if (! empty($this->filters['action_types'])) {
-            $query->forAction($this->filters['action_types']);
-        }
-
-        if ($this->filters['date_from'] || $this->filters['date_to']) {
-            $query->dateRange($this->filters['date_from'], $this->filters['date_to']);
-        }
-
-        if ($this->filters['ip_address']) {
-            $query->forIpAddress($this->filters['ip_address']);
-        }
+        $query = $this->buildFilteredQuery();
 
         $logs = $query->orderBy('created_at', 'desc')
             ->paginate($this->perPage);
@@ -114,24 +98,7 @@ class AuditLogViewer extends Component
 
     public function exportCsv(): StreamedResponse
     {
-        $query = AuditLog::query()->with('user');
-
-        // Apply same filters as main view
-        if (! empty($this->filters['user_ids'])) {
-            $query->forUser($this->filters['user_ids']);
-        }
-
-        if (! empty($this->filters['action_types'])) {
-            $query->forAction($this->filters['action_types']);
-        }
-
-        if ($this->filters['date_from'] || $this->filters['date_to']) {
-            $query->dateRange($this->filters['date_from'], $this->filters['date_to']);
-        }
-
-        if ($this->filters['ip_address']) {
-            $query->forIpAddress($this->filters['ip_address']);
-        }
+        $query = $this->buildFilteredQuery();
 
         $query->orderBy('created_at', 'desc');
 
@@ -161,6 +128,30 @@ class AuditLogViewer extends Component
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    private function buildFilteredQuery(): Builder
+    {
+        $query = AuditLog::query()->with('user');
+
+        // Apply filters using model scopes
+        if (! empty($this->filters['user_ids'])) {
+            $query->forUser($this->filters['user_ids']);
+        }
+
+        if (! empty($this->filters['action_types'])) {
+            $query->forAction($this->filters['action_types']);
+        }
+
+        if ($this->filters['date_from'] || $this->filters['date_to']) {
+            $query->dateRange($this->filters['date_from'], $this->filters['date_to']);
+        }
+
+        if ($this->filters['ip_address']) {
+            $query->forIpAddress($this->filters['ip_address']);
+        }
+
+        return $query;
     }
 
     #[Computed]
