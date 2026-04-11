@@ -19,6 +19,14 @@ class ExternalLoggerManagement extends Component
 
     public ?array $heartbeat = null;
 
+    public bool $wsjtxEnabled = false;
+
+    public int $wsjtxPort = 2237;
+
+    public string $wsjtxProcessStatus = 'stopped';
+
+    public ?array $wsjtxHeartbeat = null;
+
     public ?int $eventConfigId = null;
 
     public function mount(): void
@@ -37,6 +45,15 @@ class ExternalLoggerManagement extends Component
         if ($setting) {
             $this->n1mmEnabled = $setting->is_enabled;
             $this->n1mmPort = $setting->port;
+        }
+
+        $wsjtxSetting = ExternalLoggerSetting::where('event_configuration_id', $config->id)
+            ->where('listener_type', 'wsjtx')
+            ->first();
+
+        if ($wsjtxSetting) {
+            $this->wsjtxEnabled = $wsjtxSetting->is_enabled;
+            $this->wsjtxPort = $wsjtxSetting->port;
         }
 
         $this->refreshStatus();
@@ -99,10 +116,20 @@ class ExternalLoggerManagement extends Component
     {
         $this->refreshStatus();
 
+        if ($this->eventConfigId === null) {
+            return;
+        }
+
+        $manager = app(ExternalLoggerManager::class);
+
         // Auto-restart on crash detection
-        if ($this->processStatus === 'crashed' && $this->eventConfigId !== null) {
-            $manager = app(ExternalLoggerManager::class);
+        if ($this->processStatus === 'crashed') {
             $manager->attemptRestart($this->eventConfigId, 'n1mm');
+            $this->refreshStatus();
+        }
+
+        if ($this->wsjtxProcessStatus === 'crashed') {
+            $manager->attemptRestart($this->eventConfigId, 'wsjtx');
             $this->refreshStatus();
         }
     }
@@ -153,6 +180,88 @@ class ExternalLoggerManagement extends Component
         ]);
     }
 
+    public function toggleWsjtx(): void
+    {
+        $config = app(EventContextService::class)->getEventConfiguration();
+        if ($config === null) {
+            session()->flash('error', 'No active event configuration.');
+
+            return;
+        }
+
+        $manager = app(ExternalLoggerManager::class);
+
+        $setting = $manager->getSetting($config->id, 'wsjtx');
+
+        if ($this->wsjtxEnabled) {
+            $manager->disable($config->id, 'wsjtx');
+            $manager->stopProcess($config->id, 'wsjtx');
+            $this->wsjtxEnabled = false;
+
+            AuditLog::log('external_logger.disabled', auditable: $setting, newValues: [
+                'listener_type' => 'wsjtx',
+            ]);
+        } else {
+            $setting = $manager->enable($config->id, 'wsjtx', $this->wsjtxPort);
+            $manager->startProcess($config->id, 'wsjtx');
+            $this->wsjtxEnabled = true;
+
+            AuditLog::log('external_logger.enabled', auditable: $setting, newValues: [
+                'listener_type' => 'wsjtx',
+                'port' => $this->wsjtxPort,
+            ]);
+        }
+
+        $this->refreshStatus();
+    }
+
+    public function restartWsjtxProcess(): void
+    {
+        if ($this->eventConfigId === null) {
+            return;
+        }
+
+        $manager = app(ExternalLoggerManager::class);
+        $restarted = $manager->attemptRestart($this->eventConfigId, 'wsjtx');
+        $this->refreshStatus();
+
+        if ($restarted) {
+            $setting = $manager->getSetting($this->eventConfigId, 'wsjtx');
+            AuditLog::log('external_logger.restarted', auditable: $setting, newValues: [
+                'listener_type' => 'wsjtx',
+            ]);
+        }
+    }
+
+    public function updateWsjtxPort(): void
+    {
+        $this->validate([
+            'wsjtxPort' => 'required|integer|min:1024|max:65535',
+        ]);
+
+        $config = app(EventContextService::class)->getEventConfiguration();
+        if ($config === null) {
+            return;
+        }
+
+        $setting = ExternalLoggerSetting::where('event_configuration_id', $config->id)
+            ->where('listener_type', 'wsjtx')
+            ->first();
+
+        if ($setting === null) {
+            return;
+        }
+
+        $oldPort = $setting->port;
+        $setting->update(['port' => $this->wsjtxPort]);
+
+        AuditLog::log('external_logger.port.updated', auditable: $setting, oldValues: [
+            'port' => $oldPort,
+        ], newValues: [
+            'port' => $this->wsjtxPort,
+        ]);
+    }
+
     public function render(): View
     {
         $config = app(EventContextService::class)->getEventConfiguration();
@@ -167,6 +276,8 @@ class ExternalLoggerManagement extends Component
         if ($this->eventConfigId === null) {
             $this->processStatus = 'stopped';
             $this->heartbeat = null;
+            $this->wsjtxProcessStatus = 'stopped';
+            $this->wsjtxHeartbeat = null;
 
             return;
         }
@@ -174,5 +285,7 @@ class ExternalLoggerManagement extends Component
         $manager = app(ExternalLoggerManager::class);
         $this->processStatus = $manager->getProcessStatus($this->eventConfigId, 'n1mm');
         $this->heartbeat = $manager->getHeartbeat($this->eventConfigId, 'n1mm');
+        $this->wsjtxProcessStatus = $manager->getProcessStatus($this->eventConfigId, 'wsjtx');
+        $this->wsjtxHeartbeat = $manager->getHeartbeat($this->eventConfigId, 'wsjtx');
     }
 }
