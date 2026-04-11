@@ -6,6 +6,7 @@
     <title>Demo Analytics</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 </head>
 <body class="min-h-screen bg-base-200 p-6" x-data="{
     activeTab: 'dashboard',
