@@ -26,7 +26,7 @@
 <body class="min-h-screen font-sans antialiased bg-base-200">
 
     {{-- NAVBAR mobile only --}}
-    <x-nav sticky class="lg:hidden">
+    <x-nav sticky class="lg:hidden !z-20">
         <x-slot:brand>
             <x-app-brand />
         </x-slot:brand>
