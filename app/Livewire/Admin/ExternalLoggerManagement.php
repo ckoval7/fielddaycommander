@@ -6,7 +6,6 @@ use App\Models\ExternalLoggerSetting;
 use App\Services\EventContextService;
 use App\Services\ExternalLoggerManager;
 use Illuminate\View\View;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ExternalLoggerManagement extends Component
@@ -89,7 +88,18 @@ class ExternalLoggerManagement extends Component
         }
     }
 
-    #[On('echo-private:event.{eventConfigId}.external-logger,ExternalLoggerStatusChanged')]
+    /** @return array<string, string> */
+    protected function getListeners(): array
+    {
+        if ($this->eventConfigId === null) {
+            return [];
+        }
+
+        return [
+            "echo-private:event.{$this->eventConfigId}.external-logger,ExternalLoggerStatusChanged" => 'handleStatusChanged',
+        ];
+    }
+
     public function handleStatusChanged(): void
     {
         $this->refreshStatus();
