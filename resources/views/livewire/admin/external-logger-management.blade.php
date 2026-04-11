@@ -1,12 +1,12 @@
 <div>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            External Logger Management
-        </h2>
-    </x-slot>
-
     <div class="py-6">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div class="flex items-center justify-end">
+                <a href="{{ route('admin.import-adif') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                    <x-icon name="o-arrow-up-tray" class="w-4 h-4" />
+                    Import ADIF
+                </a>
+            </div>
             @if (! $hasActiveEvent)
                 <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
                     <p class="text-yellow-800 dark:text-yellow-200">No active event configuration. External loggers require an active event.</p>
