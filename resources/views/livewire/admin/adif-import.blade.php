@@ -184,6 +184,10 @@
                     </x-card>
                 @endif
 
+                @error('mapping')
+                    <x-alert icon="o-exclamation-triangle" class="alert-error">{{ $message }}</x-alert>
+                @enderror
+
                 <x-button wire:click="applyMappingsAndContinue" label="Continue to Review" icon="o-arrow-right" class="btn-primary" spinner="applyMappingsAndContinue" />
             </div>
         @endif
@@ -192,8 +196,8 @@
         @if ($step === 3)
             <div class="space-y-6">
                 {{-- Match summary --}}
-                <x-card title="Duplicate Analysis">
-                    <div class="grid grid-cols-3 gap-4 text-center">
+                <x-card title="Import Summary">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                         <div class="p-4 bg-success/10 rounded-lg">
                             <div class="text-3xl font-bold text-success">{{ $matchSummary['new'] ?? 0 }}</div>
                             <div class="text-sm text-base-content/70">New Contacts</div>
@@ -204,7 +208,11 @@
                         </div>
                         <div class="p-4 bg-warning/10 rounded-lg">
                             <div class="text-3xl font-bold text-warning">{{ $matchSummary['skip'] ?? 0 }}</div>
-                            <div class="text-sm text-base-content/70">Exact Duplicates (skip)</div>
+                            <div class="text-sm text-base-content/70">Skipped</div>
+                        </div>
+                        <div class="p-4 bg-error/10 rounded-lg">
+                            <div class="text-3xl font-bold text-error">{{ $matchSummary['invalid'] ?? 0 }}</div>
+                            <div class="text-sm text-base-content/70">Invalid</div>
                         </div>
                     </div>
                 </x-card>
@@ -222,11 +230,12 @@
                                     <th>Mode</th>
                                     <th>Section</th>
                                     <th>Class</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($this->importRecords as $record)
-                                    <tr wire:key="record-{{ $record->id }}">
+                                    <tr wire:key="record-{{ $record->id }}" @class(['bg-error/5' => $record->status === \App\Enums\AdifRecordStatus::Invalid])>
                                         <td>
                                             @switch($record->status->value)
                                                 @case('ready')
@@ -238,6 +247,9 @@
                                                 @case('skipped')
                                                     <span class="badge badge-warning badge-sm">Skip</span>
                                                     @break
+                                                @case('invalid')
+                                                    <span class="badge badge-error badge-sm" title="{{ $record->notes }}">Invalid</span>
+                                                    @break
                                                 @default
                                                     <span class="badge badge-ghost badge-sm">{{ $record->status->value }}</span>
                                             @endswitch
@@ -248,7 +260,21 @@
                                         <td>{{ $record->mode_name }}</td>
                                         <td>{{ $record->section_code }}</td>
                                         <td>{{ $record->exchange_class }}</td>
+                                        <td>
+                                            @if ($record->status === \App\Enums\AdifRecordStatus::Invalid)
+                                                <x-button wire:click="toggleSkip({{ $record->id }})" label="Skip" icon="o-x-mark" class="btn-error btn-xs" spinner />
+                                            @elseif ($record->status === \App\Enums\AdifRecordStatus::Skipped)
+                                                <x-button wire:click="toggleSkip({{ $record->id }})" label="Include" icon="o-arrow-uturn-left" class="btn-ghost btn-xs" spinner />
+                                            @elseif ($record->status === \App\Enums\AdifRecordStatus::Ready || $record->status === \App\Enums\AdifRecordStatus::DuplicateMatch)
+                                                <x-button wire:click="toggleSkip({{ $record->id }})" label="Skip" icon="o-x-mark" class="btn-ghost btn-xs" spinner />
+                                            @endif
+                                        </td>
                                     </tr>
+                                    @if ($record->status === \App\Enums\AdifRecordStatus::Invalid && $record->notes)
+                                        <tr wire:key="record-notes-{{ $record->id }}" class="bg-error/5">
+                                            <td colspan="8" class="text-error text-sm pt-0">{{ $record->notes }}</td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                         </table>
@@ -267,7 +293,12 @@
                         Import failed. Please check the logs and try again.
                     </x-alert>
                 @else
-                    <x-button wire:click="executeImport" label="Import Contacts" icon="o-arrow-down-tray" class="btn-primary" spinner="executeImport" />
+                    @if ($this->hasInvalidRecords)
+                        <x-alert icon="o-exclamation-triangle" class="alert-warning mb-4">
+                            {{ $matchSummary['invalid'] ?? 0 }} record(s) have validation errors. Skip or resolve them before importing.
+                        </x-alert>
+                    @endif
+                    <x-button wire:click="executeImport" label="Import Contacts" icon="o-arrow-down-tray" class="btn-primary" spinner="executeImport" :disabled="$this->hasInvalidRecords" />
                 @endif
             </div>
         @endif

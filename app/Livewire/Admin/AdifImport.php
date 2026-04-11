@@ -15,6 +15,7 @@ use App\Services\AdifDuplicateMatcherService;
 use App\Services\AdifFieldMapperService;
 use App\Services\AdifImportService;
 use App\Services\AdifParserService;
+use App\Services\AdifValidationService;
 use App\Services\EventContextService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -44,8 +45,11 @@ class AdifImport extends Component
     /** @var array<string, array{exchange_class?: array<string>, section_code?: array<string>}> */
     public array $inconsistencies = [];
 
-    /** @var array{new: int, merge: int, skip: int} */
+    /** @var array{new: int, merge: int, skip: int, invalid: int} */
     public array $matchSummary = [];
+
+    /** @var array{invalid_count: int, valid_count: int} */
+    public array $validationResult = [];
 
     /** @var array<string, int> User-selected band mappings */
     public array $bandMappings = [];
@@ -174,8 +178,28 @@ class AdifImport extends Component
             'mapped_records' => $import->records()->where('status', '!=', AdifRecordStatus::Pending->value)->count(),
         ]);
 
+        $unmappedCount = $import->records()
+            ->where(function ($query) {
+                $query->whereNull('band_id')
+                    ->orWhereNull('mode_id')
+                    ->orWhereNull('section_id')
+                    ->orWhereNull('station_id')
+                    ->orWhereNull('operator_user_id');
+            })
+            ->count();
+
+        if ($unmappedCount > 0) {
+            $this->addError('mapping', "{$unmappedCount} records still have unmapped fields. Please resolve all mappings before continuing.");
+
+            return;
+        }
+
         $matcher = new AdifDuplicateMatcherService;
         $this->matchSummary = $matcher->match($import);
+
+        $validator = new AdifValidationService;
+        $this->validationResult = $validator->validate($import);
+        $this->matchSummary['invalid'] = $this->validationResult['invalid_count'] ?? 0;
 
         $this->step = 3;
     }
@@ -193,6 +217,46 @@ class AdifImport extends Component
             $import->refresh();
             $this->importStatus = 'failed';
         }
+    }
+
+    public function toggleSkip(int $recordId): void
+    {
+        $record = AdifImportRecord::findOrFail($recordId);
+
+        if ($record->adif_import_id !== $this->importId) {
+            return;
+        }
+
+        if ($record->status === AdifRecordStatus::Skipped) {
+            // Can't unskip invalid records
+            if ($record->notes && str_contains($record->notes, 'outside event window') || str_contains($record->notes ?? '', 'not valid')) {
+                return;
+            }
+            $record->update(['status' => AdifRecordStatus::Ready]);
+        } else {
+            $record->update(['status' => AdifRecordStatus::Skipped]);
+        }
+
+        // Recount summary
+        $import = AdifImportModel::findOrFail($this->importId);
+        $this->matchSummary = [
+            'new' => $import->records()->where('status', AdifRecordStatus::Ready)->count(),
+            'merge' => $import->records()->where('status', AdifRecordStatus::DuplicateMatch)->count(),
+            'skip' => $import->records()->where('status', AdifRecordStatus::Skipped)->count(),
+            'invalid' => $import->records()->where('status', AdifRecordStatus::Invalid)->count(),
+        ];
+    }
+
+    #[Computed]
+    public function hasInvalidRecords(): bool
+    {
+        if (! $this->importId) {
+            return false;
+        }
+
+        return AdifImportRecord::where('adif_import_id', $this->importId)
+            ->where('status', AdifRecordStatus::Invalid)
+            ->exists();
     }
 
     #[Computed]

@@ -5,7 +5,9 @@ use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Mode;
+use App\Models\OperatingClass;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
@@ -31,7 +33,23 @@ beforeEach(function () {
     Section::create(['code' => 'CT', 'name' => 'Connecticut', 'region' => 'W1', 'is_active' => true]);
     Section::create(['code' => 'NNJ', 'name' => 'Northern New Jersey', 'region' => 'W2', 'is_active' => true]);
 
+    $eventType = EventType::firstOrCreate(
+        ['code' => 'FD'],
+        ['name' => 'Field Day', 'description' => 'ARRL Field Day', 'is_active' => true],
+    );
+
+    OperatingClass::firstOrCreate(
+        ['event_type_id' => $eventType->id, 'code' => 'A'],
+        ['name' => 'Class A', 'description' => 'Class A', 'allows_gota' => false, 'allows_free_vhf' => false, 'max_power_watts' => 1500, 'requires_emergency_power' => false],
+    );
+
+    OperatingClass::firstOrCreate(
+        ['event_type_id' => $eventType->id, 'code' => 'B'],
+        ['name' => 'Class B', 'description' => 'Class B', 'allows_gota' => false, 'allows_free_vhf' => false, 'max_power_watts' => 1500, 'requires_emergency_power' => false],
+    );
+
     $this->event = Event::factory()->create([
+        'event_type_id' => $eventType->id,
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -78,7 +96,8 @@ test('can upload and parse an ADIF file', function () {
 });
 
 test('full import flow creates contacts', function () {
-    $adifContent = "ADIF Export\n<EOH>\n <CALL:4>W1AW <QSO_DATE:8>20260410 <TIME_ON:6>120000 <ARRL_SECT:2>CT <BAND:3>20M <STATION_CALLSIGN:5>K3CPK <MODE:3>SSB <OPERATOR:5>K3CPK <APP_N1MM_EXCHANGE1:2>3A <APP_N1MM_NETBIOSNAME:15>DESKTOP-11-2024 <EOR>";
+    $qsoDate = now()->format('Ymd');
+    $adifContent = "ADIF Export\n<EOH>\n <CALL:4>W1AW <QSO_DATE:8>{$qsoDate} <TIME_ON:6>120000 <ARRL_SECT:2>CT <BAND:3>20M <STATION_CALLSIGN:5>K3CPK <MODE:3>SSB <OPERATOR:5>K3CPK <APP_N1MM_EXCHANGE1:2>3A <APP_N1MM_NETBIOSNAME:15>DESKTOP-11-2024 <EOR>";
 
     $file = UploadedFile::fake()->createWithContent('test.adi', $adifContent);
 
