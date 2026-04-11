@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\AuditLog;
 use App\Models\ExternalLoggerSetting;
 use App\Services\EventContextService;
 use App\Services\ExternalLoggerManager;
@@ -52,14 +53,25 @@ class ExternalLoggerManagement extends Component
 
         $manager = app(ExternalLoggerManager::class);
 
+        $setting = $manager->getSetting($config->id, 'n1mm');
+
         if ($this->n1mmEnabled) {
             $manager->disable($config->id, 'n1mm');
             $manager->stopProcess($config->id, 'n1mm');
             $this->n1mmEnabled = false;
+
+            AuditLog::log('external_logger.disabled', auditable: $setting, newValues: [
+                'listener_type' => 'n1mm',
+            ]);
         } else {
-            $manager->enable($config->id, 'n1mm', $this->n1mmPort);
+            $setting = $manager->enable($config->id, 'n1mm', $this->n1mmPort);
             $manager->startProcess($config->id, 'n1mm');
             $this->n1mmEnabled = true;
+
+            AuditLog::log('external_logger.enabled', auditable: $setting, newValues: [
+                'listener_type' => 'n1mm',
+                'port' => $this->n1mmPort,
+            ]);
         }
 
         $this->refreshStatus();
@@ -72,8 +84,15 @@ class ExternalLoggerManagement extends Component
         }
 
         $manager = app(ExternalLoggerManager::class);
-        $manager->attemptRestart($this->eventConfigId, 'n1mm');
+        $restarted = $manager->attemptRestart($this->eventConfigId, 'n1mm');
         $this->refreshStatus();
+
+        if ($restarted) {
+            $setting = $manager->getSetting($this->eventConfigId, 'n1mm');
+            AuditLog::log('external_logger.restarted', auditable: $setting, newValues: [
+                'listener_type' => 'n1mm',
+            ]);
+        }
     }
 
     public function pollStatus(): void
@@ -116,9 +135,22 @@ class ExternalLoggerManagement extends Component
             return;
         }
 
-        ExternalLoggerSetting::where('event_configuration_id', $config->id)
+        $setting = ExternalLoggerSetting::where('event_configuration_id', $config->id)
             ->where('listener_type', 'n1mm')
-            ->update(['port' => $this->n1mmPort]);
+            ->first();
+
+        if ($setting === null) {
+            return;
+        }
+
+        $oldPort = $setting->port;
+        $setting->update(['port' => $this->n1mmPort]);
+
+        AuditLog::log('external_logger.port.updated', auditable: $setting, oldValues: [
+            'port' => $oldPort,
+        ], newValues: [
+            'port' => $this->n1mmPort,
+        ]);
     }
 
     public function render(): View

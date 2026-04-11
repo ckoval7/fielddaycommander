@@ -6,6 +6,7 @@ use App\Enums\AdifImportStatus;
 use App\Enums\AdifRecordStatus;
 use App\Models\AdifImport as AdifImportModel;
 use App\Models\AdifImportRecord;
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Mode;
 use App\Models\Section;
@@ -136,6 +137,12 @@ class AdifImport extends Component
         $this->inconsistencies = $mapper->detectInconsistencies($import);
 
         $this->uploadSummary = $this->buildUploadSummary($import, $result);
+
+        AuditLog::log('adif.import.uploaded', auditable: $import, newValues: [
+            'filename' => $this->adifFile->getClientOriginalName(),
+            'total_records' => count($result['records']),
+        ]);
+
         $this->step = 2;
     }
 
@@ -213,9 +220,17 @@ class AdifImport extends Component
             $service->import($import);
             $import->refresh();
             $this->importStatus = 'completed';
+
+            AuditLog::log('adif.import.completed', auditable: $import, newValues: [
+                'imported_records' => $import->imported_records,
+                'merged_records' => $import->merged_records,
+                'skipped_records' => $import->skipped_records,
+            ]);
         } catch (\Throwable) {
             $import->refresh();
             $this->importStatus = 'failed';
+
+            AuditLog::log('adif.import.failed', auditable: $import);
         }
     }
 
