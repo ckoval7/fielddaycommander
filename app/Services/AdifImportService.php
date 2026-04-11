@@ -20,6 +20,8 @@ class AdifImportService
      */
     private const MERGEABLE_FIELDS = ['power_watts', 'notes', 'received_exchange'];
 
+    public function __construct(private readonly SessionResolverService $sessionResolver) {}
+
     /**
      * Execute the final import from staging into contacts.
      */
@@ -137,17 +139,13 @@ class AdifImportService
 
     private function findOrCreateSession(AdifImportRecord $record): OperatingSession
     {
-        return OperatingSession::firstOrCreate([
-            'station_id' => $record->station_id,
-            'operator_user_id' => $record->operator_user_id,
-            'band_id' => $record->band_id,
-            'mode_id' => $record->mode_id,
-            'is_transcription' => false,
-        ], [
-            'start_time' => $record->qso_time,
-            'power_watts' => 100,
-            'qso_count' => 0,
-        ]);
+        return $this->sessionResolver->resolve(
+            stationId: $record->station_id,
+            operatorUserId: $record->operator_user_id,
+            bandId: $record->band_id,
+            modeId: $record->mode_id,
+            startTime: $record->qso_time,
+        );
     }
 
     private function buildReceivedExchange(AdifImportRecord $record): string

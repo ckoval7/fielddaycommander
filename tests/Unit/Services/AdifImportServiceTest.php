@@ -13,6 +13,7 @@ use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
 use App\Services\AdifImportService;
+use App\Services\SessionResolverService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,7 @@ beforeEach(function () {
         ['key' => 'setup_completed', 'value' => 'true'],
     );
 
-    $this->service = new AdifImportService;
+    $this->service = new AdifImportService(new SessionResolverService);
 
     $this->band = Band::create(['name' => '20m', 'meters' => 20, 'frequency_mhz' => 14.0, 'sort_order' => 4]);
     $this->mode = Mode::create(['name' => 'Phone', 'category' => 'Phone', 'points_fd' => 1, 'points_wfd' => 1]);
