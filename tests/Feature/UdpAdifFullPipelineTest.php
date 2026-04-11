@@ -20,7 +20,9 @@ beforeEach(function () {
     DB::table('system_config')->insert(['key' => 'setup_completed', 'value' => 'true']);
     Event::fake();
 
-    $this->config = EventConfiguration::factory()->create(['callsign' => 'W2XYZ']);
+    $this->config = EventConfiguration::factory()
+        ->for(App\Models\Event::factory()->state(['start_time' => null, 'end_time' => null]))
+        ->create(['callsign' => 'W2XYZ']);
     $this->station = Station::factory()->create([
         'event_configuration_id' => $this->config->id,
         'name' => 'K3CPK',
