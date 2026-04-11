@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Contracts\ExternalLoggerListener;
 use App\Events\ExternalLoggerStatusChanged;
+use App\Exceptions\OutOfPeriodContactException;
 use App\Models\EventConfiguration;
 use App\Services\AdifContactMapper;
 use App\Services\AdifParserService;
@@ -90,6 +91,7 @@ class WsjtxListenCommand extends Command implements ExternalLoggerListener
         }
 
         $heartbeatKey = "external-logger:wsjtx:{$config->id}:heartbeat";
+        $lastLogKey = "external-logger:wsjtx:{$config->id}:last-log";
 
         ExternalLoggerStatusChanged::dispatch('wsjtx', 'started', $config->id, $port);
 
@@ -159,9 +161,33 @@ class WsjtxListenCommand extends Command implements ExternalLoggerListener
                     continue;
                 }
 
-                $handler->handleContact($dto, $config);
-
-                $processedCount++;
+                try {
+                    $handler->handleContact($dto, $config);
+                    $processedCount++;
+                    Cache::put($lastLogKey, [
+                        'callsign' => $dto->callsign,
+                        'band' => $dto->bandName,
+                        'mode' => $dto->modeName,
+                        'qso_time' => $dto->timestamp->toIso8601String(),
+                        'section' => $dto->sectionCode,
+                        'source' => 'wsjtx',
+                        'received_at' => now()->toIso8601String(),
+                        'accepted' => true,
+                        'rejection_reason' => null,
+                    ], 60 * 60 * 24);
+                } catch (OutOfPeriodContactException) {
+                    Cache::put($lastLogKey, [
+                        'callsign' => $dto->callsign,
+                        'band' => $dto->bandName,
+                        'mode' => $dto->modeName,
+                        'qso_time' => $dto->timestamp->toIso8601String(),
+                        'section' => $dto->sectionCode,
+                        'source' => 'wsjtx',
+                        'received_at' => now()->toIso8601String(),
+                        'accepted' => false,
+                        'rejection_reason' => 'outside event window',
+                    ], 60 * 60 * 24);
+                }
             } catch (\Throwable $e) {
                 $errorCount++;
                 Log::warning("WSJTX packet processing error: {$e->getMessage()}", [
