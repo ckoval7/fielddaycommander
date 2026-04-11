@@ -12,6 +12,9 @@
                     <p class="text-yellow-800 dark:text-yellow-200">No active event configuration. External loggers require an active event.</p>
                 </div>
             @else
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                    <p class="text-red-800 dark:text-red-200"><strong>Security Notice:</strong> UDP logging should only be enabled on private, firewalled networks. Do not enable UDP logging on internet-hosted servers, as UDP is unauthenticated and anyone who can reach the port can send arbitrary data.</p>
+                </div>
                 {{-- N1MM Logger+ Section --}}
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6" wire:poll.5s="pollStatus">
                     <div class="flex items-center justify-between mb-4">
@@ -291,7 +294,7 @@
                         <ol class="text-sm text-gray-500 dark:text-gray-400 list-decimal list-inside space-y-1">
                             <li>Configure your logging application to send ADIF records via UDP</li>
                             <li>Set the destination to this server's IP and port {{ $udpAdifPort }}</li>
-                            <li>In fldigi: Configure &gt; Config Dialog &gt; Misc &gt; ADIF &gt; set UDP address and port</li>
+                            <li>In fldigi: Configure &gt; Config Dialog &gt; Logging &gt; Cloud-UDP &gt; set UDP address and port and check enable</li>
                             <li>Ensure your firewall allows inbound UDP on port {{ $udpAdifPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $udpAdifPort }}/udp</code>)</li>
                         </ol>
                     </div>

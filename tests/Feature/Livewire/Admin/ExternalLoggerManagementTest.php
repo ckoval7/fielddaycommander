@@ -266,5 +266,5 @@ test('toggleUdpAdif disables and stops process', function () {
 
 test('displays UDP ADIF setup instructions', function () {
     Livewire::test(ExternalLoggerManagement::class)
-        ->assertSee('Configure > Config Dialog > Misc > ADIF');
+        ->assertSee('Configure > Config Dialog > Logging > Cloud-UDP');
 });
