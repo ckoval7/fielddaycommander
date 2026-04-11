@@ -206,6 +206,44 @@ test('summary stats include total QSOs and sections worked', function () {
         ->and($component->viewData('sectionsWorked'))->toBe(2);
 });
 
+test('section data includes latest QSO time and time bounds', function () {
+    $session = OperatingSession::factory()->create([
+        'station_id' => $this->station->id,
+    ]);
+
+    $earlyTime = now()->subHours(6);
+    $lateTime = now()->subHour();
+
+    Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $session->id,
+        'section_id' => $this->sectionCT->id,
+        'band_id' => $this->band20->id,
+        'mode_id' => $this->modeSSB->id,
+        'logger_user_id' => $this->user->id,
+        'is_duplicate' => false,
+        'qso_time' => $earlyTime,
+    ]);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $session->id,
+        'section_id' => $this->sectionCT->id,
+        'band_id' => $this->band40->id,
+        'mode_id' => $this->modeCW->id,
+        'logger_user_id' => $this->user->id,
+        'is_duplicate' => false,
+        'qso_time' => $lateTime,
+    ]);
+
+    $component = Livewire\Livewire::test(SectionMap::class);
+    $sectionData = $component->viewData('sectionData');
+
+    expect($sectionData['CT']['latestQsoTime'])->toBe($lateTime->timestamp)
+        ->and($component->viewData('minTime'))->toBe($earlyTime->timestamp)
+        ->and($component->viewData('maxTime'))->toBe($lateTime->timestamp);
+});
+
 test('section map page is publicly accessible', function () {
     $this->get('/section-map')
         ->assertOk()
