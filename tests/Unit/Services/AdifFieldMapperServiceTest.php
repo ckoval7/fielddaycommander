@@ -19,7 +19,7 @@ beforeEach(function () {
         ['key' => 'setup_completed', 'value' => 'true'],
     );
 
-    $this->mapper = new AdifFieldMapperService;
+    $this->mapper = app(AdifFieldMapperService::class);
 
     // Seed reference data
     $this->band20m = Band::create(['name' => '20m', 'meters' => 20, 'frequency_mhz' => 14.0, 'sort_order' => 4]);
@@ -294,4 +294,22 @@ test('applies user-provided station mapping', function () {
 
     $record->refresh();
     expect($record->station_id)->toBe($station->id);
+});
+
+test('auto-creates stub user for unknown operator callsign', function () {
+    $import = AdifImport::factory()->create();
+    $record = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'operator_callsign' => 'N0ACCT',
+    ]);
+
+    $report = $this->mapper->autoMap($import);
+
+    $record->refresh();
+    expect($record->operator_user_id)->not->toBeNull()
+        ->and($report['unmapped_operators'])->toBeEmpty();
+
+    $stubUser = User::where('call_sign', 'N0ACCT')->first();
+    expect($stubUser)->not->toBeNull()
+        ->and($stubUser->user_role)->toBe('locked');
 });

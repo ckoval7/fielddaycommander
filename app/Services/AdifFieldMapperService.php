@@ -8,10 +8,11 @@ use App\Models\AdifImportRecord;
 use App\Models\Mode;
 use App\Models\Section;
 use App\Models\Station;
-use App\Models\User;
 
 class AdifFieldMapperService
 {
+    public function __construct(private readonly UserResolverService $userResolver) {}
+
     /**
      * Auto-map staged records against the database.
      *
@@ -35,11 +36,6 @@ class AdifFieldMapperService
             ->pluck('id', 'name')
             ->toArray();
 
-        $users = User::query()->whereNotNull('call_sign')
-            ->pluck('id', 'call_sign')
-            ->mapWithKeys(fn ($id, $callSign) => [strtoupper($callSign) => $id])
-            ->toArray();
-
         $records = $import->records()->where('status', AdifRecordStatus::Pending)->get();
 
         foreach ($records as $record) {
@@ -47,7 +43,7 @@ class AdifFieldMapperService
             $this->mapMode($record, $modes, $report);
             $this->mapSection($record, $sections, $report);
             $this->mapStation($record, $stations, $report);
-            $this->mapOperator($record, $users, $report);
+            $this->mapOperator($record, $report);
 
             $record->status = AdifRecordStatus::Mapped;
             $record->save();
@@ -245,20 +241,15 @@ class AdifFieldMapperService
     }
 
     /**
-     * @param  array<string, int>  $users
      * @param  array{unmapped_operators: array<string>}  $report
      */
-    private function mapOperator(AdifImportRecord $record, array $users, array &$report): void
+    private function mapOperator(AdifImportRecord $record, array &$report): void
     {
         if ($record->operator_callsign === null) {
             return;
         }
 
-        $userId = $users[strtoupper($record->operator_callsign)] ?? null;
-        if ($userId !== null) {
-            $record->operator_user_id = $userId;
-        } else {
-            $report['unmapped_operators'][] = $record->operator_callsign;
-        }
+        $user = $this->userResolver->resolveOrCreate($record->operator_callsign);
+        $record->operator_user_id = $user->id;
     }
 }

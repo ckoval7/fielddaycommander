@@ -132,7 +132,7 @@ class AdifImport extends Component
             ]);
         }
 
-        $mapper = new AdifFieldMapperService;
+        $mapper = app(AdifFieldMapperService::class);
         $this->mappingReport = $mapper->autoMap($import);
         $this->inconsistencies = $mapper->detectInconsistencies($import);
 
@@ -149,7 +149,7 @@ class AdifImport extends Component
     public function applyMappingsAndContinue(): void
     {
         $import = AdifImportModel::findOrFail($this->importId);
-        $mapper = new AdifFieldMapperService;
+        $mapper = app(AdifFieldMapperService::class);
 
         $fieldMappings = [];
         if (! empty($this->bandMappings)) {
