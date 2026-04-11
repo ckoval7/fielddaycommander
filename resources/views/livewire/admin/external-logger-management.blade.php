@@ -30,8 +30,25 @@
 
                     <div class="flex items-center gap-2 mb-4">
                         <span class="inline-flex items-center gap-1.5 text-sm">
-                            <span class="h-2 w-2 rounded-full {{ $n1mmEnabled ? 'bg-green-500' : 'bg-gray-400' }}"></span>
-                            {{ $n1mmEnabled ? 'Enabled' : 'Disabled' }}
+                            @if ($processStatus === 'running')
+                                <span class="h-2 w-2 rounded-full bg-green-500"></span>
+                                @if ($heartbeat)
+                                    Listening on port {{ $heartbeat['port'] }}
+                                    &mdash; {{ $heartbeat['packets_received'] }} packets,
+                                    {{ $heartbeat['errors'] }} errors
+                                @else
+                                    Running
+                                @endif
+                            @elseif ($processStatus === 'starting')
+                                <span class="h-2 w-2 rounded-full bg-yellow-500"></span>
+                                Starting&hellip;
+                            @elseif ($processStatus === 'crashed')
+                                <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                                Crashed
+                            @else
+                                <span class="h-2 w-2 rounded-full bg-gray-400"></span>
+                                Stopped
+                            @endif
                         </span>
                     </div>
 
