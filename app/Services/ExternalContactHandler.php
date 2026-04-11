@@ -12,7 +12,6 @@ use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\Section;
-use App\Models\User;
 use Illuminate\Support\Str;
 
 class ExternalContactHandler
@@ -23,6 +22,7 @@ class ExternalContactHandler
         private ModeResolverService $modeResolver,
         private SessionResolverService $sessionResolver,
         private DuplicateCheckService $dupeChecker,
+        private UserResolverService $userResolver,
     ) {}
 
     public function handleContact(ExternalContactDto $dto, EventConfiguration $config): Contact
@@ -201,7 +201,7 @@ class ExternalContactHandler
             return null;
         }
 
-        return User::where('call_sign', strtoupper($callsign))->value('id');
+        return $this->userResolver->resolveOrCreate($callsign)->id;
     }
 
     private function resolveSection(?string $code): ?int

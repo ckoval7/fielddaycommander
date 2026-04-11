@@ -286,6 +286,26 @@ test('handles contact with null operator', function () {
     expect($contact->logger_user_id)->toBeNull();
 });
 
+test('auto-creates stub user for unknown operator callsign', function () {
+    $dto = new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        source: 'n1mm',
+        modeName: 'CW',
+        operatorCallsign: 'N0ACCT',
+        stationIdentifier: 'CONTEST-PC',
+        frequencyHz: 3525190,
+        externalId: 'stub123',
+    );
+
+    $contact = $this->handler->handleContact($dto, $this->config);
+
+    $stubUser = User::where('call_sign', 'N0ACCT')->first();
+    expect($stubUser)->not->toBeNull()
+        ->and($stubUser->user_role)->toBe('locked')
+        ->and($contact->logger_user_id)->toBe($stubUser->id);
+});
+
 test('auto-creates station for unknown identifier', function () {
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
