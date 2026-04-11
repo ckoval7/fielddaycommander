@@ -10,8 +10,16 @@ use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
+    DB::table('system_config')->insert([
+        'key' => 'setup_completed',
+        'value' => 'true',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     $this->event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
@@ -196,4 +204,10 @@ test('summary stats include total QSOs and sections worked', function () {
 
     expect($component->viewData('totalQsos'))->toBe(4)
         ->and($component->viewData('sectionsWorked'))->toBe(2);
+});
+
+test('section map page is publicly accessible', function () {
+    $this->get('/section-map')
+        ->assertOk()
+        ->assertSeeLivewire(SectionMap::class);
 });
