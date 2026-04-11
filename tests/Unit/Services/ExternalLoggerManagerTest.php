@@ -4,7 +4,9 @@ use App\Models\EventConfiguration;
 use App\Models\ExternalLoggerSetting;
 use App\Services\ExternalLoggerManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Process\Process;
 
 uses(RefreshDatabase::class);
 
@@ -115,4 +117,141 @@ test('gets all enabled settings across events', function () {
 
     expect($enabled)->toHaveCount(1)
         ->and($enabled->first()->event_configuration_id)->toBe($this->config->id);
+});
+
+test('startProcess spawns background process and stores pid', function () {
+    $setting = ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+    ]);
+
+    $this->manager->startProcess($this->config->id, 'n1mm');
+
+    $setting->refresh();
+    expect($setting->pid)->toBeInt()
+        ->and($setting->pid)->toBeGreaterThan(0);
+
+    // Clean up: kill the spawned process
+    if ($setting->pid && posix_kill($setting->pid, 0)) {
+        posix_kill($setting->pid, SIGTERM);
+    }
+});
+
+test('stopProcess sends SIGTERM and clears pid', function () {
+    // Start a dummy sleep process to get a real PID
+    $process = new Process(['sleep', '60']);
+    $process->start();
+    $dummyPid = $process->getPid();
+
+    $setting = ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => $dummyPid,
+    ]);
+
+    $this->manager->stopProcess($this->config->id, 'n1mm');
+
+    $setting->refresh();
+    expect($setting->pid)->toBeNull();
+
+    // Reap the zombie so posix_kill(pid, 0) returns false
+    pcntl_waitpid($dummyPid, $status, WNOHANG);
+
+    // Verify the process was killed
+    expect(posix_kill($dummyPid, 0))->toBeFalse();
+});
+
+test('getProcessStatus returns stopped when disabled', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => false,
+        'port' => 12060,
+    ]);
+
+    $status = $this->manager->getProcessStatus($this->config->id, 'n1mm');
+
+    expect($status)->toBe('stopped');
+});
+
+test('getProcessStatus returns running when heartbeat exists', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => 99999,
+    ]);
+
+    Cache::put("external-logger:n1mm:{$this->config->id}:heartbeat", [
+        'pid' => 99999,
+        'started_at' => now()->toIso8601String(),
+        'last_heartbeat_at' => now()->toIso8601String(),
+        'packets_received' => 10,
+        'packets_processed' => 9,
+        'errors' => 1,
+        'last_packet_at' => now()->toIso8601String(),
+        'port' => 12060,
+    ], 15);
+
+    $status = $this->manager->getProcessStatus($this->config->id, 'n1mm');
+
+    expect($status)->toBe('running');
+});
+
+test('getProcessStatus returns crashed when enabled with pid but no heartbeat', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => 99999,
+    ]);
+
+    $status = $this->manager->getProcessStatus($this->config->id, 'n1mm');
+
+    expect($status)->toBe('crashed');
+});
+
+test('getProcessStatus returns starting when enabled with no pid', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => null,
+    ]);
+
+    $status = $this->manager->getProcessStatus($this->config->id, 'n1mm');
+
+    expect($status)->toBe('starting');
+});
+
+test('getHeartbeat returns cached stats', function () {
+    $heartbeat = [
+        'pid' => 12345,
+        'started_at' => now()->toIso8601String(),
+        'last_heartbeat_at' => now()->toIso8601String(),
+        'packets_received' => 847,
+        'packets_processed' => 832,
+        'errors' => 15,
+        'last_packet_at' => now()->subSeconds(3)->toIso8601String(),
+        'port' => 12060,
+    ];
+
+    Cache::put("external-logger:n1mm:{$this->config->id}:heartbeat", $heartbeat, 15);
+
+    $result = $this->manager->getHeartbeat($this->config->id, 'n1mm');
+
+    expect($result)->toBe($heartbeat);
+});
+
+test('getHeartbeat returns null when no heartbeat cached', function () {
+    $result = $this->manager->getHeartbeat($this->config->id, 'n1mm');
+
+    expect($result)->toBeNull();
 });
