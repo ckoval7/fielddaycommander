@@ -255,3 +255,49 @@ test('getHeartbeat returns null when no heartbeat cached', function () {
 
     expect($result)->toBeNull();
 });
+
+test('attemptRestart starts process and returns true when no cooldown', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => 99999,
+    ]);
+
+    $result = $this->manager->attemptRestart($this->config->id, 'n1mm');
+
+    expect($result)->toBeTrue();
+
+    $setting = ExternalLoggerSetting::where('event_configuration_id', $this->config->id)
+        ->where('listener_type', 'n1mm')
+        ->first();
+
+    // Should have a new PID
+    expect($setting->pid)->not->toBe(99999)
+        ->and($setting->pid)->toBeGreaterThan(0);
+
+    // Cooldown should be set
+    expect(Cache::has("external-logger:n1mm:{$this->config->id}:restart-cooldown"))->toBeTrue();
+
+    // Clean up spawned process
+    if ($setting->pid && posix_kill($setting->pid, 0)) {
+        posix_kill($setting->pid, SIGTERM);
+    }
+});
+
+test('attemptRestart returns false during cooldown', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => 99999,
+    ]);
+
+    Cache::put("external-logger:n1mm:{$this->config->id}:restart-cooldown", true, 30);
+
+    $result = $this->manager->attemptRestart($this->config->id, 'n1mm');
+
+    expect($result)->toBeFalse();
+});

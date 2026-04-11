@@ -118,4 +118,26 @@ class ExternalLoggerManager
 
         return Cache::get($key);
     }
+
+    public function attemptRestart(int $eventConfigurationId, string $listenerType): bool
+    {
+        $cooldownKey = "external-logger:{$listenerType}:{$eventConfigurationId}:restart-cooldown";
+
+        if (Cache::has($cooldownKey)) {
+            return false;
+        }
+
+        // Kill the old process if it's somehow still around
+        $this->stopProcess($eventConfigurationId, $listenerType);
+
+        $pid = $this->startProcess($eventConfigurationId, $listenerType);
+
+        if ($pid !== null) {
+            Cache::put($cooldownKey, true, 30);
+
+            return true;
+        }
+
+        return false;
+    }
 }
