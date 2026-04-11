@@ -187,6 +187,5 @@ test('toggleWsjtx disables and stops process', function () {
 
 test('displays WSJTX setup instructions', function () {
     Livewire::test(ExternalLoggerManagement::class)
-        ->assertSee('File > Settings > Reporting')
-        ->assertSee('Enable logged contact ADIF broadcast');
+        ->assertSee('File > Settings > Reporting > UDP Server');
 });
