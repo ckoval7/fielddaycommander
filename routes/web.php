@@ -9,6 +9,7 @@ use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SetupController;
+use App\Livewire\Admin\AdifImport;
 use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\DeveloperTools;
 use App\Livewire\Equipment\AllEquipmentList;
@@ -267,6 +268,10 @@ Route::middleware(['auth', 'verified', 'can:view-reports'])->group(function () {
 // Administration
 Route::middleware(['auth', 'verified', 'can:view-security-logs'])->prefix('admin')->group(function () {
     Route::get('/audit-logs', AuditLogViewer::class)->name('admin.audit-logs');
+});
+
+Route::middleware(['auth', 'verified', 'can:import-contacts'])->prefix('admin')->group(function () {
+    Route::get('/import/adif', AdifImport::class)->name('admin.import-adif');
 });
 
 // Developer Tools (only available when DEVELOPER_MODE=true in .env)

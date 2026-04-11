@@ -51,6 +51,9 @@ class PermissionSeeder extends Seeder
 
             // Security
             ['name' => 'view-security-logs', 'description' => 'View security logs and activity records'],
+
+            // Import
+            ['name' => 'import-contacts', 'description' => 'Import contacts from ADIF files'],
         ];
 
         foreach ($permissions as $permission) {
@@ -60,6 +63,6 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created 25 permissions');
+        $this->command->info('Created 26 permissions');
     }
 }
