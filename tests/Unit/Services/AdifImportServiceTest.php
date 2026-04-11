@@ -318,3 +318,30 @@ test('builds correct received_exchange from ADIF fields', function () {
     $contact = Contact::where('callsign', 'W1AW')->first();
     expect($contact->received_exchange)->toBe('W1AW 3A CT');
 });
+
+test('sets logger_user_id to the ADIF operator, not the importing user', function () {
+    $operator = User::factory()->create();
+
+    $import = AdifImport::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'user_id' => $this->user->id,
+    ]);
+    AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'qso_time' => Carbon::parse('2026-04-10 12:00:00'),
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'section_id' => $this->section->id,
+        'station_id' => $this->station->id,
+        'operator_user_id' => $operator->id,
+        'exchange_class' => '3A',
+        'status' => AdifRecordStatus::Ready,
+    ]);
+
+    $this->service->import($import);
+
+    $contact = Contact::where('callsign', 'W1AW')->first();
+    expect($contact->logger_user_id)->toBe($operator->id)
+        ->and($contact->logger_user_id)->not->toBe($this->user->id);
+});

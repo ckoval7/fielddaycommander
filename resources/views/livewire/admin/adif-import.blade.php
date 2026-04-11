@@ -230,6 +230,7 @@
                                     <th>Mode</th>
                                     <th>Section</th>
                                     <th>Class</th>
+                                    <th>Operator</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -260,6 +261,7 @@
                                         <td>{{ $record->mode_name }}</td>
                                         <td>{{ $record->section_code }}</td>
                                         <td>{{ $record->exchange_class }}</td>
+                                        <td class="font-mono">{{ $record->operator_callsign }}</td>
                                         <td>
                                             @if ($record->status === \App\Enums\AdifRecordStatus::Invalid)
                                                 <x-button wire:click="toggleSkip({{ $record->id }})" label="Skip" icon="o-x-mark" class="btn-error btn-xs" spinner />
@@ -272,7 +274,7 @@
                                     </tr>
                                     @if ($record->status === \App\Enums\AdifRecordStatus::Invalid && $record->notes)
                                         <tr wire:key="record-notes-{{ $record->id }}" class="bg-error/5">
-                                            <td colspan="8" class="text-error text-sm pt-0">{{ $record->notes }}</td>
+                                            <td colspan="9" class="text-error text-sm pt-0">{{ $record->notes }}</td>
                                         </tr>
                                     @endif
                                 @endforeach

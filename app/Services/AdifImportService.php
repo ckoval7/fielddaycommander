@@ -84,7 +84,7 @@ class AdifImportService
             'uuid' => Str::uuid()->toString(),
             'event_configuration_id' => $import->event_configuration_id,
             'operating_session_id' => $session->id,
-            'logger_user_id' => $import->user_id,
+            'logger_user_id' => $record->operator_user_id,
             'band_id' => $record->band_id,
             'mode_id' => $record->mode_id,
             'qso_time' => $record->qso_time,
