@@ -128,15 +128,6 @@
                         }
 
                         return style;
-                    },
-
-                    getActiveBands() {
-                        const bands = new Set();
-                        Object.values(this.sectionData).forEach(d => {
-                            if (d.bands) d.bands.forEach(b => bands.add(b));
-                        });
-                        const order = ['160m', '80m', '40m', '20m', '15m', '10m', '6m', '2m', '1.25m', '70cm', '33cm', '23cm', 'Satellite'];
-                        return order.filter(b => bands.has(b));
                     }
                 }"
             >
@@ -976,29 +967,25 @@
                     </div>
                     <div x-show="sectionData[hoverSection]?.count === 0" class="text-base-content/50">Not worked</div>
                 </div>
-            </div>
 
-            <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-4 text-sm text-base-content/70">
-                <div class="flex items-center gap-1">
-                    <span class="inline-block w-4 h-4 rounded" style="background:#d1d5db"></span> Not worked
-                </div>
-                <template x-for="band in getActiveBands()" :key="band">
+                <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-4 text-xs text-base-content/70">
                     <div class="flex items-center gap-1">
-                        <span class="inline-block w-4 h-4 rounded" :style="{ background: bandColor(band) }"></span>
-                        <span x-text="band"></span>
+                        <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
                     </div>
-                </template>
-            </div>
-            <div class="flex items-center justify-center gap-4 mt-2 text-xs text-base-content/50">
-                <span>Intensity:</span>
-                <div class="flex items-center gap-1">
-                    <span class="inline-block w-4 h-4 rounded" style="background:hsl(210, 35%, 65%)"></span> 1 band
+                    <template x-for="band in ['160m','80m','40m','20m','15m','10m','6m','2m','1.25m','70cm','33cm','23cm','Satellite']" :key="band">
+                        <div class="flex items-center gap-1">
+                            <span class="inline-block w-3 h-3 rounded" :style="{ background: bandColor(band) }"></span>
+                            <span x-text="band"></span>
+                        </div>
+                    </template>
                 </div>
-                <div class="flex items-center gap-1">
-                    <span class="inline-block w-4 h-4 rounded" style="background:hsl(210, 70%, 50%)"></span> 2 bands
-                </div>
-                <div class="flex items-center gap-1">
-                    <span class="inline-block w-4 h-4 rounded" style="background:hsl(210, 70%, 40%)"></span> 3+ bands
+                <div class="flex items-center justify-center gap-3 mt-1 text-xs text-base-content/50">
+                    <span>Intensity:</span>
+                    <span>pastel = 1 band</span>
+                    <span>&middot;</span>
+                    <span>vivid = 2 bands</span>
+                    <span>&middot;</span>
+                    <span>deep = 3+</span>
                 </div>
             </div>
         </x-card>
