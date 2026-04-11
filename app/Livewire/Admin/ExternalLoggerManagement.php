@@ -27,6 +27,14 @@ class ExternalLoggerManagement extends Component
 
     public ?array $wsjtxHeartbeat = null;
 
+    public bool $udpAdifEnabled = false;
+
+    public int $udpAdifPort = 2238;
+
+    public string $udpAdifProcessStatus = 'stopped';
+
+    public ?array $udpAdifHeartbeat = null;
+
     public ?int $eventConfigId = null;
 
     public function mount(): void
@@ -54,6 +62,15 @@ class ExternalLoggerManagement extends Component
         if ($wsjtxSetting) {
             $this->wsjtxEnabled = $wsjtxSetting->is_enabled;
             $this->wsjtxPort = $wsjtxSetting->port;
+        }
+
+        $udpAdifSetting = ExternalLoggerSetting::where('event_configuration_id', $config->id)
+            ->where('listener_type', 'udp-adif')
+            ->first();
+
+        if ($udpAdifSetting) {
+            $this->udpAdifEnabled = $udpAdifSetting->is_enabled;
+            $this->udpAdifPort = $udpAdifSetting->port;
         }
 
         $this->refreshStatus();
@@ -130,6 +147,11 @@ class ExternalLoggerManagement extends Component
 
         if ($this->wsjtxProcessStatus === 'crashed') {
             $manager->attemptRestart($this->eventConfigId, 'wsjtx');
+            $this->refreshStatus();
+        }
+
+        if ($this->udpAdifProcessStatus === 'crashed') {
+            $manager->attemptRestart($this->eventConfigId, 'udp-adif');
             $this->refreshStatus();
         }
     }
@@ -262,6 +284,88 @@ class ExternalLoggerManagement extends Component
         ]);
     }
 
+    public function toggleUdpAdif(): void
+    {
+        $config = app(EventContextService::class)->getEventConfiguration();
+        if ($config === null) {
+            session()->flash('error', 'No active event configuration.');
+
+            return;
+        }
+
+        $manager = app(ExternalLoggerManager::class);
+
+        $setting = $manager->getSetting($config->id, 'udp-adif');
+
+        if ($this->udpAdifEnabled) {
+            $manager->disable($config->id, 'udp-adif');
+            $manager->stopProcess($config->id, 'udp-adif');
+            $this->udpAdifEnabled = false;
+
+            AuditLog::log('external_logger.disabled', auditable: $setting, newValues: [
+                'listener_type' => 'udp-adif',
+            ]);
+        } else {
+            $setting = $manager->enable($config->id, 'udp-adif', $this->udpAdifPort);
+            $manager->startProcess($config->id, 'udp-adif');
+            $this->udpAdifEnabled = true;
+
+            AuditLog::log('external_logger.enabled', auditable: $setting, newValues: [
+                'listener_type' => 'udp-adif',
+                'port' => $this->udpAdifPort,
+            ]);
+        }
+
+        $this->refreshStatus();
+    }
+
+    public function restartUdpAdifProcess(): void
+    {
+        if ($this->eventConfigId === null) {
+            return;
+        }
+
+        $manager = app(ExternalLoggerManager::class);
+        $restarted = $manager->attemptRestart($this->eventConfigId, 'udp-adif');
+        $this->refreshStatus();
+
+        if ($restarted) {
+            $setting = $manager->getSetting($this->eventConfigId, 'udp-adif');
+            AuditLog::log('external_logger.restarted', auditable: $setting, newValues: [
+                'listener_type' => 'udp-adif',
+            ]);
+        }
+    }
+
+    public function updateUdpAdifPort(): void
+    {
+        $this->validate([
+            'udpAdifPort' => 'required|integer|min:1024|max:65535',
+        ]);
+
+        $config = app(EventContextService::class)->getEventConfiguration();
+        if ($config === null) {
+            return;
+        }
+
+        $setting = ExternalLoggerSetting::where('event_configuration_id', $config->id)
+            ->where('listener_type', 'udp-adif')
+            ->first();
+
+        if ($setting === null) {
+            return;
+        }
+
+        $oldPort = $setting->port;
+        $setting->update(['port' => $this->udpAdifPort]);
+
+        AuditLog::log('external_logger.port.updated', auditable: $setting, oldValues: [
+            'port' => $oldPort,
+        ], newValues: [
+            'port' => $this->udpAdifPort,
+        ]);
+    }
+
     public function render(): View
     {
         $config = app(EventContextService::class)->getEventConfiguration();
@@ -278,6 +382,8 @@ class ExternalLoggerManagement extends Component
             $this->heartbeat = null;
             $this->wsjtxProcessStatus = 'stopped';
             $this->wsjtxHeartbeat = null;
+            $this->udpAdifProcessStatus = 'stopped';
+            $this->udpAdifHeartbeat = null;
 
             return;
         }
@@ -287,5 +393,7 @@ class ExternalLoggerManagement extends Component
         $this->heartbeat = $manager->getHeartbeat($this->eventConfigId, 'n1mm');
         $this->wsjtxProcessStatus = $manager->getProcessStatus($this->eventConfigId, 'wsjtx');
         $this->wsjtxHeartbeat = $manager->getHeartbeat($this->eventConfigId, 'wsjtx');
+        $this->udpAdifProcessStatus = $manager->getProcessStatus($this->eventConfigId, 'udp-adif');
+        $this->udpAdifHeartbeat = $manager->getHeartbeat($this->eventConfigId, 'udp-adif');
     }
 }

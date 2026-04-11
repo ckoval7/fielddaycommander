@@ -202,6 +202,100 @@
                         </ol>
                     </div>
                 </div>
+                {{-- UDP ADIF (fldigi, etc.) Section --}}
+                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6" wire:poll.5s="pollStatus">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">UDP ADIF (fldigi, etc.)</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Receive live QSO data via plain ADIF text over UDP</p>
+                        </div>
+                        <button
+                            wire:click="toggleUdpAdif"
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $udpAdifEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
+                        >
+                            <span class="sr-only">Toggle UDP ADIF listener</span>
+                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $udpAdifEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                        </button>
+                    </div>
+
+                    {{-- Process Status Indicator --}}
+                    <div class="flex items-center gap-2 mb-4">
+                        @if ($udpAdifProcessStatus === 'running')
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                            </span>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">
+                                Listening on port {{ $udpAdifHeartbeat['port'] ?? $udpAdifPort }}
+                                &middot; {{ $udpAdifHeartbeat['packets_received'] ?? 0 }} packets
+                                &middot; {{ $udpAdifHeartbeat['errors'] ?? 0 }} errors
+                                @if (! empty($udpAdifHeartbeat['last_packet_at']))
+                                    &middot; last packet {{ \Carbon\Carbon::parse($udpAdifHeartbeat['last_packet_at'])->diffForHumans() }}
+                                @endif
+                            </span>
+                        @elseif ($udpAdifProcessStatus === 'starting')
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500"></span>
+                            </span>
+                            <span class="text-sm text-yellow-600 dark:text-yellow-400">Starting listener...</span>
+                        @elseif ($udpAdifProcessStatus === 'crashed')
+                            <span class="inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                            <span class="text-sm text-red-600 dark:text-red-400">
+                                Process crashed &middot; Restarting...
+                            </span>
+                            <button
+                                wire:click="restartUdpAdifProcess"
+                                class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                                Retry
+                            </button>
+                        @else
+                            <span class="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Stopped</span>
+                        @endif
+                    </div>
+
+                    {{-- Uptime --}}
+                    @if ($udpAdifProcessStatus === 'running' && ! empty($udpAdifHeartbeat['started_at']))
+                        <div class="text-xs text-gray-400 dark:text-gray-500 mb-4">
+                            Uptime: {{ \Carbon\Carbon::parse($udpAdifHeartbeat['started_at'])->diffForHumans(null, true) }}
+                        </div>
+                    @endif
+
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <label for="udpAdifPort" class="block text-sm font-medium text-gray-700 dark:text-gray-300">UDP Port</label>
+                        <div class="mt-1 flex items-center gap-2">
+                            <input
+                                type="number"
+                                id="udpAdifPort"
+                                wire:model="udpAdifPort"
+                                wire:change="updateUdpAdifPort"
+                                min="1024"
+                                max="65535"
+                                class="block w-32 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                {{ $udpAdifEnabled ? 'disabled' : '' }}
+                            >
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Default: 2238</span>
+                        </div>
+                        @error('udpAdifPort')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        @if ($udpAdifEnabled)
+                            <p class="mt-1 text-sm text-yellow-600 dark:text-yellow-400">Disable the listener to change the port.</p>
+                        @endif
+                    </div>
+
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Instructions</h4>
+                        <ol class="text-sm text-gray-500 dark:text-gray-400 list-decimal list-inside space-y-1">
+                            <li>Configure your logging application to send ADIF records via UDP</li>
+                            <li>Set the destination to this server's IP and port {{ $udpAdifPort }}</li>
+                            <li>In fldigi: Configure &gt; Config Dialog &gt; Misc &gt; ADIF &gt; set UDP address and port</li>
+                            <li>Ensure your firewall allows inbound UDP on port {{ $udpAdifPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $udpAdifPort }}/udp</code>)</li>
+                        </ol>
+                    </div>
+                </div>
             @endif
         </div>
     </div>
