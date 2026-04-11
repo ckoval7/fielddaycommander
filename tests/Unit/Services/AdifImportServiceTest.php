@@ -87,7 +87,7 @@ test('creates operating session when needed', function () {
         ->first();
 
     expect($session)->not->toBeNull()
-        ->and($session->is_transcription)->toBeTrue()
+        ->and($session->is_transcription)->toBeFalse()
         ->and($session->operator_user_id)->toBe($this->user->id);
 });
 
@@ -97,7 +97,7 @@ test('reuses existing operating session for same band mode station operator', fu
         'operator_user_id' => $this->user->id,
         'band_id' => $this->band->id,
         'mode_id' => $this->mode->id,
-        'is_transcription' => true,
+        'is_transcription' => false,
     ]);
 
     $import = AdifImport::factory()->create([

@@ -93,7 +93,7 @@ class AdifImportService
             'points' => $points,
             'is_duplicate' => $dupeCheck['is_duplicate'],
             'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
-            'is_transcribed' => true,
+            'is_imported' => true,
         ]);
 
         $session->increment('qso_count');
@@ -142,7 +142,7 @@ class AdifImportService
             'operator_user_id' => $record->operator_user_id,
             'band_id' => $record->band_id,
             'mode_id' => $record->mode_id,
-            'is_transcription' => true,
+            'is_transcription' => false,
         ], [
             'start_time' => $record->qso_time,
             'power_watts' => 100,
