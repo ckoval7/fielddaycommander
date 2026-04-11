@@ -8,6 +8,9 @@ use Illuminate\Support\Str;
 
 class UserResolverService
 {
+    /** @var array<string, User> */
+    private array $cache = [];
+
     /**
      * Find a user by callsign, or create a locked stub account.
      */
@@ -19,7 +22,11 @@ class UserResolverService
 
         $callsign = strtoupper($callsign);
 
-        return User::firstOrCreate(
+        if (isset($this->cache[$callsign])) {
+            return $this->cache[$callsign];
+        }
+
+        return $this->cache[$callsign] = User::firstOrCreate(
             ['call_sign' => $callsign],
             [
                 'first_name' => $callsign,
