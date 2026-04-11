@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\AdifRecordStatus;
 use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
-use App\Models\Band;
 use App\Models\Mode;
 use App\Models\Section;
 use App\Models\Station;
@@ -28,10 +27,6 @@ class AdifFieldMapperService
             'unmapped_operators' => [],
         ];
 
-        $bands = Band::query()->pluck('id', 'name')->mapWithKeys(
-            fn ($id, $name) => [strtolower($name) => $id]
-        )->toArray();
-
         $modes = Mode::query()->pluck('id', 'name')->toArray();
         $sections = Section::query()->where('is_active', true)->pluck('id', 'code')->toArray();
 
@@ -48,7 +43,7 @@ class AdifFieldMapperService
         $records = $import->records()->where('status', AdifRecordStatus::Pending)->get();
 
         foreach ($records as $record) {
-            $this->mapBand($record, $bands, $report);
+            $this->mapBand($record, $report);
             $this->mapMode($record, $modes, $report);
             $this->mapSection($record, $sections, $report);
             $this->mapStation($record, $stations, $report);
@@ -179,16 +174,15 @@ class AdifFieldMapperService
     }
 
     /**
-     * @param  array<string, int>  $bands
      * @param  array{unmapped_bands: array<string>}  $report
      */
-    private function mapBand(AdifImportRecord $record, array $bands, array &$report): void
+    private function mapBand(AdifImportRecord $record, array &$report): void
     {
         if ($record->band_name === null) {
             return;
         }
 
-        $bandId = $bands[strtolower($record->band_name)] ?? null;
+        $bandId = app(BandResolverService::class)->resolveByName($record->band_name);
         if ($bandId !== null) {
             $record->band_id = $bandId;
         } else {
