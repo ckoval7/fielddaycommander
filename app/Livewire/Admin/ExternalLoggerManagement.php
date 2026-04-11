@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\ExternalLoggerSetting;
 use App\Services\EventContextService;
 use App\Services\ExternalLoggerManager;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -34,6 +35,12 @@ class ExternalLoggerManagement extends Component
     public string $udpAdifProcessStatus = 'stopped';
 
     public ?array $udpAdifHeartbeat = null;
+
+    public ?array $lastLog = null;
+
+    public ?array $wsjtxLastLog = null;
+
+    public ?array $udpAdifLastLog = null;
 
     public ?int $eventConfigId = null;
 
@@ -384,6 +391,9 @@ class ExternalLoggerManagement extends Component
             $this->wsjtxHeartbeat = null;
             $this->udpAdifProcessStatus = 'stopped';
             $this->udpAdifHeartbeat = null;
+            $this->lastLog = null;
+            $this->wsjtxLastLog = null;
+            $this->udpAdifLastLog = null;
 
             return;
         }
@@ -395,5 +405,8 @@ class ExternalLoggerManagement extends Component
         $this->wsjtxHeartbeat = $manager->getHeartbeat($this->eventConfigId, 'wsjtx');
         $this->udpAdifProcessStatus = $manager->getProcessStatus($this->eventConfigId, 'udp-adif');
         $this->udpAdifHeartbeat = $manager->getHeartbeat($this->eventConfigId, 'udp-adif');
+        $this->lastLog = Cache::get("external-logger:n1mm:{$this->eventConfigId}:last-log");
+        $this->wsjtxLastLog = Cache::get("external-logger:wsjtx:{$this->eventConfigId}:last-log");
+        $this->udpAdifLastLog = Cache::get("external-logger:udp-adif:{$this->eventConfigId}:last-log");
     }
 }

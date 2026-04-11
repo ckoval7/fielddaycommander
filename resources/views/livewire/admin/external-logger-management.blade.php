@@ -76,6 +76,45 @@
                         </div>
                     @endif
 
+                    {{-- Last Log Received --}}
+                    @if ($processStatus === 'running' || $lastLog !== null)
+                        <div x-data="{ open: false }" class="mb-4">
+                            <button
+                                type="button"
+                                @click="open = !open"
+                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                            >
+                                <x-icon name="o-chevron-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                                <span>Last Log Received</span>
+                                @if ($lastLog !== null)
+                                    @if ($lastLog['accepted'])
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Accepted</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">{{ $lastLog['rejection_reason'] }}</span>
+                                    @endif
+                                @endif
+                            </button>
+                            <div x-show="open" x-transition class="mt-2 ml-5 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                @if ($lastLog !== null)
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">Callsign:</span> {{ $lastLog['callsign'] }}</div>
+                                    @if ($lastLog['band'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Band:</span> {{ $lastLog['band'] }}</div>
+                                    @endif
+                                    @if ($lastLog['mode'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Mode:</span> {{ $lastLog['mode'] }}</div>
+                                    @endif
+                                    @if ($lastLog['section'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Section:</span> {{ $lastLog['section'] }}</div>
+                                    @endif
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">QSO Time:</span> {{ \Carbon\Carbon::parse($lastLog['qso_time'])->format('Y-m-d H:i') }} UTC</div>
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">Received:</span> {{ \Carbon\Carbon::parse($lastLog['received_at'])->diffForHumans() }}</div>
+                                @else
+                                    <p class="text-gray-400 dark:text-gray-500">No contacts received yet.</p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
                         <label for="n1mmPort" class="block text-sm font-medium text-gray-700 dark:text-gray-300">UDP Port</label>
                         <div class="mt-1 flex items-center gap-2">
@@ -172,6 +211,45 @@
                         </div>
                     @endif
 
+                    {{-- Last Log Received --}}
+                    @if ($wsjtxProcessStatus === 'running' || $wsjtxLastLog !== null)
+                        <div x-data="{ open: false }" class="mb-4">
+                            <button
+                                type="button"
+                                @click="open = !open"
+                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                            >
+                                <x-icon name="o-chevron-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                                <span>Last Log Received</span>
+                                @if ($wsjtxLastLog !== null)
+                                    @if ($wsjtxLastLog['accepted'])
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Accepted</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">{{ $wsjtxLastLog['rejection_reason'] }}</span>
+                                    @endif
+                                @endif
+                            </button>
+                            <div x-show="open" x-transition class="mt-2 ml-5 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                @if ($wsjtxLastLog !== null)
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">Callsign:</span> {{ $wsjtxLastLog['callsign'] }}</div>
+                                    @if ($wsjtxLastLog['band'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Band:</span> {{ $wsjtxLastLog['band'] }}</div>
+                                    @endif
+                                    @if ($wsjtxLastLog['mode'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Mode:</span> {{ $wsjtxLastLog['mode'] }}</div>
+                                    @endif
+                                    @if ($wsjtxLastLog['section'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Section:</span> {{ $wsjtxLastLog['section'] }}</div>
+                                    @endif
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">QSO Time:</span> {{ \Carbon\Carbon::parse($wsjtxLastLog['qso_time'])->format('Y-m-d H:i') }} UTC</div>
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">Received:</span> {{ \Carbon\Carbon::parse($wsjtxLastLog['received_at'])->diffForHumans() }}</div>
+                                @else
+                                    <p class="text-gray-400 dark:text-gray-500">No contacts received yet.</p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
                         <label for="wsjtxPort" class="block text-sm font-medium text-gray-700 dark:text-gray-300">UDP Port</label>
                         <div class="mt-1 flex items-center gap-2">
@@ -263,6 +341,45 @@
                     @if ($udpAdifProcessStatus === 'running' && ! empty($udpAdifHeartbeat['started_at']))
                         <div class="text-xs text-gray-400 dark:text-gray-500 mb-4">
                             Uptime: {{ \Carbon\Carbon::parse($udpAdifHeartbeat['started_at'])->diffForHumans(null, true) }}
+                        </div>
+                    @endif
+
+                    {{-- Last Log Received --}}
+                    @if ($udpAdifProcessStatus === 'running' || $udpAdifLastLog !== null)
+                        <div x-data="{ open: false }" class="mb-4">
+                            <button
+                                type="button"
+                                @click="open = !open"
+                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                            >
+                                <x-icon name="o-chevron-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                                <span>Last Log Received</span>
+                                @if ($udpAdifLastLog !== null)
+                                    @if ($udpAdifLastLog['accepted'])
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Accepted</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">{{ $udpAdifLastLog['rejection_reason'] }}</span>
+                                    @endif
+                                @endif
+                            </button>
+                            <div x-show="open" x-transition class="mt-2 ml-5 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                @if ($udpAdifLastLog !== null)
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">Callsign:</span> {{ $udpAdifLastLog['callsign'] }}</div>
+                                    @if ($udpAdifLastLog['band'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Band:</span> {{ $udpAdifLastLog['band'] }}</div>
+                                    @endif
+                                    @if ($udpAdifLastLog['mode'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Mode:</span> {{ $udpAdifLastLog['mode'] }}</div>
+                                    @endif
+                                    @if ($udpAdifLastLog['section'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Section:</span> {{ $udpAdifLastLog['section'] }}</div>
+                                    @endif
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">QSO Time:</span> {{ \Carbon\Carbon::parse($udpAdifLastLog['qso_time'])->format('Y-m-d H:i') }} UTC</div>
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">Received:</span> {{ \Carbon\Carbon::parse($udpAdifLastLog['received_at'])->diffForHumans() }}</div>
+                                @else
+                                    <p class="text-gray-400 dark:text-gray-500">No contacts received yet.</p>
+                                @endif
+                            </div>
                         </div>
                     @endif
 
