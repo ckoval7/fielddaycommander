@@ -113,10 +113,15 @@ class ExternalLoggerManager
         }
 
         if ($setting->pid !== null) {
-            return 'crashed';
+            // PID exists but no heartbeat — verify it's actually our listener
+            // process, not a recycled PID from an unrelated process after reboot.
+            if ($this->isListenerProcess($setting->pid, $listenerType)) {
+                return 'starting';
+            }
         }
 
-        return 'starting';
+        // No live listener process found — needs recovery via pollStatus auto-restart.
+        return 'crashed';
     }
 
     /** @return array<string, mixed>|null */
@@ -125,6 +130,20 @@ class ExternalLoggerManager
         $key = "external-logger:{$listenerType}:{$eventConfigurationId}:heartbeat";
 
         return Cache::get($key);
+    }
+
+    /**
+     * Check that a PID belongs to our artisan listener, not a recycled OS process.
+     */
+    private function isListenerProcess(int $pid, string $listenerType): bool
+    {
+        $cmdline = @file_get_contents("/proc/{$pid}/cmdline");
+
+        if ($cmdline === false) {
+            return false;
+        }
+
+        return str_contains($cmdline, "external-logger:{$listenerType}");
     }
 
     public function attemptRestart(int $eventConfigurationId, string $listenerType): bool

@@ -202,7 +202,7 @@ test('getProcessStatus returns running when heartbeat exists', function () {
     expect($status)->toBe('running');
 });
 
-test('getProcessStatus returns crashed when enabled with pid but no heartbeat', function () {
+test('getProcessStatus returns crashed when enabled with dead pid and no heartbeat', function () {
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
@@ -216,7 +216,46 @@ test('getProcessStatus returns crashed when enabled with pid but no heartbeat', 
     expect($status)->toBe('crashed');
 });
 
-test('getProcessStatus returns starting when enabled with no pid', function () {
+test('getProcessStatus returns starting when enabled with alive listener pid but no heartbeat', function () {
+    // Spawn a process whose /proc/pid/cmdline contains the listener signature
+    $output = [];
+    exec("bash -c 'sleep 60; true' external-logger:n1mm > /dev/null 2>&1 & echo \$!", $output);
+    $listenerPid = (int) $output[0];
+
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => $listenerPid,
+    ]);
+
+    $status = $this->manager->getProcessStatus($this->config->id, 'n1mm');
+
+    expect($status)->toBe('starting');
+
+    // Clean up
+    posix_kill($listenerPid, SIGTERM);
+});
+
+test('getProcessStatus returns crashed when pid reused by unrelated process', function () {
+    // Current PHP process is alive but its cmdline is not our listener
+    $unrelatedPid = getmypid();
+
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => $unrelatedPid,
+    ]);
+
+    $status = $this->manager->getProcessStatus($this->config->id, 'n1mm');
+
+    expect($status)->toBe('crashed');
+});
+
+test('getProcessStatus returns crashed when enabled with no pid to trigger auto-restart', function () {
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
@@ -227,7 +266,7 @@ test('getProcessStatus returns starting when enabled with no pid', function () {
 
     $status = $this->manager->getProcessStatus($this->config->id, 'n1mm');
 
-    expect($status)->toBe('starting');
+    expect($status)->toBe('crashed');
 });
 
 test('getHeartbeat returns cached stats', function () {
