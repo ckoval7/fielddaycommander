@@ -11,6 +11,18 @@
                 transform-origin: center;
                 filter: brightness(1.2);
             }
+            .section-label {
+                fill: currentColor;
+                font-weight: 700;
+                text-anchor: middle;
+                dominant-baseline: central;
+                pointer-events: none;
+                paint-order: stroke;
+                stroke: oklch(var(--b1));
+                stroke-width: 3px;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
         </style>
 
         <x-card class="shadow-md">
@@ -859,83 +871,91 @@
            style="display:inline;stroke:#000000;stroke-opacity:1"
          d="m 1505.1831,423.88234 -3.2719,3.59916 -1.0634,3.43555 -1.4724,4.90794 0.082,2.12678 3.0266,-0.409 2.5357,-2.12677 -4.0899,-0.3272 1.5542,-3.10836 0.8997,-3.76275 2.7812,-1.22699 0.409,-2.04497 -0.1636,-1.47238 z m -34.6827,28.01615 -3.3538,4.53985 -1.4724,6.38032 4.908,3.59915 7.7709,1.47239 1.0224,1.55418 4.7035,0.81799 6.4212,-0.6544 1.1043,-2.94476 1.7178,0.77709 1.5133,2.90386 6.3394,0.5317 0.9407,-4.78524 c 0,0 -1.6769,-2.20858 -1.5542,-2.78117 0.1227,-0.57259 6.1758,-6.74841 6.1758,-6.74841 l -0.2045,-2.24948 -3.272,0.81799 -5.685,3.39466 -8.2617,2.74027 -2.2085,0.73619 h -5.7669 l -5.3169,-1.30879 c 0,0 -3.8566,-3.81525 -3.9673,-4.04905 -0.1086,-0.22943 -0.2225,-3.38108 -0.3198,-3.83172 l -0.178,-1.51867 -0.7328,0.26646 z m -7.8847,-65.75453 -6.9409,0.11568 -1.2725,0.57841 -4.5694,0.23136 -0.7519,0.69409 -5.0322,-0.11568 -3.239,2.02442 -0.2892,1.73522 2.0822,1.44601 7.8664,-0.23136 3.4126,1.15681 4.1645,3.47044 4.7429,0.34704 2.1979,1.04113 8.7918,-0.17352 2.4872,-1.33033 4.6851,0.17352 2.2557,-0.80977 3.991,-1.8509 1.6774,-2.02442 -1.3882,-2.1401 -2.7185,-1.73522 -3.6439,-0.23137 -2.6028,0.57841 -4.0489,-1.15681 -1.9666,-1.27249 -5.3791,-0.17353 z" /></g></g>
     <!-- Section labels -->
-    <text x="1360" y="628" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">CT</text>
-    <text x="1385" y="598" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">EMA</text>
-    <text x="1352" y="603" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">WMA</text>
-    <text x="1345" y="565" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">VT</text>
-    <text x="1372" y="565" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NH</text>
-    <text x="1400" y="520" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">ME</text>
-    <text x="1245" y="610" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">WNY</text>
-    <text x="1300" y="578" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NNY</text>
-    <text x="1328" y="625" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">ENY</text>
-    <text x="1235" y="665" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">WPA</text>
-    <text x="1290" y="660" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">EPA</text>
-    <text x="1265" y="748" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">VA</text>
-    <text x="1290" y="800" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SC</text>
-    <text x="1200" y="835" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">AL</text>
-    <text x="1200" y="765" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">KY</text>
-    <text x="1250" y="890" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">WCF</text>
-    <text x="1250" y="840" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">GA</text>
-    <text x="1200" y="795" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">TN</text>
-    <text x="1300" y="925" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SFL</text>
-    <text x="1270" y="870" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NFL</text>
-    <text x="1275" y="775" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NC</text>
-    <text x="1000" y="880" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">STX</text>
-    <text x="940" y="820" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">WTX</text>
-    <text x="1010" y="825" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NTX</text>
-    <text x="910" y="805" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">OK</text>
-    <text x="1100" y="810" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">AR</text>
-    <text x="1120" y="870" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">LA</text>
-    <text x="890" y="790" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NM</text>
-    <text x="1165" y="845" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">MS</text>
-    <text x="790" y="870" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SDG</text>
-    <text x="775" y="770" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SJV</text>
-    <text x="790" y="830" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">LAX</text>
-    <text x="775" y="690" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SV</text>
-    <text x="765" y="755" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SCV</text>
-    <text x="768" y="800" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SB</text>
-    <text x="757" y="738" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">EB</text>
-    <text x="752" y="718" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SF</text>
-    <text x="805" y="850" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">ORG</text>
-    <text x="835" y="810" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">AZ</text>
-    <text x="920" y="655" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">WY</text>
-    <text x="860" y="715" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">UT</text>
-    <text x="812" y="720" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NV</text>
-    <text x="900" y="570" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">MT</text>
-    <text x="835" y="625" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">ID</text>
-    <text x="775" y="585" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">OR</text>
-    <text x="832" y="555" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">EWA</text>
-    <text x="772" y="535" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">WWA</text>
-    <text x="1210" y="705" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">OH</text>
-    <text x="1175" y="650" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">MI</text>
-    <text x="1240" y="725" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">WV</text>
-    <text x="1118" y="638" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">WI</text>
-    <text x="1135" y="725" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">IL</text>
-    <text x="1170" y="720" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">IN</text>
-    <text x="1078" y="673" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">IA</text>
-    <text x="1015" y="723" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">KS</text>
-    <text x="932" y="703" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">CO</text>
-    <text x="1015" y="673" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NE</text>
-    <text x="1012" y="625" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SD</text>
-    <text x="1012" y="575" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">ND</text>
-    <text x="1065" y="598" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">MN</text>
-    <text x="1095" y="755" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">MO</text>
-    <text x="685" y="925" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">PAC</text>
-    <text x="645" y="405" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">AK</text>
-    <text x="1225" y="960" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">PR</text>
-    <text x="845" y="355" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">TER</text>
-    <text x="1200" y="535" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">ONN</text>
-    <text x="1225" y="595" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">GH</text>
-    <text x="1235" y="575" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">ONS</text>
-    <text x="1285" y="545" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">ONE</text>
-    <text x="1385" y="475" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NB</text>
-    <text x="1425" y="485" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NS</text>
-    <text x="1325" y="495" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">QC</text>
-    <text x="1025" y="485" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">MB</text>
-    <text x="945" y="475" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">SK</text>
-    <text x="875" y="465" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">AB</text>
-    <text x="795" y="455" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">BC</text>
-    <text x="1465" y="435" font-size="8" fill="currentColor" opacity="0.7" pointer-events="none" text-anchor="middle" dominant-baseline="central">NL</text>
+    <text class="section-label" x="668" y="338" font-size="14">AB</text>
+    <text class="section-label" x="452" y="964" font-size="14">AK</text>
+    <text class="section-label" x="1135" y="889" font-size="12">AL</text>
+    <text class="section-label" x="1018" y="844" font-size="14">AR</text>
+    <text class="section-label" x="623" y="834" font-size="14">AZ</text>
+    <text class="section-label" x="514" y="286" font-size="14">BC</text>
+    <text class="section-label" x="760" y="731" font-size="14">CO</text>
+    <text class="section-label" x="1363" y="627" font-size="11">CT</text>
+    <text class="section-label" x="1328" y="696" font-size="9">DE</text>
+    <text class="section-label" x="451" y="694" font-size="9">EB</text>
+    <text class="section-label" x="1390" y="603" font-size="11">EMA</text>
+    <text class="section-label" x="1334" y="611" font-size="11">ENY</text>
+    <text class="section-label" x="1304" y="657" font-size="12">EPA</text>
+    <text class="section-label" x="555" y="486" font-size="14">EWA</text>
+    <text class="section-label" x="1201" y="878" font-size="14">GA</text>
+    <text class="section-label" x="1238" y="599" font-size="11">GH</text>
+    <text class="section-label" x="990" y="667" font-size="12">IA</text>
+    <text class="section-label" x="622" y="551" font-size="14">ID</text>
+    <text class="section-label" x="1064" y="717" font-size="12">IL</text>
+    <text class="section-label" x="1124" y="714" font-size="12">IN</text>
+    <text class="section-label" x="897" y="751" font-size="12">KS</text>
+    <text class="section-label" x="1149" y="761" font-size="12">KY</text>
+    <text class="section-label" x="1036" y="934" font-size="14">LA</text>
+    <text class="section-label" x="498" y="804" font-size="11">LAX</text>
+    <text class="section-label" x="948" y="366" font-size="14">MB</text>
+    <text class="section-label" x="1294" y="704" font-size="11">MDC</text>
+    <text class="section-label" x="1403" y="524" font-size="12">ME</text>
+    <text class="section-label" x="1111" y="625" font-size="14">MI</text>
+    <text class="section-label" x="985" y="558" font-size="14">MN</text>
+    <text class="section-label" x="1012" y="755" font-size="14">MO</text>
+    <text class="section-label" x="1068" y="893" font-size="12">MS</text>
+    <text class="section-label" x="712" y="524" font-size="14">MT</text>
+    <text class="section-label" x="1434" y="477" font-size="12">NB</text>
+    <text class="section-label" x="1267" y="798" font-size="12">NC</text>
+    <text class="section-label" x="869" y="530" font-size="12">ND</text>
+    <text class="section-label" x="874" y="676" font-size="14">NE</text>
+    <text class="section-label" x="1194" y="951" font-size="12">NFL</text>
+    <text class="section-label" x="1373" y="563" font-size="11">NH</text>
+    <text class="section-label" x="1501" y="287" font-size="14">NL</text>
+    <text class="section-label" x="1363" y="643" font-size="11">NLI</text>
+    <text class="section-label" x="738" y="843" font-size="14">NM</text>
+    <text class="section-label" x="1335" y="654" font-size="11">NNJ</text>
+    <text class="section-label" x="1311" y="580" font-size="12">NNY</text>
+    <text class="section-label" x="1501" y="490" font-size="14">NS</text>
+    <text class="section-label" x="929" y="897" font-size="14">NTX</text>
+    <text class="section-label" x="555" y="707" font-size="14">NV</text>
+    <text class="section-label" x="1186" y="691" font-size="14">OH</text>
+    <text class="section-label" x="889" y="829" font-size="14">OK</text>
+    <text class="section-label" x="1270" y="569" font-size="12">ONE</text>
+    <text class="section-label" x="1098" y="467" font-size="14">ONN</text>
+    <text class="section-label" x="1208" y="600" font-size="12">ONS</text>
+    <text class="section-label" x="515" y="559" font-size="14">OR</text>
+    <text class="section-label" x="538" y="784" font-size="14">ORG</text>
+    <text class="section-label" x="705" y="1019" font-size="12">PAC</text>
+    <text class="section-label" x="1475" y="428" font-size="12">PE</text>
+    <text class="section-label" x="1050" y="1038" font-size="14">PR</text>
+    <text class="section-label" x="1356" y="371" font-size="14">QC</text>
+    <text class="section-label" x="1384" y="618" font-size="9">RI</text>
+    <text class="section-label" x="469" y="781" font-size="11">SB</text>
+    <text class="section-label" x="1243" y="850" font-size="12">SC</text>
+    <text class="section-label" x="453" y="730" font-size="11">SCV</text>
+    <text class="section-label" x="867" y="609" font-size="14">SD</text>
+    <text class="section-label" x="536" y="843" font-size="11">SDG</text>
+    <text class="section-label" x="437" y="645" font-size="11">SF</text>
+    <text class="section-label" x="1271" y="1008" font-size="11">SFL</text>
+    <text class="section-label" x="490" y="744" font-size="12">SJV</text>
+    <text class="section-label" x="787" y="359" font-size="14">SK</text>
+    <text class="section-label" x="1335" y="681" font-size="11">SNJ</text>
+    <text class="section-label" x="906" y="993" font-size="14">STX</text>
+    <text class="section-label" x="473" y="648" font-size="12">SV</text>
+    <text class="section-label" x="736" y="120" font-size="14">TER</text>
+    <text class="section-label" x="1149" y="808" font-size="12">TN</text>
+    <text class="section-label" x="648" y="705" font-size="14">UT</text>
+    <text class="section-label" x="1266" y="736" font-size="14">VA</text>
+    <text class="section-label" x="1147" y="1027" font-size="14">VI</text>
+    <text class="section-label" x="1348" y="569" font-size="11">VT</text>
+    <text class="section-label" x="1249" y="993" font-size="11">WCF</text>
+    <text class="section-label" x="1046" y="597" font-size="14">WI</text>
+    <text class="section-label" x="1364" y="606" font-size="9">WMA</text>
+    <text class="section-label" x="1281" y="608" font-size="12">WNY</text>
+    <text class="section-label" x="1256" y="667" font-size="12">WPA</text>
+    <text class="section-label" x="800" y="890" font-size="14">WTX</text>
+    <text class="section-label" x="1240" y="721" font-size="14">WV</text>
+    <text class="section-label" x="507" y="476" font-size="12">WWA</text>
+    <text class="section-label" x="735" y="629" font-size="14">WY</text>
 </svg>
 
                 </div>
