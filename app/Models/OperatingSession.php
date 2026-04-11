@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\OperatingSessionFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OperatingSession extends Model
 {
-    /** @use HasFactory<\Database\Factories\OperatingSessionFactory> */
+    /** @use HasFactory<OperatingSessionFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -25,6 +26,8 @@ class OperatingSession extends Model
         'qso_count',
         'is_transcription',
         'is_supervised',
+        'last_activity_at',
+        'external_source',
     ];
 
     protected function casts(): array
@@ -35,6 +38,7 @@ class OperatingSession extends Model
             'power_watts' => 'integer',
             'is_transcription' => 'boolean',
             'is_supervised' => 'boolean',
+            'last_activity_at' => 'datetime',
         ];
     }
 
