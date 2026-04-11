@@ -207,7 +207,7 @@ class AdifImport extends Component
     public function executeImport(): void
     {
         $import = AdifImportModel::findOrFail($this->importId);
-        $service = new AdifImportService;
+        $service = app(AdifImportService::class);
 
         try {
             $service->import($import);
