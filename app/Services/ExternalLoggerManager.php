@@ -64,9 +64,10 @@ class ExternalLoggerManager
         // Start as a detached background process. Using exec() with & instead of
         // Symfony Process because its __destruct() kills the child on GC.
         $command = sprintf(
-            '%s %s external-logger:n1mm --event=%d > /dev/null 2>&1 & echo $!',
+            '%s %s external-logger:%s --event=%d > /dev/null 2>&1 & echo $!',
             escapeshellarg(php_binary()),
             escapeshellarg(base_path('artisan')),
+            $listenerType,
             $eventConfigurationId,
         );
 
