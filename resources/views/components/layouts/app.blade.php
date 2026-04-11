@@ -196,6 +196,7 @@
 
                         @can('import-contacts')
                             <x-menu-item title="Import ADIF" icon="o-arrow-up-tray" link="{{ route('admin.import-adif') }}" :active="request()->routeIs('admin.import-adif')" />
+                            <x-menu-item title="External Loggers" icon="o-signal" link="{{ route('admin.external-loggers') }}" :active="request()->routeIs('admin.external-loggers')" />
                         @endcan
 
                         @if(config('developer.enabled'))
