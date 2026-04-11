@@ -67,6 +67,16 @@ class DemoAnalyticsController extends Controller
             );
         }
 
+        $sessionsWithUrls = $sessions->map(function (DemoSession $session) {
+            $session->events_url = URL::temporarySignedRoute(
+                'demo.analytics.session-events',
+                now()->addHours(24),
+                ['session' => $session->id]
+            );
+
+            return $session;
+        });
+
         return view('demo.analytics', [
             'range' => $range,
             'rangeLinks' => $rangeLinks,
@@ -78,6 +88,35 @@ class DemoAnalyticsController extends Controller
             'timeOnPage' => $this->buildTimeOnPage($sessionIds),
             'repeatVisitors' => $this->buildRepeatVisitors($sessions),
             'recentSessions' => $sessions->take(25),
+            'allSessions' => $sessionsWithUrls,
+        ]);
+    }
+
+    public function sessionEvents(Request $request, DemoSession $session): JsonResponse
+    {
+        abort_unless(config('demo.enabled'), 404);
+
+        $events = $session->events->map(function (DemoEvent $event) use ($session) {
+            return [
+                'type' => $event->type,
+                'name' => $event->name,
+                'route_name' => $event->route_name,
+                'metadata' => $event->metadata,
+                'created_at' => $event->created_at->toIso8601String(),
+                'seconds_from_start' => (int) $session->provisioned_at->diffInSeconds($event->created_at),
+            ];
+        });
+
+        return response()->json([
+            'session' => [
+                'role' => $session->role,
+                'device_type' => $session->device_type,
+                'provisioned_at' => $session->provisioned_at->toIso8601String(),
+                'last_seen_at' => $session->last_seen_at->toIso8601String(),
+                'total_page_views' => $session->total_page_views,
+                'total_actions' => $session->total_actions,
+            ],
+            'events' => $events,
         ]);
     }
 

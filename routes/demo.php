@@ -22,3 +22,7 @@ Route::middleware('signed')
 Route::middleware('signed')
     ->get('/demo/analytics/api', [DemoAnalyticsController::class, 'api'])
     ->name('demo.analytics.api');
+
+Route::middleware('signed')
+    ->get('/demo/analytics/sessions/{session}/events', [DemoAnalyticsController::class, 'sessionEvents'])
+    ->name('demo.analytics.session-events');

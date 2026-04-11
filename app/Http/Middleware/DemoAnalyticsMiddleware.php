@@ -20,7 +20,7 @@ class DemoAnalyticsMiddleware
         // Use path matching instead of routeIs() because this middleware runs
         // before SubstituteBindings in the priority list, so route names are not yet available.
         if ($request->is('demo', 'demo/provision', 'demo/reset', 'demo/analytics/beacon',
-            'demo/analytics', 'demo/analytics/api')) {
+            'demo/analytics', 'demo/analytics/api', 'demo/analytics/sessions/*/events')) {
             return $next($request);
         }
 

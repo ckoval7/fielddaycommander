@@ -211,6 +211,86 @@ it('returns 404 for API when demo mode is disabled', function () {
     $this->getJson($url)->assertNotFound();
 });
 
+it('returns session events via signed URL', function () {
+    $event1 = DemoEvent::create([
+        'demo_session_id' => $this->demoSession->id,
+        'type' => 'page_view',
+        'name' => 'home',
+        'route_name' => 'home',
+        'metadata' => ['path' => '/', 'method' => 'GET'],
+        'created_at' => $this->demoSession->provisioned_at->addSeconds(5),
+    ]);
+
+    $event2 = DemoEvent::create([
+        'demo_session_id' => $this->demoSession->id,
+        'type' => 'action',
+        'name' => 'contact.logged',
+        'metadata' => ['band' => '20m', 'callsign' => 'W1AW'],
+        'created_at' => $this->demoSession->provisioned_at->addMinutes(2),
+    ]);
+
+    $event3 = DemoEvent::create([
+        'demo_session_id' => $this->demoSession->id,
+        'type' => 'client',
+        'name' => 'time_on_page',
+        'metadata' => ['seconds' => 30, 'page' => '/dashboard'],
+        'created_at' => $this->demoSession->provisioned_at->addMinutes(3),
+    ]);
+
+    $url = URL::temporarySignedRoute(
+        'demo.analytics.session-events',
+        now()->addHour(),
+        ['session' => $this->demoSession->id]
+    );
+
+    $response = $this->getJson($url)->assertOk();
+
+    $response->assertJsonStructure([
+        'session' => ['role', 'device_type', 'provisioned_at', 'last_seen_at', 'total_page_views', 'total_actions'],
+        'events' => [['type', 'name', 'route_name', 'metadata', 'created_at', 'seconds_from_start']],
+    ]);
+
+    $events = $response->json('events');
+    expect($events)->toHaveCount(3)
+        ->and($events[0]['type'])->toBe('page_view')
+        ->and($events[0]['seconds_from_start'])->toBe(5)
+        ->and($events[1]['type'])->toBe('action')
+        ->and($events[1]['name'])->toBe('contact.logged')
+        ->and($events[2]['type'])->toBe('client');
+});
+
+it('rejects unsigned requests to session events', function () {
+    $this->getJson(route('demo.analytics.session-events', ['session' => $this->demoSession->id]))
+        ->assertForbidden();
+});
+
+it('returns 404 for session events when demo mode is disabled', function () {
+    Config::set('demo.enabled', false);
+
+    DB::table('system_config')->insert([
+        'key' => 'setup_completed',
+        'value' => 'true',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $url = URL::temporarySignedRoute(
+        'demo.analytics.session-events',
+        now()->addHour(),
+        ['session' => $this->demoSession->id]
+    );
+
+    $this->getJson($url)->assertNotFound();
+});
+
+it('passes session event URLs to the dashboard view', function () {
+    $url = URL::temporarySignedRoute('demo.analytics.dashboard', now()->addHour(), ['range' => '7d']);
+
+    $response = $this->get($url)->assertOk();
+
+    $response->assertSee('Session Timelines');
+});
+
 it('displays overview metrics in the dashboard', function () {
     DemoSession::create([
         'session_uuid' => fake()->uuid(),
