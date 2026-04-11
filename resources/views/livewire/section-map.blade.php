@@ -139,10 +139,9 @@
                     </div>
                 </div>
 
-                <div class="w-full overflow-x-auto">
+                <div class="w-full flex justify-center">
                     <svg
-   width="1920"
-   height="1080"
+   class="w-full max-w-[1920px] h-auto"
    :view-box.camel="getViewBox()"
    version="1.1"
    id="svg1"
