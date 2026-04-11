@@ -12,6 +12,7 @@ class ExternalLoggerSetting extends Model
         'listener_type',
         'is_enabled',
         'port',
+        'pid',
         'settings',
     ];
 
