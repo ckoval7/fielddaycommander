@@ -65,7 +65,6 @@ class SectionMap extends Component
 
         return view('livewire.section-map', [
             'sectionData' => $sectionData,
-            'sectionDataJson' => json_encode($sectionData),
             'maxCount' => $maxCount,
             'totalQsos' => $totalQsos,
             'sectionsWorked' => $sectionsWorked,

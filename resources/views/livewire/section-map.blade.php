@@ -27,9 +27,22 @@
                     sectionData: @js($sectionData),
                     maxCount: @js($maxCount),
 
+                    getTooltipStyle() {
+                        const pad = 12;
+                        const estW = 220;
+                        const estH = 60;
+                        const x = this.tooltipX + pad + estW > window.innerWidth
+                            ? this.tooltipX - estW - pad
+                            : this.tooltipX + pad;
+                        const y = this.tooltipY + pad + estH > window.innerHeight
+                            ? this.tooltipY - estH - pad
+                            : this.tooltipY + pad;
+                        return { left: x + 'px', top: y + 'px' };
+                    },
+
                     getColor(code) {
                         const data = this.sectionData[code];
-                        if (!data || data.count === 0) return '#d1d5db';
+                        if (!data || data.count === 0 || this.maxCount === 0) return '#d1d5db';
                         const ratio = data.count / this.maxCount;
                         if (ratio <= 0.25) return '#ef4444';
                         if (ratio <= 0.50) return '#f97316';
@@ -47,7 +60,10 @@
    id="svg1"
    xml:space="preserve"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   xmlns:svg="http://www.w3.org/2000/svg"
+   role="img"
+   aria-label="ARRL Section Map"
+   focusable="false"><defs
      id="defs1" /><g
      id="north-america"
      style="stroke:#000000;stroke-opacity:1"><g
@@ -927,20 +943,16 @@
                 <div
                     x-show="hoverSection && sectionData[hoverSection]"
                     x-cloak
-                    :style="{ left: tooltipX + 12 + 'px', top: tooltipY + 12 + 'px' }"
+                    :style="getTooltipStyle()"
                     class="fixed z-50 px-3 py-2 text-sm bg-base-100 border border-base-300 rounded-lg shadow-lg pointer-events-none"
                 >
-                    <template x-if="hoverSection && sectionData[hoverSection]">
-                        <div>
-                            <div class="font-semibold" x-text="sectionData[hoverSection]?.name + ' (' + hoverSection + ')'"></div>
-                            <div x-show="sectionData[hoverSection]?.count > 0">
-                                <span x-text="sectionData[hoverSection]?.count"></span> QSOs &middot;
-                                <span x-text="sectionData[hoverSection]?.bands?.join(', ')"></span> &middot;
-                                <span x-text="sectionData[hoverSection]?.modes?.join(', ')"></span>
-                            </div>
-                            <div x-show="sectionData[hoverSection]?.count === 0" class="text-base-content/50">Not worked</div>
-                        </div>
-                    </template>
+                    <div class="font-semibold" x-text="sectionData[hoverSection]?.name + ' (' + hoverSection + ')'"></div>
+                    <div x-show="sectionData[hoverSection]?.count > 0">
+                        <span x-text="sectionData[hoverSection]?.count"></span> QSOs &middot;
+                        <span x-text="sectionData[hoverSection]?.bands?.join(', ')"></span> &middot;
+                        <span x-text="sectionData[hoverSection]?.modes?.join(', ')"></span>
+                    </div>
+                    <div x-show="sectionData[hoverSection]?.count === 0" class="text-base-content/50">Not worked</div>
                 </div>
             </div>
 
