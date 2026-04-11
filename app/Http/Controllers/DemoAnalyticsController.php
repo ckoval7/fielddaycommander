@@ -104,6 +104,7 @@ class DemoAnalyticsController extends Controller
                     'type' => $event->type,
                     'name' => $event->name,
                     'route_name' => $event->route_name,
+                    'friendly_name' => self::friendlyPageName($event->route_name),
                     'metadata' => $event->metadata,
                     'created_at' => $event->created_at->toIso8601String(),
                     'seconds_from_start' => (int) $session->provisioned_at->diffInSeconds($event->created_at),
@@ -278,7 +279,8 @@ class DemoAnalyticsController extends Controller
             ->groupBy('route_name')
             ->orderByDesc('views')
             ->limit(20)
-            ->get();
+            ->get()
+            ->each(fn ($page) => $page->friendly_name = self::friendlyPageName($page->route_name));
     }
 
     private function buildFeatureEngagement(Collection $sessionIds): Collection
@@ -300,11 +302,76 @@ class DemoAnalyticsController extends Controller
         return DemoEvent::whereIn('demo_session_id', $sessionIds)
             ->where('type', 'client')
             ->where('name', 'time_on_page')
-            ->selectRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.page')) as page, AVG(JSON_EXTRACT(metadata, '$.seconds')) as avg_seconds, COUNT(*) as views")
-            ->groupByRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.page'))")
+            ->selectRaw("route_name, JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.page')) as page, AVG(JSON_EXTRACT(metadata, '$.seconds')) as avg_seconds, COUNT(*) as views")
+            ->groupByRaw("route_name, JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.page'))")
             ->orderByDesc('avg_seconds')
             ->limit(10)
-            ->get();
+            ->get()
+            ->each(fn ($page) => $page->friendly_name = self::friendlyPageName($page->route_name));
+    }
+
+    private static function friendlyPageName(?string $routeName): string
+    {
+        if (! $routeName) {
+            return '(unknown)';
+        }
+
+        $map = [
+            'dashboard' => 'Dashboard',
+            'dashboard.alt' => 'Dashboard',
+            'dashboard.tv' => 'TV Dashboard',
+            'public.landing' => 'Public Landing',
+            'profile' => 'Profile',
+            'logging.station-select' => 'Station Select',
+            'logging.session' => 'Logging Session',
+            'logging.contacts.store' => 'Contact Sync',
+            'logging.transcribe.select' => 'Transcribe Select',
+            'logging.transcribe.session' => 'Transcribe Session',
+            'logbook.index' => 'Logbook',
+            'logbook.export' => 'Logbook Export',
+            'section-map' => 'Section Map',
+            'scoring.index' => 'Scoring',
+            'guestbook.index' => 'Guestbook',
+            'gallery.index' => 'Gallery',
+            'gallery.show' => 'Gallery Album',
+            'gallery.upload' => 'Gallery Upload',
+            'bonuses.index' => 'Bonuses',
+            'stations.index' => 'Stations',
+            'stations.create' => 'Create Station',
+            'stations.edit' => 'Edit Station',
+            'equipment.index' => 'My Equipment',
+            'equipment.create' => 'Add Equipment',
+            'equipment.edit' => 'Edit Equipment',
+            'equipment.all' => 'All Equipment',
+            'equipment.club' => 'Club Equipment',
+            'events.index' => 'Events',
+            'events.create' => 'Create Event',
+            'events.edit' => 'Edit Event',
+            'events.clone' => 'Clone Event',
+            'events.show' => 'Event Dashboard',
+            'events.equipment.dashboard' => 'Equipment Dashboard',
+            'events.guestbook' => 'Guestbook Manager',
+            'events.messages.index' => 'Message Traffic',
+            'events.messages.create' => 'Create Message',
+            'events.messages.edit' => 'Edit Message',
+            'events.messages.print-all' => 'Print All Messages',
+            'events.w1aw-bulletin' => 'W1AW Bulletin',
+            'schedule.index' => 'Schedule',
+            'schedule.my-shifts' => 'My Shifts',
+            'schedule.manage' => 'Manage Schedule',
+            'site-safety.index' => 'Site Safety',
+            'site-safety.manage' => 'Manage Safety Checklist',
+            'reports.index' => 'Reports',
+            'reports.cabrillo' => 'Cabrillo Export',
+            'reports.submission-sheet' => 'Submission Sheet',
+            'settings.index' => 'Settings',
+            'users.index' => 'User Management',
+            'admin.audit-logs' => 'Audit Logs',
+            'admin.developer' => 'Developer Tools',
+            'demo.landing' => 'Demo Landing',
+        ];
+
+        return $map[$routeName] ?? str_replace(['.', '-'], ' ', Str::title($routeName));
     }
 
     private function buildRepeatVisitors(Collection $sessions): Collection

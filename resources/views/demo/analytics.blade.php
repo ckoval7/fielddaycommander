@@ -151,7 +151,7 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Route</th>
+                                <th>Page</th>
                                 <th class="text-right">Views</th>
                                 <th class="text-right">Sessions</th>
                             </tr>
@@ -159,7 +159,7 @@
                         <tbody>
                             @forelse($pagePopularity as $page)
                                 <tr>
-                                    <td class="font-mono text-xs">{{ $page->route_name ?? '(unnamed)' }}</td>
+                                    <td class="text-sm">{{ $page->friendly_name }}</td>
                                     <td class="text-right">{{ $page->views }}</td>
                                     <td class="text-right">{{ $page->unique_sessions }}</td>
                                 </tr>
@@ -215,7 +215,7 @@
                         <tbody>
                             @forelse($timeOnPage as $page)
                                 <tr>
-                                    <td class="font-mono text-xs">{{ $page->page }}</td>
+                                    <td class="text-sm">{{ $page->friendly_name }}</td>
                                     <td class="text-right">{{ round($page->avg_seconds) }}s</td>
                                     <td class="text-right">{{ $page->views }}</td>
                                 </tr>
@@ -375,7 +375,7 @@
                             <span class="font-mono text-xs text-base-content/50 w-14 shrink-0 pt-0.5" x-text="formatTime(event.seconds_from_start)"></span>
                             <span class="badge badge-xs shrink-0 mt-1" :class="badgeClass(event.type)" x-text="badgeLabel(event.type)"></span>
                             <div class="min-w-0">
-                                <span class="font-mono text-sm" x-text="event.route_name || event.name"></span>
+                                <span class="text-sm" x-text="event.friendly_name || event.name"></span>
                                 <template x-if="event.metadata">
                                     <div class="text-xs text-base-content/50 mt-0.5">
                                         <template x-for="(val, key) in event.metadata" :key="key">
