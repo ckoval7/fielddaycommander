@@ -114,7 +114,7 @@ class DashboardController extends Controller
             [
                 'label' => 'W1AW bulletin schedule set up',
                 'done' => BulletinScheduleEntry::forEvent($event->id)->exists(),
-                'route' => route('events.w1aw-bulletin', $event),
+                'route' => route('events.w1aw-bulletin'),
             ],
         ];
 

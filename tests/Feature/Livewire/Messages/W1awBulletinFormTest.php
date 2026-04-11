@@ -7,11 +7,13 @@ use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\User;
 use App\Models\W1awBulletin;
+use Database\Seeders\BonusTypeSeeder;
+use Database\Seeders\EventTypeSeeder;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
-    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
 
     Permission::firstOrCreate(['name' => 'log-contacts']);
 
@@ -21,6 +23,8 @@ beforeEach(function () {
 
     $this->operator = User::factory()->create();
     $this->operator->givePermissionTo('log-contacts');
+
+    session(['viewing_event_id' => $this->event->id]);
 });
 
 describe('access control', function () {
@@ -28,7 +32,7 @@ describe('access control', function () {
         $user = User::factory()->create();
 
         Livewire::actingAs($user)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->assertSuccessful();
     });
 
@@ -36,7 +40,7 @@ describe('access control', function () {
         $user = User::factory()->create();
 
         Livewire::actingAs($user)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->set('frequency', '7.0475')
             ->set('mode', 'cw')
             ->set('receivedAt', now()->format('Y-m-d\TH:i'))
@@ -49,7 +53,7 @@ describe('access control', function () {
 describe('creating bulletin', function () {
     test('can save a W1AW bulletin', function () {
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->set('frequency', '7.0475')
             ->set('mode', 'cw')
             ->set('receivedAt', now()->format('Y-m-d\TH:i'))
@@ -62,7 +66,7 @@ describe('creating bulletin', function () {
 
     test('validates required fields', function () {
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->call('save')
             ->assertHasErrors(['frequency', 'mode', 'receivedAt', 'bulletinText']);
     });
@@ -77,7 +81,7 @@ describe('editing bulletin', function () {
         ]);
 
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->assertSet('frequency', '14.0475');
     });
 });
@@ -88,7 +92,7 @@ describe('editing bulletin', function () {
 describe('audit logging', function () {
     test('creating a bulletin logs to audit log', function () {
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->set('frequency', '7.0475')
             ->set('mode', 'cw')
             ->set('receivedAt', now()->format('Y-m-d\TH:i'))
@@ -121,7 +125,7 @@ describe('audit logging', function () {
         ]);
 
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->set('bulletinText', 'UPDATED TEXT')
             ->set('frequency', '14.0475')
             ->call('save')
@@ -151,7 +155,7 @@ describe('audit logging', function () {
         ]);
 
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->call('deleteBulletin')
             ->assertHasNoErrors();
 
@@ -188,7 +192,7 @@ describe('edit history', function () {
         ]);
 
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->assertSee('Edit History')
             ->assertSee('FIRST DRAFT')
             ->assertSee('ORIGINAL TEXT');
@@ -196,7 +200,7 @@ describe('edit history', function () {
 
     test('does not show edit history when bulletin has no edits', function () {
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->assertDontSee('Edit History');
     });
 
@@ -221,7 +225,7 @@ describe('edit history', function () {
         ]);
 
         Livewire::actingAs($this->operator)
-            ->test(W1awBulletinForm::class, ['event' => $this->event])
+            ->test(W1awBulletinForm::class)
             ->assertSee('Edit History')
             ->assertSee('Created bulletin');
     });

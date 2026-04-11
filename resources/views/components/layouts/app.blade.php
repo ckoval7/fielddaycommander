@@ -27,7 +27,7 @@
 <body class="min-h-screen font-sans antialiased bg-base-200">
 
     {{-- NAVBAR mobile only --}}
-    <x-nav sticky class="lg:hidden">
+    <x-nav sticky class="lg:hidden !z-20">
         <x-slot:brand>
             <x-app-brand />
         </x-slot:brand>
@@ -154,7 +154,7 @@
                                 :active="request()->routeIs('events.messages.*')" />
                         @endcan
                         <x-menu-item title="W1AW Bulletin" icon="o-radio"
-                            link="{{ route('events.w1aw-bulletin', $activeEvent) }}"
+                            link="{{ route('events.w1aw-bulletin') }}"
                             :active="request()->routeIs('events.w1aw-bulletin')" />
                     @endif
 
