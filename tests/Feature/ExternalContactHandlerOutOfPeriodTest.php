@@ -170,3 +170,30 @@ test('replace with in-period time updates the contact', function () {
     $contact = Contact::where('external_id', 'ext-id-002')->firstOrFail();
     expect($contact->callsign)->toBe('K1XYZ');
 });
+
+test('idempotency re-send bypasses window check and updates the existing contact', function () {
+    // Create the contact while there is no window restriction
+    $config = makeConfig(['start_time' => null, 'end_time' => null]);
+
+    $this->handler->handleContact(
+        makeDto(callsign: 'W1AW', timestamp: now()->subHours(2), externalId: 'ext-id-idempotent'),
+        $config
+    );
+
+    // Close the event window so new contacts would be rejected
+    $config->event->update([
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->subHour(),
+    ]);
+    $config->refresh();
+
+    // Re-send the same externalId after the window closes — idempotency path bypasses the check
+    $this->handler->handleContact(
+        makeDto(callsign: 'K1XYZ', timestamp: now()->subHour(), externalId: 'ext-id-idempotent'),
+        $config
+    );
+
+    $contact = Contact::where('external_id', 'ext-id-idempotent')->firstOrFail();
+    expect($contact->callsign)->toBe('K1XYZ');
+    expect(Contact::where('external_id', 'ext-id-idempotent')->count())->toBe(1);
+});
