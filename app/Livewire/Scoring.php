@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HasBandModeGrid;
 use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
@@ -9,12 +10,16 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Services\EventContextService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class Scoring extends Component
 {
+    use HasBandModeGrid;
+
     public ?Event $event = null;
 
     public function mount(): void
@@ -215,63 +220,14 @@ class Scoring extends Component
     }
 
     // ========================================================================
-    // BAND/MODE GRID
+    // BAND/MODE GRID (via HasBandModeGrid trait)
     // ========================================================================
 
-    #[Computed]
-    public function bandModeGrid(): array
+    protected function bandModeGridQuery(): Builder
     {
-        if (! $this->config()) {
-            return [];
-        }
-
-        // Single aggregation query grouped by mode_id and band_id
-        $counts = Contact::where('event_configuration_id', $this->config()->id)
+        return Contact::where('event_configuration_id', $this->config()->id)
             ->notDuplicate()
-            ->where('is_gota_contact', false)
-            ->selectRaw('band_id, mode_id, count(*) as contact_count, sum(points) as total_points')
-            ->groupBy('band_id', 'mode_id')
-            ->get()
-            ->groupBy('mode_id');
-
-        $data = [];
-
-        foreach ($this->modes as $mode) {
-            $modeCounts = $counts->get($mode->id, collect());
-            $cells = [];
-            $totalCount = 0;
-            $totalPoints = 0;
-
-            foreach ($this->bands as $band) {
-                $entry = $modeCounts->firstWhere('band_id', $band->id);
-                $count = $entry ? (int) $entry->contact_count : 0;
-                $cells[$band->id] = $count;
-                $totalCount += $count;
-                $totalPoints += $entry ? (int) $entry->total_points : 0;
-            }
-
-            $data[] = [
-                'mode' => $mode,
-                'cells' => $cells,
-                'total_count' => $totalCount,
-                'total_points' => $totalPoints,
-            ];
-        }
-
-        return $data;
-    }
-
-    #[Computed]
-    public function bandColumnTotals(): array
-    {
-        $totals = [];
-        foreach ($this->bandModeGrid as $row) {
-            foreach ($row['cells'] as $bandId => $count) {
-                $totals[$bandId] = ($totals[$bandId] ?? 0) + $count;
-            }
-        }
-
-        return $totals;
+            ->where('is_gota_contact', false);
     }
 
     // ========================================================================
@@ -603,7 +559,7 @@ class Scoring extends Component
         );
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.scoring');
     }

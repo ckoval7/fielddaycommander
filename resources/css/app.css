@@ -250,6 +250,7 @@
     .drawer-side > div {
         scrollbar-width: thin;
         scrollbar-color: oklch(0% 0 0 / 0.15) transparent;
+        @apply flex flex-col;
     }
 
     .drawer-side > div::-webkit-scrollbar {
@@ -288,11 +289,6 @@
 
     .drawer-side > div[class*="!w-[62px]"]::-webkit-scrollbar {
         display: none;
-    }
-
-    /* Sidebar collapse button positioning - move to top instead of bottom */
-    .drawer-side > div {
-        @apply flex flex-col;
     }
 
     /* Move collapse button to top with sticky positioning */

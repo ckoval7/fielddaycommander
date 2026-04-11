@@ -318,7 +318,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
         get recallableContacts() {
             // Get server-confirmed contacts from the DOM table rows
-            const rows = document.querySelectorAll('tr[wire\\:key^="contact-"]');
+            const rows = document.querySelectorAll(String.raw`tr[wire\:key^="contact-"]`);
             const contacts = [];
             rows.forEach(row => {
                 // Skip deleted rows (they have line-through class)
@@ -326,7 +326,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 const callsignCell = row.querySelector('td:nth-child(3)');
                 const exchangeCell = row.querySelector('td:nth-child(4)');
                 const wireKey = row.getAttribute('wire:key');
-                const contactId = wireKey ? parseInt(wireKey.replace('contact-', '')) : null;
+                const contactId = wireKey ? Number.parseInt(wireKey.replace('contact-', '')) : null;
                 if (contactId && callsignCell && exchangeCell) {
                     contacts.push({
                         id: contactId,
@@ -375,7 +375,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 inputEl.value = '';
                 const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
                 if (wire) {
-                    try { wire.set('exchangeInput', ''); } catch (e) { /* best effort */ }
+                    try { wire.set('exchangeInput', ''); } catch { /* best-effort sync */ }
                 }
                 inputEl.focus();
             }

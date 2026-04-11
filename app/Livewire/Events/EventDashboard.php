@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Livewire\Concerns\HasBandModeGrid;
 use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\BonusType;
@@ -12,6 +13,7 @@ use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use App\Models\Mode;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -20,6 +22,7 @@ use Livewire\Component;
 class EventDashboard extends Component
 {
     use AuthorizesRequests;
+    use HasBandModeGrid;
 
     public Event $event;
 
@@ -196,61 +199,10 @@ class EventDashboard extends Component
         return Mode::orderBy('name')->get();
     }
 
-    #[Computed]
-    public function bandModeGrid(): array
+    protected function bandModeGridQuery(): Builder
     {
-        $config = $this->config();
-
-        if (! $config) {
-            return [];
-        }
-
-        $counts = Contact::where('event_configuration_id', $config->id)
-            ->notDuplicate()
-            ->selectRaw('band_id, mode_id, count(*) as contact_count, sum(points) as total_points')
-            ->groupBy('band_id', 'mode_id')
-            ->get()
-            ->groupBy('mode_id');
-
-        $data = [];
-
-        foreach ($this->modes as $mode) {
-            $modeCounts = $counts->get($mode->id, collect());
-            $cells = [];
-            $totalCount = 0;
-            $totalPoints = 0;
-
-            foreach ($this->bands as $band) {
-                $entry = $modeCounts->firstWhere('band_id', $band->id);
-                $count = $entry ? (int) $entry->contact_count : 0;
-                $cells[$band->id] = $count;
-                $totalCount += $count;
-                $totalPoints += $entry ? (int) $entry->total_points : 0;
-            }
-
-            $data[] = [
-                'mode' => $mode,
-                'cells' => $cells,
-                'total_count' => $totalCount,
-                'total_points' => $totalPoints,
-            ];
-        }
-
-        return $data;
-    }
-
-    #[Computed]
-    public function bandColumnTotals(): array
-    {
-        $totals = [];
-
-        foreach ($this->bandModeGrid as $row) {
-            foreach ($row['cells'] as $bandId => $count) {
-                $totals[$bandId] = ($totals[$bandId] ?? 0) + $count;
-            }
-        }
-
-        return $totals;
+        return Contact::where('event_configuration_id', $this->config()->id)
+            ->notDuplicate();
     }
 
     #[Computed]
