@@ -158,7 +158,7 @@
                             } else {
                                 const ageSeconds = Math.floor(Date.now() / 1000) - t;
                                 const minAge = 300;      // 5 minutes
-                                const maxAge = 86400;    // 24 hours
+                                const maxAge = 43200;    // 12 hours
                                 const clamped = Math.max(minAge, Math.min(maxAge, ageSeconds));
                                 const ratio = (clamped - minAge) / (maxAge - minAge);
                                 const hue = 130 - ratio * 130; // 130=green (fresh) → 0=red (stale)
@@ -1102,7 +1102,7 @@
                         <div class="flex items-center gap-1">
                             <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
                         </div>
-                        <span>&gt;24h</span>
+                        <span>&gt;12h</span>
                         <div class="flex items-center gap-1">
                             <div class="h-3 w-48 rounded" style="background: linear-gradient(to right, hsl(0,65%,50%), hsl(60,65%,50%), hsl(130,65%,45%))"></div>
                         </div>
