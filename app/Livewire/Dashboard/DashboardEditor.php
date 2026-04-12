@@ -262,7 +262,7 @@ class DashboardEditor extends Component
         }
 
         $colSpan = max(1, min(4, $colSpan));
-        $rowSpan = max(2, min(6, $rowSpan));
+        $rowSpan = max(1, min(3, $rowSpan));
 
         $found = false;
         $this->widgets = $this->widgets->map(function ($widget) use ($widgetId, $colSpan, $rowSpan, &$found) {

@@ -4,6 +4,7 @@ use App\Livewire\Schedule\ScheduleTimeline;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
@@ -30,6 +31,8 @@ beforeEach(function () {
         'first_name' => 'Test',
         'last_name' => 'Operator',
     ]);
+
+    Setting::set('time_format', 'g:i:s A');
 
     Permission::firstOrCreate(['name' => 'sign-up-shifts']);
     $this->user->givePermissionTo('sign-up-shifts');
@@ -501,8 +504,8 @@ describe('filtering and sorting', function () {
 
         Livewire::test(ScheduleTimeline::class)
             ->set('availability', 'unfilled')
-            ->assertSee($openShift->start_time->format('M j, g:i A'))
-            ->assertDontSee($fullShift->start_time->format('M j, g:i A'));
+            ->assertSee(toLocalTime($openShift->start_time)->format('M j, '.timeFormat()))
+            ->assertDontSee(toLocalTime($fullShift->start_time)->format('M j, '.timeFormat()));
     });
 
     test('shows empty state when filters match nothing', function () {

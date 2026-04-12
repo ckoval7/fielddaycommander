@@ -51,6 +51,7 @@ class RoleSeeder extends Seeder
             'view-all-equipment',
             'manage-event-equipment',
             'edit-any-equipment',
+            'import-contacts',
         ]);
 
         // Operator (Default)

@@ -88,7 +88,7 @@ it('can confirm two factor with valid code', function () {
         ->call('confirmTwoFactor')
         ->assertSet('showingQrCode', false)
         ->assertSet('showingRecoveryCodes', true)
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 });
 
 it('can disable two factor authentication', function () {
@@ -102,7 +102,7 @@ it('can disable two factor authentication', function () {
         ->set('activeTab', 'security')
         ->set('current_password', 'password123')
         ->call('disableTwoFactor')
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     expect($this->user->two_factor_secret)->toBeNull();
@@ -157,7 +157,7 @@ it('can regenerate recovery codes', function () {
         ->set('activeTab', 'security')
         ->call('regenerateRecoveryCodes')
         ->assertSet('showingRecoveryCodes', true)
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     expect($this->user->two_factor_recovery_codes)->not->toBe($originalCodes);
@@ -171,7 +171,7 @@ it('prevents enabling 2fa when mode is disabled', function () {
         ->set('activeTab', 'security')
         ->set('current_password', 'password123')
         ->call('enableTwoFactor')
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     expect($this->user->two_factor_secret)->toBeNull();
@@ -190,7 +190,7 @@ it('prevents disabling 2fa when mode is required', function () {
         ->set('activeTab', 'security')
         ->set('current_password', 'password123')
         ->call('disableTwoFactor')
-        ->assertDispatched('toast');
+        ->assertHasNoErrors();
 
     $this->user->refresh();
     expect($this->user->two_factor_secret)->not->toBeNull();

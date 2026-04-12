@@ -120,7 +120,7 @@ class EquipmentList extends Component
      */
     protected function commitEquipmentValidationRule(): Closure
     {
-        return function ($attribute, $value, $fail) {
+        return function ($_attribute, $value, $fail) { // NOSONAR - parameter required by Laravel validation closure signature
             $equipment = Equipment::find($value);
             if (! $equipment || $equipment->owner_user_id !== auth()->id()) {
                 $fail('You do not own this equipment.');

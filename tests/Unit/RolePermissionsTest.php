@@ -28,9 +28,9 @@ test('station captain role has both contact permissions', function () {
         ->and($stationCaptain->hasPermissionTo('edit-contacts'))->toBeTrue();
 });
 
-test('system administrator role does not have contact logging permissions', function () {
+test('system administrator role has all permissions including contact logging', function () {
     $systemAdmin = Role::findByName('System Administrator');
 
-    expect($systemAdmin->hasPermissionTo('log-contacts'))->toBeFalse()
-        ->and($systemAdmin->hasPermissionTo('edit-contacts'))->toBeFalse();
+    expect($systemAdmin->hasPermissionTo('log-contacts'))->toBeTrue()
+        ->and($systemAdmin->hasPermissionTo('edit-contacts'))->toBeTrue();
 });

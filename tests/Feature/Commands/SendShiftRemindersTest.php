@@ -101,6 +101,7 @@ test('does not send reminder to no-show users', function () {
 });
 
 test('sends email when shift_reminder_email is enabled', function () {
+    config(['mail.email_configured' => true]);
     Notification::fake();
 
     $this->user->update([

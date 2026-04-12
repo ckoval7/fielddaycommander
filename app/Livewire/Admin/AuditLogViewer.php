@@ -287,6 +287,17 @@ class AuditLogViewer extends Component
                 'album.export.requested' => 'Album export requested',
                 'album.export.downloaded' => 'Album export downloaded',
             ],
+            'ADIF Import' => [
+                'adif.import.uploaded' => 'ADIF file uploaded',
+                'adif.import.completed' => 'ADIF import completed',
+                'adif.import.failed' => 'ADIF import failed',
+            ],
+            'External Logger' => [
+                'external_logger.enabled' => 'External logger enabled',
+                'external_logger.disabled' => 'External logger disabled',
+                'external_logger.port.updated' => 'External logger port updated',
+                'external_logger.restarted' => 'External logger restarted',
+            ],
         ];
     }
 }

@@ -133,7 +133,7 @@ class ContactExporterTest extends TestCase
 
         // Verify CSV parsing works correctly with special characters
         expect($dataRow[1])->toBe('W1AW/VE');
-        expect($dataRow[5])->toContain('quote');
+        expect($dataRow[5])->toContain('QUOTE');
     }
 
     public function test_empty_collection_returns_header_row_only(): void

@@ -70,8 +70,8 @@
                         $class = null;
                         if ($contact->received_exchange) {
                             $tokens = preg_split('/\s+/', trim($contact->received_exchange));
-                            if (count($tokens) >= 2) {
-                                $class = $tokens[1];
+                            if (count($tokens) >= 1) {
+                                $class = $tokens[0];
                             }
                         }
                     @endphp
@@ -157,8 +157,8 @@
                             $mobileClass = null;
                             if ($contact->received_exchange) {
                                 $mobileTokens = preg_split('/\s+/', trim($contact->received_exchange));
-                                if (count($mobileTokens) >= 2) {
-                                    $mobileClass = $mobileTokens[1];
+                                if (count($mobileTokens) >= 1) {
+                                    $mobileClass = $mobileTokens[0];
                                 }
                             }
                         @endphp

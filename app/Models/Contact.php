@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\ContactFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contact extends Model
 {
-    /** @use HasFactory<\Database\Factories\ContactFactory> */
+    /** @use HasFactory<ContactFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
@@ -36,6 +37,9 @@ class Contact extends Model
         'points',
         'is_duplicate',
         'is_transcribed',
+        'is_imported',
+        'external_id',
+        'external_source',
         'duplicate_of_contact_id',
         'notes',
     ];
@@ -49,6 +53,7 @@ class Contact extends Model
             'is_satellite' => 'boolean',
             'is_duplicate' => 'boolean',
             'is_transcribed' => 'boolean',
+            'is_imported' => 'boolean',
         ];
     }
 

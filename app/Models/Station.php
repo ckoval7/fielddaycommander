@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PowerSource;
+use Database\Factories\StationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,13 +16,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Station extends Model
 {
-    /** @use HasFactory<\Database\Factories\StationFactory> */
+    /** @use HasFactory<StationFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'event_configuration_id',
         'radio_equipment_id',
         'name',
+        'hostname',
         'power_source_description',
         'power_source',
         'is_gota',

@@ -15,3 +15,10 @@ Broadcast::channel('event.{eventId}', function ($user, int $eventId) {
 Broadcast::channel('user.{id}', function ($user, int $id) {
     return $user->id === $id;
 });
+
+/**
+ * External logger status channel - authenticated users can listen for listener status changes.
+ */
+Broadcast::channel('event.{eventConfigId}.external-logger', function ($user) {
+    return $user !== null;
+});
