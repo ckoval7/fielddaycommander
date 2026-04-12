@@ -77,29 +77,27 @@ class ContactEditor extends Component
         $parsed = app(ExchangeParserService::class)->parse($validated['received_exchange']);
         $sectionId = $parsed['success'] ? $parsed['section_id'] : $contact->section_id;
 
-        $contact->update([
-            'callsign' => strtoupper($validated['callsign']),
-            'received_exchange' => strtoupper($validated['received_exchange']),
-            'band_id' => $validated['band_id'],
-            'mode_id' => $validated['mode_id'],
-            'qso_time' => $validated['qso_time'],
-            'section_id' => $sectionId,
-            'notes' => $validated['notes'] ?: null,
-        ]);
-
-        // Re-run duplicate detection
+        // Re-run duplicate detection against the new values
         $isDuplicate = Contact::query()
             ->where('event_configuration_id', $contact->event_configuration_id)
-            ->where('band_id', $contact->band_id)
-            ->where('mode_id', $contact->mode_id)
-            ->where('callsign', $contact->callsign)
+            ->where('band_id', $validated['band_id'])
+            ->where('mode_id', $validated['mode_id'])
+            ->where('callsign', mb_strtoupper($validated['callsign']))
             ->where('is_gota_contact', $contact->is_gota_contact)
             ->where('id', '!=', $contact->id)
             ->where('is_duplicate', false)
             ->exists();
 
-        $mode = Mode::find($contact->mode_id);
+        $mode = Mode::find($validated['mode_id']);
+
         $contact->update([
+            'callsign' => $validated['callsign'],
+            'received_exchange' => $validated['received_exchange'],
+            'band_id' => $validated['band_id'],
+            'mode_id' => $validated['mode_id'],
+            'qso_time' => $validated['qso_time'],
+            'section_id' => $sectionId,
+            'notes' => $validated['notes'] ?: null,
             'is_duplicate' => $isDuplicate,
             'points' => $isDuplicate ? 0 : ($mode->points_fd ?? 1),
         ]);
