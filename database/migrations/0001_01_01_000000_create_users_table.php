@@ -35,6 +35,8 @@ return new class extends Migration
             $table->string('last_login_ip', 45)->nullable();
             $table->string('preferred_timezone')->nullable();
             $table->json('notification_preferences')->nullable();
+            $table->boolean('is_youth')->default(false);
+            $table->boolean('is_cpr_aed_trained')->default(false);
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

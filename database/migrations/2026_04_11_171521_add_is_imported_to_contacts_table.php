@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // On fresh installs, this column already exists in the create migration.
+        if (Schema::hasColumn('contacts', 'is_imported')) {
+            return;
+        }
+
         Schema::table('contacts', function (Blueprint $table) {
             $table->boolean('is_imported')->default(false)->after('is_transcribed');
         });

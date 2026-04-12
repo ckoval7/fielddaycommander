@@ -12,10 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Add is_youth to users table
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('is_youth')->default(false)->after('notification_preferences');
-        });
+        // 1. Add is_youth to users table (on fresh installs, already in create migration)
+        if (! Schema::hasColumn('users', 'is_youth')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->boolean('is_youth')->default(false)->after('notification_preferences');
+            });
+        }
 
         // 2. Look up FD event type ID
         $fdEventTypeId = DB::table('event_types')->where('code', 'FD')->value('id');

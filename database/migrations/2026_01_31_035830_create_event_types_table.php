@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name', 50);
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->unsignedInteger('setup_offset_hours')->nullable();
             $table->timestamps();
         });
     }
