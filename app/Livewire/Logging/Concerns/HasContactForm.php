@@ -57,7 +57,7 @@ trait HasContactForm
             ->where('is_duplicate', false)
             ->where('is_gota_contact', $isGotaContact)
             ->whereNotIn('callsign', $alreadyWorked)
-            ->with(['band:id,name', 'mode:id,name'])
+            ->with(['band:id,name', 'mode:id,name', 'section:id,code'])
             ->latest('qso_time')
             ->get()
             ->groupBy('callsign')
@@ -69,7 +69,11 @@ trait HasContactForm
 
                 return [
                     'callsign' => $callsign,
-                    'exchange' => strtoupper(trim($contacts->first()->received_exchange)),
+                    'exchange' => strtoupper(trim(
+                        ($contacts->first()->callsign ?? '').' '.
+                        ($contacts->first()->exchange_class ?? '').' '.
+                        ($contacts->first()->section?->code ?? '')
+                    )),
                     'worked_on' => $workedOn,
                 ];
             })
