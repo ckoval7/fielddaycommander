@@ -3,6 +3,7 @@
 namespace App\Livewire\Logbook;
 
 use App\Models\Band;
+use App\Models\Event;
 use App\Models\Mode;
 use App\Models\Section;
 use App\Models\Station;
@@ -12,6 +13,7 @@ use App\Services\LogbookQueryBuilder;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -53,6 +55,9 @@ class LogbookBrowser extends Component
     #[Url]
     public ?string $show_gota = null;
 
+    #[Url]
+    public ?string $show_deleted = null;
+
     public ?int $eventConfigurationId = null;
 
     public int $perPage = 50;
@@ -64,7 +69,7 @@ class LogbookBrowser extends Component
 
         // No active event — fall back to most recently ended event (handles grace period)
         if (! $activeEvent) {
-            $activeEvent = \App\Models\Event::query()
+            $activeEvent = Event::query()
                 ->with('eventConfiguration')
                 ->where('end_time', '<=', appNow())
                 ->orderByDesc('end_time')
@@ -94,6 +99,7 @@ class LogbookBrowser extends Component
             'show_duplicates',
             'show_transcribed',
             'show_gota',
+            'show_deleted',
         ]);
         $this->resetPage();
     }
@@ -153,6 +159,20 @@ class LogbookBrowser extends Component
         $this->resetPage();
     }
 
+    public function updatedShowDeleted(): void
+    {
+        $this->resetPage();
+    }
+
+    #[On('contact-updated')]
+    #[On('contact-deleted')]
+    #[On('contact-restored')]
+    public function refreshContacts(): void
+    {
+        unset($this->contacts);
+        unset($this->stats);
+    }
+
     #[Computed]
     public function contacts(): CursorPaginator
     {
@@ -175,6 +195,7 @@ class LogbookBrowser extends Component
             'duplicate_filter' => $this->show_duplicates,
             'transcribed_filter' => $this->show_transcribed,
             'gota_filter' => $this->show_gota,
+            'deleted_filter' => $this->show_deleted,
         ];
 
         $query = $queryBuilder->applyFilters($filters);
@@ -258,6 +279,7 @@ class LogbookBrowser extends Component
             'duplicate_filter' => $this->show_duplicates,
             'transcribed_filter' => $this->show_transcribed,
             'gota_filter' => $this->show_gota,
+            'deleted_filter' => $this->show_deleted,
         ];
 
         $query = $queryBuilder->applyFilters($filters)->reorder();

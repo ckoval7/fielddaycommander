@@ -11,6 +11,7 @@ use App\Models\Station;
 use App\Models\User;
 use App\Notifications\Equipment\EquipmentCommitted;
 use App\Services\StationCloneService;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -110,10 +111,10 @@ class StationCloneServiceTest extends TestCase
     {
         Notification::fake();
 
-        $station = Station::factory()->create([
+        $station = Station::withoutEvents(fn () => Station::factory()->create([
             'event_configuration_id' => $this->sourceConfig->id,
             'name' => 'Station 2B',
-        ]);
+        ]));
 
         $equipment = Equipment::factory()->create([
             'owner_user_id' => User::factory()->create()->id,
@@ -336,9 +337,9 @@ class StationCloneServiceTest extends TestCase
 
     public function test_deleted_equipment_is_skipped(): void
     {
-        $station = Station::factory()->create([
+        $station = Station::withoutEvents(fn () => Station::factory()->create([
             'event_configuration_id' => $this->sourceConfig->id,
-        ]);
+        ]));
 
         $equipment = Equipment::factory()->create([
             'owner_user_id' => User::factory()->create()->id,
@@ -815,7 +816,7 @@ class StationCloneServiceTest extends TestCase
             $owner,
             EquipmentCommitted::class,
             function ($notification) {
-                return $notification instanceof \Illuminate\Contracts\Queue\ShouldQueue;
+                return $notification instanceof ShouldQueue;
             }
         );
     }

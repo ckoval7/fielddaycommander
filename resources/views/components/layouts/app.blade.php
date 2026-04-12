@@ -158,7 +158,7 @@
                             :active="request()->routeIs('events.w1aw-bulletin')" />
                     @endif
 
-                    @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment'])
+                    @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment', 'import-contacts'])
                         <x-menu-separator title="ADMINISTRATION" />
 
                         @canany(['create-events', 'edit-events'])
@@ -201,6 +201,10 @@
 
                         @can('view-security-logs')
                             <x-menu-item title="Audit Logs" icon="o-clipboard-document-list" link="{{ route('admin.audit-logs') }}" :active="request()->routeIs('admin.audit-logs')" />
+                        @endcan
+
+                        @can('import-contacts')
+                            <x-menu-item title="External Loggers" icon="o-signal" link="{{ route('admin.external-loggers') }}" :active="request()->routeIs('admin.external-loggers') || request()->routeIs('admin.import-adif')" />
                         @endcan
 
                         @if(config('developer.enabled'))

@@ -6,9 +6,11 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
+use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     // Create a user and event setup
@@ -314,4 +316,71 @@ test('component has correct per page setting', function () {
     $component = new LogbookBrowser;
 
     expect($component->perPage)->toBe(50);
+});
+
+describe('show_deleted filter', function () {
+    beforeEach(function () {
+        Permission::findOrCreate('edit-contacts', 'web');
+
+        $session = OperatingSession::factory()->create([
+            'station_id' => $this->station->id,
+        ]);
+
+        $this->activeContact = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'operating_session_id' => $session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'section_id' => $this->section->id,
+        ]);
+
+        $this->deletedContact = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'operating_session_id' => $session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'section_id' => $this->section->id,
+        ]);
+        $this->deletedContact->delete();
+    });
+
+    test('show_deleted defaults to null and excludes deleted contacts', function () {
+        Livewire::test(LogbookBrowser::class)
+            ->assertSet('show_deleted', null);
+    });
+
+    test('show_deleted "include" shows both active and deleted contacts', function () {
+        $this->user->givePermissionTo('edit-contacts');
+
+        Livewire::test(LogbookBrowser::class)
+            ->set('show_deleted', 'include')
+            ->assertSee($this->activeContact->callsign)
+            ->assertSee($this->deletedContact->callsign);
+    });
+
+    test('show_deleted "only" shows only deleted contacts', function () {
+        $this->user->givePermissionTo('edit-contacts');
+
+        Livewire::test(LogbookBrowser::class)
+            ->set('show_deleted', 'only')
+            ->assertDontSee($this->activeContact->callsign)
+            ->assertSee($this->deletedContact->callsign);
+    });
+});
+
+describe('event listeners', function () {
+    test('contact-updated refreshes contacts', function () {
+        Livewire::test(LogbookBrowser::class)
+            ->dispatch('contact-updated');
+    });
+
+    test('contact-deleted refreshes contacts', function () {
+        Livewire::test(LogbookBrowser::class)
+            ->dispatch('contact-deleted');
+    });
+
+    test('contact-restored refreshes contacts', function () {
+        Livewire::test(LogbookBrowser::class)
+            ->dispatch('contact-restored');
+    });
 });

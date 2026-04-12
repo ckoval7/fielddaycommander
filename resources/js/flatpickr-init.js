@@ -7,7 +7,7 @@ export default function flatpickrComponent({ mode = 'datetime', min = null, max 
         init() {
             const config = {
                 allowInput: true,
-                static: true,
+                appendTo: document.body,
                 onChange: (selectedDates, dateStr) => {
                     this.$el.querySelector('input').value = dateStr;
                     this.$el.querySelector('input').dispatchEvent(new Event('input', { bubbles: true }));

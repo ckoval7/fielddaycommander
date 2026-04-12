@@ -48,10 +48,10 @@ beforeEach(function () {
 });
 
 describe('index route', function () {
-    test('redirects to login for unauthenticated user', function () {
+    test('allows unauthenticated access to public logbook', function () {
         $response = $this->get(route('logbook.index'));
 
-        $response->assertRedirect(route('login'));
+        $response->assertOk();
     });
 
     // Note: Full view rendering tests skipped due to MaryUI component resolution in test environment
@@ -80,10 +80,10 @@ describe('export route', function () {
             ->and($content)->toContain('Mode');
     });
 
-    test('redirects to login for unauthenticated user', function () {
+    test('allows unauthenticated access to public export', function () {
         $response = $this->get(route('logbook.export'));
 
-        $response->assertRedirect(route('login'));
+        $response->assertOk();
     });
 
     test('returns 404 when no active event exists', function () {

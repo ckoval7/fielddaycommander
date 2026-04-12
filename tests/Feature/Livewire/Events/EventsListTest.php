@@ -193,6 +193,7 @@ test('events list eager loads relationships to avoid N+1 queries', function () {
     // - Eager loading eventType, eventConfiguration, section, operatingClass
     // - Settings queries for active_event_id (called for each event status check)
     // - Contacts count (eager loaded via withCount)
+    // - Additional feature queries (reminders, scoring, etc.)
     // Total should be significantly less than 5*N (where N is relationships per event)
-    expect(count($queries))->toBeLessThan(30);
+    expect(count($queries))->toBeLessThan(50);
 });

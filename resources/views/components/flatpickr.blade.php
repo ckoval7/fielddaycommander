@@ -19,39 +19,44 @@
     x-data="{!! $xData !!}"
     class="w-full"
 >
-    {{-- Label --}}
-    @if($label)
-        <label for="{{ $uuid }}" class="pt-0 label label-text font-semibold">
+    <fieldset class="fieldset py-0">
+        {{-- Label --}}
+        @if($label)
+            <legend class="fieldset-legend mb-0.5">
+                {{ $label }}
+
+                @if($attributes->get('required'))
+                    <span class="text-error">*</span>
+                @endif
+            </legend>
+        @endif
+
+        {{-- Input --}}
+        <label class="input w-full">
             @if($icon)
-                <x-icon :name="$icon" class="w-4 h-4 text-base-content/60" />
+                <x-icon :name="$icon" class="pointer-events-none w-4 h-4 opacity-40" />
             @endif
-            <span>{{ $label }}</span>
+
+            <input
+                id="{{ $uuid }}"
+                type="text"
+                placeholder="{{ $mode === 'time' ? 'HH:MM' : ($mode === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:MM') }}"
+                {{ $attributes->except('disabled')->class(['w-full']) }}
+                autocomplete="off"
+                @if($disabled) disabled @endif
+            />
         </label>
-    @endif
 
-    {{-- Input --}}
-    <input
-        id="{{ $uuid }}"
-        type="text"
-        placeholder="{{ $mode === 'time' ? 'HH:MM' : ($mode === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:MM') }}"
-        {{ $attributes->except('disabled')->class(['input input-bordered w-full']) }}
-        autocomplete="off"
-        @if($disabled) disabled @endif
-    />
+        {{-- Hint --}}
+        @if($hint)
+            <div class="fieldset-label">{{ $hint }}</div>
+        @endif
 
-    {{-- Hint --}}
-    @if($hint)
-        <div class="label">
-            <span class="label-text-alt text-base-content/60">{{ $hint }}</span>
-        </div>
-    @endif
-
-    {{-- Error --}}
-    @if($modelName)
-        @error($modelName)
-            <div class="label">
-                <span class="label-text-alt text-error">{{ $message }}</span>
-            </div>
-        @enderror
-    @endif
+        {{-- Error --}}
+        @if($modelName)
+            @error($modelName)
+                <div class="text-error">{{ $message }}</div>
+            @enderror
+        @endif
+    </fieldset>
 </div>

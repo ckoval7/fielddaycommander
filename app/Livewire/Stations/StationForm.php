@@ -7,10 +7,12 @@ use App\Models\Equipment;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Station;
+use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -31,6 +33,8 @@ class StationForm extends Component
 
     // Form fields
     public string $name = '';
+
+    public ?string $hostname = null;
 
     public ?int $event_configuration_id = null;
 
@@ -68,7 +72,7 @@ class StationForm extends Component
         } else {
             $this->authorize('create', Station::class);
             // Default to context event (session-overridden or active event)
-            $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
+            $activeEvent = app(EventContextService::class)->getContextEvent();
             if ($activeEvent) {
                 $this->event_configuration_id = $activeEvent->eventConfiguration?->id;
             }
@@ -83,6 +87,7 @@ class StationForm extends Component
         $station = Station::with('eventConfiguration', 'primaryRadio')->findOrFail($this->stationId);
 
         $this->name = $station->name;
+        $this->hostname = $station->hostname;
         $this->event_configuration_id = $station->event_configuration_id;
         $this->radio_equipment_id = $station->radio_equipment_id;
         $this->is_gota = $station->is_gota;
@@ -225,7 +230,7 @@ class StationForm extends Component
     {
         try {
             $validated = $this->validate();
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->activeTab = 'configuration';
 
             throw $e;
@@ -233,6 +238,7 @@ class StationForm extends Component
 
         $stationData = [
             'name' => $validated['name'],
+            'hostname' => $validated['hostname'],
             'event_configuration_id' => $validated['event_configuration_id'],
             'radio_equipment_id' => $validated['radio_equipment_id'],
             'is_gota' => $validated['is_gota'],
@@ -304,6 +310,7 @@ class StationForm extends Component
         $this->reset([
             'stationId',
             'name',
+            'hostname',
             'event_configuration_id',
             'radio_equipment_id',
             'is_gota',
@@ -315,7 +322,7 @@ class StationForm extends Component
         ]);
 
         // Reset to context event (session-overridden or active event)
-        $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
+        $activeEvent = app(EventContextService::class)->getContextEvent();
         if ($activeEvent) {
             $this->event_configuration_id = $activeEvent->eventConfiguration?->id;
         }
@@ -364,6 +371,7 @@ class StationForm extends Component
                     ->where('event_configuration_id', $this->event_configuration_id)
                     ->ignore($this->stationId),
             ],
+            'hostname' => ['nullable', 'string', 'max:50'],
             'event_configuration_id' => ['required', 'exists:event_configurations,id'],
             'radio_equipment_id' => [
                 'required',

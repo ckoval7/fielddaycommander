@@ -52,7 +52,10 @@ test('stat card calculates total score correctly', function () {
 
     // Create contacts with points
     $user = User::factory()->create();
-    $station = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $eventConfig->id,
+        'max_power_watts' => 100, // Keep at/below 100W so power multiplier is 2x
+    ]);
     $band = Band::factory()->create();
     $mode = Mode::factory()->create();
     $section = Section::factory()->create();
@@ -84,7 +87,7 @@ test('stat card calculates total score correctly', function () {
 
     expect($data)
         ->toBeArray()
-        ->and($data['value'])->toBe('10') // 5 contacts * 2 points
+        ->and($data['value'])->toBe('20') // 5 contacts * 2 points * 2x power multiplier
         ->and($data['label'])->toBe('Total Score')
         ->and($data['icon'])->toBe('o-trophy')
         ->and($data['color'])->toBe('text-success');

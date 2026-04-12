@@ -80,7 +80,7 @@ class EquipmentCommitted extends Notification implements ShouldQueue
             ->line('')
             ->line('**Event Details:**')
             ->line("Event: {$event->name}")
-            ->line("Dates: {$event->start_time->format(self::DATE_FORMAT)} - {$event->end_time->format(self::DATE_FORMAT)}")
+            ->line('Dates: '.($event->start_time?->format(self::DATE_FORMAT) ?? 'TBD').' - '.($event->end_time?->format(self::DATE_FORMAT) ?? 'TBD'))
             ->lineIf($this->equipmentEvent->expected_delivery_at, "Expected Delivery: {$this->equipmentEvent->expected_delivery_at?->format(self::DATE_FORMAT)}")
             ->lineIf($this->equipmentEvent->delivery_notes, "Delivery Notes: {$this->equipmentEvent->delivery_notes}")
             ->line('')

@@ -22,5 +22,10 @@
         <div>
             @include('livewire.logbook.partials.results-view')
         </div>
+
+        {{-- Contact Editor (child component) --}}
+        @can('edit-contacts')
+            <livewire:logbook.contact-editor />
+        @endcan
     @endif
 </div>

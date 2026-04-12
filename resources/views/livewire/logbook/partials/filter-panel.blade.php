@@ -149,6 +149,23 @@
                     </div>
                 </fieldset>
 
+                {{-- Deleted Status Filter (edit-contacts only) --}}
+                @can('edit-contacts')
+                    <fieldset class="flex flex-col gap-2">
+                        <legend class="text-sm font-medium text-base-content/70">Deleted Status</legend>
+                        <div class="flex flex-col gap-2">
+                            <x-radio
+                                wire:model.live="show_deleted"
+                                :options="[
+                                    ['id' => null, 'name' => 'Active Only'],
+                                    ['id' => 'include', 'name' => 'Include Deleted'],
+                                    ['id' => 'only', 'name' => 'Deleted Only']
+                                ]"
+                            />
+                        </div>
+                    </fieldset>
+                @endcan
+
             </div>
 
             {{-- Active Filters Summary --}}
@@ -164,6 +181,7 @@
                     'Duplicates' => $show_duplicates,
                     'Transcribed' => $show_transcribed,
                     'GOTA' => $show_gota,
+                    'Deleted' => $show_deleted,
                 ])->filter()->count();
             @endphp
 

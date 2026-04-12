@@ -22,6 +22,7 @@ beforeEach(function () {
     ]);
     $this->eventConfig = EventConfiguration::factory()->create(['event_id' => $this->event->id]);
     Setting::set('active_event_id', $this->event->id);
+    Setting::set('time_format', 'g:i:s A');
 
     $this->admin = User::factory()->create([
         'first_name' => 'Admin',
@@ -570,8 +571,8 @@ describe('filtering and sorting', function () {
 
         Livewire::test(ManageSchedule::class)
             ->set('role', (string) $role2->id)
-            ->assertSee($shift2->start_time->format('M j, g:i A'))
-            ->assertDontSee($shift1->start_time->format('M j, g:i A'));
+            ->assertSee(toLocalTime($shift2->start_time)->format('M j, '.timeFormat()))
+            ->assertDontSee(toLocalTime($shift1->start_time)->format('M j, '.timeFormat()));
     });
 
     test('can search shifts by assigned user name', function () {
@@ -644,8 +645,8 @@ describe('filtering and sorting', function () {
 
         Livewire::test(ManageSchedule::class)
             ->set('availability', 'unfilled')
-            ->assertSee($openShift->start_time->format('M j, g:i A'))
-            ->assertDontSee($fullShift->start_time->format('M j, g:i A'));
+            ->assertSee(toLocalTime($openShift->start_time)->format('M j, '.timeFormat()))
+            ->assertDontSee(toLocalTime($fullShift->start_time)->format('M j, '.timeFormat()));
     });
 
     test('can filter shifts by time period', function () {
@@ -667,8 +668,8 @@ describe('filtering and sorting', function () {
 
         Livewire::test(ManageSchedule::class)
             ->set('timeFilter', 'upcoming')
-            ->assertSee($upcomingShift->start_time->format('M j, g:i A'))
-            ->assertDontSee($pastShift->start_time->format('M j, g:i A'));
+            ->assertSee(toLocalTime($upcomingShift->start_time)->format('M j, '.timeFormat()))
+            ->assertDontSee(toLocalTime($pastShift->start_time)->format('M j, '.timeFormat()));
     });
 
     test('can filter shifts by assignment status', function () {
@@ -702,8 +703,8 @@ describe('filtering and sorting', function () {
 
         Livewire::test(ManageSchedule::class)
             ->set('status', 'checked_in')
-            ->assertSee($shift1->start_time->format('M j, g:i A'))
-            ->assertDontSee($shift2->start_time->format('M j, g:i A'));
+            ->assertSee(toLocalTime($shift1->start_time)->format('M j, '.timeFormat()))
+            ->assertDontSee(toLocalTime($shift2->start_time)->format('M j, '.timeFormat()));
     });
 
     test('multiple filters compose with AND logic', function () {
@@ -742,9 +743,9 @@ describe('filtering and sorting', function () {
         Livewire::test(ManageSchedule::class)
             ->set('role', (string) $role2->id)
             ->set('availability', 'unfilled')
-            ->assertSee($matchingShift->start_time->format('M j, g:i A'))
-            ->assertDontSee($fullShift->start_time->format('M j, g:i A'))
-            ->assertDontSee($wrongRoleShift->start_time->format('M j, g:i A'));
+            ->assertSee(toLocalTime($matchingShift->start_time)->format('M j, '.timeFormat()))
+            ->assertDontSee(toLocalTime($fullShift->start_time)->format('M j, '.timeFormat()))
+            ->assertDontSee(toLocalTime($wrongRoleShift->start_time)->format('M j, '.timeFormat()));
     });
 
     test('can reset all filters', function () {
@@ -785,10 +786,11 @@ describe('filtering and sorting', function () {
         ]);
 
         Livewire::test(ManageSchedule::class)
+            ->set('sortBy', 'time')
             ->set('sortDir', 'desc')
             ->assertSeeInOrder([
-                $late->start_time->format('M j, g:i A'),
-                $early->start_time->format('M j, g:i A'),
+                toLocalTime($late->start_time)->format('M j, '.timeFormat()),
+                toLocalTime($early->start_time)->format('M j, '.timeFormat()),
             ]);
     });
 

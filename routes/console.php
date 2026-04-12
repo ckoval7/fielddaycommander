@@ -14,6 +14,9 @@ Schedule::command('events:activate-by-date')->everyFifteenMinutes();
 // Close operating sessions for events that have ended
 Schedule::command('sessions:close-expired')->everyFifteenMinutes();
 
+// Close idle external logger sessions
+Schedule::command('external-logger:close-idle')->everyFiveMinutes();
+
 // Send all scheduled reminders (bulletins, shift check-ins, etc.)
 Schedule::command('reminders:send')->everyMinute();
 

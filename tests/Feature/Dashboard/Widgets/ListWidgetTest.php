@@ -419,10 +419,10 @@ describe('Equipment Status List', function () {
             'model' => 'FT-991A',
         ]);
 
-        $station = Station::factory()->create([
+        $station = Station::withoutEvents(fn () => Station::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Station Charlie',
-        ]);
+        ]));
 
         EquipmentEvent::factory()->create([
             'equipment_id' => $equipment->id,
