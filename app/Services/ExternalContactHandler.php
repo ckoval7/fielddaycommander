@@ -219,7 +219,7 @@ class ExternalContactHandler
 
         $tokens = preg_split('/\s+/', trim($exchange));
         foreach ($tokens as $token) {
-            if (preg_match('/^\d{1,2}[A-Fa-f]$/i', $token)) {
+            if (preg_match('/^\d{1,2}[A-F]$/i', $token)) {
                 return strtoupper($token);
             }
         }

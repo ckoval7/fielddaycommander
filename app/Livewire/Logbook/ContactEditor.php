@@ -23,15 +23,15 @@ class ContactEditor extends Component
 
     public string $callsign = '';
 
-    public string $exchange_class = '';
+    public string $exchangeClass = '';
 
-    public ?int $section_id = null;
+    public ?int $sectionId = null;
 
-    public ?int $band_id = null;
+    public ?int $bandId = null;
 
-    public ?int $mode_id = null;
+    public ?int $modeId = null;
 
-    public string $qso_time = '';
+    public string $qsoTime = '';
 
     public string $notes = '';
 
@@ -43,11 +43,11 @@ class ContactEditor extends Component
 
         $this->contactId = $contact->id;
         $this->callsign = $contact->callsign ?? '';
-        $this->exchange_class = $contact->exchange_class ?? '';
-        $this->section_id = $contact->section_id;
-        $this->band_id = $contact->band_id;
-        $this->mode_id = $contact->mode_id;
-        $this->qso_time = $contact->qso_time?->format('Y-m-d H:i') ?? '';
+        $this->exchangeClass = $contact->exchange_class ?? '';
+        $this->sectionId = $contact->section_id;
+        $this->bandId = $contact->band_id;
+        $this->modeId = $contact->mode_id;
+        $this->qsoTime = $contact->qso_time?->format('Y-m-d H:i') ?? '';
         $this->notes = $contact->notes ?? '';
         $this->resetValidation();
         $this->showModal = true;
@@ -60,11 +60,11 @@ class ContactEditor extends Component
 
         $validated = $this->validate([
             'callsign' => 'required|string|max:20',
-            'exchange_class' => ['required', 'string', 'max:5', 'regex:/^\d{1,2}[A-Fa-f]$/'],
-            'section_id' => 'required|exists:sections,id',
-            'band_id' => 'required|exists:bands,id',
-            'mode_id' => 'required|exists:modes,id',
-            'qso_time' => 'required|date',
+            'exchangeClass' => ['required', 'string', 'max:5', 'regex:/^\d{1,2}[A-F]$/i'],
+            'sectionId' => 'required|exists:sections,id',
+            'bandId' => 'required|exists:bands,id',
+            'modeId' => 'required|exists:modes,id',
+            'qsoTime' => 'required|date',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -81,23 +81,23 @@ class ContactEditor extends Component
         // Re-run duplicate detection against the new values
         $isDuplicate = Contact::query()
             ->where('event_configuration_id', $contact->event_configuration_id)
-            ->where('band_id', $validated['band_id'])
-            ->where('mode_id', $validated['mode_id'])
+            ->where('band_id', $validated['bandId'])
+            ->where('mode_id', $validated['modeId'])
             ->where('callsign', mb_strtoupper($validated['callsign']))
             ->where('is_gota_contact', $contact->is_gota_contact)
             ->where('id', '!=', $contact->id)
             ->where('is_duplicate', false)
             ->exists();
 
-        $mode = Mode::find($validated['mode_id']);
+        $mode = Mode::find($validated['modeId']);
 
         $contact->update([
             'callsign' => $validated['callsign'],
-            'exchange_class' => $validated['exchange_class'],
-            'band_id' => $validated['band_id'],
-            'mode_id' => $validated['mode_id'],
-            'qso_time' => $validated['qso_time'],
-            'section_id' => $validated['section_id'],
+            'exchange_class' => $validated['exchangeClass'],
+            'band_id' => $validated['bandId'],
+            'mode_id' => $validated['modeId'],
+            'qso_time' => $validated['qsoTime'],
+            'section_id' => $validated['sectionId'],
             'notes' => $validated['notes'] ?: null,
             'is_duplicate' => $isDuplicate,
             'points' => $isDuplicate ? 0 : ($mode->points_fd ?? 1),

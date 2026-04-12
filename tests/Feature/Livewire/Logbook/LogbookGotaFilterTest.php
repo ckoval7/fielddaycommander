@@ -71,7 +71,7 @@ test('GOTA filter shows only GOTA contacts', function () {
 
     Livewire::test(LogbookBrowser::class)
         ->set('eventConfigurationId', $this->eventConfigId)
-        ->set('show_gota', 'only')
+        ->set('showGota', 'only')
         ->assertSee('K1GOTA')
         ->assertDontSee('K1REG');
 });
@@ -81,7 +81,7 @@ test('GOTA filter excludes GOTA contacts', function () {
 
     Livewire::test(LogbookBrowser::class)
         ->set('eventConfigurationId', $this->eventConfigId)
-        ->set('show_gota', 'exclude')
+        ->set('showGota', 'exclude')
         ->assertSee('K1REG')
         ->assertDontSee('K1GOTA');
 });
@@ -100,7 +100,7 @@ test('GOTA operator name is displayed for GOTA contacts', function () {
 
     Livewire::test(LogbookBrowser::class)
         ->set('eventConfigurationId', $this->eventConfigId)
-        ->set('show_gota', 'only')
+        ->set('showGota', 'only')
         ->assertSee('Jane')
         ->assertSee('Doe');
 });
