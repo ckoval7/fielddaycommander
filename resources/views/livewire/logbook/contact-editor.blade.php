@@ -21,10 +21,11 @@
                 />
 
                 <x-input
-                    label="Received Exchange"
-                    wire:model="received_exchange"
-                    placeholder="e.g. W1AW 3A CT"
+                    label="Class"
+                    wire:model="exchange_class"
+                    placeholder="e.g. 3A"
                     icon="o-document-text"
+                    hint="Transmitter count + class letter"
                     required
                 />
 
@@ -47,6 +48,18 @@
                     option-value="id"
                     placeholder="Select mode"
                     icon="o-radio"
+                    required
+                />
+
+                <x-select
+                    label="Section"
+                    wire:model="section_id"
+                    :options="$this->sections"
+                    option-label="display_name"
+                    option-value="id"
+                    placeholder="Select section"
+                    icon="o-map"
+                    searchable
                     required
                 />
 

@@ -6,7 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Mode;
-use App\Services\ExchangeParserService;
+use App\Models\Section;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
@@ -23,7 +23,9 @@ class ContactEditor extends Component
 
     public string $callsign = '';
 
-    public string $received_exchange = '';
+    public string $exchange_class = '';
+
+    public ?int $section_id = null;
 
     public ?int $band_id = null;
 
@@ -41,11 +43,13 @@ class ContactEditor extends Component
 
         $this->contactId = $contact->id;
         $this->callsign = $contact->callsign ?? '';
-        $this->received_exchange = $contact->received_exchange ?? '';
+        $this->exchange_class = $this->extractClass($contact->received_exchange);
+        $this->section_id = $contact->section_id;
         $this->band_id = $contact->band_id;
         $this->mode_id = $contact->mode_id;
         $this->qso_time = $contact->qso_time?->format('Y-m-d H:i') ?? '';
         $this->notes = $contact->notes ?? '';
+        $this->resetValidation();
         $this->showModal = true;
     }
 
@@ -56,7 +60,8 @@ class ContactEditor extends Component
 
         $validated = $this->validate([
             'callsign' => 'required|string|max:20',
-            'received_exchange' => 'required|string|max:50',
+            'exchange_class' => ['required', 'string', 'max:5', 'regex:/^\d{1,2}[A-Fa-f]$/'],
+            'section_id' => 'required|exists:sections,id',
             'band_id' => 'required|exists:bands,id',
             'mode_id' => 'required|exists:modes,id',
             'qso_time' => 'required|date',
@@ -73,9 +78,11 @@ class ContactEditor extends Component
             'notes' => $contact->notes,
         ]);
 
-        // Resolve section from received exchange
-        $parsed = app(ExchangeParserService::class)->parse($validated['received_exchange']);
-        $sectionId = $parsed['success'] ? $parsed['section_id'] : $contact->section_id;
+        // Reconstruct received_exchange from individual fields
+        $section = Section::find($validated['section_id']);
+        $receivedExchange = mb_strtoupper(trim(
+            $validated['callsign'].' '.$validated['exchange_class'].' '.$section->code
+        ));
 
         // Re-run duplicate detection against the new values
         $isDuplicate = Contact::query()
@@ -92,11 +99,11 @@ class ContactEditor extends Component
 
         $contact->update([
             'callsign' => $validated['callsign'],
-            'received_exchange' => $validated['received_exchange'],
+            'received_exchange' => $receivedExchange,
             'band_id' => $validated['band_id'],
             'mode_id' => $validated['mode_id'],
             'qso_time' => $validated['qso_time'],
-            'section_id' => $sectionId,
+            'section_id' => $validated['section_id'],
             'notes' => $validated['notes'] ?: null,
             'is_duplicate' => $isDuplicate,
             'points' => $isDuplicate ? 0 : ($mode->points_fd ?? 1),
@@ -181,6 +188,32 @@ class ContactEditor extends Component
     public function modes()
     {
         return Mode::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function sections()
+    {
+        return Section::where('is_active', true)->orderBy('code')->get()
+            ->map(function (Section $section) {
+                $section->display_name = "{$section->code} – {$section->name}";
+
+                return $section;
+            });
+    }
+
+    /**
+     * Extract the class portion (e.g. "3A") from a received exchange string.
+     */
+    private function extractClass(?string $exchange): string
+    {
+        if (! $exchange) {
+            return '';
+        }
+
+        $tokens = preg_split('/\s+/', trim($exchange));
+
+        // Exchange format: CALLSIGN CLASS SECTION (e.g. "W1AW 3A CT")
+        return count($tokens) >= 2 ? $tokens[1] : '';
     }
 
     public function render(): View

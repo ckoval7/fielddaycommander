@@ -59,7 +59,8 @@ describe('openEdit', function () {
             ->call('openEdit', $this->contact->id)
             ->assertSet('showModal', true)
             ->assertSet('callsign', 'W1AW')
-            ->assertSet('received_exchange', 'W1AW 3A CT')
+            ->assertSet('exchange_class', '3A')
+            ->assertSet('section_id', $this->section->id)
             ->assertSet('band_id', $this->band->id)
             ->assertSet('mode_id', $this->mode->id)
             ->assertSet('notes', '');
@@ -80,7 +81,7 @@ describe('save', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
             ->set('callsign', 'K1ABC')
-            ->set('received_exchange', 'K1ABC 2A CT')
+            ->set('exchange_class', '2A')
             ->set('band_id', $this->otherBand->id)
             ->set('notes', 'Corrected callsign')
             ->call('save')
@@ -90,6 +91,7 @@ describe('save', function () {
 
         $this->contact->refresh();
         expect($this->contact->callsign)->toBe('K1ABC')
+            ->and($this->contact->received_exchange)->toBe('K1ABC 2A CT')
             ->and($this->contact->band_id)->toBe($this->otherBand->id)
             ->and($this->contact->notes)->toBe('Corrected callsign');
     });
@@ -98,7 +100,7 @@ describe('save', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
             ->set('callsign', 'K1ABC')
-            ->set('received_exchange', 'K1ABC 2A CT')
+            ->set('exchange_class', '2A')
             ->call('save');
 
         $auditLog = AuditLog::where('action', 'contact.updated')
@@ -114,9 +116,26 @@ describe('save', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
             ->set('callsign', '')
-            ->set('received_exchange', '')
+            ->set('exchange_class', '')
+            ->set('section_id', null)
             ->call('save')
-            ->assertHasErrors(['callsign', 'received_exchange']);
+            ->assertHasErrors(['callsign', 'exchange_class', 'section_id']);
+    });
+
+    test('validates exchange_class format', function () {
+        Livewire::test(ContactEditor::class)
+            ->call('openEdit', $this->contact->id)
+            ->set('exchange_class', 'INVALID')
+            ->call('save')
+            ->assertHasErrors(['exchange_class']);
+    });
+
+    test('validates section_id exists', function () {
+        Livewire::test(ContactEditor::class)
+            ->call('openEdit', $this->contact->id)
+            ->set('section_id', 99999)
+            ->call('save')
+            ->assertHasErrors(['section_id']);
     });
 
     test('validates band_id exists', function () {
