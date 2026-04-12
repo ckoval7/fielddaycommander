@@ -113,6 +113,7 @@ class DemoAnalyticsController extends Controller
 
         return response()->json([
             'session' => [
+                'visitor_id' => $session->visitor_id,
                 'role' => $session->role,
                 'device_type' => $session->device_type,
                 'provisioned_at' => $session->provisioned_at->toIso8601String(),
@@ -141,6 +142,7 @@ class DemoAnalyticsController extends Controller
             'time_on_page' => $this->buildTimeOnPage($sessionIds),
             'repeat_visitors' => $this->buildRepeatVisitors($sessions),
             'recent_sessions' => $sessions->take(25)->map(fn ($s) => [
+                'visitor_id' => $s->visitor_id,
                 'role' => $s->role,
                 'total_page_views' => $s->total_page_views,
                 'total_actions' => $s->total_actions,
@@ -380,6 +382,7 @@ class DemoAnalyticsController extends Controller
             ->groupBy('visitor_hash')
             ->filter(fn ($group) => $group->count() > 1)
             ->map(fn ($group) => [
+                'visitor_id' => substr($group->first()->visitor_hash, 0, 8),
                 'sessions_count' => $group->count(),
                 'roles_tried' => $group->pluck('role')->unique()->values()->toArray(),
                 'first_visit' => $group->min('provisioned_at')->toIso8601String(),

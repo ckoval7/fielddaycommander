@@ -316,3 +316,46 @@ it('displays overview metrics in the dashboard', function () {
         ->assertSee('Session Funnel')
         ->assertSee('Recent Sessions');
 });
+
+it('includes visitor_id in session events response', function () {
+    $url = URL::temporarySignedRoute(
+        'demo.analytics.session-events',
+        now()->addHour(),
+        ['session' => $this->demoSession->id]
+    );
+
+    $response = $this->getJson($url)->assertOk();
+
+    expect($response->json('session.visitor_id'))
+        ->toBe(substr(hash('sha256', 'test'), 0, 8));
+});
+
+it('includes visitor_id in recent_sessions from api endpoint', function () {
+    $url = URL::temporarySignedRoute('demo.analytics.api', now()->addHour(), ['range' => '7d']);
+
+    $response = $this->getJson($url)->assertOk();
+
+    expect($response->json('recent_sessions.0.visitor_id'))
+        ->toBe(substr(hash('sha256', 'test'), 0, 8));
+});
+
+it('includes visitor_id in repeat_visitors from api endpoint', function () {
+    DemoSession::create([
+        'session_uuid' => fake()->uuid(),
+        'role' => 'system_admin',
+        'visitor_hash' => hash('sha256', 'test'),
+        'user_agent' => 'Test',
+        'device_type' => 'desktop',
+        'provisioned_at' => now()->subHour(),
+        'last_seen_at' => now(),
+        'total_page_views' => 5,
+        'expires_at' => now()->addHours(23),
+    ]);
+
+    $url = URL::temporarySignedRoute('demo.analytics.api', now()->addHour(), ['range' => '7d']);
+
+    $response = $this->getJson($url)->assertOk();
+
+    expect($response->json('repeat_visitors.0.visitor_id'))
+        ->toBe(substr(hash('sha256', 'test'), 0, 8));
+});
