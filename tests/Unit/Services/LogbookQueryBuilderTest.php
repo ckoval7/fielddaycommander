@@ -9,6 +9,8 @@ use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
 use App\Services\LogbookQueryBuilder;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -58,7 +60,7 @@ describe('buildQuery', function () {
     test('returns query builder with eager loading configured', function () {
         $query = $this->builder->buildQuery();
 
-        expect($query)->toBeInstanceOf(\Illuminate\Database\Eloquent\Builder::class)
+        expect($query)->toBeInstanceOf(Builder::class)
             ->and($query->getEagerLoads())->toHaveKeys(['band', 'mode', 'section', 'logger', 'operatingSession.station']);
     });
 
@@ -740,6 +742,83 @@ describe('chronological', function () {
     });
 });
 
+describe('forDeletedStatus', function () {
+    beforeEach(function () {
+        $session = OperatingSession::factory()->create([
+            'station_id' => $this->station->id,
+        ]);
+
+        $this->activeContact = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'operating_session_id' => $session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+        ]);
+
+        $this->deletedContact = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'operating_session_id' => $session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+        ]);
+        $this->deletedContact->delete();
+    });
+
+    test('null filter returns only active contacts (default)', function () {
+        $query = $this->builder->buildQuery();
+        $results = $this->builder->forDeletedStatus($query, null)->get();
+
+        expect($results)->toHaveCount(1)
+            ->and($results->first()->id)->toBe($this->activeContact->id);
+    });
+
+    test('"only" filter returns only soft-deleted contacts', function () {
+        $query = $this->builder->buildQuery();
+        $results = $this->builder->forDeletedStatus($query, 'only')->get();
+
+        expect($results)->toHaveCount(1)
+            ->and($results->first()->id)->toBe($this->deletedContact->id);
+    });
+
+    test('"include" filter returns both active and soft-deleted contacts', function () {
+        $query = $this->builder->buildQuery();
+        $results = $this->builder->forDeletedStatus($query, 'include')->get();
+
+        expect($results)->toHaveCount(2);
+    });
+});
+
+describe('applyFilters with deleted_filter', function () {
+    test('passes deleted_filter through to forDeletedStatus', function () {
+        $session = OperatingSession::factory()->create([
+            'station_id' => $this->station->id,
+        ]);
+
+        Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'operating_session_id' => $session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+        ]);
+
+        $deletedContact = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'operating_session_id' => $session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+        ]);
+        $deletedContact->delete();
+
+        $results = $this->builder->applyFilters([
+            'event_configuration_id' => $this->eventConfig->id,
+            'deleted_filter' => 'only',
+        ])->get();
+
+        expect($results)->toHaveCount(1)
+            ->and($results->first()->id)->toBe($deletedContact->id);
+    });
+});
+
 describe('applyFilters', function () {
     test('applies all filters together', function () {
         $section = Section::where('code', 'CT')->first();
@@ -811,12 +890,12 @@ describe('applyFilters', function () {
             'event_configuration_id' => $this->eventConfig->id,
         ]);
 
-        expect($query)->toBeInstanceOf(\Illuminate\Database\Eloquent\Builder::class);
+        expect($query)->toBeInstanceOf(Builder::class);
 
         // Test that we can chain additional methods
         $results = $query->limit(10)->get();
 
-        expect($results)->toBeInstanceOf(\Illuminate\Database\Eloquent\Collection::class);
+        expect($results)->toBeInstanceOf(Collection::class);
     });
 
     test('applies chronological ordering by default', function () {

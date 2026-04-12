@@ -182,6 +182,24 @@ class LogbookQueryBuilder
     }
 
     /**
+     * Filter by soft-delete status.
+     *
+     * @param  string|null  $deletedFilter  'only' = trashed only, 'include' = include trashed, null = active only
+     */
+    public function forDeletedStatus(Builder $query, ?string $deletedFilter): Builder
+    {
+        if ($deletedFilter === 'only') {
+            return $query->onlyTrashed();
+        }
+
+        if ($deletedFilter === 'include') {
+            return $query->withTrashed();
+        }
+
+        return $query;
+    }
+
+    /**
      * Apply chronological ordering (most recent first).
      */
     public function chronological(Builder $query): Builder
@@ -204,7 +222,8 @@ class LogbookQueryBuilder
      *     section_ids?: int[],
      *     duplicate_filter?: ?string,
      *     transcribed_filter?: ?string,
-     *     gota_filter?: ?string
+     *     gota_filter?: ?string,
+     *     deleted_filter?: ?string
      * }  $filters
      */
     public function applyFilters(array $filters): Builder
@@ -222,6 +241,7 @@ class LogbookQueryBuilder
         $query = $this->forDuplicateStatus($query, $filters['duplicate_filter'] ?? null);
         $query = $this->forTranscribed($query, $filters['transcribed_filter'] ?? null);
         $query = $this->forGotaStatus($query, $filters['gota_filter'] ?? null);
+        $query = $this->forDeletedStatus($query, $filters['deleted_filter'] ?? null);
         $query = $this->chronological($query);
 
         return $query;
