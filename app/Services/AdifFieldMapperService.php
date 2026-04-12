@@ -30,7 +30,11 @@ class AdifFieldMapperService
 
         $stations = Station::query()
             ->where('event_configuration_id', $import->event_configuration_id)
-            ->pluck('id', 'name')
+            ->get(['id', 'name', 'hostname'])
+            ->flatMap(fn ($s) => collect([
+                strtoupper($s->name) => $s->id,
+                strtoupper((string) $s->hostname) => $s->id,
+            ])->filter(fn ($id, $key) => $key !== ''))
             ->toArray();
 
         $records = $import->records()->where('status', AdifRecordStatus::Pending)->get();
@@ -227,7 +231,7 @@ class AdifFieldMapperService
             return;
         }
 
-        $stationId = $stations[$record->station_identifier] ?? null;
+        $stationId = $stations[strtoupper($record->station_identifier)] ?? null;
         if ($stationId !== null) {
             $record->station_id = $stationId;
         } else {

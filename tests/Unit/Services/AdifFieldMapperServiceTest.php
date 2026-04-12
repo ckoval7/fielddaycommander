@@ -155,6 +155,49 @@ test('auto-maps station by name match', function () {
     expect($record->station_id)->toBe($station->id);
 });
 
+test('auto-maps station by name case-insensitively', function () {
+    $config = EventConfiguration::factory()->create();
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'Station 1',
+    ]);
+    $import = AdifImport::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+    $record = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'station_identifier' => 'station 1',
+    ]);
+
+    $report = $this->mapper->autoMap($import);
+
+    $record->refresh();
+    expect($record->station_id)->toBe($station->id)
+        ->and($report['unmapped_stations'])->toBeEmpty();
+});
+
+test('auto-maps station by hostname case-insensitively', function () {
+    $config = EventConfiguration::factory()->create();
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'Station 1',
+        'hostname' => 'Desktop-11-2024',
+    ]);
+    $import = AdifImport::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+    $record = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'station_identifier' => 'DESKTOP-11-2024',
+    ]);
+
+    $report = $this->mapper->autoMap($import);
+
+    $record->refresh();
+    expect($record->station_id)->toBe($station->id)
+        ->and($report['unmapped_stations'])->toBeEmpty();
+});
+
 test('reports unmapped stations', function () {
     $import = AdifImport::factory()->create();
     AdifImportRecord::factory()->create([
