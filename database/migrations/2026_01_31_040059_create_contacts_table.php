@@ -24,7 +24,7 @@ return new class extends Migration
             $table->timestamp('qso_time')->nullable();
             $table->string('callsign', 20);
             $table->foreignId('section_id')->nullable()->constrained('sections');
-            $table->string('received_exchange', 50)->nullable();
+            $table->string('exchange_class', 5)->nullable();
             $table->integer('power_watts')->nullable();
 
             // GOTA-specific fields
