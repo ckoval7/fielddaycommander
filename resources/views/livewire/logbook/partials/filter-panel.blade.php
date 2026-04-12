@@ -33,7 +33,7 @@
                 {{-- Band Filter --}}
                 <x-choices-offline
                     label="Band"
-                    wire:model.live="band_ids"
+                    wire:model.live="bandIds"
                     :options="$this->bands"
                     placeholder="All Bands"
                     icon="o-signal"
@@ -43,7 +43,7 @@
                 {{-- Mode Filter --}}
                 <x-choices-offline
                     label="Mode"
-                    wire:model.live="mode_ids"
+                    wire:model.live="modeIds"
                     :options="$this->modes"
                     placeholder="All Modes"
                     icon="o-radio"
@@ -53,7 +53,7 @@
                 {{-- Station Filter --}}
                 <x-choices-offline
                     label="Station"
-                    wire:model.live="station_ids"
+                    wire:model.live="stationIds"
                     :options="$this->stations"
                     placeholder="All Stations"
                     icon="o-home"
@@ -63,7 +63,7 @@
                 {{-- Operator Filter --}}
                 <x-choices-offline
                     label="Operator"
-                    wire:model.live="operator_ids"
+                    wire:model.live="operatorIds"
                     :options="$this->operators"
                     option-label="display_name"
                     placeholder="All Operators"
@@ -74,7 +74,7 @@
                 {{-- Section Filter --}}
                 <x-choices-offline
                     label="Section"
-                    wire:model.live="section_ids"
+                    wire:model.live="sectionIds"
                     :options="$this->sections"
                     option-label="display_name"
                     placeholder="All Sections"
@@ -85,7 +85,7 @@
                 {{-- Callsign Search --}}
                 <x-input
                     label="Callsign"
-                    wire:model.live.debounce.500ms="callsign_search"
+                    wire:model.live.debounce.500ms="callsignSearch"
                     placeholder="Search callsign..."
                     icon="o-magnifying-glass"
                     clearable
@@ -94,14 +94,14 @@
                 {{-- Time From --}}
                 <x-flatpickr
                     label="Time From"
-                    wire:model.live="time_from"
+                    wire:model.live="timeFrom"
                     icon="o-calendar"
                 />
 
                 {{-- Time To --}}
                 <x-flatpickr
                     label="Time To"
-                    wire:model.live="time_to"
+                    wire:model.live="timeTo"
                     icon="o-calendar"
                 />
 
@@ -110,7 +110,7 @@
                     <legend class="text-sm font-medium text-base-content/70">Duplicate Status</legend>
                     <div class="flex flex-col gap-2">
                         <x-radio
-                            wire:model.live="show_duplicates"
+                            wire:model.live="showDuplicates"
                             :options="[
                                 ['id' => null, 'name' => 'All Contacts'],
                                 ['id' => 'exclude', 'name' => 'Exclude Duplicates'],
@@ -125,7 +125,7 @@
                     <legend class="text-sm font-medium text-base-content/70">Transcribed Status</legend>
                     <div class="flex flex-col gap-2">
                         <x-radio
-                            wire:model.live="show_transcribed"
+                            wire:model.live="showTranscribed"
                             :options="[
                                 ['id' => null, 'name' => 'All Contacts'],
                                 ['id' => 'only', 'name' => 'Transcribed Only']
@@ -139,7 +139,7 @@
                     <legend class="text-sm font-medium text-base-content/70">GOTA Status</legend>
                     <div class="flex flex-col gap-2">
                         <x-radio
-                            wire:model.live="show_gota"
+                            wire:model.live="showGota"
                             :options="[
                                 ['id' => null, 'name' => 'All Contacts'],
                                 ['id' => 'only', 'name' => 'GOTA Only'],
@@ -155,7 +155,7 @@
                         <legend class="text-sm font-medium text-base-content/70">Deleted Status</legend>
                         <div class="flex flex-col gap-2">
                             <x-radio
-                                wire:model.live="show_deleted"
+                                wire:model.live="showDeleted"
                                 :options="[
                                     ['id' => null, 'name' => 'Active Only'],
                                     ['id' => 'include', 'name' => 'Include Deleted'],
@@ -171,17 +171,17 @@
             {{-- Active Filters Summary --}}
             @php
                 $activeFilters = collect([
-                    'Band' => count($band_ids) > 0 ? 'Active' : null,
-                    'Mode' => count($mode_ids) > 0 ? 'Active' : null,
-                    'Station' => count($station_ids) > 0 ? 'Active' : null,
-                    'Operator' => count($operator_ids) > 0 ? 'Active' : null,
-                    'Section' => count($section_ids) > 0 ? 'Active' : null,
-                    'Callsign' => $callsign_search,
-                    'Time Range' => ($time_from || $time_to) ? 'Active' : null,
-                    'Duplicates' => $show_duplicates,
-                    'Transcribed' => $show_transcribed,
-                    'GOTA' => $show_gota,
-                    'Deleted' => $show_deleted,
+                    'Band' => count($bandIds) > 0 ? 'Active' : null,
+                    'Mode' => count($modeIds) > 0 ? 'Active' : null,
+                    'Station' => count($stationIds) > 0 ? 'Active' : null,
+                    'Operator' => count($operatorIds) > 0 ? 'Active' : null,
+                    'Section' => count($sectionIds) > 0 ? 'Active' : null,
+                    'Callsign' => $callsignSearch,
+                    'Time Range' => ($timeFrom || $timeTo) ? 'Active' : null,
+                    'Duplicates' => $showDuplicates,
+                    'Transcribed' => $showTranscribed,
+                    'GOTA' => $showGota,
+                    'Deleted' => $showDeleted,
                 ])->filter()->count();
             @endphp
 

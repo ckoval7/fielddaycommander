@@ -118,11 +118,11 @@ describe('responsive class validation', function () {
 
     test('filter panel has reset functionality', function () {
         Livewire::test(LogbookBrowser::class)
-            ->set('band_ids', [1])
-            ->set('mode_ids', [1])
+            ->set('bandIds', [1])
+            ->set('modeIds', [1])
             ->call('resetFilters')
-            ->assertSet('band_ids', [])
-            ->assertSet('mode_ids', []);
+            ->assertSet('bandIds', [])
+            ->assertSet('modeIds', []);
     });
 
     test('contacts are filtered by band', function () {
@@ -139,7 +139,7 @@ describe('responsive class validation', function () {
         ]);
 
         $component = Livewire::test(LogbookBrowser::class)
-            ->set('band_ids', [$band->id]);
+            ->set('bandIds', [$band->id]);
 
         $contacts = $component->get('contacts');
         expect($contacts->every(fn ($contact) => $contact->band_id === $band->id))->toBeTrue();
@@ -159,7 +159,7 @@ describe('responsive class validation', function () {
         ]);
 
         $component = Livewire::test(LogbookBrowser::class)
-            ->set('mode_ids', [$mode->id]);
+            ->set('modeIds', [$mode->id]);
 
         $contacts = $component->get('contacts');
         expect($contacts->every(fn ($contact) => $contact->mode_id === $mode->id))->toBeTrue();
@@ -176,7 +176,7 @@ describe('responsive class validation', function () {
         ]);
 
         Livewire::test(LogbookBrowser::class)
-            ->set('callsign_search', 'W1SEARCH')
+            ->set('callsignSearch', 'W1SEARCH')
             ->assertSee('W1SEARCH')
             ->assertDontSee('K1OTHER');
     });
@@ -197,7 +197,7 @@ describe('responsive class validation', function () {
         ]);
 
         Livewire::test(LogbookBrowser::class)
-            ->set('show_duplicates', 'exclude')
+            ->set('showDuplicates', 'exclude')
             ->assertSee('W1VALID')
             ->assertDontSee('W1DUP');
     });

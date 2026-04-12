@@ -22,7 +22,7 @@
 
                 <x-input
                     label="Class"
-                    wire:model="exchange_class"
+                    wire:model="exchangeClass"
                     placeholder="e.g. 3A"
                     icon="o-document-text"
                     hint="Transmitter count + class letter"
@@ -31,7 +31,7 @@
 
                 <x-choices-offline
                     label="Section"
-                    wire:model="section_id"
+                    wire:model="sectionId"
                     :options="$this->sections"
                     option-label="display_name"
                     option-value="id"
@@ -44,7 +44,7 @@
 
                 <x-select
                     label="Band"
-                    wire:model="band_id"
+                    wire:model="bandId"
                     :options="$this->bands"
                     option-label="name"
                     option-value="id"
@@ -55,7 +55,7 @@
 
                 <x-select
                     label="Mode"
-                    wire:model="mode_id"
+                    wire:model="modeId"
                     :options="$this->modes"
                     option-label="name"
                     option-value="id"
@@ -66,7 +66,7 @@
 
                 <x-flatpickr
                     label="QSO Time"
-                    wire:model="qso_time"
+                    wire:model="qsoTime"
                     icon="o-clock"
                     required
                 />

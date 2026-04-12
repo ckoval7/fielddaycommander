@@ -23,40 +23,40 @@ class LogbookBrowser extends Component
     use WithPagination;
 
     #[Url]
-    public array $band_ids = [];
+    public array $bandIds = [];
 
     #[Url]
-    public array $mode_ids = [];
+    public array $modeIds = [];
 
     #[Url]
-    public array $station_ids = [];
+    public array $stationIds = [];
 
     #[Url]
-    public array $operator_ids = [];
+    public array $operatorIds = [];
 
     #[Url]
-    public ?string $time_from = null;
+    public ?string $timeFrom = null;
 
     #[Url]
-    public ?string $time_to = null;
+    public ?string $timeTo = null;
 
     #[Url]
-    public ?string $callsign_search = null;
+    public ?string $callsignSearch = null;
 
     #[Url]
-    public array $section_ids = [];
+    public array $sectionIds = [];
 
     #[Url]
-    public ?string $show_duplicates = null;
+    public ?string $showDuplicates = null;
 
     #[Url]
-    public ?string $show_transcribed = null;
+    public ?string $showTranscribed = null;
 
     #[Url]
-    public ?string $show_gota = null;
+    public ?string $showGota = null;
 
     #[Url]
-    public ?string $show_deleted = null;
+    public ?string $showDeleted = null;
 
     public ?int $eventConfigurationId = null;
 
@@ -88,18 +88,18 @@ class LogbookBrowser extends Component
     public function resetFilters(): void
     {
         $this->reset([
-            'band_ids',
-            'mode_ids',
-            'station_ids',
-            'operator_ids',
-            'time_from',
-            'time_to',
-            'callsign_search',
-            'section_ids',
-            'show_duplicates',
-            'show_transcribed',
-            'show_gota',
-            'show_deleted',
+            'bandIds',
+            'modeIds',
+            'stationIds',
+            'operatorIds',
+            'timeFrom',
+            'timeTo',
+            'callsignSearch',
+            'sectionIds',
+            'showDuplicates',
+            'showTranscribed',
+            'showGota',
+            'showDeleted',
         ]);
         $this->resetPage();
     }
@@ -184,18 +184,18 @@ class LogbookBrowser extends Component
 
         $filters = [
             'event_configuration_id' => $this->eventConfigurationId,
-            'band_ids' => $this->band_ids,
-            'mode_ids' => $this->mode_ids,
-            'station_ids' => $this->station_ids,
-            'operator_ids' => $this->operator_ids,
-            'time_from' => $this->time_from,
-            'time_to' => $this->time_to,
-            'callsign' => $this->callsign_search,
-            'section_ids' => $this->section_ids,
-            'duplicate_filter' => $this->show_duplicates,
-            'transcribed_filter' => $this->show_transcribed,
-            'gota_filter' => $this->show_gota,
-            'deleted_filter' => $this->show_deleted,
+            'band_ids' => $this->bandIds,
+            'mode_ids' => $this->modeIds,
+            'station_ids' => $this->stationIds,
+            'operator_ids' => $this->operatorIds,
+            'time_from' => $this->timeFrom,
+            'time_to' => $this->timeTo,
+            'callsign' => $this->callsignSearch,
+            'section_ids' => $this->sectionIds,
+            'duplicate_filter' => $this->showDuplicates,
+            'transcribed_filter' => $this->showTranscribed,
+            'gota_filter' => $this->showGota,
+            'deleted_filter' => $this->showDeleted,
         ];
 
         $query = $queryBuilder->applyFilters($filters);
@@ -268,18 +268,18 @@ class LogbookBrowser extends Component
 
         $filters = [
             'event_configuration_id' => $this->eventConfigurationId,
-            'band_ids' => $this->band_ids,
-            'mode_ids' => $this->mode_ids,
-            'station_ids' => $this->station_ids,
-            'operator_ids' => $this->operator_ids,
-            'time_from' => $this->time_from,
-            'time_to' => $this->time_to,
-            'callsign' => $this->callsign_search,
-            'section_ids' => $this->section_ids,
-            'duplicate_filter' => $this->show_duplicates,
-            'transcribed_filter' => $this->show_transcribed,
-            'gota_filter' => $this->show_gota,
-            'deleted_filter' => $this->show_deleted,
+            'band_ids' => $this->bandIds,
+            'mode_ids' => $this->modeIds,
+            'station_ids' => $this->stationIds,
+            'operator_ids' => $this->operatorIds,
+            'time_from' => $this->timeFrom,
+            'time_to' => $this->timeTo,
+            'callsign' => $this->callsignSearch,
+            'section_ids' => $this->sectionIds,
+            'duplicate_filter' => $this->showDuplicates,
+            'transcribed_filter' => $this->showTranscribed,
+            'gota_filter' => $this->showGota,
+            'deleted_filter' => $this->showDeleted,
         ];
 
         $query = $queryBuilder->applyFilters($filters)->reorder();

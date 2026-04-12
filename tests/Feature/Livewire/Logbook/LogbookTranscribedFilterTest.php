@@ -77,7 +77,7 @@ test('transcribed filter shows only transcribed contacts', function () {
 
     Livewire::test(LogbookBrowser::class)
         ->set('eventConfigurationId', $this->eventConfigId)
-        ->set('show_transcribed', 'only')
+        ->set('showTranscribed', 'only')
         ->assertSee('K1TXCR')
         ->assertDontSee('K1LIVE');
 });

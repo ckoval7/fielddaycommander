@@ -50,97 +50,97 @@ test('component sets no event configuration when no active event', function () {
     expect($component->eventConfigurationId)->toBeNull();
 });
 
-test('band_ids property can be set', function () {
+test('bandIds property can be set', function () {
     $component = new LogbookBrowser;
 
-    $component->band_ids = [$this->band->id];
+    $component->bandIds = [$this->band->id];
 
-    expect($component->band_ids)->toBe([$this->band->id]);
+    expect($component->bandIds)->toBe([$this->band->id]);
 });
 
-test('mode_ids property can be set', function () {
+test('modeIds property can be set', function () {
     $component = new LogbookBrowser;
 
-    $component->mode_ids = [$this->mode->id];
+    $component->modeIds = [$this->mode->id];
 
-    expect($component->mode_ids)->toBe([$this->mode->id]);
+    expect($component->modeIds)->toBe([$this->mode->id]);
 });
 
-test('station_ids property can be set', function () {
+test('stationIds property can be set', function () {
     $component = new LogbookBrowser;
 
-    $component->station_ids = [$this->station->id];
+    $component->stationIds = [$this->station->id];
 
-    expect($component->station_ids)->toBe([$this->station->id]);
+    expect($component->stationIds)->toBe([$this->station->id]);
 });
 
-test('operator_ids property can be set', function () {
+test('operatorIds property can be set', function () {
     $operator = User::factory()->create();
 
     $component = new LogbookBrowser;
-    $component->operator_ids = [$operator->id];
+    $component->operatorIds = [$operator->id];
 
-    expect($component->operator_ids)->toBe([$operator->id]);
+    expect($component->operatorIds)->toBe([$operator->id]);
 });
 
-test('time_from property can be set', function () {
+test('timeFrom property can be set', function () {
     $component = new LogbookBrowser;
 
-    $component->time_from = '2025-02-07 10:00:00';
+    $component->timeFrom = '2025-02-07 10:00:00';
 
-    expect($component->time_from)->toBe('2025-02-07 10:00:00');
+    expect($component->timeFrom)->toBe('2025-02-07 10:00:00');
 });
 
-test('time_to property can be set', function () {
+test('timeTo property can be set', function () {
     $component = new LogbookBrowser;
 
-    $component->time_to = '2025-02-07 20:00:00';
+    $component->timeTo = '2025-02-07 20:00:00';
 
-    expect($component->time_to)->toBe('2025-02-07 20:00:00');
+    expect($component->timeTo)->toBe('2025-02-07 20:00:00');
 });
 
-test('callsign_search property can be set', function () {
+test('callsignSearch property can be set', function () {
     $component = new LogbookBrowser;
 
-    $component->callsign_search = 'W1AW';
+    $component->callsignSearch = 'W1AW';
 
-    expect($component->callsign_search)->toBe('W1AW');
+    expect($component->callsignSearch)->toBe('W1AW');
 });
 
-test('section_ids property can be set', function () {
+test('sectionIds property can be set', function () {
     $component = new LogbookBrowser;
 
-    $component->section_ids = [$this->section->id];
+    $component->sectionIds = [$this->section->id];
 
-    expect($component->section_ids)->toBe([$this->section->id]);
+    expect($component->sectionIds)->toBe([$this->section->id]);
 });
 
-test('show_duplicates property can be set', function () {
+test('showDuplicates property can be set', function () {
     $component = new LogbookBrowser;
 
-    $component->show_duplicates = 'only';
+    $component->showDuplicates = 'only';
 
-    expect($component->show_duplicates)->toBe('only');
+    expect($component->showDuplicates)->toBe('only');
 });
 
 test('reset filters clears all filter values', function () {
     $component = new LogbookBrowser;
-    $component->band_ids = [$this->band->id];
-    $component->mode_ids = [$this->mode->id];
-    $component->station_ids = [$this->station->id];
-    $component->callsign_search = 'W1AW';
-    $component->section_ids = [$this->section->id];
+    $component->bandIds = [$this->band->id];
+    $component->modeIds = [$this->mode->id];
+    $component->stationIds = [$this->station->id];
+    $component->callsignSearch = 'W1AW';
+    $component->sectionIds = [$this->section->id];
 
     $component->resetFilters();
 
-    expect($component->band_ids)->toBe([])
-        ->and($component->mode_ids)->toBe([])
-        ->and($component->station_ids)->toBe([])
-        ->and($component->callsign_search)->toBeNull()
-        ->and($component->section_ids)->toBe([]);
+    expect($component->bandIds)->toBe([])
+        ->and($component->modeIds)->toBe([])
+        ->and($component->stationIds)->toBe([])
+        ->and($component->callsignSearch)->toBeNull()
+        ->and($component->sectionIds)->toBe([]);
 });
 
-test('updated band_ids resets page', function () {
+test('updated bandIds resets page', function () {
     $component = new LogbookBrowser;
     $component->mount();
     $component->updatedBandIds();
@@ -148,7 +148,7 @@ test('updated band_ids resets page', function () {
     expect($component)->toBeInstanceOf(LogbookBrowser::class);
 });
 
-test('updated mode_ids resets page', function () {
+test('updated modeIds resets page', function () {
     $component = new LogbookBrowser;
     $component->mount();
     $component->updatedModeIds();
@@ -156,7 +156,7 @@ test('updated mode_ids resets page', function () {
     expect($component)->toBeInstanceOf(LogbookBrowser::class);
 });
 
-test('updated station_ids resets page', function () {
+test('updated stationIds resets page', function () {
     $component = new LogbookBrowser;
     $component->mount();
     $component->updatedStationIds();
@@ -164,7 +164,7 @@ test('updated station_ids resets page', function () {
     expect($component)->toBeInstanceOf(LogbookBrowser::class);
 });
 
-test('updated operator_ids resets page', function () {
+test('updated operatorIds resets page', function () {
     $component = new LogbookBrowser;
     $component->mount();
     $component->updatedOperatorIds();
@@ -172,7 +172,7 @@ test('updated operator_ids resets page', function () {
     expect($component)->toBeInstanceOf(LogbookBrowser::class);
 });
 
-test('updated time_from resets page', function () {
+test('updated timeFrom resets page', function () {
     $component = new LogbookBrowser;
     $component->mount();
     $component->updatedTimeFrom();
@@ -180,7 +180,7 @@ test('updated time_from resets page', function () {
     expect($component)->toBeInstanceOf(LogbookBrowser::class);
 });
 
-test('updated time_to resets page', function () {
+test('updated timeTo resets page', function () {
     $component = new LogbookBrowser;
     $component->mount();
     $component->updatedTimeTo();
@@ -188,7 +188,7 @@ test('updated time_to resets page', function () {
     expect($component)->toBeInstanceOf(LogbookBrowser::class);
 });
 
-test('updated callsign_search resets page', function () {
+test('updated callsignSearch resets page', function () {
     $component = new LogbookBrowser;
     $component->mount();
     $component->updatedCallsignSearch();
@@ -196,7 +196,7 @@ test('updated callsign_search resets page', function () {
     expect($component)->toBeInstanceOf(LogbookBrowser::class);
 });
 
-test('updated section_ids resets page', function () {
+test('updated sectionIds resets page', function () {
     $component = new LogbookBrowser;
     $component->mount();
     $component->updatedSectionIds();
@@ -204,7 +204,7 @@ test('updated section_ids resets page', function () {
     expect($component)->toBeInstanceOf(LogbookBrowser::class);
 });
 
-test('updated show_duplicates resets page', function () {
+test('updated showDuplicates resets page', function () {
     $component = new LogbookBrowser;
     $component->mount();
     $component->updatedShowDuplicates();
@@ -318,7 +318,7 @@ test('component has correct per page setting', function () {
     expect($component->perPage)->toBe(50);
 });
 
-describe('show_deleted filter', function () {
+describe('showDeleted filter', function () {
     beforeEach(function () {
         Permission::findOrCreate('edit-contacts', 'web');
 
@@ -344,25 +344,25 @@ describe('show_deleted filter', function () {
         $this->deletedContact->delete();
     });
 
-    test('show_deleted defaults to null and excludes deleted contacts', function () {
+    test('showDeleted defaults to null and excludes deleted contacts', function () {
         Livewire::test(LogbookBrowser::class)
-            ->assertSet('show_deleted', null);
+            ->assertSet('showDeleted', null);
     });
 
-    test('show_deleted "include" shows both active and deleted contacts', function () {
+    test('showDeleted "include" shows both active and deleted contacts', function () {
         $this->user->givePermissionTo('edit-contacts');
 
         Livewire::test(LogbookBrowser::class)
-            ->set('show_deleted', 'include')
+            ->set('showDeleted', 'include')
             ->assertSee($this->activeContact->callsign)
             ->assertSee($this->deletedContact->callsign);
     });
 
-    test('show_deleted "only" shows only deleted contacts', function () {
+    test('showDeleted "only" shows only deleted contacts', function () {
         $this->user->givePermissionTo('edit-contacts');
 
         Livewire::test(LogbookBrowser::class)
-            ->set('show_deleted', 'only')
+            ->set('showDeleted', 'only')
             ->assertDontSee($this->activeContact->callsign)
             ->assertSee($this->deletedContact->callsign);
     });

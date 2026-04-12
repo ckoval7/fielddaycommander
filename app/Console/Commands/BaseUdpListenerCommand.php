@@ -42,15 +42,12 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
     protected function runListener(ExternalLoggerManager $manager): int
     {
         $config = $this->resolveEventConfiguration();
-        if ($config === null) {
-            $this->error('No active event configuration found.');
+        $setting = $config ? $manager->getSetting($config->id, $this->getType()) : null;
 
-            return self::FAILURE;
-        }
-
-        $setting = $manager->getSetting($config->id, $this->getType());
-        if ($setting === null || ! $setting->is_enabled) {
-            $this->error("{$this->listenerLabel()} listener is not enabled for this event.");
+        if (! $config || ! $setting?->is_enabled) {
+            $this->error(! $config
+                ? 'No active event configuration found.'
+                : "{$this->listenerLabel()} listener is not enabled for this event.");
 
             return self::FAILURE;
         }

@@ -59,10 +59,10 @@ describe('openEdit', function () {
             ->call('openEdit', $this->contact->id)
             ->assertSet('showModal', true)
             ->assertSet('callsign', 'W1AW')
-            ->assertSet('exchange_class', '3A')
-            ->assertSet('section_id', $this->section->id)
-            ->assertSet('band_id', $this->band->id)
-            ->assertSet('mode_id', $this->mode->id)
+            ->assertSet('exchangeClass', '3A')
+            ->assertSet('sectionId', $this->section->id)
+            ->assertSet('bandId', $this->band->id)
+            ->assertSet('modeId', $this->mode->id)
             ->assertSet('notes', '');
     });
 
@@ -71,7 +71,7 @@ describe('openEdit', function () {
 
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
-            ->assertSet('exchange_class', '2A');
+            ->assertSet('exchangeClass', '2A');
     });
 
     test('denies access without edit-contacts permission', function () {
@@ -89,8 +89,8 @@ describe('save', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
             ->set('callsign', 'K1ABC')
-            ->set('exchange_class', '2A')
-            ->set('band_id', $this->otherBand->id)
+            ->set('exchangeClass', '2A')
+            ->set('bandId', $this->otherBand->id)
             ->set('notes', 'Corrected callsign')
             ->call('save')
             ->assertHasNoErrors()
@@ -108,7 +108,7 @@ describe('save', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
             ->set('callsign', 'K1ABC')
-            ->set('exchange_class', '2A')
+            ->set('exchangeClass', '2A')
             ->call('save');
 
         $auditLog = AuditLog::where('action', 'contact.updated')
@@ -124,42 +124,42 @@ describe('save', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
             ->set('callsign', '')
-            ->set('exchange_class', '')
-            ->set('section_id', null)
+            ->set('exchangeClass', '')
+            ->set('sectionId', null)
             ->call('save')
-            ->assertHasErrors(['callsign', 'exchange_class', 'section_id']);
+            ->assertHasErrors(['callsign', 'exchangeClass', 'sectionId']);
     });
 
     test('validates exchange_class format', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
-            ->set('exchange_class', 'INVALID')
+            ->set('exchangeClass', 'INVALID')
             ->call('save')
-            ->assertHasErrors(['exchange_class']);
+            ->assertHasErrors(['exchangeClass']);
     });
 
     test('validates section_id exists', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
-            ->set('section_id', 99999)
+            ->set('sectionId', 99999)
             ->call('save')
-            ->assertHasErrors(['section_id']);
+            ->assertHasErrors(['sectionId']);
     });
 
     test('validates band_id exists', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
-            ->set('band_id', 99999)
+            ->set('bandId', 99999)
             ->call('save')
-            ->assertHasErrors(['band_id']);
+            ->assertHasErrors(['bandId']);
     });
 
     test('validates mode_id exists', function () {
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
-            ->set('mode_id', 99999)
+            ->set('modeId', 99999)
             ->call('save')
-            ->assertHasErrors(['mode_id']);
+            ->assertHasErrors(['modeId']);
     });
 });
 
