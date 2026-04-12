@@ -2,7 +2,7 @@
     @if ($hasEvent)
         <style>
             .section-path {
-                transition: filter 0.15s ease, stroke-width 0.15s ease, stroke 0.15s ease;
+                transition: filter 0.15s ease, stroke-width 0.15s ease, stroke 0.15s ease, opacity 0.3s ease;
                 cursor: pointer;
             }
             .section-label {
@@ -39,6 +39,15 @@
                     maxTime: @js($maxTime),
 
                     callAreas: [1,2,3,4,5,6,7,8,9,0],
+                    sectionGroups: {},
+
+                    init() {
+                        this.$nextTick(() => {
+                            this.$el.querySelectorAll('g[id^=w] > path.section-path').forEach(path => {
+                                this.sectionGroups[path.id] = path.parentNode.id;
+                            });
+                        });
+                    },
 
                     getViewBox() {
                         if (this.view === 'us') return '340 425 1200 675';
@@ -115,13 +124,20 @@
                         return c ? `hsl(${c[0]}, ${c[1]}%, ${c[2]}%)` : '#d1d5db';
                     },
 
+                    isDimmed(code) {
+                        if (!this.view.startsWith('w')) return false;
+                        return this.sectionGroups[code] !== this.view;
+                    },
+
                     getSectionStyle(code) {
                         const data = this.sectionData[code];
                         const isHover = this.hoverSection === code;
                         const noData = !data || data.count === 0;
+                        const dimmed = this.isDimmed(code);
 
                         if (noData) {
                             const base = { fill: '#d1d5db' };
+                            if (dimmed) base.opacity = '0.15';
                             if (isHover) {
                                 base.stroke = '#fff';
                                 base.strokeWidth = '3';
@@ -167,6 +183,8 @@
                         }
 
                         const style = { fill };
+
+                        if (dimmed) style.opacity = '0.15';
 
                         if (isHover) {
                             style.stroke = '#fff';
