@@ -16,7 +16,7 @@ class AdifDuplicateMatcherService
      *
      * @var array<string>
      */
-    private const REQUIRED_FIELDS = ['power_watts', 'received_exchange'];
+    private const REQUIRED_FIELDS = ['power_watts', 'exchange_class'];
 
     /**
      * Match staged records against existing contacts.
