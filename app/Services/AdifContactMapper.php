@@ -24,7 +24,7 @@ class AdifContactMapper
         }
 
         $callsign = strtoupper($call);
-        $timestamp = Carbon::createFromFormat('Ymd His', $qsoDate.' '.$timeOn, 'UTC');
+        $timestamp = Carbon::createFromFormat('Ymd His', $qsoDate.' '.str_pad($timeOn, 6, '0'), 'UTC');
 
         $freq = $tags['FREQ'] ?? '';
         $frequencyHz = $freq !== ''

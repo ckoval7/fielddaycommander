@@ -236,6 +236,19 @@ test('returns null when QSO_DATE is missing', function () {
     expect($dto)->toBeNull();
 });
 
+test('handles 4-digit HHMM TIME_ON from fldigi', function () {
+    $tags = [
+        'CALL' => 'W1AW',
+        'QSO_DATE' => '20260412',
+        'TIME_ON' => '0044',
+    ];
+
+    $dto = $this->mapper->map($tags, $this->source);
+
+    expect($dto)->toBeInstanceOf(ExternalContactDto::class)
+        ->and($dto->timestamp->toDateTimeString())->toBe('2026-04-12 00:44:00');
+});
+
 test('returns null when TIME_ON is missing', function () {
     $tags = [
         'CALL' => 'W1AW',
