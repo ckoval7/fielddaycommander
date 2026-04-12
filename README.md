@@ -2,33 +2,39 @@
 
 # Field Day Commander
 
-A web-based operations hub for ham radio clubs running ARRL Field Day. Manage contacts, scoring, stations, operators, and equipment from any device on your local network, no internet required.
+A web-based operations platform for ham radio clubs running ARRL Field Day and Winter Field Day. FD Commander goes beyond contact logging to handle the whole event: volunteer scheduling, equipment tracking, safety checklists, external logger integration, and real-time scoring with all 18 ARRL bonus categories. Runs on any device on your local network, no internet required.
 
 Field Day Commander runs on modest hardware (including a Raspberry Pi 4) and is designed for air-gapped field deployments where reliability matters more than cloud connectivity.
 
-[Check out the website](https://fielddaycommander.org) and [Try the live demo](https://demo.fielddaycommander.org/)
+[Check out the website](https://fielddaycommander.org) | [Try the live demo](https://demo.fielddaycommander.org/)
 
 ## Why Use It?
 
-**For your club:** Multiple operators log contacts simultaneously from any phone, tablet, or laptop on the network. Scores update in real time so everyone can see how the event is going.
+**For your club:** Multiple operators log contacts simultaneously from any phone, tablet, or laptop on the network. Scores update in real time so everyone can see how the event is going. An interactive section map shows which ARRL sections you've worked and which you still need.
 
-**For event organizers:** Plan stations, schedule operator shifts, track equipment, manage safety checklists, and generate post-event reports and Cabrillo exports, all from one place.
+**For event organizers:** Plan stations, schedule operator shifts, track equipment, manage safety checklists, and generate Cabrillo exports, all from one place. The live scoring dashboard tracks all 18 bonus categories so you can see at a glance what points you're leaving on the table.
 
-**For operators:** A clean logging interface with realtime dupe detection. If the network hiccups, your contacts queue locally and sync when the connection comes back. Just sit down and start making contacts.
+**For operators:** A clean logging interface with real-time dupe detection. If the network hiccups, contacts you log in the web UI queue locally and sync when the connection comes back. Already using N1MM Logger+, WSJT-X, or fldigi? FD Commander receives contacts from those programs over UDP, so you don't have to double-log.
 
 ## Key Features
 
-- **Real-time contact logging:** multiple operators log QSOs simultaneously with live dupe checking
-- **Live scoring:** scores update automatically as contacts are logged, with power multipliers and bonus tracking
+- **Real-time contact logging:** multiple operators log QSOs simultaneously with live dupe checking across all stations and bands
+- **External logger integration:** receive contacts over UDP from N1MM Logger+, WSJT-X/JTDX, fldigi, and any logger that sends ADIF over UDP
+- **ADIF file import:** upload .adi/.adif files through a guided wizard with station mapping, validation, and review before import
+- **Live scoring:** scores update automatically with power multipliers and all 18 ARRL bonus categories tracked
+- **Section map:** interactive map of all 86 ARRL/RAC sections, colored by band, QSO count, or recency, updated in real time
 - **Station management:** define operating positions, assign equipment, and track which stations are active
-- **Volunteer scheduling:** build shift schedules and assign volunteers to stations and other roles
-- **Equipment tracking:** catalog personal and club-owned gear, commit it to events, and track status through the event lifecycle
-- **Role-based access:** four roles (System Admin, Event Manager, Station Captain, Operator) with appropriate permissions at each level
-- **Safety compliance:** built-in site safety checklist with completion tracking
+- **Volunteer scheduling:** build shift schedules with gap detection and operator self-sign-up
+- **Equipment tracking:** personal catalogs, event commitments, station assignments, and status tracking through the event lifecycle
+- **Visitor guestbook:** track visitors for ARRL bonus points with location-based check-in and category tracking
+- **NTS message traffic:** log radiograms, track originated/relayed/received messages, and capture the Section Manager message for bonus points
+- **Photo uploads:** capture the event from any device on the network; everything stays on your server
+- **Role-based access:** four roles (System Admin, Event Manager, Station Captain, Operator) with fully customizable permissions
+- **Safety compliance:** built-in 15-item ARRL safety checklist with required/complete tracking
 - **Cabrillo export:** generate submission-ready files when the event wraps up
 - **Store-and-forward logging:** if the server connection drops, contacts queue in the browser and sync automatically when connectivity returns
 - **Air-gapped operation:** zero external dependencies at runtime; everything runs locally after initial install
-- **Runs on a Pi:** tested on Raspberry Pi 4 (4GB), Intel NUC, and standard Linux servers
+- **Runs on a Pi:** tested on Raspberry Pi 4 with 2 GB of RAM running off a battery pack
 
 ## Getting Started
 
@@ -44,11 +50,7 @@ The interactive script handles installing dependencies, configuring the database
 
 ### Manual Setup
 
-If you prefer to configure things yourself, or need to adapt the install to your environment, follow the step-by-step deployment guides in the `docs/guides/` directory:
-
-1. **Environment Preparation,** install PHP 8.4+, MySQL/MariaDB, FrankenPHP, and Node.js
-2. **Application Deployment,** deploy the app, configure Caddy/SSL, and start background services
-3. **Quick Start Guide,** first login, initial configuration, and creating your first event
+If you prefer to configure things yourself, or need to adapt the install to your environment, see the [documentation on the website](https://fielddaycommander.org/fd-commander-docs.html).
 
 ### System Requirements
 
@@ -59,19 +61,11 @@ If you prefer to configure things yourself, or need to adapt the install to your
 
 ## Documentation
 
-Full documentation lives in the `docs/guides/` directory:
-
-| Guide | Description |
-|-------|-------------|
-| Environment Preparation | Server and dependency setup |
-| Application Deployment | App installation and web server configuration |
-| Quick Start Guide | First-run walkthrough for new installations |
-| System Overview | Architecture, roles, event lifecycle, and navigation |
-| Glossary | Definitions of Field Day and app-specific terms |
+Full documentation, how-to guides, and FAQ are on the website: [fielddaycommander.org](https://fielddaycommander.org/fd-commander-docs.html)
 
 ## Technology
 
-Built with Laravel 12, Livewire, and Mary UI. Served by FrankenPHP (Caddy + Laravel Octane) for persistent-process performance with automatic HTTPS. Real-time updates powered by Laravel Reverb (WebSockets). See the [System Overview](docs/04-system-overview.md) for architecture details.
+Built with Laravel 12, Livewire, and Mary UI. Served by FrankenPHP (Caddy + Laravel Octane) for persistent-process performance with automatic HTTPS. Real-time updates powered by Laravel Reverb (WebSockets).
 
 ## Contributing
 
