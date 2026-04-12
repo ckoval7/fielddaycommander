@@ -33,6 +33,15 @@ class AdifContactMapper
 
         $operator = trim($tags['OPERATOR'] ?? '');
 
+        $receivedExchange = trim($tags['SRX_STRING'] ?? $tags['SRX'] ?? '');
+        if ($receivedExchange === '') {
+            $class = trim($tags['CLASS'] ?? '');
+            $sect = trim($tags['ARRL_SECT'] ?? '');
+            if ($class !== '' && $sect !== '') {
+                $receivedExchange = $class.' '.$sect;
+            }
+        }
+
         $externalId = md5($callsign.$qsoDate.$timeOn.$freq);
 
         return new ExternalContactDto(
@@ -47,7 +56,7 @@ class AdifContactMapper
             sentReport: $tags['RST_SENT'] ?? null,
             sentExchange: $tags['STX_STRING'] ?? $tags['STX'] ?? null,
             receivedReport: $tags['RST_RCVD'] ?? null,
-            receivedExchange: $tags['SRX_STRING'] ?? $tags['SRX'] ?? null,
+            receivedExchange: $receivedExchange !== '' ? $receivedExchange : null,
             sectionCode: $tags['ARRL_SECT'] ?? null,
             externalId: $externalId,
             isDelete: false,

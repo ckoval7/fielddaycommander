@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\OutOfPeriodContactException;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
@@ -35,6 +36,7 @@ beforeEach(function () {
     Mode::firstOrCreate(['name' => 'SSB'], ['category' => 'Phone', 'points_fd' => 1, 'points_wfd' => 1]);
     Section::firstOrCreate(['code' => 'CT'], ['name' => 'Connecticut', 'region' => 'W1', 'is_active' => true]);
     Section::firstOrCreate(['code' => 'NLI'], ['name' => 'New York City-Long Island', 'region' => 'W2', 'is_active' => true]);
+    Section::firstOrCreate(['code' => 'NH'], ['name' => 'New Hampshire', 'region' => 'W1', 'is_active' => true]);
 
     $this->adifParser = new AdifParserService;
     $this->mapper = new AdifContactMapper;
@@ -128,6 +130,60 @@ test('full pipeline: duplicate plain ADIF packet is idempotent', function () {
     $this->handler->handleContact($dto2, $this->config);
 
     expect(Contact::where('external_id', $dto->externalId)->count())->toBe(1);
+});
+
+test('refreshing config picks up updated event window', function () {
+    // Set a narrow event window that excludes the QSO time (18:43 UTC)
+    $event = $this->config->event;
+    $event->update([
+        'start_time' => '2026-06-28 20:00:00',
+        'end_time' => '2026-06-29 20:00:00',
+    ]);
+
+    // Load the event relationship so it's cached on the model
+    $this->config->load('event');
+
+    $adifText = '<call:4>W1AW <mode:4>MFSK <submode:3>FT8 <qso_date:8>20260628 <time_on:6>184300 '
+        .'<band:3>20m <freq:6>14.076 <station_callsign:5>K3CPK <operator:5>K3CPK '
+        .'<SRX_STRING:5>3A CT <arrl_sect:2>CT <EOR>';
+
+    $parsed = $this->adifParser->parse($adifText);
+    $dto = $this->mapper->map($parsed['records'][0], 'udp-adif');
+
+    // QSO at 18:43 is outside the 20:00–20:00 window → rejected
+    expect(fn () => $this->handler->handleContact($dto, $this->config))
+        ->toThrow(OutOfPeriodContactException::class);
+
+    // Simulate what happens when the user moves the start time earlier in the UI
+    $event->update(['start_time' => '2026-06-28 18:00:00']);
+
+    // Without refresh, the stale cached event still rejects
+    expect(fn () => $this->handler->handleContact($dto, $this->config))
+        ->toThrow(OutOfPeriodContactException::class);
+
+    // After refresh (what the listener now does each heartbeat), the QSO is accepted
+    $this->config->unsetRelation('event');
+    $this->config->refresh();
+
+    $contact = $this->handler->handleContact($dto, $this->config);
+    expect($contact->callsign)->toBe('W1AW');
+});
+
+test('full pipeline: CLASS and ARRL_SECT compose received_exchange when SRX_STRING absent', function () {
+    $adifText = '<CALL:4>W1AX<MODE:3>PSK<SUBMODE:5>PSK31<FREQ:9>14.071500<BAND:3>20m'
+        .'<QSO_DATE:8>20260412<TIME_ON:4>0142<QSO_DATE_OFF:8>20260412<TIME_OFF:4>0142'
+        .'<STX_STRING:0><CLASS:2>2B<ARRL_SECT:2>NH<OPERATOR:5>K3CPK<STATION_CALLSIGN:5>K3CPK<EOR>';
+
+    $parsed = $this->adifParser->parse($adifText);
+    expect($parsed['records'])->toHaveCount(1);
+
+    $dto = $this->mapper->map($parsed['records'][0], 'udp-adif');
+    expect($dto)->not->toBeNull()
+        ->and($dto->receivedExchange)->toBe('2B NH');
+
+    $contact = $this->handler->handleContact($dto, $this->config);
+    expect($contact->received_exchange)->toBe('2B NH')
+        ->and($contact->section->code)->toBe('NH');
 });
 
 test('WSJTX binary packet is detectable by magic number', function () {
