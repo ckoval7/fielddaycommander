@@ -38,6 +38,10 @@
                     ['key' => 'station', 'label' => 'Station', 'class' => 'w-32'],
                     ['key' => 'logger', 'label' => 'Logger', 'class' => 'w-32'],
                 ];
+
+                if (auth()->check() && auth()->user()->can('edit-contacts')) {
+                    $headers[] = ['key' => 'actions', 'label' => 'Actions', 'class' => 'w-24'];
+                }
             @endphp
 
             <x-table :headers="$headers" :rows="$this->contacts" class="table-sm">
@@ -47,7 +51,10 @@
 
                 @scope('cell_callsign', $contact)
                     <div class="flex items-center gap-2">
-                        <span class="font-mono font-semibold">{{ $contact->callsign }}</span>
+                        <span class="font-mono font-semibold {{ $contact->trashed() ? 'line-through text-base-content/40' : '' }}">{{ $contact->callsign }}</span>
+                        @if($contact->trashed())
+                            <x-badge value="DELETED" class="badge-xs badge-error" />
+                        @endif
                         @if($contact->is_duplicate)
                             <x-badge value="DUP" class="badge-xs badge-warning" />
                         @endif
@@ -113,18 +120,51 @@
                 @scope('cell_logger', $contact)
                     <span class="text-sm truncate">{{ $contact->logger ? $contact->logger->first_name . ' ' . $contact->logger->last_name : 'N/A' }}</span>
                 @endscope
+
+                @scope('cell_actions', $contact)
+                    @can('edit-contacts')
+                        <div class="flex items-center gap-1">
+                            @if($contact->trashed())
+                                <x-button
+                                    icon="o-arrow-uturn-left"
+                                    wire:click="$dispatch('restore-contact', { contactId: {{ $contact->id }} })"
+                                    wire:confirm="Are you sure you want to restore this contact?"
+                                    class="btn-ghost btn-xs text-success"
+                                    tooltip="Restore"
+                                    spinner
+                                />
+                            @else
+                                <x-button
+                                    icon="o-pencil-square"
+                                    wire:click="$dispatch('open-edit-contact', { contactId: {{ $contact->id }} })"
+                                    class="btn-ghost btn-xs"
+                                    tooltip="Edit"
+                                    spinner
+                                />
+                                <x-button
+                                    icon="o-trash"
+                                    wire:click="$dispatch('delete-contact', { contactId: {{ $contact->id }} })"
+                                    wire:confirm="Are you sure you want to delete this contact?"
+                                    class="btn-ghost btn-xs text-error"
+                                    tooltip="Delete"
+                                    spinner
+                                />
+                            @endif
+                        </div>
+                    @endcan
+                @endscope
             </x-table>
         </div>
 
         {{-- Mobile Card View --}}
         <div class="lg:hidden grid grid-cols-1 gap-4">
             @foreach($this->contacts as $contact)
-                <x-card class="shadow-sm {{ $contact->is_duplicate ? 'border-l-4 border-l-warning bg-warning/5' : '' }}">
+                <x-card class="shadow-sm {{ $contact->is_duplicate ? 'border-l-4 border-l-warning bg-warning/5' : '' }} {{ $contact->trashed() ? 'opacity-60' : '' }}">
                     <div class="flex flex-col gap-3">
                         {{-- Callsign and Badges --}}
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex-1 min-w-0">
-                                <div class="font-mono font-bold text-lg truncate">{{ $contact->callsign }}</div>
+                                <div class="font-mono font-bold text-lg truncate {{ $contact->trashed() ? 'line-through' : '' }}">{{ $contact->callsign }}</div>
                                 <div class="text-xs text-base-content/60 mt-1">
                                     {{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('M d, Y H:i') : 'N/A' }}
                                 </div>
@@ -138,6 +178,9 @@
                                 @endif
                                 @if($contact->operatingSession?->station?->is_gota ?? false)
                                     <x-badge value="GOTA" class="badge-xs badge-info" />
+                                @endif
+                                @if($contact->trashed())
+                                    <x-badge value="DELETED" class="badge-xs badge-error" />
                                 @endif
                             </div>
                         </div>
@@ -195,6 +238,38 @@
                                 {{ $contact->logger ? $contact->logger->first_name : 'N/A' }}
                             </div>
                         </div>
+
+                        {{-- Actions (edit-contacts only) --}}
+                        @can('edit-contacts')
+                            <div class="flex items-center gap-2 pt-2 border-t border-base-300">
+                                @if($contact->trashed())
+                                    <x-button
+                                        icon="o-arrow-uturn-left"
+                                        label="Restore"
+                                        wire:click="$dispatch('restore-contact', { contactId: {{ $contact->id }} })"
+                                        wire:confirm="Are you sure you want to restore this contact?"
+                                        class="btn-ghost btn-xs text-success"
+                                        spinner
+                                    />
+                                @else
+                                    <x-button
+                                        icon="o-pencil-square"
+                                        label="Edit"
+                                        wire:click="$dispatch('open-edit-contact', { contactId: {{ $contact->id }} })"
+                                        class="btn-ghost btn-xs"
+                                        spinner
+                                    />
+                                    <x-button
+                                        icon="o-trash"
+                                        label="Delete"
+                                        wire:click="$dispatch('delete-contact', { contactId: {{ $contact->id }} })"
+                                        wire:confirm="Are you sure you want to delete this contact?"
+                                        class="btn-ghost btn-xs text-error"
+                                        spinner
+                                    />
+                                @endif
+                            </div>
+                        @endcan
                     </div>
                 </x-card>
             @endforeach
