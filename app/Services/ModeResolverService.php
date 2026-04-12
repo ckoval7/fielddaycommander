@@ -37,18 +37,13 @@ class ModeResolverService
         $modes = Mode::query()->pluck('id', 'name')->toArray();
         $upper = strtoupper($modeName);
 
-        if ($upper === 'CW') {
-            return $modes['CW'] ?? null;
-        }
+        $category = match (true) {
+            $upper === 'CW' => 'CW',
+            in_array($upper, self::PHONE_MODES, true) => 'Phone',
+            in_array($upper, self::DIGITAL_MODES, true) => 'Digital',
+            default => null,
+        };
 
-        if (in_array($upper, self::PHONE_MODES, true)) {
-            return $modes['Phone'] ?? null;
-        }
-
-        if (in_array($upper, self::DIGITAL_MODES, true)) {
-            return $modes['Digital'] ?? null;
-        }
-
-        return null;
+        return $category !== null ? ($modes[$category] ?? null) : null;
     }
 }

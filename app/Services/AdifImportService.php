@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AdifImportStatus;
 use App\Enums\AdifRecordStatus;
+use App\Exceptions\AdifImportRecordException;
 use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
 use App\Models\Contact;
@@ -62,7 +63,7 @@ class AdifImportService
     private function createContact(AdifImportRecord $record, AdifImport $import, array &$counters): void
     {
         if ($record->station_id === null || $record->operator_user_id === null) {
-            throw new \RuntimeException("Record {$record->id} missing station or operator mapping");
+            throw new AdifImportRecordException("Record {$record->id} missing station or operator mapping");
         }
 
         $session = $this->findOrCreateSession($record);

@@ -65,7 +65,7 @@ class AdifParserService
     {
         $tags = [];
 
-        preg_match_all('/<([A-Za-z0-9_]+):(\d+)(?::[A-Za-z])?>/', $text, $matches, PREG_OFFSET_CAPTURE);
+        preg_match_all('/<(\w+):(\d+)(?::[A-Za-z])?>/', $text, $matches, PREG_OFFSET_CAPTURE);
 
         for ($i = 0; $i < count($matches[0]); $i++) {
             $tagName = strtoupper($matches[1][$i][0]);

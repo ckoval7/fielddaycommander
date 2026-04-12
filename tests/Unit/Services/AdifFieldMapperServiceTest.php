@@ -306,8 +306,7 @@ test('auto-creates stub user for unknown operator callsign', function () {
     $report = $this->mapper->autoMap($import);
 
     $record->refresh();
-    expect($record->operator_user_id)->not->toBeNull()
-        ->and($report['unmapped_operators'])->toBeEmpty();
+    expect($record->operator_user_id)->not->toBeNull();
 
     $stubUser = User::where('call_sign', 'N0ACCT')->first();
     expect($stubUser)->not->toBeNull()

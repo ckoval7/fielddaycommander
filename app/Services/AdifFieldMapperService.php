@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\AdifRecordStatus;
 use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
-use App\Models\Mode;
 use App\Models\Section;
 use App\Models\Station;
 
@@ -16,7 +15,7 @@ class AdifFieldMapperService
     /**
      * Auto-map staged records against the database.
      *
-     * @return array{unmapped_bands: array<string>, unmapped_modes: array<string>, unmapped_sections: array<string>, unmapped_stations: array<string>, unmapped_operators: array<string>}
+     * @return array{unmapped_bands: array<string>, unmapped_modes: array<string>, unmapped_sections: array<string>, unmapped_stations: array<string>}
      */
     public function autoMap(AdifImport $import): array
     {
@@ -25,10 +24,8 @@ class AdifFieldMapperService
             'unmapped_modes' => [],
             'unmapped_sections' => [],
             'unmapped_stations' => [],
-            'unmapped_operators' => [],
         ];
 
-        $modes = Mode::query()->pluck('id', 'name')->toArray();
         $sections = Section::query()->where('is_active', true)->pluck('id', 'code')->toArray();
 
         $stations = Station::query()
@@ -40,10 +37,10 @@ class AdifFieldMapperService
 
         foreach ($records as $record) {
             $this->mapBand($record, $report);
-            $this->mapMode($record, $modes, $report);
+            $this->mapMode($record, $report);
             $this->mapSection($record, $sections, $report);
             $this->mapStation($record, $stations, $report);
-            $this->mapOperator($record, $report);
+            $this->mapOperator($record);
 
             $record->status = AdifRecordStatus::Mapped;
             $record->save();
@@ -53,7 +50,6 @@ class AdifFieldMapperService
         $report['unmapped_modes'] = array_unique($report['unmapped_modes']);
         $report['unmapped_sections'] = array_unique($report['unmapped_sections']);
         $report['unmapped_stations'] = array_unique($report['unmapped_stations']);
-        $report['unmapped_operators'] = array_unique($report['unmapped_operators']);
 
         return $report;
     }
@@ -187,10 +183,9 @@ class AdifFieldMapperService
     }
 
     /**
-     * @param  array<string, int>  $modes
      * @param  array{unmapped_modes: array<string>}  $report
      */
-    private function mapMode(AdifImportRecord $record, array $modes, array &$report): void
+    private function mapMode(AdifImportRecord $record, array &$report): void
     {
         if ($record->mode_name === null) {
             return;
@@ -240,10 +235,7 @@ class AdifFieldMapperService
         }
     }
 
-    /**
-     * @param  array{unmapped_operators: array<string>}  $report
-     */
-    private function mapOperator(AdifImportRecord $record, array &$report): void
+    private function mapOperator(AdifImportRecord $record): void
     {
         if ($record->operator_callsign === null) {
             return;
