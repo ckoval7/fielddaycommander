@@ -14,6 +14,17 @@
             hint="Must be unique within the event"
         />
 
+        {{-- Hostname (for external logger matching) --}}
+        <x-input
+            label="Hostname (NetBIOS Name)"
+            wire:model.blur="hostname"
+            icon="o-computer-desktop"
+            placeholder="e.g., CONTEST-PC"
+            autocomplete="off"
+            maxlength="50"
+            hint="Used for automatic station matching with external loggers like N1MM+"
+        />
+
         {{-- Event Selection --}}
         <x-select
             label="Event"
