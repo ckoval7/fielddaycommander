@@ -30,7 +30,7 @@ class StoreContactSyncRequest extends FormRequest
             'mode_id' => ['required', 'integer', 'exists:modes,id'],
             'callsign' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9\/]+$/'],
             'section_id' => ['required', 'integer', 'exists:sections,id'],
-            'received_exchange' => ['required', 'string', 'max:50'],
+            'exchange_class' => ['required', 'string', 'max:5', 'regex:/^\d{1,2}[A-Fa-f]$/'],
             'power_watts' => ['required', 'integer', 'min:1'],
             'qso_time' => ['required', 'date'],
             'is_gota_contact' => ['sometimes', 'boolean'],
@@ -50,7 +50,8 @@ class StoreContactSyncRequest extends FormRequest
             'uuid.required' => 'A client UUID is required for idempotent sync',
             'callsign.required' => 'A callsign is required',
             'callsign.regex' => 'The callsign must contain only letters, numbers, and forward slashes',
-            'received_exchange.required' => 'The received exchange string is required',
+            'exchange_class.required' => 'The exchange class is required',
+            'exchange_class.regex' => 'The exchange class must be a number followed by a letter (e.g. 3A)',
         ];
     }
 }

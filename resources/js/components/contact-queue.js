@@ -101,7 +101,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 callsign: contactData.callsign,
                 section_id: contactData.section_id,
                 section_code: contactData.section_code || '',
-                received_exchange: contactData.received_exchange,
+                exchange_class: contactData.exchange_class,
                 power_watts: contactData.power_watts,
                 is_gota_contact: contactData.is_gota_contact || false,
                 gota_operator_first_name: contactData.gota_operator_first_name || null,
@@ -139,7 +139,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 callsign: parsed.callsign,
                 section_id: parsed.section_id,
                 section_code: parsed.section_code,
-                received_exchange: rawInput.toUpperCase(),
+                exchange_class: (parsed.transmitter_count + parsed.class_code).toUpperCase(),
                 power_watts: sessionContext.power_watts,
                 is_gota_contact: sessionContext.is_gota || false,
                 gota_operator_first_name: sessionContext.gota_operator_first_name || null,
@@ -202,8 +202,12 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 return null;
             }
 
+            const classMatch = tokens[1].match(/^(\d{1,2})([A-F])$/i);
+            const transmitter_count = classMatch[1];
+            const class_code = classMatch[2].toUpperCase();
+
             this.parseError = '';
-            return { callsign, section_id: sectionId, section_code: sectionCode };
+            return { callsign, section_id: sectionId, section_code: sectionCode, transmitter_count, class_code };
         },
 
         async syncNext() {
@@ -245,7 +249,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                         mode_id: candidate.mode_id,
                         callsign: candidate.callsign,
                         section_id: candidate.section_id,
-                        received_exchange: candidate.received_exchange,
+                        exchange_class: candidate.exchange_class,
                         power_watts: candidate.power_watts,
                         qso_time: candidate.qso_time,
                         is_gota_contact: candidate.is_gota_contact || false,
