@@ -19,7 +19,7 @@ class AdifImportService
      *
      * @var array<string>
      */
-    private const MERGEABLE_FIELDS = ['power_watts', 'notes', 'received_exchange'];
+    private const MERGEABLE_FIELDS = ['power_watts', 'notes', 'exchange_class'];
 
     public function __construct(private readonly SessionResolverService $sessionResolver) {}
 
@@ -68,8 +68,6 @@ class AdifImportService
 
         $session = $this->findOrCreateSession($record);
 
-        $exchange = $this->buildReceivedExchange($record);
-
         $dupeService = app(DuplicateCheckService::class);
         $dupeCheck = $dupeService->check(
             $record->callsign,
@@ -91,7 +89,7 @@ class AdifImportService
             'qso_time' => $record->qso_time,
             'callsign' => $record->callsign,
             'section_id' => $record->section_id,
-            'received_exchange' => $exchange,
+            'exchange_class' => $record->exchange_class ? strtoupper($record->exchange_class) : null,
             'power_watts' => $session->power_watts,
             'points' => $points,
             'is_duplicate' => $dupeCheck['is_duplicate'],
@@ -114,13 +112,12 @@ class AdifImportService
             return;
         }
 
-        $exchange = $this->buildReceivedExchange($record);
         $updates = [];
 
         foreach (self::MERGEABLE_FIELDS as $field) {
             if ($contact->{$field} === null) {
                 $value = match ($field) {
-                    'received_exchange' => $exchange,
+                    'exchange_class' => $record->exchange_class ? strtoupper($record->exchange_class) : null,
                     default => null,
                 };
 
@@ -147,14 +144,5 @@ class AdifImportService
             modeId: $record->mode_id,
             startTime: $record->qso_time,
         );
-    }
-
-    private function buildReceivedExchange(AdifImportRecord $record): string
-    {
-        return strtoupper(trim(
-            ($record->callsign ?? '').' '.
-            ($record->exchange_class ?? '').' '.
-            ($record->section_code ?? '')
-        ));
     }
 }

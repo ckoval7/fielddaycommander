@@ -225,7 +225,7 @@ test('recent contacts ordered newest first', function () {
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'K5OLD',
         'qso_time' => now()->subMinutes(10),
-        'received_exchange' => '1D STX',
+        'exchange_class' => '1D',
     ]);
 
     Contact::factory()->create([
@@ -236,7 +236,7 @@ test('recent contacts ordered newest first', function () {
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1NEW',
         'qso_time' => now(),
-        'received_exchange' => '3A CT',
+        'exchange_class' => '3A',
     ]);
 
     // The newest contact (W1NEW) should appear before the older one (K5OLD)
@@ -282,7 +282,7 @@ test('cw mode points are assigned by API on sync', function () {
         'mode_id' => $this->cwMode->id,
         'callsign' => 'W1AW',
         'section_id' => $this->section->id,
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => '3A',
         'power_watts' => 100,
         'qso_time' => now()->toISOString(),
     ])->assertCreated();
@@ -301,7 +301,7 @@ test('phone mode points are assigned by API on sync', function () {
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1AW',
         'section_id' => $this->section->id,
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => '3A',
         'power_watts' => 100,
         'qso_time' => now()->toISOString(),
     ])->assertCreated();
@@ -327,7 +327,8 @@ test('suggestions appear for callsign worked on different band', function () {
         'band_id' => $otherBand->id,
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1AW',
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => '3A',
+        'section_id' => $this->section->id,
         'is_duplicate' => false,
     ]);
 
@@ -348,7 +349,8 @@ test('suggestions do not include callsigns already worked on current band and mo
         'band_id' => $this->band->id,
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1AW',
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => '3A',
+        'section_id' => $this->section->id,
         'is_duplicate' => false,
     ]);
 
@@ -372,7 +374,8 @@ test('suggestions clear after typing a space', function () {
         'band_id' => $otherBand->id,
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1AW',
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => '3A',
+        'section_id' => $this->section->id,
         'is_duplicate' => false,
     ]);
 
@@ -602,7 +605,8 @@ test('suggestions show full exchange and worked-on bands', function () {
         'band_id' => $otherBand->id,
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'K5ABC',
-        'received_exchange' => 'K5ABC 1D STX',
+        'exchange_class' => '1D',
+        'section_id' => $this->stxSection->id,
         'is_duplicate' => false,
     ]);
 
@@ -818,7 +822,7 @@ test('updateContact rejects when session is ended', function () {
         'band_id' => $this->band->id,
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1UPE',
-        'received_exchange' => 'W1UPE 3A CT',
+        'exchange_class' => '3A',
         'section_id' => $this->section->id,
         'qso_time' => now(),
     ]);
@@ -843,7 +847,7 @@ test('updateContact updates contact fields', function () {
         'band_id' => $this->band->id,
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1OLD',
-        'received_exchange' => 'W1OLD 3A CT',
+        'exchange_class' => '3A',
         'section_id' => $this->section->id,
         'qso_time' => now(),
     ]);
@@ -853,7 +857,7 @@ test('updateContact updates contact fields', function () {
 
     $contact->refresh();
     expect($contact->callsign)->toBe('W1NEW')
-        ->and($contact->received_exchange)->toBe('W1NEW 1D STX')
+        ->and($contact->exchange_class)->toBe('1D')
         ->and($contact->section_id)->toBe($this->stxSection->id);
 });
 
@@ -867,7 +871,7 @@ test('updateContact logs audit entry with old and new values', function () {
         'band_id' => $this->band->id,
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1OLD',
-        'received_exchange' => 'W1OLD 3A CT',
+        'exchange_class' => '3A',
         'section_id' => $this->section->id,
         'qso_time' => now(),
     ]);
@@ -894,7 +898,7 @@ test('updateContact rejects invalid exchange', function () {
         'band_id' => $this->band->id,
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1OLD',
-        'received_exchange' => 'W1OLD 3A CT',
+        'exchange_class' => '3A',
         'section_id' => $this->section->id,
         'qso_time' => now(),
     ]);
@@ -923,7 +927,7 @@ test('updateContact rejects contact from another session', function () {
         'band_id' => $this->band->id,
         'mode_id' => $this->phoneMode->id,
         'callsign' => 'W1OTH',
-        'received_exchange' => 'W1OTH 3A CT',
+        'exchange_class' => '3A',
         'section_id' => $this->section->id,
         'qso_time' => now(),
     ]);

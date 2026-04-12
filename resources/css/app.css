@@ -246,59 +246,66 @@
         @apply text-blue-400 font-semibold;
     }
 
-    /* Sidebar scrollbar - thin and unobtrusive */
+    /* Sidebar layout — override MaryUI's overflow-y-auto so we control
+       scrolling from our own inner scroll area (.sidebar-scroll-area). */
     .drawer-side > div {
-        scrollbar-width: thin;
-        scrollbar-color: oklch(0% 0 0 / 0.15) transparent;
+        overflow-y: hidden !important;
         @apply flex flex-col;
     }
 
-    .drawer-side > div::-webkit-scrollbar {
+    /* Content wrapper becomes a flex column so the sidebar slot can
+       partition into fixed header / scrollable body / indicator footer. */
+    .drawer-side > div > .flex-1 {
+        @apply order-2 flex flex-col min-h-0;
+    }
+
+    /* Collapse button pinned at top */
+    .drawer-side > div > .flex-1 + .menu {
+        @apply order-1 z-10 bg-inherit border-b border-base-300 mb-2;
+    }
+
+    /* Sidebar scroll area — thin, unobtrusive scrollbar */
+    .sidebar-scroll-area {
+        scrollbar-width: thin;
+        scrollbar-color: oklch(0% 0 0 / 0.15) transparent;
+    }
+
+    .sidebar-scroll-area::-webkit-scrollbar {
         width: 4px;
     }
 
-    .drawer-side > div::-webkit-scrollbar-track {
+    .sidebar-scroll-area::-webkit-scrollbar-track {
         background: transparent;
     }
 
-    .drawer-side > div::-webkit-scrollbar-thumb {
+    .sidebar-scroll-area::-webkit-scrollbar-thumb {
         background-color: oklch(0% 0 0 / 0.15);
         border-radius: 9999px;
     }
 
-    .drawer-side > div::-webkit-scrollbar-thumb:hover {
+    .sidebar-scroll-area::-webkit-scrollbar-thumb:hover {
         background-color: oklch(0% 0 0 / 0.3);
     }
 
-    [data-theme="dark"] .drawer-side > div {
+    [data-theme="dark"] .sidebar-scroll-area {
         scrollbar-color: oklch(100% 0 0 / 0.15) transparent;
     }
 
-    [data-theme="dark"] .drawer-side > div::-webkit-scrollbar-thumb {
+    [data-theme="dark"] .sidebar-scroll-area::-webkit-scrollbar-thumb {
         background-color: oklch(100% 0 0 / 0.15);
     }
 
-    [data-theme="dark"] .drawer-side > div::-webkit-scrollbar-thumb:hover {
+    [data-theme="dark"] .sidebar-scroll-area::-webkit-scrollbar-thumb:hover {
         background-color: oklch(100% 0 0 / 0.3);
     }
 
     /* Hide scrollbar when sidebar is collapsed */
-    .drawer-side > div[class*="!w-[62px]"] {
+    .drawer-side > div[class*="!w-[62px]"] .sidebar-scroll-area {
         scrollbar-width: none;
     }
 
-    .drawer-side > div[class*="!w-[62px]"]::-webkit-scrollbar {
+    .drawer-side > div[class*="!w-[62px]"] .sidebar-scroll-area::-webkit-scrollbar {
         display: none;
-    }
-
-    /* Move collapse button to top with sticky positioning */
-    .drawer-side > div > .flex-1 {
-        @apply order-2;
-    }
-
-    /* Position collapse button at top and make it sticky */
-    .drawer-side > div > .flex-1 + .menu {
-        @apply order-1 sticky top-0 z-10 bg-inherit border-b border-base-300 mb-2;
     }
 
     /* Hide menu separators (section titles) when sidebar is collapsed */

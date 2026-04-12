@@ -14,6 +14,8 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event as EventFacade;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -50,8 +52,8 @@ beforeEach(function () {
 
     $this->user = User::factory()->create();
 
-    $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'log-contacts']);
-    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $permission = Permission::firstOrCreate(['name' => 'log-contacts']);
+    $role = Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
     $role->givePermissionTo($permission);
     $this->user->assignRole($role);
 
@@ -129,7 +131,7 @@ test('ContactLogged event is dispatched when syncing a contact via API', functio
         'mode_id' => $this->mode->id,
         'callsign' => 'K5ABC',
         'section_id' => $this->section->id,
-        'received_exchange' => 'K5ABC 3A CT',
+        'exchange_class' => '3A',
         'power_watts' => 100,
         'qso_time' => now()->toISOString(),
     ])->assertCreated();

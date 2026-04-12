@@ -1,10 +1,15 @@
 <?php
 
 use App\Livewire\Logbook\LogbookBrowser;
+use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Mode;
+use App\Models\OperatingSession;
+use App\Models\Station;
 use App\Models\User;
+use App\Services\EventContextService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -85,12 +90,12 @@ describe('responsive layout patterns', function () {
 
     test('component handles no active event gracefully', function () {
         // Delete all events and event configurations so no context event is found
-        \App\Models\Contact::query()->forceDelete();
-        \App\Models\OperatingSession::query()->forceDelete();
-        \App\Models\Station::query()->forceDelete();
-        \App\Models\EventConfiguration::query()->forceDelete();
-        \App\Models\Event::query()->forceDelete();
-        app(\App\Services\EventContextService::class)->clearCache();
+        Contact::query()->forceDelete();
+        OperatingSession::query()->forceDelete();
+        Station::query()->forceDelete();
+        EventConfiguration::query()->forceDelete();
+        Event::query()->forceDelete();
+        app(EventContextService::class)->clearCache();
 
         Livewire::test(LogbookBrowser::class)
             ->assertSee('No Active Event')
@@ -121,7 +126,7 @@ describe('responsive class validation', function () {
     });
 
     test('contacts are filtered by band', function () {
-        $band = \App\Models\Band::first();
+        $band = Band::first();
         if (! $band) {
             $this->markTestSkipped('No bands in database');
         }
@@ -141,7 +146,7 @@ describe('responsive class validation', function () {
     });
 
     test('contacts are filtered by mode', function () {
-        $mode = \App\Models\Mode::first();
+        $mode = Mode::first();
         if (! $mode) {
             $this->markTestSkipped('No modes in database');
         }
@@ -255,13 +260,13 @@ describe('accessibility and usability', function () {
 });
 
 describe('class display formatting', function () {
-    test('received exchange is normalized to uppercase on save', function () {
+    test('exchange class is normalized to uppercase on save', function () {
         $contact = Contact::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
-            'received_exchange' => 'w1aw 3a ct',
+            'exchange_class' => '3a',
         ]);
 
-        expect($contact->received_exchange)->toBe('W1AW 3A CT');
+        expect($contact->exchange_class)->toBe('3A');
     });
 });
 

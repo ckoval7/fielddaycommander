@@ -18,12 +18,11 @@ return new class extends Migration
             $table->string('mode', 20); // cw, digital, phone
             $table->string('frequencies'); // comma-separated
             $table->string('source', 10)->default('W1AW'); // W1AW or K6KPH
-            $table->boolean('notification_sent')->default(false);
+            $table->string('notes')->nullable();
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
 
             $table->index(['event_id', 'scheduled_at']);
-            $table->index(['notification_sent', 'scheduled_at']);
         });
     }
 

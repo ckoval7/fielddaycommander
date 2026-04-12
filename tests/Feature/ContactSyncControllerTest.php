@@ -11,6 +11,8 @@ use App\Models\Station;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -48,8 +50,8 @@ beforeEach(function () {
 
     $this->user = User::factory()->create();
 
-    $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'log-contacts']);
-    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $permission = Permission::firstOrCreate(['name' => 'log-contacts']);
+    $role = Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
     $role->givePermissionTo($permission);
     $this->user->assignRole($role);
 
@@ -78,7 +80,7 @@ test('syncing a contact creates it in the database', function () {
             'mode_id' => $this->mode->id,
             'callsign' => 'W1AW',
             'section_id' => $this->section->id,
-            'received_exchange' => 'W1AW 3A CT',
+            'exchange_class' => '3A',
             'power_watts' => 100,
             'qso_time' => now()->toISOString(),
         ])
@@ -101,7 +103,7 @@ test('duplicate uuid returns success without creating a second contact', functio
         'mode_id' => $this->mode->id,
         'callsign' => 'K5ABC',
         'section_id' => $this->section->id,
-        'received_exchange' => 'K5ABC 3A CT',
+        'exchange_class' => '3A',
         'power_watts' => 100,
         'qso_time' => now()->toISOString(),
     ];
@@ -134,7 +136,7 @@ test('syncing a duplicate callsign marks it as duplicate', function () {
             'mode_id' => $this->mode->id,
             'callsign' => 'W1AW',
             'section_id' => $this->section->id,
-            'received_exchange' => 'W1AW 3A CT',
+            'exchange_class' => '3A',
             'power_watts' => 100,
             'qso_time' => now()->toISOString(),
         ])
@@ -155,7 +157,7 @@ test('syncing a contact increments session qso_count', function () {
             'mode_id' => $this->mode->id,
             'callsign' => 'N0CALL',
             'section_id' => $this->section->id,
-            'received_exchange' => 'N0CALL 1A CT',
+            'exchange_class' => '1A',
             'power_watts' => 100,
             'qso_time' => now()->toISOString(),
         ])
@@ -173,7 +175,7 @@ test('syncing a contact with invalid data returns validation error', function ()
             'mode_id' => $this->mode->id,
             'callsign' => '',
             'section_id' => $this->section->id,
-            'received_exchange' => '',
+            'exchange_class' => '',
             'power_watts' => 100,
             'qso_time' => now()->toISOString(),
         ])
@@ -192,7 +194,7 @@ test('cannot sync contacts to another users session', function () {
             'mode_id' => $this->mode->id,
             'callsign' => 'W1AW',
             'section_id' => $this->section->id,
-            'received_exchange' => 'W1AW 3A CT',
+            'exchange_class' => '3A',
             'power_watts' => 100,
             'qso_time' => now()->toISOString(),
         ])
@@ -210,7 +212,7 @@ test('cannot sync contacts after event has ended', function () {
             'mode_id' => $this->mode->id,
             'callsign' => 'W1AW',
             'section_id' => $this->section->id,
-            'received_exchange' => 'W1AW 3A CT',
+            'exchange_class' => '3A',
             'power_watts' => 100,
             'qso_time' => now()->toISOString(),
         ])
@@ -240,7 +242,7 @@ test('syncing a gota contact assigns 5 bonus points', function () {
             'mode_id' => $this->mode->id,
             'callsign' => 'W1AW',
             'section_id' => $this->section->id,
-            'received_exchange' => 'W1AW 3A CT',
+            'exchange_class' => '3A',
             'power_watts' => 100,
             'qso_time' => now()->toISOString(),
             'gota_operator_first_name' => 'John',
@@ -288,7 +290,7 @@ test('syncing a duplicate gota contact assigns 0 points', function () {
             'mode_id' => $this->mode->id,
             'callsign' => 'W1AW',
             'section_id' => $this->section->id,
-            'received_exchange' => 'W1AW 3A CT',
+            'exchange_class' => '3A',
             'power_watts' => 100,
             'qso_time' => now()->toISOString(),
             'gota_operator_first_name' => 'Jane',
@@ -311,7 +313,7 @@ test('cannot sync contacts to an ended session', function () {
             'mode_id' => $this->mode->id,
             'callsign' => 'W1AW',
             'section_id' => $this->section->id,
-            'received_exchange' => 'W1AW 3A CT',
+            'exchange_class' => '3A',
             'power_watts' => 100,
             'qso_time' => now()->toISOString(),
         ])

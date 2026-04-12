@@ -139,7 +139,7 @@ test('merges fields into matched contacts without overwriting', function () {
         'mode_id' => $this->mode->id,
         'qso_time' => Carbon::parse('2026-04-10 12:00:00'),
         'power_watts' => null,
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => null,
         'logger_user_id' => $this->user->id,
     ]);
 
@@ -166,7 +166,7 @@ test('merges fields into matched contacts without overwriting', function () {
 
     $contact->refresh();
     $import->refresh();
-    expect($contact->received_exchange)->toBe('W1AW 3A CT')
+    expect($contact->exchange_class)->toBe('3A')
         ->and($import->merged_records)->toBe(1);
 });
 
@@ -185,7 +185,7 @@ test('does not overwrite existing non-null fields during merge', function () {
         'mode_id' => $this->mode->id,
         'qso_time' => Carbon::parse('2026-04-10 12:00:00'),
         'power_watts' => 50,
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => '3A',
         'logger_user_id' => $this->user->id,
     ]);
 
@@ -294,7 +294,7 @@ test('sets import status to completed on success', function () {
     expect($import->status)->toBe(AdifImportStatus::Completed);
 });
 
-test('builds correct received_exchange from ADIF fields', function () {
+test('builds correct exchange_class from ADIF fields', function () {
     $import = AdifImport::factory()->create([
         'event_configuration_id' => $this->config->id,
         'user_id' => $this->user->id,
@@ -316,7 +316,7 @@ test('builds correct received_exchange from ADIF fields', function () {
     $this->service->import($import);
 
     $contact = Contact::where('callsign', 'W1AW')->first();
-    expect($contact->received_exchange)->toBe('W1AW 3A CT');
+    expect($contact->exchange_class)->toBe('3A');
 });
 
 test('sets logger_user_id to the ADIF operator, not the importing user', function () {

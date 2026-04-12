@@ -2,10 +2,17 @@
 
 namespace Database\Factories;
 
+use App\Models\Band;
+use App\Models\Contact;
+use App\Models\EventConfiguration;
+use App\Models\Mode;
+use App\Models\OperatingSession;
+use App\Models\Section;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Contact>
+ * @extends Factory<Contact>
  */
 class ContactFactory extends Factory
 {
@@ -17,40 +24,39 @@ class ContactFactory extends Factory
     public function definition(): array
     {
         // Ensure we have required reference data
-        $band = \App\Models\Band::first();
+        $band = Band::first();
         if (! $band) {
-            $band = \App\Models\Band::create([
+            $band = Band::create([
                 'name' => '20m',
                 'meters' => 20,
                 'frequency_mhz' => 14.175,
             ]);
         }
 
-        $mode = \App\Models\Mode::first();
+        $mode = Mode::first();
         if (! $mode) {
-            $mode = \App\Models\Mode::create([
+            $mode = Mode::create([
                 'name' => 'SSB',
                 'category' => 'Phone',
             ]);
         }
 
         // Get a random active section if available
-        $section = \App\Models\Section::where('is_active', true)->inRandomOrder()->first();
+        $section = Section::where('is_active', true)->inRandomOrder()->first();
 
         $callsign = \App\Support\CallsignGenerator::any();
         $fdClass = fake()->numberBetween(1, 5).fake()->randomElement(['A', 'B', 'C', 'D', 'E', 'F']);
-        $sectionCode = $section?->code ?? 'CT';
 
         return [
-            'event_configuration_id' => \App\Models\EventConfiguration::factory(),
-            'operating_session_id' => \App\Models\OperatingSession::factory(),
-            'logger_user_id' => \App\Models\User::factory(),
+            'event_configuration_id' => EventConfiguration::factory(),
+            'operating_session_id' => OperatingSession::factory(),
+            'logger_user_id' => User::factory(),
             'band_id' => $band->id,
             'mode_id' => $mode->id,
             'qso_time' => appNow(),
             'callsign' => $callsign,
             'section_id' => $section?->id,
-            'received_exchange' => "{$callsign} {$fdClass} {$sectionCode}",
+            'exchange_class' => $fdClass,
             'power_watts' => fake()->numberBetween(5, 100),
             'is_gota_contact' => false,
             'is_natural_power' => false,
@@ -83,7 +89,7 @@ class ContactFactory extends Factory
     public function withSection(string $code = 'CT'): static
     {
         return $this->state(function (array $attributes) use ($code) {
-            $section = \App\Models\Section::where('code', $code)->first();
+            $section = Section::where('code', $code)->first();
 
             return [
                 'section_id' => $section?->id,

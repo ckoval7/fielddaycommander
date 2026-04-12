@@ -48,7 +48,7 @@ beforeEach(function () {
         'mode_id' => $this->mode->id,
         'section_id' => $this->section->id,
         'callsign' => 'W1AW',
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => '3A',
         'notes' => null,
     ]);
 });
@@ -66,12 +66,12 @@ describe('openEdit', function () {
             ->assertSet('notes', '');
     });
 
-    test('extracts class from two-token exchange format', function () {
-        $this->contact->update(['received_exchange' => '3A CT']);
+    test('loads exchange_class from contact', function () {
+        $this->contact->update(['exchange_class' => '2A']);
 
         Livewire::test(ContactEditor::class)
             ->call('openEdit', $this->contact->id)
-            ->assertSet('exchange_class', '3A');
+            ->assertSet('exchange_class', '2A');
     });
 
     test('denies access without edit-contacts permission', function () {
@@ -99,7 +99,7 @@ describe('save', function () {
 
         $this->contact->refresh();
         expect($this->contact->callsign)->toBe('K1ABC')
-            ->and($this->contact->received_exchange)->toBe('K1ABC 2A CT')
+            ->and($this->contact->exchange_class)->toBe('2A')
             ->and($this->contact->band_id)->toBe($this->otherBand->id)
             ->and($this->contact->notes)->toBe('Corrected callsign');
     });

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('message_number');
             $table->string('precedence')->nullable()->default('routine'); // MessagePrecedence enum
             $table->string('hx_code')->nullable();            // HxCode enum
+            $table->string('hx_value', 20)->nullable();
             $table->string('station_of_origin')->nullable();
             $table->string('check')->nullable();            // String for "ARL 10" format
             $table->string('place_of_origin')->nullable();
@@ -40,6 +41,8 @@ return new class extends Migration
             $table->string('received_from')->nullable();
             $table->dateTime('sent_at')->nullable();
             $table->foreignId('sent_by_user_id')->nullable()->constrained('users');
+            $table->string('frequency', 15)->nullable();
+            $table->string('mode_category')->nullable();
             $table->text('notes')->nullable();
             $table->text('ics_reply_text')->nullable();
             $table->dateTime('ics_reply_date')->nullable();

@@ -60,7 +60,7 @@ class ContactSyncController extends Controller
                 'qso_time' => $request->qso_time,
                 'callsign' => $request->callsign,
                 'section_id' => $request->section_id,
-                'received_exchange' => $request->received_exchange,
+                'exchange_class' => $request->exchange_class,
                 'power_watts' => $request->power_watts,
                 'points' => $dupeCheck['is_duplicate'] ? 0 : $contactPoints,
                 'is_duplicate' => $dupeCheck['is_duplicate'],

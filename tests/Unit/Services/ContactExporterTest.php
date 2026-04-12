@@ -3,9 +3,12 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Contact;
+use App\Models\EventConfiguration;
+use App\Models\OperatingSession;
 use App\Services\ContactExporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Tests\TestCase;
 
 class ContactExporterTest extends TestCase
@@ -26,7 +29,7 @@ class ContactExporterTest extends TestCase
 
         $response = $this->exporter->exportCsv($contacts);
 
-        expect($response)->toBeInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class)
+        expect($response)->toBeInstanceOf(StreamedResponse::class)
             ->and($response->headers->get('content-type'))->toBe('text/csv');
     }
 
@@ -50,7 +53,7 @@ class ContactExporterTest extends TestCase
             'Band',
             'Mode',
             'Section',
-            'Exchange',
+            'Class',
             'Points',
             'Duplicate Status',
             'Logger',
@@ -117,7 +120,7 @@ class ContactExporterTest extends TestCase
     {
         $contact = Contact::factory()->create([
             'callsign' => 'W1AW/VE',
-            'received_exchange' => 'ABC, "quote", comma',
+            'exchange_class' => '3A',
             'notes' => 'Line 1'.PHP_EOL.'Line 2',
         ]);
 
@@ -133,7 +136,7 @@ class ContactExporterTest extends TestCase
 
         // Verify CSV parsing works correctly with special characters
         expect($dataRow[1])->toBe('W1AW/VE');
-        expect($dataRow[5])->toContain('QUOTE');
+        expect($dataRow[5])->toBe('3A');
     }
 
     public function test_empty_collection_returns_header_row_only(): void
@@ -154,8 +157,8 @@ class ContactExporterTest extends TestCase
 
     public function test_large_collection_completes_successfully(): void
     {
-        $eventConfig = \App\Models\EventConfiguration::factory()->create();
-        $session = \App\Models\OperatingSession::factory()->create();
+        $eventConfig = EventConfiguration::factory()->create();
+        $session = OperatingSession::factory()->create();
         $contacts = Contact::factory()->count(150)->create([
             'event_configuration_id' => $eventConfig->id,
             'operating_session_id' => $session->id,

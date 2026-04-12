@@ -125,7 +125,7 @@ test('duplicate detection runs on save and updates points', function () {
         'mode_id' => $this->mode->id,
         'section_id' => $this->section->id,
         'callsign' => 'K1ABC',
-        'received_exchange' => 'K1ABC 3A CT',
+        'exchange_class' => '3A',
         'is_duplicate' => false,
         'points' => 1,
     ]);
@@ -138,7 +138,7 @@ test('duplicate detection runs on save and updates points', function () {
         'mode_id' => $this->mode->id,
         'section_id' => $this->section->id,
         'callsign' => 'W9XYZ',
-        'received_exchange' => 'W9XYZ 2A CT',
+        'exchange_class' => '2A',
         'is_duplicate' => false,
         'points' => 1,
     ]);

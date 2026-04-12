@@ -17,7 +17,9 @@ return new class extends Migration
             $table->foreignId('radio_equipment_id')->nullable()->constrained('equipment');
 
             $table->string('name', 50);
+            $table->string('hostname', 50)->nullable();
             $table->text('power_source_description')->nullable();
+            $table->string('power_source', 20)->nullable();
             $table->boolean('is_gota')->default(false);
             $table->boolean('is_vhf_only')->default(false);
             $table->boolean('is_satellite')->default(false);
@@ -28,6 +30,7 @@ return new class extends Migration
 
             $table->index('event_configuration_id');
             $table->index('is_gota');
+            $table->unique(['event_configuration_id', 'radio_equipment_id'], 'stations_event_radio_unique');
         });
     }
 

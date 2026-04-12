@@ -16,15 +16,15 @@ return new class extends Migration
             $table->uuid('uuid')->nullable()->unique();
             $table->foreignId('event_configuration_id')->constrained('event_configurations')->cascadeOnDelete();
             $table->foreignId('operating_session_id')->constrained('operating_sessions')->cascadeOnDelete();
-            $table->foreignId('logger_user_id')->constrained('users');
-            $table->foreignId('band_id')->constrained('bands');
-            $table->foreignId('mode_id')->constrained('modes');
+            $table->foreignId('logger_user_id')->nullable()->constrained('users');
+            $table->foreignId('band_id')->nullable()->constrained('bands');
+            $table->foreignId('mode_id')->nullable()->constrained('modes');
 
             // QSO Details
             $table->timestamp('qso_time')->nullable();
             $table->string('callsign', 20);
             $table->foreignId('section_id')->nullable()->constrained('sections');
-            $table->string('received_exchange', 50)->nullable();
+            $table->string('exchange_class', 5)->nullable();
             $table->integer('power_watts')->nullable();
 
             // GOTA-specific fields
@@ -33,6 +33,7 @@ return new class extends Migration
             $table->string('gota_operator_last_name', 50)->nullable();
             $table->string('gota_operator_callsign', 20)->nullable();
             $table->foreignId('gota_coach_user_id')->nullable()->constrained('users');
+            $table->foreignId('gota_operator_user_id')->nullable()->constrained('users')->nullOnDelete();
 
             // Special Contact Types
             $table->boolean('is_natural_power')->default(false);
@@ -43,10 +44,15 @@ return new class extends Migration
             $table->integer('points')->default(1);
             $table->boolean('is_duplicate')->default(false);
             $table->boolean('is_transcribed')->default(false);
+            $table->boolean('is_imported')->default(false);
             $table->foreignId('duplicate_of_contact_id')->nullable()->constrained('contacts');
 
             // Notes
             $table->text('notes')->nullable();
+
+            // External logger fields
+            $table->string('external_id', 32)->nullable();
+            $table->string('external_source', 20)->nullable();
 
             $table->timestamps();
             $table->softDeletes();
@@ -59,6 +65,8 @@ return new class extends Migration
             $table->index('is_duplicate');
             $table->index('is_transcribed');
             $table->index('is_gota_contact');
+            $table->index('external_id');
+            $table->index('external_source');
         });
     }
 

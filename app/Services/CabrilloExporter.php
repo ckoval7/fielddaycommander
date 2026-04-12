@@ -128,10 +128,8 @@ class CabrilloExporter
             ? $config->gota_callsign
             : $config->callsign;
 
-        // received_exchange stores "CALLSIGN CLASS SECTION" — skip the callsign
-        $receivedTokens = preg_split('/\s+/', trim($contact->received_exchange ?? ''));
-        $rcvdClass = $receivedTokens[1] ?? '';
-        $rcvdSection = $receivedTokens[2] ?? '';
+        $rcvdClass = $contact->exchange_class ?? '';
+        $rcvdSection = $contact->section?->code ?? '';
 
         return sprintf(
             'QSO: %5d %s %s %s %-13s %-4s %-5s %-13s %-4s %-5s',

@@ -16,13 +16,16 @@ use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event as EventFacade;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    \Illuminate\Support\Facades\DB::table('system_config')->insert(
+    DB::table('system_config')->insert(
         ['key' => 'setup_completed', 'value' => 'true'],
     );
 
@@ -186,8 +189,8 @@ test('BandModeGrid handleContactLogged does not error', function () {
 test('ContactLogged event is dispatched with correct event ID on contact sync', function () {
     EventFacade::fake([ContactLogged::class]);
 
-    $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'log-contacts']);
-    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $permission = Permission::firstOrCreate(['name' => 'log-contacts']);
+    $role = Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
     $role->givePermissionTo($permission);
     $this->user->assignRole($role);
 
@@ -200,7 +203,7 @@ test('ContactLogged event is dispatched with correct event ID on contact sync', 
         'mode_id' => $this->mode->id,
         'callsign' => 'W1AW',
         'section_id' => $this->section->id,
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => '3A',
         'power_watts' => 100,
         'qso_time' => now()->toISOString(),
     ])->assertCreated();

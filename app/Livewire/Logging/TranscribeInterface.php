@@ -188,7 +188,7 @@ class TranscribeInterface extends Component
             'qso_time' => $resolvedTime,
             'callsign' => $parsed['callsign'],
             'section_id' => $parsed['section_id'],
-            'received_exchange' => $exchange,
+            'exchange_class' => $parsed['transmitter_count'].$parsed['class_code'],
             'power_watts' => $this->powerWatts,
             'is_gota_contact' => $this->station->is_gota,
             'points' => $dupeResult['is_duplicate'] ? 0 : $contactPoints,
@@ -340,7 +340,7 @@ class TranscribeInterface extends Component
             auditable: $contact,
             oldValues: [
                 'callsign' => $contact->callsign,
-                'received_exchange' => $contact->received_exchange,
+                'exchange_class' => $contact->exchange_class,
                 'session_id' => $contact->operating_session_id,
             ],
         );
@@ -376,7 +376,7 @@ class TranscribeInterface extends Component
             auditable: $contact,
             newValues: [
                 'callsign' => $contact->callsign,
-                'received_exchange' => $contact->received_exchange,
+                'exchange_class' => $contact->exchange_class,
                 'session_id' => $contact->operating_session_id,
             ],
         );
@@ -419,14 +419,14 @@ class TranscribeInterface extends Component
 
         $oldValues = [
             'callsign' => $contact->callsign,
-            'received_exchange' => $contact->received_exchange,
+            'exchange_class' => $contact->exchange_class,
             'section_id' => $contact->section_id,
             'qso_time' => $contact->qso_time->toIso8601String(),
         ];
 
         $updateData = [
             'callsign' => $parsed['callsign'],
-            'received_exchange' => strtoupper(trim($exchange)),
+            'exchange_class' => $parsed['transmitter_count'].$parsed['class_code'],
             'section_id' => $parsed['section_id'],
         ];
 
@@ -462,7 +462,7 @@ class TranscribeInterface extends Component
             oldValues: $oldValues,
             newValues: [
                 'callsign' => $contact->callsign,
-                'received_exchange' => $contact->received_exchange,
+                'exchange_class' => $contact->exchange_class,
                 'section_id' => $contact->section_id,
                 'qso_time' => $contact->qso_time->toIso8601String(),
             ],

@@ -23,7 +23,7 @@ class Contact extends Model
         'qso_time',
         'callsign',
         'section_id',
-        'received_exchange',
+        'exchange_class',
         'power_watts',
         'is_gota_contact',
         'gota_operator_first_name',
@@ -137,7 +137,15 @@ class Contact extends Model
     }
 
     /**
-     * Normalize received exchange to uppercase.
+     * Normalize exchange class to uppercase.
+     */
+    protected function setExchangeClassAttribute(?string $value): void
+    {
+        $this->attributes['exchange_class'] = $value ? mb_strtoupper(trim($value)) : null;
+    }
+
+    /**
+     * @deprecated Use exchange_class column directly. This column is no longer written to.
      */
     protected function setReceivedExchangeAttribute(?string $value): void
     {

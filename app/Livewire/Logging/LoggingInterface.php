@@ -164,7 +164,7 @@ class LoggingInterface extends Component
             auditable: $contact,
             oldValues: [
                 'callsign' => $contact->callsign,
-                'received_exchange' => $contact->received_exchange,
+                'exchange_class' => $contact->exchange_class,
                 'session_id' => $this->operatingSession->id,
             ],
         );
@@ -201,7 +201,7 @@ class LoggingInterface extends Component
             auditable: $contact,
             newValues: [
                 'callsign' => $contact->callsign,
-                'received_exchange' => $contact->received_exchange,
+                'exchange_class' => $contact->exchange_class,
                 'session_id' => $this->operatingSession->id,
             ],
         );
@@ -237,13 +237,13 @@ class LoggingInterface extends Component
 
         $oldValues = [
             'callsign' => $contact->callsign,
-            'received_exchange' => $contact->received_exchange,
+            'exchange_class' => $contact->exchange_class,
             'section_id' => $contact->section_id,
         ];
 
         $contact->update([
             'callsign' => $parsed['callsign'],
-            'received_exchange' => strtoupper(trim($exchangeInput)),
+            'exchange_class' => $parsed['transmitter_count'].$parsed['class_code'],
             'section_id' => $parsed['section_id'],
         ]);
 
@@ -269,7 +269,7 @@ class LoggingInterface extends Component
             oldValues: $oldValues,
             newValues: [
                 'callsign' => $contact->callsign,
-                'received_exchange' => $contact->received_exchange,
+                'exchange_class' => $contact->exchange_class,
                 'section_id' => $contact->section_id,
             ],
         );

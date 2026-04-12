@@ -73,16 +73,7 @@
                 @endscope
 
                 @scope('cell_class', $contact)
-                    @php
-                        $class = null;
-                        if ($contact->received_exchange) {
-                            $tokens = preg_split('/\s+/', trim($contact->received_exchange));
-                            if (count($tokens) >= 1) {
-                                $class = $tokens[0];
-                            }
-                        }
-                    @endphp
-                    <span class="text-sm font-mono">{{ $class ?? 'N/A' }}</span>
+                    <span class="text-sm font-mono">{{ $contact->exchange_class ?? 'N/A' }}</span>
                 @endscope
 
                 @scope('cell_section', $contact)
@@ -196,15 +187,6 @@
                         @endif
 
                         {{-- Band, Mode, Class, Section --}}
-                        @php
-                            $mobileClass = null;
-                            if ($contact->received_exchange) {
-                                $mobileTokens = preg_split('/\s+/', trim($contact->received_exchange));
-                                if (count($mobileTokens) >= 1) {
-                                    $mobileClass = $mobileTokens[0];
-                                }
-                            }
-                        @endphp
                         <div class="flex items-center gap-2 text-sm flex-wrap">
                             <div class="flex items-center gap-1">
                                 <x-icon name="o-signal" class="w-4 h-4 text-base-content/50" />
@@ -216,7 +198,7 @@
                                 <span>{{ $contact->mode?->name ?? 'N/A' }}</span>
                             </div>
                             <span class="text-base-content/30">•</span>
-                            <span class="font-mono">{{ $mobileClass ?? 'N/A' }}</span>
+                            <span class="font-mono">{{ $contact->exchange_class ?? 'N/A' }}</span>
                             <x-badge :value="$contact->section?->code ?? 'N/A'" class="badge-sm badge-primary" />
                         </div>
 

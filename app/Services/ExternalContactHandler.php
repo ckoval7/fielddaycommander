@@ -87,7 +87,7 @@ class ExternalContactHandler
             'qso_time' => $dto->timestamp,
             'callsign' => $dto->callsign,
             'section_id' => $sectionId,
-            'received_exchange' => $dto->receivedExchange,
+            'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange),
             'power_watts' => $session->power_watts,
             'points' => $points,
             'is_duplicate' => $dupeCheck['is_duplicate'],
@@ -196,7 +196,7 @@ class ExternalContactHandler
             'band_id' => $bandId,
             'mode_id' => $modeId,
             'section_id' => $sectionId,
-            'received_exchange' => $dto->receivedExchange ?? $contact->received_exchange,
+            'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange) ?? $contact->exchange_class,
         ]);
 
         if ($bandId !== null && $modeId !== null) {
@@ -209,6 +209,22 @@ class ExternalContactHandler
         }
 
         ExternalContactUpdated::dispatch($contact, $config->id, $dto->source);
+    }
+
+    private function extractClassFromExchange(?string $exchange): ?string
+    {
+        if ($exchange === null) {
+            return null;
+        }
+
+        $tokens = preg_split('/\s+/', trim($exchange));
+        foreach ($tokens as $token) {
+            if (preg_match('/^\d{1,2}[A-Fa-f]$/i', $token)) {
+                return strtoupper($token);
+            }
+        }
+
+        return null;
     }
 
     private function resolveOperator(?string $callsign): ?int

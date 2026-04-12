@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('event_configuration_id')->constrained('event_configurations')->cascadeOnDelete();
             $table->string('checklist_type');
             $table->string('label');
+            $table->text('help_text')->nullable();
             $table->boolean('is_required')->default(false);
             $table->boolean('is_default')->default(false);
             $table->unsignedInteger('sort_order')->default(0);

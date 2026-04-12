@@ -30,3 +30,5 @@ sonar-project.properties
 boost.json
 /frankenphp
 coverage.xml
+# Added by code-review-graph
+.code-review-graph/

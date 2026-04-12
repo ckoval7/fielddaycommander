@@ -8,15 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('contacts', function (Blueprint $table) {
-            $table->foreignId('logger_user_id')->nullable()->change();
-            $table->foreignId('band_id')->nullable()->change();
-            $table->foreignId('mode_id')->nullable()->change();
-        });
+        // On fresh installs, these columns are already nullable in the create migrations.
+        $columns = collect(Schema::getColumns('contacts'));
+        $alreadyNullable = $columns->firstWhere('name', 'logger_user_id')['nullable'] ?? false;
 
-        Schema::table('operating_sessions', function (Blueprint $table) {
-            $table->foreignId('operator_user_id')->nullable()->change();
-        });
+        if (! $alreadyNullable) {
+            Schema::table('contacts', function (Blueprint $table) {
+                $table->foreignId('logger_user_id')->nullable()->change();
+                $table->foreignId('band_id')->nullable()->change();
+                $table->foreignId('mode_id')->nullable()->change();
+            });
+
+            Schema::table('operating_sessions', function (Blueprint $table) {
+                $table->foreignId('operator_user_id')->nullable()->change();
+            });
+        }
     }
 
     public function down(): void
