@@ -180,6 +180,9 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
         while ($this->running) {
             $now = time();
             if ($now - $lastHeartbeatTime >= 5) {
+                $config->unsetRelation('event');
+                $config->refresh();
+
                 Cache::put($heartbeatKey, [
                     'pid' => getmypid(),
                     'started_at' => $startedAt,
