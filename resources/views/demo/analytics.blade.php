@@ -234,6 +234,7 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
+                                <th>Visitor</th>
                                 <th>Sessions</th>
                                 <th>Roles Tried</th>
                                 <th>Device</th>
@@ -244,6 +245,7 @@
                         <tbody>
                             @forelse($repeatVisitors as $visitor)
                                 <tr>
+                                    <td class="font-mono text-xs text-base-content/60">{{ $visitor['visitor_id'] }}</td>
                                     <td>{{ $visitor['sessions_count'] }}</td>
                                     <td class="text-xs">{{ implode(', ', $visitor['roles_tried']) }}</td>
                                     <td>{{ $visitor['device_type'] }}</td>
@@ -251,7 +253,7 @@
                                     <td class="text-xs">{{ \Carbon\Carbon::parse($visitor['last_visit'])->format('M j, g:ia') }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-center text-base-content/50">No repeat visitors yet</td></tr>
+                                <tr><td colspan="6" class="text-center text-base-content/50">No repeat visitors yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -267,6 +269,7 @@
                     <thead>
                         <tr>
                             <th>Role</th>
+                            <th>Visitor</th>
                             <th class="text-right">Pages</th>
                             <th class="text-right">Actions</th>
                             <th>Duration</th>
@@ -283,6 +286,7 @@
                                         {{ str_replace('_', ' ', $session->role) }}
                                     </span>
                                 </td>
+                                <td class="font-mono text-xs text-base-content/60">{{ substr($session->visitor_hash, 0, 8) }}</td>
                                 <td class="text-right">{{ $session->total_page_views }}</td>
                                 <td class="text-right">{{ $session->total_actions }}</td>
                                 <td>{{ $session->last_seen_at->diffForHumans($session->provisioned_at, true) }}</td>
@@ -291,7 +295,7 @@
                                 <td class="text-xs">{{ $session->provisioned_at->format('M j, g:ia') }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="text-center text-base-content/50">No sessions yet</td></tr>
+                            <tr><td colspan="8" class="text-center text-base-content/50">No sessions yet</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -310,6 +314,7 @@
                         <thead>
                             <tr>
                                 <th>Role</th>
+                                <th>Visitor</th>
                                 <th class="text-right">Pages</th>
                                 <th class="text-right">Actions</th>
                                 <th>Duration</th>
@@ -326,6 +331,7 @@
                                             {{ str_replace('_', ' ', $session->role) }}
                                         </span>
                                     </td>
+                                    <td class="font-mono text-xs text-base-content/60">{{ substr($session->visitor_hash, 0, 8) }}</td>
                                     <td class="text-right">{{ $session->total_page_views }}</td>
                                     <td class="text-right">{{ $session->total_actions }}</td>
                                     <td>{{ $session->last_seen_at->diffForHumans($session->provisioned_at, true) }}</td>
@@ -334,7 +340,7 @@
                                     <td class="text-right text-xs text-primary">View &rarr;</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" class="text-center text-base-content/50">No sessions yet</td></tr>
+                                <tr><td colspan="8" class="text-center text-base-content/50">No sessions yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -351,6 +357,7 @@
             {{-- Session Header --}}
             <div class="bg-base-100 rounded-box shadow-sm p-4 mb-4">
                 <div class="flex flex-wrap gap-4 text-sm">
+                    <div><span class="text-base-content/60">Visitor:</span> <span class="font-mono text-xs" x-text="selectedSession.visitor_id"></span></div>
                     <div><span class="text-base-content/60">Role:</span> <span class="badge badge-sm badge-outline" x-text="selectedSession.role"></span></div>
                     <div><span class="text-base-content/60">Device:</span> <span x-text="selectedSession.device_type"></span></div>
                     <div><span class="text-base-content/60">Pages:</span> <span x-text="selectedSession.total_page_views"></span></div>
