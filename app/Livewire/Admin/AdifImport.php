@@ -40,7 +40,7 @@ class AdifImport extends Component
     /** @var array{total: int, date_range: string, bands: array<string>, modes: array<string>, stations: array<string>} */
     public array $uploadSummary = [];
 
-    /** @var array{unmapped_bands: array<string>, unmapped_modes: array<string>, unmapped_sections: array<string>, unmapped_stations: array<string>, unmapped_operators: array<string>} */
+    /** @var array{unmapped_bands: array<string>, unmapped_modes: array<string>, unmapped_sections: array<string>, unmapped_stations: array<string>} */
     public array $mappingReport = [];
 
     /** @var array<string, array{exchange_class?: array<string>, section_code?: array<string>}> */

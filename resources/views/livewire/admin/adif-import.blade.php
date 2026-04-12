@@ -131,24 +131,6 @@
                     </x-card>
                 @endif
 
-                {{-- Unmapped operators --}}
-                @if (!empty($mappingReport['unmapped_operators']))
-                    <x-card title="Unmapped Operators">
-                        <p class="text-sm text-base-content/70 mb-4">These operator callsigns couldn't be matched to users.</p>
-                        @foreach ($mappingReport['unmapped_operators'] as $opCall)
-                            <div class="flex items-center gap-4 mb-3">
-                                <span class="font-mono font-bold w-24">{{ $opCall }}</span>
-                                <span class="text-base-content/50">&rarr;</span>
-                                <select wire:model="operatorMappings.{{ $opCall }}" class="select select-bordered select-sm w-48">
-                                    <option value="">Select operator...</option>
-                                    @foreach ($this->availableOperators as $op)
-                                        <option value="{{ $op->id }}">{{ $op->call_sign }} - {{ $op->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @endforeach
-                    </x-card>
-                @endif
 
                 {{-- Inconsistencies --}}
                 @if (!empty($inconsistencies))
