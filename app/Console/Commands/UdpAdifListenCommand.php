@@ -158,7 +158,6 @@ class UdpAdifListenCommand extends Command implements ExternalLoggerListener
 
                     try {
                         $handler->handleContact($dto, $config);
-                        $processedCount++;
                         Cache::put($lastLogKey, [
                             'callsign' => $dto->callsign,
                             'band' => $dto->bandName,
@@ -183,6 +182,7 @@ class UdpAdifListenCommand extends Command implements ExternalLoggerListener
                             'rejection_reason' => 'outside event window',
                         ], 60 * 60 * 24);
                     }
+                    $processedCount++;
                 }
             } catch (\Throwable $e) {
                 $errorCount++;
