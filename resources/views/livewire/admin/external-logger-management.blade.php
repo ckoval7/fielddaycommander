@@ -7,6 +7,12 @@
                     Import ADIF
                 </a>
             </div>
+            @if ($isDemoMode)
+                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg p-4">
+                    <p class="text-amber-800 dark:text-amber-200"><strong>Demo Mode:</strong> UDP listeners are disabled in demo mode. Controls below are read-only.</p>
+                </div>
+            @endif
+
             @if (! $hasActiveEvent)
                 <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
                     <p class="text-yellow-800 dark:text-yellow-200">No active event configuration. External loggers require an active event.</p>
@@ -24,7 +30,8 @@
                         </div>
                         <button
                             wire:click="toggleN1mm"
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $n1mmEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
+                            @if ($isDemoMode) disabled @endif
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $n1mmEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
                         >
                             <span class="sr-only">Toggle N1MM listener</span>
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $n1mmEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
@@ -57,12 +64,14 @@
                             <span class="text-sm text-red-600 dark:text-red-400">
                                 Process crashed &middot; Restarting...
                             </span>
-                            <button
-                                wire:click="restartProcess"
-                                class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                            >
-                                Retry
-                            </button>
+                            @if (! $isDemoMode)
+                                <button
+                                    wire:click="restartProcess"
+                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                    Retry
+                                </button>
+                            @endif
                         @else
                             <span class="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">Stopped</span>
@@ -126,7 +135,7 @@
                                 min="1024"
                                 max="65535"
                                 class="block w-32 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                {{ $n1mmEnabled ? 'disabled' : '' }}
+                                {{ ($n1mmEnabled || $isDemoMode) ? 'disabled' : '' }}
                             >
                             <span class="text-sm text-gray-500 dark:text-gray-400">Default: 12060</span>
                         </div>
@@ -159,7 +168,8 @@
                         </div>
                         <button
                             wire:click="toggleWsjtx"
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $wsjtxEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
+                            @if ($isDemoMode) disabled @endif
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $wsjtxEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
                         >
                             <span class="sr-only">Toggle WSJTX listener</span>
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $wsjtxEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
@@ -192,12 +202,14 @@
                             <span class="text-sm text-red-600 dark:text-red-400">
                                 Process crashed &middot; Restarting...
                             </span>
-                            <button
-                                wire:click="restartWsjtxProcess"
-                                class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                            >
-                                Retry
-                            </button>
+                            @if (! $isDemoMode)
+                                <button
+                                    wire:click="restartWsjtxProcess"
+                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                    Retry
+                                </button>
+                            @endif
                         @else
                             <span class="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">Stopped</span>
@@ -261,7 +273,7 @@
                                 min="1024"
                                 max="65535"
                                 class="block w-32 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                {{ $wsjtxEnabled ? 'disabled' : '' }}
+                                {{ ($wsjtxEnabled || $isDemoMode) ? 'disabled' : '' }}
                             >
                             <span class="text-sm text-gray-500 dark:text-gray-400">Default: 2237</span>
                         </div>
@@ -292,7 +304,8 @@
                         </div>
                         <button
                             wire:click="toggleUdpAdif"
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $udpAdifEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
+                            @if ($isDemoMode) disabled @endif
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $udpAdifEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
                         >
                             <span class="sr-only">Toggle UDP ADIF listener</span>
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $udpAdifEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
@@ -325,12 +338,14 @@
                             <span class="text-sm text-red-600 dark:text-red-400">
                                 Process crashed &middot; Restarting...
                             </span>
-                            <button
-                                wire:click="restartUdpAdifProcess"
-                                class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                            >
-                                Retry
-                            </button>
+                            @if (! $isDemoMode)
+                                <button
+                                    wire:click="restartUdpAdifProcess"
+                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                    Retry
+                                </button>
+                            @endif
                         @else
                             <span class="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">Stopped</span>
@@ -394,7 +409,7 @@
                                 min="1024"
                                 max="65535"
                                 class="block w-32 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                {{ $udpAdifEnabled ? 'disabled' : '' }}
+                                {{ ($udpAdifEnabled || $isDemoMode) ? 'disabled' : '' }}
                             >
                             <span class="text-sm text-gray-500 dark:text-gray-400">Default: 2238</span>
                         </div>

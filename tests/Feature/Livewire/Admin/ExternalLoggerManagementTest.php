@@ -331,3 +331,93 @@ test('shows rejection reason badge and callsign when last log was out of period'
         ->assertSee('outside event window')
         ->assertSee('K1XYZ');
 });
+
+// ─── Demo Mode ───────────────────────────────────────────
+
+test('demo mode shows banner and sets isDemoMode property', function () {
+    config(['demo.enabled' => true]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSet('isDemoMode', true)
+        ->assertSee('UDP listeners are disabled in demo mode');
+});
+
+test('demo mode blocks toggleN1mm', function () {
+    config(['demo.enabled' => true]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->call('toggleN1mm');
+
+    expect(ExternalLoggerSetting::where('listener_type', 'n1mm')->exists())->toBeFalse();
+});
+
+test('demo mode blocks toggleWsjtx', function () {
+    config(['demo.enabled' => true]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->call('toggleWsjtx');
+
+    expect(ExternalLoggerSetting::where('listener_type', 'wsjtx')->exists())->toBeFalse();
+});
+
+test('demo mode blocks toggleUdpAdif', function () {
+    config(['demo.enabled' => true]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->call('toggleUdpAdif');
+
+    expect(ExternalLoggerSetting::where('listener_type', 'udp-adif')->exists())->toBeFalse();
+});
+
+test('demo mode blocks port updates', function () {
+    config(['demo.enabled' => true]);
+
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => false,
+        'port' => 12060,
+    ]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->set('n1mmPort', 9999)
+        ->call('updatePort');
+
+    expect(ExternalLoggerSetting::where('listener_type', 'n1mm')->first()->port)->toBe(12060);
+});
+
+test('demo mode blocks restart actions', function () {
+    config(['demo.enabled' => true]);
+
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => 99999,
+    ]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->call('restartProcess');
+
+    // PID should remain unchanged — no restart attempted
+    expect(ExternalLoggerSetting::where('listener_type', 'n1mm')->first()->pid)->toBe(99999);
+});
+
+test('demo mode does not auto-restart crashed processes during poll', function () {
+    config(['demo.enabled' => true]);
+
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => null,
+    ]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->call('pollStatus');
+
+    // No new PID should be assigned
+    expect(ExternalLoggerSetting::where('listener_type', 'n1mm')->first()->pid)->toBeNull();
+});

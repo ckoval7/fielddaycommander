@@ -44,10 +44,14 @@ class ExternalLoggerManagement extends Component
 
     public ?int $eventConfigId = null;
 
+    public bool $isDemoMode = false;
+
     private const NO_ACTIVE_EVENT_MESSAGE = 'No active event configuration.';
 
     public function mount(): void
     {
+        $this->isDemoMode = (bool) config('demo.enabled');
+
         $config = app(EventContextService::class)->getEventConfiguration();
         if ($config === null) {
             return;
@@ -87,6 +91,12 @@ class ExternalLoggerManagement extends Component
 
     public function toggleN1mm(): void
     {
+        if ($this->isDemoMode) {
+            session()->flash('error', 'UDP listeners cannot be modified in demo mode.');
+
+            return;
+        }
+
         $config = app(EventContextService::class)->getEventConfiguration();
         if ($config === null) {
             session()->flash('error', self::NO_ACTIVE_EVENT_MESSAGE);
@@ -122,6 +132,10 @@ class ExternalLoggerManagement extends Component
 
     public function restartProcess(): void
     {
+        if ($this->isDemoMode) {
+            return;
+        }
+
         if ($this->eventConfigId === null) {
             return;
         }
@@ -142,7 +156,7 @@ class ExternalLoggerManagement extends Component
     {
         $this->refreshStatus();
 
-        if ($this->eventConfigId === null) {
+        if ($this->isDemoMode || $this->eventConfigId === null) {
             return;
         }
 
@@ -184,6 +198,10 @@ class ExternalLoggerManagement extends Component
 
     public function updatePort(): void
     {
+        if ($this->isDemoMode) {
+            return;
+        }
+
         $this->validate([
             'n1mmPort' => 'required|integer|min:1024|max:65535',
         ]);
@@ -213,6 +231,12 @@ class ExternalLoggerManagement extends Component
 
     public function toggleWsjtx(): void
     {
+        if ($this->isDemoMode) {
+            session()->flash('error', 'UDP listeners cannot be modified in demo mode.');
+
+            return;
+        }
+
         $config = app(EventContextService::class)->getEventConfiguration();
         if ($config === null) {
             session()->flash('error', self::NO_ACTIVE_EVENT_MESSAGE);
@@ -248,6 +272,10 @@ class ExternalLoggerManagement extends Component
 
     public function restartWsjtxProcess(): void
     {
+        if ($this->isDemoMode) {
+            return;
+        }
+
         if ($this->eventConfigId === null) {
             return;
         }
@@ -266,6 +294,10 @@ class ExternalLoggerManagement extends Component
 
     public function updateWsjtxPort(): void
     {
+        if ($this->isDemoMode) {
+            return;
+        }
+
         $this->validate([
             'wsjtxPort' => 'required|integer|min:1024|max:65535',
         ]);
@@ -295,6 +327,12 @@ class ExternalLoggerManagement extends Component
 
     public function toggleUdpAdif(): void
     {
+        if ($this->isDemoMode) {
+            session()->flash('error', 'UDP listeners cannot be modified in demo mode.');
+
+            return;
+        }
+
         $config = app(EventContextService::class)->getEventConfiguration();
         if ($config === null) {
             session()->flash('error', self::NO_ACTIVE_EVENT_MESSAGE);
@@ -330,6 +368,10 @@ class ExternalLoggerManagement extends Component
 
     public function restartUdpAdifProcess(): void
     {
+        if ($this->isDemoMode) {
+            return;
+        }
+
         if ($this->eventConfigId === null) {
             return;
         }
@@ -348,6 +390,10 @@ class ExternalLoggerManagement extends Component
 
     public function updateUdpAdifPort(): void
     {
+        if ($this->isDemoMode) {
+            return;
+        }
+
         $this->validate([
             'udpAdifPort' => 'required|integer|min:1024|max:65535',
         ]);
