@@ -1,6 +1,6 @@
 <div>
     <x-modal wire:model="showModal" title="Edit Contact" class="modal-lg">
-        <form wire:submit="save">
+        <form wire:submit.prevent>
             @if ($errors->any())
                 <x-alert title="Please fix the following errors:" icon="o-exclamation-triangle" class="alert-error mb-4">
                     <ul class="list-disc list-inside">
@@ -11,7 +11,7 @@
                 </x-alert>
             @endif
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 <x-input
                     label="Callsign"
                     wire:model="callsign"
@@ -26,6 +26,19 @@
                     placeholder="e.g. 3A"
                     icon="o-document-text"
                     hint="Transmitter count + class letter"
+                    required
+                />
+
+                <x-choices-offline
+                    label="Section"
+                    wire:model="section_id"
+                    :options="$this->sections"
+                    option-label="display_name"
+                    option-value="id"
+                    placeholder="Select section"
+                    icon="o-map"
+                    searchable
+                    single
                     required
                 />
 
@@ -51,18 +64,6 @@
                     required
                 />
 
-                <x-select
-                    label="Section"
-                    wire:model="section_id"
-                    :options="$this->sections"
-                    option-label="display_name"
-                    option-value="id"
-                    placeholder="Select section"
-                    icon="o-map"
-                    searchable
-                    required
-                />
-
                 <x-flatpickr
                     label="QSO Time"
                     wire:model="qso_time"
@@ -82,7 +83,7 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" wire:click="$set('showModal', false)" class="btn-ghost" />
-                <x-button label="Save Changes" type="submit" class="btn-primary" spinner="save" />
+                <x-button label="Save Changes" wire:click="save" class="btn-primary" spinner="save" />
             </x-slot:actions>
         </form>
     </x-modal>

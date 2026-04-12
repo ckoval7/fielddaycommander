@@ -66,6 +66,14 @@ describe('openEdit', function () {
             ->assertSet('notes', '');
     });
 
+    test('extracts class from two-token exchange format', function () {
+        $this->contact->update(['received_exchange' => '3A CT']);
+
+        Livewire::test(ContactEditor::class)
+            ->call('openEdit', $this->contact->id)
+            ->assertSet('exchange_class', '3A');
+    });
+
     test('denies access without edit-contacts permission', function () {
         $regularUser = User::factory()->create();
         $this->actingAs($regularUser);

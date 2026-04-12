@@ -203,6 +203,8 @@ class ContactEditor extends Component
 
     /**
      * Extract the class portion (e.g. "3A") from a received exchange string.
+     *
+     * Handles both "CALLSIGN CLASS SECTION" and "CLASS SECTION" formats.
      */
     private function extractClass(?string $exchange): string
     {
@@ -212,8 +214,13 @@ class ContactEditor extends Component
 
         $tokens = preg_split('/\s+/', trim($exchange));
 
-        // Exchange format: CALLSIGN CLASS SECTION (e.g. "W1AW 3A CT")
-        return count($tokens) >= 2 ? $tokens[1] : '';
+        foreach ($tokens as $token) {
+            if (preg_match('/^\d{1,2}[A-Fa-f]$/', $token)) {
+                return $token;
+            }
+        }
+
+        return '';
     }
 
     public function render(): View
