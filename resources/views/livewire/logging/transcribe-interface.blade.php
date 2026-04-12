@@ -407,7 +407,7 @@
                             <tbody>
                                 @foreach($this->recentContacts as $contact)
                                     <tr wire:key="contact-{{ $contact->id }}"
-                                        data-recall-value="{{ $contact->qso_time->format('Hi') }} {{ $contact->received_exchange }}"
+                                        data-recall-value="{{ $contact->qso_time->format('Hi') }} {{ $contact->callsign }} {{ $contact->exchange_class }} {{ $contact->section->code ?? '' }}"
                                         :class="{
                                             'ring-2 ring-primary': recalledContactId === {{ $contact->id }},
                                         }"
@@ -430,7 +430,7 @@
                                                 <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
                                             @endif
                                         </td>
-                                        <td class="font-mono text-sm exchange-cell">{{ $contact->received_exchange }}</td>
+                                        <td class="font-mono text-sm exchange-cell">{{ $contact->exchange_class }}</td>
                                         <td class="font-mono text-sm">{{ $contact->band->name ?? '—' }}</td>
                                         <td class="text-sm">{{ $contact->mode->name ?? '—' }}</td>
                                         <td class="text-sm">{{ $contact->section->code ?? '—' }}</td>

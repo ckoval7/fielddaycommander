@@ -336,7 +336,7 @@
                                         <span class="badge badge-xs badge-info ml-1">SYNC</span>
                                     </template>
                                 </td>
-                                <td class="font-mono" x-text="contact.received_exchange"></td>
+                                <td class="font-mono" x-text="contact.exchange_class"></td>
                                 <td x-text="contact.section_code || '-'"></td>
                             </tr>
                         </template>
@@ -367,7 +367,7 @@
                                         <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
                                     @endif
                                 </td>
-                                <td class="font-mono">{{ $contact->received_exchange }}</td>
+                                <td class="font-mono">{{ $contact->exchange_class }}</td>
                                 <td>{{ $contact->section->code ?? '-' }}</td>
                             </tr>
                         @endforeach

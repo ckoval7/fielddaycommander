@@ -145,14 +145,6 @@ class Contact extends Model
     }
 
     /**
-     * @deprecated Use exchange_class column directly. This column is no longer written to.
-     */
-    protected function setReceivedExchangeAttribute(?string $value): void
-    {
-        $this->attributes['received_exchange'] = $value ? mb_strtoupper($value) : null;
-    }
-
-    /**
      * Normalize GOTA operator callsign to uppercase.
      */
     protected function setGotaOperatorCallsignAttribute(?string $value): void
