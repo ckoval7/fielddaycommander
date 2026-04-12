@@ -142,7 +142,7 @@ class DemoSimulateActivity extends Command
                 'qso_time' => now(),
                 'callsign' => $callsign,
                 'section_id' => $section->id,
-                'received_exchange' => "{$callsign} {$fdClass} {$section->code}",
+                'exchange_class' => $fdClass,
                 'power_watts' => $session->power_watts ?? 100,
                 'is_gota_contact' => $session->station->is_gota,
                 'is_natural_power' => false,

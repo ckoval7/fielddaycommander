@@ -451,7 +451,6 @@ class DemoSeeder extends Seeder
             };
             $fdClass = $transmitterCount.$fdClassLetter;
 
-            $receivedExchange = "{$callsign} {$fdClass} {$section->code}";
             $qsoTime = $windowStart->copy()->addSeconds(random_int(0, $windowSeconds));
 
             $gotaOp = $gotaOperators ? $gotaOperators[array_rand($gotaOperators)] : null;
@@ -465,7 +464,7 @@ class DemoSeeder extends Seeder
                 'qso_time' => $qsoTime,
                 'callsign' => $callsign,
                 'section_id' => $section->id,
-                'received_exchange' => $receivedExchange,
+                'exchange_class' => $fdClass,
                 'power_watts' => 100,
                 'is_gota_contact' => $session->is_supervised,
                 'gota_operator_first_name' => $gotaOp['first_name'] ?? null,
