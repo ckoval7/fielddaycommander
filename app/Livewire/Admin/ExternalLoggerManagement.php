@@ -44,6 +44,8 @@ class ExternalLoggerManagement extends Component
 
     public ?int $eventConfigId = null;
 
+    private const NO_ACTIVE_EVENT_MESSAGE = 'No active event configuration.';
+
     public function mount(): void
     {
         $config = app(EventContextService::class)->getEventConfiguration();
@@ -87,7 +89,7 @@ class ExternalLoggerManagement extends Component
     {
         $config = app(EventContextService::class)->getEventConfiguration();
         if ($config === null) {
-            session()->flash('error', 'No active event configuration.');
+            session()->flash('error', self::NO_ACTIVE_EVENT_MESSAGE);
 
             return;
         }
@@ -213,7 +215,7 @@ class ExternalLoggerManagement extends Component
     {
         $config = app(EventContextService::class)->getEventConfiguration();
         if ($config === null) {
-            session()->flash('error', 'No active event configuration.');
+            session()->flash('error', self::NO_ACTIVE_EVENT_MESSAGE);
 
             return;
         }
@@ -295,7 +297,7 @@ class ExternalLoggerManagement extends Component
     {
         $config = app(EventContextService::class)->getEventConfiguration();
         if ($config === null) {
-            session()->flash('error', 'No active event configuration.');
+            session()->flash('error', self::NO_ACTIVE_EVENT_MESSAGE);
 
             return;
         }

@@ -4,10 +4,14 @@ namespace App\Services;
 
 use App\Enums\AdifRecordStatus;
 use App\Models\AdifImport;
+use App\Models\AdifImportRecord;
 use App\Models\OperatingClass;
+use Illuminate\Support\Carbon;
 
 class AdifValidationService
 {
+    private const QSO_TIME_FORMAT = 'Y-m-d H:i';
+
     /**
      * Validate staged records against event constraints.
      *
@@ -18,12 +22,9 @@ class AdifValidationService
         $result = ['invalid_count' => 0, 'valid_count' => 0];
 
         $event = $import->eventConfiguration->event;
-        $eventStart = $event->start_time;
-        $eventEnd = $event->end_time;
-        $eventTypeId = $event->event_type_id;
 
         $validClassCodes = OperatingClass::query()
-            ->where('event_type_id', $eventTypeId)
+            ->where('event_type_id', $event->event_type_id)
             ->pluck('code')
             ->map(fn ($code) => strtoupper($code))
             ->toArray();
@@ -37,28 +38,7 @@ class AdifValidationService
             ->get();
 
         foreach ($records as $record) {
-            $errors = [];
-
-            // Validate QSO time exists
-            if ($record->qso_time === null) {
-                $errors[] = 'Missing QSO time';
-            } elseif ($eventStart && $eventEnd) {
-                // Validate QSO time is within event window
-                if ($record->qso_time->lt($eventStart) || $record->qso_time->gt($eventEnd)) {
-                    $errors[] = "QSO time {$record->qso_time->format('Y-m-d H:i')} is outside event window ({$eventStart->format('Y-m-d H:i')} to {$eventEnd->format('Y-m-d H:i')})";
-                }
-            }
-
-            // Validate class code against event type
-            if ($record->exchange_class !== null) {
-                // Extract letter portion from class like "3A" -> "A"
-                if (preg_match('/(\d+)([A-Za-z]+)/', $record->exchange_class, $matches)) {
-                    $classLetter = strtoupper($matches[2]);
-                    if (! in_array($classLetter, $validClassCodes, true)) {
-                        $errors[] = "Class code {$classLetter} is not valid for {$event->name}";
-                    }
-                }
-            }
+            $errors = $this->validateRecord($record, $event->start_time, $event->end_time, $validClassCodes, $event->name);
 
             if (! empty($errors)) {
                 $record->update([
@@ -72,5 +52,38 @@ class AdifValidationService
         }
 
         return $result;
+    }
+
+    /**
+     * Validate a single record against event constraints.
+     *
+     * @param  array<string>  $validClassCodes
+     * @return array<string>
+     */
+    private function validateRecord(
+        AdifImportRecord $record,
+        ?Carbon $eventStart,
+        ?Carbon $eventEnd,
+        array $validClassCodes,
+        string $eventName,
+    ): array {
+        $errors = [];
+
+        if ($record->qso_time === null) {
+            $errors[] = 'Missing QSO time';
+        } elseif ($eventStart && $eventEnd
+            && ($record->qso_time->lt($eventStart) || $record->qso_time->gt($eventEnd))) {
+            $errors[] = "QSO time {$record->qso_time->format(self::QSO_TIME_FORMAT)} is outside event window ({$eventStart->format(self::QSO_TIME_FORMAT)} to {$eventEnd->format(self::QSO_TIME_FORMAT)})";
+        }
+
+        if ($record->exchange_class !== null
+            && preg_match('/(\d+)([A-Za-z]+)/', $record->exchange_class, $matches)) {
+            $classLetter = strtoupper($matches[2]);
+            if (! in_array($classLetter, $validClassCodes, true)) {
+                $errors[] = "Class code {$classLetter} is not valid for {$eventName}";
+            }
+        }
+
+        return $errors;
     }
 }

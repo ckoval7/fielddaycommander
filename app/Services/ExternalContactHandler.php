@@ -39,13 +39,12 @@ class ExternalContactHandler
         }
 
         $event = $config->event;
-        if ($event?->start_time !== null && $event?->end_time !== null) {
-            if ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time)) {
-                throw new OutOfPeriodContactException(
-                    "QSO time {$dto->timestamp->toIso8601String()} is outside event window "
-                    ."{$event->start_time->toIso8601String()} – {$event->end_time->toIso8601String()}"
-                );
-            }
+        if ($event?->start_time !== null && $event?->end_time !== null
+            && ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time))) {
+            throw new OutOfPeriodContactException(
+                "QSO time {$dto->timestamp->toIso8601String()} is outside event window "
+                ."{$event->start_time->toIso8601String()} – {$event->end_time->toIso8601String()}"
+            );
         }
 
         $station = $this->stationResolver->resolve(
@@ -116,10 +115,9 @@ class ExternalContactHandler
         }
 
         $event = $config->event;
-        if ($event?->start_time !== null && $event?->end_time !== null) {
-            if ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time)) {
-                return;
-            }
+        if ($event?->start_time !== null && $event?->end_time !== null
+            && ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time))) {
+            return;
         }
 
         $this->updateContact($contact, $dto, $config);

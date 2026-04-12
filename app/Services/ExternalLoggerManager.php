@@ -106,22 +106,16 @@ class ExternalLoggerManager
             return 'stopped';
         }
 
-        $heartbeat = $this->getHeartbeat($eventConfigurationId, $listenerType);
-
-        if ($heartbeat !== null) {
+        if ($this->getHeartbeat($eventConfigurationId, $listenerType) !== null) {
             return 'running';
         }
 
-        if ($setting->pid !== null) {
-            // PID exists but no heartbeat — verify it's actually our listener
-            // process, not a recycled PID from an unrelated process after reboot.
-            if ($this->isListenerProcess($setting->pid, $listenerType)) {
-                return 'starting';
-            }
-        }
+        // PID exists and belongs to our listener: still starting up (no heartbeat yet).
+        // Otherwise: crashed — needs recovery via pollStatus auto-restart.
+        $isStarting = $setting->pid !== null
+            && $this->isListenerProcess($setting->pid, $listenerType);
 
-        // No live listener process found — needs recovery via pollStatus auto-restart.
-        return 'crashed';
+        return $isStarting ? 'starting' : 'crashed';
     }
 
     /** @return array<string, mixed>|null */
