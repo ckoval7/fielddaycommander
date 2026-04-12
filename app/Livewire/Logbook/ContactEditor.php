@@ -43,7 +43,7 @@ class ContactEditor extends Component
 
         $this->contactId = $contact->id;
         $this->callsign = $contact->callsign ?? '';
-        $this->exchange_class = $this->extractClass($contact->received_exchange);
+        $this->exchange_class = $contact->exchange_class ?? '';
         $this->section_id = $contact->section_id;
         $this->band_id = $contact->band_id;
         $this->mode_id = $contact->mode_id;
@@ -70,19 +70,13 @@ class ContactEditor extends Component
 
         $oldValues = collect([
             'callsign' => $contact->callsign,
-            'received_exchange' => $contact->received_exchange,
+            'exchange_class' => $contact->exchange_class,
             'section_id' => $contact->section_id,
             'band_id' => $contact->band_id,
             'mode_id' => $contact->mode_id,
             'qso_time' => $contact->qso_time?->toDateTimeString(),
             'notes' => $contact->notes,
         ]);
-
-        // Reconstruct received_exchange from individual fields
-        $section = Section::find($validated['section_id']);
-        $receivedExchange = mb_strtoupper(trim(
-            $validated['callsign'].' '.$validated['exchange_class'].' '.$section->code
-        ));
 
         // Re-run duplicate detection against the new values
         $isDuplicate = Contact::query()
@@ -99,7 +93,7 @@ class ContactEditor extends Component
 
         $contact->update([
             'callsign' => $validated['callsign'],
-            'received_exchange' => $receivedExchange,
+            'exchange_class' => $validated['exchange_class'],
             'band_id' => $validated['band_id'],
             'mode_id' => $validated['mode_id'],
             'qso_time' => $validated['qso_time'],
@@ -111,7 +105,7 @@ class ContactEditor extends Component
 
         $newValues = collect([
             'callsign' => $contact->callsign,
-            'received_exchange' => $contact->received_exchange,
+            'exchange_class' => $contact->exchange_class,
             'section_id' => $contact->section_id,
             'band_id' => $contact->band_id,
             'mode_id' => $contact->mode_id,
@@ -145,7 +139,7 @@ class ContactEditor extends Component
             auditable: $contact,
             oldValues: [
                 'callsign' => $contact->callsign,
-                'received_exchange' => $contact->received_exchange,
+                'exchange_class' => $contact->exchange_class,
                 'session_id' => $contact->operating_session_id,
             ],
         );
@@ -170,7 +164,7 @@ class ContactEditor extends Component
             auditable: $contact,
             newValues: [
                 'callsign' => $contact->callsign,
-                'received_exchange' => $contact->received_exchange,
+                'exchange_class' => $contact->exchange_class,
                 'session_id' => $contact->operating_session_id,
             ],
         );
@@ -199,28 +193,6 @@ class ContactEditor extends Component
 
                 return $section;
             });
-    }
-
-    /**
-     * Extract the class portion (e.g. "3A") from a received exchange string.
-     *
-     * Handles both "CALLSIGN CLASS SECTION" and "CLASS SECTION" formats.
-     */
-    private function extractClass(?string $exchange): string
-    {
-        if (! $exchange) {
-            return '';
-        }
-
-        $tokens = preg_split('/\s+/', trim($exchange));
-
-        foreach ($tokens as $token) {
-            if (preg_match('/^\d{1,2}[A-Fa-f]$/', $token)) {
-                return $token;
-            }
-        }
-
-        return '';
     }
 
     public function render(): View
