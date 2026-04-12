@@ -169,7 +169,7 @@ test('refreshing config picks up updated event window', function () {
     expect($contact->callsign)->toBe('W1AW');
 });
 
-test('full pipeline: CLASS and ARRL_SECT compose received_exchange when SRX_STRING absent', function () {
+test('full pipeline: CLASS and ARRL_SECT compose exchange_class when SRX_STRING absent', function () {
     $adifText = '<CALL:4>W1AX<MODE:3>PSK<SUBMODE:5>PSK31<FREQ:9>14.071500<BAND:3>20m'
         .'<QSO_DATE:8>20260412<TIME_ON:4>0142<QSO_DATE_OFF:8>20260412<TIME_OFF:4>0142'
         .'<STX_STRING:0><CLASS:2>2B<ARRL_SECT:2>NH<OPERATOR:5>K3CPK<STATION_CALLSIGN:5>K3CPK<EOR>';
@@ -182,7 +182,7 @@ test('full pipeline: CLASS and ARRL_SECT compose received_exchange when SRX_STRI
         ->and($dto->receivedExchange)->toBe('2B NH');
 
     $contact = $this->handler->handleContact($dto, $this->config);
-    expect($contact->received_exchange)->toBe('2B NH')
+    expect($contact->exchange_class)->toBe('2B')
         ->and($contact->section->code)->toBe('NH');
 });
 

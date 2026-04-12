@@ -178,7 +178,7 @@ test('identifies exact duplicates when all fields match', function () {
         'section_id' => $this->section->id,
         'qso_time' => Carbon::parse('2026-04-10 12:00:00'),
         'power_watts' => 100,
-        'received_exchange' => 'W1AW 3A CT',
+        'exchange_class' => '3A',
         'notes' => null,
         'logger_user_id' => $this->user->id,
     ]);

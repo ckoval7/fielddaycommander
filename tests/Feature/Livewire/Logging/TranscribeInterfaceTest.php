@@ -235,7 +235,7 @@ test('stores clean exchange without time prefix', function () {
 
     $this->assertDatabaseHas('contacts', [
         'callsign' => 'W5XYZ',
-        'received_exchange' => 'W5XYZ 1B CT',
+        'exchange_class' => '1B',
     ]);
 });
 
@@ -329,7 +329,7 @@ function createTranscriptionContact(object $test, array $overrides = []): Contac
         'band_id' => $test->band->id,
         'mode_id' => $test->mode->id,
         'callsign' => 'W1TST',
-        'received_exchange' => 'W1TST 3A CT',
+        'exchange_class' => '3A',
         'section_id' => $section->id,
         'is_transcribed' => true,
         'qso_time' => now(),
@@ -531,7 +531,7 @@ test('updateContact updates contact fields', function () {
 
     $contact = createTranscriptionContact($this, [
         'callsign' => 'W1OLD',
-        'received_exchange' => 'W1OLD 3A CT',
+        'exchange_class' => '3A',
     ]);
 
     Livewire::test(TranscribeInterface::class, ['station' => $this->station])
@@ -540,7 +540,7 @@ test('updateContact updates contact fields', function () {
     $contact->refresh();
     $stxSection = Section::where('code', 'STX')->first();
     expect($contact->callsign)->toBe('W1NEW')
-        ->and($contact->received_exchange)->toBe('W1NEW 1D STX')
+        ->and($contact->exchange_class)->toBe('1D')
         ->and($contact->section_id)->toBe($stxSection->id);
 });
 
@@ -549,7 +549,7 @@ test('updateContact logs audit entry with old and new values', function () {
 
     $contact = createTranscriptionContact($this, [
         'callsign' => 'W1AUD',
-        'received_exchange' => 'W1AUD 3A CT',
+        'exchange_class' => '3A',
     ]);
 
     Livewire::test(TranscribeInterface::class, ['station' => $this->station])
@@ -604,7 +604,7 @@ test('updateContact rejects contact from another station', function () {
         'band_id' => $this->band->id,
         'mode_id' => $this->mode->id,
         'callsign' => 'W1OTH',
-        'received_exchange' => 'W1OTH 3A CT',
+        'exchange_class' => '3A',
         'is_transcribed' => true,
         'qso_time' => now(),
     ]);
@@ -623,7 +623,7 @@ test('updateContact with inline time updates qso_time', function () {
 
     $contact = createTranscriptionContact($this, [
         'callsign' => 'W1TST',
-        'received_exchange' => 'W1TST 3A CT',
+        'exchange_class' => '3A',
         'qso_time' => $originalTime,
     ]);
 
@@ -633,7 +633,7 @@ test('updateContact with inline time updates qso_time', function () {
     $contact->refresh();
     expect($contact->qso_time->format('H:i'))->toBe('15:30')
         ->and($contact->qso_time->format('Y-m-d'))->toBe($originalTime->format('Y-m-d'))
-        ->and($contact->received_exchange)->toBe('W1TST 3A CT');
+        ->and($contact->exchange_class)->toBe('3A');
 });
 
 test('updateContact without inline time preserves original qso_time', function () {
@@ -643,7 +643,7 @@ test('updateContact without inline time preserves original qso_time', function (
 
     $contact = createTranscriptionContact($this, [
         'callsign' => 'W1OLD',
-        'received_exchange' => 'W1OLD 3A CT',
+        'exchange_class' => '3A',
         'qso_time' => $originalTime,
     ]);
 
@@ -664,7 +664,7 @@ test('updateContact with inline time stores exchange without time prefix', funct
         ->call('updateContact', $contact->id, '1423 K1ABC 1B ME');
 
     $contact->refresh();
-    expect($contact->received_exchange)->toBe('K1ABC 1B ME')
+    expect($contact->exchange_class)->toBe('1B')
         ->and($contact->callsign)->toBe('K1ABC');
 });
 
@@ -673,12 +673,12 @@ test('updateContact re-runs duplicate detection', function () {
 
     $contact1 = createTranscriptionContact($this, [
         'callsign' => 'W1DUP',
-        'received_exchange' => 'W1DUP 3A CT',
+        'exchange_class' => '3A',
     ]);
 
     $contact2 = createTranscriptionContact($this, [
         'callsign' => 'K1ABC',
-        'received_exchange' => 'K1ABC 1B ME',
+        'exchange_class' => '1B',
         'section_id' => Section::where('code', 'ME')->first()->id,
     ]);
 

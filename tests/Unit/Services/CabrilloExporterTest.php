@@ -85,14 +85,16 @@ test('formats a CW qso line correctly', function () {
     $config = makeCabrilloExporterConfig();
     $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.0]);
     $mode = Mode::factory()->create(['name' => 'CW', 'category' => 'CW']);
+    $meSection = Section::factory()->create(['code' => 'ME']);
 
     Contact::factory()->create([
         'event_configuration_id' => $config->id,
         'band_id' => $band->id,
         'mode_id' => $mode->id,
+        'section_id' => $meSection->id,
         'qso_time' => '2025-06-28 14:23:00',
         'callsign' => 'K1ABC',
-        'received_exchange' => 'K1ABC 1A ME',
+        'exchange_class' => '1A',
         'is_duplicate' => false,
     ]);
 
@@ -105,14 +107,16 @@ test('maps phone mode to PH', function () {
     $config = makeCabrilloExporterConfig();
     $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.0]);
     $mode = Mode::factory()->create(['name' => 'Phone', 'category' => 'Phone']);
+    $meSection = Section::factory()->create(['code' => 'ME']);
 
     Contact::factory()->create([
         'event_configuration_id' => $config->id,
         'band_id' => $band->id,
         'mode_id' => $mode->id,
+        'section_id' => $meSection->id,
         'qso_time' => '2025-06-28 14:23:00',
         'callsign' => 'K1ABC',
-        'received_exchange' => 'K1ABC 1A ME',
+        'exchange_class' => '1A',
         'is_duplicate' => false,
     ]);
 
@@ -124,14 +128,16 @@ test('maps digital mode to DG', function () {
     $config = makeCabrilloExporterConfig();
     $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.0]);
     $mode = Mode::factory()->create(['name' => 'Digital', 'category' => 'Digital']);
+    $nnySection = Section::factory()->create(['code' => 'NNY']);
 
     Contact::factory()->create([
         'event_configuration_id' => $config->id,
         'band_id' => $band->id,
         'mode_id' => $mode->id,
+        'section_id' => $nnySection->id,
         'qso_time' => '2025-06-28 14:30:00',
         'callsign' => 'N2XYZ',
-        'received_exchange' => 'N2XYZ 3A NNY',
+        'exchange_class' => '3A',
         'is_duplicate' => false,
     ]);
 
@@ -202,14 +208,16 @@ test('gota contacts use gota callsign in qso line', function () {
         'gota_callsign' => 'K1GOT',
     ]);
 
+    $ctSection = Section::where('code', 'CT')->first();
     Contact::factory()->gota()->create([
         'event_configuration_id' => $config->id,
+        'section_id' => $ctSection->id,
         'callsign' => 'N1ABC',
-        'received_exchange' => 'N1ABC 2A CT',
+        'exchange_class' => '2A',
         'is_duplicate' => false,
     ]);
 
-    $exporter = new \App\Services\CabrilloExporter;
+    $exporter = new CabrilloExporter;
     $output = $exporter->export($config);
 
     // QSO line should use GOTA callsign
@@ -227,15 +235,17 @@ test('non-gota contacts use primary callsign in qso line', function () {
         'gota_callsign' => 'K1GOT',
     ]);
 
+    $ctSection = Section::where('code', 'CT')->first();
     Contact::factory()->create([
         'event_configuration_id' => $config->id,
+        'section_id' => $ctSection->id,
         'callsign' => 'N1ABC',
-        'received_exchange' => 'N1ABC 2A CT',
+        'exchange_class' => '2A',
         'is_gota_contact' => false,
         'is_duplicate' => false,
     ]);
 
-    $exporter = new \App\Services\CabrilloExporter;
+    $exporter = new CabrilloExporter;
     $output = $exporter->export($config);
 
     $qsoLines = collect(explode("\r\n", $output))->filter(fn ($l) => str_starts_with($l, 'QSO:'));
