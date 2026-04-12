@@ -19,6 +19,7 @@ readonly class ExternalContactDto
         public ?string $sentExchange = null,
         public ?string $receivedReport = null,
         public ?string $receivedExchange = null,
+        public ?string $exchangeClass = null,
         public ?string $sectionCode = null,
         public ?string $externalId = null,
         public bool $isDelete = false,
