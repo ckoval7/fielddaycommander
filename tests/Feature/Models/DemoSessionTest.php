@@ -2,6 +2,7 @@
 
 use App\Models\DemoEvent;
 use App\Models\DemoSession;
+use Carbon\Carbon;
 
 it('creates a demo session with required fields', function () {
     $session = DemoSession::create([
@@ -64,8 +65,8 @@ it('casts provisioned_at and expires_at as datetimes', function () {
         'expires_at' => '2026-04-08 12:00:00',
     ]);
 
-    expect($session->provisioned_at)->toBeInstanceOf(\Carbon\Carbon::class)
-        ->and($session->expires_at)->toBeInstanceOf(\Carbon\Carbon::class)
+    expect($session->provisioned_at)->toBeInstanceOf(Carbon::class)
+        ->and($session->expires_at)->toBeInstanceOf(Carbon::class)
         ->and($session->was_reset)->toBeBool();
 });
 
@@ -109,4 +110,19 @@ it('cascades deletes to events', function () {
     $session->delete();
 
     expect(DemoEvent::where('demo_session_id', $session->id)->count())->toBe(0);
+});
+
+it('exposes a visitor_id accessor with the first 8 chars of visitor_hash', function () {
+    $session = DemoSession::create([
+        'session_uuid' => fake()->uuid(),
+        'role' => 'operator',
+        'visitor_hash' => 'a3f9c2b1e7d04f8899aabbccddeeff0011223344',
+        'user_agent' => 'Mozilla/5.0 Test',
+        'device_type' => 'desktop',
+        'provisioned_at' => now(),
+        'last_seen_at' => now(),
+        'expires_at' => now()->addHours(24),
+    ]);
+
+    expect($session->visitor_id)->toBe('a3f9c2b1');
 });

@@ -43,6 +43,11 @@ class DemoSession extends Model
         ];
     }
 
+    public function getVisitorIdAttribute(): string
+    {
+        return substr($this->visitor_hash, 0, 8);
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(DemoEvent::class)->orderBy('id');
