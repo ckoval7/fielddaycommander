@@ -239,9 +239,7 @@ test('section data includes latest QSO time and time bounds', function () {
     $component = Livewire\Livewire::test(SectionMap::class);
     $sectionData = $component->viewData('sectionData');
 
-    expect($sectionData['CT']['latestQsoTime'])->toBe($lateTime->timestamp)
-        ->and($component->viewData('minTime'))->toBe($earlyTime->timestamp)
-        ->and($component->viewData('maxTime'))->toBe($lateTime->timestamp);
+    expect($sectionData['CT']['latestQsoTime'])->toBe($lateTime->timestamp);
 });
 
 test('section map page is publicly accessible', function () {

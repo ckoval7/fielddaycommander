@@ -67,8 +67,6 @@ class SectionMap extends Component
                 $sectionsWorked++;
             }
 
-            $minTime = $contacts->min('qso_time')?->timestamp;
-            $maxTime = $contacts->max('qso_time')?->timestamp;
         }
 
         $maxCount = max(array_column($sectionData, 'count') ?: [0]);
@@ -80,8 +78,6 @@ class SectionMap extends Component
             'sectionsWorked' => $sectionsWorked,
             'totalSections' => $allSections->count(),
             'hasEvent' => $eventConfigId !== null,
-            'minTime' => $minTime ?? null,
-            'maxTime' => $maxTime ?? null,
         ]);
     }
 }
