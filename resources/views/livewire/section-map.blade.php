@@ -35,8 +35,6 @@
                     tooltipY: 0,
                     sectionData: @js($sectionData),
                     maxCount: @js($maxCount),
-                    minTime: @js($minTime),
-                    maxTime: @js($maxTime),
 
                     callAreas: [1,2,3,4,5,6,7,8,9,0],
                     sectionGroups: {},
@@ -155,12 +153,18 @@
                             fill = `hsl(130, ${saturation}%, ${lightness}%)`;
                         } else if (this.colorMode === 'time') {
                             const t = data.latestQsoTime;
-                            if (!t || !this.minTime || !this.maxTime || this.minTime === this.maxTime) {
-                                fill = 'hsl(60, 50%, 65%)';
+                            if (!t) {
+                                fill = '#d1d5db';
                             } else {
-                                const ratio = (t - this.minTime) / (this.maxTime - this.minTime);
-                                const hue = ratio * 130;
-                                fill = `hsl(${hue}, 65%, 50%)`;
+                                const ageSeconds = Math.floor(Date.now() / 1000) - t;
+                                const minAge = 300;      // 5 minutes
+                                const maxAge = 86400;    // 24 hours
+                                const clamped = Math.max(minAge, Math.min(maxAge, ageSeconds));
+                                const ratio = (clamped - minAge) / (maxAge - minAge);
+                                const hue = 130 - ratio * 130; // 130=green (fresh) → 0=red (stale)
+                                fill = ageSeconds < minAge
+                                    ? `hsl(130, 65%, 45%)`
+                                    : `hsl(${hue}, 65%, 50%)`;
                             }
                         } else {
                             const bandCounts = data.bandCounts || {};
@@ -1098,12 +1102,11 @@
                         <div class="flex items-center gap-1">
                             <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
                         </div>
+                        <span>&gt;24h</span>
                         <div class="flex items-center gap-1">
-                            <div class="h-3 w-48 rounded" style="background: linear-gradient(to right, hsl(0,65%,50%), hsl(60,50%,65%), hsl(130,65%,50%))"></div>
+                            <div class="h-3 w-48 rounded" style="background: linear-gradient(to right, hsl(0,65%,50%), hsl(60,65%,50%), hsl(130,65%,45%))"></div>
                         </div>
-                        <span>Oldest</span>
-                        <span>&rarr;</span>
-                        <span>Most Recent</span>
+                        <span>&lt;5m</span>
                     </div>
                 </div>
             </div>
