@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Contracts\ExternalLoggerListener;
-use App\Events\ExternalLoggerStatusChanged;
 use App\Exceptions\OutOfPeriodContactException;
 use App\Models\EventConfiguration;
 use App\Services\AdifContactMapper;
@@ -11,20 +9,31 @@ use App\Services\AdifParserService;
 use App\Services\ExternalContactHandler;
 use App\Services\ExternalLoggerManager;
 use App\Services\WsjtxPacketParser;
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Socket;
 
-class WsjtxListenCommand extends Command implements ExternalLoggerListener
+class WsjtxListenCommand extends BaseUdpListenerCommand
 {
     protected $signature = 'external-logger:wsjtx {--event= : Event configuration ID (auto-detects active event if omitted)}';
 
     protected $description = 'Listen for WSJTX UDP broadcasts and create contacts from ADIF data';
 
-    private bool $running = false;
+    private WsjtxPacketParser $wsjtxParser;
 
-    private ?Socket $socket = null;
+    private AdifParserService $adifParser;
+
+    private AdifContactMapper $mapper;
+
+    private ExternalContactHandler $handler;
+
+    public function getType(): string
+    {
+        return 'wsjtx';
+    }
+
+    protected function listenerLabel(): string
+    {
+        return 'WSJTX';
+    }
 
     public function handle(
         WsjtxPacketParser $wsjtxParser,
@@ -33,210 +42,42 @@ class WsjtxListenCommand extends Command implements ExternalLoggerListener
         ExternalContactHandler $handler,
         ExternalLoggerManager $manager,
     ): int {
-        $config = $this->resolveEventConfiguration();
-        if ($config === null) {
-            $this->error('No active event configuration found.');
+        $this->wsjtxParser = $wsjtxParser;
+        $this->adifParser = $adifParser;
+        $this->mapper = $mapper;
+        $this->handler = $handler;
 
-            return self::FAILURE;
-        }
+        return $this->runListener($manager);
+    }
 
-        $setting = $manager->getSetting($config->id, 'wsjtx');
-        if ($setting === null || ! $setting->is_enabled) {
-            $this->error('WSJTX listener is not enabled for this event.');
+    protected function processPacket(string $buffer, string $from, EventConfiguration $config, string $lastLogKey): int
+    {
+        $parsed = $this->wsjtxParser->parse($buffer);
 
-            return self::FAILURE;
-        }
-
-        $port = $setting->port;
-        $this->info("Starting WSJTX UDP listener on port {$port} for event: {$config->callsign}");
-
-        // Store PID in database
-        $setting->update(['pid' => getmypid()]);
-
-        $this->socket = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
-        if ($this->socket === false) {
-            $this->error('Failed to create UDP socket: '.socket_strerror(socket_last_error()));
-            $setting->update(['pid' => null]);
-
-            return self::FAILURE;
-        }
-
-        socket_set_option($this->socket, SOL_SOCKET, SO_BROADCAST, 1);
-        socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1);
-
-        if (@socket_bind($this->socket, '0.0.0.0', $port) === false) {
-            $this->error("Failed to bind to port {$port}: ".socket_strerror(socket_last_error($this->socket)));
-            socket_close($this->socket);
-            $setting->update(['pid' => null]);
-
-            return self::FAILURE;
-        }
-
-        // Set read timeout so we can check for shutdown signals
-        socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, ['sec' => 2, 'usec' => 0]);
-
-        $this->running = true;
-        $packetCount = 0;
-        $processedCount = 0;
-        $errorCount = 0;
-        $startedAt = now()->toIso8601String();
-        $lastPacketAt = null;
-        $lastHeartbeatTime = 0;
-
-        // Handle graceful shutdown
-        if (extension_loaded('pcntl')) {
-            pcntl_async_signals(true);
-            pcntl_signal(SIGTERM, fn () => $this->running = false);
-            pcntl_signal(SIGINT, fn () => $this->running = false);
-        }
-
-        $heartbeatKey = "external-logger:wsjtx:{$config->id}:heartbeat";
-        $lastLogKey = "external-logger:wsjtx:{$config->id}:last-log";
-
-        ExternalLoggerStatusChanged::dispatch('wsjtx', 'started', $config->id, $port);
-
-        while ($this->running) {
-            // Write heartbeat every 5 seconds
-            $now = time();
-            if ($now - $lastHeartbeatTime >= 5) {
-                Cache::put($heartbeatKey, [
-                    'pid' => getmypid(),
-                    'started_at' => $startedAt,
-                    'last_heartbeat_at' => now()->toIso8601String(),
-                    'packets_received' => $packetCount,
-                    'packets_processed' => $processedCount,
-                    'errors' => $errorCount,
-                    'last_packet_at' => $lastPacketAt,
-                    'port' => $port,
-                ], 15);
-                $lastHeartbeatTime = $now;
+        // Skip non-QSO packets (heartbeats return array, unknown return null)
+        if (! is_string($parsed)) {
+            if (is_array($parsed)) {
+                Log::debug('WSJTX heartbeat received', $parsed);
             }
 
-            // Check if still enabled periodically
-            if ($packetCount % 50 === 0 && $packetCount > 0) {
-                if (! $manager->isEnabled($config->id, 'wsjtx')) {
-                    $this->info('Listener disabled via settings. Stopping.');
-                    break;
-                }
-            }
-
-            $buffer = '';
-            $from = '';
-            $fromPort = 0;
-            $bytes = @socket_recvfrom($this->socket, $buffer, 65535, 0, $from, $fromPort);
-
-            if ($bytes === false) {
-                // Timeout — just continue the loop
-                continue;
-            }
-
-            $packetCount++;
-            $lastPacketAt = now()->toIso8601String();
-
-            try {
-                $parsed = $wsjtxParser->parse($buffer);
-
-                if ($parsed === null) {
-                    continue;
-                }
-
-                if (is_array($parsed)) {
-                    Log::debug('WSJTX heartbeat received', $parsed);
-
-                    continue;
-                }
-
-                // $parsed is an ADIF string
-                $adifResult = $adifParser->parse($parsed);
-                $records = $adifResult['records'] ?? [];
-
-                if (empty($records)) {
-                    continue;
-                }
-
-                $tags = $records[0];
-                $dto = $mapper->map($tags, 'wsjtx');
-
-                if ($dto === null) {
-                    continue;
-                }
-
-                try {
-                    $handler->handleContact($dto, $config);
-                    Cache::put($lastLogKey, [
-                        'callsign' => $dto->callsign,
-                        'band' => $dto->bandName,
-                        'mode' => $dto->modeName,
-                        'qso_time' => $dto->timestamp->toIso8601String(),
-                        'section' => $dto->sectionCode,
-                        'source' => $this->getType(),
-                        'received_at' => now()->toIso8601String(),
-                        'accepted' => true,
-                        'rejection_reason' => null,
-                    ], 60 * 60 * 24);
-                } catch (OutOfPeriodContactException) {
-                    Cache::put($lastLogKey, [
-                        'callsign' => $dto->callsign,
-                        'band' => $dto->bandName,
-                        'mode' => $dto->modeName,
-                        'qso_time' => $dto->timestamp->toIso8601String(),
-                        'section' => $dto->sectionCode,
-                        'source' => $this->getType(),
-                        'received_at' => now()->toIso8601String(),
-                        'accepted' => false,
-                        'rejection_reason' => 'outside event window',
-                    ], 60 * 60 * 24);
-                }
-                $processedCount++;
-            } catch (\Throwable $e) {
-                $errorCount++;
-                Log::warning("WSJTX packet processing error: {$e->getMessage()}", [
-                    'from' => $from,
-                    'packet_number' => $packetCount,
-                ]);
-            }
+            return 0;
         }
 
-        socket_close($this->socket);
-        $this->socket = null;
+        $adifResult = $this->adifParser->parse($parsed);
+        $tags = ($adifResult['records'] ?? [])[0] ?? null;
+        $dto = $tags !== null ? $this->mapper->map($tags, 'wsjtx') : null;
 
-        // Clear PID and heartbeat on graceful shutdown
-        $setting->update(['pid' => null]);
-        Cache::forget($heartbeatKey);
-
-        ExternalLoggerStatusChanged::dispatch('wsjtx', 'stopped', $config->id, $port);
-
-        $this->info("Stopped. Processed {$processedCount} packets with {$errorCount} errors.");
-
-        return self::SUCCESS;
-    }
-
-    public function start(): void
-    {
-        $this->running = true;
-    }
-
-    public function stop(): void
-    {
-        $this->running = false;
-    }
-
-    public function isRunning(): bool
-    {
-        return $this->running;
-    }
-
-    public function getType(): string
-    {
-        return 'wsjtx';
-    }
-
-    private function resolveEventConfiguration(): ?EventConfiguration
-    {
-        if ($this->option('event')) {
-            return EventConfiguration::find($this->option('event'));
+        if ($dto === null) {
+            return 0;
         }
 
-        return EventConfiguration::where('is_active', true)->first();
+        try {
+            $this->handler->handleContact($dto, $config);
+            $this->writeLastLogEntry($lastLogKey, $dto, true);
+        } catch (OutOfPeriodContactException) {
+            $this->writeLastLogEntry($lastLogKey, $dto, false, 'outside event window');
+        }
+
+        return 1;
     }
 }
