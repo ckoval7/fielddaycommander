@@ -125,6 +125,14 @@
     },
     {
       "@type": "Question",
+      "name": "Can I use my own logging software and still have contacts show up in FD Commander?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. FD Commander has built-in UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Enable the listener for your program, point your logger at the server's IP and port, and contacts flow in automatically. You can also import an ADIF file after the fact through a guided wizard."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "Does FD Commander export Cabrillo?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -207,7 +215,7 @@
         <div class="faq-item">
           <div class="faq-question">My favorite Field Day logging software works fine. Why would I switch?</div>
           <div class="faq-answer">
-            If all you need is a Field Day logger, keep using what works. FD Commander exists because Field Day involves a lot more than logging: volunteer scheduling, equipment tracking, safety checklists, guestbooks, NTS message handling, and scoring with all 18 ARRL bonus categories. If your club coordinates all of that with spreadsheets, paper sign-ups, and group texts, FD Commander puts it in one place. If you genuinely only need a Field Day contact logger, this is more tool than you need.
+            You don't have to switch. FD Commander has built-in UDP listeners for N1MM Logger+, WSJT-X, JTDX, fldigi, and any logger that can send ADIF over UDP. Keep using what you like for on-air operation and FD Commander picks up the contacts automatically. It also accepts ADIF file imports if you'd rather bring contacts in after the fact. The reason to add FD Commander on top of your existing logger is everything else Field Day involves: volunteer scheduling, equipment tracking, safety checklists, guestbooks, NTS message handling, and scoring with all 18 ARRL bonus categories. If your club coordinates all of that with spreadsheets, paper sign-ups, and group texts, FD Commander puts it in one place -- and your operators never have to leave the logging software they already know.
           </div>
         </div>
 
@@ -221,7 +229,7 @@
         <div class="faq-item">
           <div class="faq-question">Is this just another Field Day logger with a web UI?</div>
           <div class="faq-answer">
-            No. The contact logger is one piece of it. FD Commander also handles pre-event planning (stations, equipment, schedules, safety checklists), a visitor guestbook, NTS radiogram tracking, photo uploads, role-based access control, and live scoring with the full ARRL bonus point formula. The logging part is intentionally simple: a single-field entry flow designed for speed. The rest of the platform is what makes it different.
+            No. The contact logger is one piece of it. FD Commander also handles pre-event planning (stations, equipment, schedules, safety checklists), external logger integration (N1MM+, WSJT-X, fldigi via UDP, plus ADIF file import), a visitor guestbook, NTS radiogram tracking, photo uploads, role-based access control, and live scoring with the full ARRL bonus point formula. The logging part is intentionally simple: a single-field entry flow designed for speed. The rest of the platform is what makes it different.
           </div>
         </div>
       </div>
@@ -279,8 +287,8 @@
         <div class="faq-item">
           <div class="faq-question">Does it do CAT control or talk to my radio?</div>
           <div class="faq-answer">
-            <strong>No.</strong> FD Commander is a web application, not a rig control program. It doesn't key your radio, decode digital modes, or read frequency from CAT. If you need rig integration, you'll still use your existing setup (WSJT-X, fldigi, etc.) for the RF side and log contacts in FD Commander for the scoring and coordination side.
-            <span class="faq-honest">This isn't on the roadmap. It's a different kind of tool.</span>
+            <strong>No.</strong> FD Commander is a web application, not a rig control program. It doesn't key your radio, decode digital modes, or read frequency from CAT. CAT control is a fundamentally different technology. However, FD Commander does integrate with external loggers like N1MM Logger+, WSJT-X, JTDX, and fldigi over UDP. Those programs handle the RF side, and FD Commander receives their logged contacts in real time so operators don't have to double-log. You get the best of both worlds: your preferred logging software for on-air operation, and FD Commander for scoring, deduplication, and coordination.
+            <span class="faq-honest">CAT control isn't on the roadmap. Log integration is already here.</span>
           </div>
         </div>
       </div>
@@ -297,9 +305,18 @@
         </div>
 
         <div class="faq-item">
-          <div class="faq-question">Does it export ADIF?</div>
+          <div class="faq-question">Does it support ADIF?</div>
           <div class="faq-answer">
-            FD Commander is focused on the Cabrillo format that ARRL requires for Field Day submissions. If you need ADIF for importing into your personal logging software, that's not currently a built-in feature.
+            <strong>Import: yes.</strong> FD Commander can receive ADIF data in real time over UDP from external loggers (WSJT-X, N1MM Logger+, fldigi, and others), and it has a file import wizard for uploading .adi/.adif files with station mapping and record validation.
+            <br><br>
+            <strong>Export: no.</strong> FD Commander is focused on the Cabrillo format that ARRL requires for Field Day submissions. ADIF export for importing into your personal logging software is not currently a built-in feature.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Can I use my own logging software and still have contacts show up in FD Commander?</div>
+          <div class="faq-answer">
+            Yes. FD Commander has built-in UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Enable the listener for your program, point your logger at the server's IP and port, and contacts flow into FD Commander automatically. Dupe checking, scoring, and Cabrillo export all work the same whether a contact was logged in the FD Commander UI or received from an external logger. You can also import an ADIF file after the fact through a guided wizard that lets you map stations and review every record before it's committed.
           </div>
         </div>
 

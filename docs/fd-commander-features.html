@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Features - FD Commander Field Day Software</title>
-<meta name="description" content="What makes FD Commander different from other Field Day logging software: multi-station contact logging, live scoreboard, all 18 ARRL bonus categories, volunteer scheduling, NTS messages, and offline-first operation.">
+<meta name="description" content="What makes FD Commander different from other Field Day logging software: multi-station contact logging, external logger integration (N1MM+, WSJT-X, fldigi), ADIF import, live scoreboard, all 18 ARRL bonus categories, volunteer scheduling, NTS messages, and offline-first operation.">
 <link rel="canonical" href="https://fielddaycommander.org/fd-commander-features.html">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Features - FD Commander Field Day Software">
@@ -210,7 +210,7 @@
 <section class="page-hero">
   <div class="container">
     <h1>Every detail handled, <span class="gradient">from planning to final submission.</span></h1>
-    <p>Most Field Day software stops at contact logging. FD Commander handles the whole operation: volunteer coordination, station setup, safety compliance, and then Field Day logging with real-time scoring across every station.</p>
+    <p>Most Field Day software stops at contact logging. FD Commander handles the whole operation: volunteer coordination, station setup, safety compliance, external logger integration, and real-time scoring across every station.</p>
   </div>
 </section>
 
@@ -311,6 +311,63 @@
 
     <div class="feature-deep">
       <div class="feature-deep-text">
+        <span class="feature-tag teal">Integration</span>
+        <h2>Bring contacts in from external loggers</h2>
+        <p>Already running WSJT-X for FT8, N1MM Logger+ for CW, or fldigi for RTTY? FD Commander receives contacts directly from those programs over UDP, so operators don't have to double-log. You can also import an ADIF file after the fact with a guided wizard that parses the file, maps stations, validates records, and lets you review everything before it hits your log.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> N1MM Logger+ UDP broadcast listener with live packet and error stats</li>
+          <li><span class="check">&#10003;</span> WSJT-X / JTDX UDP ADIF listener for FT8, FT4, and other digital modes</li>
+          <li><span class="check">&#10003;</span> Generic ADIF UDP endpoint for fldigi and any logger that can send ADIF over UDP</li>
+          <li><span class="check">&#10003;</span> ADIF file import wizard: upload, parse, map fields to stations, review, and import</li>
+          <li><span class="check">&#10003;</span> Validation catches records outside the event window, flags dupes, and lets you skip or fix before importing</li>
+          <li><span class="check">&#10003;</span> Configurable UDP ports with firewall instructions for each listener</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          External Logger Integration
+        </div>
+        <div class="mock-body">
+          <div class="mock-schedule-row">
+            <span style="font-weight:600;color:var(--text-primary);min-width:140px;">N1MM Logger+</span>
+            <span style="background:rgba(76,175,80,0.15);color:var(--accent-green);font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;">&#9679; Listening</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">port 12060</span>
+            <span style="color:var(--text-secondary);font-size:0.8rem;margin-left:auto;">42 packets &middot; 0 errors</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span style="font-weight:600;color:var(--text-primary);min-width:140px;">WSJT-X / JTDX</span>
+            <span style="background:rgba(76,175,80,0.15);color:var(--accent-green);font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;">&#9679; Listening</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">port 2237</span>
+            <span style="color:var(--text-secondary);font-size:0.8rem;margin-left:auto;">18 packets &middot; 0 errors</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span style="font-weight:600;color:var(--text-primary);min-width:140px;">UDP ADIF (fldigi)</span>
+            <span style="background:rgba(251,146,60,0.15);color:var(--accent-orange);font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;">&#9679; Stopped</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">port 2238</span>
+            <span style="color:var(--text-secondary);font-size:0.8rem;margin-left:auto;">-</span>
+          </div>
+          <div style="border-top:1px solid var(--border);margin-top:0.6rem;padding-top:0.75rem;">
+            <div style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.5rem;">ADIF File Import</div>
+            <div style="display:flex;align-items:center;gap:0.75rem;font-size:0.8rem;">
+              <span style="background:var(--accent-sky);color:#15191e;font-size:0.65rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:4px;">1</span>
+              <span style="color:var(--text-muted);">Upload</span>
+              <span style="color:var(--text-muted);">&rarr;</span>
+              <span style="background:var(--accent-sky);color:#15191e;font-size:0.65rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:4px;">2</span>
+              <span style="color:var(--text-muted);">Map Fields</span>
+              <span style="color:var(--text-muted);">&rarr;</span>
+              <span style="background:var(--accent-sky);color:#15191e;font-size:0.65rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:4px;">3</span>
+              <span style="color:var(--text-muted);">Review &amp; Import</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep reverse">
+      <div class="feature-deep-text">
         <span class="feature-tag emerald">Reliability</span>
         <h2>Built for real field conditions</h2>
         <p>Two layers of resilience. First: the entire platform runs on your LAN with no internet dependency at all, fully air-gapped. Second: if a browser temporarily loses its connection to the server, contacts queue locally and sync when it reconnects. Need remote access? The app is secure enough to put on the internet too.</p>
@@ -353,7 +410,7 @@
       </div>
     </div>
 
-    <div class="feature-deep reverse">
+    <div class="feature-deep">
       <div class="feature-deep-text">
         <span class="feature-tag green">Scoring</span>
         <h2>Know your score without doing math</h2>
@@ -413,6 +470,25 @@
             <div class="mock-bar" style="height:55%;background:var(--accent-sky);"><span class="mock-bar-label">2m</span></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="feature-deep reverse">
+      <div class="feature-deep-text">
+        <span class="feature-tag amber">Situational Awareness</span>
+        <h2>See where your contacts are coming from</h2>
+        <p>The Section Map gives your whole club a live, visual picture of how the event is going. Every ARRL and RAC section lights up as contacts come in. Filter by call area or switch between color modes to see band distribution, QSO density, or how recently each section was worked. Put it on a big screen at the site and let everyone see which sections you still need.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Interactive map of all 86 ARRL/RAC sections across the US and Canada</li>
+          <li><span class="check">&#10003;</span> Filter by region: All, US, Canada, or individual call areas (W1 through W0)</li>
+          <li><span class="check">&#10003;</span> Three color modes: Band (which band worked each section), QSO Count (heat map), and Recency (how fresh the contact is)</li>
+          <li><span class="check">&#10003;</span> Color intensity shows depth: pastel for 1 band, vivid for 2, deep for 3+</li>
+          <li><span class="check">&#10003;</span> Hover any section to see QSO count, bands, modes, and time since last contact</li>
+          <li><span class="check">&#10003;</span> Updates in real time as contacts are logged</li>
+        </ul>
+      </div>
+      <div class="feature-visual" style="padding:0;transition:transform 0.4s ease;cursor:pointer;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <img src="section-map.webp" alt="FD Commander Section Map showing ARRL sections colored by band across the United States and Canada" style="width:100%;display:block;border-radius:14px;">
       </div>
     </div>
 

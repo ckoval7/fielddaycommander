@@ -365,7 +365,9 @@
     <div class="sidebar-section">
       <div class="sidebar-section-title">Operations</div>
       <a class="sidebar-link" href="#logging">Contact Logging</a>
+      <a class="sidebar-link" href="#external-loggers">External Logger Integration</a>
       <a class="sidebar-link" href="#scoring">Scoring</a>
+      <a class="sidebar-link" href="#section-map">Section Map</a>
       <a class="sidebar-link" href="#guestbook">Visitor Guestbook</a>
       <a class="sidebar-link" href="#messages">NTS Messages</a>
       <a class="sidebar-link" href="#w1aw">W1AW Bulletin</a>
@@ -974,6 +976,58 @@
     <p>After the event, operators with the right permissions can edit contacts to fix exchange errors or delete accidental entries. There's a configurable grace period (default: 30 days) during which late contacts can still be added. This is useful for transcribing paper logs (see <a href="#paper-transcription">Paper Log Transcription</a>).</p>
 
     <!-- ═══════════════════════════════════════════ -->
+    <!--  EXTERNAL LOGGER INTEGRATION               -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="external-loggers">External Logger Integration</h2>
+    <p>FD Commander can receive contacts from external logging programs in real time over UDP, and it can import ADIF files after the fact. This means operators running WSJT-X, N1MM Logger+, fldigi, or any other logger that outputs ADIF don't need to double-log their contacts. The external logger handles the RF side and FD Commander handles scoring, deduplication, and Cabrillo export.</p>
+
+    <p>All external logger settings are found under <strong>Administration &gt; External Loggers</strong>. Each listener can be enabled or disabled independently, and the UDP port is configurable.</p>
+
+    <div class="callout warning">
+      <div class="callout-title">Security Notice</div>
+      UDP logging should only be enabled on private, firewalled networks. Do not enable UDP logging on internet-hosted servers, as UDP is unauthenticated and anyone who can reach the port can send arbitrary data.
+    </div>
+
+    <h3>N1MM Logger+</h3>
+    <p>N1MM Logger+ can broadcast contact data over UDP. FD Commander listens for these broadcasts and creates contacts automatically. To set it up:</p>
+    <ul>
+      <li>In N1MM+, go to <strong>Config &gt; Configure Ports &gt; Broadcast Data</strong>.</li>
+      <li>Check the <strong>Contacts</strong> and <strong>Radio</strong> checkboxes.</li>
+      <li>Ensure the server's firewall allows inbound UDP on the configured port (default: 12060). For example: <code>sudo ufw allow 12060/udp</code></li>
+      <li>Set the destination IP to the FD Commander server's address with the configured port.</li>
+      <li>Optionally, configure Station hostnames on the Stations page for automatic station matching.</li>
+    </ul>
+    <p>The listener shows live stats: packets received, errors, and uptime. You can expand "Last Log Received" to see the most recent contact data.</p>
+
+    <h3>WSJT-X / JTDX</h3>
+    <p>WSJT-X and JTDX can send logged QSOs as ADIF records over UDP. This is ideal for FT8, FT4, JT65, and other digital modes where WSJT-X handles the decoding and the operator logs contacts from within WSJT-X. To set it up:</p>
+    <ul>
+      <li>In WSJT-X, go to <strong>File &gt; Settings &gt; Reporting &gt; UDP Server</strong>.</li>
+      <li>Set the UDP server address to the FD Commander server's IP and port (default: 2237).</li>
+      <li>Under Outgoing Interfaces, select the network interface that can reach the server.</li>
+      <li>Ensure the server's firewall allows inbound UDP on the configured port. For example: <code>sudo ufw allow 2237/udp</code></li>
+    </ul>
+
+    <h3>Generic UDP ADIF (fldigi, etc.)</h3>
+    <p>For any logging application that can send plain ADIF text over UDP, FD Commander provides a generic ADIF listener (default port: 2238). This works with fldigi, and any other logger that supports ADIF UDP output. To set it up:</p>
+    <ul>
+      <li>Configure your logging application to send ADIF records via UDP.</li>
+      <li>Set the destination to the FD Commander server's IP and the configured port.</li>
+      <li>In fldigi specifically: <strong>Configure &gt; Config Dialog &gt; Logging &gt; Cloud-UDP</strong>, then set the UDP address and port and check enable.</li>
+      <li>Ensure the server's firewall allows inbound UDP on the configured port. For example: <code>sudo ufw allow 2238/udp</code></li>
+    </ul>
+
+    <h3>ADIF File Import</h3>
+    <p>If you have contacts in an ADIF file (from a previous logging session, a backup, or another program), you can import them through a three-step wizard under <strong>Administration &gt; External Loggers &gt; Import ADIF</strong>.</p>
+    <ul>
+      <li><strong>Step 1: Upload.</strong> Select your .adi or .adif file and click Parse &amp; Continue. FD Commander reads the file and shows a summary: record count, date range, bands, and modes.</li>
+      <li><strong>Step 2: Map Fields.</strong> If the ADIF file contains station identifiers that don't match your configured stations, you'll see them listed under "Unmapped Stations" with a dropdown to assign each one to an event station.</li>
+      <li><strong>Step 3: Review &amp; Import.</strong> Every record is shown in a table with its status: New, Merge Candidate, Skipped, or Invalid. Records outside the event time window are flagged as invalid with an explanation. You can skip individual records before importing. A summary at the top shows counts for each category.</li>
+    </ul>
+    <p>The import is non-destructive. You review everything before any contacts are written to the database, and invalid records must be resolved (skipped or fixed) before the import can proceed.</p>
+
+    <!-- ═══════════════════════════════════════════ -->
     <!--  SCORING                                   -->
     <!-- ═══════════════════════════════════════════ -->
 
@@ -1015,6 +1069,30 @@
         </tbody>
       </table>
     </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  SECTION MAP                               -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="section-map">Section Map</h2>
+    <p>The Section Map is an interactive visualization of all 86 ARRL and RAC sections across the United States and Canada. As contacts are logged, sections light up on the map in real time. It's accessible from the main sidebar under <strong>Section Map</strong>, right below Dashboard.</p>
+
+    <h3>Region Filters</h3>
+    <p>Across the top of the map, a row of filter buttons lets you focus on a specific region: <strong>All</strong>, <strong>US</strong>, <strong>Canada</strong>, or individual call areas (<strong>W1</strong> through <strong>W0</strong>). Selecting a call area zooms the view and dims sections outside that area so you can quickly see which sections within a region you've worked and which you still need.</p>
+
+    <h3>Color Modes</h3>
+    <p>Three color modes control how sections are shaded:</p>
+    <ul>
+      <li><strong>Band.</strong> Each section is colored by the band on which it was most recently worked (20m, 40m, 80m, etc.), using the band color from the legend. Color intensity indicates depth: pastel means 1 band, vivid means 2 bands, and deep means 3 or more bands have been worked in that section.</li>
+      <li><strong>QSO Count.</strong> A green heat map where darker sections have more contacts. Useful for spotting which areas are producing the most activity and where you might find new multipliers.</li>
+      <li><strong>Recency.</strong> A red-yellow-green scale based on how recently each section was last worked. Green means the contact is fresh, yellow means it's aging, and red means it's been a while. This helps operators see where activity is happening right now versus earlier in the event.</li>
+    </ul>
+
+    <h3>Section Details</h3>
+    <p>Hover over any worked section to see a tooltip with the section name and abbreviation, total QSO count, bands and modes worked, and how long ago the last contact was made.</p>
+
+    <h3>Using It During the Event</h3>
+    <p>The Section Map works well on a big screen at the Field Day site. It gives the whole club a visual sense of progress without needing to read a log table. Operators can glance at the map to see which call areas have gaps, and station captains can use it to guide band and direction strategy.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  GUESTBOOK                                 -->
