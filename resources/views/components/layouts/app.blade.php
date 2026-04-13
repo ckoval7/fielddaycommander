@@ -92,6 +92,7 @@
                 x-data="{
                     canScrollUp: false,
                     canScrollDown: false,
+                    tooltipTimer: null,
                     checkScroll() {
                         const el = this.$refs.scrollArea;
                         if (!el) return;
@@ -102,6 +103,12 @@
                 x-init="$nextTick(() => {
                     checkScroll();
                     new ResizeObserver(() => checkScroll()).observe($refs.scrollArea);
+                    $refs.scrollArea.querySelectorAll('li a, li summary').forEach(el => {
+                        const textSpan = el.querySelector('.mary-hideable');
+                        if (textSpan && textSpan.textContent.trim()) {
+                            el.dataset.tooltip = textSpan.textContent.trim();
+                        }
+                    });
                 })"
                 class="flex flex-col flex-1 min-h-0"
             >
@@ -134,6 +141,28 @@
                     x-ref="scrollArea"
                     @scroll="checkScroll"
                     class="flex-1 overflow-y-auto min-h-0 sidebar-scroll-area"
+                    @mouseover="
+                        if (!collapsed) return;
+                        const target = $event.target.closest('[data-tooltip]');
+                        const tip = document.getElementById('sidebar-tooltip');
+                        if (target) {
+                            clearTimeout(tooltipTimer);
+                            tooltipTimer = setTimeout(() => {
+                                const rect = target.getBoundingClientRect();
+                                tip.textContent = target.dataset.tooltip;
+                                tip.style.top = (rect.top + rect.height / 2) + 'px';
+                                tip.style.left = (rect.right + 10) + 'px';
+                                tip.style.display = 'block';
+                            }, 150);
+                        } else {
+                            clearTimeout(tooltipTimer);
+                            tip.style.display = 'none';
+                        }
+                    "
+                    @mouseleave="
+                        clearTimeout(tooltipTimer);
+                        document.getElementById('sidebar-tooltip').style.display = 'none';
+                    "
                 >
                     <x-menu activate-by-route class="mt-2">
                     @auth
