@@ -18,6 +18,7 @@ class ExternalContactReceived implements ShouldBroadcast
         public Contact $contact,
         public int $eventConfigurationId,
         public string $source,
+        public int $eventId,
     ) {}
 
     /** @return array<int, Channel> */
@@ -25,7 +26,13 @@ class ExternalContactReceived implements ShouldBroadcast
     {
         return [
             new PrivateChannel("event.{$this->eventConfigurationId}.external-logger"),
+            new PrivateChannel("event.{$this->eventId}"),
         ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'ContactLogged';
     }
 
     /** @return array<string, mixed> */

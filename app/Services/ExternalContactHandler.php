@@ -98,7 +98,7 @@ class ExternalContactHandler
 
         $session->increment('qso_count');
 
-        ExternalContactReceived::dispatch($contact, $config->id, $dto->source);
+        ExternalContactReceived::dispatch($contact, $config->id, $dto->source, $config->event_id);
 
         return $contact;
     }
