@@ -187,6 +187,25 @@ class ContactExporterTest extends TestCase
         expect($contentDisposition)->toMatch('/^attachment; filename=field-day-logbook-\d{4}-\d{2}-\d{2}-\d{6}\.csv$/');
     }
 
+    public function test_csv_section_column_contains_code_not_name(): void
+    {
+        $contact = Contact::factory()->create();
+        $contact->load('section');
+
+        $contacts = Collection::make([$contact]);
+        $response = $this->exporter->exportCsv($contacts);
+
+        ob_start();
+        $response->sendContent();
+        $csvContent = ob_get_clean();
+
+        $lines = explode("\n", trim($csvContent));
+        $dataRow = str_getcsv($lines[1]);
+
+        // Section column (index 4) should contain the code, not the name
+        expect($dataRow[4])->toBe($contact->section?->code ?? '');
+    }
+
     public function test_csv_includes_related_model_data(): void
     {
         $contact = Contact::factory()->create();

@@ -41,7 +41,7 @@ class ContactExporter
                     $contact->callsign ?? '',
                     $contact->band?->name ?? '',
                     $contact->mode?->name ?? '',
-                    $contact->section?->name ?? '',
+                    $contact->section?->code ?? '',
                     $contact->exchange_class ?? '',
                     $contact->points ?? 0,
                     $contact->is_duplicate ? 'Yes' : 'No',
