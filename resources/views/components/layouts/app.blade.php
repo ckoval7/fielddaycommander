@@ -150,6 +150,7 @@
                         if (!tip) return;
                         if (target) {
                             clearTimeout(tooltipTimer);
+                            if (tip) tip.style.display = 'none';
                             tooltipTimer = setTimeout(() => {
                                 const rect = target.getBoundingClientRect();
                                 tip.textContent = target.dataset.tooltip;
@@ -166,6 +167,7 @@
                         clearTimeout(tooltipTimer);
                         if (tooltipEl) tooltipEl.style.display = 'none';
                     "
+                    @sidebar-toggled.window="clearTimeout(tooltipTimer); if (tooltipEl) tooltipEl.style.display = 'none';"
                 >
                     <x-menu activate-by-route class="mt-2">
                     @auth
