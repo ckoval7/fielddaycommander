@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Contact;
+use App\Models\Event;
 use App\Models\Section;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
@@ -10,6 +11,36 @@ use Livewire\Component;
 
 class SectionMap extends Component
 {
+    public ?Event $event = null;
+
+    public function mount(): void
+    {
+        $service = app(EventContextService::class);
+        $this->event = $service->getContextEvent();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getListeners(): array
+    {
+        if (! $this->event) {
+            return [];
+        }
+
+        return [
+            "echo-private:event.{$this->event->id},ContactLogged" => 'handleContactLogged',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    public function handleContactLogged(array $payload): void
+    {
+        // Re-render is automatic when this method is called
+    }
+
     public function render(): View
     {
         $service = app(EventContextService::class);
