@@ -13,6 +13,18 @@ class SectionMap extends Component
 {
     public ?Event $event = null;
 
+    public array $sectionData = [];
+
+    public int $maxCount = 0;
+
+    public int $totalQsos = 0;
+
+    public int $sectionsWorked = 0;
+
+    public int $totalSections = 0;
+
+    public bool $hasEvent = false;
+
     public function mount(): void
     {
         $service = app(EventContextService::class);
@@ -43,21 +55,28 @@ class SectionMap extends Component
 
     public function render(): View
     {
-        $service = app(EventContextService::class);
-        $event = $service->getContextEvent();
-        $eventConfigId = $event?->eventConfiguration?->id;
+        $this->computeSectionData();
+
+        return view('livewire.section-map');
+    }
+
+    private function computeSectionData(): void
+    {
+        $eventConfigId = $this->event?->eventConfiguration?->id;
+        $this->hasEvent = $eventConfigId !== null;
 
         $allSections = Section::where('is_active', true)
             ->orderBy('code')
             ->get()
             ->keyBy('code');
 
-        $sectionData = [];
-        $totalQsos = 0;
-        $sectionsWorked = 0;
+        $this->totalSections = $allSections->count();
+        $this->sectionData = [];
+        $this->totalQsos = 0;
+        $this->sectionsWorked = 0;
 
         foreach ($allSections as $code => $section) {
-            $sectionData[$code] = [
+            $this->sectionData[$code] = [
                 'name' => $section->name,
                 'count' => 0,
                 'bands' => [],
@@ -85,8 +104,8 @@ class SectionMap extends Component
                     ->all();
                 $latestQsoTime = $sectionContacts->max('qso_time')?->timestamp;
 
-                $sectionData[$code] = [
-                    'name' => $sectionData[$code]['name'] ?? $code,
+                $this->sectionData[$code] = [
+                    'name' => $this->sectionData[$code]['name'] ?? $code,
                     'count' => $count,
                     'bands' => $bands,
                     'modes' => $modes,
@@ -94,21 +113,11 @@ class SectionMap extends Component
                     'latestQsoTime' => $latestQsoTime,
                 ];
 
-                $totalQsos += $count;
-                $sectionsWorked++;
+                $this->totalQsos += $count;
+                $this->sectionsWorked++;
             }
-
         }
 
-        $maxCount = max(array_column($sectionData, 'count') ?: [0]);
-
-        return view('livewire.section-map', [
-            'sectionData' => $sectionData,
-            'maxCount' => $maxCount,
-            'totalQsos' => $totalQsos,
-            'sectionsWorked' => $sectionsWorked,
-            'totalSections' => $allSections->count(),
-            'hasEvent' => $eventConfigId !== null,
-        ]);
+        $this->maxCount = max(array_column($this->sectionData, 'count') ?: [0]);
     }
 }
