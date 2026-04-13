@@ -116,6 +116,22 @@ test('ended session redirects to station select', function () {
         ->assertRedirect(route('logging.station-select'));
 });
 
+test('external session redirects to station select with warning', function () {
+    $this->actingAs($this->user);
+
+    $externalSession = OperatingSession::factory()->active()->external('N1MM')->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $externalSession])
+        ->assertRedirect(route('logging.station-select'));
+
+    expect(session('warning'))->toBe('This session is managed by N1MM.');
+});
+
 test('session info displays correctly', function () {
     $this->actingAs($this->user);
 

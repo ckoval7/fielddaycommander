@@ -2,10 +2,15 @@
 
 namespace Database\Factories;
 
+use App\Models\Band;
+use App\Models\Mode;
+use App\Models\OperatingSession;
+use App\Models\Station;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\OperatingSession>
+ * @extends Factory<OperatingSession>
  */
 class OperatingSessionFactory extends Factory
 {
@@ -17,26 +22,26 @@ class OperatingSessionFactory extends Factory
     public function definition(): array
     {
         // Ensure we have required reference data
-        $band = \App\Models\Band::first();
+        $band = Band::first();
         if (! $band) {
-            $band = \App\Models\Band::create([
+            $band = Band::create([
                 'name' => '20m',
                 'meters' => 20,
                 'frequency_mhz' => 14.175,
             ]);
         }
 
-        $mode = \App\Models\Mode::first();
+        $mode = Mode::first();
         if (! $mode) {
-            $mode = \App\Models\Mode::create([
+            $mode = Mode::create([
                 'name' => 'SSB',
                 'category' => 'Phone',
             ]);
         }
 
         return [
-            'station_id' => \App\Models\Station::factory(),
-            'operator_user_id' => \App\Models\User::factory(),
+            'station_id' => Station::factory(),
+            'operator_user_id' => User::factory(),
             'band_id' => $band->id,
             'mode_id' => $mode->id,
             'start_time' => now(),
@@ -66,6 +71,13 @@ class OperatingSessionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_supervised' => true,
+        ]);
+    }
+
+    public function external(string $source = 'N1MM'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'external_source' => $source,
         ]);
     }
 }
