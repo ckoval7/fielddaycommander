@@ -33,8 +33,8 @@
                     hoverSection: null,
                     tooltipX: 0,
                     tooltipY: 0,
-                    sectionData: @js($sectionData),
-                    maxCount: @js($maxCount),
+                    get sectionData() { return $wire.sectionData },
+                    get maxCount() { return $wire.maxCount },
 
                     callAreas: [1,2,3,4,5,6,7,8,9,0],
                     sectionGroups: {},
