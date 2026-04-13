@@ -80,7 +80,7 @@ test('QsoCount registers echo listener for active event', function () {
 
     $listeners = $component->instance()->getListeners();
 
-    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},ContactLogged");
+    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},.ContactLogged");
 });
 
 test('QsoCount has no listeners when no active event', function () {
@@ -128,7 +128,7 @@ test('Score registers echo listener for active event', function () {
 
     $listeners = $component->instance()->getListeners();
 
-    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},ContactLogged");
+    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},.ContactLogged");
 });
 
 test('Score handleContactLogged does not error', function () {
@@ -149,7 +149,7 @@ test('RecentContacts registers echo listener for active event', function () {
 
     $listeners = $component->instance()->getListeners();
 
-    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},ContactLogged");
+    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},.ContactLogged");
 });
 
 test('RecentContacts handleContactLogged does not error', function () {
@@ -170,7 +170,7 @@ test('BandModeGrid registers echo listener for active event', function () {
 
     $listeners = $component->instance()->getListeners();
 
-    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},ContactLogged");
+    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},.ContactLogged");
 });
 
 test('BandModeGrid handleContactLogged does not error', function () {

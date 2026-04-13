@@ -36,7 +36,7 @@ class QsoCount extends Component
         }
 
         return [
-            "echo-private:event.{$this->event->id},ContactLogged" => 'handleContactLogged',
+            "echo-private:event.{$this->event->id},.ContactLogged" => 'handleContactLogged',
         ];
     }
 

@@ -253,7 +253,7 @@ test('section map listens to ContactLogged on event channel', function () {
 
     $listeners = $component->instance()->getListeners();
 
-    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},ContactLogged");
+    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},.ContactLogged");
 });
 
 test('section map has no listeners when no active event', function () {
