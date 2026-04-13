@@ -147,6 +147,7 @@
                         if (!collapsed) return;
                         const target = $event.target.closest('[data-tooltip]');
                         const tip = tooltipEl;
+                        if (!tip) return;
                         if (target) {
                             clearTimeout(tooltipTimer);
                             tooltipTimer = setTimeout(() => {
@@ -163,7 +164,7 @@
                     "
                     @mouseleave="
                         clearTimeout(tooltipTimer);
-                        tooltipEl.style.display = 'none';
+                        if (tooltipEl) tooltipEl.style.display = 'none';
                     "
                 >
                     <x-menu activate-by-route class="mt-2">
