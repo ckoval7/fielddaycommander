@@ -298,6 +298,31 @@
         </div>
     </footer>
 
+    {{-- Sidebar collapsed tooltip portal --}}
+    <style>
+        #sidebar-tooltip {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            transform: translateY(-50%);
+        }
+        #sidebar-tooltip::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 5px solid transparent;
+            border-right-color: hsl(var(--b3));
+        }
+    </style>
+
+    <div
+        id="sidebar-tooltip"
+        style="display:none"
+        class="whitespace-nowrap bg-base-300 text-base-content text-sm px-3 py-1.5 rounded-lg shadow-md border border-base-300/50"
+    ></div>
+
     {{--  TOAST area --}}
     <x-toast />
 
