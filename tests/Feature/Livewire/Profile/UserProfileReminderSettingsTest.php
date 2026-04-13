@@ -124,6 +124,32 @@ describe('shift reminder settings', function () {
     });
 });
 
+describe('reminder preservation on profile save', function () {
+    test('saveProfile preserves bulletin reminder minutes', function () {
+        $this->user->setBulletinReminderMinutes([5, 10, 30]);
+
+        Livewire::actingAs($this->user)
+            ->test(UserProfile::class)
+            ->set('first_name', 'Updated')
+            ->call('saveProfile')
+            ->assertHasNoErrors();
+
+        expect($this->user->fresh()->getBulletinReminderMinutes())->toBe([5, 10, 30]);
+    });
+
+    test('saveProfile preserves shift reminder minutes', function () {
+        $this->user->setShiftReminderMinutes([5, 10, 30]);
+
+        Livewire::actingAs($this->user)
+            ->test(UserProfile::class)
+            ->set('first_name', 'Updated')
+            ->call('saveProfile')
+            ->assertHasNoErrors();
+
+        expect($this->user->fresh()->getShiftReminderMinutes())->toBe([5, 10, 30]);
+    });
+});
+
 describe('shift category toggle and email', function () {
     test('shift check-in reminder category defaults to enabled', function () {
         Livewire::actingAs($this->user)
