@@ -46,7 +46,12 @@
                         <div class="mt-3 space-y-1 text-xs sm:text-sm text-base-content/70">
                             <div class="flex justify-between">
                                 <span>Operator:</span>
-                                <span class="font-medium text-base-content">{{ $session->operator?->call_sign ?? 'Unknown' }}</span>
+                                <span class="font-medium text-base-content">
+                                    {{ $session->operator?->call_sign ?? 'Unknown' }}
+                                    @if($station->is_external_session)
+                                        <span class="text-base-content/60">({{ strtoupper($session->external_source) }})</span>
+                                    @endif
+                                </span>
                             </div>
                             <div class="flex justify-between">
                                 <span>Band/Mode:</span>

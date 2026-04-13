@@ -7,8 +7,11 @@ use App\Models\Event;
 use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Station;
+use App\Services\EventContextService;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -36,10 +39,11 @@ class StationSelect extends Component
     {
         $this->authorize('log-contacts');
 
-        // Check if user already has an active session
+        // Check if user already has an active non-external session
         $activeSession = OperatingSession::query()
             ->active()
             ->forUser(auth()->id())
+            ->whereNull('external_source')
             ->with('station')
             ->first();
 
@@ -51,7 +55,7 @@ class StationSelect extends Component
     #[Computed]
     public function activeEvent(): ?Event
     {
-        $service = app(\App\Services\EventContextService::class);
+        $service = app(EventContextService::class);
         $contextEvent = $service->getContextEvent();
 
         if (! $contextEvent) {
@@ -89,20 +93,24 @@ class StationSelect extends Component
             ->map(function (Station $station) {
                 $activeSession = $station->operatingSessions->first();
                 $status = 'available';
+                $isExternal = false;
 
                 if ($activeSession) {
+                    $isExternal = $activeSession->external_source !== null;
+
                     $lastActivity = $activeSession->contacts()
                         ->latest('qso_time')
                         ->value('qso_time');
 
                     $idleThreshold = appNow()->subMinutes(30);
-                    $referenceTime = $lastActivity ? \Carbon\Carbon::parse($lastActivity) : $activeSession->start_time;
+                    $referenceTime = $lastActivity ? Carbon::parse($lastActivity) : $activeSession->start_time;
 
                     $status = $referenceTime->lt($idleThreshold) ? 'idle' : 'occupied';
                 }
 
                 $station->setAttribute('computed_status', $status);
                 $station->setAttribute('active_session', $activeSession);
+                $station->setAttribute('is_external_session', $isExternal);
 
                 return $station;
             });
@@ -179,7 +187,7 @@ class StationSelect extends Component
     }
 
     #[Computed]
-    public function stationSupportedBands(): ?\Illuminate\Support\Collection
+    public function stationSupportedBands(): ?Collection
     {
         if (! $this->selectedStationId) {
             return null;
