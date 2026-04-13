@@ -5,7 +5,6 @@ use App\DTOs\ExternalRadioInfoDto;
 use App\Events\ExternalContactDeleted;
 use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
-use App\Events\ExternalStationStatusChanged;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
@@ -16,7 +15,7 @@ use App\Models\Station;
 use App\Models\User;
 use App\Services\ExternalContactHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 
@@ -28,6 +27,9 @@ beforeEach(function () {
     );
 
     Event::fake();
+
+    // Use a test timestamp within the event window (30-31 days from now)
+    $this->testTimestamp = now()->addDays(30)->setTime(19, 0, 0);
 
     $this->config = EventConfiguration::factory()->create(['callsign' => 'W2XYZ']);
     $this->station = Station::factory()->create([
@@ -45,7 +47,7 @@ beforeEach(function () {
 test('creates contact from ExternalContactDto', function () {
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        timestamp: $this->testTimestamp,
         source: 'n1mm',
         modeName: 'CW',
         operatorCallsign: 'K3CPK',
@@ -74,7 +76,7 @@ test('creates contact from ExternalContactDto', function () {
 test('creates operating session for contact', function () {
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        timestamp: $this->testTimestamp,
         source: 'n1mm',
         modeName: 'CW',
         operatorCallsign: 'K3CPK',
@@ -110,7 +112,7 @@ test('runs duplicate check on new contacts', function () {
 
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 19:00:00'),
+        timestamp: $this->testTimestamp->copy()->addMinutes(17),
         source: 'n1mm',
         modeName: 'CW',
         operatorCallsign: 'K3CPK',
@@ -145,7 +147,7 @@ test('handles contact replace by external_id', function () {
 
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        timestamp: $this->testTimestamp,
         source: 'n1mm',
         modeName: 'CW',
         operatorCallsign: 'K3CPK',
@@ -184,7 +186,7 @@ test('handles contact delete by external_id', function () {
 
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        timestamp: $this->testTimestamp,
         source: 'n1mm',
         externalId: 'delete123',
         isDelete: true,
@@ -201,7 +203,7 @@ test('handles contact delete by external_id', function () {
 test('ignores delete for unknown external_id', function () {
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        timestamp: $this->testTimestamp,
         source: 'n1mm',
         externalId: 'nonexistent',
         isDelete: true,
@@ -232,7 +234,7 @@ test('treats duplicate contactinfo with same external_id as replace', function (
 
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        timestamp: $this->testTimestamp,
         source: 'n1mm',
         modeName: 'CW',
         stationIdentifier: 'CONTEST-PC',
@@ -245,7 +247,7 @@ test('treats duplicate contactinfo with same external_id as replace', function (
     expect(Contact::where('external_id', 'idempotent123')->count())->toBe(1);
 });
 
-test('handles RadioInfo by opening new session', function () {
+test('handles RadioInfo by caching for later use', function () {
     $dto = new ExternalRadioInfoDto(
         stationIdentifier: 'CONTEST-PC',
         source: 'n1mm',
@@ -256,23 +258,53 @@ test('handles RadioInfo by opening new session', function () {
 
     $this->handler->handleRadioInfo($dto, $this->config);
 
+    // RadioInfo should NOT create a session - only contacts do
     $session = OperatingSession::where('station_id', $this->station->id)
         ->whereNull('end_time')
         ->first();
+    expect($session)->toBeNull();
 
-    expect($session)->not->toBeNull()
-        ->and($session->operator_user_id)->toBe($this->user->id)
-        ->and($session->band_id)->toBe($this->band->id)
-        ->and($session->mode_id)->toBe($this->modeCw->id)
-        ->and($session->external_source)->toBe('n1mm');
+    // RadioInfo should be cached for use when contacts arrive
+    $cached = Cache::get('external_radio_info:n1mm:CONTEST-PC');
+    expect($cached)->not->toBeNull()
+        ->and($cached->operatorCallsign)->toBe('K3CPK')
+        ->and($cached->frequencyHz)->toBe(3525190)
+        ->and($cached->modeName)->toBe('CW');
+});
 
-    Event::assertDispatched(ExternalStationStatusChanged::class);
+test('contact uses cached RadioInfo for fallback operator/band/mode', function () {
+    // First, send RadioInfo with operator and mode
+    $radioDto = new ExternalRadioInfoDto(
+        stationIdentifier: 'CONTEST-PC',
+        source: 'n1mm',
+        operatorCallsign: 'K3CPK',
+        frequencyHz: 3525190,
+        modeName: 'CW',
+    );
+    $this->handler->handleRadioInfo($radioDto, $this->config);
+
+    // Then, send a contact WITHOUT operator/frequency/mode
+    $contactDto = new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        stationIdentifier: 'CONTEST-PC',
+        externalId: 'fallback123',
+        sectionCode: 'CT',
+    );
+
+    $contact = $this->handler->handleContact($contactDto, $this->config);
+
+    // Contact should use fallback values from cached RadioInfo
+    expect($contact->logger_user_id)->toBe($this->user->id)
+        ->and($contact->band_id)->toBe($this->band->id)
+        ->and($contact->mode_id)->toBe($this->modeCw->id);
 });
 
 test('handles contact with null operator', function () {
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        timestamp: $this->testTimestamp,
         source: 'n1mm',
         modeName: 'CW',
         operatorCallsign: null,
@@ -289,7 +321,7 @@ test('handles contact with null operator', function () {
 test('auto-creates stub user for unknown operator callsign', function () {
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        timestamp: $this->testTimestamp,
         source: 'n1mm',
         modeName: 'CW',
         operatorCallsign: 'N0ACCT',
@@ -309,7 +341,7 @@ test('auto-creates stub user for unknown operator callsign', function () {
 test('auto-creates station for unknown identifier', function () {
     $dto = new ExternalContactDto(
         callsign: 'W1AW',
-        timestamp: Carbon::parse('2026-06-28 18:43:38'),
+        timestamp: $this->testTimestamp,
         source: 'n1mm',
         modeName: 'CW',
         stationIdentifier: 'BRAND-NEW-PC',

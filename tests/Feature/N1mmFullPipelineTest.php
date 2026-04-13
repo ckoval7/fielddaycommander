@@ -23,6 +23,10 @@ beforeEach(function () {
 
     Event::fake();
 
+    // Use a timestamp within the event window (30 days from now)
+    $this->testTimestamp = now()->addDays(30)->setTime(19, 0, 0);
+    $this->testTimestampStr = $this->testTimestamp->format('Y-m-d H:i:s');
+
     $this->config = EventConfiguration::factory()->create(['callsign' => 'W2XYZ']);
     $this->station = Station::factory()->create([
         'event_configuration_id' => $this->config->id,
@@ -41,11 +45,12 @@ beforeEach(function () {
 });
 
 test('full pipeline: raw XML to contact creation', function () {
-    $xml = '<?xml version="1.0" encoding="utf-8"?>
+    $ts = $this->testTimestampStr;
+    $xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
     <contactinfo>
         <app>N1MM</app>
         <contestname>ARRL-FIELD-DAY</contestname>
-        <timestamp>2026-06-28 18:43:38</timestamp>
+        <timestamp>{$ts}</timestamp>
         <mycall>W2XYZ</mycall>
         <band>3.5</band>
         <rxfreq>352519</rxfreq>
@@ -60,9 +65,9 @@ test('full pipeline: raw XML to contact creation', function () {
         <section>CT</section>
         <StationName>CONTEST-PC</StationName>
         <ID>f9ffac4fcd3e479ca86e137df1338531</ID>
-        <oldtimestamp>2026-06-28 18:43:38</oldtimestamp>
+        <oldtimestamp>{$ts}</oldtimestamp>
         <oldcall>W1AW</oldcall>
-    </contactinfo>';
+    </contactinfo>";
 
     $dto = $this->parser->parse($xml);
     $contact = $this->handler->handleContact($dto, $this->config);
@@ -78,10 +83,11 @@ test('full pipeline: raw XML to contact creation', function () {
 });
 
 test('full pipeline: contact then replace updates callsign', function () {
-    $xmlCreate = '<?xml version="1.0" encoding="utf-8"?>
+    $ts = $this->testTimestampStr;
+    $xmlCreate = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
     <contactinfo>
         <app>N1MM</app>
-        <timestamp>2026-06-28 18:43:38</timestamp>
+        <timestamp>{$ts}</timestamp>
         <mycall>W2XYZ</mycall>
         <band>3.5</band>
         <rxfreq>352519</rxfreq>
@@ -96,14 +102,14 @@ test('full pipeline: contact then replace updates callsign', function () {
         <section>CT</section>
         <StationName>CONTEST-PC</StationName>
         <ID>replace_test_id</ID>
-        <oldtimestamp>2026-06-28 18:43:38</oldtimestamp>
+        <oldtimestamp>{$ts}</oldtimestamp>
         <oldcall>W1AX</oldcall>
-    </contactinfo>';
+    </contactinfo>";
 
-    $xmlReplace = '<?xml version="1.0" encoding="utf-8"?>
+    $xmlReplace = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
     <contactreplace>
         <app>N1MM</app>
-        <timestamp>2026-06-28 18:43:38</timestamp>
+        <timestamp>{$ts}</timestamp>
         <mycall>W2XYZ</mycall>
         <band>3.5</band>
         <rxfreq>352519</rxfreq>
@@ -118,9 +124,9 @@ test('full pipeline: contact then replace updates callsign', function () {
         <section>CT</section>
         <StationName>CONTEST-PC</StationName>
         <ID>replace_test_id</ID>
-        <oldtimestamp>2026-06-28 18:43:38</oldtimestamp>
+        <oldtimestamp>{$ts}</oldtimestamp>
         <oldcall>W1AX</oldcall>
-    </contactreplace>';
+    </contactreplace>";
 
     $createDto = $this->parser->parse($xmlCreate);
     $this->handler->handleContact($createDto, $this->config);
@@ -134,10 +140,11 @@ test('full pipeline: contact then replace updates callsign', function () {
 });
 
 test('full pipeline: contact then delete soft-deletes', function () {
-    $xmlCreate = '<?xml version="1.0" encoding="utf-8"?>
+    $ts = $this->testTimestampStr;
+    $xmlCreate = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
     <contactinfo>
         <app>N1MM</app>
-        <timestamp>2026-06-28 18:43:38</timestamp>
+        <timestamp>{$ts}</timestamp>
         <mycall>W2XYZ</mycall>
         <band>3.5</band>
         <rxfreq>352519</rxfreq>
@@ -152,21 +159,21 @@ test('full pipeline: contact then delete soft-deletes', function () {
         <section>CT</section>
         <StationName>CONTEST-PC</StationName>
         <ID>delete_test_id</ID>
-        <oldtimestamp>2026-06-28 18:43:38</oldtimestamp>
+        <oldtimestamp>{$ts}</oldtimestamp>
         <oldcall>W1AW</oldcall>
-    </contactinfo>';
+    </contactinfo>";
 
-    $xmlDelete = '<?xml version="1.0" encoding="utf-8"?>
+    $xmlDelete = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
     <contactdelete>
         <app>N1MM</app>
-        <timestamp>2026-06-28 18:43:38</timestamp>
+        <timestamp>{$ts}</timestamp>
         <mycall>W2XYZ</mycall>
         <band>3.5</band>
         <call>W1AW</call>
         <contestnr>1</contestnr>
         <StationName>CONTEST-PC</StationName>
         <ID>delete_test_id</ID>
-    </contactdelete>';
+    </contactdelete>";
 
     $createDto = $this->parser->parse($xmlCreate);
     $this->handler->handleContact($createDto, $this->config);
@@ -178,7 +185,7 @@ test('full pipeline: contact then delete soft-deletes', function () {
         ->and(Contact::withTrashed()->where('external_id', 'delete_test_id')->first())->not->toBeNull();
 });
 
-test('full pipeline: RadioInfo creates session before contacts', function () {
+test('full pipeline: RadioInfo caches info for contacts', function () {
     $xmlRadio = '<?xml version="1.0" encoding="utf-8"?>
     <RadioInfo>
         <app>N1MM</app>
@@ -196,21 +203,42 @@ test('full pipeline: RadioInfo creates session before contacts', function () {
     $dto = $this->parser->parse($xmlRadio);
     $this->handler->handleRadioInfo($dto, $this->config);
 
+    // RadioInfo should NOT create a session - only contacts do
     $session = OperatingSession::where('station_id', $this->station->id)
         ->whereNull('end_time')
         ->first();
+    expect($session)->toBeNull();
 
-    expect($session)->not->toBeNull()
-        ->and($session->band->name)->toBe('20m')
-        ->and($session->mode->name)->toBe('Phone')
-        ->and($session->operator_user_id)->toBe($this->user->id);
+    // Now send a contact without operator/band/mode - should use cached RadioInfo
+    $ts = $this->testTimestampStr;
+    $xmlContact = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+    <contactinfo>
+        <app>N1MM</app>
+        <timestamp>{$ts}</timestamp>
+        <mycall>W2XYZ</mycall>
+        <call>W1AW</call>
+        <snt>59</snt>
+        <rcv>59</rcv>
+        <section>CT</section>
+        <StationName>CONTEST-PC</StationName>
+        <ID>radioinfo_fallback_test</ID>
+    </contactinfo>";
+
+    $contactDto = $this->parser->parse($xmlContact);
+    $contact = $this->handler->handleContact($contactDto, $this->config);
+
+    // Contact should have used the cached RadioInfo for band/mode/operator
+    expect($contact->band->name)->toBe('20m')
+        ->and($contact->mode->name)->toBe('Phone')
+        ->and($contact->logger_user_id)->toBe($this->user->id);
 });
 
 test('full pipeline: auto-creates station for unknown StationName', function () {
-    $xml = '<?xml version="1.0" encoding="utf-8"?>
+    $ts = $this->testTimestampStr;
+    $xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
     <contactinfo>
         <app>N1MM</app>
-        <timestamp>2026-06-28 18:43:38</timestamp>
+        <timestamp>{$ts}</timestamp>
         <mycall>W2XYZ</mycall>
         <band>3.5</band>
         <rxfreq>352519</rxfreq>
@@ -225,9 +253,9 @@ test('full pipeline: auto-creates station for unknown StationName', function () 
         <section>CT</section>
         <StationName>NEW-LAPTOP</StationName>
         <ID>newstation123</ID>
-        <oldtimestamp>2026-06-28 18:43:38</oldtimestamp>
+        <oldtimestamp>{$ts}</oldtimestamp>
         <oldcall>W1AW</oldcall>
-    </contactinfo>';
+    </contactinfo>";
 
     $dto = $this->parser->parse($xml);
     $this->handler->handleContact($dto, $this->config);
