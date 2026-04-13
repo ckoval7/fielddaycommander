@@ -265,3 +265,8 @@ test('section map has no listeners when no active event', function () {
 
     expect($listeners)->toBeEmpty();
 });
+
+test('section map view includes polling directive for fallback updates', function () {
+    Livewire\Livewire::test(SectionMap::class)
+        ->assertSeeHtml('wire:poll.visible.10s');
+});

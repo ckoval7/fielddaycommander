@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.visible.10s>
     @if ($hasEvent)
         <style>
             .section-path {
