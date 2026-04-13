@@ -313,7 +313,7 @@
             top: 50%;
             transform: translateY(-50%);
             border: 5px solid transparent;
-            border-right-color: hsl(var(--b3));
+            border-right-color: var(--color-base-300);
         }
     </style>
 
