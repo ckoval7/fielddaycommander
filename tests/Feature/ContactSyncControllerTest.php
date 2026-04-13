@@ -220,6 +220,26 @@ test('cannot sync contacts after event has ended', function () {
         ->assertJson(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.']);
 });
 
+test('cannot sync contacts before event has started', function () {
+    // Event starts in 10 minutes (within setup window but not yet started)
+    $this->event->update(['start_time' => now()->addMinutes(10)]);
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $this->session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'exchange_class' => '3A',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+        ])
+        ->assertUnprocessable()
+        ->assertJson(['message' => 'This event has not started yet. Contacts can only be logged once the event begins.']);
+});
+
 test('syncing a gota contact assigns 5 bonus points', function () {
     $gotaStation = Station::factory()->create([
         'event_configuration_id' => $this->config->id,

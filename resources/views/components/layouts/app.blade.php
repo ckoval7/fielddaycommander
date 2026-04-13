@@ -101,6 +101,9 @@
                 x-data="{
                     canScrollUp: false,
                     canScrollDown: false,
+                    tooltipTimer: null,
+                    tooltipEl: null,
+                    isSidebarCollapsed: {{ session('mary-sidebar-collapsed', 'false') }},
                     checkScroll() {
                         const el = this.$refs.scrollArea;
                         if (!el) return;
@@ -111,6 +114,13 @@
                 x-init="$nextTick(() => {
                     checkScroll();
                     new ResizeObserver(() => checkScroll()).observe($refs.scrollArea);
+                    $refs.scrollArea.querySelectorAll('li a, li summary').forEach(el => {
+                        const textSpan = el.querySelector('.mary-hideable');
+                        if (textSpan && textSpan.textContent.trim()) {
+                            el.dataset.tooltip = textSpan.textContent.trim();
+                        }
+                    });
+                    tooltipEl = document.getElementById('sidebar-tooltip');
                 })"
                 class="flex flex-col flex-1 min-h-0"
             >
@@ -123,16 +133,10 @@
 
                 {{-- Scroll-up indicator --}}
                 <button
-                    x-show="canScrollUp"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
+                    :class="canScrollUp ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                     @click="$refs.scrollArea.scrollBy({ top: -120, behavior: 'smooth' })"
                     type="button"
-                    class="flex justify-center py-1 border-b border-base-300/50 text-base-content/40 hover:text-base-content/70 transition-colors shrink-0"
+                    class="flex justify-center py-1 border-b border-base-300/50 text-base-content/40 hover:text-base-content/70 transition-all duration-150 shrink-0"
                     aria-label="Scroll up"
                 >
                     <x-icon name="o-chevron-up" class="w-4 h-4" />
@@ -143,6 +147,31 @@
                     x-ref="scrollArea"
                     @scroll="checkScroll"
                     class="flex-1 overflow-y-auto min-h-0 sidebar-scroll-area"
+                    @mouseover="
+                        if (!isSidebarCollapsed) return;
+                        const target = $event.target.closest('[data-tooltip]');
+                        const tip = tooltipEl;
+                        if (!tip) return;
+                        if (target) {
+                            clearTimeout(tooltipTimer);
+                            if (tip) tip.style.display = 'none';
+                            tooltipTimer = setTimeout(() => {
+                                const rect = target.getBoundingClientRect();
+                                tip.textContent = target.dataset.tooltip;
+                                tip.style.top = (rect.top + rect.height / 2) + 'px';
+                                tip.style.left = (rect.right + 10) + 'px';
+                                tip.style.display = 'block';
+                            }, 150);
+                        } else {
+                            clearTimeout(tooltipTimer);
+                            tip.style.display = 'none';
+                        }
+                    "
+                    @mouseleave="
+                        clearTimeout(tooltipTimer);
+                        if (tooltipEl) tooltipEl.style.display = 'none';
+                    "
+                    @sidebar-toggled.window="isSidebarCollapsed = $event.detail; clearTimeout(tooltipTimer); if (tooltipEl) tooltipEl.style.display = 'none';"
                 >
                     <x-menu activate-by-route class="mt-2">
                     @auth
@@ -158,6 +187,10 @@
                         @endcan
 
                         <x-menu-item title="View Log" icon="o-queue-list" link="{{ route('logbook.index') }}" />
+
+                        @can('import-contacts')
+                            <x-menu-item title="External Loggers" icon="o-signal" link="{{ route('admin.external-loggers') }}" :active="request()->routeIs('admin.external-loggers') || request()->routeIs('admin.import-adif')" />
+                        @endcan
 
                         <x-menu-separator title="EVENT MANAGEMENT" />
 
@@ -197,7 +230,7 @@
                                 :active="request()->routeIs('events.w1aw-bulletin')" />
                         @endif
 
-                        @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment', 'import-contacts'])
+                        @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment'])
                             <x-menu-separator title="ADMINISTRATION" />
 
                             @canany(['create-events', 'edit-events'])
@@ -242,10 +275,6 @@
                                 <x-menu-item title="Audit Logs" icon="o-clipboard-document-list" link="{{ route('admin.audit-logs') }}" :active="request()->routeIs('admin.audit-logs')" />
                             @endcan
 
-                            @can('import-contacts')
-                                <x-menu-item title="External Loggers" icon="o-signal" link="{{ route('admin.external-loggers') }}" :active="request()->routeIs('admin.external-loggers') || request()->routeIs('admin.import-adif')" />
-                            @endcan
-
                             @if(config('developer.enabled'))
                                 @can('manage-settings')
                                     <x-menu-item title="Developer Tools" icon="o-wrench" link="{{ route('admin.developer') }}" :active="request()->routeIs('admin.developer')" />
@@ -264,16 +293,10 @@
 
                 {{-- Scroll-down indicator --}}
                 <button
-                    x-show="canScrollDown"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
+                    :class="canScrollDown ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                     @click="$refs.scrollArea.scrollBy({ top: 120, behavior: 'smooth' })"
                     type="button"
-                    class="flex justify-center py-1 border-t border-base-300/50 text-base-content/60 hover:text-base-content/90 transition-colors shrink-0"
+                    class="flex justify-center py-1 border-t border-base-300/50 text-base-content/60 hover:text-base-content/90 transition-all duration-150 shrink-0"
                     aria-label="Scroll down"
                 >
                     <x-icon name="o-chevron-down" class="w-4 h-4" />
@@ -306,6 +329,31 @@
             <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener noreferrer" class="link link-hover">GitHub</a>
         </div>
     </footer>
+
+    {{-- Sidebar collapsed tooltip portal --}}
+    <style>
+        #sidebar-tooltip {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            transform: translateY(-50%);
+        }
+        #sidebar-tooltip::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 5px solid transparent;
+            border-right-color: var(--color-base-300);
+        }
+    </style>
+
+    <div
+        id="sidebar-tooltip"
+        style="display:none"
+        class="whitespace-nowrap bg-base-300 text-base-content text-sm px-3 py-1.5 rounded-lg shadow-md border border-base-300/50"
+    ></div>
 
     {{--  TOAST area --}}
     <x-toast />

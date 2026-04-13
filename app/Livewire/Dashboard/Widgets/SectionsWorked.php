@@ -56,7 +56,7 @@ class SectionsWorked extends Component
         }
 
         return [
-            "echo-private:event.{$eventId},ContactLogged" => 'handleUpdate',
+            "echo-private:event.{$eventId},.ContactLogged" => 'handleUpdate',
         ];
     }
 

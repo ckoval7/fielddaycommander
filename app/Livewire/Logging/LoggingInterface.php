@@ -43,6 +43,13 @@ class LoggingInterface extends Component
             return;
         }
 
+        if ($operatingSession->external_source !== null) {
+            session()->flash('warning', "This session is managed by {$operatingSession->external_source}.");
+            $this->redirect(route('logging.station-select'), navigate: true);
+
+            return;
+        }
+
         $event = $operatingSession->station->eventConfiguration?->event;
         if (! $event || Carbon::parse($event->end_time)->lt(appNow())) {
             $operatingSession->update(['end_time' => $event?->end_time ?? appNow()]);
@@ -61,6 +68,11 @@ class LoggingInterface extends Component
         $this->parsePreview = [];
 
         if (trim($this->exchangeInput) === '') {
+            return;
+        }
+
+        // Cannot perform duplicate detection or suggestions without knowing current band/mode
+        if ($this->operatingSession->band_id === null || $this->operatingSession->mode_id === null) {
             return;
         }
 
@@ -120,14 +132,14 @@ class LoggingInterface extends Component
         $this->parseError = '';
 
         $callsign = $this->extractCallsign();
-        if ($callsign) {
+        if ($callsign && $this->operatingSession->band_id !== null && $this->operatingSession->mode_id !== null) {
             $this->runDuplicateCheck(
                 $callsign,
                 $this->operatingSession->band_id,
                 $this->operatingSession->mode_id,
                 $this->operatingSession->station->event_configuration_id,
-                $this->operatingSession->band->name,
-                $this->operatingSession->mode->name,
+                $this->operatingSession->band->name ?? '',
+                $this->operatingSession->mode->name ?? '',
                 $this->operatingSession->station->is_gota,
             );
         }

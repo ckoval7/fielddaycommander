@@ -328,14 +328,21 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 // Skip deleted rows (they have line-through class)
                 if (row.classList.contains('line-through')) return;
                 const callsignCell = row.querySelector('td:nth-child(3)');
-                const exchangeCell = row.querySelector('td:nth-child(4)');
+                const exchangeClassCell = row.querySelector('td:nth-child(4)');
+                const sectionCell = row.querySelector('td:nth-child(5)');
                 const wireKey = row.getAttribute('wire:key');
                 const contactId = wireKey ? Number.parseInt(wireKey.replace('contact-', '')) : null;
-                if (contactId && callsignCell && exchangeCell) {
+                if (contactId && callsignCell && exchangeClassCell && sectionCell) {
+                    const callsign = callsignCell.textContent.trim().split('\n')[0].trim();
+                    const exchangeClass = exchangeClassCell.textContent.trim();
+                    const section = sectionCell.textContent.trim();
                     contacts.push({
                         id: contactId,
-                        callsign: callsignCell.textContent.trim().split('\n')[0].trim(),
-                        exchange: exchangeCell.textContent.trim(),
+                        callsign,
+                        exchangeClass,
+                        section,
+                        // Full exchange string for input field: "CALLSIGN CLASS SECTION"
+                        fullExchange: `${callsign} ${exchangeClass} ${section}`,
                     });
                 }
             });
@@ -352,7 +359,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             const contact = contacts[this.recallIndex];
             if (contact) {
-                inputEl.value = contact.exchange;
+                inputEl.value = contact.fullExchange;
                 this.recalledContactId = contact.id;
             }
         },
@@ -367,7 +374,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             const contacts = this.recallableContacts;
             const contact = contacts[this.recallIndex];
             if (contact) {
-                inputEl.value = contact.exchange;
+                inputEl.value = contact.fullExchange;
                 this.recalledContactId = contact.id;
             }
         },

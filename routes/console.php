@@ -32,3 +32,5 @@ Schedule::command('demo:cleanup')
 Schedule::command('demo:simulate-activity')
     ->everyMinute()
     ->when(fn () => config('demo.enabled'));
+// Monitor and restart crashed external logger listeners
+Schedule::command('external-logger:monitor')->everyMinute();

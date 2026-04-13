@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ContactLogged;
 use App\Livewire\Logging\TranscribeInterface;
 use App\Models\Band;
 use App\Models\Contact;
@@ -12,6 +13,7 @@ use App\Models\Station;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event as EventFacade;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -689,4 +691,23 @@ test('updateContact re-runs duplicate detection', function () {
     $contact2->refresh();
     expect($contact2->is_duplicate)->toBeTrue()
         ->and($contact2->points)->toBe(0);
+});
+
+test('logContact dispatches ContactLogged event', function () {
+    $this->actingAs($this->user);
+
+    EventFacade::fake([ContactLogged::class]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->set('exchangeInput', 'W5TEST 1A CT')
+        ->call('logContact')
+        ->assertSet('parseError', '');
+
+    EventFacade::assertDispatched(ContactLogged::class, function (ContactLogged $event) {
+        return $event->contact->callsign === 'W5TEST'
+            && $event->event->id === $this->event->id;
+    });
 });

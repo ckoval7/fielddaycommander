@@ -4,16 +4,21 @@ namespace App\Livewire\Profile;
 
 use App\Models\AuditLog;
 use App\Models\OperatingSession;
+use App\Models\Setting;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
+use Laravel\Fortify\Contracts\UpdatesUserPasswords;
+use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Mary\Traits\Toast;
 
 class UserProfile extends Component
 {
-    use \Mary\Traits\Toast;
+    use Toast;
 
     public string $activeTab = 'profile';
 
@@ -94,7 +99,7 @@ class UserProfile extends Component
         $this->last_name = $user->last_name;
         $this->email = $user->email;
         $this->license_class = $user->license_class;
-        $this->preferred_timezone = $user->preferred_timezone ?? \App\Models\Setting::get('timezone', config('app.timezone'));
+        $this->preferred_timezone = $user->preferred_timezone ?? Setting::get('timezone', config('app.timezone'));
         $this->is_youth = (bool) $user->is_youth;
         $this->is_cpr_aed_trained = (bool) $user->is_cpr_aed_trained;
 
@@ -131,7 +136,7 @@ class UserProfile extends Component
         $user = auth()->user();
 
         // Use Fortify's update action
-        app(\Laravel\Fortify\Contracts\UpdatesUserProfileInformation::class)->update(
+        app(UpdatesUserProfileInformation::class)->update(
             $user,
             [
                 'first_name' => $this->first_name,
@@ -145,6 +150,8 @@ class UserProfile extends Component
                     'event_notifications' => $this->event_notifications,
                     'system_announcements' => $this->system_announcements,
                     'shift_reminder_email' => $this->shift_reminder_email,
+                    'bulletin_reminder_minutes' => $user->getBulletinReminderMinutes(),
+                    'shift_reminder_minutes' => $user->getShiftReminderMinutes(),
                     'categories' => [
                         'new_section' => $this->notify_new_section,
                         'guestbook' => $this->notify_guestbook,
@@ -277,7 +284,7 @@ class UserProfile extends Component
         ]);
 
         try {
-            app(\Laravel\Fortify\Contracts\UpdatesUserPasswords::class)->update(
+            app(UpdatesUserPasswords::class)->update(
                 auth()->user(),
                 [
                     'current_password' => $this->current_password,
@@ -292,7 +299,7 @@ class UserProfile extends Component
             $this->password_confirmation = '';
 
             $this->success('Password changed successfully.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->addError('current_password', 'The current password is incorrect.');
             $this->error('Password change failed.', 'The current password is incorrect.');
         }

@@ -24,6 +24,7 @@
             color: #fff;
             padding: 12px 48px 8px;
             margin-bottom: 12px;
+            text-align: center;
         }
         .header-callsign {
             font-size: 26px; font-weight: bold; letter-spacing: .12em;

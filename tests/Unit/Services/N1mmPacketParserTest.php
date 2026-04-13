@@ -22,9 +22,10 @@ test('parses contactinfo packet into ExternalContactDto', function () {
         <mode>CW</mode>
         <call>W1AW</call>
         <snt>599</snt>
-        <sntnr>5</sntnr>
+        <sntnr>5A</sntnr>
         <rcv>599</rcv>
         <rcvnr>0</rcvnr>
+        <exchange1>2B</exchange1>
         <section>CT</section>
         <StationName>CONTEST-PC</StationName>
         <ID>f9ffac4fcd3e479ca86e137df1338531</ID>
@@ -42,6 +43,7 @@ test('parses contactinfo packet into ExternalContactDto', function () {
         ->and($result->stationIdentifier)->toBe('CONTEST-PC')
         ->and($result->frequencyHz)->toBe(3525190)
         ->and($result->sectionCode)->toBe('CT')
+        ->and($result->exchangeClass)->toBe('2B')
         ->and($result->externalId)->toBe('f9ffac4fcd3e479ca86e137df1338531')
         ->and($result->sentReport)->toBe('599')
         ->and($result->source)->toBe('n1mm')

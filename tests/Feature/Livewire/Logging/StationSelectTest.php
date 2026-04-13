@@ -879,3 +879,182 @@ test('band warning shown when selected band is not covered by any station antenn
         ->and($warning['message'])->toContain('20m')
         ->and($warning['message'])->toContain('antenna');
 });
+
+test('does not redirect to external session on mount', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    // User has an active external session
+    OperatingSession::factory()->external('N1MM')->create([
+        'station_id' => $station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now(),
+        'end_time' => null,
+    ]);
+
+    // Should NOT redirect — external sessions don't count for redirect
+    Livewire::test(StationSelect::class)
+        ->assertStatus(200)
+        ->assertNoRedirect();
+});
+
+test('shows external session as occupied with source indicator', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'External Station',
+    ]);
+
+    $operator = User::factory()->create(['call_sign' => 'K3CPK']);
+    OperatingSession::factory()->external('N1MM')->create([
+        'station_id' => $station->id,
+        'operator_user_id' => $operator->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now(),
+        'end_time' => null,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->assertSee('External Station')
+        ->assertSee('Occupied')
+        ->assertSee('K3CPK')
+        ->assertSee('N1MM');
+});
+
+test('idle external session can be taken over', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    $operator = User::factory()->create();
+    OperatingSession::factory()->external('N1MM')->create([
+        'station_id' => $station->id,
+        'operator_user_id' => $operator->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now()->subHours(2), // Idle by time (>30 min)
+        'end_time' => null,
+    ]);
+
+    // Idle external sessions can be taken over just like regular idle sessions
+    Livewire::test(StationSelect::class)
+        ->assertSee('Idle')
+        ->call('selectStation', $station->id)
+        ->assertSet('showTakeoverModal', true)
+        ->assertSet('takeoverStationId', $station->id);
+});
+
+test('active external session is occupied and not selectable', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    $operator = User::factory()->create();
+    OperatingSession::factory()->external('N1MM')->create([
+        'station_id' => $station->id,
+        'operator_user_id' => $operator->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now(), // Recent - not idle
+        'end_time' => null,
+    ]);
+
+    // Active external sessions are occupied and not selectable
+    Livewire::test(StationSelect::class)
+        ->assertSee('Occupied')
+        ->call('selectStation', $station->id)
+        ->assertSet('showSetupModal', false)
+        ->assertSet('showTakeoverModal', false);
+});
+
+test('shows stations 15 minutes before event starts for session setup', function () {
+    $this->actingAs($this->user);
+
+    // Event starts in 10 minutes (within 15-minute setup window)
+    $event = Event::factory()->create([
+        'start_time' => now()->addMinutes(10),
+        'end_time' => now()->addHours(24)->addMinutes(10),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'Setup Station',
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->assertSee('Setup Station')
+        ->assertSee('Available');
+});
+
+test('does not show stations more than 15 minutes before event starts', function () {
+    $this->actingAs($this->user);
+
+    // Event starts in 20 minutes (outside 15-minute setup window)
+    $event = Event::factory()->create([
+        'start_time' => now()->addMinutes(20),
+        'end_time' => now()->addHours(24)->addMinutes(20),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    Livewire::test(StationSelect::class)
+        ->assertSee('No Active Event');
+});
+
+test('can start session during setup window before event starts', function () {
+    $this->actingAs($this->user);
+
+    // Event starts in 5 minutes
+    $event = Event::factory()->create([
+        'start_time' => now()->addMinutes(5),
+        'end_time' => now()->addHours(24)->addMinutes(5),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->call('startSession')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('operating_sessions', [
+        'station_id' => $station->id,
+        'operator_user_id' => $this->user->id,
+    ]);
+});

@@ -1,4 +1,9 @@
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ckoval7_fd-commander&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ckoval7_fd-commander) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=ckoval7_fd-commander&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=ckoval7_fd-commander)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ckoval7_fd-commander&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ckoval7_fd-commander)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=ckoval7_fd-commander&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=ckoval7_fd-commander)
+![Website](https://img.shields.io/website?url=https%3A%2F%2Ffielddaycommander.org%2F)
+![Website](https://img.shields.io/website?url=https%3A%2F%2Fdemo.fielddaycommander.org%2F&label=demo)
+![GitHub License](https://img.shields.io/github/license/ckoval7/fd-commander)
+
 
 # Field Day Commander
 

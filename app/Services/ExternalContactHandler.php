@@ -7,12 +7,12 @@ use App\DTOs\ExternalRadioInfoDto;
 use App\Events\ExternalContactDeleted;
 use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
-use App\Events\ExternalStationStatusChanged;
 use App\Exceptions\OutOfPeriodContactException;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\Section;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class ExternalContactHandler
@@ -47,16 +47,22 @@ class ExternalContactHandler
             );
         }
 
-        $station = $this->stationResolver->resolve(
-            $dto->stationIdentifier ?? 'Unknown',
-            $config->id,
-        );
+        $stationIdentifier = $dto->stationIdentifier ?? 'Unknown';
+        $station = $this->stationResolver->resolve($stationIdentifier, $config->id);
 
-        $operatorUserId = $this->resolveOperator($dto->operatorCallsign);
-        $bandId = $dto->frequencyHz
-            ? $this->bandResolver->resolveByFrequencyHz($dto->frequencyHz)
+        // Fallback to cached RadioInfo for operator/band/mode if not in contact
+        $cachedRadioInfo = $this->getCachedRadioInfo($stationIdentifier, $dto->source);
+
+        $operatorCallsign = $dto->operatorCallsign ?? $cachedRadioInfo?->operatorCallsign;
+        $operatorUserId = $this->resolveOperator($operatorCallsign);
+
+        $frequencyHz = $dto->frequencyHz ?? $cachedRadioInfo?->frequencyHz;
+        $bandId = $frequencyHz
+            ? $this->bandResolver->resolveByFrequencyHz($frequencyHz)
             : $this->bandResolver->resolveByName($dto->bandName);
-        $modeId = $this->modeResolver->resolve($dto->modeName);
+
+        $modeName = $dto->modeName ?? $cachedRadioInfo?->modeName;
+        $modeId = $this->modeResolver->resolve($modeName);
         $sectionId = $this->resolveSection($dto->sectionCode);
 
         $session = $this->sessionResolver->resolve(
@@ -98,7 +104,7 @@ class ExternalContactHandler
 
         $session->increment('qso_count');
 
-        ExternalContactReceived::dispatch($contact, $config->id, $dto->source);
+        ExternalContactReceived::dispatch($contact, $config->id, $dto->source, $config->event_id);
 
         return $contact;
     }
@@ -143,43 +149,33 @@ class ExternalContactHandler
         ExternalContactDeleted::dispatch($contactId, $callsign, $config->id, $dto->source, $stationName);
     }
 
+    /**
+     * Store RadioInfo in cache for use when contacts arrive.
+     *
+     * RadioInfo is NOT used to create sessions or trigger notifications.
+     * Sessions are only created when actual contacts are logged.
+     */
     public function handleRadioInfo(ExternalRadioInfoDto $dto, EventConfiguration $config): void
     {
-        $station = $this->stationResolver->resolve(
-            $dto->stationIdentifier,
-            $config->id,
-        );
+        $this->cacheRadioInfo($dto);
+    }
 
-        $operatorUserId = $this->resolveOperator($dto->operatorCallsign);
-        $bandId = $this->bandResolver->resolveByFrequencyHz($dto->frequencyHz);
-        $modeId = $this->modeResolver->resolve($dto->modeName);
+    private function cacheRadioInfo(ExternalRadioInfoDto $dto): void
+    {
+        $key = $this->radioInfoCacheKey($dto->stationIdentifier, $dto->source);
+        Cache::put($key, $dto, now()->addMinutes(5));
+    }
 
-        // Close any active external sessions on this station with different operator/band/mode
-        $activeSessions = $station->operatingSessions()
-            ->whereNull('end_time')
-            ->whereNotNull('external_source')
-            ->get();
+    private function getCachedRadioInfo(string $stationIdentifier, string $source): ?ExternalRadioInfoDto
+    {
+        $key = $this->radioInfoCacheKey($stationIdentifier, $source);
 
-        foreach ($activeSessions as $activeSession) {
-            $changed = $activeSession->operator_user_id !== $operatorUserId
-                || $activeSession->band_id !== $bandId
-                || $activeSession->mode_id !== $modeId;
+        return Cache::get($key);
+    }
 
-            if ($changed) {
-                $this->sessionResolver->closeSession($activeSession);
-            }
-        }
-
-        $session = $this->sessionResolver->resolve(
-            stationId: $station->id,
-            operatorUserId: $operatorUserId,
-            bandId: $bandId,
-            modeId: $modeId,
-            startTime: now(),
-            externalSource: $dto->source,
-        );
-
-        ExternalStationStatusChanged::dispatch($station, $session, $config->id, $dto->source);
+    private function radioInfoCacheKey(string $stationIdentifier, string $source): string
+    {
+        return "external_radio_info:{$source}:{$stationIdentifier}";
     }
 
     private function updateContact(Contact $contact, ExternalContactDto $dto, EventConfiguration $config): void
