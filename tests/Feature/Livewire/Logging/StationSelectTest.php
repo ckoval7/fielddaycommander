@@ -997,3 +997,64 @@ test('active external session is occupied and not selectable', function () {
         ->assertSet('showSetupModal', false)
         ->assertSet('showTakeoverModal', false);
 });
+
+test('shows stations 15 minutes before event starts for session setup', function () {
+    $this->actingAs($this->user);
+
+    // Event starts in 10 minutes (within 15-minute setup window)
+    $event = Event::factory()->create([
+        'start_time' => now()->addMinutes(10),
+        'end_time' => now()->addHours(24)->addMinutes(10),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'name' => 'Setup Station',
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->assertSee('Setup Station')
+        ->assertSee('Available');
+});
+
+test('does not show stations more than 15 minutes before event starts', function () {
+    $this->actingAs($this->user);
+
+    // Event starts in 20 minutes (outside 15-minute setup window)
+    $event = Event::factory()->create([
+        'start_time' => now()->addMinutes(20),
+        'end_time' => now()->addHours(24)->addMinutes(20),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    Livewire::test(StationSelect::class)
+        ->assertSee('No Active Event');
+});
+
+test('can start session during setup window before event starts', function () {
+    $this->actingAs($this->user);
+
+    // Event starts in 5 minutes
+    $event = Event::factory()->create([
+        'start_time' => now()->addMinutes(5),
+        'end_time' => now()->addHours(24)->addMinutes(5),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->call('startSession')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('operating_sessions', [
+        'station_id' => $station->id,
+        'operator_user_id' => $this->user->id,
+    ]);
+});

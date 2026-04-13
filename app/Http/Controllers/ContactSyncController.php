@@ -36,6 +36,10 @@ class ContactSyncController extends Controller
             return response()->json(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.'], 422);
         }
 
+        if (Carbon::parse($event->start_time)->gt(appNow())) {
+            return response()->json(['message' => 'This event has not started yet. Contacts can only be logged once the event begins.'], 422);
+        }
+
         $isGotaContact = $session->station->is_gota;
 
         $dupeCheck = $dupeService->check(

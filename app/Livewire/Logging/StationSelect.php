@@ -64,8 +64,14 @@ class StationSelect extends Component
 
         $status = $service->getGracePeriodStatus($contextEvent);
 
-        // Allow logging only during active events — use transcription for post-event entry
+        // Allow session setup during active events or within 15 minutes of start
         if ($status === 'active') {
+            return $contextEvent->load('eventConfiguration.stations.operatingSessions.operator');
+        }
+
+        // Allow setup 15 minutes before event starts (contacts still require active event)
+        if ($contextEvent->start_time && $contextEvent->start_time->copy()->subMinutes(15)->lte(appNow())
+            && $contextEvent->start_time->gt(appNow())) {
             return $contextEvent->load('eventConfiguration.stations.operatingSessions.operator');
         }
 
