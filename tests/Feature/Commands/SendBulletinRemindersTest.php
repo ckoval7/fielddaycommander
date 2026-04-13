@@ -299,4 +299,35 @@ describe('edge cases', function () {
 
         Notification::assertNothingSent();
     });
+
+    test('sends reminders during event setup window before event starts', function () {
+        Notification::fake();
+
+        // Delete the beforeEach active event to test setup window in isolation
+        $this->event->delete();
+
+        // Create an event in setup window (setup started, but event hasn't started yet)
+        $setupEvent = Event::factory()->create([
+            'event_type_id' => $this->eventType->id,
+            'setup_allowed_from' => now()->subHours(6),
+            'start_time' => now()->addHours(6),
+            'end_time' => now()->addHours(30),
+        ]);
+
+        BulletinScheduleEntry::factory()->create([
+            'event_id' => $setupEvent->id,
+            'scheduled_at' => now()->addMinutes(15),
+            'mode' => 'cw',
+            'frequencies' => '7.0475',
+            'created_by' => $this->user->id,
+        ]);
+
+        $this->artisan('reminders:send')->assertSuccessful();
+
+        Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) {
+            $data = $notification->toArray($this->user);
+
+            return $data['title'] === 'W1AW Bulletin in 15 minutes';
+        });
+    });
 });

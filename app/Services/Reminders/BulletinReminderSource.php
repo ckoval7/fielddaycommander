@@ -16,14 +16,16 @@ class BulletinReminderSource implements ReminderSource
 {
     public function getUpcomingRemindables(): Collection
     {
-        $activeEvent = Event::active()->first();
+        // Check for active event first, then fall back to setup window
+        $event = Event::active()->first()
+            ?? Event::inSetupWindow()->first();
 
-        if (! $activeEvent) {
+        if (! $event) {
             return collect();
         }
 
         return BulletinScheduleEntry::query()
-            ->forEvent($activeEvent->id)
+            ->forEvent($event->id)
             ->inReminderWindow()
             ->get();
     }
