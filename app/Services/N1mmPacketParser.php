@@ -54,6 +54,7 @@ class N1mmPacketParser
             sentExchange: $this->extractString($doc, 'sntnr'),
             receivedReport: $this->extractString($doc, 'rcv'),
             receivedExchange: $this->extractString($doc, 'rcvnr'),
+            exchangeClass: $this->extractString($doc, 'exchange1'),
             sectionCode: $this->extractString($doc, 'section'),
             externalId: $this->extractString($doc, 'ID'),
             isDelete: $isDelete,

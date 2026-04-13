@@ -59,9 +59,10 @@ test('full pipeline: raw XML to contact creation', function () {
         <mode>CW</mode>
         <call>W1AW</call>
         <snt>599</snt>
-        <sntnr>5</sntnr>
+        <sntnr>5A</sntnr>
         <rcv>599</rcv>
         <rcvnr>0</rcvnr>
+        <exchange1>2B</exchange1>
         <section>CT</section>
         <StationName>CONTEST-PC</StationName>
         <ID>f9ffac4fcd3e479ca86e137df1338531</ID>
@@ -76,6 +77,7 @@ test('full pipeline: raw XML to contact creation', function () {
         ->and($contact->band->name)->toBe('80m')
         ->and($contact->mode->name)->toBe('CW')
         ->and($contact->section->code)->toBe('CT')
+        ->and($contact->exchange_class)->toBe('2B')
         ->and($contact->external_id)->toBe('f9ffac4fcd3e479ca86e137df1338531')
         ->and($contact->external_source)->toBe('n1mm')
         ->and($contact->logger_user_id)->toBe($this->user->id)
