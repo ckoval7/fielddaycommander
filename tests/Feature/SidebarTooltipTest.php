@@ -41,8 +41,10 @@ test('sidebar scrollable area has mouseover handler and tooltip state', function
     $response->assertSeeInOrder([
         'tooltipTimer',
         'tooltipEl',
+        'isSidebarCollapsed',
         'sidebar-scroll-area',
         '@mouseover',
+        'isSidebarCollapsed',
         '@mouseleave',
     ], false);
 });

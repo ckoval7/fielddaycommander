@@ -94,6 +94,7 @@
                     canScrollDown: false,
                     tooltipTimer: null,
                     tooltipEl: null,
+                    isSidebarCollapsed: {{ session('mary-sidebar-collapsed', 'false') }},
                     checkScroll() {
                         const el = this.$refs.scrollArea;
                         if (!el) return;
@@ -110,7 +111,7 @@
                             el.dataset.tooltip = textSpan.textContent.trim();
                         }
                     });
-                    this.tooltipEl = document.getElementById('sidebar-tooltip');
+                    tooltipEl = document.getElementById('sidebar-tooltip');
                 })"
                 class="flex flex-col flex-1 min-h-0"
             >
@@ -144,7 +145,7 @@
                     @scroll="checkScroll"
                     class="flex-1 overflow-y-auto min-h-0 sidebar-scroll-area"
                     @mouseover="
-                        if (!collapsed) return;
+                        if (!isSidebarCollapsed) return;
                         const target = $event.target.closest('[data-tooltip]');
                         const tip = tooltipEl;
                         if (!tip) return;
@@ -167,7 +168,7 @@
                         clearTimeout(tooltipTimer);
                         if (tooltipEl) tooltipEl.style.display = 'none';
                     "
-                    @sidebar-toggled.window="clearTimeout(tooltipTimer); if (tooltipEl) tooltipEl.style.display = 'none';"
+                    @sidebar-toggled.window="isSidebarCollapsed = $event.detail; clearTimeout(tooltipTimer); if (tooltipEl) tooltipEl.style.display = 'none';"
                 >
                     <x-menu activate-by-route class="mt-2">
                     @auth
