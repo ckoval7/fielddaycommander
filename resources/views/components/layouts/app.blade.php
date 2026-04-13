@@ -93,6 +93,7 @@
                     canScrollUp: false,
                     canScrollDown: false,
                     tooltipTimer: null,
+                    tooltipEl: null,
                     checkScroll() {
                         const el = this.$refs.scrollArea;
                         if (!el) return;
@@ -109,6 +110,7 @@
                             el.dataset.tooltip = textSpan.textContent.trim();
                         }
                     });
+                    this.tooltipEl = document.getElementById('sidebar-tooltip');
                 })"
                 class="flex flex-col flex-1 min-h-0"
             >
@@ -144,7 +146,7 @@
                     @mouseover="
                         if (!collapsed) return;
                         const target = $event.target.closest('[data-tooltip]');
-                        const tip = document.getElementById('sidebar-tooltip');
+                        const tip = tooltipEl;
                         if (target) {
                             clearTimeout(tooltipTimer);
                             tooltipTimer = setTimeout(() => {
@@ -161,7 +163,7 @@
                     "
                     @mouseleave="
                         clearTimeout(tooltipTimer);
-                        document.getElementById('sidebar-tooltip').style.display = 'none';
+                        tooltipEl.style.display = 'none';
                     "
                 >
                     <x-menu activate-by-route class="mt-2">
