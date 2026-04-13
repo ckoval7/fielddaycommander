@@ -45,6 +45,14 @@
                     sectionGroups: {},
 
                     init() {
+                        const savedView = sessionStorage.getItem('section_map_view');
+                        const savedColorMode = sessionStorage.getItem('section_map_color_mode');
+                        if (savedView) this.view = savedView;
+                        if (savedColorMode) this.colorMode = savedColorMode;
+
+                        this.$watch('view', (value) => sessionStorage.setItem('section_map_view', value));
+                        this.$watch('colorMode', (value) => sessionStorage.setItem('section_map_color_mode', value));
+
                         this.$nextTick(() => {
                             this.$el.querySelectorAll('g[id^=w] > path.section-path').forEach(path => {
                                 this.sectionGroups[path.id] = path.parentNode.id;
