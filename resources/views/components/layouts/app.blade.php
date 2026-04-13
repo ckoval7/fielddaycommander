@@ -124,16 +124,10 @@
 
                 {{-- Scroll-up indicator --}}
                 <button
-                    x-show="canScrollUp"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
+                    :class="canScrollUp ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                     @click="$refs.scrollArea.scrollBy({ top: -120, behavior: 'smooth' })"
                     type="button"
-                    class="flex justify-center py-1 border-b border-base-300/50 text-base-content/40 hover:text-base-content/70 transition-colors shrink-0"
+                    class="flex justify-center py-1 border-b border-base-300/50 text-base-content/40 hover:text-base-content/70 transition-all duration-150 shrink-0"
                     aria-label="Scroll up"
                 >
                     <x-icon name="o-chevron-up" class="w-4 h-4" />
@@ -290,16 +284,10 @@
 
                 {{-- Scroll-down indicator --}}
                 <button
-                    x-show="canScrollDown"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
+                    :class="canScrollDown ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                     @click="$refs.scrollArea.scrollBy({ top: 120, behavior: 'smooth' })"
                     type="button"
-                    class="flex justify-center py-1 border-t border-base-300/50 text-base-content/60 hover:text-base-content/90 transition-colors shrink-0"
+                    class="flex justify-center py-1 border-t border-base-300/50 text-base-content/60 hover:text-base-content/90 transition-all duration-150 shrink-0"
                     aria-label="Scroll down"
                 >
                     <x-icon name="o-chevron-down" class="w-4 h-4" />
