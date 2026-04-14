@@ -136,6 +136,7 @@ class DemoSeeder extends Seeder
             'operating_class_id' => $class4a->id,
             'transmitter_count' => 4,
             'has_gota_station' => true,
+            'gota_callsign' => 'W1GOT',
             'max_power_watts' => 100,
             'power_multiplier' => '2',
             'uses_commercial_power' => false,
