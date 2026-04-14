@@ -26,15 +26,18 @@
                 @endif
                 @break
             @case(\App\Models\ShiftAssignment::STATUS_CHECKED_IN)
-                @php $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time); @endphp
+                @php
+                    $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time);
+                    $checkoutConfirm = $minutesLeft >= 1
+                        ? "You still have {$minutesLeft} " . ($minutesLeft === 1 ? 'minute' : 'minutes') . ' left in this shift. Are you sure you want to check out?'
+                        : null;
+                @endphp
                 <x-button
                     label="Check Out"
                     icon="o-arrow-left-on-rectangle"
                     class="btn-warning btn-sm"
                     wire:click="checkOut({{ $myAssignment->id }})"
-                    @if($minutesLeft >= 1)
-                        wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
-                    @endif
+                    :wire:confirm="$checkoutConfirm"
                     spinner="checkOut"
                 />
                 @break
