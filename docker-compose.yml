@@ -4,6 +4,14 @@ services:
     container_name: fd-commander-app
     ports:
       - "${APP_PORT:-80}:80"
+      # External logger UDP ports — these allow logging programs on the local
+      # network (N1MM Logger+, WSJT-X, fldigi, etc.) to send contacts into the
+      # container. The host-side port (left of the colon) can be changed via
+      # env vars in .env; the container-side port (right) must match the port
+      # configured in the FD Commander admin UI (Settings > External Loggers).
+      - "${N1MM_PORT:-12060}:${N1MM_PORT:-12060}/udp"       # N1MM Logger+
+      - "${WSJTX_PORT:-2237}:${WSJTX_PORT:-2237}/udp"       # WSJT-X / JTDX
+      - "${UDP_ADIF_PORT:-2238}:${UDP_ADIF_PORT:-2238}/udp" # Plain UDP ADIF (fldigi, etc.)
     env_file: .env
     environment:
       # Override values for Docker networking — must match the mysql service
