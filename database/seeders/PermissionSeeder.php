@@ -54,6 +54,9 @@ class PermissionSeeder extends Seeder
 
             // Import
             ['name' => 'import-contacts', 'description' => 'Import contacts from ADIF files'],
+
+            // Weather
+            ['name' => 'manage-weather', 'description' => 'Manually enter weather data and trigger storm alerts'],
         ];
 
         foreach ($permissions as $permission) {
@@ -63,6 +66,6 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created 26 permissions');
+        $this->command->info('Created 27 permissions');
     }
 }
