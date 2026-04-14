@@ -5,7 +5,9 @@ namespace App\Livewire\Messages;
 use App\Models\Event;
 use App\Models\Message;
 use App\Models\Setting;
+use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Route;
 use Livewire\Component;
 
 class MessageForm extends Component
@@ -161,7 +163,7 @@ class MessageForm extends Component
 
         $this->dispatch('toast', title: 'Message saved', type: 'success');
 
-        if (\Illuminate\Support\Facades\Route::has('events.messages.index')) {
+        if (Route::has('events.messages.index')) {
             $this->redirect(route('events.messages.index', $this->event), navigate: true);
         }
     }
@@ -314,7 +316,7 @@ class MessageForm extends Component
         ];
     }
 
-    public function render(): \Illuminate\Contracts\View\View
+    public function render(): View
     {
         return view('livewire.messages.message-form', [
             'isEditing' => $this->message && $this->message->exists,
@@ -371,6 +373,15 @@ class MessageForm extends Component
         $config = $this->event->eventConfiguration;
         $clubName = $config->club_name ?? '[CLUB NAME]';
         $year = $this->event->start_time?->format('Y') ?? date('Y');
-        $this->messageText = "{$clubName} FIELD DAY {$year} X\n[NUMBER] PARTICIPANTS X\nLOCATION [CITY STATE] X\n[NUMBER] ARES OPERATORS PARTICIPATING";
+
+        $locationParts = array_filter([$config->city, $config->state]);
+        $location = $locationParts ? implode(', ', $locationParts) : null;
+
+        if ($location) {
+            $this->placeOfOrigin = $location;
+        }
+
+        $locationPlaceholder = $location ?? '[CITY STATE]';
+        $this->messageText = "{$clubName} FIELD DAY {$year} X\n[NUMBER] PARTICIPANTS X\nLOCATION {$locationPlaceholder} X\n[NUMBER] ARES OPERATORS PARTICIPATING";
     }
 }

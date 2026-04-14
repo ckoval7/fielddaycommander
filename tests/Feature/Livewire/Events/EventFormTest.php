@@ -2,6 +2,7 @@
 
 use App\Livewire\Events\EventForm;
 use App\Models\AuditLog;
+use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
@@ -188,7 +189,7 @@ test('event form locks fields when event has contacts', function () {
         'event_id' => $event->id,
         'max_power_watts' => 100,
     ]);
-    \App\Models\Contact::factory()->create(['event_configuration_id' => $config->id]);
+    Contact::factory()->create(['event_configuration_id' => $config->id]);
 
     $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
 
@@ -405,7 +406,7 @@ test('event form prevents setting end time before current time on active event',
     ]);
 
     // Set as active event
-    \App\Models\Setting::set('active_event_id', $event->id);
+    Setting::set('active_event_id', $event->id);
 
     // Try to set end time before current time (should fail)
     Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])
@@ -435,7 +436,7 @@ test('event form allows extending end time on active event', function () {
     ]);
 
     // Set as active event
-    \App\Models\Setting::set('active_event_id', $event->id);
+    Setting::set('active_event_id', $event->id);
 
     $newEndTime = now()->addHours(12);
 
@@ -467,7 +468,7 @@ test('event form locks event type, callsign, and start time on active event', fu
     ]);
 
     // Set as active event
-    \App\Models\Setting::set('active_event_id', $event->id);
+    Setting::set('active_event_id', $event->id);
 
     $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
 
@@ -615,16 +616,16 @@ test('can create event with guestbook enabled', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', 39.7392)
-        ->set('guestbook_longitude', -104.9903)
+        ->set('latitude', 39.7392)
+        ->set('longitude', -104.9903)
         ->set('guestbook_detection_radius', 500)
         ->call('save')
         ->assertHasNoErrors();
 
     $event = Event::where('name', 'Field Day 2025')->first();
     expect($event->eventConfiguration->guestbook_enabled)->toBeTrue();
-    expect($event->eventConfiguration->guestbook_latitude)->toBe('39.7392000');
-    expect($event->eventConfiguration->guestbook_longitude)->toBe('-104.9903000');
+    expect((float) $event->eventConfiguration->latitude)->toEqual(39.7392);
+    expect((float) $event->eventConfiguration->longitude)->toEqual(-104.9903);
     expect($event->eventConfiguration->guestbook_detection_radius)->toBe(500);
 });
 
@@ -645,8 +646,8 @@ test('can create event with guestbook and local subnets', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', 39.7392)
-        ->set('guestbook_longitude', -104.9903)
+        ->set('latitude', 39.7392)
+        ->set('longitude', -104.9903)
         ->set('guestbook_detection_radius', 500)
         ->set('guestbook_local_subnets', $subnets)
         ->call('save')
@@ -675,10 +676,10 @@ test('validates latitude range', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', 91.0)
-        ->set('guestbook_longitude', -104.9903)
+        ->set('latitude', 91.0)
+        ->set('longitude', -104.9903)
         ->call('save')
-        ->assertHasErrors(['guestbook_latitude']);
+        ->assertHasErrors(['latitude']);
 
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('name', 'Field Day 2025')
@@ -692,10 +693,10 @@ test('validates latitude range', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', -91.0)
-        ->set('guestbook_longitude', -104.9903)
+        ->set('latitude', -91.0)
+        ->set('longitude', -104.9903)
         ->call('save')
-        ->assertHasErrors(['guestbook_latitude']);
+        ->assertHasErrors(['latitude']);
 });
 
 test('validates longitude range', function () {
@@ -713,10 +714,10 @@ test('validates longitude range', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', 39.7392)
-        ->set('guestbook_longitude', 181.0)
+        ->set('latitude', 39.7392)
+        ->set('longitude', 181.0)
         ->call('save')
-        ->assertHasErrors(['guestbook_longitude']);
+        ->assertHasErrors(['longitude']);
 });
 
 test('validates detection radius range', function () {
@@ -734,8 +735,8 @@ test('validates detection radius range', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', 39.7392)
-        ->set('guestbook_longitude', -104.9903)
+        ->set('latitude', 39.7392)
+        ->set('longitude', -104.9903)
         ->set('guestbook_detection_radius', 50)
         ->call('save')
         ->assertHasErrors(['guestbook_detection_radius']);
@@ -752,8 +753,8 @@ test('validates detection radius range', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', 39.7392)
-        ->set('guestbook_longitude', -104.9903)
+        ->set('latitude', 39.7392)
+        ->set('longitude', -104.9903)
         ->set('guestbook_detection_radius', 3000)
         ->call('save')
         ->assertHasErrors(['guestbook_detection_radius']);
@@ -774,8 +775,8 @@ test('validates CIDR notation format', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', 39.7392)
-        ->set('guestbook_longitude', -104.9903)
+        ->set('latitude', 39.7392)
+        ->set('longitude', -104.9903)
         ->set('guestbook_local_subnets', 'not-a-valid-cidr')
         ->call('save')
         ->assertHasErrors(['guestbook_local_subnets']);
@@ -796,8 +797,8 @@ test('validates CIDR IP octets', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', 39.7392)
-        ->set('guestbook_longitude', -104.9903)
+        ->set('latitude', 39.7392)
+        ->set('longitude', -104.9903)
         ->set('guestbook_local_subnets', '192.168.256.0/24')
         ->call('save')
         ->assertHasErrors(['guestbook_local_subnets']);
@@ -818,8 +819,8 @@ test('validates CIDR prefix length', function () {
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
         ->set('guestbook_enabled', true)
-        ->set('guestbook_latitude', 39.7392)
-        ->set('guestbook_longitude', -104.9903)
+        ->set('latitude', 39.7392)
+        ->set('longitude', -104.9903)
         ->set('guestbook_local_subnets', '192.168.1.0/33')
         ->call('save')
         ->assertHasErrors(['guestbook_local_subnets']);
@@ -842,15 +843,15 @@ test('allows guestbook to be enabled without coordinates', function () {
         ->set('guestbook_enabled', true)
         // No lat/lon provided - should still save successfully
         ->call('save')
-        ->assertHasNoErrors(['guestbook_latitude', 'guestbook_longitude'])
+        ->assertHasNoErrors(['latitude', 'longitude'])
         ->assertRedirect(route('events.index'));
 
     // Verify event was created with guestbook enabled but no coordinates
     $event = Event::where('name', 'Field Day 2025')->first();
     expect($event)->not->toBeNull();
     expect($event->eventConfiguration->guestbook_enabled)->toBeTrue();
-    expect($event->eventConfiguration->guestbook_latitude)->toBeNull();
-    expect($event->eventConfiguration->guestbook_longitude)->toBeNull();
+    expect($event->eventConfiguration->latitude)->toBeNull();
+    expect($event->eventConfiguration->longitude)->toBeNull();
 });
 
 test('loads guestbook settings when editing event', function () {
@@ -876,8 +877,8 @@ test('loads guestbook settings when editing event', function () {
         'power_multiplier' => 2,
         'uses_battery' => true,
         'guestbook_enabled' => true,
-        'guestbook_latitude' => 39.7392,
-        'guestbook_longitude' => -104.9903,
+        'latitude' => 39.7392,
+        'longitude' => -104.9903,
         'guestbook_detection_radius' => 750,
         'guestbook_local_subnets' => ['192.168.1.0/24', '10.0.0.0/8'],
     ]);
@@ -885,8 +886,8 @@ test('loads guestbook settings when editing event', function () {
     $component = Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit']);
 
     expect($component->guestbook_enabled)->toBeTrue();
-    expect($component->guestbook_latitude)->toBe(39.7392);
-    expect($component->guestbook_longitude)->toBe(-104.9903);
+    expect((float) $component->get('latitude'))->toEqual(39.7392);
+    expect((float) $component->get('longitude'))->toEqual(-104.9903);
     expect($component->guestbook_detection_radius)->toBe(750);
     expect($component->guestbook_local_subnets)->toBe("192.168.1.0/24\n10.0.0.0/8");
 });
@@ -1034,4 +1035,126 @@ test('setupAllowedFrom computed property returns null for event type without off
         ->set('event_type_id', $wfdType->id)
         ->set('start_time', '2027-01-30 18:00')
         ->assertSet('setupAllowedFrom', null);
+});
+
+test('event configuration model has location fillable and casts', function () {
+    $config = EventConfiguration::factory()->create([
+        'grid_square' => 'DM79',
+        'latitude' => 39.7392,
+        'longitude' => -104.9903,
+        'city' => 'Denver',
+        'state' => 'Colorado',
+    ]);
+
+    $config->refresh();
+
+    expect($config->grid_square)->toBe('DM79');
+    expect($config->city)->toBe('Denver');
+    expect($config->state)->toBe('Colorado');
+    // Decimals are cast; compare as float
+    expect((float) $config->latitude)->toEqual(39.7392);
+    expect((float) $config->longitude)->toEqual(-104.9903);
+});
+
+test('event configuration has_location accessor returns true when lat and lon set', function () {
+    $withLocation = EventConfiguration::factory()->create([
+        'latitude' => 39.7392,
+        'longitude' => -104.9903,
+    ]);
+    $withoutLocation = EventConfiguration::factory()->create([
+        'latitude' => null,
+        'longitude' => null,
+    ]);
+
+    expect($withLocation->has_location)->toBeTrue();
+    expect($withoutLocation->has_location)->toBeFalse();
+});
+
+test('event form saves location fields when creating event', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Field Day 2025')
+        ->set('event_type_id', $this->eventType->id)
+        ->set('start_time', '2025-06-28 18:00:00')
+        ->set('end_time', '2025-06-29 20:59:00')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $this->operatingClassA->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->set('grid_square', 'DM79')
+        ->set('latitude', 39.7392)
+        ->set('longitude', -104.9903)
+        ->set('city', 'Denver')
+        ->set('state', 'Colorado')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $config = Event::where('name', 'Field Day 2025')->first()->eventConfiguration;
+    expect($config->grid_square)->toBe('DM79');
+    expect($config->city)->toBe('Denver');
+    expect($config->state)->toBe('Colorado');
+    expect((float) $config->latitude)->toEqual(39.7392);
+    expect((float) $config->longitude)->toEqual(-104.9903);
+});
+
+test('event form location fields are all optional', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Field Day 2025')
+        ->set('event_type_id', $this->eventType->id)
+        ->set('start_time', '2025-06-28 18:00:00')
+        ->set('end_time', '2025-06-29 20:59:00')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $this->operatingClassA->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->call('save')
+        ->assertHasNoErrors();
+});
+
+test('event form rejects invalid grid square format', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Field Day 2025')
+        ->set('event_type_id', $this->eventType->id)
+        ->set('start_time', '2025-06-28 18:00:00')
+        ->set('end_time', '2025-06-29 20:59:00')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $this->operatingClassA->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->set('grid_square', 'INVALID!')
+        ->call('save')
+        ->assertHasErrors(['grid_square']);
+});
+
+test('event form loads location fields when editing', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'grid_square' => 'FN31',
+        'latitude' => 41.7658,
+        'longitude' => -72.6851,
+        'city' => 'Hartford',
+        'state' => 'Connecticut',
+    ]);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
+
+    expect($component->get('grid_square'))->toBe('FN31');
+    expect($component->get('city'))->toBe('Hartford');
+    expect($component->get('state'))->toBe('Connecticut');
+    expect((float) $component->get('latitude'))->toEqual(41.7658);
+    expect((float) $component->get('longitude'))->toEqual(-72.6851);
 });

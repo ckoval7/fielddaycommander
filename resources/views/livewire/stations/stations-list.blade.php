@@ -48,6 +48,12 @@
                         <div class="stat-title text-xs">Active Now</div>
                         <div class="stat-value text-lg sm:text-2xl text-success">{{ $stats['active'] }}</div>
                     </div>
+                    @if($stats['idle'] > 0)
+                        <div class="stat py-3 px-4">
+                            <div class="stat-title text-xs">Idle</div>
+                            <div class="stat-value text-lg sm:text-2xl text-warning">{{ $stats['idle'] }}</div>
+                        </div>
+                    @endif
                     <div class="stat py-3 px-4">
                         <div class="stat-title text-xs">Equipment Items</div>
                         <div class="stat-value text-lg sm:text-2xl">{{ $stats['equipment_count'] }}</div>
@@ -100,8 +106,10 @@
                                 <x-badge value="Satellite" class="badge-accent badge-sm sm:badge-md" icon="o-globe-alt" />
                             @endif
 
-                            @if($station->is_active)
+                            @if($station->operatingStatus() === 'occupied')
                                 <x-badge value="Active" class="badge-success badge-sm sm:badge-md" icon="o-bolt" />
+                            @elseif($station->operatingStatus() === 'idle')
+                                <x-badge value="Idle" class="badge-warning badge-sm sm:badge-md" icon="o-clock" />
                             @endif
                         </div>
                     </div>

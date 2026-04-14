@@ -125,15 +125,18 @@
                                                     <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format(timeFormat() . ' T') }}" class="badge-ghost badge-sm" />
                                                 @endif
                                             @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_IN)
-                                                @php $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time); @endphp
+                                                @php
+                                                    $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time);
+                                                    $checkoutConfirm = $minutesLeft >= 1
+                                                        ? "You still have {$minutesLeft} " . ($minutesLeft === 1 ? 'minute' : 'minutes') . ' left in this shift. Are you sure you want to check out?'
+                                                        : null;
+                                                @endphp
                                                 <x-button
                                                     label="Check Out"
                                                     icon="o-arrow-left-on-rectangle"
                                                     class="btn-warning btn-sm"
                                                     wire:click="checkOut({{ $assignment->id }})"
-                                                    @if($minutesLeft >= 1)
-                                                        wire:confirm="You still have {{ $minutesLeft }} {{ $minutesLeft === 1 ? 'minute' : 'minutes' }} left in this shift. Are you sure you want to check out?"
-                                                    @endif
+                                                    :wire:confirm="$checkoutConfirm"
                                                     spinner="checkOut"
                                                 />
                                             @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_OUT)

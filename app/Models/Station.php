@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PowerSource;
+use Carbon\Carbon;
 use Database\Factories\StationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -138,6 +139,34 @@ class Station extends Model
         return Attribute::make(
             get: fn (): int => $this->contacts()->count()
         );
+    }
+
+    /**
+     * Compute the operating status of this station.
+     *
+     * Returns 'available' (no active session), 'idle' (active session but
+     * no QSO in the last 30 minutes), or 'occupied' (active and working).
+     *
+     * Expects active operatingSessions to be eager-loaded for efficiency.
+     */
+    public function operatingStatus(): string
+    {
+        $activeSession = $this->operatingSessions
+            ->whereNull('end_time')
+            ->first();
+
+        if (! $activeSession) {
+            return 'available';
+        }
+
+        $lastActivity = $activeSession->contacts()
+            ->latest('qso_time')
+            ->value('qso_time');
+
+        $idleThreshold = appNow()->subMinutes(30);
+        $referenceTime = $lastActivity ? Carbon::parse($lastActivity) : $activeSession->start_time;
+
+        return $referenceTime->lt($idleThreshold) ? 'idle' : 'occupied';
     }
 
     // Scopes

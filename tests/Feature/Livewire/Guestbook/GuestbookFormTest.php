@@ -428,3 +428,28 @@ describe('audit logging', function () {
         expect(AuditLog::where('action', 'guestbook.entry.signed')->count())->toBe(0);
     });
 });
+
+test('guestbook form eventLocation computed reads from new latitude longitude columns', function () {
+    $this->eventConfig->update([
+        'latitude' => 39.7392,
+        'longitude' => -104.9903,
+    ]);
+
+    $component = Livewire::test(GuestbookForm::class);
+
+    $location = $component->get('eventLocation');
+    expect($location['latitude'])->toEqual(39.7392);
+    expect($location['longitude'])->toEqual(-104.9903);
+    expect($component->get('hasEventLocation'))->toBeTrue();
+});
+
+test('guestbook form hasEventLocation is false when lat lon not set', function () {
+    $this->eventConfig->update([
+        'latitude' => null,
+        'longitude' => null,
+    ]);
+
+    $component = Livewire::test(GuestbookForm::class);
+
+    expect($component->get('hasEventLocation'))->toBeFalse();
+});

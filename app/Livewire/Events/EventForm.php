@@ -77,12 +77,19 @@ class EventForm extends Component
 
     public ?string $gota_callsign = null;
 
+    // Section 2: Event Location (all optional)
+    public ?string $grid_square = null;
+
+    public ?float $latitude = null;
+
+    public ?float $longitude = null;
+
+    public ?string $city = null;
+
+    public ?string $state = null;
+
     // Section 5: Guestbook Settings
     public bool $guestbook_enabled = false;
-
-    public ?float $guestbook_latitude = null;
-
-    public ?float $guestbook_longitude = null;
 
     public ?int $guestbook_detection_radius = 500;
 
@@ -205,10 +212,15 @@ class EventForm extends Component
             $this->has_gota_station = $this->configuration->has_gota_station;
             $this->gota_callsign = $this->configuration->gota_callsign;
 
+            // Load location fields
+            $this->grid_square = $this->configuration->grid_square;
+            $this->latitude = $this->configuration->latitude;
+            $this->longitude = $this->configuration->longitude;
+            $this->city = $this->configuration->city;
+            $this->state = $this->configuration->state;
+
             // Load guestbook settings
             $this->guestbook_enabled = $this->configuration->guestbook_enabled;
-            $this->guestbook_latitude = $this->configuration->guestbook_latitude;
-            $this->guestbook_longitude = $this->configuration->guestbook_longitude;
             $this->guestbook_detection_radius = $this->configuration->guestbook_detection_radius ?? 500;
             // Convert array to string for textarea (one CIDR per line)
             $this->guestbook_local_subnets = is_array($this->configuration->guestbook_local_subnets)
@@ -459,7 +471,7 @@ class EventForm extends Component
         if ($this->mode === 'edit' && $this->eventId) {
             $isCurrentlyActive = Event::active()->where('id', $this->eventId)->exists();
             if ($isCurrentlyActive) {
-                $newEndTime = \Carbon\Carbon::parse($validated['end_time']);
+                $newEndTime = Carbon::parse($validated['end_time']);
 
                 if (appNow() > $newEndTime) {
                     $this->addError('end_time', 'Cannot set the end date before the current time on an active event.');
@@ -527,9 +539,12 @@ class EventForm extends Component
             'uses_water' => $validated['uses_water'] ?? false,
             'uses_methane' => $validated['uses_methane'] ?? false,
             'uses_other_power' => $validated['uses_other_power'] ?? null,
+            'grid_square' => $validated['grid_square'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'state' => $validated['state'] ?? null,
             'guestbook_enabled' => $validated['guestbook_enabled'] ?? false,
-            'guestbook_latitude' => $validated['guestbook_latitude'] ?? null,
-            'guestbook_longitude' => $validated['guestbook_longitude'] ?? null,
             'guestbook_detection_radius' => $validated['guestbook_detection_radius'] ?? 500,
             'guestbook_local_subnets' => $subnets,
         ]);
@@ -585,9 +600,12 @@ class EventForm extends Component
             'club_name' => $validated['club_name'] ?? null,
             'section_id' => $validated['section_id'],
             'power_multiplier' => $this->powerMultiplier,
+            'grid_square' => $validated['grid_square'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'state' => $validated['state'] ?? null,
             'guestbook_enabled' => $validated['guestbook_enabled'] ?? false,
-            'guestbook_latitude' => $validated['guestbook_latitude'] ?? null,
-            'guestbook_longitude' => $validated['guestbook_longitude'] ?? null,
             'guestbook_detection_radius' => $validated['guestbook_detection_radius'] ?? 500,
             'guestbook_local_subnets' => $subnets,
         ];
@@ -634,6 +652,7 @@ class EventForm extends Component
             'transmitter_count' => ['required', 'integer', 'min:1', 'max:99'],
             ...$this->powerRules(),
             ...$this->gotaRules(),
+            ...$this->locationRules(),
             ...$this->guestbookRules(),
         ];
     }
@@ -718,6 +737,22 @@ class EventForm extends Component
     }
 
     /**
+     * Validation rules for location fields.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    private function locationRules(): array
+    {
+        return [
+            'grid_square' => ['nullable', 'string', 'max:6', 'regex:/^[A-R]{2}[0-9]{2}([A-X]{2})?$/i'],
+            'latitude' => ['nullable', 'numeric', 'min:-90', 'max:90'],
+            'longitude' => ['nullable', 'numeric', 'min:-180', 'max:180'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+        ];
+    }
+
+    /**
      * Validation rules for guestbook-related fields.
      *
      * @return array<string, array<int, mixed>>
@@ -732,8 +767,6 @@ class EventForm extends Component
                 'string',
                 fn ($attribute, $value, $fail) => $this->validateSubnets($value, $fail),
             ],
-            'guestbook_latitude' => ['nullable', 'numeric', 'min:-90', 'max:90'],
-            'guestbook_longitude' => ['nullable', 'numeric', 'min:-180', 'max:180'],
         ];
     }
 
@@ -791,10 +824,11 @@ class EventForm extends Component
             'transmitter_count.required' => 'Please specify the number of transmitters.',
             'max_power_watts.required' => 'Please specify the maximum power.',
             'gota_callsign.regex' => 'The GOTA callsign format is invalid. Use only letters, numbers, and forward slashes.',
-            'guestbook_latitude.min' => 'Latitude must be between -90 and 90 degrees.',
-            'guestbook_latitude.max' => 'Latitude must be between -90 and 90 degrees.',
-            'guestbook_longitude.min' => 'Longitude must be between -180 and 180 degrees.',
-            'guestbook_longitude.max' => 'Longitude must be between -180 and 180 degrees.',
+            'grid_square.regex' => 'Grid square must be a valid Maidenhead locator (e.g. DM79 or DM79ab).',
+            'latitude.min' => 'Latitude must be between -90 and 90 degrees.',
+            'latitude.max' => 'Latitude must be between -90 and 90 degrees.',
+            'longitude.min' => 'Longitude must be between -180 and 180 degrees.',
+            'longitude.max' => 'Longitude must be between -180 and 180 degrees.',
             'guestbook_detection_radius.min' => 'Detection radius must be at least 100 meters.',
             'guestbook_detection_radius.max' => 'Detection radius cannot exceed 2000 meters.',
         ];
