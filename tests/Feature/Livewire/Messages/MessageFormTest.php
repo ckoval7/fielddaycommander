@@ -86,6 +86,36 @@ describe('SM/SEC template', function () {
             ->assertSet('precedence', 'routine');
     });
 
+    test('leaves place of origin empty when no city or state configured', function () {
+        $this->eventConfig->update(['city' => null, 'state' => null]);
+
+        Livewire::actingAs($this->operator)
+            ->withQueryParams(['template' => 'sm'])
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->assertSet('placeOfOrigin', '')
+            ->assertSeeHtml('[CITY STATE]');
+    });
+
+    test('auto-populates place of origin from event city and state', function () {
+        $this->eventConfig->update(['city' => 'Hartford', 'state' => 'CT']);
+
+        Livewire::actingAs($this->operator)
+            ->withQueryParams(['template' => 'sm'])
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->assertSet('placeOfOrigin', 'Hartford, CT')
+            ->assertSeeHtml('LOCATION Hartford, CT X');
+    });
+
+    test('auto-populates place of origin with only city when state is absent', function () {
+        $this->eventConfig->update(['city' => 'Hartford', 'state' => null]);
+
+        Livewire::actingAs($this->operator)
+            ->withQueryParams(['template' => 'sm'])
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->assertSet('placeOfOrigin', 'Hartford')
+            ->assertSeeHtml('LOCATION Hartford X');
+    });
+
     test('prevents duplicate SM message', function () {
         Message::factory()->smMessage()->create([
             'event_configuration_id' => $this->eventConfig->id,
