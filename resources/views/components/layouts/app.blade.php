@@ -84,6 +84,9 @@
         <livewire:components.system-account-banner />
     @endauth
 
+    {{-- Weather Alert Banner --}}
+    <livewire:components.weather-alert-banner />
+
     {{-- MAIN --}}
     <x-main full-width with-nav>
         {{-- SIDEBAR --}}
