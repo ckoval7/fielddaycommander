@@ -8,7 +8,6 @@ use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Services\EventContextService;
-use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Collection;
@@ -98,23 +97,9 @@ class StationSelect extends Component
             ->get()
             ->map(function (Station $station) {
                 $activeSession = $station->operatingSessions->first();
-                $status = 'available';
-                $isExternal = false;
+                $isExternal = $activeSession?->external_source !== null;
 
-                if ($activeSession) {
-                    $isExternal = $activeSession->external_source !== null;
-
-                    $lastActivity = $activeSession->contacts()
-                        ->latest('qso_time')
-                        ->value('qso_time');
-
-                    $idleThreshold = appNow()->subMinutes(30);
-                    $referenceTime = $lastActivity ? Carbon::parse($lastActivity) : $activeSession->start_time;
-
-                    $status = $referenceTime->lt($idleThreshold) ? 'idle' : 'occupied';
-                }
-
-                $station->setAttribute('computed_status', $status);
+                $station->setAttribute('computed_status', $station->operatingStatus());
                 $station->setAttribute('active_session', $activeSession);
                 $station->setAttribute('is_external_session', $isExternal);
 

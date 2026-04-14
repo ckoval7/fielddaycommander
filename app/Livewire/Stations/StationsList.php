@@ -4,8 +4,8 @@ namespace App\Livewire\Stations;
 
 use App\Models\Event;
 use App\Models\Station;
+use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -34,7 +34,7 @@ class StationsList extends Component
     private function getDefaultEvent(): ?Event
     {
         // 1. Try context event (session-overridden or active event)
-        $contextEvent = app(\App\Services\EventContextService::class)->getContextEvent();
+        $contextEvent = app(EventContextService::class)->getContextEvent();
         if ($contextEvent) {
             return $contextEvent;
         }
@@ -80,12 +80,10 @@ class StationsList extends Component
     #[Computed]
     public function stats()
     {
+        $empty = ['total' => 0, 'active' => 0, 'idle' => 0, 'equipment_count' => 0];
+
         if (! $this->eventFilter) {
-            return [
-                'total' => 0,
-                'active' => 0,
-                'equipment_count' => 0,
-            ];
+            return $empty;
         }
 
         // Find the EventConfiguration for the selected Event
@@ -93,34 +91,34 @@ class StationsList extends Component
         $eventConfigId = $event?->eventConfiguration?->id;
 
         if (! $eventConfigId) {
-            return [
-                'total' => 0,
-                'active' => 0,
-                'equipment_count' => 0,
-            ];
+            return $empty;
         }
 
-        $totalStations = Station::query()
+        $stations = Station::query()
             ->where('event_configuration_id', $eventConfigId)
-            ->count();
-
-        $activeStations = Station::query()
-            ->where('event_configuration_id', $eventConfigId)
-            ->whereHas('operatingSessions', function (Builder $query) {
-                $query->whereNull('end_time');
-            })
-            ->count();
-
-        $equipmentCount = Station::query()
-            ->where('event_configuration_id', $eventConfigId)
+            ->with(['operatingSessions' => function ($query) {
+                $query->whereNull('end_time')->latest();
+            }])
             ->withCount('additionalEquipment')
-            ->get()
-            ->sum('additional_equipment_count');
+            ->get();
+
+        $idle = 0;
+        $active = 0;
+
+        foreach ($stations as $station) {
+            $status = $station->operatingStatus();
+            if ($status === 'idle') {
+                $idle++;
+            } elseif ($status === 'occupied') {
+                $active++;
+            }
+        }
 
         return [
-            'total' => $totalStations,
-            'active' => $activeStations,
-            'equipment_count' => $equipmentCount,
+            'total' => $stations->count(),
+            'active' => $active,
+            'idle' => $idle,
+            'equipment_count' => $stations->sum('additional_equipment_count'),
         ];
     }
 
