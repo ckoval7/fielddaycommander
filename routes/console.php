@@ -25,3 +25,6 @@ Schedule::command('exports:clean')->daily();
 
 // Monitor and restart crashed external logger listeners
 Schedule::command('external-logger:monitor')->everyMinute();
+
+Schedule::command('weather:fetch-forecast')->everyFifteenMinutes();
+Schedule::command('weather:check-alerts')->everyTwoMinutes();
