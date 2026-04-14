@@ -109,7 +109,67 @@
             </div>
         </x-card>
 
-        <!-- Section 2: Station Configuration -->
+        <!-- Section 2: Event Location -->
+        <x-card class="mb-6">
+            <x-slot:title>Event Location</x-slot:title>
+
+            <div class="space-y-4">
+                <p class="text-sm text-base-content/60">All location fields are optional. Latitude and longitude are used for guestbook proximity detection when the guestbook is enabled.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <x-input
+                        label="Grid Square"
+                        wire:model="grid_square"
+                        icon="o-map"
+                        placeholder="DM79"
+                        hint="Maidenhead locator, 4 or 6 characters (e.g. DM79 or DM79ab)"
+                        maxlength="6"
+                    />
+
+                    <div></div>{{-- spacer --}}
+
+                    <x-input
+                        label="Latitude"
+                        wire:model="latitude"
+                        type="number"
+                        step="0.0000001"
+                        min="-90"
+                        max="90"
+                        icon="o-map-pin"
+                        placeholder="39.7392"
+                        hint="Decimal degrees, e.g. 39.7392"
+                    />
+
+                    <x-input
+                        label="Longitude"
+                        wire:model="longitude"
+                        type="number"
+                        step="0.0000001"
+                        min="-180"
+                        max="180"
+                        icon="o-map-pin"
+                        placeholder="-104.9903"
+                        hint="Decimal degrees, e.g. -104.9903"
+                    />
+
+                    <x-input
+                        label="City / Town"
+                        wire:model="city"
+                        icon="o-building-office-2"
+                        placeholder="Denver"
+                    />
+
+                    <x-input
+                        label="State / Province"
+                        wire:model="state"
+                        icon="o-flag"
+                        placeholder="Colorado"
+                    />
+                </div>
+            </div>
+        </x-card>
+
+        <!-- Section 3: Station Configuration -->
         <x-card class="mb-6">
             <x-slot:title>Station Configuration</x-slot:title>
 
@@ -171,7 +231,7 @@
             </div>
         </x-card>
 
-        <!-- Section 3: Power Configuration -->
+        <!-- Section 4: Power Configuration -->
         <x-card class="mb-6">
             <x-slot:title>
                 <div class="flex items-center justify-between">
@@ -276,7 +336,7 @@
             </div>
         </x-card>
 
-        <!-- Section 4: GOTA Station -->
+        <!-- Section 5: GOTA Station -->
         @if($this->allowsGota || $has_gota_station)
             <x-card class="mb-6">
                 <x-slot:title>GOTA Station (Get On The Air)</x-slot:title>
@@ -320,7 +380,7 @@
             </x-alert>
         @endif
 
-        <!-- Section 5: Guestbook Settings -->
+        <!-- Section 6: Guestbook Settings -->
         <x-card class="mb-6">
             <x-slot:title>Guestbook Settings</x-slot:title>
 
@@ -336,34 +396,9 @@
                         <div class="text-sm">
                             <strong>Location-based Check-in:</strong>
                             Visitors must be within the detection radius of your event location OR on a local subnet to sign the guestbook.
+                            Set latitude and longitude in the <strong>Event Location</strong> section above.
                         </div>
                     </x-alert>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <x-input
-                            label="Latitude"
-                            wire:model="guestbook_latitude"
-                            type="number"
-                            step="0.0000001"
-                            min="-90"
-                            max="90"
-                            icon="o-map-pin"
-                            placeholder="39.7392"
-                            hint="Optional - for browser location detection"
-                        />
-
-                        <x-input
-                            label="Longitude"
-                            wire:model="guestbook_longitude"
-                            type="number"
-                            step="0.0000001"
-                            min="-180"
-                            max="180"
-                            icon="o-map-pin"
-                            placeholder="-104.9903"
-                            hint="Optional - for browser location detection"
-                        />
-                    </div>
 
                     <div>
                         <x-input

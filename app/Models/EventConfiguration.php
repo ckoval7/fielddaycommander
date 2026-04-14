@@ -38,8 +38,11 @@ class EventConfiguration extends Model
         'uses_methane',
         'uses_other_power',
         'guestbook_enabled',
-        'guestbook_latitude',
-        'guestbook_longitude',
+        'grid_square',
+        'latitude',
+        'longitude',
+        'city',
+        'state',
         'guestbook_detection_radius',
         'guestbook_local_subnets',
     ];
@@ -57,8 +60,8 @@ class EventConfiguration extends Model
             'uses_water' => 'boolean',
             'uses_methane' => 'boolean',
             'guestbook_enabled' => 'boolean',
-            'guestbook_latitude' => 'decimal:7',
-            'guestbook_longitude' => 'decimal:7',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
             'guestbook_detection_radius' => 'integer',
             'guestbook_local_subnets' => 'array',
         ];
@@ -134,9 +137,9 @@ class EventConfiguration extends Model
         return $this->hasOne(W1awBulletin::class);
     }
 
-    public function getHasGuestbookLocationAttribute(): bool
+    public function getHasLocationAttribute(): bool
     {
-        return $this->guestbook_latitude !== null && $this->guestbook_longitude !== null;
+        return $this->latitude !== null && $this->longitude !== null;
     }
 
     /**

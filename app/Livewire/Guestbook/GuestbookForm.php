@@ -88,8 +88,8 @@ class GuestbookForm extends Component
     public function eventLocation(): array
     {
         return [
-            'latitude' => $this->eventConfig?->guestbook_latitude,
-            'longitude' => $this->eventConfig?->guestbook_longitude,
+            'latitude' => $this->eventConfig?->latitude,
+            'longitude' => $this->eventConfig?->longitude,
             'radius' => $this->eventConfig?->guestbook_detection_radius ?? 500,
         ];
     }
@@ -100,8 +100,8 @@ class GuestbookForm extends Component
     #[Computed]
     public function hasEventLocation(): bool
     {
-        return $this->eventConfig?->guestbook_latitude !== null
-            && $this->eventConfig?->guestbook_longitude !== null;
+        return $this->eventConfig?->latitude !== null
+            && $this->eventConfig?->longitude !== null;
     }
 
     /**
