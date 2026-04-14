@@ -45,13 +45,13 @@ test('seeder creates 6 stations with correct types', function () {
     expect(Station::where('is_vhf_only', true)->count())->toBe(1);
 });
 
-test('seeder creates exactly 4 open operating sessions', function () {
-    expect(OperatingSession::whereNull('end_time')->count())->toBe(4);
+test('seeder creates exactly 3 open operating sessions (GOTA left for user)', function () {
+    expect(OperatingSession::whereNull('end_time')->count())->toBe(3);
 });
 
 test('seeder creates a realistic early-event contact count', function () {
-    // 4 HF stations × 20–30 hist + VHF 4–8 + GOTA 5–10 + active sessions ≈ 99–165
-    expect(Contact::count())->toBeGreaterThanOrEqual(95)->toBeLessThan(175);
+    // 4 HF stations × 20–30 hist + VHF 4–8 + GOTA 5–10 + active sessions ≈ 94–172
+    expect(Contact::count())->toBeGreaterThanOrEqual(94)->toBeLessThan(175);
 });
 
 test('seeder creates contacts only on the band and mode of their operating session', function () {

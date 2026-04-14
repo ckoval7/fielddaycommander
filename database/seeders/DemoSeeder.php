@@ -280,7 +280,7 @@ class DemoSeeder extends Seeder
                 'is_vhf_only' => false,
                 'captain' => $captain1,
                 'operator' => $operators[8],
-                'has_active' => true,
+                'has_active' => false,
                 'radio_make' => 'Icom',
                 'radio_model' => 'IC-718',
                 'radio_bands' => ['160m', '80m', '40m', '20m', '15m', '10m'],

@@ -80,6 +80,7 @@ class DemoSimulateActivity extends Command
     private function simulateForDatabase(): int
     {
         $activeSessions = OperatingSession::active()
+            ->whereHas('station', fn ($q) => $q->where('is_gota', false))
             ->with(['station.eventConfiguration.event', 'band', 'mode'])
             ->get();
 
