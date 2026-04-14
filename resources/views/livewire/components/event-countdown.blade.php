@@ -78,14 +78,14 @@
             this.countdown = this.state === 'ended' ? formatted + ' ago' : formatted;
         }
     }"
-    class="flex flex-col lg:flex-row items-start lg:items-baseline gap-3 lg:gap-4"
+    class="flex flex-col lg:flex-row items-start lg:items-center min-[1400px]:items-baseline gap-3 lg:gap-4"
     aria-live="polite"
     aria-label="Event countdown timer"
 >
     @if($event)
         {{-- Event Badge and Name --}}
         <div class="flex items-center gap-3">
-            <span class="badge {{ $badgeClass }} badge-lg text-base font-bold flex items-center gap-2">
+            <span class="badge {{ $badgeClass }} badge-lg text-base font-bold flex items-center gap-2 max-[1399px]:hidden">
                 @if($state === 'setup')
                     <x-icon name="o-wrench-screwdriver" class="w-4 h-4" />
                 @elseif($state === 'upcoming')
@@ -119,7 +119,7 @@
         <span class="hidden lg:inline text-2xl text-base-content/30">|</span>
 
         {{-- Clocks --}}
-        <div class="flex items-center gap-4 text-base lg:text-lg">
+        <div class="hidden lg:flex items-center gap-4 max-[1399px]:flex-col max-[1399px]:items-start max-[1399px]:gap-1 text-base lg:text-lg">
             <div class="flex items-center gap-2">
                 <span class="text-base-content/70 font-semibold">{{ $timezoneLabel }}:</span>
                 <span class="font-mono font-bold text-xl lg:text-2xl" x-text="localTime"></span>
