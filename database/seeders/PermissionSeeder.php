@@ -66,6 +66,6 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created 27 permissions');
+        $this->command->info('Created '.count($permissions).' permissions');
     }
 }
