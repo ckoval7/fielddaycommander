@@ -59,3 +59,29 @@ it('renders with min and max constraints', function () {
         ->toContain("min: '2025-01-01'")
         ->toContain("max: '2025-12-31'");
 });
+
+it('does not render now button by default', function () {
+    $html = Blade::render('<x-flatpickr wire:model="testField" />');
+
+    expect($html)->not->toContain('Now');
+});
+
+it('renders now button when now-button prop is set', function () {
+    $html = Blade::render('<x-flatpickr wire:model="testField" now-button />');
+
+    expect($html)
+        ->toContain('Now')
+        ->toContain('x-on:click="setNow()"');
+});
+
+it('passes nowUtc true by default in x-data when now-button is set', function () {
+    $html = Blade::render('<x-flatpickr wire:model="testField" now-button />');
+
+    expect($html)->toContain('nowUtc: true');
+});
+
+it('passes nowUtc false when now-utc is false', function () {
+    $html = Blade::render('<x-flatpickr wire:model="testField" now-button :now-utc="false" />');
+
+    expect($html)->toContain('nowUtc: false');
+});

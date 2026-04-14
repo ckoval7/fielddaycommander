@@ -119,6 +119,7 @@
                         label="Time (UTC)"
                         wire:model="scheduleScheduledAt"
                         icon="o-clock"
+                        now-button
                     />
                     <x-select
                         label="Mode"
@@ -223,6 +224,7 @@
                         wire:model="receivedAt"
                         icon="o-clock"
                         required
+                        now-button
                     />
                 </div>
             </x-card>
