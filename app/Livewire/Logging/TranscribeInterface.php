@@ -201,7 +201,11 @@ class TranscribeInterface extends Component
             'gota_operator_user_id' => $this->station->is_gota ? $this->gotaOperatorUserId : null,
         ]);
 
-        ContactLogged::dispatch($contact->load(['band', 'mode', 'section']), $this->event);
+        try {
+            ContactLogged::dispatch($contact->load(['band', 'mode', 'section']), $this->event);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         $this->clearInput();
         $this->clearDuplicateState();

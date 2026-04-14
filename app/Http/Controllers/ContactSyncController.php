@@ -83,7 +83,12 @@ class ContactSyncController extends Controller
         $session->increment('qso_count');
 
         $event = $session->station->eventConfiguration->event;
-        ContactLogged::dispatch($contact->load(['band', 'mode', 'section']), $event);
+
+        try {
+            ContactLogged::dispatch($contact->load(['band', 'mode', 'section']), $event);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return response()->json([
             'uuid' => $contact->uuid,
