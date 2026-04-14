@@ -44,7 +44,7 @@
 
     {{-- Desktop header - spans full width above sidebar and content --}}
     <div class="hidden lg:block sticky top-0 z-50 bg-base-100 border-b border-base-300">
-        <div class="flex items-center justify-between px-6 py-4">
+        <div class="flex items-center justify-between px-6 py-2.5">
             {{-- Left: App Brand --}}
             <div class="flex items-center gap-4">
                 <x-app-brand />

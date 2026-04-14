@@ -100,12 +100,6 @@
             <span class="text-xl lg:text-2xl font-bold {{ $textClass }}">
                 {{ $event->name }}
             </span>
-            @if($state === 'active')
-                <span class="relative flex h-4 w-4">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-4 w-4 bg-success"></span>
-                </span>
-            @endif
         </div>
 
         {{-- Separator (desktop only) --}}
