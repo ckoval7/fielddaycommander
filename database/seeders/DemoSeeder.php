@@ -155,6 +155,9 @@ class DemoSeeder extends Seeder
         // 7. Build stations, operating sessions, contacts
         $this->seedStationsAndContacts($config, [$captain1, $captain2], $operators);
 
+        // 7b. Equipment inventory and station assignments
+        $this->seedEquipment($config, $organization, $manager, $event, $captain2);
+
         // 8. Bonuses
         $this->seedBonuses($config, $manager);
 
@@ -369,6 +372,140 @@ class DemoSeeder extends Seeder
 
                 $activeSession->update(['qso_count' => $activeCount]);
             }
+        }
+    }
+
+    private function seedEquipment(
+        EventConfiguration $config,
+        Organization $organization,
+        User $manager,
+        Event $event,
+        User $captain2
+    ): void {
+        $stations = Station::where('event_configuration_id', $config->id)
+            ->with('primaryRadio')
+            ->get()
+            ->keyBy('name');
+
+        // Reassign most station radios to club ownership (heavy-club profile)
+        foreach (['Station Alpha', 'Station Bravo', 'VHF/UHF', 'GOTA'] as $stationName) {
+            $stations[$stationName]->primaryRadio->update([
+                'owner_user_id' => null,
+                'owner_organization_id' => $organization->id,
+            ]);
+        }
+
+        // Per-station equipment loadouts (all club-owned unless 'owner' => 'user')
+        $loadouts = [
+            'Station Alpha' => [
+                ['type' => 'antenna', 'make' => 'MFJ', 'model' => '1778 G5RV', 'description' => 'G5RV wire antenna', 'bands' => ['40m', '20m', '15m', '10m']],
+                ['type' => 'power_supply', 'make' => 'Astron', 'model' => 'RS-35M', 'description' => '35A linear power supply'],
+                ['type' => 'accessory', 'make' => 'Heil', 'model' => 'Pro Set Plus', 'description' => 'Boom headset'],
+                ['type' => 'accessory', 'make' => 'Heil', 'model' => 'HC-6', 'description' => 'Desk mic element'],
+            ],
+            'Station Bravo' => [
+                ['type' => 'antenna', 'make' => 'Homebrew', 'model' => 'Inverted-V Dipole', 'description' => 'Inverted-V dipole cut for 40m', 'bands' => ['40m']],
+                ['type' => 'power_supply', 'make' => 'Samlex', 'model' => 'SEC-1235M', 'description' => '30A switching power supply'],
+                ['type' => 'accessory', 'make' => 'Yaesu', 'model' => 'MD-100', 'description' => 'Desktop microphone'],
+            ],
+            'Station Charlie' => [
+                ['type' => 'antenna', 'make' => 'SteppIR', 'model' => 'DB18E', 'description' => '3-element Yagi antenna', 'bands' => ['20m', '15m', '10m']],
+                ['type' => 'power_supply', 'make' => 'Astron', 'model' => 'RS-20M', 'description' => '20A linear power supply with meters'],
+                ['type' => 'accessory', 'make' => 'Begali', 'model' => 'Sculpture', 'description' => 'CW paddle', 'owner' => 'user'],
+                ['type' => 'amplifier', 'make' => 'Elecraft', 'model' => 'KPA500', 'description' => '500W solid-state amplifier', 'power_output_watts' => 500],
+            ],
+            'Station Delta' => [
+                ['type' => 'antenna', 'make' => 'Alpha Delta', 'model' => 'DX-B', 'description' => 'Parallel dipole antenna', 'bands' => ['80m', '40m', '20m', '15m', '10m']],
+                ['type' => 'power_supply', 'make' => 'Samlex', 'model' => 'SEC-1223M', 'description' => '23A switching power supply'],
+                ['type' => 'accessory', 'make' => 'Kenwood', 'model' => 'MC-43S', 'description' => 'Hand microphone'],
+                ['type' => 'accessory', 'make' => 'Heil', 'model' => 'Pro Set', 'description' => 'Boom headset'],
+            ],
+            'VHF/UHF' => [
+                ['type' => 'antenna', 'make' => 'Diamond', 'model' => 'X50A', 'description' => 'Dual-band VHF/UHF vertical antenna', 'bands' => ['2m', '70cm']],
+                ['type' => 'power_supply', 'make' => 'Powerwerx', 'model' => 'SS-30DV', 'description' => '30A switching power supply with Anderson Powerpoles'],
+                ['type' => 'accessory', 'make' => 'Kenwood', 'model' => 'MC-59', 'description' => 'DTMF hand microphone'],
+            ],
+            'GOTA' => [
+                ['type' => 'antenna', 'make' => 'MFJ', 'model' => '1982MP', 'description' => 'End-fed half-wave wire antenna', 'bands' => ['80m', '40m', '20m', '15m', '10m']],
+                ['type' => 'power_supply', 'make' => 'Astron', 'model' => 'RS-20M', 'description' => '20A linear power supply with meters'],
+                ['type' => 'accessory', 'make' => 'Icom', 'model' => 'HM-36', 'description' => 'Hand microphone'],
+                ['type' => 'accessory', 'make' => 'MFJ', 'model' => '557', 'description' => 'Straight key for CW demos'],
+            ],
+        ];
+
+        foreach ($loadouts as $stationName => $items) {
+            $station = $stations[$stationName];
+
+            // Create EquipmentEvent for the station's primary radio
+            EquipmentEvent::create([
+                'equipment_id' => $station->radio_equipment_id,
+                'event_id' => $event->id,
+                'station_id' => $station->id,
+                'assigned_by_user_id' => $manager->id,
+                'status' => 'delivered',
+                'committed_at' => $event->start_time,
+                'status_changed_at' => $event->start_time,
+            ]);
+
+            foreach ($items as $item) {
+                $isUserOwned = ($item['owner'] ?? 'club') === 'user';
+
+                $equipment = Equipment::create([
+                    'owner_organization_id' => $isUserOwned ? null : $organization->id,
+                    'owner_user_id' => $isUserOwned ? $captain2->id : null,
+                    'make' => $item['make'],
+                    'model' => $item['model'],
+                    'type' => $item['type'],
+                    'description' => $item['description'],
+                    'power_output_watts' => $item['power_output_watts'] ?? null,
+                ]);
+
+                if (! empty($item['bands'])) {
+                    $bandIds = Band::whereIn('name', $item['bands'])->pluck('id');
+                    $equipment->bands()->attach($bandIds);
+                }
+
+                EquipmentEvent::create([
+                    'equipment_id' => $equipment->id,
+                    'event_id' => $event->id,
+                    'station_id' => $station->id,
+                    'assigned_by_user_id' => $manager->id,
+                    'status' => 'delivered',
+                    'committed_at' => $event->start_time,
+                    'status_changed_at' => $event->start_time,
+                ]);
+            }
+        }
+
+        // Spare equipment: committed to event but not assigned to any station
+        $spares = [
+            ['type' => 'power_supply', 'make' => 'Samlex', 'model' => 'SEC-1235M', 'description' => 'Backup 30A switching power supply'],
+            ['type' => 'antenna', 'make' => 'Comet', 'model' => 'GP-3', 'description' => 'Dual-band VHF/UHF base antenna', 'bands' => ['2m', '70cm']],
+        ];
+
+        foreach ($spares as $item) {
+            $equipment = Equipment::create([
+                'owner_organization_id' => $organization->id,
+                'make' => $item['make'],
+                'model' => $item['model'],
+                'type' => $item['type'],
+                'description' => $item['description'],
+            ]);
+
+            if (! empty($item['bands'])) {
+                $bandIds = Band::whereIn('name', $item['bands'])->pluck('id');
+                $equipment->bands()->attach($bandIds);
+            }
+
+            EquipmentEvent::create([
+                'equipment_id' => $equipment->id,
+                'event_id' => $event->id,
+                'station_id' => null,
+                'assigned_by_user_id' => $manager->id,
+                'status' => 'committed',
+                'committed_at' => $event->start_time,
+                'status_changed_at' => $event->start_time,
+            ]);
         }
     }
 
