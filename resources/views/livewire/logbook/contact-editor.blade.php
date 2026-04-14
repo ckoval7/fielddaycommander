@@ -69,6 +69,7 @@
                     wire:model="qsoTime"
                     icon="o-clock"
                     required
+                    now-button
                 />
             </div>
 

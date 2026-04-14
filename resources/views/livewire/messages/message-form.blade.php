@@ -76,6 +76,7 @@
                     label="Filed At (UTC)"
                     wire:model="filedAt"
                     icon="o-clock"
+                    now-button
                 />
             </div>
         </x-card>
@@ -469,6 +470,7 @@
                             label="Reply Date/Time (UTC)"
                             wire:model="icsReplyDate"
                             icon="o-clock"
+                            now-button
                         />
                     </div>
                 </div>

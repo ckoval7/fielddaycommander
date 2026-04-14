@@ -6,12 +6,14 @@
     'min' => null,
     'max' => null,
     'disabled' => false,
+    'nowButton' => false,
+    'nowUtc' => true,
 ])
 
 @php
     $uuid = 'fp-' . str()->random(8);
     $modelName = $attributes->whereStartsWith('wire:model')->first();
-    $xData = "flatpickr({ mode: '{$mode}', min: " . ($min ? "'{$min}'" : 'null') . ", max: " . ($max ? "'{$max}'" : 'null') . ", model: " . ($modelName ? "'{$modelName}'" : 'null') . " })";
+    $xData = "flatpickr({ mode: '{$mode}', min: " . ($min ? "'{$min}'" : 'null') . ", max: " . ($max ? "'{$max}'" : 'null') . ", model: " . ($modelName ? "'{$modelName}'" : 'null') . ", nowUtc: " . ($nowUtc ? 'true' : 'false') . " })";
 @endphp
 
 <div
@@ -32,6 +34,10 @@
         @endif
 
         {{-- Input --}}
+        @if($nowButton)
+            <div class="flex items-end gap-1.5">
+        @endif
+
         <label class="input w-full">
             @if($icon)
                 <x-icon :name="$icon" class="pointer-events-none w-4 h-4 opacity-40" />
@@ -46,6 +52,18 @@
                 @if($disabled) disabled @endif
             />
         </label>
+
+        @if($nowButton)
+                <button
+                    type="button"
+                    class="btn btn-sm btn-soft btn-secondary"
+                    x-on:click="setNow()"
+                    title="Set to current {{ $nowUtc ? 'UTC' : 'local' }} time"
+                >
+                    Now
+                </button>
+            </div>
+        @endif
 
         {{-- Hint --}}
         @if($hint)

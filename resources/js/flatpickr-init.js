@@ -1,8 +1,9 @@
 import flatpickr from 'flatpickr';
 
-export default function flatpickrComponent({ mode = 'datetime', min = null, max = null, model = null }) {
+export default function flatpickrComponent({ mode = 'datetime', min = null, max = null, model = null, nowUtc = true }) {
     return {
         instance: null,
+        nowUtc,
 
         init() {
             const config = {
@@ -45,6 +46,45 @@ export default function flatpickrComponent({ mode = 'datetime', min = null, max 
                     this.instance.setDate(value || '', true);
                 });
             }
+        },
+
+        setNow() {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+
+            let dateStr;
+
+            if (this.nowUtc) {
+                const y = now.getUTCFullYear();
+                const m = pad(now.getUTCMonth() + 1);
+                const d = pad(now.getUTCDate());
+                const h = pad(now.getUTCHours());
+                const min = pad(now.getUTCMinutes());
+
+                if (mode === 'date') {
+                    dateStr = `${y}-${m}-${d}`;
+                } else if (mode === 'time') {
+                    dateStr = `${h}:${min}`;
+                } else {
+                    dateStr = `${y}-${m}-${d} ${h}:${min}`;
+                }
+            } else {
+                const y = now.getFullYear();
+                const m = pad(now.getMonth() + 1);
+                const d = pad(now.getDate());
+                const h = pad(now.getHours());
+                const min = pad(now.getMinutes());
+
+                if (mode === 'date') {
+                    dateStr = `${y}-${m}-${d}`;
+                } else if (mode === 'time') {
+                    dateStr = `${h}:${min}`;
+                } else {
+                    dateStr = `${y}-${m}-${d} ${h}:${min}`;
+                }
+            }
+
+            this.instance.setDate(dateStr, true);
         },
 
         destroy() {
