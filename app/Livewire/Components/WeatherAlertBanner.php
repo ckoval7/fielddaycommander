@@ -3,7 +3,7 @@
 namespace App\Livewire\Components;
 
 use App\Models\Setting;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Session;
 use Livewire\Component;
 
@@ -23,6 +23,9 @@ class WeatherAlertBanner extends Component
         $this->manual = ! empty($this->alerts) && ($this->alerts[0]['event'] ?? '') === 'Local Alert';
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function getListeners(): array
     {
         return [

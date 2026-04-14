@@ -5,7 +5,7 @@
 
             <div class="flex-1 min-w-0">
                 @if($manual)
-                    <span class="font-semibold text-sm mr-2">⚡ Local Alert</span>
+                    <span class="font-semibold text-sm mr-2">Local Alert</span>
                 @endif
 
                 <div class="space-y-0.5">
