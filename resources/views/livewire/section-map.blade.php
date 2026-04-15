@@ -37,6 +37,8 @@
                     colorMode: 'band',
                     highlightSection: null,
                     hoverSection: null,
+                    pinnedSection: null,
+                    lastPointerType: 'mouse',
                     hoverTimer: null,
                     tooltipX: 0,
                     tooltipY: 0,
@@ -108,11 +110,12 @@
 
                     clearHover() {
                         clearTimeout(this.hoverTimer);
-                        this.highlightSection = null;
-                        this.hoverSection = null;
+                        this.highlightSection = this.pinnedSection;
+                        this.hoverSection = this.pinnedSection;
                     },
 
                     handlePointerMove(event) {
+                        if (event.pointerType === 'touch') return;
                         const target = event.target.closest('.section-path');
                         const section = target?.id;
                         this.tooltipX = event.clientX;
@@ -123,6 +126,38 @@
                             }
                         } else if (this.highlightSection) {
                             this.clearHover();
+                        }
+                    },
+
+                    handleTouchTap(event) {
+                        if (this.lastPointerType !== 'touch') return;
+                        const target = event.target.closest('.section-path');
+                        const section = target?.id;
+                        if (section) {
+                            if (this.pinnedSection === section) {
+                                this.pinnedSection = null;
+                                this.highlightSection = null;
+                                this.hoverSection = null;
+                            } else {
+                                this.pinnedSection = section;
+                                this.highlightSection = section;
+                                this.hoverSection = section;
+                                this.tooltipX = event.clientX;
+                                this.tooltipY = event.clientY;
+                            }
+                        } else {
+                            this.pinnedSection = null;
+                            this.highlightSection = null;
+                            this.hoverSection = null;
+                        }
+                    },
+
+                    handleWindowClick(event) {
+                        if (this.lastPointerType !== 'touch' || !this.pinnedSection) return;
+                        if (!event.target.closest('svg')) {
+                            this.pinnedSection = null;
+                            this.highlightSection = null;
+                            this.hoverSection = null;
                         }
                     },
 
@@ -242,6 +277,7 @@
                         return style;
                     }
                 }"
+                @click.window="handleWindowClick($event)"
             >
                 <div class="flex flex-wrap justify-center gap-2 mb-3">
                     <div class="join">
@@ -279,6 +315,8 @@
    xml:space="preserve"
    xmlns="http://www.w3.org/2000/svg"
    @pointermove="handlePointerMove($event)"
+   @pointerdown="lastPointerType = $event.pointerType"
+   @click="handleTouchTap($event)"
    @pointerleave="clearHover()"
    role="img"
    aria-label="ARRL Section Map"
@@ -830,21 +868,25 @@
                 </div>
 
                 <div
-                    x-show="hoverSection && sectionData[hoverSection]"
+                    x-show="(hoverSection || pinnedSection) && sectionData[hoverSection || pinnedSection]"
                     x-cloak
                     :style="getTooltipStyle()"
                     class="fixed z-50 px-3 py-2 text-sm bg-base-100 border border-base-300 rounded-lg shadow-lg pointer-events-none"
                 >
-                    <div class="font-semibold" x-text="sectionData[hoverSection]?.name + ' (' + hoverSection + ')'"></div>
-                    <div x-show="sectionData[hoverSection]?.count > 0">
-                        <span x-text="sectionData[hoverSection]?.count"></span> QSOs &middot;
-                        <span x-text="sectionData[hoverSection]?.bands?.join(', ')"></span> &middot;
-                        <span x-text="sectionData[hoverSection]?.modes?.join(', ')"></span>
-                    </div>
-                    <div x-show="sectionData[hoverSection]?.latestQsoTime" class="text-base-content/50">
-                        Last worked <span x-text="timeAgo(sectionData[hoverSection]?.latestQsoTime)"></span>
-                    </div>
-                    <div x-show="sectionData[hoverSection]?.count === 0" class="text-base-content/50">Not worked</div>
+                    <template x-if="hoverSection || pinnedSection">
+                        <div>
+                            <div class="font-semibold" x-text="sectionData[hoverSection || pinnedSection]?.name + ' (' + (hoverSection || pinnedSection) + ')'"></div>
+                            <div x-show="sectionData[hoverSection || pinnedSection]?.count > 0">
+                                <span x-text="sectionData[hoverSection || pinnedSection]?.count"></span> QSOs &middot;
+                                <span x-text="sectionData[hoverSection || pinnedSection]?.bands?.join(', ')"></span> &middot;
+                                <span x-text="sectionData[hoverSection || pinnedSection]?.modes?.join(', ')"></span>
+                            </div>
+                            <div x-show="sectionData[hoverSection || pinnedSection]?.latestQsoTime" class="text-base-content/50">
+                                Last worked <span x-text="timeAgo(sectionData[hoverSection || pinnedSection]?.latestQsoTime)"></span>
+                            </div>
+                            <div x-show="sectionData[hoverSection || pinnedSection]?.count === 0" class="text-base-content/50">Not worked</div>
+                        </div>
+                    </template>
                 </div>
 
                 {{-- Band legend --}}
