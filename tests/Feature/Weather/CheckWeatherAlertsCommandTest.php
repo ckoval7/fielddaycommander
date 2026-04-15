@@ -12,9 +12,9 @@ beforeEach(function () {
     app(ActiveEventService::class)->clearCache();
 });
 
-test('it skips when no active event has coordinates', function () {
+test('it skips when no active or upcoming event has coordinates', function () {
     $this->artisan('weather:check-alerts')
-        ->expectsOutputToContain('No active event')
+        ->expectsOutputToContain('No active or upcoming event')
         ->assertSuccessful();
 });
 
@@ -52,4 +52,29 @@ test('it checks alerts and broadcasts changes for active event', function () {
 
     EventFacade::assertDispatched(WeatherAlertChanged::class);
     expect(Setting::get('weather.alerts'))->toHaveCount(1);
+});
+
+test('it checks alerts for upcoming event', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addHours(6),
+        'end_time' => now()->addHours(30),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'latitude' => 41.3083,
+        'longitude' => -72.9279,
+        'state' => 'CT',
+    ]);
+
+    Http::fake([
+        'api.weather.gov/*' => Http::response(['features' => []], 200),
+    ]);
+
+    $this->artisan('weather:check-alerts')
+        ->expectsOutputToContain('Weather alerts checked')
+        ->assertSuccessful();
+
+    expect(Setting::get('weather.alerts'))->toBeEmpty();
 });

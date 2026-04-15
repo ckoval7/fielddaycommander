@@ -31,6 +31,16 @@ class ActiveEventService
     protected bool $loaded = false;
 
     /**
+     * Cached active-or-upcoming event instance.
+     */
+    protected ?Event $activeOrUpcomingEvent = null;
+
+    /**
+     * Whether the active-or-upcoming event has been loaded.
+     */
+    protected bool $activeOrUpcomingLoaded = false;
+
+    /**
      * Get the active event with eventConfiguration eager-loaded.
      *
      * Queries the database on first call, then returns the cached instance
@@ -83,6 +93,26 @@ class ActiveEventService
     }
 
     /**
+     * Get the nearest event that has not yet ended — either currently active or upcoming.
+     *
+     * Used by weather polling so forecasts and alerts are fetched before
+     * an event starts, not only while it is in progress.
+     */
+    public function getActiveOrUpcomingEvent(): ?Event
+    {
+        if (! $this->activeOrUpcomingLoaded) {
+            $this->activeOrUpcomingEvent = Event::where('end_time', '>=', appNow())
+                ->with('eventConfiguration')
+                ->orderBy('start_time')
+                ->first();
+
+            $this->activeOrUpcomingLoaded = true;
+        }
+
+        return $this->activeOrUpcomingEvent;
+    }
+
+    /**
      * Clear the cached event.
      *
      * Useful for testing or when you know the event status has changed
@@ -92,5 +122,7 @@ class ActiveEventService
     {
         $this->activeEvent = null;
         $this->loaded = false;
+        $this->activeOrUpcomingEvent = null;
+        $this->activeOrUpcomingLoaded = false;
     }
 }

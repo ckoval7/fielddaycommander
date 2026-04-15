@@ -25,6 +25,21 @@ function makeActiveWeatherEvent(array $configAttrs = []): EventConfiguration
     ], $configAttrs));
 }
 
+function makeUpcomingWeatherEvent(array $configAttrs = []): EventConfiguration
+{
+    $event = Event::factory()->create([
+        'start_time' => now()->addHours(6),
+        'end_time' => now()->addHours(30),
+    ]);
+
+    return EventConfiguration::factory()->create(array_merge([
+        'event_id' => $event->id,
+        'latitude' => 41.3083,
+        'longitude' => -72.9279,
+        'state' => 'CT',
+    ], $configAttrs));
+}
+
 function makeWeatherService(): WeatherService
 {
     // ActiveEventService is a singleton — clear its cache between tests
@@ -60,6 +75,36 @@ test('getActiveEventCoordinates returns coordinates from active event', function
         'lon' => -72.9279,
         'state' => 'CT',
     ]);
+});
+
+test('getActiveEventCoordinates returns coordinates from upcoming event', function () {
+    makeUpcomingWeatherEvent();
+    $service = makeWeatherService();
+
+    $coords = $service->getActiveEventCoordinates();
+
+    expect($coords)->toMatchArray([
+        'lat' => 41.3083,
+        'lon' => -72.9279,
+        'state' => 'CT',
+    ]);
+});
+
+test('getActiveEventCoordinates returns null for completed event', function () {
+    Event::factory()
+        ->has(EventConfiguration::factory()->state([
+            'latitude' => 41.3083,
+            'longitude' => -72.9279,
+            'state' => 'CT',
+        ]))
+        ->create([
+            'start_time' => now()->subHours(25),
+            'end_time' => now()->subHour(),
+        ]);
+
+    $service = makeWeatherService();
+
+    expect($service->getActiveEventCoordinates())->toBeNull();
 });
 
 // --- fetchForecast ---

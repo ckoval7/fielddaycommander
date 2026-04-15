@@ -16,7 +16,7 @@ class CheckWeatherAlerts extends Command
         $coords = $weatherService->getActiveEventCoordinates();
 
         if (! $coords) {
-            $this->comment('No active event with location coordinates. Skipping.');
+            $this->comment('No active or upcoming event with location coordinates. Skipping.');
 
             return self::SUCCESS;
         }

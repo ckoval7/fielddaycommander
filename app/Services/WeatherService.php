@@ -33,7 +33,7 @@ class WeatherService
 
     public function getActiveEventCoordinates(): ?array
     {
-        $config = $this->activeEventService->getEventConfiguration();
+        $config = $this->activeEventService->getActiveOrUpcomingEvent()?->eventConfiguration;
 
         if (! $config || ! $config->has_location || ! $config->state) {
             return null;
