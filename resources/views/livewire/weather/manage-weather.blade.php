@@ -8,6 +8,55 @@
         </a>
     </div>
 
+    {{-- API Status --}}
+    <div class="card bg-base-200 shadow">
+        <div class="card-body space-y-3">
+            <h2 class="card-title text-base">API Status</h2>
+
+            {{-- Open-Meteo Forecast --}}
+            <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Open-Meteo Forecast</span>
+                    <div class="flex items-center gap-2">
+                        @if($forecastStatus === null)
+                            <div class="badge badge-ghost badge-sm">Not fetched yet</div>
+                        @elseif($forecastStatus['success'])
+                            <div class="badge badge-success badge-sm">OK</div>
+                            <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($forecastStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                        @else
+                            <div class="badge badge-error badge-sm">Error</div>
+                            <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($forecastStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                        @endif
+                    </div>
+                </div>
+                @if($forecastStatus !== null && ! $forecastStatus['success'])
+                    <p class="text-xs text-error">{{ $forecastStatus['error'] }}</p>
+                @endif
+            </div>
+
+            {{-- NWS Alerts --}}
+            <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">NWS Alerts</span>
+                    <div class="flex items-center gap-2">
+                        @if($alertsStatus === null)
+                            <div class="badge badge-ghost badge-sm">Not fetched yet</div>
+                        @elseif($alertsStatus['success'])
+                            <div class="badge badge-success badge-sm">OK</div>
+                            <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($alertsStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                        @else
+                            <div class="badge badge-error badge-sm">Error</div>
+                            <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($alertsStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                        @endif
+                    </div>
+                </div>
+                @if($alertsStatus !== null && ! $alertsStatus['success'])
+                    <p class="text-xs text-error">{{ $alertsStatus['error'] }}</p>
+                @endif
+            </div>
+        </div>
+    </div>
+
     {{-- Manual Forecast Override --}}
     <div class="card bg-base-200 shadow">
         <div class="card-body space-y-4">

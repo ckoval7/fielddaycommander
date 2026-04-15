@@ -123,3 +123,53 @@ test('validation requires alert message when triggering alert', function () {
         ->call('triggerAlert')
         ->assertHasErrors(['alertMessage']);
 });
+
+test('manage weather page shows not fetched yet when no cached status', function () {
+    cache()->forget('weather.forecast_status');
+    cache()->forget('weather.alerts_status');
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSee('Not fetched yet');
+});
+
+test('manage weather page shows OK badge when both APIs succeed', function () {
+    cache()->put('weather.forecast_status', [
+        'last_attempt' => now()->toIso8601String(),
+        'success' => true,
+        'error' => null,
+    ], now()->addHours(2));
+
+    cache()->put('weather.alerts_status', [
+        'last_attempt' => now()->toIso8601String(),
+        'success' => true,
+        'error' => null,
+    ], now()->addHours(2));
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSee('OK');
+});
+
+test('manage weather page shows error badge and message when API fails', function () {
+    cache()->forget('weather.alerts_status');
+
+    cache()->put('weather.forecast_status', [
+        'last_attempt' => now()->toIso8601String(),
+        'success' => false,
+        'error' => 'HTTP 503',
+    ], now()->addHours(2));
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSee('HTTP 503');
+});

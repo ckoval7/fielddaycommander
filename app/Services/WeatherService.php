@@ -64,14 +64,29 @@ class WeatherService
 
             if (! $response->successful()) {
                 Log::warning('Open-Meteo API error', ['status' => $response->status()]);
+                cache()->put('weather.forecast_status', [
+                    'last_attempt' => now()->toIso8601String(),
+                    'success' => false,
+                    'error' => 'HTTP '.$response->status(),
+                ], now()->addHours(2));
 
                 return;
             }
 
             Setting::set('weather.forecast', $response->json());
             Setting::set('weather.last_fetch', now()->toIso8601String());
+            cache()->put('weather.forecast_status', [
+                'last_attempt' => now()->toIso8601String(),
+                'success' => true,
+                'error' => null,
+            ], now()->addHours(2));
         } catch (\Throwable $e) {
             Log::error('Failed to fetch weather forecast', ['error' => $e->getMessage()]);
+            cache()->put('weather.forecast_status', [
+                'last_attempt' => now()->toIso8601String(),
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], now()->addHours(2));
         }
     }
 
@@ -88,6 +103,11 @@ class WeatherService
 
             if (! $response->successful()) {
                 Log::warning('NWS API error', ['status' => $response->status()]);
+                cache()->put('weather.alerts_status', [
+                    'last_attempt' => now()->toIso8601String(),
+                    'success' => false,
+                    'error' => 'HTTP '.$response->status(),
+                ], now()->addHours(2));
 
                 return;
             }
@@ -116,8 +136,19 @@ class WeatherService
                 Setting::set('weather.alert_fingerprint', $fingerprint);
                 WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false);
             }
+
+            cache()->put('weather.alerts_status', [
+                'last_attempt' => now()->toIso8601String(),
+                'success' => true,
+                'error' => null,
+            ], now()->addHours(2));
         } catch (\Throwable $e) {
             Log::error('Failed to check NWS alerts', ['error' => $e->getMessage()]);
+            cache()->put('weather.alerts_status', [
+                'last_attempt' => now()->toIso8601String(),
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], now()->addHours(2));
         }
     }
 

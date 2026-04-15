@@ -27,6 +27,10 @@ class ManageWeather extends Component
 
     public ?array $currentAlerts = null;
 
+    public ?array $forecastStatus = null;
+
+    public ?array $alertsStatus = null;
+
     public function mount(): void
     {
         $this->authorize('manage-weather');
@@ -38,6 +42,8 @@ class ManageWeather extends Component
         $this->currentOverride = Setting::get('weather.manual_override');
         $this->overrideActive = $this->currentOverride !== null;
         $this->currentAlerts = Setting::get('weather.alerts', []);
+        $this->forecastStatus = cache()->get('weather.forecast_status');
+        $this->alertsStatus = cache()->get('weather.alerts_status');
     }
 
     public function activateOverride(WeatherService $weatherService): void

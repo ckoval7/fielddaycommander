@@ -6,6 +6,7 @@ use App\Models\EventConfiguration;
 use App\Models\Setting;
 use App\Services\ActiveEventService;
 use App\Services\WeatherService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Event as EventFacade;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -314,4 +315,108 @@ test('clearManualAlert broadcasts all-clear with manual flag', function () {
     EventFacade::assertDispatched(WeatherAlertChanged::class, function ($event) {
         return $event->hasAlerts === false && $event->manual === true;
     });
+});
+
+test('fetchForecast writes success status to cache', function () {
+    Http::fake([
+        'api.open-meteo.com/*' => Http::response([
+            'current' => ['temperature_2m' => 72.5, 'wind_speed_10m' => 12.0, 'wind_gusts_10m' => 18.5, 'precipitation' => 0.0, 'weather_code' => 2],
+            'hourly' => ['time' => [], 'temperature_2m' => []],
+            'daily' => ['time' => [], 'temperature_2m_max' => []],
+        ], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->fetchForecast(41.3083, -72.9279);
+
+    $status = cache()->get('weather.forecast_status');
+    expect($status)->not->toBeNull();
+    expect($status['success'])->toBeTrue();
+    expect($status['error'])->toBeNull();
+    expect($status['last_attempt'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]/');
+});
+
+test('fetchForecast writes error status to cache on API failure', function () {
+    Http::fake([
+        'api.open-meteo.com/*' => Http::response([], 503),
+    ]);
+
+    Log::shouldReceive('warning')->once()->with('Open-Meteo API error', Mockery::any());
+
+    $service = makeWeatherService();
+    $service->fetchForecast(41.3083, -72.9279);
+
+    $status = cache()->get('weather.forecast_status');
+    expect($status)->not->toBeNull();
+    expect($status['success'])->toBeFalse();
+    expect($status['error'])->toBe('HTTP 503');
+    expect($status['last_attempt'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]/');
+});
+
+test('fetchForecast writes error status to cache on exception', function () {
+    Http::fake([
+        'api.open-meteo.com/*' => fn () => throw new ConnectionException('timeout'),
+    ]);
+
+    Log::shouldReceive('error')->once();
+
+    $service = makeWeatherService();
+    $service->fetchForecast(41.3083, -72.9279);
+
+    $status = cache()->get('weather.forecast_status');
+    expect($status)->not->toBeNull();
+    expect($status['success'])->toBeFalse();
+    expect($status['error'])->toBe('timeout');
+    expect($status['last_attempt'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]/');
+});
+
+test('checkAlerts writes success status to cache', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Http::fake([
+        'api.weather.gov/*' => Http::response(['features' => []], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279, 'CT');
+
+    $status = cache()->get('weather.alerts_status');
+    expect($status)->not->toBeNull();
+    expect($status['success'])->toBeTrue();
+    expect($status['error'])->toBeNull();
+    expect($status['last_attempt'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]/');
+});
+
+test('checkAlerts writes error status to cache on API failure', function () {
+    Http::fake([
+        'api.weather.gov/*' => Http::response([], 503),
+    ]);
+
+    Log::shouldReceive('warning')->once()->with('NWS API error', Mockery::any());
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279, 'CT');
+
+    $status = cache()->get('weather.alerts_status');
+    expect($status)->not->toBeNull();
+    expect($status['success'])->toBeFalse();
+    expect($status['error'])->toBe('HTTP 503');
+    expect($status['last_attempt'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]/');
+});
+
+test('checkAlerts writes error status to cache on exception', function () {
+    Http::fake([
+        'api.weather.gov/*' => fn () => throw new ConnectionException('timeout'),
+    ]);
+
+    Log::shouldReceive('error')->once();
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279, 'CT');
+
+    $status = cache()->get('weather.alerts_status');
+    expect($status)->not->toBeNull();
+    expect($status['success'])->toBeFalse();
+    expect($status['error'])->toBe('timeout');
+    expect($status['last_attempt'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]/');
 });
