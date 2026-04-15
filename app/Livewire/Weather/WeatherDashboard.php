@@ -50,7 +50,7 @@ class WeatherDashboard extends Component
         $this->alerts = Setting::get('weather.alerts', []);
         $this->lastFetch = Setting::get('weather.last_fetch');
 
-        unset($this->hourlyData, $this->dailyData);
+        $this->clearComputedCache();
     }
 
     /**
@@ -110,12 +110,17 @@ class WeatherDashboard extends Component
         return $result;
     }
 
-    public function iconFor(int $code): string
+    protected function clearComputedCache(): void
+    {
+        unset($this->hourlyData, $this->dailyData);
+    }
+
+    protected function iconFor(int $code): string
     {
         return WmoCode::icon($code);
     }
 
-    public function labelFor(int $code): string
+    protected function labelFor(int $code): string
     {
         return WmoCode::label($code);
     }
