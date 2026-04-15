@@ -78,8 +78,9 @@ class WeatherService
     public function checkAlerts(float $lat, float $lon, string $state): void
     {
         try {
+            $email = Setting::get('contact_email') ?? 'admin@fielddaycommander.org';
             $response = Http::withHeaders([
-                'User-Agent' => '('.config('app.url').', '.config('app.name').')',
+                'User-Agent' => '('.config('app.name').', '.config('app.url').'; '.$email.')',
                 'Accept' => 'application/geo+json',
             ])->get('https://api.weather.gov/alerts/active', [
                 'area' => strtoupper($state),
