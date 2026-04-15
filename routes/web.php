@@ -280,3 +280,8 @@ Route::middleware(['auth', 'verified', 'can:import-contacts'])->prefix('admin')-
 Route::middleware(['auth', 'verified', 'can:manage-settings'])->prefix('admin')->group(function () {
     Route::get('/developer', DeveloperTools::class)->name('admin.developer');
 });
+
+// Weather Dashboard (stub — replaced by Task 3)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/weather', fn () => '')->name('weather.index');
+});

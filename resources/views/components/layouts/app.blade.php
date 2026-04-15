@@ -55,9 +55,10 @@
                 <livewire:components.event-countdown />
             </div>
 
-            {{-- Right: Notifications, Theme toggle and User menu --}}
+            {{-- Right: Weather, Notifications, Theme toggle and User menu --}}
             <div class="flex items-center gap-3">
                 @auth
+                    <livewire:components.weather-icon />
                     <livewire:components.notification-bell />
                 @endauth
                 <x-custom-theme-toggle />
