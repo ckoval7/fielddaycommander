@@ -71,4 +71,20 @@ class WmoCode
     {
         return self::$labels[$code] ?? 'Unknown';
     }
+
+    public static function color(int $code): string
+    {
+        return match (true) {
+            $code <= 1 => 'text-amber-400 dark:text-amber-300',   // Clear, mainly clear
+            $code === 2 => 'text-slate-400 dark:text-slate-300',    // Partly cloudy
+            $code === 3 => 'text-slate-500 dark:text-slate-400',    // Overcast
+            $code === 45 || $code === 48 => 'text-gray-400 dark:text-gray-300',    // Fog
+            $code >= 51 && $code <= 67 => 'text-blue-400 dark:text-blue-300',    // Drizzle / rain
+            $code >= 71 && $code <= 77 => 'text-sky-200 dark:text-sky-100',      // Snow
+            $code >= 80 && $code <= 82 => 'text-blue-500 dark:text-blue-400',    // Showers
+            $code >= 85 && $code <= 86 => 'text-sky-300 dark:text-sky-200',      // Snow showers
+            $code >= 95 => 'text-yellow-400 dark:text-yellow-300',// Thunderstorm
+            default => 'text-slate-400 dark:text-slate-300',
+        };
+    }
 }

@@ -125,6 +125,11 @@ class WeatherDashboard extends Component
         return WmoCode::label($code);
     }
 
+    protected function colorFor(int $code): string
+    {
+        return WmoCode::color($code);
+    }
+
     public function render(): View
     {
         return view('livewire.weather.weather-dashboard')

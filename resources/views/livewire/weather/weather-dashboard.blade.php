@@ -63,7 +63,7 @@
                         @php $c = $forecast['current']; @endphp
                         <div class="flex flex-wrap gap-6 items-center">
                             <div class="flex items-center gap-3">
-                                <x-icon name="{{ $this->iconFor((int) ($c['weather_code'] ?? 0)) }}" class="w-10 h-10" />
+                                <x-icon name="{{ $this->iconFor((int) ($c['weather_code'] ?? 0)) }}" class="w-10 h-10 {{ $this->colorFor((int) ($c['weather_code'] ?? 0)) }}" />
                                 <div>
                                     <span class="text-4xl font-bold">{{ round($c['temperature_2m']) }}°</span>
                                     <p class="text-sm text-base-content/60">{{ $this->labelFor((int) ($c['weather_code'] ?? 0)) }}</p>
@@ -124,7 +124,7 @@
                                             <td class="font-medium text-xs">{{ $hour['time'] }}</td>
                                             <td>
                                                 @if($hour['weather_code'] !== null)
-                                                    <x-icon name="{{ $this->iconFor($hour['weather_code']) }}" class="w-4 h-4 mx-auto" />
+                                                    <x-icon name="{{ $this->iconFor($hour['weather_code']) }}" class="w-4 h-4 mx-auto {{ $this->colorFor($hour['weather_code']) }}" />
                                                 @endif
                                             </td>
                                             <td>{{ $hour['temperature'] !== null ? round($hour['temperature']).'°' : '—' }}</td>
@@ -154,7 +154,7 @@
                                 <div class="card-body items-center text-center py-4">
                                     <p class="text-xs font-semibold text-base-content/60 uppercase">{{ $day['date'] }}</p>
                                     @if($day['weather_code'] !== null)
-                                        <x-icon name="{{ $this->iconFor($day['weather_code']) }}" class="w-8 h-8 my-1" />
+                                        <x-icon name="{{ $this->iconFor($day['weather_code']) }}" class="w-8 h-8 my-1 {{ $this->colorFor($day['weather_code']) }}" />
                                         <p class="text-xs text-base-content/60">{{ $this->labelFor($day['weather_code']) }}</p>
                                     @endif
                                     <div class="flex items-center gap-2 mt-1">
