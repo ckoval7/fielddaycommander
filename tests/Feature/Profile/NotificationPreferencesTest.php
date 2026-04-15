@@ -162,3 +162,80 @@ test('saving categories preserves existing email notification preferences', func
         ->and($prefs['categories']['new_section'])->toBeFalse()
         ->and($prefs['categories']['guestbook'])->toBeTrue();
 });
+
+test('notify_weather_alert defaults to true', function () {
+    Livewire::test(UserProfile::class)
+        ->assertSet('notify_weather_alert', true);
+});
+
+test('weather_alert_email defaults to false', function () {
+    Livewire::test(UserProfile::class)
+        ->assertSet('weather_alert_email', false);
+});
+
+test('saving notify_weather_alert persists to database', function () {
+    Livewire::test(UserProfile::class)
+        ->set('notify_weather_alert', false)
+        ->call('saveProfile')
+        ->assertHasNoErrors();
+
+    $this->user->refresh();
+    $categories = $this->user->notification_preferences['categories'];
+
+    expect($categories['weather_alert'])->toBeFalse();
+});
+
+test('saving weather_alert_email persists to database', function () {
+    Livewire::test(UserProfile::class)
+        ->set('weather_alert_email', true)
+        ->call('saveProfile')
+        ->assertHasNoErrors();
+
+    $this->user->refresh();
+
+    expect($this->user->notification_preferences['weather_alert_email'])->toBeTrue();
+});
+
+test('notify_weather_alert loads from saved preferences', function () {
+    $this->user->update([
+        'notification_preferences' => [
+            'event_notifications' => true,
+            'system_announcements' => true,
+            'categories' => ['weather_alert' => false],
+        ],
+    ]);
+
+    Livewire::test(UserProfile::class)
+        ->assertSet('notify_weather_alert', false);
+});
+
+test('weather_alert_email loads from saved preferences', function () {
+    $this->user->update([
+        'notification_preferences' => [
+            'event_notifications' => true,
+            'system_announcements' => true,
+            'weather_alert_email' => true,
+        ],
+    ]);
+
+    Livewire::test(UserProfile::class)
+        ->assertSet('weather_alert_email', true);
+});
+
+test('toggle all includes notify_weather_alert', function () {
+    Livewire::test(UserProfile::class)
+        ->set('notify_weather_alert', false)
+        ->call('toggleAllCategories', true)
+        ->assertSet('notify_weather_alert', true);
+
+    Livewire::test(UserProfile::class)
+        ->call('toggleAllCategories', false)
+        ->assertSet('notify_weather_alert', false);
+});
+
+test('allCategoriesEnabled is false when notify_weather_alert is disabled', function () {
+    $component = Livewire::test(UserProfile::class)
+        ->set('notify_weather_alert', false);
+
+    expect($component->get('allCategoriesEnabled'))->toBeFalse();
+});

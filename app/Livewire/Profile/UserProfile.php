@@ -60,8 +60,12 @@ class UserProfile extends Component
 
     public bool $notify_shift_checkin_reminder = true;
 
+    public bool $notify_weather_alert = true;
+
     // Shift reminder settings
     public bool $shift_reminder_email = false;
+
+    public bool $weather_alert_email = false;
 
     public ?int $shiftReminderMinute = null;
 
@@ -118,7 +122,9 @@ class UserProfile extends Component
         $this->notify_equipment = $categories['equipment'] ?? true;
         $this->notify_bulletin_reminder = $categories['bulletin_reminder'] ?? true;
         $this->notify_shift_checkin_reminder = $categories['shift_checkin_reminder'] ?? true;
+        $this->notify_weather_alert = $categories['weather_alert'] ?? true;
         $this->shift_reminder_email = $preferences['shift_reminder_email'] ?? false;
+        $this->weather_alert_email = $preferences['weather_alert_email'] ?? false;
     }
 
     public function saveProfile(): void
@@ -150,6 +156,7 @@ class UserProfile extends Component
                     'event_notifications' => $this->event_notifications,
                     'system_announcements' => $this->system_announcements,
                     'shift_reminder_email' => $this->shift_reminder_email,
+                    'weather_alert_email' => $this->weather_alert_email,
                     'bulletin_reminder_minutes' => $user->getBulletinReminderMinutes(),
                     'shift_reminder_minutes' => $user->getShiftReminderMinutes(),
                     'categories' => [
@@ -161,6 +168,7 @@ class UserProfile extends Component
                         'equipment' => $this->notify_equipment,
                         'bulletin_reminder' => $this->notify_bulletin_reminder,
                         'shift_checkin_reminder' => $this->notify_shift_checkin_reminder,
+                        'weather_alert' => $this->notify_weather_alert,
                     ],
                 ],
             ]
@@ -179,6 +187,7 @@ class UserProfile extends Component
         $this->notify_equipment = $enabled;
         $this->notify_bulletin_reminder = $enabled;
         $this->notify_shift_checkin_reminder = $enabled;
+        $this->notify_weather_alert = $enabled;
     }
 
     #[Computed]
@@ -191,7 +200,8 @@ class UserProfile extends Component
             && $this->notify_qso_milestone
             && $this->notify_equipment
             && $this->notify_bulletin_reminder
-            && $this->notify_shift_checkin_reminder;
+            && $this->notify_shift_checkin_reminder
+            && $this->notify_weather_alert;
     }
 
     public function getShiftReminderMinutesProperty(): array

@@ -1,10 +1,23 @@
 <?php
 
+use App\Contracts\ReminderSource;
+use App\Enums\NotificationCategory;
 use App\Livewire\Profile\UserProfile;
 use App\Livewire\Users\UserManagement;
+use App\Models\BulletinScheduleEntry;
+use App\Models\Event;
+use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\User;
+use App\Notifications\InAppNotification;
 use App\Services\ReminderService;
+use Carbon\Carbon;
+use Database\Seeders\BonusTypeSeeder;
+use Database\Seeders\EventTypeSeeder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\Notification;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -117,10 +130,10 @@ test('profile hides email notification preferences when email is not configured'
 
 test('reminder service skips email when email is not configured', function () {
     Config::set('mail.email_configured', false);
-    \Illuminate\Support\Facades\Notification::fake();
+    Illuminate\Support\Facades\Notification::fake();
 
     $this->travelTo(now());
-    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
 
     $user = User::factory()->create([
         'notification_preferences' => [
@@ -129,23 +142,23 @@ test('reminder service skips email when email is not configured', function () {
         ],
     ]);
 
-    $eventType = \App\Models\EventType::where('code', 'FD')->first();
-    $event = \App\Models\Event::factory()->create([
+    $eventType = EventType::where('code', 'FD')->first();
+    $event = Event::factory()->create([
         'event_type_id' => $eventType->id,
         'start_time' => now()->subHours(6),
         'end_time' => now()->addHours(18),
     ]);
-    \App\Models\EventConfiguration::factory()->create([
+    EventConfiguration::factory()->create([
         'event_id' => $event->id,
         'created_by_user_id' => $user->id,
     ]);
-    $item = \App\Models\BulletinScheduleEntry::factory()->create([
+    $item = BulletinScheduleEntry::factory()->create([
         'event_id' => $event->id,
         'scheduled_at' => now()->addMinutes(10),
         'created_by' => $user->id,
     ]);
 
-    $mockMail = new class extends \Illuminate\Notifications\Notification
+    $mockMail = new class extends Notification
     {
         public function via(): array
         {
@@ -153,45 +166,45 @@ test('reminder service skips email when email is not configured', function () {
         }
     };
 
-    $source = new class(collect([$item]), collect([$user]), $mockMail) implements \App\Contracts\ReminderSource
+    $source = new class(collect([$item]), collect([$user]), $mockMail) implements ReminderSource
     {
         public function __construct(
-            private \Illuminate\Support\Collection $items,
-            private \Illuminate\Support\Collection $users,
-            private \Illuminate\Notifications\Notification $mailNotification,
+            private Collection $items,
+            private Collection $users,
+            private Notification $mailNotification,
         ) {}
 
-        public function getUpcomingRemindables(): \Illuminate\Support\Collection
+        public function getUpcomingRemindables(): Collection
         {
             return $this->items;
         }
 
-        public function getReminderCategory(): \App\Enums\NotificationCategory
+        public function getReminderCategory(): NotificationCategory
         {
-            return \App\Enums\NotificationCategory::BulletinReminder;
+            return NotificationCategory::BulletinReminder;
         }
 
-        public function buildNotificationData(\Illuminate\Database\Eloquent\Model $item, User $user, int $minutes): array
+        public function buildNotificationData(Model $item, User $user, int $minutes): array
         {
             return ['title' => 'Test', 'message' => 'Test', 'url' => '/test'];
         }
 
-        public function buildMailNotification(\Illuminate\Database\Eloquent\Model $item, User $user, int $minutes): ?\Illuminate\Notifications\Notification
+        public function buildMailNotification(Model $item, User $user, int $minutes): ?Notification
         {
             return $this->mailNotification;
         }
 
-        public function getGroupKey(\Illuminate\Database\Eloquent\Model $item, int $minutes): string
+        public function getGroupKey(Model $item, int $minutes): string
         {
             return "test_{$item->id}_{$minutes}m";
         }
 
-        public function getUsersToNotify(\Illuminate\Database\Eloquent\Model $item): \Illuminate\Support\Collection
+        public function getUsersToNotify(Model $item): Collection
         {
             return $this->users;
         }
 
-        public function getScheduledTime(\Illuminate\Database\Eloquent\Model $item): \Carbon\Carbon
+        public function getScheduledTime(Model $item): Carbon
         {
             return $item->scheduled_at;
         }
@@ -216,8 +229,8 @@ test('reminder service skips email when email is not configured', function () {
     $service->processSource($source);
 
     // In-app notification sent, but the mail notification class should NOT have been dispatched
-    \Illuminate\Support\Facades\Notification::assertSentTo($user, \App\Notifications\InAppNotification::class);
-    \Illuminate\Support\Facades\Notification::assertNotSentTo($user, $mockMail::class);
+    Illuminate\Support\Facades\Notification::assertSentTo($user, InAppNotification::class);
+    Illuminate\Support\Facades\Notification::assertNotSentTo($user, $mockMail::class);
 });
 
 // =============================================================================
@@ -243,4 +256,26 @@ test('mail.email_configured is true for smtp mailer', function () {
     Config::set('mail.email_configured', ! in_array(config('mail.default'), ['log', 'array']));
 
     expect(config('mail.email_configured'))->toBeTrue();
+});
+
+// =============================================================================
+// Weather Alert Email Preference Visibility
+// =============================================================================
+
+test('profile shows weather alert email toggle when email is configured', function () {
+    Config::set('mail.email_configured', true);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserProfile::class)
+        ->assertSee('Email weather alerts');
+});
+
+test('profile hides weather alert email toggle when email is not configured', function () {
+    Config::set('mail.email_configured', false);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserProfile::class)
+        ->assertDontSee('Email weather alerts');
 });

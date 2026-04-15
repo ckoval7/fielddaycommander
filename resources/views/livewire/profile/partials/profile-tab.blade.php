@@ -111,6 +111,13 @@
                                 wire:model="system_announcements"
                                 hint="System maintenance and important updates"
                             />
+
+                            {{-- Weather Alerts --}}
+                            <x-checkbox
+                                label="Email weather alerts"
+                                wire:model="weather_alert_email"
+                                hint="Send an email when weather alerts become active"
+                            />
                         </div>
                     </div>
                 @endif
@@ -243,6 +250,18 @@
                             </div>
                         </div>
                         <x-toggle wire:model="notify_shift_checkin_reminder" />
+                    </div>
+
+                    {{-- Weather Alerts --}}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <x-icon name="o-cloud" class="w-5 h-5 text-primary shrink-0" />
+                            <div class="min-w-0">
+                                <div class="font-medium">Weather Alerts</div>
+                                <div class="text-sm text-base-content/60">NWS and manual weather alerts</div>
+                            </div>
+                        </div>
+                        <x-toggle wire:model="notify_weather_alert" />
                     </div>
                 </div>
 

@@ -12,6 +12,7 @@ enum NotificationCategory: string
     case Equipment = 'equipment';
     case BulletinReminder = 'bulletin_reminder';
     case ShiftCheckinReminder = 'shift_checkin_reminder';
+    case WeatherAlert = 'weather_alert';
 
     /**
      * Get the human-readable label for the category.
@@ -27,6 +28,7 @@ enum NotificationCategory: string
             self::Equipment => 'Equipment',
             self::BulletinReminder => 'Bulletin Reminder',
             self::ShiftCheckinReminder => 'Shift Check-in Reminders',
+            self::WeatherAlert => 'Weather Alerts',
         };
     }
 
@@ -44,6 +46,7 @@ enum NotificationCategory: string
             self::Equipment => 'o-wrench-screwdriver',
             self::BulletinReminder => 'o-radio',
             self::ShiftCheckinReminder => 'o-clock',
+            self::WeatherAlert => 'o-cloud',
         };
     }
 
@@ -61,6 +64,7 @@ enum NotificationCategory: string
             self::Equipment => 300,
             self::BulletinReminder => 0,
             self::ShiftCheckinReminder => 0,
+            self::WeatherAlert => 0,
         };
     }
 
@@ -89,6 +93,7 @@ enum NotificationCategory: string
             self::Equipment => 'Equipment status changes',
             self::BulletinReminder => 'W1AW bulletin transmission reminders',
             self::ShiftCheckinReminder => 'Reminders before your scheduled shifts',
+            self::WeatherAlert => 'NWS and manual weather alerts',
         };
     }
 }

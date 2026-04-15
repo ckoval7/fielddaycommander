@@ -34,6 +34,7 @@ test('specific category values match expected strings', function () {
     expect(NotificationCategory::QsoMilestone->value)->toBe('qso_milestone');
     expect(NotificationCategory::Equipment->value)->toBe('equipment');
     expect(NotificationCategory::BulletinReminder->value)->toBe('bulletin_reminder');
+    expect(NotificationCategory::WeatherAlert->value)->toBe('weather_alert');
 });
 
 test('debounce values match specification', function () {
@@ -44,6 +45,7 @@ test('debounce values match specification', function () {
     expect(NotificationCategory::QsoMilestone->debounceSeconds())->toBe(0);
     expect(NotificationCategory::Equipment->debounceSeconds())->toBe(300);
     expect(NotificationCategory::BulletinReminder->debounceSeconds())->toBe(0);
+    expect(NotificationCategory::WeatherAlert->debounceSeconds())->toBe(0);
 });
 
 test('category icons match specification', function () {
@@ -54,10 +56,11 @@ test('category icons match specification', function () {
     expect(NotificationCategory::QsoMilestone->icon())->toBe('o-trophy');
     expect(NotificationCategory::Equipment->icon())->toBe('o-wrench-screwdriver');
     expect(NotificationCategory::BulletinReminder->icon())->toBe('o-radio');
+    expect(NotificationCategory::WeatherAlert->icon())->toBe('o-cloud');
 });
 
-test('there are exactly eight categories', function () {
-    expect(NotificationCategory::cases())->toHaveCount(8);
+test('there are exactly nine categories', function () {
+    expect(NotificationCategory::cases())->toHaveCount(9);
 });
 
 test('shift checkin reminder has correct properties', function () {
