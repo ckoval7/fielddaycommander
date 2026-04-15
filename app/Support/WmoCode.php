@@ -75,7 +75,7 @@ class WmoCode
     public static function color(int $code): string
     {
         return match (true) {
-            $code <= 1 => 'text-amber-400 dark:text-amber-300',   // Clear, mainly clear
+            $code <= 1 => 'text-amber-500 dark:text-amber-300 drop-shadow-[0_0_8px_#f59e0b]',   // Clear, mainly clear
             $code === 2 => 'text-slate-400 dark:text-slate-300',    // Partly cloudy
             $code === 3 => 'text-slate-500 dark:text-slate-400',    // Overcast
             $code === 45 || $code === 48 => 'text-gray-400 dark:text-gray-300',    // Fog
