@@ -4,6 +4,8 @@ namespace App\Support;
 
 class WmoCode
 {
+    private function __construct() {}
+
     /** @var array<int, string> */
     private static array $icons = [
         0 => 'o-sun',
