@@ -42,6 +42,7 @@ use App\Livewire\Schedule\ScheduleTimeline;
 use App\Livewire\Stations\StationForm;
 use App\Livewire\Stations\StationsList;
 use App\Livewire\Users\UserManagement;
+use App\Livewire\Weather\ManageWeather;
 use App\Livewire\Weather\WeatherDashboard;
 use App\Models\Event;
 use App\Models\Message;
@@ -285,4 +286,5 @@ Route::middleware(['auth', 'verified', 'can:manage-settings'])->prefix('admin')-
 // Weather Dashboard
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/weather', WeatherDashboard::class)->name('weather.index');
+    Route::get('/weather/manage', ManageWeather::class)->name('weather.manage');
 });

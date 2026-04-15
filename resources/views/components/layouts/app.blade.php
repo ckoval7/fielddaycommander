@@ -201,6 +201,7 @@
 
                         <x-menu-item title="Shift Schedule" icon="o-calendar-days" link="{{ route('schedule.index') }}" :active="request()->routeIs('schedule.index', 'schedule.my-shifts')" />
                         <x-menu-item title="Site Safety" icon="o-shield-check" link="{{ route('site-safety.index') }}" :active="request()->routeIs('site-safety.index')" />
+                        <x-menu-item title="Weather" icon="o-sun" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
 
                         <x-menu-sub title="Equipment" icon="o-wrench-screwdriver">
                             <x-menu-item title="My Catalog" link="{{ route('equipment.index') }}" route="equipment.index" />
@@ -225,7 +226,7 @@
                                 :active="request()->routeIs('events.w1aw-bulletin')" />
                         @endif
 
-                        @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment'])
+                        @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment', 'manage-weather'])
                             <x-menu-separator title="ADMINISTRATION" />
 
                             @canany(['create-events', 'edit-events'])
@@ -238,6 +239,10 @@
 
                             @can('manage-shifts')
                                 <x-menu-item title="Manage Safety Checklist" icon="o-clipboard-document-check" link="{{ route('site-safety.manage') }}" :active="request()->routeIs('site-safety.manage')" />
+                            @endcan
+
+                            @can('manage-weather')
+                                <x-menu-item title="Manage Weather" icon="o-cloud" link="{{ route('weather.manage') }}" :active="request()->routeIs('weather.manage')" />
                             @endcan
 
                             @can('manage-guestbook')
