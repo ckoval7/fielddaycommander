@@ -5,6 +5,7 @@ namespace App\Livewire\Weather;
 use App\Models\Setting;
 use App\Services\WeatherService;
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class ManageWeather extends Component
@@ -151,6 +152,12 @@ class ManageWeather extends Component
             $this->loadCurrentState();
             $this->dispatch('toast', title: 'NWS Alerts enabled', type: 'success');
         }
+    }
+
+    #[Computed]
+    public function locationConfig(): ?array
+    {
+        return app(WeatherService::class)->getActiveEventCoordinates();
     }
 
     public function render(): View

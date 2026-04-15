@@ -8,6 +8,17 @@
         </a>
     </div>
 
+    {{-- Location Warning --}}
+    @if($this->locationConfig === null)
+        <div class="alert alert-warning text-sm">
+            <x-icon name="o-exclamation-triangle" class="w-5 h-5 shrink-0" />
+            <div>
+                <p class="font-medium">Weather APIs cannot fetch data</p>
+                <p class="text-xs mt-0.5">No active or upcoming event has a location configured. Set latitude, longitude, and state on an event to enable live weather fetching.</p>
+            </div>
+        </div>
+    @endif
+
     {{-- Unit System --}}
     <div class="card bg-base-200 shadow">
         <div class="card-body">
