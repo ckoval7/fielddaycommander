@@ -165,6 +165,23 @@ class WeatherService
             $fingerprint = md5(json_encode($alerts));
             $previousFingerprint = Setting::get('weather.alert_fingerprint');
 
+            if (empty($alerts)) {
+                $existingAlerts = Setting::get('weather.alerts', []);
+                $hasManualAlert = collect($existingAlerts)->contains(
+                    fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT
+                );
+
+                if ($hasManualAlert) {
+                    cache()->put('weather.alerts_status', [
+                        'last_attempt' => now()->toIso8601String(),
+                        'success' => true,
+                        'error' => null,
+                    ], now()->addHours(2));
+
+                    return;
+                }
+            }
+
             Setting::set('weather.alerts', $alerts);
 
             if ($fingerprint !== $previousFingerprint) {

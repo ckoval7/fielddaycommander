@@ -389,6 +389,37 @@ test('setManualAlert broadcasts WeatherAlertChanged with manual flag', function 
     expect($alerts[0]['headline'])->toBe('Lightning within 10 miles — seek shelter immediately');
 });
 
+test('checkAlerts preserves manual alert when NWS returns empty', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    $manualAlerts = [[
+        'event' => 'Local Alert',
+        'headline' => 'Lightning within 10 miles',
+        'description' => 'Lightning within 10 miles',
+        'severity' => 'Severe',
+        'expires' => null,
+    ]];
+    Setting::set('weather.alerts', $manualAlerts);
+    Setting::set('weather.alert_fingerprint', md5(json_encode($manualAlerts)));
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    expect(Setting::get('weather.alerts'))->toHaveCount(1);
+    expect(Setting::get('weather.alerts')[0]['event'])->toBe('Local Alert');
+    EventFacade::assertNotDispatched(WeatherAlertChanged::class);
+});
+
 test('clearManualAlert broadcasts all-clear with manual flag', function () {
     EventFacade::fake([WeatherAlertChanged::class]);
 
