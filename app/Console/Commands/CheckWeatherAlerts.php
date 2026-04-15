@@ -21,7 +21,7 @@ class CheckWeatherAlerts extends Command
             return self::SUCCESS;
         }
 
-        $weatherService->checkAlerts($coords['lat'], $coords['lon'], $coords['state']);
+        $weatherService->checkAlerts($coords['lat'], $coords['lon']);
         $this->info('Weather alerts checked.');
 
         return self::SUCCESS;

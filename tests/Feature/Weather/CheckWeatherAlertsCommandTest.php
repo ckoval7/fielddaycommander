@@ -33,8 +33,15 @@ test('it checks alerts and broadcasts changes for active event', function () {
     ]);
 
     Http::fake([
-        'api.weather.gov/*' => Http::response([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
             'features' => [[
+                'geometry' => null,
                 'properties' => [
                     'event' => 'Tornado Warning',
                     'headline' => 'Tornado Warning in effect',
@@ -52,6 +59,7 @@ test('it checks alerts and broadcasts changes for active event', function () {
 
     EventFacade::assertDispatched(WeatherAlertChanged::class);
     expect(Setting::get('weather.alerts'))->toHaveCount(1);
+    expect(Setting::get('weather.alerts')[0]['severity_level'])->toBe('yellow');
 });
 
 test('it checks alerts for upcoming event', function () {
@@ -69,7 +77,13 @@ test('it checks alerts for upcoming event', function () {
     ]);
 
     Http::fake([
-        'api.weather.gov/*' => Http::response(['features' => []], 200),
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
     ]);
 
     $this->artisan('weather:check-alerts')

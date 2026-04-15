@@ -11,16 +11,12 @@ class WeatherAlertBanner extends Component
 {
     public array $alerts = [];
 
-    public bool $manual = false;
-
     #[Session]
     public ?string $dismissedFingerprint = null;
 
     public function mount(): void
     {
         $this->alerts = Setting::get('weather.alerts', []);
-        // Detect if active alerts are manually-triggered (vs NWS) by checking event type
-        $this->manual = ! empty($this->alerts) && ($this->alerts[0]['event'] ?? '') === 'Local Alert';
     }
 
     /**
@@ -36,8 +32,7 @@ class WeatherAlertBanner extends Component
     public function handleAlertUpdate(array $data): void
     {
         $this->alerts = $data['alerts'] ?? [];
-        $this->manual = $data['manual'] ?? false;
-        $this->dismissedFingerprint = null; // clear dismiss so banner reappears
+        $this->dismissedFingerprint = null;
     }
 
     public function dismiss(): void

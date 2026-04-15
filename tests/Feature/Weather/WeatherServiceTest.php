@@ -220,9 +220,16 @@ test('checkAlerts stores filtered alerts and broadcasts when fingerprint changes
     EventFacade::fake([WeatherAlertChanged::class]);
 
     Http::fake([
-        'api.weather.gov/*' => Http::response([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
             'features' => [
                 [
+                    'geometry' => null,
                     'properties' => [
                         'event' => 'Severe Thunderstorm Warning',
                         'headline' => 'Warning issued for New Haven County',
@@ -232,8 +239,9 @@ test('checkAlerts stores filtered alerts and broadcasts when fingerprint changes
                     ],
                 ],
                 [
+                    'geometry' => null,
                     'properties' => [
-                        'event' => 'Air Quality Alert', // should be filtered out
+                        'event' => 'Air Quality Alert', // filtered out
                         'headline' => 'Air Quality Alert',
                         'description' => '...',
                         'severity' => 'Minor',
@@ -245,11 +253,12 @@ test('checkAlerts stores filtered alerts and broadcasts when fingerprint changes
     ]);
 
     $service = makeWeatherService();
-    $service->checkAlerts(41.3083, -72.9279, 'CT');
+    $service->checkAlerts(41.3083, -72.9279);
 
     $alerts = Setting::get('weather.alerts');
     expect($alerts)->toHaveCount(1);
     expect($alerts[0]['event'])->toBe('Severe Thunderstorm Warning');
+    expect($alerts[0]['severity_level'])->toBe('yellow');
 
     EventFacade::assertDispatched(WeatherAlertChanged::class, function ($event) {
         return $event->hasAlerts === true && $event->manual === false;
@@ -259,46 +268,53 @@ test('checkAlerts stores filtered alerts and broadcasts when fingerprint changes
 test('checkAlerts does not broadcast when fingerprint is unchanged', function () {
     EventFacade::fake([WeatherAlertChanged::class]);
 
-    $existingAlerts = [['event' => 'Tornado Warning', 'headline' => 'Test']];
-    Setting::set('weather.alert_fingerprint', md5(json_encode($existingAlerts)));
-
     Http::fake([
-        'api.weather.gov/*' => Http::response([
-            'features' => [
-                [
-                    'properties' => [
-                        'event' => 'Tornado Warning',
-                        'headline' => 'Test',
-                        'description' => '',
-                        'severity' => 'Extreme',
-                        'expires' => null,
-                    ],
-                ],
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
             ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
+            'features' => [[
+                'geometry' => null,
+                'properties' => [
+                    'event' => 'Tornado Warning',
+                    'headline' => 'Test',
+                    'description' => '',
+                    'severity' => 'Extreme',
+                    'expires' => null,
+                ],
+            ]],
         ], 200),
     ]);
 
-    // The stored fingerprint matches what the API returns after filtering
-    // Rebuild the expected fingerprint to match what checkAlerts will compute
-    $expectedAlerts = [['event' => 'Tornado Warning', 'headline' => 'Test', 'description' => '', 'severity' => 'Extreme', 'expires' => null]];
+    // Fingerprint must include severity_level to match what checkAlerts now computes
+    $expectedAlerts = [['event' => 'Tornado Warning', 'headline' => 'Test', 'description' => '', 'severity' => 'Extreme', 'expires' => null, 'severity_level' => 'yellow']];
     Setting::set('weather.alert_fingerprint', md5(json_encode($expectedAlerts)));
 
     $service = makeWeatherService();
-    $service->checkAlerts(41.3083, -72.9279, 'CT');
+    $service->checkAlerts(41.3083, -72.9279);
 
     EventFacade::assertNotDispatched(WeatherAlertChanged::class);
 });
 
 test('checkAlerts stores empty array and broadcasts all-clear when no relevant alerts', function () {
     EventFacade::fake([WeatherAlertChanged::class]);
-    Setting::set('weather.alert_fingerprint', md5(json_encode([['event' => 'Old Alert']]))); // Different fingerprint
+    Setting::set('weather.alert_fingerprint', md5(json_encode([['event' => 'Old Alert']])));
 
     Http::fake([
-        'api.weather.gov/*' => Http::response(['features' => []], 200),
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
     ]);
 
     $service = makeWeatherService();
-    $service->checkAlerts(41.3083, -72.9279, 'CT');
+    $service->checkAlerts(41.3083, -72.9279);
 
     expect(Setting::get('weather.alerts'))->toBeEmpty();
 
@@ -441,11 +457,17 @@ test('checkAlerts writes success status to cache', function () {
     EventFacade::fake([WeatherAlertChanged::class]);
 
     Http::fake([
-        'api.weather.gov/*' => Http::response(['features' => []], 200),
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
     ]);
 
     $service = makeWeatherService();
-    $service->checkAlerts(41.3083, -72.9279, 'CT');
+    $service->checkAlerts(41.3083, -72.9279);
 
     $status = cache()->get('weather.alerts_status');
     expect($status)->not->toBeNull();
@@ -456,13 +478,19 @@ test('checkAlerts writes success status to cache', function () {
 
 test('checkAlerts writes error status to cache on API failure', function () {
     Http::fake([
-        'api.weather.gov/*' => Http::response([], 503),
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([], 503),
     ]);
 
     Log::shouldReceive('warning')->once()->with('NWS API error', Mockery::any());
 
     $service = makeWeatherService();
-    $service->checkAlerts(41.3083, -72.9279, 'CT');
+    $service->checkAlerts(41.3083, -72.9279);
 
     $status = cache()->get('weather.alerts_status');
     expect($status)->not->toBeNull();
@@ -473,13 +501,19 @@ test('checkAlerts writes error status to cache on API failure', function () {
 
 test('checkAlerts writes error status to cache on exception', function () {
     Http::fake([
-        'api.weather.gov/*' => fn () => throw new ConnectionException('timeout'),
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => fn () => throw new ConnectionException('timeout'),
     ]);
 
     Log::shouldReceive('error')->once();
 
     $service = makeWeatherService();
-    $service->checkAlerts(41.3083, -72.9279, 'CT');
+    $service->checkAlerts(41.3083, -72.9279);
 
     $status = cache()->get('weather.alerts_status');
     expect($status)->not->toBeNull();
@@ -585,7 +619,7 @@ test('checkAlerts skips API call and does not update data when NWS is disabled',
     Setting::set('weather.nws_enabled', false);
 
     $service = makeWeatherService();
-    $service->checkAlerts(41.3083, -72.9279, 'CT');
+    $service->checkAlerts(41.3083, -72.9279);
 
     Http::assertNothingSent();
     EventFacade::assertNotDispatched(WeatherAlertChanged::class);
@@ -625,4 +659,222 @@ test('isWeatherPageVisible returns true when Open-Meteo disabled but manual over
     $service = makeWeatherService();
 
     expect($service->isWeatherPageVisible())->toBeTrue();
+});
+
+// --- alert classification (severity_level) ---
+
+test('point inside polygon geometry is classified as red', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
+            'features' => [[
+                'geometry' => [
+                    'type' => 'Polygon',
+                    // bounding box that contains [41.3083, -72.9279]
+                    'coordinates' => [[
+                        [-74.0, 40.0], [-71.0, 40.0], [-71.0, 43.0], [-74.0, 43.0], [-74.0, 40.0],
+                    ]],
+                ],
+                'properties' => [
+                    'event' => 'Tornado Warning',
+                    'headline' => 'Tornado Warning in effect',
+                    'description' => 'Tornado spotted.',
+                    'severity' => 'Extreme',
+                    'expires' => null,
+                ],
+            ]],
+        ], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    expect(Setting::get('weather.alerts')[0]['severity_level'])->toBe('red');
+});
+
+test('point outside polygon geometry is classified as yellow', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
+            'features' => [[
+                'geometry' => [
+                    'type' => 'Polygon',
+                    // bounding box that does NOT contain [41.3083, -72.9279]
+                    'coordinates' => [[
+                        [-80.0, 45.0], [-78.0, 45.0], [-78.0, 47.0], [-80.0, 47.0], [-80.0, 45.0],
+                    ]],
+                ],
+                'properties' => [
+                    'event' => 'High Wind Warning',
+                    'headline' => 'High Wind Warning',
+                    'description' => 'Strong winds.',
+                    'severity' => 'Severe',
+                    'expires' => null,
+                ],
+            ]],
+        ], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    expect(Setting::get('weather.alerts')[0]['severity_level'])->toBe('yellow');
+});
+
+test('null geometry is classified as yellow', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
+            'features' => [[
+                'geometry' => null,
+                'properties' => [
+                    'event' => 'Flash Flood Watch',
+                    'headline' => 'Flash Flood Watch',
+                    'description' => 'Heavy rain expected.',
+                    'severity' => 'Moderate',
+                    'expires' => null,
+                ],
+            ]],
+        ], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    expect(Setting::get('weather.alerts')[0]['severity_level'])->toBe('yellow');
+});
+
+test('point inside any ring of a multipolygon is classified as red', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
+            'features' => [[
+                'geometry' => [
+                    'type' => 'MultiPolygon',
+                    'coordinates' => [
+                        // First polygon: does NOT contain the point
+                        [[[-80.0, 45.0], [-78.0, 45.0], [-78.0, 47.0], [-80.0, 47.0], [-80.0, 45.0]]],
+                        // Second polygon: DOES contain [41.3083, -72.9279]
+                        [[[-74.0, 40.0], [-71.0, 40.0], [-71.0, 43.0], [-74.0, 43.0], [-74.0, 40.0]]],
+                    ],
+                ],
+                'properties' => [
+                    'event' => 'Tornado Warning',
+                    'headline' => 'Tornado Warning in effect',
+                    'description' => 'Tornado spotted.',
+                    'severity' => 'Extreme',
+                    'expires' => null,
+                ],
+            ]],
+        ], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    expect(Setting::get('weather.alerts')[0]['severity_level'])->toBe('red');
+});
+
+// --- fetchNwsPoints (via checkAlerts) ---
+
+test('checkAlerts fetches zone and county from NWS points API on first call', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'api.weather.gov/points/41.3083,-72.9279'));
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'zone=CTC003%2CCTZ009')
+        || str_contains($req->url(), 'zone=CTC003,CTZ009'));
+});
+
+test('checkAlerts uses cached zone and county without hitting points API again', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    cache()->forever('weather.nws_points.41.3083,-72.9279', [
+        'zone' => 'CTZ009',
+        'county' => 'CTC003',
+    ]);
+
+    Http::fake([
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    Http::assertNotSent(fn ($req) => str_contains($req->url(), 'api.weather.gov/points'));
+});
+
+test('checkAlerts logs warning and skips when points API fails', function () {
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([], 503),
+    ]);
+
+    Log::shouldReceive('warning')->once()->with('NWS points API error', Mockery::any());
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    $status = cache()->get('weather.alerts_status');
+    expect($status['success'])->toBeFalse();
+    Http::assertNotSent(fn ($req) => str_contains($req->url(), 'alerts/active'));
+});
+
+test('checkAlerts rounds lat/lon to 4 decimal places for cache key', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.308312345, -72.927912345);
+
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'api.weather.gov/points/41.3083,-72.9279'));
+    expect(cache()->has('weather.nws_points.41.3083,-72.9279'))->toBeTrue();
 });

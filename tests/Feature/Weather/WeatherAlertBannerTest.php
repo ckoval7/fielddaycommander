@@ -12,28 +12,47 @@ test('banner is hidden when there are no alerts', function () {
         ->assertDontSee('alert-error');
 });
 
-test('banner shows NWS alert headline', function () {
+test('yellow alert shows Nearby Danger label', function () {
     Setting::set('weather.alerts', [[
         'event' => 'Severe Thunderstorm Warning',
         'headline' => 'Severe Thunderstorm Warning for New Haven County',
         'description' => 'Damaging winds expected.',
         'severity' => 'Severe',
         'expires' => null,
+        'severity_level' => 'yellow',
     ]]);
 
     Livewire::test(WeatherAlertBanner::class)
-        ->assertSee('Severe Thunderstorm Warning for New Haven County');
+        ->assertSee('Severe Thunderstorm Warning for New Haven County')
+        ->assertSee('Nearby Danger');
 });
 
-test('banner shows multiple NWS alerts', function () {
+test('red alert shows Immediate Danger label', function () {
+    Setting::set('weather.alerts', [[
+        'event' => 'Tornado Warning',
+        'headline' => 'Tornado Warning in effect',
+        'description' => 'Tornado spotted.',
+        'severity' => 'Extreme',
+        'expires' => null,
+        'severity_level' => 'red',
+    ]]);
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->assertSee('Tornado Warning in effect')
+        ->assertSee('Immediate Danger');
+});
+
+test('red and yellow alerts render as separate rows', function () {
     Setting::set('weather.alerts', [
-        ['event' => 'Tornado Warning', 'headline' => 'Tornado Warning headline', 'description' => '', 'severity' => 'Extreme', 'expires' => null],
-        ['event' => 'Flash Flood Watch', 'headline' => 'Flash Flood Watch headline', 'description' => '', 'severity' => 'Moderate', 'expires' => null],
+        ['event' => 'Tornado Warning', 'headline' => 'Tornado Warning headline', 'description' => '', 'severity' => 'Extreme', 'expires' => null, 'severity_level' => 'red'],
+        ['event' => 'Flash Flood Watch', 'headline' => 'Flash Flood Watch headline', 'description' => '', 'severity' => 'Moderate', 'expires' => null, 'severity_level' => 'yellow'],
     ]);
 
     Livewire::test(WeatherAlertBanner::class)
         ->assertSee('Tornado Warning headline')
-        ->assertSee('Flash Flood Watch headline');
+        ->assertSee('Flash Flood Watch headline')
+        ->assertSee('Immediate Danger')
+        ->assertSee('Nearby Danger');
 });
 
 test('banner hides after user dismisses it', function () {
@@ -43,6 +62,7 @@ test('banner hides after user dismisses it', function () {
         'description' => '',
         'severity' => 'Severe',
         'expires' => null,
+        'severity_level' => 'yellow',
     ]]);
 
     Livewire::test(WeatherAlertBanner::class)
@@ -52,7 +72,7 @@ test('banner hides after user dismisses it', function () {
 });
 
 test('banner reappears when new alert arrives with different fingerprint', function () {
-    $initialAlerts = [['event' => 'High Wind Warning', 'headline' => 'Wind warning', 'description' => '', 'severity' => 'Severe', 'expires' => null]];
+    $initialAlerts = [['event' => 'High Wind Warning', 'headline' => 'Wind warning', 'description' => '', 'severity' => 'Severe', 'expires' => null, 'severity_level' => 'yellow']];
     Setting::set('weather.alerts', $initialAlerts);
 
     $component = Livewire::test(WeatherAlertBanner::class)
@@ -60,15 +80,13 @@ test('banner reappears when new alert arrives with different fingerprint', funct
         ->call('dismiss')
         ->assertDontSee('Wind warning');
 
-    // New different alert arrives via broadcast
-    $newAlerts = [['alerts' => [['event' => 'Tornado Warning', 'headline' => 'Tornado incoming', 'description' => '', 'severity' => 'Extreme', 'expires' => null]], 'has_alerts' => true, 'manual' => false]];
+    $newAlerts = [['alerts' => [['event' => 'Tornado Warning', 'headline' => 'Tornado incoming', 'description' => '', 'severity' => 'Extreme', 'expires' => null, 'severity_level' => 'red']], 'has_alerts' => true]];
 
     $component->dispatch('echo:weather,WeatherAlertChanged', ...$newAlerts)
         ->assertSee('Tornado incoming');
 });
 
-test('manual alerts use Local Alert label on initial render', function () {
-    // setManualAlert() stores event = 'Local Alert'; mount() detects this and sets $manual = true
+test('manual Local Alert shows Local Alert label', function () {
     Setting::set('weather.alerts', [[
         'event' => 'Local Alert',
         'headline' => 'Lightning within 10 miles — seek shelter',

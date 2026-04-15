@@ -98,19 +98,34 @@ class WeatherService
         }
     }
 
-    public function checkAlerts(float $lat, float $lon, string $state): void
+    public function checkAlerts(float $lat, float $lon): void
     {
         if (! $this->isNwsEnabled()) {
             return;
         }
 
         try {
+            $lat = round($lat, 4);
+            $lon = round($lon, 4);
+
+            $points = $this->fetchNwsPoints($lat, $lon);
+
+            if ($points === null) {
+                cache()->put('weather.alerts_status', [
+                    'last_attempt' => now()->toIso8601String(),
+                    'success' => false,
+                    'error' => 'Failed to resolve NWS zone/county for coordinates',
+                ], now()->addHours(2));
+
+                return;
+            }
+
             $email = Setting::get('contact_email') ?? 'admin@fielddaycommander.org';
             $response = Http::withHeaders([
                 'User-Agent' => '('.config('app.name').', '.config('app.url').'; '.$email.')',
                 'Accept' => 'application/geo+json',
             ])->get('https://api.weather.gov/alerts/active', [
-                'area' => strtoupper($state),
+                'zone' => $points['county'].','.$points['zone'],
             ]);
 
             if (! $response->successful()) {
@@ -129,13 +144,21 @@ class WeatherService
                     $feature['properties']['event'] ?? '',
                     self::ALLOWED_NWS_EVENTS,
                 ))
-                ->map(fn ($feature) => [
-                    'event' => $feature['properties']['event'],
-                    'headline' => $feature['properties']['headline'],
-                    'description' => $feature['properties']['description'],
-                    'severity' => $feature['properties']['severity'],
-                    'expires' => $feature['properties']['expires'],
-                ])
+                ->map(function ($feature) use ($lat, $lon) {
+                    $geometry = $feature['geometry'] ?? null;
+                    $severityLevel = ($geometry !== null && $this->pointInPolygon($lat, $lon, $geometry))
+                        ? 'red'
+                        : 'yellow';
+
+                    return [
+                        'event' => $feature['properties']['event'],
+                        'headline' => $feature['properties']['headline'],
+                        'description' => $feature['properties']['description'],
+                        'severity' => $feature['properties']['severity'],
+                        'expires' => $feature['properties']['expires'],
+                        'severity_level' => $severityLevel,
+                    ];
+                })
                 ->values()
                 ->all();
 
@@ -252,5 +275,89 @@ class WeatherService
             Setting::set('weather.alert_fingerprint', md5(json_encode([])));
             WeatherAlertChanged::dispatch([], false, false);
         }
+    }
+
+    /**
+     * @return array{zone: string, county: string}|null
+     */
+    private function fetchNwsPoints(float $lat, float $lon): ?array
+    {
+        $cacheKey = "weather.nws_points.{$lat},{$lon}";
+
+        $cached = cache()->get($cacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $email = Setting::get('contact_email') ?? 'admin@fielddaycommander.org';
+        $response = Http::withHeaders([
+            'User-Agent' => '('.config('app.name').', '.config('app.url').'; '.$email.')',
+            'Accept' => 'application/geo+json',
+        ])->get("https://api.weather.gov/points/{$lat},{$lon}");
+
+        if (! $response->successful()) {
+            Log::warning('NWS points API error', ['status' => $response->status(), 'lat' => $lat, 'lon' => $lon]);
+
+            return null;
+        }
+
+        $zone = basename($response->json('properties.forecastZone') ?? '');
+        $county = basename($response->json('properties.county') ?? '');
+
+        if (! $zone || ! $county) {
+            Log::warning('NWS points API returned empty zone or county', ['lat' => $lat, 'lon' => $lon]);
+
+            return null;
+        }
+
+        $points = ['zone' => $zone, 'county' => $county];
+        cache()->forever($cacheKey, $points);
+
+        return $points;
+    }
+
+    private function pointInPolygon(float $lat, float $lon, array $geometry): bool
+    {
+        if ($geometry['type'] === 'MultiPolygon') {
+            foreach ($geometry['coordinates'] as $polygonRings) {
+                if ($this->pointInRing($lat, $lon, $polygonRings[0])) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($geometry['type'] === 'Polygon') {
+            return $this->pointInRing($lat, $lon, $geometry['coordinates'][0]);
+        }
+
+        return false;
+    }
+
+    private function pointInRing(float $lat, float $lon, array $ring): bool
+    {
+        $inside = false;
+        $n = count($ring);
+        $j = $n - 1;
+
+        for ($i = 0; $i < $n; $i++) {
+            // GeoJSON coordinates are [longitude, latitude]
+            $xi = $ring[$i][0]; // lon of vertex i
+            $yi = $ring[$i][1]; // lat of vertex i
+            $xj = $ring[$j][0]; // lon of vertex j
+            $yj = $ring[$j][1]; // lat of vertex j
+
+            $intersect = (($yi > $lat) !== ($yj > $lat))
+                && ($lon < ($xj - $xi) * ($lat - $yi) / ($yj - $yi) + $xi);
+
+            if ($intersect) {
+                $inside = ! $inside;
+            }
+
+            $j = $i;
+        }
+
+        return $inside;
     }
 }
