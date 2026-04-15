@@ -53,6 +53,7 @@ class RoleSeeder extends Seeder
             'manage-event-equipment',
             'edit-any-equipment',
             'import-contacts',
+            'manage-weather',
         ]);
 
         // Operator (Default)
