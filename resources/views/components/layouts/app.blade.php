@@ -31,6 +31,7 @@
             <x-app-brand />
         </x-slot:brand>
         <x-slot:actions>
+            <livewire:components.weather-icon />
             @auth
                 <livewire:components.notification-bell />
             @endauth
