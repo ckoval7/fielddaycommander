@@ -748,7 +748,7 @@ class EventForm extends Component
             'latitude' => ['nullable', 'numeric', 'min:-90', 'max:90'],
             'longitude' => ['nullable', 'numeric', 'min:-180', 'max:180'],
             'city' => ['nullable', 'string', 'max:100'],
-            'state' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'size:2', 'alpha'],
         ];
     }
 
@@ -829,6 +829,8 @@ class EventForm extends Component
             'latitude.max' => 'Latitude must be between -90 and 90 degrees.',
             'longitude.min' => 'Longitude must be between -180 and 180 degrees.',
             'longitude.max' => 'Longitude must be between -180 and 180 degrees.',
+            'state.size' => 'State / Province must be a 2-letter abbreviation (e.g. MD, CA).',
+            'state.alpha' => 'State / Province must be a 2-letter abbreviation (e.g. MD, CA).',
             'guestbook_detection_radius.min' => 'Detection radius must be at least 100 meters.',
             'guestbook_detection_radius.max' => 'Detection radius cannot exceed 2000 meters.',
         ];

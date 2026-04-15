@@ -163,7 +163,8 @@
                         label="State / Province"
                         wire:model="state"
                         icon="o-flag"
-                        placeholder="Colorado"
+                        placeholder="CO"
+                        hint="2-letter abbreviation"
                     />
                 </div>
             </div>

@@ -1088,14 +1088,14 @@ test('event form saves location fields when creating event', function () {
         ->set('latitude', 39.7392)
         ->set('longitude', -104.9903)
         ->set('city', 'Denver')
-        ->set('state', 'Colorado')
+        ->set('state', 'CO')
         ->call('save')
         ->assertHasNoErrors();
 
     $config = Event::where('name', 'Field Day 2025')->first()->eventConfiguration;
     expect($config->grid_square)->toBe('DM79');
     expect($config->city)->toBe('Denver');
-    expect($config->state)->toBe('Colorado');
+    expect($config->state)->toBe('CO');
     expect((float) $config->latitude)->toEqual(39.7392);
     expect((float) $config->longitude)->toEqual(-104.9903);
 });
