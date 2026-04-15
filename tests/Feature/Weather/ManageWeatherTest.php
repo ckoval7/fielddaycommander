@@ -173,3 +173,57 @@ test('manage weather page shows error badge and message when API fails', functio
         ->test(ManageWeather::class)
         ->assertSee('HTTP 503');
 });
+
+test('saveUnits stores imperial setting', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->call('saveUnits', 'imperial')
+        ->assertHasNoErrors()
+        ->assertSet('units', 'imperial');
+
+    expect(Setting::get('weather.units'))->toBe('imperial');
+});
+
+test('saveUnits stores metric setting', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->call('saveUnits', 'metric')
+        ->assertHasNoErrors()
+        ->assertSet('units', 'metric');
+
+    expect(Setting::get('weather.units'))->toBe('metric');
+});
+
+test('manage weather form shows metric labels when metric is active', function () {
+    Setting::set('weather.units', 'metric');
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSee('Temp (°C)')
+        ->assertSee('Wind (km/h)');
+});
+
+test('override activation rejects temperature above metric ceiling', function () {
+    Setting::set('weather.units', 'metric');
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->set('temperature', 70) // valid °F but out of range for °C (max 60)
+        ->set('windSpeed', 15)
+        ->set('windDirection', 'N')
+        ->set('precipitationChance', 50)
+        ->call('activateOverride')
+        ->assertHasErrors(['temperature']);
+});

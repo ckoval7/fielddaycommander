@@ -49,14 +49,16 @@ class WeatherService
     public function fetchForecast(float $lat, float $lon): void
     {
         try {
+            $units = Setting::get('weather.units', 'imperial');
+
             $response = Http::get('https://api.open-meteo.com/v1/forecast', [
                 'latitude' => $lat,
                 'longitude' => $lon,
                 'current' => 'temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,weather_code',
                 'hourly' => 'temperature_2m,precipitation_probability,rain,wind_speed_10m,wind_gusts_10m,weather_code,cape',
                 'daily' => 'temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,weather_code',
-                'temperature_unit' => 'fahrenheit',
-                'wind_speed_unit' => 'mph',
+                'temperature_unit' => $units === 'metric' ? 'celsius' : 'fahrenheit',
+                'wind_speed_unit' => $units === 'metric' ? 'kmh' : 'mph',
                 'timezone' => 'auto',
                 'forecast_days' => 4,
                 'forecast_hours' => 12,

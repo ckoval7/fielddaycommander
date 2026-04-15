@@ -8,6 +8,30 @@
         </a>
     </div>
 
+    {{-- Unit System --}}
+    <div class="card bg-base-200 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="card-title text-base">Unit System</h2>
+                    <p class="text-xs text-base-content/60 mt-1">Applies to all users. Takes effect after the next weather fetch.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        wire:click="saveUnits('imperial')"
+                        class="btn btn-sm {{ $units === 'imperial' ? 'btn-primary' : 'btn-outline' }}">
+                        Imperial (°F, mph)
+                    </button>
+                    <button
+                        wire:click="saveUnits('metric')"
+                        class="btn btn-sm {{ $units === 'metric' ? 'btn-primary' : 'btn-outline' }}">
+                        Metric (°C, km/h)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- API Status --}}
     <div class="card bg-base-200 shadow">
         <div class="card-body space-y-3">
@@ -70,8 +94,8 @@
             @if($overrideActive && $currentOverride)
                 <div class="p-3 bg-info/10 rounded text-sm space-y-1">
                     <p><span class="font-medium">Currently active:</span>
-                        {{ $currentOverride['temperature'] ?? '—' }}°F ·
-                        Wind {{ $currentOverride['wind_speed'] ?? '—' }} mph {{ $currentOverride['wind_direction'] ?? '' }} ·
+                        {{ $currentOverride['temperature'] ?? '—' }}°{{ $units === 'metric' ? 'C' : 'F' }} ·
+                        Wind {{ $currentOverride['wind_speed'] ?? '—' }} {{ $units === 'metric' ? 'km/h' : 'mph' }} {{ $currentOverride['wind_direction'] ?? '' }} ·
                         {{ $currentOverride['precipitation_chance'] ?? '—' }}% rain chance
                     </p>
                     @if(!empty($currentOverride['notes']))
@@ -88,12 +112,12 @@
             @else
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
-                        <label class="label label-text text-xs">Temp (°F)</label>
+                        <label class="label label-text text-xs">Temp ({{ $units === 'metric' ? '°C' : '°F' }})</label>
                         <input wire:model="temperature" type="number" class="input input-bordered input-sm w-full" placeholder="72" />
                         @error('temperature') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="label label-text text-xs">Wind (mph)</label>
+                        <label class="label label-text text-xs">Wind ({{ $units === 'metric' ? 'km/h' : 'mph' }})</label>
                         <input wire:model="windSpeed" type="number" class="input input-bordered input-sm w-full" placeholder="10" />
                         @error('windSpeed') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                     </div>

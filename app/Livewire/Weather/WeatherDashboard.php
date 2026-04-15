@@ -26,6 +26,8 @@ class WeatherDashboard extends Component
 
     public ?string $lastFetch = null;
 
+    public string $windUnit = 'mph';
+
     public function mount(): void
     {
         $this->canManageWeather = auth()->user()?->can('manage-weather') ?? false;
@@ -49,6 +51,7 @@ class WeatherDashboard extends Component
 
         $this->alerts = Setting::get('weather.alerts', []);
         $this->lastFetch = Setting::get('weather.last_fetch');
+        $this->windUnit = Setting::get('weather.units', 'imperial') === 'metric' ? 'km/h' : 'mph';
 
         $this->clearComputedCache();
     }

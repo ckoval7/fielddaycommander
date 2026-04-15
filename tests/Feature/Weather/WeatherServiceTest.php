@@ -147,6 +147,73 @@ test('fetchForecast logs warning on API failure and does not throw', function ()
     expect(Setting::get('weather.forecast'))->toBeNull();
 });
 
+test('fetchForecast sends imperial units to Open-Meteo by default', function () {
+    Http::fake([
+        'api.open-meteo.com/*' => Http::response([
+            'current' => ['temperature_2m' => 72.5, 'wind_speed_10m' => 12.0, 'wind_gusts_10m' => 0.0, 'precipitation' => 0.0, 'weather_code' => 0],
+            'hourly' => ['time' => [], 'temperature_2m' => []],
+            'daily' => ['time' => [], 'temperature_2m_max' => []],
+        ], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->fetchForecast(41.3083, -72.9279);
+
+    Http::assertSent(function ($request) {
+        $data = $request->data();
+
+        return str_contains($request->url(), 'api.open-meteo.com')
+            && ($data['temperature_unit'] ?? null) === 'fahrenheit'
+            && ($data['wind_speed_unit'] ?? null) === 'mph';
+    });
+});
+
+test('fetchForecast sends metric units to Open-Meteo when setting is metric', function () {
+    Setting::set('weather.units', 'metric');
+
+    Http::fake([
+        'api.open-meteo.com/*' => Http::response([
+            'current' => ['temperature_2m' => 22.0, 'wind_speed_10m' => 20.0, 'wind_gusts_10m' => 0.0, 'precipitation' => 0.0, 'weather_code' => 0],
+            'hourly' => ['time' => [], 'temperature_2m' => []],
+            'daily' => ['time' => [], 'temperature_2m_max' => []],
+        ], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->fetchForecast(41.3083, -72.9279);
+
+    Http::assertSent(function ($request) {
+        $data = $request->data();
+
+        return str_contains($request->url(), 'api.open-meteo.com')
+            && ($data['temperature_unit'] ?? null) === 'celsius'
+            && ($data['wind_speed_unit'] ?? null) === 'kmh';
+    });
+});
+
+test('fetchForecast sends imperial units when setting is explicitly imperial', function () {
+    Setting::set('weather.units', 'imperial');
+
+    Http::fake([
+        'api.open-meteo.com/*' => Http::response([
+            'current' => ['temperature_2m' => 72.5, 'wind_speed_10m' => 12.0, 'wind_gusts_10m' => 0.0, 'precipitation' => 0.0, 'weather_code' => 0],
+            'hourly' => ['time' => [], 'temperature_2m' => []],
+            'daily' => ['time' => [], 'temperature_2m_max' => []],
+        ], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->fetchForecast(41.3083, -72.9279);
+
+    Http::assertSent(function ($request) {
+        $data = $request->data();
+
+        return str_contains($request->url(), 'api.open-meteo.com')
+            && ($data['temperature_unit'] ?? null) === 'fahrenheit'
+            && ($data['wind_speed_unit'] ?? null) === 'mph';
+    });
+});
+
 // --- checkAlerts ---
 
 test('checkAlerts stores filtered alerts and broadcasts when fingerprint changes', function () {

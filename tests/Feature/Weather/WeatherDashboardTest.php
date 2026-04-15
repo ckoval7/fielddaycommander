@@ -11,6 +11,7 @@ beforeEach(function () {
     Setting::set('weather.manual_override', null);
     Setting::set('weather.alerts', []);
     Setting::set('weather.last_fetch', null);
+    Setting::set('weather.units', 'imperial');
 });
 
 test('dashboard is accessible to guests', function () {
@@ -183,4 +184,29 @@ test('dashboard shows last fetch time in footer when using forecast data', funct
     Livewire::actingAs($user)
         ->test(WeatherDashboard::class)
         ->assertSee('Open-Meteo');
+});
+
+test('dashboard exposes mph windUnit by default', function () {
+    Setting::set('weather.forecast', [
+        'current' => ['temperature_2m' => 72.5, 'wind_speed_10m' => 12.0, 'wind_gusts_10m' => 18.0, 'precipitation' => 0.0, 'weather_code' => 0],
+        'hourly' => ['time' => [], 'temperature_2m' => [], 'precipitation_probability' => [], 'wind_speed_10m' => [], 'weather_code' => [], 'cape' => []],
+        'daily' => ['time' => [], 'temperature_2m_max' => [], 'temperature_2m_min' => [], 'precipitation_probability_max' => [], 'wind_speed_10m_max' => [], 'wind_gusts_10m_max' => [], 'weather_code' => []],
+    ]);
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertSet('windUnit', 'mph')
+        ->assertSee('mph');
+});
+
+test('dashboard exposes km/h windUnit when metric setting is active', function () {
+    Setting::set('weather.units', 'metric');
+    Setting::set('weather.forecast', [
+        'current' => ['temperature_2m' => 22.0, 'wind_speed_10m' => 20.0, 'wind_gusts_10m' => 30.0, 'precipitation' => 0.0, 'weather_code' => 0],
+        'hourly' => ['time' => [], 'temperature_2m' => [], 'precipitation_probability' => [], 'wind_speed_10m' => [], 'weather_code' => [], 'cape' => []],
+        'daily' => ['time' => [], 'temperature_2m_max' => [], 'temperature_2m_min' => [], 'precipitation_probability_max' => [], 'wind_speed_10m_max' => [], 'wind_gusts_10m_max' => [], 'weather_code' => []],
+    ]);
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertSet('windUnit', 'km/h')
+        ->assertSee('km/h');
 });

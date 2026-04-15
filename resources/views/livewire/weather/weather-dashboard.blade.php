@@ -42,7 +42,7 @@
                                 @if(isset($d['wind_speed']))
                                     <div>
                                         <span class="text-base-content/50">Wind</span>
-                                        <span class="ml-1 font-medium">{{ $d['wind_direction'] ?? '' }} {{ round($d['wind_speed']) }} mph</span>
+                                        <span class="ml-1 font-medium">{{ $d['wind_direction'] ?? '' }} {{ round($d['wind_speed']) }} {{ $windUnit }}</span>
                                     </div>
                                 @endif
                                 @if(isset($d['precipitation_chance']))
@@ -72,11 +72,11 @@
                             <div class="flex flex-wrap gap-4 text-sm">
                                 <div>
                                     <span class="text-base-content/50">Wind</span>
-                                    <span class="ml-1 font-medium">{{ round($c['wind_speed_10m']) }} mph</span>
+                                    <span class="ml-1 font-medium">{{ round($c['wind_speed_10m']) }} {{ $windUnit }}</span>
                                     @if(($c['wind_gusts_10m'] ?? 0) >= 25)
-                                        <span class="ml-1 text-warning font-medium">gusts {{ round($c['wind_gusts_10m']) }} mph</span>
+                                        <span class="ml-1 text-warning font-medium">gusts {{ round($c['wind_gusts_10m']) }} {{ $windUnit }}</span>
                                     @elseif(($c['wind_gusts_10m'] ?? 0) > 0)
-                                        <span class="ml-1 text-base-content/50">gusts {{ round($c['wind_gusts_10m']) }} mph</span>
+                                        <span class="ml-1 text-base-content/50">gusts {{ round($c['wind_gusts_10m']) }} {{ $windUnit }}</span>
                                     @endif
                                 </div>
                                 <div>
@@ -102,7 +102,7 @@
                                         <th></th>
                                         <th>Temp</th>
                                         <th>Precip %</th>
-                                        <th>Wind mph</th>
+                                        <th>Wind {{ $windUnit }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -167,7 +167,7 @@
                                             <p>Precip {{ $day['precip_chance'] }}%</p>
                                         @endif
                                         @if($day['wind_max'] !== null)
-                                            <p>Wind {{ round($day['wind_max']) }} mph @if($day['gusts_max'] !== null)(gusts {{ round($day['gusts_max']) }})@endif</p>
+                                            <p>Wind {{ round($day['wind_max']) }} {{ $windUnit }} @if($day['gusts_max'] !== null)(gusts {{ round($day['gusts_max']) }} {{ $windUnit }})@endif</p>
                                         @endif
                                     </div>
                                 </div>

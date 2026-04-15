@@ -31,6 +31,8 @@ class ManageWeather extends Component
 
     public ?array $alertsStatus = null;
 
+    public string $units = 'imperial';
+
     public function mount(): void
     {
         $this->authorize('manage-weather');
@@ -44,14 +46,15 @@ class ManageWeather extends Component
         $this->currentAlerts = Setting::get('weather.alerts', []);
         $this->forecastStatus = cache()->get('weather.forecast_status');
         $this->alertsStatus = cache()->get('weather.alerts_status');
+        $this->units = Setting::get('weather.units', 'imperial');
     }
 
     public function activateOverride(WeatherService $weatherService): void
     {
         $this->authorize('manage-weather');
         $this->validate([
-            'temperature' => 'required|integer|between:-60,140',
-            'windSpeed' => 'required|integer|between:0,200',
+            'temperature' => 'required|integer|between:'.($this->units === 'metric' ? '-50,60' : '-60,140'),
+            'windSpeed' => 'required|integer|between:0,'.($this->units === 'metric' ? '300' : '200'),
             'windDirection' => 'required|string|in:N,NE,E,SE,S,SW,W,NW',
             'precipitationChance' => 'required|integer|between:0,100',
             'notes' => 'nullable|string|max:500',
@@ -96,6 +99,22 @@ class ManageWeather extends Component
         $weatherService->clearManualAlert();
         $this->loadCurrentState();
         $this->dispatch('toast', title: 'Alert cleared', type: 'info');
+    }
+
+    public function saveUnits(string $units): void
+    {
+        $this->authorize('manage-weather');
+
+        if (! in_array($units, ['imperial', 'metric'], true)) {
+            $this->dispatch('toast', title: 'Invalid unit system', type: 'error');
+
+            return;
+        }
+
+        Setting::set('weather.units', $units);
+        $this->units = $units;
+        $this->resetValidation(['temperature', 'windSpeed']);
+        $this->dispatch('toast', title: 'Unit system updated', type: 'success');
     }
 
     public function render(): View
