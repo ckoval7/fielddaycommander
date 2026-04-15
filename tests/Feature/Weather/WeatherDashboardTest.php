@@ -13,8 +13,8 @@ beforeEach(function () {
     Setting::set('weather.last_fetch', null);
 });
 
-test('dashboard redirects guests to login', function () {
-    $this->get('/weather')->assertRedirect('/login');
+test('dashboard is accessible to guests', function () {
+    Livewire::test(WeatherDashboard::class)->assertOk();
 });
 
 test('dashboard renders for authenticated users', function () {
