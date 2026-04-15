@@ -227,3 +227,87 @@ test('override activation rejects temperature above metric ceiling', function ()
         ->call('activateOverride')
         ->assertHasErrors(['temperature']);
 });
+
+// --- API toggles ---
+
+test('toggleOpenMeteo disables Open-Meteo and clears forecast when currently enabled', function () {
+    Setting::set('weather.openmeteo_enabled', true);
+    Setting::set('weather.forecast', ['current' => ['temperature_2m' => 72.5]]);
+    Setting::set('weather.last_fetch', now()->toIso8601String());
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSet('openMeteoEnabled', true)
+        ->call('toggleOpenMeteo')
+        ->assertSet('openMeteoEnabled', false);
+
+    expect(Setting::get('weather.openmeteo_enabled'))->toBeFalsy();
+    expect(Setting::get('weather.forecast'))->toBeNull();
+});
+
+test('toggleOpenMeteo enables Open-Meteo when currently disabled', function () {
+    Setting::set('weather.openmeteo_enabled', false);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSet('openMeteoEnabled', false)
+        ->call('toggleOpenMeteo')
+        ->assertSet('openMeteoEnabled', true);
+
+    expect(Setting::get('weather.openmeteo_enabled'))->toBeTruthy();
+});
+
+test('toggleNws disables NWS and clears alerts when currently enabled', function () {
+    Event::fake([WeatherAlertChanged::class]);
+
+    Setting::set('weather.nws_enabled', true);
+    Setting::set('weather.alerts', [
+        ['event' => 'Tornado Warning', 'headline' => 'Tornado Warning', 'description' => '', 'severity' => 'Extreme', 'expires' => null],
+    ]);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSet('nwsEnabled', true)
+        ->call('toggleNws')
+        ->assertSet('nwsEnabled', false);
+
+    expect(Setting::get('weather.nws_enabled'))->toBeFalsy();
+    expect(Setting::get('weather.alerts'))->toBeEmpty();
+});
+
+test('toggleNws enables NWS when currently disabled', function () {
+    Setting::set('weather.nws_enabled', false);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSet('nwsEnabled', false)
+        ->call('toggleNws')
+        ->assertSet('nwsEnabled', true);
+
+    expect(Setting::get('weather.nws_enabled'))->toBeTruthy();
+});
+
+test('manage weather component loads openMeteoEnabled and nwsEnabled from settings', function () {
+    Setting::set('weather.openmeteo_enabled', false);
+    Setting::set('weather.nws_enabled', false);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSet('openMeteoEnabled', false)
+        ->assertSet('nwsEnabled', false);
+});

@@ -30,6 +30,12 @@ class WeatherDashboard extends Component
 
     public function mount(): void
     {
+        if (! app(WeatherService::class)->isOpenMeteoEnabled() && Setting::get('weather.manual_override') === null) {
+            $this->redirect(route('dashboard'));
+
+            return;
+        }
+
         $this->canManageWeather = auth()->user()?->can('manage-weather') ?? false;
         $this->loadData();
     }

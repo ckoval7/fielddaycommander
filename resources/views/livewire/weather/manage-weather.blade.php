@@ -40,9 +40,17 @@
             {{-- Open-Meteo Forecast --}}
             <div class="space-y-1">
                 <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium">Open-Meteo Forecast</span>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" class="toggle toggle-sm toggle-primary"
+                            wire:click="toggleOpenMeteo"
+                            @checked($openMeteoEnabled)
+                            wire:confirm="{{ $openMeteoEnabled ? 'Disable Open-Meteo? The stored forecast will be cleared.' : 'Enable Open-Meteo forecast polling?' }}" />
+                        <span class="text-sm font-medium">Open-Meteo Forecast</span>
+                    </div>
                     <div class="flex items-center gap-2">
-                        @if($forecastStatus === null)
+                        @if(! $openMeteoEnabled)
+                            <div class="badge badge-ghost badge-sm">Disabled</div>
+                        @elseif($forecastStatus === null)
                             <div class="badge badge-ghost badge-sm">Not fetched yet</div>
                         @elseif($forecastStatus['success'])
                             <div class="badge badge-success badge-sm">OK</div>
@@ -53,7 +61,7 @@
                         @endif
                     </div>
                 </div>
-                @if($forecastStatus !== null && ! $forecastStatus['success'])
+                @if($openMeteoEnabled && $forecastStatus !== null && ! $forecastStatus['success'])
                     <p class="text-xs text-error">{{ $forecastStatus['error'] }}</p>
                 @endif
             </div>
@@ -61,9 +69,17 @@
             {{-- NWS Alerts --}}
             <div class="space-y-1">
                 <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium">NWS Alerts</span>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" class="toggle toggle-sm toggle-primary"
+                            wire:click="toggleNws"
+                            @checked($nwsEnabled)
+                            wire:confirm="{{ $nwsEnabled ? 'Disable NWS Alerts? Stored NWS alerts will be cleared. Manual alerts are unaffected.' : 'Enable NWS alert polling?' }}" />
+                        <span class="text-sm font-medium">NWS Alerts</span>
+                    </div>
                     <div class="flex items-center gap-2">
-                        @if($alertsStatus === null)
+                        @if(! $nwsEnabled)
+                            <div class="badge badge-ghost badge-sm">Disabled</div>
+                        @elseif($alertsStatus === null)
                             <div class="badge badge-ghost badge-sm">Not fetched yet</div>
                         @elseif($alertsStatus['success'])
                             <div class="badge badge-success badge-sm">OK</div>
@@ -74,7 +90,7 @@
                         @endif
                     </div>
                 </div>
-                @if($alertsStatus !== null && ! $alertsStatus['success'])
+                @if($nwsEnabled && $alertsStatus !== null && ! $alertsStatus['success'])
                     <p class="text-xs text-error">{{ $alertsStatus['error'] }}</p>
                 @endif
             </div>

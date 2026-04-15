@@ -174,7 +174,9 @@
                         <x-menu-item title="Dashboard" icon="o-home" link="/" />
                         <x-menu-item title="Public Page" icon="o-globe-alt" link="{{ route('public.landing') }}" />
                         <x-menu-item title="Section Map" icon="o-map" link="{{ route('section-map') }}" />
-                        <x-menu-item title="Weather" icon="o-sun" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
+                        @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
+                            <x-menu-item title="Weather" icon="o-sun" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
+                        @endif
 
                         <x-menu-separator title="LOGGING" />
 
@@ -285,7 +287,9 @@
                     @else
                         <x-menu-item title="Home" icon="o-home" link="/" />
                         <x-menu-item title="Section Map" icon="o-map" link="{{ route('section-map') }}" />
-                        <x-menu-item title="Weather" icon="o-sun" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
+                        @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
+                            <x-menu-item title="Weather" icon="o-sun" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
+                        @endif
                         <x-menu-item title="View Log" icon="o-queue-list" link="{{ route('logbook.index') }}" />
                         <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
                         <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" />

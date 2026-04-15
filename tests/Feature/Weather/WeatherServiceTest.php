@@ -487,3 +487,142 @@ test('checkAlerts writes error status to cache on exception', function () {
     expect($status['error'])->toBe('timeout');
     expect($status['last_attempt'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]/');
 });
+
+// --- enable/disable Open-Meteo ---
+
+test('isOpenMeteoEnabled returns true by default', function () {
+    $service = makeWeatherService();
+
+    expect($service->isOpenMeteoEnabled())->toBeTrue();
+});
+
+test('disableOpenMeteo sets flag to false and clears forecast data', function () {
+    Setting::set('weather.forecast', ['current' => ['temperature_2m' => 72.5]]);
+    Setting::set('weather.last_fetch', now()->toIso8601String());
+
+    $service = makeWeatherService();
+    $service->disableOpenMeteo();
+
+    expect($service->isOpenMeteoEnabled())->toBeFalse();
+    expect(Setting::get('weather.forecast'))->toBeNull();
+    expect(Setting::get('weather.last_fetch'))->toBeNull();
+});
+
+test('enableOpenMeteo sets flag to true', function () {
+    Setting::set('weather.openmeteo_enabled', false);
+
+    $service = makeWeatherService();
+    $service->enableOpenMeteo();
+
+    expect($service->isOpenMeteoEnabled())->toBeTrue();
+});
+
+// --- enable/disable NWS ---
+
+test('isNwsEnabled returns true by default', function () {
+    $service = makeWeatherService();
+
+    expect($service->isNwsEnabled())->toBeTrue();
+});
+
+test('disableNws sets flag to false and clears NWS alerts', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Setting::set('weather.alerts', [
+        ['event' => 'Severe Thunderstorm Warning', 'headline' => 'NWS alert', 'description' => '', 'severity' => 'Severe', 'expires' => null],
+    ]);
+    Setting::set('weather.alert_fingerprint', 'abc123');
+
+    $service = makeWeatherService();
+    $service->disableNws();
+
+    expect($service->isNwsEnabled())->toBeFalse();
+    expect(Setting::get('weather.alerts'))->toBeEmpty();
+
+    EventFacade::assertDispatched(WeatherAlertChanged::class, fn ($e) => $e->hasAlerts === false && $e->manual === false);
+});
+
+test('disableNws does not clear alerts when a manual alert is active', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Setting::set('weather.alerts', [
+        ['event' => 'Local Alert', 'headline' => 'Lightning within 10 miles', 'description' => 'Lightning within 10 miles', 'severity' => 'Severe', 'expires' => null],
+    ]);
+
+    $service = makeWeatherService();
+    $service->disableNws();
+
+    expect(Setting::get('weather.alerts'))->toHaveCount(1);
+    EventFacade::assertNotDispatched(WeatherAlertChanged::class);
+});
+
+test('enableNws sets flag to true', function () {
+    Setting::set('weather.nws_enabled', false);
+
+    $service = makeWeatherService();
+    $service->enableNws();
+
+    expect($service->isNwsEnabled())->toBeTrue();
+});
+
+// --- API guards ---
+
+test('fetchForecast skips API call and does not update data when Open-Meteo is disabled', function () {
+    Http::fake();
+    Setting::set('weather.openmeteo_enabled', false);
+    Setting::set('weather.forecast', null);
+
+    $service = makeWeatherService();
+    $service->fetchForecast(41.3083, -72.9279);
+
+    Http::assertNothingSent();
+    expect(Setting::get('weather.forecast'))->toBeNull();
+});
+
+test('checkAlerts skips API call and does not update data when NWS is disabled', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+    Http::fake();
+    Setting::set('weather.nws_enabled', false);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279, 'CT');
+
+    Http::assertNothingSent();
+    EventFacade::assertNotDispatched(WeatherAlertChanged::class);
+});
+
+// --- isWeatherPageVisible ---
+
+test('isWeatherPageVisible returns true when Open-Meteo is enabled', function () {
+    Setting::set('weather.openmeteo_enabled', true);
+
+    $service = makeWeatherService();
+
+    expect($service->isWeatherPageVisible())->toBeTrue();
+});
+
+test('isWeatherPageVisible returns false when Open-Meteo disabled and no manual override', function () {
+    Setting::set('weather.openmeteo_enabled', false);
+    Setting::set('weather.manual_override', null);
+
+    $service = makeWeatherService();
+
+    expect($service->isWeatherPageVisible())->toBeFalse();
+});
+
+test('isWeatherPageVisible returns true when Open-Meteo disabled but manual override is active', function () {
+    Setting::set('weather.openmeteo_enabled', false);
+    Setting::set('weather.manual_override', [
+        'temperature' => 75,
+        'wind_speed' => 10,
+        'wind_direction' => 'N',
+        'precipitation_chance' => 20,
+        'notes' => '',
+        'updated_by' => 'W1AW',
+        'updated_at' => now()->toIso8601String(),
+    ]);
+
+    $service = makeWeatherService();
+
+    expect($service->isWeatherPageVisible())->toBeTrue();
+});

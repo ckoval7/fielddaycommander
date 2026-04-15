@@ -27,6 +27,8 @@ class WeatherService
         'Ice Storm Warning',
     ];
 
+    protected const MANUAL_ALERT_EVENT = 'Local Alert';
+
     public function __construct(
         protected readonly ActiveEventService $activeEventService,
     ) {}
@@ -48,6 +50,10 @@ class WeatherService
 
     public function fetchForecast(float $lat, float $lon): void
     {
+        if (! $this->isOpenMeteoEnabled()) {
+            return;
+        }
+
         try {
             $units = Setting::get('weather.units', 'imperial');
 
@@ -94,6 +100,10 @@ class WeatherService
 
     public function checkAlerts(float $lat, float $lon, string $state): void
     {
+        if (! $this->isNwsEnabled()) {
+            return;
+        }
+
         try {
             $email = Setting::get('contact_email') ?? 'admin@fielddaycommander.org';
             $response = Http::withHeaders([
@@ -178,7 +188,7 @@ class WeatherService
     public function setManualAlert(string $message): void
     {
         $alerts = [[
-            'event' => 'Local Alert',
+            'event' => self::MANUAL_ALERT_EVENT,
             'headline' => $message,
             'description' => $message,
             'severity' => 'Severe',
@@ -196,5 +206,51 @@ class WeatherService
         Setting::set('weather.alerts', $alerts);
         Setting::set('weather.alert_fingerprint', md5(json_encode($alerts)));
         WeatherAlertChanged::dispatch($alerts, false, true);
+    }
+
+    public function isOpenMeteoEnabled(): bool
+    {
+        return (bool) Setting::get('weather.openmeteo_enabled', true);
+    }
+
+    public function enableOpenMeteo(): void
+    {
+        Setting::set('weather.openmeteo_enabled', true);
+    }
+
+    public function disableOpenMeteo(): void
+    {
+        Setting::set('weather.openmeteo_enabled', false);
+        Setting::set('weather.forecast', null);
+        Setting::set('weather.last_fetch', null);
+    }
+
+    public function isWeatherPageVisible(): bool
+    {
+        return $this->isOpenMeteoEnabled() || Setting::get('weather.manual_override') !== null;
+    }
+
+    public function isNwsEnabled(): bool
+    {
+        return (bool) Setting::get('weather.nws_enabled', true);
+    }
+
+    public function enableNws(): void
+    {
+        Setting::set('weather.nws_enabled', true);
+    }
+
+    public function disableNws(): void
+    {
+        Setting::set('weather.nws_enabled', false);
+
+        $alerts = Setting::get('weather.alerts', []);
+        $isManual = collect($alerts)->contains(fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT);
+
+        if (! $isManual) {
+            Setting::set('weather.alerts', []);
+            Setting::set('weather.alert_fingerprint', md5(json_encode([])));
+            WeatherAlertChanged::dispatch([], false, false);
+        }
     }
 }

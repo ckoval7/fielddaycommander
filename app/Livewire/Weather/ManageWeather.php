@@ -33,6 +33,10 @@ class ManageWeather extends Component
 
     public string $units = 'imperial';
 
+    public bool $openMeteoEnabled = true;
+
+    public bool $nwsEnabled = true;
+
     public function mount(): void
     {
         $this->authorize('manage-weather');
@@ -47,6 +51,8 @@ class ManageWeather extends Component
         $this->forecastStatus = cache()->get('weather.forecast_status');
         $this->alertsStatus = cache()->get('weather.alerts_status');
         $this->units = Setting::get('weather.units', 'imperial');
+        $this->openMeteoEnabled = (bool) Setting::get('weather.openmeteo_enabled', true);
+        $this->nwsEnabled = (bool) Setting::get('weather.nws_enabled', true);
     }
 
     public function activateOverride(WeatherService $weatherService): void
@@ -115,6 +121,36 @@ class ManageWeather extends Component
         $this->units = $units;
         $this->resetValidation(['temperature', 'windSpeed']);
         $this->dispatch('toast', title: 'Unit system updated', type: 'success');
+    }
+
+    public function toggleOpenMeteo(WeatherService $weatherService): void
+    {
+        $this->authorize('manage-weather');
+
+        if ($this->openMeteoEnabled) {
+            $weatherService->disableOpenMeteo();
+            $this->loadCurrentState();
+            $this->dispatch('toast', title: 'Open-Meteo disabled — forecast cleared', type: 'info');
+        } else {
+            $weatherService->enableOpenMeteo();
+            $this->loadCurrentState();
+            $this->dispatch('toast', title: 'Open-Meteo enabled', type: 'success');
+        }
+    }
+
+    public function toggleNws(WeatherService $weatherService): void
+    {
+        $this->authorize('manage-weather');
+
+        if ($this->nwsEnabled) {
+            $weatherService->disableNws();
+            $this->loadCurrentState();
+            $this->dispatch('toast', title: 'NWS Alerts disabled — alerts cleared', type: 'info');
+        } else {
+            $weatherService->enableNws();
+            $this->loadCurrentState();
+            $this->dispatch('toast', title: 'NWS Alerts enabled', type: 'success');
+        }
     }
 
     public function render(): View

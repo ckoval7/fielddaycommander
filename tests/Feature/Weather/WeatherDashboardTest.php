@@ -210,3 +210,37 @@ test('dashboard exposes km/h windUnit when metric setting is active', function (
         ->assertSet('windUnit', 'km/h')
         ->assertSee('km/h');
 });
+
+// --- Open-Meteo disabled redirect ---
+
+test('dashboard redirects to dashboard route when Open-Meteo disabled and no manual override', function () {
+    Setting::set('weather.openmeteo_enabled', false);
+    Setting::set('weather.manual_override', null);
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertRedirect(route('dashboard'));
+});
+
+test('dashboard does not redirect when Open-Meteo disabled but manual override is active', function () {
+    Setting::set('weather.openmeteo_enabled', false);
+    Setting::set('weather.manual_override', [
+        'temperature' => 75,
+        'wind_speed' => 12,
+        'wind_direction' => 'SW',
+        'precipitation_chance' => 30,
+        'notes' => '',
+        'updated_by' => 'W1AW',
+        'updated_at' => now()->toIso8601String(),
+    ]);
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertOk();
+});
+
+test('dashboard does not redirect when Open-Meteo is enabled', function () {
+    Setting::set('weather.openmeteo_enabled', true);
+    Setting::set('weather.manual_override', null);
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertOk();
+});
