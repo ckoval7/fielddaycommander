@@ -5,32 +5,22 @@ namespace App\Livewire\Weather;
 use App\Models\Setting;
 use App\Services\WeatherService;
 use Illuminate\View\View;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class ManageWeather extends Component
 {
-    // Override fields
-    #[Validate('required|integer|between:-60,140')]
     public ?int $temperature = null;
 
-    #[Validate('required|integer|between:0,200')]
     public ?int $windSpeed = null;
 
-    #[Validate('required|string|in:N,NE,E,SE,S,SW,W,NW')]
     public string $windDirection = 'N';
 
-    #[Validate('required|integer|between:0,100')]
     public ?int $precipitationChance = null;
 
-    #[Validate('nullable|string|max:500')]
     public string $notes = '';
 
-    // Alert field
-    #[Validate('required|string|min:5|max:200')]
     public string $alertMessage = '';
 
-    // Current state
     public bool $overrideActive = false;
 
     public ?array $currentOverride = null;

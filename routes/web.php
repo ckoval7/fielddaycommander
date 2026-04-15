@@ -286,5 +286,8 @@ Route::middleware(['auth', 'verified', 'can:manage-settings'])->prefix('admin')-
 // Weather Dashboard
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/weather', WeatherDashboard::class)->name('weather.index');
+});
+
+Route::middleware(['auth', 'verified', 'can:manage-weather'])->group(function () {
     Route::get('/weather/manage', ManageWeather::class)->name('weather.manage');
 });
