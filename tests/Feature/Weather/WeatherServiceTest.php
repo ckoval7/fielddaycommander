@@ -963,3 +963,22 @@ test('checkAlerts rounds lat/lon to 4 decimal places for cache key', function ()
     Http::assertSent(fn ($req) => str_contains($req->url(), 'api.weather.gov/points/41.3083,-72.9279'));
     expect(cache()->has('weather.nws_points.41.3083,-72.9279'))->toBeTrue();
 });
+
+// --- demo mode: coordinates ---
+
+test('getActiveEventCoordinates returns configured demo coordinates in demo mode', function () {
+    config()->set('demo.enabled', true);
+    config()->set('demo.weather.latitude', 44.9778);
+    config()->set('demo.weather.longitude', -93.2650);
+    config()->set('demo.weather.state', 'MN');
+
+    // Seed a normal active event to prove we ignore it in demo mode
+    makeActiveWeatherEvent(['latitude' => 41.3083, 'longitude' => -72.9279, 'state' => 'CT']);
+    $service = makeWeatherService();
+
+    expect($service->getActiveEventCoordinates())->toMatchArray([
+        'lat' => 44.9778,
+        'lon' => -93.2650,
+        'state' => 'MN',
+    ]);
+});

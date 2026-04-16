@@ -35,6 +35,14 @@ class WeatherService
 
     public function getActiveEventCoordinates(): ?array
     {
+        if (config('demo.enabled')) {
+            return [
+                'lat' => (float) config('demo.weather.latitude'),
+                'lon' => (float) config('demo.weather.longitude'),
+                'state' => (string) config('demo.weather.state'),
+            ];
+        }
+
         $config = $this->eventContextService->getContextEvent()?->eventConfiguration;
 
         if (! $config || ! $config->has_location || ! $config->state) {
