@@ -150,7 +150,7 @@ test('feed items have expected structure', function () {
         ->and($data['items'][0])->toHaveKeys(['id', 'icon', 'title', 'message', 'time_ago', 'read'])
         ->and($data['items'][0]['title'])->toBe('Milestone!')
         ->and($data['items'][0]['message'])->toBe('50 QSOs logged!')
-        ->and($data['items'][0]['icon'])->toBe('o-trophy')
+        ->and($data['items'][0]['icon'])->toBe('phosphor-trophy')
         ->and($data['items'][0]['read'])->toBeFalse();
 });
 
@@ -469,12 +469,12 @@ test('feed items use icon from notification category', function (NotificationCat
 
     expect($data['items'][0]['icon'])->toBe($expectedIcon);
 })->with([
-    [NotificationCategory::QsoMilestone, 'o-trophy'],
-    [NotificationCategory::NewSection, 'o-globe-americas'],
-    [NotificationCategory::Equipment, 'o-wrench-screwdriver'],
-    [NotificationCategory::Guestbook, 'o-book-open'],
-    [NotificationCategory::Photos, 'o-photo'],
-    [NotificationCategory::StationStatus, 'o-signal'],
+    [NotificationCategory::QsoMilestone, 'phosphor-trophy'],
+    [NotificationCategory::NewSection, 'phosphor-globe'],
+    [NotificationCategory::Equipment, 'phosphor-wrench'],
+    [NotificationCategory::Guestbook, 'phosphor-book-open'],
+    [NotificationCategory::Photos, 'phosphor-image'],
+    [NotificationCategory::StationStatus, 'phosphor-cell-signal-high'],
 ]);
 
 // ────────────────────────────────────────────────────────────────

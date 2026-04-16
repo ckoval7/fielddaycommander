@@ -14,26 +14,26 @@
         <x-alert
             title="Destructive Operations"
             description="The tools on this page can permanently modify or delete data. Use with caution. All actions are logged for audit purposes."
-            icon="o-exclamation-triangle"
+            icon="phosphor-warning"
             class="alert-warning"
         />
 
         {{-- Time Travel Section --}}
-        <x-card title="Time Travel" subtitle="Override the application's current time for testing" icon="o-clock">
+        <x-card title="Time Travel" subtitle="Override the application's current time for testing" icon="phosphor-clock">
             <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <x-flatpickr
                         label="Date"
                         wire:model.live="fakeDate"
                         mode="date"
-                        icon="o-calendar"
+                        icon="phosphor-calendar"
                     />
 
                     <x-flatpickr
                         label="Time"
                         wire:model.live="fakeTime"
                         mode="time"
-                        icon="o-clock"
+                        icon="phosphor-clock"
                     />
 
                     <div class="flex items-end pb-2">
@@ -49,14 +49,14 @@
                             label="Set Time"
                             wire:click="setTime"
                             class="btn-primary"
-                            icon="o-play"
+                            icon="phosphor-play"
                             spinner="setTime"
                         />
                         <x-button
                             label="Clear"
                             wire:click="clearTime"
                             class="btn-ghost"
-                            icon="o-x-mark"
+                            icon="phosphor-x"
                             spinner="clearTime"
                         />
                     </div>
@@ -66,7 +66,7 @@
                 @if($this->fieldDayStatusPreview)
                     <div class="bg-base-200 rounded-lg p-4">
                         <div class="flex items-center gap-3">
-                            <x-icon name="o-signal" class="w-5 h-5 text-base-content/60" />
+                            <x-icon name="phosphor-cell-signal-high" class="w-5 h-5 text-base-content/60" />
                             <span class="font-medium">Field Day Status Preview:</span>
                             <x-badge
                                 :value="$this->fieldDayStatusPreview['status']"
@@ -82,15 +82,15 @@
         </x-card>
 
         {{-- Database Tools Section --}}
-        <x-card title="Database Tools" subtitle="Manage database state for development" icon="o-circle-stack">
+        <x-card title="Database Tools" subtitle="Manage database state for development" icon="phosphor-database">
             <x-tabs wire:model="databaseTab">
                 {{-- Full Reset Tab --}}
-                <x-tab name="full-reset" label="Full Reset" icon="o-arrow-path">
+                <x-tab name="full-reset" label="Full Reset" icon="phosphor-arrow-clockwise">
                     <div class="py-4 space-y-4">
                         <x-alert
                             title="Full Database Reset"
                             description="This will drop all tables and re-run all migrations with seeders. All data will be lost and you will be logged out."
-                            icon="o-exclamation-circle"
+                            icon="phosphor-warning-circle"
                             class="alert-error"
                         />
 
@@ -98,13 +98,13 @@
                             label="Reset Database"
                             wire:click="confirmFullReset"
                             class="btn-error"
-                            icon="o-trash"
+                            icon="phosphor-trash"
                         />
                     </div>
                 </x-tab>
 
                 {{-- Selective Reset Tab --}}
-                <x-tab name="selective-reset" label="Selective Reset" icon="o-funnel">
+                <x-tab name="selective-reset" label="Selective Reset" icon="phosphor-funnel">
                     <div class="py-4 space-y-4">
                         <p class="text-base-content/70">
                             Select which data categories to clear. This truncates the selected tables without affecting the rest of the database.
@@ -131,14 +131,14 @@
                             label="Reset Selected Tables"
                             wire:click="confirmSelectiveReset"
                             class="btn-warning"
-                            icon="o-trash"
+                            icon="phosphor-trash"
                             :disabled="empty($selectedTables)"
                         />
                     </div>
                 </x-tab>
 
                 {{-- Snapshots Tab --}}
-                <x-tab name="snapshots" label="Snapshots" icon="o-camera">
+                <x-tab name="snapshots" label="Snapshots" icon="phosphor-camera">
                     <div class="py-4 space-y-6">
                         {{-- Create Snapshot Form --}}
                         <div class="bg-base-200 rounded-lg p-4 space-y-4">
@@ -148,20 +148,20 @@
                                     label="Snapshot Name"
                                     wire:model="snapshotName"
                                     placeholder="e.g., before-testing-feature"
-                                    icon="o-tag"
+                                    icon="phosphor-tag"
                                 />
                                 <x-input
                                     label="Description (optional)"
                                     wire:model="snapshotDescription"
                                     placeholder="Brief description of the snapshot"
-                                    icon="o-document-text"
+                                    icon="phosphor-file-text"
                                 />
                             </div>
                             <x-button
                                 label="Create Snapshot"
                                 wire:click="createSnapshot"
                                 class="btn-primary"
-                                icon="o-camera"
+                                icon="phosphor-camera"
                                 spinner="createSnapshot"
                             />
                         </div>
@@ -172,7 +172,7 @@
 
                             @if($snapshots->isEmpty())
                                 <div class="text-center py-8 text-base-content/50">
-                                    <x-icon name="o-camera" class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                    <x-icon name="phosphor-camera" class="w-12 h-12 mx-auto mb-2 opacity-50" />
                                     <p>No snapshots found</p>
                                     <p class="text-sm">Create a snapshot to save the current database state</p>
                                 </div>
@@ -202,14 +202,14 @@
                                                     <td class="text-right">
                                                         <div class="flex justify-end gap-1">
                                                             <x-button
-                                                                icon="o-arrow-uturn-left"
+                                                                icon="phosphor-arrow-u-up-left"
                                                                 wire:click="confirmRestore('{{ $snapshot['filename'] }}')"
                                                                 class="btn-sm btn-ghost"
                                                                 tooltip="Restore"
                                                                 spinner
                                                             />
                                                             <x-button
-                                                                icon="o-trash"
+                                                                icon="phosphor-trash"
                                                                 wire:click="deleteSnapshot('{{ $snapshot['filename'] }}')"
                                                                 wire:confirm="Are you sure you want to delete this snapshot?"
                                                                 class="btn-sm btn-ghost text-error"
@@ -231,12 +231,12 @@
         </x-card>
 
         {{-- Quick Actions Section --}}
-        <x-card title="Quick Actions" subtitle="Common development tasks" icon="o-bolt">
+        <x-card title="Quick Actions" subtitle="Common development tasks" icon="phosphor-lightning">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {{-- Seed Test Contacts --}}
                 <div class="bg-base-200 rounded-lg p-4 space-y-3">
                     <div class="flex items-center gap-2">
-                        <x-icon name="o-user-plus" class="w-5 h-5 text-primary" />
+                        <x-icon name="phosphor-user-plus" class="w-5 h-5 text-primary" />
                         <h4 class="font-semibold">Seed Test Contacts</h4>
                     </div>
                     <p class="text-sm text-base-content/60">
@@ -246,7 +246,7 @@
                         label="Seed 50 Contacts"
                         wire:click="seedTestContacts"
                         class="btn-primary btn-sm w-full"
-                        icon="o-plus"
+                        icon="phosphor-plus"
                         spinner="seedTestContacts"
                     />
                 </div>
@@ -254,7 +254,7 @@
                 {{-- Fast Forward to Next Event --}}
                 <div class="bg-base-200 rounded-lg p-4 space-y-3">
                     <div class="flex items-center gap-2">
-                        <x-icon name="o-forward" class="w-5 h-5 text-success" />
+                        <x-icon name="phosphor-fast-forward" class="w-5 h-5 text-success" />
                         <h4 class="font-semibold">Fast Forward Event</h4>
                     </div>
                     <p class="text-sm text-base-content/60">
@@ -264,7 +264,7 @@
                         label="Fast Forward"
                         wire:click="fastForwardToNextEvent"
                         class="btn-success btn-sm w-full"
-                        icon="o-forward"
+                        icon="phosphor-fast-forward"
                         spinner="fastForwardToNextEvent"
                     />
                 </div>
@@ -272,7 +272,7 @@
                 {{-- Clear Caches --}}
                 <div class="bg-base-200 rounded-lg p-4 space-y-3">
                     <div class="flex items-center gap-2">
-                        <x-icon name="o-arrow-path" class="w-5 h-5 text-warning" />
+                        <x-icon name="phosphor-arrow-clockwise" class="w-5 h-5 text-warning" />
                         <h4 class="font-semibold">Clear Caches</h4>
                     </div>
                     <p class="text-sm text-base-content/60">
@@ -282,7 +282,7 @@
                         label="Clear All Caches"
                         wire:click="clearCaches"
                         class="btn-warning btn-sm w-full"
-                        icon="o-trash"
+                        icon="phosphor-trash"
                         spinner="clearCaches"
                     />
                 </div>
@@ -290,7 +290,7 @@
         </x-card>
 
         {{-- Test User Pool Section --}}
-        <x-card title="Test User Pool" subtitle="Manage reusable test users" icon="o-users">
+        <x-card title="Test User Pool" subtitle="Manage reusable test users" icon="phosphor-users">
             <div class="space-y-4">
                 <div class="flex flex-col sm:flex-row gap-4 items-end">
                     <div class="flex-1">
@@ -300,7 +300,7 @@
                             type="number"
                             min="3"
                             max="50"
-                            icon="o-user-group"
+                            icon="phosphor-users-three"
                             hint="Range: 3-50 users"
                         />
                     </div>
@@ -310,7 +310,7 @@
                             label="Initialize Test Users"
                             wire:click="initializeTestUsers(testUserCount)"
                             class="btn-primary btn-sm flex-1 sm:flex-none"
-                            icon="o-user-plus"
+                            icon="phosphor-user-plus"
                             spinner="initializeTestUsers"
                             :disabled="$this->testUserPoolExists()"
                         />
@@ -318,7 +318,7 @@
                             label="Clear Test Users"
                             wire:click="confirmClearTestUsers"
                             class="btn-error btn-sm flex-1 sm:flex-none"
-                            icon="o-trash"
+                            icon="phosphor-trash"
                             :disabled="!$this->testUserPoolExists()"
                         />
                     </div>
@@ -332,7 +332,7 @@
         <div class="space-y-4">
             <x-alert
                 title="This action cannot be undone!"
-                icon="o-exclamation-triangle"
+                icon="phosphor-warning"
                 class="alert-error"
             />
             <p>You are about to:</p>
@@ -356,7 +356,7 @@
                 label="Yes, Reset Everything"
                 wire:click="fullReset"
                 class="btn-error"
-                icon="o-trash"
+                icon="phosphor-trash"
                 spinner="fullReset"
             />
         </x-slot:actions>
@@ -367,7 +367,7 @@
         <div class="space-y-4">
             <x-alert
                 title="This will permanently delete data!"
-                icon="o-exclamation-triangle"
+                icon="phosphor-warning"
                 class="alert-warning"
             />
             <p>You are about to clear the following categories:</p>
@@ -393,7 +393,7 @@
                 label="Yes, Clear Selected"
                 wire:click="selectiveReset"
                 class="btn-warning"
-                icon="o-trash"
+                icon="phosphor-trash"
                 spinner="selectiveReset"
             />
         </x-slot:actions>
@@ -404,7 +404,7 @@
         <div class="space-y-4">
             <x-alert
                 title="This will replace all current data!"
-                icon="o-exclamation-triangle"
+                icon="phosphor-warning"
                 class="alert-warning"
             />
             <p>You are about to restore the database from:</p>
@@ -425,7 +425,7 @@
                 label="Yes, Restore Snapshot"
                 wire:click="restoreSnapshot"
                 class="btn-warning"
-                icon="o-arrow-uturn-left"
+                icon="phosphor-arrow-u-up-left"
                 spinner="restoreSnapshot"
             />
         </x-slot:actions>
@@ -436,7 +436,7 @@
         <div class="space-y-4">
             <x-alert
                 title="This action will permanently delete data!"
-                icon="o-exclamation-triangle"
+                icon="phosphor-warning"
                 class="alert-warning"
             />
             <p>You are about to delete:</p>
@@ -459,7 +459,7 @@
                 label="Yes, Delete All Test Users"
                 wire:click="clearTestUsers"
                 class="btn-error"
-                icon="o-trash"
+                icon="phosphor-trash"
                 spinner="clearTestUsers"
             />
         </x-slot:actions>

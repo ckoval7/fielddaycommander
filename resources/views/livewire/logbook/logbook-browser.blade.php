@@ -2,7 +2,7 @@
     @if(!$eventConfigurationId)
         <x-card class="shadow-md">
             <div class="text-center py-12">
-                <x-icon name="o-exclamation-circle" class="w-16 h-16 mx-auto text-warning" />
+                <x-icon name="phosphor-warning-circle" class="w-16 h-16 mx-auto text-warning" />
                 <p class="mt-4 text-lg font-medium">No Active Event</p>
                 <p class="text-sm text-base-content/70 mt-2">Please activate an event to view the logbook.</p>
             </div>

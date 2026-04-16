@@ -230,7 +230,7 @@ class Feed extends Component
 
         return [
             'id' => $notification->id,
-            'icon' => $data['icon'] ?? $category?->icon() ?? 'o-bell',
+            'icon' => $data['icon'] ?? $category?->icon() ?? 'phosphor-bell',
             'title' => $data['title'] ?? 'Notification',
             'message' => $data['message'] ?? '',
             'time_ago' => $this->formatTimeAgo($notification->created_at),

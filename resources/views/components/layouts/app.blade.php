@@ -32,13 +32,14 @@
             <x-app-brand />
         </x-slot:brand>
         <x-slot:actions>
+            <livewire:components.weather-icon />
             @auth
                 <livewire:components.notification-bell />
             @endauth
             <x-custom-theme-toggle class="me-2" />
             <x-user-menu class="me-2" />
             <button type="button" class="lg:hidden me-3" aria-label="Toggle navigation menu" onclick="document.getElementById('main-drawer').click()">
-                <x-icon name="o-bars-3" class="cursor-pointer" />
+                <x-icon name="phosphor-list" class="cursor-pointer" />
             </button>
         </x-slot:actions>
     </x-nav>
@@ -56,8 +57,9 @@
                 <livewire:components.event-countdown />
             </div>
 
-            {{-- Right: Notifications, Theme toggle and User menu --}}
+            {{-- Right: Weather, Notifications, Theme toggle and User menu --}}
             <div class="flex items-center gap-3">
+                <livewire:components.weather-icon />
                 @auth
                     <livewire:components.notification-bell />
                 @endauth
@@ -92,6 +94,9 @@
     @auth
         <livewire:components.system-account-banner />
     @endauth
+
+    {{-- Weather Alert Banner --}}
+    <livewire:components.weather-alert-banner />
 
     {{-- MAIN --}}
     <x-main full-width with-nav>
@@ -139,7 +144,7 @@
                     class="flex justify-center py-1 border-b border-base-300/50 text-base-content/40 hover:text-base-content/70 transition-all duration-150 shrink-0"
                     aria-label="Scroll up"
                 >
-                    <x-icon name="o-chevron-up" class="w-4 h-4" />
+                    <x-icon name="phosphor-caret-up" class="w-4 h-4" />
                 </button>
 
                 {{-- Scrollable menu area --}}
@@ -175,39 +180,42 @@
                 >
                     <x-menu activate-by-route class="mt-2">
                     @auth
-                        <x-menu-item title="Dashboard" icon="o-home" link="/" />
-                        <x-menu-item title="Public Page" icon="o-globe-alt" link="{{ route('public.landing') }}" />
-                        <x-menu-item title="Section Map" icon="o-map" link="{{ route('section-map') }}" />
+                        <x-menu-item title="Dashboard" icon="phosphor-house" link="/" />
+                        <x-menu-item title="Public Page" icon="phosphor-globe" link="{{ route('public.landing') }}" />
+                        <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
+                        @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
+                            <x-menu-item title="Weather" icon="phosphor-sun-duotone" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
+                        @endif
 
                         <x-menu-separator title="LOGGING" />
 
                         @can('log-contacts')
-                            <x-menu-item title="Log Contact" icon="o-pencil-square" link="{{ route('logging.station-select') }}" exact :active="request()->routeIs('logging.station-select', 'logging.session')" />
-                            <x-menu-item title="Transcribe Paper Log" icon="o-clipboard-document" link="{{ route('logging.transcribe.select') }}" :active="request()->routeIs('logging.transcribe.*')" />
+                            <x-menu-item title="Log Contact" icon="phosphor-pencil-line" link="{{ route('logging.station-select') }}" exact :active="request()->routeIs('logging.station-select', 'logging.session')" />
+                            <x-menu-item title="Transcribe Paper Log" icon="phosphor-note-pencil-duotone" link="{{ route('logging.transcribe.select') }}" :active="request()->routeIs('logging.transcribe.*')" />
                         @endcan
 
-                        <x-menu-item title="View Log" icon="o-queue-list" link="{{ route('logbook.index') }}" />
+                        <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
 
                         @can('import-contacts')
-                            <x-menu-item title="External Loggers" icon="o-signal" link="{{ route('admin.external-loggers') }}" :active="request()->routeIs('admin.external-loggers') || request()->routeIs('admin.import-adif')" />
+                            <x-menu-item title="External Loggers" icon="phosphor-broadcast" link="{{ route('admin.external-loggers') }}" :active="request()->routeIs('admin.external-loggers') || request()->routeIs('admin.import-adif')" />
                         @endcan
 
                         <x-menu-separator title="EVENT MANAGEMENT" />
 
-                        <x-menu-item title="Scoring" icon="o-trophy" link="/scoring" />
+                        <x-menu-item title="Scoring" icon="phosphor-trophy" link="/scoring" />
 
                         @can('manage-bonuses')
-                            <x-menu-item title="Bonuses" icon="o-star" link="/bonuses" />
+                            <x-menu-item title="Bonuses" icon="phosphor-star" link="/bonuses" />
                         @endcan
 
                         @can('view-stations')
-                            <x-menu-item title="Stations" icon="o-server-stack" link="{{ route('stations.index') }}" route="stations.index" />
+                            <x-menu-item title="Stations" icon="phosphor-hard-drives" link="{{ route('stations.index') }}" route="stations.index" />
                         @endcan
 
-                        <x-menu-item title="Shift Schedule" icon="o-calendar-days" link="{{ route('schedule.index') }}" :active="request()->routeIs('schedule.index', 'schedule.my-shifts')" />
-                        <x-menu-item title="Site Safety" icon="o-shield-check" link="{{ route('site-safety.index') }}" :active="request()->routeIs('site-safety.index')" />
+                        <x-menu-item title="Shift Schedule" icon="phosphor-calendar-dots" link="{{ route('schedule.index') }}" :active="request()->routeIs('schedule.index', 'schedule.my-shifts')" />
+                        <x-menu-item title="Site Safety" icon="phosphor-shield-check" link="{{ route('site-safety.index') }}" :active="request()->routeIs('site-safety.index')" />
 
-                        <x-menu-sub title="Equipment" icon="o-wrench-screwdriver">
+                        <x-menu-sub title="Equipment" icon="phosphor-toolbox">
                             <x-menu-item title="My Catalog" link="{{ route('equipment.index') }}" route="equipment.index" />
                             <x-menu-item title="Club Equipment" link="{{ route('equipment.club') }}" route="equipment.club" />
                             @can('view-all-equipment')
@@ -215,78 +223,85 @@
                             @endcan
                         </x-menu-sub>
 
-                        <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
-                        <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
+                        <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
+                        <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
 
                         @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
                         @if($activeEvent)
                             @can('log-contacts')
-                                <x-menu-item title="Message Traffic" icon="o-envelope"
+                                <x-menu-item title="Message Traffic" icon="phosphor-envelope"
                                     link="{{ route('events.messages.index', $activeEvent) }}"
                                     :active="request()->routeIs('events.messages.*')" />
                             @endcan
-                            <x-menu-item title="W1AW Bulletin" icon="o-radio"
+                            <x-menu-item title="W1AW Bulletin" icon="phosphor-radio"
                                 link="{{ route('events.w1aw-bulletin') }}"
                                 :active="request()->routeIs('events.w1aw-bulletin')" />
                         @endif
 
-                        @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment'])
+                        @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment', 'manage-weather'])
                             <x-menu-separator title="ADMINISTRATION" />
 
                             @canany(['create-events', 'edit-events'])
-                                <x-menu-item title="Events" icon="o-calendar-days" link="/events" />
+                                <x-menu-item title="Events" icon="phosphor-calendar-star" link="/events" />
                             @endcanany
 
                             @can('manage-shifts')
-                                <x-menu-item title="Manage Schedule" icon="o-cog-6-tooth" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />
+                                <x-menu-item title="Manage Schedule" icon="phosphor-calendar-plus-duotone" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />
                             @endcan
 
                             @can('manage-shifts')
-                                <x-menu-item title="Manage Safety Checklist" icon="o-clipboard-document-check" link="{{ route('site-safety.manage') }}" :active="request()->routeIs('site-safety.manage')" />
+                                <x-menu-item title="Manage Safety Checklist" icon="phosphor-clipboard-text" link="{{ route('site-safety.manage') }}" :active="request()->routeIs('site-safety.manage')" />
+                            @endcan
+
+                            @can('manage-weather')
+                                <x-menu-item title="Manage Weather" icon="phosphor-cloud-sun-duotone" link="{{ route('weather.manage') }}" :active="request()->routeIs('weather.manage')" />
                             @endcan
 
                             @can('manage-guestbook')
                                 @php $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
                                 @if($activeEvent)
-                                    <x-menu-item title="Manage Guestbook" icon="o-book-open" link="{{ route('events.guestbook', $activeEvent->id) }}" :active="request()->routeIs('events.guestbook')" />
+                                    <x-menu-item title="Manage Guestbook" icon="phosphor-notebook" link="{{ route('events.guestbook', $activeEvent->id) }}" :active="request()->routeIs('events.guestbook')" />
                                 @endif
                             @endcan
 
                             @canany(['manage-event-equipment', 'view-all-equipment'])
                                 @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
                                 @if($activeEvent)
-                                    <x-menu-item title="Event Equipment" icon="o-wrench-screwdriver" link="{{ route('events.equipment.dashboard', $activeEvent) }}" :active="request()->routeIs('events.equipment.dashboard')" />
+                                    <x-menu-item title="Event Equipment" icon="phosphor-wrench" link="{{ route('events.equipment.dashboard', $activeEvent) }}" :active="request()->routeIs('events.equipment.dashboard')" />
                                 @endif
                             @endcanany
 
                             @can('manage-users')
-                                <x-menu-item title="Users" icon="o-user-group" link="/users" />
+                                <x-menu-item title="Users" icon="phosphor-users-three" link="/users" />
                             @endcan
 
                             @can('manage-settings')
-                                <x-menu-item title="Settings" icon="o-cog-6-tooth" link="/settings" />
+                                <x-menu-item title="Settings" icon="phosphor-gear-six" link="/settings" />
                             @endcan
 
                             @can('view-reports')
-                                <x-menu-item title="Reports" icon="o-document-chart-bar" link="/reports" />
+                                <x-menu-item title="Reports" icon="phosphor-chart-bar" link="/reports" />
                             @endcan
 
                             @can('view-security-logs')
-                                <x-menu-item title="Audit Logs" icon="o-clipboard-document-list" link="{{ route('admin.audit-logs') }}" :active="request()->routeIs('admin.audit-logs')" />
+                                <x-menu-item title="Audit Logs" icon="phosphor-scroll" link="{{ route('admin.audit-logs') }}" :active="request()->routeIs('admin.audit-logs')" />
                             @endcan
 
                             @if(config('developer.enabled'))
                                 @can('manage-settings')
-                                    <x-menu-item title="Developer Tools" icon="o-wrench" link="{{ route('admin.developer') }}" :active="request()->routeIs('admin.developer')" />
+                                    <x-menu-item title="Developer Tools" icon="phosphor-code" link="{{ route('admin.developer') }}" :active="request()->routeIs('admin.developer')" />
                                 @endcan
                             @endif
                         @endcanany
                     @else
-                        <x-menu-item title="Home" icon="o-home" link="/" />
-                        <x-menu-item title="Section Map" icon="o-map" link="{{ route('section-map') }}" />
-                        <x-menu-item title="View Log" icon="o-queue-list" link="{{ route('logbook.index') }}" />
-                        <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
-                        <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" />
+                        <x-menu-item title="Home" icon="phosphor-house" link="/" />
+                        <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
+                        @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
+                            <x-menu-item title="Weather" icon="phosphor-sun-duotone" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
+                        @endif
+                        <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
+                        <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
+                        <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" />
                     @endauth
                     </x-menu>
                 </div>
@@ -299,7 +314,7 @@
                     class="flex justify-center py-1 border-t border-base-300/50 text-base-content/60 hover:text-base-content/90 transition-all duration-150 shrink-0"
                     aria-label="Scroll down"
                 >
-                    <x-icon name="o-chevron-down" class="w-4 h-4" />
+                    <x-icon name="phosphor-caret-down" class="w-4 h-4" />
                 </button>
             </div>
         </x-slot:sidebar>
@@ -365,16 +380,16 @@
                 const data = Array.isArray(event) ? event[0] : event;
 
                 const iconMap = {
-                    'o-check-circle': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>',
-                    'o-x-circle': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>',
-                    'o-exclamation-triangle': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>',
-                    'o-information-circle': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>',
-                    'o-envelope': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>',
-                    'o-key': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" /></svg>',
-                    'o-lock-closed': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>',
-                    'o-lock-open': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>',
-                    'o-trash': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>',
-                    'o-clock': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>',
+                    'phosphor-check-circle': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>',
+                    'phosphor-x-circle': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>',
+                    'phosphor-warning': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>',
+                    'phosphor-info': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>',
+                    'phosphor-envelope': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>',
+                    'phosphor-key': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" /></svg>',
+                    'phosphor-lock': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>',
+                    'phosphor-lock-open': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>',
+                    'phosphor-trash': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>',
+                    'phosphor-clock': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>',
                 };
 
                 const cssMap = {
@@ -385,15 +400,15 @@
                 };
 
                 const defaultIcons = {
-                    success: 'o-check-circle',
-                    error: 'o-x-circle',
-                    warning: 'o-exclamation-triangle',
-                    info: 'o-information-circle',
+                    success: 'phosphor-check-circle',
+                    error: 'phosphor-x-circle',
+                    warning: 'phosphor-warning',
+                    info: 'phosphor-info',
                 };
 
                 const type = data.type || 'info';
-                const iconName = data.icon || defaultIcons[type] || 'o-information-circle';
-                const icon = iconMap[iconName] || iconMap['o-information-circle'];
+                const iconName = data.icon || defaultIcons[type] || 'phosphor-info';
+                const icon = iconMap[iconName] || iconMap['phosphor-info'];
                 const css = data.css || cssMap[type] || 'alert-info';
 
                 window.toast({

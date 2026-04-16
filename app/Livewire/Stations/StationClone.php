@@ -6,6 +6,7 @@ use App\Models\Equipment;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Station;
+use App\Services\EventContextService;
 use App\Services\StationCloneService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -52,7 +53,7 @@ class StationClone extends Component
         $this->availableStations = collect();
 
         // Default target to context event
-        $contextEvent = app(\App\Services\EventContextService::class)->getContextEvent();
+        $contextEvent = app(EventContextService::class)->getContextEvent();
         if ($contextEvent) {
             $this->targetEventId = $contextEvent->id;
         }
@@ -263,7 +264,7 @@ class StationClone extends Component
             $this->dispatch('toast', [
                 'title' => 'Successfully Cloned Stations',
                 'description' => $description,
-                'icon' => 'o-check-circle',
+                'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
             ]);
 
@@ -280,7 +281,7 @@ class StationClone extends Component
                 $this->dispatch('toast', [
                     'title' => 'Warning',
                     'description' => $warning,
-                    'icon' => 'o-exclamation-triangle',
+                    'icon' => 'phosphor-warning',
                     'css' => 'alert-warning',
                 ]);
             }
@@ -292,7 +293,7 @@ class StationClone extends Component
                 $this->dispatch('toast', [
                     'title' => 'Error',
                     'description' => $error,
-                    'icon' => 'o-x-circle',
+                    'icon' => 'phosphor-x-circle',
                     'css' => 'alert-error',
                 ]);
             }
@@ -358,7 +359,7 @@ class StationClone extends Component
         $this->copyEquipmentAssignments = true;
 
         // Reset to context event (session-overridden or active event)
-        $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
+        $activeEvent = app(EventContextService::class)->getContextEvent();
         if ($activeEvent) {
             $this->targetEventId = $activeEvent->id;
         }

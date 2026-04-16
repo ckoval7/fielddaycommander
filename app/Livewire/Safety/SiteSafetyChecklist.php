@@ -255,7 +255,7 @@ class SiteSafetyChecklist extends Component
         $this->dispatch('toast',
             title: 'Bonus Earned',
             description: 'The '.$checklistType->label().' bonus ('.$bonusType->base_points.' pts) has been awarded.',
-            icon: 'o-check-circle',
+            icon: 'phosphor-check-circle',
             css: 'alert-success'
         );
     }
@@ -290,7 +290,7 @@ class SiteSafetyChecklist extends Component
             $this->dispatch('toast',
                 title: 'Bonus Revoked',
                 description: 'The '.$checklistType->label().' bonus has been revoked because the checklist is no longer complete.',
-                icon: 'o-exclamation-triangle',
+                icon: 'phosphor-warning',
                 css: 'alert-warning'
             );
         }

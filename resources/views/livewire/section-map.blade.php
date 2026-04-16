@@ -37,6 +37,8 @@
                     colorMode: 'band',
                     highlightSection: null,
                     hoverSection: null,
+                    pinnedSection: null,
+                    lastPointerType: 'mouse',
                     hoverTimer: null,
                     tooltipX: 0,
                     tooltipY: 0,
@@ -108,11 +110,12 @@
 
                     clearHover() {
                         clearTimeout(this.hoverTimer);
-                        this.highlightSection = null;
-                        this.hoverSection = null;
+                        this.highlightSection = this.pinnedSection;
+                        this.hoverSection = this.pinnedSection;
                     },
 
                     handlePointerMove(event) {
+                        if (event.pointerType === 'touch') return;
                         const target = event.target.closest('.section-path');
                         const section = target?.id;
                         this.tooltipX = event.clientX;
@@ -123,6 +126,38 @@
                             }
                         } else if (this.highlightSection) {
                             this.clearHover();
+                        }
+                    },
+
+                    handleTouchTap(event) {
+                        if (this.lastPointerType !== 'touch') return;
+                        const target = event.target.closest('.section-path');
+                        const section = target?.id;
+                        if (section) {
+                            if (this.pinnedSection === section) {
+                                this.pinnedSection = null;
+                                this.highlightSection = null;
+                                this.hoverSection = null;
+                            } else {
+                                this.pinnedSection = section;
+                                this.highlightSection = section;
+                                this.hoverSection = section;
+                                this.tooltipX = event.clientX;
+                                this.tooltipY = event.clientY;
+                            }
+                        } else {
+                            this.pinnedSection = null;
+                            this.highlightSection = null;
+                            this.hoverSection = null;
+                        }
+                    },
+
+                    handleWindowClick(event) {
+                        if (this.lastPointerType !== 'touch' || !this.pinnedSection) return;
+                        if (!event.target.closest('svg')) {
+                            this.pinnedSection = null;
+                            this.highlightSection = null;
+                            this.hoverSection = null;
                         }
                     },
 
@@ -157,19 +192,21 @@
                     },
 
                     bandHsl: {
-                        '160m': [280, 60, 45],
-                        '80m': [250, 55, 50],
-                        '40m': [145, 60, 42],
-                        '20m': [210, 70, 50],
-                        '15m': [30, 85, 52],
-                        '10m': [0, 70, 55],
-                        '6m': [175, 65, 45],
-                        '2m': [320, 60, 55],
-                        '1.25m': [55, 70, 48],
-                        '70cm': [195, 70, 45],
-                        '33cm': [90, 50, 45],
-                        '23cm': [350, 65, 50],
-                        'Satellite': [220, 60, 60],
+                        // HF bands — each a distinct hue, ~50-90° apart
+                        '160m': [355, 78, 50],  // Crimson Red
+                        '80m':  [25,  90, 53],  // Vivid Orange
+                        '40m':  [52,  87, 45],  // Amber (darkened for legibility)
+                        '20m':  [140, 62, 40],  // Forest Green
+                        '15m':  [200, 82, 46],  // Cerulean Blue
+                        '10m':  [258, 68, 58],  // Indigo
+                        // VHF / UHF / Satellite — all one shared color
+                        '6m':       [308, 70, 54],
+                        '2m':       [308, 70, 54],
+                        '1.25m':    [308, 70, 54],
+                        '70cm':     [308, 70, 54],
+                        '33cm':     [308, 70, 54],
+                        '23cm':     [308, 70, 54],
+                        'Satellite':[308, 70, 54],  // Magenta-Purple
                     },
 
                     bandColor(band) {
@@ -242,6 +279,7 @@
                         return style;
                     }
                 }"
+                @click.window="handleWindowClick($event)"
             >
                 <div class="flex flex-wrap justify-center gap-2 mb-3">
                     <div class="join">
@@ -279,6 +317,8 @@
    xml:space="preserve"
    xmlns="http://www.w3.org/2000/svg"
    @pointermove="handlePointerMove($event)"
+   @pointerdown="lastPointerType = $event.pointerType"
+   @click="handleTouchTap($event)"
    @pointerleave="clearHover()"
    role="img"
    aria-label="ARRL Section Map"
@@ -830,21 +870,25 @@
                 </div>
 
                 <div
-                    x-show="hoverSection && sectionData[hoverSection]"
+                    x-show="(hoverSection || pinnedSection) && sectionData[hoverSection || pinnedSection]"
                     x-cloak
                     :style="getTooltipStyle()"
                     class="fixed z-50 px-3 py-2 text-sm bg-base-100 border border-base-300 rounded-lg shadow-lg pointer-events-none"
                 >
-                    <div class="font-semibold" x-text="sectionData[hoverSection]?.name + ' (' + hoverSection + ')'"></div>
-                    <div x-show="sectionData[hoverSection]?.count > 0">
-                        <span x-text="sectionData[hoverSection]?.count"></span> QSOs &middot;
-                        <span x-text="sectionData[hoverSection]?.bands?.join(', ')"></span> &middot;
-                        <span x-text="sectionData[hoverSection]?.modes?.join(', ')"></span>
-                    </div>
-                    <div x-show="sectionData[hoverSection]?.latestQsoTime" class="text-base-content/50">
-                        Last worked <span x-text="timeAgo(sectionData[hoverSection]?.latestQsoTime)"></span>
-                    </div>
-                    <div x-show="sectionData[hoverSection]?.count === 0" class="text-base-content/50">Not worked</div>
+                    <template x-if="hoverSection || pinnedSection">
+                        <div>
+                            <div class="font-semibold" x-text="sectionData[hoverSection || pinnedSection]?.name + ' (' + (hoverSection || pinnedSection) + ')'"></div>
+                            <div x-show="sectionData[hoverSection || pinnedSection]?.count > 0">
+                                <span x-text="sectionData[hoverSection || pinnedSection]?.count"></span> QSOs &middot;
+                                <span x-text="sectionData[hoverSection || pinnedSection]?.bands?.join(', ')"></span> &middot;
+                                <span x-text="sectionData[hoverSection || pinnedSection]?.modes?.join(', ')"></span>
+                            </div>
+                            <div x-show="sectionData[hoverSection || pinnedSection]?.latestQsoTime" class="text-base-content/50">
+                                Last worked <span x-text="timeAgo(sectionData[hoverSection || pinnedSection]?.latestQsoTime)"></span>
+                            </div>
+                            <div x-show="sectionData[hoverSection || pinnedSection]?.count === 0" class="text-base-content/50">Not worked</div>
+                        </div>
+                    </template>
                 </div>
 
                 {{-- Band legend --}}
@@ -853,12 +897,16 @@
                         <div class="flex items-center gap-1">
                             <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
                         </div>
-                        <template x-for="band in ['160m','80m','40m','20m','15m','10m','6m','2m','1.25m','70cm','33cm','23cm','Satellite']" :key="band">
+                        <template x-for="band in ['160m','80m','40m','20m','15m','10m']" :key="band">
                             <div class="flex items-center gap-1">
                                 <span class="inline-block w-3 h-3 rounded" :style="{ background: bandColor(band) }"></span>
                                 <span x-text="band"></span>
                             </div>
                         </template>
+                        <div class="flex items-center gap-1">
+                            <span class="inline-block w-3 h-3 rounded" :style="{ background: bandColor('6m') }"></span>
+                            <span>VHF/UHF/Sat</span>
+                        </div>
                     </div>
                     <div class="flex items-center justify-center gap-3 mt-1 text-xs text-base-content/50">
                         <span>Intensity:</span>
@@ -903,7 +951,7 @@
     @else
         <x-card class="shadow-md">
             <div class="text-center py-12">
-                <x-icon name="o-map" class="w-16 h-16 mx-auto text-warning" />
+                <x-icon name="phosphor-map-trifold" class="w-16 h-16 mx-auto text-warning" />
                 <p class="mt-4 text-lg font-medium">No Active Event</p>
                 <p class="text-sm text-base-content/70 mt-2">No active event &mdash; section data will appear during Field Day.</p>
             </div>

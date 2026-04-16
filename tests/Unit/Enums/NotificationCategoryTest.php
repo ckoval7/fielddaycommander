@@ -10,7 +10,7 @@ test('all categories have labels', function () {
 
 test('all categories have icons', function () {
     foreach (NotificationCategory::cases() as $category) {
-        expect($category->icon())->toBeString()->toStartWith('o-');
+        expect($category->icon())->toBeString()->not->toBeEmpty();
     }
 });
 
@@ -34,6 +34,7 @@ test('specific category values match expected strings', function () {
     expect(NotificationCategory::QsoMilestone->value)->toBe('qso_milestone');
     expect(NotificationCategory::Equipment->value)->toBe('equipment');
     expect(NotificationCategory::BulletinReminder->value)->toBe('bulletin_reminder');
+    expect(NotificationCategory::WeatherAlert->value)->toBe('weather_alert');
 });
 
 test('debounce values match specification', function () {
@@ -44,20 +45,22 @@ test('debounce values match specification', function () {
     expect(NotificationCategory::QsoMilestone->debounceSeconds())->toBe(0);
     expect(NotificationCategory::Equipment->debounceSeconds())->toBe(300);
     expect(NotificationCategory::BulletinReminder->debounceSeconds())->toBe(0);
+    expect(NotificationCategory::WeatherAlert->debounceSeconds())->toBe(0);
 });
 
 test('category icons match specification', function () {
-    expect(NotificationCategory::NewSection->icon())->toBe('o-globe-americas');
-    expect(NotificationCategory::Guestbook->icon())->toBe('o-book-open');
-    expect(NotificationCategory::Photos->icon())->toBe('o-photo');
-    expect(NotificationCategory::StationStatus->icon())->toBe('o-signal');
-    expect(NotificationCategory::QsoMilestone->icon())->toBe('o-trophy');
-    expect(NotificationCategory::Equipment->icon())->toBe('o-wrench-screwdriver');
-    expect(NotificationCategory::BulletinReminder->icon())->toBe('o-radio');
+    expect(NotificationCategory::NewSection->icon())->toBe('phosphor-globe');
+    expect(NotificationCategory::Guestbook->icon())->toBe('phosphor-book-open');
+    expect(NotificationCategory::Photos->icon())->toBe('phosphor-image');
+    expect(NotificationCategory::StationStatus->icon())->toBe('phosphor-cell-signal-high');
+    expect(NotificationCategory::QsoMilestone->icon())->toBe('phosphor-trophy');
+    expect(NotificationCategory::Equipment->icon())->toBe('phosphor-wrench');
+    expect(NotificationCategory::BulletinReminder->icon())->toBe('phosphor-radio');
+    expect(NotificationCategory::WeatherAlert->icon())->toBe('phosphor-cloud-lightning-duotone');
 });
 
-test('there are exactly eight categories', function () {
-    expect(NotificationCategory::cases())->toHaveCount(8);
+test('there are exactly nine categories', function () {
+    expect(NotificationCategory::cases())->toHaveCount(9);
 });
 
 test('shift checkin reminder has correct properties', function () {
@@ -65,7 +68,7 @@ test('shift checkin reminder has correct properties', function () {
 
     expect($category->value)->toBe('shift_checkin_reminder')
         ->and($category->label())->toBe('Shift Check-in Reminders')
-        ->and($category->icon())->toBe('o-clock')
+        ->and($category->icon())->toBe('phosphor-clock')
         ->and($category->debounceSeconds())->toBe(0)
         ->and($category->description())->toBe('Reminders before your scheduled shifts');
 });

@@ -33,7 +33,7 @@ it('renders with time mode', function () {
 });
 
 it('renders label and icon', function () {
-    $html = Blade::render('<x-flatpickr label="Start Time" icon="o-clock" wire:model="testField" />');
+    $html = Blade::render('<x-flatpickr label="Start Time" icon="phosphor-clock" wire:model="testField" />');
 
     expect($html)
         ->toContain('Start Time')

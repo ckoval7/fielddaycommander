@@ -281,7 +281,7 @@ test('notification data structure matches contract', function () {
     expect($data['message'])->toBe('W1AW worked CT on 20m CW');
     expect($data['url'])->toBe('/contacts');
     expect($data['count'])->toBe(1);
-    expect($data['icon'])->toBe('o-globe-americas');
+    expect($data['icon'])->toBe('phosphor-globe');
 });
 
 test('shouldDebounce uses real time when app time is offset by time travel', function () {

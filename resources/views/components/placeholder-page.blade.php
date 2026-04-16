@@ -1,4 +1,4 @@
-@props(['title', 'icon' => 'o-wrench-screwdriver'])
+@props(['title', 'icon' => 'phosphor-wrench'])
 
 <div class="flex flex-col items-center justify-center min-h-[60vh] text-center">
     <div class="mb-6">
@@ -11,5 +11,5 @@
         This page is under construction and will be available soon.
     </p>
 
-    <x-button label="Back to Dashboard" icon="o-home" link="/" class="btn-primary" />
+    <x-button label="Back to Dashboard" icon="phosphor-house" link="/" class="btn-primary" />
 </div>

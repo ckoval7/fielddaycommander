@@ -145,21 +145,21 @@ class DashboardEditor extends Component
             $this->dispatch('toast', [
                 'title' => 'Success',
                 'description' => 'Dashboard saved',
-                'icon' => 'o-check-circle',
+                'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
             ]);
         } catch (\InvalidArgumentException $e) {
             $this->dispatch('toast', [
                 'title' => 'Validation Error',
                 'description' => $e->getMessage(),
-                'icon' => 'o-exclamation-triangle',
+                'icon' => 'phosphor-warning',
                 'css' => 'alert-error',
             ]);
         } catch (\OverflowException $e) {
             $this->dispatch('toast', [
                 'title' => 'Limit Exceeded',
                 'description' => $e->getMessage(),
-                'icon' => 'o-exclamation-triangle',
+                'icon' => 'phosphor-warning',
                 'css' => 'alert-error',
             ]);
         }
@@ -191,7 +191,7 @@ class DashboardEditor extends Component
         $this->dispatch('toast', [
             'title' => 'Cancelled',
             'description' => 'Changes discarded',
-            'icon' => 'o-x-circle',
+            'icon' => 'phosphor-x-circle',
             'css' => 'alert-warning',
         ]);
     }
@@ -327,7 +327,7 @@ class DashboardEditor extends Component
         $this->dispatch('toast', [
             'title' => 'Widget Removed',
             'description' => 'Widget has been removed from the dashboard',
-            'icon' => 'o-trash',
+            'icon' => 'phosphor-trash',
             'css' => 'alert-info',
         ]);
     }
@@ -349,7 +349,7 @@ class DashboardEditor extends Component
             $this->dispatch('toast', [
                 'title' => 'Limit Reached',
                 'description' => "Cannot add more than {$maxWidgets} widgets per dashboard.",
-                'icon' => 'o-exclamation-triangle',
+                'icon' => 'phosphor-warning',
                 'css' => 'alert-error',
             ]);
 
@@ -375,7 +375,7 @@ class DashboardEditor extends Component
         $this->dispatch('toast', [
             'title' => 'Widget Added',
             'description' => 'New widget has been added to the dashboard',
-            'icon' => 'o-plus-circle',
+            'icon' => 'phosphor-plus-circle',
             'css' => 'alert-success',
         ]);
     }
@@ -439,7 +439,7 @@ class DashboardEditor extends Component
             $this->dispatch('toast', [
                 'title' => 'Widget Updated',
                 'description' => 'Widget configuration saved',
-                'icon' => 'o-check-circle',
+                'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
             ]);
 
@@ -470,7 +470,7 @@ class DashboardEditor extends Component
      */
     public function getWidgetTypeIcon(string $type): string
     {
-        return config("dashboard.widget_types.{$type}.icon", 'o-cube');
+        return config("dashboard.widget_types.{$type}.icon", 'phosphor-cube');
     }
 
     public function render(): View

@@ -5,12 +5,12 @@
             @can('create', \App\Models\Station::class)
                 <x-button
                     label="Clone from Event"
-                    icon="o-arrow-path"
+                    icon="phosphor-arrow-clockwise"
                     class="btn-outline"
                     wire:click="$dispatch('open-clone-modal')"
                     responsive
                 />
-                <x-button label="Add Station" icon="o-plus" class="btn-primary" link="{{ route('stations.create') }}" wire:navigate responsive />
+                <x-button label="Add Station" icon="phosphor-plus" class="btn-primary" link="{{ route('stations.create') }}" wire:navigate responsive />
             @endcan
         </x-slot:actions>
     </x-header>
@@ -67,7 +67,7 @@
         {{-- No Event Selected --}}
         <x-card shadow>
             <div class="text-center py-12 text-base-content/60">
-                <x-icon name="o-radio" class="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <x-icon name="phosphor-radio" class="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p class="text-lg font-semibold mb-2">No Event Selected</p>
                 <p class="text-sm">Please select an event to view its stations.</p>
             </div>
@@ -76,11 +76,11 @@
         {{-- Empty State --}}
         <x-card shadow>
             <div class="text-center py-12 text-base-content/60">
-                <x-icon name="o-radio" class="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <x-icon name="phosphor-radio" class="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p class="text-lg font-semibold mb-2">No stations configured for this event</p>
                 <p class="text-sm mb-4">Get started by adding your first station.</p>
                 @can('create', \App\Models\Station::class)
-                    <x-button label="Add Station" icon="o-plus" class="btn-primary" link="{{ route('stations.create') }}" wire:navigate />
+                    <x-button label="Add Station" icon="phosphor-plus" class="btn-primary" link="{{ route('stations.create') }}" wire:navigate />
                 @endcan
             </div>
         </x-card>
@@ -95,21 +95,21 @@
 
                         <div class="flex flex-wrap gap-2">
                             @if($station->is_gota)
-                                <x-badge value="GOTA" class="badge-primary badge-sm sm:badge-md" icon="o-academic-cap" />
+                                <x-badge value="GOTA" class="badge-primary badge-sm sm:badge-md" icon="phosphor-graduation-cap" />
                             @endif
 
                             @if($station->is_vhf_only)
-                                <x-badge value="VHF-only" class="badge-info badge-sm sm:badge-md" icon="o-signal" />
+                                <x-badge value="VHF-only" class="badge-info badge-sm sm:badge-md" icon="phosphor-cell-signal-high" />
                             @endif
 
                             @if($station->is_satellite)
-                                <x-badge value="Satellite" class="badge-accent badge-sm sm:badge-md" icon="o-globe-alt" />
+                                <x-badge value="Satellite" class="badge-accent badge-sm sm:badge-md" icon="phosphor-globe" />
                             @endif
 
                             @if($station->operatingStatus() === 'occupied')
-                                <x-badge value="Active" class="badge-success badge-sm sm:badge-md" icon="o-bolt" />
+                                <x-badge value="Active" class="badge-success badge-sm sm:badge-md" icon="phosphor-lightning" />
                             @elseif($station->operatingStatus() === 'idle')
-                                <x-badge value="Idle" class="badge-warning badge-sm sm:badge-md" icon="o-clock" />
+                                <x-badge value="Idle" class="badge-warning badge-sm sm:badge-md" icon="phosphor-clock" />
                             @endif
                         </div>
                     </div>
@@ -133,7 +133,7 @@
                     {{-- Equipment Count --}}
                     <div class="mb-3">
                         <div class="flex items-center gap-2">
-                            <x-icon name="o-wrench-screwdriver" class="w-4 h-4 text-base-content/60 flex-shrink-0" />
+                            <x-icon name="phosphor-wrench" class="w-4 h-4 text-base-content/60 flex-shrink-0" />
                             <span class="text-xs sm:text-sm">
                                 <span class="font-semibold">{{ $station->additional_equipment_count }}</span>
                                 {{ Str::plural('item', $station->additional_equipment_count) }} assigned
@@ -162,7 +162,7 @@
                             @if($station->is_active)
                                 <x-button
                                     label="End Sessions"
-                                    icon="o-stop"
+                                    icon="phosphor-stop"
                                     class="btn-sm btn-warning flex-1 min-h-[2.75rem] sm:min-h-[1.75rem]"
                                     wire:click="endSessions({{ $station->id }})"
                                     wire:confirm="End all active operating sessions for '{{ $station->name }}'?"
@@ -171,7 +171,7 @@
                             @endif
                             <x-button
                                 label="Edit"
-                                icon="o-pencil"
+                                icon="phosphor-pencil-simple"
                                 class="btn-sm btn-outline flex-1 min-h-[2.75rem] sm:min-h-[1.75rem]"
                                 link="{{ route('stations.edit', $station) }}"
                                 wire:navigate
@@ -180,7 +180,7 @@
 
                         @can('delete', $station)
                             <x-button
-                                icon="o-trash"
+                                icon="phosphor-trash"
                                 class="btn-sm btn-ghost text-error min-h-[2.75rem] sm:min-h-[1.75rem]"
                                 wire:click="deleteStation({{ $station->id }})"
                                 wire:confirm="Are you sure you want to delete '{{ $station->name }}'? {{ $station->contacts()->exists() ? 'This station has contacts and will be archived (soft deleted).' : 'This station will be permanently deleted.' }}"

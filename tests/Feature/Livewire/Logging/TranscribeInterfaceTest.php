@@ -693,6 +693,202 @@ test('updateContact re-runs duplicate detection', function () {
         ->and($contact2->points)->toBe(0);
 });
 
+test('updateContact preserves digital mode points on edit', function () {
+    $this->actingAs($this->user);
+
+    $digitalMode = Mode::firstOrCreate(
+        ['name' => 'Digital'],
+        ['category' => 'Digital', 'points_fd' => 2, 'points_wfd' => 2],
+    );
+
+    $contact = createTranscriptionContact($this, [
+        'mode_id' => $digitalMode->id,
+        'callsign' => 'W1DIG',
+        'exchange_class' => '3A',
+        'points' => 2,
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, 'W1NEW 1B CT');
+
+    $contact->refresh();
+    expect($contact->is_duplicate)->toBeFalse()
+        ->and($contact->points)->toBe(2);
+});
+
+test('updateContact preserves CW mode points on edit', function () {
+    $this->actingAs($this->user);
+
+    $cwMode = Mode::firstOrCreate(
+        ['name' => 'CW'],
+        ['category' => 'CW', 'points_fd' => 2, 'points_wfd' => 2],
+    );
+
+    $contact = createTranscriptionContact($this, [
+        'mode_id' => $cwMode->id,
+        'callsign' => 'W1CW',
+        'exchange_class' => '3A',
+        'points' => 2,
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, 'W1NEWCW 1B CT');
+
+    $contact->refresh();
+    expect($contact->points)->toBe(2);
+});
+
+test('updateContact preserves GOTA 5 points on edit', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->event->eventConfiguration->id,
+        'is_gota' => true,
+    ]);
+
+    $session = OperatingSession::firstOrCreate(
+        [
+            'station_id' => $gotaStation->id,
+            'is_transcription' => true,
+        ],
+        [
+            'operator_user_id' => $this->user->id,
+            'start_time' => $this->event->start_time,
+            'end_time' => $this->event->end_time,
+            'is_transcription' => true,
+            'power_watts' => 100,
+            'qso_count' => 0,
+        ]
+    );
+
+    $section = Section::where('code', 'CT')->first();
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->event->eventConfiguration->id,
+        'operating_session_id' => $session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'W1GOTA',
+        'exchange_class' => '3A',
+        'section_id' => $section->id,
+        'is_transcribed' => true,
+        'is_gota_contact' => true,
+        'points' => 5,
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $gotaStation])
+        ->call('updateContact', $contact->id, 'W1NEWGOTA 1B CT');
+
+    $contact->refresh();
+    expect($contact->is_gota_contact)->toBeTrue()
+        ->and($contact->points)->toBe(5);
+});
+
+test('toggling timeIsLocal to true converts contactTime and workingDate to local', function () {
+    $this->actingAs($this->user);
+    $this->user->update(['preferred_timezone' => 'America/New_York']);
+
+    $utc = Carbon::parse('2026-04-16 14:00', 'UTC');
+    $local = $utc->copy()->setTimezone('America/New_York');
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('workingDate', $utc->format('Y-m-d'))
+        ->set('contactTime', $utc->format('H:i'))
+        ->set('timeIsLocal', true)
+        ->assertSet('workingDate', $local->format('Y-m-d'))
+        ->assertSet('contactTime', $local->format('H:i'));
+});
+
+test('toggling timeIsLocal to false converts contactTime and workingDate to UTC', function () {
+    $this->actingAs($this->user);
+    $this->user->update(['preferred_timezone' => 'America/New_York']);
+
+    $date = '2026-04-16';
+    $localTime = '10:30';
+    $utcCarbon = Carbon::parse($date.' '.$localTime, 'America/New_York')->utc();
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('timeIsLocal', true)
+        ->set('workingDate', $date)
+        ->set('contactTime', $localTime)
+        ->set('timeIsLocal', false)
+        ->assertSet('workingDate', $utcCarbon->format('Y-m-d'))
+        ->assertSet('contactTime', $utcCarbon->format('H:i'));
+});
+
+test('toggling timeIsLocal preserves the instant across midnight', function () {
+    $this->actingAs($this->user);
+    $this->user->update(['preferred_timezone' => 'America/New_York']);
+
+    // 02:00 UTC = prior-day evening in Eastern
+    $utc = Carbon::parse('2026-04-16 02:00', 'UTC');
+    $local = $utc->copy()->setTimezone('America/New_York');
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('workingDate', $utc->format('Y-m-d'))
+        ->set('contactTime', $utc->format('H:i'))
+        ->set('timeIsLocal', true)
+        ->assertSet('workingDate', $local->format('Y-m-d'))
+        ->assertSet('contactTime', $local->format('H:i'));
+});
+
+test('recall value shows local time when timeIsLocal is true', function () {
+    $this->actingAs($this->user);
+    $this->user->update(['preferred_timezone' => 'America/New_York']);
+
+    $qsoTime = $this->event->start_time->copy()->addHours(2);
+    createTranscriptionContact($this, [
+        'callsign' => 'W1LOC',
+        'qso_time' => $qsoTime,
+    ]);
+
+    $expectedLocal = $qsoTime->copy()->setTimezone('America/New_York')->format('Hi');
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('timeIsLocal', true)
+        ->assertSeeHtml('data-recall-value="'.$expectedLocal.' W1LOC');
+});
+
+test('recall value shows UTC time when timeIsLocal is false', function () {
+    $this->actingAs($this->user);
+    $this->user->update(['preferred_timezone' => 'America/New_York']);
+
+    $qsoTime = $this->event->start_time->copy()->addHours(2);
+    createTranscriptionContact($this, [
+        'callsign' => 'W1UTC',
+        'qso_time' => $qsoTime,
+    ]);
+
+    $expectedUtc = $qsoTime->format('Hi');
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('timeIsLocal', false)
+        ->assertSeeHtml('data-recall-value="'.$expectedUtc.' W1UTC');
+});
+
+test('updateContact parses inline time as local when timeIsLocal is true', function () {
+    $this->actingAs($this->user);
+    $this->user->update(['preferred_timezone' => 'America/New_York']);
+
+    $eventStart = $this->event->start_time;
+    $contact = createTranscriptionContact($this, [
+        'callsign' => 'W1TST',
+        'qso_time' => $eventStart,
+    ]);
+
+    $localDate = $eventStart->copy()->setTimezone('America/New_York')->format('Y-m-d');
+    $expectedUtc = Carbon::parse($localDate.' 10:30', 'America/New_York')->utc();
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('timeIsLocal', true)
+        ->call('updateContact', $contact->id, '1030 W1TST 3A CT');
+
+    $contact->refresh();
+    expect($contact->qso_time->utc()->format('Y-m-d H:i'))->toBe($expectedUtc->format('Y-m-d H:i'));
+});
+
 test('logContact dispatches ContactLogged event', function () {
     $this->actingAs($this->user);
 

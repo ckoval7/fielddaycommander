@@ -65,6 +65,8 @@ class UserManagement extends Component
 
     public string $password_confirmation = '';
 
+    public bool $requirePasswordChange = true;
+
     // Lock modal
     public ?int $lockingUserId = null;
 
@@ -160,7 +162,7 @@ class UserManagement extends Component
         $this->reset([
             'editingUserId', 'call_sign', 'first_name', 'last_name',
             'email', 'license_class', 'is_youth', 'is_cpr_aed_trained', 'role_id', 'password',
-            'password_confirmation', 'inviteMode',
+            'password_confirmation', 'inviteMode', 'requirePasswordChange',
         ]);
         $this->inviteMode = (bool) config('mail.email_configured');
         $this->role_id = $this->roles->first()?->id;
@@ -225,6 +227,7 @@ class UserManagement extends Component
             'is_youth' => $this->is_youth,
             'is_cpr_aed_trained' => $this->is_cpr_aed_trained,
             'password' => $this->inviteMode ? Hash::make(str()->random(32)) : Hash::make($validated['password']),
+            'requires_password_change' => ! $this->inviteMode && $this->requirePasswordChange,
         ]);
 
         $role = Role::find($validated['role_id']);
@@ -257,7 +260,7 @@ class UserManagement extends Component
                 $this->showModal = false;
                 $this->reset(['selectedUsers', 'selectAll']);
                 unset($this->users);
-                $this->dispatch('toast', title: 'Success', description: 'User created and invitation email sent', icon: 'o-envelope', css: 'alert-success');
+                $this->dispatch('toast', title: 'Success', description: 'User created and invitation email sent', icon: 'phosphor-envelope', css: 'alert-success');
             } catch (\Exception $e) {
                 Log::error('Failed to send user invitation email', [
                     'user_id' => $user->id,
@@ -267,13 +270,13 @@ class UserManagement extends Component
                     'error' => $e->getMessage(),
                 ]);
 
-                $this->dispatch('toast', title: 'Warning', description: 'User created but invitation email failed to send. Check application logs for details.', icon: 'o-exclamation-triangle', css: 'alert-warning');
+                $this->dispatch('toast', title: 'Warning', description: 'User created but invitation email failed to send. Check application logs for details.', icon: 'phosphor-warning', css: 'alert-warning');
             }
         } else {
             $this->showModal = false;
             $this->reset(['selectedUsers', 'selectAll']);
             unset($this->users);
-            $this->dispatch('toast', title: 'Success', description: 'User created successfully', icon: 'o-check-circle', css: 'alert-success');
+            $this->dispatch('toast', title: 'Success', description: 'User created successfully', icon: 'phosphor-check-circle', css: 'alert-success');
         }
     }
 
@@ -299,7 +302,7 @@ class UserManagement extends Component
         if ($user->isSystemUser()) {
             $currentRoleId = $user->roles->first()?->id;
             if ($currentRoleId && (int) $validated['role_id'] !== $currentRoleId) {
-                $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account role cannot be changed.', icon: 'o-x-circle', css: 'alert-error');
+                $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account role cannot be changed.', icon: 'phosphor-x-circle', css: 'alert-error');
 
                 return;
             }
@@ -334,7 +337,7 @@ class UserManagement extends Component
 
         unset($this->users);
 
-        $this->dispatch('toast', title: 'Success', description: 'User updated successfully', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'User updated successfully', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function openLockModal(int $userId): void
@@ -348,7 +351,7 @@ class UserManagement extends Component
         Gate::authorize('manage-users');
 
         if (auth()->id() === $this->lockingUserId) {
-            $this->dispatch('toast', title: 'Error', description: 'You cannot lock your own account', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'You cannot lock your own account', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -364,7 +367,7 @@ class UserManagement extends Component
 
         $this->showLockModal = false;
         $this->reset(['lockingUserId']);
-        $this->dispatch('toast', title: 'Success', description: 'Account locked', icon: 'o-lock-closed', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Account locked', icon: 'phosphor-lock', css: 'alert-success');
     }
 
     public function unlockAccount(int $userId): void
@@ -378,7 +381,7 @@ class UserManagement extends Component
             'call_sign' => $user->call_sign,
         ]);
 
-        $this->dispatch('toast', title: 'Success', description: 'Account unlocked', icon: 'o-lock-open', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Account unlocked', icon: 'phosphor-lock-open', css: 'alert-success');
     }
 
     public function forcePasswordReset(int $userId): void
@@ -392,7 +395,7 @@ class UserManagement extends Component
             'call_sign' => $user->call_sign,
         ]);
 
-        $this->dispatch('toast', title: 'Success', description: 'User will be prompted to change password on next login', icon: 'o-key', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'User will be prompted to change password on next login', icon: 'phosphor-key', css: 'alert-success');
     }
 
     public function openResetModal(int $userId): void
@@ -424,7 +427,7 @@ class UserManagement extends Component
             ], isCritical: true);
 
             $this->showResetModal = false;
-            $this->dispatch('toast', title: 'Success', description: 'Password reset successfully', icon: 'o-key', css: 'alert-success');
+            $this->dispatch('toast', title: 'Success', description: 'Password reset successfully', icon: 'phosphor-key', css: 'alert-success');
         } else {
             $user = User::findOrFail($this->resettingUserId);
 
@@ -436,9 +439,9 @@ class UserManagement extends Component
                 ]);
 
                 $this->showResetModal = false;
-                $this->dispatch('toast', title: 'Success', description: 'Password reset email sent', icon: 'o-envelope', css: 'alert-success');
+                $this->dispatch('toast', title: 'Success', description: 'Password reset email sent', icon: 'phosphor-envelope', css: 'alert-success');
             } else {
-                $this->dispatch('toast', title: 'Error', description: __($status), icon: 'o-x-circle', css: 'alert-error');
+                $this->dispatch('toast', title: 'Error', description: __($status), icon: 'phosphor-x-circle', css: 'alert-error');
 
                 return;
             }
@@ -458,7 +461,7 @@ class UserManagement extends Component
         Gate::authorize('manage-users');
 
         if (auth()->id() === $this->deletingUserId) {
-            $this->dispatch('toast', title: 'Error', description: 'You cannot delete your own account', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'You cannot delete your own account', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -474,7 +477,7 @@ class UserManagement extends Component
 
         $this->showDeleteModal = false;
         $this->reset('deletingUserId');
-        $this->dispatch('toast', title: 'Success', description: 'User deleted', icon: 'o-trash', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'User deleted', icon: 'phosphor-trash', css: 'alert-success');
     }
 
     public function bulkAssignRole(): void
@@ -486,7 +489,7 @@ class UserManagement extends Component
         }
 
         if (count($this->selectedUsers) > 50) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_LIMIT_ERROR, icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: self::BULK_LIMIT_ERROR, icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -511,7 +514,7 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll', 'bulk_role_id']);
-        $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} users", icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} users", icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function bulkLockAccounts(): void
@@ -523,13 +526,13 @@ class UserManagement extends Component
         }
 
         if (count($this->selectedUsers) > 50) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_LIMIT_ERROR, icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: self::BULK_LIMIT_ERROR, icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
 
         if (in_array(auth()->id(), $this->selectedUsers)) {
-            $this->dispatch('toast', title: 'Error', description: 'You cannot lock your own account', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'You cannot lock your own account', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -551,7 +554,7 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll', 'bulkLockExpiry']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} accounts locked", icon: 'o-lock-closed', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} accounts locked", icon: 'phosphor-lock', css: 'alert-success');
     }
 
     public function bulkUnlockAccounts(): void
@@ -563,7 +566,7 @@ class UserManagement extends Component
         }
 
         if (count($this->selectedUsers) > 50) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_LIMIT_ERROR, icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: self::BULK_LIMIT_ERROR, icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -584,7 +587,7 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} accounts unlocked", icon: 'o-lock-open', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} accounts unlocked", icon: 'phosphor-lock-open', css: 'alert-success');
     }
 
     public function bulkDeleteUsers(): void
@@ -596,13 +599,13 @@ class UserManagement extends Component
         }
 
         if (count($this->selectedUsers) > 50) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_LIMIT_ERROR, icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: self::BULK_LIMIT_ERROR, icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
 
         if (in_array(auth()->id(), $this->selectedUsers)) {
-            $this->dispatch('toast', title: 'Error', description: 'You cannot delete your own account', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'You cannot delete your own account', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -622,7 +625,7 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} users deleted", icon: 'o-trash', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} users deleted", icon: 'phosphor-trash', css: 'alert-success');
     }
 
     public function render()

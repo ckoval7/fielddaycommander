@@ -89,7 +89,7 @@ test('stat card calculates total score correctly', function () {
         ->toBeArray()
         ->and($data['value'])->toBe('20') // 5 contacts * 2 points * 2x power multiplier
         ->and($data['label'])->toBe('Total Score')
-        ->and($data['icon'])->toBe('o-trophy')
+        ->and($data['icon'])->toBe('phosphor-trophy')
         ->and($data['color'])->toBe('text-success');
 });
 
@@ -134,7 +134,7 @@ test('stat card calculates qso count correctly', function () {
         ->toBeArray()
         ->and($data['value'])->toBe('7')
         ->and($data['label'])->toBe('QSOs')
-        ->and($data['icon'])->toBe('o-chat-bubble-left-right')
+        ->and($data['icon'])->toBe('phosphor-chat-centered-dots')
         ->and($data['color'])->toBe('text-primary');
 });
 
@@ -256,7 +256,7 @@ test('stat card calculates sections worked correctly', function () {
         ->toBeArray()
         ->and($data['value'])->toBe('3') // 3 unique sections
         ->and($data['label'])->toBe('Sections')
-        ->and($data['icon'])->toBe('o-map')
+        ->and($data['icon'])->toBe('phosphor-map-trifold')
         ->and($data['color'])->toBe('text-info');
 });
 
@@ -306,7 +306,7 @@ test('stat card calculates operators count correctly', function () {
         ->toBeArray()
         ->and($data['value'])->toBe('3') // 3 unique operators
         ->and($data['label'])->toBe('Operators')
-        ->and($data['icon'])->toBe('o-users')
+        ->and($data['icon'])->toBe('phosphor-users')
         ->and($data['color'])->toBe('text-warning');
 });
 
@@ -412,7 +412,7 @@ test('stat card handles unknown metric gracefully', function () {
         ->toBeArray()
         ->and($data['value'])->toBe('0')
         ->and($data['label'])->toBe('Unknown')
-        ->and($data['icon'])->toBe('o-question-mark-circle');
+        ->and($data['icon'])->toBe('phosphor-question');
 });
 
 test('stat card returns empty listeners array', function () {

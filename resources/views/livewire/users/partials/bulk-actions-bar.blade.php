@@ -1,4 +1,4 @@
-<x-alert icon="o-check-circle" class="alert-info mb-4">
+<x-alert icon="phosphor-check-circle" class="alert-info mb-4">
     <div class="flex items-center justify-between w-full gap-4">
         <span class="font-semibold">{{ count($selectedUsers) }} user(s) selected</span>
 
@@ -15,7 +15,7 @@
             </div>
             <x-button
                 label="Assign"
-                icon="o-user-group"
+                icon="phosphor-users-three"
                 class="btn-sm btn-primary"
                 wire:click="bulkAssignRole"
                 :disabled="!$bulk_role_id"
@@ -25,7 +25,7 @@
             {{-- Lock --}}
             <x-button
                 label="Lock"
-                icon="o-lock-closed"
+                icon="phosphor-lock"
                 class="btn-sm btn-warning"
                 wire:click="bulkLockAccounts"
                 spinner="bulkLockAccounts"
@@ -34,7 +34,7 @@
             {{-- Unlock --}}
             <x-button
                 label="Unlock"
-                icon="o-lock-open"
+                icon="phosphor-lock-open"
                 class="btn-sm btn-success"
                 wire:click="bulkUnlockAccounts"
                 spinner="bulkUnlockAccounts"
@@ -43,7 +43,7 @@
             {{-- Delete --}}
             <x-button
                 label="Delete"
-                icon="o-trash"
+                icon="phosphor-trash"
                 class="btn-sm btn-error"
                 wire:click="bulkDeleteUsers"
                 spinner="bulkDeleteUsers"

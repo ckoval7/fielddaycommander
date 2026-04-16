@@ -3,6 +3,7 @@
 use App\Livewire\Components\NotificationBell;
 use App\Models\User;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 test('component renders for authenticated users', function () {
@@ -42,7 +43,7 @@ test('component shows notification content', function () {
     createNotification($user, [
         'title' => 'New Section Worked!',
         'message' => 'W1AW worked CT on 20m CW',
-        'icon' => 'o-globe-americas',
+        'icon' => 'phosphor-globe',
     ]);
 
     Livewire::actingAs($user)
@@ -145,7 +146,7 @@ test('load notifications responds to event', function () {
 function createNotification(User $user, array $data = []): DatabaseNotification
 {
     return DatabaseNotification::create([
-        'id' => \Illuminate\Support\Str::uuid()->toString(),
+        'id' => Str::uuid()->toString(),
         'type' => 'App\\Notifications\\InAppNotification',
         'notifiable_type' => User::class,
         'notifiable_id' => $user->id,
@@ -156,7 +157,7 @@ function createNotification(User $user, array $data = []): DatabaseNotification
             'message' => 'This is a test notification',
             'url' => '/contacts',
             'count' => 1,
-            'icon' => 'o-bell',
+            'icon' => 'phosphor-bell',
         ], $data),
     ]);
 }

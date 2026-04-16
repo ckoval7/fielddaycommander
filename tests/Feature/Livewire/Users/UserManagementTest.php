@@ -5,7 +5,9 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
@@ -183,7 +185,7 @@ test('search and filters combine correctly', function () {
 
 test('can create user with invitation email mode', function () {
     Notification::fake();
-    \Illuminate\Support\Facades\Config::set('mail.email_configured', true);
+    Config::set('mail.email_configured', true);
 
     $this->actingAs($this->admin);
 
@@ -247,9 +249,80 @@ test('can create user with manual password mode', function () {
     Notification::assertNothingSent();
 });
 
+test('create user defaults requirePasswordChange to true', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->assertSet('requirePasswordChange', true);
+});
+
+test('manual password user is flagged to change password on next login by default', function () {
+    Notification::fake();
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->set('inviteMode', false)
+        ->set('call_sign', 'W1AW')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('role_id', $this->roles['Operator']->id)
+        ->set('password', 'Password123!')
+        ->set('password_confirmation', 'Password123!')
+        ->call('saveUser');
+
+    $user = User::where('email', 'test@example.com')->first();
+    expect($user->requires_password_change)->toBeTrue();
+});
+
+test('manual password user is not flagged when requirePasswordChange is unchecked', function () {
+    Notification::fake();
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->set('inviteMode', false)
+        ->set('requirePasswordChange', false)
+        ->set('call_sign', 'W1AW')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('role_id', $this->roles['Operator']->id)
+        ->set('password', 'Password123!')
+        ->set('password_confirmation', 'Password123!')
+        ->call('saveUser');
+
+    $user = User::where('email', 'test@example.com')->first();
+    expect($user->requires_password_change)->toBeFalse();
+});
+
+test('invited user is not flagged to change password', function () {
+    Notification::fake();
+    Config::set('mail.email_configured', true);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->set('inviteMode', true)
+        ->set('call_sign', 'W1AW')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('role_id', $this->roles['Operator']->id)
+        ->call('saveUser');
+
+    $user = User::where('email', 'test@example.com')->first();
+    expect($user->requires_password_change)->toBeFalse();
+});
+
 test('create user defaults to manual password when email is not configured', function () {
     Notification::fake();
-    \Illuminate\Support\Facades\Config::set('mail.email_configured', false);
+    Config::set('mail.email_configured', false);
 
     $this->actingAs($this->admin);
 
@@ -279,7 +352,7 @@ test('create user defaults to manual password when email is not configured', fun
 
 test('create user backend guard prevents invitation when email is not configured', function () {
     Notification::fake();
-    \Illuminate\Support\Facades\Config::set('mail.email_configured', false);
+    Config::set('mail.email_configured', false);
 
     $this->actingAs($this->admin);
 
@@ -613,7 +686,7 @@ test('can send password reset email', function () {
         ->assertSet('showResetModal', false)
         ->assertDispatched('toast');
 
-    Notification::assertSentTo($user, \Illuminate\Auth\Notifications\ResetPassword::class);
+    Notification::assertSentTo($user, ResetPassword::class);
 });
 
 test('can reset password with auto-generated password', function () {

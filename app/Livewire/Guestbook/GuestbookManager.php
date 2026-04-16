@@ -258,7 +258,7 @@ class GuestbookManager extends Component
         $this->dispatch('bonus-claimed');
 
         $this->closeVerifyModal();
-        $this->dispatch('toast', title: 'Success', description: 'Entry updated successfully', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Entry updated successfully', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function openDeleteModal(int $entryId): void
@@ -298,7 +298,7 @@ class GuestbookManager extends Component
 
         $this->closeDeleteModal();
         $this->selectedIds = array_diff($this->selectedIds, [$this->deletingEntryId]);
-        $this->dispatch('toast', title: 'Success', description: 'Entry deleted successfully', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Entry deleted successfully', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function toggleSelectAll(): void
@@ -319,7 +319,7 @@ class GuestbookManager extends Component
         }
 
         if (count($this->selectedIds) > 100) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_ACTION_LIMIT_MESSAGE, icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: self::BULK_ACTION_LIMIT_MESSAGE, icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -345,7 +345,7 @@ class GuestbookManager extends Component
 
         $count = count($this->selectedIds);
         $this->selectedIds = [];
-        $this->dispatch('toast', title: 'Success', description: "{$count} entries verified", icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} entries verified", icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function bulkUnverify(): void
@@ -357,7 +357,7 @@ class GuestbookManager extends Component
         }
 
         if (count($this->selectedIds) > 100) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_ACTION_LIMIT_MESSAGE, icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: self::BULK_ACTION_LIMIT_MESSAGE, icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -383,7 +383,7 @@ class GuestbookManager extends Component
 
         $count = count($this->selectedIds);
         $this->selectedIds = [];
-        $this->dispatch('toast', title: 'Success', description: "{$count} entries unverified", icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} entries unverified", icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function bulkDelete(): void
@@ -395,7 +395,7 @@ class GuestbookManager extends Component
         }
 
         if (count($this->selectedIds) > 100) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_ACTION_LIMIT_MESSAGE, icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: self::BULK_ACTION_LIMIT_MESSAGE, icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -412,7 +412,7 @@ class GuestbookManager extends Component
 
         $count = count($this->selectedIds);
         $this->selectedIds = [];
-        $this->dispatch('toast', title: 'Success', description: "{$count} entries deleted", icon: 'o-trash', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} entries deleted", icon: 'phosphor-trash', css: 'alert-success');
     }
 
     public function clearFilters(): void

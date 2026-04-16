@@ -5,7 +5,7 @@
         {{-- Header --}}
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-3xl font-bold">Users</h1>
-            <x-button label="Add User" icon="o-user-plus" class="btn-primary" wire:click="openCreateModal" responsive />
+            <x-button label="Add User" icon="phosphor-user-plus" class="btn-primary" wire:click="openCreateModal" responsive />
         </div>
 
         {{-- Search and Filters --}}
@@ -14,7 +14,7 @@
                 label="Search"
                 placeholder="Search by call sign, name, or email..."
                 wire:model.live.debounce.300ms="search"
-                icon="o-magnifying-glass"
+                icon="phosphor-magnifying-glass"
                 clearable
             />
 
@@ -83,26 +83,26 @@
                                     <div class="flex flex-col gap-1">
                                         @if($user->account_locked_at)
                                             <span class="badge badge-error badge-sm">
-                                                <x-icon name="o-lock-closed" class="w-3 h-3 mr-1" />
+                                                <x-icon name="phosphor-lock" class="w-3 h-3 mr-1" />
                                                 Locked
                                             </span>
                                         @else
                                             <span class="badge badge-success badge-sm">
-                                                <x-icon name="o-check-circle" class="w-3 h-3 mr-1" />
+                                                <x-icon name="phosphor-check-circle" class="w-3 h-3 mr-1" />
                                                 Active
                                             </span>
                                         @endif
 
                                         @if($user->requires_password_change)
                                             <span class="badge badge-warning badge-sm">
-                                                <x-icon name="o-key" class="w-3 h-3 mr-1" />
+                                                <x-icon name="phosphor-key" class="w-3 h-3 mr-1" />
                                                 Reset Required
                                             </span>
                                         @endif
 
                                         @if($user->two_factor_secret)
                                             <span class="badge badge-info badge-sm">
-                                                <x-icon name="o-shield-check" class="w-3 h-3 mr-1" />
+                                                <x-icon name="phosphor-shield-check" class="w-3 h-3 mr-1" />
                                                 2FA
                                             </span>
                                         @endif
@@ -111,29 +111,29 @@
                                 <td>
                                     <x-dropdown>
                                         <x-slot:trigger>
-                                            <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost" />
+                                            <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" />
                                         </x-slot:trigger>
 
-                                        <x-menu-item title="Edit" icon="o-pencil" wire:click="openEditModal({{ $user->id }})" />
+                                        <x-menu-item title="Edit" icon="phosphor-pencil-simple" wire:click="openEditModal({{ $user->id }})" />
                                         <x-menu-separator />
 
                                         @if($user->account_locked_at)
-                                            <x-menu-item title="Unlock Account" icon="o-lock-open" wire:click="unlockAccount({{ $user->id }})" />
+                                            <x-menu-item title="Unlock Account" icon="phosphor-lock-open" wire:click="unlockAccount({{ $user->id }})" />
                                         @else
-                                            <x-menu-item title="Lock Account" icon="o-lock-closed" wire:click="openLockModal({{ $user->id }})" />
+                                            <x-menu-item title="Lock Account" icon="phosphor-lock" wire:click="openLockModal({{ $user->id }})" />
                                         @endif
 
-                                        <x-menu-item title="Force Password Change" icon="o-key" wire:click="forcePasswordReset({{ $user->id }})" />
-                                        <x-menu-item title="Reset Password" icon="o-key" wire:click="openResetModal({{ $user->id }})" />
+                                        <x-menu-item title="Force Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
+                                        <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
                                         <x-menu-separator />
-                                        <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
+                                        <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
                                     </x-dropdown>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="8" class="text-center py-8 text-base-content/60">
-                                    <x-icon name="o-user-group" class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                    <x-icon name="phosphor-users-three" class="w-12 h-12 mx-auto mb-2 opacity-50" />
                                     <p>No users found</p>
                                 </td>
                             </tr>
@@ -164,22 +164,22 @@
                             </div>
                             <x-dropdown>
                                 <x-slot:trigger>
-                                    <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost" />
+                                    <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" />
                                 </x-slot:trigger>
 
-                                <x-menu-item title="Edit" icon="o-pencil" wire:click="openEditModal({{ $user->id }})" />
+                                <x-menu-item title="Edit" icon="phosphor-pencil-simple" wire:click="openEditModal({{ $user->id }})" />
                                 <x-menu-separator />
 
                                 @if($user->account_locked_at)
-                                    <x-menu-item title="Unlock Account" icon="o-lock-open" wire:click="unlockAccount({{ $user->id }})" />
+                                    <x-menu-item title="Unlock Account" icon="phosphor-lock-open" wire:click="unlockAccount({{ $user->id }})" />
                                 @else
-                                    <x-menu-item title="Lock Account" icon="o-lock-closed" wire:click="openLockModal({{ $user->id }})" />
+                                    <x-menu-item title="Lock Account" icon="phosphor-lock" wire:click="openLockModal({{ $user->id }})" />
                                 @endif
 
-                                <x-menu-item title="Force Password Change" icon="o-key" wire:click="forcePasswordReset({{ $user->id }})" />
-                                <x-menu-item title="Reset Password" icon="o-key" wire:click="openResetModal({{ $user->id }})" />
+                                <x-menu-item title="Force Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
+                                <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
                                 <x-menu-separator />
-                                <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
+                                <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
                             </x-dropdown>
                         </div>
 
@@ -194,26 +194,26 @@
 
                             @if($user->account_locked_at)
                                 <span class="badge badge-error badge-sm">
-                                    <x-icon name="o-lock-closed" class="w-3 h-3 mr-1" />
+                                    <x-icon name="phosphor-lock" class="w-3 h-3 mr-1" />
                                     Locked
                                 </span>
                             @else
                                 <span class="badge badge-success badge-sm">
-                                    <x-icon name="o-check-circle" class="w-3 h-3 mr-1" />
+                                    <x-icon name="phosphor-check-circle" class="w-3 h-3 mr-1" />
                                     Active
                                 </span>
                             @endif
 
                             @if($user->requires_password_change)
                                 <span class="badge badge-warning badge-sm">
-                                    <x-icon name="o-key" class="w-3 h-3 mr-1" />
+                                    <x-icon name="phosphor-key" class="w-3 h-3 mr-1" />
                                     Reset Required
                                 </span>
                             @endif
 
                             @if($user->two_factor_secret)
                                 <span class="badge badge-info badge-sm">
-                                    <x-icon name="o-shield-check" class="w-3 h-3 mr-1" />
+                                    <x-icon name="phosphor-shield-check" class="w-3 h-3 mr-1" />
                                     2FA
                                 </span>
                             @endif
@@ -223,7 +223,7 @@
             @empty
                 <div class="card bg-base-100 shadow">
                     <div class="card-body items-center text-center py-8 text-base-content/60">
-                        <x-icon name="o-user-group" class="w-12 h-12 mb-2 opacity-50" />
+                        <x-icon name="phosphor-users-three" class="w-12 h-12 mb-2 opacity-50" />
                         <p>No users found</p>
                     </div>
                 </div>

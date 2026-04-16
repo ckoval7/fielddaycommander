@@ -184,22 +184,22 @@ Size variants:
                     @php
                         $emptyMessages = [
                             'recent_contacts' => [
-                                'icon' => 'o-radio',
+                                'icon' => 'phosphor-radio',
                                 'title' => 'No contacts logged yet',
                                 'message' => 'Start making contacts to see them appear here',
                             ],
                             'active_stations' => [
-                                'icon' => 'o-signal',
+                                'icon' => 'phosphor-cell-signal-high',
                                 'title' => 'No active stations',
                                 'message' => 'Ready to get on the air? Hop on a station and start making contacts!',
                             ],
                             'equipment_status' => [
-                                'icon' => 'o-wrench-screwdriver',
+                                'icon' => 'phosphor-wrench',
                                 'title' => 'No equipment status',
                                 'message' => 'Equipment assignments will appear here',
                             ],
                         ];
-                        $empty = $emptyMessages[$listType] ?? ['icon' => 'o-inbox', 'title' => 'No data available', 'message' => ''];
+                        $empty = $emptyMessages[$listType] ?? ['icon' => 'phosphor-tray', 'title' => 'No data available', 'message' => ''];
                         $iconSize = $size === 'tv' ? 'w-16 h-16' : 'w-12 h-12';
                         $titleSize = $size === 'tv' ? 'text-2xl' : 'text-base';
                         $messageSize = $size === 'tv' ? 'text-lg' : 'text-sm';

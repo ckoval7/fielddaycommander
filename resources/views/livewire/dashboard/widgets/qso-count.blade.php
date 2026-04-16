@@ -33,7 +33,7 @@
         >
             <x-mary-card title="QSO Count & Rate" shadow separator>
                 <x-slot:menu>
-                    <x-mary-icon name="o-radio" class="w-5 h-5 text-primary" />
+                    <x-mary-icon name="phosphor-radio" class="w-5 h-5 text-primary" />
                 </x-slot:menu>
 
                 <div class="space-y-6">

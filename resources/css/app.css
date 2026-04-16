@@ -37,6 +37,7 @@
 @source "../../storage/framework/views/*.php";
 @source "../**/*.blade.php";
 @source "../**/*.js";
+@source "../../app/**/*.php";
 
 /* Custom button styles
  * All buttons tested for WCAG AA compliance (4.5:1 minimum for normal text)

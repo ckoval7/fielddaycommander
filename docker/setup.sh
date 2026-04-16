@@ -55,6 +55,13 @@ set_env "REVERB_APP_KEY" "$(random_string 20)"
 set_env "REVERB_APP_SECRET" "$(random_string 20)"
 set_env "REVERB_APP_ID" "$(random_string 8)"
 
+# External logger UDP ports — uncomment and change to use non-default ports.
+# These must match the ports configured in the FD Commander admin UI
+# (Settings > External Loggers) and the mappings in docker-compose.yml.
+# set_env "N1MM_PORT" "12060"       # N1MM Logger+  (default: 12060)
+# set_env "WSJTX_PORT" "2237"       # WSJT-X / JTDX (default: 2237)
+# set_env "UDP_ADIF_PORT" "2238"    # Plain UDP ADIF (default: 2238)
+
 # Docker-specific defaults
 if $CREATED; then
     echo ""

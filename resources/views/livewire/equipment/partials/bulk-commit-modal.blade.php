@@ -4,7 +4,7 @@
         <x-select
             label="Event"
             wire:model="bulkCommitEventId"
-            icon="o-calendar"
+            icon="phosphor-calendar"
             placeholder="Select an event..."
             :options="$this->upcomingEvents->map(fn($e) => [
                 'value' => $e->id,
@@ -18,7 +18,7 @@
             label="Expected Delivery"
             wire:model="bulkCommitExpectedDeliveryAt"
             mode="date"
-            icon="o-calendar"
+            icon="phosphor-calendar"
             hint="When do you expect to deliver this equipment?"
         />
 
@@ -32,7 +32,7 @@
 
         @error('bulkCommit')
             <div class="alert alert-error">
-                <x-icon name="o-exclamation-triangle" class="w-5 h-5" />
+                <x-icon name="phosphor-warning" class="w-5 h-5" />
                 <span>{{ $message }}</span>
             </div>
         @enderror

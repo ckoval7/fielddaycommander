@@ -49,12 +49,12 @@
         {{-- Normal Mode: Card-based layout --}}
         <x-mary-card title="Band/Mode Activity Grid" shadow separator>
             <x-slot:menu>
-                <x-mary-icon name="o-chart-bar" class="w-5 h-5 text-info" />
+                <x-mary-icon name="phosphor-chart-bar" class="w-5 h-5 text-info" />
             </x-slot:menu>
 
             @if (empty($this->gridData))
                 <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <x-mary-icon name="o-chart-bar" class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <x-mary-icon name="phosphor-chart-bar" class="w-12 h-12 mx-auto mb-2 opacity-50" />
                     <p>No contacts logged yet</p>
                 </div>
             @else

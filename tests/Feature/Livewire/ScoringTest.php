@@ -11,11 +11,13 @@ use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 beforeEach(function () {
     // Mark setup as complete
-    \Illuminate\Support\Facades\DB::table('system_config')->updateOrInsert(
+    DB::table('system_config')->updateOrInsert(
         ['key' => 'setup_completed'],
         ['value' => 'true', 'updated_at' => now()]
     );
@@ -134,7 +136,7 @@ function makeActiveEvent(array $configOverrides = []): EventConfiguration
 // ============================================================================
 
 it('is accessible at the scoring route', function () {
-    $user = \App\Models\User::factory()->create();
+    $user = User::factory()->create();
 
     $this->actingAs($user)
         ->get(route('scoring.index'))
@@ -280,6 +282,57 @@ it('computes the band/mode grid', function () {
     expect($cwRow['cells'][$band->id])->toBe(3);
     expect($cwRow['total_count'])->toBe(3);
     expect($cwRow['total_points'])->toBe(6);
+});
+
+it('hides VHF/UHF bands with no QSOs from the bands list', function () {
+    makeActiveEvent();
+
+    $vhf = Band::create([
+        'name' => '2m',
+        'meters' => 2,
+        'frequency_mhz' => 144.0,
+        'is_hf' => false,
+        'is_vhf_uhf' => true,
+        'is_satellite' => false,
+        'allowed_fd' => true,
+        'allowed_wfd' => true,
+        'sort_order' => 8,
+    ]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $bandIds = collect($component->bands)->pluck('id')->all();
+    expect($bandIds)->not->toContain($vhf->id);
+});
+
+it('shows VHF/UHF bands that have QSOs', function () {
+    $config = makeActiveEvent();
+    $cw = Mode::where('name', 'CW')->first();
+
+    $vhf = Band::create([
+        'name' => '2m',
+        'meters' => 2,
+        'frequency_mhz' => 144.0,
+        'is_hf' => false,
+        'is_vhf_uhf' => true,
+        'is_satellite' => false,
+        'allowed_fd' => true,
+        'allowed_wfd' => true,
+        'sort_order' => 8,
+    ]);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $vhf->id,
+        'mode_id' => $cw->id,
+        'points' => 1,
+        'is_duplicate' => false,
+    ]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $bandIds = collect($component->bands)->pluck('id')->all();
+    expect($bandIds)->toContain($vhf->id);
 });
 
 // ============================================================================
@@ -704,7 +757,7 @@ it('shows bonus column with status chips', function () {
         ->where('code', 'web_submission')
         ->first();
 
-    \App\Models\EventBonus::factory()->create([
+    EventBonus::factory()->create([
         'event_configuration_id' => $config->id,
         'bonus_type_id' => $bonusType->id,
         'is_verified' => true,

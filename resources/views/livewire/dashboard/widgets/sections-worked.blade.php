@@ -9,12 +9,12 @@
             </div>
         </x-slot:title>
         <x-slot:menu>
-            <x-mary-icon name="o-map" class="w-5 h-5 text-info" />
+            <x-mary-icon name="phosphor-map-trifold" class="w-5 h-5 text-info" />
         </x-slot:menu>
 
         @if (empty($data['groups']))
             <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                <x-mary-icon name="o-map" class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <x-mary-icon name="phosphor-map-trifold" class="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>No active event</p>
             </div>
         @else
@@ -32,7 +32,7 @@
                         >
                             {{-- Chevron --}}
                             <x-mary-icon
-                                name="o-chevron-right"
+                                name="phosphor-caret-right"
                                 class="w-4 h-4 flex-shrink-0 transition-transform duration-200"
                                 ::class="openArea === {{ $index }} ? 'rotate-90' : ''"
                             />

@@ -11,9 +11,9 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         @if ($this->bonusSummary['sm_message'])
-                            <x-mary-icon name="o-check-circle" class="w-8 h-8 text-[--tv-status-excellent]" />
+                            <x-mary-icon name="phosphor-check-circle" class="w-8 h-8 text-[--tv-status-excellent]" />
                         @else
-                            <x-mary-icon name="o-x-circle" class="w-8 h-8 text-[--tv-status-poor]" />
+                            <x-mary-icon name="phosphor-x-circle" class="w-8 h-8 text-[--tv-status-poor]" />
                         @endif
                         <span class="text-2xl text-[--tv-text-muted]">SM/SEC Message</span>
                     </div>
@@ -39,9 +39,9 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         @if ($this->bonusSummary['w1aw_bulletin'])
-                            <x-mary-icon name="o-check-circle" class="w-8 h-8 text-[--tv-status-excellent]" />
+                            <x-mary-icon name="phosphor-check-circle" class="w-8 h-8 text-[--tv-status-excellent]" />
                         @else
-                            <x-mary-icon name="o-x-circle" class="w-8 h-8 text-[--tv-status-poor]" />
+                            <x-mary-icon name="phosphor-x-circle" class="w-8 h-8 text-[--tv-status-poor]" />
                         @endif
                         <span class="text-2xl text-[--tv-text-muted]">W1AW Bulletin</span>
                     </div>
@@ -65,7 +65,7 @@
         {{-- Normal Mode: Card-based layout --}}
         <x-mary-card title="Message Traffic" shadow separator>
             <x-slot:menu>
-                <x-mary-icon name="o-envelope" class="w-5 h-5 text-info" />
+                <x-mary-icon name="phosphor-envelope" class="w-5 h-5 text-info" />
             </x-slot:menu>
 
             <div class="space-y-3">
@@ -73,9 +73,9 @@
                 <div class="flex items-center justify-between py-1">
                     <div class="flex items-center gap-2">
                         @if ($this->bonusSummary['sm_message'])
-                            <x-mary-icon name="o-check-circle" class="w-5 h-5 text-success" />
+                            <x-mary-icon name="phosphor-check-circle" class="w-5 h-5 text-success" />
                         @else
-                            <x-mary-icon name="o-x-circle" class="w-5 h-5 text-error" />
+                            <x-mary-icon name="phosphor-x-circle" class="w-5 h-5 text-error" />
                         @endif
                         <span class="text-sm text-gray-700 dark:text-gray-300">SM/SEC Message</span>
                     </div>
@@ -101,9 +101,9 @@
                 <div class="flex items-center justify-between py-1">
                     <div class="flex items-center gap-2">
                         @if ($this->bonusSummary['w1aw_bulletin'])
-                            <x-mary-icon name="o-check-circle" class="w-5 h-5 text-success" />
+                            <x-mary-icon name="phosphor-check-circle" class="w-5 h-5 text-success" />
                         @else
-                            <x-mary-icon name="o-x-circle" class="w-5 h-5 text-error" />
+                            <x-mary-icon name="phosphor-x-circle" class="w-5 h-5 text-error" />
                         @endif
                         <span class="text-sm text-gray-700 dark:text-gray-300">W1AW Bulletin</span>
                     </div>

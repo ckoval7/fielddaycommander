@@ -10,7 +10,7 @@
         {{-- Normal Mode: Card-based layout --}}
         <x-mary-card title="Equipment Status" shadow separator>
             <x-slot:menu>
-                <x-mary-icon name="o-cog" class="w-5 h-5 text-gray-600" />
+                <x-mary-icon name="phosphor-gear" class="w-5 h-5 text-gray-600" />
             </x-slot:menu>
 
             <div class="space-y-4">
@@ -37,7 +37,7 @@
                 {{-- Station List --}}
                 @if ($this->stations->isEmpty())
                     <div class="text-center py-6 text-gray-500 dark:text-gray-400">
-                        <x-mary-icon name="o-cog" class="w-10 h-10 mx-auto mb-2 opacity-50" />
+                        <x-mary-icon name="phosphor-gear" class="w-10 h-10 mx-auto mb-2 opacity-50" />
                         <p class="text-sm">No stations configured</p>
                     </div>
                 @else

@@ -9,13 +9,13 @@
         <x-slot:actions>
             @if($isClubEquipment)
                 <span class="badge badge-club badge-lg">
-                    <x-icon name="o-building-office" class="w-4 h-4 mr-1" />
+                    <x-icon name="phosphor-buildings" class="w-4 h-4 mr-1" />
                     Club Equipment
                 </span>
             @endif
             <x-button
                 label="Cancel"
-                icon="o-x-mark"
+                icon="phosphor-x"
                 class="btn-ghost"
                 link="{{ route('equipment.index') }}"
                 wire:navigate
@@ -33,7 +33,7 @@
                 <x-input
                     label="Make"
                     wire:model="make"
-                    icon="o-tag"
+                    icon="phosphor-tag"
                     placeholder="e.g., Yaesu"
                     required
                 />
@@ -42,7 +42,7 @@
                 <x-input
                     label="Model"
                     wire:model="model"
-                    icon="o-cube"
+                    icon="phosphor-cube"
                     placeholder="e.g., FT-891"
                     required
                 />
@@ -55,14 +55,14 @@
                     option-value="value"
                     option-label="label"
                     required
-                    icon="o-rectangle-stack"
+                    icon="phosphor-stack"
                 />
 
                 {{-- Serial Number --}}
                 <x-input
                     label="Serial Number"
                     wire:model="serial_number"
-                    icon="o-hashtag"
+                    icon="phosphor-hash"
                     placeholder="Optional"
                 />
             </div>
@@ -78,7 +78,7 @@
                         option-label="name"
                         placeholder="Select equipment owner"
                         hint="Choose who this equipment belongs to"
-                        icon="o-user"
+                        icon="phosphor-user"
                         required
                     />
                 </div>
@@ -106,7 +106,7 @@
                         option-label="name"
                         placeholder="No specific manager"
                         hint="Optional - Assign a specific person to manage this club equipment"
-                        icon="o-user"
+                        icon="phosphor-user"
                     />
                 </div>
             @endif
@@ -124,7 +124,7 @@
                     type="number"
                     min="1"
                     max="10000"
-                    icon="o-bolt"
+                    icon="phosphor-lightning"
                     placeholder="Optional"
                 />
 
@@ -135,7 +135,7 @@
                     type="number"
                     step="0.01"
                     min="0"
-                    icon="o-currency-dollar"
+                    icon="phosphor-currency-dollar"
                     placeholder="$0.00"
                     hint="Optional"
                 />
@@ -152,7 +152,7 @@
                     label="Emergency Contact Phone"
                     wire:model="emergency_contact_phone"
                     type="tel"
-                    icon="o-phone"
+                    icon="phosphor-phone"
                     placeholder="Optional"
                 />
 
@@ -160,7 +160,7 @@
                 <x-input
                     label="Tags"
                     wire:model.live="tagsInput"
-                    icon="o-tag"
+                    icon="phosphor-tag"
                     placeholder="Comma-separated"
                     hint="Optional - e.g., HF,Portable,Contest"
                 />
@@ -235,12 +235,12 @@
                                 />
                             @endif
                             <div class="flex items-center gap-2 text-sm">
-                                <x-icon name="o-check-circle" class="w-5 h-5 text-success" />
+                                <x-icon name="phosphor-check-circle" class="w-5 h-5 text-success" />
                                 <span class="text-base-content/70">{{ $photo->getClientOriginalName() }}</span>
                             </div>
                             <x-button
                                 label="Choose Different Photo"
-                                icon="o-arrow-path"
+                                icon="phosphor-arrow-clockwise"
                                 class="btn-sm"
                                 x-on:click="$refs.photoInput.click()"
                             />
@@ -252,7 +252,7 @@
                             x-on:click="$refs.photoInput.click()"
                         >
                             <div wire:loading.remove wire:target="photo">
-                                <x-icon name="o-photo" class="w-12 h-12 text-base-content/40 mb-3" />
+                                <x-icon name="phosphor-image" class="w-12 h-12 text-base-content/40 mb-3" />
                                 <p class="text-base font-medium text-base-content mb-1">Click to upload photo</p>
                                 <p class="text-sm text-base-content/60">PNG or JPEG up to 5MB</p>
                             </div>
@@ -276,7 +276,7 @@
         <div class="flex gap-3">
             <x-button
                 label="Cancel"
-                icon="o-x-mark"
+                icon="phosphor-x"
                 class="btn-ghost"
                 link="{{ route('equipment.index') }}"
                 wire:navigate
@@ -285,7 +285,7 @@
                 label="{{ $equipmentId ? 'Update Equipment' : 'Create Equipment' }}"
                 type="submit"
                 class="btn-primary"
-                icon="o-check"
+                icon="phosphor-check"
                 spinner="save"
             />
         </div>

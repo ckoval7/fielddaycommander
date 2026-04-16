@@ -13,7 +13,7 @@
                             label="Dashboard Title"
                             wire:model="newTitle"
                             placeholder="e.g., My Custom Dashboard"
-                            icon="o-rectangle-stack"
+                            icon="phosphor-stack"
                             required
                             maxlength="255"
                         />
@@ -36,14 +36,14 @@
                             option-label="title"
                             placeholder="Blank Dashboard"
                             hint="Leave blank to start fresh, or select a dashboard to copy"
-                            icon="o-document-duplicate"
+                            icon="phosphor-copy"
                         />
 
                         {{-- Form Actions --}}
                         <div class="flex gap-3 justify-end pt-4">
                             <x-button
                                 label="Cancel"
-                                icon="o-x-mark"
+                                icon="phosphor-x"
                                 class="btn-ghost"
                                 wire:click="cancelCreate"
                             />
@@ -51,7 +51,7 @@
                                 label="Create Dashboard"
                                 type="submit"
                                 class="btn-primary"
-                                icon="o-plus"
+                                icon="phosphor-plus"
                                 spinner="createDashboard"
                             />
                         </div>
@@ -64,12 +64,12 @@
                 @if($dashboards->isEmpty())
                     {{-- Empty State --}}
                     <div class="text-center py-12">
-                        <x-icon name="o-rectangle-stack" class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+                        <x-icon name="phosphor-stack" class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
                         <p class="text-lg font-medium text-base-content mb-2">No dashboards yet</p>
                         <p class="text-sm text-base-content/60 mb-6">Create your first dashboard to get started</p>
                         <x-button
                             label="Create Dashboard"
-                            icon="o-plus"
+                            icon="phosphor-plus"
                             class="btn-primary"
                             wire:click="openCreateForm"
                         />
@@ -95,11 +95,11 @@
 
                                         <div class="flex items-center gap-4 text-xs text-base-content/50">
                                             <span class="flex items-center gap-1">
-                                                <x-icon name="o-calendar" class="w-3.5 h-3.5" />
+                                                <x-icon name="phosphor-calendar" class="w-3.5 h-3.5" />
                                                 Updated {{ $dashboard->updated_at->diffForHumans() }}
                                             </span>
                                             <span class="flex items-center gap-1">
-                                                <x-icon name="o-squares-2x2" class="w-3.5 h-3.5" />
+                                                <x-icon name="phosphor-squares-four" class="w-3.5 h-3.5" />
                                                 {{ $dashboard->getVisibleWidgetCount() }} widgets
                                             </span>
                                         </div>
@@ -110,7 +110,7 @@
                                         @if(!$dashboard->is_default)
                                             <x-button
                                                 label="Set as Default"
-                                                icon="o-star"
+                                                icon="phosphor-star"
                                                 class="btn-sm btn-ghost"
                                                 wire:click="setDefault({{ $dashboard->id }})"
                                                 spinner="setDefault"
@@ -119,7 +119,7 @@
 
                                         <x-button
                                             label="Duplicate"
-                                            icon="o-document-duplicate"
+                                            icon="phosphor-copy"
                                             class="btn-sm btn-ghost"
                                             wire:click="duplicateDashboard({{ $dashboard->id }})"
                                             spinner="duplicateDashboard"
@@ -127,7 +127,7 @@
 
                                         <x-button
                                             label="Delete"
-                                            icon="o-trash"
+                                            icon="phosphor-trash"
                                             class="btn-sm btn-ghost text-error hover:bg-error/10"
                                             wire:click="confirmDelete({{ $dashboard->id }})"
                                         />
@@ -141,7 +141,7 @@
                     <div class="pt-4 border-t border-base-300">
                         <x-button
                             label="Create New Dashboard"
-                            icon="o-plus"
+                            icon="phosphor-plus"
                             class="btn-primary w-full"
                             wire:click="openCreateForm"
                         />
@@ -164,7 +164,7 @@
         <div class="space-y-4">
             <div class="flex items-start gap-3">
                 <div class="p-3 bg-error/10 rounded-lg">
-                    <x-icon name="o-exclamation-triangle" class="w-6 h-6 text-error" />
+                    <x-icon name="phosphor-warning" class="w-6 h-6 text-error" />
                 </div>
                 <div>
                     <p class="font-medium mb-2">Are you sure you want to delete this dashboard?</p>
@@ -182,7 +182,7 @@
             <x-button
                 label="Delete Dashboard"
                 class="btn-error"
-                icon="o-trash"
+                icon="phosphor-trash"
                 wire:click="deleteDashboard"
                 spinner="deleteDashboard"
             />

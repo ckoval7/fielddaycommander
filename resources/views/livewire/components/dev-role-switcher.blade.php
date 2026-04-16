@@ -4,7 +4,7 @@
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full">
                 {{-- Left: Icon + Label --}}
                 <div class="flex items-center gap-2 shrink-0">
-                    <x-icon name="o-wrench" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <x-icon name="phosphor-wrench" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     <span class="font-bold text-xs uppercase tracking-wide">Role Switcher</span>
                     @if($isActive)
                         <span class="badge badge-sm badge-primary">active</span>

@@ -52,13 +52,13 @@
             <h3 class="card-title">Two-Factor Authentication</h3>
 
             @if(config('auth-security.2fa_mode') === 'required' && ! $user->hasEnabledTwoFactorAuthentication() && ! $showingQrCode)
-                <x-alert icon="o-exclamation-triangle" class="alert-error">
+                <x-alert icon="phosphor-warning" class="alert-error">
                     Two-factor authentication is required. You must set it up before you can use the application.
                 </x-alert>
             @endif
 
             @if($showingQrCode)
-                <x-alert icon="o-device-phone-mobile" class="alert-info">
+                <x-alert icon="phosphor-device-mobile" class="alert-info">
                     Scan the QR code below with your authenticator app
                 </x-alert>
 
@@ -92,7 +92,7 @@
                     </div>
                 </x-form>
             @elseif($user->hasEnabledTwoFactorAuthentication())
-                <x-alert icon="o-check-circle" class="alert-success">
+                <x-alert icon="phosphor-check-circle" class="alert-success">
                     Two-factor authentication is enabled
                 </x-alert>
 
@@ -159,7 +159,7 @@
                 @endif
             @else
                 @if(config('auth-security.2fa_mode') !== 'required')
-                <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                <x-alert icon="phosphor-warning" class="alert-warning">
                     Two-factor authentication is not enabled
                 </x-alert>
                 @endif

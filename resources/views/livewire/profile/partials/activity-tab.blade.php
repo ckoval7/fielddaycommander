@@ -4,7 +4,7 @@
             <h3 class="card-title">Your Recent Activity</h3>
 
             @if($activityLog->isEmpty())
-                <x-alert icon="o-information-circle">
+                <x-alert icon="phosphor-info">
                     No recent activity to display.
                 </x-alert>
             @else
@@ -16,19 +16,19 @@
                             <div class="mt-1">
                                 @switch($activity->action)
                                     @case('user.login.success')
-                                        <x-icon name="o-arrow-right-on-rectangle" class="w-5 h-5 text-success" />
+                                        <x-icon name="phosphor-sign-in" class="w-5 h-5 text-success" />
                                         @break
                                     @case('user.logout')
-                                        <x-icon name="o-arrow-left-on-rectangle" class="w-5 h-5 text-gray-500" />
+                                        <x-icon name="phosphor-sign-out" class="w-5 h-5 text-gray-500" />
                                         @break
                                     @case('user.password.changed')
-                                        <x-icon name="o-lock-closed" class="w-5 h-5 text-warning" />
+                                        <x-icon name="phosphor-lock" class="w-5 h-5 text-warning" />
                                         @break
                                     @case('user.profile.updated')
-                                        <x-icon name="o-pencil" class="w-5 h-5 text-info" />
+                                        <x-icon name="phosphor-pencil-simple" class="w-5 h-5 text-info" />
                                         @break
                                     @default
-                                        <x-icon name="o-information-circle" class="w-5 h-5 text-gray-400" />
+                                        <x-icon name="phosphor-info" class="w-5 h-5 text-gray-400" />
                                 @endswitch
                             </div>
 

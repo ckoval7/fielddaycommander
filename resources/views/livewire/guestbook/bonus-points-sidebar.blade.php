@@ -7,7 +7,7 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2 flex-1 min-w-0">
                             @if($item['earned'])
-                                <x-icon name="o-check-circle" class="w-5 h-5 text-success shrink-0" />
+                                <x-icon name="phosphor-check-circle" class="w-5 h-5 text-success shrink-0" />
                             @else
                                 <x-icon :name="$item['icon']" class="w-5 h-5 {{ $item['iconColor'] }} shrink-0" />
                             @endif
@@ -30,7 +30,7 @@
             @if($this->arrlOfficialCount > 0)
                 <div class="flex items-center justify-between text-base-content/60">
                     <div class="flex items-center gap-2">
-                        <x-icon name="o-star" class="w-5 h-5 text-warning" />
+                        <x-icon name="phosphor-star" class="w-5 h-5 text-warning" />
                         <span class="text-sm">ARRL Officials</span>
                     </div>
                     <x-badge :value="$this->arrlOfficialCount" class="badge-warning badge-sm" />
@@ -55,11 +55,11 @@
                 @php
                     $missing = collect($this->bonusItems)->where('earned', false)->pluck('label')->join(', ');
                 @endphp
-                <x-alert icon="o-information-circle" class="alert-info text-xs">
+                <x-alert icon="phosphor-info" class="alert-info text-xs">
                     Still needed: {{ $missing }}
                 </x-alert>
             @elseif($this->totalBonusPoints === $this->maxBonusPoints)
-                <x-alert icon="o-check-circle" class="alert-success text-xs">
+                <x-alert icon="phosphor-check-circle" class="alert-success text-xs">
                     All guestbook bonuses earned!
                 </x-alert>
             @endif

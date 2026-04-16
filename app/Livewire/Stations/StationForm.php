@@ -268,7 +268,7 @@ class StationForm extends Component
         $toastData = [
             'title' => 'Success',
             'description' => $successMessage,
-            'icon' => 'o-check-circle',
+            'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ];
 
@@ -369,6 +369,7 @@ class StationForm extends Component
                 'max:255',
                 Rule::unique('stations', 'name')
                     ->where('event_configuration_id', $this->event_configuration_id)
+                    ->whereNull('deleted_at')
                     ->ignore($this->stationId),
             ],
             'hostname' => ['nullable', 'string', 'max:50'],
@@ -378,6 +379,7 @@ class StationForm extends Component
                 'exists:equipment,id',
                 Rule::unique('stations', 'radio_equipment_id')
                     ->where('event_configuration_id', $this->event_configuration_id)
+                    ->whereNull('deleted_at')
                     ->ignore($this->stationId),
             ],
             'is_gota' => ['boolean', fn ($attribute, $value, $fail) => $this->validateGota($value, $fail)],

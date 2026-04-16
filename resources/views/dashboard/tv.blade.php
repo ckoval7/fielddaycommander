@@ -149,7 +149,7 @@ Props from controller:
                             }"
                             class="badge badge-lg badge-primary gap-2 px-4 py-3"
                         >
-                            <x-icon name="o-clock" class="w-5 h-5" />
+                            <x-icon name="phosphor-clock" class="w-5 h-5" />
                             <span class="font-mono text-lg font-bold" x-text="timeLeft"></span>
                         </div>
                     @endif
@@ -159,7 +159,7 @@ Props from controller:
                         @click="fullscreen = !fullscreen; kiosk = fullscreen; if (fullscreen) requestFullscreen();"
                         class="btn btn-ghost btn-sm gap-2"
                     >
-                        <x-icon :name="$kiosk ? 'o-arrows-pointing-in' : 'o-arrows-pointing-out'" class="w-5 h-5" />
+                        <x-icon :name="$kiosk ? 'phosphor-arrows-in' : 'phosphor-arrows-out'" class="w-5 h-5" />
                         <span x-text="fullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'"></span>
                     </button>
                 </div>
@@ -261,7 +261,7 @@ Props from controller:
                                     @default
                                         <x-card class="h-full flex items-center justify-center">
                                             <div class="text-center text-base-content/50">
-                                                <x-icon name="o-question-mark-circle" class="w-16 h-16 mx-auto mb-4" />
+                                                <x-icon name="phosphor-question" class="w-16 h-16 mx-auto mb-4" />
                                                 <p class="text-xl">Unknown widget type: {{ $widget['type'] }}</p>
                                             </div>
                                         </x-card>
@@ -273,7 +273,7 @@ Props from controller:
             @else
                 {{-- Empty State --}}
                 <div class="flex flex-col items-center justify-center h-screen text-center">
-                    <x-icon name="o-tv" class="w-32 h-32 text-base-content/30 mb-6" />
+                    <x-icon name="phosphor-television" class="w-32 h-32 text-base-content/30 mb-6" />
                     <h2 class="text-4xl font-bold text-base-content mb-4">No widgets configured</h2>
                     <p class="text-2xl text-base-content/60">Configure widgets in the main dashboard to display here</p>
                 </div>

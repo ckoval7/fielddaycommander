@@ -2,7 +2,7 @@
     <x-slot:title>Dashboard</x-slot:title>
     <div class="p-6">
         <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
-            <x-mary-icon name="o-calendar" class="w-16 h-16 text-base-content/30 mb-4" />
+            <x-mary-icon name="phosphor-calendar" class="w-16 h-16 text-base-content/30 mb-4" />
             <h1 class="text-2xl font-bold mb-2">No Active Event</h1>
             <p class="text-base-content/60 mb-6 max-w-md">
                 There is no Field Day event currently in progress. The dashboard will become available when an event starts.
@@ -30,7 +30,7 @@
 
             @can('create-events')
                 <a href="{{ route('events.create') }}" class="btn btn-primary mt-6">
-                    <x-mary-icon name="o-plus" class="w-4 h-4" />
+                    <x-mary-icon name="phosphor-plus" class="w-4 h-4" />
                     Create Event
                 </a>
             @endcan

@@ -19,12 +19,12 @@
         @if($this->assignedCount > 0)
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 text-xs sm:text-sm flex-shrink-0">
                 <span class="flex items-center gap-1.5">
-                    <x-icon name="o-cube" class="w-4 h-4 flex-shrink-0" />
+                    <x-icon name="phosphor-cube" class="w-4 h-4 flex-shrink-0" />
                     <span class="font-medium">{{ $this->assignedCount }}</span> <span class="hidden sm:inline">items</span>
                 </span>
                 @if($this->assignedTotalValue > 0)
                     <span class="flex items-center gap-1.5">
-                        <x-icon name="o-currency-dollar" class="w-4 h-4 flex-shrink-0" />
+                        <x-icon name="phosphor-currency-dollar" class="w-4 h-4 flex-shrink-0" />
                         <span class="font-medium">${{ number_format($this->assignedTotalValue, 2) }}</span>
                     </span>
                 @endif
@@ -36,7 +36,7 @@
         <x-alert
             title="Equipment Not Delivered"
             description="This station is operating but some equipment hasn't been marked as delivered."
-            icon="o-exclamation-triangle"
+            icon="phosphor-warning"
             class="alert-warning"
         />
     @endif
@@ -71,7 +71,7 @@
             <x-slot:title>
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div class="flex items-center gap-2">
-                        <x-icon name="o-check-circle" class="w-5 h-5 text-success flex-shrink-0" />
+                        <x-icon name="phosphor-check-circle" class="w-5 h-5 text-success flex-shrink-0" />
                         <span>Assigned to Station</span>
                     </div>
                     <div class="text-xs text-base-content/50 font-normal hidden sm:block">
@@ -89,7 +89,7 @@
                     <div class="bg-base-200 rounded-lg p-2 sm:p-3 border border-base-300">
                         <div class="flex flex-col sm:flex-row sm:items-start gap-3">
                             <div class="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                                <x-icon name="o-radio" class="w-5 h-5 text-primary" />
+                                <x-icon name="phosphor-radio" class="w-5 h-5 text-primary" />
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="font-medium truncate text-sm sm:text-base">
@@ -103,7 +103,7 @@
                                 </div>
                             </div>
                             <x-button
-                                icon="o-eye"
+                                icon="phosphor-eye"
                                 class="btn-ghost btn-sm btn-circle min-h-[2.75rem] sm:min-h-[1.75rem] flex-shrink-0"
                                 wire:click="showDetails({{ $this->stationModel->primaryRadio->id }})"
                                 title="View details"
@@ -159,14 +159,14 @@
                                     </div>
                                     <div class="flex items-center gap-1 flex-shrink-0">
                                         <x-button
-                                            icon="o-eye"
+                                            icon="phosphor-eye"
                                             class="btn-ghost btn-sm btn-circle min-h-[2.75rem] sm:min-h-[1.75rem]"
                                             wire:click="showDetails({{ $commitment->equipment->id }})"
                                             title="View details"
                                         />
                                         @if($this->canManage)
                                             <x-button
-                                                icon="o-x-mark"
+                                                icon="phosphor-x"
                                                 class="btn-ghost btn-sm btn-circle text-error min-h-[2.75rem] sm:min-h-[1.75rem]"
                                                 wire:click="requestUnassign({{ $commitment->equipment->id }})"
                                                 wire:loading.attr="disabled"
@@ -183,7 +183,7 @@
             @empty
                 @if(!$this->stationModel?->primaryRadio)
                     <output class="text-center py-6 sm:py-8 block" aria-label="No equipment assigned">
-                        <x-icon name="o-cube" class="w-10 sm:w-12 h-10 sm:h-12 mx-auto text-base-content/30" />
+                        <x-icon name="phosphor-cube" class="w-10 sm:w-12 h-10 sm:h-12 mx-auto text-base-content/30" />
                         <p class="mt-2 text-xs sm:text-base text-base-content/70">No equipment assigned</p>
                         <p class="text-xs sm:text-sm text-base-content/50 mt-1">
                             Browse available equipment below, then drag & drop to assign
@@ -205,7 +205,7 @@
         <x-card>
             <x-slot:title>
                 <div class="flex items-center gap-2">
-                    <x-icon name="o-squares-plus" class="w-5 h-5 text-info flex-shrink-0" />
+                    <x-icon name="phosphor-squares-four" class="w-5 h-5 text-info flex-shrink-0" />
                     <span class="truncate">Available Equipment</span>
                 </div>
             </x-slot:title>
@@ -216,7 +216,7 @@
                     <x-input
                         wire:model.live.debounce.300ms="searchQuery"
                         placeholder="Search make/model..."
-                        icon="o-magnifying-glass"
+                        icon="phosphor-magnifying-glass"
                         clearable
                     />
                     <x-select
@@ -225,7 +225,7 @@
                         option-value="id"
                         option-label="name"
                         placeholder="All Types"
-                        icon="o-funnel"
+                        icon="phosphor-funnel"
                     />
                 </div>
                 <div class="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-2">
@@ -239,7 +239,7 @@
                     @if($searchQuery || $typeFilter || $ownerFilter !== 'all' || $bandFilter)
                         <x-button
                             label="Clear"
-                            icon="o-x-mark"
+                            icon="phosphor-x"
                             class="btn-ghost btn-sm w-full sm:w-auto"
                             wire:click="clearFilters"
                         />
@@ -249,7 +249,7 @@
 
             {{-- Tabs: Committed to Event / All Catalog --}}
             <x-tabs wire:model="availableTab">
-                <x-tab name="committed" label="Committed to Event" icon="o-calendar">
+                <x-tab name="committed" label="Committed to Event" icon="phosphor-calendar">
                     <div class="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2">
                         @forelse($this->eventCommittedEquipment as $commitment)
                             <div
@@ -354,7 +354,7 @@
                                     @if($this->canManage)
                                         <x-button
                                             label="Assign"
-                                            icon="o-plus"
+                                            icon="phosphor-plus"
                                             class="btn-primary btn-sm w-full sm:w-auto min-h-[2.75rem] sm:min-h-[1.75rem] flex-shrink-0"
                                             wire:click="assignEquipment({{ $commitment->equipment->id }}, false)"
                                             wire:loading.attr="disabled"
@@ -366,7 +366,7 @@
                             </div>
                         @empty
                             <div class="text-center py-6 sm:py-8">
-                                <x-icon name="o-inbox" class="w-8 sm:w-10 h-8 sm:h-10 mx-auto text-base-content/30" />
+                                <x-icon name="phosphor-tray" class="w-8 sm:w-10 h-8 sm:h-10 mx-auto text-base-content/30" />
                                 <p class="mt-2 text-xs sm:text-sm text-base-content/50">
                                     @if($searchQuery || $typeFilter || $ownerFilter !== 'all')
                                         No equipment matches your filters
@@ -379,7 +379,7 @@
                     </div>
                 </x-tab>
 
-                <x-tab name="catalog" label="All Equipment Catalog" icon="o-archive-box">
+                <x-tab name="catalog" label="All Equipment Catalog" icon="phosphor-archive">
                     <div class="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2">
                         @forelse($this->catalogEquipment as $equipment)
                             <div
@@ -487,7 +487,7 @@
                                     @if($this->canManage)
                                         <x-button
                                             label="Commit & Assign"
-                                            icon="o-plus"
+                                            icon="phosphor-plus"
                                             class="btn-success btn-sm w-full lg:w-auto min-h-[2.75rem] lg:min-h-[1.75rem] flex-shrink-0"
                                             wire:click="assignEquipment({{ $equipment->id }}, true)"
                                             wire:loading.attr="disabled"
@@ -499,7 +499,7 @@
                             </div>
                         @empty
                             <div class="text-center py-6 sm:py-8">
-                                <x-icon name="o-inbox" class="w-8 sm:w-10 h-8 sm:h-10 mx-auto text-base-content/30" />
+                                <x-icon name="phosphor-tray" class="w-8 sm:w-10 h-8 sm:h-10 mx-auto text-base-content/30" />
                                 <p class="mt-2 text-xs sm:text-sm text-base-content/50">
                                     @if($searchQuery || $typeFilter || $ownerFilter !== 'all')
                                         No equipment matches your filters
@@ -519,7 +519,7 @@
     <x-modal wire:model="showConflictModal" title="Equipment Already Assigned" persistent>
         @if($conflictData)
             <div class="space-y-4">
-                <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                <x-alert icon="phosphor-warning" class="alert-warning">
                     This {{ $conflictData['equipment_type'] }} is currently assigned to another station.
                 </x-alert>
 
@@ -562,7 +562,7 @@
             <x-button
                 label="Reassign to This Station"
                 class="btn-warning w-full sm:w-auto"
-                icon="o-arrow-path"
+                icon="phosphor-arrow-clockwise"
                 wire:click="confirmReassignment"
                 spinner="confirmReassignment"
             />
@@ -571,7 +571,7 @@
 
     {{-- Unassign Confirmation Modal --}}
     <x-modal wire:model="showUnassignConfirmModal" title="Confirm Unassign" persistent>
-        <x-alert icon="o-exclamation-triangle" class="alert-warning">
+        <x-alert icon="phosphor-warning" class="alert-warning">
             This station has an active operating session. Unassigning equipment while the station is in use may cause issues.
         </x-alert>
         <p class="mt-4 text-xs sm:text-sm text-base-content/70">
@@ -587,7 +587,7 @@
             <x-button
                 label="Unassign Equipment"
                 class="btn-error w-full sm:w-auto"
-                icon="o-x-mark"
+                icon="phosphor-x"
                 wire:click="unassignEquipment({{ $unassignEquipmentId }})"
                 spinner="unassignEquipment"
             />
@@ -602,7 +602,7 @@
             </p>
 
             @foreach($warningMessages as $warning)
-                <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                <x-alert icon="phosphor-warning" class="alert-warning">
                     <div>
                         <div class="font-semibold">{{ $warning['title'] }}</div>
                         <div class="text-sm">{{ $warning['message'] }}</div>
@@ -620,7 +620,7 @@
             <x-button
                 label="Assign Anyway"
                 class="btn-warning w-full sm:w-auto"
-                icon="o-check"
+                icon="phosphor-check"
                 wire:click="confirmWarningAssignment"
                 spinner="confirmWarningAssignment"
             />
@@ -718,7 +718,7 @@
     {{-- Equipment Suggestions Banner --}}
     <div x-data="{ dismissed: false }" x-show="!dismissed" x-transition class="bg-info/10 border border-info/30 rounded-lg p-3 sm:p-4">
         <div class="flex items-start gap-3">
-            <x-icon name="o-light-bulb" class="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
+            <x-icon name="phosphor-lightbulb" class="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
             <div class="flex-1 min-w-0">
                 <div class="font-medium text-sm">Typical station equipment</div>
                 <ul class="mt-1 text-xs sm:text-sm text-base-content/70 columns-2 gap-x-6 list-disc list-inside">
@@ -731,7 +731,7 @@
                 </ul>
             </div>
             <button @click="dismissed = true" class="btn btn-ghost btn-xs btn-circle flex-shrink-0" aria-label="Dismiss suggestions">
-                <x-icon name="o-x-mark" class="w-4 h-4" />
+                <x-icon name="phosphor-x" class="w-4 h-4" />
             </button>
         </div>
     </div>

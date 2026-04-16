@@ -33,7 +33,7 @@
     <!-- Sun icon (shown in dark mode) -->
     <div x-show="darkMode" x-transition class="absolute inset-0 flex items-center justify-center">
         <x-icon
-            name="o-sun"
+            name="phosphor-sun-duotone"
             class="w-5 h-5"
         />
     </div>
@@ -41,7 +41,7 @@
     <!-- Moon icon (shown in light mode) -->
     <div x-show="!darkMode" x-transition class="absolute inset-0 flex items-center justify-center">
         <x-icon
-            name="o-moon"
+            name="phosphor-moon-duotone"
             class="w-5 h-5"
         />
     </div>

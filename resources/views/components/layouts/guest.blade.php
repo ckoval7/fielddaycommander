@@ -76,7 +76,7 @@
                     <img src="{{ asset($logoPath) }}" alt="Logo" class="w-16 h-16 object-contain">
                 @else
                     <div class="w-16 h-16 rounded-lg bg-primary flex items-center justify-center">
-                        <x-icon name="o-signal" class="w-10 h-10 text-primary-content" />
+                        <x-icon name="phosphor-cell-signal-high" class="w-10 h-10 text-primary-content" />
                     </div>
                 @endif
                 <div class="text-left">

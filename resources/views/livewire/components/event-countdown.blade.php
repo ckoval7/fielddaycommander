@@ -87,13 +87,13 @@
         <div class="flex items-center gap-3">
             <span class="badge {{ $badgeClass }} badge-lg text-base font-bold flex items-center gap-2 max-[1399px]:hidden">
                 @if($state === 'setup')
-                    <x-icon name="o-wrench-screwdriver" class="w-4 h-4" />
+                    <x-icon name="phosphor-wrench" class="w-4 h-4" />
                 @elseif($state === 'upcoming')
-                    <x-icon name="o-calendar-days" class="w-4 h-4" />
+                    <x-icon name="phosphor-calendar-dots" class="w-4 h-4" />
                 @elseif($state === 'active')
-                    <x-icon name="o-play-circle" class="w-4 h-4" />
+                    <x-icon name="phosphor-play-circle" class="w-4 h-4" />
                 @elseif($state === 'ended')
-                    <x-icon name="o-check-badge" class="w-4 h-4" />
+                    <x-icon name="phosphor-seal-check" class="w-4 h-4" />
                 @endif
                 {{ $state === 'active' ? 'LIVE' : strtoupper($state) }}
             </span>

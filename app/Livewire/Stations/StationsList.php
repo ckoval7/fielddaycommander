@@ -174,7 +174,7 @@ class StationsList extends Component
         $this->dispatch('toast', [
             'title' => 'Sessions Ended',
             'description' => "Closed {$closed} active session(s) for {$station->name}.",
-            'icon' => 'o-check-circle',
+            'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ]);
     }

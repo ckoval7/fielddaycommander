@@ -29,7 +29,7 @@ beforeEach(function () {
     $this->role = ShiftRole::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'name' => 'Station Operator',
-        'icon' => 'o-radio',
+        'icon' => 'phosphor-radio',
         'color' => '#6366f1',
         'requires_confirmation' => false,
     ]);
@@ -274,7 +274,7 @@ test('my shifts shows confirmation badge for bonus roles', function () {
     $bonusRole = ShiftRole::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'name' => 'Safety Officer',
-        'icon' => 'o-shield-check',
+        'icon' => 'phosphor-shield-check',
         'color' => '#f59e0b',
         'requires_confirmation' => true,
         'bonus_points' => 100,
@@ -321,7 +321,7 @@ describe('filtering', function () {
         $role2 = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Safety Officer',
-            'icon' => 'o-shield-check',
+            'icon' => 'phosphor-shield-check',
             'color' => '#ef4444',
         ]);
 

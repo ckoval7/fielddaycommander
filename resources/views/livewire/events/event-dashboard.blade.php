@@ -27,7 +27,7 @@
             @can('edit-events')
                 <x-button
                     label="Edit"
-                    icon="o-pencil"
+                    icon="phosphor-pencil-simple"
                     class="btn-outline"
                     link="{{ route('events.edit', ['eventId' => $event->id]) }}"
                     wire:navigate
@@ -37,7 +37,7 @@
             @can('create-events')
                 <x-button
                     label="Clone"
-                    icon="o-document-duplicate"
+                    icon="phosphor-copy"
                     class="btn-outline"
                     link="{{ route('events.clone', ['eventId' => $event->id]) }}"
                     wire:navigate
@@ -51,7 +51,7 @@
                     wire:click="delete"
                     wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}"
                 >
-                    <x-icon name="o-trash" class="w-5 h-5" />
+                    <x-icon name="phosphor-trash" class="w-5 h-5" />
                     Delete
                 </button>
             @endcan
@@ -61,7 +61,7 @@
     <!-- Tabs -->
     <x-tabs wire:model="activeTab">
         <!-- Tab 1 - Overview -->
-        <x-tab name="overview" label="Overview" icon="o-home">
+        <x-tab name="overview" label="Overview" icon="phosphor-house">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <!-- Configuration Card -->
                 <x-card title="Configuration" shadow class="col-span-1 md:col-span-2">
@@ -140,7 +140,7 @@
                         </div>
                     @else
                         <div class="text-center py-8 text-base-content/60">
-                            <x-icon name="o-exclamation-triangle" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                            <x-icon name="phosphor-warning" class="w-12 h-12 mx-auto opacity-50 mb-2" />
                             <p>No configuration found for this event.</p>
                         </div>
                     @endif
@@ -191,7 +191,7 @@
                         <div class="space-y-2">
                             @foreach($this->participants as $participant)
                                 <div class="flex items-center gap-2">
-                                    <x-icon name="o-user" class="w-4 h-4" />
+                                    <x-icon name="phosphor-user" class="w-4 h-4" />
                                     <span>{{ $participant['name'] }}</span>
                                     <span class="text-xs text-base-content/60">({{ $participant['contact_count'] }} contacts)</span>
                                 </div>
@@ -199,7 +199,7 @@
                         </div>
                     @else
                         <div class="text-center py-4 text-base-content/60">
-                            <x-icon name="o-users" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                            <x-icon name="phosphor-users" class="w-12 h-12 mx-auto opacity-50 mb-2" />
                             <p>No participants yet</p>
                         </div>
                     @endif
@@ -254,7 +254,7 @@
                                 <div class="mt-4 pt-4 border-t border-base-300">
                                     <x-button
                                         label="Manage Guestbook"
-                                        icon="o-book-open"
+                                        icon="phosphor-book-open"
                                         class="btn-outline btn-sm w-full"
                                         link="{{ route('events.guestbook', ['event' => $event->id]) }}"
                                         wire:navigate
@@ -268,12 +268,12 @@
         </x-tab>
 
         <!-- Tab 2 - Recent Contacts -->
-        <x-tab name="contacts" label="Recent Contacts" icon="o-radio">
+        <x-tab name="contacts" label="Recent Contacts" icon="phosphor-radio">
             <div class="mt-6">
                 <x-card shadow>
                     @if($this->recentContacts->isEmpty())
                         <div class="text-center py-8 text-base-content/60">
-                            <x-icon name="o-radio" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                            <x-icon name="phosphor-radio" class="w-12 h-12 mx-auto opacity-50 mb-2" />
                             <p>No contacts logged yet.</p>
                         </div>
                     @else
@@ -316,7 +316,7 @@
         </x-tab>
 
         <!-- Tab 3 - Scoring (combines Band/Mode Grid + Bonuses) -->
-        <x-tab name="scoring" label="Scoring" icon="o-trophy">
+        <x-tab name="scoring" label="Scoring" icon="phosphor-trophy">
             <div class="mt-6 space-y-6">
 
                 {{-- Score Headline --}}
@@ -472,7 +472,7 @@
 
         <!-- Tab 4 - Equipment -->
         @canany(['manage-event-equipment', 'view-all-equipment'])
-            <x-tab name="equipment" label="Equipment" icon="o-wrench-screwdriver">
+            <x-tab name="equipment" label="Equipment" icon="phosphor-wrench">
                 <div class="mt-6">
                     @if($event->status !== 'completed')
                         {{-- Active/Upcoming: summary + link to dashboard --}}
@@ -499,7 +499,7 @@
                             <div class="flex justify-center">
                                 <x-button
                                     label="{{ auth()->user()->can('manage-event-equipment') ? 'Go to Equipment Dashboard' : 'View Equipment Dashboard' }}"
-                                    icon="o-arrow-right"
+                                    icon="phosphor-arrow-right"
                                     class="btn-primary"
                                     link="{{ route('events.equipment.dashboard', ['event' => $event->id]) }}"
                                     wire:navigate
@@ -511,7 +511,7 @@
                         <x-card title="Equipment Used" shadow>
                             @if($this->equipmentCommitments->isEmpty())
                                 <div class="text-center py-8 text-base-content/60">
-                                    <x-icon name="o-wrench-screwdriver" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                                    <x-icon name="phosphor-wrench" class="w-12 h-12 mx-auto opacity-50 mb-2" />
                                     <p>No equipment was committed to this event.</p>
                                 </div>
                             @else

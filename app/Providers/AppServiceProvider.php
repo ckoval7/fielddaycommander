@@ -18,8 +18,16 @@ use App\Observers\MessageObserver;
 use App\Observers\OperatingSessionObserver;
 use App\Observers\StationObserver;
 use App\Observers\W1awBulletinObserver;
+use App\Policies\GuestbookEntryPolicy;
+use App\Policies\ImagePolicy;
+use App\Policies\MessagePolicy;
+use App\Policies\W1awBulletinPolicy;
+use App\Services\ActiveEventService;
+use App\Services\EventContextService;
+use App\View\Components\Icon;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -33,8 +41,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register EventContextService as a scoped binding (extends ActiveEventService)
         // Scoped ensures mutable state resets between Octane requests while sharing within a request
-        $this->app->scoped(\App\Services\EventContextService::class);
-        $this->app->alias(\App\Services\EventContextService::class, \App\Services\ActiveEventService::class);
+        $this->app->scoped(EventContextService::class);
+        $this->app->alias(EventContextService::class, ActiveEventService::class);
     }
 
     /**
@@ -45,11 +53,24 @@ class AppServiceProvider extends ServiceProvider
         // Define rate limiters
         $this->configureRateLimiters();
 
+        // Override Mary UI's <x-icon> component with a prefix-aware version
+        // so names like `phosphor-house` resolve via Blade Icons' prefix
+        // routing instead of being force-prefixed with `heroicon-`. Names
+        // without a registered prefix (e.g. `o-bolt`) still get the
+        // `heroicon-` prefix applied for backward compatibility. The
+        // `mary-icon` alias is used by Mary's internal components (Button,
+        // Alert, etc.), so override it too via `booted()` to ensure our
+        // registration runs after Mary's service provider.
+        Blade::component('icon', Icon::class);
+        $this->app->booted(function (): void {
+            Blade::component('mary-icon', Icon::class);
+        });
+
         // Register policies
-        Gate::policy(\App\Models\Image::class, \App\Policies\ImagePolicy::class);
-        Gate::policy(\App\Models\GuestbookEntry::class, \App\Policies\GuestbookEntryPolicy::class);
-        Gate::policy(\App\Models\Message::class, \App\Policies\MessagePolicy::class);
-        Gate::policy(\App\Models\W1awBulletin::class, \App\Policies\W1awBulletinPolicy::class);
+        Gate::policy(Image::class, ImagePolicy::class);
+        Gate::policy(GuestbookEntry::class, GuestbookEntryPolicy::class);
+        Gate::policy(Message::class, MessagePolicy::class);
+        Gate::policy(W1awBulletin::class, W1awBulletinPolicy::class);
 
         // Register model observers
         Contact::observe(ContactObserver::class);

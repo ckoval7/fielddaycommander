@@ -16,36 +16,36 @@
             @if($this->canManage)
                 <x-button
                     label="Commit Club Equipment"
-                    icon="o-plus"
+                    icon="phosphor-plus"
                     class="btn-primary"
                     wire:click="openCommitModal"
                 />
 
                 <x-dropdown>
                     <x-slot:trigger>
-                        <x-button label="Export" icon="o-document-arrow-down" class="btn-outline" />
+                        <x-button label="Export" icon="phosphor-file-arrow-down" class="btn-outline" />
                     </x-slot:trigger>
 
                     {{-- Pre-Event Reports --}}
                     <x-menu-separator title="Pre-Event" />
                     <x-menu-item
                         title="Commitment Summary (CSV)"
-                        icon="o-document-text"
+                        icon="phosphor-file-text"
                         link="{{ route('events.equipment.reports.commitment-summary', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
                         title="Delivery Checklist (PDF)"
-                        icon="o-clipboard-document-check"
+                        icon="phosphor-clipboard-text"
                         link="{{ route('events.equipment.reports.delivery-checklist', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
                         title="Station Inventory (PDF)"
-                        icon="o-building-office"
+                        icon="phosphor-buildings"
                         link="{{ route('events.equipment.reports.station-inventory-pdf', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
                         title="Station Inventory (CSV)"
-                        icon="o-table-cells"
+                        icon="phosphor-squares-four"
                         link="{{ route('events.equipment.reports.station-inventory-csv', ['event' => $event->id]) }}"
                     />
 
@@ -53,12 +53,12 @@
                     <x-menu-separator title="Post-Event" />
                     <x-menu-item
                         title="Return Checklist (PDF)"
-                        icon="o-arrow-uturn-left"
+                        icon="phosphor-arrow-u-up-left"
                         link="{{ route('events.equipment.reports.return-checklist', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
                         title="Historical Record (CSV)"
-                        icon="o-archive-box"
+                        icon="phosphor-archive"
                         link="{{ route('events.equipment.reports.historical-record', ['event' => $event->id]) }}"
                     />
 
@@ -66,22 +66,22 @@
                     <x-menu-separator title="Reference & Incidents" />
                     <x-menu-item
                         title="Owner Contacts (PDF)"
-                        icon="o-users"
+                        icon="phosphor-users"
                         link="{{ route('events.equipment.reports.owner-contacts-pdf', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
                         title="Owner Contacts (CSV)"
-                        icon="o-table-cells"
+                        icon="phosphor-squares-four"
                         link="{{ route('events.equipment.reports.owner-contacts-csv', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
                         title="Incident Report (PDF)"
-                        icon="o-exclamation-triangle"
+                        icon="phosphor-warning"
                         link="{{ route('events.equipment.reports.incident-report-pdf', ['event' => $event->id]) }}"
                     />
                     <x-menu-item
                         title="Incident Report (CSV)"
-                        icon="o-table-cells"
+                        icon="phosphor-squares-four"
                         link="{{ route('events.equipment.reports.incident-report-csv', ['event' => $event->id]) }}"
                     />
                 </x-dropdown>
@@ -89,7 +89,7 @@
 
             <x-button
                 label="Back to Event"
-                icon="o-arrow-left"
+                icon="phosphor-arrow-left"
                 class="btn-ghost"
                 link="{{ route('events.show', ['event' => $event->id]) }}"
                 wire:navigate
@@ -110,7 +110,7 @@
             <div class="text-center">
                 <div class="text-3xl font-bold text-info">{{ $this->statsCards['committed'] }}</div>
                 <div class="text-sm text-base-content/60 flex items-center justify-center">
-                    <x-icon name="o-clipboard-document-list" class="w-4 h-4 mr-2" />
+                    <x-icon name="phosphor-clipboard-text" class="w-4 h-4 mr-2" />
                     Committed
                 </div>
             </div>
@@ -120,7 +120,7 @@
             <div class="text-center">
                 <div class="text-3xl font-bold text-success">{{ $this->statsCards['delivered'] }}</div>
                 <div class="text-sm text-base-content/60 flex items-center justify-center">
-                    <x-icon name="o-truck" class="w-4 h-4 mr-2" />
+                    <x-icon name="phosphor-truck" class="w-4 h-4 mr-2" />
                     Delivered
                 </div>
             </div>
@@ -130,7 +130,7 @@
             <div class="text-center">
                 <div class="text-3xl font-bold text-neutral">{{ $this->statsCards['returned'] }}</div>
                 <div class="text-sm text-base-content/60 flex items-center justify-center">
-                    <x-icon name="o-check-circle" class="w-4 h-4 mr-2" />
+                    <x-icon name="phosphor-check-circle" class="w-4 h-4 mr-2" />
                     Returned
                 </div>
             </div>
@@ -151,7 +151,7 @@
                 <x-input
                     wire:model.live.debounce.300ms="searchQuery"
                     placeholder="Search equipment, make, model, owner..."
-                    icon="o-magnifying-glass"
+                    icon="phosphor-magnifying-glass"
                     clearable
                 />
             </div>
@@ -183,7 +183,7 @@
                 @if($searchQuery || $typeFilter || $statusFilter || $stationFilter)
                     <x-button
                         label="Clear"
-                        icon="o-x-mark"
+                        icon="phosphor-x"
                         class="btn-ghost btn-sm"
                         wire:click="clearFilters"
                     />
@@ -195,7 +195,7 @@
     {{-- Tabs --}}
     <x-tabs wire:model="activeTab">
         {{-- Tab 1: Overview --}}
-        <x-tab name="overview" label="Overview" icon="o-queue-list">
+        <x-tab name="overview" label="Overview" icon="phosphor-list-bullets">
             <div class="mt-6 space-y-6">
                 {{-- Equipment List --}}
                 <x-card title="All Equipment ({{ $this->filteredCommitments->count() }})" shadow separator>
@@ -228,7 +228,7 @@
                                                         />
                                                     @else
                                                         <div class="w-10 h-10 bg-base-300 rounded flex items-center justify-center">
-                                                            <x-icon name="o-wrench-screwdriver" class="w-5 h-5 text-base-content/50" />
+                                                            <x-icon name="phosphor-wrench" class="w-5 h-5 text-base-content/50" />
                                                         </div>
                                                     @endif
                                                     <div>
@@ -242,7 +242,7 @@
                                             <td>
                                                 @if($commitment->equipment->owner_organization_id)
                                                     <div class="flex items-center gap-2">
-                                                        <x-icon name="o-building-office" class="w-4 h-4 text-base-content/60" />
+                                                        <x-icon name="phosphor-buildings" class="w-4 h-4 text-base-content/60" />
                                                         <span>{{ $commitment->equipment->owningOrganization->name ?? 'Club' }}</span>
                                                     </div>
                                                 @elseif($commitment->equipment->owner)
@@ -270,13 +270,13 @@
                                                         default => 'badge-ghost'
                                                     };
                                                     $statusIcon = match($commitment->status) {
-                                                        'committed' => 'o-clipboard-document-list',
-                                                        'delivered' => 'o-truck',
-                                                        'returned' => 'o-check-circle',
-                                                        'cancelled' => 'o-x-circle',
-                                                        'lost' => 'o-exclamation-triangle',
-                                                        'damaged' => 'o-exclamation-triangle',
-                                                        default => 'o-question-mark-circle'
+                                                        'committed' => 'phosphor-clipboard-text',
+                                                        'delivered' => 'phosphor-truck',
+                                                        'returned' => 'phosphor-check-circle',
+                                                        'cancelled' => 'phosphor-x-circle',
+                                                        'lost' => 'phosphor-warning',
+                                                        'damaged' => 'phosphor-warning',
+                                                        default => 'phosphor-question'
                                                     };
                                                 @endphp
                                                 <div class="flex items-center gap-2">
@@ -321,7 +321,7 @@
                                             @if($this->canManage)
                                                 <td class="text-right">
                                                     <x-button
-                                                        icon="o-arrow-path"
+                                                        icon="phosphor-arrow-clockwise"
                                                         class="btn-sm btn-ghost"
                                                         wire:click="openStatusModal({{ $commitment->id }})"
                                                         title="Change Status"
@@ -335,7 +335,7 @@
                         </div>
                     @else
                         <div class="text-center py-12 text-base-content/60">
-                            <x-icon name="o-inbox" class="w-16 h-16 mx-auto opacity-50 mb-4" />
+                            <x-icon name="phosphor-tray" class="w-16 h-16 mx-auto opacity-50 mb-4" />
                             <p class="text-lg font-semibold mb-2">No Equipment Found</p>
                             <p class="text-sm">
                                 @if($searchQuery || $typeFilter || $statusFilter || $stationFilter)
@@ -357,13 +357,13 @@
                                     <div class="flex-shrink-0">
                                         @php
                                             $statusIcon = match($activity->status) {
-                                                'committed' => 'o-clock',
-                                                'delivered' => 'o-check-circle',
-                                                'returned' => 'o-arrow-uturn-left',
-                                                'cancelled' => 'o-x-circle',
-                                                'lost' => 'o-exclamation-triangle',
-                                                'damaged' => 'o-exclamation-triangle',
-                                                default => 'o-question-mark-circle'
+                                                'committed' => 'phosphor-clock',
+                                                'delivered' => 'phosphor-check-circle',
+                                                'returned' => 'phosphor-arrow-u-up-left',
+                                                'cancelled' => 'phosphor-x-circle',
+                                                'lost' => 'phosphor-warning',
+                                                'damaged' => 'phosphor-warning',
+                                                default => 'phosphor-question'
                                             };
                                             $statusColor = match($activity->status) {
                                                 'committed' => 'text-info',
@@ -394,7 +394,7 @@
                         </div>
                     @else
                         <div class="text-center py-8 text-base-content/60">
-                            <x-icon name="o-clock" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                            <x-icon name="phosphor-clock" class="w-12 h-12 mx-auto opacity-50 mb-2" />
                             <p>No recent activity</p>
                         </div>
                     @endif
@@ -403,7 +403,7 @@
         </x-tab>
 
         {{-- Tab 2: By Owner --}}
-        <x-tab name="by-owner" label="By Owner" icon="o-users">
+        <x-tab name="by-owner" label="By Owner" icon="phosphor-users">
             <div class="mt-6 space-y-6">
                 @if($this->commitmentsByOwner->count() > 0)
                     @foreach($this->commitmentsByOwner as $ownerGroup)
@@ -411,9 +411,9 @@
                             <x-slot:title>
                                 <div class="flex items-center gap-2">
                                     @if($ownerGroup['is_club'])
-                                        <x-icon name="o-building-office" class="w-5 h-5" />
+                                        <x-icon name="phosphor-buildings" class="w-5 h-5" />
                                     @else
-                                        <x-icon name="o-user" class="w-5 h-5" />
+                                        <x-icon name="phosphor-user" class="w-5 h-5" />
                                     @endif
                                     <span>{{ $ownerGroup['owner_name'] }}</span>
                                     @if($ownerGroup['callsign'])
@@ -444,7 +444,7 @@
                                                     @if($commitment->equipment->is_club_equipment)
                                                         <div class="mt-1">
                                                             <span class="badge badge-club badge-xs">
-                                                                <x-icon name="o-building-office" class="w-3 h-3 mr-0.5" />
+                                                                <x-icon name="phosphor-buildings" class="w-3 h-3 mr-0.5" />
                                                                 Club Equipment
                                                             </span>
                                                         </div>
@@ -466,13 +466,13 @@
                                                             default => 'badge-ghost'
                                                         };
                                                         $statusIcon = match($commitment->status) {
-                                                            'committed' => 'o-clipboard-document-list',
-                                                            'delivered' => 'o-truck',
-                                                            'returned' => 'o-check-circle',
-                                                            'cancelled' => 'o-x-circle',
-                                                            'lost' => 'o-exclamation-triangle',
-                                                            'damaged' => 'o-exclamation-triangle',
-                                                            default => 'o-question-mark-circle'
+                                                            'committed' => 'phosphor-clipboard-text',
+                                                            'delivered' => 'phosphor-truck',
+                                                            'returned' => 'phosphor-check-circle',
+                                                            'cancelled' => 'phosphor-x-circle',
+                                                            'lost' => 'phosphor-warning',
+                                                            'damaged' => 'phosphor-warning',
+                                                            default => 'phosphor-question'
                                                         };
                                                     @endphp
                                                     <div class="flex items-center gap-2">
@@ -495,7 +495,7 @@
                                                 @if($this->canManage)
                                                     <td class="text-right">
                                                         <x-button
-                                                            icon="o-arrow-path"
+                                                            icon="phosphor-arrow-clockwise"
                                                             class="btn-xs btn-ghost"
                                                             wire:click="openStatusModal({{ $commitment->id }})"
                                                             title="Change Status"
@@ -512,7 +512,7 @@
                 @else
                     <x-card shadow>
                         <div class="text-center py-12 text-base-content/60">
-                            <x-icon name="o-users" class="w-16 h-16 mx-auto opacity-50 mb-4" />
+                            <x-icon name="phosphor-users" class="w-16 h-16 mx-auto opacity-50 mb-4" />
                             <p class="text-lg font-semibold mb-2">No Equipment Committed</p>
                             <p class="text-sm">No equipment has been committed to this event yet.</p>
                         </div>
@@ -522,7 +522,7 @@
         </x-tab>
 
         {{-- Tab 3: By Type --}}
-        <x-tab name="by-type" label="By Type" icon="o-tag">
+        <x-tab name="by-type" label="By Type" icon="phosphor-tag">
             <div class="mt-6">
                 @if($this->equipmentByType->count() > 0)
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -554,13 +554,13 @@
                                                         default => 'badge-ghost'
                                                     };
                                                     $statusIcon = match($commitment->status) {
-                                                        'committed' => 'o-clipboard-document-list',
-                                                        'delivered' => 'o-truck',
-                                                        'returned' => 'o-check-circle',
-                                                        'cancelled' => 'o-x-circle',
-                                                        'lost' => 'o-exclamation-triangle',
-                                                        'damaged' => 'o-exclamation-triangle',
-                                                        default => 'o-question-mark-circle'
+                                                        'committed' => 'phosphor-clipboard-text',
+                                                        'delivered' => 'phosphor-truck',
+                                                        'returned' => 'phosphor-check-circle',
+                                                        'cancelled' => 'phosphor-x-circle',
+                                                        'lost' => 'phosphor-warning',
+                                                        'damaged' => 'phosphor-warning',
+                                                        default => 'phosphor-question'
                                                     };
                                                 @endphp
                                                 <div class="flex items-center gap-2">
@@ -580,7 +580,7 @@
                 @else
                     <x-card shadow>
                         <div class="text-center py-12 text-base-content/60">
-                            <x-icon name="o-tag" class="w-16 h-16 mx-auto opacity-50 mb-4" />
+                            <x-icon name="phosphor-tag" class="w-16 h-16 mx-auto opacity-50 mb-4" />
                             <p class="text-lg font-semibold mb-2">No Equipment Committed</p>
                             <p class="text-sm">No equipment has been committed to this event yet.</p>
                         </div>
@@ -590,7 +590,7 @@
         </x-tab>
 
         {{-- Tab 4: By Station --}}
-        <x-tab name="by-station" label="By Station" icon="o-building-office">
+        <x-tab name="by-station" label="By Station" icon="phosphor-buildings">
             <div class="mt-6 space-y-6">
                 @if($this->commitmentsByStation->count() > 0)
                     @foreach($this->commitmentsByStation as $stationGroup)
@@ -598,9 +598,9 @@
                             <x-slot:title>
                                 <div class="flex items-center gap-2">
                                     @if($stationGroup['station_id'])
-                                        <x-icon name="o-building-office" class="w-5 h-5" />
+                                        <x-icon name="phosphor-buildings" class="w-5 h-5" />
                                     @else
-                                        <x-icon name="o-inbox" class="w-5 h-5 text-base-content/50" />
+                                        <x-icon name="phosphor-tray" class="w-5 h-5 text-base-content/50" />
                                     @endif
                                     <span>{{ $stationGroup['station_name'] }}</span>
                                     @if($stationGroup['is_gota'])
@@ -631,7 +631,7 @@
                                                     @if($commitment->equipment->is_club_equipment)
                                                         <div class="mt-1">
                                                             <span class="badge badge-club badge-xs">
-                                                                <x-icon name="o-building-office" class="w-3 h-3 mr-0.5" />
+                                                                <x-icon name="phosphor-buildings" class="w-3 h-3 mr-0.5" />
                                                                 Club Equipment
                                                             </span>
                                                         </div>
@@ -649,13 +649,13 @@
                                                             default => 'badge-ghost'
                                                         };
                                                         $statusIcon = match($commitment->status) {
-                                                            'committed' => 'o-clipboard-document-list',
-                                                            'delivered' => 'o-truck',
-                                                            'returned' => 'o-check-circle',
-                                                            'cancelled' => 'o-x-circle',
-                                                            'lost' => 'o-exclamation-triangle',
-                                                            'damaged' => 'o-exclamation-triangle',
-                                                            default => 'o-question-mark-circle'
+                                                            'committed' => 'phosphor-clipboard-text',
+                                                            'delivered' => 'phosphor-truck',
+                                                            'returned' => 'phosphor-check-circle',
+                                                            'cancelled' => 'phosphor-x-circle',
+                                                            'lost' => 'phosphor-warning',
+                                                            'damaged' => 'phosphor-warning',
+                                                            default => 'phosphor-question'
                                                         };
                                                     @endphp
                                                     <div class="flex items-center gap-2">
@@ -669,7 +669,7 @@
                                                 @if($this->canManage)
                                                     <td class="text-right">
                                                         <x-button
-                                                            icon="o-arrow-path"
+                                                            icon="phosphor-arrow-clockwise"
                                                             class="btn-xs btn-ghost"
                                                             wire:click="openStatusModal({{ $commitment->id }})"
                                                             title="Change Status"
@@ -686,7 +686,7 @@
                 @else
                     <x-card shadow>
                         <div class="text-center py-12 text-base-content/60">
-                            <x-icon name="o-building-office" class="w-16 h-16 mx-auto opacity-50 mb-4" />
+                            <x-icon name="phosphor-buildings" class="w-16 h-16 mx-auto opacity-50 mb-4" />
                             <p class="text-lg font-semibold mb-2">No Equipment Committed</p>
                             <p class="text-sm">No equipment has been committed to this event yet.</p>
                         </div>
@@ -735,7 +735,7 @@
                         />
                     @else
                         <div class="text-center py-4 text-base-content/60">
-                            <x-icon name="o-no-symbol" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                            <x-icon name="phosphor-prohibit" class="w-12 h-12 mx-auto opacity-50 mb-2" />
                             <p>No status transitions available from current status.</p>
                         </div>
                     @endif
@@ -768,7 +768,7 @@
                 <x-select
                     label="Equipment"
                     wire:model="commitEquipmentId"
-                    icon="o-wrench-screwdriver"
+                    icon="phosphor-wrench"
                     placeholder="Select club equipment..."
                     :options="$this->availableClubEquipment->map(fn($eq) => [
                         'id' => $eq->id,
@@ -781,7 +781,7 @@
                 <x-datetime
                     label="Expected Delivery (optional)"
                     wire:model="commitExpectedDeliveryAt"
-                    icon="o-calendar"
+                    icon="phosphor-calendar"
                 />
 
                 <x-textarea
@@ -792,7 +792,7 @@
                 />
             @else
                 <div class="text-center py-4 text-base-content/60">
-                    <x-icon name="o-check-circle" class="w-12 h-12 mx-auto opacity-50 mb-2" />
+                    <x-icon name="phosphor-check-circle" class="w-12 h-12 mx-auto opacity-50 mb-2" />
                     <p>All club equipment is already committed to this event.</p>
                 </div>
             @endif

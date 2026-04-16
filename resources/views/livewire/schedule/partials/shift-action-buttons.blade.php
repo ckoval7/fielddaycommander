@@ -6,7 +6,7 @@
                 @if($shift->can_check_in)
                     <x-button
                         label="Check In"
-                        icon="o-arrow-right-on-rectangle"
+                        icon="phosphor-sign-in"
                         class="btn-primary btn-sm"
                         wire:click="checkIn({{ $myAssignment->id }})"
                         spinner="checkIn"
@@ -17,7 +17,7 @@
                 @if($myAssignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
                     <x-button
                         label="Drop"
-                        icon="o-x-mark"
+                        icon="phosphor-x"
                         class="btn-ghost btn-sm text-error"
                         wire:click="cancelSignUp({{ $myAssignment->id }})"
                         wire:confirm="Are you sure you want to drop this shift?"
@@ -34,7 +34,7 @@
                 @endphp
                 <x-button
                     label="Check Out"
-                    icon="o-arrow-left-on-rectangle"
+                    icon="phosphor-sign-out"
                     class="btn-warning btn-sm"
                     wire:click="checkOut({{ $myAssignment->id }})"
                     :wire:confirm="$checkoutConfirm"
@@ -44,7 +44,7 @@
             @case(\App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
                 <x-button
                     label="Check In Again"
-                    icon="o-arrow-right-on-rectangle"
+                    icon="phosphor-sign-in"
                     class="btn-ghost btn-sm"
                     wire:click="reCheckIn({{ $myAssignment->id }})"
                     spinner="reCheckIn"
@@ -54,7 +54,7 @@
     @elseif($shift->is_open && !$isFull && !$isMyShift)
         <x-button
             label="Sign Up"
-            icon="o-plus"
+            icon="phosphor-plus"
             class="btn-success btn-sm"
             wire:click="signUp({{ $shift->id }})"
             spinner="signUp"

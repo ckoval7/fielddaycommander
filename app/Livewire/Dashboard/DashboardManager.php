@@ -102,7 +102,7 @@ class DashboardManager extends Component
             $this->dispatch('toast', [
                 'title' => 'Error',
                 'description' => 'Failed to create dashboard: '.$e->getMessage(),
-                'icon' => 'o-exclamation-triangle',
+                'icon' => 'phosphor-warning',
                 'css' => 'alert-error',
             ]);
         }
@@ -125,14 +125,14 @@ class DashboardManager extends Component
             $this->dispatch('toast', [
                 'title' => 'Success',
                 'description' => 'Dashboard duplicated successfully',
-                'icon' => 'o-check-circle',
+                'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
             ]);
         } catch (DashboardAuthorizationException|\OverflowException $e) {
             $this->dispatch('toast', [
                 'title' => 'Error',
                 'description' => 'Failed to duplicate dashboard: '.$e->getMessage(),
-                'icon' => 'o-exclamation-triangle',
+                'icon' => 'phosphor-warning',
                 'css' => 'alert-error',
             ]);
         }
@@ -171,14 +171,14 @@ class DashboardManager extends Component
             $this->dispatch('toast', [
                 'title' => 'Success',
                 'description' => 'Dashboard deleted successfully',
-                'icon' => 'o-check-circle',
+                'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
             ]);
         } catch (DashboardAuthorizationException|\LogicException $e) {
             $this->dispatch('toast', [
                 'title' => 'Error',
                 'description' => 'Failed to delete dashboard: '.$e->getMessage(),
-                'icon' => 'o-exclamation-triangle',
+                'icon' => 'phosphor-warning',
                 'css' => 'alert-error',
             ]);
 
@@ -202,14 +202,14 @@ class DashboardManager extends Component
             $this->dispatch('toast', [
                 'title' => 'Success',
                 'description' => 'Default dashboard updated',
-                'icon' => 'o-check-circle',
+                'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
             ]);
         } catch (DashboardAuthorizationException $e) {
             $this->dispatch('toast', [
                 'title' => 'Error',
                 'description' => 'Failed to set default dashboard: '.$e->getMessage(),
-                'icon' => 'o-exclamation-triangle',
+                'icon' => 'phosphor-warning',
                 'css' => 'alert-error',
             ]);
         }

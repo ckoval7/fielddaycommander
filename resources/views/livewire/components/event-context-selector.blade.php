@@ -44,7 +44,7 @@
                 wire:click="returnToActive"
                 class="btn btn-xs btn-warning btn-outline w-full mt-1 mb-1"
             >
-                <x-icon name="o-arrow-uturn-left" class="w-3 h-3" />
+                <x-icon name="phosphor-arrow-u-up-left" class="w-3 h-3" />
                 Return to Active Event
             </button>
         @endif
@@ -63,7 +63,7 @@
         class="btn btn-xs btn-ghost w-full justify-between mt-1"
     >
         <span>{{ $contextEvent ? 'Change Event' : 'Select Event' }}</span>
-        <x-icon name="o-chevron-down" class="w-3 h-3 transition-transform" ::class="open && 'rotate-180'" />
+        <x-icon name="phosphor-caret-down" class="w-3 h-3 transition-transform" ::class="open && 'rotate-180'" />
     </button>
 
     {{-- Event list dropdown --}}

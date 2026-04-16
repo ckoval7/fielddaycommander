@@ -12,6 +12,7 @@ enum NotificationCategory: string
     case Equipment = 'equipment';
     case BulletinReminder = 'bulletin_reminder';
     case ShiftCheckinReminder = 'shift_checkin_reminder';
+    case WeatherAlert = 'weather_alert';
 
     /**
      * Get the human-readable label for the category.
@@ -27,23 +28,25 @@ enum NotificationCategory: string
             self::Equipment => 'Equipment',
             self::BulletinReminder => 'Bulletin Reminder',
             self::ShiftCheckinReminder => 'Shift Check-in Reminders',
+            self::WeatherAlert => 'Weather Alerts',
         };
     }
 
     /**
-     * Get the Heroicon name for the category.
+     * Get the icon name for the category.
      */
     public function icon(): string
     {
         return match ($this) {
-            self::NewSection => 'o-globe-americas',
-            self::Guestbook => 'o-book-open',
-            self::Photos => 'o-photo',
-            self::StationStatus => 'o-signal',
-            self::QsoMilestone => 'o-trophy',
-            self::Equipment => 'o-wrench-screwdriver',
-            self::BulletinReminder => 'o-radio',
-            self::ShiftCheckinReminder => 'o-clock',
+            self::NewSection => 'phosphor-globe',
+            self::Guestbook => 'phosphor-book-open',
+            self::Photos => 'phosphor-image',
+            self::StationStatus => 'phosphor-cell-signal-high',
+            self::QsoMilestone => 'phosphor-trophy',
+            self::Equipment => 'phosphor-wrench',
+            self::BulletinReminder => 'phosphor-radio',
+            self::ShiftCheckinReminder => 'phosphor-clock',
+            self::WeatherAlert => 'phosphor-cloud-lightning-duotone',
         };
     }
 
@@ -61,6 +64,7 @@ enum NotificationCategory: string
             self::Equipment => 300,
             self::BulletinReminder => 0,
             self::ShiftCheckinReminder => 0,
+            self::WeatherAlert => 0,
         };
     }
 
@@ -89,6 +93,7 @@ enum NotificationCategory: string
             self::Equipment => 'Equipment status changes',
             self::BulletinReminder => 'W1AW bulletin transmission reminders',
             self::ShiftCheckinReminder => 'Reminders before your scheduled shifts',
+            self::WeatherAlert => 'NWS and manual weather alerts',
         };
     }
 }

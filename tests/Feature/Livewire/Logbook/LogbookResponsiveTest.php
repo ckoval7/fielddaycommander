@@ -85,7 +85,7 @@ describe('responsive layout patterns', function () {
         Livewire::test(LogbookBrowser::class)
             ->assertSee('Band')
             ->assertSee('Mode')
-            ->assertSee('Reset');
+            ->assertSee('Filters');
     });
 
     test('component handles no active event gracefully', function () {

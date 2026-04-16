@@ -7,7 +7,7 @@
             class="btn btn-sm btn-outline gap-2"
             type="button"
         >
-            <x-mary-icon name="o-adjustments-horizontal" class="w-4 h-4" />
+            <x-mary-icon name="phosphor-sliders-horizontal" class="w-4 h-4" />
             <span x-show="!customizerOpen">Customize Widgets</span>
             <span x-show="customizerOpen" x-cloak>Done</span>
         </button>
@@ -32,7 +32,7 @@
                     class="btn btn-sm btn-ghost gap-1"
                     type="button"
                 >
-                    <x-mary-icon name="o-arrow-path" class="w-4 h-4" />
+                    <x-mary-icon name="phosphor-arrow-clockwise" class="w-4 h-4" />
                     Reset to Defaults
                 </button>
             </x-slot:menu>
@@ -78,7 +78,7 @@
 
             <div class="mt-4 pt-4 border-t border-base-300">
                 <p class="text-sm text-base-content/60">
-                    <x-mary-icon name="o-information-circle" class="w-4 h-4 inline" />
+                    <x-mary-icon name="phosphor-info" class="w-4 h-4 inline" />
                     Your preferences are saved automatically and persist across sessions.
                 </p>
             </div>
@@ -110,7 +110,7 @@
         x-cloak
         class="text-center py-12"
     >
-        <x-mary-icon name="o-squares-2x2" class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+        <x-mary-icon name="phosphor-squares-four" class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
         <h3 class="text-xl font-semibold mb-2">No Widgets Selected</h3>
         <p class="text-base-content/70 mb-4">
             Click "Customize Widgets" above to add widgets to your dashboard.

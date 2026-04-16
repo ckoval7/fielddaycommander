@@ -9,7 +9,7 @@
         <x-slot:actions>
             <x-button
                 label="Back to Dashboard"
-                icon="o-arrow-left"
+                icon="phosphor-arrow-left"
                 class="btn-ghost"
                 link="/"
                 wire:navigate
@@ -20,9 +20,9 @@
     {{-- Status Badge --}}
     <div>
         @if($bulletinId)
-            <x-badge value="Bonus Earned: 100 pts" class="badge-success" icon="o-check-circle" />
+            <x-badge value="Bonus Earned: 100 pts" class="badge-success" icon="phosphor-check-circle" />
         @else
-            <x-badge value="Not Yet Captured" class="badge-warning" icon="o-clock" />
+            <x-badge value="Not Yet Captured" class="badge-warning" icon="phosphor-clock" />
         @endif
     </div>
 
@@ -30,7 +30,7 @@
     <x-card>
         <x-slot:title>
             <div class="flex items-center gap-2">
-                <x-icon name="o-radio" class="w-5 h-5" />
+                <x-icon name="phosphor-radio" class="w-5 h-5" />
                 Transmission Schedule
             </div>
         </x-slot:title>
@@ -43,7 +43,7 @@
                     x-data="bulletinCountdown('{{ $this->nextScheduleEntry->scheduled_at->toIso8601String() }}')"
                 >
                     <div class="flex items-center gap-2 text-info">
-                        <x-icon name="o-clock" class="w-4 h-4" />
+                        <x-icon name="phosphor-clock" class="w-4 h-4" />
                         <span class="text-sm font-medium">
                             Next: {{ $this->nextScheduleEntry->mode_label }} on {{ $this->nextScheduleEntry->frequencies }} MHz
                             — <span x-text="countdown">loading...</span>
@@ -82,14 +82,14 @@
                                     <td class="text-right">
                                         <div class="flex gap-1 justify-end">
                                             <x-button
-                                                icon="o-pencil"
+                                                icon="phosphor-pencil-simple"
                                                 class="btn-ghost btn-xs"
                                                 wire:click="editScheduleEntry({{ $entry->id }})"
                                                 spinner="editScheduleEntry({{ $entry->id }})"
                                                 title="Edit"
                                             />
                                             <x-button
-                                                icon="o-trash"
+                                                icon="phosphor-trash"
                                                 class="btn-ghost btn-xs text-error"
                                                 wire:click="deleteScheduleEntry({{ $entry->id }})"
                                                 wire:confirm="Remove this transmission from the schedule?"
@@ -118,7 +118,7 @@
                     <x-flatpickr
                         label="Time (UTC)"
                         wire:model="scheduleScheduledAt"
-                        icon="o-clock"
+                        icon="phosphor-clock"
                         now-button
                     />
                     <x-select
@@ -162,7 +162,7 @@
                             label="Update"
                             wire:click="updateScheduleEntry"
                             class="btn-primary btn-sm"
-                            icon="o-check"
+                            icon="phosphor-check"
                             spinner="updateScheduleEntry"
                         />
                         <x-button
@@ -176,7 +176,7 @@
                             label="Add Transmission"
                             wire:click="addScheduleEntry"
                             class="btn-primary btn-sm"
-                            icon="o-plus"
+                            icon="phosphor-plus"
                             spinner="addScheduleEntry"
                         />
                     @endif
@@ -196,7 +196,7 @@
                     <x-input
                         label="Frequency (MHz)"
                         wire:model="frequency"
-                        icon="o-signal"
+                        icon="phosphor-cell-signal-high"
                         placeholder="e.g., 14.0475"
                         maxlength="20"
                         required
@@ -213,7 +213,7 @@
                         ]"
                         option-value="id"
                         option-label="name"
-                        icon="o-radio"
+                        icon="phosphor-radio"
                         placeholder="Select mode"
                         required
                     />
@@ -222,7 +222,7 @@
                     <x-flatpickr
                         label="Received At (UTC)"
                         wire:model="receivedAt"
-                        icon="o-clock"
+                        icon="phosphor-clock"
                         required
                         now-button
                     />
@@ -249,7 +249,7 @@
                     label="{{ $bulletinId ? 'Update Bulletin' : 'Save Bulletin' }}"
                     type="submit"
                     class="btn-primary"
-                    icon="o-check"
+                    icon="phosphor-check"
                     spinner="save"
                 />
 
@@ -259,7 +259,7 @@
                         wire:click="deleteBulletin"
                         wire:confirm="Are you sure you want to delete this bulletin? This cannot be undone."
                         class="btn-error"
-                        icon="o-trash"
+                        icon="phosphor-trash"
                         spinner="deleteBulletin"
                     />
                 @endif
@@ -270,7 +270,7 @@
                 <x-card>
                     <x-slot:title>
                         <div class="flex items-center gap-2">
-                            <x-icon name="o-clock" class="w-5 h-5" />
+                            <x-icon name="phosphor-clock" class="w-5 h-5" />
                             Edit History
                         </div>
                     </x-slot:title>

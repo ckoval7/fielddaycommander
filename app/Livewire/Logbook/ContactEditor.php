@@ -7,6 +7,7 @@ use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Mode;
 use App\Models\Section;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
@@ -34,6 +35,12 @@ class ContactEditor extends Component
     public string $qsoTime = '';
 
     public string $notes = '';
+
+    public bool $showBulkLoggerModal = false;
+
+    public array $bulkLoggerContactIds = [];
+
+    public ?int $bulkLoggerUserId = null;
 
     #[On('open-edit-contact')]
     public function openEdit(int $contactId): void
@@ -91,6 +98,10 @@ class ContactEditor extends Component
 
         $mode = Mode::find($validated['modeId']);
 
+        $contactPoints = $contact->is_gota_contact
+            ? 5
+            : ($mode->points_fd ?? 1);
+
         $contact->update([
             'callsign' => $validated['callsign'],
             'exchange_class' => $validated['exchangeClass'],
@@ -100,7 +111,7 @@ class ContactEditor extends Component
             'section_id' => $validated['sectionId'],
             'notes' => $validated['notes'] ?: null,
             'is_duplicate' => $isDuplicate,
-            'points' => $isDuplicate ? 0 : ($mode->points_fd ?? 1),
+            'points' => $isDuplicate ? 0 : $contactPoints,
         ]);
 
         $newValues = collect([
@@ -172,6 +183,86 @@ class ContactEditor extends Component
         $this->dispatch('contact-restored');
     }
 
+    #[On('bulk-delete-contacts')]
+    public function bulkDeleteContacts(array $contactIds): void
+    {
+        if (empty($contactIds)) {
+            return;
+        }
+
+        $contacts = Contact::whereIn('id', $contactIds)->get();
+        $count = 0;
+
+        foreach ($contacts as $contact) {
+            if (auth()->user()->cannot('delete', $contact)) {
+                continue;
+            }
+
+            AuditLog::log(
+                'contact.deleted',
+                auditable: $contact,
+                oldValues: [
+                    'callsign' => $contact->callsign,
+                    'exchange_class' => $contact->exchange_class,
+                    'session_id' => $contact->operating_session_id,
+                ],
+            );
+
+            $contact->delete();
+            $contact->operatingSession->decrement('qso_count');
+            $count++;
+        }
+
+        if ($count > 0) {
+            $this->dispatch('contact-deleted');
+            $this->dispatch('notify', title: 'Success', description: "{$count} contact(s) deleted.", type: 'success');
+        }
+    }
+
+    #[On('open-bulk-change-logger')]
+    public function openBulkChangeLogger(array $contactIds): void
+    {
+        $this->bulkLoggerContactIds = $contactIds;
+        $this->bulkLoggerUserId = null;
+        $this->resetValidation();
+        $this->showBulkLoggerModal = true;
+    }
+
+    public function bulkChangeLogger(): void
+    {
+        $this->validate([
+            'bulkLoggerUserId' => 'required|exists:users,id',
+        ]);
+
+        $contacts = Contact::whereIn('id', $this->bulkLoggerContactIds)->get();
+        $count = 0;
+
+        foreach ($contacts as $contact) {
+            if (auth()->user()->cannot('update', $contact)) {
+                continue;
+            }
+
+            $oldLoggerId = $contact->logger_user_id;
+            $contact->update(['logger_user_id' => $this->bulkLoggerUserId]);
+
+            AuditLog::log(
+                'contact.updated',
+                auditable: $contact,
+                oldValues: ['logger_user_id' => $oldLoggerId],
+                newValues: ['logger_user_id' => $this->bulkLoggerUserId],
+            );
+
+            $count++;
+        }
+
+        $this->showBulkLoggerModal = false;
+
+        if ($count > 0) {
+            $this->dispatch('contact-updated');
+            $this->dispatch('notify', title: 'Success', description: "Logger updated for {$count} contact(s).", type: 'success');
+        }
+    }
+
     #[Computed]
     public function bands()
     {
@@ -192,6 +283,20 @@ class ContactEditor extends Component
                 $section->display_name = "{$section->code} – {$section->name}";
 
                 return $section;
+            });
+    }
+
+    #[Computed]
+    public function operators()
+    {
+        return User::orderBy('call_sign')
+            ->get()
+            ->map(function (User $user) {
+                $user->display_name = $user->first_name
+                    ? "{$user->first_name}, {$user->call_sign}"
+                    : $user->call_sign;
+
+                return $user;
             });
     }
 

@@ -10,7 +10,7 @@
         {{-- Normal Mode: Card-based layout --}}
         <x-mary-card title="Guestbook Stats" shadow separator>
             <x-slot:menu>
-                <x-mary-icon name="o-book-open" class="w-5 h-5 text-success" />
+                <x-mary-icon name="phosphor-book-open" class="w-5 h-5 text-success" />
             </x-slot:menu>
 
             <div class="space-y-4">

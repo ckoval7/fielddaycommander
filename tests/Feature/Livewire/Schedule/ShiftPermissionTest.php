@@ -27,7 +27,7 @@ beforeEach(function () {
     $this->role = ShiftRole::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'name' => 'Station Operator',
-        'icon' => 'o-radio',
+        'icon' => 'phosphor-radio',
         'color' => '#6366f1',
     ]);
 

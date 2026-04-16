@@ -77,7 +77,7 @@
 
                 <x-button
                     label="End Session"
-                    icon="o-stop"
+                    icon="phosphor-stop"
                     class="btn-outline btn-error btn-sm"
                     wire:click="endSession"
                     wire:confirm="Are you sure you want to end this session?"
@@ -239,7 +239,7 @@
                 </div>
                 <x-button
                     label="Log"
-                    icon="o-check"
+                    icon="phosphor-check"
                     class="btn-primary btn-lg"
                     @click="logContact($refs.exchangeInput)"
                     tooltip="Enter"
@@ -247,7 +247,7 @@
                 />
                 <x-button
                     label="Clear"
-                    icon="o-x-mark"
+                    icon="phosphor-x"
                     class="btn-ghost btn-lg"
                     wire:click="clearInput"
                     tooltip="Esc"
@@ -280,7 +280,7 @@
             </template>
 
             @if($isDuplicate)
-                <x-alert x-show="!isRecalling" icon="o-exclamation-triangle" class="alert-warning">
+                <x-alert x-show="!isRecalling" icon="phosphor-warning" class="alert-warning">
                     Duplicate: {{ $dupeWarning }}
                 </x-alert>
             @endif

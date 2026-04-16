@@ -52,7 +52,7 @@ Props from controller:
                         option-value="id"
                         option-label="title"
                         placeholder="Switch Dashboard"
-                        icon="o-rectangle-stack"
+                        icon="phosphor-stack"
                         class="select-sm w-full sm:w-auto"
                         x-on:change="window.location.href = '/?dashboard=' + $event.target.value"
                     />
@@ -61,7 +61,7 @@ Props from controller:
                 {{-- Edit Layout Button --}}
                 <x-button
                     label="Edit Layout"
-                    icon="o-pencil-square"
+                    icon="phosphor-note-pencil"
                     class="btn-outline btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                     @click="Livewire.dispatch('toggle-edit-mode')"
                 />
@@ -69,7 +69,7 @@ Props from controller:
                 {{-- Dashboard Management Button --}}
                 <x-button
                     label="Manage"
-                    icon="o-cog-6-tooth"
+                    icon="phosphor-gear-six"
                     class="btn-ghost btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                     @click="Livewire.dispatch('open-modal', { modalId: 'dashboard-manager' })"
                 />

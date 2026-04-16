@@ -13,7 +13,7 @@
             <div class="flex flex-wrap gap-2">
                 <x-button
                     label="Full Shift Schedule"
-                    icon="o-calendar"
+                    icon="phosphor-calendar"
                     class="btn-outline"
                     link="{{ route('schedule.index') }}"
                 />
@@ -31,7 +31,7 @@
         @endif
 
         @if(!$eventConfig)
-            <x-alert icon="o-information-circle" class="alert-info">
+            <x-alert icon="phosphor-info" class="alert-info">
                 No event is currently selected. Please select an event to view your shifts.
             </x-alert>
         @else
@@ -45,14 +45,14 @@
                 {{-- Current Shifts --}}
                 <section>
                     <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <x-icon name="o-signal" class="w-5 h-5 text-success" />
+                        <x-icon name="phosphor-cell-signal-high" class="w-5 h-5 text-success" />
                         Current Shifts
                     </h2>
 
                     @if($currentShifts->isEmpty())
                         <x-card>
                             <div class="text-center py-6">
-                                <x-icon name="o-clock" class="w-12 h-12 mx-auto mb-3 text-base-content/30" />
+                                <x-icon name="phosphor-clock" class="w-12 h-12 mx-auto mb-3 text-base-content/30" />
                                 <p class="text-base-content/60">
                                     @if($this->activeFilterCount > 0)
                                         No current shifts match your filters.
@@ -116,7 +116,7 @@
                                                 @if($shift->can_check_in)
                                                     <x-button
                                                         label="Check In"
-                                                        icon="o-arrow-right-on-rectangle"
+                                                        icon="phosphor-sign-in"
                                                         class="btn-primary btn-sm"
                                                         wire:click="checkIn({{ $assignment->id }})"
                                                         spinner="checkIn"
@@ -133,7 +133,7 @@
                                                 @endphp
                                                 <x-button
                                                     label="Check Out"
-                                                    icon="o-arrow-left-on-rectangle"
+                                                    icon="phosphor-sign-out"
                                                     class="btn-warning btn-sm"
                                                     wire:click="checkOut({{ $assignment->id }})"
                                                     :wire:confirm="$checkoutConfirm"
@@ -142,7 +142,7 @@
                                             @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
                                                 <x-button
                                                     label="Check In Again"
-                                                    icon="o-arrow-right-on-rectangle"
+                                                    icon="phosphor-sign-in"
                                                     class="btn-ghost btn-sm"
                                                     wire:click="reCheckIn({{ $assignment->id }})"
                                                     spinner="reCheckIn"
@@ -159,14 +159,14 @@
                 {{-- Upcoming Shifts --}}
                 <section>
                     <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <x-icon name="o-arrow-right" class="w-5 h-5 text-info" />
+                        <x-icon name="phosphor-arrow-right" class="w-5 h-5 text-info" />
                         Upcoming Shifts
                     </h2>
 
                     @if($upcomingShifts->isEmpty())
                         <x-card>
                             <div class="text-center py-6">
-                                <x-icon name="o-calendar" class="w-12 h-12 mx-auto mb-3 text-base-content/30" />
+                                <x-icon name="phosphor-calendar" class="w-12 h-12 mx-auto mb-3 text-base-content/30" />
                                 <p class="text-base-content/60">
                                     @if($this->activeFilterCount > 0)
                                         No upcoming shifts match your filters.
@@ -203,7 +203,7 @@
                                             @if($assignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP && $assignment->status === \App\Models\ShiftAssignment::STATUS_SCHEDULED)
                                                 <x-button
                                                     label="Drop"
-                                                    icon="o-x-mark"
+                                                    icon="phosphor-x"
                                                     class="btn-ghost btn-sm text-error"
                                                     wire:click="cancelSignUp({{ $assignment->id }})"
                                                     wire:confirm="Are you sure you want to drop this shift?"
@@ -221,14 +221,14 @@
                 {{-- Past Shifts --}}
                 <section>
                     <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <x-icon name="o-clock" class="w-5 h-5 text-base-content/50" />
+                        <x-icon name="phosphor-clock" class="w-5 h-5 text-base-content/50" />
                         Past Shifts
                     </h2>
 
                     @if($pastShifts->isEmpty())
                         <x-card>
                             <div class="text-center py-6">
-                                <x-icon name="o-archive-box" class="w-12 h-12 mx-auto mb-3 text-base-content/30" />
+                                <x-icon name="phosphor-archive" class="w-12 h-12 mx-auto mb-3 text-base-content/30" />
                                 <p class="text-base-content/60">
                                     @if($this->activeFilterCount > 0)
                                         No past shifts match your filters.

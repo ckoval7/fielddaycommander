@@ -43,7 +43,7 @@
                     <img src="{{ $logoUrl }}" alt="Logo" class="w-24 h-24 object-contain">
                 @else
                     <div class="w-24 h-24 rounded-lg bg-primary flex items-center justify-center">
-                        <x-icon name="o-signal" class="w-14 h-14 text-primary-content" />
+                        <x-icon name="phosphor-cell-signal-high" class="w-14 h-14 text-primary-content" />
                     </div>
                 @endif
             </div>
@@ -79,12 +79,12 @@
             <div class="mt-6">
                 @auth
                     <a href="{{ route('dashboard.alt') }}" class="btn btn-primary">
-                        <x-icon name="o-home" class="w-5 h-5" />
+                        <x-icon name="phosphor-house" class="w-5 h-5" />
                         Go to Dashboard
                     </a>
                 @else
                     <a href="{{ route('login') }}" class="btn btn-primary">
-                        <x-icon name="o-arrow-right-end-on-rectangle" class="w-5 h-5" />
+                        <x-icon name="phosphor-sign-in" class="w-5 h-5" />
                         Sign In
                     </a>
                 @endauth
@@ -129,7 +129,7 @@
         @else
             <div class="border-t border-base-300 pt-8">
                 <div class="text-center py-12">
-                    <x-icon name="o-calendar" class="w-16 h-16 text-base-content/30 mx-auto mb-4" />
+                    <x-icon name="phosphor-calendar" class="w-16 h-16 text-base-content/30 mx-auto mb-4" />
                     <p class="text-lg text-base-content/60">No active event at this time. Check back soon!</p>
                 </div>
             </div>

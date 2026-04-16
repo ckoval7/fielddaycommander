@@ -4,7 +4,7 @@
         <x-card>
             <x-slot:title>Roles</x-slot:title>
             <x-slot:menu>
-                <x-button wire:click="openCreateModal" class="btn-primary btn-sm" icon="o-plus">
+                <x-button wire:click="openCreateModal" class="btn-primary btn-sm" icon="phosphor-plus">
                     Create New Role
                 </x-button>
             </x-slot:menu>
@@ -42,7 +42,7 @@
                                     <x-button
                                         wire:click.stop="confirmDelete({{ $role->id }})"
                                         class="btn-ghost btn-xs text-error"
-                                        icon="o-trash"
+                                        icon="phosphor-trash"
                                     />
                                 </td>
                             </tr>
@@ -100,7 +100,7 @@
                     <x-button
                         wire:click="savePermissions"
                         class="btn-primary"
-                        icon="o-check"
+                        icon="phosphor-check"
                         spinner="savePermissions"
                     >
                         <span wire:loading.remove wire:target="savePermissions">Save Permissions</span>

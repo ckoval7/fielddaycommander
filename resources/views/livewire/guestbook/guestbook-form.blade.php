@@ -99,7 +99,7 @@
         <x-alert
             title="Thank you for signing our guestbook!"
             description="Your entry has been recorded. We appreciate your visit!"
-            icon="o-check-circle"
+            icon="phosphor-check-circle"
             class="alert-success"
             dismissible
             wire:click="hideSuccess"
@@ -129,7 +129,7 @@
                         <x-alert
                             title="Error"
                             :description="$message"
-                            icon="o-exclamation-triangle"
+                            icon="phosphor-warning"
                             class="alert-error"
                             dismissible
                         />
@@ -140,7 +140,7 @@
                         <x-input
                             label="Name"
                             wire:model="name"
-                            icon="o-user"
+                            icon="phosphor-user"
                             placeholder="Your full name"
                             required
                         />
@@ -149,7 +149,7 @@
                         <x-input
                             label="Callsign"
                             wire:model="callsign"
-                            icon="o-signal"
+                            icon="phosphor-cell-signal-high"
                             placeholder="Optional - e.g., W1AW"
                             hint="Your amateur radio callsign (if applicable)"
                         />
@@ -160,7 +160,7 @@
                         label="Email"
                         wire:model="email"
                         type="email"
-                        icon="o-envelope"
+                        icon="phosphor-envelope"
                         placeholder="Optional - your@email.com"
                         hint="We'll only use this to contact you about the event"
                     />
@@ -172,7 +172,7 @@
                         :options="$this->visitorCategories"
                         option-value="id"
                         option-label="name"
-                        icon="o-user-group"
+                        icon="phosphor-users-three"
                         required
                     />
 
@@ -203,13 +203,13 @@
                                     <span class="loading loading-spinner loading-xs"></span>
                                 </template>
                                 <template x-if="locationStatus === 'in_person'">
-                                    <x-icon name="o-map-pin" class="w-4 h-4" />
+                                    <x-icon name="phosphor-map-pin" class="w-4 h-4" />
                                 </template>
                                 <template x-if="locationStatus === 'online'">
-                                    <x-icon name="o-globe-alt" class="w-4 h-4" />
+                                    <x-icon name="phosphor-globe" class="w-4 h-4" />
                                 </template>
                                 <template x-if="locationStatus === 'error' || locationStatus === 'unsupported'">
-                                    <x-icon name="o-exclamation-circle" class="w-4 h-4" />
+                                    <x-icon name="phosphor-warning-circle" class="w-4 h-4" />
                                 </template>
                                 <span x-text="locationMessage"></span>
                             </div>
@@ -220,7 +220,7 @@
                                 @click="detectLocation()"
                                 class="btn btn-xs btn-ghost"
                             >
-                                <x-icon name="o-arrow-path" class="w-3 h-3" />
+                                <x-icon name="phosphor-arrow-clockwise" class="w-3 h-3" />
                                 Re-detect location
                             </button>
                         @endif
@@ -246,7 +246,7 @@
                             label="Sign Guestbook"
                             type="submit"
                             class="btn-primary"
-                            icon="o-pencil-square"
+                            icon="phosphor-note-pencil"
                             spinner="save"
                         />
                     </div>
@@ -257,7 +257,7 @@
             <x-alert
                 title="Guestbook Not Available"
                 description="There is no active event with the guestbook enabled at this time."
-                icon="o-information-circle"
+                icon="phosphor-info"
                 class="alert-info"
             />
         @endif
@@ -265,14 +265,14 @@
         {{-- After success, show option to add another entry --}}
         <x-card class="text-center">
             <div class="py-8 space-y-4">
-                <x-icon name="o-check-circle" class="w-16 h-16 mx-auto text-success" />
+                <x-icon name="phosphor-check-circle" class="w-16 h-16 mx-auto text-success" />
                 <h3 class="text-xl font-semibold">Thank You!</h3>
                 <p class="text-base-content/70">Your guestbook entry has been recorded.</p>
                 <x-button
                     label="Sign Again"
                     wire:click="hideSuccess"
                     class="btn-primary"
-                    icon="o-plus"
+                    icon="phosphor-plus"
                 />
             </div>
         </x-card>

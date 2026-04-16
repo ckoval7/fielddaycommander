@@ -50,7 +50,7 @@
         {{-- Normal Mode: Card-based layout --}}
         <x-mary-card title="Progress Toward Goals" shadow separator>
             <x-slot:menu>
-                <x-mary-icon name="o-chart-pie" class="w-5 h-5 text-accent" />
+                <x-mary-icon name="phosphor-chart-pie" class="w-5 h-5 text-accent" />
             </x-slot:menu>
 
             <div class="space-y-6">

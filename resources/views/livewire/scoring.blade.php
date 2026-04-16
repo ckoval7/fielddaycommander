@@ -3,7 +3,7 @@
     {{-- EMPTY STATE --}}
     @if (! $this->event)
         <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-            <x-mary-icon name="o-trophy" class="w-16 h-16 opacity-30" />
+            <x-mary-icon name="phosphor-trophy" class="w-16 h-16 opacity-30" />
             <div class="text-2xl font-semibold opacity-50">No active event</div>
             <p class="text-sm opacity-40">Scores will appear here during an active Field Day event.</p>
         </div>
@@ -428,9 +428,9 @@
                             default       => 'var(--score-warning)',
                         };
                         $icon = match($notice['severity']) {
-                            'error'       => 'o-x-circle',
-                            'opportunity' => 'o-light-bulb',
-                            default       => 'o-exclamation-triangle',
+                            'error'       => 'phosphor-x-circle',
+                            'opportunity' => 'phosphor-lightbulb',
+                            default       => 'phosphor-warning',
                         };
                     @endphp
                     <div class="flex items-start gap-2">

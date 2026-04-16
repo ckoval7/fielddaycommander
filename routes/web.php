@@ -42,6 +42,8 @@ use App\Livewire\Schedule\ScheduleTimeline;
 use App\Livewire\Stations\StationForm;
 use App\Livewire\Stations\StationsList;
 use App\Livewire\Users\UserManagement;
+use App\Livewire\Weather\ManageWeather;
+use App\Livewire\Weather\WeatherDashboard;
 use App\Models\Event;
 use App\Models\Message;
 use Illuminate\Support\Facades\Route;
@@ -279,4 +281,11 @@ Route::middleware(['auth', 'verified', 'can:import-contacts'])->prefix('admin')-
 // Developer Tools (only available when DEVELOPER_MODE=true in .env)
 Route::middleware(['auth', 'verified', 'can:manage-settings'])->prefix('admin')->group(function () {
     Route::get('/developer', DeveloperTools::class)->name('admin.developer');
+});
+
+// Weather Dashboard
+Route::get('/weather', WeatherDashboard::class)->name('weather.index');
+
+Route::middleware(['auth', 'verified', 'can:manage-weather'])->group(function () {
+    Route::get('/weather/manage', ManageWeather::class)->name('weather.manage');
 });

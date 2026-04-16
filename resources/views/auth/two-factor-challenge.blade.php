@@ -31,7 +31,7 @@
                         Use an authentication code
                     </button>
 
-                    <x-button label="Log In" type="submit" class="btn-primary" icon="o-arrow-right-end-on-rectangle" />
+                    <x-button label="Log In" type="submit" class="btn-primary" icon="phosphor-sign-in" />
                 </div>
             </div>
         </form>

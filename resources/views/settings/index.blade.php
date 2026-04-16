@@ -6,15 +6,15 @@
         </div>
 
         <x-tabs selected="system-preferences">
-            <x-tab name="system-preferences" label="System Preferences" icon="o-cog-6-tooth">
+            <x-tab name="system-preferences" label="System Preferences" icon="phosphor-gear-six">
                 <livewire:settings.system-preferences />
             </x-tab>
 
-            <x-tab name="branding" label="Site Branding" icon="o-paint-brush">
+            <x-tab name="branding" label="Site Branding" icon="phosphor-paint-brush">
                 <livewire:settings.site-branding />
             </x-tab>
 
-            <x-tab name="roles" label="Role Management" icon="o-shield-check">
+            <x-tab name="roles" label="Role Management" icon="phosphor-shield-check">
                 <livewire:settings.role-manager />
             </x-tab>
         </x-tabs>

@@ -9,7 +9,7 @@
         <x-slot:actions>
             <x-button
                 label="Cancel"
-                icon="o-x-mark"
+                icon="phosphor-x"
                 class="btn-ghost"
                 link="{{ route('stations.index') }}"
                 wire:navigate
@@ -21,7 +21,7 @@
         {{-- Tabbed Interface for Editing --}}
         <x-tabs wire:model="activeTab">
             {{-- Configuration Tab --}}
-            <x-tab name="configuration" label="Configuration" icon="o-cog-6-tooth">
+            <x-tab name="configuration" label="Configuration" icon="phosphor-gear-six">
                 <form wire:submit="save" class="space-y-6 mt-6">
                     @include('livewire.stations.partials.configuration-form')
 
@@ -29,7 +29,7 @@
                     <div class="flex gap-3">
                         <x-button
                             label="Back to Stations"
-                            icon="o-arrow-left"
+                            icon="phosphor-arrow-left"
                             class="btn-ghost"
                             link="{{ route('stations.index') }}"
                             wire:navigate
@@ -38,7 +38,7 @@
                             label="Update Station"
                             type="submit"
                             class="btn-primary"
-                            icon="o-check"
+                            icon="phosphor-check"
                             spinner="save"
                         />
                     </div>
@@ -46,7 +46,7 @@
             </x-tab>
 
             {{-- Equipment Tab --}}
-            <x-tab name="equipment" label="Equipment" icon="o-wrench-screwdriver">
+            <x-tab name="equipment" label="Equipment" icon="phosphor-wrench">
                 <div class="mt-6">
                     <livewire:stations.equipment-assignment
                         :station-id="$stationId"
@@ -56,11 +56,11 @@
             </x-tab>
 
             {{-- Activity Tab (Future) --}}
-            <x-tab name="activity" label="Activity" icon="o-chart-bar">
+            <x-tab name="activity" label="Activity" icon="phosphor-chart-bar">
                 <div class="mt-6">
                     <x-card>
                         <div class="text-center py-12 text-base-content/60">
-                            <x-icon name="o-chart-bar" class="w-16 h-16 mx-auto mb-4 opacity-50" />
+                            <x-icon name="phosphor-chart-bar" class="w-16 h-16 mx-auto mb-4 opacity-50" />
                             <p class="text-lg font-semibold mb-2">Operating Sessions & Contacts</p>
                             <p class="text-sm">Activity tracking coming soon...</p>
                         </div>
@@ -77,7 +77,7 @@
             <div class="flex gap-3">
                 <x-button
                     label="Cancel"
-                    icon="o-x-mark"
+                    icon="phosphor-x"
                     class="btn-ghost"
                     link="{{ route('stations.index') }}"
                     wire:navigate
@@ -86,7 +86,7 @@
                     label="Create Station"
                     type="submit"
                     class="btn-primary"
-                    icon="o-check"
+                    icon="phosphor-check"
                     spinner="save"
                 />
             </div>

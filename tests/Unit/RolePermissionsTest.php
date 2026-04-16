@@ -34,3 +34,15 @@ test('system administrator role has all permissions including contact logging', 
     expect($systemAdmin->hasPermissionTo('log-contacts'))->toBeTrue()
         ->and($systemAdmin->hasPermissionTo('edit-contacts'))->toBeTrue();
 });
+
+test('system administrator role has manage-weather permission', function () {
+    $systemAdmin = Role::findByName('System Administrator');
+
+    expect($systemAdmin->hasPermissionTo('manage-weather'))->toBeTrue();
+});
+
+test('event manager role has manage-weather permission', function () {
+    $eventManager = Role::findByName('Event Manager');
+
+    expect($eventManager->hasPermissionTo('manage-weather'))->toBeTrue();
+});

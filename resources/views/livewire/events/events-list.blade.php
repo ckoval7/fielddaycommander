@@ -3,7 +3,7 @@
     <x-header title="Events" subtitle="Manage Field Day and other contest events" separator progress-indicator>
         <x-slot:actions>
             @can('create-events')
-                <x-button label="Create Event" icon="o-plus" class="btn-primary" link="{{ route('events.create') }}" wire:navigate responsive />
+                <x-button label="Create Event" icon="phosphor-plus" class="btn-primary" link="{{ route('events.create') }}" wire:navigate responsive />
             @endcan
         </x-slot:actions>
     </x-header>
@@ -26,16 +26,16 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex flex-wrap items-center gap-1.5 mb-1">
                             @if($event->status === 'active')
-                                <span class="badge badge-success badge-sm"><x-icon name="o-play-circle" class="w-3 h-3 mr-1" />Active</span>
+                                <span class="badge badge-success badge-sm"><x-icon name="phosphor-play-circle" class="w-3 h-3 mr-1" />Active</span>
                             @elseif($event->status === 'setup')
-                                <span class="badge badge-warning badge-sm"><x-icon name="o-wrench-screwdriver" class="w-3 h-3 mr-1" />Setup</span>
+                                <span class="badge badge-warning badge-sm"><x-icon name="phosphor-wrench" class="w-3 h-3 mr-1" />Setup</span>
                             @elseif($event->status === 'upcoming')
-                                <span class="badge badge-info badge-sm"><x-icon name="o-calendar" class="w-3 h-3 mr-1" />Upcoming</span>
+                                <span class="badge badge-info badge-sm"><x-icon name="phosphor-calendar" class="w-3 h-3 mr-1" />Upcoming</span>
                             @else
-                                <span class="badge badge-neutral badge-sm"><x-icon name="o-check-badge" class="w-3 h-3 mr-1" />Completed</span>
+                                <span class="badge badge-neutral badge-sm"><x-icon name="phosphor-seal-check" class="w-3 h-3 mr-1" />Completed</span>
                             @endif
                             @if($event->deleted_at)
-                                <span class="badge badge-error badge-sm"><x-icon name="o-archive-box" class="w-3 h-3 mr-1" />Archived</span>
+                                <span class="badge badge-error badge-sm"><x-icon name="phosphor-archive" class="w-3 h-3 mr-1" />Archived</span>
                             @endif
                         </div>
                         <div class="font-semibold">{{ $event->name }}</div>
@@ -43,22 +43,22 @@
                     </div>
                     <x-dropdown>
                         <x-slot:trigger>
-                            <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost btn-square" />
+                            <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost btn-square" />
                         </x-slot:trigger>
-                        <x-menu-item title="View Details" icon="o-eye" link="{{ route('events.show', $event) }}" wire:navigate />
+                        <x-menu-item title="View Details" icon="phosphor-eye" link="{{ route('events.show', $event) }}" wire:navigate />
                         @can('edit-events')
                             @if(!$event->deleted_at)
-                                <x-menu-item title="Edit" icon="o-pencil" link="{{ route('events.edit', ['eventId' => $event->id]) }}" wire:navigate />
+                                <x-menu-item title="Edit" icon="phosphor-pencil-simple" link="{{ route('events.edit', ['eventId' => $event->id]) }}" wire:navigate />
                             @endif
                         @endcan
                         @can('create-events')
                             @if(!$event->deleted_at)
-                                <x-menu-item title="Clone Event" icon="o-document-duplicate" link="{{ route('events.clone', ['eventId' => $event->id]) }}" wire:navigate />
+                                <x-menu-item title="Clone Event" icon="phosphor-copy" link="{{ route('events.clone', ['eventId' => $event->id]) }}" wire:navigate />
                             @endif
                         @endcan
                         @can('delete-events')
                             @if(!$event->deleted_at)
-                                <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}" />
+                                <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}" />
                             @endif
                         @endcan
                     </x-dropdown>
@@ -66,14 +66,14 @@
 
                 <div class="mt-3 pt-3 border-t border-base-200 space-y-1.5">
                     <div class="flex items-center gap-2 text-sm">
-                        <x-icon name="o-clock" class="w-4 h-4 opacity-50 shrink-0" />
+                        <x-icon name="phosphor-clock" class="w-4 h-4 opacity-50 shrink-0" />
                         <div>
                             <span>{{ $event->start_time ? toLocalTime($event->start_time)->format('M j, Y H:i T') : 'Not set' }}</span>
                             <span class="opacity-60 text-xs"> to {{ $event->end_time ? toLocalTime($event->end_time)->format('M j, Y H:i T') : 'Not set' }}</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 text-sm">
-                        <x-icon name="o-signal" class="w-4 h-4 opacity-50 shrink-0" />
+                        <x-icon name="phosphor-cell-signal-high" class="w-4 h-4 opacity-50 shrink-0" />
                         <span class="font-mono">{{ $event->eventConfiguration->callsign ?? 'Not configured' }}</span>
                         @if($event->eventConfiguration?->operatingClass?->code)
                             <span class="badge badge-outline badge-xs">{{ $event->eventConfiguration->operatingClass->code }}</span>
@@ -99,10 +99,10 @@
         @empty
             <div class="text-center py-8 text-base-content/60">
                 <div class="flex flex-col items-center gap-2">
-                    <x-icon name="o-calendar" class="w-12 h-12 opacity-50" />
+                    <x-icon name="phosphor-calendar" class="w-12 h-12 opacity-50" />
                     <p>No events found</p>
                     @can('create-events')
-                        <x-button label="Create First Event" icon="o-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" wire:navigate />
+                        <x-button label="Create First Event" icon="phosphor-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" wire:navigate />
                     @endcan
                 </div>
             </div>
@@ -125,7 +125,7 @@
                             <button wire:click="sortBy('name')" class="flex items-center gap-1 hover:underline">
                                 Status & Name
                                 @if($sortField === 'name')
-                                    <x-icon :name="$sortDirection === 'asc' ? 'o-chevron-up' : 'o-chevron-down'" class="w-4 h-4" />
+                                    <x-icon :name="$sortDirection === 'asc' ? 'phosphor-caret-up' : 'phosphor-caret-down'" class="w-4 h-4" />
                                 @endif
                             </button>
                         </th>
@@ -134,7 +134,7 @@
                             <button wire:click="sortBy('start_time')" class="flex items-center gap-1 hover:underline">
                                 Dates
                                 @if($sortField === 'start_time')
-                                    <x-icon :name="$sortDirection === 'asc' ? 'o-chevron-up' : 'o-chevron-down'" class="w-4 h-4" />
+                                    <x-icon :name="$sortDirection === 'asc' ? 'phosphor-caret-up' : 'phosphor-caret-down'" class="w-4 h-4" />
                                 @endif
                             </button>
                         </th>
@@ -153,16 +153,16 @@
                                 <div class="flex flex-col gap-2">
                                     <div class="flex items-center gap-2">
                                         @if($event->status === 'active')
-                                            <span class="badge badge-success badge-sm"><x-icon name="o-play-circle" class="w-4 h-4 mr-2" />Active</span>
+                                            <span class="badge badge-success badge-sm"><x-icon name="phosphor-play-circle" class="w-4 h-4 mr-2" />Active</span>
                                         @elseif($event->status === 'setup')
-                                            <span class="badge badge-warning badge-sm"><x-icon name="o-wrench-screwdriver" class="w-4 h-4 mr-2" />Setup</span>
+                                            <span class="badge badge-warning badge-sm"><x-icon name="phosphor-wrench" class="w-4 h-4 mr-2" />Setup</span>
                                         @elseif($event->status === 'upcoming')
-                                            <span class="badge badge-info badge-sm"><x-icon name="o-calendar" class="w-4 h-4 mr-2" />Upcoming</span>
+                                            <span class="badge badge-info badge-sm"><x-icon name="phosphor-calendar" class="w-4 h-4 mr-2" />Upcoming</span>
                                         @else
-                                            <span class="badge badge-neutral badge-sm"><x-icon name="o-check-badge" class="w-4 h-4 mr-2" />Completed</span>
+                                            <span class="badge badge-neutral badge-sm"><x-icon name="phosphor-seal-check" class="w-4 h-4 mr-2" />Completed</span>
                                         @endif
                                         @if($event->deleted_at)
-                                            <span class="badge badge-error badge-sm"><x-icon name="o-archive-box" class="w-4 h-4 mr-2" />Archived</span>
+                                            <span class="badge badge-error badge-sm"><x-icon name="phosphor-archive" class="w-4 h-4 mr-2" />Archived</span>
                                         @endif
                                     </div>
                                     <span class="font-semibold">{{ $event->name }}</span>
@@ -191,22 +191,22 @@
                             <td class="text-right">
                                 <x-dropdown>
                                     <x-slot:trigger>
-                                        <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost btn-square" />
+                                        <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost btn-square" />
                                     </x-slot:trigger>
-                                    <x-menu-item title="View Details" icon="o-eye" link="{{ route('events.show', $event) }}" wire:navigate />
+                                    <x-menu-item title="View Details" icon="phosphor-eye" link="{{ route('events.show', $event) }}" wire:navigate />
                                     @can('edit-events')
                                         @if(!$event->deleted_at)
-                                            <x-menu-item title="Edit" icon="o-pencil" link="{{ route('events.edit', ['eventId' => $event->id]) }}" wire:navigate />
+                                            <x-menu-item title="Edit" icon="phosphor-pencil-simple" link="{{ route('events.edit', ['eventId' => $event->id]) }}" wire:navigate />
                                         @endif
                                     @endcan
                                     @can('create-events')
                                         @if(!$event->deleted_at)
-                                            <x-menu-item title="Clone Event" icon="o-document-duplicate" link="{{ route('events.clone', ['eventId' => $event->id]) }}" wire:navigate />
+                                            <x-menu-item title="Clone Event" icon="phosphor-copy" link="{{ route('events.clone', ['eventId' => $event->id]) }}" wire:navigate />
                                         @endif
                                     @endcan
                                     @can('delete-events')
                                         @if(!$event->deleted_at)
-                                            <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}" />
+                                            <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}" />
                                         @endif
                                     @endcan
                                 </x-dropdown>
@@ -216,10 +216,10 @@
                         <tr>
                             <td colspan="9" class="text-center py-8 text-base-content/60">
                                 <div class="flex flex-col items-center gap-2">
-                                    <x-icon name="o-calendar" class="w-12 h-12 opacity-50" />
+                                    <x-icon name="phosphor-calendar" class="w-12 h-12 opacity-50" />
                                     <p>No events found</p>
                                     @can('create-events')
-                                        <x-button label="Create First Event" icon="o-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" wire:navigate />
+                                        <x-button label="Create First Event" icon="phosphor-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" wire:navigate />
                                     @endcan
                                 </div>
                             </td>

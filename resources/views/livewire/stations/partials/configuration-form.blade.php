@@ -7,7 +7,7 @@
         <x-input
             label="Station Name"
             wire:model.blur="name"
-            icon="o-signal"
+            icon="phosphor-cell-signal-high"
             placeholder="e.g., Station 1, Digital Station, Phone Tent"
             autocomplete="off"
             required
@@ -18,7 +18,7 @@
         <x-input
             label="Hostname (NetBIOS Name)"
             wire:model.blur="hostname"
-            icon="o-computer-desktop"
+            icon="phosphor-desktop"
             placeholder="e.g., CONTEST-PC"
             autocomplete="off"
             maxlength="50"
@@ -33,7 +33,7 @@
             option-value="id"
             option-label="name"
             placeholder="Select event"
-            icon="o-calendar"
+            icon="phosphor-calendar"
             required
             :disabled="$stationId ? true : false"
             :hint="$stationId ? 'Event cannot be changed when editing' : 'Select the field day event'"
@@ -57,7 +57,7 @@
         />
 
         @if(!$this->allowsGota && $event_configuration_id)
-            <x-alert icon="o-information-circle" class="alert-warning">
+            <x-alert icon="phosphor-info" class="alert-warning">
                 The selected event's operating class does not allow a GOTA station.
             </x-alert>
         @endif
@@ -91,7 +91,7 @@
         option-label="name"
         placeholder="Search by make or model..."
         hint="Select the main transceiver for this station"
-        icon="o-radio"
+        icon="phosphor-radio"
         search-function="searchRadios"
         single
         searchable
@@ -104,7 +104,7 @@
         @endphp
         @if($selectedRadio && isset($selectedRadio['power_output_watts']))
             <div class="mt-2">
-                <x-alert icon="o-information-circle" class="alert-info">
+                <x-alert icon="phosphor-info" class="alert-info">
                     Radio capability: {{ $selectedRadio['power_output_watts'] }}W
                 </x-alert>
             </div>
@@ -124,14 +124,14 @@
             type="number"
             min="1"
             max="5000"
-            icon="o-bolt"
+            icon="phosphor-lightning"
             placeholder="Optional"
             hint="Default operating power for this station (operators can override)"
         />
 
         @if($this->maxPowerLimit && $max_power_watts)
             @if($max_power_watts > $this->maxPowerLimit)
-                <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                <x-alert icon="phosphor-warning" class="alert-warning">
                     <span class="font-semibold">Scoring impact:</span> This station's power ({{ $max_power_watts }}W) exceeds the event's {{ $this->maxPowerLimit }}W setting.
                     Per Field Day rules, the highest station power determines the multiplier for the <span class="font-semibold">entire entry</span>
                     @if($max_power_watts > 100)
@@ -143,7 +143,7 @@
                     @endif
                 </x-alert>
             @else
-                <x-alert icon="o-check-circle" class="alert-success">
+                <x-alert icon="phosphor-check-circle" class="alert-success">
                     Power level is within the event's {{ $this->maxPowerLimit }}W limit.
                 </x-alert>
             @endif
@@ -157,7 +157,7 @@
             option-value="id"
             option-label="name"
             placeholder="Select power source..."
-            icon="o-battery-100"
+            icon="phosphor-battery-full"
             hint="Primary power source for this station"
         />
 
@@ -167,7 +167,7 @@
             @endphp
             @if($ps)
                 <x-alert
-                    icon="{{ $ps->isNaturalPower() ? 'o-sun' : ($ps->isEmergencyPower() ? 'o-bolt' : 'o-building-office') }}"
+                    icon="{{ $ps->isNaturalPower() ? 'phosphor-sun' : ($ps->isEmergencyPower() ? 'phosphor-lightning' : 'phosphor-buildings') }}"
                     class="{{ $ps->isNaturalPower() ? 'alert-success' : ($ps->isEmergencyPower() ? 'alert-info' : 'alert-warning') }}"
                 >
                     @if($ps->isNaturalPower())

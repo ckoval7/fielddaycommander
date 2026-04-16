@@ -6,7 +6,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
             <h1 class="text-3xl font-bold">Club Equipment</h1>
             @can('edit-any-equipment')
-                <x-button label="Add Club Equipment" icon="o-plus" class="btn-primary btn-sm sm:btn-md" link="{{ route('equipment.create', ['club' => true]) }}" wire:navigate />
+                <x-button label="Add Club Equipment" icon="phosphor-plus" class="btn-primary btn-sm sm:btn-md" link="{{ route('equipment.create', ['club' => true]) }}" wire:navigate />
             @endcan
         </div>
 
@@ -31,7 +31,7 @@
                         @endphp
                         <x-button
                             label="Commit to Event"
-                            icon="o-calendar"
+                            icon="phosphor-calendar"
                             class="btn-primary btn-sm"
                             wire:click="openBulkCommitModal"
                             :disabled="!$allAvailable"
@@ -39,7 +39,7 @@
                         />
                         <x-button
                             label="Delete"
-                            icon="o-trash"
+                            icon="phosphor-trash"
                             class="btn-error btn-sm"
                             wire:click="bulkDeleteEquipment"
                             wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} item(s)?"
@@ -47,7 +47,7 @@
                     </div>
                     <x-button
                         label="Clear"
-                        icon="o-x-mark"
+                        icon="phosphor-x"
                         class="btn-ghost btn-sm ml-auto"
                         wire:click="deselectAll"
                     />
@@ -76,13 +76,13 @@
                                 @can('edit-any-equipment')
                                     <x-dropdown>
                                         <x-slot:trigger>
-                                            <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost" />
+                                            <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" />
                                         </x-slot:trigger>
-                                        <x-menu-item title="Edit" icon="o-pencil" link="{{ route('equipment.edit', $item) }}" wire:navigate />
+                                        <x-menu-item title="Edit" icon="phosphor-pencil-simple" link="{{ route('equipment.edit', $item) }}" wire:navigate />
                                         @if($item->currentCommitment)
                                             <x-menu-separator />
-                                            <x-menu-item title="View Commitment" icon="o-eye" wire:click="openDetailsModal({{ $item->currentCommitment->id }})" />
-                                            <x-menu-item title="Update Notes" icon="o-pencil-square" wire:click="openNotesModal({{ $item->currentCommitment->id }})" />
+                                            <x-menu-item title="View Commitment" icon="phosphor-eye" wire:click="openDetailsModal({{ $item->currentCommitment->id }})" />
+                                            <x-menu-item title="Update Notes" icon="phosphor-note-pencil" wire:click="openNotesModal({{ $item->currentCommitment->id }})" />
                                             <x-menu-separator />
                                             @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
                                                 @if($status !== $item->currentCommitment->status)
@@ -93,10 +93,10 @@
                                                 @endif
                                             @endforeach
                                         @else
-                                            <x-menu-item title="Commit to Event" icon="o-calendar" wire:click="openCommitModal({{ $item->id }})" />
+                                            <x-menu-item title="Commit to Event" icon="phosphor-calendar" wire:click="openCommitModal({{ $item->id }})" />
                                         @endif
                                         <x-menu-separator />
-                                        <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="deleteEquipment({{ $item->id }})" wire:confirm="Are you sure you want to delete this equipment?" />
+                                        <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="deleteEquipment({{ $item->id }})" wire:confirm="Are you sure you want to delete this equipment?" />
                                     </x-dropdown>
                                 @endcan
                             </div>
@@ -217,15 +217,15 @@
                                     <td class="text-right">
                                         <x-dropdown>
                                             <x-slot:trigger>
-                                                <x-button icon="o-ellipsis-vertical" class="btn-sm btn-ghost" />
+                                                <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" />
                                             </x-slot:trigger>
 
-                                            <x-menu-item title="Edit" icon="o-pencil" link="{{ route('equipment.edit', $item) }}" wire:navigate />
+                                            <x-menu-item title="Edit" icon="phosphor-pencil-simple" link="{{ route('equipment.edit', $item) }}" wire:navigate />
 
                                             @if($item->currentCommitment)
                                                 <x-menu-separator />
-                                                <x-menu-item title="View Commitment" icon="o-eye" wire:click="openDetailsModal({{ $item->currentCommitment->id }})" />
-                                                <x-menu-item title="Update Notes" icon="o-pencil-square" wire:click="openNotesModal({{ $item->currentCommitment->id }})" />
+                                                <x-menu-item title="View Commitment" icon="phosphor-eye" wire:click="openDetailsModal({{ $item->currentCommitment->id }})" />
+                                                <x-menu-item title="Update Notes" icon="phosphor-note-pencil" wire:click="openNotesModal({{ $item->currentCommitment->id }})" />
                                                 <x-menu-separator />
                                                 @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
                                                     @if($status !== $item->currentCommitment->status)
@@ -236,11 +236,11 @@
                                                     @endif
                                                 @endforeach
                                             @else
-                                                <x-menu-item title="Commit to Event" icon="o-calendar" wire:click="openCommitModal({{ $item->id }})" />
+                                                <x-menu-item title="Commit to Event" icon="phosphor-calendar" wire:click="openCommitModal({{ $item->id }})" />
                                             @endif
 
                                             <x-menu-separator />
-                                            <x-menu-item title="Delete" icon="o-trash" class="text-error" wire:click="deleteEquipment({{ $item->id }})" wire:confirm="Are you sure you want to delete this equipment?" />
+                                            <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="deleteEquipment({{ $item->id }})" wire:confirm="Are you sure you want to delete this equipment?" />
                                         </x-dropdown>
                                     </td>
                                 @endcan

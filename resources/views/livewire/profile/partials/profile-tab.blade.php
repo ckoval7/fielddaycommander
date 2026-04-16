@@ -94,7 +94,7 @@
                                 <x-checkbox checked disabled />
                                 <span>Security Alerts <span class="text-xs text-base-content/60">(always enabled)</span></span>
                                 <div class="tooltip" data-tip="Security notifications cannot be disabled for your protection">
-                                    <x-icon name="o-information-circle" class="w-4 h-4 text-base-content/40 cursor-help" />
+                                    <x-icon name="phosphor-info" class="w-4 h-4 text-base-content/40 cursor-help" />
                                 </div>
                             </div>
 
@@ -110,6 +110,13 @@
                                 label="System Announcements"
                                 wire:model="system_announcements"
                                 hint="System maintenance and important updates"
+                            />
+
+                            {{-- Weather Alerts --}}
+                            <x-checkbox
+                                label="Email weather alerts"
+                                wire:model="weather_alert_email"
+                                hint="Send an email when weather alerts become active"
                             />
                         </div>
                     </div>
@@ -135,11 +142,11 @@
                     </div>
                     <div>
                         @if($this->allCategoriesEnabled)
-                            <x-button wire:click="toggleAllCategories(false)" class="btn-sm btn-ghost" icon="o-x-mark">
+                            <x-button wire:click="toggleAllCategories(false)" class="btn-sm btn-ghost" icon="phosphor-x">
                                 Disable All
                             </x-button>
                         @else
-                            <x-button wire:click="toggleAllCategories(true)" class="btn-sm btn-ghost" icon="o-check">
+                            <x-button wire:click="toggleAllCategories(true)" class="btn-sm btn-ghost" icon="phosphor-check">
                                 Enable All
                             </x-button>
                         @endif
@@ -152,7 +159,7 @@
                     {{-- New Section Worked --}}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <x-icon name="o-globe-americas" class="w-5 h-5 text-primary shrink-0" />
+                            <x-icon name="phosphor-globe" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">New Section Worked</div>
                                 <div class="text-sm text-base-content/60">When a new ARRL/RAC section is worked for the first time</div>
@@ -164,7 +171,7 @@
                     {{-- Guestbook Entries --}}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <x-icon name="o-book-open" class="w-5 h-5 text-primary shrink-0" />
+                            <x-icon name="phosphor-book-open" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">Guestbook Entries</div>
                                 <div class="text-sm text-base-content/60">When visitors sign the guestbook</div>
@@ -176,7 +183,7 @@
                     {{-- Photo Uploads --}}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <x-icon name="o-photo" class="w-5 h-5 text-primary shrink-0" />
+                            <x-icon name="phosphor-image" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">Photo Uploads</div>
                                 <div class="text-sm text-base-content/60">When new photos are uploaded to the gallery</div>
@@ -188,7 +195,7 @@
                     {{-- Station Status --}}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <x-icon name="o-signal" class="w-5 h-5 text-primary shrink-0" />
+                            <x-icon name="phosphor-cell-signal-high" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">Station Status</div>
                                 <div class="text-sm text-base-content/60">When a station becomes available or occupied</div>
@@ -200,7 +207,7 @@
                     {{-- QSO Milestones --}}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <x-icon name="o-trophy" class="w-5 h-5 text-primary shrink-0" />
+                            <x-icon name="phosphor-trophy" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">QSO Milestones</div>
                                 <div class="text-sm text-base-content/60">When the event reaches QSO count milestones</div>
@@ -212,7 +219,7 @@
                     {{-- Equipment Changes --}}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <x-icon name="o-wrench-screwdriver" class="w-5 h-5 text-primary shrink-0" />
+                            <x-icon name="phosphor-wrench" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">Equipment Changes</div>
                                 <div class="text-sm text-base-content/60">When equipment status changes</div>
@@ -224,7 +231,7 @@
                     {{-- Bulletin Reminders --}}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <x-icon name="o-radio" class="w-5 h-5 text-primary shrink-0" />
+                            <x-icon name="phosphor-radio" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">Bulletin Reminders</div>
                                 <div class="text-sm text-base-content/60">W1AW bulletin transmission reminders</div>
@@ -236,13 +243,25 @@
                     {{-- Shift Check-in Reminders --}}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <x-icon name="o-clock" class="w-5 h-5 text-primary shrink-0" />
+                            <x-icon name="phosphor-clock" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">Shift Check-in Reminders</div>
                                 <div class="text-sm text-base-content/60">Reminders before your scheduled shifts</div>
                             </div>
                         </div>
                         <x-toggle wire:model="notify_shift_checkin_reminder" />
+                    </div>
+
+                    {{-- Weather Alerts --}}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <x-icon name="phosphor-cloud" class="w-5 h-5 text-primary shrink-0" />
+                            <div class="min-w-0">
+                                <div class="font-medium">Weather Alerts</div>
+                                <div class="text-sm text-base-content/60">NWS and manual weather alerts</div>
+                            </div>
+                        </div>
+                        <x-toggle wire:model="notify_weather_alert" />
                     </div>
                 </div>
 
@@ -276,7 +295,7 @@
                                                 class="btn btn-ghost btn-xs p-0 min-h-0 h-auto"
                                                 title="Remove"
                                             >
-                                                <x-icon name="o-x-mark" class="w-3 h-3" />
+                                                <x-icon name="phosphor-x" class="w-3 h-3" />
                                             </button>
                                         </span>
                                     @endforeach
@@ -300,7 +319,7 @@
                                         label="Add"
                                         wire:click="addShiftReminderMinute"
                                         class="btn-primary btn-sm"
-                                        icon="o-plus"
+                                        icon="phosphor-plus"
                                         spinner="addShiftReminderMinute"
                                     />
                                 </div>
@@ -333,7 +352,7 @@
                                                 class="btn btn-ghost btn-xs p-0 min-h-0 h-auto"
                                                 title="Remove"
                                             >
-                                                <x-icon name="o-x-mark" class="w-3 h-3" />
+                                                <x-icon name="phosphor-x" class="w-3 h-3" />
                                             </button>
                                         </span>
                                     @endforeach
@@ -357,7 +376,7 @@
                                         label="Add"
                                         wire:click="addBulletinReminderMinute"
                                         class="btn-primary btn-sm"
-                                        icon="o-plus"
+                                        icon="phosphor-plus"
                                         spinner="addBulletinReminderMinute"
                                     />
                                 </div>

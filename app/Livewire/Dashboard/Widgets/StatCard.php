@@ -114,7 +114,7 @@ class StatCard extends Component
         return [
             'value' => number_format($score),
             'label' => 'Total Score',
-            'icon' => 'o-trophy',
+            'icon' => 'phosphor-trophy',
             'color' => 'text-success',
             'last_updated_at' => appNow(),
         ];
@@ -133,7 +133,7 @@ class StatCard extends Component
         return [
             'value' => number_format($count),
             'label' => 'QSOs',
-            'icon' => 'o-chat-bubble-left-right',
+            'icon' => 'phosphor-chat-centered-dots',
             'color' => 'text-primary',
             'last_updated_at' => appNow(),
         ];
@@ -154,7 +154,7 @@ class StatCard extends Component
         return [
             'value' => number_format($count),
             'label' => 'Sections',
-            'icon' => 'o-map',
+            'icon' => 'phosphor-map-trifold',
             'color' => 'text-info',
             'last_updated_at' => appNow(),
         ];
@@ -174,7 +174,7 @@ class StatCard extends Component
         return [
             'value' => number_format($count),
             'label' => 'Operators',
-            'icon' => 'o-users',
+            'icon' => 'phosphor-users',
             'color' => 'text-warning',
             'last_updated_at' => appNow(),
         ];
@@ -197,7 +197,7 @@ class StatCard extends Component
         return [
             'value' => number_format($rate, 1),
             'label' => 'QSOs / Hour',
-            'icon' => 'o-bolt',
+            'icon' => 'phosphor-lightning',
             'color' => 'text-info',
             'last_updated_at' => appNow(),
         ];
@@ -222,7 +222,7 @@ class StatCard extends Component
         return [
             'value' => number_format($avgRate, 1),
             'label' => 'Avg QSO Rate (4h)',
-            'icon' => 'o-chart-bar',
+            'icon' => 'phosphor-chart-bar',
             'color' => 'text-info',
             'last_updated_at' => appNow(),
         ];
@@ -244,7 +244,7 @@ class StatCard extends Component
         return [
             'value' => number_format($count),
             'label' => 'Contacts Last Hour',
-            'icon' => 'o-clock',
+            'icon' => 'phosphor-clock',
             'color' => 'text-success',
             'last_updated_at' => appNow(),
         ];
@@ -267,7 +267,7 @@ class StatCard extends Component
         return [
             'value' => number_format($hoursRemaining),
             'label' => 'Hours Remaining',
-            'icon' => 'o-clock',
+            'icon' => 'phosphor-clock',
             'color' => 'text-warning',
             'last_updated_at' => appNow(),
         ];
@@ -285,7 +285,7 @@ class StatCard extends Component
         return [
             'value' => number_format($bonusPoints),
             'label' => 'Bonus Points',
-            'icon' => 'o-star',
+            'icon' => 'phosphor-star',
             'color' => 'text-accent',
             'last_updated_at' => appNow(),
         ];
@@ -303,7 +303,7 @@ class StatCard extends Component
         return [
             'value' => number_format($count),
             'label' => 'Guestbook Entries',
-            'icon' => 'o-book-open',
+            'icon' => 'phosphor-book-open',
             'color' => 'text-info',
             'last_updated_at' => appNow(),
         ];
@@ -315,19 +315,19 @@ class StatCard extends Component
     protected function emptyMetric(string $metric): array
     {
         $labels = [
-            'total_score' => ['Total Score', 'o-trophy', 'text-success'],
-            'qso_count' => ['QSOs', 'o-chat-bubble-left-right', 'text-primary'],
-            'sections_worked' => ['Sections', 'o-map', 'text-info'],
-            'operators_count' => ['Operators', 'o-users', 'text-warning'],
-            'qso_per_hour' => ['QSOs / Hour', 'o-bolt', 'text-info'],
-            'avg_qso_rate_4h' => ['Avg QSO Rate (4h)', 'o-chart-bar', 'text-info'],
-            'contacts_last_hour' => ['Contacts Last Hour', 'o-clock', 'text-success'],
-            'hours_remaining' => ['Hours Remaining', 'o-clock', 'text-warning'],
-            'bonus_points_earned' => ['Bonus Points', 'o-star', 'text-accent'],
-            'guestbook_count' => ['Guestbook Entries', 'o-book-open', 'text-info'],
+            'total_score' => ['Total Score', 'phosphor-trophy', 'text-success'],
+            'qso_count' => ['QSOs', 'phosphor-chat-centered-dots', 'text-primary'],
+            'sections_worked' => ['Sections', 'phosphor-map-trifold', 'text-info'],
+            'operators_count' => ['Operators', 'phosphor-users', 'text-warning'],
+            'qso_per_hour' => ['QSOs / Hour', 'phosphor-lightning', 'text-info'],
+            'avg_qso_rate_4h' => ['Avg QSO Rate (4h)', 'phosphor-chart-bar', 'text-info'],
+            'contacts_last_hour' => ['Contacts Last Hour', 'phosphor-clock', 'text-success'],
+            'hours_remaining' => ['Hours Remaining', 'phosphor-clock', 'text-warning'],
+            'bonus_points_earned' => ['Bonus Points', 'phosphor-star', 'text-accent'],
+            'guestbook_count' => ['Guestbook Entries', 'phosphor-book-open', 'text-info'],
         ];
 
-        [$label, $icon, $color] = $labels[$metric] ?? ['Unknown', 'o-question-mark-circle', 'text-base-content'];
+        [$label, $icon, $color] = $labels[$metric] ?? ['Unknown', 'phosphor-question', 'text-base-content'];
 
         return [
             'value' => '0',

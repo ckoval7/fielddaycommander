@@ -3,7 +3,7 @@
         <div class="alert {{ $gracePeriodStatus === 'grace' ? 'alert-warning' : 'alert-info' }} mb-4">
             <div class="flex items-center justify-between w-full">
                 <div class="flex items-center gap-2">
-                    <x-icon name="o-information-circle" class="w-5 h-5" />
+                    <x-icon name="phosphor-info" class="w-5 h-5" />
                     <span>
                         <strong>Viewing:</strong> {{ $contextEvent->name }}
                         @if($gracePeriodStatus === 'grace')

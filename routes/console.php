@@ -34,3 +34,9 @@ Schedule::command('demo:simulate-activity')
     ->when(fn () => config('demo.enabled'));
 // Monitor and restart crashed external logger listeners
 Schedule::command('external-logger:monitor')->everyMinute();
+
+// Fetch weather forecast from Open-Meteo
+Schedule::command('weather:fetch-forecast')->everyFifteenMinutes();
+
+// Check NWS storm alerts and broadcast changes
+Schedule::command('weather:check-alerts')->everyTwoMinutes();

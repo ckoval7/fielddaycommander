@@ -30,10 +30,10 @@ Props from component:
                     @if(isset($data['trend']) && $data['trend'] !== 'stable')
                         <div class="flex items-center gap-2 text-lg font-medium px-3 py-1 rounded-full {{ $data['trend'] === 'up' ? 'bg-success/10 text-success' : 'bg-error/10 text-error' }}">
                             @if($data['trend'] === 'up')
-                                <x-icon name="o-arrow-trending-up" class="w-6 h-6" />
+                                <x-icon name="phosphor-trend-up" class="w-6 h-6" />
                                 <span>+{{ number_format($data['change_amount']) }}</span>
                             @else
-                                <x-icon name="o-arrow-trending-down" class="w-6 h-6" />
+                                <x-icon name="phosphor-trend-down" class="w-6 h-6" />
                                 <span>{{ number_format($data['change_amount']) }}</span>
                             @endif
                         </div>
@@ -70,10 +70,10 @@ Props from component:
                     @if(isset($data['trend']) && $data['trend'] !== 'stable')
                         <div class="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full {{ $data['trend'] === 'up' ? 'bg-success/10 text-success' : 'bg-error/10 text-error' }}">
                             @if($data['trend'] === 'up')
-                                <x-icon name="o-arrow-trending-up" class="w-3.5 h-3.5" />
+                                <x-icon name="phosphor-trend-up" class="w-3.5 h-3.5" />
                                 <span>+{{ number_format($data['change_amount']) }}</span>
                             @else
-                                <x-icon name="o-arrow-trending-down" class="w-3.5 h-3.5" />
+                                <x-icon name="phosphor-trend-down" class="w-3.5 h-3.5" />
                                 <span>{{ number_format($data['change_amount']) }}</span>
                             @endif
                         </div>

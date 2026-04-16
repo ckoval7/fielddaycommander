@@ -3,7 +3,7 @@
 
     <div class="text-center space-y-4">
         <div class="flex justify-center">
-            <x-icon name="o-clock" class="w-16 h-16 text-warning" />
+            <x-icon name="phosphor-clock" class="w-16 h-16 text-warning" />
         </div>
 
         <h2 class="text-xl font-semibold">Account Pending Approval</h2>

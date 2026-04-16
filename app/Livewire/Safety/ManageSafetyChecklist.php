@@ -166,7 +166,7 @@ class ManageSafetyChecklist extends Component
         $this->resetForm();
         unset($this->items);
 
-        $this->dispatch('toast', title: 'Success', description: $message, icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: $message, icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function deleteItem(int $id): void
@@ -176,7 +176,7 @@ class ManageSafetyChecklist extends Component
         $item = SafetyChecklistItem::findOrFail($id);
 
         if ($item->is_default) {
-            $this->dispatch('toast', title: 'Error', description: 'Cannot delete default ARRL items', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'Cannot delete default ARRL items', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -194,7 +194,7 @@ class ManageSafetyChecklist extends Component
 
         unset($this->items);
 
-        $this->dispatch('toast', title: 'Success', description: 'Item deleted successfully', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Item deleted successfully', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function seedDefaults(): void
@@ -205,7 +205,7 @@ class ManageSafetyChecklist extends Component
 
         unset($this->items);
 
-        $this->dispatch('toast', title: 'Success', description: 'Default items seeded successfully', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Default items seeded successfully', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function moveUp(int $id): void

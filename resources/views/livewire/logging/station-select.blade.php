@@ -4,7 +4,7 @@
     @if(! $this->activeEvent)
         <x-card>
             <div class="text-center py-8">
-                <x-icon name="o-signal-slash" class="w-12 h-12 mx-auto text-base-content/30" />
+                <x-icon name="phosphor-cell-signal-slash" class="w-12 h-12 mx-auto text-base-content/30" />
                 <h3 class="mt-4 text-lg font-semibold">No Active Event</h3>
                 <p class="mt-2 text-base-content/70">There is no event currently in progress. Logging is only available during an active event.</p>
             </div>
@@ -70,7 +70,7 @@
                                 label="Select Station"
                                 wire:click="selectStation({{ $station->id }})"
                                 class="btn-success btn-sm w-full"
-                                icon="o-play"
+                                icon="phosphor-play"
                                 spinner="selectStation({{ $station->id }})"
                             />
                         @elseif($status === 'idle')
@@ -78,14 +78,14 @@
                                 label="Take Over"
                                 wire:click="selectStation({{ $station->id }})"
                                 class="btn-warning btn-sm w-full"
-                                icon="o-arrow-path"
+                                icon="phosphor-arrow-clockwise"
                                 spinner="selectStation({{ $station->id }})"
                             />
                         @else
                             <x-button
                                 label="In Use"
                                 class="btn-ghost btn-sm w-full"
-                                icon="o-lock-closed"
+                                icon="phosphor-lock"
                                 disabled
                             />
                         @endif
@@ -95,7 +95,7 @@
                 <div class="col-span-full">
                     <x-card>
                         <div class="text-center py-8">
-                            <x-icon name="o-server-stack" class="w-12 h-12 mx-auto text-base-content/30" />
+                            <x-icon name="phosphor-hard-drives" class="w-12 h-12 mx-auto text-base-content/30" />
                             <h3 class="mt-4 text-lg font-semibold">No Stations Configured</h3>
                             <p class="mt-2 text-base-content/70">No stations have been set up for this event yet.</p>
                         </div>
@@ -112,16 +112,16 @@
             @if($supportedBands === null)
                 @php $stationForBands = $this->stations?->firstWhere('id', $selectedStationId); @endphp
                 @if($stationForBands && ! $stationForBands->primaryRadio)
-                    <x-alert icon="o-information-circle" class="alert-info text-sm">
+                    <x-alert icon="phosphor-info" class="alert-info text-sm">
                         No radio assigned — band compatibility unknown.
                     </x-alert>
                 @elseif($stationForBands)
-                    <x-alert icon="o-information-circle" class="alert-info text-sm">
+                    <x-alert icon="phosphor-info" class="alert-info text-sm">
                         No antennas assigned — band compatibility unknown.
                     </x-alert>
                 @endif
             @elseif($supportedBands->isEmpty())
-                <x-alert icon="o-exclamation-triangle" class="alert-warning text-sm">
+                <x-alert icon="phosphor-warning" class="alert-warning text-sm">
                     No bands are supported by both the radio and antennas at this station.
                 </x-alert>
             @else
@@ -144,7 +144,7 @@
 
             @if($this->bandWarning)
                 <x-alert
-                    :icon="$this->bandWarning['type'] === 'warning' ? 'o-exclamation-triangle' : 'o-information-circle'"
+                    :icon="$this->bandWarning['type'] === 'warning' ? 'phosphor-warning' : 'phosphor-info'"
                     @class([
                         'alert-warning' => $this->bandWarning['type'] === 'warning',
                         'alert-info' => $this->bandWarning['type'] === 'info',
@@ -195,7 +195,7 @@
                 label="Start Session"
                 wire:click="startSession"
                 class="btn-primary w-full sm:w-auto"
-                icon="o-play"
+                icon="phosphor-play"
                 spinner="startSession"
             />
         </x-slot:actions>
@@ -205,7 +205,7 @@
     <x-modal wire:model="showTakeoverModal" title="Take Over Station" persistent>
         @php $takeoverStation = $this->stations?->firstWhere('id', $takeoverStationId); @endphp
         @if($takeoverStation)
-            <x-alert icon="o-exclamation-triangle" class="alert-warning">
+            <x-alert icon="phosphor-warning" class="alert-warning">
                 This station has an idle session. Taking over will end the current operator's session.
             </x-alert>
 
@@ -233,7 +233,7 @@
                 label="Take Over Station"
                 wire:click="confirmTakeover"
                 class="btn-warning w-full sm:w-auto"
-                icon="o-arrow-path"
+                icon="phosphor-arrow-clockwise"
                 spinner="confirmTakeover"
             />
         </x-slot:actions>

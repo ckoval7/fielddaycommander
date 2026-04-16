@@ -6,7 +6,7 @@
                     {{-- Active event exists - direct link --}}
                     <x-button
                         label="Upload Photo"
-                        icon="o-arrow-up-tray"
+                        icon="phosphor-upload-simple"
                         link="{{ route('gallery.upload', $this->activeEventConfiguration) }}"
                         class="btn-primary"
                     />
@@ -14,7 +14,7 @@
                     {{-- No active event - show selector --}}
                     <x-button
                         label="Upload Photo"
-                        icon="o-arrow-up-tray"
+                        icon="phosphor-upload-simple"
                         wire:click="$set('showEventSelector', true)"
                         class="btn-primary"
                     />
@@ -25,7 +25,7 @@
 
     @if(session('status'))
         <div class="alert alert-info mb-4">
-            <x-icon name="o-information-circle" class="w-5 h-5" />
+            <x-icon name="phosphor-info" class="w-5 h-5" />
             <span>{{ session('status') }}</span>
         </div>
     @endif
@@ -33,20 +33,20 @@
     @if($this->events->isEmpty())
         <x-card class="shadow-md">
             <div class="text-center py-12">
-                <x-icon name="o-photo" class="w-16 h-16 mx-auto text-base-content/30" />
+                <x-icon name="phosphor-image" class="w-16 h-16 mx-auto text-base-content/30" />
                 <p class="mt-4 text-base-content/70">No photos have been uploaded yet.</p>
                 @auth
                     @if($this->activeEventConfiguration)
                         <x-button
                             label="Be the first to upload!"
-                            icon="o-arrow-up-tray"
+                            icon="phosphor-upload-simple"
                             link="{{ route('gallery.upload', $this->activeEventConfiguration) }}"
                             class="btn-primary mt-4"
                         />
                     @elseif($this->uploadableEvents->isNotEmpty())
                         <x-button
                             label="Be the first to upload!"
-                            icon="o-arrow-up-tray"
+                            icon="phosphor-upload-simple"
                             wire:click="$set('showEventSelector', true)"
                             class="btn-primary mt-4"
                         />
@@ -69,7 +69,7 @@
                                     >
                                 @else
                                     <div class="w-full h-full flex items-center justify-center">
-                                        <x-icon name="o-photo" class="w-12 h-12 text-base-content/30" />
+                                        <x-icon name="phosphor-image" class="w-12 h-12 text-base-content/30" />
                                     </div>
                                 @endif
                             </div>
@@ -85,7 +85,7 @@
                             <div class="mt-3 pt-3 border-t border-base-200">
                                 <form method="POST" action="{{ route('album-export.store', $eventConfig) }}">
                                     @csrf
-                                    <x-button type="submit" label="Download" icon="o-arrow-down-tray" class="btn-sm btn-ghost w-full" />
+                                    <x-button type="submit" label="Download" icon="phosphor-download-simple" class="btn-sm btn-ghost w-full" />
                                 </form>
                             </div>
                         @endcan
@@ -116,7 +116,7 @@
             @if($selectedEventId)
                 <x-button
                     label="Continue"
-                    icon="o-arrow-right"
+                    icon="phosphor-arrow-right"
                     class="btn-primary"
                     wire:click="uploadToEvent"
                 />

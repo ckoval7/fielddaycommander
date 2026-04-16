@@ -3,7 +3,7 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="flex items-center justify-end">
                 <a href="{{ route('admin.import-adif') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                    <x-icon name="o-arrow-up-tray" class="w-4 h-4" />
+                    <x-icon name="phosphor-upload-simple" class="w-4 h-4" />
                     Import ADIF
                 </a>
             </div>
@@ -93,7 +93,7 @@
                                 @click="open = !open"
                                 class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                             >
-                                <x-icon name="o-chevron-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                                <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
                                 <span>Last Log Received</span>
                                 @if ($lastLog !== null)
                                     @if ($lastLog['accepted'])
@@ -231,7 +231,7 @@
                                 @click="open = !open"
                                 class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                             >
-                                <x-icon name="o-chevron-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                                <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
                                 <span>Last Log Received</span>
                                 @if ($wsjtxLastLog !== null)
                                     @if ($wsjtxLastLog['accepted'])
@@ -367,7 +367,7 @@
                                 @click="open = !open"
                                 class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                             >
-                                <x-icon name="o-chevron-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                                <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
                                 <span>Last Log Received</span>
                                 @if ($udpAdifLastLog !== null)
                                     @if ($udpAdifLastLog['accepted'])
