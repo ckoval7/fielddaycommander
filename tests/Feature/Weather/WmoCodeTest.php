@@ -2,32 +2,32 @@
 
 use App\Support\WmoCode;
 
-test('icon returns o-sun for clear sky', function () {
-    expect(WmoCode::icon(0))->toBe('o-sun');
+test('icon returns phosphor sun for clear sky', function () {
+    expect(WmoCode::icon(0))->toBe('phosphor-sun-duotone');
 });
 
-test('icon returns o-sun for mainly clear', function () {
-    expect(WmoCode::icon(1))->toBe('o-sun');
+test('icon returns phosphor sun dim for mainly clear', function () {
+    expect(WmoCode::icon(1))->toBe('phosphor-sun-dim-duotone');
 });
 
-test('icon returns o-cloud for partly cloudy', function () {
-    expect(WmoCode::icon(2))->toBe('o-cloud');
+test('icon returns phosphor cloud sun for partly cloudy', function () {
+    expect(WmoCode::icon(2))->toBe('phosphor-cloud-sun-duotone');
 });
 
-test('icon returns o-cloud-arrow-down for moderate rain', function () {
-    expect(WmoCode::icon(63))->toBe('o-cloud-arrow-down');
+test('icon returns phosphor cloud rain for moderate rain', function () {
+    expect(WmoCode::icon(63))->toBe('phosphor-cloud-rain-duotone');
 });
 
-test('icon returns o-bolt for thunderstorm', function () {
-    expect(WmoCode::icon(95))->toBe('o-bolt');
+test('icon returns phosphor cloud lightning for thunderstorm', function () {
+    expect(WmoCode::icon(95))->toBe('phosphor-cloud-lightning-duotone');
 });
 
-test('icon returns o-bolt for thunderstorm with hail', function () {
-    expect(WmoCode::icon(96))->toBe('o-bolt');
+test('icon returns phosphor cloud lightning for thunderstorm with hail', function () {
+    expect(WmoCode::icon(96))->toBe('phosphor-cloud-lightning-duotone');
 });
 
-test('icon returns o-cloud for unmapped code', function () {
-    expect(WmoCode::icon(999))->toBe('o-cloud');
+test('icon returns phosphor cloud for unmapped code', function () {
+    expect(WmoCode::icon(999))->toBe('phosphor-cloud-duotone');
 });
 
 test('label returns Clear for code 0', function () {

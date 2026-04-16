@@ -60,7 +60,7 @@ class WeatherService
             $response = Http::get('https://api.open-meteo.com/v1/forecast', [
                 'latitude' => $lat,
                 'longitude' => $lon,
-                'current' => 'temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,weather_code',
+                'current' => 'temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,weather_code,is_day',
                 'hourly' => 'temperature_2m,precipitation_probability,rain,wind_speed_10m,wind_gusts_10m,weather_code,cape',
                 'daily' => 'temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,weather_code',
                 'temperature_unit' => $units === 'metric' ? 'celsius' : 'fahrenheit',

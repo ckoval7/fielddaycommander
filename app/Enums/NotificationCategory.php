@@ -33,7 +33,7 @@ enum NotificationCategory: string
     }
 
     /**
-     * Get the Heroicon name for the category.
+     * Get the icon name for the category.
      */
     public function icon(): string
     {
@@ -46,7 +46,7 @@ enum NotificationCategory: string
             self::Equipment => 'o-wrench-screwdriver',
             self::BulletinReminder => 'o-radio',
             self::ShiftCheckinReminder => 'o-clock',
-            self::WeatherAlert => 'o-cloud',
+            self::WeatherAlert => 'phosphor-cloud-lightning-duotone',
         };
     }
 

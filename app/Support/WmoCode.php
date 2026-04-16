@@ -7,31 +7,38 @@ class WmoCode
     private function __construct() {}
 
     /** @var array<int, string> */
-    private static array $icons = [
-        0 => 'o-sun',
-        1 => 'o-sun',
-        2 => 'o-cloud',
-        3 => 'o-cloud',
-        45 => 'o-cloud',
-        48 => 'o-cloud',
-        51 => 'o-cloud-arrow-down',
-        53 => 'o-cloud-arrow-down',
-        55 => 'o-cloud-arrow-down',
-        61 => 'o-cloud-arrow-down',
-        63 => 'o-cloud-arrow-down',
-        65 => 'o-cloud-arrow-down',
-        71 => 'o-cloud',
-        73 => 'o-cloud',
-        75 => 'o-cloud',
-        77 => 'o-cloud',
-        80 => 'o-cloud-arrow-down',
-        81 => 'o-cloud-arrow-down',
-        82 => 'o-cloud-arrow-down',
-        85 => 'o-cloud',
-        86 => 'o-cloud',
-        95 => 'o-bolt',
-        96 => 'o-bolt',
-        99 => 'o-bolt',
+    private static array $dayIcons = [
+        0 => 'phosphor-sun-duotone',
+        1 => 'phosphor-sun-dim-duotone',
+        2 => 'phosphor-cloud-sun-duotone',
+        3 => 'phosphor-cloud-duotone',
+        45 => 'phosphor-cloud-fog-duotone',
+        48 => 'phosphor-cloud-fog-duotone',
+        51 => 'phosphor-drop-half-duotone',
+        53 => 'phosphor-drop-duotone',
+        55 => 'phosphor-drop-simple-duotone',
+        61 => 'phosphor-cloud-rain-duotone',
+        63 => 'phosphor-cloud-rain-duotone',
+        65 => 'phosphor-cloud-rain-duotone',
+        71 => 'phosphor-cloud-snow-duotone',
+        73 => 'phosphor-cloud-snow-duotone',
+        75 => 'phosphor-cloud-snow-duotone',
+        77 => 'phosphor-snowflake-duotone',
+        80 => 'phosphor-cloud-rain-duotone',
+        81 => 'phosphor-cloud-rain-duotone',
+        82 => 'phosphor-cloud-rain-duotone',
+        85 => 'phosphor-cloud-snow-duotone',
+        86 => 'phosphor-cloud-snow-duotone',
+        95 => 'phosphor-cloud-lightning-duotone',
+        96 => 'phosphor-cloud-lightning-duotone',
+        99 => 'phosphor-cloud-lightning-duotone',
+    ];
+
+    /** @var array<string, string> Day icon -> Night icon overrides */
+    private static array $nightOverrides = [
+        'phosphor-sun-duotone' => 'phosphor-moon-duotone',
+        'phosphor-sun-dim-duotone' => 'phosphor-moon-stars-duotone',
+        'phosphor-cloud-sun-duotone' => 'phosphor-cloud-moon-duotone',
     ];
 
     /** @var array<int, string> */
@@ -62,9 +69,15 @@ class WmoCode
         99 => 'Thunderstorm with Heavy Hail',
     ];
 
-    public static function icon(int $code): string
+    public static function icon(int $code, bool $isNight = false): string
     {
-        return self::$icons[$code] ?? 'o-cloud';
+        $day = self::$dayIcons[$code] ?? 'phosphor-cloud-duotone';
+
+        if (! $isNight) {
+            return $day;
+        }
+
+        return self::$nightOverrides[$day] ?? $day;
     }
 
     public static function label(int $code): string
@@ -75,15 +88,15 @@ class WmoCode
     public static function color(int $code): string
     {
         return match (true) {
-            $code <= 1 => 'text-amber-500 dark:text-amber-300 drop-shadow-[0_0_8px_#f59e0b]',   // Clear, mainly clear
-            $code === 2 => 'text-slate-400 dark:text-slate-300',    // Partly cloudy
-            $code === 3 => 'text-slate-500 dark:text-slate-400',    // Overcast
-            $code === 45 || $code === 48 => 'text-gray-400 dark:text-gray-300',    // Fog
-            $code >= 51 && $code <= 67 => 'text-blue-400 dark:text-blue-300',    // Drizzle / rain
-            $code >= 71 && $code <= 77 => 'text-sky-200 dark:text-sky-100',      // Snow
-            $code >= 80 && $code <= 82 => 'text-blue-500 dark:text-blue-400',    // Showers
-            $code >= 85 && $code <= 86 => 'text-sky-300 dark:text-sky-200',      // Snow showers
-            $code >= 95 => 'text-yellow-400 dark:text-yellow-300',// Thunderstorm
+            $code <= 1 => 'text-amber-500 dark:text-amber-300 drop-shadow-[0_0_8px_#f59e0b]',
+            $code === 2 => 'text-slate-400 dark:text-slate-300',
+            $code === 3 => 'text-slate-500 dark:text-slate-400',
+            $code === 45 || $code === 48 => 'text-gray-400 dark:text-gray-300',
+            $code >= 51 && $code <= 67 => 'text-blue-400 dark:text-blue-300',
+            $code >= 71 && $code <= 77 => 'text-sky-200 dark:text-sky-100',
+            $code >= 80 && $code <= 82 => 'text-blue-500 dark:text-blue-400',
+            $code >= 85 && $code <= 86 => 'text-sky-300 dark:text-sky-200',
+            $code >= 95 => 'text-yellow-400 dark:text-yellow-300',
             default => 'text-slate-400 dark:text-slate-300',
         };
     }

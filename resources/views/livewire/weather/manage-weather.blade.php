@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">Manage Weather</h1>
         <a href="{{ route('weather.index') }}" wire:navigate class="btn btn-ghost btn-sm">
-            <x-icon name="o-arrow-left" class="w-4 h-4" />
+            <x-icon name="phosphor-arrow-left" class="w-4 h-4" />
             Back to Forecast
         </a>
     </div>
@@ -11,7 +11,7 @@
     {{-- Location Warning --}}
     @if($this->locationConfig === null)
         <div class="alert alert-warning text-sm">
-            <x-icon name="o-exclamation-triangle" class="w-5 h-5 shrink-0" />
+            <x-icon name="phosphor-warning-duotone" class="w-5 h-5 shrink-0" />
             <div>
                 <p class="font-medium">Weather APIs cannot fetch data</p>
                 <p class="text-xs mt-0.5">No active or upcoming event has a location configured. Set latitude, longitude, and state on an event to enable live weather fetching.</p>
@@ -188,7 +188,7 @@
 
             @if(!empty($currentAlerts))
                 <div class="alert alert-warning text-sm">
-                    <x-icon name="o-exclamation-triangle" class="w-5 h-5 shrink-0" />
+                    <x-icon name="phosphor-warning-duotone" class="w-5 h-5 shrink-0" />
                     <div>
                         @foreach($currentAlerts as $alert)
                             <p>{{ $alert['headline'] }}</p>

@@ -57,8 +57,14 @@ class AppServiceProvider extends ServiceProvider
         // so names like `phosphor-house` resolve via Blade Icons' prefix
         // routing instead of being force-prefixed with `heroicon-`. Names
         // without a registered prefix (e.g. `o-bolt`) still get the
-        // `heroicon-` prefix applied for backward compatibility.
+        // `heroicon-` prefix applied for backward compatibility. The
+        // `mary-icon` alias is used by Mary's internal components (Button,
+        // Alert, etc.), so override it too via `booted()` to ensure our
+        // registration runs after Mary's service provider.
         Blade::component('icon', Icon::class);
+        $this->app->booted(function (): void {
+            Blade::component('mary-icon', Icon::class);
+        });
 
         // Register policies
         Gate::policy(Image::class, ImagePolicy::class);

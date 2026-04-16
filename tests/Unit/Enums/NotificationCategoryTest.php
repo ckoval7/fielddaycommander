@@ -10,7 +10,7 @@ test('all categories have labels', function () {
 
 test('all categories have icons', function () {
     foreach (NotificationCategory::cases() as $category) {
-        expect($category->icon())->toBeString()->toStartWith('o-');
+        expect($category->icon())->toBeString()->not->toBeEmpty();
     }
 });
 
@@ -56,7 +56,7 @@ test('category icons match specification', function () {
     expect(NotificationCategory::QsoMilestone->icon())->toBe('o-trophy');
     expect(NotificationCategory::Equipment->icon())->toBe('o-wrench-screwdriver');
     expect(NotificationCategory::BulletinReminder->icon())->toBe('o-radio');
-    expect(NotificationCategory::WeatherAlert->icon())->toBe('o-cloud');
+    expect(NotificationCategory::WeatherAlert->icon())->toBe('phosphor-cloud-lightning-duotone');
 });
 
 test('there are exactly nine categories', function () {

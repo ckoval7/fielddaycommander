@@ -13,7 +13,7 @@
                 <div class="flex flex-wrap gap-2">
                     <x-button
                         label="Manage Weather"
-                        icon="o-cog-6-tooth"
+                        icon="phosphor-gear-six"
                         class="btn-outline"
                         link="{{ route('weather.manage') }}"
                     />
@@ -24,7 +24,7 @@
         {{-- Empty state --}}
         @if(! $hasData)
             <div class="flex flex-col items-center justify-center py-16 text-center text-base-content/60">
-                <x-icon name="o-cloud" class="w-16 h-16 mb-4 opacity-30" />
+                <x-icon name="phosphor-cloud-duotone" class="w-16 h-16 mb-4 opacity-30" />
                 @if($canManageWeather)
                     <p class="text-lg font-medium text-base-content/70">No weather data yet.</p>
                     <p class="text-sm mt-1 max-w-sm">Set up an active event with coordinates to enable automatic weather monitoring.</p>
@@ -43,7 +43,7 @@
                         @php $d = $manualOverride; @endphp
                         <div class="flex flex-wrap gap-6 items-center">
                             <div class="flex items-center gap-3">
-                                <x-icon name="o-cloud" class="w-10 h-10 text-base-content/40" />
+                                <x-icon name="phosphor-cloud-duotone" class="w-10 h-10 text-base-content/40" />
                                 @if(isset($d['temperature']))
                                     <span class="text-4xl font-bold">{{ round($d['temperature']) }}°</span>
                                 @endif
@@ -199,7 +199,7 @@
                         >
                             <div class="flex items-start justify-between w-full gap-2">
                                 <div class="flex items-center gap-2">
-                                    <x-icon name="{{ $isLocalAlert ? 'o-bolt' : 'o-exclamation-triangle' }}" class="w-5 h-5 shrink-0" />
+                                    <x-icon name="{{ $isLocalAlert ? 'phosphor-warning-octagon-duotone' : 'phosphor-warning-duotone' }}" class="w-5 h-5 shrink-0" />
                                     <span class="font-semibold text-sm">{{ $alert['headline'] ?? $alert['event'] }}</span>
                                 </div>
                                 @if(! $isLocalAlert && ! empty($alert['description']))
@@ -208,7 +208,7 @@
                                         type="button"
                                         class="btn btn-ghost btn-xs shrink-0"
                                     >
-                                        <x-icon name="o-chevron-down" class="w-4 h-4" x-bind:class="expanded ? 'rotate-180' : ''" />
+                                        <x-icon name="phosphor-caret-down" class="w-4 h-4" x-bind:class="expanded ? 'rotate-180' : ''" />
                                     </button>
                                 @endif
                             </div>

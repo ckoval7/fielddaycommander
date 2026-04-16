@@ -109,3 +109,45 @@ test('icon does not show wind badge when gusts are below 25 mph', function () {
         ->assertSet('gusts', 18.0)
         ->assertDontSeeHtml('badge-xs font-bold'); // just confirms no M badge rendered
 });
+
+test('icon renders night variant when is_day is 0', function () {
+    Setting::set('weather.forecast', [
+        'current' => [
+            'temperature_2m' => 58.0,
+            'wind_speed_10m' => 5.0,
+            'wind_gusts_10m' => 8.0,
+            'precipitation' => 0.0,
+            'weather_code' => 0,
+            'is_day' => 0,
+        ],
+    ]);
+
+    $user = User::factory()->create();
+
+    $component = Livewire::actingAs($user)
+        ->test(WeatherIcon::class)
+        ->assertSet('isNight', true);
+
+    expect($component->instance()->iconName())->toBe('phosphor-moon-duotone');
+});
+
+test('icon renders day variant when is_day is 1', function () {
+    Setting::set('weather.forecast', [
+        'current' => [
+            'temperature_2m' => 72.0,
+            'wind_speed_10m' => 5.0,
+            'wind_gusts_10m' => 8.0,
+            'precipitation' => 0.0,
+            'weather_code' => 2,
+            'is_day' => 1,
+        ],
+    ]);
+
+    $user = User::factory()->create();
+
+    $component = Livewire::actingAs($user)
+        ->test(WeatherIcon::class)
+        ->assertSet('isNight', false);
+
+    expect($component->instance()->iconName())->toBe('phosphor-cloud-sun-duotone');
+});

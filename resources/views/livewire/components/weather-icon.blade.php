@@ -23,7 +23,7 @@
 
             @if($hasData && $gusts !== null && $gusts >= 25)
                 <span class="badge badge-warning badge-xs">
-                    <x-icon name="o-bolt" class="w-3 h-3" />
+                    <x-icon name="phosphor-lightning-duotone" class="w-3 h-3" />
                 </span>
             @endif
         </a>
