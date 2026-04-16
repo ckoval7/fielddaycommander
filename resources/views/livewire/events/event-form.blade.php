@@ -9,7 +9,7 @@
         <x-slot:actions>
             <x-button
                 label="Cancel"
-                icon="o-x-mark"
+                icon="phosphor-x"
                 class="btn-ghost"
                 link="{{ route('events.index') }}"
                 wire:navigate
@@ -18,7 +18,7 @@
     </x-header>
 
     @if($isLocked)
-        <x-alert icon="o-lock-closed" class="alert-warning">
+        <x-alert icon="phosphor-lock" class="alert-warning">
             <strong>Some fields are locked</strong> because this event has contacts or has already started.
             You can still update the event name, club name, section, end date, and guestbook settings.
         </x-alert>
@@ -26,7 +26,7 @@
 
     {{-- Validation Error Summary --}}
     @if($errors->any())
-        <x-alert icon="o-exclamation-triangle" class="alert-error mb-4">
+        <x-alert icon="phosphor-warning" class="alert-error mb-4">
             <div>
                 <div class="font-bold">Please fix the following errors:</div>
                 <ul class="list-disc list-inside text-sm mt-1">
@@ -49,7 +49,7 @@
                         label="Event Name"
                         wire:model.live="name"
                         required
-                        icon="o-calendar"
+                        icon="phosphor-calendar"
                         hint="e.g., Field Day 2025"
                         placeholder="Field Day 2025"
                     />
@@ -62,7 +62,7 @@
                     option-label="name"
                     option-value="id"
                     required
-                    icon="o-tag"
+                    icon="phosphor-tag"
                     placeholder="Select event type"
                     hint="Field Day, Winter Field Day, etc."
                     :disabled="$isLocked"
@@ -76,7 +76,7 @@
                         min="2020"
                         max="2099"
                         readonly
-                        icon="o-calendar-days"
+                        icon="phosphor-calendar-dots"
                         hint="Auto-detected from event name"
                     />
                 </div>
@@ -85,7 +85,7 @@
                     label="Start Date & Time (UTC)"
                     wire:model.live="start_time"
                     required
-                    icon="o-play"
+                    icon="phosphor-play"
                     hint="When the event begins, in UTC"
                     :disabled="$isLocked"
                 />
@@ -94,14 +94,14 @@
                     label="End Date & Time (UTC)"
                     wire:model="end_time"
                     required
-                    icon="o-stop"
+                    icon="phosphor-stop"
                     hint="When the event ends, in UTC"
                 />
 
                 @if($this->setupAllowedFrom)
                     <div class="col-span-full">
                         <div class="flex items-center gap-2 text-sm text-warning">
-                            <x-icon name="o-wrench-screwdriver" class="w-4 h-4" />
+                            <x-icon name="phosphor-wrench" class="w-4 h-4" />
                             <span>Setup window opens: <strong>{{ $this->setupAllowedFrom }}</strong></span>
                         </div>
                     </div>
@@ -120,7 +120,7 @@
                     <x-input
                         label="Grid Square"
                         wire:model="grid_square"
-                        icon="o-map"
+                        icon="phosphor-map-trifold"
                         placeholder="DM79"
                         hint="Maidenhead locator, 4 or 6 characters (e.g. DM79 or DM79ab)"
                         maxlength="6"
@@ -135,7 +135,7 @@
                         step="0.0000001"
                         min="-90"
                         max="90"
-                        icon="o-map-pin"
+                        icon="phosphor-map-pin"
                         placeholder="39.7392"
                         hint="Decimal degrees, e.g. 39.7392"
                     />
@@ -147,7 +147,7 @@
                         step="0.0000001"
                         min="-180"
                         max="180"
-                        icon="o-map-pin"
+                        icon="phosphor-map-pin"
                         placeholder="-104.9903"
                         hint="Decimal degrees, e.g. -104.9903"
                     />
@@ -155,14 +155,14 @@
                     <x-input
                         label="City / Town"
                         wire:model="city"
-                        icon="o-building-office-2"
+                        icon="phosphor-buildings"
                         placeholder="Denver"
                     />
 
                     <x-input
                         label="State / Province"
                         wire:model="state"
-                        icon="o-flag"
+                        icon="phosphor-flag"
                         placeholder="CO"
                         hint="2-letter abbreviation"
                     />
@@ -179,7 +179,7 @@
                     label="Station Callsign"
                     wire:model="callsign"
                     required
-                    icon="o-radio"
+                    icon="phosphor-radio"
                     placeholder="W1AW"
                     hint="Primary station callsign"
                     :disabled="$isLocked"
@@ -188,7 +188,7 @@
                 <x-input
                     label="Club Name"
                     wire:model="club_name"
-                    icon="o-building-office"
+                    icon="phosphor-buildings"
                     placeholder="Amateur Radio Club"
                     hint="Optional club or organization name"
                 />
@@ -200,7 +200,7 @@
                     option-label="name"
                     option-value="id"
                     required
-                    icon="o-map"
+                    icon="phosphor-map-trifold"
                     placeholder="Select section"
                     hint="Your ARRL or RAC section"
                 />
@@ -212,7 +212,7 @@
                     option-label="name"
                     option-value="id"
                     required
-                    icon="o-flag"
+                    icon="phosphor-flag"
                     placeholder="Select operating class"
                     hint="{{ $event_type_id ? 'Choose your operating class' : 'Select event type first' }}"
                     :disabled="!$event_type_id || $isLocked"
@@ -225,7 +225,7 @@
                     min="1"
                     max="99"
                     required
-                    icon="o-signal"
+                    icon="phosphor-cell-signal-high"
                     hint="Simultaneous transmitters (e.g., 2A = 2)"
                     :disabled="$isLocked"
                 />
@@ -252,7 +252,7 @@
                     min="1"
                     max="{{ $this->maxPowerLimit ?? 1500 }}"
                     required
-                    icon="o-bolt"
+                    icon="phosphor-lightning"
                     hint="{{ $this->maxPowerLimit ? 'Class limit: ' . $this->maxPowerLimit . 'W' : 'Enter maximum transmitter power' }}"
                     :disabled="$isLocked"
                 />
@@ -318,13 +318,13 @@
                 <x-input
                     label="Other Power Source"
                     wire:model="uses_other_power"
-                    icon="o-light-bulb"
+                    icon="phosphor-lightbulb"
                     placeholder="Describe any other power source"
                     hint="Optional: Specify other renewable/alternative power"
                     :disabled="$isLocked"
                 />
 
-                <x-alert icon="o-information-circle" class="alert-info">
+                <x-alert icon="phosphor-info" class="alert-info">
                     <div class="text-sm">
                         <strong>Power Multiplier Rules:</strong>
                         <ul class="list-disc list-inside mt-1 space-y-1">
@@ -363,20 +363,20 @@
                             label="GOTA Callsign"
                             wire:model="gota_callsign"
                             required
-                            icon="o-academic-cap"
+                            icon="phosphor-graduation-cap"
                             placeholder="W1GOTA"
                             hint="Callsign for GOTA station (usually different from main)"
                             :disabled="$isLocked"
                         />
 
-                        <x-alert icon="o-information-circle" class="alert-info">
+                        <x-alert icon="phosphor-info" class="alert-info">
                             GOTA stations must use 100W or less output power and are intended for new or inexperienced operators.
                         </x-alert>
                     @endif
                 </div>
             </x-card>
         @elseif($operating_class_id && !$this->allowsGota)
-            <x-alert icon="o-exclamation-triangle" class="alert-warning mb-6">
+            <x-alert icon="phosphor-warning" class="alert-warning mb-6">
                 The selected operating class does not permit a GOTA station.
             </x-alert>
         @endif
@@ -393,7 +393,7 @@
                 />
 
                 @if($guestbook_enabled)
-                    <x-alert icon="o-information-circle" class="alert-info">
+                    <x-alert icon="phosphor-info" class="alert-info">
                         <div class="text-sm">
                             <strong>Location-based Check-in:</strong>
                             Visitors must be within the detection radius of your event location OR on a local subnet to sign the guestbook.
@@ -409,7 +409,7 @@
                             min="100"
                             max="2000"
                             step="50"
-                            icon="o-signal"
+                            icon="phosphor-cell-signal-high"
                             hint="How far from the event location visitors can check in (100-2000m)"
                         />
                         <div class="mt-2">
@@ -431,7 +431,7 @@
                         label="Local Subnets (Optional)"
                         wire:model="guestbook_local_subnets"
                         rows="4"
-                        icon="o-globe-alt"
+                        icon="phosphor-globe"
                         placeholder="192.168.1.0/24&#10;10.0.0.0/8"
                         hint="One CIDR notation per line (e.g., 192.168.1.0/24). Visitors on these networks can sign in."
                     />
@@ -443,7 +443,7 @@
         <div class="flex justify-end gap-3">
             <x-button
                 label="Cancel"
-                icon="o-x-mark"
+                icon="phosphor-x"
                 class="btn-ghost"
                 link="{{ route('events.index') }}"
                 wire:navigate
@@ -451,7 +451,7 @@
             <x-button
                 type="submit"
                 label="{{ $mode === 'edit' ? 'Update Event' : 'Create Event' }}"
-                icon="o-check"
+                icon="phosphor-check"
                 class="btn-primary"
                 spinner="save"
             />
