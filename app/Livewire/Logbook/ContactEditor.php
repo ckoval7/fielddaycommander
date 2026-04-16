@@ -211,7 +211,7 @@ class ContactEditor extends Component
 
         if ($count > 0) {
             $this->dispatch('contact-deleted');
-            $this->dispatch('notify', title: 'Success', description: "{$count} contact(s) deleted.");
+            $this->dispatch('notify', title: 'Success', description: "{$count} contact(s) deleted.", type: 'success');
         }
     }
 
@@ -255,7 +255,7 @@ class ContactEditor extends Component
 
         if ($count > 0) {
             $this->dispatch('contact-updated');
-            $this->dispatch('notify', title: 'Success', description: "Logger updated for {$count} contact(s).");
+            $this->dispatch('notify', title: 'Success', description: "Logger updated for {$count} contact(s).", type: 'success');
         }
     }
 
