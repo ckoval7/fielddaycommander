@@ -47,7 +47,7 @@ class ManageSchedule extends Component
 
     public bool $roleRequiresConfirmation = false;
 
-    public string $roleIcon = 'o-user-group';
+    public string $roleIcon = 'phosphor-users-three';
 
     public string $roleColor = self::DEFAULT_ROLE_COLOR;
 
@@ -203,7 +203,7 @@ class ManageSchedule extends Component
             $this->roleDescription = $role->description ?? '';
             $this->roleBonusPoints = $role->bonus_points;
             $this->roleRequiresConfirmation = $role->requires_confirmation;
-            $this->roleIcon = $role->icon ?? 'o-user-group';
+            $this->roleIcon = $role->icon ?? 'phosphor-users-three';
             $this->roleColor = $role->color ?? self::DEFAULT_ROLE_COLOR;
         }
 
@@ -296,7 +296,7 @@ class ManageSchedule extends Component
         unset($this->roles);
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: $message, icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: $message, icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function deleteRole(int $roleId): void
@@ -311,7 +311,7 @@ class ManageSchedule extends Component
             ->count();
 
         if ($shiftsWithAssignments > 0) {
-            $this->dispatch('toast', title: 'Error', description: 'Cannot delete role with assigned shifts. Remove assignments first.', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'Cannot delete role with assigned shifts. Remove assignments first.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -332,7 +332,7 @@ class ManageSchedule extends Component
         unset($this->roles);
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'Role deleted successfully', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Role deleted successfully', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     // --- Shift CRUD ---
@@ -439,7 +439,7 @@ class ManageSchedule extends Component
         $this->resetShiftForm();
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: $message, icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: $message, icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function deleteShift(int $shiftId): void
@@ -473,7 +473,7 @@ class ManageSchedule extends Component
             ? "Shift and {$assignmentCount} assignment(s) deleted"
             : 'Shift deleted successfully';
 
-        $this->dispatch('toast', title: 'Success', description: $description, icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: $description, icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     // --- Bulk Creation ---
@@ -556,7 +556,7 @@ class ManageSchedule extends Component
         $this->resetBulkForm();
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: "{$createdCount} shifts created successfully", icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$createdCount} shifts created successfully", icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     // --- Assignments ---
@@ -582,7 +582,7 @@ class ManageSchedule extends Component
         // Check capacity
         if (! $shift->has_capacity) {
             $this->showAssignModal = false;
-            $this->dispatch('toast', title: 'Error', description: 'This shift is already at capacity.', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'This shift is already at capacity.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -594,7 +594,7 @@ class ManageSchedule extends Component
 
         if ($alreadyAssigned) {
             $this->showAssignModal = false;
-            $this->dispatch('toast', title: 'Error', description: 'User is already assigned to this shift.', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'User is already assigned to this shift.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -623,7 +623,7 @@ class ManageSchedule extends Component
         $this->assignUserId = null;
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'User assigned to shift', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'User assigned to shift', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function removeAssignment(int $assignmentId): void
@@ -646,7 +646,7 @@ class ManageSchedule extends Component
 
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'Assignment removed', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Assignment removed', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     // --- Confirmations ---
@@ -672,7 +672,7 @@ class ManageSchedule extends Component
         unset($this->pendingConfirmations);
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'Check-in confirmed', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Check-in confirmed', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function revokeConfirmation(int $assignmentId): void
@@ -695,7 +695,7 @@ class ManageSchedule extends Component
         unset($this->pendingConfirmations);
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'Confirmation revoked', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Confirmation revoked', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     // --- Manager Overrides ---
@@ -720,7 +720,7 @@ class ManageSchedule extends Component
 
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'User checked in', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'User checked in', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function managerCheckOut(int $assignmentId): void
@@ -743,7 +743,7 @@ class ManageSchedule extends Component
 
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'User checked out', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'User checked out', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function markNoShow(int $assignmentId): void
@@ -766,7 +766,7 @@ class ManageSchedule extends Component
 
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'Marked as no-show', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Marked as no-show', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     // --- Form Resets ---
@@ -778,7 +778,7 @@ class ManageSchedule extends Component
         $this->roleDescription = '';
         $this->roleBonusPoints = null;
         $this->roleRequiresConfirmation = false;
-        $this->roleIcon = 'o-user-group';
+        $this->roleIcon = 'phosphor-users-three';
         $this->roleColor = self::DEFAULT_ROLE_COLOR;
     }
 

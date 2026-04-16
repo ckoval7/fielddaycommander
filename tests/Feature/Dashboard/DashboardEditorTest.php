@@ -475,8 +475,8 @@ test('get widget type label returns configured name', function () {
 test('get widget type icon returns configured icon', function () {
     $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard]);
 
-    expect($component->instance()->getWidgetTypeIcon('stat_card'))->toBe('o-chart-bar');
-    expect($component->instance()->getWidgetTypeIcon('chart'))->toBe('o-chart-pie');
+    expect($component->instance()->getWidgetTypeIcon('stat_card'))->toBe('phosphor-chart-bar');
+    expect($component->instance()->getWidgetTypeIcon('chart'))->toBe('phosphor-chart-pie');
 });
 
 test('get widget type label falls back for unknown type', function () {
@@ -488,7 +488,7 @@ test('get widget type label falls back for unknown type', function () {
 test('get widget type icon falls back for unknown type', function () {
     $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard]);
 
-    expect($component->instance()->getWidgetTypeIcon('unknown_type'))->toBe('o-cube');
+    expect($component->instance()->getWidgetTypeIcon('unknown_type'))->toBe('phosphor-cube');
 });
 
 // ── Full Workflow Integration ────────────────────────────────────────

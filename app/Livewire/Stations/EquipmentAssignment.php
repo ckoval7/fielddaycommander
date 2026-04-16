@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Notifications\Equipment\EquipmentReassigned;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -405,8 +406,8 @@ class EquipmentAssignment extends Component
      *   is_conflicted: bool,
      *   current_station_name: string|null,
      *   current_station_id: int|null,
-     *   assigned_by_user: \App\Models\User|null,
-     *   assigned_at: \Illuminate\Support\Carbon|null,
+     *   assigned_by_user: User|null,
+     *   assigned_at: Carbon|null,
      *   can_reassign: bool,
      *   conflict_message: string
      * }
@@ -710,7 +711,7 @@ class EquipmentAssignment extends Component
             $this->dispatch('toast', [
                 'title' => 'Error',
                 'description' => 'You do not have permission to assign equipment.',
-                'icon' => 'o-x-circle',
+                'icon' => 'phosphor-x-circle',
                 'css' => 'alert-error',
             ]);
 
@@ -725,7 +726,7 @@ class EquipmentAssignment extends Component
             $this->dispatch('toast', [
                 'title' => 'Cannot Assign Equipment',
                 'description' => $typeValidation['error_message'],
-                'icon' => 'o-exclamation-triangle',
+                'icon' => 'phosphor-warning',
                 'css' => 'alert-warning',
             ]);
 
@@ -739,7 +740,7 @@ class EquipmentAssignment extends Component
                 $this->dispatch('toast', [
                     'title' => 'Equipment In Use',
                     'description' => $conflictCheck['conflict_message'],
-                    'icon' => 'o-exclamation-circle',
+                    'icon' => 'phosphor-warning-circle',
                     'css' => 'alert-error',
                 ]);
 
@@ -844,7 +845,7 @@ class EquipmentAssignment extends Component
         $this->dispatch('toast', [
             'title' => 'Equipment Assigned',
             'description' => "{$equipment->make} {$equipment->model} assigned to this station.",
-            'icon' => 'o-check-circle',
+            'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ]);
     }
@@ -925,7 +926,7 @@ class EquipmentAssignment extends Component
         $this->dispatch('toast', [
             'title' => 'Equipment Reassigned',
             'description' => "{$equipment->make} {$equipment->model} reassigned to this station.",
-            'icon' => 'o-check-circle',
+            'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ]);
     }
@@ -1000,7 +1001,7 @@ class EquipmentAssignment extends Component
             $this->dispatch('toast', [
                 'title' => 'Error',
                 'description' => 'You do not have permission to unassign equipment.',
-                'icon' => 'o-x-circle',
+                'icon' => 'phosphor-x-circle',
                 'css' => 'alert-error',
             ]);
 
@@ -1038,7 +1039,7 @@ class EquipmentAssignment extends Component
         $this->dispatch('toast', [
             'title' => 'Equipment Unassigned',
             'description' => "{$equipment->make} {$equipment->model} removed from this station.",
-            'icon' => 'o-check-circle',
+            'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ]);
     }
@@ -1127,12 +1128,12 @@ class EquipmentAssignment extends Component
     public function getTypeIcon(string $type): string
     {
         return match ($type) {
-            'radio' => 'o-radio',
-            'antenna' => 'o-signal',
-            'amplifier' => 'o-bolt',
-            'computer' => 'o-computer-desktop',
-            'accessory' => 'o-wrench-screwdriver',
-            default => 'o-cube',
+            'radio' => 'phosphor-radio',
+            'antenna' => 'phosphor-cell-signal-high',
+            'amplifier' => 'phosphor-lightning',
+            'computer' => 'phosphor-desktop',
+            'accessory' => 'phosphor-wrench',
+            default => 'phosphor-cube',
         };
     }
 

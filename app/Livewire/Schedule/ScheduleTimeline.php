@@ -136,13 +136,13 @@ class ScheduleTimeline extends Component
         $shift = Shift::findOrFail($shiftId);
 
         if (! $shift->is_open) {
-            $this->dispatch('toast', title: 'Error', description: 'This shift is not open for sign-ups.', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'This shift is not open for sign-ups.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
 
         if (! $shift->has_capacity) {
-            $this->dispatch('toast', title: 'Error', description: 'This shift is full.', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'This shift is full.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -152,7 +152,7 @@ class ScheduleTimeline extends Component
             ->exists();
 
         if ($alreadyAssigned) {
-            $this->dispatch('toast', title: 'Error', description: 'You are already signed up for this shift.', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'You are already signed up for this shift.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -178,7 +178,7 @@ class ScheduleTimeline extends Component
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 
-        $this->dispatch('toast', title: 'Success', description: 'You have been signed up for the shift.', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'You have been signed up for the shift.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     /**
@@ -212,7 +212,7 @@ class ScheduleTimeline extends Component
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 
-        $this->dispatch('toast', title: 'Success', description: 'Shift has been dropped.', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Shift has been dropped.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     /**
@@ -228,7 +228,7 @@ class ScheduleTimeline extends Component
             ->firstOrFail();
 
         if (! $assignment->shift->can_check_in) {
-            $this->dispatch('toast', title: 'Too Early', description: 'Check-in opens 15 minutes before the shift starts.', icon: 'o-clock', css: 'alert-warning');
+            $this->dispatch('toast', title: 'Too Early', description: 'Check-in opens 15 minutes before the shift starts.', icon: 'phosphor-clock', css: 'alert-warning');
 
             return;
         }
@@ -248,7 +248,7 @@ class ScheduleTimeline extends Component
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 
-        $this->dispatch('toast', title: 'Success', description: 'You have checked in.', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'You have checked in.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     /**
@@ -278,7 +278,7 @@ class ScheduleTimeline extends Component
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 
-        $this->dispatch('toast', title: 'Success', description: 'You have checked out.', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'You have checked out.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     /**
@@ -294,7 +294,7 @@ class ScheduleTimeline extends Component
             ->firstOrFail();
 
         if (! $assignment->shift->is_current) {
-            $this->dispatch('toast', title: 'Too Late', description: 'This shift has already ended.', icon: 'o-clock', css: 'alert-warning');
+            $this->dispatch('toast', title: 'Too Late', description: 'This shift has already ended.', icon: 'phosphor-clock', css: 'alert-warning');
 
             return;
         }
@@ -314,7 +314,7 @@ class ScheduleTimeline extends Component
         unset($this->shiftsByRole);
         unset($this->myAssignments);
 
-        $this->dispatch('toast', title: 'Success', description: 'You have checked back in.', icon: 'o-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'You have checked back in.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     /**

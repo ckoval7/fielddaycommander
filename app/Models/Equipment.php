@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\EquipmentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * Equipment model representing ham radio or club equipment.
@@ -29,16 +31,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $emergency_contact_phone
  * @property int|null $power_output_watts
  * @property string|null $photo_path
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  * @property-read string $owner_name
  * @property-read bool $is_club_equipment
  * @property-read EquipmentEvent|null $current_commitment
  */
 class Equipment extends Model
 {
-    /** @use HasFactory<\Database\Factories\EquipmentFactory> */
+    /** @use HasFactory<EquipmentFactory> */
     use HasFactory, SoftDeletes;
 
     /**
@@ -47,15 +49,15 @@ class Equipment extends Model
      * @var array<string, array{label: string, icon: string}>
      */
     public const TYPES = [
-        'radio' => ['label' => 'Radio', 'icon' => 'o-radio'],
-        'antenna' => ['label' => 'Antenna', 'icon' => 'o-signal'],
-        'amplifier' => ['label' => 'Amplifier', 'icon' => 'o-bolt'],
-        'computer' => ['label' => 'Computer', 'icon' => 'o-computer-desktop'],
-        'power_supply' => ['label' => 'Power Supply', 'icon' => 'o-battery-100'],
-        'accessory' => ['label' => 'Accessory', 'icon' => 'o-wrench-screwdriver'],
-        'tool' => ['label' => 'Tool', 'icon' => 'o-wrench'],
-        'furniture' => ['label' => 'Furniture', 'icon' => 'o-home'],
-        'other' => ['label' => 'Other', 'icon' => 'o-cube'],
+        'radio' => ['label' => 'Radio', 'icon' => 'phosphor-radio'],
+        'antenna' => ['label' => 'Antenna', 'icon' => 'phosphor-cell-signal-high'],
+        'amplifier' => ['label' => 'Amplifier', 'icon' => 'phosphor-lightning'],
+        'computer' => ['label' => 'Computer', 'icon' => 'phosphor-desktop'],
+        'power_supply' => ['label' => 'Power Supply', 'icon' => 'phosphor-battery-full'],
+        'accessory' => ['label' => 'Accessory', 'icon' => 'phosphor-wrench'],
+        'tool' => ['label' => 'Tool', 'icon' => 'phosphor-wrench'],
+        'furniture' => ['label' => 'Furniture', 'icon' => 'phosphor-house'],
+        'other' => ['label' => 'Other', 'icon' => 'phosphor-cube'],
     ];
 
     /**
@@ -99,7 +101,7 @@ class Equipment extends Model
      */
     public static function typeIcon(string $type): string
     {
-        return self::TYPES[$type]['icon'] ?? 'o-cube';
+        return self::TYPES[$type]['icon'] ?? 'phosphor-cube';
     }
 
     /**

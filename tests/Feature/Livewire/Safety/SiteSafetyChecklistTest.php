@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ChecklistType;
 use App\Livewire\Safety\SiteSafetyChecklist;
 use App\Models\AuditLog;
 use App\Models\BonusType;
@@ -27,7 +28,7 @@ beforeEach(function () {
     $this->safetyRole = ShiftRole::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'name' => 'Safety Officer',
-        'icon' => 'o-shield-check',
+        'icon' => 'phosphor-shield-check',
         'color' => '#dc2626',
         'requires_confirmation' => true,
     ]);
@@ -124,7 +125,7 @@ describe('display', function () {
 
         Livewire::test(SiteSafetyChecklist::class)
             ->assertSee('Custom item without help')
-            ->assertDontSeeHtml('o-question-mark-circle');
+            ->assertDontSeeHtml('phosphor-question');
     });
 
     test('seeded defaults include help text', function () {
@@ -430,7 +431,7 @@ describe('audit logging', function () {
 
         $item = SafetyChecklistItem::create([
             'event_configuration_id' => $this->eventConfig->id,
-            'checklist_type' => \App\Enums\ChecklistType::SafetyOfficer,
+            'checklist_type' => ChecklistType::SafetyOfficer,
             'label' => 'Fire Extinguisher Check',
             'is_required' => true,
             'is_default' => false,

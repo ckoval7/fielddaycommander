@@ -76,7 +76,7 @@ describe('rendering', function () {
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Station Operator',
-            'icon' => 'o-radio',
+            'icon' => 'phosphor-radio',
         ]);
 
         Shift::factory()->create([
@@ -408,13 +408,13 @@ describe('filtering and sorting', function () {
         $role1 = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Station Operator',
-            'icon' => 'o-radio',
+            'icon' => 'phosphor-radio',
         ]);
 
         $role2 = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Safety Officer',
-            'icon' => 'o-shield-check',
+            'icon' => 'phosphor-shield-check',
         ]);
 
         Shift::factory()->create([
@@ -538,7 +538,7 @@ describe('urgent empty shift highlighting', function () {
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Station Operator',
-            'icon' => 'o-radio',
+            'icon' => 'phosphor-radio',
         ]);
 
         Shift::factory()->create([
@@ -560,7 +560,7 @@ describe('urgent empty shift highlighting', function () {
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Station Operator',
-            'icon' => 'o-radio',
+            'icon' => 'phosphor-radio',
         ]);
 
         $shift = Shift::factory()->create([
@@ -584,7 +584,7 @@ describe('urgent empty shift highlighting', function () {
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Station Operator',
-            'icon' => 'o-radio',
+            'icon' => 'phosphor-radio',
         ]);
 
         Shift::factory()->create([
@@ -606,7 +606,7 @@ describe('urgent empty shift highlighting', function () {
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Station Operator',
-            'icon' => 'o-radio',
+            'icon' => 'phosphor-radio',
         ]);
 
         Shift::factory()->create([
@@ -628,7 +628,7 @@ describe('urgent empty shift highlighting', function () {
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'name' => 'Station Operator',
-            'icon' => 'o-radio',
+            'icon' => 'phosphor-radio',
         ]);
 
         Shift::factory()->create([

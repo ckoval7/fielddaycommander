@@ -327,7 +327,7 @@ class UserProfile extends Component
     public function enableTwoFactor(): void
     {
         if (config('auth-security.2fa_mode') === 'disabled') {
-            $this->dispatch('toast', title: 'Error', description: 'Two-factor authentication is disabled by your administrator.', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'Two-factor authentication is disabled by your administrator.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -379,7 +379,7 @@ class UserProfile extends Component
     public function disableTwoFactor(): void
     {
         if (config('auth-security.2fa_mode') === 'required') {
-            $this->dispatch('toast', title: 'Error', description: 'Two-factor authentication is required and cannot be disabled.', icon: 'o-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'Two-factor authentication is required and cannot be disabled.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }

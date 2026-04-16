@@ -38,14 +38,14 @@ enum NotificationCategory: string
     public function icon(): string
     {
         return match ($this) {
-            self::NewSection => 'o-globe-americas',
-            self::Guestbook => 'o-book-open',
-            self::Photos => 'o-photo',
-            self::StationStatus => 'o-signal',
-            self::QsoMilestone => 'o-trophy',
-            self::Equipment => 'o-wrench-screwdriver',
-            self::BulletinReminder => 'o-radio',
-            self::ShiftCheckinReminder => 'o-clock',
+            self::NewSection => 'phosphor-globe',
+            self::Guestbook => 'phosphor-book-open',
+            self::Photos => 'phosphor-image',
+            self::StationStatus => 'phosphor-cell-signal-high',
+            self::QsoMilestone => 'phosphor-trophy',
+            self::Equipment => 'phosphor-wrench',
+            self::BulletinReminder => 'phosphor-radio',
+            self::ShiftCheckinReminder => 'phosphor-clock',
             self::WeatherAlert => 'phosphor-cloud-lightning-duotone',
         };
     }

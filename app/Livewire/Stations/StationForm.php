@@ -268,7 +268,7 @@ class StationForm extends Component
         $toastData = [
             'title' => 'Success',
             'description' => $successMessage,
-            'icon' => 'o-check-circle',
+            'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ];
 

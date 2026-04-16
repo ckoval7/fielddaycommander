@@ -18,7 +18,7 @@ return [
             'component' => 'dashboard.widgets.stat-card',
             'name' => 'Stat Card',
             'description' => 'Display a single metric as a large number with optional trend indicator',
-            'icon' => 'o-chart-bar',
+            'icon' => 'phosphor-chart-bar',
             'config_schema' => [
                 'metric' => [
                     'type' => 'select',
@@ -67,7 +67,7 @@ return [
             'component' => 'dashboard.widgets.chart',
             'name' => 'Chart',
             'description' => 'Visualize data with interactive graphs powered by Chart.js',
-            'icon' => 'o-chart-pie',
+            'icon' => 'phosphor-chart-pie',
             'config_schema' => [
                 'chart_type' => [
                     'type' => 'select',
@@ -110,7 +110,7 @@ return [
             'component' => 'dashboard.widgets.progress-bar',
             'name' => 'Progress Bar',
             'description' => 'Track progress toward goals and milestones',
-            'icon' => 'o-arrow-trending-up',
+            'icon' => 'phosphor-trend-up',
             'config_schema' => [
                 'metric' => [
                     'type' => 'select',
@@ -141,7 +141,7 @@ return [
             'component' => 'dashboard.widgets.list-widget',
             'name' => 'List',
             'description' => 'Display scrollable lists of data',
-            'icon' => 'o-list-bullet',
+            'icon' => 'phosphor-list-bullets',
             'config_schema' => [
                 'list_type' => [
                     'type' => 'select',
@@ -172,7 +172,7 @@ return [
             'component' => 'dashboard.widgets.timer',
             'name' => 'Timer',
             'description' => 'Display countdown timers or elapsed time',
-            'icon' => 'o-clock',
+            'icon' => 'phosphor-clock',
             'config_schema' => [
                 'timer_type' => [
                     'type' => 'select',
@@ -204,7 +204,7 @@ return [
             'component' => 'dashboard.widgets.info-card',
             'name' => 'Info Card',
             'description' => 'Display static or semi-static event information',
-            'icon' => 'o-information-circle',
+            'icon' => 'phosphor-info',
             'config_schema' => [
                 'info_type' => [
                     'type' => 'select',
@@ -232,7 +232,7 @@ return [
             'component' => 'dashboard.widgets.message-traffic-score',
             'name' => 'Message Traffic Score',
             'description' => 'Display SM/SEC message, traffic count, and W1AW bulletin bonus point status',
-            'icon' => 'o-envelope',
+            'icon' => 'phosphor-envelope',
             'config_schema' => [],
         ],
 
@@ -240,7 +240,7 @@ return [
             'component' => 'dashboard.widgets.sections-worked',
             'name' => 'Sections Worked',
             'description' => 'All ARRL sections grouped by call area, showing worked vs not worked',
-            'icon' => 'o-map',
+            'icon' => 'phosphor-map-trifold',
             'config_schema' => [],
         ],
 
@@ -248,7 +248,7 @@ return [
             'component' => 'dashboard.widgets.feed',
             'name' => 'Activity Feed',
             'description' => 'Live stream of recent activity and events',
-            'icon' => 'o-rss',
+            'icon' => 'phosphor-rss',
             'config_schema' => [
                 'feed_type' => [
                     'type' => 'select',

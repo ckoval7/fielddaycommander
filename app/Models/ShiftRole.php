@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\ShiftRoleFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ShiftRole extends Model
 {
-    /** @use HasFactory<\Database\Factories\ShiftRoleFactory> */
+    /** @use HasFactory<ShiftRoleFactory> */
     use HasFactory, SoftDeletes;
 
     /**
@@ -26,7 +27,7 @@ class ShiftRole extends Model
             'bonus_points' => 100,
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'F'],
-            'icon' => 'o-shield-check',
+            'icon' => 'phosphor-shield-check',
             'color' => '#dc2626',
         ],
         'Site Responsibilities' => [
@@ -34,7 +35,7 @@ class ShiftRole extends Model
             'bonus_points' => 50,
             'requires_confirmation' => true,
             'eligible_classes' => ['B', 'C', 'D', 'E', 'F'],
-            'icon' => 'o-clipboard-document-check',
+            'icon' => 'phosphor-clipboard-text',
             'color' => '#f59e0b',
         ],
         'Public Information Table' => [
@@ -42,7 +43,7 @@ class ShiftRole extends Model
             'bonus_points' => 100,
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'B', 'F'],
-            'icon' => 'o-information-circle',
+            'icon' => 'phosphor-info',
             'color' => '#3b82f6',
         ],
         'Public Greeter' => [
@@ -50,7 +51,7 @@ class ShiftRole extends Model
             'bonus_points' => 100,
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'B', 'F'],
-            'icon' => 'o-hand-raised',
+            'icon' => 'phosphor-hand',
             'color' => '#10b981',
         ],
         'GOTA Coach' => [
@@ -58,7 +59,7 @@ class ShiftRole extends Model
             'bonus_points' => 100,
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'F'],
-            'icon' => 'o-academic-cap',
+            'icon' => 'phosphor-graduation-cap',
             'color' => '#8b5cf6',
         ],
         'Message Handler' => [
@@ -66,7 +67,7 @@ class ShiftRole extends Model
             'bonus_points' => 100,
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
-            'icon' => 'o-envelope',
+            'icon' => 'phosphor-envelope',
             'color' => '#ec4899',
         ],
         'Event Manager' => [
@@ -74,7 +75,7 @@ class ShiftRole extends Model
             'bonus_points' => null,
             'requires_confirmation' => false,
             'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
-            'icon' => 'o-user-group',
+            'icon' => 'phosphor-users-three',
             'color' => '#6366f1',
         ],
         'Station Captain' => [
@@ -82,7 +83,7 @@ class ShiftRole extends Model
             'bonus_points' => null,
             'requires_confirmation' => false,
             'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
-            'icon' => 'o-radio',
+            'icon' => 'phosphor-radio',
             'color' => '#64748b',
         ],
         'Operator' => [
@@ -90,7 +91,7 @@ class ShiftRole extends Model
             'bonus_points' => null,
             'requires_confirmation' => false,
             'eligible_classes' => ['A', 'B', 'C', 'D', 'E', 'F'],
-            'icon' => 'o-signal',
+            'icon' => 'phosphor-cell-signal-high',
             'color' => '#0ea5e9',
         ],
     ];

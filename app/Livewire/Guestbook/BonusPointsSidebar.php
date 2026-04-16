@@ -60,7 +60,7 @@ class BonusPointsSidebar extends Component
         return [
             'elected_official' => [
                 'label' => 'Elected Official Visit',
-                'icon' => 'o-building-library',
+                'icon' => 'phosphor-buildings',
                 'iconColor' => 'text-primary',
                 'count' => $this->electedOfficialCount,
                 'earned' => $this->electedOfficialCount > 0,
@@ -69,7 +69,7 @@ class BonusPointsSidebar extends Component
             ],
             'agency' => [
                 'label' => 'Served Agency Visit',
-                'icon' => 'o-shield-check',
+                'icon' => 'phosphor-shield-check',
                 'iconColor' => 'text-info',
                 'count' => $this->agencyCount,
                 'earned' => $this->agencyCount > 0,
@@ -78,7 +78,7 @@ class BonusPointsSidebar extends Component
             ],
             'media' => [
                 'label' => 'Media Publicity',
-                'icon' => 'o-tv',
+                'icon' => 'phosphor-television',
                 'iconColor' => 'text-secondary',
                 'count' => $this->mediaCount,
                 'earned' => $this->mediaCount > 0,

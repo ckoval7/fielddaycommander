@@ -36,15 +36,15 @@ test('authenticated home page renders Phosphor nav icons and no stale Heroicon n
 
     // Nav-specific Heroicon names we migrated away from must not appear
     foreach ([
-        'name="o-home"',
-        'icon="o-home"',
-        'icon="o-queue-list"',
-        'icon="o-user-group"',
+        'name="phosphor-house"',
+        'icon="phosphor-house"',
+        'icon="phosphor-list-bullets"',
+        'icon="phosphor-users-three"',
         'icon="o-cog-6-tooth"',
-        'icon="o-book-open"',
-        'icon="o-calendar-days"',
-        'icon="o-wrench-screwdriver"',
-        'icon="o-signal"',
+        'icon="phosphor-book-open"',
+        'icon="phosphor-calendar-dots"',
+        'icon="phosphor-wrench"',
+        'icon="phosphor-cell-signal-high"',
     ] as $needle) {
         expect($html)->not->toContain($needle);
     }

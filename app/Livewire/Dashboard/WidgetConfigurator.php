@@ -180,7 +180,7 @@ class WidgetConfigurator extends Component
                     'value' => $key,
                     'label' => $config['name'] ?? ucfirst($key),
                     'description' => $config['description'] ?? '',
-                    'icon' => $config['icon'] ?? 'o-cube',
+                    'icon' => $config['icon'] ?? 'phosphor-cube',
                 ];
             })
             ->toArray();

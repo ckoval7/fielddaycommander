@@ -275,7 +275,7 @@ class EquipmentForm extends Component
         $this->dispatch('toast', [
             'title' => 'Success',
             'description' => $this->equipmentId ? 'Equipment updated successfully' : 'Equipment created successfully',
-            'icon' => 'o-check-circle',
+            'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ]);
 

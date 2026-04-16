@@ -67,7 +67,7 @@ test('stat card calculates avg qso rate 4h correctly with contacts', function ()
         ->toBeArray()
         ->and($data['value'])->toBe('3.0') // 12 / 4 = 3.0
         ->and($data['label'])->toBe('Avg QSO Rate (4h)')
-        ->and($data['icon'])->toBe('o-chart-bar')
+        ->and($data['icon'])->toBe('phosphor-chart-bar')
         ->and($data['color'])->toBe('text-info');
 });
 
@@ -264,7 +264,7 @@ test('stat card calculates contacts last hour correctly', function () {
         ->toBeArray()
         ->and($data['value'])->toBe('5')
         ->and($data['label'])->toBe('Contacts Last Hour')
-        ->and($data['icon'])->toBe('o-clock')
+        ->and($data['icon'])->toBe('phosphor-clock')
         ->and($data['color'])->toBe('text-success');
 });
 
@@ -395,7 +395,7 @@ test('stat card calculates hours remaining correctly for ongoing event', functio
         ->toBeArray()
         ->and($data['value'])->toBe('6')
         ->and($data['label'])->toBe('Hours Remaining')
-        ->and($data['icon'])->toBe('o-clock')
+        ->and($data['icon'])->toBe('phosphor-clock')
         ->and($data['color'])->toBe('text-warning');
 });
 
@@ -482,7 +482,7 @@ test('stat card calculates bonus points earned correctly', function () {
         ->toBeArray()
         ->and($data['value'])->toBe('175') // 100 + 50 + 25
         ->and($data['label'])->toBe('Bonus Points')
-        ->and($data['icon'])->toBe('o-star')
+        ->and($data['icon'])->toBe('phosphor-star')
         ->and($data['color'])->toBe('text-accent');
 });
 
@@ -570,7 +570,7 @@ test('stat card calculates guestbook count correctly', function () {
         ->toBeArray()
         ->and($data['value'])->toBe('5')
         ->and($data['label'])->toBe('Guestbook Entries')
-        ->and($data['icon'])->toBe('o-book-open')
+        ->and($data['icon'])->toBe('phosphor-book-open')
         ->and($data['color'])->toBe('text-info');
 });
 
@@ -607,11 +607,11 @@ test('stat card guestbook count only counts current event', function () {
 
 test('stat card returns empty metric for new metrics when no active event', function () {
     $metrics = [
-        'avg_qso_rate_4h' => ['Avg QSO Rate (4h)', 'o-chart-bar', 'text-info'],
-        'contacts_last_hour' => ['Contacts Last Hour', 'o-clock', 'text-success'],
-        'hours_remaining' => ['Hours Remaining', 'o-clock', 'text-warning'],
-        'bonus_points_earned' => ['Bonus Points', 'o-star', 'text-accent'],
-        'guestbook_count' => ['Guestbook Entries', 'o-book-open', 'text-info'],
+        'avg_qso_rate_4h' => ['Avg QSO Rate (4h)', 'phosphor-chart-bar', 'text-info'],
+        'contacts_last_hour' => ['Contacts Last Hour', 'phosphor-clock', 'text-success'],
+        'hours_remaining' => ['Hours Remaining', 'phosphor-clock', 'text-warning'],
+        'bonus_points_earned' => ['Bonus Points', 'phosphor-star', 'text-accent'],
+        'guestbook_count' => ['Guestbook Entries', 'phosphor-book-open', 'text-info'],
     ];
 
     foreach ($metrics as $metricName => [$label, $icon, $color]) {
