@@ -14,14 +14,14 @@
                 @can('manage-shifts')
                     <x-button
                         label="Manage Schedule"
-                        icon="o-cog-6-tooth"
+                        icon="phosphor-gear-six"
                         class="btn-outline"
                         link="{{ route('schedule.manage') }}"
                     />
                 @endcan
                 <x-button
                     label="My Shifts"
-                    icon="o-calendar-days"
+                    icon="phosphor-calendar-dots"
                     class="btn-outline"
                     link="{{ route('schedule.my-shifts') }}"
                 />
@@ -39,7 +39,7 @@
         @endif
 
         @if(!$eventConfig)
-            <x-alert icon="o-information-circle" class="alert-info">
+            <x-alert icon="phosphor-info" class="alert-info">
                 No event is currently selected. Please select an event to view the schedule.
             </x-alert>
         @else
@@ -52,19 +52,19 @@
             @if($this->filteredShifts->isEmpty())
                 @if($this->activeFilterCount > 0)
                     <div class="text-center py-12">
-                        <x-icon name="o-funnel" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
+                        <x-icon name="phosphor-funnel" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
                         <h3 class="text-lg font-semibold mb-2">No shifts match your filters</h3>
                         <p class="text-base-content/60 mb-4">Try adjusting your filters to see more shifts.</p>
                         <x-button
                             label="Clear Filters"
-                            icon="o-x-mark"
+                            icon="phosphor-x"
                             class="btn-outline btn-sm"
                             wire:click="resetFilters"
                         />
                     </div>
                 @else
                     <div class="text-center py-12">
-                        <x-icon name="o-calendar" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
+                        <x-icon name="phosphor-calendar" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
                         <h3 class="text-lg font-semibold mb-2">No roles configured</h3>
                         <p class="text-base-content/60">Shift roles have not been set up for this event yet.</p>
                     </div>

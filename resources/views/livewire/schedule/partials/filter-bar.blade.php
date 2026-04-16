@@ -14,13 +14,13 @@
             @click="open = !open"
             class="btn btn-sm btn-outline gap-2"
         >
-            <x-icon name="o-funnel" class="w-4 h-4" />
+            <x-icon name="phosphor-funnel" class="w-4 h-4" />
             Filters
             @if($this->activeFilterCount > 0)
                 <span class="badge badge-primary badge-sm">{{ $this->activeFilterCount }}</span>
             @endif
-            <x-icon x-show="!open" name="o-chevron-down" class="w-3 h-3" />
-            <x-icon x-show="open" name="o-chevron-up" class="w-3 h-3" />
+            <x-icon x-show="!open" name="phosphor-caret-down" class="w-3 h-3" />
+            <x-icon x-show="open" name="phosphor-caret-up" class="w-3 h-3" />
         </button>
 
         @if($this->activeFilterCount > 0)
@@ -137,9 +137,9 @@
                         title="{{ $sortDir === 'asc' ? 'Ascending' : 'Descending' }}"
                     >
                         @if($sortDir === 'asc')
-                            <x-icon name="o-bars-arrow-up" class="w-4 h-4" />
+                            <x-icon name="phosphor-sort-ascending" class="w-4 h-4" />
                         @else
-                            <x-icon name="o-bars-arrow-down" class="w-4 h-4" />
+                            <x-icon name="phosphor-sort-descending" class="w-4 h-4" />
                         @endif
                     </button>
                 </div>

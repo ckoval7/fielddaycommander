@@ -7,7 +7,7 @@
             <div>
                 <div class="flex items-center gap-2 mb-2">
                     <x-button
-                        icon="o-arrow-left"
+                        icon="phosphor-arrow-left"
                         class="btn-ghost btn-sm"
                         link="{{ route('schedule.index') }}"
                         tooltip="Back to Shift Schedule"
@@ -21,26 +21,26 @@
         </div>
 
         @if(!$eventConfig)
-            <x-alert icon="o-exclamation-triangle" class="alert-warning">
+            <x-alert icon="phosphor-warning" class="alert-warning">
                 No active event configuration found. Please configure an event first.
             </x-alert>
         @else
             {{-- Tabs --}}
             <x-tabs wire:model="activeTab">
                 {{-- Tab 1: Shifts --}}
-                <x-tab name="shifts" label="Shifts" icon="o-clock">
+                <x-tab name="shifts" label="Shifts" icon="phosphor-clock">
                     <div class="mt-6 space-y-4">
                         {{-- Action buttons --}}
                         <div class="flex flex-wrap gap-2">
                             <x-button
                                 label="Add Shift"
-                                icon="o-plus"
+                                icon="phosphor-plus"
                                 class="btn-primary btn-sm"
                                 wire:click="openShiftModal"
                             />
                             <x-button
                                 label="Bulk Create"
-                                icon="o-squares-plus"
+                                icon="phosphor-squares-four"
                                 class="btn-outline btn-sm"
                                 wire:click="openBulkModal"
                             />
@@ -59,7 +59,7 @@
                         @if($this->shifts->isEmpty())
                             <x-card shadow>
                                 <div class="text-center py-8 text-base-content/60">
-                                    <x-icon name="o-clock" class="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                    <x-icon name="phosphor-clock" class="w-12 h-12 mx-auto mb-3 opacity-30" />
                                     @if($this->activeFilterCount > 0)
                                         <p class="text-lg font-medium">No shifts match your filters</p>
                                         <p class="text-sm mb-3">Try adjusting your filters or clearing them.</p>
@@ -131,7 +131,7 @@
                                                                 <div class="flex items-center gap-1 sm:ml-auto">
                                                                     @if($assignment->status === 'scheduled')
                                                                         <x-button
-                                                                            icon="o-arrow-right-on-rectangle"
+                                                                            icon="phosphor-sign-in"
                                                                             class="btn-ghost btn-xs"
                                                                             wire:click="managerCheckIn({{ $assignment->id }})"
                                                                             tooltip="Check In"
@@ -140,7 +140,7 @@
                                                                     @endif
                                                                     @if($assignment->status === 'checked_in')
                                                                         <x-button
-                                                                            icon="o-arrow-left-on-rectangle"
+                                                                            icon="phosphor-sign-out"
                                                                             class="btn-ghost btn-xs"
                                                                             wire:click="managerCheckOut({{ $assignment->id }})"
                                                                             tooltip="Check Out"
@@ -149,7 +149,7 @@
                                                                     @endif
                                                                     @if($assignment->status === 'scheduled' || $assignment->status === 'checked_in')
                                                                         <x-button
-                                                                            icon="o-x-mark"
+                                                                            icon="phosphor-x"
                                                                             class="btn-ghost btn-xs text-error"
                                                                             wire:click="markNoShow({{ $assignment->id }})"
                                                                             tooltip="Mark No-Show"
@@ -157,7 +157,7 @@
                                                                         />
                                                                     @endif
                                                                     <x-button
-                                                                        icon="o-trash"
+                                                                        icon="phosphor-trash"
                                                                         class="btn-ghost btn-xs text-error"
                                                                         wire:click="removeAssignment({{ $assignment->id }})"
                                                                         tooltip="Remove Assignment"
@@ -176,20 +176,20 @@
                                             <div class="flex items-center gap-1 shrink-0">
                                                 @if($shift->assignments->count() < $shift->capacity)
                                                     <x-button
-                                                        icon="o-user-plus"
+                                                        icon="phosphor-user-plus"
                                                         class="btn-ghost btn-sm"
                                                         wire:click="openAssignModal({{ $shift->id }})"
                                                         tooltip="Assign User"
                                                     />
                                                 @endif
                                                 <x-button
-                                                    icon="o-pencil"
+                                                    icon="phosphor-pencil-simple"
                                                     class="btn-ghost btn-sm"
                                                     wire:click="openShiftModal({{ $shift->id }})"
                                                     tooltip="Edit Shift"
                                                 />
                                                 <x-button
-                                                    icon="o-trash"
+                                                    icon="phosphor-trash"
                                                     class="btn-ghost btn-sm text-error"
                                                     wire:click="deleteShift({{ $shift->id }})"
                                                     wire:confirm="Delete this shift{{ $shift->assignments->count() > 0 ? ' and its ' . $shift->assignments->count() . ' assignment(s)' : '' }}?"
@@ -205,12 +205,12 @@
                 </x-tab>
 
                 {{-- Tab 2: Roles --}}
-                <x-tab name="roles" label="Roles" icon="o-tag">
+                <x-tab name="roles" label="Roles" icon="phosphor-tag">
                     <div class="mt-6 space-y-4">
                         <div class="flex flex-wrap gap-2">
                             <x-button
                                 label="Add Custom Role"
-                                icon="o-plus"
+                                icon="phosphor-plus"
                                 class="btn-primary btn-sm"
                                 wire:click="openRoleModal"
                             />
@@ -219,7 +219,7 @@
                         @if($this->roles->isEmpty())
                             <x-card shadow>
                                 <div class="text-center py-8 text-base-content/60">
-                                    <x-icon name="o-tag" class="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                    <x-icon name="phosphor-tag" class="w-12 h-12 mx-auto mb-3 opacity-30" />
                                     <p class="text-lg font-medium">No roles configured</p>
                                     <p class="text-sm">Roles will be seeded automatically when available.</p>
                                 </div>
@@ -258,13 +258,13 @@
                                             </div>
                                             <div class="flex items-center gap-1 shrink-0">
                                                 <x-button
-                                                    icon="o-pencil"
+                                                    icon="phosphor-pencil-simple"
                                                     class="btn-ghost btn-sm"
                                                     wire:click="openRoleModal({{ $role->id }})"
                                                     tooltip="Edit Role"
                                                 />
                                                 <x-button
-                                                    icon="o-trash"
+                                                    icon="phosphor-trash"
                                                     class="btn-ghost btn-sm text-error"
                                                     wire:click="deleteRole({{ $role->id }})"
                                                     wire:confirm="Delete this role? Any shifts without assignments will also be deleted."
@@ -280,12 +280,12 @@
                 </x-tab>
 
                 {{-- Tab 3: Confirmations --}}
-                <x-tab name="confirmations" label="Confirmations" icon="o-check-badge">
+                <x-tab name="confirmations" label="Confirmations" icon="phosphor-seal-check">
                     <div class="mt-6 space-y-4">
                         @if($this->pendingConfirmations->isEmpty())
                             <x-card shadow>
                                 <div class="text-center py-8 text-base-content/60">
-                                    <x-icon name="o-check-badge" class="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                    <x-icon name="phosphor-seal-check" class="w-12 h-12 mx-auto mb-3 opacity-30" />
                                     <p class="text-lg font-medium">No pending confirmations</p>
                                     <p class="text-sm">Confirmations appear here when users check in to roles that require confirmation.</p>
                                 </div>
@@ -321,13 +321,13 @@
                                             <div class="flex items-center gap-2 shrink-0">
                                                 <x-button
                                                     label="Confirm"
-                                                    icon="o-check"
+                                                    icon="phosphor-check"
                                                     class="btn-success btn-sm"
                                                     wire:click="confirmCheckIn({{ $confirmation->id }})"
                                                 />
                                                 <x-button
                                                     label="Reject"
-                                                    icon="o-x-mark"
+                                                    icon="phosphor-x"
                                                     class="btn-error btn-sm btn-outline"
                                                     wire:click="revokeConfirmation({{ $confirmation->id }})"
                                                     wire:confirm="Reject this confirmation?"
