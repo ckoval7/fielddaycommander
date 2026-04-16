@@ -9,7 +9,7 @@
         <x-slot:actions>
             <x-button
                 label="New Message"
-                icon="o-plus"
+                icon="phosphor-plus"
                 class="btn-primary"
                 link="{{ route('events.messages.create', $event) }}"
                 responsive
@@ -17,13 +17,13 @@
             <div class="hidden sm:contents">
                 <x-button
                     label="SM/SEC Message"
-                    icon="o-star"
+                    icon="phosphor-star"
                     class="btn-outline btn-sm"
                     link="{{ route('events.messages.create', ['event' => $event, 'template' => 'sm']) }}"
                 />
                 <x-button
                     label="Print All"
-                    icon="o-printer"
+                    icon="phosphor-printer"
                     class="btn-ghost btn-sm"
                     link="{{ route('events.messages.print-all', $event) }}"
                     external
@@ -38,9 +38,9 @@
         <x-card class="shadow-sm">
             <div class="flex items-center gap-2 lg:gap-3">
                 @if($this->bonusSummary['sm_message'])
-                    <x-icon name="o-check-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-success shrink-0" />
+                    <x-icon name="phosphor-check-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-success shrink-0" />
                 @else
-                    <x-icon name="o-x-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-base-content/30 shrink-0" />
+                    <x-icon name="phosphor-x-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-base-content/30 shrink-0" />
                 @endif
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">SM/SEC</div>
@@ -52,7 +52,7 @@
         {{-- Message Handling --}}
         <x-card class="shadow-sm">
             <div class="flex items-center gap-2 lg:gap-3">
-                <x-icon name="o-envelope" class="w-6 h-6 lg:w-8 lg:h-8 text-info shrink-0" />
+                <x-icon name="phosphor-envelope" class="w-6 h-6 lg:w-8 lg:h-8 text-info shrink-0" />
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">Messages</div>
                     <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['traffic_count'] }}/10</div>
@@ -65,9 +65,9 @@
         <x-card class="shadow-sm">
             <div class="flex items-center gap-2 lg:gap-3">
                 @if($this->bonusSummary['w1aw_bulletin'])
-                    <x-icon name="o-check-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-success shrink-0" />
+                    <x-icon name="phosphor-check-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-success shrink-0" />
                 @else
-                    <x-icon name="o-x-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-base-content/30 shrink-0" />
+                    <x-icon name="phosphor-x-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-base-content/30 shrink-0" />
                 @endif
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">W1AW</div>
@@ -79,7 +79,7 @@
         {{-- Total --}}
         <x-card class="shadow-sm bg-primary/5 border border-primary/20">
             <div class="flex items-center gap-2 lg:gap-3">
-                <x-icon name="o-trophy" class="w-6 h-6 lg:w-8 lg:h-8 text-primary shrink-0" />
+                <x-icon name="phosphor-trophy" class="w-6 h-6 lg:w-8 lg:h-8 text-primary shrink-0" />
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide">Total</div>
                     <div class="text-xl lg:text-2xl font-bold text-primary">{{ $this->bonusSummary['total'] }} pts</div>
@@ -117,7 +117,7 @@
         @if($this->messages->isEmpty())
             <div class="text-center py-10 text-base-content/60">
                 <div class="flex flex-col items-center gap-2">
-                    <x-icon name="o-envelope" class="w-12 h-12 opacity-30" />
+                    <x-icon name="phosphor-envelope" class="w-12 h-12 opacity-30" />
                     <p class="font-medium">No messages found</p>
                     @if($roleFilter)
                         <p class="text-sm">Try removing the role filter or log a new message.</p>
@@ -126,7 +126,7 @@
                     @endif
                     <x-button
                         label="Log First Message"
-                        icon="o-plus"
+                        icon="phosphor-plus"
                         class="btn-primary btn-sm mt-2"
                         link="{{ route('events.messages.create', $event) }}"
                     />
@@ -204,7 +204,7 @@
                                 <td>
                                     @if($message->sent_at)
                                         <div class="flex items-center gap-1">
-                                            <x-icon name="o-check-circle" class="w-4 h-4 text-success" />
+                                            <x-icon name="phosphor-check-circle" class="w-4 h-4 text-success" />
                                             <div>
                                                 <div class="text-xs">{{ $message->sent_at->format('M j, g:ia') }}</div>
                                                 @if($message->sentByUser)
@@ -216,7 +216,7 @@
                                                 @endif
                                             </div>
                                             <x-button
-                                                icon="o-x-mark"
+                                                icon="phosphor-x"
                                                 class="btn-ghost btn-xs"
                                                 tooltip="Clear {{ $message->role->value === 'received_delivered' ? 'delivered' : 'sent' }} status"
                                                 wire:click="unmarkAsSent({{ $message->id }})"
@@ -227,7 +227,7 @@
                                             <x-badge value="Draft" class="badge-warning badge-outline badge-sm" />
                                             <x-button
                                                 label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
-                                                icon="o-paper-airplane"
+                                                icon="phosphor-paper-plane-tilt"
                                                 class="btn-ghost btn-xs"
                                                 wire:click="openSentByModal({{ $message->id }})"
                                             />
@@ -237,13 +237,13 @@
                                 <td class="text-right">
                                     <div class="flex items-center justify-end gap-1">
                                         <x-button
-                                            icon="o-pencil"
+                                            icon="phosphor-pencil-simple"
                                             class="btn-ghost btn-xs"
                                             tooltip="Edit"
                                             link="{{ route('events.messages.edit', [$event, $message]) }}"
                                         />
                                         <x-button
-                                            icon="o-printer"
+                                            icon="phosphor-printer"
                                             class="btn-ghost btn-xs"
                                             tooltip="Print"
                                             link="{{ route('events.messages.print', [$event, $message]) }}"
@@ -251,7 +251,7 @@
                                         />
                                         @can('delete', $message)
                                             <x-button
-                                                icon="o-trash"
+                                                icon="phosphor-trash"
                                                 class="btn-ghost btn-xs text-error"
                                                 tooltip="Delete"
                                                 wire:click="deleteMessage({{ $message->id }})"
@@ -335,7 +335,7 @@
                                     <span class="text-xs text-base-content/60">{{ $message->filed_at?->format('M j, Y') ?? '—' }}</span>
                                     @if($message->sent_at)
                                         <div class="flex items-center gap-1">
-                                            <x-icon name="o-check-circle" class="w-4 h-4 text-success" />
+                                            <x-icon name="phosphor-check-circle" class="w-4 h-4 text-success" />
                                             <span class="text-xs">{{ $message->sent_at->format('M j, g:ia') }}</span>
                                             @if($message->sentByUser)
                                                 <button
@@ -349,7 +349,7 @@
                                             <x-badge value="Draft" class="badge-warning badge-outline badge-sm" />
                                             <x-button
                                                 label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
-                                                icon="o-paper-airplane"
+                                                icon="phosphor-paper-plane-tilt"
                                                 class="btn-ghost btn-xs"
                                                 wire:click="openSentByModal({{ $message->id }})"
                                             />
@@ -359,26 +359,26 @@
                                 <div class="flex items-center gap-1">
                                     @if($message->sent_at)
                                         <x-button
-                                            icon="o-x-mark"
+                                            icon="phosphor-x"
                                             class="btn-ghost btn-xs"
                                             tooltip="Clear status"
                                             wire:click="unmarkAsSent({{ $message->id }})"
                                         />
                                     @endif
                                     <x-button
-                                        icon="o-pencil"
+                                        icon="phosphor-pencil-simple"
                                         class="btn-ghost btn-xs"
                                         link="{{ route('events.messages.edit', [$event, $message]) }}"
                                     />
                                     <x-button
-                                        icon="o-printer"
+                                        icon="phosphor-printer"
                                         class="btn-ghost btn-xs"
                                         link="{{ route('events.messages.print', [$event, $message]) }}"
                                         external
                                     />
                                     @can('delete', $message)
                                         <x-button
-                                            icon="o-trash"
+                                            icon="phosphor-trash"
                                             class="btn-ghost btn-xs text-error"
                                             wire:click="deleteMessage({{ $message->id }})"
                                             wire:confirm="Are you sure you want to delete message #{{ $message->message_number }}?"
@@ -402,7 +402,7 @@
                 :options="$this->operators"
                 option-value="id"
                 option-label="name"
-                icon="o-user"
+                icon="phosphor-user"
                 placeholder="Select operator"
             />
 
@@ -411,7 +411,7 @@
                     <x-input
                         label="Frequency"
                         wire:model="sentFrequency"
-                        icon="o-signal"
+                        icon="phosphor-cell-signal-high"
                         placeholder="e.g., 7.228"
                         maxlength="15"
                     />
@@ -427,7 +427,7 @@
                         ]"
                         option-value="id"
                         option-label="name"
-                        icon="o-radio"
+                        icon="phosphor-radio"
                     />
                 </div>
             @endunless

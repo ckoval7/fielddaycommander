@@ -10,7 +10,7 @@
             @if(\Illuminate\Support\Facades\Route::has('events.messages.index'))
                 <x-button
                     label="Back to Messages"
-                    icon="o-arrow-left"
+                    icon="phosphor-arrow-left"
                     class="btn-ghost"
                     link="{{ route('events.messages.index', $event) }}"
                     wire:navigate
@@ -36,7 +36,7 @@
                         ]"
                         option-value="id"
                         option-label="name"
-                        icon="o-document-text"
+                        icon="phosphor-file-text"
                         required
                     />
                 @endif
@@ -51,7 +51,7 @@
                     ]"
                     option-value="id"
                     option-label="name"
-                    icon="o-arrow-path"
+                    icon="phosphor-arrow-clockwise"
                     required
                 />
             </div>
@@ -67,7 +67,7 @@
                     wire:model="messageNumber"
                     type="number"
                     min="1"
-                    icon="o-hashtag"
+                    icon="phosphor-hash"
                     placeholder="e.g., 1"
                     required
                 />
@@ -75,7 +75,7 @@
                 <x-flatpickr
                     label="Filed At (UTC)"
                     wire:model="filedAt"
-                    icon="o-clock"
+                    icon="phosphor-clock"
                     now-button
                 />
             </div>
@@ -98,7 +98,7 @@
                         ]"
                         option-value="id"
                         option-label="name"
-                        icon="o-flag"
+                        icon="phosphor-flag"
                         required
                     />
 
@@ -116,7 +116,7 @@
                         ]"
                         option-value="id"
                         option-label="name"
-                        icon="o-tag"
+                        icon="phosphor-tag"
                         placeholder="None"
                     />
 
@@ -124,7 +124,7 @@
                         <x-input
                             label="HX Value"
                             wire:model="hxValue"
-                            icon="o-hashtag"
+                            icon="phosphor-hash"
                             placeholder="{{ match($hxCode) {
                                 'hxb' => 'Hours (e.g., 3)',
                                 'hxc' => 'Date/time',
@@ -140,7 +140,7 @@
                     <x-input
                         label="Station of Origin"
                         wire:model="stationOfOrigin"
-                        icon="o-signal"
+                        icon="phosphor-cell-signal-high"
                         placeholder="e.g., W1TEST"
                         maxlength="20"
                         required
@@ -149,7 +149,7 @@
                     <x-input
                         label="Check (Word Count)"
                         wire:model="checkCount"
-                        icon="o-calculator"
+                        icon="phosphor-calculator"
                         placeholder="Auto-calculated from message text"
                         hint="Automatically counted from message text"
                         required
@@ -158,7 +158,7 @@
                     <x-input
                         label="Place of Origin"
                         wire:model="placeOfOrigin"
-                        icon="o-map-pin"
+                        icon="phosphor-map-pin"
                         placeholder="e.g., Hartford, CT"
                         required
                     />
@@ -175,7 +175,7 @@
                     <x-input
                         label="Addressee Name"
                         wire:model="addresseeName"
-                        icon="o-user"
+                        icon="phosphor-user"
                         placeholder="Full name"
                         required
                     />
@@ -183,7 +183,7 @@
                     <x-input
                         label="Phone"
                         wire:model="addresseePhone"
-                        icon="o-phone"
+                        icon="phosphor-phone"
                         placeholder="Optional"
                         maxlength="30"
                     />
@@ -191,21 +191,21 @@
                     <x-input
                         label="Street Address"
                         wire:model="addresseeAddress"
-                        icon="o-home"
+                        icon="phosphor-house"
                         placeholder="Optional"
                     />
 
                     <x-input
                         label="City"
                         wire:model="addresseeCity"
-                        icon="o-building-office"
+                        icon="phosphor-buildings"
                         placeholder="Optional"
                     />
 
                     <x-input
                         label="State"
                         wire:model="addresseeState"
-                        icon="o-map"
+                        icon="phosphor-map-trifold"
                         placeholder="e.g., CT"
                         maxlength="10"
                     />
@@ -213,7 +213,7 @@
                     <x-input
                         label="ZIP Code"
                         wire:model="addresseeZip"
-                        icon="o-envelope"
+                        icon="phosphor-envelope"
                         placeholder="Optional"
                         maxlength="20"
                     />
@@ -230,7 +230,7 @@
                     <x-input
                         label="Name"
                         wire:model="addresseeName"
-                        icon="o-user"
+                        icon="phosphor-user"
                         placeholder="Recipient name"
                         required
                     />
@@ -238,7 +238,7 @@
                     <x-input
                         label="Position/Title"
                         wire:model="icsToPosition"
-                        icon="o-briefcase"
+                        icon="phosphor-briefcase"
                         placeholder="e.g., Operations Chief"
                     />
                 </div>
@@ -252,7 +252,7 @@
                     <x-input
                         label="Name"
                         wire:model="signature"
-                        icon="o-user"
+                        icon="phosphor-user"
                         placeholder="Sender name"
                         required
                     />
@@ -260,7 +260,7 @@
                     <x-input
                         label="Position/Title"
                         wire:model="icsFromPosition"
-                        icon="o-briefcase"
+                        icon="phosphor-briefcase"
                         placeholder="e.g., Planning Section Chief"
                     />
                 </div>
@@ -273,7 +273,7 @@
                 <x-input
                     label="Subject"
                     wire:model="icsSubject"
-                    icon="o-chat-bubble-left"
+                    icon="phosphor-chat-circle"
                     placeholder="Message subject"
                     required
                 />
@@ -309,7 +309,7 @@
                     <x-input
                         label="Signature"
                         wire:model="signature"
-                        icon="o-pencil"
+                        icon="phosphor-pencil-simple"
                         placeholder="Sender's name"
                         required
                     />
@@ -322,13 +322,13 @@
                         />
 
                         @if($isSmMessage)
-                            <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                            <x-alert icon="phosphor-warning" class="alert-warning">
                                 Only one SM/SEC message may exist per event. This message will be marked as the official SM/SEC radiogram.
                             </x-alert>
                         @endif
 
                         @error('isSmMessage')
-                            <x-alert icon="o-x-circle" class="alert-error">
+                            <x-alert icon="phosphor-x-circle" class="alert-error">
                                 {{ $errors->first('isSmMessage') }}
                             </x-alert>
                         @enderror
@@ -358,13 +358,13 @@
                         />
 
                         @if($isSmMessage)
-                            <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                            <x-alert icon="phosphor-warning" class="alert-warning">
                                 Only one SM/SEC message may exist per event.
                             </x-alert>
                         @endif
 
                         @error('isSmMessage')
-                            <x-alert icon="o-x-circle" class="alert-error">
+                            <x-alert icon="phosphor-x-circle" class="alert-error">
                                 {{ $errors->first('isSmMessage') }}
                             </x-alert>
                         @enderror
@@ -389,7 +389,7 @@
                     <x-input
                         label="Sent To"
                         wire:model="sentTo"
-                        icon="o-paper-airplane"
+                        icon="phosphor-paper-plane-tilt"
                         placeholder="Callsign (optional)"
                         maxlength="20"
                         hint="Station this message was sent to"
@@ -398,7 +398,7 @@
                     <x-input
                         label="Received From"
                         wire:model="receivedFrom"
-                        icon="o-inbox"
+                        icon="phosphor-tray"
                         placeholder="Callsign (optional)"
                         maxlength="20"
                         hint="Station this message was received from"
@@ -416,7 +416,7 @@
                     <x-input
                         label="Frequency"
                         wire:model="frequency"
-                        icon="o-signal"
+                        icon="phosphor-cell-signal-high"
                         placeholder="e.g., 7.228"
                         maxlength="15"
                     />
@@ -432,7 +432,7 @@
                         ]"
                         option-value="id"
                         option-label="name"
-                        icon="o-radio"
+                        icon="phosphor-radio"
                     />
                 </div>
             </x-card>
@@ -455,21 +455,21 @@
                         <x-input
                             label="Replier Name"
                             wire:model="icsReplyName"
-                            icon="o-user"
+                            icon="phosphor-user"
                             placeholder="Name"
                         />
 
                         <x-input
                             label="Replier Position/Title"
                             wire:model="icsReplyPosition"
-                            icon="o-briefcase"
+                            icon="phosphor-briefcase"
                             placeholder="Position"
                         />
 
                         <x-flatpickr
                             label="Reply Date/Time (UTC)"
                             wire:model="icsReplyDate"
-                            icon="o-clock"
+                            icon="phosphor-clock"
                             now-button
                         />
                     </div>
@@ -482,7 +482,7 @@
             @if(\Illuminate\Support\Facades\Route::has('events.messages.index'))
                 <x-button
                     label="Cancel"
-                    icon="o-x-mark"
+                    icon="phosphor-x"
                     class="btn-ghost"
                     link="{{ route('events.messages.index', $event) }}"
                     wire:navigate
@@ -493,7 +493,7 @@
                 label="{{ $isEditing ? 'Update Message' : 'Save Message' }}"
                 type="submit"
                 class="btn-primary"
-                icon="o-check"
+                icon="phosphor-check"
                 spinner="save"
             />
         </div>
