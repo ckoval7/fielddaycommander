@@ -182,7 +182,7 @@
 
                         @can('log-contacts')
                             <x-menu-item title="Log Contact" icon="phosphor-pencil-line" link="{{ route('logging.station-select') }}" exact :active="request()->routeIs('logging.station-select', 'logging.session')" />
-                            <x-menu-item title="Transcribe Paper Log" icon="phosphor-scan" link="{{ route('logging.transcribe.select') }}" :active="request()->routeIs('logging.transcribe.*')" />
+                            <x-menu-item title="Transcribe Paper Log" icon="phosphor-note-pencil-duotone" link="{{ route('logging.transcribe.select') }}" :active="request()->routeIs('logging.transcribe.*')" />
                         @endcan
 
                         <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
