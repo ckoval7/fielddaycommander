@@ -17,6 +17,38 @@
         </a>
     </div>
 
+    {{-- Bulk Action Bar --}}
+    @can('edit-contacts')
+        @if(count($selectedIds) > 0)
+            <div class="flex items-center gap-4 mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                <span class="text-sm font-semibold">{{ count($selectedIds) }} contact(s) selected</span>
+                <div class="flex gap-2">
+                    <x-button
+                        label="Change Logger"
+                        icon="o-user"
+                        class="btn-primary btn-sm"
+                        wire:click="$dispatch('open-bulk-change-logger', { contactIds: {{ json_encode($selectedIds) }} })"
+                        spinner
+                    />
+                    <x-button
+                        label="Delete"
+                        icon="o-trash"
+                        class="btn-error btn-sm"
+                        wire:click="$dispatch('bulk-delete-contacts', { contactIds: {{ json_encode($selectedIds) }} })"
+                        wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} contact(s)?"
+                        spinner
+                    />
+                </div>
+                <x-button
+                    label="Clear"
+                    icon="o-x-mark"
+                    class="btn-ghost btn-sm ml-auto"
+                    wire:click="deselectAll"
+                />
+            </div>
+        @endif
+    @endcan
+
     @if($this->contacts->isEmpty())
         <div class="text-center py-12">
             <x-icon name="o-magnifying-glass" class="w-16 h-16 mx-auto text-base-content/30" />
@@ -44,7 +76,11 @@
                 }
             @endphp
 
-            <x-table :headers="$headers" :rows="$this->contacts" class="table-sm">
+            @can('edit-contacts')
+                <x-table :headers="$headers" :rows="$this->contacts" class="table-sm" selectable wire:model="selectedIds">
+            @else
+                <x-table :headers="$headers" :rows="$this->contacts" class="table-sm">
+            @endcan
                 @scope('cell_qso_time', $contact)
                     <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') : 'N/A' }}</span>
                 @endscope
@@ -152,8 +188,14 @@
             @foreach($this->contacts as $contact)
                 <x-card class="shadow-sm {{ $contact->is_duplicate ? 'border-l-4 border-l-warning bg-warning/5' : '' }} {{ $contact->trashed() ? 'opacity-60' : '' }}">
                     <div class="flex flex-col gap-3">
-                        {{-- Callsign and Badges --}}
+                        {{-- Selection and Callsign --}}
                         <div class="flex items-start justify-between gap-2">
+                            @can('edit-contacts')
+                                <label class="flex items-center pt-1 flex-shrink-0">
+                                    <span class="sr-only">Select {{ $contact->callsign }}</span>
+                                    <input type="checkbox" class="checkbox checkbox-sm" value="{{ $contact->id }}" wire:model.live="selectedIds" />
+                                </label>
+                            @endcan
                             <div class="flex-1 min-w-0">
                                 <div class="font-mono font-bold text-lg truncate {{ $contact->trashed() ? 'line-through' : '' }}">{{ $contact->callsign }}</div>
                                 <div class="text-xs text-base-content/60 mt-1">
