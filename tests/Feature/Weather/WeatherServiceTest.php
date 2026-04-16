@@ -982,3 +982,26 @@ test('getActiveEventCoordinates returns configured demo coordinates in demo mode
         'state' => 'MN',
     ]);
 });
+
+// --- demo mode: fetchForecast writes shared cache ---
+
+test('fetchForecast in demo mode writes shared cache and skips Setting', function () {
+    config()->set('demo.enabled', true);
+    config()->set('demo.weather.cache_ttl_minutes', 30);
+    cache()->forget('weather:demo:forecast');
+    cache()->forget('weather:demo:last_fetch');
+    Setting::set('weather.forecast', null);
+    Setting::set('weather.last_fetch', null);
+
+    Http::fake([
+        'api.open-meteo.com/*' => Http::response(['current' => ['temperature_2m' => 72.0]], 200),
+    ]);
+
+    makeWeatherService()->fetchForecast(44.9778, -93.2650);
+
+    expect(cache()->get('weather:demo:forecast'))
+        ->toMatchArray(['current' => ['temperature_2m' => 72.0]]);
+    expect(cache()->get('weather:demo:last_fetch'))->not->toBeNull();
+    expect(Setting::get('weather.forecast'))->toBeNull();
+    expect(Setting::get('weather.last_fetch'))->toBeNull();
+});

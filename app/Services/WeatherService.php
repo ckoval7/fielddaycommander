@@ -89,8 +89,14 @@ class WeatherService
                 return;
             }
 
-            Setting::set('weather.forecast', $response->json());
-            Setting::set('weather.last_fetch', now()->toIso8601String());
+            if (config('demo.enabled')) {
+                $ttl = now()->addMinutes((int) config('demo.weather.cache_ttl_minutes', 30));
+                cache()->put('weather:demo:forecast', $response->json(), $ttl);
+                cache()->put('weather:demo:last_fetch', now()->toIso8601String(), $ttl);
+            } else {
+                Setting::set('weather.forecast', $response->json());
+                Setting::set('weather.last_fetch', now()->toIso8601String());
+            }
             cache()->put('weather.forecast_status', [
                 'last_attempt' => now()->toIso8601String(),
                 'success' => true,
