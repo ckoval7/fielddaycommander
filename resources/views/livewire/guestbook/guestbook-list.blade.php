@@ -4,7 +4,7 @@
     @if($entries->isEmpty())
         <x-card class="shadow-md">
             <div class="text-center py-12">
-                <x-icon name="o-user-group" class="w-16 h-16 mx-auto text-base-content/30" />
+                <x-icon name="phosphor-users-three" class="w-16 h-16 mx-auto text-base-content/30" />
                 <p class="mt-4 text-base-content/70">No visitors have signed the guestbook yet.</p>
                 <p class="text-sm text-base-content/50 mt-2">Be the first to sign in!</p>
             </div>
@@ -70,7 +70,7 @@
                     @if($entry->is_verified)
                         <div class="mt-3 pt-3 border-t border-base-300">
                             <div class="flex items-center gap-2 text-xs text-success">
-                                <x-icon name="o-check-circle" class="w-4 h-4" />
+                                <x-icon name="phosphor-check-circle" class="w-4 h-4" />
                                 <span>Verified by {{ $entry->verifiedBy ? $entry->verifiedBy->first_name . ' ' . $entry->verifiedBy->last_name : 'Staff' }}</span>
                             </div>
                         </div>

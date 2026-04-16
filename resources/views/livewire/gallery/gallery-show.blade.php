@@ -1,24 +1,24 @@
 <div>
     <x-header :title="$eventConfiguration->event->name" subtitle="Photo Gallery">
         <x-slot:actions>
-            <x-button label="Back to Gallery" icon="o-arrow-left" link="{{ route('gallery.index') }}" />
+            <x-button label="Back to Gallery" icon="phosphor-arrow-left" link="{{ route('gallery.index') }}" />
             @auth
                 @can('manage-images')
                     @if($this->images->isNotEmpty())
                         <form method="POST" action="{{ route('album-export.store', $eventConfiguration) }}" class="inline">
                             @csrf
-                            <x-button type="submit" label="Download Album" icon="o-arrow-down-tray" class="btn-secondary" />
+                            <x-button type="submit" label="Download Album" icon="phosphor-download-simple" class="btn-secondary" />
                         </form>
                     @endif
                 @endcan
-                <x-button label="Upload Photo" icon="o-arrow-up-tray" link="{{ route('gallery.upload', $eventConfiguration) }}" class="btn-primary" />
+                <x-button label="Upload Photo" icon="phosphor-upload-simple" link="{{ route('gallery.upload', $eventConfiguration) }}" class="btn-primary" />
             @endauth
         </x-slot:actions>
     </x-header>
 
     @if(session('status'))
         <div class="alert alert-info mb-4">
-            <x-icon name="o-information-circle" class="w-5 h-5" />
+            <x-icon name="phosphor-info" class="w-5 h-5" />
             <span>{{ session('status') }}</span>
         </div>
     @endif
@@ -26,10 +26,10 @@
     @if($this->images->isEmpty())
         <x-card>
             <div class="text-center py-12">
-                <x-icon name="o-photo" class="w-16 h-16 mx-auto text-base-content/30" />
+                <x-icon name="phosphor-image" class="w-16 h-16 mx-auto text-base-content/30" />
                 <p class="mt-4 text-base-content/70">No photos have been uploaded for this event yet.</p>
                 @auth
-                    <x-button label="Upload the first photo!" icon="o-arrow-up-tray" link="{{ route('gallery.upload', $eventConfiguration) }}" class="btn-primary mt-4" />
+                    <x-button label="Upload the first photo!" icon="phosphor-upload-simple" link="{{ route('gallery.upload', $eventConfiguration) }}" class="btn-primary mt-4" />
                 @endauth
             </div>
         </x-card>
@@ -57,7 +57,7 @@
                             wire:confirm="Are you sure you want to delete this photo?"
                             class="absolute top-2 right-2 p-1.5 bg-error/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error"
                         >
-                            <x-icon name="o-trash" class="w-4 h-4" />
+                            <x-icon name="phosphor-trash" class="w-4 h-4" />
                         </button>
                     @endcan
                 </div>
@@ -87,7 +87,7 @@
                         @can('delete', $currentImage)
                             <x-button
                                 label="Delete"
-                                icon="o-trash"
+                                icon="phosphor-trash"
                                 class="btn-error btn-sm"
                                 wire:click="deleteImage({{ $currentImage->id }})"
                                 wire:confirm="Are you sure you want to delete this photo?"

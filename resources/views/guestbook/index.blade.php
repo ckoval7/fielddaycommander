@@ -19,7 +19,7 @@
         {{-- No Active Event Message --}}
         @if (! $activeEvent || ! $activeEvent->eventConfiguration || ! $activeEvent->eventConfiguration->guestbook_enabled)
             <div class="alert alert-info mb-8">
-                <x-icon name="o-information-circle" class="w-6 h-6" />
+                <x-icon name="phosphor-info" class="w-6 h-6" />
                 <div>
                     <h3 class="font-bold">No Active Event</h3>
                     <p>Currently, there is no active Field Day event accepting guestbook entries. Please check back later!</p>
