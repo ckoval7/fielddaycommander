@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Components;
 
-use App\Models\Setting;
+use App\Services\WeatherService;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Session;
 use Livewire\Component;
@@ -16,7 +16,7 @@ class WeatherAlertBanner extends Component
 
     public function mount(): void
     {
-        $this->alerts = Setting::get('weather.alerts', []);
+        $this->alerts = app(WeatherService::class)->getAlerts();
     }
 
     /**

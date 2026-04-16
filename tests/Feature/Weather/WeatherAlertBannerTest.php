@@ -99,3 +99,42 @@ test('manual Local Alert shows Local Alert label', function () {
         ->assertSee('Local Alert')
         ->assertSee('Lightning within 10 miles');
 });
+
+test('banner in demo mode reads alerts from shared cache when session has none', function () {
+    config()->set('demo.enabled', true);
+    Setting::set('weather.alerts', []);
+    cache()->put('weather:demo:alerts', [[
+        'event' => 'Severe Thunderstorm Warning',
+        'headline' => 'Shared demo alert',
+        'description' => 'desc',
+        'severity' => 'Severe',
+        'expires' => null,
+        'severity_level' => 'yellow',
+    ]], now()->addHour());
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->assertSee('Shared demo alert');
+});
+
+test('banner in demo mode prefers per-session manual alert over shared cache', function () {
+    config()->set('demo.enabled', true);
+    Setting::set('weather.alerts', [[
+        'event' => 'Local Alert',
+        'headline' => 'Session override',
+        'description' => 'desc',
+        'severity' => 'Severe',
+        'expires' => null,
+    ]]);
+    cache()->put('weather:demo:alerts', [[
+        'event' => 'Severe Thunderstorm Warning',
+        'headline' => 'Shared demo alert',
+        'description' => 'desc',
+        'severity' => 'Severe',
+        'expires' => null,
+        'severity_level' => 'yellow',
+    ]], now()->addHour());
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->assertSee('Session override')
+        ->assertDontSee('Shared demo alert');
+});
