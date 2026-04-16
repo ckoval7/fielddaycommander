@@ -1073,3 +1073,82 @@ test('getLastFetch outside demo mode returns Setting timestamp', function () {
 
     expect(makeWeatherService()->getLastFetch())->toEqual('2026-04-16T12:00:00+00:00');
 });
+
+// --- demo mode: checkAlerts writes shared cache + broadcasts ---
+
+test('checkAlerts in demo mode writes shared cache and broadcasts on fingerprint change', function () {
+    config()->set('demo.enabled', true);
+    config()->set('demo.weather.cache_ttl_minutes', 30);
+    cache()->forget('weather:demo:alerts');
+    cache()->forget('weather:demo:alert_fingerprint');
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/MNZ060',
+                'county' => 'https://api.weather.gov/zones/county/MNC053',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
+            'features' => [[
+                'properties' => [
+                    'event' => 'Severe Thunderstorm Warning',
+                    'headline' => 'headline',
+                    'description' => 'desc',
+                    'severity' => 'Severe',
+                    'expires' => '2026-04-16T20:00:00+00:00',
+                ],
+                'geometry' => null,
+            ]],
+        ], 200),
+    ]);
+
+    makeWeatherService()->checkAlerts(44.9778, -93.2650);
+
+    expect(cache()->get('weather:demo:alerts'))->toHaveCount(1);
+    expect(cache()->get('weather:demo:alert_fingerprint'))->not->toBeNull();
+    expect(Setting::get('weather.alerts', 'unset'))->toEqual('unset');
+    EventFacade::assertDispatched(WeatherAlertChanged::class);
+});
+
+test('checkAlerts in demo mode does not rebroadcast when fingerprint unchanged', function () {
+    config()->set('demo.enabled', true);
+    EventFacade::fake([WeatherAlertChanged::class]);
+
+    $alerts = [[
+        'event' => 'Severe Thunderstorm Warning',
+        'headline' => 'headline',
+        'description' => 'desc',
+        'severity' => 'Severe',
+        'expires' => '2026-04-16T20:00:00+00:00',
+        'severity_level' => 'yellow',
+    ]];
+    cache()->put('weather:demo:alerts', $alerts, now()->addHour());
+    cache()->put('weather:demo:alert_fingerprint', md5(json_encode($alerts)), now()->addHour());
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/MNZ060',
+                'county' => 'https://api.weather.gov/zones/county/MNC053',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
+            'features' => [[
+                'properties' => [
+                    'event' => 'Severe Thunderstorm Warning',
+                    'headline' => 'headline',
+                    'description' => 'desc',
+                    'severity' => 'Severe',
+                    'expires' => '2026-04-16T20:00:00+00:00',
+                ],
+                'geometry' => null,
+            ]],
+        ], 200),
+    ]);
+
+    makeWeatherService()->checkAlerts(44.9778, -93.2650);
+
+    EventFacade::assertNotDispatched(WeatherAlertChanged::class);
+});

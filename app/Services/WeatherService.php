@@ -177,9 +177,12 @@ class WeatherService
                 ->all();
 
             $fingerprint = md5(json_encode($alerts));
-            $previousFingerprint = Setting::get('weather.alert_fingerprint');
+            $isDemo = (bool) config('demo.enabled');
+            $previousFingerprint = $isDemo
+                ? cache()->get('weather:demo:alert_fingerprint')
+                : Setting::get('weather.alert_fingerprint');
 
-            if (empty($alerts)) {
+            if (empty($alerts) && ! $isDemo) {
                 $existingAlerts = Setting::get('weather.alerts', []);
                 $hasManualAlert = collect($existingAlerts)->contains(
                     fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT
@@ -196,11 +199,21 @@ class WeatherService
                 }
             }
 
-            Setting::set('weather.alerts', $alerts);
+            if ($isDemo) {
+                $ttl = now()->addMinutes((int) config('demo.weather.cache_ttl_minutes', 30));
+                cache()->put('weather:demo:alerts', $alerts, $ttl);
 
-            if ($fingerprint !== $previousFingerprint) {
-                Setting::set('weather.alert_fingerprint', $fingerprint);
-                WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false);
+                if ($fingerprint !== $previousFingerprint) {
+                    cache()->put('weather:demo:alert_fingerprint', $fingerprint, $ttl);
+                    WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false);
+                }
+            } else {
+                Setting::set('weather.alerts', $alerts);
+
+                if ($fingerprint !== $previousFingerprint) {
+                    Setting::set('weather.alert_fingerprint', $fingerprint);
+                    WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false);
+                }
             }
 
             cache()->put('weather.alerts_status', [
