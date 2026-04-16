@@ -17,7 +17,7 @@
             <div class="px-4 py-2.5 max-w-5xl mx-auto">
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <x-icon name="o-calendar" class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <x-icon name="phosphor-calendar" class="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         <span class="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Log Date</span>
                     </div>
 
@@ -57,7 +57,7 @@
             <div class="px-4 py-2.5 max-w-5xl mx-auto flex items-center justify-between gap-3">
                 <div class="min-w-0">
                     <div class="flex items-center gap-2">
-                        <x-icon name="o-signal" class="w-4 h-4 text-base-content/50 flex-shrink-0" />
+                        <x-icon name="phosphor-cell-signal-high" class="w-4 h-4 text-base-content/50 flex-shrink-0" />
                         <span class="font-bold text-lg truncate">{{ $station->name }}</span>
                         @if($station->is_gota)
                             <x-badge value="GOTA" class="badge-warning badge-sm" />
@@ -71,7 +71,7 @@
                 </div>
                 <div class="flex-shrink-0">
                     <a href="{{ route('logging.transcribe.select') }}" class="btn btn-ghost btn-sm" wire:navigate>
-                        <x-icon name="o-arrow-left" class="w-4 h-4" />
+                        <x-icon name="phosphor-arrow-left" class="w-4 h-4" />
                         <span class="hidden sm:inline">Change Station</span>
                     </a>
                 </div>
@@ -332,7 +332,7 @@
                             </div>
                             <x-button
                                 label="Log"
-                                icon="o-check"
+                                icon="phosphor-check"
                                 class="btn-primary btn-lg"
                                 wire:click="logContact"
                                 spinner="logContact"
@@ -341,7 +341,7 @@
                             />
                             <x-button
                                 label="Clear"
-                                icon="o-x-mark"
+                                icon="phosphor-x"
                                 class="btn-ghost btn-lg"
                                 wire:click="clearInput"
                                 tooltip="Esc"
@@ -350,7 +350,7 @@
                         </div>
 
                         @if($parseError)
-                            <x-alert icon="o-exclamation-triangle" class="alert-error">
+                            <x-alert icon="phosphor-warning" class="alert-error">
                                 {{ $parseError }}
                             </x-alert>
                         @endif
@@ -371,7 +371,7 @@
                         </template>
 
                         @if($isDuplicate)
-                            <x-alert x-show="!isRecalling" icon="o-exclamation-triangle" class="alert-warning">
+                            <x-alert x-show="!isRecalling" icon="phosphor-warning" class="alert-warning">
                                 Duplicate: {{ $dupeWarning }}
                             </x-alert>
                         @endif

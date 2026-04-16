@@ -12,13 +12,13 @@
         {{-- No Event State --}}
         <x-card>
             <div class="text-center py-12">
-                <x-icon name="o-document-text" class="w-14 h-14 mx-auto text-base-content/25" />
+                <x-icon name="phosphor-file-text" class="w-14 h-14 mx-auto text-base-content/25" />
                 <h3 class="mt-5 text-xl font-semibold">No event available for transcription</h3>
                 <p class="mt-2 text-base-content/60 max-w-md mx-auto">
                     Transcription is only available during an active event or within the grace period following an event.
                 </p>
                 <div class="mt-6">
-                    <x-button label="Return Home" link="{{ route('dashboard') }}" icon="o-home" class="btn-ghost" />
+                    <x-button label="Return Home" link="{{ route('dashboard') }}" icon="phosphor-house" class="btn-ghost" />
                 </div>
             </div>
         </x-card>
@@ -27,7 +27,7 @@
         <div class="mb-8">
             <div class="flex items-start gap-4">
                 <div class="rounded-xl bg-primary/10 p-3 hidden sm:flex">
-                    <x-icon name="o-document-text" class="w-7 h-7 text-primary" />
+                    <x-icon name="phosphor-file-text" class="w-7 h-7 text-primary" />
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold">Transcribe Paper Log</h1>
@@ -63,7 +63,7 @@
 
                     {{-- Radio Equipment --}}
                     <div class="flex items-center gap-2 text-sm">
-                        <x-icon name="o-radio" class="w-4 h-4 text-base-content/40 shrink-0" />
+                        <x-icon name="phosphor-radio" class="w-4 h-4 text-base-content/40 shrink-0" />
                         @if($station->primaryRadio)
                             <span class="font-medium text-base-content">
                                 {{ $station->primaryRadio->make }}
@@ -77,7 +77,7 @@
                     {{-- Max Power --}}
                     @if($station->max_power_watts)
                         <div class="flex items-center gap-2 text-sm mt-2">
-                            <x-icon name="o-bolt" class="w-4 h-4 text-base-content/40 shrink-0" />
+                            <x-icon name="phosphor-lightning" class="w-4 h-4 text-base-content/40 shrink-0" />
                             <span class="text-base-content/70">{{ $station->max_power_watts }} W max</span>
                         </div>
                     @endif
@@ -89,7 +89,7 @@
                         </span>
                         <span class="flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                             Select
-                            <x-icon name="o-arrow-right" class="w-3.5 h-3.5" />
+                            <x-icon name="phosphor-arrow-right" class="w-3.5 h-3.5" />
                         </span>
                     </div>
                 </a>
@@ -97,7 +97,7 @@
                 <div class="col-span-full">
                     <x-card>
                         <div class="text-center py-10">
-                            <x-icon name="o-server-stack" class="w-12 h-12 mx-auto text-base-content/25" />
+                            <x-icon name="phosphor-hard-drives" class="w-12 h-12 mx-auto text-base-content/25" />
                             <h3 class="mt-4 text-lg font-semibold">No Stations Configured</h3>
                             <p class="mt-2 text-base-content/60">
                                 No stations have been set up for this event yet. Contact your event administrator.
