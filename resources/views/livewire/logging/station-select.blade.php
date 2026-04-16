@@ -144,7 +144,7 @@
 
             @if($this->bandWarning)
                 <x-alert
-                    :icon="$this->bandWarning['type'] === 'warning' ? 'o-exclamation-triangle' : 'o-information-circle'"
+                    :icon="$this->bandWarning['type'] === 'warning' ? 'phosphor-warning' : 'phosphor-info'"
                     @class([
                         'alert-warning' => $this->bandWarning['type'] === 'warning',
                         'alert-info' => $this->bandWarning['type'] === 'info',

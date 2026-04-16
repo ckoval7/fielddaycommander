@@ -1,4 +1,4 @@
-@props(['title', 'icon' => 'o-wrench-screwdriver'])
+@props(['title', 'icon' => 'phosphor-wrench'])
 
 <div class="flex flex-col items-center justify-center min-h-[60vh] text-center">
     <div class="mb-6">

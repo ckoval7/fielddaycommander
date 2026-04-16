@@ -2,7 +2,7 @@
     {{-- Breadcrumb --}}
     @php
         $breadcrumbs = [
-            ['label' => 'Home', 'link' => route('dashboard'), 'icon' => 's-home'],
+            ['label' => 'Home', 'link' => route('dashboard'), 'icon' => 'phosphor-house-fill'],
             ['label' => 'Transcribe Log'],
         ];
     @endphp

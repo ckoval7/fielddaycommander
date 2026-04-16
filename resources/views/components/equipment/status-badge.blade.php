@@ -11,13 +11,13 @@
         default => 'badge-success badge-outline'
     };
     $statusIcon = match($status) {
-        'committed' => 'o-clipboard-document-list',
-        'delivered' => 'o-truck',
-        'returned' => 'o-check-circle',
-        'cancelled' => 'o-x-circle',
-        'lost' => 'o-exclamation-triangle',
-        'damaged' => 'o-exclamation-triangle',
-        default => 'o-check-circle'
+        'committed' => 'phosphor-clipboard-text',
+        'delivered' => 'phosphor-truck',
+        'returned' => 'phosphor-check-circle',
+        'cancelled' => 'phosphor-x-circle',
+        'lost' => 'phosphor-warning',
+        'damaged' => 'phosphor-warning',
+        default => 'phosphor-check-circle'
     };
 @endphp
 

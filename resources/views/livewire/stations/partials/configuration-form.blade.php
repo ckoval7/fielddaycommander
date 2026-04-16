@@ -167,7 +167,7 @@
             @endphp
             @if($ps)
                 <x-alert
-                    icon="{{ $ps->isNaturalPower() ? 'o-sun' : ($ps->isEmergencyPower() ? 'o-bolt' : 'o-building-office') }}"
+                    icon="{{ $ps->isNaturalPower() ? 'phosphor-sun' : ($ps->isEmergencyPower() ? 'phosphor-lightning' : 'phosphor-buildings') }}"
                     class="{{ $ps->isNaturalPower() ? 'alert-success' : ($ps->isEmergencyPower() ? 'alert-info' : 'alert-warning') }}"
                 >
                     @if($ps->isNaturalPower())

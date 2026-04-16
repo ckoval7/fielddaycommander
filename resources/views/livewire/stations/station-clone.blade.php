@@ -209,7 +209,7 @@
                                                 @php
                                                     $iconName = isset($conflict['equipment_type'])
                                                         ? \App\Models\Equipment::typeIcon($conflict['equipment_type'])
-                                                        : 'o-cube';
+                                                        : 'phosphor-cube';
                                                 @endphp
                                                 <x-icon :name="$iconName" class="w-5 h-5 text-warning mt-0.5 flex-shrink-0" />
 

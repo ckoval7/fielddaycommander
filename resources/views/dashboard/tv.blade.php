@@ -159,7 +159,7 @@ Props from controller:
                         @click="fullscreen = !fullscreen; kiosk = fullscreen; if (fullscreen) requestFullscreen();"
                         class="btn btn-ghost btn-sm gap-2"
                     >
-                        <x-icon :name="$kiosk ? 'o-arrows-pointing-in' : 'o-arrows-pointing-out'" class="w-5 h-5" />
+                        <x-icon :name="$kiosk ? 'phosphor-arrows-in' : 'phosphor-arrows-out'" class="w-5 h-5" />
                         <span x-text="fullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'"></span>
                     </button>
                 </div>

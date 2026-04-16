@@ -270,13 +270,13 @@
                                                         default => 'badge-ghost'
                                                     };
                                                     $statusIcon = match($commitment->status) {
-                                                        'committed' => 'o-clipboard-document-list',
-                                                        'delivered' => 'o-truck',
-                                                        'returned' => 'o-check-circle',
-                                                        'cancelled' => 'o-x-circle',
-                                                        'lost' => 'o-exclamation-triangle',
-                                                        'damaged' => 'o-exclamation-triangle',
-                                                        default => 'o-question-mark-circle'
+                                                        'committed' => 'phosphor-clipboard-text',
+                                                        'delivered' => 'phosphor-truck',
+                                                        'returned' => 'phosphor-check-circle',
+                                                        'cancelled' => 'phosphor-x-circle',
+                                                        'lost' => 'phosphor-warning',
+                                                        'damaged' => 'phosphor-warning',
+                                                        default => 'phosphor-question'
                                                     };
                                                 @endphp
                                                 <div class="flex items-center gap-2">
@@ -357,13 +357,13 @@
                                     <div class="flex-shrink-0">
                                         @php
                                             $statusIcon = match($activity->status) {
-                                                'committed' => 'o-clock',
-                                                'delivered' => 'o-check-circle',
-                                                'returned' => 'o-arrow-uturn-left',
-                                                'cancelled' => 'o-x-circle',
-                                                'lost' => 'o-exclamation-triangle',
-                                                'damaged' => 'o-exclamation-triangle',
-                                                default => 'o-question-mark-circle'
+                                                'committed' => 'phosphor-clock',
+                                                'delivered' => 'phosphor-check-circle',
+                                                'returned' => 'phosphor-arrow-u-up-left',
+                                                'cancelled' => 'phosphor-x-circle',
+                                                'lost' => 'phosphor-warning',
+                                                'damaged' => 'phosphor-warning',
+                                                default => 'phosphor-question'
                                             };
                                             $statusColor = match($activity->status) {
                                                 'committed' => 'text-info',
@@ -466,13 +466,13 @@
                                                             default => 'badge-ghost'
                                                         };
                                                         $statusIcon = match($commitment->status) {
-                                                            'committed' => 'o-clipboard-document-list',
-                                                            'delivered' => 'o-truck',
-                                                            'returned' => 'o-check-circle',
-                                                            'cancelled' => 'o-x-circle',
-                                                            'lost' => 'o-exclamation-triangle',
-                                                            'damaged' => 'o-exclamation-triangle',
-                                                            default => 'o-question-mark-circle'
+                                                            'committed' => 'phosphor-clipboard-text',
+                                                            'delivered' => 'phosphor-truck',
+                                                            'returned' => 'phosphor-check-circle',
+                                                            'cancelled' => 'phosphor-x-circle',
+                                                            'lost' => 'phosphor-warning',
+                                                            'damaged' => 'phosphor-warning',
+                                                            default => 'phosphor-question'
                                                         };
                                                     @endphp
                                                     <div class="flex items-center gap-2">
@@ -554,13 +554,13 @@
                                                         default => 'badge-ghost'
                                                     };
                                                     $statusIcon = match($commitment->status) {
-                                                        'committed' => 'o-clipboard-document-list',
-                                                        'delivered' => 'o-truck',
-                                                        'returned' => 'o-check-circle',
-                                                        'cancelled' => 'o-x-circle',
-                                                        'lost' => 'o-exclamation-triangle',
-                                                        'damaged' => 'o-exclamation-triangle',
-                                                        default => 'o-question-mark-circle'
+                                                        'committed' => 'phosphor-clipboard-text',
+                                                        'delivered' => 'phosphor-truck',
+                                                        'returned' => 'phosphor-check-circle',
+                                                        'cancelled' => 'phosphor-x-circle',
+                                                        'lost' => 'phosphor-warning',
+                                                        'damaged' => 'phosphor-warning',
+                                                        default => 'phosphor-question'
                                                     };
                                                 @endphp
                                                 <div class="flex items-center gap-2">
@@ -649,13 +649,13 @@
                                                             default => 'badge-ghost'
                                                         };
                                                         $statusIcon = match($commitment->status) {
-                                                            'committed' => 'o-clipboard-document-list',
-                                                            'delivered' => 'o-truck',
-                                                            'returned' => 'o-check-circle',
-                                                            'cancelled' => 'o-x-circle',
-                                                            'lost' => 'o-exclamation-triangle',
-                                                            'damaged' => 'o-exclamation-triangle',
-                                                            default => 'o-question-mark-circle'
+                                                            'committed' => 'phosphor-clipboard-text',
+                                                            'delivered' => 'phosphor-truck',
+                                                            'returned' => 'phosphor-check-circle',
+                                                            'cancelled' => 'phosphor-x-circle',
+                                                            'lost' => 'phosphor-warning',
+                                                            'damaged' => 'phosphor-warning',
+                                                            default => 'phosphor-question'
                                                         };
                                                     @endphp
                                                     <div class="flex items-center gap-2">

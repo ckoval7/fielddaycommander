@@ -65,7 +65,7 @@
                 >
                     <div class="flex items-start gap-2">
                         <x-icon
-                            :name="$selectedLayout === $layout['key'] ? 'o-check-circle' : 'o-squares-2x2'"
+                            :name="$selectedLayout === $layout['key'] ? 'phosphor-check-circle' : 'phosphor-squares-four'"
                             class="w-5 h-5 mt-0.5 {{ $selectedLayout === $layout['key'] ? 'text-primary' : 'text-base-content/50' }}"
                         />
                         <div class="flex-1 min-w-0">

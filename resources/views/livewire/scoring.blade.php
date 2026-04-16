@@ -428,9 +428,9 @@
                             default       => 'var(--score-warning)',
                         };
                         $icon = match($notice['severity']) {
-                            'error'       => 'o-x-circle',
-                            'opportunity' => 'o-light-bulb',
-                            default       => 'o-exclamation-triangle',
+                            'error'       => 'phosphor-x-circle',
+                            'opportunity' => 'phosphor-lightbulb',
+                            default       => 'phosphor-warning',
                         };
                     @endphp
                     <div class="flex items-start gap-2">

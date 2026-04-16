@@ -62,7 +62,7 @@
                     Back
                 </x-button>
 
-                <x-button type="submit" class="btn-primary" icon-right="o-arrow-right">
+                <x-button type="submit" class="btn-primary" icon-right="phosphor-arrow-right">
                     Next: Preferences
                 </x-button>
             </div>

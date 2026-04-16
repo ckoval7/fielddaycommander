@@ -30,7 +30,7 @@
                             type="button"
                             x-on:click="
                                 navigator.clipboard.writeText($wire.newPassword);
-                                $wire.dispatch('toast', { title: 'Copied', description: 'Password copied to clipboard', icon: 'o-clipboard-document', css: 'alert-info' });
+                                $wire.dispatch('toast', { title: 'Copied', description: 'Password copied to clipboard', icon: 'phosphor-clipboard', css: 'alert-info' });
                             "
                             tooltip="Copy to clipboard"
                         />
