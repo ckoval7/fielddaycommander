@@ -6,7 +6,7 @@
                     $isManual = ($alert['event'] ?? '') === 'Local Alert';
                     $isRed = $isManual || ($alert['severity_level'] ?? '') === 'red';
                 @endphp
-                <div class="{{ $isRed ? 'alert alert-error' : 'alert alert-warning' }} rounded-none border-0 border-b border-current/20 flex items-start gap-3 py-2 px-4 pr-10">
+                <div class="{{ $isRed ? 'alert alert-error' : 'alert bg-amber-100 text-amber-950 dark:bg-yellow-400/20 dark:text-yellow-100' }} rounded-none border-0 border-b border-current/20 flex items-start gap-3 py-2 px-4 pr-10">
                     <x-icon name="{{ $isRed ? 'phosphor-warning-octagon-duotone' : 'phosphor-warning-duotone' }}" class="w-5 h-5 shrink-0 mt-0.5" />
 
                     <div class="flex-1 min-w-0">

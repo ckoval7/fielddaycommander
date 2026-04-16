@@ -195,7 +195,7 @@
                         @php $isLocalAlert = ($alert['event'] ?? '') === 'Local Alert'; @endphp
                         <div
                             x-data="{ expanded: false }"
-                            class="{{ $isLocalAlert ? 'alert alert-error' : 'alert alert-warning' }} flex-col items-start gap-1"
+                            class="{{ $isLocalAlert ? 'alert alert-error' : 'alert bg-amber-100 text-amber-950 dark:bg-yellow-400/20 dark:text-yellow-100' }} flex-col items-start gap-1"
                         >
                             <div class="flex items-start justify-between w-full gap-2">
                                 <div class="flex items-center gap-2">

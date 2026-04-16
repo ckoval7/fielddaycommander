@@ -8,7 +8,7 @@ test('banner is hidden when there are no alerts', function () {
     Setting::set('weather.alerts', []);
 
     Livewire::test(WeatherAlertBanner::class)
-        ->assertDontSee('alert-warning')
+        ->assertDontSee('bg-amber-100')
         ->assertDontSee('alert-error');
 });
 
