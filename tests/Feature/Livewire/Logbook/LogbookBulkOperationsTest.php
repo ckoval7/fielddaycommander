@@ -140,3 +140,88 @@ describe('bulk delete', function () {
             ->assertNotDispatched('contact-deleted');
     });
 });
+
+describe('bulk change logger', function () {
+    test('opens bulk logger modal with contact ids', function () {
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->call('openBulkChangeLogger', $contactIds)
+            ->assertSet('showBulkLoggerModal', true)
+            ->assertSet('bulkLoggerContactIds', $contactIds);
+    });
+
+    test('bulk changes logger for multiple contacts', function () {
+        $newLogger = User::factory()->create();
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->call('openBulkChangeLogger', $contactIds)
+            ->set('bulkLoggerUserId', $newLogger->id)
+            ->call('bulkChangeLogger')
+            ->assertHasNoErrors()
+            ->assertSet('showBulkLoggerModal', false)
+            ->assertDispatched('contact-updated')
+            ->assertDispatched('notify');
+
+        foreach ($this->contacts as $contact) {
+            expect($contact->fresh()->logger_user_id)->toBe($newLogger->id);
+        }
+    });
+
+    test('bulk change logger creates audit log for each contact', function () {
+        $newLogger = User::factory()->create();
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->call('openBulkChangeLogger', $contactIds)
+            ->set('bulkLoggerUserId', $newLogger->id)
+            ->call('bulkChangeLogger');
+
+        foreach ($this->contacts as $contact) {
+            $auditLog = AuditLog::where('action', 'contact.updated')
+                ->where('auditable_id', $contact->id)
+                ->first();
+
+            expect($auditLog)->not->toBeNull()
+                ->and($auditLog->new_values)->toHaveKey('logger_user_id', $newLogger->id);
+        }
+    });
+
+    test('bulk change logger validates user exists', function () {
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->call('openBulkChangeLogger', $contactIds)
+            ->set('bulkLoggerUserId', 99999)
+            ->call('bulkChangeLogger')
+            ->assertHasErrors(['bulkLoggerUserId']);
+    });
+
+    test('bulk change logger skips contacts user cannot update', function () {
+        $regularUser = User::factory()->create();
+        $this->actingAs($regularUser);
+
+        $newLogger = User::factory()->create();
+        $originalLoggerIds = $this->contacts->pluck('logger_user_id')->toArray();
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->call('openBulkChangeLogger', $contactIds)
+            ->set('bulkLoggerUserId', $newLogger->id)
+            ->call('bulkChangeLogger');
+
+        foreach ($this->contacts as $i => $contact) {
+            expect($contact->fresh()->logger_user_id)->toBe($originalLoggerIds[$i]);
+        }
+    });
+
+    test('bulk change logger requires user selection', function () {
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->call('openBulkChangeLogger', $contactIds)
+            ->call('bulkChangeLogger')
+            ->assertHasErrors(['bulkLoggerUserId']);
+    });
+});

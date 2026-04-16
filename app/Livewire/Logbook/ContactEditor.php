@@ -7,6 +7,7 @@ use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Mode;
 use App\Models\Section;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
@@ -34,6 +35,12 @@ class ContactEditor extends Component
     public string $qsoTime = '';
 
     public string $notes = '';
+
+    public bool $showBulkLoggerModal = false;
+
+    public array $bulkLoggerContactIds = [];
+
+    public ?int $bulkLoggerUserId = null;
 
     #[On('open-edit-contact')]
     public function openEdit(int $contactId): void
@@ -207,6 +214,49 @@ class ContactEditor extends Component
         }
     }
 
+    public function openBulkChangeLogger(array $contactIds): void
+    {
+        $this->bulkLoggerContactIds = $contactIds;
+        $this->bulkLoggerUserId = null;
+        $this->resetValidation();
+        $this->showBulkLoggerModal = true;
+    }
+
+    public function bulkChangeLogger(): void
+    {
+        $this->validate([
+            'bulkLoggerUserId' => 'required|exists:users,id',
+        ]);
+
+        $contacts = Contact::whereIn('id', $this->bulkLoggerContactIds)->get();
+        $count = 0;
+
+        foreach ($contacts as $contact) {
+            if (auth()->user()->cannot('update', $contact)) {
+                continue;
+            }
+
+            $oldLoggerId = $contact->logger_user_id;
+            $contact->update(['logger_user_id' => $this->bulkLoggerUserId]);
+
+            AuditLog::log(
+                'contact.updated',
+                auditable: $contact,
+                oldValues: ['logger_user_id' => $oldLoggerId],
+                newValues: ['logger_user_id' => $this->bulkLoggerUserId],
+            );
+
+            $count++;
+        }
+
+        $this->showBulkLoggerModal = false;
+
+        if ($count > 0) {
+            $this->dispatch('contact-updated');
+            $this->dispatch('notify', title: 'Success', description: "Logger updated for {$count} contact(s).");
+        }
+    }
+
     #[Computed]
     public function bands()
     {
@@ -227,6 +277,20 @@ class ContactEditor extends Component
                 $section->display_name = "{$section->code} – {$section->name}";
 
                 return $section;
+            });
+    }
+
+    #[Computed]
+    public function operators()
+    {
+        return User::orderBy('call_sign')
+            ->get()
+            ->map(function (User $user) {
+                $user->display_name = $user->first_name
+                    ? "{$user->first_name}, {$user->call_sign}"
+                    : $user->call_sign;
+
+                return $user;
             });
     }
 
