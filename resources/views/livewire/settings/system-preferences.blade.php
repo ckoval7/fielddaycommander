@@ -10,7 +10,7 @@
             <x-input
                 label="Organization Name"
                 wire:model="organization_name"
-                icon="o-building-office"
+                icon="phosphor-buildings"
                 placeholder="e.g., Springfield Amateur Radio Club"
                 required
             />
@@ -18,7 +18,7 @@
             <x-input
                 label="Organization Callsign"
                 wire:model="organization_callsign"
-                icon="o-signal"
+                icon="phosphor-cell-signal-high"
                 placeholder="e.g., W1ABC"
                 hint="Club station callsign (3-10 uppercase letters/numbers)"
             />
@@ -27,7 +27,7 @@
                 label="Organization Email"
                 type="email"
                 wire:model="organization_email"
-                icon="o-envelope"
+                icon="phosphor-envelope"
                 placeholder="e.g., info@example.org"
                 hint="Club contact email"
             />
@@ -36,7 +36,7 @@
                 label="Organization Phone"
                 type="tel"
                 wire:model="organization_phone"
-                icon="o-phone"
+                icon="phosphor-phone"
                 placeholder="e.g., (555) 123-4567"
                 hint="Club contact phone number"
             />
@@ -71,7 +71,7 @@
                 required
             />
 
-            <x-alert icon="o-eye" class="alert-info">
+            <x-alert icon="phosphor-eye" class="alert-info">
                 <strong>Preview:</strong> {{ $this->preview }}
             </x-alert>
         </div>
@@ -85,7 +85,7 @@
                 label="Post-Event Grace Period (days)"
                 type="number"
                 wire:model="post_event_grace_period_days"
-                icon="o-clock"
+                icon="phosphor-clock"
                 hint="Number of days after an event ends that operators can still enter late contacts (e.g., paper logs). Set to 0 to disable."
                 min="0"
                 max="365"
@@ -106,7 +106,7 @@
             label="Contact Email"
             type="email"
             wire:model="contact_email"
-            icon="o-envelope"
+            icon="phosphor-envelope"
             hint="Public contact email for the site"
         />
     </x-card>
@@ -115,7 +115,7 @@
         <x-button
             wire:click="save"
             class="btn-primary"
-            icon="o-check"
+            icon="phosphor-check"
             spinner="save"
         >
             <span wire:loading.remove wire:target="save">Save Preferences</span>

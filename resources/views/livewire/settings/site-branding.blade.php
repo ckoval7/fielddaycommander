@@ -7,14 +7,14 @@
                 label="Site Name"
                 wire:model="site_name"
                 required
-                icon="o-building-office"
+                icon="phosphor-buildings"
                 hint="Your organization or club name"
             />
 
             <x-input
                 label="Site Tagline"
                 wire:model="site_tagline"
-                icon="o-chat-bubble-left-ellipsis"
+                icon="phosphor-chat-centered-dots"
                 hint="Optional subtitle or motto"
             />
         </div>
@@ -32,7 +32,7 @@
                         <x-button
                             wire:click="removeLogo"
                             class="btn-error btn-sm"
-                            icon="o-trash"
+                            icon="phosphor-trash"
                             spinner="removeLogo"
                         >
                             <span wire:loading.remove wire:target="removeLogo">Remove Logo</span>
@@ -87,7 +87,7 @@
             />
 
             <a href="{{ route('public.landing') }}" target="_blank" class="btn btn-sm btn-ghost gap-2">
-                <x-icon name="o-arrow-top-right-on-square" class="w-4 h-4" />
+                <x-icon name="phosphor-arrow-square-out" class="w-4 h-4" />
                 View Public Landing Page
             </a>
         </div>
@@ -97,7 +97,7 @@
         <x-button
             wire:click="save"
             class="btn-primary"
-            icon="o-check"
+            icon="phosphor-check"
             spinner="save"
         >
             <span wire:loading.remove wire:target="save">Save Branding</span>
