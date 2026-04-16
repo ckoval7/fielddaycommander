@@ -179,6 +179,7 @@ class ContactEditor extends Component
         $this->dispatch('contact-restored');
     }
 
+    #[On('bulk-delete-contacts')]
     public function bulkDeleteContacts(array $contactIds): void
     {
         if (empty($contactIds)) {
@@ -214,6 +215,7 @@ class ContactEditor extends Component
         }
     }
 
+    #[On('open-bulk-change-logger')]
     public function openBulkChangeLogger(array $contactIds): void
     {
         $this->bulkLoggerContactIds = $contactIds;

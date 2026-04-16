@@ -76,11 +76,8 @@
                 }
             @endphp
 
-            @can('edit-contacts')
-                <x-table :headers="$headers" :rows="$this->contacts" class="table-sm" selectable wire:model="selectedIds">
-            @else
-                <x-table :headers="$headers" :rows="$this->contacts" class="table-sm">
-            @endcan
+            @php $canEdit = auth()->check() && auth()->user()->can('edit-contacts'); @endphp
+            <x-table :headers="$headers" :rows="$this->contacts" class="table-sm" :selectable="$canEdit" wire:model="selectedIds">
                 @scope('cell_qso_time', $contact)
                     <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') : 'N/A' }}</span>
                 @endscope

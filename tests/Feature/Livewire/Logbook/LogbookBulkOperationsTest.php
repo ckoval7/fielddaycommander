@@ -225,3 +225,26 @@ describe('bulk change logger', function () {
             ->assertHasErrors(['bulkLoggerUserId']);
     });
 });
+
+describe('event wiring', function () {
+    test('bulk-delete-contacts event triggers bulk delete', function () {
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->dispatch('bulk-delete-contacts', contactIds: $contactIds)
+            ->assertDispatched('contact-deleted');
+
+        foreach ($this->contacts as $contact) {
+            expect($contact->fresh()->trashed())->toBeTrue();
+        }
+    });
+
+    test('open-bulk-change-logger event opens modal', function () {
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->dispatch('open-bulk-change-logger', contactIds: $contactIds)
+            ->assertSet('showBulkLoggerModal', true)
+            ->assertSet('bulkLoggerContactIds', $contactIds);
+    });
+});
