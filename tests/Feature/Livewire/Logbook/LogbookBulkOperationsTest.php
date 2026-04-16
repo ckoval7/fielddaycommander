@@ -1,6 +1,8 @@
 <?php
 
+use App\Livewire\Logbook\ContactEditor;
 use App\Livewire\Logbook\LogbookBrowser;
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
@@ -80,5 +82,61 @@ describe('selection state', function () {
             ->set('selectedIds', $this->contacts->pluck('id')->toArray())
             ->dispatch('contact-updated')
             ->assertSet('selectedIds', []);
+    });
+});
+
+describe('bulk delete', function () {
+    test('bulk deletes multiple contacts and decrements qso_count', function () {
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->call('bulkDeleteContacts', $contactIds)
+            ->assertDispatched('contact-deleted')
+            ->assertDispatched('notify');
+
+        foreach ($this->contacts as $contact) {
+            expect($contact->fresh()->trashed())->toBeTrue();
+        }
+
+        $this->session->refresh();
+        expect($this->session->qso_count)->toBe(2); // 5 - 3
+    });
+
+    test('bulk delete creates audit log for each contact', function () {
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->call('bulkDeleteContacts', $contactIds);
+
+        foreach ($this->contacts as $contact) {
+            $auditLog = AuditLog::where('action', 'contact.deleted')
+                ->where('auditable_id', $contact->id)
+                ->first();
+
+            expect($auditLog)->not->toBeNull();
+        }
+    });
+
+    test('bulk delete skips contacts user cannot delete', function () {
+        $regularUser = User::factory()->create();
+        $this->actingAs($regularUser);
+
+        $contactIds = $this->contacts->pluck('id')->toArray();
+
+        Livewire::test(ContactEditor::class)
+            ->call('bulkDeleteContacts', $contactIds);
+
+        foreach ($this->contacts as $contact) {
+            expect($contact->fresh()->trashed())->toBeFalse();
+        }
+
+        $this->session->refresh();
+        expect($this->session->qso_count)->toBe(5);
+    });
+
+    test('bulk delete with empty array does nothing', function () {
+        Livewire::test(ContactEditor::class)
+            ->call('bulkDeleteContacts', [])
+            ->assertNotDispatched('contact-deleted');
     });
 });

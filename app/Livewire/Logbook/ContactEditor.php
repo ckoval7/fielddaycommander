@@ -172,6 +172,41 @@ class ContactEditor extends Component
         $this->dispatch('contact-restored');
     }
 
+    public function bulkDeleteContacts(array $contactIds): void
+    {
+        if (empty($contactIds)) {
+            return;
+        }
+
+        $contacts = Contact::whereIn('id', $contactIds)->get();
+        $count = 0;
+
+        foreach ($contacts as $contact) {
+            if (auth()->user()->cannot('delete', $contact)) {
+                continue;
+            }
+
+            AuditLog::log(
+                'contact.deleted',
+                auditable: $contact,
+                oldValues: [
+                    'callsign' => $contact->callsign,
+                    'exchange_class' => $contact->exchange_class,
+                    'session_id' => $contact->operating_session_id,
+                ],
+            );
+
+            $contact->delete();
+            $contact->operatingSession->decrement('qso_count');
+            $count++;
+        }
+
+        if ($count > 0) {
+            $this->dispatch('contact-deleted');
+            $this->dispatch('notify', title: 'Success', description: "{$count} contact(s) deleted.");
+        }
+    }
+
     #[Computed]
     public function bands()
     {
