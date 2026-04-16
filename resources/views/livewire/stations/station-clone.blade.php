@@ -1,7 +1,7 @@
 <div>
     {{-- Clone Modal --}}
     <x-modal wire:model="showModal" title="Clone Stations from Previous Event" subtitle="Copy station configurations from a past event to a new event" class="backdrop-blur" persistent>
-        <form wire:submit="cloneStations">
+        <form wire:submit.prevent>
             {{-- Step 1: Event Selection --}}
             <div class="mb-6">
                 <x-header title="Step 1: Select Source Event" subtitle="Choose the event to clone stations from" size="text-lg" separator />
@@ -231,6 +231,7 @@
                                 icon="o-x-mark"
                                 class="btn-ghost"
                                 wire:click="cancelConflictPreview"
+                                type="button"
                             />
                             <x-button
                                 label="Skip Unavailable Equipment & Continue"
@@ -238,6 +239,7 @@
                                 class="btn-warning"
                                 wire:click="continueWithSkip"
                                 spinner="continueWithSkip"
+                                type="button"
                             />
                         </div>
                     </div>

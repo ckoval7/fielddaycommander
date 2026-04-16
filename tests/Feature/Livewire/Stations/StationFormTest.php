@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PowerSource;
 use App\Livewire\Stations\StationForm;
 use App\Models\Equipment;
 use App\Models\Event;
@@ -540,14 +541,14 @@ test('can create station with power source', function () {
 test('can update station power source', function () {
     $station = Station::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'power_source' => \App\Enums\PowerSource::Generator,
+        'power_source' => PowerSource::Generator,
     ]);
 
     Livewire::test(StationForm::class, ['station' => $station])
         ->set('power_source', 'battery')
         ->call('save');
 
-    expect($station->fresh()->power_source)->toBe(\App\Enums\PowerSource::Battery);
+    expect($station->fresh()->power_source)->toBe(PowerSource::Battery);
 });
 
 test('power source is optional', function () {
@@ -564,6 +565,42 @@ test('power source is optional', function () {
         'name' => 'No Power Source',
         'power_source' => null,
     ]);
+});
+
+test('allows reusing a deleted stations radio for a new station', function () {
+    $station = Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'radio_equipment_id' => $this->radio->id,
+        'name' => 'Old Station',
+    ]);
+
+    $station->delete();
+
+    Livewire::test(StationForm::class)
+        ->set('name', 'New Station')
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->set('radio_equipment_id', $this->radio->id)
+        ->call('save')
+        ->assertHasNoErrors(['radio_equipment_id']);
+});
+
+test('allows reusing a deleted stations name for a new station', function () {
+    $station = Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'radio_equipment_id' => $this->radio->id,
+        'name' => 'Reusable Name',
+    ]);
+
+    $station->delete();
+
+    $newRadio = Equipment::factory()->create(['type' => 'radio']);
+
+    Livewire::test(StationForm::class)
+        ->set('name', 'Reusable Name')
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->set('radio_equipment_id', $newRadio->id)
+        ->call('save')
+        ->assertHasNoErrors(['name']);
 });
 
 test('rejects invalid power source value', function () {
