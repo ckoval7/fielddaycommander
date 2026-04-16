@@ -245,7 +245,7 @@
                             @endcan
 
                             @can('manage-weather')
-                                <x-menu-item title="Manage Weather" icon="phosphor-sliders-horizontal-duotone" link="{{ route('weather.manage') }}" :active="request()->routeIs('weather.manage')" />
+                                <x-menu-item title="Manage Weather" icon="phosphor-cloud-sun-duotone" link="{{ route('weather.manage') }}" :active="request()->routeIs('weather.manage')" />
                             @endcan
 
                             @can('manage-guestbook')
