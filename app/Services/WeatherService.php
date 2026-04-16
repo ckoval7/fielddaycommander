@@ -226,6 +226,10 @@ class WeatherService
             return ['manual' => true, 'data' => $override];
         }
 
+        if (config('demo.enabled')) {
+            return ['manual' => false, 'data' => cache()->get('weather:demo:forecast', [])];
+        }
+
         return ['manual' => false, 'data' => Setting::get('weather.forecast', [])];
     }
 

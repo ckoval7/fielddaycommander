@@ -1005,3 +1005,28 @@ test('fetchForecast in demo mode writes shared cache and skips Setting', functio
     expect(Setting::get('weather.forecast'))->toBeNull();
     expect(Setting::get('weather.last_fetch'))->toBeNull();
 });
+
+// --- demo mode: getDisplayData reads shared cache ---
+
+test('getDisplayData in demo mode returns shared cache forecast when no override', function () {
+    config()->set('demo.enabled', true);
+    cache()->put('weather:demo:forecast', ['current' => ['temperature_2m' => 68.0]], now()->addHour());
+    Setting::set('weather.manual_override', null);
+    Setting::set('weather.forecast', ['current' => ['temperature_2m' => 999.0]]); // must be ignored
+
+    $result = makeWeatherService()->getDisplayData();
+
+    expect($result['manual'])->toBeFalse();
+    expect($result['data'])->toMatchArray(['current' => ['temperature_2m' => 68.0]]);
+});
+
+test('getDisplayData in demo mode returns per-session override when set', function () {
+    config()->set('demo.enabled', true);
+    cache()->put('weather:demo:forecast', ['current' => ['temperature_2m' => 68.0]], now()->addHour());
+    Setting::set('weather.manual_override', ['current' => ['temperature_2m' => 42.0]]);
+
+    $result = makeWeatherService()->getDisplayData();
+
+    expect($result['manual'])->toBeTrue();
+    expect($result['data'])->toMatchArray(['current' => ['temperature_2m' => 42.0]]);
+});
