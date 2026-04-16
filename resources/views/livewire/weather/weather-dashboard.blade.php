@@ -2,13 +2,23 @@
     <x-slot:title>Weather</x-slot:title>
 
     <div class="p-6">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold">Weather</h1>
                 @if($isManual)
                     <span class="badge badge-warning mt-1">Manual Override Active</span>
                 @endif
             </div>
+            @can('manage-weather')
+                <div class="flex flex-wrap gap-2">
+                    <x-button
+                        label="Manage Weather"
+                        icon="o-cog-6-tooth"
+                        class="btn-outline"
+                        link="{{ route('weather.manage') }}"
+                    />
+                </div>
+            @endcan
         </div>
 
         {{-- Empty state --}}

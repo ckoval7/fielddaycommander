@@ -46,6 +46,30 @@ test('dashboard shows manage-weather empty state hint when user has permission',
         ->assertSee('No weather data yet');
 });
 
+test('dashboard shows manage weather button for users with manage-weather permission', function () {
+    Permission::firstOrCreate(['name' => 'manage-weather']);
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(WeatherDashboard::class)
+        ->assertSee('Manage Weather')
+        ->assertSee(route('weather.manage'));
+});
+
+test('dashboard hides manage weather button for users without permission', function () {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(WeatherDashboard::class)
+        ->assertDontSee('Manage Weather');
+});
+
+test('dashboard hides manage weather button for guests', function () {
+    Livewire::test(WeatherDashboard::class)
+        ->assertDontSee('Manage Weather');
+});
+
 test('dashboard shows current conditions when forecast data is present', function () {
     Setting::set('weather.forecast', [
         'current' => [
