@@ -4,7 +4,7 @@
         <x-select
             label="Event"
             wire:model="commitEventId"
-            icon="o-calendar"
+            icon="phosphor-calendar"
             placeholder="Select an event..."
             :options="$this->upcomingEvents->map(fn($e) => [
                 'value' => $e->id,
@@ -18,7 +18,7 @@
             label="Expected Delivery"
             wire:model="commitExpectedDeliveryAt"
             mode="date"
-            icon="o-calendar"
+            icon="phosphor-calendar"
             hint="When do you expect to deliver this equipment?"
         />
 

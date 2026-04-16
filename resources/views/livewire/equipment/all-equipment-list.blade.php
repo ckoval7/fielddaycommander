@@ -8,7 +8,7 @@
             @can('edit-any-equipment')
                 <x-button
                     label="Add Equipment for User"
-                    icon="o-plus"
+                    icon="phosphor-plus"
                     class="btn-primary btn-sm sm:btn-md"
                     link="{{ route('equipment.create', $userFilter && $userFilter !== 'club' ? ['for_user' => $userFilter] : []) }}"
                     wire:navigate
@@ -39,7 +39,7 @@
                             <div class="mt-1">
                                 @if($item->is_club_equipment)
                                     <span class="badge badge-club badge-xs">
-                                        <x-icon name="o-building-office" class="w-3 h-3 mr-0.5" />
+                                        <x-icon name="phosphor-buildings" class="w-3 h-3 mr-0.5" />
                                         Club
                                     </span>
                                     @if($item->managed_by_user_id && $item->manager)
@@ -103,7 +103,7 @@
                                 <td>
                                     @if($item->is_club_equipment)
                                         <span class="badge badge-club badge-sm">
-                                            <x-icon name="o-building-office" class="w-3 h-3 mr-0.5" />
+                                            <x-icon name="phosphor-buildings" class="w-3 h-3 mr-0.5" />
                                             Club
                                         </span>
                                         @if($item->managed_by_user_id && $item->manager)

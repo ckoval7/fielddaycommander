@@ -15,7 +15,7 @@
                         />
                     @else
                         <div class="w-20 h-20 bg-base-300 rounded flex items-center justify-center flex-shrink-0">
-                            <x-icon name="o-wrench-screwdriver" class="w-8 h-8 text-base-content/50" />
+                            <x-icon name="phosphor-wrench" class="w-8 h-8 text-base-content/50" />
                         </div>
                     @endif
                     <div class="space-y-1">
@@ -133,7 +133,7 @@
             <div class="flex flex-wrap gap-2 w-full justify-end">
                 <x-dropdown>
                     <x-slot:trigger>
-                        <x-button label="Change Status" icon="o-arrows-right-left" class="btn-primary btn-sm" />
+                        <x-button label="Change Status" icon="phosphor-arrows-left-right" class="btn-primary btn-sm" />
                     </x-slot:trigger>
                     @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
                         @if($status !== $detailCommitment->status)
@@ -148,7 +148,7 @@
 
                 <x-button
                     label="Update Notes"
-                    icon="o-pencil"
+                    icon="phosphor-pencil-simple"
                     class="btn-outline btn-sm"
                     wire:click="openNotesModal({{ $detailCommitment->id }})"
                 />

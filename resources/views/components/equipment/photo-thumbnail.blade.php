@@ -20,6 +20,6 @@
     />
 @else
     <div class="{{ $sizeClasses }} bg-base-300 rounded flex items-center justify-center flex-shrink-0">
-        <x-icon name="o-camera" class="{{ $iconSize }} text-base-content/50" />
+        <x-icon name="phosphor-camera" class="{{ $iconSize }} text-base-content/50" />
     </div>
 @endif

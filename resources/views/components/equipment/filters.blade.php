@@ -5,7 +5,7 @@
         label="Search"
         placeholder="Search by make, model, or serial number..."
         wire:model.live.debounce.300ms="search"
-        icon="o-magnifying-glass"
+        icon="phosphor-magnifying-glass"
         clearable
     />
 
