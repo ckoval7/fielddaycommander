@@ -6,13 +6,13 @@
             @click="open = !open"
             class="btn btn-sm btn-outline gap-2"
         >
-            <x-icon name="o-funnel" class="w-4 h-4" />
+            <x-icon name="phosphor-funnel" class="w-4 h-4" />
             Filters
             @if($this->activeFilterCount > 0)
                 <span class="badge badge-primary badge-sm">{{ $this->activeFilterCount }}</span>
             @endif
-            <x-icon x-show="!open" name="o-chevron-down" class="w-3 h-3" />
-            <x-icon x-show="open" name="o-chevron-up" class="w-3 h-3" />
+            <x-icon x-show="!open" name="phosphor-caret-down" class="w-3 h-3" />
+            <x-icon x-show="open" name="phosphor-caret-up" class="w-3 h-3" />
         </button>
 
         @if($this->activeFilterCount > 0)
@@ -53,7 +53,7 @@
                     wire:model.live="bandIds"
                     :options="$this->bands"
                     placeholder="All Bands"
-                    icon="o-signal"
+                    icon="phosphor-cell-signal-high"
                     searchable
                 />
 
@@ -63,7 +63,7 @@
                     wire:model.live="modeIds"
                     :options="$this->modes"
                     placeholder="All Modes"
-                    icon="o-radio"
+                    icon="phosphor-radio"
                     searchable
                 />
 
@@ -73,7 +73,7 @@
                     wire:model.live="stationIds"
                     :options="$this->stations"
                     placeholder="All Stations"
-                    icon="o-home"
+                    icon="phosphor-house"
                     searchable
                 />
 
@@ -84,7 +84,7 @@
                     :options="$this->operators"
                     option-label="display_name"
                     placeholder="All Operators"
-                    icon="o-user"
+                    icon="phosphor-user"
                     searchable
                 />
 
@@ -95,7 +95,7 @@
                     :options="$this->sections"
                     option-label="display_name"
                     placeholder="All Sections"
-                    icon="o-map"
+                    icon="phosphor-map-trifold"
                     searchable
                 />
 
@@ -104,7 +104,7 @@
                     label="Callsign"
                     wire:model.live.debounce.500ms="callsignSearch"
                     placeholder="Search callsign..."
-                    icon="o-magnifying-glass"
+                    icon="phosphor-magnifying-glass"
                     clearable
                 />
 
@@ -112,14 +112,14 @@
                 <x-flatpickr
                     label="Time From"
                     wire:model.live="timeFrom"
-                    icon="o-calendar"
+                    icon="phosphor-calendar"
                 />
 
                 {{-- Time To --}}
                 <x-flatpickr
                     label="Time To"
                     wire:model.live="timeTo"
-                    icon="o-calendar"
+                    icon="phosphor-calendar"
                 />
 
                 {{-- Duplicate Filter --}}

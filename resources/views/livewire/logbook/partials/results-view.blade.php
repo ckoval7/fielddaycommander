@@ -12,7 +12,7 @@
             class="btn btn-sm btn-primary min-h-[2.75rem] sm:min-h-[1.75rem]"
             target="_blank"
         >
-            <x-icon name="o-arrow-down-tray" class="w-4 h-4" />
+            <x-icon name="phosphor-download-simple" class="w-4 h-4" />
             <span class="ml-1">Export CSV</span>
         </a>
     </div>
@@ -25,14 +25,14 @@
                 <div class="flex gap-2">
                     <x-button
                         label="Change Logger"
-                        icon="o-user"
+                        icon="phosphor-user"
                         class="btn-primary btn-sm"
                         wire:click="$dispatch('open-bulk-change-logger', { contactIds: {{ json_encode($selectedIds) }} })"
                         spinner
                     />
                     <x-button
                         label="Delete"
-                        icon="o-trash"
+                        icon="phosphor-trash"
                         class="btn-error btn-sm"
                         wire:click="$dispatch('bulk-delete-contacts', { contactIds: {{ json_encode($selectedIds) }} })"
                         wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} contact(s)?"
@@ -41,7 +41,7 @@
                 </div>
                 <x-button
                     label="Clear"
-                    icon="o-x-mark"
+                    icon="phosphor-x"
                     class="btn-ghost btn-sm ml-auto"
                     wire:click="deselectAll"
                 />
@@ -51,7 +51,7 @@
 
     @if($this->contacts->isEmpty())
         <div class="text-center py-12">
-            <x-icon name="o-magnifying-glass" class="w-16 h-16 mx-auto text-base-content/30" />
+            <x-icon name="phosphor-magnifying-glass" class="w-16 h-16 mx-auto text-base-content/30" />
             <p class="mt-4 text-base-content/70">No contacts found matching the current filters.</p>
             <p class="text-sm text-base-content/50 mt-2">Try adjusting your filter criteria.</p>
         </div>
@@ -158,7 +158,7 @@
                         <div class="flex items-center gap-1">
                             @if($contact->trashed())
                                 <x-button
-                                    icon="o-arrow-uturn-left"
+                                    icon="phosphor-arrow-u-up-left"
                                     wire:click="$dispatch('restore-contact', { contactId: {{ $contact->id }} })"
                                     wire:confirm="Are you sure you want to restore this contact?"
                                     class="btn-ghost btn-xs text-success"
@@ -167,14 +167,14 @@
                                 />
                             @else
                                 <x-button
-                                    icon="o-pencil-square"
+                                    icon="phosphor-note-pencil"
                                     wire:click="$dispatch('open-edit-contact', { contactId: {{ $contact->id }} })"
                                     class="btn-ghost btn-xs"
                                     tooltip="Edit"
                                     spinner
                                 />
                                 <x-button
-                                    icon="o-trash"
+                                    icon="phosphor-trash"
                                     wire:click="$dispatch('delete-contact', { contactId: {{ $contact->id }} })"
                                     wire:confirm="Are you sure you want to delete this contact?"
                                     class="btn-ghost btn-xs text-error"
@@ -236,12 +236,12 @@
                         {{-- Band, Mode, Class, Section --}}
                         <div class="flex items-center gap-2 text-sm flex-wrap">
                             <div class="flex items-center gap-1">
-                                <x-icon name="o-signal" class="w-4 h-4 text-base-content/50" />
+                                <x-icon name="phosphor-cell-signal-high" class="w-4 h-4 text-base-content/50" />
                                 <span>{{ $contact->band?->name ?? 'N/A' }}</span>
                             </div>
                             <span class="text-base-content/30">•</span>
                             <div class="flex items-center gap-1">
-                                <x-icon name="o-radio" class="w-4 h-4 text-base-content/50" />
+                                <x-icon name="phosphor-radio" class="w-4 h-4 text-base-content/50" />
                                 <span>{{ $contact->mode?->name ?? 'N/A' }}</span>
                             </div>
                             <span class="text-base-content/30">•</span>
@@ -273,7 +273,7 @@
                             <div class="flex items-center gap-2 pt-2 border-t border-base-300">
                                 @if($contact->trashed())
                                     <x-button
-                                        icon="o-arrow-uturn-left"
+                                        icon="phosphor-arrow-u-up-left"
                                         label="Restore"
                                         wire:click="$dispatch('restore-contact', { contactId: {{ $contact->id }} })"
                                         wire:confirm="Are you sure you want to restore this contact?"
@@ -282,14 +282,14 @@
                                     />
                                 @else
                                     <x-button
-                                        icon="o-pencil-square"
+                                        icon="phosphor-note-pencil"
                                         label="Edit"
                                         wire:click="$dispatch('open-edit-contact', { contactId: {{ $contact->id }} })"
                                         class="btn-ghost btn-xs"
                                         spinner
                                     />
                                     <x-button
-                                        icon="o-trash"
+                                        icon="phosphor-trash"
                                         label="Delete"
                                         wire:click="$dispatch('delete-contact', { contactId: {{ $contact->id }} })"
                                         wire:confirm="Are you sure you want to delete this contact?"

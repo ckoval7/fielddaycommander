@@ -2,7 +2,7 @@
     <x-modal wire:model="showModal" title="Edit Contact" class="modal-lg">
         <form wire:submit.prevent>
             @if ($errors->any())
-                <x-alert title="Please fix the following errors:" icon="o-exclamation-triangle" class="alert-error mb-4">
+                <x-alert title="Please fix the following errors:" icon="phosphor-warning" class="alert-error mb-4">
                     <ul class="list-disc list-inside">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -16,7 +16,7 @@
                     label="Callsign"
                     wire:model="callsign"
                     placeholder="e.g. W1AW"
-                    icon="o-identification"
+                    icon="phosphor-identification-card"
                     required
                 />
 
@@ -24,7 +24,7 @@
                     label="Class"
                     wire:model="exchangeClass"
                     placeholder="e.g. 3A"
-                    icon="o-document-text"
+                    icon="phosphor-file-text"
                     hint="Transmitter count + class letter"
                     required
                 />
@@ -36,7 +36,7 @@
                     option-label="display_name"
                     option-value="id"
                     placeholder="Select section"
-                    icon="o-map"
+                    icon="phosphor-map-trifold"
                     searchable
                     single
                     required
@@ -49,7 +49,7 @@
                     option-label="name"
                     option-value="id"
                     placeholder="Select band"
-                    icon="o-signal"
+                    icon="phosphor-cell-signal-high"
                     required
                 />
 
@@ -60,14 +60,14 @@
                     option-label="name"
                     option-value="id"
                     placeholder="Select mode"
-                    icon="o-radio"
+                    icon="phosphor-radio"
                     required
                 />
 
                 <x-flatpickr
                     label="QSO Time"
                     wire:model="qsoTime"
-                    icon="o-clock"
+                    icon="phosphor-clock"
                     required
                     now-button
                 />
@@ -99,7 +99,7 @@
                 option-label="display_name"
                 option-value="id"
                 placeholder="Select a logger..."
-                icon="o-user"
+                icon="phosphor-user"
                 searchable
                 single
                 required
@@ -107,7 +107,7 @@
 
             @error('bulkLoggerUserId')
                 <div class="alert alert-error">
-                    <x-icon name="o-exclamation-triangle" class="w-5 h-5" />
+                    <x-icon name="phosphor-warning" class="w-5 h-5" />
                     <span>{{ $message }}</span>
                 </div>
             @enderror
