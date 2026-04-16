@@ -98,6 +98,10 @@ class ContactEditor extends Component
 
         $mode = Mode::find($validated['modeId']);
 
+        $contactPoints = $contact->is_gota_contact
+            ? 5
+            : ($mode->points_fd ?? 1);
+
         $contact->update([
             'callsign' => $validated['callsign'],
             'exchange_class' => $validated['exchangeClass'],
@@ -107,7 +111,7 @@ class ContactEditor extends Component
             'section_id' => $validated['sectionId'],
             'notes' => $validated['notes'] ?: null,
             'is_duplicate' => $isDuplicate,
-            'points' => $isDuplicate ? 0 : ($mode->points_fd ?? 1),
+            'points' => $isDuplicate ? 0 : $contactPoints,
         ]);
 
         $newValues = collect([

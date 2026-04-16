@@ -270,9 +270,13 @@ class LoggingInterface extends Component
             ->where('is_duplicate', false)
             ->exists();
 
+        $contactPoints = $contact->is_gota_contact
+            ? 5
+            : ($contact->mode->points_fd ?? 1);
+
         $contact->update([
             'is_duplicate' => $isDuplicate,
-            'points' => $isDuplicate ? 0 : ($contact->operatingSession->mode->points_fd ?? 1),
+            'points' => $isDuplicate ? 0 : $contactPoints,
         ]);
 
         AuditLog::log(

@@ -693,6 +693,99 @@ test('updateContact re-runs duplicate detection', function () {
         ->and($contact2->points)->toBe(0);
 });
 
+test('updateContact preserves digital mode points on edit', function () {
+    $this->actingAs($this->user);
+
+    $digitalMode = Mode::firstOrCreate(
+        ['name' => 'Digital'],
+        ['category' => 'Digital', 'points_fd' => 2, 'points_wfd' => 2],
+    );
+
+    $contact = createTranscriptionContact($this, [
+        'mode_id' => $digitalMode->id,
+        'callsign' => 'W1DIG',
+        'exchange_class' => '3A',
+        'points' => 2,
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, 'W1NEW 1B CT');
+
+    $contact->refresh();
+    expect($contact->is_duplicate)->toBeFalse()
+        ->and($contact->points)->toBe(2);
+});
+
+test('updateContact preserves CW mode points on edit', function () {
+    $this->actingAs($this->user);
+
+    $cwMode = Mode::firstOrCreate(
+        ['name' => 'CW'],
+        ['category' => 'CW', 'points_fd' => 2, 'points_wfd' => 2],
+    );
+
+    $contact = createTranscriptionContact($this, [
+        'mode_id' => $cwMode->id,
+        'callsign' => 'W1CW',
+        'exchange_class' => '3A',
+        'points' => 2,
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->call('updateContact', $contact->id, 'W1NEWCW 1B CT');
+
+    $contact->refresh();
+    expect($contact->points)->toBe(2);
+});
+
+test('updateContact preserves GOTA 5 points on edit', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->event->eventConfiguration->id,
+        'is_gota' => true,
+    ]);
+
+    $session = OperatingSession::firstOrCreate(
+        [
+            'station_id' => $gotaStation->id,
+            'is_transcription' => true,
+        ],
+        [
+            'operator_user_id' => $this->user->id,
+            'start_time' => $this->event->start_time,
+            'end_time' => $this->event->end_time,
+            'is_transcription' => true,
+            'power_watts' => 100,
+            'qso_count' => 0,
+        ]
+    );
+
+    $section = Section::where('code', 'CT')->first();
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->event->eventConfiguration->id,
+        'operating_session_id' => $session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'W1GOTA',
+        'exchange_class' => '3A',
+        'section_id' => $section->id,
+        'is_transcribed' => true,
+        'is_gota_contact' => true,
+        'points' => 5,
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $gotaStation])
+        ->call('updateContact', $contact->id, 'W1NEWGOTA 1B CT');
+
+    $contact->refresh();
+    expect($contact->is_gota_contact)->toBeTrue()
+        ->and($contact->points)->toBe(5);
+});
+
 test('logContact dispatches ContactLogged event', function () {
     $this->actingAs($this->user);
 
