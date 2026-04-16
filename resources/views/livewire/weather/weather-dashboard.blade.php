@@ -134,7 +134,7 @@
                                             <td class="font-medium text-xs">{{ $hour['time'] }}</td>
                                             <td>
                                                 @if($hour['weather_code'] !== null)
-                                                    <x-icon name="{{ $this->iconFor($hour['weather_code']) }}" class="w-4 h-4 mx-auto {{ $this->colorFor($hour['weather_code']) }}" />
+                                                    <x-icon name="{{ $this->iconFor($hour['weather_code']) }}" class="w-6 h-6 mx-auto {{ $this->colorFor($hour['weather_code']) }}" />
                                                 @endif
                                             </td>
                                             <td>{{ $hour['temperature'] !== null ? round($hour['temperature']).'°' : '—' }}</td>
