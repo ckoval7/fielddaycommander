@@ -10,7 +10,7 @@
             </div>
             <x-button
                 label="Export CSV"
-                icon="o-arrow-down-tray"
+                icon="phosphor-download-simple"
                 class="btn-primary"
                 wire:click="exportCsv"
                 spinner="exportCsv"
@@ -49,14 +49,14 @@
                         label="Date From"
                         wire:model.live="filters.date_from"
                         mode="date"
-                        icon="o-calendar"
+                        icon="phosphor-calendar"
                     />
 
                     <x-flatpickr
                         label="Date To"
                         wire:model.live="filters.date_to"
                         mode="date"
-                        icon="o-calendar"
+                        icon="phosphor-calendar"
                     />
                 </div>
 
@@ -66,7 +66,7 @@
                         label="IP Address"
                         wire:model.live.debounce.300ms="filters.ip_address"
                         placeholder="Search by IP..."
-                        icon="o-globe-alt"
+                        icon="phosphor-globe"
                         clearable
                     />
                 </div>
@@ -95,7 +95,7 @@
                             label="Clear Filters"
                             wire:click="clearFilters"
                             class="btn-sm btn-ghost"
-                            icon="o-x-mark"
+                            icon="phosphor-x"
                         />
                     </div>
                 </div>
@@ -151,7 +151,7 @@
 
                     @scope('actions', $log)
                         <x-button
-                            icon="o-eye"
+                            icon="phosphor-eye"
                             wire:click="showDetails({{ $log->id }})"
                             class="btn-sm btn-ghost"
                             spinner="showDetails"
@@ -189,7 +189,7 @@
         @if($logs->isEmpty())
             <x-card class="mt-6">
                 <div class="text-center py-12">
-                    <x-icon name="o-document-magnifying-glass" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
+                    <x-icon name="phosphor-file-magnifying-glass" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
                     <h3 class="text-lg font-semibold mb-2">No audit logs found</h3>
                     <p class="text-base-content/60">Try adjusting your filters to see more results.</p>
                 </div>
@@ -206,7 +206,7 @@
                     <x-alert
                         title="Critical Security Event"
                         description="This action has been flagged as a critical security event requiring attention."
-                        icon="o-exclamation-triangle"
+                        icon="phosphor-warning"
                         class="alert-error"
                     />
                 @endif

@@ -14,7 +14,7 @@
                     ])>{{ $num }}</div>
                     <span @class(['font-semibold' => $step === $num, 'text-base-content/50' => $step < $num])>{{ $label }}</span>
                     @if ($num < 3)
-                        <x-icon name="o-chevron-right" class="w-4 h-4 text-base-content/30" />
+                        <x-icon name="phosphor-caret-right" class="w-4 h-4 text-base-content/30" />
                     @endif
                 </div>
             @endforeach
@@ -34,7 +34,7 @@
                             Uploading file...
                         </div>
 
-                        <x-button type="submit" label="Parse & Continue" icon="o-arrow-right" class="btn-primary" spinner="uploadFile" />
+                        <x-button type="submit" label="Parse & Continue" icon="phosphor-arrow-right" class="btn-primary" spinner="uploadFile" />
                     </div>
                 </form>
             </x-card>
@@ -167,10 +167,10 @@
                 @endif
 
                 @error('mapping')
-                    <x-alert icon="o-exclamation-triangle" class="alert-error">{{ $message }}</x-alert>
+                    <x-alert icon="phosphor-warning" class="alert-error">{{ $message }}</x-alert>
                 @enderror
 
-                <x-button wire:click="applyMappingsAndContinue" label="Continue to Review" icon="o-arrow-right" class="btn-primary" spinner="applyMappingsAndContinue" />
+                <x-button wire:click="applyMappingsAndContinue" label="Continue to Review" icon="phosphor-arrow-right" class="btn-primary" spinner="applyMappingsAndContinue" />
             </div>
         @endif
 
@@ -246,11 +246,11 @@
                                         <td class="font-mono">{{ $record->operator_callsign }}</td>
                                         <td>
                                             @if ($record->status === \App\Enums\AdifRecordStatus::Invalid)
-                                                <x-button wire:click="toggleSkip({{ $record->id }})" label="Skip" icon="o-x-mark" class="btn-error btn-xs" spinner />
+                                                <x-button wire:click="toggleSkip({{ $record->id }})" label="Skip" icon="phosphor-x" class="btn-error btn-xs" spinner />
                                             @elseif ($record->status === \App\Enums\AdifRecordStatus::Skipped)
-                                                <x-button wire:click="toggleSkip({{ $record->id }})" label="Include" icon="o-arrow-uturn-left" class="btn-ghost btn-xs" spinner />
+                                                <x-button wire:click="toggleSkip({{ $record->id }})" label="Include" icon="phosphor-arrow-u-up-left" class="btn-ghost btn-xs" spinner />
                                             @elseif ($record->status === \App\Enums\AdifRecordStatus::Ready || $record->status === \App\Enums\AdifRecordStatus::DuplicateMatch)
-                                                <x-button wire:click="toggleSkip({{ $record->id }})" label="Skip" icon="o-x-mark" class="btn-ghost btn-xs" spinner />
+                                                <x-button wire:click="toggleSkip({{ $record->id }})" label="Skip" icon="phosphor-x" class="btn-ghost btn-xs" spinner />
                                             @endif
                                         </td>
                                     </tr>
@@ -266,23 +266,23 @@
                 </x-card>
 
                 @if ($importStatus === 'completed')
-                    <x-alert icon="o-check-circle" class="alert-success">
+                    <x-alert icon="phosphor-check-circle" class="alert-success">
                         Import completed successfully!
                         {{ $this->currentImport?->imported_records ?? 0 }} imported,
                         {{ $this->currentImport?->merged_records ?? 0 }} merged,
                         {{ $this->currentImport?->skipped_records ?? 0 }} skipped.
                     </x-alert>
                 @elseif ($importStatus === 'failed')
-                    <x-alert icon="o-exclamation-triangle" class="alert-error">
+                    <x-alert icon="phosphor-warning" class="alert-error">
                         Import failed. Please check the logs and try again.
                     </x-alert>
                 @else
                     @if ($this->hasInvalidRecords)
-                        <x-alert icon="o-exclamation-triangle" class="alert-warning mb-4">
+                        <x-alert icon="phosphor-warning" class="alert-warning mb-4">
                             {{ $matchSummary['invalid'] ?? 0 }} record(s) have validation errors. Skip or resolve them before importing.
                         </x-alert>
                     @endif
-                    <x-button wire:click="executeImport" label="Import Contacts" icon="o-arrow-down-tray" class="btn-primary" spinner="executeImport" :disabled="$this->hasInvalidRecords" />
+                    <x-button wire:click="executeImport" label="Import Contacts" icon="phosphor-download-simple" class="btn-primary" spinner="executeImport" :disabled="$this->hasInvalidRecords" />
                 @endif
             </div>
         @endif
