@@ -33,7 +33,7 @@
         <!-- Menu items -->
         <li>
             <a href="{{ route('profile') }}" wire:navigate>
-                <x-icon name="o-user" class="w-4 h-4" />
+                <x-icon name="phosphor-user" class="w-4 h-4" />
                 Profile
             </a>
         </li>
@@ -43,7 +43,7 @@
 
             <li>
                 <a href="{{ route('users.index') }}" wire:navigate>
-                    <x-icon name="o-user-group" class="w-4 h-4" />
+                    <x-icon name="phosphor-users-three" class="w-4 h-4" />
                     Manage Users
                 </a>
             </li>
@@ -52,7 +52,7 @@
         @can('manage-settings')
             <li>
                 <a href="{{ route('settings.index') }}" wire:navigate>
-                    <x-icon name="o-cog-6-tooth" class="w-4 h-4" />
+                    <x-icon name="phosphor-gear-six" class="w-4 h-4" />
                     System Settings
                 </a>
             </li>
@@ -64,7 +64,7 @@
             <form method="POST" action="{{ route('logout') }}" data-navigate-ignore>
                 @csrf
                 <button type="submit" class="text-error">
-                    <x-icon name="o-arrow-right-on-rectangle" class="w-4 h-4" />
+                    <x-icon name="phosphor-sign-out" class="w-4 h-4" />
                     Logout
                 </button>
             </form>

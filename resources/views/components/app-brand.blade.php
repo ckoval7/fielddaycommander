@@ -6,7 +6,7 @@
                 <img src="{{ asset($logoPath) }}" alt="Logo" class="w-14 h-14 object-contain">
             @else
                 <div class="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <x-icon name="o-signal" class="w-9 h-9 text-primary" />
+                    <x-icon name="phosphor-broadcast" class="w-9 h-9 text-primary" />
                 </div>
             @endif
 
@@ -35,7 +35,7 @@
             <img src="{{ asset($logoPath) }}" alt="Logo" class="w-12 h-12 object-contain">
         @else
             <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <x-icon name="o-signal" class="w-7 h-7 text-primary" />
+                <x-icon name="phosphor-broadcast" class="w-7 h-7 text-primary" />
             </div>
         @endif
     </div>

@@ -38,7 +38,7 @@
             <x-custom-theme-toggle class="me-2" />
             <x-user-menu class="me-2" />
             <button type="button" class="lg:hidden me-3" aria-label="Toggle navigation menu" onclick="document.getElementById('main-drawer').click()">
-                <x-icon name="o-bars-3" class="cursor-pointer" />
+                <x-icon name="phosphor-list" class="cursor-pointer" />
             </button>
         </x-slot:actions>
     </x-nav>
@@ -135,7 +135,7 @@
                     class="flex justify-center py-1 border-b border-base-300/50 text-base-content/40 hover:text-base-content/70 transition-all duration-150 shrink-0"
                     aria-label="Scroll up"
                 >
-                    <x-icon name="o-chevron-up" class="w-4 h-4" />
+                    <x-icon name="phosphor-caret-up" class="w-4 h-4" />
                 </button>
 
                 {{-- Scrollable menu area --}}
@@ -171,42 +171,42 @@
                 >
                     <x-menu activate-by-route class="mt-2">
                     @auth
-                        <x-menu-item title="Dashboard" icon="o-home" link="/" />
-                        <x-menu-item title="Public Page" icon="o-globe-alt" link="{{ route('public.landing') }}" />
-                        <x-menu-item title="Section Map" icon="o-map" link="{{ route('section-map') }}" />
+                        <x-menu-item title="Dashboard" icon="phosphor-house" link="/" />
+                        <x-menu-item title="Public Page" icon="phosphor-globe" link="{{ route('public.landing') }}" />
+                        <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
                         @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
-                            <x-menu-item title="Weather" icon="o-sun" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
+                            <x-menu-item title="Weather" icon="phosphor-sun-duotone" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
                         @endif
 
                         <x-menu-separator title="LOGGING" />
 
                         @can('log-contacts')
-                            <x-menu-item title="Log Contact" icon="o-pencil-square" link="{{ route('logging.station-select') }}" exact :active="request()->routeIs('logging.station-select', 'logging.session')" />
-                            <x-menu-item title="Transcribe Paper Log" icon="o-clipboard-document" link="{{ route('logging.transcribe.select') }}" :active="request()->routeIs('logging.transcribe.*')" />
+                            <x-menu-item title="Log Contact" icon="phosphor-pencil-line" link="{{ route('logging.station-select') }}" exact :active="request()->routeIs('logging.station-select', 'logging.session')" />
+                            <x-menu-item title="Transcribe Paper Log" icon="phosphor-scan" link="{{ route('logging.transcribe.select') }}" :active="request()->routeIs('logging.transcribe.*')" />
                         @endcan
 
-                        <x-menu-item title="View Log" icon="o-queue-list" link="{{ route('logbook.index') }}" />
+                        <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
 
                         @can('import-contacts')
-                            <x-menu-item title="External Loggers" icon="o-signal" link="{{ route('admin.external-loggers') }}" :active="request()->routeIs('admin.external-loggers') || request()->routeIs('admin.import-adif')" />
+                            <x-menu-item title="External Loggers" icon="phosphor-broadcast" link="{{ route('admin.external-loggers') }}" :active="request()->routeIs('admin.external-loggers') || request()->routeIs('admin.import-adif')" />
                         @endcan
 
                         <x-menu-separator title="EVENT MANAGEMENT" />
 
-                        <x-menu-item title="Scoring" icon="o-trophy" link="/scoring" />
+                        <x-menu-item title="Scoring" icon="phosphor-trophy" link="/scoring" />
 
                         @can('manage-bonuses')
-                            <x-menu-item title="Bonuses" icon="o-star" link="/bonuses" />
+                            <x-menu-item title="Bonuses" icon="phosphor-star" link="/bonuses" />
                         @endcan
 
                         @can('view-stations')
-                            <x-menu-item title="Stations" icon="o-server-stack" link="{{ route('stations.index') }}" route="stations.index" />
+                            <x-menu-item title="Stations" icon="phosphor-hard-drives" link="{{ route('stations.index') }}" route="stations.index" />
                         @endcan
 
-                        <x-menu-item title="Shift Schedule" icon="o-calendar-days" link="{{ route('schedule.index') }}" :active="request()->routeIs('schedule.index', 'schedule.my-shifts')" />
-                        <x-menu-item title="Site Safety" icon="o-shield-check" link="{{ route('site-safety.index') }}" :active="request()->routeIs('site-safety.index')" />
+                        <x-menu-item title="Shift Schedule" icon="phosphor-calendar-dots" link="{{ route('schedule.index') }}" :active="request()->routeIs('schedule.index', 'schedule.my-shifts')" />
+                        <x-menu-item title="Site Safety" icon="phosphor-shield-check" link="{{ route('site-safety.index') }}" :active="request()->routeIs('site-safety.index')" />
 
-                        <x-menu-sub title="Equipment" icon="o-wrench-screwdriver">
+                        <x-menu-sub title="Equipment" icon="phosphor-toolbox">
                             <x-menu-item title="My Catalog" link="{{ route('equipment.index') }}" route="equipment.index" />
                             <x-menu-item title="Club Equipment" link="{{ route('equipment.club') }}" route="equipment.club" />
                             @can('view-all-equipment')
@@ -214,17 +214,17 @@
                             @endcan
                         </x-menu-sub>
 
-                        <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
-                        <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
+                        <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
+                        <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
 
                         @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
                         @if($activeEvent)
                             @can('log-contacts')
-                                <x-menu-item title="Message Traffic" icon="o-envelope"
+                                <x-menu-item title="Message Traffic" icon="phosphor-envelope"
                                     link="{{ route('events.messages.index', $activeEvent) }}"
                                     :active="request()->routeIs('events.messages.*')" />
                             @endcan
-                            <x-menu-item title="W1AW Bulletin" icon="o-radio"
+                            <x-menu-item title="W1AW Bulletin" icon="phosphor-radio"
                                 link="{{ route('events.w1aw-bulletin') }}"
                                 :active="request()->routeIs('events.w1aw-bulletin')" />
                         @endif
@@ -233,66 +233,66 @@
                             <x-menu-separator title="ADMINISTRATION" />
 
                             @canany(['create-events', 'edit-events'])
-                                <x-menu-item title="Events" icon="o-calendar-days" link="/events" />
+                                <x-menu-item title="Events" icon="phosphor-calendar-star" link="/events" />
                             @endcanany
 
                             @can('manage-shifts')
-                                <x-menu-item title="Manage Schedule" icon="o-cog-6-tooth" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />
+                                <x-menu-item title="Manage Schedule" icon="phosphor-gear-duotone" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />
                             @endcan
 
                             @can('manage-shifts')
-                                <x-menu-item title="Manage Safety Checklist" icon="o-clipboard-document-check" link="{{ route('site-safety.manage') }}" :active="request()->routeIs('site-safety.manage')" />
+                                <x-menu-item title="Manage Safety Checklist" icon="phosphor-clipboard-text" link="{{ route('site-safety.manage') }}" :active="request()->routeIs('site-safety.manage')" />
                             @endcan
 
                             @can('manage-weather')
-                                <x-menu-item title="Manage Weather" icon="o-cloud" link="{{ route('weather.manage') }}" :active="request()->routeIs('weather.manage')" />
+                                <x-menu-item title="Manage Weather" icon="phosphor-sliders-horizontal-duotone" link="{{ route('weather.manage') }}" :active="request()->routeIs('weather.manage')" />
                             @endcan
 
                             @can('manage-guestbook')
                                 @php $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
                                 @if($activeEvent)
-                                    <x-menu-item title="Manage Guestbook" icon="o-book-open" link="{{ route('events.guestbook', $activeEvent->id) }}" :active="request()->routeIs('events.guestbook')" />
+                                    <x-menu-item title="Manage Guestbook" icon="phosphor-notebook" link="{{ route('events.guestbook', $activeEvent->id) }}" :active="request()->routeIs('events.guestbook')" />
                                 @endif
                             @endcan
 
                             @canany(['manage-event-equipment', 'view-all-equipment'])
                                 @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
                                 @if($activeEvent)
-                                    <x-menu-item title="Event Equipment" icon="o-wrench-screwdriver" link="{{ route('events.equipment.dashboard', $activeEvent) }}" :active="request()->routeIs('events.equipment.dashboard')" />
+                                    <x-menu-item title="Event Equipment" icon="phosphor-wrench" link="{{ route('events.equipment.dashboard', $activeEvent) }}" :active="request()->routeIs('events.equipment.dashboard')" />
                                 @endif
                             @endcanany
 
                             @can('manage-users')
-                                <x-menu-item title="Users" icon="o-user-group" link="/users" />
+                                <x-menu-item title="Users" icon="phosphor-users-three" link="/users" />
                             @endcan
 
                             @can('manage-settings')
-                                <x-menu-item title="Settings" icon="o-cog-6-tooth" link="/settings" />
+                                <x-menu-item title="Settings" icon="phosphor-gear-six" link="/settings" />
                             @endcan
 
                             @can('view-reports')
-                                <x-menu-item title="Reports" icon="o-document-chart-bar" link="/reports" />
+                                <x-menu-item title="Reports" icon="phosphor-chart-bar" link="/reports" />
                             @endcan
 
                             @can('view-security-logs')
-                                <x-menu-item title="Audit Logs" icon="o-clipboard-document-list" link="{{ route('admin.audit-logs') }}" :active="request()->routeIs('admin.audit-logs')" />
+                                <x-menu-item title="Audit Logs" icon="phosphor-scroll" link="{{ route('admin.audit-logs') }}" :active="request()->routeIs('admin.audit-logs')" />
                             @endcan
 
                             @if(config('developer.enabled'))
                                 @can('manage-settings')
-                                    <x-menu-item title="Developer Tools" icon="o-wrench" link="{{ route('admin.developer') }}" :active="request()->routeIs('admin.developer')" />
+                                    <x-menu-item title="Developer Tools" icon="phosphor-code" link="{{ route('admin.developer') }}" :active="request()->routeIs('admin.developer')" />
                                 @endcan
                             @endif
                         @endcanany
                     @else
-                        <x-menu-item title="Home" icon="o-home" link="/" />
-                        <x-menu-item title="Section Map" icon="o-map" link="{{ route('section-map') }}" />
+                        <x-menu-item title="Home" icon="phosphor-house" link="/" />
+                        <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
                         @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
-                            <x-menu-item title="Weather" icon="o-sun" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
+                            <x-menu-item title="Weather" icon="phosphor-sun-duotone" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
                         @endif
-                        <x-menu-item title="View Log" icon="o-queue-list" link="{{ route('logbook.index') }}" />
-                        <x-menu-item title="Gallery" icon="o-photo" link="/gallery" />
-                        <x-menu-item title="Guestbook" icon="o-book-open" link="/guestbook" />
+                        <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
+                        <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
+                        <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" />
                     @endauth
                     </x-menu>
                 </div>
@@ -305,7 +305,7 @@
                     class="flex justify-center py-1 border-t border-base-300/50 text-base-content/60 hover:text-base-content/90 transition-all duration-150 shrink-0"
                     aria-label="Scroll down"
                 >
-                    <x-icon name="o-chevron-down" class="w-4 h-4" />
+                    <x-icon name="phosphor-caret-down" class="w-4 h-4" />
                 </button>
             </div>
         </x-slot:sidebar>
