@@ -237,7 +237,7 @@
                             @endcanany
 
                             @can('manage-shifts')
-                                <x-menu-item title="Manage Schedule" icon="phosphor-gear-duotone" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />
+                                <x-menu-item title="Manage Schedule" icon="phosphor-calendar-plus-duotone" link="{{ route('schedule.manage') }}" :active="request()->routeIs('schedule.manage')" />
                             @endcan
 
                             @can('manage-shifts')
