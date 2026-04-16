@@ -62,6 +62,9 @@ class LogbookBrowser extends Component
 
     public int $perPage = 50;
 
+    /** @var array<int> */
+    public array $selectedIds = [];
+
     public function mount(): void
     {
         $service = app(EventContextService::class);
@@ -100,67 +103,85 @@ class LogbookBrowser extends Component
             'showTranscribed',
             'showGota',
             'showDeleted',
+            'selectedIds',
         ]);
         $this->resetPage();
     }
 
+    public function deselectAll(): void
+    {
+        $this->selectedIds = [];
+    }
+
     public function updatedBandIds(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedModeIds(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedStationIds(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedOperatorIds(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedTimeFrom(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedTimeTo(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedCallsignSearch(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedSectionIds(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedShowDuplicates(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedShowTranscribed(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedShowGota(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
     public function updatedShowDeleted(): void
     {
+        $this->selectedIds = [];
         $this->resetPage();
     }
 
@@ -169,6 +190,7 @@ class LogbookBrowser extends Component
     #[On('contact-restored')]
     public function refreshContacts(): void
     {
+        $this->selectedIds = [];
         unset($this->contacts);
         unset($this->stats);
     }
