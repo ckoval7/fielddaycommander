@@ -36,6 +36,23 @@ test('sends in-app notification to all users when alerts are active', function (
     });
 });
 
+test('sets url on in-app notification to the weather page', function () {
+    $user = User::factory()->create();
+    $user->assignRole('Operator');
+
+    $event = new WeatherAlertChanged(
+        alerts: [['event' => 'Tornado Warning', 'headline' => 'Tornado Warning in effect', 'severity' => 'Extreme', 'expires' => null, 'description' => '', 'severity_level' => 'red']],
+        hasAlerts: true,
+        manual: false,
+    );
+
+    app(SendWeatherAlertNotifications::class)->handle($event);
+
+    Notification::assertSentTo($user, InAppNotification::class, function ($notification) {
+        return $notification->url === route('weather.index');
+    });
+});
+
 test('uses alert headline as message for single alert', function () {
     $user = User::factory()->create();
     $user->assignRole('Operator');

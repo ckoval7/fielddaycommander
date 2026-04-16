@@ -25,6 +25,7 @@ class SendWeatherAlertNotifications
                 category: NotificationCategory::WeatherAlert,
                 title: $title,
                 message: $message,
+                url: route('weather.index'),
             );
 
             if ($shouldSendEmail && ($user->notification_preferences['weather_alert_email'] ?? false)) {
