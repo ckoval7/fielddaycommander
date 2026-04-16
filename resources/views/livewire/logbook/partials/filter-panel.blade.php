@@ -1,33 +1,50 @@
-{{-- Filter Panel Component --}}
-<x-card class="shadow-md">
-    <div x-data="{ showFilters: true }">
-        {{-- Header with Toggle --}}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h3 class="text-lg font-semibold">Filters</h3>
-            <div class="flex items-center gap-2">
-                <button
-                    @click="showFilters = !showFilters"
-                    class="btn btn-sm btn-ghost min-h-[2.75rem] sm:min-h-[1.75rem]"
-                    type="button"
-                >
-                    <x-icon x-show="!showFilters" name="o-chevron-down" class="w-5 h-5" />
-                    <x-icon x-show="showFilters" name="o-chevron-up" class="w-5 h-5" />
-                    <span class="ml-1" x-text="showFilters ? 'Hide Filters' : 'Show Filters'"></span>
-                </button>
-                <button
-                    wire:click="resetFilters"
-                    class="btn btn-sm btn-outline min-h-[2.75rem] sm:min-h-[1.75rem]"
-                    type="button"
-                >
-                    <x-icon name="o-x-mark" class="w-4 h-4" />
-                    <span class="hidden sm:inline ml-1">Reset Filters</span>
-                    <span class="sm:hidden ml-1">Reset</span>
-                </button>
-            </div>
-        </div>
+<div x-data="{ open: false }">
+    {{-- Filter toggle button + active filter count --}}
+    <div class="flex items-center gap-2 mb-2">
+        <button
+            type="button"
+            @click="open = !open"
+            class="btn btn-sm btn-outline gap-2"
+        >
+            <x-icon name="o-funnel" class="w-4 h-4" />
+            Filters
+            @if($this->activeFilterCount > 0)
+                <span class="badge badge-primary badge-sm">{{ $this->activeFilterCount }}</span>
+            @endif
+            <x-icon x-show="!open" name="o-chevron-down" class="w-3 h-3" />
+            <x-icon x-show="open" name="o-chevron-up" class="w-3 h-3" />
+        </button>
 
-        {{-- Filter Controls --}}
-        <div x-show="showFilters" x-collapse>
+        @if($this->activeFilterCount > 0)
+            <button
+                type="button"
+                wire:click="resetFilters"
+                class="btn btn-ghost btn-xs text-error"
+            >
+                Clear all
+            </button>
+        @endif
+    </div>
+
+    {{-- Active filter pills (visible when collapsed) --}}
+    @if($this->activeFilterCount > 0)
+        <div x-show="!open" class="flex flex-wrap gap-1 mb-3">
+            @foreach($this->activeFilterPills as $pill)
+                <span class="badge badge-outline badge-sm gap-1">
+                    {{ $pill['label'] }}
+                    <button
+                        type="button"
+                        wire:click="removeFilter('{{ $pill['key'] }}')"
+                        class="hover:text-error"
+                    >&times;</button>
+                </span>
+            @endforeach
+        </div>
+    @endif
+
+    {{-- Expanded filter controls --}}
+    <template x-if="open">
+        <div class="p-4 rounded-lg bg-base-200/50 border border-base-300">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
                 {{-- Band Filter --}}
@@ -167,32 +184,6 @@
                 @endcan
 
             </div>
-
-            {{-- Active Filters Summary --}}
-            @php
-                $activeFilters = collect([
-                    'Band' => count($bandIds) > 0 ? 'Active' : null,
-                    'Mode' => count($modeIds) > 0 ? 'Active' : null,
-                    'Station' => count($stationIds) > 0 ? 'Active' : null,
-                    'Operator' => count($operatorIds) > 0 ? 'Active' : null,
-                    'Section' => count($sectionIds) > 0 ? 'Active' : null,
-                    'Callsign' => $callsignSearch,
-                    'Time Range' => ($timeFrom || $timeTo) ? 'Active' : null,
-                    'Duplicates' => $showDuplicates,
-                    'Transcribed' => $showTranscribed,
-                    'GOTA' => $showGota,
-                    'Deleted' => $showDeleted,
-                ])->filter()->count();
-            @endphp
-
-            @if($activeFilters > 0)
-                <div class="mt-4 pt-4 border-t border-base-300">
-                    <div class="flex items-center gap-2 text-sm text-base-content/70">
-                        <x-icon name="o-funnel" class="w-4 h-4" />
-                        <span>{{ $activeFilters }} {{ Str::plural('filter', $activeFilters) }} active</span>
-                    </div>
-                </div>
-            @endif
         </div>
-    </div>
-</x-card>
+    </template>
+</div>

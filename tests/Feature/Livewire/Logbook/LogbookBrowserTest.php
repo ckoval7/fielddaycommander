@@ -384,3 +384,139 @@ describe('event listeners', function () {
             ->dispatch('contact-restored');
     });
 });
+
+describe('activeFilterCount', function () {
+    test('returns zero when no filters are set', function () {
+        $component = new LogbookBrowser;
+
+        expect($component->activeFilterCount())->toBe(0);
+    });
+
+    test('counts a non-empty array filter', function () {
+        $component = new LogbookBrowser;
+        $component->bandIds = [$this->band->id];
+
+        expect($component->activeFilterCount())->toBe(1);
+    });
+
+    test('counts a non-empty string filter', function () {
+        $component = new LogbookBrowser;
+        $component->callsignSearch = 'W1AW';
+
+        expect($component->activeFilterCount())->toBe(1);
+    });
+
+    test('counts timeFrom and timeTo as a single time-range filter', function () {
+        $component = new LogbookBrowser;
+        $component->timeFrom = '2025-02-07 10:00:00';
+        $component->timeTo = '2025-02-07 20:00:00';
+
+        expect($component->activeFilterCount())->toBe(1);
+    });
+
+    test('sums multiple active filters', function () {
+        $component = new LogbookBrowser;
+        $component->bandIds = [$this->band->id];
+        $component->modeIds = [$this->mode->id];
+        $component->callsignSearch = 'W1AW';
+        $component->showDuplicates = 'exclude';
+
+        expect($component->activeFilterCount())->toBe(4);
+    });
+});
+
+describe('activeFilterPills', function () {
+    test('returns empty array when no filters are set', function () {
+        $component = new LogbookBrowser;
+
+        expect($component->activeFilterPills())->toBe([]);
+    });
+
+    test('returns a band pill with selected-count label', function () {
+        $component = new LogbookBrowser;
+        $component->bandIds = [$this->band->id];
+
+        $pills = $component->activeFilterPills();
+
+        expect($pills)->toHaveCount(1)
+            ->and($pills[0]['key'])->toBe('bandIds')
+            ->and($pills[0]['label'])->toBe('Band: 1 selected');
+    });
+
+    test('returns a callsign pill with the search value', function () {
+        $component = new LogbookBrowser;
+        $component->callsignSearch = 'W1AW';
+
+        $pills = $component->activeFilterPills();
+
+        expect($pills[0]['key'])->toBe('callsignSearch')
+            ->and($pills[0]['label'])->toBe('Callsign: W1AW');
+    });
+
+    test('returns a single time pill when both ends are set', function () {
+        $component = new LogbookBrowser;
+        $component->timeFrom = '2025-02-07 10:00:00';
+        $component->timeTo = '2025-02-07 20:00:00';
+
+        $pills = $component->activeFilterPills();
+
+        expect($pills)->toHaveCount(1)
+            ->and($pills[0]['key'])->toBe('timeRange')
+            ->and($pills[0]['label'])->toBe('Time: 2025-02-07 10:00:00 – 2025-02-07 20:00:00');
+    });
+
+    test('returns readable labels for duplicate, transcribed, gota, and deleted filters', function () {
+        $component = new LogbookBrowser;
+        $component->showDuplicates = 'exclude';
+        $component->showTranscribed = 'only';
+        $component->showGota = 'only';
+        $component->showDeleted = 'include';
+
+        $pills = collect($component->activeFilterPills())->keyBy('key');
+
+        expect($pills['showDuplicates']['label'])->toBe('Duplicates: Exclude')
+            ->and($pills['showTranscribed']['label'])->toBe('Transcribed: Only')
+            ->and($pills['showGota']['label'])->toBe('GOTA: Only')
+            ->and($pills['showDeleted']['label'])->toBe('Deleted: Include');
+    });
+});
+
+describe('removeFilter', function () {
+    test('clears an array filter by key', function () {
+        $component = new LogbookBrowser;
+        $component->bandIds = [$this->band->id];
+
+        $component->removeFilter('bandIds');
+
+        expect($component->bandIds)->toBe([]);
+    });
+
+    test('clears a string filter by key', function () {
+        $component = new LogbookBrowser;
+        $component->callsignSearch = 'W1AW';
+
+        $component->removeFilter('callsignSearch');
+
+        expect($component->callsignSearch)->toBeNull();
+    });
+
+    test('timeRange clears both timeFrom and timeTo', function () {
+        $component = new LogbookBrowser;
+        $component->timeFrom = '2025-02-07 10:00:00';
+        $component->timeTo = '2025-02-07 20:00:00';
+
+        $component->removeFilter('timeRange');
+
+        expect($component->timeFrom)->toBeNull()
+            ->and($component->timeTo)->toBeNull();
+    });
+
+    test('unknown key is a no-op', function () {
+        $component = new LogbookBrowser;
+        $component->bandIds = [$this->band->id];
+
+        $component->removeFilter('unknownKey');
+
+        expect($component->bandIds)->toBe([$this->band->id]);
+    });
+});

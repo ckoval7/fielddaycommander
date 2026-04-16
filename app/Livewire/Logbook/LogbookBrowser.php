@@ -196,6 +196,122 @@ class LogbookBrowser extends Component
     }
 
     #[Computed]
+    public function activeFilterCount(): int
+    {
+        $count = 0;
+
+        if (count($this->bandIds) > 0) {
+            $count++;
+        }
+        if (count($this->modeIds) > 0) {
+            $count++;
+        }
+        if (count($this->stationIds) > 0) {
+            $count++;
+        }
+        if (count($this->operatorIds) > 0) {
+            $count++;
+        }
+        if (count($this->sectionIds) > 0) {
+            $count++;
+        }
+        if ($this->callsignSearch !== null && $this->callsignSearch !== '') {
+            $count++;
+        }
+        if ($this->timeFrom !== null || $this->timeTo !== null) {
+            $count++;
+        }
+        if ($this->showDuplicates !== null && $this->showDuplicates !== '') {
+            $count++;
+        }
+        if ($this->showTranscribed !== null && $this->showTranscribed !== '') {
+            $count++;
+        }
+        if ($this->showGota !== null && $this->showGota !== '') {
+            $count++;
+        }
+        if ($this->showDeleted !== null && $this->showDeleted !== '') {
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * @return array<int, array{key: string, label: string}>
+     */
+    #[Computed]
+    public function activeFilterPills(): array
+    {
+        $pills = [];
+
+        if (count($this->bandIds) > 0) {
+            $pills[] = ['key' => 'bandIds', 'label' => 'Band: '.count($this->bandIds).' selected'];
+        }
+        if (count($this->modeIds) > 0) {
+            $pills[] = ['key' => 'modeIds', 'label' => 'Mode: '.count($this->modeIds).' selected'];
+        }
+        if (count($this->stationIds) > 0) {
+            $pills[] = ['key' => 'stationIds', 'label' => 'Station: '.count($this->stationIds).' selected'];
+        }
+        if (count($this->operatorIds) > 0) {
+            $pills[] = ['key' => 'operatorIds', 'label' => 'Operator: '.count($this->operatorIds).' selected'];
+        }
+        if (count($this->sectionIds) > 0) {
+            $pills[] = ['key' => 'sectionIds', 'label' => 'Section: '.count($this->sectionIds).' selected'];
+        }
+        if ($this->callsignSearch !== null && $this->callsignSearch !== '') {
+            $pills[] = ['key' => 'callsignSearch', 'label' => "Callsign: {$this->callsignSearch}"];
+        }
+        if ($this->timeFrom !== null || $this->timeTo !== null) {
+            $label = match (true) {
+                $this->timeFrom !== null && $this->timeTo !== null => "Time: {$this->timeFrom} – {$this->timeTo}",
+                $this->timeFrom !== null => "Time from: {$this->timeFrom}",
+                default => "Time to: {$this->timeTo}",
+            };
+            $pills[] = ['key' => 'timeRange', 'label' => $label];
+        }
+
+        $radioLabels = [
+            'showDuplicates' => ['prefix' => 'Duplicates', 'values' => ['exclude' => 'Exclude', 'only' => 'Only']],
+            'showTranscribed' => ['prefix' => 'Transcribed', 'values' => ['only' => 'Only']],
+            'showGota' => ['prefix' => 'GOTA', 'values' => ['only' => 'Only', 'exclude' => 'Exclude']],
+            'showDeleted' => ['prefix' => 'Deleted', 'values' => ['include' => 'Include', 'only' => 'Only']],
+        ];
+
+        foreach ($radioLabels as $property => $config) {
+            $value = $this->{$property};
+            if ($value !== null && $value !== '') {
+                $label = $config['values'][$value] ?? ucfirst($value);
+                $pills[] = ['key' => $property, 'label' => "{$config['prefix']}: {$label}"];
+            }
+        }
+
+        return $pills;
+    }
+
+    public function removeFilter(string $key): void
+    {
+        match ($key) {
+            'bandIds' => $this->bandIds = [],
+            'modeIds' => $this->modeIds = [],
+            'stationIds' => $this->stationIds = [],
+            'operatorIds' => $this->operatorIds = [],
+            'sectionIds' => $this->sectionIds = [],
+            'callsignSearch' => $this->callsignSearch = null,
+            'timeRange' => [$this->timeFrom = null, $this->timeTo = null],
+            'showDuplicates' => $this->showDuplicates = null,
+            'showTranscribed' => $this->showTranscribed = null,
+            'showGota' => $this->showGota = null,
+            'showDeleted' => $this->showDeleted = null,
+            default => null,
+        };
+
+        $this->selectedIds = [];
+        $this->resetPage();
+    }
+
+    #[Computed]
     public function contacts(): CursorPaginator
     {
         if (! $this->eventConfigurationId) {
