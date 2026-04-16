@@ -21,7 +21,7 @@
                 name="site_name"
                 value="{{ old('site_name', 'Field Day Commander') }}"
                 required
-                icon="o-building-office"
+                icon="phosphor-buildings"
                 errorField="site_name"
                 hint="Your organization or club name"
             />
@@ -30,7 +30,7 @@
                 label="Site Tagline"
                 name="site_tagline"
                 value="{{ old('site_tagline', 'ARRL Field Day Logging System') }}"
-                icon="o-chat-bubble-left-ellipsis"
+                icon="phosphor-chat-centered-dots"
                 errorField="site_tagline"
                 hint="Optional subtitle or motto"
             />
@@ -57,7 +57,7 @@
                     onclick="window.location='{{ route('setup.welcome') }}'"
                     onkeydown="if(event.key==='Enter'||event.key===' '){window.location='{{ route('setup.welcome') }}'}"
                     class="btn-ghost"
-                    icon="o-arrow-left"
+                    icon="phosphor-arrow-left"
                 >
                     Back
                 </x-button>

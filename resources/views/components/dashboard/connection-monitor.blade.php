@@ -164,7 +164,7 @@ Props:
     >
         <div class="container mx-auto flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <x-icon name="o-exclamation-triangle" class="w-5 h-5 flex-shrink-0" />
+                <x-icon name="phosphor-warning" class="w-5 h-5 flex-shrink-0" />
                 <div class="flex-1">
                     <span class="font-semibold">Real-time updates paused</span>
                     <span class="hidden sm:inline"> - Reconnecting...</span>
@@ -175,7 +175,7 @@ Props:
                 class="btn btn-sm btn-ghost"
                 aria-label="Dismiss"
             >
-                <x-icon name="o-x-mark" class="w-4 h-4" />
+                <x-icon name="phosphor-x" class="w-4 h-4" />
             </button>
         </div>
     </div>
@@ -187,7 +187,7 @@ Props:
     >
         <div class="container mx-auto flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <x-icon name="o-check-circle" class="w-5 h-5 flex-shrink-0" />
+                <x-icon name="phosphor-check-circle" class="w-5 h-5 flex-shrink-0" />
                 <div class="flex-1">
                     <span class="font-semibold">Real-time updates restored</span>
                 </div>

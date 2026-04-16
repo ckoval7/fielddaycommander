@@ -17,7 +17,7 @@
             @csrf
 
             <div class="space-y-4">
-                <x-alert icon="o-information-circle" class="alert-info">
+                <x-alert icon="phosphor-info" class="alert-info">
                     <div>
                         <div class="font-bold">System Administrator Account</div>
                         <div class="text-sm">Callsign: <span class="font-mono">SYSTEM</span> | Email: <span class="font-mono">admin@localhost</span></div>
@@ -29,7 +29,7 @@
                     type="password"
                     name="admin_password"
                     required
-                    icon="o-lock-closed"
+                    icon="phosphor-lock"
                     errorField="admin_password"
                     hint="Minimum 12 characters with uppercase, lowercase, numbers, and symbols"
                 />
@@ -39,7 +39,7 @@
                     type="password"
                     name="admin_password_confirmation"
                     required
-                    icon="o-lock-closed"
+                    icon="phosphor-lock"
                     errorField="admin_password_confirmation"
                 />
             </div>

@@ -4,7 +4,7 @@
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full">
                 {{-- Left: Warning Icon + Label --}}
                 <div class="flex items-center gap-3 shrink-0">
-                    <x-icon name="o-exclamation-triangle" class="w-5 h-5 text-red-600" />
+                    <x-icon name="phosphor-warning" class="w-5 h-5 text-red-600" />
                     <span class="font-bold text-sm sm:text-base">SYSTEM ACCOUNT</span>
                     <span class="hidden sm:inline text-red-400">|</span>
                 </div>

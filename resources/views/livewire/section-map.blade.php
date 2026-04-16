@@ -951,7 +951,7 @@
     @else
         <x-card class="shadow-md">
             <div class="text-center py-12">
-                <x-icon name="o-map" class="w-16 h-16 mx-auto text-warning" />
+                <x-icon name="phosphor-map-trifold" class="w-16 h-16 mx-auto text-warning" />
                 <p class="mt-4 text-lg font-medium">No Active Event</p>
                 <p class="text-sm text-base-content/70 mt-2">No active event &mdash; section data will appear during Field Day.</p>
             </div>

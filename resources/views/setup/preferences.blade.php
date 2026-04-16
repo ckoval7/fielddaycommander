@@ -37,7 +37,7 @@
                 <x-input
                     label="Organization Name"
                     name="organization_name"
-                    icon="o-building-office"
+                    icon="phosphor-buildings"
                     placeholder="e.g., Springfield Amateur Radio Club"
                     required
                     errorField="organization_name"
@@ -46,7 +46,7 @@
                 <x-input
                     label="Organization Callsign"
                     name="organization_callsign"
-                    icon="o-signal"
+                    icon="phosphor-cell-signal-high"
                     placeholder="e.g., W1ABC"
                     hint="Optional - Club station callsign (3-10 uppercase letters/numbers)"
                     errorField="organization_callsign"
@@ -56,7 +56,7 @@
                     label="Organization Email"
                     type="email"
                     name="organization_email"
-                    icon="o-envelope"
+                    icon="phosphor-envelope"
                     placeholder="e.g., info@example.org"
                     hint="Optional - Club contact email"
                     errorField="organization_email"
@@ -66,7 +66,7 @@
                     label="Organization Phone"
                     type="tel"
                     name="organization_phone"
-                    icon="o-phone"
+                    icon="phosphor-phone"
                     placeholder="e.g., (555) 123-4567"
                     hint="Optional - Club contact phone number"
                     errorField="organization_phone"
@@ -164,7 +164,7 @@
                     label="Contact Email"
                     type="email"
                     name="contact_email"
-                    icon="o-envelope"
+                    icon="phosphor-envelope"
                     hint="Optional - for public contact information"
                     errorField="contact_email"
                 />
@@ -176,12 +176,12 @@
                     onclick="window.location='{{ route('setup.branding') }}'"
                     onkeydown="if(event.key==='Enter'||event.key===' '){window.location='{{ route('setup.branding') }}'}"
                     class="btn-ghost"
-                    icon="o-arrow-left"
+                    icon="phosphor-arrow-left"
                 >
                     Back
                 </x-button>
 
-                <x-button type="submit" class="btn-success" icon-right="o-check-circle">
+                <x-button type="submit" class="btn-success" icon-right="phosphor-check-circle">
                     Complete Setup
                 </x-button>
             </div>

@@ -11,5 +11,5 @@
         This page is under construction and will be available soon.
     </p>
 
-    <x-button label="Back to Dashboard" icon="o-home" link="/" class="btn-primary" />
+    <x-button label="Back to Dashboard" icon="phosphor-house" link="/" class="btn-primary" />
 </div>

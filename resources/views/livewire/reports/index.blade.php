@@ -74,7 +74,7 @@
          ============================================================ --}}
     @if (! $this->event)
         <div class="flex flex-col items-center justify-center min-h-96 gap-4 p-8">
-            <x-mary-icon name="o-document-chart-bar" class="w-16 h-16 opacity-25" />
+            <x-mary-icon name="phosphor-chart-bar" class="w-16 h-16 opacity-25" />
             <div class="text-2xl font-semibold opacity-50">No active event</div>
             <p class="text-sm text-center max-w-sm" style="color: var(--reports-text-muted);">
                 Reports will be available once a Field Day event is active.
@@ -142,7 +142,7 @@
                 <div class="flex items-start gap-4">
                     <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
                          style="background-color: var(--reports-cabrillo-border); color: white;">
-                        <x-mary-icon name="o-signal" class="w-5 h-5" />
+                        <x-mary-icon name="phosphor-cell-signal-high" class="w-5 h-5" />
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
@@ -166,7 +166,7 @@
                 <div class="flex items-start gap-4">
                     <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
                          style="background-color: var(--reports-pdf-border); color: white;">
-                        <x-mary-icon name="o-document-text" class="w-5 h-5" />
+                        <x-mary-icon name="phosphor-file-text" class="w-5 h-5" />
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
@@ -190,7 +190,7 @@
                 <div class="flex items-start gap-4">
                     <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
                          style="background-color: var(--reports-csv-border); color: white;">
-                        <x-mary-icon name="o-table-cells" class="w-5 h-5" />
+                        <x-mary-icon name="phosphor-squares-four" class="w-5 h-5" />
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
@@ -224,7 +224,7 @@
              style="border: 1px solid var(--reports-border); background-color: var(--reports-surface);">
             @if (count($this->qsoRateByHour) === 0)
                 <div class="flex flex-col items-center justify-center py-12 gap-3">
-                    <x-mary-icon name="o-clock" class="w-10 h-10 opacity-25" />
+                    <x-mary-icon name="phosphor-clock" class="w-10 h-10 opacity-25" />
                     <p class="text-sm" style="color: var(--reports-text-muted);">No contacts logged yet.</p>
                 </div>
             @else
@@ -291,7 +291,7 @@
              style="border: 1px solid var(--reports-border); background-color: var(--reports-surface);">
             @if (count($this->operatorSummary) === 0)
                 <div class="flex flex-col items-center justify-center py-12 gap-3">
-                    <x-mary-icon name="o-users" class="w-10 h-10 opacity-25" />
+                    <x-mary-icon name="phosphor-users" class="w-10 h-10 opacity-25" />
                     <p class="text-sm" style="color: var(--reports-text-muted);">No operator data yet.</p>
                 </div>
             @else
@@ -360,7 +360,7 @@
         @if (count($this->sectionCounts) === 0)
             <div class="flex flex-col items-center justify-center py-12 gap-3 rounded-lg"
                  style="border: 1px solid var(--reports-border); background-color: var(--reports-surface);">
-                <x-mary-icon name="o-map" class="w-10 h-10 opacity-25" />
+                <x-mary-icon name="phosphor-map-trifold" class="w-10 h-10 opacity-25" />
                 <p class="text-sm" style="color: var(--reports-text-muted);">No sections worked yet.</p>
             </div>
         @else
