@@ -192,19 +192,21 @@
                     },
 
                     bandHsl: {
-                        '160m': [280, 60, 45],
-                        '80m': [250, 55, 50],
-                        '40m': [145, 60, 42],
-                        '20m': [210, 70, 50],
-                        '15m': [30, 85, 52],
-                        '10m': [0, 70, 55],
-                        '6m': [175, 65, 45],
-                        '2m': [320, 60, 55],
-                        '1.25m': [55, 70, 48],
-                        '70cm': [195, 70, 45],
-                        '33cm': [90, 50, 45],
-                        '23cm': [350, 65, 50],
-                        'Satellite': [220, 60, 60],
+                        // HF bands — each a distinct hue, ~50-90° apart
+                        '160m': [355, 78, 50],  // Crimson Red
+                        '80m':  [25,  90, 53],  // Vivid Orange
+                        '40m':  [52,  87, 45],  // Amber (darkened for legibility)
+                        '20m':  [140, 62, 40],  // Forest Green
+                        '15m':  [200, 82, 46],  // Cerulean Blue
+                        '10m':  [258, 68, 58],  // Indigo
+                        // VHF / UHF / Satellite — all one shared color
+                        '6m':       [308, 70, 54],
+                        '2m':       [308, 70, 54],
+                        '1.25m':    [308, 70, 54],
+                        '70cm':     [308, 70, 54],
+                        '33cm':     [308, 70, 54],
+                        '23cm':     [308, 70, 54],
+                        'Satellite':[308, 70, 54],  // Magenta-Purple
                     },
 
                     bandColor(band) {
@@ -895,12 +897,16 @@
                         <div class="flex items-center gap-1">
                             <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
                         </div>
-                        <template x-for="band in ['160m','80m','40m','20m','15m','10m','6m','2m','1.25m','70cm','33cm','23cm','Satellite']" :key="band">
+                        <template x-for="band in ['160m','80m','40m','20m','15m','10m']" :key="band">
                             <div class="flex items-center gap-1">
                                 <span class="inline-block w-3 h-3 rounded" :style="{ background: bandColor(band) }"></span>
                                 <span x-text="band"></span>
                             </div>
                         </template>
+                        <div class="flex items-center gap-1">
+                            <span class="inline-block w-3 h-3 rounded" :style="{ background: bandColor('6m') }"></span>
+                            <span>VHF/UHF/Sat</span>
+                        </div>
                     </div>
                     <div class="flex items-center justify-center gap-3 mt-1 text-xs text-base-content/50">
                         <span>Intensity:</span>
