@@ -13,14 +13,14 @@
         @csrf
 
         <div class="space-y-4">
-            <x-input label="Email" type="email" name="email" :value="old('email')" required autofocus icon="o-envelope" errorField="email" />
+            <x-input label="Email" type="email" name="email" :value="old('email')" required autofocus icon="phosphor-envelope" errorField="email" />
 
             <div class="flex items-center justify-between pt-2">
                 <a href="{{ route('login') }}" class="link link-primary text-sm">
                     Back to login
                 </a>
 
-                <x-button label="Email Reset Link" type="submit" class="btn-primary" icon="o-paper-airplane" />
+                <x-button label="Email Reset Link" type="submit" class="btn-primary" icon="phosphor-paper-plane-tilt" />
             </div>
         </div>
     </form>

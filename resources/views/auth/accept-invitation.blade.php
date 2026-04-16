@@ -21,7 +21,7 @@
                 type="password"
                 name="password"
                 required
-                icon="o-lock-closed"
+                icon="phosphor-lock"
                 hint="Choose a strong password for your account"
                 errorField="password"
             />
@@ -31,7 +31,7 @@
                 type="password"
                 name="password_confirmation"
                 required
-                icon="o-lock-closed"
+                icon="phosphor-lock"
                 errorField="password_confirmation"
             />
 
@@ -40,7 +40,7 @@
                     label="Set Password & Login"
                     type="submit"
                     class="btn-primary"
-                    icon="o-check-circle"
+                    icon="phosphor-check-circle"
                 />
             </div>
         </div>

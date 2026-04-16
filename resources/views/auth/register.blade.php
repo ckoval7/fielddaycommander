@@ -6,18 +6,18 @@
 
         @if(config('auth-security.registration_mode') === 'approval_required')
             <div class="alert alert-info mb-4">
-                <x-icon name="o-information-circle" class="w-5 h-5" />
+                <x-icon name="phosphor-info" class="w-5 h-5" />
                 <span class="text-sm">New accounts require administrator approval before you can log in.</span>
             </div>
         @endif
 
         <div class="space-y-4">
-            <x-input label="Call Sign" type="text" name="call_sign" :value="old('call_sign')" required autofocus icon="o-megaphone" errorField="call_sign" />
-            <x-input label="First Name" type="text" name="first_name" :value="old('first_name')" required icon="o-user" errorField="first_name" />
-            <x-input label="Last Name" type="text" name="last_name" :value="old('last_name')" required icon="o-user" errorField="last_name" />
-            <x-input label="Email" type="email" name="email" :value="old('email')" required icon="o-envelope" errorField="email" />
-            <x-input label="Password" type="password" name="password" required icon="o-lock-closed" errorField="password" />
-            <x-input label="Confirm Password" type="password" name="password_confirmation" required icon="o-lock-closed" errorField="password_confirmation" />
+            <x-input label="Call Sign" type="text" name="call_sign" :value="old('call_sign')" required autofocus icon="phosphor-megaphone" errorField="call_sign" />
+            <x-input label="First Name" type="text" name="first_name" :value="old('first_name')" required icon="phosphor-user" errorField="first_name" />
+            <x-input label="Last Name" type="text" name="last_name" :value="old('last_name')" required icon="phosphor-user" errorField="last_name" />
+            <x-input label="Email" type="email" name="email" :value="old('email')" required icon="phosphor-envelope" errorField="email" />
+            <x-input label="Password" type="password" name="password" required icon="phosphor-lock" errorField="password" />
+            <x-input label="Confirm Password" type="password" name="password_confirmation" required icon="phosphor-lock" errorField="password_confirmation" />
 
             <div class="flex flex-wrap gap-x-6 gap-y-1">
                 <label class="label cursor-pointer justify-start gap-3">
@@ -36,7 +36,7 @@
                     Already registered?
                 </a>
 
-                <x-button label="Register" type="submit" class="btn-primary" icon="o-user-plus" />
+                <x-button label="Register" type="submit" class="btn-primary" icon="phosphor-user-plus" />
             </div>
         </div>
     </form>
