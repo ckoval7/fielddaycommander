@@ -111,7 +111,7 @@
     >
         <div class="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <x-icon name="o-exclamation-triangle" class="w-6 h-6 flex-shrink-0" />
+                <x-icon name="phosphor-warning" class="w-6 h-6 flex-shrink-0" />
                 <div>
                     <div class="font-semibold">Connection Lost</div>
                     <div class="text-sm opacity-90">
@@ -125,7 +125,7 @@
                 class="btn btn-ghost btn-sm btn-circle"
                 aria-label="Dismiss banner"
             >
-                <x-icon name="o-x-mark" class="w-5 h-5" />
+                <x-icon name="phosphor-x" class="w-5 h-5" />
             </button>
         </div>
     </div>

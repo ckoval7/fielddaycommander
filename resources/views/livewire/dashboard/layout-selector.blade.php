@@ -29,11 +29,11 @@
         aria-haspopup="true"
         :aria-expanded="open"
     >
-        <x-icon name="o-squares-2x2" class="w-5 h-5" />
+        <x-icon name="phosphor-squares-four" class="w-5 h-5" />
         <span class="hidden sm:inline">
             {{ collect($layouts)->firstWhere('key', $selectedLayout)['name'] ?? 'Dashboard' }}
         </span>
-        <x-icon name="o-chevron-down" class="w-4 h-4" />
+        <x-icon name="phosphor-caret-down" class="w-4 h-4" />
     </button>
 
     {{-- Dropdown Menu --}}

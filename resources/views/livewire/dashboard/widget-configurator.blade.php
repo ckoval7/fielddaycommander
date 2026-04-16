@@ -11,7 +11,7 @@
                     option-value="value"
                     option-label="label"
                     placeholder="Select a widget type"
-                    icon="o-cube"
+                    icon="phosphor-cube"
                 />
 
                 @if ($widgetType)
@@ -19,7 +19,7 @@
                         $selectedWidget = collect($this->availableWidgetTypes)->firstWhere('value', $widgetType);
                     @endphp
                     @if ($selectedWidget && $selectedWidget['description'])
-                        <x-alert icon="o-information-circle" class="alert-info">
+                        <x-alert icon="phosphor-info" class="alert-info">
                             {{ $selectedWidget['description'] }}
                         </x-alert>
                     @endif
@@ -99,7 +99,7 @@
                 </div>
             @elseif ($mode === 'add' && !$widgetType)
                 <div class="text-center py-8 text-base-content/60">
-                    <x-icon name="o-arrow-up" class="w-12 h-12 mx-auto mb-2" />
+                    <x-icon name="phosphor-arrow-up" class="w-12 h-12 mx-auto mb-2" />
                     <p>Select a widget type to configure</p>
                 </div>
             @endif

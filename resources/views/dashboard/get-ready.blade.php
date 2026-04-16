@@ -75,9 +75,9 @@
                             <div class="flex items-center gap-3 p-3 rounded-lg {{ $item['done'] ? 'bg-success/5' : 'bg-base-200/50' }}">
                                 <div class="flex-shrink-0">
                                     @if($item['done'])
-                                        <x-icon name="o-check-circle" class="w-6 h-6 text-success" />
+                                        <x-icon name="phosphor-check-circle" class="w-6 h-6 text-success" />
                                     @else
-                                        <x-icon name="o-exclamation-circle" class="w-6 h-6 text-base-content/30" />
+                                        <x-icon name="phosphor-warning-circle" class="w-6 h-6 text-base-content/30" />
                                     @endif
                                 </div>
                                 <div class="flex-1">
@@ -107,13 +107,13 @@
                             @click="navigator.clipboard.writeText('{{ route('register') }}'); copied = true; setTimeout(() => copied = false, 2000)"
                             :title="copied ? 'Copied!' : 'Copy link'"
                         >
-                            <x-icon x-show="!copied" name="o-clipboard-document" class="w-4 h-4" />
-                            <x-icon x-show="copied" x-cloak name="o-check" class="w-4 h-4 text-success" />
+                            <x-icon x-show="!copied" name="phosphor-clipboard" class="w-4 h-4" />
+                            <x-icon x-show="copied" x-cloak name="phosphor-check" class="w-4 h-4 text-success" />
                         </button>
                     </div>
                     @can('manage-users')
                         <a href="{{ route('users.index') }}" class="btn btn-ghost btn-sm text-base-content/60">
-                            <x-icon name="o-users" class="w-4 h-4" />
+                            <x-icon name="phosphor-users" class="w-4 h-4" />
                             Manage Users
                         </a>
                     @endcan

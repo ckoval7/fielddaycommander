@@ -31,7 +31,7 @@
         {{-- Normal Mode: Card-based layout --}}
         <x-mary-card title="Time Remaining" shadow separator>
             <x-slot:menu>
-                <x-mary-icon name="o-clock" class="w-5 h-5 text-info" />
+                <x-mary-icon name="phosphor-clock" class="w-5 h-5 text-info" />
             </x-slot:menu>
 
             <div class="space-y-4">

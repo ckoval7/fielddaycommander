@@ -45,7 +45,7 @@
         >
             <x-mary-card title="Current Score" shadow separator>
                 <x-slot:menu>
-                    <x-mary-icon name="o-star" class="w-5 h-5 text-warning" />
+                    <x-mary-icon name="phosphor-star" class="w-5 h-5 text-warning" />
                 </x-slot:menu>
 
                 <div class="space-y-6">

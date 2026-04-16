@@ -17,7 +17,7 @@
         >
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-center gap-2 text-info">
-                    <x-icon name="o-pencil-square" class="w-5 h-5" />
+                    <x-icon name="phosphor-note-pencil" class="w-5 h-5" />
                     <span class="font-medium text-sm">Editing dashboard</span>
                     <span class="text-xs text-base-content/60 hidden sm:inline">— drag to reorder, click controls to configure</span>
                 </div>
@@ -25,13 +25,13 @@
                 <div class="flex flex-wrap gap-2 flex-shrink-0">
                     <x-button
                         label="Add Widget"
-                        icon="o-plus"
+                        icon="phosphor-plus"
                         class="btn-outline btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                         wire:click="openWidgetPicker"
                     />
                     <x-button
                         label="Save"
-                        icon="o-check"
+                        icon="phosphor-check"
                         class="btn-primary btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                         wire:click="saveLayout"
                         x-on:click="window.__dashboardEditUnsaved = false; window.onbeforeunload = null;"
@@ -39,7 +39,7 @@
                     />
                     <x-button
                         label="Cancel"
-                        icon="o-x-mark"
+                        icon="phosphor-x"
                         class="btn-ghost btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                         wire:click="cancelEdit"
                         spinner="cancelEdit"
@@ -53,7 +53,7 @@
                     <x-input
                         wire:model="title"
                         placeholder="Dashboard name"
-                        icon="o-pencil"
+                        icon="phosphor-pencil-simple"
                         class="input-sm"
                         maxlength="255"
                     />
@@ -65,7 +65,7 @@
                     <x-input
                         wire:model="description"
                         placeholder="Description (optional)"
-                        icon="o-document-text"
+                        icon="phosphor-file-text"
                         class="input-sm"
                         maxlength="1000"
                     />
@@ -146,7 +146,7 @@
                             <div class="flex items-center justify-between gap-2">
                                 {{-- Drag Handle + Label --}}
                                 <div class="flex items-center gap-2 min-w-0 cursor-grab active:cursor-grabbing">
-                                    <x-icon name="o-bars-3" class="w-5 h-5 text-base-content/50 flex-shrink-0" />
+                                    <x-icon name="phosphor-list" class="w-5 h-5 text-base-content/50 flex-shrink-0" />
                                     <span class="text-xs font-medium truncate text-base-content/80">
                                         {{ config("dashboard.widget_types.{$widget['type']}.name", ucfirst($widget['type'])) }}
                                     </span>
@@ -161,7 +161,7 @@
                                             class="btn btn-ghost btn-xs btn-square"
                                             title="Resize widget"
                                         >
-                                            <x-icon name="o-arrows-pointing-out" class="w-4 h-4" />
+                                            <x-icon name="phosphor-arrows-out" class="w-4 h-4" />
                                         </button>
 
                                         {{-- Size Picker Popover --}}
@@ -205,7 +205,7 @@
                                         class="btn btn-ghost btn-xs btn-square"
                                         title="Configure widget"
                                     >
-                                        <x-icon name="o-cog-6-tooth" class="w-4 h-4" />
+                                        <x-icon name="phosphor-gear-six" class="w-4 h-4" />
                                     </button>
 
                                     {{-- Visibility Toggle --}}
@@ -226,7 +226,7 @@
                                         class="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10"
                                         title="Remove widget"
                                     >
-                                        <x-icon name="o-trash" class="w-4 h-4" />
+                                        <x-icon name="phosphor-trash" class="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -335,7 +335,7 @@
                                 @default
                                     <x-card class="h-full">
                                         <div class="flex flex-col items-center justify-center py-8 text-base-content/50">
-                                            <x-icon name="o-question-mark-circle" class="w-12 h-12 mb-3" />
+                                            <x-icon name="phosphor-question" class="w-12 h-12 mb-3" />
                                             <p class="text-sm">Unknown widget type: {{ $widget['type'] }}</p>
                                         </div>
                                     </x-card>
@@ -350,7 +350,7 @@
                         wire:click="openWidgetPicker"
                         class="w-full h-full min-h-[120px] border-2 border-dashed border-base-300 rounded-lg p-6 text-center text-base-content/50 hover:border-primary hover:text-primary transition-colors"
                     >
-                        <x-icon name="o-plus" class="w-8 h-8 mx-auto mb-2" />
+                        <x-icon name="phosphor-plus" class="w-8 h-8 mx-auto mb-2" />
                         <p class="text-sm font-medium">Add Widget</p>
                     </button>
                 </li>
@@ -359,13 +359,13 @@
     @else
         {{-- Empty State --}}
         <div class="text-center py-12">
-            <x-icon name="o-squares-2x2" class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+            <x-icon name="phosphor-squares-four" class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
             <p class="text-lg font-medium text-base-content mb-2">No widgets configured</p>
             <p class="text-sm text-base-content/60 mb-6">Click "Add Widget" above to add your first widget</p>
             @if(!$editMode)
                 <x-button
                     label="Edit Layout"
-                    icon="o-pencil-square"
+                    icon="phosphor-note-pencil"
                     class="btn-primary"
                     wire:click="toggleEditMode"
                 />
@@ -378,7 +378,7 @@
         <div class="space-y-4">
             <div class="flex items-start gap-3">
                 <div class="p-3 bg-error/10 rounded-lg">
-                    <x-icon name="o-exclamation-triangle" class="w-6 h-6 text-error" />
+                    <x-icon name="phosphor-warning" class="w-6 h-6 text-error" />
                 </div>
                 <div>
                     <p class="font-medium mb-2">Are you sure you want to remove this widget?</p>
@@ -396,7 +396,7 @@
             <x-button
                 label="Remove Widget"
                 class="btn-error"
-                icon="o-trash"
+                icon="phosphor-trash"
                 wire:click="removeWidget"
                 spinner="removeWidget"
             />

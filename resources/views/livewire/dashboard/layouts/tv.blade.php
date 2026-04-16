@@ -21,7 +21,7 @@
                     <h1 class="text-5xl font-bold">Field Day Dashboard</h1>
                     @if($event)
                         <span class="badge badge-success badge-lg text-2xl px-6 py-4">
-                            <x-mary-icon name="o-play-circle" class="w-6 h-6 mr-2" />
+                            <x-mary-icon name="phosphor-play-circle" class="w-6 h-6 mr-2" />
                             LIVE
                         </span>
                     @endif
