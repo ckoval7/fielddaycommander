@@ -55,8 +55,9 @@ class WeatherDashboard extends Component
             $this->manualOverride = [];
         }
 
-        $this->alerts = Setting::get('weather.alerts', []);
-        $this->lastFetch = Setting::get('weather.last_fetch');
+        $service = app(WeatherService::class);
+        $this->alerts = $service->getAlerts();
+        $this->lastFetch = $service->getLastFetch();
         $this->windUnit = Setting::get('weather.units', 'imperial') === 'metric' ? 'km/h' : 'mph';
 
         $this->clearComputedCache();

@@ -268,3 +268,24 @@ test('dashboard does not redirect when Open-Meteo is enabled', function () {
     Livewire::test(WeatherDashboard::class)
         ->assertOk();
 });
+
+test('dashboard in demo mode reads forecast and alerts from shared cache', function () {
+    config()->set('demo.enabled', true);
+    cache()->put('weather:demo:forecast', [
+        'current' => ['temperature_2m' => 68.0, 'weather_code' => 0, 'is_day' => 1, 'wind_speed_10m' => 5.0, 'wind_gusts_10m' => 10.0, 'precipitation' => 0.0],
+        'hourly' => ['time' => [], 'temperature_2m' => [], 'precipitation_probability' => [], 'wind_speed_10m' => [], 'weather_code' => [], 'cape' => []],
+        'daily' => ['time' => [], 'temperature_2m_max' => [], 'temperature_2m_min' => [], 'precipitation_probability_max' => [], 'wind_speed_10m_max' => [], 'wind_gusts_10m_max' => [], 'weather_code' => []],
+    ], now()->addHour());
+    cache()->put('weather:demo:last_fetch', '2026-04-16T12:00:00+00:00', now()->addHour());
+    cache()->put('weather:demo:alerts', [[
+        'event' => 'Severe Thunderstorm Warning',
+        'headline' => 'Shared',
+        'description' => '',
+        'severity' => 'Severe',
+        'expires' => null,
+        'severity_level' => 'yellow',
+    ]], now()->addHour());
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertSet('hasData', true);
+});
