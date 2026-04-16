@@ -3,6 +3,6 @@
 
     <x-slot:actions>
         <x-button label="Cancel" wire:click="$set('showLockModal', false)" class="btn-ghost" />
-        <x-button label="Lock Account" wire:click="lockAccount" class="btn-warning" icon="o-lock-closed" spinner="lockAccount" />
+        <x-button label="Lock Account" wire:click="lockAccount" class="btn-warning" icon="phosphor-lock" spinner="lockAccount" />
     </x-slot:actions>
 </x-modal>

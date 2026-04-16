@@ -14,18 +14,18 @@
                         option-value="id"
                         option-label="name"
                         placeholder="Select an event to clone from..."
-                        icon="o-calendar"
+                        icon="phosphor-calendar"
                         hint="Only completed or past events with stations are shown"
                         required
                     >
                         <x-slot:prepend>
-                            <x-icon name="o-arrow-path" class="w-5 h-5" />
+                            <x-icon name="phosphor-arrow-clockwise" class="w-5 h-5" />
                         </x-slot:prepend>
                     </x-select>
 
                     @if($sourceEventId && $sourceEvents->firstWhere('id', $sourceEventId))
                         <div class="mt-2">
-                            <x-alert icon="o-information-circle" class="alert-info">
+                            <x-alert icon="phosphor-info" class="alert-info">
                                 <span class="font-semibold">
                                     {{ $sourceEvents->firstWhere('id', $sourceEventId)['station_count'] }}
                                 </span>
@@ -46,7 +46,7 @@
                         <div class="flex gap-2">
                             <x-button
                                 label="Select All"
-                                icon="o-check"
+                                icon="phosphor-check"
                                 class="btn-sm btn-outline"
                                 wire:click="toggleSelectAll"
                                 wire:model.live="selectAll"
@@ -54,7 +54,7 @@
                             />
                             <x-button
                                 label="Select None"
-                                icon="o-x-mark"
+                                icon="phosphor-x"
                                 class="btn-sm btn-outline"
                                 wire:click="$set('selectedStationIds', [])"
                                 type="button"
@@ -80,22 +80,22 @@
 
                                             {{-- Badges --}}
                                             @if($station->is_gota)
-                                                <x-badge value="GOTA" class="badge-primary badge-sm" icon="o-academic-cap" />
+                                                <x-badge value="GOTA" class="badge-primary badge-sm" icon="phosphor-graduation-cap" />
                                             @endif
 
                                             @if($station->is_vhf_only)
-                                                <x-badge value="VHF" class="badge-info badge-sm" icon="o-signal" />
+                                                <x-badge value="VHF" class="badge-info badge-sm" icon="phosphor-cell-signal-high" />
                                             @endif
 
                                             @if($station->is_satellite)
-                                                <x-badge value="SAT" class="badge-accent badge-sm" icon="o-globe-alt" />
+                                                <x-badge value="SAT" class="badge-accent badge-sm" icon="phosphor-globe" />
                                             @endif
                                         </div>
 
                                         {{-- Primary Radio --}}
                                         @if($station->primaryRadio)
                                             <div class="text-sm text-base-content/70 mt-1">
-                                                <x-icon name="o-radio" class="w-4 h-4 inline" />
+                                                <x-icon name="phosphor-radio" class="w-4 h-4 inline" />
                                                 {{ $station->primaryRadio->make }} {{ $station->primaryRadio->model }}
                                             </div>
                                         @endif
@@ -103,7 +103,7 @@
                                         {{-- Equipment Count --}}
                                         @if($station->additional_equipment_count > 0)
                                             <div class="text-sm text-base-content/60 mt-1">
-                                                <x-icon name="o-wrench-screwdriver" class="w-4 h-4 inline" />
+                                                <x-icon name="phosphor-wrench" class="w-4 h-4 inline" />
                                                 {{ $station->additional_equipment_count }} {{ str('item')->plural($station->additional_equipment_count) }}
                                             </div>
                                         @endif
@@ -131,7 +131,7 @@
                             option-value="id"
                             option-label="name"
                             placeholder="Select target event..."
-                            icon="o-calendar"
+                            icon="phosphor-calendar"
                             hint="Only future or active events are shown"
                             required
                         />
@@ -154,7 +154,7 @@
                             wire:model="nameSuffix"
                             placeholder="e.g., ' 2025'"
                             hint="Add a suffix to station names. Leave blank to keep original names."
-                            icon="o-tag"
+                            icon="phosphor-tag"
                             maxlength="50"
                         />
 
@@ -162,7 +162,7 @@
                             <div class="font-medium mb-1">Example:</div>
                             <div class="flex items-center gap-2">
                                 <span class="text-base-content/60">"Station 1"</span>
-                                <x-icon name="o-arrow-right" class="w-4 h-4" />
+                                <x-icon name="phosphor-arrow-right" class="w-4 h-4" />
                                 <span class="font-medium">"Station 1{{ $nameSuffix }}"</span>
                             </div>
                         </div>
@@ -170,7 +170,7 @@
                 </div>
             @elseif($sourceEventId && $availableStations->isEmpty())
                 <div class="mb-6">
-                    <x-alert icon="o-information-circle" class="alert-warning">
+                    <x-alert icon="phosphor-info" class="alert-warning">
                         No stations found for the selected event.
                     </x-alert>
                 </div>
@@ -183,7 +183,7 @@
 
                     <div class="mt-4 space-y-4">
                         {{-- Conflict Summary Alert --}}
-                        <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                        <x-alert icon="phosphor-warning" class="alert-warning">
                             <div class="font-medium">
                                 {{ count($conflictPreview['conflicts']) }} {{ str('equipment item')->plural(count($conflictPreview['conflicts'])) }} cannot be assigned
                             </div>
@@ -228,14 +228,14 @@
                         <div class="flex gap-3 justify-end pt-2">
                             <x-button
                                 label="Cancel Clone"
-                                icon="o-x-mark"
+                                icon="phosphor-x"
                                 class="btn-ghost"
                                 wire:click="cancelConflictPreview"
                                 type="button"
                             />
                             <x-button
                                 label="Skip Unavailable Equipment & Continue"
-                                icon="o-arrow-path"
+                                icon="phosphor-arrow-clockwise"
                                 class="btn-warning"
                                 wire:click="continueWithSkip"
                                 spinner="continueWithSkip"
@@ -249,7 +249,7 @@
             {{-- General Errors --}}
             @error('general')
                 <div class="mb-4">
-                    <x-alert icon="o-exclamation-triangle" class="alert-error">
+                    <x-alert icon="phosphor-warning" class="alert-error">
                         {{ $message }}
                     </x-alert>
                 </div>
@@ -261,13 +261,13 @@
             @if(!$showConflicts)
                 <x-button
                     label="Cancel"
-                    icon="o-x-mark"
+                    icon="phosphor-x"
                     class="btn-ghost"
                     @click="$wire.closeModal()"
                 />
                 <x-button
                     label="Clone Stations"
-                    icon="o-arrow-path"
+                    icon="phosphor-arrow-clockwise"
                     class="btn-primary"
                     wire:click="checkForConflicts"
                     :disabled="!$sourceEventId || empty($selectedStationIds) || !$targetEventId"

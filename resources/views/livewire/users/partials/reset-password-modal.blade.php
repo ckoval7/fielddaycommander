@@ -20,12 +20,12 @@
                         <x-input
                             id="generated-password"
                             wire:model="newPassword"
-                            icon="o-lock-closed"
+                            icon="phosphor-lock"
                             class="font-mono grow"
                             readonly
                         />
                         <x-button
-                            icon="o-clipboard-document"
+                            icon="phosphor-clipboard"
                             class="btn-ghost"
                             type="button"
                             x-on:click="
@@ -37,7 +37,7 @@
                     </div>
                 </div>
 
-                <x-alert icon="o-information-circle" class="alert-warning">
+                <x-alert icon="phosphor-info" class="alert-warning">
                     User will be required to change this password on next login.
                 </x-alert>
             </div>
@@ -49,7 +49,7 @@
                 label="{{ $resetMethod === 'email' ? 'Send Email' : 'Reset Password' }}"
                 type="submit"
                 class="btn-primary"
-                icon="o-key"
+                icon="phosphor-key"
                 spinner="resetPassword"
             />
         </div>

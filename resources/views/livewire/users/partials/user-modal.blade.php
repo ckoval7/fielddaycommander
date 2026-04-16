@@ -2,7 +2,7 @@
     <form wire:submit="saveUser">
         {{-- Validation Error Summary --}}
         @if ($errors->any())
-            <x-alert title="Please fix the following errors:" icon="o-exclamation-triangle" class="alert-error mb-4">
+            <x-alert title="Please fix the following errors:" icon="phosphor-warning" class="alert-error mb-4">
                 <ul class="list-disc list-inside">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -16,7 +16,7 @@
             <x-input
                 label="Call Sign"
                 wire:model="call_sign"
-                icon="o-megaphone"
+                icon="phosphor-megaphone"
                 required
             />
 
@@ -25,7 +25,7 @@
                 label="Email"
                 type="email"
                 wire:model="email"
-                icon="o-envelope"
+                icon="phosphor-envelope"
                 required
             />
 
@@ -33,7 +33,7 @@
             <x-input
                 label="First Name"
                 wire:model="first_name"
-                icon="o-user"
+                icon="phosphor-user"
                 required
             />
 
@@ -41,7 +41,7 @@
             <x-input
                 label="Last Name"
                 wire:model="last_name"
-                icon="o-user"
+                icon="phosphor-user"
                 required
             />
 
@@ -98,7 +98,7 @@
                         label="Password"
                         type="password"
                         wire:model="password"
-                        icon="o-lock-closed"
+                        icon="phosphor-lock"
                         required
                     />
 
@@ -106,7 +106,7 @@
                         label="Confirm Password"
                         type="password"
                         wire:model="password_confirmation"
-                        icon="o-lock-closed"
+                        icon="phosphor-lock"
                         required
                     />
                 </div>
