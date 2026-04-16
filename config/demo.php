@@ -48,4 +48,20 @@ return [
 
     'analytics_retention_days' => env('DEMO_ANALYTICS_RETENTION_DAYS', 90),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Weather
+    |--------------------------------------------------------------------------
+    |
+    | Shared weather location and cache settings for demo sessions.
+    |
+    */
+
+    'weather' => [
+        'latitude' => env('DEMO_WEATHER_LAT', 41.8781),
+        'longitude' => env('DEMO_WEATHER_LON', -87.6298),
+        'state' => env('DEMO_WEATHER_STATE', 'IL'),
+        'cache_ttl_minutes' => env('DEMO_WEATHER_CACHE_TTL', 30),
+    ],
+
 ];
