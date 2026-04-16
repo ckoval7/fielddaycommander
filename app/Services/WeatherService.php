@@ -256,6 +256,12 @@ class WeatherService
     public function enableOpenMeteo(): void
     {
         Setting::set('weather.openmeteo_enabled', true);
+
+        $coords = $this->getActiveEventCoordinates();
+
+        if ($coords !== null) {
+            $this->fetchForecast($coords['lat'], $coords['lon']);
+        }
     }
 
     public function disableOpenMeteo(): void

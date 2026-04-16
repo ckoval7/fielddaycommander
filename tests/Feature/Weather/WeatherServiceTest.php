@@ -582,6 +582,37 @@ test('enableOpenMeteo sets flag to true', function () {
     expect($service->isOpenMeteoEnabled())->toBeTrue();
 });
 
+test('enableOpenMeteo immediately fetches forecast when active event has coordinates', function () {
+    Http::fake([
+        'api.open-meteo.com/*' => Http::response([
+            'current' => ['temperature_2m' => 68.0],
+            'hourly' => ['time' => []],
+            'daily' => ['time' => []],
+        ], 200),
+    ]);
+
+    makeActiveWeatherEvent();
+    Setting::set('weather.openmeteo_enabled', false);
+
+    $service = makeWeatherService();
+    $service->enableOpenMeteo();
+
+    Http::assertSentCount(1);
+    expect(Setting::get('weather.forecast'))->not->toBeNull();
+    expect(Setting::get('weather.last_fetch'))->not->toBeNull();
+});
+
+test('enableOpenMeteo skips fetch when no active or upcoming event', function () {
+    Http::fake();
+    Setting::set('weather.openmeteo_enabled', false);
+
+    $service = makeWeatherService();
+    $service->enableOpenMeteo();
+
+    Http::assertNothingSent();
+    expect($service->isOpenMeteoEnabled())->toBeTrue();
+});
+
 // --- enable/disable NWS ---
 
 test('isNwsEnabled returns true by default', function () {

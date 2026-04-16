@@ -2,10 +2,13 @@
 
 use App\Events\WeatherAlertChanged;
 use App\Livewire\Weather\ManageWeather;
+use App\Models\EventConfiguration;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ActiveEventService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
@@ -261,6 +264,41 @@ test('toggleOpenMeteo enables Open-Meteo when currently disabled', function () {
         ->assertSet('openMeteoEnabled', true);
 
     expect(Setting::get('weather.openmeteo_enabled'))->toBeTruthy();
+});
+
+test('toggleOpenMeteo triggers immediate forecast fetch when enabling with active event', function () {
+    Http::fake([
+        'api.open-meteo.com/*' => Http::response([
+            'current' => ['temperature_2m' => 68.0],
+            'hourly' => ['time' => []],
+            'daily' => ['time' => []],
+        ], 200),
+    ]);
+
+    $event = App\Models\Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'latitude' => 41.3083,
+        'longitude' => -72.9279,
+        'state' => 'CT',
+    ]);
+
+    Setting::set('weather.openmeteo_enabled', false);
+    app(ActiveEventService::class)->clearCache();
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->call('toggleOpenMeteo')
+        ->assertSet('openMeteoEnabled', true);
+
+    Http::assertSentCount(1);
+    expect(Setting::get('weather.forecast'))->not->toBeNull();
 });
 
 test('toggleNws disables NWS and clears alerts when currently enabled', function () {
