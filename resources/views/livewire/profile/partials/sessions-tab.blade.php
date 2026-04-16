@@ -84,7 +84,7 @@
             </div>
         </div>
     @else
-        <x-alert icon="o-information-circle">
+        <x-alert icon="phosphor-info">
             You are only logged in on this device.
         </x-alert>
     @endif

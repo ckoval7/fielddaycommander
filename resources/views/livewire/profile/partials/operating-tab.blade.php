@@ -40,7 +40,7 @@
             <h3 class="card-title">Recent Operating Sessions</h3>
 
             @if($operatingSessions->isEmpty())
-                <x-alert icon="o-information-circle">
+                <x-alert icon="phosphor-info">
                     You haven't operated any stations yet.
                 </x-alert>
             @else
