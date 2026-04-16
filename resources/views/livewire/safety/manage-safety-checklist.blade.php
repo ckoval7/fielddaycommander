@@ -7,7 +7,7 @@
             <div>
                 <div class="flex items-center gap-2 mb-2">
                     <x-button
-                        icon="o-arrow-left"
+                        icon="phosphor-arrow-left"
                         class="btn-ghost btn-sm"
                         link="{{ route('site-safety.index') }}"
                         tooltip="Back to Safety Checklist"
@@ -21,7 +21,7 @@
             <div class="flex flex-wrap gap-2">
                 <x-button
                     label="Add Item"
-                    icon="o-plus"
+                    icon="phosphor-plus"
                     class="btn-primary btn-sm"
                     wire:click="openItemModal"
                 />
@@ -29,7 +29,7 @@
         </div>
 
         @if(!$eventConfig)
-            <x-alert icon="o-exclamation-triangle" class="alert-warning">
+            <x-alert icon="phosphor-warning" class="alert-warning">
                 No active event configuration found. Please configure an event first.
             </x-alert>
         @else
@@ -37,7 +37,7 @@
             @if($this->items->isEmpty())
                 <x-card shadow>
                     <div class="text-center py-8 text-base-content/60">
-                        <x-icon name="o-clipboard-document-check" class="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <x-icon name="phosphor-clipboard-text" class="w-12 h-12 mx-auto mb-3 opacity-30" />
                         <p class="text-lg font-medium">No checklist items yet</p>
                         <p class="text-sm">Add custom items to get started.</p>
                     </div>
@@ -50,13 +50,13 @@
                                 {{-- Reorder buttons --}}
                                 <div class="flex flex-col gap-1 shrink-0">
                                     <x-button
-                                        icon="o-chevron-up"
+                                        icon="phosphor-caret-up"
                                         class="btn-ghost btn-xs"
                                         wire:click="moveUp({{ $item->id }})"
                                         tooltip="Move Up"
                                     />
                                     <x-button
-                                        icon="o-chevron-down"
+                                        icon="phosphor-caret-down"
                                         class="btn-ghost btn-xs"
                                         wire:click="moveDown({{ $item->id }})"
                                         tooltip="Move Down"
@@ -87,13 +87,13 @@
                                 {{-- Action buttons --}}
                                 <div class="flex items-center gap-1 shrink-0">
                                     <x-button
-                                        icon="o-pencil"
+                                        icon="phosphor-pencil-simple"
                                         class="btn-ghost btn-sm"
                                         wire:click="openItemModal({{ $item->id }})"
                                         tooltip="Edit Item"
                                     />
                                     <x-button
-                                        icon="o-trash"
+                                        icon="phosphor-trash"
                                         class="btn-ghost btn-sm text-error"
                                         wire:click="deleteItem({{ $item->id }})"
                                         wire:confirm="Delete this checklist item?"

@@ -29,18 +29,18 @@
                         class="text-xs text-success font-medium"
                         style="display: none;"
                     >
-                        <x-icon name="o-check" class="w-3.5 h-3.5 inline" /> Saved
+                        <x-icon name="phosphor-check" class="w-3.5 h-3.5 inline" /> Saved
                     </span>
                 </div>
             @endif
         </div>
 
         @if(!$eventConfig)
-            <x-alert icon="o-information-circle" class="alert-info">
+            <x-alert icon="phosphor-info" class="alert-info">
                 No event is currently selected. Please select an event to view the safety checklist.
             </x-alert>
         @elseif($this->items->isEmpty())
-            <x-alert icon="o-information-circle" class="alert-info">
+            <x-alert icon="phosphor-info" class="alert-info">
                 No safety checklist items are applicable for this operating class.
             </x-alert>
         @else
@@ -54,7 +54,7 @@
                 @php
                     $requiredRoles = collect($checklistTypes)->map(fn($t) => $t->label())->join(' or ');
                 @endphp
-                <x-alert icon="o-lock-closed" class="alert-warning">
+                <x-alert icon="phosphor-lock" class="alert-warning">
                     You must be signed on to a <strong>{{ $requiredRoles }}</strong> shift to check off items.
                 </x-alert>
             @endif
@@ -69,7 +69,7 @@
                         <x-card>
                             <x-slot:title>
                                 <div class="flex items-center gap-2">
-                                    <x-icon name="o-shield-check" class="w-5 h-5" />
+                                    <x-icon name="phosphor-shield-check" class="w-5 h-5" />
                                     <span>{{ $type->label() }}</span>
                                     <x-badge :value="$type->bonusPoints() . ' bonus pts'" class="badge-warning badge-sm" />
                                 </div>
@@ -113,7 +113,7 @@
                                                             :title="expanded ? 'Hide details' : 'What does this mean?'"
                                                             :aria-expanded="expanded"
                                                         >
-                                                            <x-icon name="o-question-mark-circle" class="w-5 h-5" />
+                                                            <x-icon name="phosphor-question" class="w-5 h-5" />
                                                         </button>
                                                     @endif
                                                 </div>
@@ -125,7 +125,7 @@
                                                         x-collapse
                                                         class="mt-2 text-xs text-base-content/70 bg-info/5 border border-info/20 rounded-md px-3 py-2 leading-relaxed"
                                                     >
-                                                        <x-icon name="o-light-bulb" class="w-3.5 h-3.5 inline text-info mr-1 -mt-0.5" />
+                                                        <x-icon name="phosphor-lightbulb" class="w-3.5 h-3.5 inline text-info mr-1 -mt-0.5" />
                                                         {{ $item->help_text }}
                                                     </div>
                                                 @endif
@@ -133,7 +133,7 @@
                                                 {{-- CPR/AED Trained Personnel --}}
                                                 @if(str_contains($item->label, 'CPR - AED') && $this->cprAedTrainedUsers->isNotEmpty())
                                                     <div class="mt-2 text-xs text-success bg-success/5 border border-success/20 rounded-md px-3 py-2">
-                                                        <x-icon name="o-heart" class="w-3.5 h-3.5 inline text-success mr-1 -mt-0.5" />
+                                                        <x-icon name="phosphor-heart" class="w-3.5 h-3.5 inline text-success mr-1 -mt-0.5" />
                                                         <span class="font-medium">Trained personnel:</span>
                                                         {{ $this->cprAedTrainedUsers->map(fn($u) => $u->call_sign . ' (' . $u->first_name . ')')->join(', ') }}
                                                     </div>
