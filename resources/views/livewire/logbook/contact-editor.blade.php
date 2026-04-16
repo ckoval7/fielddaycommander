@@ -88,4 +88,34 @@
             </x-slot:actions>
         </form>
     </x-modal>
+
+    {{-- Bulk Change Logger Modal --}}
+    <x-modal wire:model="showBulkLoggerModal" title="Change Logger for {{ count($bulkLoggerContactIds) }} Contact(s)" class="backdrop-blur">
+        <x-form wire:submit="bulkChangeLogger" class="space-y-4">
+            <x-choices-offline
+                label="New Logger"
+                wire:model="bulkLoggerUserId"
+                :options="$this->operators"
+                option-label="display_name"
+                option-value="id"
+                placeholder="Select a logger..."
+                icon="o-user"
+                searchable
+                single
+                required
+            />
+
+            @error('bulkLoggerUserId')
+                <div class="alert alert-error">
+                    <x-icon name="o-exclamation-triangle" class="w-5 h-5" />
+                    <span>{{ $message }}</span>
+                </div>
+            @enderror
+
+            <x-slot:actions>
+                <x-button label="Cancel" wire:click="$set('showBulkLoggerModal', false)" class="btn-ghost" />
+                <x-button label="Apply" type="submit" class="btn-primary" spinner="bulkChangeLogger" />
+            </x-slot:actions>
+        </x-form>
+    </x-modal>
 </div>
