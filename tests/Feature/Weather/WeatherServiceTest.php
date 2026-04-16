@@ -91,7 +91,7 @@ test('getActiveEventCoordinates returns coordinates from upcoming event', functi
     ]);
 });
 
-test('getActiveEventCoordinates returns null for completed event', function () {
+test('getActiveEventCoordinates returns coordinates from grace-period event', function () {
     Event::factory()
         ->has(EventConfiguration::factory()->state([
             'latitude' => 41.3083,
@@ -101,6 +101,29 @@ test('getActiveEventCoordinates returns null for completed event', function () {
         ->create([
             'start_time' => now()->subHours(25),
             'end_time' => now()->subHour(),
+        ]);
+
+    $service = makeWeatherService();
+
+    expect($service->getActiveEventCoordinates())->toMatchArray([
+        'lat' => 41.3083,
+        'lon' => -72.9279,
+        'state' => 'CT',
+    ]);
+});
+
+test('getActiveEventCoordinates returns null for archived event past grace period', function () {
+    Setting::set('post_event_grace_period_days', 30);
+
+    Event::factory()
+        ->has(EventConfiguration::factory()->state([
+            'latitude' => 41.3083,
+            'longitude' => -72.9279,
+            'state' => 'CT',
+        ]))
+        ->create([
+            'start_time' => now()->subDays(60),
+            'end_time' => now()->subDays(45),
         ]);
 
     $service = makeWeatherService();

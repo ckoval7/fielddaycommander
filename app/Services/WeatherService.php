@@ -30,12 +30,12 @@ class WeatherService
     protected const MANUAL_ALERT_EVENT = 'Local Alert';
 
     public function __construct(
-        protected readonly ActiveEventService $activeEventService,
+        protected readonly EventContextService $eventContextService,
     ) {}
 
     public function getActiveEventCoordinates(): ?array
     {
-        $config = $this->activeEventService->getActiveOrUpcomingEvent()?->eventConfiguration;
+        $config = $this->eventContextService->getContextEvent()?->eventConfiguration;
 
         if (! $config || ! $config->has_location || ! $config->state) {
             return null;
