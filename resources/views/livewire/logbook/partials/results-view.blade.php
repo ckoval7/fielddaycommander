@@ -68,7 +68,7 @@
         >
             @php
                 $headers = [
-                    ['key' => 'qso_time', 'label' => 'QSO Time', 'class' => 'w-40'],
+                    ['key' => 'qso_time', 'label' => 'QSO Time (UTC)', 'class' => 'w-40'],
                     ['key' => 'callsign', 'label' => 'Callsign', 'class' => 'w-32'],
                     ['key' => 'band', 'label' => 'Band', 'class' => 'w-24'],
                     ['key' => 'mode', 'label' => 'Mode', 'class' => 'w-24'],
@@ -87,7 +87,7 @@
             @php $canEdit = auth()->check() && auth()->user()->can('edit-contacts'); @endphp
             <x-table :headers="$headers" :rows="$this->contacts" class="table-sm" :selectable="$canEdit" wire:model.live="selectedIds">
                 @scope('cell_qso_time', $contact)
-                    <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') : 'N/A' }}</span>
+                    <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') . ' UTC' : 'N/A' }}</span>
                 @endscope
 
                 @scope('cell_callsign', $contact)
@@ -204,7 +204,7 @@
                             <div class="flex-1 min-w-0">
                                 <div class="font-mono font-bold text-lg truncate {{ $contact->trashed() ? 'line-through' : '' }}">{{ $contact->callsign }}</div>
                                 <div class="text-xs text-base-content/60 mt-1">
-                                    {{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('M d, Y H:i') : 'N/A' }}
+                                    {{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('M d, Y H:i') . ' UTC' : 'N/A' }}
                                 </div>
                             </div>
                             <div class="flex flex-col items-end gap-1 flex-shrink-0">
