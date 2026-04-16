@@ -65,6 +65,27 @@ class TranscribeInterface extends Component
         }
     }
 
+    public function updatedTimeIsLocal(bool $value): void
+    {
+        if ($this->workingDate === '' || $this->contactTime === '') {
+            return;
+        }
+
+        $time = $this->parseFlexibleTime($this->contactTime);
+        if ($time === null) {
+            return;
+        }
+
+        $dateTimeStr = $this->workingDate.' '.$time;
+
+        $carbon = $value
+            ? Carbon::parse($dateTimeStr, 'UTC')->setTimezone(localTimezone())
+            : Carbon::parse($dateTimeStr, localTimezone())->utc();
+
+        $this->workingDate = $carbon->format('Y-m-d');
+        $this->contactTime = $carbon->format('H:i');
+    }
+
     public function updatedExchangeInput(): void
     {
         $this->parseError = '';
@@ -432,10 +453,9 @@ class TranscribeInterface extends Component
 
         // If inline time provided, update qso_time using original date + new time
         if ($inlineTime !== null) {
-            $updateData['qso_time'] = Carbon::parse(
-                $contact->qso_time->format('Y-m-d').' '.$inlineTime,
-                'UTC'
-            );
+            $tz = $this->timeIsLocal ? localTimezone() : 'UTC';
+            $baseDate = $contact->qso_time->copy()->setTimezone($tz)->format('Y-m-d');
+            $updateData['qso_time'] = Carbon::parse($baseDate.' '.$inlineTime, $tz)->utc();
         }
 
         $contact->update($updateData);

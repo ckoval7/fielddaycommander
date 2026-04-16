@@ -395,7 +395,7 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Time (UTC)</th>
+                                    <th>Time ({{ $timeIsLocal ? $this->timezoneLabel : 'UTC' }})</th>
                                     <th>Callsign</th>
                                     <th>Exchange</th>
                                     <th>Band</th>
@@ -406,8 +406,11 @@
                             </thead>
                             <tbody>
                                 @foreach($this->recentContacts as $contact)
+                                    @php
+                                        $displayTime = $timeIsLocal ? toLocalTime($contact->qso_time) : $contact->qso_time;
+                                    @endphp
                                     <tr wire:key="contact-{{ $contact->id }}"
-                                        data-recall-value="{{ $contact->qso_time->format('Hi') }} {{ $contact->callsign }} {{ $contact->exchange_class }} {{ $contact->section->code ?? '' }}"
+                                        data-recall-value="{{ $displayTime->format('Hi') }} {{ $contact->callsign }} {{ $contact->exchange_class }} {{ $contact->section->code ?? '' }}"
                                         :class="{
                                             'ring-2 ring-primary': recalledContactId === {{ $contact->id }},
                                         }"
@@ -415,7 +418,7 @@
                                             'opacity-40 line-through' => $contact->trashed(),
                                             'opacity-50' => ! $contact->trashed() && $contact->is_duplicate,
                                         ])>
-                                        <td class="font-mono text-sm">{{ $contact->qso_time->format('H:i') }}</td>
+                                        <td class="font-mono text-sm">{{ $displayTime->format('H:i') }}</td>
                                         <td class="font-bold font-mono uppercase">
                                             {{ $contact->callsign }}
                                             @if($contact->trashed())
