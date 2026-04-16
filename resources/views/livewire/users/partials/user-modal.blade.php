@@ -110,6 +110,13 @@
                         required
                     />
                 </div>
+
+                <div class="form-control mt-2">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" class="checkbox checkbox-sm" wire:model="requirePasswordChange" />
+                        <span class="label-text">User must change password on next login</span>
+                    </label>
+                </div>
             @endif
         @endif
 

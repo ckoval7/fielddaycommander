@@ -65,6 +65,8 @@ class UserManagement extends Component
 
     public string $password_confirmation = '';
 
+    public bool $requirePasswordChange = true;
+
     // Lock modal
     public ?int $lockingUserId = null;
 
@@ -160,7 +162,7 @@ class UserManagement extends Component
         $this->reset([
             'editingUserId', 'call_sign', 'first_name', 'last_name',
             'email', 'license_class', 'is_youth', 'is_cpr_aed_trained', 'role_id', 'password',
-            'password_confirmation', 'inviteMode',
+            'password_confirmation', 'inviteMode', 'requirePasswordChange',
         ]);
         $this->inviteMode = (bool) config('mail.email_configured');
         $this->role_id = $this->roles->first()?->id;
@@ -225,6 +227,7 @@ class UserManagement extends Component
             'is_youth' => $this->is_youth,
             'is_cpr_aed_trained' => $this->is_cpr_aed_trained,
             'password' => $this->inviteMode ? Hash::make(str()->random(32)) : Hash::make($validated['password']),
+            'requires_password_change' => ! $this->inviteMode && $this->requirePasswordChange,
         ]);
 
         $role = Role::find($validated['role_id']);
