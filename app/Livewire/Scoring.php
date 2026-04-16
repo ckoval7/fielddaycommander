@@ -512,7 +512,21 @@ class Scoring extends Component
     #[Computed]
     public function bands(): Collection
     {
-        return Band::allowedForFieldDay()->ordered()->get();
+        $all = Band::allowedForFieldDay()->ordered()->get();
+
+        if (! $this->config()) {
+            return $all;
+        }
+
+        $bandIdsWithQsos = Contact::where('event_configuration_id', $this->config()->id)
+            ->notDuplicate()
+            ->where('is_gota_contact', false)
+            ->distinct()
+            ->pluck('band_id')
+            ->all();
+
+        return $all->filter(fn (Band $band) => ! $band->is_vhf_uhf || in_array($band->id, $bandIdsWithQsos))
+            ->values();
     }
 
     #[Computed]
