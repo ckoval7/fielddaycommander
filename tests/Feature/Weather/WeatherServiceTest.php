@@ -1030,3 +1030,46 @@ test('getDisplayData in demo mode returns per-session override when set', functi
     expect($result['manual'])->toBeTrue();
     expect($result['data'])->toMatchArray(['current' => ['temperature_2m' => 42.0]]);
 });
+
+// --- demo mode: getAlerts + getLastFetch layering ---
+
+test('getAlerts returns per-session manual alerts regardless of demo mode', function () {
+    config()->set('demo.enabled', true);
+    $manualAlerts = [['event' => 'Local Alert', 'headline' => 'test']];
+    Setting::set('weather.alerts', $manualAlerts);
+    cache()->put('weather:demo:alerts', [['event' => 'Shared']], now()->addHour());
+
+    expect(makeWeatherService()->getAlerts())->toEqual($manualAlerts);
+});
+
+test('getAlerts in demo mode falls through to shared cache when session has no alerts', function () {
+    config()->set('demo.enabled', true);
+    Setting::set('weather.alerts', []);
+    $shared = [['event' => 'Tornado Warning', 'headline' => 'shared']];
+    cache()->put('weather:demo:alerts', $shared, now()->addHour());
+
+    expect(makeWeatherService()->getAlerts())->toEqual($shared);
+});
+
+test('getAlerts outside demo mode returns Setting alerts', function () {
+    config()->set('demo.enabled', false);
+    $alerts = [['event' => 'Severe Thunderstorm Warning']];
+    Setting::set('weather.alerts', $alerts);
+
+    expect(makeWeatherService()->getAlerts())->toEqual($alerts);
+});
+
+test('getLastFetch in demo mode returns shared cache timestamp', function () {
+    config()->set('demo.enabled', true);
+    cache()->put('weather:demo:last_fetch', '2026-04-16T12:00:00+00:00', now()->addHour());
+    Setting::set('weather.last_fetch', '1999-01-01T00:00:00+00:00');
+
+    expect(makeWeatherService()->getLastFetch())->toEqual('2026-04-16T12:00:00+00:00');
+});
+
+test('getLastFetch outside demo mode returns Setting timestamp', function () {
+    config()->set('demo.enabled', false);
+    Setting::set('weather.last_fetch', '2026-04-16T12:00:00+00:00');
+
+    expect(makeWeatherService()->getLastFetch())->toEqual('2026-04-16T12:00:00+00:00');
+});

@@ -233,6 +233,30 @@ class WeatherService
         return ['manual' => false, 'data' => Setting::get('weather.forecast', [])];
     }
 
+    public function getAlerts(): array
+    {
+        $sessionAlerts = Setting::get('weather.alerts', []);
+
+        if (! empty($sessionAlerts)) {
+            return $sessionAlerts;
+        }
+
+        if (config('demo.enabled')) {
+            return cache()->get('weather:demo:alerts', []);
+        }
+
+        return $sessionAlerts;
+    }
+
+    public function getLastFetch(): ?string
+    {
+        if (config('demo.enabled')) {
+            return cache()->get('weather:demo:last_fetch');
+        }
+
+        return Setting::get('weather.last_fetch');
+    }
+
     public function setManualOverride(array $data): void
     {
         Setting::set('weather.manual_override', $data);
