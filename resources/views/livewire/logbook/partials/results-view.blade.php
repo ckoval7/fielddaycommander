@@ -57,7 +57,15 @@
         </div>
     @else
         {{-- Desktop Table View --}}
-        <div class="hidden lg:block overflow-x-auto">
+        <div
+            class="hidden lg:block overflow-x-auto"
+            x-data
+            x-effect="
+                if ($wire.selectedIds.length === 0) {
+                    $el.querySelectorAll('input[id^=checkAll-]').forEach(cb => cb.checked = false);
+                }
+            "
+        >
             @php
                 $headers = [
                     ['key' => 'qso_time', 'label' => 'QSO Time', 'class' => 'w-40'],
@@ -77,7 +85,7 @@
             @endphp
 
             @php $canEdit = auth()->check() && auth()->user()->can('edit-contacts'); @endphp
-            <x-table :headers="$headers" :rows="$this->contacts" class="table-sm" :selectable="$canEdit" wire:model="selectedIds">
+            <x-table :headers="$headers" :rows="$this->contacts" class="table-sm" :selectable="$canEdit" wire:model.live="selectedIds">
                 @scope('cell_qso_time', $contact)
                     <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') : 'N/A' }}</span>
                 @endscope

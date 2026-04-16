@@ -83,6 +83,19 @@ describe('selection state', function () {
             ->dispatch('contact-updated')
             ->assertSet('selectedIds', []);
     });
+
+    test('bulk action bar is hidden when no contacts are selected', function () {
+        Livewire::test(LogbookBrowser::class)
+            ->assertDontSee('contact(s) selected');
+    });
+
+    test('bulk action bar appears when contacts are selected', function () {
+        Livewire::test(LogbookBrowser::class)
+            ->set('selectedIds', $this->contacts->pluck('id')->toArray())
+            ->assertSee('contact(s) selected')
+            ->assertSeeHtml('open-bulk-change-logger')
+            ->assertSeeHtml('bulk-delete-contacts');
+    });
 });
 
 describe('bulk delete', function () {
