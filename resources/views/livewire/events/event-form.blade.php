@@ -114,7 +114,7 @@
             <x-slot:title>Event Location</x-slot:title>
 
             <div class="space-y-4">
-                <p class="text-sm text-base-content/60">All location fields are optional. Latitude and longitude are used for guestbook proximity detection when the guestbook is enabled.</p>
+                <p class="text-sm text-base-content/60">All location fields are optional, but each one unlocks different features. Fill in as many as apply to your site.</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <x-input
@@ -122,7 +122,7 @@
                         wire:model="grid_square"
                         icon="phosphor-map-trifold"
                         placeholder="DM79"
-                        hint="Maidenhead locator, 4 or 6 characters (e.g. DM79 or DM79ab)"
+                        hint="Maidenhead locator (e.g. DM79 or DM79ab). Reference info for operators; not used by any automated feature yet."
                         maxlength="6"
                     />
 
@@ -137,7 +137,7 @@
                         max="90"
                         icon="phosphor-map-pin"
                         placeholder="39.7392"
-                        hint="Decimal degrees, e.g. 39.7392"
+                        hint="Decimal degrees (e.g. 39.7392). Used for weather forecasts, NWS alerts, and guestbook proximity check-in."
                     />
 
                     <x-input
@@ -149,7 +149,7 @@
                         max="180"
                         icon="phosphor-map-pin"
                         placeholder="-104.9903"
-                        hint="Decimal degrees, e.g. -104.9903"
+                        hint="Decimal degrees (e.g. -104.9903). Used for weather forecasts, NWS alerts, and guestbook proximity check-in."
                     />
 
                     <x-input
@@ -157,6 +157,7 @@
                         wire:model="city"
                         icon="phosphor-buildings"
                         placeholder="Denver"
+                        hint="Shown in auto-filled Section Manager messages as your place of origin."
                     />
 
                     <x-input
@@ -164,7 +165,7 @@
                         wire:model="state"
                         icon="phosphor-flag"
                         placeholder="CO"
-                        hint="2-letter abbreviation"
+                        hint="2-letter abbreviation. Shown in auto-filled Section Manager messages."
                     />
                 </div>
             </div>
