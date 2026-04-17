@@ -147,6 +147,11 @@ class DemoSeeder extends Seeder
             'uses_water' => false,
             'uses_methane' => false,
             'guestbook_enabled' => true,
+            'grid_square' => 'FN31',
+            'latitude' => 41.4307,
+            'longitude' => -72.8906,
+            'city' => 'Hamden',
+            'state' => 'CT',
         ]);
 
         // Seed checklist items and shift roles
