@@ -687,6 +687,34 @@ test('user can commit equipment to event from catalog', function () {
     ]);
 });
 
+test('allows delivery date before setup window begins', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(2)->setTime(18, 0),
+        'end_time' => now()->addDays(3)->setTime(21, 0),
+        'setup_allowed_from' => now()->addDays(1)->setTime(18, 0),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('commitEquipmentId', $equipment->id)
+        ->set('commitEventId', $event->id)
+        ->set('commitExpectedDeliveryAt', now()->format('Y-m-d'))
+        ->call('commitEquipment')
+        ->assertHasNoErrors()
+        ->assertSet('showCommitModal', false);
+
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $equipment->id,
+        'event_id' => $event->id,
+        'status' => 'committed',
+    ]);
+});
+
 test('cannot commit equipment user does not own', function () {
     $this->actingAs($this->user);
 

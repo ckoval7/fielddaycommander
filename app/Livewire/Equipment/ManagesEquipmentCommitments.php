@@ -144,7 +144,6 @@ trait ManagesEquipmentCommitments
             'commitExpectedDeliveryAt' => array_filter([
                 'nullable',
                 'date',
-                $event?->setup_allowed_from ? "after_or_equal:{$event->setup_allowed_from}" : null,
                 $event ? "before_or_equal:{$event->end_time}" : null,
             ]),
             'commitDeliveryNotes' => [
@@ -322,7 +321,6 @@ trait ManagesEquipmentCommitments
             'bulkCommitExpectedDeliveryAt' => array_filter([
                 'nullable',
                 'date',
-                $event?->setup_allowed_from ? "after_or_equal:{$event->setup_allowed_from}" : null,
                 $event ? "before_or_equal:{$event->end_time}" : null,
             ]),
             'bulkCommitDeliveryNotes' => ['nullable', 'string', 'max:500'],
