@@ -657,6 +657,142 @@ test('user can open commit modal for available equipment', function () {
         ->assertSet('commitEquipmentId', $equipment->id);
 });
 
+test('recommitting equipment after prior cancellation revives the existing row', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+        'setup_allowed_from' => now()->addDays(6),
+    ]);
+
+    $cancelled = EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => $event->id,
+        'status' => 'cancelled',
+        'delivery_notes' => 'old notes',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('commitEquipmentId', $equipment->id)
+        ->set('commitEventId', $event->id)
+        ->set('commitDeliveryNotes', 'new notes')
+        ->call('commitEquipment')
+        ->assertHasNoErrors()
+        ->assertSet('showCommitModal', false);
+
+    $this->assertDatabaseCount('equipment_event', 1);
+    $this->assertDatabaseHas('equipment_event', [
+        'id' => $cancelled->id,
+        'status' => 'committed',
+        'delivery_notes' => 'new notes',
+    ]);
+});
+
+test('bulk recommit after prior cancellation revives the existing row', function () {
+    $this->actingAs($this->user);
+
+    $eq1 = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(7),
+        'end_time' => now()->addDays(9),
+        'setup_allowed_from' => now()->addDays(6),
+    ]);
+
+    $returned = EquipmentEvent::factory()->create([
+        'equipment_id' => $eq1->id,
+        'event_id' => $event->id,
+        'status' => 'returned',
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$eq1->id])
+        ->set('bulkCommitEventId', $event->id)
+        ->call('bulkCommitEquipment')
+        ->assertHasNoErrors()
+        ->assertSet('showBulkCommitModal', false);
+
+    $this->assertDatabaseCount('equipment_event', 1);
+    $this->assertDatabaseHas('equipment_event', [
+        'id' => $returned->id,
+        'status' => 'committed',
+    ]);
+});
+
+test('commit modal pre-populates with the active event when one is in progress', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    Event::factory()->create([
+        'start_time' => now()->addDays(3),
+        'end_time' => now()->addDays(5),
+        'setup_allowed_from' => now()->addDays(2),
+    ]);
+
+    $active = Event::factory()->create([
+        'start_time' => now()->subDay(),
+        'end_time' => now()->addDay(),
+        'setup_allowed_from' => now()->subDays(2),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('openCommitModal', $equipment->id)
+        ->assertSet('commitEventId', $active->id);
+});
+
+test('commit modal pre-populates with the next upcoming event when none are active', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    Event::factory()->create([
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(12),
+        'setup_allowed_from' => now()->addDays(9),
+    ]);
+
+    $next = Event::factory()->create([
+        'start_time' => now()->addDays(3),
+        'end_time' => now()->addDays(5),
+        'setup_allowed_from' => now()->addDays(2),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('openCommitModal', $equipment->id)
+        ->assertSet('commitEventId', $next->id);
+});
+
+test('commit modal event is null when there are no upcoming events', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('openCommitModal', $equipment->id)
+        ->assertSet('commitEventId', null);
+});
+
+test('bulk commit modal pre-populates with the active or next event', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    $active = Event::factory()->create([
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(4),
+        'setup_allowed_from' => now()->subDay(),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$equipment->id])
+        ->call('openBulkCommitModal')
+        ->assertSet('bulkCommitEventId', $active->id);
+});
+
 test('user can commit equipment to event from catalog', function () {
     $this->actingAs($this->user);
 
