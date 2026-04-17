@@ -31,6 +31,7 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 # --- Defaults ---
 APP_PATH="/var/www/fd-commander"
 BRANCH="main"
+FORCE=0
 
 usage() {
     cat <<'USAGE'
@@ -41,6 +42,7 @@ Updates an existing FD Commander deployment with the latest code.
 Options:
   --app-path <path>     Deploy path (default: /var/www/fd-commander)
   --branch <branch>     Git branch (default: main)
+  --force               Run full update pipeline even if already up to date
   -h, --help            Show this help message
 USAGE
     exit "${1:-0}"
@@ -50,6 +52,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --app-path)  APP_PATH="$2"; shift 2 ;;
         --branch)    BRANCH="$2"; shift 2 ;;
+        --force)     FORCE=1; shift ;;
         -h|--help)   usage 0 ;;
         *)           log_error "Unknown option: $1"; usage 1 ;;
     esac
@@ -97,11 +100,15 @@ fetch_updates() {
         REMOTE=$(sudo -u fdcommander git rev-parse "origin/$BRANCH")
 
         if [[ "$LOCAL" == "$REMOTE" ]]; then
-            log_info "Already up to date (${LOCAL:0:8}). Nothing to do."
-            exit 0
+            if [[ $FORCE -eq 1 ]]; then
+                log_warn "Already up to date (${LOCAL:0:8}) — continuing due to --force"
+            else
+                log_info "Already up to date (${LOCAL:0:8}). Nothing to do."
+                exit 0
+            fi
+        else
+            log_info "Updates available: ${LOCAL:0:8} → ${REMOTE:0:8}"
         fi
-
-        log_info "Updates available: ${LOCAL:0:8} → ${REMOTE:0:8}"
     else
         cd "$SCRIPT_DIR"
         git fetch origin "$BRANCH"
@@ -122,11 +129,13 @@ fetch_updates() {
         fi
 
         if [[ "$SOURCE_REV" == "$DEPLOYED_REV" ]]; then
-            log_info "Already up to date (${SOURCE_REV:0:8}). Nothing to do."
-            exit 0
-        fi
-
-        if [[ -n "$DEPLOYED_REV" ]]; then
+            if [[ $FORCE -eq 1 ]]; then
+                log_warn "Already up to date (${SOURCE_REV:0:8}) — continuing due to --force"
+            else
+                log_info "Already up to date (${SOURCE_REV:0:8}). Nothing to do."
+                exit 0
+            fi
+        elif [[ -n "$DEPLOYED_REV" ]]; then
             log_info "Updates available: ${DEPLOYED_REV:0:8} → ${SOURCE_REV:0:8}"
         else
             log_info "No deployment revision tracked yet — will sync current source (${SOURCE_REV:0:8})"
