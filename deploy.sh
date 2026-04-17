@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_VERSION="1.0.0"
 FRANKENPHP_VERSION="1.12.1"
 LOG_FILE="/var/log/fd-commander-deploy.log"
+readonly DISTRO_DEBIAN="debian"
+readonly DISTRO_RHEL="rhel"
 
 # --- Colors ---
 RED='\033[0;31m'
@@ -155,13 +157,13 @@ detect_distro() {
 
     source /etc/os-release
 
-    if [[ "$ID" == "ubuntu" ]] || [[ "$ID" == "debian" ]] || [[ "$ID" == "raspbian" ]]; then
-        DISTRO_FAMILY="debian"
+    if [[ "$ID" == "ubuntu" ]] || [[ "$ID" == "$DISTRO_DEBIAN" ]] || [[ "$ID" == "raspbian" ]]; then
+        DISTRO_FAMILY="$DISTRO_DEBIAN"
         PKG_MANAGER="apt"
         WEB_GROUP="www-data"
         REDIS_SERVICE="redis-server"
-    elif [[ "$ID" == "rhel" ]] || [[ "$ID" == "almalinux" ]] || [[ "$ID" == "rocky" ]] || [[ "${ID_LIKE:-}" == *"rhel"* ]] || [[ "${ID_LIKE:-}" == *"fedora"* ]]; then
-        DISTRO_FAMILY="rhel"
+    elif [[ "$ID" == "$DISTRO_RHEL" ]] || [[ "$ID" == "almalinux" ]] || [[ "$ID" == "rocky" ]] || [[ "${ID_LIKE:-}" == *"$DISTRO_RHEL"* ]] || [[ "${ID_LIKE:-}" == *"fedora"* ]]; then
+        DISTRO_FAMILY="$DISTRO_RHEL"
         PKG_MANAGER="dnf"
         WEB_GROUP="www-data"
         REDIS_SERVICE="redis"
@@ -649,13 +651,14 @@ compute_redis_maxmemory() {
     else
         echo "2gb"
     fi
+    return 0
 }
 
 configure_redis() {
     log_phase "Phase 4b: Configuring Redis"
 
     local conf_file
-    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+    if [[ "$DISTRO_FAMILY" == "$DISTRO_DEBIAN" ]]; then
         conf_file="/etc/redis/redis.conf"
     else
         conf_file="/etc/redis/redis.conf"
@@ -719,6 +722,7 @@ REDISEOF
         exit 1
     fi
     log_info "Redis configured with AOF fsync=always and volatile-lru eviction"
+    return 0
 }
 
 configure_caddy() {
@@ -866,7 +870,7 @@ REVERBEOF
 configure_firewall() {
     log_phase "Phase 8: Configuring firewall"
 
-    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+    if [[ "$DISTRO_FAMILY" == "$DISTRO_DEBIAN" ]]; then
         if command -v ufw &>/dev/null && ufw status | grep -q "active"; then
             log_info "Configuring UFW firewall..."
             ufw allow "${APP_PORT}/tcp"
@@ -874,7 +878,7 @@ configure_firewall() {
         else
             log_warn "UFW not active. Recommend enabling: ufw allow ${APP_PORT}/tcp && ufw enable"
         fi
-    elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+    elif [[ "$DISTRO_FAMILY" == "$DISTRO_RHEL" ]]; then
         if systemctl is-active --quiet firewalld; then
             log_info "Configuring firewalld..."
             if [[ "$APP_PORT" == "80" ]]; then

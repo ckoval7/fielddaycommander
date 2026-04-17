@@ -58,13 +58,8 @@ class WeatherDashboard extends Component
         }
 
         $config = app(EventContextService::class)->getEventConfiguration();
-
-        if ($config === null) {
-            return null;
-        }
-
-        $city = trim((string) $config->city);
-        $state = trim((string) $config->state);
+        $city = $config !== null ? trim((string) $config->city) : '';
+        $state = $config !== null ? trim((string) $config->state) : '';
 
         if ($city === '' || $state === '') {
             return null;
