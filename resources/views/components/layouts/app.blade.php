@@ -27,16 +27,20 @@
 
     {{-- NAVBAR mobile only --}}
     <x-nav sticky class="lg:hidden !z-20">
-        <x-slot:brand>
-            <x-app-brand />
+        <x-slot:brand class="min-w-0">
+            <x-app-brand class="min-w-0" />
         </x-slot:brand>
-        <x-slot:actions>
-            <livewire:components.weather-icon />
-            @auth
-                <livewire:components.notification-bell />
-            @endauth
-            <x-custom-theme-toggle class="me-2" />
-            <x-user-menu class="me-2" />
+        <x-slot:actions class="!gap-1 shrink-0">
+            <div class="flex flex-col items-end gap-0">
+                <livewire:components.weather-icon />
+                <div class="flex items-center gap-0">
+                    @auth
+                        <livewire:components.notification-bell />
+                    @endauth
+                    <x-custom-theme-toggle />
+                    <x-user-menu />
+                </div>
+            </div>
             <button type="button" class="lg:hidden me-3" aria-label="Toggle navigation menu" onclick="document.getElementById('main-drawer').click()">
                 <x-icon name="phosphor-list" class="cursor-pointer" />
             </button>

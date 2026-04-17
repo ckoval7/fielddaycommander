@@ -1,13 +1,13 @@
 @auth
 <div class="dropdown dropdown-end">
-    <button tabindex="0" class="btn btn-ghost btn-circle avatar">
-        <div class="w-10 rounded-full">
+    <button tabindex="0" class="btn btn-ghost btn-circle btn-sm lg:btn-md avatar">
+        <div class="w-8 lg:w-10 rounded-full">
             @if(auth()->user()->avatar_path && file_exists(public_path(auth()->user()->avatar_path)))
                 <img src="{{ asset(auth()->user()->avatar_path) }}" alt="{{ auth()->user()->call_sign }}" class="rounded-full">
             @else
                 <div class="avatar placeholder">
-                    <div class="bg-slate-600 text-white rounded-full w-10 flex items-center justify-center">
-                        <span class="text-sm">{{ auth()->user()->getInitials() }}</span>
+                    <div class="bg-slate-600 text-white rounded-full w-8 lg:w-10 flex items-center justify-center">
+                        <span class="text-xs lg:text-sm">{{ auth()->user()->getInitials() }}</span>
                     </div>
                 </div>
             @endif
