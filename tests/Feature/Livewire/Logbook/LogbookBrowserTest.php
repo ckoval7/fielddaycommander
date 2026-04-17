@@ -140,77 +140,25 @@ test('reset filters clears all filter values', function () {
         ->and($component->sectionIds)->toBe([]);
 });
 
-test('updated bandIds resets page', function () {
+test('updated filter property clears selections and resets page', function (string $property) {
     $component = new LogbookBrowser;
     $component->mount();
-    $component->updatedBandIds();
+    $component->selectedIds = [1, 2, 3];
 
-    expect($component)->toBeInstanceOf(LogbookBrowser::class);
-});
+    $component->updated($property);
 
-test('updated modeIds resets page', function () {
-    $component = new LogbookBrowser;
-    $component->mount();
-    $component->updatedModeIds();
-
-    expect($component)->toBeInstanceOf(LogbookBrowser::class);
-});
-
-test('updated stationIds resets page', function () {
-    $component = new LogbookBrowser;
-    $component->mount();
-    $component->updatedStationIds();
-
-    expect($component)->toBeInstanceOf(LogbookBrowser::class);
-});
-
-test('updated operatorIds resets page', function () {
-    $component = new LogbookBrowser;
-    $component->mount();
-    $component->updatedOperatorIds();
-
-    expect($component)->toBeInstanceOf(LogbookBrowser::class);
-});
-
-test('updated timeFrom resets page', function () {
-    $component = new LogbookBrowser;
-    $component->mount();
-    $component->updatedTimeFrom();
-
-    expect($component)->toBeInstanceOf(LogbookBrowser::class);
-});
-
-test('updated timeTo resets page', function () {
-    $component = new LogbookBrowser;
-    $component->mount();
-    $component->updatedTimeTo();
-
-    expect($component)->toBeInstanceOf(LogbookBrowser::class);
-});
-
-test('updated callsignSearch resets page', function () {
-    $component = new LogbookBrowser;
-    $component->mount();
-    $component->updatedCallsignSearch();
-
-    expect($component)->toBeInstanceOf(LogbookBrowser::class);
-});
-
-test('updated sectionIds resets page', function () {
-    $component = new LogbookBrowser;
-    $component->mount();
-    $component->updatedSectionIds();
-
-    expect($component)->toBeInstanceOf(LogbookBrowser::class);
-});
-
-test('updated showDuplicates resets page', function () {
-    $component = new LogbookBrowser;
-    $component->mount();
-    $component->updatedShowDuplicates();
-
-    expect($component)->toBeInstanceOf(LogbookBrowser::class);
-});
+    expect($component->selectedIds)->toBe([]);
+})->with([
+    'bandIds',
+    'modeIds',
+    'stationIds',
+    'operatorIds',
+    'timeFrom',
+    'timeTo',
+    'callsignSearch',
+    'sectionIds',
+    'showDuplicates',
+]);
 
 test('contacts are loaded when event is active', function () {
     Contact::factory()->count(5)->create([

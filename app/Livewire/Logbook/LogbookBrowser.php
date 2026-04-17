@@ -22,6 +22,21 @@ class LogbookBrowser extends Component
 {
     use WithPagination;
 
+    private const FILTER_PROPERTIES = [
+        'bandIds',
+        'modeIds',
+        'stationIds',
+        'operatorIds',
+        'timeFrom',
+        'timeTo',
+        'callsignSearch',
+        'sectionIds',
+        'showDuplicates',
+        'showTranscribed',
+        'showGota',
+        'showDeleted',
+    ];
+
     #[Url]
     public array $bandIds = [];
 
@@ -113,76 +128,12 @@ class LogbookBrowser extends Component
         $this->selectedIds = [];
     }
 
-    public function updatedBandIds(): void
+    public function updated(string $property): void
     {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedModeIds(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedStationIds(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedOperatorIds(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedTimeFrom(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedTimeTo(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedCallsignSearch(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedSectionIds(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedShowDuplicates(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedShowTranscribed(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedShowGota(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
-    }
-
-    public function updatedShowDeleted(): void
-    {
-        $this->selectedIds = [];
-        $this->resetPage();
+        if (in_array($property, self::FILTER_PROPERTIES, true)) {
+            $this->selectedIds = [];
+            $this->resetPage();
+        }
     }
 
     #[On('contact-updated')]
@@ -198,43 +149,7 @@ class LogbookBrowser extends Component
     #[Computed]
     public function activeFilterCount(): int
     {
-        $count = 0;
-
-        if (count($this->bandIds) > 0) {
-            $count++;
-        }
-        if (count($this->modeIds) > 0) {
-            $count++;
-        }
-        if (count($this->stationIds) > 0) {
-            $count++;
-        }
-        if (count($this->operatorIds) > 0) {
-            $count++;
-        }
-        if (count($this->sectionIds) > 0) {
-            $count++;
-        }
-        if ($this->callsignSearch !== null && $this->callsignSearch !== '') {
-            $count++;
-        }
-        if ($this->timeFrom !== null || $this->timeTo !== null) {
-            $count++;
-        }
-        if ($this->showDuplicates !== null && $this->showDuplicates !== '') {
-            $count++;
-        }
-        if ($this->showTranscribed !== null && $this->showTranscribed !== '') {
-            $count++;
-        }
-        if ($this->showGota !== null && $this->showGota !== '') {
-            $count++;
-        }
-        if ($this->showDeleted !== null && $this->showDeleted !== '') {
-            $count++;
-        }
-
-        return $count;
+        return count($this->activeFilterPills);
     }
 
     /**
@@ -245,20 +160,19 @@ class LogbookBrowser extends Component
     {
         $pills = [];
 
-        if (count($this->bandIds) > 0) {
-            $pills[] = ['key' => 'bandIds', 'label' => 'Band: '.count($this->bandIds).' selected'];
-        }
-        if (count($this->modeIds) > 0) {
-            $pills[] = ['key' => 'modeIds', 'label' => 'Mode: '.count($this->modeIds).' selected'];
-        }
-        if (count($this->stationIds) > 0) {
-            $pills[] = ['key' => 'stationIds', 'label' => 'Station: '.count($this->stationIds).' selected'];
-        }
-        if (count($this->operatorIds) > 0) {
-            $pills[] = ['key' => 'operatorIds', 'label' => 'Operator: '.count($this->operatorIds).' selected'];
-        }
-        if (count($this->sectionIds) > 0) {
-            $pills[] = ['key' => 'sectionIds', 'label' => 'Section: '.count($this->sectionIds).' selected'];
+        $idFilters = [
+            'bandIds' => ['key' => 'bandIds', 'prefix' => 'Band'],
+            'modeIds' => ['key' => 'modeIds', 'prefix' => 'Mode'],
+            'stationIds' => ['key' => 'stationIds', 'prefix' => 'Station'],
+            'operatorIds' => ['key' => 'operatorIds', 'prefix' => 'Operator'],
+            'sectionIds' => ['key' => 'sectionIds', 'prefix' => 'Section'],
+        ];
+
+        foreach ($idFilters as $property => $config) {
+            $count = count($this->{$property});
+            if ($count > 0) {
+                $pills[] = ['key' => $config['key'], 'label' => "{$config['prefix']}: {$count} selected"];
+            }
         }
         if ($this->callsignSearch !== null && $this->callsignSearch !== '') {
             $pills[] = ['key' => 'callsignSearch', 'label' => "Callsign: {$this->callsignSearch}"];

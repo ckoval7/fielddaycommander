@@ -1084,7 +1084,7 @@ test('event form saves location fields when creating event', function () {
         ->set('transmitter_count', 1)
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
-        ->set('grid_square', 'DM79')
+        ->set('gridSquare', 'DM79')
         ->set('latitude', 39.7392)
         ->set('longitude', -104.9903)
         ->set('city', 'Denver')
@@ -1132,9 +1132,9 @@ test('event form rejects invalid grid square format', function () {
         ->set('transmitter_count', 1)
         ->set('max_power_watts', 100)
         ->set('uses_battery', true)
-        ->set('grid_square', 'INVALID!')
+        ->set('gridSquare', 'INVALID!')
         ->call('save')
-        ->assertHasErrors(['grid_square']);
+        ->assertHasErrors(['gridSquare']);
 });
 
 test('event form loads location fields when editing', function () {
@@ -1152,7 +1152,7 @@ test('event form loads location fields when editing', function () {
 
     $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
 
-    expect($component->get('grid_square'))->toBe('FN31');
+    expect($component->get('gridSquare'))->toBe('FN31');
     expect($component->get('city'))->toBe('Hartford');
     expect($component->get('state'))->toBe('Connecticut');
     expect((float) $component->get('latitude'))->toEqual(41.7658);

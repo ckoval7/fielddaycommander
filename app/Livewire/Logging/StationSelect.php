@@ -64,17 +64,15 @@ class StationSelect extends Component
         $status = $service->getGracePeriodStatus($contextEvent);
 
         // Allow session setup during active events or within 15 minutes of start
-        if ($status === 'active') {
-            return $contextEvent->load('eventConfiguration.stations.operatingSessions.operator');
+        $withinPreStartWindow = $contextEvent->start_time
+            && $contextEvent->start_time->copy()->subMinutes(15)->lte(appNow())
+            && $contextEvent->start_time->gt(appNow());
+
+        if ($status !== 'active' && ! $withinPreStartWindow) {
+            return null;
         }
 
-        // Allow setup 15 minutes before event starts (contacts still require active event)
-        if ($contextEvent->start_time && $contextEvent->start_time->copy()->subMinutes(15)->lte(appNow())
-            && $contextEvent->start_time->gt(appNow())) {
-            return $contextEvent->load('eventConfiguration.stations.operatingSessions.operator');
-        }
-
-        return null;
+        return $contextEvent->load('eventConfiguration.stations.operatingSessions.operator');
     }
 
     #[Computed]
@@ -180,16 +178,11 @@ class StationSelect extends Component
     #[Computed]
     public function stationSupportedBands(): ?Collection
     {
-        if (! $this->selectedStationId) {
-            return null;
-        }
+        $station = $this->selectedStationId
+            ? $this->stations->firstWhere('id', $this->selectedStationId)
+            : null;
 
-        $station = $this->stations->firstWhere('id', $this->selectedStationId);
-        if (! $station) {
-            return null;
-        }
-
-        if (! $station->primaryRadio) {
+        if (! $station?->primaryRadio) {
             return null;
         }
 

@@ -115,7 +115,7 @@
                             {{-- Weather Alerts --}}
                             <x-checkbox
                                 label="Email weather alerts"
-                                wire:model="weather_alert_email"
+                                wire:model="weatherAlertEmail"
                                 hint="Send an email when weather alerts become active"
                             />
                         </div>
@@ -261,7 +261,7 @@
                                 <div class="text-sm text-base-content/60">NWS and manual weather alerts</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notify_weather_alert" />
+                        <x-toggle wire:model="notifyWeatherAlert" />
                     </div>
                 </div>
 

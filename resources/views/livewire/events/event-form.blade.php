@@ -119,7 +119,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <x-input
                         label="Grid Square"
-                        wire:model="grid_square"
+                        wire:model="gridSquare"
                         icon="phosphor-map-trifold"
                         placeholder="DM79"
                         hint="Maidenhead locator (e.g. DM79 or DM79ab). Reference info for operators; not used by any automated feature yet."
