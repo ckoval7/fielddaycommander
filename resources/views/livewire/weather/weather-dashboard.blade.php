@@ -143,7 +143,7 @@
                                             <td>
                                                 {{ $hour['wind_speed'] !== null ? round($hour['wind_speed']) : '—' }}
                                                 @if($capeLabel)
-                                                    <div class="text-xs font-semibold {{ $cape >= 1500 ? 'text-error' : 'text-warning' }}">{{ $capeLabel }}</div>
+                                                    <div class="text-xs font-semibold {{ $cape >= 1500 ? 'text-red-700 dark:text-error' : 'text-amber-700 dark:text-warning' }}">{{ $capeLabel }}</div>
                                                 @endif
                                             </td>
                                         </tr>
