@@ -46,6 +46,22 @@ test('redirects admin routes to demo landing without demo session', function () 
     $response->assertRedirect(route('demo.landing'));
 });
 
+test('skips expensive swap when worker is already pointed at visitor DB', function () {
+    $uuid = (string) Str::uuid();
+    $dbName = 'demo_'.str_replace('-', '_', $uuid);
+
+    // Simulate a prior request on the same Octane worker having already
+    // swapped the demo connection to this visitor's database.
+    Config::set('database.connections.demo.database', $dbName);
+
+    $response = $this->withUnencryptedCookies(['demo_session' => $uuid.'|operator'])->get('/');
+
+    // The fast path must not bounce the visitor to the landing page: that
+    // response is reserved for a genuine missing-DB scenario and would wipe
+    // the demo_session cookie.
+    expect($response->isRedirect(route('demo.landing')))->toBeFalse();
+});
+
 test('middleware is no-op when demo mode is disabled', function () {
     Config::set('demo.enabled', false);
     // GET / renders the public landing for unauthenticated visitors (200).

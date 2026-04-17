@@ -51,6 +51,15 @@ class DemoMiddleware
 
         $dbName = 'demo_'.str_replace('-', '_', $uuid);
 
+        // Under Octane, `config()` mutations persist across requests in the same
+        // worker. If this worker is already pointed at the visitor's DB from a
+        // prior request, skip the expensive swap work (PDO reconnect, permission
+        // cache flush, user reload) — the swapped connection, permission cache,
+        // and session state all remain correct for this visitor.
+        if (config('database.connections.demo.database') === $dbName) {
+            return $next($request);
+        }
+
         if (! $this->demoDatabaseExists($dbName)) {
             return redirect()->route('demo.landing')
                 ->withoutCookie('demo_session');
@@ -63,10 +72,9 @@ class DemoMiddleware
         // Clear Spatie permission cache so it re-loads from the demo DB
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        // Always re-authenticate from the cookie's role slug.
-        // The session guard may resolve a stale user from the wrong database
-        // before DemoMiddleware swaps the connection, so we unconditionally
-        // set the correct user from the visitor's isolated demo DB.
+        // On visitor change, re-authenticate from the cookie's role slug so the
+        // session guard doesn't serve a stale user resolved against the previous
+        // visitor's demo DB.
         if ($roleSlug) {
             $user = User::role($this->resolveRoleName($roleSlug))->first();
             if ($user) {
