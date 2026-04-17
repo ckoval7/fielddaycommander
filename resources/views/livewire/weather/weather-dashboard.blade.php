@@ -1,4 +1,4 @@
-<div wire:poll.15m="loadData">
+<div wire:poll.900s="loadData">
     <x-slot:title>Weather</x-slot:title>
 
     <div class="p-6">
