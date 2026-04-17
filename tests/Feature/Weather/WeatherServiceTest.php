@@ -1051,6 +1051,15 @@ test('getAlerts in demo mode falls through to shared cache when session has no a
     expect(makeWeatherService()->getAlerts())->toEqual($shared);
 });
 
+test('getAlerts in demo mode ignores non-manual session alerts and returns shared cache', function () {
+    config()->set('demo.enabled', true);
+    Setting::set('weather.alerts', [['event' => 'Severe Thunderstorm Warning', 'headline' => 'stale session']]);
+    $shared = [['event' => 'Tornado Warning', 'headline' => 'shared']];
+    cache()->put('weather:demo:alerts', $shared, now()->addHour());
+
+    expect(makeWeatherService()->getAlerts())->toEqual($shared);
+});
+
 test('getAlerts outside demo mode returns Setting alerts', function () {
     config()->set('demo.enabled', false);
     $alerts = [['event' => 'Severe Thunderstorm Warning']];

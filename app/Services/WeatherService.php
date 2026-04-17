@@ -250,11 +250,16 @@ class WeatherService
     {
         $sessionAlerts = Setting::get('weather.alerts', []);
 
-        if (! empty($sessionAlerts)) {
-            return $sessionAlerts;
-        }
-
         if (config('demo.enabled')) {
+            $manualAlerts = array_values(array_filter(
+                $sessionAlerts,
+                fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT,
+            ));
+
+            if (! empty($manualAlerts)) {
+                return $manualAlerts;
+            }
+
             return cache()->get('weather:demo:alerts', []);
         }
 
