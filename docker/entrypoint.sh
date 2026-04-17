@@ -83,11 +83,8 @@ else
 fi
 
 # 9. Cache configuration
-echo "Caching configuration..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan event:cache
+echo "Optimizing application (config/route/view/event caches)..."
+php artisan optimize
 
 echo "=== Starting services via supervisord ==="
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

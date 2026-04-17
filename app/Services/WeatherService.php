@@ -182,21 +182,12 @@ class WeatherService
                 ? cache()->get('weather:demo:alert_fingerprint')
                 : Setting::get('weather.alert_fingerprint');
 
+            $preserveExistingManualAlert = false;
             if (empty($alerts) && ! $isDemo) {
                 $existingAlerts = Setting::get('weather.alerts', []);
-                $hasManualAlert = collect($existingAlerts)->contains(
+                $preserveExistingManualAlert = collect($existingAlerts)->contains(
                     fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT
                 );
-
-                if ($hasManualAlert) {
-                    cache()->put('weather.alerts_status', [
-                        'last_attempt' => now()->toIso8601String(),
-                        'success' => true,
-                        'error' => null,
-                    ], now()->addHours(2));
-
-                    return;
-                }
             }
 
             if ($isDemo) {
@@ -207,7 +198,7 @@ class WeatherService
                     cache()->put('weather:demo:alert_fingerprint', $fingerprint, $ttl);
                     WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false);
                 }
-            } else {
+            } elseif (! $preserveExistingManualAlert) {
                 Setting::set('weather.alerts', $alerts);
 
                 if ($fingerprint !== $previousFingerprint) {
@@ -372,6 +363,20 @@ class WeatherService
             return $cached;
         }
 
+        $points = $this->requestNwsPoints($lat, $lon);
+
+        if ($points !== null) {
+            cache()->forever($cacheKey, $points);
+        }
+
+        return $points;
+    }
+
+    /**
+     * @return array{zone: string, county: string}|null
+     */
+    private function requestNwsPoints(float $lat, float $lon): ?array
+    {
         $email = Setting::get('contact_email') ?? 'admin@fielddaycommander.org';
         $response = Http::withHeaders([
             'User-Agent' => '('.config('app.name').', '.config('app.url').'; '.$email.')',
@@ -393,26 +398,28 @@ class WeatherService
             return null;
         }
 
-        $points = ['zone' => $zone, 'county' => $county];
-        cache()->forever($cacheKey, $points);
+        $city = trim((string) $response->json('properties.relativeLocation.properties.city', ''));
+        $state = trim((string) $response->json('properties.relativeLocation.properties.state', ''));
 
-        return $points;
+        if ($city !== '' && $state !== '') {
+            Setting::set('weather.location', ['city' => $city, 'state' => $state]);
+        }
+
+        return ['zone' => $zone, 'county' => $county];
     }
 
     private function pointInPolygon(float $lat, float $lon, array $geometry): bool
     {
-        if ($geometry['type'] === 'MultiPolygon') {
-            foreach ($geometry['coordinates'] as $polygonRings) {
-                if ($this->pointInRing($lat, $lon, $polygonRings[0])) {
-                    return true;
-                }
+        $rings = match ($geometry['type']) {
+            'Polygon' => [$geometry['coordinates'][0]],
+            'MultiPolygon' => array_map(fn ($polygon) => $polygon[0], $geometry['coordinates']),
+            default => [],
+        };
+
+        foreach ($rings as $ring) {
+            if ($this->pointInRing($lat, $lon, $ring)) {
+                return true;
             }
-
-            return false;
-        }
-
-        if ($geometry['type'] === 'Polygon') {
-            return $this->pointInRing($lat, $lon, $geometry['coordinates'][0]);
         }
 
         return false;

@@ -22,10 +22,22 @@ services:
       DB_USERNAME: "${DB_USERNAME:-fd_commander}"
       DB_PASSWORD: "${DB_PASSWORD}"
       REVERB_SERVER_HOST: "0.0.0.0"
+      # Redis drivers — contact logs fsync to disk every write (AOF always),
+      # everything else caches aggressively in RAM.
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+      REDIS_CACHE_DB: "1"
     volumes:
       - app-storage:/app/storage
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -46,20 +58,36 @@ services:
       retries: 10
     restart: unless-stopped
 
-  # Uncomment to add Redis for caching/broadcasting
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: fd-commander-redis
-  #   volumes:
-  #     - redis-data:/data
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "ping"]
-  #     interval: 5s
-  #     timeout: 3s
-  #     retries: 5
-  #   restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    container_name: fd-commander-redis
+    # AOF with appendfsync=always fsyncs every Redis write, so queue jobs
+    # survive a power cut. (Contacts go straight to the DB, not through Redis.)
+    # Heavy RAM cache with volatile-lru eviction keeps queue/session keys in
+    # place and only evicts TTL'd cache entries when maxmemory is reached.
+    # REDIS_MAXMEMORY is sized by docker/setup.sh based on host RAM (Pi-friendly).
+    command: >-
+      redis-server
+      --appendonly yes
+      --appendfsync always
+      --no-appendfsync-on-rewrite no
+      --aof-use-rdb-preamble yes
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --maxmemory ${REDIS_MAXMEMORY:-256mb}
+      --maxmemory-policy volatile-lru
+      --tcp-keepalive 60
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   app-storage:
   mysql-data:
-  # redis-data:
+  redis-data:

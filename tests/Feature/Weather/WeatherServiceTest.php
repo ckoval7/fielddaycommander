@@ -322,6 +322,54 @@ test('checkAlerts does not broadcast when fingerprint is unchanged', function ()
     EventFacade::assertNotDispatched(WeatherAlertChanged::class);
 });
 
+test('checkAlerts stores NWS relativeLocation as weather.location setting', function () {
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+                'relativeLocation' => [
+                    'properties' => [
+                        'city' => 'Madison',
+                        'state' => 'CT',
+                    ],
+                ],
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    expect(Setting::get('weather.location'))->toMatchArray([
+        'city' => 'Madison',
+        'state' => 'CT',
+    ]);
+});
+
+test('checkAlerts does not overwrite weather.location when relativeLocation missing', function () {
+    Setting::set('weather.location', ['city' => 'Original', 'state' => 'CT']);
+
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
+    ]);
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+
+    expect(Setting::get('weather.location'))->toMatchArray([
+        'city' => 'Original',
+        'state' => 'CT',
+    ]);
+});
+
 test('checkAlerts stores empty array and broadcasts all-clear when no relevant alerts', function () {
     EventFacade::fake([WeatherAlertChanged::class]);
     Setting::set('weather.alert_fingerprint', md5(json_encode([['event' => 'Old Alert']])));

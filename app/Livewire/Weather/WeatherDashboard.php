@@ -3,6 +3,7 @@
 namespace App\Livewire\Weather;
 
 use App\Models\Setting;
+use App\Services\EventContextService;
 use App\Services\WeatherService;
 use App\Support\WmoCode;
 use Carbon\Carbon;
@@ -28,6 +29,8 @@ class WeatherDashboard extends Component
 
     public string $windUnit = 'mph';
 
+    public ?string $locationLabel = null;
+
     public function mount(): void
     {
         if (! app(WeatherService::class)->isWeatherPageVisible()) {
@@ -37,7 +40,44 @@ class WeatherDashboard extends Component
         }
 
         $this->canManageWeather = auth()->user()?->can('manage-weather') ?? false;
+        $this->locationLabel = $this->resolveLocationLabel();
         $this->loadData();
+    }
+
+    protected function resolveLocationLabel(): ?string
+    {
+        $nws = Setting::get('weather.location');
+
+        if (is_array($nws)) {
+            $city = trim((string) ($nws['city'] ?? ''));
+            $state = trim((string) ($nws['state'] ?? ''));
+
+            if ($city !== '' && $state !== '') {
+                return $city.', '.$state;
+            }
+        }
+
+        $config = app(EventContextService::class)->getEventConfiguration();
+
+        if ($config === null) {
+            return null;
+        }
+
+        $city = trim((string) $config->city);
+        $state = trim((string) $config->state);
+
+        if ($city === '' || $state === '') {
+            return null;
+        }
+
+        return $city.', '.$state;
+    }
+
+    protected function pageTitle(): string
+    {
+        return $this->locationLabel !== null
+            ? 'Weather for '.$this->locationLabel
+            : 'Weather';
     }
 
     public function loadData(): void
@@ -143,6 +183,6 @@ class WeatherDashboard extends Component
     public function render(): View
     {
         return view('livewire.weather.weather-dashboard')
-            ->layout('layouts.app', ['title' => 'Weather']);
+            ->layout('layouts.app', ['title' => $this->pageTitle()]);
     }
 }

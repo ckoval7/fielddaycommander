@@ -78,7 +78,7 @@ class EventForm extends Component
     public ?string $gota_callsign = null;
 
     // Section 2: Event Location (all optional)
-    public ?string $grid_square = null;
+    public ?string $gridSquare = null;
 
     public ?float $latitude = null;
 
@@ -213,7 +213,7 @@ class EventForm extends Component
             $this->gota_callsign = $this->configuration->gota_callsign;
 
             // Load location fields
-            $this->grid_square = $this->configuration->grid_square;
+            $this->gridSquare = $this->configuration->grid_square;
             $this->latitude = $this->configuration->latitude;
             $this->longitude = $this->configuration->longitude;
             $this->city = $this->configuration->city;
@@ -539,7 +539,7 @@ class EventForm extends Component
             'uses_water' => $validated['uses_water'] ?? false,
             'uses_methane' => $validated['uses_methane'] ?? false,
             'uses_other_power' => $validated['uses_other_power'] ?? null,
-            'grid_square' => $validated['grid_square'] ?? null,
+            'grid_square' => $validated['gridSquare'] ?? null,
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
             'city' => $validated['city'] ?? null,
@@ -600,7 +600,7 @@ class EventForm extends Component
             'club_name' => $validated['club_name'] ?? null,
             'section_id' => $validated['section_id'],
             'power_multiplier' => $this->powerMultiplier,
-            'grid_square' => $validated['grid_square'] ?? null,
+            'grid_square' => $validated['gridSquare'] ?? null,
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
             'city' => $validated['city'] ?? null,
@@ -744,7 +744,7 @@ class EventForm extends Component
     private function locationRules(): array
     {
         return [
-            'grid_square' => ['nullable', 'string', 'max:6', 'regex:/^[A-R]{2}[0-9]{2}([A-X]{2})?$/i'],
+            'gridSquare' => ['nullable', 'string', 'max:6', 'regex:/^[A-R]{2}[0-9]{2}([A-X]{2})?$/i'],
             'latitude' => ['nullable', 'numeric', 'min:-90', 'max:90'],
             'longitude' => ['nullable', 'numeric', 'min:-180', 'max:180'],
             'city' => ['nullable', 'string', 'max:100'],
@@ -824,7 +824,7 @@ class EventForm extends Component
             'transmitter_count.required' => 'Please specify the number of transmitters.',
             'max_power_watts.required' => 'Please specify the maximum power.',
             'gota_callsign.regex' => 'The GOTA callsign format is invalid. Use only letters, numbers, and forward slashes.',
-            'grid_square.regex' => 'Grid square must be a valid Maidenhead locator (e.g. DM79 or DM79ab).',
+            'gridSquare.regex' => 'Grid square must be a valid Maidenhead locator (e.g. DM79 or DM79ab).',
             'latitude.min' => 'Latitude must be between -90 and 90 degrees.',
             'latitude.max' => 'Latitude must be between -90 and 90 degrees.',
             'longitude.min' => 'Longitude must be between -180 and 180 degrees.',

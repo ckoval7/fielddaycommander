@@ -139,18 +139,18 @@
             @else
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
-                        <label class="label label-text text-xs">Temp ({{ $units === 'metric' ? '°C' : '°F' }})</label>
-                        <input wire:model="temperature" type="number" class="input input-bordered input-sm w-full" placeholder="72" />
+                        <label for="weather-temperature" class="label label-text text-xs">Temp ({{ $units === 'metric' ? '°C' : '°F' }})</label>
+                        <input id="weather-temperature" wire:model="temperature" type="number" class="input input-bordered input-sm w-full" placeholder="72" />
                         @error('temperature') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="label label-text text-xs">Wind ({{ $units === 'metric' ? 'km/h' : 'mph' }})</label>
-                        <input wire:model="windSpeed" type="number" class="input input-bordered input-sm w-full" placeholder="10" />
+                        <label for="weather-wind-speed" class="label label-text text-xs">Wind ({{ $units === 'metric' ? 'km/h' : 'mph' }})</label>
+                        <input id="weather-wind-speed" wire:model="windSpeed" type="number" class="input input-bordered input-sm w-full" placeholder="10" />
                         @error('windSpeed') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="label label-text text-xs">Direction</label>
-                        <select wire:model="windDirection" class="select select-bordered select-sm w-full">
+                        <label for="weather-wind-direction" class="label label-text text-xs">Direction</label>
+                        <select id="weather-wind-direction" wire:model="windDirection" class="select select-bordered select-sm w-full">
                             @foreach(['N','NE','E','SE','S','SW','W','NW'] as $dir)
                                 <option value="{{ $dir }}">{{ $dir }}</option>
                             @endforeach
@@ -158,14 +158,14 @@
                         @error('windDirection') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="label label-text text-xs">Rain %</label>
-                        <input wire:model="precipitationChance" type="number" min="0" max="100" class="input input-bordered input-sm w-full" placeholder="20" />
+                        <label for="weather-precipitation-chance" class="label label-text text-xs">Rain %</label>
+                        <input id="weather-precipitation-chance" wire:model="precipitationChance" type="number" min="0" max="100" class="input input-bordered input-sm w-full" placeholder="20" />
                         @error('precipitationChance') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
                 <div>
-                    <label class="label label-text text-xs">Notes (optional)</label>
-                    <textarea wire:model="notes" class="textarea textarea-bordered w-full text-sm" rows="2"
+                    <label for="weather-notes" class="label label-text text-xs">Notes (optional)</label>
+                    <textarea id="weather-notes" wire:model="notes" class="textarea textarea-bordered w-full text-sm" rows="2"
                         placeholder="Radar showing cells to the west, monitor closely"></textarea>
                     @error('notes') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -201,8 +201,8 @@
                 </button>
             @else
                 <div class="space-y-2">
-                    <label class="label label-text text-xs">Alert Message</label>
-                    <input wire:model="alertMessage" type="text" class="input input-bordered w-full"
+                    <label for="weather-alert-message" class="label label-text text-xs">Alert Message</label>
+                    <input id="weather-alert-message" wire:model="alertMessage" type="text" class="input input-bordered w-full"
                         placeholder="Lightning within 10 miles — seek shelter immediately" />
                     @error('alertMessage') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                 </div>

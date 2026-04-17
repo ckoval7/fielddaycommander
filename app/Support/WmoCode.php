@@ -4,6 +4,9 @@ namespace App\Support;
 
 class WmoCode
 {
+    /**
+     * Prevent instantiation — this class exposes only static helpers.
+     */
     private function __construct() {}
 
     /** @var array<int, string> */
