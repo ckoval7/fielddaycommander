@@ -266,36 +266,33 @@ print_dry_run() {
 install_packages_debian() {
     log_phase "Phase 2: Installing system packages (Debian/Ubuntu)"
 
-    # Add Ondrej PHP repo (PPA on Ubuntu, DEB repo on Debian/Raspbian)
-    if ! command -v php8.4 &>/dev/null; then
-        apt-get update -y
-        source /etc/os-release
-        apt-get install -y lsb-release ca-certificates curl software-properties-common
-        if [[ "$ID" == "ubuntu" ]]; then
-            log_info "Adding Ondrej PHP PPA (Ubuntu)..."
-            if ! add-apt-repository -y ppa:ondrej/php 2>/dev/null; then
-                log_warn "PPA not available for $(lsb_release -sc), falling back to Sury DEB repo..."
-                curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
-                # Use noble (24.04 LTS) as fallback when current codename isn't supported
-                local sury_codename
-                sury_codename=$(lsb_release -sc)
-                echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${sury_codename} main" \
-                    > /etc/apt/sources.list.d/sury-php.list
-                # Verify the repo is reachable; if not, fall back to latest LTS codename
-                if ! apt-get update -o Dir::Etc::sourcelist=/etc/apt/sources.list.d/sury-php.list -o Dir::Etc::sourceparts=- -q 2>/dev/null; then
-                    log_warn "Sury repo unavailable for '${sury_codename}', using 'noble' (24.04 LTS) packages..."
-                    echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ noble main" \
-                        > /etc/apt/sources.list.d/sury-php.list
-                fi
-            fi
-        else
-            log_info "Adding Ondrej PHP DEB repo (Debian)..."
-            curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
-            echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" \
-                > /etc/apt/sources.list.d/sury-php.list
-        fi
-    else
+    source /etc/os-release
+    local codename="${VERSION_CODENAME:-}"
+
+    apt-get update -y
+    apt-get install -y ca-certificates curl gnupg
+
+    # PHP 8.4 ships natively on Debian 13+ (trixie) and any distro where apt already
+    # lists php8.4-cli. Only fall back to a third-party repo (Sury for Debian/Raspbian,
+    # ondrej/php PPA for Ubuntu) when the native archives don't carry it.
+    if command -v php8.4 &>/dev/null; then
         log_warn "PHP 8.4 already installed, skipping repo setup"
+    elif apt-cache show php8.4-cli &>/dev/null; then
+        log_info "PHP 8.4 available in default repos (${ID} ${codename}), skipping third-party repo"
+    elif [[ "$ID" == "ubuntu" ]]; then
+        log_info "Adding ondrej/php PPA for Ubuntu ${codename}..."
+        install -d -m 0755 /usr/share/keyrings
+        curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x14aa40ec0831756756d7f66c4f4ea0aae5267a6c' \
+            | gpg --dearmor --yes -o /usr/share/keyrings/ondrej-php.gpg
+        echo "deb [signed-by=/usr/share/keyrings/ondrej-php.gpg] https://ppa.launchpadcontent.net/ondrej/php/ubuntu ${codename} main" \
+            > /etc/apt/sources.list.d/ondrej-php.list
+        apt-get update -y
+    else
+        log_info "Adding Sury PHP DEB repo for ${ID} ${codename}..."
+        curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+        echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${codename} main" \
+            > /etc/apt/sources.list.d/sury-php.list
+        apt-get update -y
     fi
 
     # Add NodeSource repo
@@ -307,7 +304,6 @@ install_packages_debian() {
     fi
 
     log_info "Installing packages..."
-    apt-get update -y
     apt-get install -y \
         php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
         php8.4-curl php8.4-zip php8.4-bcmath php8.4-gd php8.4-intl php8.4-redis \
