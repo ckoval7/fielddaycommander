@@ -333,6 +333,13 @@ class WeatherService
             return null;
         }
 
+        $city = trim((string) $response->json('properties.relativeLocation.properties.city', ''));
+        $state = trim((string) $response->json('properties.relativeLocation.properties.state', ''));
+
+        if ($city !== '' && $state !== '') {
+            Setting::set('weather.location', ['city' => $city, 'state' => $state]);
+        }
+
         $points = ['zone' => $zone, 'county' => $county];
         cache()->forever($cacheKey, $points);
 

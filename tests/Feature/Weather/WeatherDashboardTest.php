@@ -1,8 +1,11 @@
 <?php
 
 use App\Livewire\Weather\WeatherDashboard;
+use App\Models\Event;
+use App\Models\EventConfiguration;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\EventContextService;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
@@ -12,6 +15,9 @@ beforeEach(function () {
     Setting::set('weather.alerts', []);
     Setting::set('weather.last_fetch', null);
     Setting::set('weather.units', 'imperial');
+    Setting::set('weather.location', null);
+
+    app(EventContextService::class)->clearCache();
 });
 
 test('dashboard is accessible to guests', function () {
@@ -267,4 +273,75 @@ test('dashboard does not redirect when Open-Meteo is enabled', function () {
 
     Livewire::test(WeatherDashboard::class)
         ->assertOk();
+});
+
+test('dashboard header shows city and state from active event configuration', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'latitude' => 41.3083,
+        'longitude' => -72.9279,
+        'city' => 'New Haven',
+        'state' => 'CT',
+    ]);
+    app(EventContextService::class)->clearCache();
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertSet('locationLabel', 'New Haven, CT')
+        ->assertSee('Weather for New Haven, CT');
+});
+
+test('dashboard header falls back to plain Weather when no city or state configured', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'city' => null,
+        'state' => null,
+    ]);
+    app(EventContextService::class)->clearCache();
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertSet('locationLabel', null)
+        ->assertSee('Weather')
+        ->assertDontSee('Weather for');
+});
+
+test('dashboard header is plain Weather when no event is configured', function () {
+    Livewire::test(WeatherDashboard::class)
+        ->assertSet('locationLabel', null)
+        ->assertSee('Weather')
+        ->assertDontSee('Weather for');
+});
+
+test('dashboard header prefers NWS-sourced location over event configuration', function () {
+    Setting::set('weather.location', ['city' => 'Madison', 'state' => 'CT']);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'city' => 'New Haven',
+        'state' => 'CT',
+    ]);
+    app(EventContextService::class)->clearCache();
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertSet('locationLabel', 'Madison, CT')
+        ->assertSee('Weather for Madison, CT');
+});
+
+test('dashboard header uses NWS location even with no event configuration', function () {
+    Setting::set('weather.location', ['city' => 'Madison', 'state' => 'CT']);
+
+    Livewire::test(WeatherDashboard::class)
+        ->assertSet('locationLabel', 'Madison, CT')
+        ->assertSee('Weather for Madison, CT');
 });

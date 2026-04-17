@@ -1,10 +1,11 @@
 <div wire:poll.900s="loadData">
-    <x-slot:title>Weather</x-slot:title>
+    @php $headerText = $locationLabel !== null ? 'Weather for '.$locationLabel : 'Weather'; @endphp
+    <x-slot:title>{{ $headerText }}</x-slot:title>
 
     <div class="p-6">
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold">Weather</h1>
+                <h1 class="text-2xl md:text-3xl font-bold">{{ $headerText }}</h1>
                 @if($isManual)
                     <span class="badge badge-warning mt-1">Manual Override Active</span>
                 @endif
