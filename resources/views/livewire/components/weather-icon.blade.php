@@ -1,4 +1,4 @@
-<div wire:poll.15m="loadWeatherData">
+<div wire:poll.900s="loadWeatherData">
     @php
         $shouldShow = $hasData || $canManageWeather;
         $isGrayedOut = ! $hasData && $canManageWeather;
