@@ -227,6 +227,7 @@ compute_redis_maxmemory() {
     elif [[ $total_mb -le 8192 ]]; then echo "1gb"
     else                                 echo "2gb"
     fi
+    return 0
 }
 
 # set_env: idempotently set a key=value in the deployed .env file.
@@ -235,6 +236,7 @@ set_env() {
     local key="$1" value="$2"
     sed -i "/^#\?${key}=/d" "$env_file"
     echo "${key}=${value}" >> "$env_file"
+    return 0
 }
 
 # Ask the user whether to migrate to Redis on first run. Returns 0 = migrate,
