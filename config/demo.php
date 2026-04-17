@@ -53,7 +53,9 @@ return [
     | Weather
     |--------------------------------------------------------------------------
     |
-    | Shared weather location and cache settings for demo sessions.
+    | Shared weather location and cache settings for demo sessions. Requires
+    | a shared cache driver (Redis, Memcached, or database) in production —
+    | `file` / `array` drivers are per-node and break cross-session visibility.
     |
     */
 
