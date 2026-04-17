@@ -44,6 +44,26 @@ random_string() {
     tr -dc 'A-Za-z0-9' < /dev/urandom | head -c "$length" || true
 }
 
+# Pick a Redis maxmemory value sized to the host (Pi-friendly).
+# Buckets by total RAM: ≤1G→128mb, ≤2G→256mb, ≤4G→512mb, ≤8G→1gb, else 2gb.
+compute_redis_maxmemory() {
+    local total_kb
+    total_kb=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+    local total_mb=$(( total_kb / 1024 ))
+
+    if [[ $total_mb -le 1024 ]]; then
+        echo "128mb"
+    elif [[ $total_mb -le 2048 ]]; then
+        echo "256mb"
+    elif [[ $total_mb -le 4096 ]]; then
+        echo "512mb"
+    elif [[ $total_mb -le 8192 ]]; then
+        echo "1gb"
+    else
+        echo "2gb"
+    fi
+}
+
 echo ""
 echo "Checking secrets..."
 
@@ -70,7 +90,17 @@ if $CREATED; then
     sed -i "s|^APP_DEBUG=.*|APP_DEBUG=false|" "$ENV_FILE"
     sed -i "s|^DB_CONNECTION=.*|DB_CONNECTION=mysql|" "$ENV_FILE"
     sed -i "s|^BROADCAST_CONNECTION=.*|BROADCAST_CONNECTION=reverb|" "$ENV_FILE"
-    sed -i "s|^QUEUE_CONNECTION=.*|QUEUE_CONNECTION=database|" "$ENV_FILE"
+    # Redis-backed cache/session/queue — fast in RAM, durable on disk via AOF.
+    sed -i "s|^CACHE_STORE=.*|CACHE_STORE=redis|" "$ENV_FILE"
+    sed -i "s|^SESSION_DRIVER=.*|SESSION_DRIVER=redis|" "$ENV_FILE"
+    sed -i "s|^QUEUE_CONNECTION=.*|QUEUE_CONNECTION=redis|" "$ENV_FILE"
+    set_env "REDIS_CLIENT" "phpredis"
+    set_env "REDIS_HOST" "redis"
+    set_env "REDIS_PORT" "6379"
+    set_env "REDIS_DB" "0"
+    set_env "REDIS_CACHE_DB" "1"
+    # Sized to host RAM so Pi-class machines don't starve the app.
+    set_env "REDIS_MAXMEMORY" "$(compute_redis_maxmemory)"
 fi
 
 echo ""

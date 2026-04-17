@@ -46,6 +46,7 @@ SSL_KEY=""
 NO_SEEDERS=false
 DRY_RUN=false
 DB_SERVICE="mariadb"
+REDIS_SERVICE="redis"
 
 # Save original args for potential re-exec (password sanitization)
 ORIG_ARGS=("$@")
@@ -158,10 +159,12 @@ detect_distro() {
         DISTRO_FAMILY="debian"
         PKG_MANAGER="apt"
         WEB_GROUP="www-data"
+        REDIS_SERVICE="redis-server"
     elif [[ "$ID" == "rhel" ]] || [[ "$ID" == "almalinux" ]] || [[ "$ID" == "rocky" ]] || [[ "${ID_LIKE:-}" == *"rhel"* ]] || [[ "${ID_LIKE:-}" == *"fedora"* ]]; then
         DISTRO_FAMILY="rhel"
         PKG_MANAGER="dnf"
         WEB_GROUP="www-data"
+        REDIS_SERVICE="redis"
     else
         log_error "Unsupported distribution: $ID"
         exit 1
@@ -253,7 +256,8 @@ print_dry_run() {
     echo "Source:         $( [[ -n "$REPO_URL" ]] && echo "$REPO_URL (branch: $BRANCH)" || echo "Copy current directory" )"
     echo "Seeders:        $( $NO_SEEDERS && echo "Skipped" || echo "Production seeders" )"
     echo ""
-    echo "Phases: Packages → App Setup → Database → Caddy → SSL → Systemd → Firewall → Cache"
+    echo "Cache/Queue/Session: Redis (AOF fsync=always, volatile-lru)"
+    echo "Phases: Packages → App Setup → Database → Redis → Caddy → SSL → Systemd → Firewall → Cache"
 }
 
 # --- Package Installation ---
@@ -305,7 +309,7 @@ install_packages_debian() {
     apt-get install -y \
         php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
         php8.4-curl php8.4-zip php8.4-bcmath php8.4-gd php8.4-intl php8.4-redis \
-        mariadb-server nodejs unzip git
+        mariadb-server redis-server nodejs unzip git
 }
 
 install_packages_rhel() {
@@ -330,7 +334,7 @@ install_packages_rhel() {
     dnf install -y \
         php-cli php-mysqlnd php-mbstring php-xml \
         php-curl php-zip php-bcmath php-gd php-intl php-redis \
-        mariadb-server nodejs unzip git
+        mariadb-server redis nodejs unzip git
 
     # SELinux: allow FrankenPHP network access and set binary context
     if command -v setsebool &>/dev/null; then
@@ -475,8 +479,16 @@ configure_env() {
     set_env "DB_USERNAME" "$DB_USER"
     set_env "DB_PASSWORD" "$DB_PASSWORD"
 
-    set_env "QUEUE_CONNECTION" "database"
+    set_env "CACHE_STORE" "redis"
+    set_env "SESSION_DRIVER" "redis"
+    set_env "QUEUE_CONNECTION" "redis"
     set_env "BROADCAST_CONNECTION" "reverb"
+
+    set_env "REDIS_CLIENT" "phpredis"
+    set_env "REDIS_HOST" "127.0.0.1"
+    set_env "REDIS_PORT" "6379"
+    set_env "REDIS_DB" "0"
+    set_env "REDIS_CACHE_DB" "1"
 
     set_env "REVERB_SERVER_HOST" "127.0.0.1"
     set_env "REVERB_SERVER_PORT" "$REVERB_PORT"
@@ -619,6 +631,96 @@ SQLEOF
     log_info "Database setup complete"
 }
 
+# Pick a Redis maxmemory value sized to the host (Pi-friendly).
+# Buckets by total RAM: ≤1G→128mb, ≤2G→256mb, ≤4G→512mb, ≤8G→1gb, else 2gb.
+compute_redis_maxmemory() {
+    local total_kb
+    total_kb=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+    local total_mb=$(( total_kb / 1024 ))
+
+    if [[ $total_mb -le 1024 ]]; then
+        echo "128mb"
+    elif [[ $total_mb -le 2048 ]]; then
+        echo "256mb"
+    elif [[ $total_mb -le 4096 ]]; then
+        echo "512mb"
+    elif [[ $total_mb -le 8192 ]]; then
+        echo "1gb"
+    else
+        echo "2gb"
+    fi
+}
+
+configure_redis() {
+    log_phase "Phase 4b: Configuring Redis"
+
+    local conf_file
+    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+        conf_file="/etc/redis/redis.conf"
+    else
+        conf_file="/etc/redis/redis.conf"
+        [[ -f "/etc/redis.conf" ]] && conf_file="/etc/redis.conf"
+    fi
+
+    if [[ ! -f "$conf_file" ]]; then
+        log_error "Redis config not found at ${conf_file}"
+        exit 1
+    fi
+
+    local redis_maxmemory
+    redis_maxmemory=$(compute_redis_maxmemory)
+    log_info "Redis maxmemory sized for host: ${redis_maxmemory}"
+
+    # Drop-in overrides tuned for FD Commander:
+    #  - AOF + appendfsync always  → every Redis write fsyncs to disk, so queue
+    #    jobs survive a power cut. (Contacts themselves go straight to the DB,
+    #    not through Redis — DB durability covers them.)
+    #  - maxmemory + volatile-lru  → heavy RAM caching sized to the host; only
+    #    TTL'd cache/session keys are eligible for eviction, so queue jobs
+    #    without a TTL stay put.
+    local override="/etc/redis/fdcommander.conf"
+    log_info "Writing Redis overrides to ${override}..."
+    mkdir -p "$(dirname "$override")"
+    cat > "$override" <<REDISEOF
+# FD Commander Redis tuning — durable queue + heavy RAM cache.
+appendonly yes
+appendfsync always
+no-appendfsync-on-rewrite no
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+aof-use-rdb-preamble yes
+
+# Keep RDB snapshots as a secondary safety net.
+save 900 1
+save 300 10
+save 60 10000
+
+# Heavy RAM caching, sized to this host by deploy.sh.
+maxmemory ${redis_maxmemory}
+maxmemory-policy volatile-lru
+
+# Persistent connections from phpredis benefit from a modest TCP keepalive.
+tcp-keepalive 60
+REDISEOF
+
+    # Include the override from the main redis.conf (idempotent).
+    if ! grep -q "^include ${override}" "$conf_file"; then
+        echo "" >> "$conf_file"
+        echo "# FD Commander overrides" >> "$conf_file"
+        echo "include ${override}" >> "$conf_file"
+    fi
+
+    systemctl enable "$REDIS_SERVICE"
+    systemctl restart "$REDIS_SERVICE"
+
+    # Verify redis is responding
+    if ! redis-cli ping | grep -q PONG; then
+        log_error "Redis did not respond to PING after restart"
+        exit 1
+    fi
+    log_info "Redis configured with AOF fsync=always and volatile-lru eviction"
+}
+
 configure_caddy() {
     log_phase "Phase 5: Configuring FrankenPHP/Caddy"
 
@@ -668,7 +770,7 @@ configure_systemd() {
     cat > /etc/systemd/system/fdcommander.service <<WEBEOF
 [Unit]
 Description=FD Commander Web Server (FrankenPHP/Octane)
-After=network.target ${DB_SERVICE}.service
+After=network.target ${DB_SERVICE}.service ${REDIS_SERVICE}.service
 
 [Service]
 User=fdcommander
@@ -692,7 +794,7 @@ WEBEOF
     cat > /etc/systemd/system/fdcommander-queue.service <<QUEUEEOF
 [Unit]
 Description=FD Commander Queue Worker
-After=network.target ${DB_SERVICE}.service
+After=network.target ${DB_SERVICE}.service ${REDIS_SERVICE}.service
 
 [Service]
 User=fdcommander
@@ -795,10 +897,8 @@ finalize() {
 
     cd "$APP_PATH"
 
-    log_info "Caching configuration..."
-    sudo -u fdcommander php artisan config:cache
-    sudo -u fdcommander php artisan route:cache
-    sudo -u fdcommander php artisan view:cache
+    log_info "Optimizing application (config/route/view/event caches)..."
+    sudo -u fdcommander php artisan optimize
 
     # Print summary
     echo ""
@@ -825,6 +925,7 @@ finalize() {
     echo "  Scheduler:      $(systemctl is-active fdcommander-scheduler.timer)"
     echo "  Reverb:         $(systemctl is-active fdcommander-reverb.service)"
     echo "  FrankenPHP:     $(systemctl is-active fdcommander.service)"
+    echo "  Redis:          $(systemctl is-active ${REDIS_SERVICE}.service)"
     echo ""
     echo -e "${BOLD}Logs${NC}"
     echo "  Deploy log:     ${LOG_FILE}"
@@ -856,6 +957,7 @@ main() {
     install_packages
     setup_app
     setup_database
+    configure_redis
     configure_caddy
     configure_ssl
     configure_systemd
