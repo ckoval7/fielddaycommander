@@ -23,7 +23,7 @@ return [
     |
     */
 
-    'ttl_hours' => env('DEMO_TTL_HOURS', 24),
+    'ttl_hours' => (int) env('DEMO_TTL_HOURS', 24),
 
     /*
     |--------------------------------------------------------------------------
@@ -35,7 +35,7 @@ return [
     |
     */
 
-    'max_sessions' => env('DEMO_MAX_SESSIONS', 25),
+    'max_sessions' => (int) env('DEMO_MAX_SESSIONS', 25),
 
     /*
     |--------------------------------------------------------------------------
@@ -46,7 +46,7 @@ return [
     |
     */
 
-    'analytics_retention_days' => env('DEMO_ANALYTICS_RETENTION_DAYS', 90),
+    'analytics_retention_days' => (int) env('DEMO_ANALYTICS_RETENTION_DAYS', 90),
 
     /*
     |--------------------------------------------------------------------------
@@ -63,7 +63,7 @@ return [
         'latitude' => env('DEMO_WEATHER_LAT', 41.8781),
         'longitude' => env('DEMO_WEATHER_LON', -87.6298),
         'state' => env('DEMO_WEATHER_STATE', 'IL'),
-        'cache_ttl_minutes' => env('DEMO_WEATHER_CACHE_TTL', 30),
+        'cache_ttl_minutes' => (int) env('DEMO_WEATHER_CACHE_TTL', 30),
     ],
 
 ];
