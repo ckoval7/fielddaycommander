@@ -29,6 +29,13 @@ class DemoCleanup extends Command
         if (empty($rows)) {
             $this->info('No expired demo databases found.');
         } else {
+            /**
+             * The administrative default DB for the demo connection (e.g. demo_base).
+             * The demo_provisioner MySQL user is only granted privileges on demo_*
+             * schemas, so we must restore the connection here — NOT to the main app
+             * DB — before issuing DROP DATABASE, or PDO's initial USE fails with 1044.
+             */
+            $adminDemoDb = config('database.connections.demo.database');
             $ttlHours = config('demo.ttl_hours', 24);
             $dropped = 0;
 
@@ -56,8 +63,8 @@ class DemoCleanup extends Command
 
                     if (Carbon::parse($provisionedAt)->addHours($ttlHours)->isPast()) {
                         DB::purge('demo');
-                        Config::set('database.connections.demo.database', config('database.connections.mysql.database'));
-                        DB::statement("DROP DATABASE `{$dbName}`");
+                        Config::set('database.connections.demo.database', $adminDemoDb);
+                        DB::connection('demo')->statement("DROP DATABASE `{$dbName}`");
                         $this->info("Dropped expired demo database: {$dbName}");
                         $dropped++;
                     }
@@ -65,6 +72,9 @@ class DemoCleanup extends Command
                     $this->warn("Could not process {$dbName}: {$e->getMessage()}");
                 }
             }
+
+            Config::set('database.connections.demo.database', $adminDemoDb);
+            DB::purge('demo');
 
             if ($dropped === 0) {
                 $this->info('No expired demo databases found.');

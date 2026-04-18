@@ -132,9 +132,15 @@ class DemoController extends Controller
             return 0;
         }
 
-        return count(DB::select(
+        $rows = DB::select(
             "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'demo\_%'"
-        ));
+        );
+
+        return count(array_filter($rows, function ($row): bool {
+            $name = $row->schema_name ?? $row->SCHEMA_NAME;
+
+            return (bool) preg_match('/^demo_[a-f0-9_]{32,40}$/', $name);
+        }));
     }
 
     private function safeDemoDbName(string $uuid): string

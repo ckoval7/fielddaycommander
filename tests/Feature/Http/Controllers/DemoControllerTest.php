@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DemoController;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -58,4 +59,21 @@ test('reset redirects to role picker and clears cookie', function () {
 test('reset without valid cookie redirects to role picker', function () {
     $response = $this->post(route('demo.reset'));
     $response->assertRedirect(route('demo.landing'));
+});
+
+test('session cap excludes demo_base and malformed schema names', function () {
+    Config::set('demo.max_sessions', 1);
+
+    DB::shouldReceive('getDriverName')->andReturn('mysql');
+    DB::shouldReceive('select')->once()->andReturn([
+        (object) ['schema_name' => 'demo_base'],
+        (object) ['schema_name' => 'demo_garbage'],
+        (object) ['schema_name' => 'demo_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+    ]);
+
+    $reflection = new ReflectionMethod(DemoController::class, 'countDemoSessions');
+    $reflection->setAccessible(true);
+    $count = $reflection->invoke(new DemoController);
+
+    expect($count)->toBe(1);
 });
