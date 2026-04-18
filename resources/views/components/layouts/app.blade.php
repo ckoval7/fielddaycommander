@@ -9,16 +9,20 @@
     <title>{{ isset($title) ? $title.' - '.(\App\Models\Setting::get('site_name') ?: config('app.name')) : (\App\Models\Setting::get('site_name') ?: config('app.name')) }}</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
-    {{-- Set theme before page renders to prevent flash --}}
+    {{-- Set theme before page renders to prevent flash. Re-apply after
+         wire:navigate, which strips unknown attributes from <html>. --}}
     <script>
         (function() {
-            let theme = localStorage.getItem('theme');
-            // If no saved preference, default to light and save it
-            if (!theme) {
-                theme = 'light';
-                localStorage.setItem('theme', theme);
+            function applyTheme() {
+                let theme = localStorage.getItem('theme');
+                if (!theme) {
+                    theme = 'light';
+                    localStorage.setItem('theme', theme);
+                }
+                document.documentElement.setAttribute('data-theme', theme);
             }
-            document.documentElement.setAttribute('data-theme', theme);
+            applyTheme();
+            document.addEventListener('livewire:navigated', applyTheme);
         })();
     </script>
 
@@ -45,17 +49,6 @@
         }"
         x-init="onScroll(); window.addEventListener('scroll', () => onScroll(), { passive: true })"
     >
-        {{-- LIVE status rail: only renders when an event is active, hidden in collapsed mode --}}
-        @if($mobileEventCountdown->state === 'active')
-            <div x-show="!(scrolled && hasCallsign)">
-                <x-header.live-rail
-                    :event-name="$mobileEventCountdown->event?->name"
-                    :target-timestamp="$mobileEventCountdown->targetTimestamp"
-                    :server-timestamp="$mobileEventCountdown->serverTimestamp"
-                />
-            </div>
-        @endif
-
         {{-- Row 1: brand + right cluster --}}
         <div class="flex items-center gap-1.5 min-h-14 pl-3 pr-1.5 py-2">
             {{-- Expanded brand (LogoMark + callsign stack) --}}
@@ -155,10 +148,11 @@
             </button>
         </div>
 
-        {{-- Row 2: event status (hidden when collapsed) --}}
+        {{-- Row 2: event status (collapses on scroll) --}}
         @if($mobileEventCountdown->event)
             <div
-                x-show="!(scrolled && hasCallsign)"
+                x-show="!scrolled"
+                x-collapse
                 class="border-t border-base-300 px-3.5 py-2.5"
             >
                 <livewire:components.event-countdown />

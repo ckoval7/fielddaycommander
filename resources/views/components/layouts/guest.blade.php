@@ -8,16 +8,20 @@
     <title>{{ config('app.name') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
-    {{-- Set theme before page renders to prevent flash --}}
+    {{-- Set theme before page renders to prevent flash. Re-apply after
+         wire:navigate, which strips unknown attributes from <html>. --}}
     <script>
         (function() {
-            let theme = localStorage.getItem('theme');
-            // If no saved preference, default to light and save it
-            if (!theme) {
-                theme = 'light';
-                localStorage.setItem('theme', theme);
+            function applyTheme() {
+                let theme = localStorage.getItem('theme');
+                if (!theme) {
+                    theme = 'light';
+                    localStorage.setItem('theme', theme);
+                }
+                document.documentElement.setAttribute('data-theme', theme);
             }
-            document.documentElement.setAttribute('data-theme', theme);
+            applyTheme();
+            document.addEventListener('livewire:navigated', applyTheme);
         })();
     </script>
 
