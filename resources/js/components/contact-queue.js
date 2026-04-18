@@ -432,7 +432,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         _releaseRecallLock() {
             if (!this.recalledUuid) return;
             const entry = this.queue.find(c => c.uuid === this.recalledUuid);
-            if (entry && entry.status === 'editing') {
+            if (entry?.status === 'editing') {
                 entry.status = entry._prevStatus ?? 'pending';
                 delete entry._prevStatus;
                 this.saveQueue();
