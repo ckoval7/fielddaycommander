@@ -139,6 +139,15 @@ class ManageWeather extends Component
         }
     }
 
+    public function clearNwsLocationCache(WeatherService $weatherService): void
+    {
+        $this->authorize('manage-weather');
+        $weatherService->clearNwsLocationCache();
+        unset($this->resolvedNwsLocation);
+        $this->loadCurrentState();
+        $this->dispatch('toast', title: 'NWS location cache cleared — re-resolving', type: 'info');
+    }
+
     public function toggleNws(WeatherService $weatherService): void
     {
         $this->authorize('manage-weather');

@@ -362,6 +362,28 @@ class WeatherService
     }
 
     /**
+     * Clear the cached NWS points lookup and stored city/state for the active
+     * event. If NWS is enabled and coordinates are available, re-resolves
+     * immediately so the UI reflects the fresh result.
+     */
+    public function clearNwsLocationCache(): void
+    {
+        $coords = $this->getActiveEventCoordinates();
+
+        if ($coords !== null) {
+            $lat = round($coords['lat'], 4);
+            $lon = round($coords['lon'], 4);
+            cache()->forget("weather.nws_points.{$lat},{$lon}");
+        }
+
+        Setting::set('weather.location', null);
+
+        if ($coords !== null && $this->isNwsEnabled()) {
+            $this->checkAlerts($coords['lat'], $coords['lon']);
+        }
+    }
+
+    /**
      * @return array{zone: string, county: string}|null
      */
     private function fetchNwsPoints(float $lat, float $lon): ?array

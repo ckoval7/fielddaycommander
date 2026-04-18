@@ -191,6 +191,14 @@
                         @else
                             <p class="text-base-content/60">No active event location configured.</p>
                         @endif
+                        @if($resolved || $requested)
+                            <button wire:click="clearNwsLocationCache"
+                                wire:confirm="Clear the cached NWS zone, county, and city for the active event's coordinates? NWS will re-resolve on the next poll."
+                                class="btn btn-outline btn-xs mt-2">
+                                <x-icon name="phosphor-arrow-clockwise" class="w-3 h-3" />
+                                Clear cached location
+                            </button>
+                        @endif
                     </div>
 
                     {{-- Request details --}}

@@ -536,6 +536,127 @@ test('NWS panel renders the points URL with 4-decimal rounded coordinates', func
         ->assertSee('https://api.weather.gov/points/41.3083,-72.9279');
 });
 
+test('clearNwsLocationCache removes cached points and stored city/state and re-resolves', function () {
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ006',
+                'county' => 'https://api.weather.gov/zones/county/CTC009',
+                'relativeLocation' => [
+                    'properties' => ['city' => 'New Haven', 'state' => 'CT'],
+                ],
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
+    ]);
+
+    $event = App\Models\Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'latitude' => 41.30834,
+        'longitude' => -72.92791,
+        'state' => 'CT',
+    ]);
+    app(ActiveEventService::class)->clearCache();
+
+    cache()->forever('weather.nws_points.41.3083,-72.9279', [
+        'zone' => 'STALEZONE',
+        'county' => 'STALECOUNTY',
+    ]);
+    Setting::set('weather.location', ['city' => 'Fawn Grove', 'state' => 'PA']);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->call('clearNwsLocationCache');
+
+    expect(cache()->get('weather.nws_points.41.3083,-72.9279'))->toMatchArray([
+        'zone' => 'CTZ006',
+        'county' => 'CTC009',
+    ]);
+    expect(Setting::get('weather.location'))->toMatchArray([
+        'city' => 'New Haven',
+        'state' => 'CT',
+    ]);
+});
+
+test('clearNwsLocationCache clears stored city/state even without active event coordinates', function () {
+    Setting::set('weather.location', ['city' => 'Fawn Grove', 'state' => 'PA']);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->call('clearNwsLocationCache');
+
+    expect(Setting::get('weather.location'))->toBeNull();
+});
+
+test('clearNwsLocationCache does not call NWS when NWS is disabled', function () {
+    Http::fake();
+
+    $event = App\Models\Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'latitude' => 41.30834,
+        'longitude' => -72.92791,
+        'state' => 'CT',
+    ]);
+    app(ActiveEventService::class)->clearCache();
+
+    Setting::set('weather.nws_enabled', false);
+    cache()->forever('weather.nws_points.41.3083,-72.9279', [
+        'zone' => 'CTZ006',
+        'county' => 'CTC009',
+    ]);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->call('clearNwsLocationCache');
+
+    expect(cache()->get('weather.nws_points.41.3083,-72.9279'))->toBeNull();
+    Http::assertNothingSent();
+});
+
+test('NWS panel shows Clear cached location button when a location is resolved', function () {
+    $event = App\Models\Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'latitude' => 41.30834,
+        'longitude' => -72.92791,
+        'state' => 'CT',
+    ]);
+    app(ActiveEventService::class)->clearCache();
+
+    cache()->forever('weather.nws_points.41.3083,-72.9279', [
+        'zone' => 'CTZ006',
+        'county' => 'CTC009',
+    ]);
+    Setting::set('weather.location', ['city' => 'New Haven', 'state' => 'CT']);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSee('Clear cached location');
+});
+
 test('Open-Meteo disabled state shows polling-disabled helper inside panel', function () {
     Setting::set('weather.openmeteo_enabled', false);
 
