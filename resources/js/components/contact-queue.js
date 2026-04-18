@@ -16,6 +16,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         storageKey: `fd-commander-queue-${sessionId}`,
         recallIndex: -1,
         recalledContactId: null,
+        recalledUuid: null,
 
         init() {
             this.loadQueue();
@@ -38,7 +39,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         get pendingContacts() {
-            return this.queue.filter(c => c.status === 'pending' || c.status === 'syncing');
+            return this.queue.filter(c => c.status === 'pending' || c.status === 'syncing' || c.status === 'editing');
         },
 
         get failedContacts() {
@@ -321,9 +322,28 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         get recallableContacts() {
-            // Get server-confirmed contacts from the DOM table rows
-            const rows = document.querySelectorAll(String.raw`tr[wire\:key^="contact-"]`);
             const contacts = [];
+
+            // Queue items first — newest first, matching table render order.
+            // Skip entries whose fetch is in flight; the response handler will
+            // mutate them and race with the user's edit. The currently-recalled
+            // entry (status === 'editing') stays in the list so navigation
+            // indices remain stable.
+            for (const entry of this.queue) {
+                if (entry.status === 'syncing') continue;
+                contacts.push({
+                    source: 'queue',
+                    uuid: entry.uuid,
+                    id: null,
+                    callsign: entry.callsign,
+                    exchangeClass: entry.exchange_class,
+                    section: entry.section_code || '',
+                    fullExchange: `${entry.callsign} ${entry.exchange_class} ${entry.section_code || ''}`.trim(),
+                });
+            }
+
+            // Server-confirmed contacts from the DOM table rows
+            const rows = document.querySelectorAll(String.raw`tr[wire\:key^="contact-"]`);
             rows.forEach(row => {
                 // Skip deleted rows (they have line-through class)
                 if (row.classList.contains('line-through')) return;
@@ -337,15 +357,17 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     const exchangeClass = exchangeClassCell.textContent.trim();
                     const section = sectionCell.textContent.trim();
                     contacts.push({
+                        source: 'server',
+                        uuid: null,
                         id: contactId,
                         callsign,
                         exchangeClass,
                         section,
-                        // Full exchange string for input field: "CALLSIGN CLASS SECTION"
                         fullExchange: `${callsign} ${exchangeClass} ${section}`,
                     });
                 }
             });
+
             return contacts;
         },
 
@@ -359,8 +381,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             const contact = contacts[this.recallIndex];
             if (contact) {
-                inputEl.value = contact.fullExchange;
-                this.recalledContactId = contact.id;
+                this._applyRecallTarget(contact, inputEl);
             }
         },
 
@@ -374,14 +395,55 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             const contacts = this.recallableContacts;
             const contact = contacts[this.recallIndex];
             if (contact) {
-                inputEl.value = contact.fullExchange;
+                this._applyRecallTarget(contact, inputEl);
+            }
+        },
+
+        /**
+         * Move the recall pointer to a target contact. Releases any sync lock
+         * on the previously recalled queue entry and, if the new target is a
+         * queue entry, locks it with status='editing' so syncNext skips it.
+         */
+        _applyRecallTarget(contact, inputEl) {
+            // Release lock on whatever queue entry was previously recalled (if any).
+            this._releaseRecallLock();
+
+            inputEl.value = contact.fullExchange;
+
+            if (contact.source === 'queue') {
+                this.recalledUuid = contact.uuid;
+                this.recalledContactId = null;
+                const entry = this.queue.find(c => c.uuid === contact.uuid);
+                if (entry && entry.status !== 'editing') {
+                    entry._prevStatus = entry.status;
+                    entry.status = 'editing';
+                    this.saveQueue();
+                }
+            } else {
                 this.recalledContactId = contact.id;
+                this.recalledUuid = null;
+            }
+        },
+
+        /**
+         * Restore the prior status of the currently recalled queue entry (if any).
+         * Called before moving to a new recall target and from exitRecall.
+         */
+        _releaseRecallLock() {
+            if (!this.recalledUuid) return;
+            const entry = this.queue.find(c => c.uuid === this.recalledUuid);
+            if (entry && entry.status === 'editing') {
+                entry.status = entry._prevStatus ?? 'pending';
+                delete entry._prevStatus;
+                this.saveQueue();
             }
         },
 
         exitRecall(inputEl) {
+            this._releaseRecallLock();
             this.recallIndex = -1;
             this.recalledContactId = null;
+            this.recalledUuid = null;
             if (inputEl) {
                 inputEl.value = '';
                 const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
@@ -393,28 +455,78 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         deleteRecalled(inputEl) {
-            if (!this.isRecalling || !this.recalledContactId) return;
+            if (!this.isRecalling) return;
 
-            const contactId = this.recalledContactId;
-            const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
-            if (wire) {
-                wire.call('deleteContact', contactId);
+            // Queue-sourced delete: drop the entry from the queue.
+            if (this.recalledUuid) {
+                const uuid = this.recalledUuid;
+                // Clear the ref before exitRecall so _releaseRecallLock is a no-op.
+                this.recalledUuid = null;
+                this.queue = this.queue.filter(c => c.uuid !== uuid);
+                this.saveQueue();
+                globalThis.Livewire?.dispatch('contact-discarded');
+                this.exitRecall(inputEl);
+                return;
             }
-            this.exitRecall(inputEl);
+
+            // Server-sourced delete: delegate to Livewire.
+            if (this.recalledContactId) {
+                const contactId = this.recalledContactId;
+                const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
+                if (wire) {
+                    wire.call('deleteContact', contactId);
+                }
+                this.exitRecall(inputEl);
+            }
         },
 
         saveRecalled(inputEl) {
-            if (!this.isRecalling || !this.recalledContactId) return;
+            if (!this.isRecalling) return;
 
-            const contactId = this.recalledContactId;
             const exchange = inputEl.value.trim();
             if (!exchange) return;
 
-            const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
-            if (wire) {
-                wire.call('updateContact', contactId, exchange);
+            // Queue-sourced edit: parse client-side, mutate queue entry in place,
+            // clear the sync lock back to 'pending' and kick sync.
+            if (this.recalledUuid) {
+                const parsed = this.parseExchange(exchange);
+                if (!parsed) {
+                    // parseError is already set by parseExchange; stay in recall mode.
+                    return;
+                }
+
+                const entry = this.queue.find(c => c.uuid === this.recalledUuid);
+                if (entry) {
+                    entry.callsign = parsed.callsign;
+                    entry.section_id = parsed.section_id;
+                    entry.section_code = parsed.section_code;
+                    entry.exchange_class = (parsed.transmitter_count + parsed.class_code).toUpperCase();
+                    entry.status = 'pending';
+                    entry.attempts = 0;
+                    entry.last_error = null;
+                    entry.lastAttemptTime = 0;
+                    delete entry._prevStatus;
+                    this.saveQueue();
+                }
+
+                // exitRecall would try to release the lock, but we've already
+                // transitioned the entry to 'pending'. Clear recalledUuid first
+                // so _releaseRecallLock is a no-op.
+                this.recalledUuid = null;
+                this.exitRecall(inputEl);
+                this.syncNext();
+                return;
             }
-            this.exitRecall(inputEl);
+
+            // Server-sourced edit: delegate to Livewire.
+            if (this.recalledContactId) {
+                const contactId = this.recalledContactId;
+                const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
+                if (wire) {
+                    wire.call('updateContact', contactId, exchange);
+                }
+                this.exitRecall(inputEl);
+            }
         },
 
         loadQueue() {
@@ -422,10 +534,12 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 const stored = localStorage.getItem(this.storageKey);
                 if (stored) {
                     this.queue = JSON.parse(stored);
-                    // Reset any contacts stuck in 'syncing' state (from page reload mid-sync)
+                    // Reset any contacts stuck in 'syncing' or 'editing' state
+                    // (from page reload mid-sync or mid-edit)
                     this.queue.forEach(c => {
-                        if (c.status === 'syncing') {
+                        if (c.status === 'syncing' || c.status === 'editing') {
                             c.status = 'pending';
+                            delete c._prevStatus;
                         }
                     });
                     this.saveQueue();

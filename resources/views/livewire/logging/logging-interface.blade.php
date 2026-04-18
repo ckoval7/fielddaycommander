@@ -323,7 +323,8 @@
                         <template x-for="contact in queue" :key="contact.uuid">
                             <tr :class="{
                                 'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
-                                'bg-error/5': contact.status === 'failed'
+                                'bg-error/5': contact.status === 'failed',
+                                'ring-2 ring-primary': recalledUuid === contact.uuid,
                             }">
                                 <td class="font-mono">-</td>
                                 <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
@@ -332,7 +333,7 @@
                                     <template x-if="contact.status === 'failed'">
                                         <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span>
                                     </template>
-                                    <template x-if="contact.status !== 'failed'">
+                                    <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
                                         <span class="badge badge-xs badge-info ml-1">SYNC</span>
                                     </template>
                                 </td>
