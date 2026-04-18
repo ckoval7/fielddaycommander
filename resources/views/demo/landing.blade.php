@@ -21,7 +21,8 @@
 <div id="provision-content" class="max-w-lg w-full">
     <div class="text-center mb-8">
         <h1 class="text-3xl font-bold">Field Day Commander</h1>
-        <p class="text-base-content/60 mt-2">Pick a role to explore. Your sandbox is private and resets after 24 hours.</p>
+        @php($ttlHours = config('demo.ttl_hours', 24))
+        <p class="text-base-content/60 mt-2">Pick a role to explore. Your sandbox is private and resets after {{ $ttlHours }} {{ \Illuminate\Support\Str::plural('hour', $ttlHours) }}.</p>
     </div>
 
     @if(session('error'))
