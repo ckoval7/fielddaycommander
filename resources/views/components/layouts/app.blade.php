@@ -25,27 +25,145 @@
 </head>
 <body class="min-h-screen font-sans antialiased bg-base-200">
 
+    @php
+        // Shared event state snapshot for the mobile header's live-rail + collapse logic.
+        // The in-header <livewire:components.event-countdown /> instance owns the ticking UI.
+        $mobileEventCountdown = new \App\Livewire\Components\EventCountdown;
+        $mobileEventCountdown->updateComponent();
+        $mobileBrand = new \App\View\Components\AppBrand;
+        $mobileHasCallsign = $mobileBrand->callsign !== $mobileBrand->eventName;
+    @endphp
+
     {{-- NAVBAR mobile only --}}
-    <x-nav sticky class="lg:hidden !z-20">
-        <x-slot:brand class="min-w-0">
-            <x-app-brand class="min-w-0" />
-        </x-slot:brand>
-        <x-slot:actions class="!gap-1 shrink-0">
-            <div class="flex flex-col items-end gap-0">
-                <livewire:components.weather-icon />
-                <div class="flex items-center gap-0">
-                    @auth
-                        <livewire:components.notification-bell />
-                    @endauth
-                    <x-custom-theme-toggle />
-                    <x-user-menu />
-                </div>
+    <header
+        class="lg:hidden sticky top-0 z-20 bg-base-100 border-b border-base-300"
+        x-data="{
+            scrolled: false,
+            hasCallsign: @json($mobileHasCallsign),
+            onScroll() { this.scrolled = window.scrollY > 80; },
+        }"
+        x-init="onScroll(); window.addEventListener('scroll', () => onScroll(), { passive: true })"
+    >
+        {{-- LIVE status rail: only renders when an event is active, hidden in collapsed mode --}}
+        @if($mobileEventCountdown->state === 'active')
+            <div x-show="!(scrolled && hasCallsign)">
+                <x-header.live-rail
+                    :event-name="$mobileEventCountdown->event?->name"
+                    :target-timestamp="$mobileEventCountdown->targetTimestamp"
+                    :server-timestamp="$mobileEventCountdown->serverTimestamp"
+                />
             </div>
-            <button type="button" class="lg:hidden me-3" aria-label="Toggle navigation menu" onclick="document.getElementById('main-drawer').click()">
-                <x-icon name="phosphor-list" class="cursor-pointer" />
+        @endif
+
+        {{-- Row 1: brand + right cluster --}}
+        <div class="flex items-center gap-1.5 min-h-14 pl-3 pr-1.5 py-2">
+            {{-- Expanded brand (LogoMark + callsign stack) --}}
+            <a
+                href="/"
+                wire:navigate
+                class="flex items-center gap-2.5 flex-1 min-w-0"
+                x-show="!(scrolled && hasCallsign)"
+            >
+                @if($mobileBrand->hasCustomLogo)
+                    <img src="{{ asset($mobileBrand->logoPath) }}" alt="Logo" class="shrink-0 w-[40px] h-[40px] rounded-lg object-contain" />
+                @else
+                    <span class="shrink-0 w-[40px] h-[40px] rounded-lg bg-primary/10 flex items-center justify-center">
+                        <x-icon name="phosphor-broadcast" class="w-6 h-6 text-primary" />
+                    </span>
+                @endif
+                <span class="min-w-0 flex flex-col leading-tight">
+                    <span class="text-base font-bold text-base-content truncate tracking-tight">{{ $mobileBrand->callsign }}</span>
+                    @if($mobileHasCallsign)
+                        <span class="text-[11px] text-base-content/55 truncate -mt-px">{{ $mobileBrand->eventName }}</span>
+                    @endif
+                </span>
+            </a>
+
+            {{-- Collapsed brand (callsign tile + pulsing event dot + short name + countdown) --}}
+            <div
+                x-show="scrolled && hasCallsign"
+                x-cloak
+                class="flex items-center gap-2 flex-1 min-w-0"
+            >
+                <a href="/" wire:navigate class="shrink-0 w-[30px] h-[30px] rounded-[7px] bg-primary/10 text-primary font-mono font-extrabold text-[11px] -tracking-[0.3px] flex items-center justify-center">
+                    {{ Str::limit($mobileBrand->callsign, 6, '') }}
+                </a>
+                @if($mobileEventCountdown->event)
+                    <span @class([
+                        'shrink-0 w-1.5 h-1.5 rounded-full',
+                        'bg-warning' => $mobileEventCountdown->state === 'setup',
+                        'bg-info' => $mobileEventCountdown->state === 'upcoming',
+                        'bg-success' => $mobileEventCountdown->state === 'active',
+                        'bg-base-content/40' => $mobileEventCountdown->state === 'ended',
+                    ])
+                    @if($mobileEventCountdown->state === 'active') style="animation: fdpulse 1.6s ease-in-out infinite" @endif
+                    ></span>
+                    <span class="text-[13px] font-semibold text-base-content truncate min-w-0">
+                        {{ $mobileEventCountdown->event->name }}
+                    </span>
+                    <span
+                        class="text-[13px] font-mono font-bold shrink-0 {{ $mobileEventCountdown->textClass }}"
+                        x-data="{
+                            countdown: @js($mobileEventCountdown->getFormattedCountdownProperty()),
+                            targetTs: {{ (int) $mobileEventCountdown->targetTimestamp }},
+                            serverTs: {{ (int) $mobileEventCountdown->serverTimestamp }},
+                            initRealTs: Math.floor(Date.now() / 1000),
+                            state: @js($mobileEventCountdown->state),
+                            _interval: null,
+                            init() { this.tick(); this._interval = setInterval(() => this.tick(), 1000); },
+                            destroy() { if (this._interval) clearInterval(this._interval); },
+                            effectiveNow() { return this.serverTs + (Math.floor(Date.now() / 1000) - this.initRealTs); },
+                            tick() {
+                                if (!this.targetTs) return;
+                                const diff = this.state === 'ended' ? this.effectiveNow() - this.targetTs : this.targetTs - this.effectiveNow();
+                                if (diff <= 0) return;
+                                const days = Math.floor(diff / 86400);
+                                const hours = Math.floor((diff % 86400) / 3600);
+                                const minutes = Math.floor((diff % 3600) / 60);
+                                const seconds = diff % 60;
+                                let f;
+                                if (days > 0) f = days + 'd ' + hours + 'h ' + minutes + 'm';
+                                else if (hours > 0) f = hours + 'h ' + minutes + 'm';
+                                else f = minutes + 'm ' + seconds + 's';
+                                this.countdown = this.state === 'ended' ? f + ' ago' : f;
+                            },
+                        }"
+                        x-text="countdown"
+                    >{{ $mobileEventCountdown->getFormattedCountdownProperty() }}</span>
+                @endif
+            </div>
+
+            {{-- Right cluster (stays mounted across default/collapsed transitions) --}}
+            <livewire:components.weather-icon />
+
+            @auth
+                <livewire:components.notification-bell />
+            @endauth
+
+            <div x-show="!(scrolled && hasCallsign)">
+                <x-user-menu />
+            </div>
+
+            <button
+                type="button"
+                class="w-11 h-11 flex items-center justify-center"
+                aria-label="Toggle navigation menu"
+                onclick="document.getElementById('main-drawer').click()"
+            >
+                <x-icon name="phosphor-list" class="w-6 h-6" />
             </button>
-        </x-slot:actions>
-    </x-nav>
+        </div>
+
+        {{-- Row 2: event status (hidden when collapsed) --}}
+        @if($mobileEventCountdown->event)
+            <div
+                x-show="!(scrolled && hasCallsign)"
+                class="border-t border-base-300 px-3.5 py-2.5"
+            >
+                <livewire:components.event-countdown />
+            </div>
+        @endif
+    </header>
 
     {{-- Desktop header - spans full width above sidebar and content --}}
     <div class="hidden lg:block sticky top-0 z-50 bg-base-100 border-b border-base-300">
@@ -60,21 +178,15 @@
                 <livewire:components.event-countdown />
             </div>
 
-            {{-- Right: Weather, Notifications, Theme toggle and User menu --}}
+            {{-- Right: Weather, Notifications and User menu (theme toggle lives inside user menu) --}}
             <div class="flex items-center gap-3">
                 <livewire:components.weather-icon />
                 @auth
                     <livewire:components.notification-bell />
                 @endauth
-                <x-custom-theme-toggle />
                 <x-user-menu />
             </div>
         </div>
-    </div>
-
-    {{-- Mobile timer bar - below navbar --}}
-    <div class="lg:hidden sticky top-16 z-10 bg-base-100 border-b border-base-300 px-4 py-2">
-        <livewire:components.event-countdown />
     </div>
 
     {{-- Developer Mode Banner --}}

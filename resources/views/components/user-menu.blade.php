@@ -1,13 +1,13 @@
 @auth
 <div class="dropdown dropdown-end">
-    <button tabindex="0" class="btn btn-ghost btn-circle btn-sm lg:btn-md avatar">
-        <div class="w-8 lg:w-10 rounded-full">
+    <button tabindex="0" class="btn btn-ghost btn-circle btn-md avatar">
+        <div class="w-10 rounded-full">
             @if(auth()->user()->avatar_path && file_exists(public_path(auth()->user()->avatar_path)))
                 <img src="{{ asset(auth()->user()->avatar_path) }}" alt="{{ auth()->user()->call_sign }}" class="rounded-full">
             @else
                 <div class="avatar placeholder">
-                    <div class="bg-slate-600 text-white rounded-full w-8 lg:w-10 flex items-center justify-center">
-                        <span class="text-xs lg:text-sm">{{ auth()->user()->getInitials() }}</span>
+                    <div class="bg-slate-600 text-white rounded-full w-10 flex items-center justify-center">
+                        <span class="text-sm">{{ auth()->user()->getInitials() }}</span>
                     </div>
                 </div>
             @endif
@@ -29,6 +29,31 @@
         </li>
 
         <div class="divider my-1"></div>
+
+        <!-- Theme toggle -->
+        <li
+            x-data="{
+                darkMode: (localStorage.getItem('theme') || 'light') === 'dark',
+                toggle() {
+                    this.darkMode = !this.darkMode;
+                    const theme = this.darkMode ? 'dark' : 'light';
+                    localStorage.setItem('theme', theme);
+                    document.documentElement.setAttribute('data-theme', theme);
+                    window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
+                },
+                init() {
+                    window.addEventListener('theme-changed', (e) => {
+                        this.darkMode = e.detail.theme === 'dark';
+                    });
+                }
+            }"
+        >
+            <button type="button" @click="toggle()" :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+                <x-icon name="phosphor-sun-duotone" class="w-4 h-4" x-show="darkMode" />
+                <x-icon name="phosphor-moon-duotone" class="w-4 h-4" x-show="!darkMode" />
+                <span x-text="darkMode ? 'Light Mode' : 'Dark Mode'">Theme</span>
+            </button>
+        </li>
 
         <!-- Menu items -->
         <li>
