@@ -12,6 +12,12 @@ Set these values in `.env`:
 | `DEMO_TTL_HOURS`                | `24`    | Hours before a demo database is eligible for cleanup |
 | `DEMO_MAX_SESSIONS`             | `25`    | Maximum concurrent demo databases                |
 | `DEMO_ANALYTICS_RETENTION_DAYS` | `90`    | Days to keep analytics data before pruning       |
+| `DEMO_WEATHER_LAT`              | `41.8781`  | Latitude used for the shared demo weather location |
+| `DEMO_WEATHER_LON`              | `-87.6298` | Longitude used for the shared demo weather location |
+| `DEMO_WEATHER_STATE`            | `IL`    | State abbreviation paired with the weather coordinates |
+| `DEMO_WEATHER_CACHE_TTL`        | `30`    | Minutes to cache weather responses across demo sessions |
+
+In demo mode, weather is pinned to a single shared location (not the per-session event configuration) so all active demo tenants reuse one cached NWS/Open-Meteo response. A shared cache driver (Redis, Memcached, or database) is required for cross-session visibility — `file` and `array` drivers are per-node and break this.
 
 ## Artisan Commands
 
