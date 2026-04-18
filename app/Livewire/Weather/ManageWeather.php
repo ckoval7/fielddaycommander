@@ -160,6 +160,27 @@ class ManageWeather extends Component
         return app(WeatherService::class)->getActiveEventCoordinates();
     }
 
+    #[Computed]
+    public function resolvedOpenMeteoLocation(): ?array
+    {
+        return app(WeatherService::class)->getResolvedOpenMeteoLocation();
+    }
+
+    #[Computed]
+    public function resolvedNwsLocation(): ?array
+    {
+        return app(WeatherService::class)->getResolvedNwsLocation();
+    }
+
+    /**
+     * @return list<string>
+     */
+    #[Computed]
+    public function nwsAllowedEvents(): array
+    {
+        return app(WeatherService::class)->allowedNwsEvents();
+    }
+
     public function render(): View
     {
         return view('livewire.weather.manage-weather')

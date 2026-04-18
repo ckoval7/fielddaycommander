@@ -29,6 +29,12 @@ class WeatherService
 
     protected const MANUAL_ALERT_EVENT = 'Local Alert';
 
+    /** @return list<string> */
+    public function allowedNwsEvents(): array
+    {
+        return self::ALLOWED_NWS_EVENTS;
+    }
+
     public function __construct(
         protected readonly EventContextService $eventContextService,
     ) {}
@@ -45,6 +51,68 @@ class WeatherService
             'lat' => (float) $config->latitude,
             'lon' => (float) $config->longitude,
             'state' => $config->state,
+        ];
+    }
+
+    /**
+     * Reads the location Open-Meteo resolved on its last successful fetch.
+     *
+     * Open-Meteo snaps to its nearest grid point, so the returned lat/lon may
+     * differ slightly from the coordinates we submitted.
+     *
+     * @return array{lat: float, lon: float, elevation: float|null, timezone: string|null, timezone_abbreviation: string|null}|null
+     */
+    public function getResolvedOpenMeteoLocation(): ?array
+    {
+        $forecast = Setting::get('weather.forecast');
+
+        if (! is_array($forecast) || ! isset($forecast['latitude'], $forecast['longitude'])) {
+            return null;
+        }
+
+        return [
+            'lat' => (float) $forecast['latitude'],
+            'lon' => (float) $forecast['longitude'],
+            'elevation' => isset($forecast['elevation']) ? (float) $forecast['elevation'] : null,
+            'timezone' => $forecast['timezone'] ?? null,
+            'timezone_abbreviation' => $forecast['timezone_abbreviation'] ?? null,
+        ];
+    }
+
+    /**
+     * Reads the location NWS resolved for the active event's coordinates.
+     *
+     * Pulls zone/county from the per-coordinate points cache (populated by
+     * {@see checkAlerts()}) and city/state from the `weather.location` setting
+     * (populated by {@see requestNwsPoints()}).
+     *
+     * @return array{zone: string, county: string, city: ?string, state: ?string}|null
+     */
+    public function getResolvedNwsLocation(): ?array
+    {
+        $coords = $this->getActiveEventCoordinates();
+
+        if ($coords === null) {
+            return null;
+        }
+
+        $lat = round($coords['lat'], 4);
+        $lon = round($coords['lon'], 4);
+        $cacheKey = "weather.nws_points.{$lat},{$lon}";
+
+        $points = cache()->get($cacheKey);
+
+        if (! is_array($points) || empty($points['zone']) || empty($points['county'])) {
+            return null;
+        }
+
+        $location = Setting::get('weather.location', []);
+
+        return [
+            'zone' => $points['zone'],
+            'county' => $points['county'],
+            'city' => $location['city'] ?? null,
+            'state' => $location['state'] ?? null,
         ];
     }
 
