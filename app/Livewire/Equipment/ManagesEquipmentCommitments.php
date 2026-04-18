@@ -109,6 +109,21 @@ trait ManagesEquipmentCommitments
     }
 
     /**
+     * Pick the default event for the commit modals.
+     *
+     * Prefers a currently active event (now falls within its start/end
+     * window); otherwise falls back to the next upcoming event.
+     */
+    private function defaultCommitEventId(): ?int
+    {
+        $events = $this->upcomingEvents;
+
+        $active = $events->first(fn (Event $e) => $e->start_time <= now() && $e->end_time >= now());
+
+        return $active?->id ?? $events->first()?->id;
+    }
+
+    /**
      * Open modal to commit a specific equipment item to an event.
      */
     public function openCommitModal(int $equipmentId): void
@@ -116,7 +131,7 @@ trait ManagesEquipmentCommitments
         $this->authorizeCommitAction();
 
         $this->commitEquipmentId = $equipmentId;
-        $this->commitEventId = null;
+        $this->commitEventId = $this->defaultCommitEventId();
         $this->commitExpectedDeliveryAt = null;
         $this->commitDeliveryNotes = null;
         $this->showCommitModal = true;
@@ -144,7 +159,6 @@ trait ManagesEquipmentCommitments
             'commitExpectedDeliveryAt' => array_filter([
                 'nullable',
                 'date',
-                $event?->setup_allowed_from ? "after_or_equal:{$event->setup_allowed_from}" : null,
                 $event ? "before_or_equal:{$event->end_time}" : null,
             ]),
             'commitDeliveryNotes' => [
@@ -160,16 +174,20 @@ trait ManagesEquipmentCommitments
             return;
         }
 
-        EquipmentEvent::create([
-            'equipment_id' => $this->commitEquipmentId,
-            'event_id' => $this->commitEventId,
-            'status' => 'committed',
-            'committed_at' => now(),
-            'expected_delivery_at' => $this->commitExpectedDeliveryAt ? Carbon::parse($this->commitExpectedDeliveryAt) : null,
-            'delivery_notes' => $this->commitDeliveryNotes,
-            'status_changed_at' => now(),
-            'status_changed_by_user_id' => auth()->id(),
-        ]);
+        EquipmentEvent::updateOrCreate(
+            [
+                'equipment_id' => $this->commitEquipmentId,
+                'event_id' => $this->commitEventId,
+            ],
+            [
+                'status' => 'committed',
+                'committed_at' => now(),
+                'expected_delivery_at' => $this->commitExpectedDeliveryAt ? Carbon::parse($this->commitExpectedDeliveryAt) : null,
+                'delivery_notes' => $this->commitDeliveryNotes,
+                'status_changed_at' => now(),
+                'status_changed_by_user_id' => auth()->id(),
+            ]
+        );
 
         $this->dispatch('notify', title: 'Success', description: 'Equipment committed to event successfully.', type: 'success');
 
@@ -300,7 +318,7 @@ trait ManagesEquipmentCommitments
     {
         $this->authorizeCommitAction();
 
-        $this->bulkCommitEventId = null;
+        $this->bulkCommitEventId = $this->defaultCommitEventId();
         $this->bulkCommitExpectedDeliveryAt = null;
         $this->bulkCommitDeliveryNotes = null;
         $this->showBulkCommitModal = true;
@@ -322,7 +340,6 @@ trait ManagesEquipmentCommitments
             'bulkCommitExpectedDeliveryAt' => array_filter([
                 'nullable',
                 'date',
-                $event?->setup_allowed_from ? "after_or_equal:{$event->setup_allowed_from}" : null,
                 $event ? "before_or_equal:{$event->end_time}" : null,
             ]),
             'bulkCommitDeliveryNotes' => ['nullable', 'string', 'max:500'],
@@ -346,16 +363,20 @@ trait ManagesEquipmentCommitments
         }
 
         foreach ($equipmentItems as $equipment) {
-            EquipmentEvent::create([
-                'equipment_id' => $equipment->id,
-                'event_id' => $this->bulkCommitEventId,
-                'status' => 'committed',
-                'committed_at' => now(),
-                'expected_delivery_at' => $this->bulkCommitExpectedDeliveryAt ? Carbon::parse($this->bulkCommitExpectedDeliveryAt) : null,
-                'delivery_notes' => $this->bulkCommitDeliveryNotes,
-                'status_changed_at' => now(),
-                'status_changed_by_user_id' => auth()->id(),
-            ]);
+            EquipmentEvent::updateOrCreate(
+                [
+                    'equipment_id' => $equipment->id,
+                    'event_id' => $this->bulkCommitEventId,
+                ],
+                [
+                    'status' => 'committed',
+                    'committed_at' => now(),
+                    'expected_delivery_at' => $this->bulkCommitExpectedDeliveryAt ? Carbon::parse($this->bulkCommitExpectedDeliveryAt) : null,
+                    'delivery_notes' => $this->bulkCommitDeliveryNotes,
+                    'status_changed_at' => now(),
+                    'status_changed_by_user_id' => auth()->id(),
+                ]
+            );
         }
 
         $count = $equipmentItems->count();

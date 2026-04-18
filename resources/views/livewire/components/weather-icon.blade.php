@@ -8,10 +8,10 @@
         <a
             wire:navigate
             href="{{ route('weather.index') }}"
-            class="flex items-center gap-1.5 btn btn-ghost btn-sm px-2 {{ $isGrayedOut ? 'opacity-40' : '' }}"
+            class="flex items-center gap-1.5 btn btn-ghost btn-md lg:btn-sm px-2 {{ $isGrayedOut ? 'opacity-40' : '' }}"
             title="Weather"
         >
-            <x-icon name="{{ $this->iconName() }}" class="w-5 h-5" />
+            <x-icon name="{{ $this->iconName() }}" class="w-6 h-6 lg:w-5 lg:h-5" />
 
             @if($hasData && $temperature !== null)
                 <span class="text-sm font-medium tabular-nums">{{ round($temperature) }}°</span>

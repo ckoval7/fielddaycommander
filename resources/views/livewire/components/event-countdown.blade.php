@@ -78,55 +78,85 @@
             this.countdown = this.state === 'ended' ? formatted + ' ago' : formatted;
         }
     }"
-    class="flex flex-col lg:flex-row items-start lg:items-center min-[1400px]:items-baseline gap-3 lg:gap-4"
+    class="w-full"
     aria-live="polite"
     aria-label="Event countdown timer"
 >
     @if($event)
-        {{-- Event Badge and Name --}}
-        <div class="flex items-center gap-3">
-            <span class="badge {{ $badgeClass }} badge-lg text-base font-bold flex items-center gap-2 max-[1399px]:hidden">
-                @if($state === 'setup')
-                    <x-icon name="phosphor-wrench" class="w-4 h-4" />
-                @elseif($state === 'upcoming')
-                    <x-icon name="phosphor-calendar-dots" class="w-4 h-4" />
-                @elseif($state === 'active')
-                    <x-icon name="phosphor-play-circle" class="w-4 h-4" />
-                @elseif($state === 'ended')
-                    <x-icon name="phosphor-seal-check" class="w-4 h-4" />
-                @endif
-                {{ $state === 'active' ? 'LIVE' : strtoupper($state) }}
-            </span>
-            <span class="text-xl lg:text-2xl font-bold {{ $textClass }}">
-                {{ $event->name }}
-            </span>
-        </div>
-
-        {{-- Separator (desktop only) --}}
-        <span class="hidden lg:inline text-2xl text-base-content/30">|</span>
-
-        {{-- Countdown Label and Time --}}
-        <div class="flex items-center gap-2">
-            <span class="text-base lg:text-lg font-semibold">
-                {{ $label }}{{ $state !== 'ended' ? ':' : '' }}
-            </span>
-            <span class="text-xl lg:text-2xl font-mono font-bold {{ $textClass }}" x-text="countdown">
-                {{ $this->formattedCountdown }}{{ $state === 'ended' ? ' ago' : '' }}
-            </span>
-        </div>
-
-        {{-- Separator (desktop only) --}}
-        <span class="hidden lg:inline text-2xl text-base-content/30">|</span>
-
-        {{-- Clocks --}}
-        <div class="hidden lg:flex items-center gap-4 max-[1399px]:flex-col max-[1399px]:items-start max-[1399px]:gap-1 text-base lg:text-lg">
-            <div class="flex items-center gap-2">
-                <span class="text-base-content/70 font-semibold">{{ $timezoneLabel }}:</span>
-                <span class="font-mono font-bold text-xl lg:text-2xl" x-text="localTime"></span>
+        {{-- Mobile layout — compact Row 2 status bar --}}
+        <div class="lg:hidden flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1 flex flex-col gap-0.5">
+                <span class="badge {{ $badgeClass }} badge-sm text-[11px] font-bold uppercase tracking-wide flex items-center gap-1 w-fit">
+                    @if($state === 'setup')
+                        <x-icon name="phosphor-wrench" class="w-3 h-3" />
+                    @elseif($state === 'upcoming')
+                        <x-icon name="phosphor-calendar-dots" class="w-3 h-3" />
+                    @elseif($state === 'active')
+                        <x-icon name="phosphor-play-circle" class="w-3 h-3" />
+                    @elseif($state === 'ended')
+                        <x-icon name="phosphor-seal-check" class="w-3 h-3" />
+                    @endif
+                    {{ $state === 'active' ? 'LIVE' : strtoupper($state) }}
+                </span>
+                <span class="text-sm font-semibold text-base-content truncate">
+                    {{ $event->name }}
+                </span>
             </div>
+            <div class="text-right shrink-0 flex flex-col items-end">
+                <span class="text-[10px] uppercase tracking-[0.8px] font-semibold text-base-content/55">
+                    {{ $state === 'ended' ? 'Ended' : ($state === 'active' ? 'Ends in' : 'Starts in') }}
+                </span>
+                <span class="font-mono font-bold text-base leading-tight {{ $textClass }}" x-text="countdown">
+                    {{ $this->formattedCountdown }}{{ $state === 'ended' ? ' ago' : '' }}
+                </span>
+            </div>
+        </div>
+
+        {{-- Desktop layout — full header timer bar --}}
+        <div class="hidden lg:flex flex-row items-center justify-center min-[1400px]:items-baseline gap-4">
+            {{-- Event Badge and Name --}}
+            <div class="flex items-center gap-3">
+                <span class="badge {{ $badgeClass }} badge-lg text-base font-bold flex items-center gap-2 max-[1399px]:hidden">
+                    @if($state === 'setup')
+                        <x-icon name="phosphor-wrench" class="w-4 h-4" />
+                    @elseif($state === 'upcoming')
+                        <x-icon name="phosphor-calendar-dots" class="w-4 h-4" />
+                    @elseif($state === 'active')
+                        <x-icon name="phosphor-play-circle" class="w-4 h-4" />
+                    @elseif($state === 'ended')
+                        <x-icon name="phosphor-seal-check" class="w-4 h-4" />
+                    @endif
+                    {{ $state === 'active' ? 'LIVE' : strtoupper($state) }}
+                </span>
+                <span class="text-2xl font-bold {{ $textClass }}">
+                    {{ $event->name }}
+                </span>
+            </div>
+
+            <span class="text-2xl text-base-content/30">|</span>
+
+            {{-- Countdown Label and Time --}}
             <div class="flex items-center gap-2">
-                <span class="text-base-content/70 font-semibold">UTC:</span>
-                <span class="font-mono font-bold text-xl lg:text-2xl" x-text="utcTime"></span>
+                <span class="text-lg font-semibold">
+                    {{ $label }}{{ $state !== 'ended' ? ':' : '' }}
+                </span>
+                <span class="text-2xl font-mono font-bold {{ $textClass }}" x-text="countdown">
+                    {{ $this->formattedCountdown }}{{ $state === 'ended' ? ' ago' : '' }}
+                </span>
+            </div>
+
+            <span class="text-2xl text-base-content/30">|</span>
+
+            {{-- Clocks --}}
+            <div class="flex items-center gap-4 max-[1399px]:flex-col max-[1399px]:items-start max-[1399px]:gap-1 text-lg">
+                <div class="flex items-center gap-2">
+                    <span class="text-base-content/70 font-semibold">{{ $timezoneLabel }}:</span>
+                    <span class="font-mono font-bold text-2xl" x-text="localTime"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-base-content/70 font-semibold">UTC:</span>
+                    <span class="font-mono font-bold text-2xl" x-text="utcTime"></span>
+                </div>
             </div>
         </div>
     @endif

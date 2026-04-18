@@ -381,6 +381,12 @@
         @apply transition-all duration-200;
     }
 
+    /* Mobile header LIVE rail pulse */
+    @keyframes fdpulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.35; }
+    }
+
     /* Milestone Celebration Animation */
     @keyframes pulse-glow {
         0%, 100% {

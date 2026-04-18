@@ -139,6 +139,15 @@ class ManageWeather extends Component
         }
     }
 
+    public function clearNwsLocationCache(WeatherService $weatherService): void
+    {
+        $this->authorize('manage-weather');
+        $weatherService->clearNwsLocationCache();
+        unset($this->resolvedNwsLocation);
+        $this->loadCurrentState();
+        $this->dispatch('toast', title: 'NWS location cache cleared — re-resolving', type: 'info');
+    }
+
     public function toggleNws(WeatherService $weatherService): void
     {
         $this->authorize('manage-weather');
@@ -158,6 +167,27 @@ class ManageWeather extends Component
     public function locationConfig(): ?array
     {
         return app(WeatherService::class)->getActiveEventCoordinates();
+    }
+
+    #[Computed]
+    public function resolvedOpenMeteoLocation(): ?array
+    {
+        return app(WeatherService::class)->getResolvedOpenMeteoLocation();
+    }
+
+    #[Computed]
+    public function resolvedNwsLocation(): ?array
+    {
+        return app(WeatherService::class)->getResolvedNwsLocation();
+    }
+
+    /**
+     * @return list<string>
+     */
+    #[Computed]
+    public function nwsAllowedEvents(): array
+    {
+        return app(WeatherService::class)->allowedNwsEvents();
     }
 
     public function render(): View

@@ -296,6 +296,19 @@
                 rows="4"
             />
 
+            @if($errors->has('commitEquipmentId') || $errors->has('commitEventId') || $errors->has('commitExpectedDeliveryAt') || $errors->has('commitDeliveryNotes'))
+                <div class="alert alert-error">
+                    <x-icon name="phosphor-warning" class="w-5 h-5" />
+                    <ul class="list-disc list-inside">
+                        @foreach(['commitEquipmentId', 'commitEventId', 'commitExpectedDeliveryAt', 'commitDeliveryNotes'] as $field)
+                            @error($field)
+                                <li>{{ $message }}</li>
+                            @enderror
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <x-slot:actions>
                 <x-button label="Cancel" wire:click="$set('showCommitModal', false)" class="btn-ghost" />
                 <x-button label="Commit Equipment" type="submit" class="btn-primary" spinner="commitEquipment" />

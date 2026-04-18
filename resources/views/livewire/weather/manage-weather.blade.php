@@ -49,61 +49,213 @@
             <h2 class="card-title text-base">API Status</h2>
 
             {{-- Open-Meteo Forecast --}}
-            <div class="space-y-1">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <input type="checkbox" class="toggle toggle-sm toggle-primary"
-                            wire:click="toggleOpenMeteo"
-                            @checked($openMeteoEnabled)
-                            wire:confirm="{{ $openMeteoEnabled ? 'Disable Open-Meteo? The stored forecast will be cleared.' : 'Enable Open-Meteo forecast polling?' }}" />
-                        <span class="text-sm font-medium">Open-Meteo Forecast</span>
+            <div class="collapse collapse-arrow bg-base-100">
+                <input type="checkbox" aria-label="Open-Meteo troubleshooting details" />
+                <div class="collapse-title p-3 min-h-0 pr-10">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-3 relative z-10">
+                            <input type="checkbox" class="toggle toggle-sm toggle-primary"
+                                wire:click.stop="toggleOpenMeteo"
+                                @checked($openMeteoEnabled)
+                                wire:confirm="{{ $openMeteoEnabled ? 'Disable Open-Meteo? The stored forecast will be cleared.' : 'Enable Open-Meteo forecast polling?' }}" />
+                            <span class="text-sm font-medium">Open-Meteo Forecast</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            @if(! $openMeteoEnabled)
+                                <div class="badge badge-ghost badge-sm">Disabled</div>
+                            @elseif($forecastStatus === null)
+                                <div class="badge badge-ghost badge-sm">Not fetched yet</div>
+                            @elseif($forecastStatus['success'])
+                                <div class="badge badge-success badge-sm">OK</div>
+                                <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($forecastStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                            @else
+                                <div class="badge badge-error badge-sm">Error</div>
+                                <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($forecastStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                            @endif
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        @if(! $openMeteoEnabled)
-                            <div class="badge badge-ghost badge-sm">Disabled</div>
-                        @elseif($forecastStatus === null)
-                            <div class="badge badge-ghost badge-sm">Not fetched yet</div>
-                        @elseif($forecastStatus['success'])
-                            <div class="badge badge-success badge-sm">OK</div>
-                            <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($forecastStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                </div>
+                <div class="collapse-content text-sm space-y-3">
+                    {{-- Location Open-Meteo is using --}}
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">Location Open-Meteo is using</p>
+                        @php($requested = $this->locationConfig)
+                        @php($resolved = $this->resolvedOpenMeteoLocation)
+                        @if($resolved)
+                            <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+                                @if($requested)
+                                    <dt class="text-base-content/60">Requested</dt>
+                                    <dd>{{ $requested['lat'] }}, {{ $requested['lon'] }}</dd>
+                                @endif
+                                <dt class="text-base-content/60">Resolved</dt>
+                                <dd>{{ $resolved['lat'] }}, {{ $resolved['lon'] }}</dd>
+                                @if($resolved['elevation'] !== null)
+                                    <dt class="text-base-content/60">Elevation</dt>
+                                    <dd>{{ number_format($resolved['elevation'], 0) }} m</dd>
+                                @endif
+                                @if($resolved['timezone'])
+                                    <dt class="text-base-content/60">Timezone</dt>
+                                    <dd>{{ $resolved['timezone'] }}@if($resolved['timezone_abbreviation']) ({{ $resolved['timezone_abbreviation'] }})@endif</dd>
+                                @endif
+                            </dl>
+                        @elseif($requested)
+                            <p class="text-base-content/60">Requested {{ $requested['lat'] }}, {{ $requested['lon'] }} — no resolved location yet (no successful fetch).</p>
                         @else
-                            <div class="badge badge-error badge-sm">Error</div>
-                            <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($forecastStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                            <p class="text-base-content/60">No active event location configured.</p>
+                        @endif
+                    </div>
+
+                    {{-- Request details --}}
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">Request</p>
+                        <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+                            <dt class="text-base-content/60">Endpoint</dt>
+                            <dd class="font-mono text-xs break-all">https://api.open-meteo.com/v1/forecast</dd>
+                            <dt class="text-base-content/60">Units</dt>
+                            <dd>{{ $units === 'metric' ? 'Metric (°C, km/h)' : 'Imperial (°F, mph)' }}</dd>
+                            <dt class="text-base-content/60">Window</dt>
+                            <dd>4 days, 12 hours ahead</dd>
+                        </dl>
+                    </div>
+
+                    {{-- Fetch status --}}
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">Fetch status</p>
+                        @if(! $openMeteoEnabled)
+                            <p class="text-base-content/60">Polling is disabled — forecast has been cleared.</p>
+                        @elseif($forecastStatus === null)
+                            <p class="text-base-content/60">No fetch has been attempted yet.</p>
+                        @else
+                            <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+                                <dt class="text-base-content/60">Last attempt</dt>
+                                <dd>{{ \Carbon\Carbon::parse($forecastStatus['last_attempt'] ?? null)->toDayDateTimeString() }}</dd>
+                            </dl>
+                            @if(! $forecastStatus['success'])
+                                <p class="text-error mt-1">{{ $forecastStatus['error'] }}</p>
+                            @endif
                         @endif
                     </div>
                 </div>
-                @if($openMeteoEnabled && $forecastStatus !== null && ! $forecastStatus['success'])
-                    <p class="text-xs text-error">{{ $forecastStatus['error'] }}</p>
-                @endif
             </div>
 
             {{-- NWS Alerts --}}
-            <div class="space-y-1">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <input type="checkbox" class="toggle toggle-sm toggle-primary"
-                            wire:click="toggleNws"
-                            @checked($nwsEnabled)
-                            wire:confirm="{{ $nwsEnabled ? 'Disable NWS Alerts? Stored NWS alerts will be cleared. Manual alerts are unaffected.' : 'Enable NWS alert polling?' }}" />
-                        <span class="text-sm font-medium">NWS Alerts</span>
+            <div class="collapse collapse-arrow bg-base-100">
+                <input type="checkbox" aria-label="NWS Alerts troubleshooting details" />
+                <div class="collapse-title p-3 min-h-0 pr-10">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-3 relative z-10">
+                            <input type="checkbox" class="toggle toggle-sm toggle-primary"
+                                wire:click.stop="toggleNws"
+                                @checked($nwsEnabled)
+                                wire:confirm="{{ $nwsEnabled ? 'Disable NWS Alerts? Stored NWS alerts will be cleared. Manual alerts are unaffected.' : 'Enable NWS alert polling?' }}" />
+                            <span class="text-sm font-medium">NWS Alerts</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            @if(! $nwsEnabled)
+                                <div class="badge badge-ghost badge-sm">Disabled</div>
+                            @elseif($alertsStatus === null)
+                                <div class="badge badge-ghost badge-sm">Not fetched yet</div>
+                            @elseif($alertsStatus['success'])
+                                <div class="badge badge-success badge-sm">OK</div>
+                                <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($alertsStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                            @else
+                                <div class="badge badge-error badge-sm">Error</div>
+                                <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($alertsStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                            @endif
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        @if(! $nwsEnabled)
-                            <div class="badge badge-ghost badge-sm">Disabled</div>
-                        @elseif($alertsStatus === null)
-                            <div class="badge badge-ghost badge-sm">Not fetched yet</div>
-                        @elseif($alertsStatus['success'])
-                            <div class="badge badge-success badge-sm">OK</div>
-                            <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($alertsStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                </div>
+                <div class="collapse-content text-sm space-y-3">
+                    {{-- Location NWS thinks you are in --}}
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">Location NWS thinks you are in</p>
+                        @php($requested = $this->locationConfig)
+                        @php($resolved = $this->resolvedNwsLocation)
+                        @if($resolved)
+                            <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+                                @if($requested)
+                                    <dt class="text-base-content/60">Requested</dt>
+                                    <dd>{{ $requested['lat'] }}, {{ $requested['lon'] }}</dd>
+                                @endif
+                                @if($resolved['city'] && $resolved['state'])
+                                    <dt class="text-base-content/60">City</dt>
+                                    <dd>{{ $resolved['city'] }}, {{ $resolved['state'] }}</dd>
+                                @endif
+                                <dt class="text-base-content/60">Forecast zone</dt>
+                                <dd class="font-mono">{{ $resolved['zone'] }}</dd>
+                                <dt class="text-base-content/60">County zone</dt>
+                                <dd class="font-mono">{{ $resolved['county'] }}</dd>
+                            </dl>
+                        @elseif($requested)
+                            <p class="text-base-content/60">Requested {{ $requested['lat'] }}, {{ $requested['lon'] }} — NWS has not resolved a zone/county yet.</p>
                         @else
-                            <div class="badge badge-error badge-sm">Error</div>
-                            <span class="text-xs text-base-content/60">{{ \Carbon\Carbon::parse($alertsStatus['last_attempt'] ?? null)->diffForHumans() }}</span>
+                            <p class="text-base-content/60">No active event location configured.</p>
+                        @endif
+                        @if($resolved || $requested)
+                            <button wire:click="clearNwsLocationCache"
+                                wire:confirm="Clear the cached NWS zone, county, and city for the active event's coordinates? NWS will re-resolve on the next poll."
+                                class="btn btn-outline btn-xs mt-2">
+                                <x-icon name="phosphor-arrow-clockwise" class="w-3 h-3" />
+                                Clear cached location
+                            </button>
+                        @endif
+                    </div>
+
+                    {{-- Request details --}}
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">Request</p>
+                        <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+                            <dt class="text-base-content/60">Points</dt>
+                            <dd class="font-mono text-xs break-all">
+                                @if($requested)
+                                    https://api.weather.gov/points/{{ number_format($requested['lat'], 4, '.', '') }},{{ number_format($requested['lon'], 4, '.', '') }}
+                                @else
+                                    <span class="text-base-content/50">(no coordinates)</span>
+                                @endif
+                            </dd>
+                            <dt class="text-base-content/60">Alerts</dt>
+                            <dd class="font-mono text-xs break-all">
+                                @if($resolved)
+                                    https://api.weather.gov/alerts/active?zone={{ $resolved['county'] }},{{ $resolved['zone'] }}
+                                @else
+                                    <span class="text-base-content/50">(zone/county unresolved)</span>
+                                @endif
+                            </dd>
+                            <dt class="text-base-content/60">Contact</dt>
+                            <dd class="break-all">{{ \App\Models\Setting::get('contact_email') ?? 'admin@fielddaycommander.org' }}</dd>
+                        </dl>
+                    </div>
+
+                    {{-- Alert filtering --}}
+                    <details class="border border-base-300 rounded px-3 py-2">
+                        <summary class="cursor-pointer text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                            Event types shown (NWS alerts outside this list are ignored)
+                        </summary>
+                        <ul class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
+                            @foreach($this->nwsAllowedEvents as $eventType)
+                                <li>{{ $eventType }}</li>
+                            @endforeach
+                        </ul>
+                    </details>
+
+                    {{-- Fetch status --}}
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">Fetch status</p>
+                        @if(! $nwsEnabled)
+                            <p class="text-base-content/60">Polling is disabled — stored NWS alerts have been cleared (manual alerts preserved).</p>
+                        @elseif($alertsStatus === null)
+                            <p class="text-base-content/60">No fetch has been attempted yet.</p>
+                        @else
+                            <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+                                <dt class="text-base-content/60">Last attempt</dt>
+                                <dd>{{ \Carbon\Carbon::parse($alertsStatus['last_attempt'] ?? null)->toDayDateTimeString() }}</dd>
+                            </dl>
+                            @if(! $alertsStatus['success'])
+                                <p class="text-error mt-1">{{ $alertsStatus['error'] }}</p>
+                            @endif
                         @endif
                     </div>
                 </div>
-                @if($nwsEnabled && $alertsStatus !== null && ! $alertsStatus['success'])
-                    <p class="text-xs text-error">{{ $alertsStatus['error'] }}</p>
-                @endif
             </div>
         </div>
     </div>
