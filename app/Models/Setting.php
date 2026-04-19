@@ -23,12 +23,12 @@ class Setting extends Model
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $value = Cache::remember("setting.{$key}", 3600, function () use ($key, $default) {
-            return static::where('key', $key)->value('value') ?? $default;
+        $value = Cache::remember("setting.{$key}", 3600, function () use ($key) {
+            return static::where('key', $key)->value('value');
         });
 
-        if ($value === $default) {
-            return $value;
+        if ($value === null) {
+            return $default;
         }
 
         // Try to decode JSON values

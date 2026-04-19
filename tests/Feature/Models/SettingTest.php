@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Setting;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 beforeEach(function () {
@@ -69,6 +70,15 @@ test('setting cache is cleared when value is updated', function () {
     expect(Setting::get('cache_test'))->toBe('updated');
 });
 
+test('missing setting with non-null default does not poison cache for subsequent callers', function () {
+    // First caller primes the cache with a non-null default
+    expect(Setting::get('weather.location', []))->toBe([]);
+
+    // Second caller with a different default must not receive the first default
+    // and must not explode trying to json_decode it
+    expect(Setting::get('weather.location'))->toBeNull();
+});
+
 test('can get all settings', function () {
     Setting::set('key1', 'value1');
     Setting::set('key2', 'value2');
@@ -76,7 +86,7 @@ test('can get all settings', function () {
 
     $all = Setting::getAllSettings();
 
-    expect($all)->toBeInstanceOf(\Illuminate\Support\Collection::class)
+    expect($all)->toBeInstanceOf(Collection::class)
         ->and($all->count())->toBe(3)
         ->and($all->get('key1'))->toBe('value1')
         ->and($all->get('key2'))->toBe('value2')
