@@ -22,12 +22,12 @@
     {{-- Unit System --}}
     <div class="card bg-base-200 shadow">
         <div class="card-body">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="card-title text-base">Unit System</h2>
                     <p class="text-xs text-base-content/60 mt-1">Applies to all users. Takes effect after the next weather fetch.</p>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex flex-col gap-2 sm:flex-row">
                     <button
                         wire:click="saveUnits('imperial')"
                         class="btn btn-sm {{ $units === 'imperial' ? 'btn-primary' : 'btn-outline' }}">
