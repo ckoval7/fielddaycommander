@@ -44,9 +44,19 @@
         x-data="{
             scrolled: false,
             hasCallsign: @json($mobileHasCallsign),
-            onScroll() { this.scrolled = window.scrollY > 80; },
+            onScroll() {
+                // Hysteresis + room guard avoid a feedback loop: collapsing Row 2
+                // shrinks the page and can clamp scrollY back below the threshold.
+                const y = window.scrollY;
+                const room = document.documentElement.scrollHeight - window.innerHeight;
+                if (!this.scrolled && y > 80 && room > 160) {
+                    this.scrolled = true;
+                } else if (this.scrolled && y < 30) {
+                    this.scrolled = false;
+                }
+            },
         }"
-        x-init="onScroll(); window.addEventListener('scroll', () => onScroll(), { passive: true })"
+        x-init="onScroll(); window.addEventListener('scroll', () => onScroll(), { passive: true }); window.addEventListener('resize', () => onScroll(), { passive: true })"
     >
         {{-- Row 1: brand + right cluster --}}
         <div class="flex items-center gap-1.5 min-h-14 pl-3 pr-1.5 py-2">
