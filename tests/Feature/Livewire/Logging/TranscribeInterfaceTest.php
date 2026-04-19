@@ -889,6 +889,74 @@ test('updateContact parses inline time as local when timeIsLocal is true', funct
     expect($contact->qso_time->utc()->format('Y-m-d H:i'))->toBe($expectedUtc->format('Y-m-d H:i'));
 });
 
+test('transcribe interface renders mobile card list for recent contacts', function () {
+    $this->actingAs($this->user);
+
+    $section = Section::where('code', 'CT')->first();
+    $session = OperatingSession::firstOrCreate(
+        [
+            'station_id' => $this->station->id,
+            'is_transcription' => true,
+        ],
+        [
+            'operator_user_id' => $this->user->id,
+            'start_time' => $this->event->start_time,
+            'end_time' => $this->event->end_time,
+            'is_transcription' => true,
+            'power_watts' => 100,
+            'qso_count' => 0,
+        ]
+    );
+
+    Contact::factory()->create([
+        'event_configuration_id' => $this->event->eventConfiguration->id,
+        'operating_session_id' => $session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'callsign' => 'K1ABC',
+        'exchange_class' => '2A',
+        'section_id' => $section->id,
+        'is_transcribed' => true,
+        'qso_time' => now(),
+    ]);
+
+    $html = Livewire::test(TranscribeInterface::class, ['station' => $this->station])->html();
+
+    expect($html)->toContain('sm:hidden space-y-1.5')
+        ->toContain('recallByContactId(')
+        ->toContain('hidden sm:block overflow-x-auto');
+});
+
+test('transcribe interface renders button-morph for recall mode', function () {
+    $this->actingAs($this->user);
+
+    $html = Livewire::test(TranscribeInterface::class, ['station' => $this->station])->html();
+
+    expect($html)->toContain('x-if="!isRecalling"')
+        ->toContain('saveRecalled($refs.exchangeInput)')
+        ->toContain('deleteRecalled($refs.exchangeInput)')
+        ->toContain('exitRecall($refs.exchangeInput)');
+});
+
+test('transcribe interface wraps buttons and exposes input id', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->assertSeeHtml('<div class="flex gap-2 sm:contents">')
+        ->assertSeeHtml('id="exchange-input"');
+});
+
+test('transcribe interface emits mobile-friendly responsive classes', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->assertSeeHtml('max-lg:z-10 lg:z-40')
+        ->assertSeeHtml('flex flex-col sm:flex-row gap-2')
+        ->assertSeeHtml('grid grid-cols-1 sm:grid-cols-3 gap-3')
+        ->assertSeeHtml('hidden sm:flex flex-wrap');
+});
+
 test('logContact dispatches ContactLogged event', function () {
     $this->actingAs($this->user);
 

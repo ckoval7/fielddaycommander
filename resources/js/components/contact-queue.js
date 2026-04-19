@@ -400,6 +400,36 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         /**
+         * Tap-to-recall a queued contact by its client-side uuid.
+         * No-op if the entry is mid-sync or not found.
+         */
+        recallByUuid(uuid) {
+            const input = document.getElementById('exchange-input');
+            if (!input) return;
+            const all = this.recallableContacts;
+            const idx = all.findIndex(c => c.source === 'queue' && c.uuid === uuid);
+            if (idx < 0) return;
+            this.recallIndex = idx;
+            this._applyRecallTarget(all[idx], input);
+            input.focus();
+        },
+
+        /**
+         * Tap-to-recall a server-confirmed contact by its id.
+         * Assumes the contact is present in the DOM's recent-QSO table.
+         */
+        recallByContactId(id) {
+            const input = document.getElementById('exchange-input');
+            if (!input) return;
+            const all = this.recallableContacts;
+            const idx = all.findIndex(c => c.source === 'server' && c.id === id);
+            if (idx < 0) return;
+            this.recallIndex = idx;
+            this._applyRecallTarget(all[idx], input);
+            input.focus();
+        },
+
+        /**
          * Move the recall pointer to a target contact. Releases any sync lock
          * on the previously recalled queue entry and, if the new target is a
          * queue entry, locks it with status='editing' so syncNext skips it.

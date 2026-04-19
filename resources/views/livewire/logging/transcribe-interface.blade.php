@@ -13,7 +13,7 @@
         </div>
     @else
         {{-- Date & Timezone Bar — sticky at top --}}
-        <div class="sticky top-0 z-40 bg-amber-50 dark:bg-amber-900/30 border-b-2 border-amber-300 dark:border-amber-600 shadow-md">
+        <div class="sticky top-0 max-lg:z-10 lg:z-40 bg-amber-50 dark:bg-amber-900/30 border-b-2 border-amber-300 dark:border-amber-600 shadow-md">
             <div class="px-4 py-2.5 max-w-5xl mx-auto">
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="flex items-center gap-2 flex-shrink-0">
@@ -144,13 +144,26 @@
                 $wire.call('updateContact', this.recalledContactId, exchange);
                 this.exitRecall(inputEl);
             },
+
+            recallByContactId(id) {
+                const input = document.getElementById('exchange-input');
+                if (!input) return;
+                const all = this.recallableContacts;
+                const idx = all.findIndex(c => c.id === id);
+                if (idx < 0) return;
+                this.recallIndex = idx;
+                input.value = all[idx].exchange;
+                this.recalledContactId = id;
+                $wire.set('exchangeInput', all[idx].exchange);
+                input.focus();
+            },
         }">
 
             {{-- Contact Form Card --}}
             <x-card title="Log Contact" class="shadow-sm">
                 <div class="space-y-4">
                     {{-- Band / Mode / Power --}}
-                    <div class="grid grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {{-- Band --}}
                         <div>
                             <label for="transcribe-band" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Band <span class="text-error">*</span></label>
@@ -268,10 +281,11 @@
                             <span>Time: <span class="font-mono font-semibold text-base-content/70">{{ $contactTime }}</span> {{ $timeIsLocal ? $this->timezoneLabel : 'UTC' }}</span>
                             <span class="text-base-content/30">&mdash; prepend time to set, e.g. 1423 W1AW 3A CT</span>
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex flex-col sm:flex-row gap-2">
                             <div class="relative flex-1">
                                 <input
                                     type="text"
+                                    id="exchange-input"
                                     wire:model.live.debounce.300ms="exchangeInput"
                                     x-ref="exchangeInput"
                                     @input="si = -1"
@@ -330,23 +344,46 @@
                                     </div>
                                 @endif
                             </div>
-                            <x-button
-                                label="Log"
-                                icon="phosphor-check"
-                                class="btn-primary btn-lg"
-                                wire:click="logContact"
-                                spinner="logContact"
-                                tooltip="Enter"
-                                tooltip-position="tooltip-bottom"
-                            />
-                            <x-button
-                                label="Clear"
-                                icon="phosphor-x"
-                                class="btn-ghost btn-lg"
-                                wire:click="clearInput"
-                                tooltip="Esc"
-                                tooltip-position="tooltip-bottom"
-                            />
+                            <template x-if="!isRecalling">
+                                <div class="flex gap-2 sm:contents">
+                                    <x-button
+                                        label="Log"
+                                        icon="phosphor-check"
+                                        class="btn-primary btn-lg flex-1 sm:flex-initial"
+                                        wire:click="logContact"
+                                        spinner="logContact"
+                                        tooltip="Enter"
+                                        tooltip-position="tooltip-bottom"
+                                    />
+                                    <x-button
+                                        label="Clear"
+                                        icon="phosphor-x"
+                                        class="btn-ghost btn-lg flex-1 sm:flex-initial"
+                                        wire:click="clearInput"
+                                        tooltip="Esc"
+                                        tooltip-position="tooltip-bottom"
+                                    />
+                                </div>
+                            </template>
+                            <template x-if="isRecalling">
+                                <div class="flex gap-2 sm:contents">
+                                    <button type="button"
+                                        class="btn btn-primary btn-lg flex-1 sm:flex-initial"
+                                        @click="saveRecalled($refs.exchangeInput)">
+                                        <x-icon name="phosphor-check" class="w-5 h-5" /> Save
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-error btn-lg flex-1 sm:flex-initial"
+                                        @click="deleteRecalled($refs.exchangeInput)">
+                                        <x-icon name="phosphor-trash" class="w-5 h-5" /> Delete
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-ghost btn-lg flex-1 sm:flex-initial"
+                                        @click="exitRecall($refs.exchangeInput)">
+                                        <x-icon name="phosphor-x" class="w-5 h-5" /> Cancel
+                                    </button>
+                                </div>
+                            </template>
                         </div>
 
                         @if($parseError)
@@ -362,10 +399,11 @@
                                     <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                                 </svg>
                                 <span>
-                                    Recalled QSO <span x-text="recallIndex + 1" class="font-bold"></span>
-                                    — <kbd class="kbd kbd-xs text-base-content">Del</kbd> delete
-                                    · <kbd class="kbd kbd-xs text-base-content">Enter</kbd> save edits
-                                    · <kbd class="kbd kbd-xs text-base-content">Esc</kbd> cancel
+                                    Editing recalled QSO <span x-text="recallIndex + 1" class="font-bold"></span>
+                                    — change the exchange above, then tap
+                                    <span class="font-semibold">Save</span>,
+                                    <span class="font-semibold">Delete</span>, or
+                                    <span class="font-semibold">Cancel</span>.
                                 </span>
                             </div>
                         </template>
@@ -377,7 +415,7 @@
                         @endif
 
                         {{-- Keyboard shortcuts --}}
-                        <div class="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-base-content/40">
+                        <div class="hidden sm:flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-base-content/40">
                             <span><kbd class="kbd kbd-xs text-base-content">Enter</kbd> Log contact</span>
                             <span><kbd class="kbd kbd-xs text-base-content">Esc</kbd> Clear input</span>
                             <span><kbd class="kbd kbd-xs text-base-content">&uarr;</kbd><kbd class="kbd kbd-xs text-base-content">&darr;</kbd> Recall QSOs</span>
@@ -391,7 +429,56 @@
             {{-- Recently Transcribed Contacts --}}
             @if($this->recentContacts->isNotEmpty())
                 <x-card title="Recently Transcribed" subtitle="This station only">
-                    <div class="overflow-x-auto">
+                    {{-- Mobile: card list --}}
+                    <div class="sm:hidden space-y-1.5">
+                        @foreach($this->recentContacts as $contact)
+                            @php
+                                $displayTime = $timeIsLocal ? toLocalTime($contact->qso_time) : $contact->qso_time;
+                            @endphp
+                            @if($contact->trashed())
+                                <div wire:key="card-{{ $contact->id }}"
+                                    class="w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-base-300 bg-base-100 opacity-40 line-through">
+                                    <div class="min-w-0">
+                                        <div class="font-bold font-mono uppercase text-lg truncate">
+                                            {{ $contact->callsign }}
+                                            <button wire:click="restoreContact({{ $contact->id }})" class="btn btn-ghost btn-xs ml-1 no-underline">Undo</button>
+                                        </div>
+                                        <div class="text-xs text-base-content/60 font-mono">
+                                            {{ $contact->exchange_class }} · {{ $contact->band->name ?? '—' }} · {{ $contact->mode->name ?? '—' }} · {{ $contact->section->code ?? '—' }}
+                                        </div>
+                                    </div>
+                                    <span class="font-mono text-xs text-base-content/60 flex-shrink-0">{{ $displayTime->format('H:i') }}</span>
+                                </div>
+                            @else
+                                <button
+                                    type="button"
+                                    wire:key="card-{{ $contact->id }}"
+                                    @click="recallByContactId({{ $contact->id }})"
+                                    :class="{ 'ring-2 ring-primary': recalledContactId === {{ $contact->id }} }"
+                                    @class([
+                                        'w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-base-300 bg-base-100 text-left',
+                                        'opacity-50' => $contact->is_duplicate,
+                                    ])
+                                >
+                                    <div class="min-w-0">
+                                        <div class="font-bold font-mono uppercase text-lg truncate">
+                                            {{ $contact->callsign }}
+                                            @if($contact->is_duplicate)
+                                                <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
+                                            @endif
+                                        </div>
+                                        <div class="text-xs text-base-content/60 font-mono">
+                                            {{ $contact->exchange_class }} · {{ $contact->band->name ?? '—' }} · {{ $contact->mode->name ?? '—' }} · {{ $contact->section->code ?? '—' }} · {{ $contact->points }}pt
+                                        </div>
+                                    </div>
+                                    <span class="font-mono text-xs text-base-content/60 flex-shrink-0">{{ $displayTime->format('H:i') }}</span>
+                                </button>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    {{-- Desktop: existing table --}}
+                    <div class="hidden sm:block overflow-x-auto">
                         <table class="table table-sm">
                             <thead>
                                 <tr>
