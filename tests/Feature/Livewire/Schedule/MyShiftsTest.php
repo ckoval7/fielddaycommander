@@ -743,7 +743,8 @@ test('my shifts summary caps worked hours at scheduled length', function () {
 
     $this->actingAs($this->user);
 
-    Livewire::test(MyShifts::class)
-        ->assertSeeHtml('2.0 hours worked')
-        ->assertSeeHtml('2.0 hours signed up');
+    $component = Livewire::test(MyShifts::class);
+
+    expect($component->instance()->hoursWorkedThisEvent())->toBe(2.0);
+    expect($component->instance()->hoursSignedUpThisEvent())->toBe(2.0);
 });

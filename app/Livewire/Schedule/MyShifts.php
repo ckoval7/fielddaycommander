@@ -108,42 +108,59 @@ class MyShifts extends Component
     }
 
     /**
+     * All assignments for the current user scoped to the active event, eager-loading shift.
+     *
+     * Memoized so a single render can read both hour totals without issuing two queries.
+     *
+     * @return Collection<int, ShiftAssignment>
+     */
+    #[Computed]
+    public function eventAssignments(): Collection
+    {
+        if (! $this->eventConfig) {
+            return new Collection;
+        }
+
+        return ShiftAssignment::query()
+            ->forUser(Auth::id())
+            ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->eventConfig->id))
+            ->with('shift')
+            ->get();
+    }
+
+    /**
      * Total hours worked by the current user across all assignments for the active event.
+     *
+     * Excludes no-show assignments defensively — `hoursWorked()` already returns 0.0
+     * for them (no check-in timestamp), but the filter keeps intent symmetric with
+     * `hoursSignedUpThisEvent` and guards against future data quirks.
      */
     #[Computed]
     public function hoursWorkedThisEvent(): float
     {
-        if (! $this->eventConfig) {
-            return 0.0;
-        }
-
-        $assignments = ShiftAssignment::query()
-            ->forUser(Auth::id())
-            ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->eventConfig->id))
-            ->with('shift')
-            ->get();
-
-        return round($assignments->sum(fn ($a) => $a->hoursWorked()), 1);
+        return round(
+            $this->eventAssignments
+                ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
+                ->sum(fn ($a) => $a->hoursWorked()),
+            1
+        );
     }
 
     /**
-     * Total hours signed up by the current user for the active event (excludes no-shows).
+     * Total hours signed up by the current user for the active event.
+     *
+     * Excludes no-shows; `scheduledHours()` is status-agnostic, so this filter is
+     * the sole mechanism preventing no-show shifts from inflating the total.
      */
     #[Computed]
     public function hoursSignedUpThisEvent(): float
     {
-        if (! $this->eventConfig) {
-            return 0.0;
-        }
-
-        $assignments = ShiftAssignment::query()
-            ->forUser(Auth::id())
-            ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
-            ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->eventConfig->id))
-            ->with('shift')
-            ->get();
-
-        return round($assignments->sum(fn ($a) => $a->scheduledHours()), 1);
+        return round(
+            $this->eventAssignments
+                ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
+                ->sum(fn ($a) => $a->scheduledHours()),
+            1
+        );
     }
 
     /**
