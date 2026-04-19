@@ -102,6 +102,19 @@ test('hoursWorked rounds to 0.1 hour', function () {
     expect($assignment->hoursWorked())->toBe(1.6);
 });
 
+test('hoursWorked returns 0.0 when checkout precedes check-in', function () {
+    $start = now();
+    $assignment = makeAssignmentForHours([
+        'start_time' => $start,
+        'end_time' => $start->copy()->addHours(3),
+    ], [
+        'checked_in_at' => $start->copy()->addMinutes(30),
+        'checked_out_at' => $start,
+    ]);
+
+    expect($assignment->hoursWorked())->toBe(0.0);
+});
+
 test('scheduledHours returns shift duration rounded to 0.1', function () {
     $start = now();
     $assignment = makeAssignmentForHours([

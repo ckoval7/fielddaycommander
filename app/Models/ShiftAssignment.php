@@ -181,8 +181,12 @@ class ShiftAssignment extends Model
     /**
      * Calculate the hours actually worked on this assignment, rounded to 0.1 hour.
      *
-     * Returns 0.0 if either check-in or check-out is missing. Caps the duration at
-     * the shift's scheduled length so a late checkout doesn't exceed the planned hours.
+     * Returns 0.0 if either check-in or check-out is missing, or if checkout
+     * precedes check-in. Caps the duration at the shift's scheduled length so a
+     * late checkout doesn't exceed the planned hours.
+     *
+     * @note Callers summing across a collection should eager-load the `shift`
+     * relation (e.g. `->with('shift')`) to avoid N+1 queries.
      */
     public function hoursWorked(): float
     {
@@ -192,7 +196,7 @@ class ShiftAssignment extends Model
 
         $workedMinutes = $this->checked_in_at->diffInMinutes($this->checked_out_at);
         $scheduledMinutes = $this->shift->start_time->diffInMinutes($this->shift->end_time);
-        $minutes = min($workedMinutes, $scheduledMinutes);
+        $minutes = max(0, min($workedMinutes, $scheduledMinutes));
 
         return round($minutes / 60, 1);
     }
