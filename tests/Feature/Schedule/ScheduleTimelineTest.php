@@ -531,6 +531,42 @@ describe('filtering and sorting', function () {
             ->assertSet('role', '')
             ->assertSet('timeFilter', '');
     });
+
+    test('hides past shifts by default and shows them when Past filter is selected', function () {
+        $this->actingAs($this->user);
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Operator',
+        ]);
+
+        $pastShift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->subHours(4),
+            'end_time' => appNow()->subHours(2),
+        ]);
+
+        $upcomingShift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $component = Livewire::test(ScheduleTimeline::class);
+
+        $defaultShifts = $component->instance()->filteredShifts;
+        expect($defaultShifts->pluck('id')->all())
+            ->toContain($upcomingShift->id)
+            ->not->toContain($pastShift->id);
+
+        $component->set('timeFilter', 'past');
+        $pastShifts = $component->instance()->filteredShifts;
+        expect($pastShifts->pluck('id')->all())
+            ->toContain($pastShift->id)
+            ->not->toContain($upcomingShift->id);
+    });
 });
 
 describe('urgent empty shift highlighting', function () {
