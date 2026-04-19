@@ -280,9 +280,13 @@ class EquipmentForm extends Component
         ]);
 
         // Redirect back to the appropriate list
-        $redirectRoute = (! $this->equipmentId && auth()->user()->can('edit-any-equipment') && $this->owner_user_id !== auth()->id())
-            ? route('equipment.all')
-            : route('equipment.index');
+        if ($this->isClubEquipment) {
+            $redirectRoute = route('equipment.club');
+        } elseif (! $this->equipmentId && auth()->user()->can('edit-any-equipment') && $this->owner_user_id !== auth()->id()) {
+            $redirectRoute = route('equipment.all');
+        } else {
+            $redirectRoute = route('equipment.index');
+        }
 
         return $this->redirect($redirectRoute, navigate: true);
     }

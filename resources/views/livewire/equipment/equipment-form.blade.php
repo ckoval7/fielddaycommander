@@ -17,7 +17,7 @@
                 label="Cancel"
                 icon="phosphor-x"
                 class="btn-ghost"
-                link="{{ route('equipment.index') }}"
+                link="{{ route($isClubEquipment ? 'equipment.club' : 'equipment.index') }}"
                 wire:navigate
             />
         </x-slot:actions>
@@ -278,7 +278,7 @@
                 label="Cancel"
                 icon="phosphor-x"
                 class="btn-ghost"
-                link="{{ route('equipment.index') }}"
+                link="{{ route($isClubEquipment ? 'equipment.club' : 'equipment.index') }}"
                 wire:navigate
             />
             <x-button
