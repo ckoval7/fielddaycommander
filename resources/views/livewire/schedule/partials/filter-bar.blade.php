@@ -111,7 +111,7 @@
                 <div>
                     <label for="schedule-time" class="label label-text text-xs font-semibold">Time</label>
                     <select id="schedule-time" wire:model.live="timeFilter" class="select select-bordered select-sm w-full">
-                        <option value="">All Times</option>
+                        <option value="">Current &amp; Upcoming</option>
                         <option value="current">Current</option>
                         <option value="upcoming">Upcoming</option>
                         <option value="past">Past</option>

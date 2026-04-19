@@ -71,6 +71,8 @@ trait WithScheduleFilters
             $query->where('start_time', '>', appNow());
         } elseif ($this->timeFilter === 'past') {
             $query->where('end_time', '<', appNow());
+        } else {
+            $query->where('end_time', '>=', appNow());
         }
 
         return $query;
