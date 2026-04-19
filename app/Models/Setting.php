@@ -31,7 +31,13 @@ class Setting extends Model
             return $default;
         }
 
-        // Try to decode JSON values
+        // Legacy cache entries may hold already-decoded values (arrays, ints,
+        // bools) from a prior version that cached the caller's default. Only
+        // attempt JSON decoding on strings.
+        if (! is_string($value)) {
+            return $value;
+        }
+
         $decoded = json_decode($value, true);
 
         return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;

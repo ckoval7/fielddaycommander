@@ -79,6 +79,14 @@ test('missing setting with non-null default does not poison cache for subsequent
     expect(Setting::get('weather.location'))->toBeNull();
 });
 
+test('tolerates legacy cache entries that hold non-string values', function () {
+    // Simulate a cache entry written by the previous buggy version that cached
+    // the caller's array default instead of the raw DB string.
+    Cache::put('setting.weather.location', ['city' => 'Madison', 'state' => 'CT'], 3600);
+
+    expect(Setting::get('weather.location'))->toBe(['city' => 'Madison', 'state' => 'CT']);
+});
+
 test('can get all settings', function () {
     Setting::set('key1', 'value1');
     Setting::set('key2', 'value2');
