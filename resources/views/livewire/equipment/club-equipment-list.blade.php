@@ -15,9 +15,9 @@
         {{-- Bulk Action Bar --}}
         @can('edit-any-equipment')
             @if(count($selectedIds) > 0)
-                <div class="flex items-center gap-4 mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                <div class="flex flex-wrap items-center gap-3 mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
                     <span class="text-sm font-semibold">{{ count($selectedIds) }} item(s) selected</span>
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2 w-full sm:w-auto">
                         @php
                             $allAvailable = \App\Models\Equipment::whereIn('id', $selectedIds)
                                 ->whereDoesntHave('commitments', function ($q) {
@@ -44,13 +44,13 @@
                             wire:click="bulkDeleteEquipment"
                             wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} item(s)?"
                         />
+                        <x-button
+                            label="Clear"
+                            icon="phosphor-x"
+                            class="btn-ghost btn-sm ml-auto sm:ml-0"
+                            wire:click="deselectAll"
+                        />
                     </div>
-                    <x-button
-                        label="Clear"
-                        icon="phosphor-x"
-                        class="btn-ghost btn-sm ml-auto"
-                        wire:click="deselectAll"
-                    />
                 </div>
             @endif
         @endcan
