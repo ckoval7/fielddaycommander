@@ -526,6 +526,31 @@ test('my shifts does not show other users shifts', function () {
         ->assertSee('You have no upcoming shifts scheduled.');
 });
 
+test('user can check out of a past shift they forgot to check out of', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(4),
+        'end_time' => appNow()->subHours(2),
+    ]);
+
+    $assignment = ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_IN,
+        'checked_in_at' => appNow()->subHours(4),
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSee('Check Out')
+        ->call('checkOut', $assignment->id)
+        ->assertDispatched('toast', title: 'Success', description: 'You have checked out.');
+
+    expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
+});
+
 test('user can re-check-in to a checked-out shift while still active', function () {
     $shift = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,

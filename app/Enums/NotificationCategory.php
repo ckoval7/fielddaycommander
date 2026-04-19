@@ -12,6 +12,7 @@ enum NotificationCategory: string
     case Equipment = 'equipment';
     case BulletinReminder = 'bulletin_reminder';
     case ShiftCheckinReminder = 'shift_checkin_reminder';
+    case ShiftCheckoutReminder = 'shift_checkout_reminder';
     case WeatherAlert = 'weather_alert';
 
     /**
@@ -28,6 +29,7 @@ enum NotificationCategory: string
             self::Equipment => 'Equipment',
             self::BulletinReminder => 'Bulletin Reminder',
             self::ShiftCheckinReminder => 'Shift Check-in Reminders',
+            self::ShiftCheckoutReminder => 'Shift Check-out Reminders',
             self::WeatherAlert => 'Weather Alerts',
         };
     }
@@ -46,6 +48,7 @@ enum NotificationCategory: string
             self::Equipment => 'phosphor-wrench',
             self::BulletinReminder => 'phosphor-radio',
             self::ShiftCheckinReminder => 'phosphor-clock',
+            self::ShiftCheckoutReminder => 'phosphor-sign-out',
             self::WeatherAlert => 'phosphor-cloud-lightning-duotone',
         };
     }
@@ -64,6 +67,7 @@ enum NotificationCategory: string
             self::Equipment => 300,
             self::BulletinReminder => 0,
             self::ShiftCheckinReminder => 0,
+            self::ShiftCheckoutReminder => 0,
             self::WeatherAlert => 0,
         };
     }
@@ -93,6 +97,7 @@ enum NotificationCategory: string
             self::Equipment => 'Equipment status changes',
             self::BulletinReminder => 'W1AW bulletin transmission reminders',
             self::ShiftCheckinReminder => 'Reminders before your scheduled shifts',
+            self::ShiftCheckoutReminder => 'Reminders when you forget to check out of a shift',
             self::WeatherAlert => 'NWS and manual weather alerts',
         };
     }
