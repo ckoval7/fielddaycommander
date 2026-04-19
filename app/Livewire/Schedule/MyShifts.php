@@ -108,6 +108,45 @@ class MyShifts extends Component
     }
 
     /**
+     * Total hours worked by the current user across all assignments for the active event.
+     */
+    #[Computed]
+    public function hoursWorkedThisEvent(): float
+    {
+        if (! $this->eventConfig) {
+            return 0.0;
+        }
+
+        $assignments = ShiftAssignment::query()
+            ->forUser(Auth::id())
+            ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->eventConfig->id))
+            ->with('shift')
+            ->get();
+
+        return round($assignments->sum(fn ($a) => $a->hoursWorked()), 1);
+    }
+
+    /**
+     * Total hours signed up by the current user for the active event (excludes no-shows).
+     */
+    #[Computed]
+    public function hoursSignedUpThisEvent(): float
+    {
+        if (! $this->eventConfig) {
+            return 0.0;
+        }
+
+        $assignments = ShiftAssignment::query()
+            ->forUser(Auth::id())
+            ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
+            ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->eventConfig->id))
+            ->with('shift')
+            ->get();
+
+        return round($assignments->sum(fn ($a) => $a->scheduledHours()), 1);
+    }
+
+    /**
      * Get available statuses for the filter dropdown.
      *
      * @return array<string, string>
