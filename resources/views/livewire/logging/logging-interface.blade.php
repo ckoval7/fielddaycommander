@@ -11,7 +11,7 @@
         sections: {{ Js::from(\App\Models\Section::where('is_active', true)->pluck('id', 'code')->toArray()) }}
      })">
     {{-- Sticky Session Info Bar --}}
-    <div class="sticky top-0 z-30 bg-base-100 border-b border-base-300 shadow-sm">
+    <div class="sticky top-0 max-lg:z-10 lg:z-30 bg-base-100 border-b border-base-300 shadow-sm">
         <div class="px-4 py-2.5 flex items-center justify-between gap-3">
             {{-- Left: Station name --}}
             <div class="min-w-0">
@@ -175,10 +175,11 @@
 
         {{-- Exchange Input --}}
         <div class="space-y-2" x-data="{ si: -1 }">
-            <div class="flex gap-2">
+            <div class="flex flex-col sm:flex-row gap-2">
                 <div class="relative flex-1">
                     <input
                         type="text"
+                        id="exchange-input"
                         wire:model.live.debounce.300ms="exchangeInput"
                         x-ref="exchangeInput"
                         @input="si = -1"
@@ -237,22 +238,45 @@
                         </div>
                     @endif
                 </div>
-                <x-button
-                    label="Log"
-                    icon="phosphor-check"
-                    class="btn-primary btn-lg"
-                    @click="logContact($refs.exchangeInput)"
-                    tooltip="Enter"
-                    tooltip-position="tooltip-bottom"
-                />
-                <x-button
-                    label="Clear"
-                    icon="phosphor-x"
-                    class="btn-ghost btn-lg"
-                    wire:click="clearInput"
-                    tooltip="Esc"
-                    tooltip-position="tooltip-bottom"
-                />
+                <template x-if="!isRecalling">
+                    <div class="flex gap-2 sm:contents">
+                        <x-button
+                            label="Log"
+                            icon="phosphor-check"
+                            class="btn-primary btn-lg flex-1 sm:flex-initial"
+                            @click="logContact($refs.exchangeInput)"
+                            tooltip="Enter"
+                            tooltip-position="tooltip-bottom"
+                        />
+                        <x-button
+                            label="Clear"
+                            icon="phosphor-x"
+                            class="btn-ghost btn-lg flex-1 sm:flex-initial"
+                            wire:click="clearInput"
+                            tooltip="Esc"
+                            tooltip-position="tooltip-bottom"
+                        />
+                    </div>
+                </template>
+                <template x-if="isRecalling">
+                    <div class="flex gap-2 sm:contents">
+                        <button type="button"
+                            class="btn btn-primary btn-lg flex-1 sm:flex-initial"
+                            @click="saveRecalled($refs.exchangeInput)">
+                            <x-icon name="phosphor-check" class="w-5 h-5" /> Save
+                        </button>
+                        <button type="button"
+                            class="btn btn-error btn-lg flex-1 sm:flex-initial"
+                            @click="deleteRecalled($refs.exchangeInput)">
+                            <x-icon name="phosphor-trash" class="w-5 h-5" /> Delete
+                        </button>
+                        <button type="button"
+                            class="btn btn-ghost btn-lg flex-1 sm:flex-initial"
+                            @click="exitRecall($refs.exchangeInput)">
+                            <x-icon name="phosphor-x" class="w-5 h-5" /> Cancel
+                        </button>
+                    </div>
+                </template>
             </div>
 
             <template x-if="parseError">
@@ -271,10 +295,11 @@
                         <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                     </svg>
                     <span>
-                        Recalled QSO <span x-text="recallIndex + 1" class="font-bold"></span>
-                        — <kbd class="kbd kbd-xs text-base-content">Del</kbd> delete
-                        · <kbd class="kbd kbd-xs text-base-content">Enter</kbd> save edits
-                        · <kbd class="kbd kbd-xs text-base-content">Esc</kbd> cancel
+                        Editing recalled QSO <span x-text="recallIndex + 1" class="font-bold"></span>
+                        — change the exchange above, then tap
+                        <span class="font-semibold">Save</span>,
+                        <span class="font-semibold">Delete</span>, or
+                        <span class="font-semibold">Cancel</span>.
                     </span>
                 </div>
             </template>
@@ -286,7 +311,7 @@
             @endif
 
             {{-- Keyboard Shortcuts Help --}}
-            <div class="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-base-content/40">
+            <div class="hidden sm:flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-base-content/40">
                 <span><kbd class="kbd kbd-xs text-base-content">Enter</kbd> Log contact</span>
                 <span><kbd class="kbd kbd-xs text-base-content">Esc</kbd> Clear input</span>
                 <span><kbd class="kbd kbd-xs text-base-content">&uarr;</kbd><kbd class="kbd kbd-xs text-base-content">&darr;</kbd> Recall QSOs</span>
@@ -307,7 +332,77 @@
                 </div>
             @endif
 
-            <div class="overflow-x-auto" @if($this->recentContacts->isEmpty()) x-show="queue.length > 0" x-cloak @endif>
+            {{-- Mobile: card list --}}
+            <div class="sm:hidden space-y-1.5" @if($this->recentContacts->isEmpty()) x-show="queue.length > 0" x-cloak @endif>
+                {{-- Pending/failed from the JS queue --}}
+                <template x-for="contact in queue" :key="contact.uuid">
+                    <button
+                        type="button"
+                        @click="recallByUuid(contact.uuid)"
+                        :class="{
+                            'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
+                            'bg-error/5': contact.status === 'failed',
+                            'ring-2 ring-primary': recalledUuid === contact.uuid,
+                        }"
+                        class="w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-base-300 bg-base-100 text-left"
+                    >
+                        <div class="min-w-0">
+                            <div class="font-bold font-mono uppercase text-lg truncate" x-text="contact.callsign"></div>
+                            <div class="text-xs text-base-content/60 font-mono" x-text="contact.exchange_class + ' · ' + (contact.section_code || '—')"></div>
+                        </div>
+                        <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+                            <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></span>
+                            <template x-if="contact.status === 'failed'">
+                                <span class="badge badge-xs badge-error" :title="contact.last_error">FAIL</span>
+                            </template>
+                            <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
+                                <span class="badge badge-xs badge-info">SYNC</span>
+                            </template>
+                        </div>
+                    </button>
+                </template>
+
+                {{-- Server-confirmed --}}
+                @foreach($this->recentContacts as $contact)
+                    @if($contact->trashed())
+                        <div wire:key="card-{{ $contact->id }}"
+                            class="w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-base-300 bg-base-100 opacity-40 line-through">
+                            <div class="min-w-0">
+                                <div class="font-bold font-mono uppercase text-lg truncate">
+                                    {{ $contact->callsign }}
+                                    <button wire:click="restoreContact({{ $contact->id }})" class="btn btn-ghost btn-xs ml-1 no-underline">Undo</button>
+                                </div>
+                                <div class="text-xs text-base-content/60 font-mono">{{ $contact->exchange_class }} · {{ $contact->section->code ?? '—' }}</div>
+                            </div>
+                            <span class="font-mono text-xs text-base-content/60 flex-shrink-0">{{ $contact->qso_time->format('H:i') }}</span>
+                        </div>
+                    @else
+                        <button
+                            type="button"
+                            wire:key="card-{{ $contact->id }}"
+                            @click="recallByContactId({{ $contact->id }})"
+                            :class="{ 'ring-2 ring-primary': recalledContactId === {{ $contact->id }} }"
+                            @class([
+                                'w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-base-300 bg-base-100 text-left',
+                                'opacity-50' => $contact->is_duplicate,
+                            ])
+                        >
+                            <div class="min-w-0">
+                                <div class="font-bold font-mono uppercase text-lg truncate">
+                                    {{ $contact->callsign }}
+                                    @if($contact->is_duplicate)
+                                        <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
+                                    @endif
+                                </div>
+                                <div class="text-xs text-base-content/60 font-mono">{{ $contact->exchange_class }} · {{ $contact->section->code ?? '—' }}</div>
+                            </div>
+                            <span class="font-mono text-xs text-base-content/60 flex-shrink-0">{{ $contact->qso_time->format('H:i') }}</span>
+                        </button>
+                    @endif
+                @endforeach
+            </div>
+
+            <div class="hidden sm:block overflow-x-auto" @if($this->recentContacts->isEmpty()) x-show="queue.length > 0" x-cloak @endif>
                 <table class="table table-sm">
                     <thead>
                         <tr>

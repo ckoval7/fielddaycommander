@@ -1000,6 +1000,65 @@ test('delete then undo restores contact fully', function () {
         ->and($this->session->fresh()->qso_count)->toBe(1);
 });
 
+test('logging interface emits mobile-friendly responsive classes', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtml('max-lg:z-10 lg:z-30')
+        ->assertSeeHtml('flex flex-col sm:flex-row gap-2')
+        ->assertSeeHtml('hidden sm:flex flex-wrap');
+});
+
+test('logging interface wraps action buttons so they share mobile row', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtml('<div class="flex gap-2 sm:contents">');
+});
+
+test('logging interface exchange input has a stable DOM id', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtml('id="exchange-input"');
+});
+
+test('logging interface renders mobile card list for recent QSOs', function () {
+    $this->actingAs($this->user);
+
+    Contact::factory()->create([
+        'operating_session_id' => $this->session->id,
+        'event_configuration_id' => $this->config->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'section_id' => $this->section->id,
+        'callsign' => 'W1AW',
+        'exchange_class' => '3A',
+        'qso_time' => now(),
+    ]);
+
+    $html = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])->html();
+
+    expect($html)->toContain('sm:hidden space-y-1.5')
+        ->toContain('recallByContactId(')
+        ->toContain('recallByUuid(contact.uuid)')
+        ->toContain('hidden sm:block overflow-x-auto');
+});
+
+test('logging interface renders button-morph templates for recall mode', function () {
+    $this->actingAs($this->user);
+
+    $html = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])->html();
+
+    expect($html)->toContain('x-if="!isRecalling"')
+        ->toContain('saveRecalled($refs.exchangeInput)')
+        ->toContain('deleteRecalled($refs.exchangeInput)')
+        ->toContain('exitRecall($refs.exchangeInput)')
+        ->toContain('>Save<')
+        ->toContain('>Delete<')
+        ->toContain('>Cancel<');
+});
+
 test('recentContacts includes trashed contacts during active session', function () {
     $this->actingAs($this->user);
 
