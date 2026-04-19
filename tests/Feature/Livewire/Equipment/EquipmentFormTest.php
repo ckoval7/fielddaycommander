@@ -213,6 +213,25 @@ test('owner dropdown is hidden for regular users', function () {
         ->assertDontSee('Select equipment owner');
 });
 
+test('creating club equipment redirects to the club equipment list', function () {
+    $manager = User::factory()->create();
+    $managerRole = Role::create(['name' => 'Manager', 'guard_name' => 'web']);
+    Permission::findOrCreate('view-all-equipment');
+    Permission::findOrCreate('manage-event-equipment');
+    $managerRole->givePermissionTo(['manage-own-equipment', 'edit-any-equipment', 'view-all-equipment']);
+    $manager->assignRole($managerRole);
+
+    $this->actingAs($manager);
+
+    Livewire::withQueryParams(['club' => 1])
+        ->test(EquipmentForm::class, ['equipment' => null])
+        ->set('make', 'Motorola')
+        ->set('model', 'XPR7550e')
+        ->set('type', 'radio')
+        ->call('save')
+        ->assertRedirect(route('equipment.club'));
+});
+
 describe('audit logging', function () {
     test('creating equipment logs to audit log', function () {
         $this->actingAs($this->user);
