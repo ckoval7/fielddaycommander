@@ -215,6 +215,51 @@ pull_updates() {
     log_info "Code updated"
 }
 
+# Pick an Octane worker count sized to the host.
+# Defaults to nproc, with a floor of 2 so even a single-core box can handle
+# a polling request alongside a user request.
+compute_octane_workers() {
+    local cores
+    cores=$(nproc 2>/dev/null || echo 1)
+    if [[ $cores -lt 2 ]]; then
+        echo 2
+    else
+        echo "$cores"
+    fi
+    return 0
+}
+
+# Sync the FrankenPHP/Octane systemd unit's --workers value with current nproc.
+# Idempotent: no-ops if the unit already specifies the desired count.
+# Adds the flag if missing (older installs).
+sync_octane_workers() {
+    local unit_file="/etc/systemd/system/fdcommander.service"
+    if [[ ! -f "$unit_file" ]]; then
+        log_warn "Octane unit not found at ${unit_file} — skipping worker sync"
+        return 0
+    fi
+
+    local desired
+    desired=$(compute_octane_workers)
+
+    if grep -qE -- '--workers=[0-9]+' "$unit_file"; then
+        local current
+        current=$(grep -oE -- '--workers=[0-9]+' "$unit_file" | head -1 | cut -d= -f2)
+        if [[ "$current" == "$desired" ]]; then
+            log_info "Octane workers already at ${desired}"
+            return 0
+        fi
+        log_info "Updating Octane workers in unit: ${current} → ${desired}"
+        sed -i -E "s/--workers=[0-9]+/--workers=${desired}/" "$unit_file"
+    else
+        log_info "Adding --workers=${desired} to Octane unit"
+        sed -i -E "s|(octane:frankenphp)( --host=[^ ]+)?( --port=[^ ]+)?|\1\2\3 --workers=${desired}|" "$unit_file"
+    fi
+
+    systemctl daemon-reload
+    return 0
+}
+
 # Pick a Redis maxmemory value sized to the host (Pi-friendly).
 # Buckets by total RAM: ≤1G→128mb, ≤2G→256mb, ≤4G→512mb, ≤8G→1gb, else 2gb.
 compute_redis_maxmemory() {
@@ -423,6 +468,8 @@ rebuild_caches() {
 # --- Restart services ---
 restart_services() {
     log_phase "Restarting services"
+
+    sync_octane_workers
 
     systemctl restart fdcommander.service
     systemctl restart fdcommander-queue.service

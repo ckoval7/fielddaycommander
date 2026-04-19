@@ -681,6 +681,20 @@ DEMOEOF
     log_info "Database setup complete"
 }
 
+# Pick an Octane worker count sized to the host.
+# Defaults to nproc, with a floor of 2 so even a single-core box can handle
+# a polling request alongside a user request.
+compute_octane_workers() {
+    local cores
+    cores=$(nproc 2>/dev/null || echo 1)
+    if [[ $cores -lt 2 ]]; then
+        echo 2
+    else
+        echo "$cores"
+    fi
+    return 0
+}
+
 # Pick a Redis maxmemory value sized to the host (Pi-friendly).
 # Buckets by total RAM: ≤1G→128mb, ≤2G→256mb, ≤4G→512mb, ≤8G→1gb, else 2gb.
 compute_redis_maxmemory() {
@@ -818,7 +832,14 @@ configure_systemd() {
     log_phase "Phase 7: Configuring systemd services"
 
     # FrankenPHP/Octane Web Server
-    log_info "Creating FrankenPHP/Octane service..."
+    #
+    # Worker count is sized to the host: nproc workers, with a floor of 2 so
+    # even a single-core box can handle a polling request alongside a user
+    # request. Each Octane FrankenPHP worker is a thread inside one process,
+    # so per-worker memory cost is small.
+    local octane_workers
+    octane_workers=$(compute_octane_workers)
+    log_info "Creating FrankenPHP/Octane service with ${octane_workers} workers..."
     cat > /etc/systemd/system/fdcommander.service <<WEBEOF
 [Unit]
 Description=FD Commander Web Server (FrankenPHP/Octane)
@@ -829,7 +850,7 @@ User=fdcommander
 Group=${WEB_GROUP}
 WorkingDirectory=${APP_PATH}
 EnvironmentFile=${APP_PATH}/.env
-ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=${APP_PORT} --caddyfile=${APP_PATH}/Caddyfile
+ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=${APP_PORT} --workers=${octane_workers} --caddyfile=${APP_PATH}/Caddyfile
 Restart=always
 RestartSec=5
 $( [[ "$APP_PORT" -lt 1024 ]] && printf 'CapabilityBoundingSet=CAP_NET_BIND_SERVICE\nAmbientCapabilities=CAP_NET_BIND_SERVICE' || echo '# No privileged port capabilities needed' )

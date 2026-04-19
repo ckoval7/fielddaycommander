@@ -128,10 +128,10 @@
             </div>
 
             {{-- Right cluster (stays mounted across default/collapsed transitions) --}}
-            <livewire:components.weather-icon />
+            <livewire:components.weather-icon lazy />
 
             @auth
-                <livewire:components.notification-bell />
+                <livewire:components.notification-bell lazy />
             @endauth
 
             <div x-show="!(scrolled && hasCallsign)">
@@ -155,7 +155,7 @@
                 x-collapse
                 class="border-t border-base-300 px-3.5 py-2.5"
             >
-                <livewire:components.event-countdown />
+                <livewire:components.event-countdown lazy />
             </div>
         @endif
     </header>
@@ -170,14 +170,14 @@
 
             {{-- Center: Event Countdown Timer --}}
             <div class="flex-1 flex items-center justify-center">
-                <livewire:components.event-countdown />
+                <livewire:components.event-countdown lazy />
             </div>
 
             {{-- Right: Weather, Notifications and User menu (theme toggle lives inside user menu) --}}
             <div class="flex items-center gap-3">
-                <livewire:components.weather-icon />
+                <livewire:components.weather-icon lazy />
                 @auth
-                    <livewire:components.notification-bell />
+                    <livewire:components.notification-bell lazy />
                 @endauth
                 <x-user-menu />
             </div>
