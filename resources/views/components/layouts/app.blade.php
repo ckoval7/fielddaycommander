@@ -165,7 +165,12 @@
                 x-collapse
                 class="border-t border-base-300 px-3.5 py-2.5"
             >
-                <livewire:components.event-countdown lazy />
+                <div
+                    class="transition-opacity duration-200 ease-out"
+                    :class="scrolled ? 'opacity-0' : 'opacity-100'"
+                >
+                    <livewire:components.event-countdown lazy />
+                </div>
             </div>
         @endif
     </header>
