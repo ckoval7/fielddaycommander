@@ -68,6 +68,14 @@
                 </p>
             @endif
 
+            {{-- Talk-in frequency --}}
+            @if($eventConfig?->talk_in_frequency)
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+                    <x-icon name="phosphor-broadcast" class="w-5 h-5" />
+                    <span class="text-sm font-medium">Talk-in: {{ $eventConfig->talk_in_frequency }}</span>
+                </div>
+            @endif
+
             {{-- Welcome message --}}
             @if($welcomeMessage)
                 <div class="max-w-2xl mx-auto mt-4">
