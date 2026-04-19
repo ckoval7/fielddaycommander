@@ -135,6 +135,12 @@ class ScheduleTimeline extends Component
 
         $shift = Shift::findOrFail($shiftId);
 
+        if ($shift->is_past) {
+            $this->dispatch('toast', title: 'Error', description: 'This shift has already ended.', icon: 'phosphor-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         if (! $shift->is_open) {
             $this->dispatch('toast', title: 'Error', description: 'This shift is not open for sign-ups.', icon: 'phosphor-x-circle', css: 'alert-error');
 

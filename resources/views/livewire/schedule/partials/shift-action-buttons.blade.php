@@ -58,6 +58,7 @@
             class="btn-success btn-sm"
             wire:click="signUp({{ $shift->id }})"
             spinner="signUp"
+            :disabled="$shift->is_past"
         />
     @endif
 </div>

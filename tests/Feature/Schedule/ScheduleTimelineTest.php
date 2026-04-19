@@ -156,6 +156,27 @@ describe('sign up', function () {
             ->assertDispatched('toast', title: 'Error');
     });
 
+    test('user cannot sign up for a past shift', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        $shift = Shift::factory()->open()->withCapacity(3)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->subHours(4),
+            'end_time' => appNow()->subHours(2),
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->call('signUp', $shift->id)
+            ->assertDispatched('toast', title: 'Error');
+
+        expect(ShiftAssignment::where('shift_id', $shift->id)->where('user_id', $this->user->id)->exists())->toBeFalse();
+    });
+
     test('user cannot sign up twice for the same shift', function () {
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
