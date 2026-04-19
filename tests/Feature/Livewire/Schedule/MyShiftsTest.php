@@ -748,3 +748,33 @@ test('my shifts summary caps worked hours at scheduled length', function () {
     expect($component->instance()->hoursWorkedThisEvent())->toBe(2.0);
     expect($component->instance()->hoursSignedUpThisEvent())->toBe(2.0);
 });
+
+test('my shifts renders the summary bar when user has assignments', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(5),
+        'end_time' => appNow()->subHours(3),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shift->start_time,
+        'checked_out_at' => $shift->end_time,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSeeHtml('2.0 hours worked')
+        ->assertSeeHtml('2.0 hours signed up');
+});
+
+test('my shifts hides the summary bar when user has no assignments for the event', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertDontSeeHtml('hours worked')
+        ->assertDontSeeHtml('hours signed up');
+});

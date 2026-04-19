@@ -35,6 +35,19 @@
                 No event is currently selected. Please select an event to view your shifts.
             </x-alert>
         @else
+            {{-- Event hours summary --}}
+            @php
+                $hoursWorked = $this->hoursWorkedThisEvent;
+                $hoursSignedUp = $this->hoursSignedUpThisEvent;
+            @endphp
+            @if($hoursSignedUp > 0 || $hoursWorked > 0)
+                <div class="mb-6 rounded-lg bg-base-200 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                    <x-icon name="phosphor-clock-countdown" class="w-5 h-5 text-primary" />
+                    <span class="font-semibold">{{ number_format($hoursWorked, 1) }} hours worked</span>
+                    <span class="text-base-content/40">·</span>
+                    <span class="text-base-content/70">{{ number_format($hoursSignedUp, 1) }} hours signed up</span>
+                </div>
+            @endif
             @php
                 $currentShifts = $this->currentShifts;
                 $upcomingShifts = $this->upcomingShifts;
