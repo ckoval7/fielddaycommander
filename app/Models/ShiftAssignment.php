@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\ShiftAssignmentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ShiftAssignment extends Model
 {
-    /** @use HasFactory<\Database\Factories\ShiftAssignmentFactory> */
+    /** @use HasFactory<ShiftAssignmentFactory> */
     use HasFactory, SoftDeletes;
 
     public const STATUS_SCHEDULED = 'scheduled';
@@ -175,6 +176,33 @@ class ShiftAssignment extends Model
         $this->update([
             'status' => self::STATUS_NO_SHOW,
         ]);
+    }
+
+    /**
+     * Calculate the hours actually worked on this assignment, rounded to 0.1 hour.
+     *
+     * Returns 0.0 if either check-in or check-out is missing. Caps the duration at
+     * the shift's scheduled length so a late checkout doesn't exceed the planned hours.
+     */
+    public function hoursWorked(): float
+    {
+        if ($this->checked_in_at === null || $this->checked_out_at === null) {
+            return 0.0;
+        }
+
+        $workedMinutes = $this->checked_in_at->diffInMinutes($this->checked_out_at);
+        $scheduledMinutes = $this->shift->start_time->diffInMinutes($this->shift->end_time);
+        $minutes = min($workedMinutes, $scheduledMinutes);
+
+        return round($minutes / 60, 1);
+    }
+
+    /**
+     * Scheduled shift duration in hours, rounded to 0.1.
+     */
+    public function scheduledHours(): float
+    {
+        return round($this->shift->start_time->diffInMinutes($this->shift->end_time) / 60, 1);
     }
 
     /**
