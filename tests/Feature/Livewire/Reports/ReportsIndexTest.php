@@ -332,3 +332,33 @@ test('reports volunteerHours excludes no-show assignments', function () {
 
     expect($component->instance()->volunteerHours())->toBeEmpty();
 });
+
+test('reports page renders volunteer hours card section', function () {
+    Permission::firstOrCreate(['name' => 'view-reports']);
+    $viewer = User::factory()->create();
+    $viewer->givePermissionTo('view-reports');
+
+    $config = makeReportsIndexEvent();
+    $role = ShiftRole::factory()->create(['event_configuration_id' => $config->id]);
+    $user = User::factory()->create(['first_name' => 'Dana', 'last_name' => 'Drew']);
+
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $config->id,
+        'shift_role_id' => $role->id,
+        'start_time' => now()->subHours(3),
+        'end_time' => now()->subHour(),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shift->start_time,
+        'checked_out_at' => $shift->end_time,
+    ]);
+
+    Livewire::actingAs($viewer)
+        ->test(ReportsIndex::class)
+        ->assertSee('Volunteer Hours')
+        ->assertSee('Dana Drew')
+        ->assertSeeHtml('2.0');
+});

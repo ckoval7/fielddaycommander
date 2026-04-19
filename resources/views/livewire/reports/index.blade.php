@@ -387,6 +387,50 @@
     </div>
 
     {{-- ============================================================
+         SECTION 5: VOLUNTEER HOURS
+         ============================================================ --}}
+    <div class="px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
+        <div class="text-xs font-bold uppercase tracking-widest mb-5"
+             style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 3px; height: 1em; background-color: var(--reports-section-bar); border-radius: 2px;"></span>
+            Volunteer Hours
+            @if (count($this->volunteerHours) > 0)
+                <span class="ml-2 text-xs font-normal font-mono"
+                      style="color: var(--reports-text-muted);">({{ count($this->volunteerHours) }})</span>
+            @endif
+        </div>
+
+        @if (count($this->volunteerHours) === 0)
+            <div class="flex flex-col items-center justify-center py-12 gap-3 rounded-lg"
+                 style="border: 1px solid var(--reports-border); background-color: var(--reports-surface);">
+                <x-mary-icon name="phosphor-clock-countdown" class="w-10 h-10 opacity-25" />
+                <p class="text-sm" style="color: var(--reports-text-muted);">No volunteer hours logged yet.</p>
+            </div>
+        @else
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                @foreach ($this->volunteerHours as $row)
+                    <div class="rounded p-2.5 flex flex-col"
+                         style="background-color: var(--reports-surface);
+                                border: 1px solid var(--reports-border);">
+                        <div class="font-semibold text-sm truncate" style="color: var(--reports-text);"
+                             title="{{ $row['name'] }}">
+                            {{ $row['name'] }}
+                        </div>
+                        <div class="font-mono font-bold tabular-nums mt-1 text-sm"
+                             style="color: var(--reports-section-bar);">
+                            {{ number_format($row['hours_worked'], 1) }}
+                            <span class="text-xs font-normal" style="color: var(--reports-text-muted);">worked</span>
+                        </div>
+                        <div class="font-mono tabular-nums text-xs mt-0.5" style="color: var(--reports-text-muted);">
+                            {{ number_format($row['hours_signed_up'], 1) }} signed up
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
+    {{-- ============================================================
          FOOTER
          ============================================================ --}}
     <div class="px-6 py-4 text-xs text-center" style="color: var(--reports-text-muted);">
