@@ -1158,3 +1158,58 @@ test('event form loads location fields when editing', function () {
     expect((float) $component->get('latitude'))->toEqual(41.7658);
     expect((float) $component->get('longitude'))->toEqual(-72.6851);
 });
+
+test('event form saves talk-in frequency when creating event', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Field Day 2025')
+        ->set('event_type_id', $this->eventType->id)
+        ->set('start_time', '2025-06-28 18:00:00')
+        ->set('end_time', '2025-06-29 20:59:00')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $this->operatingClassA->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->set('talk_in_frequency', '146.52 MHz FM')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $config = Event::where('name', 'Field Day 2025')->first()->eventConfiguration;
+    expect($config->talk_in_frequency)->toBe('146.52 MHz FM');
+});
+
+test('event form loads talk-in frequency when editing', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create();
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'talk_in_frequency' => '147.000 MHz',
+    ]);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
+
+    expect($component->get('talk_in_frequency'))->toBe('147.000 MHz');
+});
+
+test('event form rejects talk-in frequency over 50 characters', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Field Day 2025')
+        ->set('event_type_id', $this->eventType->id)
+        ->set('start_time', '2025-06-28 18:00:00')
+        ->set('end_time', '2025-06-29 20:59:00')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $this->operatingClassA->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->set('talk_in_frequency', str_repeat('x', 51))
+        ->call('save')
+        ->assertHasErrors(['talk_in_frequency']);
+});
