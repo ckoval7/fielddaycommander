@@ -64,3 +64,37 @@ it('shows no-event message when no active event exists', function () {
     $response->assertStatus(200);
     $response->assertSee('No active event at this time');
 });
+
+it('shows talk-in frequency when set on the active event configuration', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'talk_in_frequency' => '146.52 MHz FM',
+    ]);
+
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+    $response->assertSee('Talk-in: 146.52 MHz FM');
+});
+
+it('hides talk-in frequency when not set', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(23),
+    ]);
+
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'talk_in_frequency' => null,
+    ]);
+
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+    $response->assertDontSee('Talk-in:');
+});
