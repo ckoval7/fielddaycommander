@@ -43,6 +43,7 @@ class EventConfiguration extends Model
         'longitude',
         'city',
         'state',
+        'talk_in_frequency',
         'guestbook_detection_radius',
         'guestbook_local_subnets',
     ];

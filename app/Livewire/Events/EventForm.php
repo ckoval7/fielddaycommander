@@ -88,6 +88,8 @@ class EventForm extends Component
 
     public ?string $state = null;
 
+    public ?string $talk_in_frequency = null;
+
     // Section 5: Guestbook Settings
     public bool $guestbook_enabled = false;
 
@@ -218,6 +220,7 @@ class EventForm extends Component
             $this->longitude = $this->configuration->longitude;
             $this->city = $this->configuration->city;
             $this->state = $this->configuration->state;
+            $this->talk_in_frequency = $this->configuration->talk_in_frequency;
 
             // Load guestbook settings
             $this->guestbook_enabled = $this->configuration->guestbook_enabled;
@@ -544,6 +547,7 @@ class EventForm extends Component
             'longitude' => $validated['longitude'] ?? null,
             'city' => $validated['city'] ?? null,
             'state' => $validated['state'] ?? null,
+            'talk_in_frequency' => $validated['talk_in_frequency'] ?? null,
             'guestbook_enabled' => $validated['guestbook_enabled'] ?? false,
             'guestbook_detection_radius' => $validated['guestbook_detection_radius'] ?? 500,
             'guestbook_local_subnets' => $subnets,
@@ -605,6 +609,7 @@ class EventForm extends Component
             'longitude' => $validated['longitude'] ?? null,
             'city' => $validated['city'] ?? null,
             'state' => $validated['state'] ?? null,
+            'talk_in_frequency' => $validated['talk_in_frequency'] ?? null,
             'guestbook_enabled' => $validated['guestbook_enabled'] ?? false,
             'guestbook_detection_radius' => $validated['guestbook_detection_radius'] ?? 500,
             'guestbook_local_subnets' => $subnets,
@@ -749,6 +754,7 @@ class EventForm extends Component
             'longitude' => ['nullable', 'numeric', 'min:-180', 'max:180'],
             'city' => ['nullable', 'string', 'max:100'],
             'state' => ['nullable', 'string', 'size:2', 'alpha'],
+            'talk_in_frequency' => ['nullable', 'string', 'max:50'],
         ];
     }
 

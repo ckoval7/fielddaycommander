@@ -167,6 +167,15 @@
                         placeholder="CO"
                         hint="2-letter abbreviation. Shown in auto-filled Section Manager messages."
                     />
+
+                    <x-input
+                        label="Talk-in Frequency"
+                        wire:model="talk_in_frequency"
+                        icon="phosphor-broadcast"
+                        placeholder="146.52 MHz FM"
+                        hint="Frequency visitors can tune to for directions to your site."
+                        maxlength="50"
+                    />
                 </div>
             </div>
         </x-card>
