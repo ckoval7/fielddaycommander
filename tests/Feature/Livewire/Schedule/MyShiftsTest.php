@@ -761,6 +761,49 @@ test('my shifts summary caps worked hours at scheduled length', function () {
     ]);
 });
 
+test('my shifts summary reports divergent sum and wall-clock hours when assignments overlap', function () {
+    // Two 2-hour shifts that overlap by 1 hour
+    //   Shift A: now-4h → now-2h  (2h)
+    //   Shift B: now-3h → now-1h  (2h)
+    // Sum: 4.0, wall clock: 3.0 (union of windows)
+    $shiftA = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(4),
+        'end_time' => appNow()->subHours(2),
+    ]);
+    $shiftB = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(3),
+        'end_time' => appNow()->subHours(1),
+    ]);
+
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shiftA->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shiftA->start_time,
+        'checked_out_at' => $shiftA->end_time,
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shiftB->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shiftB->start_time,
+        'checked_out_at' => $shiftB->end_time,
+    ]);
+
+    $this->actingAs($this->user);
+
+    expect(Livewire::test(MyShifts::class)->instance()->eventHoursSummary())->toBe([
+        'worked_sum' => 4.0,
+        'worked_wall_clock' => 3.0,
+        'signed_up_sum' => 4.0,
+        'signed_up_wall_clock' => 3.0,
+    ]);
+});
+
 test('my shifts renders the summary bar when user has assignments', function () {
     $shift = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
