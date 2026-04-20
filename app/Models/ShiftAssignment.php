@@ -116,7 +116,7 @@ class ShiftAssignment extends Model
     {
         $this->update([
             'status' => self::STATUS_CHECKED_IN,
-            'checked_in_at' => now(),
+            'checked_in_at' => appNow(),
         ]);
     }
 
@@ -127,7 +127,7 @@ class ShiftAssignment extends Model
     {
         $this->update([
             'status' => self::STATUS_CHECKED_OUT,
-            'checked_out_at' => now(),
+            'checked_out_at' => appNow(),
         ]);
     }
 
