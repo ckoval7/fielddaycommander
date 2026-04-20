@@ -36,17 +36,22 @@
             </x-alert>
         @else
             {{-- Event hours summary --}}
-            @php
-                $summary = $this->eventHoursSummary;
-                $hoursWorked = $summary['worked_sum'];
-                $hoursSignedUp = $summary['signed_up_sum'];
-            @endphp
-            @if($hoursSignedUp > 0 || $hoursWorked > 0)
+            @php $hours = $this->eventHoursSummary; @endphp
+            @if($hours['signed_up_sum'] > 0 || $hours['worked_sum'] > 0)
                 <div class="mb-6 rounded-lg bg-base-200 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                     <x-icon name="phosphor-clock-countdown" class="w-5 h-5 text-primary" />
-                    <span class="font-semibold">{{ number_format($hoursWorked, 1) }} hours worked</span>
+
+                    <span class="font-semibold">{{ number_format($hours['worked_sum'], 1) }} hours worked</span>
+                    @if($hours['worked_wall_clock'] !== $hours['worked_sum'])
+                        <span class="text-base-content/60">({{ number_format($hours['worked_wall_clock'], 1) }} wall clock)</span>
+                    @endif
+
                     <span class="text-base-content/40">·</span>
-                    <span class="text-base-content/70">{{ number_format($hoursSignedUp, 1) }} hours signed up</span>
+
+                    <span class="text-base-content/70">{{ number_format($hours['signed_up_sum'], 1) }} hours signed up</span>
+                    @if($hours['signed_up_wall_clock'] !== $hours['signed_up_sum'])
+                        <span class="text-base-content/60">({{ number_format($hours['signed_up_wall_clock'], 1) }} wall clock)</span>
+                    @endif
                 </div>
             @endif
             @php
