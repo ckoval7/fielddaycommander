@@ -547,5 +547,26 @@
             });
         @endif
     </script>
+    <script>
+        {{-- If the user arrived here after a 419, surface a toast and clean up the URL. --}}
+        document.addEventListener('livewire:initialized', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (!params.has('session_expired')) {
+                return;
+            }
+
+            Livewire.dispatch('toast', [{
+                type: 'warning',
+                title: 'Your session expired.',
+                description: 'Please sign in again to continue.',
+                timeout: 6000,
+            }]);
+
+            params.delete('session_expired');
+            const query = params.toString();
+            const newUrl = window.location.pathname + (query ? `?${query}` : '') + window.location.hash;
+            window.history.replaceState({}, '', newUrl);
+        });
+    </script>
 </body>
 </html>
