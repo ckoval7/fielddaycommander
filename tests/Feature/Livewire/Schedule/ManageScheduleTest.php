@@ -571,7 +571,7 @@ describe('manager overrides', function () {
             ->and($fresh->confirmed_at)->not->toBeNull();
     });
 
-    test('mark worked preserves existing check-in time if already set', function () {
+    test('mark worked overwrites existing check-in and check-out to credit the full shift', function () {
         $shift = Shift::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'shift_role_id' => $this->role->id,
@@ -579,13 +579,11 @@ describe('manager overrides', function () {
             'end_time' => appNow()->subHour(),
         ]);
 
-        $customCheckIn = $shift->start_time->addMinutes(10);
-
         $assignment = ShiftAssignment::factory()->create([
             'shift_id' => $shift->id,
             'user_id' => $this->regularUser->id,
             'status' => ShiftAssignment::STATUS_CHECKED_IN,
-            'checked_in_at' => $customCheckIn,
+            'checked_in_at' => $shift->end_time->addHour(),
             'checked_out_at' => null,
         ]);
 
@@ -596,7 +594,7 @@ describe('manager overrides', function () {
             ->assertDispatched('toast', description: 'Marked as worked');
 
         $fresh = $assignment->fresh();
-        expect($fresh->checked_in_at->toDateTimeString())->toBe($customCheckIn->toDateTimeString())
+        expect($fresh->checked_in_at->toDateTimeString())->toBe($shift->start_time->toDateTimeString())
             ->and($fresh->checked_out_at->toDateTimeString())->toBe($shift->end_time->toDateTimeString())
             ->and($fresh->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
     });

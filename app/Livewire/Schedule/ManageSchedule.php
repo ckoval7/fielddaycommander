@@ -776,7 +776,7 @@ class ManageSchedule extends Component
         $assignment = ShiftAssignment::findOrFail($assignmentId);
         $assignment->load(['user', 'shift']);
 
-        $assignment->checked_in_at ??= $assignment->shift->start_time;
+        $assignment->checked_in_at = $assignment->shift->start_time;
         $assignment->checked_out_at = $assignment->shift->end_time;
         $assignment->status = ShiftAssignment::STATUS_CHECKED_OUT;
         $assignment->confirmed_by_user_id = Auth::id();
