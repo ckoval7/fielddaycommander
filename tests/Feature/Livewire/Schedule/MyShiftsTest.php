@@ -834,7 +834,7 @@ test('my shifts hides the summary bar when user has no assignments for the event
         ->assertDontSeeHtml('hours signed up');
 });
 
-test('my shifts summary shows wall-clock parenthetical when assignments overlap', function () {
+test('my shifts summary labels shift and actual hours when assignments overlap', function () {
     $shiftA = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'shift_role_id' => $this->role->id,
@@ -865,12 +865,11 @@ test('my shifts summary shows wall-clock parenthetical when assignments overlap'
     $this->actingAs($this->user);
 
     Livewire::test(MyShifts::class)
-        ->assertSeeHtml('4.0 hours worked')
-        ->assertSeeHtml('(3.0 wall clock)')
-        ->assertSeeHtml('4.0 hours signed up');
+        ->assertSeeHtml('4.0 shift hours, 3.0 actual hours worked')
+        ->assertSeeHtml('4.0 shift hours, 3.0 actual hours signed up');
 });
 
-test('my shifts summary omits wall-clock parenthetical when values match', function () {
+test('my shifts summary uses plain hours phrasing when sum and actual match', function () {
     $shift = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'shift_role_id' => $this->role->id,
@@ -890,5 +889,6 @@ test('my shifts summary omits wall-clock parenthetical when values match', funct
     Livewire::test(MyShifts::class)
         ->assertSeeHtml('2.0 hours worked')
         ->assertSeeHtml('2.0 hours signed up')
-        ->assertDontSeeHtml('wall clock');
+        ->assertDontSeeHtml('shift hours')
+        ->assertDontSeeHtml('actual hours');
 });

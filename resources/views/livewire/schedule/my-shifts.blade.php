@@ -41,16 +41,18 @@
                 <div class="mb-6 rounded-lg bg-base-200 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                     <x-icon name="phosphor-clock-countdown" class="w-5 h-5 text-primary" />
 
-                    <span class="font-semibold">{{ number_format($hours['worked_sum'], 1) }} hours worked</span>
                     @if($hours['worked_wall_clock'] !== $hours['worked_sum'])
-                        <span class="text-base-content/60">({{ number_format($hours['worked_wall_clock'], 1) }} wall clock)</span>
+                        <span class="font-semibold">{{ number_format($hours['worked_sum'], 1) }} shift hours, {{ number_format($hours['worked_wall_clock'], 1) }} actual hours worked</span>
+                    @else
+                        <span class="font-semibold">{{ number_format($hours['worked_sum'], 1) }} hours worked</span>
                     @endif
 
                     <span class="text-base-content/40">·</span>
 
-                    <span class="text-base-content/70">{{ number_format($hours['signed_up_sum'], 1) }} hours signed up</span>
                     @if($hours['signed_up_wall_clock'] !== $hours['signed_up_sum'])
-                        <span class="text-base-content/60">({{ number_format($hours['signed_up_wall_clock'], 1) }} wall clock)</span>
+                        <span class="text-base-content/70">{{ number_format($hours['signed_up_sum'], 1) }} shift hours, {{ number_format($hours['signed_up_wall_clock'], 1) }} actual hours signed up</span>
+                    @else
+                        <span class="text-base-content/70">{{ number_format($hours['signed_up_sum'], 1) }} hours signed up</span>
                     @endif
                 </div>
             @endif
