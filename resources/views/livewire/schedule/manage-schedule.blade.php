@@ -166,7 +166,7 @@
                                                                         />
                                                                     @endif
                                                                     <x-button
-                                                                        icon="phosphor-trash"
+                                                                        icon="phosphor-user-minus"
                                                                         class="btn-ghost btn-xs text-error"
                                                                         wire:click="removeAssignment({{ $assignment->id }})"
                                                                         tooltip="Remove Assignment"
