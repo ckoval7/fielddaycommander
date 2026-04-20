@@ -800,6 +800,35 @@ class ManageSchedule extends Component
         $this->dispatch('toast', title: 'Success', description: 'Marked as worked', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
+    public function unmarkWorked(int $assignmentId): void
+    {
+        Gate::authorize('manage-shifts');
+
+        $assignment = ShiftAssignment::findOrFail($assignmentId);
+        $assignment->load(['user', 'shift']);
+
+        $assignment->status = ShiftAssignment::STATUS_SCHEDULED;
+        $assignment->checked_in_at = null;
+        $assignment->checked_out_at = null;
+        $assignment->confirmed_by_user_id = null;
+        $assignment->confirmed_at = null;
+        $assignment->save();
+
+        AuditLog::log(
+            action: 'shift.unmark_worked_by_manager',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'user' => $assignment->user->call_sign,
+                'managed_by' => Auth::user()->call_sign,
+            ]
+        );
+
+        unset($this->shifts);
+
+        $this->dispatch('toast', title: 'Success', description: 'Mark Worked undone', icon: 'phosphor-check-circle', css: 'alert-success');
+    }
+
     // --- Form Resets ---
 
     protected function resetRoleForm(): void

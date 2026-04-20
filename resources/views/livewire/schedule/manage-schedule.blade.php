@@ -157,13 +157,27 @@
                                                                         />
                                                                     @endif
                                                                     @if($shift->end_time->isPast())
-                                                                        <x-button
-                                                                            icon="phosphor-seal-check"
-                                                                            class="btn-ghost btn-xs text-success"
-                                                                            wire:click="markWorked({{ $assignment->id }})"
-                                                                            tooltip="Mark Worked"
-                                                                            wire:confirm="Mark this user's shift as fully worked?"
-                                                                        />
+                                                                        @php
+                                                                            $isMarkWorked = $assignment->checked_in_at?->equalTo($shift->start_time)
+                                                                                && $assignment->checked_out_at?->equalTo($shift->end_time);
+                                                                        @endphp
+                                                                        @if($isMarkWorked)
+                                                                            <x-button
+                                                                                icon="phosphor-arrow-counter-clockwise"
+                                                                                class="btn-ghost btn-xs text-warning"
+                                                                                wire:click="unmarkWorked({{ $assignment->id }})"
+                                                                                tooltip="Undo Mark Worked"
+                                                                                wire:confirm="Undo Mark Worked for this user?"
+                                                                            />
+                                                                        @else
+                                                                            <x-button
+                                                                                icon="phosphor-seal-check"
+                                                                                class="btn-ghost btn-xs text-success"
+                                                                                wire:click="markWorked({{ $assignment->id }})"
+                                                                                tooltip="Mark Worked"
+                                                                                wire:confirm="Mark this user's shift as fully worked?"
+                                                                            />
+                                                                        @endif
                                                                     @endif
                                                                     <x-button
                                                                         icon="phosphor-user-minus"
