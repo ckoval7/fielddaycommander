@@ -135,30 +135,18 @@ class ScheduleTimeline extends Component
 
         $shift = Shift::findOrFail($shiftId);
 
-        if ($shift->is_past) {
-            $this->dispatch('toast', title: 'Error', description: 'This shift has already ended.', icon: 'phosphor-x-circle', css: 'alert-error');
+        $error = match (true) {
+            $shift->is_past => 'This shift has already ended.',
+            ! $shift->is_open => 'This shift is not open for sign-ups.',
+            ! $shift->has_capacity => 'This shift is full.',
+            ShiftAssignment::where('shift_id', $shiftId)
+                ->where('user_id', auth()->id())
+                ->exists() => 'You are already signed up for this shift.',
+            default => null,
+        };
 
-            return;
-        }
-
-        if (! $shift->is_open) {
-            $this->dispatch('toast', title: 'Error', description: 'This shift is not open for sign-ups.', icon: 'phosphor-x-circle', css: 'alert-error');
-
-            return;
-        }
-
-        if (! $shift->has_capacity) {
-            $this->dispatch('toast', title: 'Error', description: 'This shift is full.', icon: 'phosphor-x-circle', css: 'alert-error');
-
-            return;
-        }
-
-        $alreadyAssigned = ShiftAssignment::where('shift_id', $shiftId)
-            ->where('user_id', auth()->id())
-            ->exists();
-
-        if ($alreadyAssigned) {
-            $this->dispatch('toast', title: 'Error', description: 'You are already signed up for this shift.', icon: 'phosphor-x-circle', css: 'alert-error');
+        if ($error !== null) {
+            $this->dispatch('toast', title: 'Error', description: $error, icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }

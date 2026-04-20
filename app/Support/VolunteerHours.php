@@ -18,6 +18,9 @@ class VolunteerHours
 
     public const MODE_WALL_CLOCK = 'wall_clock';
 
+    /**
+     * Static-only utility class; instantiation is disallowed.
+     */
     private function __construct() {}
 
     /**

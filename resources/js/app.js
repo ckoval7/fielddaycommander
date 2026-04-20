@@ -36,13 +36,14 @@ document.addEventListener('livewire:init', () => {
                 try {
                     response.clone().json().then((payload) => {
                         if (payload && typeof payload.redirect === 'string') {
-                            window.location.assign(payload.redirect);
+                            globalThis.location.assign(payload.redirect);
                         } else {
-                            window.location.assign(fallback);
+                            globalThis.location.assign(fallback);
                         }
-                    }).catch(() => window.location.assign(fallback));
+                    }).catch(() => globalThis.location.assign(fallback));
                 } catch (e) {
-                    window.location.assign(fallback);
+                    console.error('Livewire 419 handler failed to parse response', e);
+                    globalThis.location.assign(fallback);
                 }
                 return;
             }
@@ -53,7 +54,7 @@ document.addEventListener('livewire:init', () => {
             if (status >= 500 || status === 0) {
                 preventDefault();
                 const isUnreachable = status === 0;
-                window.Livewire.dispatch('toast', [{
+                globalThis.Livewire.dispatch('toast', [{
                     type: 'error',
                     title: isUnreachable
                         ? 'Can’t reach the server.'
