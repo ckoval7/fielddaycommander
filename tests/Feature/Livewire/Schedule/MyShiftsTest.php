@@ -833,3 +833,62 @@ test('my shifts hides the summary bar when user has no assignments for the event
         ->assertDontSeeHtml('hours worked')
         ->assertDontSeeHtml('hours signed up');
 });
+
+test('my shifts summary shows wall-clock parenthetical when assignments overlap', function () {
+    $shiftA = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(4),
+        'end_time' => appNow()->subHours(2),
+    ]);
+    $shiftB = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(3),
+        'end_time' => appNow()->subHours(1),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shiftA->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shiftA->start_time,
+        'checked_out_at' => $shiftA->end_time,
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shiftB->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shiftB->start_time,
+        'checked_out_at' => $shiftB->end_time,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSeeHtml('4.0 hours worked')
+        ->assertSeeHtml('(3.0 wall clock)')
+        ->assertSeeHtml('4.0 hours signed up');
+});
+
+test('my shifts summary omits wall-clock parenthetical when values match', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(5),
+        'end_time' => appNow()->subHours(3),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shift->start_time,
+        'checked_out_at' => $shift->end_time,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSeeHtml('2.0 hours worked')
+        ->assertSeeHtml('2.0 hours signed up')
+        ->assertDontSeeHtml('wall clock');
+});
