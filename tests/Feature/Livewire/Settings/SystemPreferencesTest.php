@@ -5,6 +5,7 @@ use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\VolunteerHours;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -174,4 +175,35 @@ test('organization update logs to audit log', function () {
     $auditLog = AuditLog::where('action', 'organization.updated')->first();
     expect($auditLog)->not->toBeNull();
     expect($auditLog->new_values['name'])->toBe('Audit Test Club');
+});
+
+test('defaults volunteer_hours_mode to sum when unset', function () {
+    Livewire::test(SystemPreferences::class)
+        ->assertSet('volunteer_hours_mode', VolunteerHours::MODE_SUM);
+});
+
+test('loads saved volunteer_hours_mode', function () {
+    Setting::set('volunteer_hours_mode', VolunteerHours::MODE_WALL_CLOCK);
+
+    Livewire::test(SystemPreferences::class)
+        ->assertSet('volunteer_hours_mode', VolunteerHours::MODE_WALL_CLOCK);
+});
+
+test('saves volunteer_hours_mode and records audit entry', function () {
+    Livewire::test(SystemPreferences::class)
+        ->set('volunteer_hours_mode', VolunteerHours::MODE_WALL_CLOCK)
+        ->call('save')
+        ->assertDispatched('notify');
+
+    expect(Setting::get('volunteer_hours_mode'))->toBe(VolunteerHours::MODE_WALL_CLOCK);
+    expect(AuditLog::where('action', 'settings.updated')
+        ->whereJsonContains('new_values->volunteer_hours_mode', VolunteerHours::MODE_WALL_CLOCK)
+        ->exists())->toBeTrue();
+});
+
+test('rejects invalid volunteer_hours_mode value', function () {
+    Livewire::test(SystemPreferences::class)
+        ->set('volunteer_hours_mode', 'bogus')
+        ->call('save')
+        ->assertHasErrors(['volunteer_hours_mode']);
 });
