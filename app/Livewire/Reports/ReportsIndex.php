@@ -133,6 +133,12 @@ class ReportsIndex extends Component
             ->all();
     }
 
+    #[Computed]
+    public function volunteerHoursMode(): string
+    {
+        return Setting::get('volunteer_hours_mode', VolunteerHours::MODE_SUM);
+    }
+
     /**
      * @return array<int, array{user_id: int, name: string, hours_worked: float, hours_signed_up: float}>
      */
@@ -143,7 +149,7 @@ class ReportsIndex extends Component
             return [];
         }
 
-        $mode = Setting::get('volunteer_hours_mode', VolunteerHours::MODE_SUM);
+        $mode = $this->volunteerHoursMode;
 
         $assignments = ShiftAssignment::query()
             ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->config()->id))

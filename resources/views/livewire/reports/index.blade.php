@@ -401,7 +401,7 @@
         </div>
 
         <div class="text-xs mb-4" style="color: var(--reports-text-muted);">
-            @if (\App\Models\Setting::get('volunteer_hours_mode', \App\Support\VolunteerHours::MODE_SUM) === \App\Support\VolunteerHours::MODE_WALL_CLOCK)
+            @if ($this->volunteerHoursMode === \App\Support\VolunteerHours::MODE_WALL_CLOCK)
                 Wall-clock hours — overlapping shifts merged.
             @else
                 Hours counted per role (overlaps not merged).
