@@ -78,7 +78,7 @@ class VolunteerHours
      *
      * @param  Collection<int, array{0: CarbonInterface, 1: CarbonInterface}>  $intervals
      */
-    protected static function mergeAndSum(Collection $intervals): float
+    private static function mergeAndSum(Collection $intervals): float
     {
         if ($intervals->isEmpty()) {
             return 0.0;
