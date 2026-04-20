@@ -400,6 +400,14 @@
             @endif
         </div>
 
+        <div class="text-xs mb-4" style="color: var(--reports-text-muted);">
+            @if (\App\Models\Setting::get('volunteer_hours_mode', \App\Support\VolunteerHours::MODE_SUM) === \App\Support\VolunteerHours::MODE_WALL_CLOCK)
+                Wall-clock hours — overlapping shifts merged.
+            @else
+                Hours counted per role (overlaps not merged).
+            @endif
+        </div>
+
         @if (count($this->volunteerHours) === 0)
             <div class="flex flex-col items-center justify-center py-12 gap-3 rounded-lg"
                  style="border: 1px solid var(--reports-border); background-color: var(--reports-surface);">

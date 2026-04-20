@@ -111,6 +111,43 @@
         />
     </x-card>
 
+    <x-card>
+        <x-slot:title>Volunteer Hours</x-slot:title>
+
+        <div class="space-y-3">
+            <p class="text-sm opacity-70">
+                How the reports page totals volunteer hours when a person has overlapping shifts
+                (for example, an event manager who is also a safety officer and an operator).
+            </p>
+
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                    type="radio"
+                    class="radio radio-sm mt-0.5"
+                    value="sum"
+                    wire:model="volunteer_hours_mode"
+                />
+                <div>
+                    <div class="font-medium">Count all hours (sum)</div>
+                    <div class="text-sm opacity-70">Each role's hours count separately. Recognizes multi-role contribution.</div>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                    type="radio"
+                    class="radio radio-sm mt-0.5"
+                    value="wall_clock"
+                    wire:model="volunteer_hours_mode"
+                />
+                <div>
+                    <div class="font-medium">Wall-clock hours (merge overlaps)</div>
+                    <div class="text-sm opacity-70">Overlapping shifts merge into the actual time the volunteer was on site.</div>
+                </div>
+            </label>
+        </div>
+    </x-card>
+
     <div class="flex justify-end">
         <x-button
             wire:click="save"
