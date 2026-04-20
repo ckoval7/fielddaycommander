@@ -59,8 +59,8 @@ test('category icons match specification', function () {
     expect(NotificationCategory::WeatherAlert->icon())->toBe('phosphor-cloud-lightning-duotone');
 });
 
-test('there are exactly nine categories', function () {
-    expect(NotificationCategory::cases())->toHaveCount(9);
+test('there are exactly ten categories', function () {
+    expect(NotificationCategory::cases())->toHaveCount(10);
 });
 
 test('shift checkin reminder has correct properties', function () {
@@ -71,4 +71,14 @@ test('shift checkin reminder has correct properties', function () {
         ->and($category->icon())->toBe('phosphor-clock')
         ->and($category->debounceSeconds())->toBe(0)
         ->and($category->description())->toBe('Reminders before your scheduled shifts');
+});
+
+test('shift checkout reminder has correct properties', function () {
+    $category = NotificationCategory::ShiftCheckoutReminder;
+
+    expect($category->value)->toBe('shift_checkout_reminder')
+        ->and($category->label())->toBe('Shift Check-out Reminders')
+        ->and($category->icon())->toBe('phosphor-sign-out')
+        ->and($category->debounceSeconds())->toBe(0)
+        ->and($category->description())->toBe('Reminders when you forget to check out of a shift');
 });

@@ -5,6 +5,8 @@ namespace App\Livewire\Settings;
 use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\Setting;
+use App\Support\VolunteerHours;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class SystemPreferences extends Component
@@ -22,6 +24,8 @@ class SystemPreferences extends Component
     public int $post_event_grace_period_days = 30;
 
     public bool $enable_ics213 = false;
+
+    public string $volunteer_hours_mode = VolunteerHours::MODE_SUM;
 
     public string $organization_name = '';
 
@@ -45,6 +49,7 @@ class SystemPreferences extends Component
         $this->api_key = Setting::get('callsign_api_key');
         $this->post_event_grace_period_days = (int) Setting::get('post_event_grace_period_days', 30);
         $this->enable_ics213 = Setting::getBoolean('enable_ics213', false);
+        $this->volunteer_hours_mode = Setting::get('volunteer_hours_mode', VolunteerHours::MODE_SUM);
 
         $this->loadOrganization();
     }
@@ -75,6 +80,7 @@ class SystemPreferences extends Component
             'organization_callsign' => ['nullable', 'string', 'max:20', 'regex:/^[A-Z0-9]{3,10}$/'],
             'organization_email' => ['nullable', 'email', 'max:255'],
             'organization_phone' => ['nullable', 'string', 'max:20'],
+            'volunteer_hours_mode' => ['required', Rule::in([VolunteerHours::MODE_SUM, VolunteerHours::MODE_WALL_CLOCK])],
         ], [
             'organization_name.required' => 'An organization name is required.',
             'organization_callsign.regex' => 'The callsign must be 3-10 uppercase letters and numbers.',
@@ -85,6 +91,7 @@ class SystemPreferences extends Component
             'date_format' => Setting::get('date_format'),
             'time_format' => Setting::get('time_format'),
             'post_event_grace_period_days' => Setting::get('post_event_grace_period_days'),
+            'volunteer_hours_mode' => Setting::get('volunteer_hours_mode'),
         ];
 
         Setting::set('timezone', $this->timezone);
@@ -102,6 +109,7 @@ class SystemPreferences extends Component
 
         Setting::set('post_event_grace_period_days', $this->post_event_grace_period_days);
         Setting::set('enable_ics213', $this->enable_ics213 ? '1' : '0');
+        Setting::set('volunteer_hours_mode', $this->volunteer_hours_mode);
 
         $this->saveOrganization();
 
@@ -110,6 +118,7 @@ class SystemPreferences extends Component
             'date_format' => $this->date_format,
             'time_format' => $this->time_format,
             'post_event_grace_period_days' => $this->post_event_grace_period_days,
+            'volunteer_hours_mode' => $this->volunteer_hours_mode,
         ]);
 
         $this->dispatch('notify', title: 'Success', description: 'System preferences saved successfully.');

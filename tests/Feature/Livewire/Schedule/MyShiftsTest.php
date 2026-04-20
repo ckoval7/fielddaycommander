@@ -526,6 +526,31 @@ test('my shifts does not show other users shifts', function () {
         ->assertSee('You have no upcoming shifts scheduled.');
 });
 
+test('user can check out of a past shift they forgot to check out of', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(4),
+        'end_time' => appNow()->subHours(2),
+    ]);
+
+    $assignment = ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_IN,
+        'checked_in_at' => appNow()->subHours(4),
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSee('Check Out')
+        ->call('checkOut', $assignment->id)
+        ->assertDispatched('toast', title: 'Success', description: 'You have checked out.');
+
+    expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
+});
+
 test('user can re-check-in to a checked-out shift while still active', function () {
     $shift = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
@@ -641,4 +666,229 @@ test('user cannot re-check-in to another users assignment', function () {
     expect(fn () => Livewire::test(MyShifts::class)
         ->call('reCheckIn', $assignment->id)
     )->toThrow(ModelNotFoundException::class);
+});
+
+test('my shifts summary totals hours worked and signed up for the event', function () {
+    // Past shift fully worked (2 hours)
+    $pastShift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(5),
+        'end_time' => appNow()->subHours(3),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $pastShift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $pastShift->start_time,
+        'checked_out_at' => $pastShift->end_time,
+    ]);
+
+    // Upcoming shift (3 hours scheduled, 0 worked)
+    $upcomingShift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->addHours(2),
+        'end_time' => appNow()->addHours(5),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $upcomingShift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(MyShifts::class);
+
+    expect($component->instance()->eventHoursSummary())->toBe([
+        'worked_sum' => 2.0,
+        'worked_wall_clock' => 2.0,
+        'signed_up_sum' => 5.0,
+        'signed_up_wall_clock' => 5.0,
+    ]);
+});
+
+test('my shifts summary excludes no-show assignments from signed-up hours', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(3),
+        'end_time' => appNow()->subHours(1),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_NO_SHOW,
+    ]);
+
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(MyShifts::class);
+
+    expect($component->instance()->eventHoursSummary())->toBe([
+        'worked_sum' => 0.0,
+        'worked_wall_clock' => 0.0,
+        'signed_up_sum' => 0.0,
+        'signed_up_wall_clock' => 0.0,
+    ]);
+});
+
+test('my shifts summary caps worked hours at scheduled length', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(4),
+        'end_time' => appNow()->subHours(2),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shift->start_time,
+        'checked_out_at' => $shift->end_time->copy()->addHours(1),
+    ]);
+
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(MyShifts::class);
+
+    expect($component->instance()->eventHoursSummary())->toBe([
+        'worked_sum' => 2.0,
+        'worked_wall_clock' => 2.0,
+        'signed_up_sum' => 2.0,
+        'signed_up_wall_clock' => 2.0,
+    ]);
+});
+
+test('my shifts summary reports divergent sum and wall-clock hours when assignments overlap', function () {
+    // Two 2-hour shifts that overlap by 1 hour
+    //   Shift A: now-4h → now-2h  (2h)
+    //   Shift B: now-3h → now-1h  (2h)
+    // Sum: 4.0, wall clock: 3.0 (union of windows)
+    $shiftA = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(4),
+        'end_time' => appNow()->subHours(2),
+    ]);
+    $shiftB = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(3),
+        'end_time' => appNow()->subHours(1),
+    ]);
+
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shiftA->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shiftA->start_time,
+        'checked_out_at' => $shiftA->end_time,
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shiftB->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shiftB->start_time,
+        'checked_out_at' => $shiftB->end_time,
+    ]);
+
+    $this->actingAs($this->user);
+
+    expect(Livewire::test(MyShifts::class)->instance()->eventHoursSummary())->toBe([
+        'worked_sum' => 4.0,
+        'worked_wall_clock' => 3.0,
+        'signed_up_sum' => 4.0,
+        'signed_up_wall_clock' => 3.0,
+    ]);
+});
+
+test('my shifts renders the summary bar when user has assignments', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(5),
+        'end_time' => appNow()->subHours(3),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shift->start_time,
+        'checked_out_at' => $shift->end_time,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSeeHtml('2.0 hours worked')
+        ->assertSeeHtml('2.0 hours signed up');
+});
+
+test('my shifts hides the summary bar when user has no assignments for the event', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertDontSeeHtml('hours worked')
+        ->assertDontSeeHtml('hours signed up');
+});
+
+test('my shifts summary labels shift and actual hours when assignments overlap', function () {
+    $shiftA = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(4),
+        'end_time' => appNow()->subHours(2),
+    ]);
+    $shiftB = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(3),
+        'end_time' => appNow()->subHours(1),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shiftA->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shiftA->start_time,
+        'checked_out_at' => $shiftA->end_time,
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shiftB->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shiftB->start_time,
+        'checked_out_at' => $shiftB->end_time,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSeeHtml('4.0 shift hours, 3.0 actual hours worked')
+        ->assertSeeHtml('4.0 shift hours, 3.0 actual hours signed up');
+});
+
+test('my shifts summary uses plain hours phrasing when sum and actual match', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(5),
+        'end_time' => appNow()->subHours(3),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $shift->start_time,
+        'checked_out_at' => $shift->end_time,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSeeHtml('2.0 hours worked')
+        ->assertSeeHtml('2.0 hours signed up')
+        ->assertDontSeeHtml('shift hours')
+        ->assertDontSeeHtml('actual hours');
 });

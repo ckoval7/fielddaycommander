@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Contracts\ReminderSource;
 use App\Services\Reminders\BulletinReminderSource;
+use App\Services\Reminders\ShiftCheckoutReminderSource;
 use App\Services\Reminders\ShiftReminderSource;
 use App\Services\ReminderService;
 use Illuminate\Console\Command;
@@ -20,6 +21,7 @@ class SendReminders extends Command
     private array $sources = [
         BulletinReminderSource::class,
         ShiftReminderSource::class,
+        ShiftCheckoutReminderSource::class,
     ];
 
     public function handle(ReminderService $reminderService): int

@@ -540,6 +540,322 @@ describe('manager overrides', function () {
 
         expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_NO_SHOW);
     });
+
+    test('can mark a past shift as worked, setting times and status', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'checked_in_at' => null,
+            'checked_out_at' => null,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('markWorked', $assignment->id)
+            ->assertDispatched('toast', description: 'Marked as worked');
+
+        $fresh = $assignment->fresh();
+        expect($fresh->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT)
+            ->and($fresh->checked_in_at->toDateTimeString())->toBe($shift->start_time->toDateTimeString())
+            ->and($fresh->checked_out_at->toDateTimeString())->toBe($shift->end_time->toDateTimeString())
+            ->and($fresh->confirmed_by_user_id)->toBe($this->admin->id)
+            ->and($fresh->confirmed_at)->not->toBeNull();
+    });
+
+    test('mark worked overwrites existing check-in and check-out to credit the full shift', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => $shift->end_time->addHour(),
+            'checked_out_at' => null,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('markWorked', $assignment->id)
+            ->assertDispatched('toast', description: 'Marked as worked');
+
+        $fresh = $assignment->fresh();
+        expect($fresh->checked_in_at->toDateTimeString())->toBe($shift->start_time->toDateTimeString())
+            ->and($fresh->checked_out_at->toDateTimeString())->toBe($shift->end_time->toDateTimeString())
+            ->and($fresh->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
+    });
+
+    test('mark worked reverses a no-show and credits the full shift', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_NO_SHOW,
+            'checked_in_at' => null,
+            'checked_out_at' => null,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('markWorked', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Marked as worked');
+
+        $fresh = $assignment->fresh();
+        expect($fresh->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT)
+            ->and($fresh->checked_in_at?->equalTo($shift->start_time))->toBeTrue()
+            ->and($fresh->checked_out_at?->equalTo($shift->end_time))->toBeTrue();
+    });
+
+    test('mark worked creates an audit log entry', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'checked_in_at' => null,
+            'checked_out_at' => null,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('markWorked', $assignment->id);
+
+        $log = AuditLog::where('action', 'shift.mark_worked_by_manager')->first();
+        expect($log)->not->toBeNull()
+            ->and($log->new_values)->toHaveKey('managed_by', $this->admin->call_sign);
+    });
+
+    test('mark worked button visible on past unchecked-out assignments', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow()->subHours(2),
+            'checked_out_at' => null,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        // Use 'past' time filter so the default future-only filter doesn't hide the shift
+        Livewire::test(ManageSchedule::class)
+            ->set('timeFilter', 'past')
+            ->assertSeeHtml('wire:click="markWorked('.$assignment->id.')"');
+    });
+
+    test('mark worked button visible even when already checked out so managers can revise', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+            'checked_in_at' => appNow()->subHours(2),
+            'checked_out_at' => appNow()->subMinutes(30),
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->set('timeFilter', 'past')
+            ->assertSeeHtml('wire:click="markWorked('.$assignment->id.')"');
+    });
+
+    test('mark worked button hidden when shift is in the future', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHour(),
+            'end_time' => appNow()->addHours(2),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'checked_out_at' => null,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        // Future shifts appear without a time filter; button must still be absent
+        Livewire::test(ManageSchedule::class)
+            ->assertDontSeeHtml('wire:click="markWorked('.$assignment->id.')"');
+    });
+
+    test('mark worked button visible on no-show assignments so managers can reverse', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_NO_SHOW,
+            'checked_out_at' => null,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->set('timeFilter', 'past')
+            ->assertSeeHtml('wire:click="markWorked('.$assignment->id.')"');
+    });
+
+    test('unmark worked reverts the assignment to scheduled with cleared timestamps', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+            'checked_in_at' => $shift->start_time,
+            'checked_out_at' => $shift->end_time,
+            'confirmed_by_user_id' => $this->admin->id,
+            'confirmed_at' => appNow(),
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('unmarkWorked', $assignment->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Mark Worked undone');
+
+        $fresh = $assignment->fresh();
+        expect($fresh->status)->toBe(ShiftAssignment::STATUS_SCHEDULED)
+            ->and($fresh->checked_in_at)->toBeNull()
+            ->and($fresh->checked_out_at)->toBeNull()
+            ->and($fresh->confirmed_by_user_id)->toBeNull()
+            ->and($fresh->confirmed_at)->toBeNull();
+    });
+
+    test('unmark worked creates an audit log entry', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+            'checked_in_at' => $shift->start_time,
+            'checked_out_at' => $shift->end_time,
+            'confirmed_by_user_id' => $this->admin->id,
+            'confirmed_at' => appNow(),
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('unmarkWorked', $assignment->id);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'shift.unmark_worked_by_manager',
+            'auditable_type' => ShiftAssignment::class,
+            'auditable_id' => $assignment->id,
+        ]);
+    });
+
+    test('undo button shown only when timestamps match the shift window', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $markedWorked = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+            'checked_in_at' => $shift->start_time,
+            'checked_out_at' => $shift->end_time,
+            'confirmed_by_user_id' => $this->admin->id,
+            'confirmed_at' => appNow(),
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->set('timeFilter', 'past')
+            ->assertSeeHtml('wire:click="unmarkWorked('.$markedWorked->id.')"')
+            ->assertDontSeeHtml('wire:click="markWorked('.$markedWorked->id.')"');
+    });
+
+    test('undo button hidden when timestamps do not match the shift window', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $naturalCheckout = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+            'checked_in_at' => $shift->start_time->copy()->addMinutes(5),
+            'checked_out_at' => $shift->end_time->copy()->subMinutes(5),
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->set('timeFilter', 'past')
+            ->assertDontSeeHtml('wire:click="unmarkWorked('.$naturalCheckout->id.')"')
+            ->assertSeeHtml('wire:click="markWorked('.$naturalCheckout->id.')"');
+    });
+
 });
 
 // =============================================================================

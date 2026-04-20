@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\ShiftAssignment;
 use App\Services\EventContextService;
+use App\Support\VolunteerHours;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -105,6 +106,60 @@ class MyShifts extends Component
         $this->applyAssignmentSorting($query);
 
         return $query->get();
+    }
+
+    /**
+     * All assignments for the current user scoped to the active event, eager-loading shift.
+     *
+     * Memoized so the hours summary can aggregate across assignments without requerying.
+     *
+     * @return Collection<int, ShiftAssignment>
+     */
+    #[Computed]
+    public function eventAssignments(): Collection
+    {
+        if (! $this->eventConfig) {
+            return new Collection;
+        }
+
+        return ShiftAssignment::query()
+            ->forUser(Auth::id())
+            ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->eventConfig->id))
+            ->with('shift')
+            ->get();
+    }
+
+    /**
+     * Shift-hour sum and overlap-merged wall-clock hours, for both worked and signed up,
+     * across all the current user's assignments in the active event.
+     *
+     * No-show assignments are excluded. Keys:
+     *   - worked_sum, worked_wall_clock: from actual check-in/check-out intervals
+     *   - signed_up_sum, signed_up_wall_clock: from scheduled shift windows
+     *
+     * @return array{worked_sum: float, worked_wall_clock: float, signed_up_sum: float, signed_up_wall_clock: float}
+     */
+    #[Computed]
+    public function eventHoursSummary(): array
+    {
+        if (! $this->eventConfig) {
+            return [
+                'worked_sum' => 0.0,
+                'worked_wall_clock' => 0.0,
+                'signed_up_sum' => 0.0,
+                'signed_up_wall_clock' => 0.0,
+            ];
+        }
+
+        $assignments = $this->eventAssignments
+            ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW);
+
+        return [
+            'worked_sum' => VolunteerHours::sumHoursWorked($assignments),
+            'worked_wall_clock' => VolunteerHours::wallClockHoursWorked($assignments),
+            'signed_up_sum' => VolunteerHours::sumHoursScheduled($assignments),
+            'signed_up_wall_clock' => VolunteerHours::wallClockHoursScheduled($assignments),
+        ];
     }
 
     /**

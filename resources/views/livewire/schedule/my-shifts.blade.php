@@ -35,6 +35,27 @@
                 No event is currently selected. Please select an event to view your shifts.
             </x-alert>
         @else
+            {{-- Event hours summary --}}
+            @php $hours = $this->eventHoursSummary; @endphp
+            @if($hours['signed_up_sum'] > 0 || $hours['worked_sum'] > 0)
+                <div class="mb-6 rounded-lg bg-base-200 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                    <x-icon name="phosphor-clock-countdown" class="w-5 h-5 text-primary" />
+
+                    @if($hours['worked_wall_clock'] !== $hours['worked_sum'])
+                        <span class="font-semibold">{{ number_format($hours['worked_sum'], 1) }} shift hours, {{ number_format($hours['worked_wall_clock'], 1) }} actual hours worked</span>
+                    @else
+                        <span class="font-semibold">{{ number_format($hours['worked_sum'], 1) }} hours worked</span>
+                    @endif
+
+                    <span class="text-base-content/40">·</span>
+
+                    @if($hours['signed_up_wall_clock'] !== $hours['signed_up_sum'])
+                        <span class="text-base-content/70">{{ number_format($hours['signed_up_sum'], 1) }} shift hours, {{ number_format($hours['signed_up_wall_clock'], 1) }} actual hours signed up</span>
+                    @else
+                        <span class="text-base-content/70">{{ number_format($hours['signed_up_sum'], 1) }} hours signed up</span>
+                    @endif
+                </div>
+            @endif
             @php
                 $currentShifts = $this->currentShifts;
                 $upcomingShifts = $this->upcomingShifts;
@@ -111,44 +132,12 @@
                                         </div>
 
                                         {{-- Actions --}}
-                                        <div class="flex gap-2">
-                                            @if($assignment->status === \App\Models\ShiftAssignment::STATUS_SCHEDULED)
-                                                @if($shift->can_check_in)
-                                                    <x-button
-                                                        label="Check In"
-                                                        icon="phosphor-sign-in"
-                                                        class="btn-primary btn-sm"
-                                                        wire:click="checkIn({{ $assignment->id }})"
-                                                        spinner="checkIn"
-                                                    />
-                                                @else
-                                                    <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format(timeFormat() . ' T') }}" class="badge-ghost badge-sm" />
-                                                @endif
-                                            @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_IN)
-                                                @php
-                                                    $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time);
-                                                    $checkoutConfirm = $minutesLeft >= 1
-                                                        ? "You still have {$minutesLeft} " . ($minutesLeft === 1 ? 'minute' : 'minutes') . ' left in this shift. Are you sure you want to check out?'
-                                                        : null;
-                                                @endphp
-                                                <x-button
-                                                    label="Check Out"
-                                                    icon="phosphor-sign-out"
-                                                    class="btn-warning btn-sm"
-                                                    wire:click="checkOut({{ $assignment->id }})"
-                                                    :wire:confirm="$checkoutConfirm"
-                                                    spinner="checkOut"
-                                                />
-                                            @elseif($assignment->status === \App\Models\ShiftAssignment::STATUS_CHECKED_OUT)
-                                                <x-button
-                                                    label="Check In Again"
-                                                    icon="phosphor-sign-in"
-                                                    class="btn-ghost btn-sm"
-                                                    wire:click="reCheckIn({{ $assignment->id }})"
-                                                    spinner="reCheckIn"
-                                                />
-                                            @endif
-                                        </div>
+                                        @include('livewire.schedule.partials.shift-action-buttons', [
+                                            'shift' => $shift,
+                                            'myAssignment' => $assignment,
+                                            'isMyShift' => true,
+                                            'isFull' => false,
+                                        ])
                                     </div>
                                 </x-card>
                             @endforeach
@@ -199,18 +188,12 @@
                                         </div>
 
                                         {{-- Actions --}}
-                                        <div class="flex gap-2">
-                                            @if($assignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP && $assignment->status === \App\Models\ShiftAssignment::STATUS_SCHEDULED)
-                                                <x-button
-                                                    label="Drop"
-                                                    icon="phosphor-x"
-                                                    class="btn-ghost btn-sm text-error"
-                                                    wire:click="cancelSignUp({{ $assignment->id }})"
-                                                    wire:confirm="Are you sure you want to drop this shift?"
-                                                    spinner="cancelSignUp"
-                                                />
-                                            @endif
-                                        </div>
+                                        @include('livewire.schedule.partials.shift-action-buttons', [
+                                            'shift' => $shift,
+                                            'myAssignment' => $assignment,
+                                            'isMyShift' => true,
+                                            'isFull' => false,
+                                        ])
                                     </div>
                                 </x-card>
                             @endforeach
@@ -284,6 +267,14 @@
                                                 @endif
                                             @endif
                                         </div>
+
+                                        {{-- Actions --}}
+                                        @include('livewire.schedule.partials.shift-action-buttons', [
+                                            'shift' => $shift,
+                                            'myAssignment' => $assignment,
+                                            'isMyShift' => true,
+                                            'isFull' => false,
+                                        ])
                                     </div>
                                 </x-card>
                             @endforeach

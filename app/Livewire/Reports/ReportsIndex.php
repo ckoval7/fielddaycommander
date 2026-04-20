@@ -5,7 +5,11 @@ namespace App\Livewire\Reports;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Setting;
+use App\Models\ShiftAssignment;
 use App\Services\EventContextService;
+use App\Support\VolunteerHours;
+use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -129,7 +133,60 @@ class ReportsIndex extends Component
             ->all();
     }
 
-    public function render(): \Illuminate\View\View
+    #[Computed]
+    public function volunteerHoursMode(): string
+    {
+        return Setting::get('volunteer_hours_mode', VolunteerHours::MODE_SUM);
+    }
+
+    /**
+     * @return array<int, array{user_id: int, name: string, hours_worked: float, hours_signed_up: float}>
+     */
+    #[Computed]
+    public function volunteerHours(): array
+    {
+        if (! $this->config()) {
+            return [];
+        }
+
+        $mode = $this->volunteerHoursMode;
+
+        $assignments = ShiftAssignment::query()
+            ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->config()->id))
+            ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
+            ->with(['shift', 'user'])
+            ->get();
+
+        return $assignments
+            ->groupBy('user_id')
+            ->map(function ($group) use ($mode) {
+                $user = $group->first()->user;
+                $name = trim(($user?->first_name ?? '').' '.($user?->last_name ?? ''));
+
+                $worked = $mode === VolunteerHours::MODE_WALL_CLOCK
+                    ? VolunteerHours::wallClockHoursWorked($group)
+                    : VolunteerHours::sumHoursWorked($group);
+
+                $scheduled = $mode === VolunteerHours::MODE_WALL_CLOCK
+                    ? VolunteerHours::wallClockHoursScheduled($group)
+                    : VolunteerHours::sumHoursScheduled($group);
+
+                return [
+                    'user_id' => $group->first()->user_id,
+                    'name' => $name !== '' ? $name : ($user?->call_sign ?? '—'),
+                    'hours_worked' => $worked,
+                    'hours_signed_up' => $scheduled,
+                ];
+            })
+            ->sortBy([
+                ['hours_worked', 'desc'],
+                ['name', 'asc'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function render(): View
     {
         return view('livewire.reports.index')->layout('layouts.app');
     }
