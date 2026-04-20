@@ -769,6 +769,43 @@ class ManageSchedule extends Component
         $this->dispatch('toast', title: 'Success', description: 'Marked as no-show', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
+    public function markWorked(int $assignmentId): void
+    {
+        Gate::authorize('manage-shifts');
+
+        $assignment = ShiftAssignment::findOrFail($assignmentId);
+        $assignment->load(['user', 'shift']);
+
+        if ($assignment->status === ShiftAssignment::STATUS_NO_SHOW) {
+            $this->dispatch('toast', title: 'Error', description: 'Cannot mark a no-show as worked', icon: 'phosphor-x-circle', css: 'alert-error');
+
+            return;
+        }
+
+        $assignment->checked_in_at ??= $assignment->shift->start_time;
+        $assignment->checked_out_at = $assignment->shift->end_time;
+        $assignment->status = ShiftAssignment::STATUS_CHECKED_OUT;
+        $assignment->confirmed_by_user_id = Auth::id();
+        $assignment->confirmed_at = appNow();
+        $assignment->save();
+
+        AuditLog::log(
+            action: 'shift.mark_worked_by_manager',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'user' => $assignment->user->call_sign,
+                'managed_by' => Auth::user()->call_sign,
+                'shift_start' => $assignment->shift->start_time->toDateTimeString(),
+                'shift_end' => $assignment->shift->end_time->toDateTimeString(),
+            ]
+        );
+
+        unset($this->shifts);
+
+        $this->dispatch('toast', title: 'Success', description: 'Marked as worked', icon: 'phosphor-check-circle', css: 'alert-success');
+    }
+
     // --- Form Resets ---
 
     protected function resetRoleForm(): void
