@@ -143,7 +143,7 @@ class ReportsIndex extends Component
             return [];
         }
 
-        $mode = Setting::get('volunteer_hours_mode', 'sum');
+        $mode = Setting::get('volunteer_hours_mode', VolunteerHours::MODE_SUM);
 
         $assignments = ShiftAssignment::query()
             ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->config()->id))
@@ -157,11 +157,11 @@ class ReportsIndex extends Component
                 $user = $group->first()->user;
                 $name = trim(($user?->first_name ?? '').' '.($user?->last_name ?? ''));
 
-                $worked = $mode === 'wall_clock'
+                $worked = $mode === VolunteerHours::MODE_WALL_CLOCK
                     ? VolunteerHours::wallClockHoursWorked($group)
                     : VolunteerHours::sumHoursWorked($group);
 
-                $scheduled = $mode === 'wall_clock'
+                $scheduled = $mode === VolunteerHours::MODE_WALL_CLOCK
                     ? VolunteerHours::wallClockHoursScheduled($group)
                     : VolunteerHours::sumHoursScheduled($group);
 

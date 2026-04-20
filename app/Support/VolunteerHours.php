@@ -14,6 +14,10 @@ use Illuminate\Support\Collection;
  */
 class VolunteerHours
 {
+    public const MODE_SUM = 'sum';
+
+    public const MODE_WALL_CLOCK = 'wall_clock';
+
     private function __construct() {}
 
     /**
