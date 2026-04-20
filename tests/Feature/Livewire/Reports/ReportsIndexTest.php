@@ -9,6 +9,7 @@ use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
+use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
@@ -361,4 +362,68 @@ test('reports page renders volunteer hours card section', function () {
         ->assertSee('Volunteer Hours')
         ->assertSee('Dana Drew')
         ->assertSeeHtml('2.0');
+});
+
+test('reports volunteerHours merges overlapping shifts in wall_clock mode', function () {
+    Permission::firstOrCreate(['name' => 'view-reports']);
+    $viewer = User::factory()->create();
+    $viewer->givePermissionTo('view-reports');
+
+    Setting::set('volunteer_hours_mode', 'wall_clock');
+
+    $config = makeReportsIndexEvent();
+    $role = ShiftRole::factory()->create(['event_configuration_id' => $config->id]);
+
+    $alice = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Adams']);
+
+    // Three overlapping 4h / 2h / 1h shifts (10-14, 11-13, 12-13). Sum=7h, wall-clock=4h.
+    $base = now()->subHours(8)->startOfHour();
+
+    $s1 = Shift::factory()->create([
+        'event_configuration_id' => $config->id,
+        'shift_role_id' => $role->id,
+        'start_time' => $base,
+        'end_time' => $base->copy()->addHours(4),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $s1->id,
+        'user_id' => $alice->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $s1->start_time,
+        'checked_out_at' => $s1->end_time,
+    ]);
+
+    $s2 = Shift::factory()->create([
+        'event_configuration_id' => $config->id,
+        'shift_role_id' => $role->id,
+        'start_time' => $base->copy()->addHour(),
+        'end_time' => $base->copy()->addHours(3),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $s2->id,
+        'user_id' => $alice->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $s2->start_time,
+        'checked_out_at' => $s2->end_time,
+    ]);
+
+    $s3 = Shift::factory()->create([
+        'event_configuration_id' => $config->id,
+        'shift_role_id' => $role->id,
+        'start_time' => $base->copy()->addHours(2),
+        'end_time' => $base->copy()->addHours(3),
+    ]);
+    ShiftAssignment::factory()->create([
+        'shift_id' => $s3->id,
+        'user_id' => $alice->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+        'checked_in_at' => $s3->start_time,
+        'checked_out_at' => $s3->end_time,
+    ]);
+
+    $rows = Livewire::actingAs($viewer)->test(ReportsIndex::class)->instance()->volunteerHours();
+
+    expect($rows)->toHaveCount(1);
+    expect($rows[0]['hours_worked'])->toBe(4.0);
+    expect($rows[0]['hours_signed_up'])->toBe(4.0);
 });
