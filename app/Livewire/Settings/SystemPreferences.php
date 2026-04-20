@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\Setting;
 use App\Support\VolunteerHours;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class SystemPreferences extends Component
@@ -79,7 +80,7 @@ class SystemPreferences extends Component
             'organization_callsign' => ['nullable', 'string', 'max:20', 'regex:/^[A-Z0-9]{3,10}$/'],
             'organization_email' => ['nullable', 'email', 'max:255'],
             'organization_phone' => ['nullable', 'string', 'max:20'],
-            'volunteer_hours_mode' => ['required', 'in:'.VolunteerHours::MODE_SUM.','.VolunteerHours::MODE_WALL_CLOCK],
+            'volunteer_hours_mode' => ['required', Rule::in([VolunteerHours::MODE_SUM, VolunteerHours::MODE_WALL_CLOCK])],
         ], [
             'organization_name.required' => 'An organization name is required.',
             'organization_callsign.regex' => 'The callsign must be 3-10 uppercase letters and numbers.',
