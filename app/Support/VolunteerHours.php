@@ -13,8 +13,12 @@ use Illuminate\Support\Collection;
  */
 class VolunteerHours
 {
+    private function __construct() {}
+
     /**
      * Sum each assignment's clamped hoursWorked (duplicates overlapping time across roles).
+     *
+     * @param  Collection<int, ShiftAssignment>  $assignments
      */
     public static function sumHoursWorked(Collection $assignments): float
     {
@@ -23,6 +27,8 @@ class VolunteerHours
 
     /**
      * Sum each assignment's full scheduled length (duplicates overlapping time across roles).
+     *
+     * @param  Collection<int, ShiftAssignment>  $assignments
      */
     public static function sumHoursScheduled(Collection $assignments): float
     {
