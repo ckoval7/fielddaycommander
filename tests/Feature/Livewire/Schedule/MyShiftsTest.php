@@ -701,8 +701,12 @@ test('my shifts summary totals hours worked and signed up for the event', functi
 
     $component = Livewire::test(MyShifts::class);
 
-    expect($component->instance()->hoursWorkedThisEvent())->toBe(2.0);
-    expect($component->instance()->hoursSignedUpThisEvent())->toBe(5.0);
+    expect($component->instance()->eventHoursSummary())->toBe([
+        'worked_sum' => 2.0,
+        'worked_wall_clock' => 2.0,
+        'signed_up_sum' => 5.0,
+        'signed_up_wall_clock' => 5.0,
+    ]);
 });
 
 test('my shifts summary excludes no-show assignments from signed-up hours', function () {
@@ -722,8 +726,12 @@ test('my shifts summary excludes no-show assignments from signed-up hours', func
 
     $component = Livewire::test(MyShifts::class);
 
-    expect($component->instance()->hoursWorkedThisEvent())->toBe(0.0);
-    expect($component->instance()->hoursSignedUpThisEvent())->toBe(0.0);
+    expect($component->instance()->eventHoursSummary())->toBe([
+        'worked_sum' => 0.0,
+        'worked_wall_clock' => 0.0,
+        'signed_up_sum' => 0.0,
+        'signed_up_wall_clock' => 0.0,
+    ]);
 });
 
 test('my shifts summary caps worked hours at scheduled length', function () {
@@ -745,8 +753,12 @@ test('my shifts summary caps worked hours at scheduled length', function () {
 
     $component = Livewire::test(MyShifts::class);
 
-    expect($component->instance()->hoursWorkedThisEvent())->toBe(2.0);
-    expect($component->instance()->hoursSignedUpThisEvent())->toBe(2.0);
+    expect($component->instance()->eventHoursSummary())->toBe([
+        'worked_sum' => 2.0,
+        'worked_wall_clock' => 2.0,
+        'signed_up_sum' => 2.0,
+        'signed_up_wall_clock' => 2.0,
+    ]);
 });
 
 test('my shifts renders the summary bar when user has assignments', function () {
