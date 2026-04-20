@@ -111,7 +111,7 @@ class MyShifts extends Component
     /**
      * All assignments for the current user scoped to the active event, eager-loading shift.
      *
-     * Memoized so a single render can read both hour totals without issuing two queries.
+     * Memoized so the hours summary can aggregate across assignments without requerying.
      *
      * @return Collection<int, ShiftAssignment>
      */
