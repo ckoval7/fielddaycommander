@@ -156,7 +156,7 @@
                                                                             wire:confirm="Mark this user as a no-show?"
                                                                         />
                                                                     @endif
-                                                                    @if($shift->end_time->isPast() && $assignment->checked_out_at === null && $assignment->status !== 'no_show')
+                                                                    @if($shift->end_time->isPast())
                                                                         <x-button
                                                                             icon="phosphor-seal-check"
                                                                             class="btn-ghost btn-xs text-success"

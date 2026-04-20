@@ -776,12 +776,6 @@ class ManageSchedule extends Component
         $assignment = ShiftAssignment::findOrFail($assignmentId);
         $assignment->load(['user', 'shift']);
 
-        if ($assignment->status === ShiftAssignment::STATUS_NO_SHOW) {
-            $this->dispatch('toast', title: 'Error', description: 'Cannot mark a no-show as worked', icon: 'phosphor-x-circle', css: 'alert-error');
-
-            return;
-        }
-
         $assignment->checked_in_at ??= $assignment->shift->start_time;
         $assignment->checked_out_at = $assignment->shift->end_time;
         $assignment->status = ShiftAssignment::STATUS_CHECKED_OUT;

@@ -601,7 +601,7 @@ describe('manager overrides', function () {
             ->and($fresh->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
     });
 
-    test('mark worked cannot be called on a no-show assignment', function () {
+    test('mark worked reverses a no-show and credits the full shift', function () {
         $shift = Shift::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'shift_role_id' => $this->role->id,
@@ -613,6 +613,7 @@ describe('manager overrides', function () {
             'shift_id' => $shift->id,
             'user_id' => $this->regularUser->id,
             'status' => ShiftAssignment::STATUS_NO_SHOW,
+            'checked_in_at' => null,
             'checked_out_at' => null,
         ]);
 
@@ -620,11 +621,12 @@ describe('manager overrides', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('markWorked', $assignment->id)
-            ->assertDispatched('toast', title: 'Error', description: 'Cannot mark a no-show as worked');
+            ->assertDispatched('toast', title: 'Success', description: 'Marked as worked');
 
         $fresh = $assignment->fresh();
-        expect($fresh->status)->toBe(ShiftAssignment::STATUS_NO_SHOW)
-            ->and($fresh->checked_out_at)->toBeNull();
+        expect($fresh->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT)
+            ->and($fresh->checked_in_at?->equalTo($shift->start_time))->toBeTrue()
+            ->and($fresh->checked_out_at?->equalTo($shift->end_time))->toBeTrue();
     });
 
     test('mark worked creates an audit log entry', function () {
@@ -677,7 +679,7 @@ describe('manager overrides', function () {
             ->assertSeeHtml('wire:click="markWorked('.$assignment->id.')"');
     });
 
-    test('mark worked button hidden when already checked out', function () {
+    test('mark worked button visible even when already checked out so managers can revise', function () {
         $shift = Shift::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'shift_role_id' => $this->role->id,
@@ -697,7 +699,7 @@ describe('manager overrides', function () {
 
         Livewire::test(ManageSchedule::class)
             ->set('timeFilter', 'past')
-            ->assertDontSeeHtml('wire:click="markWorked('.$assignment->id.')"');
+            ->assertSeeHtml('wire:click="markWorked('.$assignment->id.')"');
     });
 
     test('mark worked button hidden when shift is in the future', function () {
@@ -722,7 +724,7 @@ describe('manager overrides', function () {
             ->assertDontSeeHtml('wire:click="markWorked('.$assignment->id.')"');
     });
 
-    test('mark worked button hidden when assignment is no-show', function () {
+    test('mark worked button visible on no-show assignments so managers can reverse', function () {
         $shift = Shift::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'shift_role_id' => $this->role->id,
@@ -741,7 +743,7 @@ describe('manager overrides', function () {
 
         Livewire::test(ManageSchedule::class)
             ->set('timeFilter', 'past')
-            ->assertDontSeeHtml('wire:click="markWorked('.$assignment->id.')"');
+            ->assertSeeHtml('wire:click="markWorked('.$assignment->id.')"');
     });
 });
 
