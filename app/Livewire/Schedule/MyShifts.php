@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\ShiftAssignment;
 use App\Services\EventContextService;
+use App\Support\VolunteerHours;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -129,38 +130,36 @@ class MyShifts extends Component
     }
 
     /**
-     * Total hours worked by the current user across all assignments for the active event.
+     * Shift-hour sum and overlap-merged wall-clock hours, for both worked and signed up,
+     * across all the current user's assignments in the active event.
      *
-     * Excludes no-show assignments defensively — `hoursWorked()` already returns 0.0
-     * for them (no check-in timestamp), but the filter keeps intent symmetric with
-     * `hoursSignedUpThisEvent` and guards against future data quirks.
+     * No-show assignments are excluded. Keys:
+     *   - worked_sum, worked_wall_clock: from actual check-in/check-out intervals
+     *   - signed_up_sum, signed_up_wall_clock: from scheduled shift windows
+     *
+     * @return array{worked_sum: float, worked_wall_clock: float, signed_up_sum: float, signed_up_wall_clock: float}
      */
     #[Computed]
-    public function hoursWorkedThisEvent(): float
+    public function eventHoursSummary(): array
     {
-        return round(
-            $this->eventAssignments
-                ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
-                ->sum(fn ($a) => $a->hoursWorked()),
-            1
-        );
-    }
+        if (! $this->eventConfig) {
+            return [
+                'worked_sum' => 0.0,
+                'worked_wall_clock' => 0.0,
+                'signed_up_sum' => 0.0,
+                'signed_up_wall_clock' => 0.0,
+            ];
+        }
 
-    /**
-     * Total hours signed up by the current user for the active event.
-     *
-     * Excludes no-shows; `scheduledHours()` is status-agnostic, so this filter is
-     * the sole mechanism preventing no-show shifts from inflating the total.
-     */
-    #[Computed]
-    public function hoursSignedUpThisEvent(): float
-    {
-        return round(
-            $this->eventAssignments
-                ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
-                ->sum(fn ($a) => $a->scheduledHours()),
-            1
-        );
+        $assignments = $this->eventAssignments
+            ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW);
+
+        return [
+            'worked_sum' => VolunteerHours::sumHoursWorked($assignments),
+            'worked_wall_clock' => VolunteerHours::wallClockHoursWorked($assignments),
+            'signed_up_sum' => VolunteerHours::sumHoursScheduled($assignments),
+            'signed_up_wall_clock' => VolunteerHours::wallClockHoursScheduled($assignments),
+        ];
     }
 
     /**

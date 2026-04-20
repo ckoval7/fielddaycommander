@@ -37,8 +37,9 @@
         @else
             {{-- Event hours summary --}}
             @php
-                $hoursWorked = $this->hoursWorkedThisEvent;
-                $hoursSignedUp = $this->hoursSignedUpThisEvent;
+                $summary = $this->eventHoursSummary;
+                $hoursWorked = $summary['worked_sum'];
+                $hoursSignedUp = $summary['signed_up_sum'];
             @endphp
             @if($hoursSignedUp > 0 || $hoursWorked > 0)
                 <div class="mb-6 rounded-lg bg-base-200 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
