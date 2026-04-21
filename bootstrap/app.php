@@ -1,8 +1,19 @@
 <?php
 
+use App\Http\Middleware\AuditLogger;
+use App\Http\Middleware\CheckSystemSetupComplete;
+use App\Http\Middleware\DemoAnalyticsMiddleware;
+use App\Http\Middleware\DemoMiddleware;
+use App\Http\Middleware\DevRoleOverride;
+use App\Http\Middleware\EnforceRegistrationMode;
+use App\Http\Middleware\Ensure2FAEnabled;
+use App\Http\Middleware\EnsurePasswordChanged;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withEvents(discover: false)
@@ -18,28 +29,41 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+            'verified' => EnsureEmailIsVerified::class,
         ]);
         $middleware->trustProxies(at: '*');
         $middleware->encryptCookies(except: ['demo_session']);
         $middleware->web(append: [
-            \App\Http\Middleware\DemoMiddleware::class,
-            \App\Http\Middleware\DemoAnalyticsMiddleware::class,
-            \App\Http\Middleware\DevRoleOverride::class,
-            \App\Http\Middleware\CheckSystemSetupComplete::class,
-            \App\Http\Middleware\EnforceRegistrationMode::class,
-            \App\Http\Middleware\EnsurePasswordChanged::class,
-            \App\Http\Middleware\Ensure2FAEnabled::class,
-            \App\Http\Middleware\AuditLogger::class,
+            DemoMiddleware::class,
+            DemoAnalyticsMiddleware::class,
+            DevRoleOverride::class,
+            CheckSystemSetupComplete::class,
+            EnforceRegistrationMode::class,
+            EnsurePasswordChanged::class,
+            Ensure2FAEnabled::class,
+            AuditLogger::class,
         ]);
 
         // Ensure DemoMiddleware swaps the DB connection before Laravel's
         // auth middleware tries to resolve the user from the session.
         $middleware->prependToPriorityList(
             before: \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
-            prepend: \App\Http\Middleware\DemoMiddleware::class,
+            prepend: DemoMiddleware::class,
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (HttpException $e, Request $request) {
+            if ($e->getStatusCode() !== 419) {
+                return null;
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Your session expired. Please sign in again.',
+                    'redirect' => '/?session_expired=1',
+                ], 419);
+            }
+
+            return redirect('/?session_expired=1');
+        });
     })->create();
