@@ -18,6 +18,7 @@ class Event extends Model
         'name',
         'event_type_id',
         'year',
+        'rules_version',
         'start_time',
         'end_time',
         'setup_allowed_from',
@@ -96,6 +97,15 @@ class Event extends Model
     }
 
     // Accessors
+
+    /**
+     * Resolved rules_version, falling back to the event year for legacy rows.
+     */
+    public function getEffectiveRulesVersionAttribute(): string
+    {
+        return $this->rules_version ?? (string) $this->year;
+    }
+
     public function getStatusAttribute(): string
     {
         $now = appNow();
