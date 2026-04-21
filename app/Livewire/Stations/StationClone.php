@@ -68,7 +68,6 @@ class StationClone extends Component
         return Event::query()
             ->withoutTrashed()
             ->has('eventConfiguration.stations')
-            ->where('end_time', '<', now()) // Only completed/past events
             ->with('eventConfiguration')
             ->orderByDesc('start_time')
             ->get()
