@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Event;
+use Illuminate\Support\Facades\DB;
 
 uses()->group('unit', 'models', 'scoring');
 
