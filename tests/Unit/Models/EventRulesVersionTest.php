@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Event;
+use App\Models\EventType;
 use App\Scoring\Exceptions\RulesVersionLocked;
 use Illuminate\Support\Facades\DB;
 
@@ -29,11 +30,21 @@ test('existing events without rules_version fall back to year', function () {
     expect($event->fresh()->effective_rules_version)->toBe('2023');
 });
 
-test('rules_version defaults from year on create when not supplied', function () {
-    $event = Event::factory()->create([
-        'year' => 2025,
-        'rules_version' => null,
-    ]);
+test('rules_version defaults from year on create when not supplied (observer, not factory)', function () {
+    $eventType = EventType::firstOrCreate(
+        ['code' => 'FD'],
+        ['name' => 'Field Day', 'description' => 'ARRL Field Day']
+    );
+
+    $event = new Event;
+    $event->name = 'Test Observer Default';
+    $event->event_type_id = $eventType->id;
+    $event->year = 2025;
+    $event->start_time = now()->addDays(30)->setTime(18, 0, 0);
+    $event->end_time = now()->addDays(31)->setTime(20, 59, 0);
+    $event->setup_allowed_from = now()->addDays(29)->setTime(18, 0, 0);
+    $event->max_setup_hours = 24;
+    $event->save();
 
     expect($event->fresh()->rules_version)->toBe('2025');
 });
