@@ -39,4 +39,4 @@ test('pointsForContact from factory returns the override for the event year', fu
 
     expect($factory->forEvent($event2025)->pointsForContact($mode, $station2025))->toBe(2)
         ->and($factory->forEvent($event2026)->pointsForContact($mode, $station2026))->toBe(4);
-})->skip('requires FieldDay2026 from Task 11 to pass; remove skip() after Task 11');
+});

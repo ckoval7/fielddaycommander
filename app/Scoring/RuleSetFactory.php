@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Scoring\Rules\FieldDay2025;
+use App\Scoring\Rules\FieldDay2026;
 use Illuminate\Support\Facades\Log;
 
 class RuleSetFactory
@@ -21,6 +22,7 @@ class RuleSetFactory
     protected array $registry = [
         'FD' => [
             '2025' => FieldDay2025::class,
+            '2026' => FieldDay2026::class,
         ],
     ];
 
