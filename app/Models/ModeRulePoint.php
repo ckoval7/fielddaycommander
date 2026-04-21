@@ -2,17 +2,15 @@
 
 namespace App\Models;
 
-use Database\Factories\ModeRulePointsFactory;
+use Database\Factories\ModeRulePointFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ModeRulePoints extends Model
+class ModeRulePoint extends Model
 {
-    /** @use HasFactory<ModeRulePointsFactory> */
+    /** @use HasFactory<ModeRulePointFactory> */
     use HasFactory;
-
-    protected $table = 'mode_rule_points';
 
     protected $fillable = [
         'event_type_id',

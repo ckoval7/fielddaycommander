@@ -4,19 +4,19 @@ namespace Database\Factories;
 
 use App\Models\EventType;
 use App\Models\Mode;
-use App\Models\ModeRulePoints;
+use App\Models\ModeRulePoint;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ModeRulePoints>
+ * @extends Factory<ModeRulePoint>
  */
-class ModeRulePointsFactory extends Factory
+class ModeRulePointFactory extends Factory
 {
     public function definition(): array
     {
         return [
             'event_type_id' => EventType::factory(),
-            'rules_version' => '2026',
+            'rules_version' => '2025',
             'mode_id' => Mode::factory(),
             'points' => 2,
         ];

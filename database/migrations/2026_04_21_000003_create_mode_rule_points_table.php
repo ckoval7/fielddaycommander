@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('points');
             $table->timestamps();
 
-            $table->unique(['event_type_id', 'rules_version', 'mode_id'], 'mode_rule_points_scope_unique');
+            $table->unique(['event_type_id', 'rules_version', 'mode_id'], 'mode_rule_points_event_version_mode_unique');
         });
     }
 
