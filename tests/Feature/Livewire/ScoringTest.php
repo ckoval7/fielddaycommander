@@ -116,6 +116,8 @@ function makeActiveEvent(array $configOverrides = []): EventConfiguration
 
     $event = Event::factory()->create([
         'event_type_id' => $eventType->id,
+        'year' => 2025,
+        'rules_version' => '2025',
         'start_time' => appNow()->subHours(12),
         'end_time' => appNow()->addHours(12),
     ]);

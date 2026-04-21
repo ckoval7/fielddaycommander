@@ -23,6 +23,11 @@ class FieldDay2025 implements RuleSet
 
     protected const LOW_WATT_CEILING = 100;
 
+    protected ?int $cachedEventTypeId = null;
+
+    /** @var array<string, ?BonusType> */
+    protected array $cachedBonuses = [];
+
     public function id(): string
     {
         return 'FD-2025';
@@ -98,13 +103,19 @@ class FieldDay2025 implements RuleSet
 
     public function bonus(string $code): ?BonusType
     {
-        $eventTypeId = EventType::query()->where('code', $this->eventTypeCode())->value('id');
-
-        if (! $eventTypeId) {
-            return null;
+        if (array_key_exists($code, $this->cachedBonuses)) {
+            return $this->cachedBonuses[$code];
         }
 
-        return BonusType::query()
+        $eventTypeId = $this->cachedEventTypeId ??= EventType::query()
+            ->where('code', $this->eventTypeCode())
+            ->value('id');
+
+        if (! $eventTypeId) {
+            return $this->cachedBonuses[$code] = null;
+        }
+
+        return $this->cachedBonuses[$code] = BonusType::query()
             ->where('event_type_id', $eventTypeId)
             ->where('rules_version', $this->version())
             ->where('code', $code)
