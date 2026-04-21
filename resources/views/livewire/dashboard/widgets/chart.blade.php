@@ -81,9 +81,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: {
-                        duration: 400,
-                    },
+                    animation: false,
                     plugins: {
                         legend: {
                             display: isPie,
@@ -195,6 +193,7 @@
             :aria-label="chartData.description || 'Chart visualization'"
         >
             <canvas
+                wire:ignore
                 x-ref="canvas"
                 :id="canvasId"
                 aria-hidden="true"
