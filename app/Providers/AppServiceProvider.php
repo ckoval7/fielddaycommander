@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Contact;
 use App\Models\EquipmentEvent;
+use App\Models\Event;
 use App\Models\GuestbookEntry;
 use App\Models\Image;
 use App\Models\Message;
@@ -12,6 +13,7 @@ use App\Models\Station;
 use App\Models\W1awBulletin;
 use App\Observers\ContactObserver;
 use App\Observers\EquipmentEventObserver;
+use App\Observers\EventObserver;
 use App\Observers\GuestbookEntryObserver;
 use App\Observers\ImageObserver;
 use App\Observers\MessageObserver;
@@ -75,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
         // Register model observers
         Contact::observe(ContactObserver::class);
         EquipmentEvent::observe(EquipmentEventObserver::class);
+        Event::observe(EventObserver::class);
         GuestbookEntry::observe(GuestbookEntryObserver::class);
         Image::observe(ImageObserver::class);
         Message::observe(MessageObserver::class);
