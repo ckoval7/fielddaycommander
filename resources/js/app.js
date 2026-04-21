@@ -23,6 +23,30 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('flatpickr', flatpickrComponent);
 });
 
+// Livewire rejects every pending action promise when a request errors
+// (livewire.js rejectActionPromises -> { status, body, json, errors }).
+// Poll-driven actions have no .catch() attached, so those rejections surface
+// as "Uncaught (in promise)" noise even though our Livewire.hook('request')
+// fail handler already dealt with the response. Silence those specific
+// rejections for the statuses we explicitly handle below.
+globalThis.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason;
+    if (!reason || typeof reason !== 'object') {
+        return;
+    }
+    const hasLivewireShape = 'status' in reason
+        && 'body' in reason
+        && 'json' in reason
+        && 'errors' in reason;
+    if (!hasLivewireShape) {
+        return;
+    }
+    const status = reason.status;
+    if (status === 419 || status === 0 || (typeof status === 'number' && status >= 500)) {
+        event.preventDefault();
+    }
+});
+
 // Graceful handling of failed Livewire XHR requests. We suppress Livewire's
 // default "Page Expired" / Whoops modals and surface a toast (or a redirect,
 // for 419) so the app degrades more gracefully when the session expires or
