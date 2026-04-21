@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
+use Database\Factories\BonusTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BonusType extends Model
 {
-    /** @use HasFactory<\Database\Factories\BonusTypeFactory> */
+    /** @use HasFactory<BonusTypeFactory> */
     use HasFactory;
 
     protected $fillable = [
         'event_type_id',
+        'rules_version',
         'code',
         'name',
         'description',
