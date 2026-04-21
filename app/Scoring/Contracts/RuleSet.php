@@ -53,15 +53,18 @@ interface RuleSet
 
     // -- Bonuses that are fully formula-driven (no DB row) --
 
-    public function gotaCoachThreshold(): int;   // default 10 supervised
+    public function gotaCoachThreshold(): int;
 
-    public function gotaCoachBonus(): int;       // default 100
+    public function gotaCoachBonus(): int;
 
-    public function youthMaxCount(): int;        // default 5
+    public function youthMaxCount(): int;
 
-    public function youthPointsPerYouth(): int;  // default 20
+    public function youthPointsPerYouth(): int;
 
-    public function emergencyPowerMaxTransmitters(): int; // default 20
+    /**
+     * Max number of transmitters eligible for the emergency-power bonus.
+     */
+    public function emergencyPowerMaxTransmitters(): int;
 
     // -- Bonus row lookup (partitioned by rules_version) --
 
