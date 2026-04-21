@@ -57,7 +57,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            if ($request->expectsJson()) {
+            // Livewire's /livewire/update request sends Content-Type:
+            // application/json but no Accept header, so expectsJson() is false.
+            // Detect JSON-style requests via Content-Type or the X-Livewire
+            // header so we return a JSON redirect payload instead of a 302 —
+            // fetch auto-follows 302s and Livewire then tries to JSON.parse
+            // the redirected HTML.
+            if ($request->expectsJson() || $request->isJson() || $request->hasHeader('X-Livewire')) {
                 return response()->json([
                     'message' => 'Your session expired. Please sign in again.',
                     'redirect' => '/?session_expired=1',
