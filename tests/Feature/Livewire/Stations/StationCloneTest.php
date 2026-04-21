@@ -37,7 +37,7 @@ test('mount throws authorization exception for user without manage-stations perm
 // Source events computed property
 // ---------------------------------------------------------------------------
 
-test('sourceEvents returns only past events that have stations', function () {
+test('sourceEvents returns events that have stations regardless of date', function () {
     // Past event WITH stations (should appear)
     $pastEvent = Event::factory()->create([
         'start_time' => appNow()->subDays(10),
@@ -55,7 +55,7 @@ test('sourceEvents returns only past events that have stations', function () {
     ]);
     EventConfiguration::factory()->create(['event_id' => $pastEventNoStations->id]);
 
-    // Future event with stations (should NOT appear in sourceEvents)
+    // Future event with stations (should appear)
     $futureEvent = Event::factory()->create([
         'start_time' => appNow()->addDays(5),
         'end_time' => appNow()->addDays(6),
@@ -69,8 +69,8 @@ test('sourceEvents returns only past events that have stations', function () {
 
     $ids = collect($sourceEvents)->pluck('id');
     expect($ids)->toContain($pastEvent->id)
-        ->and($ids)->not->toContain($pastEventNoStations->id)
-        ->and($ids)->not->toContain($futureEvent->id);
+        ->and($ids)->toContain($futureEvent->id)
+        ->and($ids)->not->toContain($pastEventNoStations->id);
 });
 
 test('sourceEvents includes station count', function () {
