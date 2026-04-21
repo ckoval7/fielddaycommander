@@ -86,7 +86,13 @@
                     @else
                         <div class="space-y-3">
                             @foreach($currentShifts as $assignment)
-                                @php $shift = $assignment->shift; $role = $shift->shiftRole; @endphp
+                                @php
+                                    $shift = $assignment->shift;
+                                    $role = $shift->shiftRole;
+                                    $startLocal = toLocalTime($shift->start_time);
+                                    $endLocal = toLocalTime($shift->end_time);
+                                    $spansDays = $startLocal->format('Y-m-d') !== $endLocal->format('Y-m-d');
+                                @endphp
                                 <x-card>
                                     <div class="flex flex-col md:flex-row md:items-center gap-4">
                                         {{-- Role Info --}}
@@ -102,7 +108,11 @@
 
                                         {{-- Time Range --}}
                                         <div class="text-sm text-base-content/70">
-                                            {{ toLocalTime($shift->start_time)->format(timeFormat()) }} - {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
+                                            @if($spansDays)
+                                                {{ $startLocal->format('M j, ' . timeFormat()) }} - {{ $endLocal->format('M j, ' . timeFormat() . ' T') }}
+                                            @else
+                                                {{ $startLocal->format(timeFormat()) }} - {{ $endLocal->format(timeFormat() . ' T') }}
+                                            @endif
                                         </div>
 
                                         {{-- Status & Confirmation --}}
@@ -168,7 +178,13 @@
                     @else
                         <div class="space-y-3">
                             @foreach($upcomingShifts as $assignment)
-                                @php $shift = $assignment->shift; $role = $shift->shiftRole; @endphp
+                                @php
+                                    $shift = $assignment->shift;
+                                    $role = $shift->shiftRole;
+                                    $startLocal = toLocalTime($shift->start_time);
+                                    $endLocal = toLocalTime($shift->end_time);
+                                    $spansDays = $startLocal->format('Y-m-d') !== $endLocal->format('Y-m-d');
+                                @endphp
                                 <x-card>
                                     <div class="flex flex-col md:flex-row md:items-center gap-4">
                                         {{-- Role Info --}}
@@ -184,7 +200,7 @@
 
                                         {{-- Time Range --}}
                                         <div class="text-sm text-base-content/70">
-                                            {{ toLocalTime($shift->start_time)->format('M j, ' . timeFormat()) }} - {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
+                                            {{ $startLocal->format('M j, ' . timeFormat()) }} - {{ $spansDays ? $endLocal->format('M j, ' . timeFormat() . ' T') : $endLocal->format(timeFormat() . ' T') }}
                                         </div>
 
                                         {{-- Actions --}}
@@ -224,7 +240,13 @@
                     @else
                         <div class="space-y-3">
                             @foreach($pastShifts as $assignment)
-                                @php $shift = $assignment->shift; $role = $shift->shiftRole; @endphp
+                                @php
+                                    $shift = $assignment->shift;
+                                    $role = $shift->shiftRole;
+                                    $startLocal = toLocalTime($shift->start_time);
+                                    $endLocal = toLocalTime($shift->end_time);
+                                    $spansDays = $startLocal->format('Y-m-d') !== $endLocal->format('Y-m-d');
+                                @endphp
                                 <x-card>
                                     <div class="flex flex-col md:flex-row md:items-center gap-4">
                                         {{-- Role Info --}}
@@ -240,7 +262,7 @@
 
                                         {{-- Time Range --}}
                                         <div class="text-sm text-base-content/70">
-                                            {{ toLocalTime($shift->start_time)->format('M j, ' . timeFormat()) }} - {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
+                                            {{ $startLocal->format('M j, ' . timeFormat()) }} - {{ $spansDays ? $endLocal->format('M j, ' . timeFormat() . ' T') : $endLocal->format(timeFormat() . ' T') }}
                                         </div>
 
                                         {{-- Status --}}
