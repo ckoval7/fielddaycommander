@@ -204,6 +204,7 @@ class ManualBonusClaims extends Component
             return null;
         }
 
+        // TODO(rules-version): needs rules_version scope
         $bonusType = BonusType::where('code', 'youth_participation')
             ->where('event_type_id', $this->event->event_type_id)
             ->first();
@@ -257,6 +258,7 @@ class ManualBonusClaims extends Component
             return;
         }
 
+        // TODO(rules-version): needs rules_version scope
         $bonusType = BonusType::where('code', 'youth_participation')->first();
 
         if (! $bonusType) {

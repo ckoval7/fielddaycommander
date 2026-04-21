@@ -21,8 +21,10 @@ class BonusTypeSeeder extends Seeder
             $this->winterFieldDayBonuses($wfdEventType->id)
         );
 
+        // Seeder is idempotent and non-destructive — existing rows are never overwritten.
+        // Use a migration to change values for an already-shipped rules_version.
         foreach ($bonuses as $bonus) {
-            BonusType::updateOrCreate(
+            BonusType::firstOrCreate(
                 [
                     'event_type_id' => $bonus['event_type_id'],
                     'rules_version' => $bonus['rules_version'],

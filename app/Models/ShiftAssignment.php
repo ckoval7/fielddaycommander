@@ -226,6 +226,7 @@ class ShiftAssignment extends Model
             return;
         }
 
+        // TODO(rules-version): needs rules_version scope
         $bonusType = BonusType::where('code', $bonusTypeCode)->first();
         if (! $bonusType) {
             return;
@@ -262,6 +263,7 @@ class ShiftAssignment extends Model
             return;
         }
 
+        // TODO(rules-version): needs rules_version scope
         $bonusType = BonusType::where('code', $bonusTypeCode)->first();
         if (! $bonusType) {
             return;

@@ -24,6 +24,7 @@ class GuestbookBonusSyncService
 
     protected function syncCategoryBonus(EventConfiguration $eventConfiguration, string $category, string $bonusCode): void
     {
+        // TODO(rules-version): needs rules_version scope
         $bonusType = BonusType::where('code', $bonusCode)->first();
         if (! $bonusType) {
             return;
