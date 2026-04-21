@@ -438,12 +438,6 @@
         @endif
     </div>
 
-    {{-- ============================================================
-         FOOTER
-         ============================================================ --}}
-    <div class="px-6 py-4 text-xs text-center" style="color: var(--reports-text-muted);">
-        FD Log DB &mdash; Field Day Reports
-    </div>
 
     @endif
 </div>
