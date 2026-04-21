@@ -4,6 +4,9 @@ namespace App\Livewire\Admin;
 
 use App\Models\AuditLog;
 use App\Models\Contact;
+use App\Models\Event;
+use App\Models\OperatingSession;
+use App\Models\Station;
 use App\Models\User;
 use App\Services\DatabaseSnapshotService;
 use App\Services\DeveloperClockService;
@@ -16,6 +19,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Mary\Traits\Toast;
 use RuntimeException;
+use Spatie\Permission\Models\Role;
 
 class DeveloperTools extends Component
 {
@@ -71,6 +75,8 @@ class DeveloperTools extends Component
 
     public function mount(): void
     {
+        abort_if(config('demo.enabled'), 404);
+
         Gate::authorize('manage-settings');
 
         $this->loadCurrentFakeTime();
@@ -130,7 +136,7 @@ class DeveloperTools extends Component
                 : Carbon::parse($this->fakeDate)->startOfDay();
 
             // Find event that would be active at the selected time
-            $event = \App\Models\Event::query()
+            $event = Event::query()
                 ->where('start_time', '<=', $selectedTime)
                 ->where('end_time', '>=', $selectedTime)
                 ->orderBy('created_at', 'asc')
@@ -159,7 +165,7 @@ class DeveloperTools extends Component
      *
      * @return array{status: string, message: string, class: string}
      */
-    protected function buildStatusPreview(Carbon $selectedTime, \App\Models\Event $event): array
+    protected function buildStatusPreview(Carbon $selectedTime, Event $event): array
     {
         $startTime = Carbon::parse($event->start_time);
         $endTime = Carbon::parse($event->end_time);
@@ -542,7 +548,7 @@ class DeveloperTools extends Component
         }
 
         try {
-            $operatorRole = \Spatie\Permission\Models\Role::where('name', 'Operator')->first();
+            $operatorRole = Role::where('name', 'Operator')->first();
 
             if ($operatorRole === null) {
                 $this->error('Role not found', 'Operator role does not exist');
@@ -640,7 +646,7 @@ class DeveloperTools extends Component
             return ['title' => 'Test user pool required', 'message' => 'Please initialize the test user pool before seeding contacts.'];
         }
 
-        $event = \App\Models\Event::active()->first();
+        $event = Event::active()->first();
         if ($event === null) {
             return ['title' => 'No active event', 'message' => 'No event is currently in progress based on date range.'];
         }
@@ -649,7 +655,7 @@ class DeveloperTools extends Component
             return ['title' => 'No event configuration', 'message' => 'The active event does not have a configuration yet.'];
         }
 
-        if (\App\Models\Station::count() === 0) {
+        if (Station::count() === 0) {
             return ['title' => 'No stations configured', 'message' => 'Please create at least one station before seeding test contacts.'];
         }
 
@@ -669,9 +675,9 @@ class DeveloperTools extends Component
                 return;
             }
 
-            $event = \App\Models\Event::active()->first();
+            $event = Event::active()->first();
             $eventConfig = $event->eventConfiguration;
-            $stations = \App\Models\Station::all();
+            $stations = Station::all();
 
             // Get all test users from the pool
             $testUserPool = User::where('call_sign', 'LIKE', self::TEST_USER_CALLSIGN_PATTERN)->get();
@@ -686,7 +692,7 @@ class DeveloperTools extends Component
             $users = $testUserPool->random($userCount);
 
             // Create one operating session per user, using random existing stations
-            $sessions = $users->map(fn ($user) => \App\Models\OperatingSession::factory()->create([
+            $sessions = $users->map(fn ($user) => OperatingSession::factory()->create([
                 'station_id' => $stations->random()->id,
                 'operator_user_id' => $user->id,
             ]));
@@ -743,7 +749,7 @@ class DeveloperTools extends Component
             $now = appNow();
 
             // Find the next upcoming event (start_time > now)
-            $nextEvent = \App\Models\Event::query()
+            $nextEvent = Event::query()
                 ->where('start_time', '>', $now)
                 ->orderBy('start_time', 'asc')
                 ->first();

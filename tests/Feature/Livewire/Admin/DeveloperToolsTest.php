@@ -3,7 +3,9 @@
 use App\Livewire\Admin\DeveloperTools;
 use App\Models\AuditLog;
 use App\Models\Contact;
+use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Station;
 use App\Models\User;
 use App\Services\DatabaseSnapshotService;
 use App\Services\DeveloperClockService;
@@ -11,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -61,6 +64,14 @@ test('user with manage-settings permission can access component', function () {
 
     Livewire::test(DeveloperTools::class)
         ->assertStatus(200);
+});
+
+test('component 404s in demo mode so shared DB cannot be reset', function () {
+    Config::set('demo.enabled', true);
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->assertStatus(404);
 });
 
 // =============================================================================
@@ -190,7 +201,7 @@ test('time travel handles service exceptions', function () {
     $clockService->shouldReceive('getFakeTime')->andReturn(null);
     $clockService->shouldReceive('isFrozen')->andReturn(true);
     $clockService->shouldReceive('setFakeTime')
-        ->andThrow(new \Exception('Service error'));
+        ->andThrow(new Exception('Service error'));
 
     Livewire::test(DeveloperTools::class)
         ->set('fakeDate', '2026-06-28')
@@ -336,7 +347,7 @@ test('createSnapshot handles service exceptions', function () {
     $snapshotService = $this->mock(DatabaseSnapshotService::class);
     $snapshotService->shouldReceive('listSnapshots')->andReturn(collect());
     $snapshotService->shouldReceive('createSnapshot')
-        ->andThrow(new \RuntimeException('Snapshot creation failed'));
+        ->andThrow(new RuntimeException('Snapshot creation failed'));
 
     Livewire::test(DeveloperTools::class)
         ->set('snapshotName', 'test-snapshot')
@@ -413,10 +424,10 @@ test('seedTestContacts creates 50 contacts for active event', function () {
     $this->actingAs($this->adminUser);
 
     // Create at least one station (required for operating sessions)
-    \App\Models\Station::factory()->create();
+    Station::factory()->create();
 
     // Create an active event (within date range)
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -456,7 +467,7 @@ test('seedTestContacts fails when no stations configured', function () {
     $this->actingAs($this->adminUser);
 
     // Create an active event but no stations
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -496,7 +507,7 @@ test('quick actions handle exceptions gracefully', function () {
 
     Artisan::shouldReceive('call')
         ->with('optimize:clear')
-        ->andThrow(new \Exception('Command failed'));
+        ->andThrow(new Exception('Command failed'));
 
     Livewire::test(DeveloperTools::class)
         ->call('clearCaches');
@@ -642,10 +653,10 @@ test('quick actions log audit entries', function () {
     $this->actingAs($this->adminUser);
 
     // Create at least one station (required for operating sessions)
-    \App\Models\Station::factory()->create();
+    Station::factory()->create();
 
     // Set up active event for seedTestContacts (within date range)
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -919,10 +930,10 @@ test('seedTestContacts shows error when test user pool does not exist', function
     $this->actingAs($this->adminUser);
 
     // Create at least one station (required for operating sessions)
-    \App\Models\Station::factory()->create();
+    Station::factory()->create();
 
     // Create an active event (within date range)
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -948,10 +959,10 @@ test('seedTestContacts uses existing test user pool instead of creating new user
     $this->actingAs($this->adminUser);
 
     // Create at least one station (required for operating sessions)
-    \App\Models\Station::factory()->create();
+    Station::factory()->create();
 
     // Create an active event (within date range)
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -991,10 +1002,10 @@ test('seedTestContacts selects random subset from pool', function () {
     $this->actingAs($this->adminUser);
 
     // Create at least one station
-    \App\Models\Station::factory()->create();
+    Station::factory()->create();
 
     // Create an active event
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -1027,10 +1038,10 @@ test('seedTestContacts adjusts range for small test user pool', function () {
     $this->actingAs($this->adminUser);
 
     // Create at least one station
-    \App\Models\Station::factory()->create();
+    Station::factory()->create();
 
     // Create an active event
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -1063,10 +1074,10 @@ test('seedTestContacts audit log includes contact_count and user_count', functio
     $this->actingAs($this->adminUser);
 
     // Create at least one station
-    \App\Models\Station::factory()->create();
+    Station::factory()->create();
 
     // Create an active event
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -1096,10 +1107,10 @@ test('seedTestContacts success message shows number of users used', function () 
     $this->actingAs($this->adminUser);
 
     // Create at least one station
-    \App\Models\Station::factory()->create();
+    Station::factory()->create();
 
     // Create an active event
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);

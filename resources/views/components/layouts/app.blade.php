@@ -201,7 +201,10 @@
 
     {{-- Developer Mode Banner --}}
     @if(config('developer.enabled'))
-        <livewire:components.developer-banner />
+        {{-- Time-travel banner is a dev-only tool; hide it in demo mode where all visitors share it. --}}
+        @unless(config('demo.enabled'))
+            <livewire:components.developer-banner />
+        @endunless
         @auth
             <livewire:components.dev-role-switcher />
         @endauth
@@ -412,7 +415,7 @@
                                 <x-menu-item title="Audit Logs" icon="phosphor-scroll" link="{{ route('admin.audit-logs') }}" :active="request()->routeIs('admin.audit-logs')" />
                             @endcan
 
-                            @if(config('developer.enabled'))
+                            @if(config('developer.enabled') && ! config('demo.enabled'))
                                 @can('manage-settings')
                                     <x-menu-item title="Developer Tools" icon="phosphor-code" link="{{ route('admin.developer') }}" :active="request()->routeIs('admin.developer')" />
                                 @endcan

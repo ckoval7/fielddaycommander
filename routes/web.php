@@ -278,7 +278,9 @@ Route::middleware(['auth', 'verified', 'can:import-contacts'])->prefix('admin')-
     Route::get('/external-loggers', ExternalLoggerManagement::class)->name('admin.external-loggers');
 });
 
-// Developer Tools (only available when DEVELOPER_MODE=true in .env)
+// Developer Tools (only available when DEVELOPER_MODE=true in .env).
+// The component itself 404s in demo mode so a role-switched admin can't reset the
+// shared DB or clear caches for every other visitor.
 Route::middleware(['auth', 'verified', 'can:manage-settings'])->prefix('admin')->group(function () {
     Route::get('/developer', DeveloperTools::class)->name('admin.developer');
 });
