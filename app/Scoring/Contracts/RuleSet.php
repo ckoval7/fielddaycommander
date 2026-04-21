@@ -1,0 +1,73 @@
+<?php
+
+namespace App\Scoring\Contracts;
+
+use App\Models\BonusType;
+use App\Models\Mode;
+use App\Models\Station;
+use App\Scoring\Dto\PowerContext;
+
+/**
+ * Immutable per-year, per-event-type scoring rules.
+ *
+ * Every method returning a number or string is the source of truth for that
+ * year's rule. Implementations must never read the current date, feature flags,
+ * or any global state that could change historical results.
+ */
+interface RuleSet
+{
+    /**
+     * Machine identifier — e.g. "FD-2025" or "WFD-2025". Shown in reports.
+     */
+    public function id(): string;
+
+    /**
+     * The rules_version string this implementation handles (e.g. "2025").
+     */
+    public function version(): string;
+
+    /**
+     * Event type code this ruleset applies to (e.g. "FD").
+     */
+    public function eventTypeCode(): string;
+
+    // -- Per-contact point values --
+
+    /**
+     * Points awarded for a single non-duplicate, non-GOTA contact.
+     * GOTA contacts are always flat 5 (see gotaPointsPerContact()).
+     */
+    public function pointsForContact(Mode $mode, Station $station): int;
+
+    /**
+     * Flat points for each non-duplicate GOTA contact, ignored by QSO multiplier.
+     */
+    public function gotaPointsPerContact(): int;
+
+    // -- Multiplier --
+
+    /**
+     * Returns '1', '2', or '5' (string, to match stored `power_multiplier`).
+     */
+    public function powerMultiplier(PowerContext $ctx): string;
+
+    // -- Bonuses that are fully formula-driven (no DB row) --
+
+    public function gotaCoachThreshold(): int;   // default 10 supervised
+
+    public function gotaCoachBonus(): int;       // default 100
+
+    public function youthMaxCount(): int;        // default 5
+
+    public function youthPointsPerYouth(): int;  // default 20
+
+    public function emergencyPowerMaxTransmitters(): int; // default 20
+
+    // -- Bonus row lookup (partitioned by rules_version) --
+
+    /**
+     * Resolve a BonusType row for this ruleset by its code.
+     * Returns null if the code is not defined for this version.
+     */
+    public function bonus(string $code): ?BonusType;
+}
