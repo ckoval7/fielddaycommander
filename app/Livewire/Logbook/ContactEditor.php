@@ -7,6 +7,7 @@ use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Mode;
 use App\Models\Section;
+use App\Models\Station;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -98,9 +99,9 @@ class ContactEditor extends Component
 
         $mode = Mode::find($validated['modeId']);
 
-        $contactPoints = $contact->is_gota_contact
-            ? 5
-            : ($mode->points_fd ?? 1);
+        $stationShim = Station::make(['is_gota' => $contact->is_gota_contact]);
+        $contactPoints = $contact->eventConfiguration?->pointsForContact($mode, $stationShim)
+            ?? ($contact->is_gota_contact ? 5 : ($mode->points_fd ?? 1));
 
         $contact->update([
             'callsign' => $validated['callsign'],

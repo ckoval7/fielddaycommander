@@ -94,6 +94,16 @@ class EventConfiguration extends Model
     }
 
     /**
+     * Resolve points for a single contact via the event's pinned RuleSet.
+     *
+     * Handles GOTA flat-rate and mode_rule_points overrides internally.
+     */
+    public function pointsForContact(Mode $mode, Station $station): int
+    {
+        return $this->ruleSet()->pointsForContact($mode, $station);
+    }
+
+    /**
      * Build a PowerContext from this configuration's effective power state.
      */
     protected function powerContext(): PowerContext
