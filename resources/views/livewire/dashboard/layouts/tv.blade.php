@@ -149,6 +149,8 @@ document.addEventListener('alpine:init', () => {
         // Auto-refresh failsafe timer
         lastUpdateTime: Date.now(),
         autoRefreshInterval: null,
+        livewireWildcardUnsub: null,
+        qsoLoggedHandler: null,
 
         init() {
             // Set up auto-refresh failsafe (if no Reverb updates for >1 minute, refresh page)
@@ -163,14 +165,15 @@ document.addEventListener('alpine:init', () => {
             }, 30000); // Check every 30 seconds
 
             // Listen for any Livewire events to update the last update time
-            Livewire.on('*', () => {
+            this.livewireWildcardUnsub = Livewire.on('*', () => {
                 this.lastUpdateTime = Date.now();
             });
 
             // Listen for contact logged events specifically
-            window.addEventListener('qso-logged', () => {
+            this.qsoLoggedHandler = () => {
                 this.lastUpdateTime = Date.now();
-            });
+            };
+            window.addEventListener('qso-logged', this.qsoLoggedHandler);
         },
 
         toggleHeader() {
@@ -178,9 +181,19 @@ document.addEventListener('alpine:init', () => {
         },
 
         destroy() {
-            // Clean up interval on component destruction
             if (this.autoRefreshInterval) {
                 clearInterval(this.autoRefreshInterval);
+                this.autoRefreshInterval = null;
+            }
+
+            if (typeof this.livewireWildcardUnsub === 'function') {
+                this.livewireWildcardUnsub();
+                this.livewireWildcardUnsub = null;
+            }
+
+            if (this.qsoLoggedHandler) {
+                window.removeEventListener('qso-logged', this.qsoLoggedHandler);
+                this.qsoLoggedHandler = null;
             }
         }
     }));

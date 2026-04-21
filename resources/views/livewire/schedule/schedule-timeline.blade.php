@@ -92,12 +92,17 @@
                             </div>
 
                             {{-- Time Range --}}
+                            @php
+                                $startLocal = toLocalTime($shift->start_time);
+                                $endLocal = toLocalTime($shift->end_time);
+                                $spansDays = $startLocal->format('Y-m-d') !== $endLocal->format('Y-m-d');
+                            @endphp
                             <div class="flex-shrink-0 min-w-[160px]">
                                 <div class="font-medium text-sm">
-                                    {{ toLocalTime($shift->start_time)->format('M j, ' . timeFormat() . ' T') }}
+                                    {{ $startLocal->format('M j, ' . timeFormat() . ' T') }}
                                 </div>
                                 <div class="text-xs text-base-content/60">
-                                    to {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
+                                    to {{ $spansDays ? $endLocal->format('M j, ' . timeFormat() . ' T') : $endLocal->format(timeFormat() . ' T') }}
                                 </div>
                             </div>
 
@@ -199,12 +204,17 @@
 
                                         <div class="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg {{ $isUrgentlyEmpty ? 'bg-warning/5 border border-warning border-l-4' : 'bg-base-200/50 border border-base-300' }}">
                                             {{-- Time Range --}}
+                                            @php
+                                                $startLocal = toLocalTime($shift->start_time);
+                                                $endLocal = toLocalTime($shift->end_time);
+                                                $spansDays = $startLocal->format('Y-m-d') !== $endLocal->format('Y-m-d');
+                                            @endphp
                                             <div class="flex-shrink-0 min-w-[160px]">
                                                 <div class="font-medium text-sm">
-                                                    {{ toLocalTime($shift->start_time)->format('M j, ' . timeFormat() . ' T') }}
+                                                    {{ $startLocal->format('M j, ' . timeFormat() . ' T') }}
                                                 </div>
                                                 <div class="text-xs text-base-content/60">
-                                                    to {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
+                                                    to {{ $spansDays ? $endLocal->format('M j, ' . timeFormat() . ' T') : $endLocal->format(timeFormat() . ' T') }}
                                                 </div>
                                             </div>
 

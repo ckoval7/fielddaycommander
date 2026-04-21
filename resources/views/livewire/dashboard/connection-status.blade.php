@@ -8,32 +8,30 @@
         autoRefreshInterval: {{ $isTvMode ? 60000 : 0 }}, // 1 minute for TV mode
         showOfflineBanner: false,
 
+        pusherConnection: null,
+        pusherHandlers: {},
+        qsoLoggedHandler: null,
+        checkIntervalId: null,
+
         init() {
             // Listen for Reverb/Echo connection events
             if (window.Echo) {
-                // Monitor connection status
-                window.Echo.connector.pusher.connection.bind('connected', () => {
-                    this.handleConnected();
-                });
+                this.pusherConnection = window.Echo.connector.pusher.connection;
 
-                window.Echo.connector.pusher.connection.bind('disconnected', () => {
-                    this.handleDisconnected();
-                });
+                this.pusherHandlers = {
+                    connected: () => this.handleConnected(),
+                    disconnected: () => this.handleDisconnected(),
+                    connecting: () => { this.connecting = true; },
+                    unavailable: () => this.handleDisconnected(),
+                    failed: () => this.handleDisconnected(),
+                };
 
-                window.Echo.connector.pusher.connection.bind('connecting', () => {
-                    this.connecting = true;
-                });
-
-                window.Echo.connector.pusher.connection.bind('unavailable', () => {
-                    this.handleDisconnected();
-                });
-
-                window.Echo.connector.pusher.connection.bind('failed', () => {
-                    this.handleDisconnected();
+                Object.entries(this.pusherHandlers).forEach(([event, handler]) => {
+                    this.pusherConnection.bind(event, handler);
                 });
 
                 // Check initial connection state
-                const state = window.Echo.connector.pusher.connection.state;
+                const state = this.pusherConnection.state;
                 this.connected = (state === 'connected');
                 this.connecting = (state === 'connecting');
 
@@ -44,15 +42,36 @@
             }
 
             // Listen for data updates to track last update time
-            window.addEventListener('qso-logged', () => {
+            this.qsoLoggedHandler = () => {
                 this.lastUpdateAt = Date.now();
-            });
+            };
+            window.addEventListener('qso-logged', this.qsoLoggedHandler);
 
             // TV mode: Auto-refresh if no updates received
             if (this.autoRefreshInterval > 0) {
-                setInterval(() => {
+                this.checkIntervalId = setInterval(() => {
                     this.checkAutoRefresh();
                 }, 10000); // Check every 10 seconds
+            }
+        },
+
+        destroy() {
+            if (this.pusherConnection && this.pusherHandlers) {
+                Object.entries(this.pusherHandlers).forEach(([event, handler]) => {
+                    this.pusherConnection.unbind(event, handler);
+                });
+            }
+            this.pusherConnection = null;
+            this.pusherHandlers = {};
+
+            if (this.qsoLoggedHandler) {
+                window.removeEventListener('qso-logged', this.qsoLoggedHandler);
+                this.qsoLoggedHandler = null;
+            }
+
+            if (this.checkIntervalId) {
+                clearInterval(this.checkIntervalId);
+                this.checkIntervalId = null;
             }
         },
 

@@ -18,6 +18,10 @@ Props:
         dismissedAt: null,
         checkInterval: null,
         hasEverConnected: false,
+        onlineHandler: null,
+        offlineHandler: null,
+        livewireReconnectUnsub: null,
+        livewireDisconnectUnsub: null,
 
         init() {
             // Delay the first check to give Echo time to establish its connection
@@ -31,19 +35,40 @@ Props:
             }, 5000);
 
             // Listen for online/offline events
-            window.addEventListener('online', () => this.handleOnline());
-            window.addEventListener('offline', () => this.handleOffline());
+            this.onlineHandler = () => this.handleOnline();
+            this.offlineHandler = () => this.handleOffline();
+            window.addEventListener('online', this.onlineHandler);
+            window.addEventListener('offline', this.offlineHandler);
 
             // Listen for Livewire connection events
             if (window.Livewire) {
-                Livewire.on('reconnect', () => this.handleReconnect());
-                Livewire.on('disconnect', () => this.handleDisconnect());
+                this.livewireReconnectUnsub = Livewire.on('reconnect', () => this.handleReconnect());
+                this.livewireDisconnectUnsub = Livewire.on('disconnect', () => this.handleDisconnect());
             }
         },
 
         destroy() {
             if (this.checkInterval) {
                 clearInterval(this.checkInterval);
+                this.checkInterval = null;
+            }
+
+            if (this.onlineHandler) {
+                window.removeEventListener('online', this.onlineHandler);
+                this.onlineHandler = null;
+            }
+            if (this.offlineHandler) {
+                window.removeEventListener('offline', this.offlineHandler);
+                this.offlineHandler = null;
+            }
+
+            if (typeof this.livewireReconnectUnsub === 'function') {
+                this.livewireReconnectUnsub();
+                this.livewireReconnectUnsub = null;
+            }
+            if (typeof this.livewireDisconnectUnsub === 'function') {
+                this.livewireDisconnectUnsub();
+                this.livewireDisconnectUnsub = null;
             }
         },
 

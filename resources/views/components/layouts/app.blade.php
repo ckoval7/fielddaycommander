@@ -138,10 +138,10 @@
             </div>
 
             {{-- Right cluster (stays mounted across default/collapsed transitions) --}}
-            <livewire:components.weather-icon lazy />
+            <livewire:components.weather-icon />
 
             @auth
-                <livewire:components.notification-bell lazy />
+                <livewire:components.notification-bell />
             @endauth
 
             <div x-show="!(scrolled && hasCallsign)">
@@ -190,9 +190,9 @@
 
             {{-- Right: Weather, Notifications and User menu (theme toggle lives inside user menu) --}}
             <div class="flex items-center gap-3">
-                <livewire:components.weather-icon lazy />
+                <livewire:components.weather-icon />
                 @auth
-                    <livewire:components.notification-bell lazy />
+                    <livewire:components.notification-bell />
                 @endauth
                 <x-user-menu />
             </div>

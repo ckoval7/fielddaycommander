@@ -2,6 +2,9 @@
     {{-- Header --}}
     <x-header title="Stations" subtitle="Manage field day stations and equipment assignments" separator progress-indicator>
         <x-slot:actions>
+            @can('log-contacts')
+                <x-button label="Log Contact" icon="phosphor-pencil-line" class="btn-outline" link="{{ route('logging.station-select') }}" wire:navigate responsive />
+            @endcan
             @can('create', \App\Models\Station::class)
                 <x-button
                     label="Clone from Event"

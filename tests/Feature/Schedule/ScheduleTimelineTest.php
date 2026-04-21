@@ -814,3 +814,63 @@ describe('audit logging', function () {
         expect($auditLog->new_values['status'])->toBe('checked_out');
     });
 });
+
+describe('multi-day shift display', function () {
+    test('shift spanning two days shows both dates in the time range', function () {
+        Setting::set('timezone', 'UTC');
+        Setting::set('time_format', 'H:i:s');
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Overnight',
+        ]);
+
+        $start = now()->addDays(1)->setTime(23, 0, 0);
+        $end = $start->copy()->addHours(3);
+
+        Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => $start,
+            'end_time' => $end,
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertSeeInOrder([
+                $start->format('M j, H:i'),
+                'to '.$end->format('M j, H:i'),
+            ]);
+    });
+
+    test('single-day shift shows the date only once in the time range', function () {
+        Setting::set('timezone', 'UTC');
+        Setting::set('time_format', 'H:i:s');
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Daytime',
+        ]);
+
+        $start = now()->addDays(1)->setTime(10, 0, 0);
+        $end = $start->copy()->addHours(3);
+
+        Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => $start,
+            'end_time' => $end,
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->assertSee($start->format('M j, H:i'))
+            ->assertSeeInOrder([
+                $start->format('M j, H:i'),
+                'to '.$end->format('H:i'),
+            ])
+            ->assertDontSee('to '.$end->format('M j, H:i'));
+    });
+});

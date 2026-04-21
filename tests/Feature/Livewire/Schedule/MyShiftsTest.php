@@ -9,7 +9,9 @@ use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Models\User;
 use App\Services\EventContextService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Date;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
@@ -891,4 +893,95 @@ test('my shifts summary uses plain hours phrasing when sum and actual match', fu
         ->assertSeeHtml('2.0 hours signed up')
         ->assertDontSeeHtml('shift hours')
         ->assertDontSeeHtml('actual hours');
+});
+
+test('upcoming shift spanning multiple days shows both dates in time range', function () {
+    Setting::set('timezone', 'UTC');
+    Setting::set('time_format', 'H:i:s');
+
+    $start = appNow()->addDays(3)->setTime(23, 0, 0);
+    $end = $start->copy()->addHours(3);
+
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => $start,
+        'end_time' => $end,
+    ]);
+
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSeeInOrder([
+            $start->format('M j, H:i'),
+            $end->format('M j, H:i'),
+        ]);
+});
+
+test('upcoming shift contained within a single day does not repeat the date', function () {
+    Setting::set('timezone', 'UTC');
+    Setting::set('time_format', 'H:i:s');
+
+    $start = appNow()->addDays(3)->setTime(10, 0, 0);
+    $end = $start->copy()->addHours(3);
+
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => $start,
+        'end_time' => $end,
+    ]);
+
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSee($start->format('M j, H:i').' - '.$end->format('H:i'));
+});
+
+test('current shift spanning multiple days shows both dates in time range', function () {
+    Setting::set('timezone', 'UTC');
+    Setting::set('time_format', 'H:i:s');
+
+    $fakeNow = Carbon::create(2030, 6, 15, 23, 30, 0, 'UTC');
+    Date::setTestNow($fakeNow);
+
+    $this->event->update([
+        'start_time' => $fakeNow->copy()->subHours(12),
+        'end_time' => $fakeNow->copy()->addHours(12),
+    ]);
+
+    $start = $fakeNow->copy()->subHour();
+    $end = $fakeNow->copy()->addHours(2);
+
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => $start,
+        'end_time' => $end,
+    ]);
+
+    ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_IN,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->assertSee($start->format('M j, H:i').' - '.$end->format('M j, H:i'));
+
+    Date::setTestNow();
 });
