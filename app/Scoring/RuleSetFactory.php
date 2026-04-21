@@ -44,14 +44,16 @@ class RuleSetFactory
         $fallbackClass = $this->latestRegisteredFor($typeCode)
             ?? throw UnknownRuleSet::for($typeCode, $requested);
 
-        Log::warning('scoring.rules_version_fallback', [
+        $fallback = app($fallbackClass);
+
+        Log::warning('Scoring rules_version fallback', [
             'event_id' => $event->id,
             'event_type' => $typeCode,
             'requested' => $requested,
-            'resolved_to' => app($fallbackClass)->version(),
+            'resolved_to' => $fallback->version(),
         ]);
 
-        return app($fallbackClass);
+        return $fallback;
     }
 
     /**
