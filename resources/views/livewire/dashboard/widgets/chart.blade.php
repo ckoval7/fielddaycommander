@@ -6,6 +6,7 @@
         chartData: @js($chartData),
         isTv: @js($size === 'tv'),
         canvasId: @js('chart-canvas-' . $widgetId),
+        editModeHandler: null,
 
         init() {
             this.$nextTick(() => {
@@ -18,16 +19,21 @@
             });
 
             // Resize chart when edit mode changes (container padding shifts)
-            window.addEventListener('edit-mode-changed', () => {
+            this.editModeHandler = () => {
                 this.$nextTick(() => {
                     if (this.chartInstance) {
                         this.chartInstance.resize();
                     }
                 });
-            });
+            };
+            window.addEventListener('edit-mode-changed', this.editModeHandler);
         },
 
         destroy() {
+            if (this.editModeHandler) {
+                window.removeEventListener('edit-mode-changed', this.editModeHandler);
+                this.editModeHandler = null;
+            }
             if (this.chartInstance) {
                 this.chartInstance.destroy();
                 this.chartInstance = null;

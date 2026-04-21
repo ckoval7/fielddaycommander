@@ -35,19 +35,22 @@ Props from controller:
             widgetCount: @js(count($widgets)),
             gridRows: 0,
             widgetHeight: 0,
+            resizeTimer: null,
+            resizeHandler: null,
+            keydownHandler: null,
 
             init() {
                 this.calculateGrid();
 
                 // Recalculate on window resize (debounced)
-                let resizeTimer;
-                window.addEventListener('resize', () => {
-                    clearTimeout(resizeTimer);
-                    resizeTimer = setTimeout(() => this.calculateGrid(), 200);
-                });
+                this.resizeHandler = () => {
+                    clearTimeout(this.resizeTimer);
+                    this.resizeTimer = setTimeout(() => this.calculateGrid(), 200);
+                };
+                window.addEventListener('resize', this.resizeHandler);
 
                 // Global fullscreen keyboard shortcut (F key)
-                document.addEventListener('keydown', (e) => {
+                this.keydownHandler = (e) => {
                     if (e.key === 'f' || e.key === 'F') {
                         e.preventDefault();
                         this.fullscreen = !this.fullscreen;
@@ -59,11 +62,27 @@ Props from controller:
                         this.kiosk = false;
                         this.fullscreen = false;
                     }
-                });
+                };
+                document.addEventListener('keydown', this.keydownHandler);
 
                 // Auto-enable fullscreen if kiosk param present
                 if (this.kiosk && !document.fullscreenElement) {
                     this.requestFullscreen();
+                }
+            },
+
+            destroy() {
+                if (this.resizeHandler) {
+                    window.removeEventListener('resize', this.resizeHandler);
+                    this.resizeHandler = null;
+                }
+                if (this.keydownHandler) {
+                    document.removeEventListener('keydown', this.keydownHandler);
+                    this.keydownHandler = null;
+                }
+                if (this.resizeTimer) {
+                    clearTimeout(this.resizeTimer);
+                    this.resizeTimer = null;
                 }
             },
 
