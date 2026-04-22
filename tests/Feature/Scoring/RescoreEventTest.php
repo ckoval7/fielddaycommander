@@ -157,18 +157,20 @@ test('rescore migrates event_bonuses to target version and recomputes points', f
     $bonus2025 = BonusType::factory()->create([
         'event_type_id' => $this->fd->id,
         'rules_version' => '2025',
-        'code' => 'media_publicity',
+        'code' => 'social_media',
         'base_points' => 100,
         'max_points' => null,
         'is_active' => true,
+        'trigger_type' => 'manual',
     ]);
     $bonus2026 = BonusType::factory()->create([
         'event_type_id' => $this->fd->id,
         'rules_version' => '2026',
-        'code' => 'media_publicity',
+        'code' => 'social_media',
         'base_points' => 250,
         'max_points' => null,
         'is_active' => true,
+        'trigger_type' => 'manual',
     ]);
 
     $eventBonus = EventBonus::factory()->create([

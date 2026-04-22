@@ -34,9 +34,8 @@ test('pointsForContact from factory uses the override registered for the ruleset
 });
 
 test('events pinned to an unshipped rules_version fall back to the newest registered ruleset', function () {
-    // Only FieldDay2025 is registered. An event pinned to a future year should
-    // score with the 2025 ruleset, and overrides registered for the unshipped
-    // version must NOT apply.
+    // An event pinned to a future year should score with the newest registered
+    // ruleset, and overrides registered for the unshipped version must NOT apply.
     $fd = EventType::firstOrCreate(['code' => 'FD'], ['name' => 'Field Day']);
     $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
 
@@ -56,8 +55,8 @@ test('events pinned to an unshipped rules_version fall back to the newest regist
 
     $rules = app(RuleSetFactory::class)->forEvent($event);
 
-    expect($rules->version())->toBe('2025')
+    expect($rules->version())->toBe('2026')
         ->and($rules->pointsForContact($mode, $station))->toBe(2)
-        ->and($event->resolved_rules_version)->toBe('2025')
+        ->and($event->resolved_rules_version)->toBe('2026')
         ->and($event->effective_rules_version)->toBe('2027');
 });

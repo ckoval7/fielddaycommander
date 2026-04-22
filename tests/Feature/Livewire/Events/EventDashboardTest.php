@@ -170,11 +170,11 @@ test('event dashboard eager loads relationships', function () {
     EventConfiguration::factory()->create(['event_id' => $event->id]);
 
     // Enable query logging
-    \DB::enableQueryLog();
+    DB::enableQueryLog();
 
     Livewire::test(EventDashboard::class, ['event' => $event]);
 
-    $queries = \DB::getQueryLog();
+    $queries = DB::getQueryLog();
 
     // Should have minimal queries due to eager loading
     // Expect: event + eager loads + computed properties (qsoBreakdown, participants, scoring)
@@ -575,7 +575,7 @@ test('bonusList returns all bonus types with claimed status', function () {
         ['code' => 'FD'],
         ['name' => 'Field Day', 'description' => 'ARRL Field Day', 'is_active' => true],
     );
-    $event = Event::factory()->create(['event_type_id' => $eventType->id]);
+    $event = Event::factory()->create(['event_type_id' => $eventType->id, 'rules_version' => '2025']);
     $config = EventConfiguration::factory()->create([
         'event_id' => $event->id,
         'callsign' => 'W1AW',
@@ -583,12 +583,14 @@ test('bonusList returns all bonus types with claimed status', function () {
 
     $bonusType1 = BonusType::factory()->create([
         'event_type_id' => $eventType->id,
+        'rules_version' => '2025',
         'name' => 'Emergency Power',
         'base_points' => 100,
         'is_active' => true,
     ]);
     $bonusType2 = BonusType::factory()->create([
         'event_type_id' => $eventType->id,
+        'rules_version' => '2025',
         'name' => 'Media Publicity',
         'base_points' => 100,
         'is_active' => true,
@@ -622,7 +624,7 @@ test('scoring tab displays band/mode grid and bonus checklist', function () {
         ['code' => 'FD'],
         ['name' => 'Field Day', 'description' => 'ARRL Field Day', 'is_active' => true],
     );
-    $event = Event::factory()->create(['event_type_id' => $eventType->id]);
+    $event = Event::factory()->create(['event_type_id' => $eventType->id, 'rules_version' => '2025']);
     $config = EventConfiguration::factory()->create([
         'event_id' => $event->id,
         'callsign' => 'W1AW',
@@ -642,6 +644,7 @@ test('scoring tab displays band/mode grid and bonus checklist', function () {
 
     $bonusType = BonusType::factory()->create([
         'event_type_id' => $eventType->id,
+        'rules_version' => '2025',
         'name' => 'Emergency Power',
         'base_points' => 100,
         'is_active' => true,
