@@ -19,6 +19,7 @@ use Livewire\Livewire;
 beforeEach(function () {
     $this->event = Event::factory()->create([
         'name' => 'Field Day 2026',
+        'rules_version' => '2025',
         'start_time' => appNow()->subHours(12),
         'end_time' => appNow()->addHours(12),
     ]);
