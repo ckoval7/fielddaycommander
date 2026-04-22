@@ -13,5 +13,5 @@ return [
     | Flipped to true in Phase 3 at which point the sync services are
     | deleted outright.
     */
-    'use_bonus_strategies' => env('SCORING_USE_BONUS_STRATEGIES', false),
+    'use_bonus_strategies' => env('SCORING_USE_BONUS_STRATEGIES', true),
 ];
