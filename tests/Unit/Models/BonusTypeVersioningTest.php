@@ -71,14 +71,14 @@ test('resolveFor returns the row scoped to the event event_type and rules_versio
 });
 
 test('resolveFor follows resolved_rules_version when the requested version is unregistered', function () {
-    // Event pinned to an unregistered year → RuleSetFactory falls back to 2025,
-    // so resolveFor should return the 2025 row, not null.
+    // Event pinned to an unregistered year → RuleSetFactory falls back to the
+    // newest registered ruleset, so resolveFor should return that row, not null.
     $fd = EventType::firstOrCreate(['code' => 'FD'], ['name' => 'Field Day']);
 
     BonusType::factory()->create([
         'event_type_id' => $fd->id,
         'code' => 'fallback_probe',
-        'rules_version' => '2025',
+        'rules_version' => '2026',
         'base_points' => 5,
     ]);
 

@@ -25,7 +25,7 @@ beforeEach(function () {
     $this->eventType = EventType::where('code', 'FD')->first();
     $classA = OperatingClass::where('code', 'A')->where('event_type_id', $this->eventType->id)->first();
 
-    $this->event = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+    $this->event = Event::factory()->create(['event_type_id' => $this->eventType->id, 'rules_version' => '2025']);
     $this->eventConfig = EventConfiguration::factory()->create([
         'event_id' => $this->event->id,
         'operating_class_id' => $classA->id,
