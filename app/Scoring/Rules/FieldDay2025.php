@@ -7,6 +7,18 @@ use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\ModeRulePoint;
 use App\Models\Station;
+use App\Scoring\Bonuses\FieldDay2025\AgencyVisitStrategy;
+use App\Scoring\Bonuses\FieldDay2025\EducationalActivityStrategy;
+use App\Scoring\Bonuses\FieldDay2025\ElectedOfficialVisitStrategy;
+use App\Scoring\Bonuses\FieldDay2025\MediaPublicityStrategy;
+use App\Scoring\Bonuses\FieldDay2025\NtsMessageStrategy;
+use App\Scoring\Bonuses\FieldDay2025\PublicInfoBoothStrategy;
+use App\Scoring\Bonuses\FieldDay2025\PublicLocationStrategy;
+use App\Scoring\Bonuses\FieldDay2025\SmSecMessageStrategy;
+use App\Scoring\Bonuses\FieldDay2025\SocialMediaStrategy;
+use App\Scoring\Bonuses\FieldDay2025\W1awBulletinStrategy;
+use App\Scoring\Bonuses\FieldDay2025\WebSubmissionStrategy;
+use App\Scoring\Bonuses\FieldDay2025\YouthParticipationStrategy;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Dto\PowerContext;
 
@@ -103,7 +115,20 @@ class FieldDay2025 implements RuleSet
 
     public function strategies(): array
     {
-        return [];
+        return [
+            'sm_sec_message' => SmSecMessageStrategy::class,
+            'nts_message' => NtsMessageStrategy::class,
+            'w1aw_bulletin' => W1awBulletinStrategy::class,
+            'elected_official_visit' => ElectedOfficialVisitStrategy::class,
+            'agency_visit' => AgencyVisitStrategy::class,
+            'media_publicity' => MediaPublicityStrategy::class,
+            'youth_participation' => YouthParticipationStrategy::class,
+            'social_media' => SocialMediaStrategy::class,
+            'public_location' => PublicLocationStrategy::class,
+            'public_info_booth' => PublicInfoBoothStrategy::class,
+            'educational_activity' => EducationalActivityStrategy::class,
+            'web_submission' => WebSubmissionStrategy::class,
+        ];
     }
 
     public function bonus(string $code): ?BonusType
