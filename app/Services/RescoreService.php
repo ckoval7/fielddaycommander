@@ -8,12 +8,16 @@ use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Scoring\Contracts\RuleSet;
+use App\Scoring\EventBonusReconciler;
 use App\Scoring\RuleSetFactory;
 use Illuminate\Support\Facades\DB;
 
 class RescoreService
 {
-    public function __construct(private readonly RuleSetFactory $factory) {}
+    public function __construct(
+        private readonly RuleSetFactory $factory,
+        private readonly EventBonusReconciler $reconciler,
+    ) {}
 
     /**
      * Recompute `contacts.points` and re-point `event_bonuses` onto the
@@ -71,6 +75,8 @@ class RescoreService
                 });
 
             $bonuses = $this->migrateEventBonuses($config, $event->rules_version);
+
+            $this->reconciler->reconcileAll($config);
         });
 
         $this->resetMemoizedRuleSet($config);
