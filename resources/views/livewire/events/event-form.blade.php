@@ -81,6 +81,18 @@
                     />
                 </div>
 
+                <x-select
+                    label="Scoring Rules"
+                    wire:model="rules_version"
+                    :options="$this->rulesVersionOptions"
+                    option-label="name"
+                    option-value="id"
+                    icon="phosphor-scales"
+                    placeholder="Default ({{ $year }})"
+                    hint="{{ $rulesVersionLocked ? 'Locked — event has already started.' : 'Which year\'s ARRL rules to score by. Editable until the event starts.' }}"
+                    :disabled="$rulesVersionLocked || empty($this->rulesVersionOptions)"
+                />
+
                 <x-flatpickr
                     label="Start Date & Time (UTC)"
                     wire:model.live="start_time"

@@ -10,6 +10,7 @@ use App\Models\OperatingClass;
 use App\Models\Organization;
 use App\Models\Section;
 use App\Models\Setting;
+use App\Scoring\RuleSetFactory;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -39,6 +40,8 @@ class EventForm extends Component
     public ?string $end_time = null;
 
     public ?int $year = null;
+
+    public ?string $rules_version = null;
 
     // Section 2: Station Configuration
     public ?string $callsign = null;
@@ -100,6 +103,8 @@ class EventForm extends Component
     // State tracking
     public bool $isLocked = false;
 
+    public bool $rulesVersionLocked = false;
+
     private ?Event $event = null;
 
     private ?EventConfiguration $configuration = null;
@@ -159,6 +164,52 @@ class EventForm extends Component
             $this->year = now()->year;
             $this->prefillFromOrganization();
         }
+
+        $this->defaultRulesVersionIfUnset();
+    }
+
+    private function defaultRulesVersionIfUnset(): void
+    {
+        if ($this->rules_version !== null || $this->year === null) {
+            return;
+        }
+
+        $versions = $this->availableRulesVersions();
+        $default = (string) $this->year;
+
+        $this->rules_version = in_array($default, $versions, true)
+            ? $default
+            : ($versions ? end($versions) : $default);
+    }
+
+    /**
+     * Registered rules versions for the selected event type.
+     *
+     * @return array<int, string>
+     */
+    protected function availableRulesVersions(): array
+    {
+        if (! $this->event_type_id) {
+            return [];
+        }
+
+        $code = EventType::query()->whereKey($this->event_type_id)->value('code');
+
+        return $code ? app(RuleSetFactory::class)->versionsFor($code) : [];
+    }
+
+    #[Computed]
+    public function rulesVersionOptions(): array
+    {
+        $versions = $this->availableRulesVersions();
+
+        $options = array_map(fn (string $v) => ['id' => $v, 'name' => $v], $versions);
+
+        if ($this->rules_version !== null && ! in_array($this->rules_version, $versions, true)) {
+            array_unshift($options, ['id' => $this->rules_version, 'name' => $this->rules_version.' (not registered)']);
+        }
+
+        return $options;
     }
 
     private function prefillFromOrganization(): void
@@ -190,6 +241,9 @@ class EventForm extends Component
         $this->start_time = $this->event->start_time?->format(self::DATETIME_FORMAT);
         $this->end_time = $this->event->end_time?->format(self::DATETIME_FORMAT);
         $this->year = $this->event->year;
+        $this->rules_version = $this->event->rules_version;
+        $this->rulesVersionLocked = $this->event->start_time !== null
+            && $this->event->start_time <= appNow();
 
         // Load configuration fields if they exist
         if ($this->configuration) {
@@ -428,6 +482,8 @@ class EventForm extends Component
         }
 
         $this->autofillFieldDayDates();
+        $this->rules_version = null;
+        $this->defaultRulesVersionIfUnset();
     }
 
     public function updated($property): void
@@ -505,6 +561,7 @@ class EventForm extends Component
             'name' => $validated['name'],
             'event_type_id' => $validated['event_type_id'],
             'year' => $this->year,
+            'rules_version' => $validated['rules_version'] ?? $this->rules_version,
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'setup_allowed_from' => $eventType?->setup_offset_hours !== null
@@ -578,6 +635,10 @@ class EventForm extends Component
             'year' => $this->year,
             'end_time' => $validated['end_time'],
         ];
+
+        if (! $this->rulesVersionLocked && ! empty($validated['rules_version'])) {
+            $eventData['rules_version'] = $validated['rules_version'];
+        }
 
         if (! $this->isLocked) {
             $eventData['event_type_id'] = $validated['event_type_id'];
@@ -655,6 +716,7 @@ class EventForm extends Component
             'section_id' => ['required', 'exists:sections,id'],
             'operating_class_id' => ['required', 'exists:operating_classes,id'],
             'transmitter_count' => ['required', 'integer', 'min:1', 'max:99'],
+            'rules_version' => ['nullable', 'string', 'max:16', 'regex:/^[A-Za-z0-9._-]+$/'],
             ...$this->powerRules(),
             ...$this->gotaRules(),
             ...$this->locationRules(),

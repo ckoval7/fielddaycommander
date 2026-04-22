@@ -60,6 +60,7 @@ class AuditLog extends Model
         'event.deleted' => 'Event deleted',
         'event.activated' => 'Event activated',
         'event.deactivated' => 'Event deactivated',
+        'event.rules_rescored' => 'Event rescored with new rules version',
 
         // Developer Tools
         'developer.time_travel.set' => 'Time travel set',

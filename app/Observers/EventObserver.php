@@ -7,6 +7,8 @@ use App\Scoring\Exceptions\RulesVersionLocked;
 
 class EventObserver
 {
+    public static bool $bypassRulesVersionLock = false;
+
     public function creating(Event $event): void
     {
         if ($event->rules_version === null && $event->year !== null) {
@@ -20,10 +22,11 @@ class EventObserver
             return;
         }
 
-        $isLocked = $event->start_time !== null && $event->start_time <= now();
-        $hasContacts = $event->eventConfiguration?->contacts()->exists() ?? false;
+        if (self::$bypassRulesVersionLock) {
+            return;
+        }
 
-        if ($isLocked || $hasContacts) {
+        if ($event->start_time !== null && $event->start_time <= now()) {
             throw RulesVersionLocked::forEvent($event->id);
         }
     }

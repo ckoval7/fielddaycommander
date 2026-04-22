@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Observers\EventObserver;
+use App\Scoring\RuleSetFactory;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -106,6 +108,18 @@ class Event extends Model
         return $this->rules_version ?? (string) $this->year;
     }
 
+    /**
+     * Version of the ruleset the factory actually resolves for this event.
+     *
+     * Differs from effective_rules_version when the requested version is not
+     * yet registered — the factory falls back to the newest shipped ruleset,
+     * and this accessor reflects what is really scoring the event.
+     */
+    public function getResolvedRulesVersionAttribute(): string
+    {
+        return app(RuleSetFactory::class)->forEvent($this)->version();
+    }
+
     public function getStatusAttribute(): string
     {
         $now = appNow();
@@ -142,5 +156,28 @@ class Event extends Model
     public function getFinalScoreAttribute(): int
     {
         return $this->eventConfiguration?->calculateFinalScore() ?? 0;
+    }
+
+    /**
+     * Run the given callback with the rules_version lock disabled.
+     *
+     * Used by admin-initiated rescore flows that need to change the pinned
+     * version on an event that has already started.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public static function withoutRulesVersionLock(callable $callback): mixed
+    {
+        $previous = EventObserver::$bypassRulesVersionLock;
+        EventObserver::$bypassRulesVersionLock = true;
+
+        try {
+            return $callback();
+        } finally {
+            EventObserver::$bypassRulesVersionLock = $previous;
+        }
     }
 }

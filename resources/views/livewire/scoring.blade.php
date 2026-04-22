@@ -446,4 +446,12 @@
     @endif
 
     @endif
+
+    @if ($event?->resolved_rules_version)
+        <div class="mt-8 text-center text-xs text-base-content/50 border-t border-base-200 pt-3">
+            Scored per ARRL {{ $event->eventType->name ?? 'Field Day' }}
+            rules version <span class="font-mono">{{ $event->resolved_rules_version }}</span>@if ($event->effective_rules_version !== $event->resolved_rules_version)
+                <span class="text-warning"> (event pinned to {{ $event->effective_rules_version }}; not yet shipped)</span>@endif.
+        </div>
+    @endif
 </div>

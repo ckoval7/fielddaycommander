@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Contact;
 use App\Models\Event;
+use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Scoring\Exceptions\RulesVersionLocked;
 use Illuminate\Support\Facades\DB;
@@ -61,4 +63,21 @@ test('rules_version cannot be changed after event is locked', function () {
 
     expect(fn () => $event->save())
         ->toThrow(RulesVersionLocked::class);
+});
+
+test('rules_version is editable before event start even when contacts exist', function () {
+    $event = Event::factory()->create([
+        'year' => 2025,
+        'rules_version' => '2025',
+        'start_time' => now()->addDays(30),
+        'end_time' => now()->addDays(31),
+    ]);
+
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    Contact::factory()->create(['event_configuration_id' => $config->id]);
+
+    $event->rules_version = '2026';
+    $event->save();
+
+    expect($event->fresh()->rules_version)->toBe('2026');
 });

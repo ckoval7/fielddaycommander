@@ -74,6 +74,7 @@ class SubmissionReportService
             'event_end' => $config->event->end_time,
             'generated_at' => now(),
             'total_pages' => $config->has_gota_station ? 3 : 2,
+            'rules_version' => $config->event->resolved_rules_version,
         ];
     }
 

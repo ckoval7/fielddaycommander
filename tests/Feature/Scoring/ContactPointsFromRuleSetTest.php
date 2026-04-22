@@ -10,33 +10,54 @@ use App\Scoring\RuleSetFactory;
 
 uses()->group('feature', 'scoring');
 
-test('pointsForContact from factory returns the override for the event year', function () {
+test('pointsForContact from factory uses the override registered for the ruleset version', function () {
     $fd = EventType::firstOrCreate(['code' => 'FD'], ['name' => 'Field Day']);
     $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
 
-    $event2025 = Event::factory()->create([
+    $event = Event::factory()->create([
         'event_type_id' => $fd->id,
         'rules_version' => '2025',
     ]);
-    $config2025 = EventConfiguration::factory()->create(['event_id' => $event2025->id]);
-    $station2025 = Station::factory()->create(['event_configuration_id' => $config2025->id, 'is_gota' => false]);
-
-    $event2026 = Event::factory()->create([
-        'event_type_id' => $fd->id,
-        'rules_version' => '2026',
-    ]);
-    $config2026 = EventConfiguration::factory()->create(['event_id' => $event2026->id]);
-    $station2026 = Station::factory()->create(['event_configuration_id' => $config2026->id, 'is_gota' => false]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create(['event_configuration_id' => $config->id, 'is_gota' => false]);
 
     ModeRulePoint::create([
         'event_type_id' => $fd->id,
-        'rules_version' => '2026',
+        'rules_version' => '2025',
         'mode_id' => $mode->id,
         'points' => 4,
     ]);
 
     $factory = app(RuleSetFactory::class);
 
-    expect($factory->forEvent($event2025)->pointsForContact($mode, $station2025))->toBe(2)
-        ->and($factory->forEvent($event2026)->pointsForContact($mode, $station2026))->toBe(4);
+    expect($factory->forEvent($event)->pointsForContact($mode, $station))->toBe(4);
+});
+
+test('events pinned to an unshipped rules_version fall back to the newest registered ruleset', function () {
+    // Only FieldDay2025 is registered. An event pinned to a future year should
+    // score with the 2025 ruleset, and overrides registered for the unshipped
+    // version must NOT apply.
+    $fd = EventType::firstOrCreate(['code' => 'FD'], ['name' => 'Field Day']);
+    $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
+
+    $event = Event::factory()->create([
+        'event_type_id' => $fd->id,
+        'rules_version' => '2027',
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create(['event_configuration_id' => $config->id, 'is_gota' => false]);
+
+    ModeRulePoint::create([
+        'event_type_id' => $fd->id,
+        'rules_version' => '2027',
+        'mode_id' => $mode->id,
+        'points' => 4,
+    ]);
+
+    $rules = app(RuleSetFactory::class)->forEvent($event);
+
+    expect($rules->version())->toBe('2025')
+        ->and($rules->pointsForContact($mode, $station))->toBe(2)
+        ->and($event->resolved_rules_version)->toBe('2025')
+        ->and($event->effective_rules_version)->toBe('2027');
 });

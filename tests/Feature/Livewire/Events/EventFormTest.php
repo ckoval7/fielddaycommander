@@ -1213,3 +1213,72 @@ test('event form rejects talk-in frequency over 50 characters', function () {
         ->call('save')
         ->assertHasErrors(['talk_in_frequency']);
 });
+
+test('event form saves selected rules_version on create', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Field Day 2026')
+        ->set('event_type_id', $this->eventType->id)
+        ->set('start_time', '2026-06-27 18:00:00')
+        ->set('end_time', '2026-06-28 20:59:00')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $this->operatingClassA->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->set('rules_version', '2025')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $event = Event::where('name', 'Field Day 2026')->firstOrFail();
+    expect($event->rules_version)->toBe('2025');
+});
+
+test('event form can change rules_version on edit before event starts', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'name' => 'Field Day 2026',
+        'year' => 2026,
+        'rules_version' => '2025',
+        'start_time' => now()->addDays(60),
+        'end_time' => now()->addDays(61),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+    ]);
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->assertSet('rules_version', '2025')
+        ->assertSet('rulesVersionLocked', false)
+        ->set('rules_version', '2026')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($event->fresh()->rules_version)->toBe('2026');
+});
+
+test('event form locks rules_version after event has started', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'year' => 2025,
+        'rules_version' => '2025',
+        'start_time' => now()->subDay(),
+        'end_time' => now()->addDay(),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+    ]);
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->assertSet('rulesVersionLocked', true);
+});
