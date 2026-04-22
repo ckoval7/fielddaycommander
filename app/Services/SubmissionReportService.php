@@ -144,16 +144,23 @@ class SubmissionReportService
             ['code' => 'social_media',            'name' => 'Social media'],
         ];
 
-        // Index claimed bonuses by bonus_type code
+        // Index claimed bonuses by bonus_type code, scoped to the event's
+        // resolved rules_version so stale cross-version rows do not leak in.
+        $rulesVersion = $config->event?->resolved_rules_version;
+
         $claimed = [];
         foreach ($config->bonuses as $bonus) {
-            $code = $bonus->bonusType?->code;
-            if ($code) {
-                $claimed[$code] = [
-                    'points' => (int) $bonus->calculated_points,
-                    'is_verified' => $bonus->is_verified,
-                ];
+            $bonusType = $bonus->bonusType;
+
+            if (! $bonusType || $bonusType->rules_version !== $rulesVersion) {
+                continue;
             }
+
+            $claimed[$bonusType->code] = [
+                'name' => $bonusType->name,
+                'points' => (int) $bonus->calculated_points,
+                'is_verified' => $bonus->is_verified,
+            ];
         }
 
         // Auto-determined bonuses
@@ -178,9 +185,11 @@ class SubmissionReportService
         }
 
         $checklist = [];
+        $rendered = [];
         foreach ($arrlOrder as $item) {
             $code = $item['code'];
             $match = $claimed[$code] ?? null;
+            $rendered[$code] = true;
 
             $checklist[] = [
                 'name' => $item['name'],
@@ -189,6 +198,23 @@ class SubmissionReportService
                 'points' => $match ? $match['points'] : 0,
                 'is_verified' => $match ? $match['is_verified'] : false,
                 'auto' => $item['auto'] ?? false,
+            ];
+        }
+
+        // Append ruleset-specific extras (e.g. non-ARRL bonuses introduced by a
+        // custom rules_version) so they are visible on the sheet.
+        foreach ($claimed as $code => $match) {
+            if (isset($rendered[$code])) {
+                continue;
+            }
+
+            $checklist[] = [
+                'name' => $match['name'] ?? $code,
+                'code' => $code,
+                'claimed' => true,
+                'points' => $match['points'],
+                'is_verified' => $match['is_verified'],
+                'auto' => false,
             ];
         }
 

@@ -227,8 +227,12 @@ class SiteSafetyChecklist extends Component
             ChecklistType::SiteResponsibilities => 'site_responsibilities',
         };
 
-        // TODO(rules-version): needs rules_version scope
-        $bonusType = BonusType::where('code', $bonusTypeCode)->first();
+        $event = $this->eventConfig?->event;
+        if (! $event) {
+            return;
+        }
+
+        $bonusType = BonusType::resolveFor($event, $bonusTypeCode);
         if (! $bonusType) {
             return;
         }
@@ -271,8 +275,12 @@ class SiteSafetyChecklist extends Component
             ChecklistType::SiteResponsibilities => 'site_responsibilities',
         };
 
-        // TODO(rules-version): needs rules_version scope
-        $bonusType = BonusType::where('code', $bonusTypeCode)->first();
+        $event = $this->eventConfig?->event;
+        if (! $event) {
+            return;
+        }
+
+        $bonusType = BonusType::resolveFor($event, $bonusTypeCode);
         if (! $bonusType) {
             return;
         }

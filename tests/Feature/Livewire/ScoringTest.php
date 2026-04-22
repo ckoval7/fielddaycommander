@@ -395,6 +395,41 @@ it('lists unclaimed bonuses', function () {
     expect($unclaimed->count())->toBeGreaterThan(0);
 });
 
+it('scopes bonuses to the event rules_version so rescored events do not list other versions', function () {
+    // An event pinned to rules_version=2025 should NOT see bonus_types
+    // defined for other versions, even when those rows share the same
+    // event_type_id and code. Without the scope, the rescore flow shows
+    // every code twice (once per version).
+    $config = makeActiveEvent();
+
+    BonusType::create([
+        'event_type_id' => $this->eventType->id,
+        'rules_version' => 'TEST',
+        'code' => 'public_location',
+        'name' => 'Public Location (TEST)',
+        'base_points' => 100,
+        'is_per_transmitter' => false,
+        'is_active' => true,
+    ]);
+    BonusType::create([
+        'event_type_id' => $this->eventType->id,
+        'rules_version' => 'TEST',
+        'code' => 'use_fd_commander',
+        'name' => 'Use Field Day Commander',
+        'base_points' => 100,
+        'is_per_transmitter' => false,
+        'is_active' => true,
+    ]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $codes = collect($component->bonusList)->pluck('type.code');
+    $publicLocationCount = $codes->filter(fn ($c) => $c === 'public_location')->count();
+
+    expect($publicLocationCount)->toBe(1)
+        ->and($codes)->not->toContain('use_fd_commander');
+});
+
 // ============================================================================
 // BONUS LIST — CLASS ELIGIBILITY FILTERING
 // ============================================================================

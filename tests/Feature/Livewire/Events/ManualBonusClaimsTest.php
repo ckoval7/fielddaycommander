@@ -3,6 +3,7 @@
 use App\Livewire\Events\ManualBonusClaims;
 use App\Models\AuditLog;
 use App\Models\BonusType;
+use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
@@ -214,7 +215,7 @@ test('saveAdditionalYouth dispatches bonus-claimed event', function () {
 
 test('youth section shows auto-detected youth count', function () {
     $youthUser = User::factory()->create(['is_youth' => true]);
-    \App\Models\Contact::factory()->create([
+    Contact::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'logger_user_id' => $youthUser->id,
         'is_duplicate' => false,
@@ -285,4 +286,25 @@ describe('audit logging', function () {
         expect($auditLog->old_values['bonus_type'])->toBe('social_media');
         expect($auditLog->old_values['points'])->toBe($bonusType->base_points);
     });
+});
+
+test('eligible bonus list is scoped to the event rules_version', function () {
+    // Seed an extra TEST-version row for an already-seeded manual-claim code.
+    // Without rules_version scoping the component would render both versions.
+    BonusType::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'code' => 'social_media',
+        'rules_version' => 'TEST',
+        'base_points' => 999,
+        'is_active' => true,
+    ]);
+
+    $eligible = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->get('eligibleBonusTypes');
+
+    $socialMedia = $eligible->where('code', 'social_media');
+
+    expect($socialMedia)->toHaveCount(1)
+        ->and($socialMedia->first()->rules_version)->toBe($this->event->resolved_rules_version);
 });

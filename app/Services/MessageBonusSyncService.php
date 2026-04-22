@@ -18,8 +18,12 @@ class MessageBonusSyncService
 
     protected function syncSmSecBonus(EventConfiguration $eventConfiguration): void
     {
-        // TODO(rules-version): needs rules_version scope
-        $bonusType = BonusType::where('code', 'sm_sec_message')->first();
+        $event = $eventConfiguration->event;
+        if (! $event) {
+            return;
+        }
+
+        $bonusType = BonusType::resolveFor($event, 'sm_sec_message');
         if (! $bonusType) {
             return;
         }
@@ -51,8 +55,12 @@ class MessageBonusSyncService
 
     protected function syncMessageHandlingBonus(EventConfiguration $eventConfiguration): void
     {
-        // TODO(rules-version): needs rules_version scope
-        $bonusType = BonusType::where('code', 'nts_message')->first();
+        $event = $eventConfiguration->event;
+        if (! $event) {
+            return;
+        }
+
+        $bonusType = BonusType::resolveFor($event, 'nts_message');
         if (! $bonusType) {
             return;
         }
@@ -105,8 +113,12 @@ class MessageBonusSyncService
 
     protected function syncW1awBonus(EventConfiguration $eventConfiguration): void
     {
-        // TODO(rules-version): needs rules_version scope
-        $bonusType = BonusType::where('code', 'w1aw_bulletin')->first();
+        $event = $eventConfiguration->event;
+        if (! $event) {
+            return;
+        }
+
+        $bonusType = BonusType::resolveFor($event, 'w1aw_bulletin');
         if (! $bonusType) {
             return;
         }

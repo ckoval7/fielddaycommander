@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Scoring\Rules\FieldDay2025;
+use App\Scoring\Rules\FieldDayTest;
 use Illuminate\Support\Facades\Log;
 
 class RuleSetFactory
@@ -21,6 +22,7 @@ class RuleSetFactory
     protected array $registry = [
         'FD' => [
             '2025' => FieldDay2025::class,
+            'TEST' => FieldDayTest::class,
         ],
     ];
 
@@ -75,6 +77,19 @@ class RuleSetFactory
     protected function latestRegisteredFor(string $typeCode): ?string
     {
         $versions = $this->registry[$typeCode] ?? null;
+
+        if (! $versions) {
+            return null;
+        }
+
+        // Only numeric (year) versions are fallback candidates — synthetic
+        // versions like 'TEST' must never be silently picked for an event
+        // whose requested version isn't registered.
+        $versions = array_filter(
+            $versions,
+            fn (string $version) => ctype_digit($version),
+            ARRAY_FILTER_USE_KEY,
+        );
 
         if (! $versions) {
             return null;

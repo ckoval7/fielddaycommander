@@ -216,7 +216,7 @@ class ShiftAssignment extends Model
      */
     protected function syncEventBonus(): void
     {
-        $shift = $this->shift()->with('shiftRole', 'eventConfiguration')->first();
+        $shift = $this->shift()->with('shiftRole', 'eventConfiguration.event')->first();
         if (! $shift) {
             return;
         }
@@ -226,8 +226,12 @@ class ShiftAssignment extends Model
             return;
         }
 
-        // TODO(rules-version): needs rules_version scope
-        $bonusType = BonusType::where('code', $bonusTypeCode)->first();
+        $event = $shift->eventConfiguration?->event;
+        if (! $event) {
+            return;
+        }
+
+        $bonusType = BonusType::resolveFor($event, $bonusTypeCode);
         if (! $bonusType) {
             return;
         }
@@ -253,7 +257,7 @@ class ShiftAssignment extends Model
      */
     protected function removeEventBonus(): void
     {
-        $shift = $this->shift()->with('shiftRole', 'eventConfiguration')->first();
+        $shift = $this->shift()->with('shiftRole', 'eventConfiguration.event')->first();
         if (! $shift) {
             return;
         }
@@ -263,8 +267,12 @@ class ShiftAssignment extends Model
             return;
         }
 
-        // TODO(rules-version): needs rules_version scope
-        $bonusType = BonusType::where('code', $bonusTypeCode)->first();
+        $event = $shift->eventConfiguration?->event;
+        if (! $event) {
+            return;
+        }
+
+        $bonusType = BonusType::resolveFor($event, $bonusTypeCode);
         if (! $bonusType) {
             return;
         }

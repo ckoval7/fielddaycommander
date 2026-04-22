@@ -215,12 +215,15 @@ class EventDashboard extends Component
     public function bonusList(): array
     {
         $eventTypeId = $this->event->event_type_id;
+        $rulesVersion = $this->event->resolved_rules_version;
 
         $query = BonusType::where('is_active', true);
 
         if ($eventTypeId) {
             $query->where('event_type_id', $eventTypeId);
         }
+
+        $query->where('rules_version', $rulesVersion);
 
         $bonusTypes = $query->orderByDesc('base_points')->get();
 

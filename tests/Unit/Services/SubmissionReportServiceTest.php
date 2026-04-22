@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Band;
+use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\Mode;
@@ -186,4 +188,83 @@ test('participant count includes unique loggers and GOTA operators', function ()
     $data = app(SubmissionReportService::class)->getData($config);
 
     expect($data['participant_count'])->toBe(2);
+});
+
+test('bonus_checklist ignores EventBonus rows from other rules_versions', function () {
+    // Pin event to 'TEST' (a registered ruleset). A stale row for the same code
+    // scoped to '2025' must not leak into the checklist for a TEST event.
+    $config = makeSubmissionConfig([], ['rules_version' => 'TEST']);
+
+    $eventTypeId = $config->event->event_type_id;
+
+    $currentType = BonusType::factory()->create([
+        'event_type_id' => $eventTypeId,
+        'code' => 'public_location',
+        'rules_version' => 'TEST',
+        'base_points' => 100,
+        'is_active' => true,
+    ]);
+
+    $staleType = BonusType::factory()->create([
+        'event_type_id' => $eventTypeId,
+        'code' => 'public_location',
+        'rules_version' => '2025',
+        'base_points' => 500,
+        'is_active' => true,
+    ]);
+
+    EventBonus::create([
+        'event_configuration_id' => $config->id,
+        'bonus_type_id' => $currentType->id,
+        'quantity' => 1,
+        'calculated_points' => 100,
+        'is_verified' => true,
+    ]);
+
+    EventBonus::create([
+        'event_configuration_id' => $config->id,
+        'bonus_type_id' => $staleType->id,
+        'quantity' => 1,
+        'calculated_points' => 500,
+        'is_verified' => true,
+    ]);
+
+    $data = app(SubmissionReportService::class)->getData($config);
+
+    $publicLocation = collect($data['bonus_checklist'])->firstWhere('code', 'public_location');
+
+    expect($publicLocation)->not->toBeNull()
+        ->and($publicLocation['claimed'])->toBeTrue()
+        ->and($publicLocation['points'])->toBe(100);
+});
+
+test('bonus_checklist appends ruleset-specific bonuses not in the ARRL form order', function () {
+    $config = makeSubmissionConfig([], ['rules_version' => 'TEST']);
+
+    $customType = BonusType::factory()->create([
+        'event_type_id' => $config->event->event_type_id,
+        'code' => 'use_fd_commander',
+        'name' => 'Use Field Day Commander',
+        'rules_version' => 'TEST',
+        'base_points' => 100,
+        'is_active' => true,
+    ]);
+
+    EventBonus::create([
+        'event_configuration_id' => $config->id,
+        'bonus_type_id' => $customType->id,
+        'quantity' => 1,
+        'calculated_points' => 100,
+        'is_verified' => true,
+    ]);
+
+    $data = app(SubmissionReportService::class)->getData($config);
+
+    $custom = collect($data['bonus_checklist'])->firstWhere('code', 'use_fd_commander');
+
+    expect($custom)->not->toBeNull()
+        ->and($custom['name'])->toBe('Use Field Day Commander')
+        ->and($custom['claimed'])->toBeTrue()
+        ->and($custom['points'])->toBe(100)
+        ->and($custom['is_verified'])->toBeTrue();
 });
