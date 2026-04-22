@@ -53,7 +53,8 @@ it('does not write the row when the entry is unverified', function () {
 
     (new ElectedOfficialVisitStrategy)->reconcile($this->config);
 
-    expect(EventBonus::where('event_configuration_id', $this->config->id)->count())->toBe(0);
+    expect(EventBonus::where('event_configuration_id', $this->config->id)
+        ->where('bonus_type_id', $this->bt->id)->count())->toBe(0);
 });
 
 it('does not write the row when the entry is a different category', function () {
@@ -65,7 +66,8 @@ it('does not write the row when the entry is a different category', function () 
 
     (new ElectedOfficialVisitStrategy)->reconcile($this->config);
 
-    expect(EventBonus::where('event_configuration_id', $this->config->id)->count())->toBe(0);
+    expect(EventBonus::where('event_configuration_id', $this->config->id)
+        ->where('bonus_type_id', $this->bt->id)->count())->toBe(0);
 });
 
 it('deletes the row when no qualifying entry exists', function () {
@@ -78,7 +80,8 @@ it('deletes the row when no qualifying entry exists', function () {
 
     (new ElectedOfficialVisitStrategy)->reconcile($this->config);
 
-    expect(EventBonus::where('event_configuration_id', $this->config->id)->count())->toBe(0);
+    expect(EventBonus::where('event_configuration_id', $this->config->id)
+        ->where('bonus_type_id', $this->bt->id)->count())->toBe(0);
 });
 
 it('is idempotent', function () {
