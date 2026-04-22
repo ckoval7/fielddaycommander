@@ -23,17 +23,6 @@ class ManualBonusClaims extends Component
 
     public int $additionalYouth = 0;
 
-    protected const MANUAL_BONUS_CODES = [
-        'social_media',
-        'public_location',
-        'public_location_wfd',
-        'public_info_booth',
-        'educational_activity',
-        'web_submission',
-        'elected_official_visit',
-        'agency_visit',
-    ];
-
     #[Computed]
     public function eligibleBonusTypes(): Collection
     {
@@ -49,7 +38,7 @@ class ManualBonusClaims extends Component
             ->where('is_active', true)
             ->where('event_type_id', $this->event->event_type_id)
             ->where('rules_version', $this->event->resolved_rules_version)
-            ->whereIn('code', self::MANUAL_BONUS_CODES)
+            ->where('trigger_type', 'manual')
             ->get()
             ->filter(function (BonusType $bonusType) use ($classCode) {
                 $classes = $bonusType->eligible_classes;
@@ -58,7 +47,6 @@ class ManualBonusClaims extends Component
                     return true;
                 }
 
-                // BonusTypeSeeder double-encodes eligible_classes (json_encode + array cast)
                 if (is_string($classes)) {
                     $classes = json_decode($classes, true) ?? [];
                 }

@@ -140,7 +140,7 @@ test('unclaiming deletes the EventBonus record', function () {
 });
 
 test('cannot claim a bonus type not in the manual list', function () {
-    $nonManualBonus = BonusType::where('code', 'emergency_power')
+    $nonManualBonus = BonusType::where('code', 'sm_sec_message')
         ->where('event_type_id', $this->eventType->id)
         ->first();
 
@@ -154,7 +154,7 @@ test('cannot claim a bonus type not in the manual list', function () {
 });
 
 test('cannot unclaim a bonus type not in the manual list', function () {
-    $nonManualBonus = BonusType::where('code', 'emergency_power')
+    $nonManualBonus = BonusType::where('code', 'sm_sec_message')
         ->where('event_type_id', $this->eventType->id)
         ->first();
 
@@ -227,11 +227,11 @@ test('youth section shows auto-detected youth count', function () {
         ->assertSee('20 pts');
 });
 
-test('shows elected_official_visit and agency_visit as manual claims', function () {
+test('elected_official_visit and agency_visit are derived and not shown as manual claims', function () {
     Livewire::actingAs($this->user)
         ->test(ManualBonusClaims::class, ['event' => $this->event])
-        ->assertSee('Elected Official Visit')
-        ->assertSee('Served Agency Visit');
+        ->assertDontSee('Elected Official Visit')
+        ->assertDontSee('Served Agency Visit');
 });
 
 test('shows public_info_booth bonus for class A', function () {
