@@ -38,12 +38,12 @@ class YouthParticipationStrategy extends AbstractBonusStrategy
             ->where('bonus_type_id', $bonusType->id)
             ->first();
 
-        $adjustment = $existing && is_numeric($existing->notes) ? (int) $existing->notes : 0;
+        $adjustment = (int) ($existing?->manual_quantity_adjustment ?? 0);
 
         $cap = (int) ($bonusType->max_occurrences ?? 5);
         $total = min($autoCount + $adjustment, $cap);
 
-        if ($total <= 0) {
+        if ($total <= 0 && $adjustment === 0) {
             $this->writeOrDelete($config, $bonusType, null, null);
 
             return;
@@ -63,7 +63,7 @@ class YouthParticipationStrategy extends AbstractBonusStrategy
             [
                 'quantity' => $total,
                 'calculated_points' => $points,
-                'notes' => $adjustment > 0 ? (string) $adjustment : null,
+                'manual_quantity_adjustment' => $adjustment > 0 ? $adjustment : null,
                 'is_verified' => true,
                 'verified_at' => now(),
             ],

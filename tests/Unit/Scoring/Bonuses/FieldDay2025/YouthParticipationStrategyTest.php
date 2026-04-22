@@ -26,24 +26,23 @@ it('reports hybrid trigger and subscribes to QsoLogged', function () {
         ->and($s->subscribesTo())->toBe([QsoLogged::class]);
 });
 
-it('preserves an existing adjustment stored in notes', function () {
+it('computes total = auto + manual_quantity_adjustment capped at max_occurrences', function () {
     EventBonus::create([
         'event_configuration_id' => $this->config->id,
         'bonus_type_id' => $this->bt->id,
         'quantity' => 3,
         'calculated_points' => 3 * (int) $this->bt->base_points,
-        'notes' => '3',
+        'manual_quantity_adjustment' => 3,
         'is_verified' => true,
         'verified_at' => now(),
     ]);
 
     (new YouthParticipationStrategy)->reconcile($this->config);
 
-    $row = EventBonus::where('event_configuration_id', $this->config->id)
-        ->where('bonus_type_id', $this->bt->id)->first();
+    $row = EventBonus::where('event_configuration_id', $this->config->id)->first();
     expect($row->quantity)->toBe(3)
-        ->and($row->calculated_points)->toBe(3 * (int) $this->bt->base_points)
-        ->and($row->notes)->toBe('3');
+        ->and($row->manual_quantity_adjustment)->toBe(3)
+        ->and($row->calculated_points)->toBe(3 * (int) $this->bt->base_points);
 });
 
 it('deletes the row when auto is zero and adjustment is null', function () {
@@ -52,7 +51,7 @@ it('deletes the row when auto is zero and adjustment is null', function () {
         'bonus_type_id' => $this->bt->id,
         'quantity' => 0,
         'calculated_points' => 0,
-        'notes' => null,
+        'manual_quantity_adjustment' => null,
     ]);
 
     (new YouthParticipationStrategy)->reconcile($this->config);
