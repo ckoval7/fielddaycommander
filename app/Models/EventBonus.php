@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\EventBonusFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EventBonus extends Model
 {
-    /** @use HasFactory<\Database\Factories\EventBonusFactory> */
+    /** @use HasFactory<EventBonusFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -16,6 +17,7 @@ class EventBonus extends Model
         'bonus_type_id',
         'claimed_by_user_id',
         'quantity',
+        'manual_quantity_adjustment',
         'calculated_points',
         'notes',
         'proof_file_path',
