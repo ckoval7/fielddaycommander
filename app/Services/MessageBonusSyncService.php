@@ -11,6 +11,10 @@ class MessageBonusSyncService
 {
     public function sync(EventConfiguration $eventConfiguration): void
     {
+        if (config('scoring.use_bonus_strategies')) {
+            return;
+        }
+
         $this->syncSmSecBonus($eventConfiguration);
         $this->syncMessageHandlingBonus($eventConfiguration);
         $this->syncW1awBonus($eventConfiguration);

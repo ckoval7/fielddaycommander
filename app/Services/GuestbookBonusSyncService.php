@@ -17,6 +17,10 @@ class GuestbookBonusSyncService
 
     public function sync(EventConfiguration $eventConfiguration): void
     {
+        if (config('scoring.use_bonus_strategies')) {
+            return;
+        }
+
         foreach (self::CATEGORY_BONUS_MAP as $category => $bonusCode) {
             $this->syncCategoryBonus($eventConfiguration, $category, $bonusCode);
         }
