@@ -218,7 +218,7 @@ class ManualBonusClaims extends Component
             ->where('bonus_type_id', $bonusType->id)
             ->first();
 
-        $additional = $bonus ? (int) ($bonus->notes ?? 0) : 0;
+        $additional = $bonus ? (int) ($bonus->manual_quantity_adjustment ?? 0) : 0;
         $this->additionalYouth = $additional;
 
         $total = min($autoCount + $additional, $bonusType->max_occurrences ?? 5);
@@ -263,7 +263,7 @@ class ManualBonusClaims extends Component
                 [
                     'quantity' => $total,
                     'calculated_points' => $total * $bonusType->base_points,
-                    'notes' => $additional > 0 ? (string) $additional : null,
+                    'manual_quantity_adjustment' => $additional > 0 ? $additional : null,
                     'is_verified' => true,
                     'verified_by_user_id' => auth()->id(),
                     'verified_at' => now(),
