@@ -30,6 +30,7 @@ class BonusType extends Model
         'event_type_id',
         'rules_version',
         'code',
+        'trigger_type',
         'name',
         'description',
         'base_points',

@@ -21,6 +21,7 @@ class BonusTypeFactory extends Factory
             'event_type_id' => 1, // Field Day
             'rules_version' => '2025',
             'code' => fake()->unique()->slug(2),
+            'trigger_type' => 'manual',
             'name' => fake()->words(3, true),
             'description' => fake()->sentence(),
             'base_points' => fake()->randomElement([50, 100, 200, 500]),

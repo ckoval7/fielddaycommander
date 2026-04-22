@@ -8,6 +8,17 @@ use Illuminate\Database\Seeder;
 
 class BonusTypeSeeder extends Seeder
 {
+    /** @var array<string, string> Maps bonus codes to non-manual trigger types. */
+    private const TRIGGER_TYPES = [
+        'sm_sec_message' => 'derived',
+        'nts_message' => 'derived',
+        'w1aw_bulletin' => 'derived',
+        'elected_official_visit' => 'derived',
+        'agency_visit' => 'derived',
+        'media_publicity' => 'derived',
+        'youth_participation' => 'hybrid',
+    ];
+
     /**
      * Run the database seeds.
      */
@@ -24,6 +35,8 @@ class BonusTypeSeeder extends Seeder
         // Seeder is idempotent and non-destructive — existing rows are never overwritten.
         // Use a migration to change values for an already-shipped rules_version.
         foreach ($bonuses as $bonus) {
+            $bonus['trigger_type'] = self::TRIGGER_TYPES[$bonus['code']] ?? 'manual';
+
             BonusType::firstOrCreate(
                 [
                     'event_type_id' => $bonus['event_type_id'],
