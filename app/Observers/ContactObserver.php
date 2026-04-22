@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\NotificationCategory;
 use App\Models\Contact;
+use App\Scoring\DomainEvents\QsoLogged;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 
@@ -25,6 +26,16 @@ class ContactObserver
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    public function saved(Contact $contact): void
+    {
+        event(new QsoLogged($contact, $contact->event_configuration_id));
+    }
+
+    public function deleted(Contact $contact): void
+    {
+        event(new QsoLogged($contact, $contact->event_configuration_id));
     }
 
     /**
