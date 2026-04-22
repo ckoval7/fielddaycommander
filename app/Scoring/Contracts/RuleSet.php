@@ -73,4 +73,14 @@ interface RuleSet
      * Returns null if the code is not defined for this version.
      */
     public function bonus(string $code): ?BonusType;
+
+    /**
+     * Bonus strategies owned by this ruleset, keyed by bonus code.
+     *
+     * Returns a map of code => FQCN of a BonusStrategy implementation.
+     * Subclasses override via `array_merge(parent::strategies(), [...])`.
+     *
+     * @return array<string, class-string<BonusStrategy>>
+     */
+    public function strategies(): array;
 }

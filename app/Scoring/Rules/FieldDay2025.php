@@ -101,6 +101,11 @@ class FieldDay2025 implements RuleSet
         return 20;
     }
 
+    public function strategies(): array
+    {
+        return [];
+    }
+
     public function bonus(string $code): ?BonusType
     {
         if (array_key_exists($code, $this->cachedBonuses)) {
