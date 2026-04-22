@@ -49,7 +49,28 @@ class FieldDay2027 extends FieldDay2026
 
 Extend the closest-in-time predecessor (almost always `FieldDayYYYY-1`). Do **not** extend `FieldDay2025` and skip years — you lose intervening changes.
 
-### 3. Register the new class in the factory
+### 3. Override strategies only if ARRL changed a bonus's trigger or formula
+
+If ARRL 2027 did not change how any bonus is triggered or computed, leave
+`strategies()` out of `FieldDay2027` entirely — `FieldDay2026`'s map is
+inherited automatically.
+
+If a bonus formula changed (e.g. NTS message cap moves from 10 to 15 in
+2027), create a new strategy in `app/Scoring/Bonuses/FieldDay2027/` and
+register it via:
+
+```php
+public function strategies(): array
+{
+    return array_merge(parent::strategies(), [
+        'nts_message' => \App\Scoring\Bonuses\FieldDay2027\NtsMessageStrategy::class,
+    ]);
+}
+```
+
+Do not touch older strategy classes — they are frozen.
+
+### 4. Register the new class in the factory
 
 ```php
 // app/Scoring/RuleSetFactory.php
@@ -64,7 +85,7 @@ protected array $registry = [
 
 Never remove old entries. Historical events continue to resolve to their frozen rulesets.
 
-### 4. Seed `bonus_types` rows for the new version
+### 5. Seed `bonus_types` rows for the new version
 
 Write a migration. **Do not update the seeder** — seeders run on fresh databases and the existing bonus rows must remain as-is for any already-installed 2025/2026 data.
 
@@ -98,6 +119,12 @@ return new class extends Migration
             // if ($row->code === 'some_deprecated_bonus') {
             //     continue;                     // skip — no longer awarded
             // }
+            //
+            // trigger_type: copy it forward as-is from the 2026 row (the loop
+            // above already does this). Only override it if ARRL changed *how*
+            // the bonus gets claimed — e.g. a formerly-manual bonus is now
+            // derived automatically from a new state source, in which case set
+            // $new['trigger_type'] to the new value for that row only.
 
             DB::table('bonus_types')->insert([
                 ...$new,
@@ -122,7 +149,7 @@ return new class extends Migration
 };
 ```
 
-### 5. Seed `mode_rule_points` overrides (only if ARRL changed per-mode points)
+### 6. Seed `mode_rule_points` overrides (only if ARRL changed per-mode points)
 
 ```php
 DB::table('mode_rule_points')->insert([
@@ -137,7 +164,7 @@ DB::table('mode_rule_points')->insert([
 
 Only insert rows for modes where the points differ from the fallback (`modes.points_fd`). If ARRL did not change point values, skip this step entirely.
 
-### 6. Write tests against published ARRL numbers
+### 7. Write tests against published ARRL numbers
 
 Create `tests/Unit/Scoring/FieldDay2027Test.php`. For each rule ARRL changed, assert the new value directly against `FieldDay2027`. Do not loop over other years — those are frozen and already covered.
 
@@ -160,11 +187,11 @@ test('unchanged rules match 2026 values', function () {
 });
 ```
 
-### 7. Set the default for new events
+### 8. Set the default for new events
 
 Does `EventFactory`'s default `rules_version = (string) $year` still do the right thing? Usually yes. If we need the current calendar year's ruleset to be used for drafts (e.g. someone creates a 2027 event in late 2026), confirm the `Event::creating` observer in `app/Observers/EventObserver.php` picks up `$event->year`. Update only if the year→ruleset mapping needs a manual override.
 
-### 8. Run the scoring test suite
+### 9. Run the scoring test suite
 
 ```bash
 php artisan test --compact --filter=scoring
@@ -173,7 +200,7 @@ php artisan test --compact --filter=EventConfigurationTest
 
 Every year's tests must stay green. If an older year's test fails because of your change, you edited something frozen — revert and put the change in `FieldDay2027` instead.
 
-### 9. PR checklist
+### 10. PR checklist
 
 Before opening the PR, confirm:
 
@@ -184,7 +211,7 @@ Before opening the PR, confirm:
 - [ ] Tests cover every ARRL-changed rule.
 - [ ] PR description links the ARRL 2027 rules PDF and summarizes the diff.
 
-### 10. Merge timing
+### 11. Merge timing
 
 Ideally merge **before** any event pinned to `rules_version='2027'` is created. The factory has a soft-fallback safety net: a 2027 event with no registered `FieldDay2027` resolves to the newest registered version (`FieldDay2026`) and logs `scoring.rules_version_fallback`. That keeps demo and pre-announcement testing unblocked, but the warning means the scores on that event are computed against the *previous* year's rules — not what you want for a real submission. Check logs before submitting.
 
