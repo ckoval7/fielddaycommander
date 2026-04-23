@@ -24,6 +24,7 @@ use App\Policies\GuestbookEntryPolicy;
 use App\Policies\ImagePolicy;
 use App\Policies\MessagePolicy;
 use App\Policies\W1awBulletinPolicy;
+use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
 use App\View\Components\Icon;
@@ -45,6 +46,8 @@ class AppServiceProvider extends ServiceProvider
         // Scoped ensures mutable state resets between Octane requests while sharing within a request
         $this->app->scoped(EventContextService::class);
         $this->app->alias(EventContextService::class, ActiveEventService::class);
+
+        $this->app->singleton(RuleSetFactory::class);
     }
 
     /**

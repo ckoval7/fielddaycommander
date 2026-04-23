@@ -19,7 +19,12 @@ use App\Scoring\Bonuses\FieldDay2025\SocialMediaStrategy;
 use App\Scoring\Bonuses\FieldDay2025\W1awBulletinStrategy;
 use App\Scoring\Bonuses\FieldDay2025\WebSubmissionStrategy;
 use App\Scoring\Bonuses\FieldDay2025\YouthParticipationStrategy;
+use App\Scoring\Contracts\BonusStrategy;
 use App\Scoring\Contracts\RuleSet;
+use App\Scoring\DomainEvents\GuestbookEntryChanged;
+use App\Scoring\DomainEvents\MessageChanged;
+use App\Scoring\DomainEvents\QsoLogged;
+use App\Scoring\DomainEvents\W1awBulletinChanged;
 use App\Scoring\Dto\PowerContext;
 
 /**
@@ -111,6 +116,36 @@ class FieldDay2025 implements RuleSet
     public function emergencyPowerMaxTransmitters(): int
     {
         return 20;
+    }
+
+    /**
+     * Strategy classes indexed by the domain event class they subscribe to.
+     *
+     * Mirror of the `strategies()` array — keep these two in sync when adding
+     * a new strategy. Looked up on every domain event dispatch, so keep it O(1).
+     *
+     * @var array<class-string, array<int, class-string<BonusStrategy>>>
+     */
+    protected const STRATEGY_INDEX = [
+        QsoLogged::class => [
+            YouthParticipationStrategy::class,
+        ],
+        MessageChanged::class => [
+            NtsMessageStrategy::class,
+            SmSecMessageStrategy::class,
+        ],
+        GuestbookEntryChanged::class => [
+            AgencyVisitStrategy::class,
+            ElectedOfficialVisitStrategy::class,
+        ],
+        W1awBulletinChanged::class => [
+            W1awBulletinStrategy::class,
+        ],
+    ];
+
+    public function strategiesFor(string $eventClass): array
+    {
+        return self::STRATEGY_INDEX[$eventClass] ?? [];
     }
 
     public function strategies(): array

@@ -26,6 +26,13 @@ class RuleSetFactory
      */
     protected array $registry;
 
+    /**
+     * Memoized RuleSet instances keyed by "typeCode|version".
+     *
+     * @var array<string, RuleSet>
+     */
+    protected array $resolved = [];
+
     public function __construct()
     {
         $registry = [
@@ -50,9 +57,14 @@ class RuleSetFactory
             ?? throw UnknownRuleSet::for('(null)', $event->effective_rules_version);
 
         $requested = $event->effective_rules_version;
+        $key = $typeCode.'|'.$requested;
+
+        if (isset($this->resolved[$key])) {
+            return $this->resolved[$key];
+        }
 
         if (isset($this->registry[$typeCode][$requested])) {
-            return app($this->registry[$typeCode][$requested]);
+            return $this->resolved[$key] = app($this->registry[$typeCode][$requested]);
         }
 
         // Soft fallback: pick the newest registered version for this event type.
@@ -71,7 +83,7 @@ class RuleSetFactory
             'resolved_to' => $fallback->version(),
         ]);
 
-        return $fallback;
+        return $this->resolved[$key] = $fallback;
     }
 
     /**

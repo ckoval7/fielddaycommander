@@ -30,13 +30,10 @@ class ReconcileOnDomainEvent
 
         $ruleset = $this->factory->forEvent($config->event);
 
-        foreach ($ruleset->strategies() as $class) {
+        foreach ($ruleset->strategiesFor($event::class) as $class) {
             /** @var BonusStrategy $strategy */
             $strategy = $this->container->make($class);
-
-            if (in_array($event::class, $strategy->subscribesTo(), true)) {
-                $strategy->reconcile($config);
-            }
+            $strategy->reconcile($config);
         }
     }
 }

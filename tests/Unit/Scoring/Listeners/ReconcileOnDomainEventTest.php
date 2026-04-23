@@ -46,7 +46,9 @@ it('calls reconcile only on strategies that subscribe to the dispatched event', 
     $listensToGuestbook = new Subscriber('b', [GuestbookEntryChanged::class]);
 
     $fakeRuleSet = Mockery::mock(RuleSet::class);
-    $fakeRuleSet->shouldReceive('strategies')->andReturn(['a' => 'A', 'b' => 'B']);
+    $fakeRuleSet->shouldReceive('strategiesFor')
+        ->with(MessageChanged::class)
+        ->andReturn(['A']);
     $factory = Mockery::mock(RuleSetFactory::class);
     $factory->shouldReceive('forEvent')->andReturn($fakeRuleSet);
 

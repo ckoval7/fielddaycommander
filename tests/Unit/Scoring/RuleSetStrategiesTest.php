@@ -1,6 +1,11 @@
 <?php
 
+use App\Scoring\Bonuses\FieldDay2025\NtsMessageStrategy;
+use App\Scoring\Bonuses\FieldDay2025\SmSecMessageStrategy;
+use App\Scoring\Bonuses\FieldDay2025\YouthParticipationStrategy;
 use App\Scoring\Contracts\BonusStrategy;
+use App\Scoring\DomainEvents\MessageChanged;
+use App\Scoring\DomainEvents\QsoLogged;
 use App\Scoring\Rules\FieldDay2025;
 use App\Scoring\Rules\FieldDay2026;
 use App\Scoring\Rules\FieldDayTest;
@@ -37,4 +42,31 @@ it('FieldDay2026 inherits FieldDay2025 strategies', function () {
 
 it('FieldDayTest returns an empty strategies map', function () {
     expect((new FieldDayTest)->strategies())->toBe([]);
+});
+
+test('FieldDay2025::strategiesFor returns only strategies subscribing to the given event class', function () {
+    $ruleset = new FieldDay2025;
+
+    $qsoSubscribers = $ruleset->strategiesFor(QsoLogged::class);
+    $messageSubscribers = $ruleset->strategiesFor(MessageChanged::class);
+
+    expect($qsoSubscribers)->toContain(YouthParticipationStrategy::class)
+        ->not->toContain(NtsMessageStrategy::class);
+
+    expect($messageSubscribers)
+        ->toContain(NtsMessageStrategy::class)
+        ->toContain(SmSecMessageStrategy::class)
+        ->not->toContain(YouthParticipationStrategy::class);
+});
+
+test('FieldDay2025::strategiesFor returns empty array for unrelated event class', function () {
+    $ruleset = new FieldDay2025;
+
+    expect($ruleset->strategiesFor(stdClass::class))->toBe([]);
+});
+
+test('FieldDayTest::strategiesFor returns empty array regardless of event class', function () {
+    $ruleset = new FieldDayTest;
+
+    expect($ruleset->strategiesFor(QsoLogged::class))->toBe([]);
 });

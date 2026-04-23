@@ -33,6 +33,11 @@ class FieldDayTest extends FieldDay2025
         return [];
     }
 
+    public function strategiesFor(string $eventClass): array
+    {
+        return [];
+    }
+
     public function powerMultiplier(PowerContext $ctx): string
     {
         if ($ctx->effectivePowerWatts > self::LOW_WATT_CEILING) {

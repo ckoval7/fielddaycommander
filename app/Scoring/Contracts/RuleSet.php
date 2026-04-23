@@ -85,6 +85,17 @@ interface RuleSet
     public function strategies(): array;
 
     /**
+     * Return the strategy classes that subscribe to the given domain event class.
+     *
+     * Used by the reconcile listener to skip instantiating strategies that do not
+     * care about the event being dispatched. Must return class-strings only.
+     *
+     * @param  class-string  $eventClass
+     * @return array<int, class-string<BonusStrategy>>
+     */
+    public function strategiesFor(string $eventClass): array;
+
+    /**
      * Versioned rulebook reference for a bonus code.
      *
      * Covers every bonus this ruleset exposes — both strategy-driven codes

@@ -88,3 +88,22 @@ test('FD-TEST is registered in local environment', function () {
 
     expect($factory->versionsFor('FD'))->toContain('TEST');
 });
+
+test('forEvent returns the same RuleSet instance for the same event (memoized)', function () {
+    $fd = EventType::firstOrCreate(['code' => 'FD'], ['name' => 'Field Day']);
+    $event = Event::factory()->create([
+        'event_type_id' => $fd->id,
+        'rules_version' => '2025',
+    ]);
+
+    $factory = app(RuleSetFactory::class);
+    $a = $factory->forEvent($event);
+    $b = $factory->forEvent($event);
+
+    expect($a)->toBe($b);
+});
+
+test('RuleSetFactory is bound as a singleton', function () {
+    expect(app(RuleSetFactory::class))
+        ->toBe(app(RuleSetFactory::class));
+});
