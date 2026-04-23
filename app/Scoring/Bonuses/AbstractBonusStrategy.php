@@ -39,25 +39,33 @@ abstract class AbstractBonusStrategy implements BonusStrategy
             return;
         }
 
+        $query = EventBonus::where('event_configuration_id', $config->id)
+            ->where('bonus_type_id', $bonusType->id);
+
         if ($quantity === null || $quantity <= 0) {
-            EventBonus::where('event_configuration_id', $config->id)
-                ->where('bonus_type_id', $bonusType->id)
-                ->delete();
+            $query->delete();
 
             return;
         }
 
-        EventBonus::updateOrCreate(
-            [
-                'event_configuration_id' => $config->id,
-                'bonus_type_id' => $bonusType->id,
-            ],
-            [
-                'quantity' => $quantity,
-                'calculated_points' => (int) $points,
-                'is_verified' => true,
-                'verified_at' => now(),
-            ],
-        );
+        $existing = $query->first();
+
+        if ($existing) {
+            $existing->quantity = $quantity;
+            $existing->calculated_points = (int) $points;
+            $existing->is_verified = true;
+            $existing->save();
+
+            return;
+        }
+
+        EventBonus::create([
+            'event_configuration_id' => $config->id,
+            'bonus_type_id' => $bonusType->id,
+            'quantity' => $quantity,
+            'calculated_points' => (int) $points,
+            'is_verified' => true,
+            'verified_at' => now(),
+        ]);
     }
 }
