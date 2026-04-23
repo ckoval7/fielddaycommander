@@ -171,13 +171,6 @@ class Event extends Model
      */
     public static function withoutRulesVersionLock(callable $callback): mixed
     {
-        $previous = EventObserver::$bypassRulesVersionLock;
-        EventObserver::$bypassRulesVersionLock = true;
-
-        try {
-            return $callback();
-        } finally {
-            EventObserver::$bypassRulesVersionLock = $previous;
-        }
+        return EventObserver::withoutRulesVersionLock($callback);
     }
 }

@@ -7,7 +7,28 @@ use App\Scoring\Exceptions\RulesVersionLocked;
 
 class EventObserver
 {
-    public static bool $bypassRulesVersionLock = false;
+    private static bool $bypassRulesVersionLock = false;
+
+    /**
+     * Run $callback with the rules_version lock disabled. Restores the previous
+     * state in a `finally` so no leakage into subsequent Octane requests.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public static function withoutRulesVersionLock(callable $callback): mixed
+    {
+        $previous = self::$bypassRulesVersionLock;
+        self::$bypassRulesVersionLock = true;
+
+        try {
+            return $callback();
+        } finally {
+            self::$bypassRulesVersionLock = $previous;
+        }
+    }
 
     public function creating(Event $event): void
     {
