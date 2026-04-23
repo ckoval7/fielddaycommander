@@ -307,3 +307,24 @@ test('withoutRulesVersionLock restores the lock after the callback', function ()
     $event->rules_version = '2025';
     expect(fn () => $event->save())->toThrow(RulesVersionLocked::class);
 });
+
+test('confirmRescore rejects a version that is not in availableRulesVersions', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('System Administrator');
+    $this->actingAs($admin);
+
+    $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
+    [$event] = makeScoredEvent($this->fd, $mode, pointsStored: 2);
+
+    Livewire::test(EventDashboard::class, ['event' => $event])
+        ->call('openRescoreModal')
+        ->set('rescoreTargetVersion', '2099')
+        ->call('confirmRescore')
+        ->assertHasErrors(['rescoreTargetVersion']);
+
+    // rules_version on the event was NOT mutated
+    expect($event->fresh()->rules_version)->toBe('2025');
+
+    // No audit log was written
+    expect(AuditLog::where('action', 'event.rules_rescored')->count())->toBe(0);
+});

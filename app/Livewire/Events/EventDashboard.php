@@ -327,6 +327,14 @@ class EventDashboard extends Component
         ]);
 
         $target = $this->rescoreTargetVersion;
+        $allowed = collect($this->availableRulesVersions)->pluck('id')->all();
+
+        if (! in_array($target, $allowed, true)) {
+            $this->addError('rescoreTargetVersion', 'Selected rules version is not available for this event type.');
+
+            return;
+        }
+
         $previous = $this->event->rules_version;
 
         Event::withoutRulesVersionLock(function () use ($target) {
