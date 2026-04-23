@@ -164,24 +164,10 @@ class SubmissionReportService
         }
 
         // Auto-determined bonuses
-        $gotaBonus = $config->calculateGotaBonus() + $config->calculateGotaCoachBonus();
-        if ($gotaBonus > 0) {
-            $claimed['_gota'] = ['points' => $gotaBonus, 'is_verified' => true];
-        }
-
-        $youthBonus = $config->calculateYouthBonus();
-        if ($youthBonus > 0) {
-            $claimed['youth_participation'] = ['points' => $youthBonus, 'is_verified' => true];
-        }
-
-        $emergencyPowerBonus = $config->calculateEmergencyPowerBonus();
-        if ($emergencyPowerBonus > 0) {
-            $claimed['emergency_power'] = ['points' => $emergencyPowerBonus, 'is_verified' => true];
-        }
-
-        $satelliteBonus = $config->calculateSatelliteBonus();
-        if ($satelliteBonus > 0) {
-            $claimed['satellite_qso'] = ['points' => $satelliteBonus, 'is_verified' => true];
+        foreach ($this->autoBonusPoints($config) as $code => $points) {
+            if ($points > 0) {
+                $claimed[$code] = ['points' => $points, 'is_verified' => true];
+            }
         }
 
         $checklist = [];
@@ -219,6 +205,21 @@ class SubmissionReportService
         }
 
         return $checklist;
+    }
+
+    /**
+     * Compute auto-determined bonus points keyed by canonical code.
+     *
+     * @return array<string, int>
+     */
+    private function autoBonusPoints(EventConfiguration $config): array
+    {
+        return [
+            '_gota' => $config->calculateGotaBonus() + $config->calculateGotaCoachBonus(),
+            'youth_participation' => $config->calculateYouthBonus(),
+            'emergency_power' => $config->calculateEmergencyPowerBonus(),
+            'satellite_qso' => $config->calculateSatelliteBonus(),
+        ];
     }
 
     /**

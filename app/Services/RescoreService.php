@@ -11,6 +11,7 @@ use App\Scoring\Contracts\RuleSet;
 use App\Scoring\EventBonusReconciler;
 use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Scoring\RuleSetFactory;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class RescoreService
@@ -86,7 +87,7 @@ class RescoreService
             $this->reconciler->reconcileAll($config);
         });
 
-        $this->resetMemoizedRuleSet($config);
+        $config->forgetResolvedRuleSet();
 
         return [
             'rescored' => $rescored,
@@ -110,10 +111,12 @@ class RescoreService
      */
     private function migrateEventBonuses(EventConfiguration $config, string $targetVersion): array
     {
+        $counts = ['repointed' => 0, 'recomputed' => 0, 'invalidated' => 0];
+
         $eventTypeId = $config->event?->event_type_id;
 
         if (! $eventTypeId) {
-            return ['repointed' => 0, 'recomputed' => 0, 'invalidated' => 0];
+            return $counts;
         }
 
         $targetByCode = BonusType::query()
@@ -122,66 +125,87 @@ class RescoreService
             ->get()
             ->keyBy('code');
 
-        $repointed = 0;
-        $recomputed = 0;
-        $invalidated = 0;
-
         EventBonus::query()
             ->where('event_configuration_id', $config->id)
             ->with('bonusType')
-            ->chunkById(500, function ($bonuses) use ($targetByCode, &$repointed, &$recomputed, &$invalidated) {
+            ->chunkById(500, function ($bonuses) use ($targetByCode, &$counts) {
                 foreach ($bonuses as $bonus) {
-                    $currentCode = $bonus->bonusType?->code;
-
-                    if ($currentCode === null) {
-                        continue;
-                    }
-
-                    $target = $targetByCode->get($currentCode);
-
-                    if (! $target) {
-                        if ($bonus->is_verified || (int) $bonus->calculated_points !== 0) {
-                            $bonus->is_verified = false;
-                            $bonus->calculated_points = 0;
-                            $bonus->save();
-                            $invalidated++;
-                        }
-
-                        continue;
-                    }
-
-                    $quantity = max(1, (int) ($bonus->quantity ?? 1));
-                    $newPoints = $quantity * (int) $target->base_points;
-
-                    if ($target->max_points !== null) {
-                        $newPoints = min($newPoints, (int) $target->max_points);
-                    }
-
-                    $repointedThis = $bonus->bonus_type_id !== $target->id;
-                    $recomputedThis = (int) $bonus->calculated_points !== $newPoints;
-
-                    if (! $repointedThis && ! $recomputedThis) {
-                        continue;
-                    }
-
-                    $bonus->bonus_type_id = $target->id;
-                    $bonus->calculated_points = $newPoints;
-                    $bonus->save();
-
-                    if ($repointedThis) {
-                        $repointed++;
-                    }
-                    if ($recomputedThis) {
-                        $recomputed++;
-                    }
+                    $this->migrateBonus($bonus, $targetByCode, $counts);
                 }
             });
 
-        return [
-            'repointed' => $repointed,
-            'recomputed' => $recomputed,
-            'invalidated' => $invalidated,
-        ];
+        return $counts;
+    }
+
+    /**
+     * Apply migration to a single EventBonus, mutating $counts in place.
+     *
+     * @param  Collection<string, BonusType>  $targetByCode
+     * @param  array{repointed: int, recomputed: int, invalidated: int}  $counts
+     */
+    private function migrateBonus(EventBonus $bonus, $targetByCode, array &$counts): void
+    {
+        $currentCode = $bonus->bonusType?->code;
+
+        if ($currentCode === null) {
+            return;
+        }
+
+        $target = $targetByCode->get($currentCode);
+
+        if (! $target) {
+            $this->invalidateBonus($bonus, $counts);
+
+            return;
+        }
+
+        $this->applyBonusTarget($bonus, $target, $counts);
+    }
+
+    /**
+     * @param  array{repointed: int, recomputed: int, invalidated: int}  $counts
+     */
+    private function invalidateBonus(EventBonus $bonus, array &$counts): void
+    {
+        if (! $bonus->is_verified && (int) $bonus->calculated_points === 0) {
+            return;
+        }
+
+        $bonus->is_verified = false;
+        $bonus->calculated_points = 0;
+        $bonus->save();
+        $counts['invalidated']++;
+    }
+
+    /**
+     * @param  array{repointed: int, recomputed: int, invalidated: int}  $counts
+     */
+    private function applyBonusTarget(EventBonus $bonus, BonusType $target, array &$counts): void
+    {
+        $quantity = max(1, (int) ($bonus->quantity ?? 1));
+        $newPoints = $quantity * (int) $target->base_points;
+
+        if ($target->max_points !== null) {
+            $newPoints = min($newPoints, (int) $target->max_points);
+        }
+
+        $repointedThis = $bonus->bonus_type_id !== $target->id;
+        $recomputedThis = (int) $bonus->calculated_points !== $newPoints;
+
+        if (! $repointedThis && ! $recomputedThis) {
+            return;
+        }
+
+        $bonus->bonus_type_id = $target->id;
+        $bonus->calculated_points = $newPoints;
+        $bonus->save();
+
+        if ($repointedThis) {
+            $counts['repointed']++;
+        }
+        if ($recomputedThis) {
+            $counts['recomputed']++;
+        }
     }
 
     private function pointsFor(Contact $contact, RuleSet $ruleSet): int
@@ -198,11 +222,5 @@ class RescoreService
         }
 
         return $ruleSet->pointsForContact($mode, $station);
-    }
-
-    private function resetMemoizedRuleSet(EventConfiguration $config): void
-    {
-        $property = new \ReflectionProperty($config, 'resolvedRuleSet');
-        $property->setValue($config, null);
     }
 }

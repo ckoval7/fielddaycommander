@@ -228,11 +228,8 @@ class SiteSafetyChecklist extends Component
         };
 
         $event = $this->eventConfig?->event;
-        if (! $event) {
-            return;
-        }
+        $bonusType = $event ? BonusType::resolveFor($event, $bonusTypeCode) : null;
 
-        $bonusType = BonusType::resolveFor($event, $bonusTypeCode);
         if (! $bonusType) {
             return;
         }

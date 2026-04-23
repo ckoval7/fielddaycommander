@@ -94,6 +94,15 @@ class EventConfiguration extends Model
     }
 
     /**
+     * Drop the memoized RuleSet so the next resolution re-reads the event's
+     * current rules_version. Call after persisting a rules_version change.
+     */
+    public function forgetResolvedRuleSet(): void
+    {
+        $this->resolvedRuleSet = null;
+    }
+
+    /**
      * Resolve points for a single contact via the event's pinned RuleSet.
      *
      * Handles GOTA flat-rate and mode_rule_points overrides internally.

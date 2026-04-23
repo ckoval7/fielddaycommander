@@ -216,25 +216,12 @@ class ShiftAssignment extends Model
      */
     protected function syncEventBonus(): void
     {
-        $shift = $this->shift()->with('shiftRole', 'eventConfiguration.event')->first();
-        if (! $shift) {
+        $context = $this->resolveShiftBonusContext();
+        if (! $context) {
             return;
         }
 
-        $bonusTypeCode = $shift->shiftRole->getBonusTypeCode();
-        if (! $bonusTypeCode) {
-            return;
-        }
-
-        $event = $shift->eventConfiguration?->event;
-        if (! $event) {
-            return;
-        }
-
-        $bonusType = BonusType::resolveFor($event, $bonusTypeCode);
-        if (! $bonusType) {
-            return;
-        }
+        [$shift, $bonusType] = $context;
 
         EventBonus::updateOrCreate(
             [
@@ -257,28 +244,36 @@ class ShiftAssignment extends Model
      */
     protected function removeEventBonus(): void
     {
-        $shift = $this->shift()->with('shiftRole', 'eventConfiguration.event')->first();
-        if (! $shift) {
+        $context = $this->resolveShiftBonusContext();
+        if (! $context) {
             return;
         }
 
-        $bonusTypeCode = $shift->shiftRole->getBonusTypeCode();
-        if (! $bonusTypeCode) {
-            return;
-        }
-
-        $event = $shift->eventConfiguration?->event;
-        if (! $event) {
-            return;
-        }
-
-        $bonusType = BonusType::resolveFor($event, $bonusTypeCode);
-        if (! $bonusType) {
-            return;
-        }
+        [$shift, $bonusType] = $context;
 
         EventBonus::where('event_configuration_id', $shift->event_configuration_id)
             ->where('bonus_type_id', $bonusType->id)
             ->delete();
+    }
+
+    /**
+     * Resolve the shift and matching bonus type for this assignment, or null if
+     * the role does not map to a bonus or required context is missing.
+     *
+     * @return array{0: Shift, 1: BonusType}|null
+     */
+    private function resolveShiftBonusContext(): ?array
+    {
+        $shift = $this->shift()->with('shiftRole', 'eventConfiguration.event')->first();
+        $bonusTypeCode = $shift?->shiftRole?->getBonusTypeCode();
+        $event = $shift?->eventConfiguration?->event;
+
+        if (! $shift || ! $bonusTypeCode || ! $event) {
+            return null;
+        }
+
+        $bonusType = BonusType::resolveFor($event, $bonusTypeCode);
+
+        return $bonusType ? [$shift, $bonusType] : null;
     }
 }

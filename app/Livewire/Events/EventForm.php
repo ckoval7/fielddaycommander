@@ -176,10 +176,9 @@ class EventForm extends Component
 
         $versions = $this->availableRulesVersions();
         $default = (string) $this->year;
+        $fallback = $versions ? end($versions) : $default;
 
-        $this->rules_version = in_array($default, $versions, true)
-            ? $default
-            : ($versions ? end($versions) : $default);
+        $this->rules_version = in_array($default, $versions, true) ? $default : $fallback;
     }
 
     /**
