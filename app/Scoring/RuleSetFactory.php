@@ -18,15 +18,29 @@ class RuleSetFactory
      * Add new versions here as they're implemented. DO NOT remove old entries —
      * historical events continue to resolve to their frozen rulesets.
      *
+     * The synthetic FD-TEST ruleset is only registered in non-production
+     * environments. It produces fabricated scores and must never be selectable
+     * against real club data.
+     *
      * @var array<string, array<string, class-string<RuleSet>>>
      */
-    protected array $registry = [
-        'FD' => [
-            '2025' => FieldDay2025::class,
-            '2026' => FieldDay2026::class,
-            'TEST' => FieldDayTest::class,
-        ],
-    ];
+    protected array $registry;
+
+    public function __construct()
+    {
+        $registry = [
+            'FD' => [
+                '2025' => FieldDay2025::class,
+                '2026' => FieldDay2026::class,
+            ],
+        ];
+
+        if (app()->environment(['local', 'testing'])) {
+            $registry['FD']['TEST'] = FieldDayTest::class;
+        }
+
+        $this->registry = $registry;
+    }
 
     public function forEvent(Event $event): RuleSet
     {

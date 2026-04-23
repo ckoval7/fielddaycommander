@@ -72,3 +72,19 @@ test('throws UnknownRuleSet when event type has no registered rulesets at all', 
     expect(fn () => app(RuleSetFactory::class)->forEvent($event))
         ->toThrow(UnknownRuleSet::class);
 });
+
+test('FD-TEST is not registered in production environment', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    $factory = new RuleSetFactory;
+
+    expect($factory->versionsFor('FD'))->not->toContain('TEST');
+});
+
+test('FD-TEST is registered in local environment', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $factory = new RuleSetFactory;
+
+    expect($factory->versionsFor('FD'))->toContain('TEST');
+});
