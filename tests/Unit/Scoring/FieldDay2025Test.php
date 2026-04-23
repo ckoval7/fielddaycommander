@@ -103,3 +103,30 @@ test('bonus() returns the 2025-scoped row only', function () {
 test('bonus() returns null for unknown code', function () {
     expect($this->rules->bonus('no_such_code'))->toBeNull();
 });
+
+test('bonusRuleReference returns ARRL section and text for every seeded code', function () {
+    $codes = [
+        'emergency_power', 'media_publicity', 'public_location', 'public_info_booth',
+        'sm_sec_message', 'nts_message', 'satellite_qso', 'natural_power',
+        'w1aw_bulletin', 'educational_activity', 'elected_official_visit',
+        'agency_visit', 'web_submission', 'youth_participation', 'social_media',
+        'safety_officer', 'site_responsibilities',
+    ];
+
+    foreach ($codes as $code) {
+        $ref = $this->rules->bonusRuleReference($code);
+        expect($ref)->not->toBeNull("no rule text for {$code}")
+            ->and($ref)->toHaveKeys(['section', 'text'])
+            ->and($ref['section'])->toStartWith('7.3.')
+            ->and($ref['text'])->not->toBe('');
+    }
+});
+
+test('bonusRuleReference covers GOTA synthetic codes', function () {
+    expect($this->rules->bonusRuleReference('gota_qso')['section'])->toBe('7.3.13.1')
+        ->and($this->rules->bonusRuleReference('gota_coach')['section'])->toBe('7.3.13.2');
+});
+
+test('bonusRuleReference returns null for unknown code', function () {
+    expect($this->rules->bonusRuleReference('no_such_code'))->toBeNull();
+});

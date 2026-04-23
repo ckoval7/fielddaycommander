@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Livewire\Concerns\ResolvesBonusRule;
 use App\Models\AuditLog;
 use App\Models\BonusType;
 use App\Models\Event;
@@ -13,6 +14,8 @@ use Livewire\Component;
 
 class ManualBonusClaims extends Component
 {
+    use ResolvesBonusRule;
+
     public Event $event;
 
     /** @var array<int, string> */

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Livewire\Concerns\HasBandModeGrid;
+use App\Livewire\Concerns\ResolvesBonusRule;
 use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
@@ -19,6 +20,7 @@ use Livewire\Component;
 class Scoring extends Component
 {
     use HasBandModeGrid;
+    use ResolvesBonusRule;
 
     public ?Event $event = null;
 

@@ -83,4 +83,15 @@ interface RuleSet
      * @return array<string, class-string<BonusStrategy>>
      */
     public function strategies(): array;
+
+    /**
+     * Versioned rulebook reference for a bonus code.
+     *
+     * Covers every bonus this ruleset exposes — both strategy-driven codes
+     * and codes scored directly by the ruleset (e.g. emergency_power,
+     * gota_qso). Returns null for codes this version does not define.
+     *
+     * @return array{section: string, text: string}|null
+     */
+    public function bonusRuleReference(string $code): ?array;
 }
