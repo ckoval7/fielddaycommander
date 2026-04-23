@@ -327,12 +327,11 @@
                     <div class="flex items-start justify-between gap-2 py-1.5"
                          style="border-bottom: 1px solid var(--score-divider);">
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-1 flex-wrap">
+                            <x-bonus-rule-help :rule="$this->bonusRule($item['type']->code)">
                                 <span class="text-sm font-medium leading-tight" style="color: var(--score-text);">
                                     {{ $item['type']->name }}
                                 </span>
-                                <x-bonus-rule-help :rule="$this->bonusRule($item['type']->code)" />
-                            </div>
+                            </x-bonus-rule-help>
                             @if ($item['type']->is_per_occurrence && $item['bonus'])
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
                                     {{ $item['bonus']->quantity }} × {{ $item['type']->base_points }} pts
@@ -379,10 +378,9 @@
                     <div class="space-y-2">
                         <div class="flex items-start justify-between py-1.5" style="border-bottom: 1px solid var(--score-divider);">
                             <div>
-                                <div class="flex items-center gap-1 flex-wrap">
+                                <x-bonus-rule-help :rule="$this->bonusRule('gota_qso')">
                                     <span class="text-sm font-medium" style="color: var(--score-text);">GOTA QSO Bonus</span>
-                                    <x-bonus-rule-help :rule="$this->bonusRule('gota_qso')" />
-                                </div>
+                                </x-bonus-rule-help>
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
                                     {{ $this->gotaContactCount }} contacts × 5 pts
                                 </div>
@@ -393,10 +391,9 @@
                         </div>
                         <div class="flex items-start justify-between py-1.5" style="border-bottom: 1px solid var(--score-divider);">
                             <div>
-                                <div class="flex items-center gap-1 flex-wrap">
+                                <x-bonus-rule-help :rule="$this->bonusRule('gota_coach')">
                                     <span class="text-sm font-medium" style="color: var(--score-text);">GOTA Coach Bonus</span>
-                                    <x-bonus-rule-help :rule="$this->bonusRule('gota_coach')" />
-                                </div>
+                                </x-bonus-rule-help>
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
                                     {{ $this->gotaSupervisedCount }} supervised contacts (need 10+)
                                 </div>
