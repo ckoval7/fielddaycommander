@@ -70,3 +70,16 @@ test('FieldDayTest::strategiesFor returns empty array regardless of event class'
 
     expect($ruleset->strategiesFor(QsoLogged::class))->toBe([]);
 });
+
+test('FieldDay2025 STRATEGY_INDEX matches every strategy subscribesTo()', function () {
+    $ruleset = new FieldDay2025;
+
+    foreach ($ruleset->strategies() as $class) {
+        /** @var BonusStrategy $strategy */
+        $strategy = new $class;
+
+        foreach ($strategy->subscribesTo() as $eventClass) {
+            expect($ruleset->strategiesFor($eventClass))->toContain($class);
+        }
+    }
+});
