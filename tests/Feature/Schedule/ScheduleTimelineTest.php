@@ -588,6 +588,36 @@ describe('filtering and sorting', function () {
             ->toContain($pastShift->id)
             ->not->toContain($upcomingShift->id);
     });
+
+    test('All time filter shows both past and upcoming shifts', function () {
+        $this->actingAs($this->user);
+
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Operator',
+        ]);
+
+        $pastShift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->subHours(4),
+            'end_time' => appNow()->subHours(2),
+        ]);
+
+        $upcomingShift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+
+        $component = Livewire::test(ScheduleTimeline::class)
+            ->set('timeFilter', 'all');
+
+        expect($component->instance()->filteredShifts->pluck('id')->all())
+            ->toContain($pastShift->id)
+            ->toContain($upcomingShift->id);
+    });
 });
 
 describe('urgent empty shift highlighting', function () {

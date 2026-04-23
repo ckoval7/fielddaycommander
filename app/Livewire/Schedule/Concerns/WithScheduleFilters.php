@@ -71,7 +71,7 @@ trait WithScheduleFilters
             $query->where('start_time', '>', appNow());
         } elseif ($this->timeFilter === 'past') {
             $query->where('end_time', '<', appNow());
-        } else {
+        } elseif ($this->timeFilter !== 'all') {
             $query->where('end_time', '>=', appNow());
         }
 
@@ -273,7 +273,7 @@ trait WithScheduleFilters
 
     public function updatedTimeFilter(string $value): void
     {
-        if (! in_array($value, ['', 'current', 'upcoming', 'past'])) {
+        if (! in_array($value, ['', 'current', 'upcoming', 'past', 'all'])) {
             $this->timeFilter = '';
         }
     }

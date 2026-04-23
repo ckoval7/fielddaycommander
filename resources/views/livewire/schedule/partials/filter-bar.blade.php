@@ -115,6 +115,7 @@
                         <option value="current">Current</option>
                         <option value="upcoming">Upcoming</option>
                         <option value="past">Past</option>
+                        <option value="all">All</option>
                     </select>
                 </div>
             @endif
