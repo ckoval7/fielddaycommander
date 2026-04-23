@@ -8,6 +8,6 @@ class RulesVersionLocked extends RuntimeException
 {
     public static function forEvent(int $eventId): self
     {
-        return new self("Cannot change rules_version on event {$eventId}; it has already started or has contacts logged.");
+        return new self("Cannot change rules_version on event {$eventId}; the event has already started.");
     }
 }
