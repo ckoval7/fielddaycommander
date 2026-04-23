@@ -12,6 +12,8 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use App\Models\Mode;
+use App\Scoring\RuleSetFactory;
+use App\Services\RescoreService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -27,6 +29,10 @@ class EventDashboard extends Component
     public Event $event;
 
     public string $activeTab = 'overview';
+
+    public bool $showRescoreModal = false;
+
+    public string $rescoreTargetVersion = '';
 
     protected function config(): ?EventConfiguration
     {
@@ -124,7 +130,6 @@ class EventDashboard extends Component
                 'total' => 0,
                 'elected_official' => false,
                 'agency' => false,
-                'media' => false,
                 'bonus_points' => 0,
             ];
         }
@@ -143,18 +148,12 @@ class EventDashboard extends Component
             ->where('is_verified', true)
             ->exists();
 
-        $hasMedia = GuestbookEntry::where('event_configuration_id', $configId)
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_MEDIA)
-            ->where('is_verified', true)
-            ->exists();
-
-        $bonusPoints = ($hasElected ? 100 : 0) + ($hasAgency ? 100 : 0) + ($hasMedia ? 100 : 0);
+        $bonusPoints = ($hasElected ? 100 : 0) + ($hasAgency ? 100 : 0);
 
         return [
             'total' => $total,
             'elected_official' => $hasElected,
             'agency' => $hasAgency,
-            'media' => $hasMedia,
             'bonus_points' => $bonusPoints,
         ];
     }
@@ -209,12 +208,15 @@ class EventDashboard extends Component
     public function bonusList(): array
     {
         $eventTypeId = $this->event->event_type_id;
+        $rulesVersion = $this->event->resolved_rules_version;
 
         $query = BonusType::where('is_active', true);
 
         if ($eventTypeId) {
             $query->where('event_type_id', $eventTypeId);
         }
+
+        $query->where('rules_version', $rulesVersion);
 
         $bonusTypes = $query->orderByDesc('base_points')->get();
 
@@ -283,6 +285,98 @@ class EventDashboard extends Component
             'claimed_pts' => (int) $list->where('status', 'claimed')->sum('points'),
             'unclaimed_count' => $list->where('status', 'unclaimed')->count(),
         ];
+    }
+
+    #[Computed]
+    public function availableRulesVersions(): array
+    {
+        $code = $this->event->eventType?->code;
+
+        if ($code === null) {
+            return [];
+        }
+
+        $versions = app(RuleSetFactory::class)->versionsFor($code);
+
+        return collect($versions)
+            ->map(fn (string $v) => ['id' => $v, 'name' => $v])
+            ->values()
+            ->all();
+    }
+
+    public function openRescoreModal(): void
+    {
+        abort_unless(auth()->user()?->isSystemAdmin(), 403);
+
+        $this->rescoreTargetVersion = $this->event->resolved_rules_version;
+        $this->showRescoreModal = true;
+    }
+
+    public function cancelRescore(): void
+    {
+        $this->showRescoreModal = false;
+        $this->rescoreTargetVersion = '';
+    }
+
+    public function confirmRescore(RescoreService $rescorer): void
+    {
+        abort_unless(auth()->user()?->isSystemAdmin(), 403);
+
+        $this->validate([
+            'rescoreTargetVersion' => ['required', 'string', 'max:16', 'regex:/^[A-Za-z0-9._-]+$/'],
+        ]);
+
+        $target = $this->rescoreTargetVersion;
+        $allowed = collect($this->availableRulesVersions)->pluck('id')->all();
+
+        if (! in_array($target, $allowed, true)) {
+            $this->addError('rescoreTargetVersion', 'Selected rules version is not available for this event type.');
+
+            return;
+        }
+
+        $previous = $this->event->rules_version;
+
+        Event::withoutRulesVersionLock(function () use ($target) {
+            $this->event->rules_version = $target;
+            $this->event->save();
+        });
+
+        $result = $rescorer->rescoreEvent($this->event->fresh());
+
+        AuditLog::log(
+            action: 'event.rules_rescored',
+            auditable: $this->event,
+            oldValues: ['rules_version' => $previous],
+            newValues: [
+                'rules_version' => $target,
+                'contacts_rescored' => $result['rescored'],
+                'contacts_unchanged' => $result['unchanged'],
+                'bonuses_repointed' => $result['bonuses_repointed'],
+                'bonuses_recomputed' => $result['bonuses_recomputed'],
+                'bonuses_invalidated' => $result['bonuses_invalidated'],
+            ],
+            isCritical: true,
+        );
+
+        $this->event->refresh();
+
+        $this->showRescoreModal = false;
+        $this->rescoreTargetVersion = '';
+
+        $bonusSummary = sprintf(
+            '%d bonus %s repointed, %d recomputed, %d invalidated',
+            $result['bonuses_repointed'],
+            $result['bonuses_repointed'] === 1 ? 'claim' : 'claims',
+            $result['bonuses_recomputed'],
+            $result['bonuses_invalidated'],
+        );
+
+        $this->dispatch(
+            'notify',
+            title: 'Rescored',
+            description: "Applied {$target} rules. {$result['rescored']} contacts updated, {$result['unchanged']} unchanged. {$bonusSummary}. Review any invalidated or flagged bonuses.",
+        );
     }
 
     public function delete(): void

@@ -3,6 +3,7 @@
 use App\Livewire\Events\ManualBonusClaims;
 use App\Models\AuditLog;
 use App\Models\BonusType;
+use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
@@ -24,7 +25,7 @@ beforeEach(function () {
     $this->eventType = EventType::where('code', 'FD')->first();
     $classA = OperatingClass::where('code', 'A')->where('event_type_id', $this->eventType->id)->first();
 
-    $this->event = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+    $this->event = Event::factory()->create(['event_type_id' => $this->eventType->id, 'rules_version' => '2025']);
     $this->eventConfig = EventConfiguration::factory()->create([
         'event_id' => $this->event->id,
         'operating_class_id' => $classA->id,
@@ -139,7 +140,7 @@ test('unclaiming deletes the EventBonus record', function () {
 });
 
 test('cannot claim a bonus type not in the manual list', function () {
-    $nonManualBonus = BonusType::where('code', 'emergency_power')
+    $nonManualBonus = BonusType::where('code', 'sm_sec_message')
         ->where('event_type_id', $this->eventType->id)
         ->first();
 
@@ -153,7 +154,7 @@ test('cannot claim a bonus type not in the manual list', function () {
 });
 
 test('cannot unclaim a bonus type not in the manual list', function () {
-    $nonManualBonus = BonusType::where('code', 'emergency_power')
+    $nonManualBonus = BonusType::where('code', 'sm_sec_message')
         ->where('event_type_id', $this->eventType->id)
         ->first();
 
@@ -214,7 +215,7 @@ test('saveAdditionalYouth dispatches bonus-claimed event', function () {
 
 test('youth section shows auto-detected youth count', function () {
     $youthUser = User::factory()->create(['is_youth' => true]);
-    \App\Models\Contact::factory()->create([
+    Contact::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'logger_user_id' => $youthUser->id,
         'is_duplicate' => false,
@@ -226,11 +227,11 @@ test('youth section shows auto-detected youth count', function () {
         ->assertSee('20 pts');
 });
 
-test('shows elected_official_visit and agency_visit as manual claims', function () {
+test('elected_official_visit and agency_visit are derived and not shown as manual claims', function () {
     Livewire::actingAs($this->user)
         ->test(ManualBonusClaims::class, ['event' => $this->event])
-        ->assertSee('Elected Official Visit')
-        ->assertSee('Served Agency Visit');
+        ->assertDontSee('Elected Official Visit')
+        ->assertDontSee('Served Agency Visit');
 });
 
 test('shows public_info_booth bonus for class A', function () {
@@ -285,4 +286,25 @@ describe('audit logging', function () {
         expect($auditLog->old_values['bonus_type'])->toBe('social_media');
         expect($auditLog->old_values['points'])->toBe($bonusType->base_points);
     });
+});
+
+test('eligible bonus list is scoped to the event rules_version', function () {
+    // Seed an extra TEST-version row for an already-seeded manual-claim code.
+    // Without rules_version scoping the component would render both versions.
+    BonusType::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'code' => 'social_media',
+        'rules_version' => 'TEST',
+        'base_points' => 999,
+        'is_active' => true,
+    ]);
+
+    $eligible = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->get('eligibleBonusTypes');
+
+    $socialMedia = $eligible->where('code', 'social_media');
+
+    expect($socialMedia)->toHaveCount(1)
+        ->and($socialMedia->first()->rules_version)->toBe($this->event->resolved_rules_version);
 });

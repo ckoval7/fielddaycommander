@@ -3,29 +3,22 @@
 namespace App\Observers;
 
 use App\Models\Message;
-use App\Services\MessageBonusSyncService;
+use App\Scoring\DomainEvents\MessageChanged;
 
 class MessageObserver
 {
-    public function __construct(protected MessageBonusSyncService $syncService) {}
-
-    public function created(Message $message): void
+    public function saved(Message $message): void
     {
-        $this->syncService->sync($message->eventConfiguration);
-    }
-
-    public function updated(Message $message): void
-    {
-        $this->syncService->sync($message->eventConfiguration);
+        event(new MessageChanged($message, $message->event_configuration_id));
     }
 
     public function deleted(Message $message): void
     {
-        $this->syncService->sync($message->eventConfiguration);
+        event(new MessageChanged($message, $message->event_configuration_id));
     }
 
     public function restored(Message $message): void
     {
-        $this->syncService->sync($message->eventConfiguration);
+        event(new MessageChanged($message, $message->event_configuration_id));
     }
 }

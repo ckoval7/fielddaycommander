@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Livewire\Concerns\HasBandModeGrid;
+use App\Livewire\Concerns\ResolvesBonusRule;
 use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
@@ -19,6 +20,7 @@ use Livewire\Component;
 class Scoring extends Component
 {
     use HasBandModeGrid;
+    use ResolvesBonusRule;
 
     public ?Event $event = null;
 
@@ -241,9 +243,14 @@ class Scoring extends Component
 
         $classCode = $this->config()?->operatingClass?->code;
 
+        $rulesVersion = $this->event?->resolved_rules_version;
+
         $query = BonusType::where('is_active', true);
         if ($eventTypeId) {
             $query->where('event_type_id', $eventTypeId);
+        }
+        if ($rulesVersion !== null) {
+            $query->where('rules_version', $rulesVersion);
         }
         $bonusTypes = $query->orderByDesc('base_points')->get()
             ->filter(fn (BonusType $bt) => $bt->eligible_classes === null

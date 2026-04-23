@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Enums\PowerSource;
+use App\Scoring\Contracts\RuleSet;
+use App\Scoring\Dto\PowerContext;
+use App\Scoring\RuleSetFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +16,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class EventConfiguration extends Model
 {
     use HasFactory, SoftDeletes;
+
+    /** Memoized RuleSet — resolved once per instance. */
+    protected ?RuleSet $resolvedRuleSet = null;
 
     protected $fillable = [
         'event_id',
@@ -71,6 +77,50 @@ class EventConfiguration extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    /**
+     * Resolve the RuleSet for this event configuration, memoized per instance.
+     */
+    protected function ruleSet(): RuleSet
+    {
+        if ($this->resolvedRuleSet !== null) {
+            return $this->resolvedRuleSet;
+        }
+
+        $event = $this->event ?? $this->event()->first();
+
+        return $this->resolvedRuleSet = app(RuleSetFactory::class)->forEvent($event);
+    }
+
+    /**
+     * Drop the memoized RuleSet so the next resolution re-reads the event's
+     * current rules_version. Call after persisting a rules_version change.
+     */
+    public function forgetResolvedRuleSet(): void
+    {
+        $this->resolvedRuleSet = null;
+    }
+
+    /**
+     * Resolve points for a single contact via the event's pinned RuleSet.
+     *
+     * Handles GOTA flat-rate and mode_rule_points overrides internally.
+     */
+    public function pointsForContact(Mode $mode, Station $station): int
+    {
+        return $this->ruleSet()->pointsForContact($mode, $station);
+    }
+
+    /**
+     * Build a PowerContext from this configuration's effective power state.
+     */
+    protected function powerContext(): PowerContext
+    {
+        return new PowerContext(
+            effectivePowerWatts: $this->effectiveMaxPowerWatts(),
+            qualifiesForQrpNaturalBonus: $this->hasQrpNaturalPowerBonus(),
+        );
     }
 
     public function section(): BelongsTo
@@ -144,29 +194,11 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Calculate power multiplier based on 2025 Field Day rules.
-     *
-     * Uses the higher of the event config power and the highest station power,
-     * since any station exceeding the event power level affects the entire entry.
-     *
-     * 5× = ≤5W + (battery OR solar OR wind OR water) + NOT (commercial OR generator)
-     * 2× = (≤5W + commercial/generator) OR (6-100W)
-     * 1× = >100W
+     * Calculate power multiplier via the event's pinned RuleSet.
      */
     public function calculatePowerMultiplier(): string
     {
-        $effectivePower = $this->effectiveMaxPowerWatts();
-
-        if ($effectivePower > 100) {
-            return '1';
-        }
-
-        if ($effectivePower <= 5 && $this->hasQrpNaturalPowerBonus()) {
-            return '5';
-        }
-
-        // 6-100W or QRP without natural power bonus gets 2x
-        return '2';
+        return $this->ruleSet()->powerMultiplier($this->powerContext());
     }
 
     /**
@@ -234,7 +266,7 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Calculate GOTA bonus: 5 points per non-duplicate GOTA contact.
+     * Calculate GOTA bonus: points per non-duplicate GOTA contact, per the event's RuleSet.
      * Not multiplied by power multiplier.
      */
     public function calculateGotaBonus(): int
@@ -248,11 +280,11 @@ class EventConfiguration extends Model
             ->where('is_gota_contact', true)
             ->count();
 
-        return $gotaContactCount * 5;
+        return $gotaContactCount * $this->ruleSet()->gotaPointsPerContact();
     }
 
     /**
-     * Calculate GOTA coach bonus: 100 points if 10+ supervised contacts.
+     * Calculate GOTA coach bonus via the event's RuleSet threshold and bonus amount.
      */
     public function calculateGotaCoachBonus(): int
     {
@@ -260,13 +292,15 @@ class EventConfiguration extends Model
             return 0;
         }
 
+        $rules = $this->ruleSet();
+
         $supervisedGotaCount = $this->contacts()
             ->where('is_duplicate', false)
             ->where('is_gota_contact', true)
             ->whereHas('operatingSession', fn ($q) => $q->where('is_supervised', true))
             ->count();
 
-        return $supervisedGotaCount >= 10 ? 100 : 0;
+        return $supervisedGotaCount >= $rules->gotaCoachThreshold() ? $rules->gotaCoachBonus() : 0;
     }
 
     /**
@@ -297,18 +331,19 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Calculate youth participation bonus: 20 pts per youth, max 100.
+     * Calculate youth participation bonus via the event's RuleSet.
      *
      * Combines auto-counted registered youth with QSOs and any manual
      * additional youth stored in the EventBonus notes field.
      */
     public function calculateYouthBonus(): int
     {
+        $rules = $this->ruleSet();
         $autoCount = $this->countYouthWithQsos();
 
-        $bonusType = BonusType::where('code', 'youth_participation')->first();
-        $maxOccurrences = $bonusType->max_occurrences ?? 5;
-        $basePoints = $bonusType->base_points ?? 20;
+        $bonusType = $rules->bonus('youth_participation');
+        $maxOccurrences = $bonusType->max_occurrences ?? $rules->youthMaxCount();
+        $basePoints = $bonusType->base_points ?? $rules->youthPointsPerYouth();
 
         $additional = 0;
         if ($bonusType) {
@@ -324,7 +359,7 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Calculate emergency power bonus: 100 pts × min(transmitter_count, 20).
+     * Calculate emergency power bonus via the event's RuleSet.
      *
      * Awarded when running 100% on emergency power (no commercial power)
      * and the operating class is eligible for the bonus.
@@ -333,7 +368,8 @@ class EventConfiguration extends Model
      */
     public function calculateEmergencyPowerBonus(): int
     {
-        $bonusType = BonusType::where('code', 'emergency_power')->first();
+        $rules = $this->ruleSet();
+        $bonusType = $rules->bonus('emergency_power');
 
         $hasCommercialStation = ! $this->uses_commercial_power
             && $this->stations()
@@ -356,17 +392,17 @@ class EventConfiguration extends Model
             }
         }
 
-        return min($this->transmitter_count, 20) * $bonusType->base_points;
+        return min($this->transmitter_count, $rules->emergencyPowerMaxTransmitters()) * $bonusType->base_points;
     }
 
     /**
-     * Calculate satellite QSO bonus: 100 pts if any non-duplicate satellite contact exists.
+     * Calculate satellite QSO bonus via the event's RuleSet.
      *
      * Only eligible for classes A, B, F (per bonus type eligible_classes).
      */
     public function calculateSatelliteBonus(): int
     {
-        $bonusType = BonusType::where('code', 'satellite_qso')->first();
+        $bonusType = $this->ruleSet()->bonus('satellite_qso');
 
         if (! $bonusType || ! $bonusType->is_active) {
             return 0;

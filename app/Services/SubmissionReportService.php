@@ -74,6 +74,7 @@ class SubmissionReportService
             'event_end' => $config->event->end_time,
             'generated_at' => now(),
             'total_pages' => $config->has_gota_station ? 3 : 2,
+            'rules_version' => $config->event->resolved_rules_version,
         ];
     }
 
@@ -143,43 +144,38 @@ class SubmissionReportService
             ['code' => 'social_media',            'name' => 'Social media'],
         ];
 
-        // Index claimed bonuses by bonus_type code
+        // Index claimed bonuses by bonus_type code, scoped to the event's
+        // resolved rules_version so stale cross-version rows do not leak in.
+        $rulesVersion = $config->event?->resolved_rules_version;
+
         $claimed = [];
         foreach ($config->bonuses as $bonus) {
-            $code = $bonus->bonusType?->code;
-            if ($code) {
-                $claimed[$code] = [
-                    'points' => (int) $bonus->calculated_points,
-                    'is_verified' => $bonus->is_verified,
-                ];
+            $bonusType = $bonus->bonusType;
+
+            if (! $bonusType || $bonusType->rules_version !== $rulesVersion) {
+                continue;
             }
+
+            $claimed[$bonusType->code] = [
+                'name' => $bonusType->name,
+                'points' => (int) $bonus->calculated_points,
+                'is_verified' => $bonus->is_verified,
+            ];
         }
 
         // Auto-determined bonuses
-        $gotaBonus = $config->calculateGotaBonus() + $config->calculateGotaCoachBonus();
-        if ($gotaBonus > 0) {
-            $claimed['_gota'] = ['points' => $gotaBonus, 'is_verified' => true];
-        }
-
-        $youthBonus = $config->calculateYouthBonus();
-        if ($youthBonus > 0) {
-            $claimed['youth_participation'] = ['points' => $youthBonus, 'is_verified' => true];
-        }
-
-        $emergencyPowerBonus = $config->calculateEmergencyPowerBonus();
-        if ($emergencyPowerBonus > 0) {
-            $claimed['emergency_power'] = ['points' => $emergencyPowerBonus, 'is_verified' => true];
-        }
-
-        $satelliteBonus = $config->calculateSatelliteBonus();
-        if ($satelliteBonus > 0) {
-            $claimed['satellite_qso'] = ['points' => $satelliteBonus, 'is_verified' => true];
+        foreach ($this->autoBonusPoints($config) as $code => $points) {
+            if ($points > 0) {
+                $claimed[$code] = ['points' => $points, 'is_verified' => true];
+            }
         }
 
         $checklist = [];
+        $rendered = [];
         foreach ($arrlOrder as $item) {
             $code = $item['code'];
             $match = $claimed[$code] ?? null;
+            $rendered[$code] = true;
 
             $checklist[] = [
                 'name' => $item['name'],
@@ -191,7 +187,39 @@ class SubmissionReportService
             ];
         }
 
+        // Append ruleset-specific extras (e.g. non-ARRL bonuses introduced by a
+        // custom rules_version) so they are visible on the sheet.
+        foreach ($claimed as $code => $match) {
+            if (isset($rendered[$code])) {
+                continue;
+            }
+
+            $checklist[] = [
+                'name' => $match['name'] ?? $code,
+                'code' => $code,
+                'claimed' => true,
+                'points' => $match['points'],
+                'is_verified' => $match['is_verified'],
+                'auto' => false,
+            ];
+        }
+
         return $checklist;
+    }
+
+    /**
+     * Compute auto-determined bonus points keyed by canonical code.
+     *
+     * @return array<string, int>
+     */
+    private function autoBonusPoints(EventConfiguration $config): array
+    {
+        return [
+            '_gota' => $config->calculateGotaBonus() + $config->calculateGotaCoachBonus(),
+            'youth_participation' => $config->calculateYouthBonus(),
+            'emergency_power' => $config->calculateEmergencyPowerBonus(),
+            'satellite_qso' => $config->calculateSatelliteBonus(),
+        ];
     }
 
     /**

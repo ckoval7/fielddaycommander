@@ -1,6 +1,13 @@
 <?php
 
+use App\Enums\PowerSource;
+use App\Models\BonusType;
+use App\Models\Contact;
+use App\Models\Event;
+use App\Models\EventBonus;
 use App\Models\EventConfiguration;
+use App\Models\OperatingClass;
+use App\Models\OperatingSession;
 use App\Models\Station;
 
 uses()->group('unit', 'models');
@@ -99,7 +106,7 @@ test('station at or below event config power does not affect multiplier', functi
     Station::factory()->create([
         'event_configuration_id' => $config->id,
         'max_power_watts' => 5,
-        'power_source' => \App\Enums\PowerSource::Battery,
+        'power_source' => PowerSource::Battery,
     ]);
 
     expect($config->calculatePowerMultiplier())->toBe('5')
@@ -144,7 +151,7 @@ test('hasContacts returns true when configuration has contacts', function () {
     $config = EventConfiguration::factory()->create();
 
     // Create a contact for this configuration
-    \App\Models\Contact::factory()->create([
+    Contact::factory()->create([
         'event_configuration_id' => $config->id,
     ]);
 
@@ -162,7 +169,7 @@ test('hasGotaContacts returns true when configuration has GOTA contacts', functi
         'has_gota_station' => true,
     ]);
 
-    \App\Models\Contact::factory()->create([
+    Contact::factory()->create([
         'event_configuration_id' => $config->id,
         'is_gota_contact' => true,
     ]);
@@ -179,7 +186,7 @@ test('hasGotaContacts returns false when configuration has no GOTA contacts', fu
 test('isLocked returns true when configuration has contacts', function () {
     $config = EventConfiguration::factory()->create();
 
-    \App\Models\Contact::factory()->create([
+    Contact::factory()->create([
         'event_configuration_id' => $config->id,
     ]);
 
@@ -187,7 +194,7 @@ test('isLocked returns true when configuration has contacts', function () {
 });
 
 test('isLocked returns true when event has started', function () {
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->subHour(),
         'end_time' => now()->addHour(),
     ]);
@@ -200,7 +207,7 @@ test('isLocked returns true when event has started', function () {
 });
 
 test('isLocked returns false when no contacts and event not started', function () {
-    $event = \App\Models\Event::factory()->create([
+    $event = Event::factory()->create([
         'start_time' => now()->addDay(),
         'end_time' => now()->addDays(2),
     ]);
@@ -221,14 +228,14 @@ test('calculateQsoScore returns total QSO points with power multiplier', functio
     ]);
 
     // Create 3 contacts worth 1 point each = 3 points
-    \App\Models\Contact::factory(3)->create([
+    Contact::factory(3)->create([
         'event_configuration_id' => $config->id,
         'points' => 1,
         'is_duplicate' => false,
     ]);
 
     // Create 1 duplicate (should not count)
-    \App\Models\Contact::factory()->create([
+    Contact::factory()->create([
         'event_configuration_id' => $config->id,
         'points' => 1,
         'is_duplicate' => true,
@@ -242,20 +249,20 @@ test('calculateBonusScore returns sum of verified bonus points', function () {
     $config = EventConfiguration::factory()->create();
 
     // Create verified bonuses
-    \App\Models\EventBonus::factory()->create([
+    EventBonus::factory()->create([
         'event_configuration_id' => $config->id,
         'calculated_points' => 100,
         'is_verified' => true,
     ]);
 
-    \App\Models\EventBonus::factory()->create([
+    EventBonus::factory()->create([
         'event_configuration_id' => $config->id,
         'calculated_points' => 50,
         'is_verified' => true,
     ]);
 
     // Create unverified bonus (should not count)
-    \App\Models\EventBonus::factory()->create([
+    EventBonus::factory()->create([
         'event_configuration_id' => $config->id,
         'calculated_points' => 200,
         'is_verified' => false,
@@ -271,14 +278,14 @@ test('calculateFinalScore returns QSO score plus bonus score', function () {
     ]);
 
     // Create contacts: 2 × 1 × 2 multiplier = 4 points
-    \App\Models\Contact::factory(2)->create([
+    Contact::factory(2)->create([
         'event_configuration_id' => $config->id,
         'points' => 1,
         'is_duplicate' => false,
     ]);
 
     // Create verified bonus: 100 points
-    \App\Models\EventBonus::factory()->create([
+    EventBonus::factory()->create([
         'event_configuration_id' => $config->id,
         'calculated_points' => 100,
         'is_verified' => true,
@@ -290,13 +297,13 @@ test('calculateFinalScore returns QSO score plus bonus score', function () {
 
 test('calculateQsoScore excludes GOTA contacts', function () {
     $config = EventConfiguration::factory()->create(['max_power_watts' => 100]);
-    \App\Models\Contact::factory()->create([
+    Contact::factory()->create([
         'event_configuration_id' => $config->id,
         'is_gota_contact' => false,
         'points' => 2,
         'is_duplicate' => false,
     ]);
-    \App\Models\Contact::factory()->gota()->create([
+    Contact::factory()->gota()->create([
         'event_configuration_id' => $config->id,
         'is_duplicate' => false,
     ]);
@@ -305,11 +312,11 @@ test('calculateQsoScore excludes GOTA contacts', function () {
 
 test('calculateGotaBonus returns 5 points per non-duplicate GOTA contact', function () {
     $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
-    \App\Models\Contact::factory()->gota()->count(3)->create([
+    Contact::factory()->gota()->count(3)->create([
         'event_configuration_id' => $config->id,
         'is_duplicate' => false,
     ]);
-    \App\Models\Contact::factory()->gota()->create([
+    Contact::factory()->gota()->create([
         'event_configuration_id' => $config->id,
         'is_duplicate' => true,
     ]);
@@ -319,8 +326,8 @@ test('calculateGotaBonus returns 5 points per non-duplicate GOTA contact', funct
 test('calculateGotaCoachBonus returns 100 when 10+ supervised contacts exist', function () {
     $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
     $station = Station::factory()->gota()->create(['event_configuration_id' => $config->id]);
-    $session = \App\Models\OperatingSession::factory()->supervised()->create(['station_id' => $station->id]);
-    \App\Models\Contact::factory()->gota()->count(10)->create([
+    $session = OperatingSession::factory()->supervised()->create(['station_id' => $station->id]);
+    Contact::factory()->gota()->count(10)->create([
         'event_configuration_id' => $config->id,
         'operating_session_id' => $session->id,
         'is_duplicate' => false,
@@ -331,8 +338,8 @@ test('calculateGotaCoachBonus returns 100 when 10+ supervised contacts exist', f
 test('calculateGotaCoachBonus returns 0 when fewer than 10 supervised contacts', function () {
     $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
     $station = Station::factory()->gota()->create(['event_configuration_id' => $config->id]);
-    $session = \App\Models\OperatingSession::factory()->supervised()->create(['station_id' => $station->id]);
-    \App\Models\Contact::factory()->gota()->count(9)->create([
+    $session = OperatingSession::factory()->supervised()->create(['station_id' => $station->id]);
+    Contact::factory()->gota()->count(9)->create([
         'event_configuration_id' => $config->id,
         'operating_session_id' => $session->id,
         'is_duplicate' => false,
@@ -341,14 +348,14 @@ test('calculateGotaCoachBonus returns 0 when fewer than 10 supervised contacts',
 });
 
 test('emergency power bonus disqualified when any station uses commercial mains', function () {
-    $operatingClass = \App\Models\OperatingClass::factory()->create(['code' => 'A']);
+    $operatingClass = OperatingClass::factory()->create(['code' => 'A']);
     $config = EventConfiguration::factory()->create([
         'uses_commercial_power' => false,
         'transmitter_count' => 2,
         'operating_class_id' => $operatingClass->id,
     ]);
 
-    \App\Models\BonusType::factory()->create([
+    BonusType::factory()->create([
         'code' => 'emergency_power',
         'base_points' => 100,
         'is_active' => true,
@@ -357,26 +364,30 @@ test('emergency power bonus disqualified when any station uses commercial mains'
 
     Station::factory()->create([
         'event_configuration_id' => $config->id,
-        'power_source' => \App\Enums\PowerSource::Battery,
+        'power_source' => PowerSource::Battery,
     ]);
 
     Station::factory()->create([
         'event_configuration_id' => $config->id,
-        'power_source' => \App\Enums\PowerSource::CommercialMains,
+        'power_source' => PowerSource::CommercialMains,
     ]);
 
     expect($config->calculateEmergencyPowerBonus())->toBe(0);
 });
 
 test('emergency power bonus awarded when all stations use emergency power sources', function () {
-    $operatingClass = \App\Models\OperatingClass::factory()->create(['code' => 'A']);
+    $operatingClass = OperatingClass::factory()->create(['code' => 'A']);
+    $event = Event::factory()->create(['year' => 2025, 'rules_version' => '2025']);
     $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
         'uses_commercial_power' => false,
         'transmitter_count' => 2,
         'operating_class_id' => $operatingClass->id,
     ]);
 
-    \App\Models\BonusType::factory()->create([
+    BonusType::factory()->create([
+        'event_type_id' => $event->event_type_id,
+        'rules_version' => '2025',
         'code' => 'emergency_power',
         'base_points' => 100,
         'is_active' => true,
@@ -385,12 +396,12 @@ test('emergency power bonus awarded when all stations use emergency power source
 
     Station::factory()->create([
         'event_configuration_id' => $config->id,
-        'power_source' => \App\Enums\PowerSource::Generator,
+        'power_source' => PowerSource::Generator,
     ]);
 
     Station::factory()->create([
         'event_configuration_id' => $config->id,
-        'power_source' => \App\Enums\PowerSource::Battery,
+        'power_source' => PowerSource::Battery,
     ]);
 
     expect($config->calculateEmergencyPowerBonus())->toBe(200);
@@ -407,13 +418,13 @@ test('natural power bonus lost when any station uses generator', function () {
     Station::factory()->create([
         'event_configuration_id' => $config->id,
         'max_power_watts' => 5,
-        'power_source' => \App\Enums\PowerSource::Battery,
+        'power_source' => PowerSource::Battery,
     ]);
 
     Station::factory()->create([
         'event_configuration_id' => $config->id,
         'max_power_watts' => 5,
-        'power_source' => \App\Enums\PowerSource::Generator,
+        'power_source' => PowerSource::Generator,
     ]);
 
     expect($config->calculatePowerMultiplier())->toBe('2');
@@ -430,13 +441,13 @@ test('natural power bonus retained when all stations use natural power', functio
     Station::factory()->create([
         'event_configuration_id' => $config->id,
         'max_power_watts' => 5,
-        'power_source' => \App\Enums\PowerSource::Solar,
+        'power_source' => PowerSource::Solar,
     ]);
 
     Station::factory()->create([
         'event_configuration_id' => $config->id,
         'max_power_watts' => 5,
-        'power_source' => \App\Enums\PowerSource::Other,
+        'power_source' => PowerSource::Other,
     ]);
 
     expect($config->calculatePowerMultiplier())->toBe('5');
@@ -453,13 +464,13 @@ test('natural power bonus lost when any station uses commercial mains', function
     Station::factory()->create([
         'event_configuration_id' => $config->id,
         'max_power_watts' => 5,
-        'power_source' => \App\Enums\PowerSource::Battery,
+        'power_source' => PowerSource::Battery,
     ]);
 
     Station::factory()->create([
         'event_configuration_id' => $config->id,
         'max_power_watts' => 5,
-        'power_source' => \App\Enums\PowerSource::CommercialMains,
+        'power_source' => PowerSource::CommercialMains,
     ]);
 
     expect($config->calculatePowerMultiplier())->toBe('2');

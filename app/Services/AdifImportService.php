@@ -8,7 +8,9 @@ use App\Exceptions\AdifImportRecordException;
 use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
 use App\Models\Contact;
+use App\Models\EventConfiguration;
 use App\Models\OperatingSession;
+use App\Models\Station;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -77,7 +79,17 @@ class AdifImportService
         );
 
         $mode = $record->mode;
-        $points = $dupeCheck['is_duplicate'] ? 0 : ($mode?->points_fd ?? 1);
+
+        if ($dupeCheck['is_duplicate']) {
+            $points = 0;
+        } else {
+            $eventConfiguration = EventConfiguration::find($import->event_configuration_id);
+            $station = Station::find($record->station_id);
+
+            $points = $eventConfiguration && $station && $mode
+                ? $eventConfiguration->pointsForContact($mode, $station)
+                : ($mode?->points_fd ?? 1);
+        }
 
         Contact::create([
             'uuid' => Str::uuid()->toString(),

@@ -81,7 +81,11 @@ class ExternalContactHandler
             : ['is_duplicate' => false, 'duplicate_of_contact_id' => null];
 
         $mode = $modeId !== null ? Mode::find($modeId) : null;
-        $points = $dupeCheck['is_duplicate'] ? 0 : ($mode?->points_fd ?? 1);
+        $points = match (true) {
+            $dupeCheck['is_duplicate'] => 0,
+            $mode !== null => $config->pointsForContact($mode, $station),
+            default => 1,
+        };
 
         $contact = Contact::create([
             'uuid' => Str::uuid()->toString(),

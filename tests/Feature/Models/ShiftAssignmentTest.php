@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\BonusType;
+use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\Shift;
@@ -99,7 +100,8 @@ describe('Confirmation & Bonus Sync', function () {
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\EventTypeSeeder']);
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\BonusTypeSeeder']);
 
-        $eventConfiguration = EventConfiguration::factory()->create();
+        $event = Event::factory()->create(['rules_version' => '2025']);
+        $eventConfiguration = EventConfiguration::factory()->create(['event_id' => $event->id]);
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
             'name' => 'Public Information Table',
@@ -128,7 +130,8 @@ describe('Confirmation & Bonus Sync', function () {
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\EventTypeSeeder']);
         $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\BonusTypeSeeder']);
 
-        $eventConfiguration = EventConfiguration::factory()->create();
+        $event = Event::factory()->create(['rules_version' => '2025']);
+        $eventConfiguration = EventConfiguration::factory()->create(['event_id' => $event->id]);
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $eventConfiguration->id,
             'name' => 'Public Information Table',

@@ -44,6 +44,15 @@
                 />
             @endcan
 
+            @if (auth()->user()?->isSystemAdmin())
+                <x-button
+                    label="Change Rules & Rescore"
+                    icon="phosphor-scales"
+                    class="btn-outline btn-warning"
+                    wire:click="openRescoreModal"
+                />
+            @endif
+
             @can('delete-events')
                 <button
                     type="button"
@@ -57,6 +66,52 @@
             @endcan
         </div>
     </div>
+
+    @if (auth()->user()?->isSystemAdmin())
+        <x-modal wire:model="showRescoreModal" title="Change Rules Version & Rescore">
+            <div class="space-y-4">
+                <p class="text-sm">
+                    This will change the pinned rules version on this event and recompute <span class="font-semibold">every contact's point value</span> using the selected ruleset. Use this when an event was scored with an outdated ruleset and needs to be recalculated.
+                </p>
+
+                <div class="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
+                    <div class="font-semibold text-warning flex items-center gap-1">
+                        <x-icon name="phosphor-warning" class="w-4 h-4" />
+                        Bonuses are not recalculated automatically
+                    </div>
+                    <p class="mt-1 text-base-content/80">
+                        After rescoring, review the bonus checklist for any changes. Rule updates can alter bonus amounts, thresholds, or which bonuses apply — you may need to re-verify, adjust, or claim bonuses that changed between rule versions.
+                    </p>
+                </div>
+
+                <div>
+                    <div class="text-xs text-base-content/60 mb-1">Current resolved version</div>
+                    <div class="font-mono text-sm">{{ $event->resolved_rules_version }}</div>
+                </div>
+
+                <x-select
+                    label="Apply rules version"
+                    wire:model="rescoreTargetVersion"
+                    :options="$this->availableRulesVersions"
+                    option-label="name"
+                    option-value="id"
+                    icon="phosphor-scales"
+                    hint="Only shipped rulesets are listed."
+                />
+            </div>
+
+            <x-slot:actions>
+                <x-button label="Cancel" wire:click="cancelRescore" class="btn-ghost" />
+                <x-button
+                    label="Apply & Rescore"
+                    wire:click="confirmRescore"
+                    class="btn-warning"
+                    icon="phosphor-arrows-clockwise"
+                    spinner="confirmRescore"
+                />
+            </x-slot:actions>
+        </x-modal>
+    @endif
 
     <!-- Tabs -->
     <x-tabs wire:model="activeTab">
@@ -107,6 +162,20 @@
                             <div>
                                 <div class="text-sm text-base-content/60">Power Multiplier</div>
                                 <div class="font-semibold">{{ $event->eventConfiguration->calculatePowerMultiplier() }}x</div>
+                            </div>
+
+                            <!-- Scoring Rules -->
+                            <div>
+                                <div class="text-sm text-base-content/60">Scoring Rules</div>
+                                <div class="font-semibold">
+                                    ARRL {{ $event->eventType->name ?? 'Field Day' }}
+                                    <span class="font-mono">{{ $event->resolved_rules_version }}</span>
+                                    @if ($event->effective_rules_version !== $event->resolved_rules_version)
+                                        <span class="text-xs text-warning" title="Pinned to {{ $event->effective_rules_version }} — that ruleset is not yet shipped, so scoring falls back to {{ $event->resolved_rules_version }}.">
+                                            (pinned {{ $event->effective_rules_version }})
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
 
                             <!-- Power Sources -->
@@ -228,14 +297,6 @@
                                 <div class="flex items-center justify-between">
                                     <span class="text-sm text-base-content/60">Served Agency</span>
                                     @if($this->guestbookStats['agency'])
-                                        <span class="badge badge-success badge-sm">+100</span>
-                                    @else
-                                        <span class="badge badge-ghost badge-sm">--</span>
-                                    @endif
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-base-content/60">Media Publicity</span>
-                                    @if($this->guestbookStats['media'])
                                         <span class="badge badge-success badge-sm">+100</span>
                                     @else
                                         <span class="badge badge-ghost badge-sm">--</span>

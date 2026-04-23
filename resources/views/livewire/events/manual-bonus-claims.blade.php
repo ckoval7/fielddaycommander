@@ -20,8 +20,11 @@
                                         : "claim({$bonusType->id}, \$wire.notes[{$bonusType->id}])" }}"
                                     @if($claimed) wire:confirm="Remove this bonus claim?" @endif
                                 />
-                                <div class="min-w-0">
-                                    <div class="text-sm font-medium">{{ $bonusType->name }}</div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1 flex-wrap">
+                                        <span class="text-sm font-medium">{{ $bonusType->name }}</span>
+                                        <x-bonus-rule-help :rule="$this->bonusRule($bonusType->code)" />
+                                    </div>
                                     <div class="text-xs text-base-content/60 truncate">{{ $bonusType->description }}</div>
                                 </div>
                             </div>

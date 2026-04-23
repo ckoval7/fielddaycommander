@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\BonusType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\BonusType>
+ * @extends Factory<BonusType>
  */
 class BonusTypeFactory extends Factory
 {
@@ -18,7 +19,9 @@ class BonusTypeFactory extends Factory
     {
         return [
             'event_type_id' => 1, // Field Day
+            'rules_version' => '2025',
             'code' => fake()->unique()->slug(2),
+            'trigger_type' => 'manual',
             'name' => fake()->words(3, true),
             'description' => fake()->sentence(),
             'base_points' => fake()->randomElement([50, 100, 200, 500]),

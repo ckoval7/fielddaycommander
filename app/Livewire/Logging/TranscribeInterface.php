@@ -198,7 +198,7 @@ class TranscribeInterface extends Component
 
         $session = $this->getOrCreateTranscriptionSession();
 
-        $contactPoints = $this->station->is_gota ? 5 : $mode->points_fd;
+        $contactPoints = $this->station->eventConfiguration->pointsForContact($mode, $this->station);
 
         $contact = Contact::create([
             'event_configuration_id' => $this->station->event_configuration_id,
@@ -471,9 +471,9 @@ class TranscribeInterface extends Component
             ->where('is_duplicate', false)
             ->exists();
 
-        $contactPoints = $contact->is_gota_contact
-            ? 5
-            : ($contact->mode->points_fd ?? 1);
+        $stationShim = Station::make(['is_gota' => $contact->is_gota_contact]);
+        $contactPoints = $contact->eventConfiguration?->pointsForContact($contact->mode, $stationShim)
+            ?? ($contact->is_gota_contact ? 5 : ($contact->mode->points_fd ?? 1));
 
         $contact->update([
             'is_duplicate' => $isDuplicate,

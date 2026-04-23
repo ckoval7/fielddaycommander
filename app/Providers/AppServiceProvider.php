@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Contact;
 use App\Models\EquipmentEvent;
+use App\Models\Event;
 use App\Models\GuestbookEntry;
 use App\Models\Image;
 use App\Models\Message;
@@ -12,6 +13,7 @@ use App\Models\Station;
 use App\Models\W1awBulletin;
 use App\Observers\ContactObserver;
 use App\Observers\EquipmentEventObserver;
+use App\Observers\EventObserver;
 use App\Observers\GuestbookEntryObserver;
 use App\Observers\ImageObserver;
 use App\Observers\MessageObserver;
@@ -22,6 +24,7 @@ use App\Policies\GuestbookEntryPolicy;
 use App\Policies\ImagePolicy;
 use App\Policies\MessagePolicy;
 use App\Policies\W1awBulletinPolicy;
+use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
 use App\View\Components\Icon;
@@ -43,6 +46,8 @@ class AppServiceProvider extends ServiceProvider
         // Scoped ensures mutable state resets between Octane requests while sharing within a request
         $this->app->scoped(EventContextService::class);
         $this->app->alias(EventContextService::class, ActiveEventService::class);
+
+        $this->app->singleton(RuleSetFactory::class);
     }
 
     /**
@@ -75,6 +80,7 @@ class AppServiceProvider extends ServiceProvider
         // Register model observers
         Contact::observe(ContactObserver::class);
         EquipmentEvent::observe(EquipmentEventObserver::class);
+        Event::observe(EventObserver::class);
         GuestbookEntry::observe(GuestbookEntryObserver::class);
         Image::observe(ImageObserver::class);
         Message::observe(MessageObserver::class);

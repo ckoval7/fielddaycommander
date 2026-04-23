@@ -227,7 +227,9 @@ class SiteSafetyChecklist extends Component
             ChecklistType::SiteResponsibilities => 'site_responsibilities',
         };
 
-        $bonusType = BonusType::where('code', $bonusTypeCode)->first();
+        $event = $this->eventConfig?->event;
+        $bonusType = $event ? BonusType::resolveFor($event, $bonusTypeCode) : null;
+
         if (! $bonusType) {
             return;
         }
@@ -270,7 +272,12 @@ class SiteSafetyChecklist extends Component
             ChecklistType::SiteResponsibilities => 'site_responsibilities',
         };
 
-        $bonusType = BonusType::where('code', $bonusTypeCode)->first();
+        $event = $this->eventConfig?->event;
+        if (! $event) {
+            return;
+        }
+
+        $bonusType = BonusType::resolveFor($event, $bonusTypeCode);
         if (! $bonusType) {
             return;
         }
