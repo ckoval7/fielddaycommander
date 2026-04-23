@@ -14,6 +14,7 @@ use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Models\User;
 use App\Scoring\Exceptions\RulesVersionLocked;
+use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Services\RescoreService;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -80,6 +81,19 @@ test('rescore service recomputes points using newly selected rules version', fun
 
     expect($result['rescored'])->toBe(1)
         ->and($contact->fresh()->points)->toBe(7);
+});
+
+test('rescore service rejects an event pinned to an unregistered rules_version', function () {
+    $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
+    [$event] = makeScoredEvent($this->fd, $mode, pointsStored: 2);
+
+    Event::withoutRulesVersionLock(function () use ($event) {
+        $event->rules_version = '2099';
+        $event->save();
+    });
+
+    expect(fn () => app(RescoreService::class)->rescoreEvent($event->fresh()))
+        ->toThrow(UnknownRuleSet::class);
 });
 
 test('rescore service zeros out duplicate contacts', function () {

@@ -67,7 +67,9 @@ class RuleSetFactory
      */
     public function versionsFor(string $typeCode): array
     {
-        $versions = array_keys($this->registry[$typeCode] ?? []);
+        // array_keys coerces numeric-string keys like '2025' to ints, so cast
+        // back to strings — version identifiers are strings throughout the app.
+        $versions = array_map('strval', array_keys($this->registry[$typeCode] ?? []));
         sort($versions);
 
         return $versions;

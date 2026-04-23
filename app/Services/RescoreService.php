@@ -9,6 +9,7 @@ use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\EventBonusReconciler;
+use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Scoring\RuleSetFactory;
 use Illuminate\Support\Facades\DB;
 
@@ -45,6 +46,12 @@ class RescoreService
                 'bonuses_recomputed' => 0,
                 'bonuses_invalidated' => 0,
             ];
+        }
+
+        $typeCode = $event->eventType?->code;
+
+        if ($typeCode === null || ! in_array((string) $event->rules_version, $this->factory->versionsFor($typeCode), true)) {
+            throw UnknownRuleSet::for($typeCode ?? '(null)', (string) $event->rules_version);
         }
 
         $ruleSet = $this->factory->forEvent($event);
