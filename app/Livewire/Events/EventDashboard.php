@@ -130,7 +130,6 @@ class EventDashboard extends Component
                 'total' => 0,
                 'elected_official' => false,
                 'agency' => false,
-                'media' => false,
                 'bonus_points' => 0,
             ];
         }
@@ -149,18 +148,12 @@ class EventDashboard extends Component
             ->where('is_verified', true)
             ->exists();
 
-        $hasMedia = GuestbookEntry::where('event_configuration_id', $configId)
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_MEDIA)
-            ->where('is_verified', true)
-            ->exists();
-
-        $bonusPoints = ($hasElected ? 100 : 0) + ($hasAgency ? 100 : 0) + ($hasMedia ? 100 : 0);
+        $bonusPoints = ($hasElected ? 100 : 0) + ($hasAgency ? 100 : 0);
 
         return [
             'total' => $total,
             'elected_official' => $hasElected,
             'agency' => $hasAgency,
-            'media' => $hasMedia,
             'bonus_points' => $bonusPoints,
         ];
     }

@@ -76,15 +76,6 @@ class BonusPointsSidebar extends Component
                 'points' => 100,
                 'rule' => '7.3.12',
             ],
-            'media' => [
-                'label' => 'Media Publicity',
-                'icon' => 'phosphor-television',
-                'iconColor' => 'text-secondary',
-                'count' => $this->mediaCount,
-                'earned' => $this->mediaCount > 0,
-                'points' => 100,
-                'rule' => '7.3.2',
-            ],
         ];
     }
 

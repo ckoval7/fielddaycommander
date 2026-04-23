@@ -302,14 +302,6 @@
                                         <span class="badge badge-ghost badge-sm">--</span>
                                     @endif
                                 </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-base-content/60">Media Publicity</span>
-                                    @if($this->guestbookStats['media'])
-                                        <span class="badge badge-success badge-sm">+100</span>
-                                    @else
-                                        <span class="badge badge-ghost badge-sm">--</span>
-                                    @endif
-                                </div>
                             </div>
 
                             <!-- Bonus Points Total -->

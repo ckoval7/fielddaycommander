@@ -15,7 +15,6 @@ class BonusTypeSeeder extends Seeder
         'w1aw_bulletin' => 'derived',
         'elected_official_visit' => 'derived',
         'agency_visit' => 'derived',
-        'media_publicity' => 'derived',
         'youth_participation' => 'hybrid',
     ];
 
@@ -74,7 +73,7 @@ class BonusTypeSeeder extends Seeder
                 'rules_version' => '2025',
                 'code' => 'media_publicity',
                 'name' => 'Media Publicity',
-                'description' => 'Official visit by broadcast or print media representative',
+                'description' => 'Publicity received from local media',
                 'base_points' => 100,
                 'is_per_transmitter' => false,
                 'is_per_occurrence' => false,

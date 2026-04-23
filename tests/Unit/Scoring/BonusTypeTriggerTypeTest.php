@@ -17,13 +17,15 @@ it('derived codes are classified correctly', function (string $code) {
     ['w1aw_bulletin'],
     ['elected_official_visit'],
     ['agency_visit'],
-    ['media_publicity'],
 ]);
 
 it('youth_participation is hybrid', function () {
     expect(BonusType::where('code', 'youth_participation')->first()?->trigger_type)->toBe('hybrid');
 });
 
-it('social_media is manual', function () {
-    expect(BonusType::where('code', 'social_media')->first()?->trigger_type)->toBe('manual');
-});
+it('manual codes are classified correctly', function (string $code) {
+    expect(BonusType::where('code', $code)->first()?->trigger_type)->toBe('manual');
+})->with([
+    ['social_media'],
+    ['media_publicity'],
+]);

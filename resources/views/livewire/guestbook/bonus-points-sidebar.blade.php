@@ -38,6 +38,18 @@
                 <div class="text-xs text-base-content/50 -mt-2 ml-7">Tracked but not bonus-eligible per rules</div>
             @endif
 
+            {{-- Media Representatives (tracked here, bonus claimed in Manual Bonus Claims) --}}
+            @if($this->mediaCount > 0)
+                <div class="flex items-center justify-between text-base-content/60">
+                    <div class="flex items-center gap-2">
+                        <x-icon name="phosphor-television" class="w-5 h-5 text-secondary" />
+                        <span class="text-sm">Media Representatives</span>
+                    </div>
+                    <x-badge :value="$this->mediaCount" class="badge-secondary badge-sm" />
+                </div>
+                <div class="text-xs text-base-content/50 -mt-2 ml-7">Claim Media Publicity bonus on the event dashboard</div>
+            @endif
+
             <div class="divider my-2"></div>
 
             {{-- Points Summary --}}

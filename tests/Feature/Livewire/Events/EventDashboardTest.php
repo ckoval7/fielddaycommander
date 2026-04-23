@@ -204,7 +204,7 @@ test('event dashboard displays guestbook stats when guestbook is enabled', funct
     ]);
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
         'is_verified' => true,
     ]);
 
@@ -213,8 +213,9 @@ test('event dashboard displays guestbook stats when guestbook is enabled', funct
         ->assertSee('Guestbook Visitors')
         ->assertSee('Total Visitors')
         ->assertSee('Elected Official')
-        ->assertSee('Media Publicity')
-        ->assertSee('200 pts'); // elected official + media = 200
+        ->assertSee('Served Agency')
+        ->assertDontSee('Media Publicity')
+        ->assertSee('200 pts'); // elected official + agency = 200
 });
 
 test('event dashboard hides guestbook stats when guestbook is disabled', function () {

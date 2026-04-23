@@ -34,6 +34,6 @@ it('eligible bonus types include every manual code for this ruleset version and 
 
     $codes = $component->instance()->eligibleBonusTypes->pluck('code')->sort()->values()->all();
 
-    expect($codes)->toContain('social_media', 'public_location', 'public_info_booth', 'educational_activity', 'web_submission')
-        ->and($codes)->not->toContain('sm_sec_message', 'nts_message', 'w1aw_bulletin', 'elected_official_visit', 'agency_visit', 'media_publicity', 'youth_participation');
+    expect($codes)->toContain('social_media', 'public_location', 'public_info_booth', 'educational_activity', 'web_submission', 'media_publicity')
+        ->and($codes)->not->toContain('sm_sec_message', 'nts_message', 'w1aw_bulletin', 'elected_official_visit', 'agency_visit', 'youth_participation');
 });
