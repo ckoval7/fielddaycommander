@@ -43,8 +43,8 @@
         <x-card class="mb-6">
             <x-slot:title>Event Information</x-slot:title>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="md:col-span-2">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div class="md:col-span-6">
                     <x-input
                         label="Event Name"
                         wire:model.live="name"
@@ -55,20 +55,36 @@
                     />
                 </div>
 
-                <x-select
-                    label="Event Type"
-                    wire:model.live="event_type_id"
-                    :options="$this->eventTypes"
-                    option-label="name"
-                    option-value="id"
-                    required
-                    icon="phosphor-tag"
-                    placeholder="Select event type"
-                    hint="Field Day, Winter Field Day, etc."
-                    :disabled="$isLocked"
-                />
+                <div class="md:col-span-2">
+                    <x-select
+                        label="Event Type"
+                        wire:model.live="event_type_id"
+                        :options="$this->eventTypes"
+                        option-label="name"
+                        option-value="id"
+                        required
+                        icon="phosphor-tag"
+                        placeholder="Select event type"
+                        hint="Field Day, Winter Field Day, etc."
+                        :disabled="$isLocked"
+                    />
+                </div>
 
-                <div class="flex items-center gap-2">
+                <div class="md:col-span-2">
+                    <x-select
+                        label="Scoring Rules"
+                        wire:model="rules_version"
+                        :options="$this->rulesVersionOptions"
+                        option-label="name"
+                        option-value="id"
+                        icon="phosphor-scales"
+                        placeholder="Default ({{ $year }})"
+                        hint="{{ $rulesVersionLocked ? 'Locked — event has already started.' : 'Which ARRL rule year to score by. Editable until the event starts.' }}"
+                        :disabled="$rulesVersionLocked || empty($this->rulesVersionOptions)"
+                    />
+                </div>
+
+                <div class="md:col-span-2">
                     <x-input
                         label="Year"
                         wire:model="year"
@@ -81,34 +97,26 @@
                     />
                 </div>
 
-                <x-select
-                    label="Scoring Rules"
-                    wire:model="rules_version"
-                    :options="$this->rulesVersionOptions"
-                    option-label="name"
-                    option-value="id"
-                    icon="phosphor-scales"
-                    placeholder="Default ({{ $year }})"
-                    hint="{{ $rulesVersionLocked ? 'Locked — event has already started.' : 'Which year\'s ARRL rules to score by. Editable until the event starts.' }}"
-                    :disabled="$rulesVersionLocked || empty($this->rulesVersionOptions)"
-                />
+                <div class="md:col-span-3">
+                    <x-flatpickr
+                        label="Start Date & Time (UTC)"
+                        wire:model.live="start_time"
+                        required
+                        icon="phosphor-play"
+                        hint="When the event begins, in UTC"
+                        :disabled="$isLocked"
+                    />
+                </div>
 
-                <x-flatpickr
-                    label="Start Date & Time (UTC)"
-                    wire:model.live="start_time"
-                    required
-                    icon="phosphor-play"
-                    hint="When the event begins, in UTC"
-                    :disabled="$isLocked"
-                />
-
-                <x-flatpickr
-                    label="End Date & Time (UTC)"
-                    wire:model="end_time"
-                    required
-                    icon="phosphor-stop"
-                    hint="When the event ends, in UTC"
-                />
+                <div class="md:col-span-3">
+                    <x-flatpickr
+                        label="End Date & Time (UTC)"
+                        wire:model="end_time"
+                        required
+                        icon="phosphor-stop"
+                        hint="When the event ends, in UTC"
+                    />
+                </div>
 
                 @if($this->setupAllowedFrom)
                     <div class="col-span-full">
