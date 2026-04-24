@@ -165,7 +165,7 @@ class DemoSeeder extends Seeder
         $this->seedEquipment($config, $organization, $manager, $event, $captain2);
 
         // 8. Bonuses
-        $this->seedBonuses($config, $manager);
+        $this->seedBonuses($config, $manager, $event);
 
         // 9. Safety checklist (~60% complete)
         $this->seedSafetyChecklist($captain1);
@@ -621,12 +621,12 @@ class DemoSeeder extends Seeder
         }
     }
 
-    private function seedBonuses(EventConfiguration $config, User $manager): void
+    private function seedBonuses(EventConfiguration $config, User $manager, Event $event): void
     {
         $verifiedCodes = ['emergency_power', 'public_location', 'w1aw_bulletin'];
 
         foreach ($verifiedCodes as $code) {
-            $bonusType = BonusType::where('code', $code)->first();
+            $bonusType = BonusType::resolveFor($event, $code);
             if (! $bonusType) {
                 continue;
             }
@@ -644,7 +644,7 @@ class DemoSeeder extends Seeder
         }
 
         // One pending bonus
-        $mediaBonusType = BonusType::where('code', 'media_publicity')->first();
+        $mediaBonusType = BonusType::resolveFor($event, 'media_publicity');
         if ($mediaBonusType) {
             EventBonus::create([
                 'event_configuration_id' => $config->id,

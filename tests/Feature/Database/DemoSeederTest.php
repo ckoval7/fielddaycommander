@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\EventBonus;
 use App\Models\GuestbookEntry;
 use App\Models\OperatingSession;
 use App\Models\Organization;
@@ -71,6 +73,24 @@ test('seeder stores demo_provisioned_at in system_config', function () {
         ->value('value');
     expect($value)->not->toBeNull();
     expect(Carbon::parse($value)->isToday())->toBeTrue();
+});
+
+test('seeder creates FD bonus types for the event resolved rules version', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+    $resolved = $event->resolved_rules_version;
+
+    $matchingTypes = BonusType::where('event_type_id', $event->event_type_id)
+        ->where('rules_version', $resolved)
+        ->where('is_active', true)
+        ->count();
+
+    expect($matchingTypes)->toBeGreaterThan(0);
+
+    $claimed = EventBonus::where('event_configuration_id', $event->eventConfiguration->id)->get();
+    expect($claimed)->not->toBeEmpty();
+    $claimed->each(function (EventBonus $bonus) use ($resolved): void {
+        expect($bonus->bonusType->rules_version)->toBe($resolved);
+    });
 });
 
 test('seeder creates organization and sets default_organization_id', function () {

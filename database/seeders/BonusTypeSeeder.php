@@ -19,6 +19,16 @@ class BonusTypeSeeder extends Seeder
     ];
 
     /**
+     * Rules versions seeded for Field Day bonuses. FieldDay2026 inherits 2025
+     * verbatim (per FieldDay2026 class docblock), so each shipped version gets
+     * an identical copy of the bonus catalog until ARRL publishes changes.
+     * Add new years here as matching RuleSet classes are registered.
+     *
+     * @var array<int, string>
+     */
+    private const FD_RULES_VERSIONS = ['2025', '2026'];
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
@@ -26,10 +36,11 @@ class BonusTypeSeeder extends Seeder
         $fdEventType = EventType::where('code', 'FD')->first();
         $wfdEventType = EventType::where('code', 'WFD')->first();
 
-        $bonuses = array_merge(
-            $this->fieldDayBonuses($fdEventType->id),
-            $this->winterFieldDayBonuses($wfdEventType->id)
-        );
+        $bonuses = [];
+        foreach (self::FD_RULES_VERSIONS as $version) {
+            $bonuses = array_merge($bonuses, $this->fieldDayBonuses($fdEventType->id, $version));
+        }
+        $bonuses = array_merge($bonuses, $this->winterFieldDayBonuses($wfdEventType->id));
 
         // Seeder is idempotent and non-destructive — existing rows are never overwritten.
         // Use a migration to change values for an already-shipped rules_version.
@@ -48,16 +59,16 @@ class BonusTypeSeeder extends Seeder
     }
 
     /**
-     * Get Field Day bonus type definitions.
+     * Get Field Day bonus type definitions for a specific rules version.
      *
      * @return array<int, array<string, mixed>>
      */
-    protected function fieldDayBonuses(int $eventTypeId): array
+    protected function fieldDayBonuses(int $eventTypeId, string $rulesVersion = '2025'): array
     {
         return [
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'emergency_power',
                 'name' => 'Emergency Power',
                 'description' => '100% emergency power for entire operation',
@@ -70,7 +81,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'media_publicity',
                 'name' => 'Media Publicity',
                 'description' => 'Publicity received from local media',
@@ -84,7 +95,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'public_location',
                 'name' => 'Public Location',
                 'description' => 'Set up in public place, not member residence',
@@ -97,7 +108,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'public_info_booth',
                 'name' => 'Information Booth',
                 'description' => 'Set up information table for non-hams',
@@ -110,7 +121,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'nts_message',
                 'name' => 'NTS Messages Handled',
                 'description' => 'Formal NTS messages originated, relayed, or received (10 points each)',
@@ -124,7 +135,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'social_media',
                 'name' => 'Social Media',
                 'description' => 'Make FD operation known to general public via social media',
@@ -137,7 +148,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'safety_officer',
                 'name' => 'Safety Officer',
                 'description' => 'Designated safety officer for Field Day operation',
@@ -150,7 +161,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'natural_power',
                 'name' => 'Natural Power QSOs',
                 'description' => '5 or more QSOs using 100% natural power (solar, wind, water)',
@@ -163,7 +174,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'elected_official_visit',
                 'name' => 'Elected Official Visit',
                 'description' => 'Site visit by an elected government official as result of invitation',
@@ -177,7 +188,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'agency_visit',
                 'name' => 'Served Agency Visit',
                 'description' => 'Site visit by representative of an agency served by ARES (Red Cross, Salvation Army, local EM, etc.)',
@@ -191,7 +202,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'satellite_qso',
                 'name' => 'Satellite QSO',
                 'description' => 'Complete at least one QSO via amateur radio satellite',
@@ -204,7 +215,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'sm_sec_message',
                 'name' => 'Section Manager Message',
                 'description' => 'Formal message to ARRL Section Manager or Section Emergency Coordinator',
@@ -218,7 +229,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'w1aw_bulletin',
                 'name' => 'W1AW Field Day Bulletin',
                 'description' => 'Copy of W1AW Field Day bulletin received via amateur radio',
@@ -232,7 +243,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'educational_activity',
                 'name' => 'Educational Activity',
                 'description' => 'Formal educational or outreach activity conducted during Field Day',
@@ -246,7 +257,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'web_submission',
                 'name' => 'Web Submission',
                 'description' => 'Submit Field Day log via ARRL web submission',
@@ -260,7 +271,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'youth_participation',
                 'name' => 'Youth Participation',
                 'description' => 'Participation by licensed operators age 18 or younger (20 points each)',
@@ -274,7 +285,7 @@ class BonusTypeSeeder extends Seeder
             ],
             [
                 'event_type_id' => $eventTypeId,
-                'rules_version' => '2025',
+                'rules_version' => $rulesVersion,
                 'code' => 'site_responsibilities',
                 'name' => 'Site Responsibilities',
                 'description' => 'Operator assumes all site responsibilities per ARRL rules',
