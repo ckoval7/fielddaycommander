@@ -308,3 +308,26 @@ test('eligible bonus list is scoped to the event rules_version', function () {
     expect($socialMedia)->toHaveCount(1)
         ->and($socialMedia->first()->rules_version)->toBe($this->event->resolved_rules_version);
 });
+
+test('2026 events render inherited bonuses without explicit 2026 seed rows being absent', function () {
+    // Guards the 2026-from-2025 inheritance path: BonusTypeSeeder must have
+    // cloned the 2025 manual-claim rows as 2026 rows, otherwise the bonus
+    // picker renders empty for events pinned to the new rules_version.
+    $event2026 = Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'year' => 2026,
+        'rules_version' => '2026',
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event2026->id,
+        'operating_class_id' => $this->eventConfig->operating_class_id,
+    ]);
+
+    $eligible = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $event2026])
+        ->get('eligibleBonusTypes');
+
+    expect($eligible)->not->toBeEmpty()
+        ->and($eligible->pluck('rules_version')->unique()->all())->toEqual(['2026'])
+        ->and($eligible->pluck('code')->all())->toContain('social_media', 'public_location');
+});

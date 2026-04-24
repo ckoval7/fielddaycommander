@@ -19,6 +19,19 @@ class BonusTypeSeeder extends Seeder
     ];
 
     /**
+     * Rules versions that inherit verbatim from a parent version.
+     *
+     * Each entry ensures the child version has a full bonus-type row set
+     * copied from its parent. When ARRL publishes version-specific tweaks,
+     * drop the entry and seed the child explicitly (or ship a migration).
+     *
+     * @var array<string, string>
+     */
+    private const INHERITED_VERSIONS = [
+        '2026' => '2025',
+    ];
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
@@ -30,6 +43,8 @@ class BonusTypeSeeder extends Seeder
             $this->fieldDayBonuses($fdEventType->id),
             $this->winterFieldDayBonuses($wfdEventType->id)
         );
+
+        $bonuses = $this->withInheritedVersions($bonuses);
 
         // Seeder is idempotent and non-destructive — existing rows are never overwritten.
         // Use a migration to change values for an already-shipped rules_version.
@@ -45,6 +60,30 @@ class BonusTypeSeeder extends Seeder
                 $bonus
             );
         }
+    }
+
+    /**
+     * Clone bonus rows for each version listed in INHERITED_VERSIONS so
+     * year-over-year rulesets that inherit verbatim still have their own
+     * per-version rows for lookup and rescore flows.
+     *
+     * @param  array<int, array<string, mixed>>  $bonuses
+     * @return array<int, array<string, mixed>>
+     */
+    private function withInheritedVersions(array $bonuses): array
+    {
+        foreach (self::INHERITED_VERSIONS as $child => $parent) {
+            foreach ($bonuses as $bonus) {
+                if ($bonus['rules_version'] !== $parent) {
+                    continue;
+                }
+
+                $bonus['rules_version'] = $child;
+                $bonuses[] = $bonus;
+            }
+        }
+
+        return $bonuses;
     }
 
     /**
