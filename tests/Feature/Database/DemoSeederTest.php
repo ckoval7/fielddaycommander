@@ -93,6 +93,27 @@ test('seeder creates FD bonus types for the event resolved rules version', funct
     });
 });
 
+test('seeder does not produce claimed-but-unverified bonuses with points', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+
+    $invalid = EventBonus::where('event_configuration_id', $event->eventConfiguration->id)
+        ->where('is_verified', false)
+        ->where('calculated_points', '>', 0)
+        ->get();
+
+    expect($invalid)->toBeEmpty();
+});
+
+test('seeder does not pre-earn the W1AW bulletin bonus', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+
+    $w1awBonus = EventBonus::where('event_configuration_id', $event->eventConfiguration->id)
+        ->whereHas('bonusType', fn ($q) => $q->where('code', 'w1aw_bulletin'))
+        ->first();
+
+    expect($w1awBonus)->toBeNull();
+});
+
 test('seeder creates organization and sets default_organization_id', function () {
     $org = Organization::active()->first();
     expect($org)->not->toBeNull();

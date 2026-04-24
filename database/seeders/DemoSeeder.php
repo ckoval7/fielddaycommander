@@ -623,7 +623,7 @@ class DemoSeeder extends Seeder
 
     private function seedBonuses(EventConfiguration $config, User $manager, Event $event): void
     {
-        $verifiedCodes = ['emergency_power', 'public_location', 'w1aw_bulletin'];
+        $verifiedCodes = ['emergency_power', 'public_location'];
 
         foreach ($verifiedCodes as $code) {
             $bonusType = BonusType::resolveFor($event, $code);
@@ -643,7 +643,6 @@ class DemoSeeder extends Seeder
             ]);
         }
 
-        // One pending bonus
         $mediaBonusType = BonusType::resolveFor($event, 'media_publicity');
         if ($mediaBonusType) {
             EventBonus::create([
@@ -653,7 +652,9 @@ class DemoSeeder extends Seeder
                 'quantity' => 1,
                 'calculated_points' => $mediaBonusType->base_points,
                 'notes' => 'Local newspaper article submitted for review',
-                'is_verified' => false,
+                'is_verified' => true,
+                'verified_by_user_id' => $manager->id,
+                'verified_at' => now()->subMinutes(20),
             ]);
         }
     }
