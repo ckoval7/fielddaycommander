@@ -209,12 +209,24 @@ class StationSelect extends Component
 
         if ($station->computed_status === 'available') {
             $this->selectedStationId = $stationId;
+            $this->powerWatts = $this->defaultPowerWattsFor($station);
             $this->showSetupModal = true;
         } elseif ($station->computed_status === 'idle') {
             $this->takeoverStationId = $stationId;
             $this->showTakeoverModal = true;
         }
         // occupied stations are not selectable
+    }
+
+    private function defaultPowerWattsFor(Station $station): int
+    {
+        $radioLimit = $station->primaryRadio?->power_output_watts;
+
+        if ($radioLimit !== null && $radioLimit > 0) {
+            return min(100, $radioLimit);
+        }
+
+        return 100;
     }
 
     public function startSession(): void
@@ -275,6 +287,10 @@ class StationSelect extends Component
 
         // Open setup modal for the new session
         $this->selectedStationId = $this->takeoverStationId;
+        $station = $this->stations->firstWhere('id', $this->takeoverStationId);
+        if ($station) {
+            $this->powerWatts = $this->defaultPowerWattsFor($station);
+        }
         $this->showTakeoverModal = false;
         $this->showSetupModal = true;
     }
