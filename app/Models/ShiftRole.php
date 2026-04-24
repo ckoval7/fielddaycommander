@@ -109,7 +109,6 @@ class ShiftRole extends Model
      */
     public const BONUS_TYPE_MAP = [
         'Public Information Table' => 'public_info_booth',
-        'Public Greeter' => 'public_location',
     ];
 
     /**
