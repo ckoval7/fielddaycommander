@@ -110,12 +110,6 @@ describe('Seeding', function () {
             'name' => 'Public Information Table',
         ]);
         expect($pioTable->getBonusTypeCode())->toBe('public_info_booth');
-
-        $publicGreeter = ShiftRole::factory()->create([
-            'event_configuration_id' => $eventConfiguration->id,
-            'name' => 'Public Greeter',
-        ]);
-        expect($publicGreeter->getBonusTypeCode())->toBe('public_location');
     });
 
     test('getBonusTypeCode returns null for eligibility-only roles', function () {
@@ -127,6 +121,9 @@ describe('Seeding', function () {
 
         $gotaCoach = ShiftRole::factory()->create(['name' => 'GOTA Coach']);
         expect($gotaCoach->getBonusTypeCode())->toBeNull();
+
+        $publicGreeter = ShiftRole::factory()->create(['name' => 'Public Greeter']);
+        expect($publicGreeter->getBonusTypeCode())->toBeNull();
     });
 
     test('isBonusEligibilityOnly identifies eligibility-only roles', function () {

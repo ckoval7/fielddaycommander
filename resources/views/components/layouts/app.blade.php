@@ -311,6 +311,7 @@
                         <x-menu-item title="Dashboard" icon="phosphor-house" link="/" />
                         <x-menu-item title="Public Page" icon="phosphor-globe" link="{{ route('public.landing') }}" />
                         <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
+                        <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
                         @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
                             <x-menu-item title="Weather" icon="phosphor-sun-duotone" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
                         @endif
@@ -351,7 +352,6 @@
                             @endcan
                         </x-menu-sub>
 
-                        <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" :active="request()->routeIs('guestbook.index')" />
                         <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
 
                         @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
@@ -424,12 +424,12 @@
                     @else
                         <x-menu-item title="Home" icon="phosphor-house" link="/" />
                         <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
+                        <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" />
                         @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
                             <x-menu-item title="Weather" icon="phosphor-sun-duotone" link="{{ route('weather.index') }}" :active="request()->routeIs('weather.index')" />
                         @endif
                         <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
                         <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
-                        <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" />
                     @endauth
                     </x-menu>
                 </div>
