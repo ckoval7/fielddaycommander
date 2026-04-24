@@ -73,24 +73,28 @@
             {{-- Role dropdown --}}
             <div>
                 <label for="schedule-role" class="label label-text text-xs font-semibold">Role</label>
-                <select id="schedule-role" wire:model.live="role" class="select select-bordered select-sm w-full">
-                    <option value="">All Roles</option>
-                    @foreach($this->filterRoles as $filterRole)
-                        <option value="{{ $filterRole->id }}">{{ $filterRole->name }}</option>
-                    @endforeach
-                </select>
+                <label class="select select-bordered select-sm w-full">
+                    <select id="schedule-role" wire:model.live="role">
+                        <option value="">All Roles</option>
+                        @foreach($this->filterRoles as $filterRole)
+                            <option value="{{ $filterRole->id }}">{{ $filterRole->name }}</option>
+                        @endforeach
+                    </select>
+                </label>
             </div>
 
             {{-- Status dropdown --}}
             @if($showStatusFilter && count($statuses) > 0)
                 <div>
                     <label for="schedule-status" class="label label-text text-xs font-semibold">Status</label>
-                    <select id="schedule-status" wire:model.live="status" class="select select-bordered select-sm w-full">
-                        <option value="">All Statuses</option>
-                        @foreach($statuses as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
+                    <label class="select select-bordered select-sm w-full">
+                        <select id="schedule-status" wire:model.live="status">
+                            <option value="">All Statuses</option>
+                            @foreach($statuses as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </label>
                 </div>
             @endif
 
@@ -98,11 +102,13 @@
             @if($showAvailability)
                 <div>
                     <label for="schedule-availability" class="label label-text text-xs font-semibold">Availability</label>
-                    <select id="schedule-availability" wire:model.live="availability" class="select select-bordered select-sm w-full">
-                        <option value="">All</option>
-                        <option value="unfilled">Unfilled Only</option>
-                        <option value="full">Full Only</option>
-                    </select>
+                    <label class="select select-bordered select-sm w-full">
+                        <select id="schedule-availability" wire:model.live="availability">
+                            <option value="">All</option>
+                            <option value="unfilled">Unfilled Only</option>
+                            <option value="full">Full Only</option>
+                        </select>
+                    </label>
                 </div>
             @endif
 
@@ -110,12 +116,15 @@
             @if($showTimeFilter)
                 <div>
                     <label for="schedule-time" class="label label-text text-xs font-semibold">Time</label>
-                    <select id="schedule-time" wire:model.live="timeFilter" class="select select-bordered select-sm w-full">
-                        <option value="">Current &amp; Upcoming</option>
-                        <option value="current">Current</option>
-                        <option value="upcoming">Upcoming</option>
-                        <option value="past">Past</option>
-                    </select>
+                    <label class="select select-bordered select-sm w-full">
+                        <select id="schedule-time" wire:model.live="timeFilter">
+                            <option value="">Current &amp; Upcoming</option>
+                            <option value="current">Current</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="past">Past</option>
+                            <option value="all">All</option>
+                        </select>
+                    </label>
                 </div>
             @endif
 
@@ -123,13 +132,15 @@
             <div>
                 <label for="schedule-sort" class="label label-text text-xs font-semibold">Sort by</label>
                 <div class="flex gap-1">
-                    <select id="schedule-sort" wire:model.live="sortBy" class="select select-bordered select-sm flex-1">
-                        <option value="time">Time</option>
-                        <option value="role">Role</option>
-                        @if($showAvailability)
-                            <option value="fill">Fill %</option>
-                        @endif
-                    </select>
+                    <label class="select select-bordered select-sm flex-1">
+                        <select id="schedule-sort" wire:model.live="sortBy">
+                            <option value="time">Time</option>
+                            <option value="role">Role</option>
+                            @if($showAvailability)
+                                <option value="fill">Fill %</option>
+                            @endif
+                        </select>
+                    </label>
                     <button
                         type="button"
                         wire:click="$set('sortDir', '{{ $sortDir === 'asc' ? 'desc' : 'asc' }}')"

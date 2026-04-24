@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Livewire\Concerns\ResolvesBonusRule;
 use App\Models\AuditLog;
 use App\Models\BonusType;
 use App\Models\Event;
@@ -13,6 +14,8 @@ use Livewire\Component;
 
 class ManualBonusClaims extends Component
 {
+    use ResolvesBonusRule;
+
     public Event $event;
 
     /** @var array<int, string> */
@@ -22,17 +25,6 @@ class ManualBonusClaims extends Component
     public array $quantities = [];
 
     public int $additionalYouth = 0;
-
-    protected const MANUAL_BONUS_CODES = [
-        'social_media',
-        'public_location',
-        'public_location_wfd',
-        'public_info_booth',
-        'educational_activity',
-        'web_submission',
-        'elected_official_visit',
-        'agency_visit',
-    ];
 
     #[Computed]
     public function eligibleBonusTypes(): Collection
@@ -48,7 +40,8 @@ class ManualBonusClaims extends Component
         return BonusType::query()
             ->where('is_active', true)
             ->where('event_type_id', $this->event->event_type_id)
-            ->whereIn('code', self::MANUAL_BONUS_CODES)
+            ->where('rules_version', $this->event->resolved_rules_version)
+            ->where('trigger_type', 'manual')
             ->get()
             ->filter(function (BonusType $bonusType) use ($classCode) {
                 $classes = $bonusType->eligible_classes;
@@ -57,7 +50,6 @@ class ManualBonusClaims extends Component
                     return true;
                 }
 
-                // BonusTypeSeeder double-encodes eligible_classes (json_encode + array cast)
                 if (is_string($classes)) {
                     $classes = json_decode($classes, true) ?? [];
                 }
@@ -204,9 +196,7 @@ class ManualBonusClaims extends Component
             return null;
         }
 
-        $bonusType = BonusType::where('code', 'youth_participation')
-            ->where('event_type_id', $this->event->event_type_id)
-            ->first();
+        $bonusType = BonusType::resolveFor($this->event, 'youth_participation');
 
         if (! $bonusType) {
             return null;
@@ -231,7 +221,7 @@ class ManualBonusClaims extends Component
             ->where('bonus_type_id', $bonusType->id)
             ->first();
 
-        $additional = $bonus ? (int) ($bonus->notes ?? 0) : 0;
+        $additional = $bonus ? (int) ($bonus->manual_quantity_adjustment ?? 0) : 0;
         $this->additionalYouth = $additional;
 
         $total = min($autoCount + $additional, $bonusType->max_occurrences ?? 5);
@@ -257,7 +247,7 @@ class ManualBonusClaims extends Component
             return;
         }
 
-        $bonusType = BonusType::where('code', 'youth_participation')->first();
+        $bonusType = BonusType::resolveFor($this->event, 'youth_participation');
 
         if (! $bonusType) {
             return;
@@ -276,7 +266,7 @@ class ManualBonusClaims extends Component
                 [
                     'quantity' => $total,
                     'calculated_points' => $total * $bonusType->base_points,
-                    'notes' => $additional > 0 ? (string) $additional : null,
+                    'manual_quantity_adjustment' => $additional > 0 ? $additional : null,
                     'is_verified' => true,
                     'verified_by_user_id' => auth()->id(),
                     'verified_at' => now(),

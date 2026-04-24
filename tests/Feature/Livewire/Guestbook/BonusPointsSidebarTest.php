@@ -26,8 +26,8 @@ test('renders with bonus items showing zero counts when no entries exist', funct
         ->assertSee('Guestbook Bonuses')
         ->assertSee('Elected Official Visit')
         ->assertSee('Served Agency Visit')
-        ->assertSee('Media Publicity')
-        ->assertSee('of 300 possible');
+        ->assertDontSee('Media Publicity')
+        ->assertSee('of 200 possible');
 });
 
 test('shows earned status when verified elected official entry exists', function () {
@@ -54,16 +54,18 @@ test('shows earned status when verified agency entry exists', function () {
         ->assertSee('+100');
 });
 
-test('shows earned status when verified media entry exists', function () {
+test('media representatives are listed as tracked but not bonus-eligible in this sidebar', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
         'is_verified' => true,
     ]);
 
-    Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id])
-        ->assertSee('Media Publicity')
-        ->assertSee('+100');
+    $component = Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id])
+        ->assertSee('Media Representatives')
+        ->assertSee('Claim Media Publicity bonus on the event dashboard');
+
+    expect($component->get('totalBonusPoints'))->toBe(0);
 });
 
 test('arrl officials show tracked but not bonus-eligible text when present', function () {
@@ -84,26 +86,20 @@ test('arrl officials section is hidden when none exist', function () {
         ->assertDontSee('Tracked but not bonus-eligible per rules');
 });
 
-test('total bonus points equals 100 per earned bonus type with max of 300', function () {
+test('total bonus points equals 100 per earned bonus type with max of 200', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
         'is_verified' => true,
     ]);
 
-    GuestbookEntry::factory()->create([
-        'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
-        'is_verified' => true,
-    ]);
-
     $component = Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id]);
 
-    expect($component->get('totalBonusPoints'))->toBe(200);
-    expect($component->get('maxBonusPoints'))->toBe(300);
+    expect($component->get('totalBonusPoints'))->toBe(100);
+    expect($component->get('maxBonusPoints'))->toBe(200);
 });
 
-test('shows all guestbook bonuses earned when all three are earned', function () {
+test('shows all guestbook bonuses earned when both are earned', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
@@ -113,12 +109,6 @@ test('shows all guestbook bonuses earned when all three are earned', function ()
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
         'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
-        'is_verified' => true,
-    ]);
-
-    GuestbookEntry::factory()->create([
-        'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
         'is_verified' => true,
     ]);
 
@@ -137,7 +127,6 @@ test('shows still needed alert listing missing bonuses when some are unearned', 
     Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id])
         ->assertSee('Still needed:')
         ->assertSee('Served Agency Visit')
-        ->assertSee('Media Publicity')
         ->assertDontSee('All guestbook bonuses earned!');
 });
 

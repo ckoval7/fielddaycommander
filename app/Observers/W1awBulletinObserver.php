@@ -3,29 +3,22 @@
 namespace App\Observers;
 
 use App\Models\W1awBulletin;
-use App\Services\MessageBonusSyncService;
+use App\Scoring\DomainEvents\W1awBulletinChanged;
 
 class W1awBulletinObserver
 {
-    public function __construct(protected MessageBonusSyncService $syncService) {}
-
-    public function created(W1awBulletin $bulletin): void
+    public function saved(W1awBulletin $bulletin): void
     {
-        $this->syncService->sync($bulletin->eventConfiguration);
-    }
-
-    public function updated(W1awBulletin $bulletin): void
-    {
-        $this->syncService->sync($bulletin->eventConfiguration);
+        event(new W1awBulletinChanged($bulletin, $bulletin->event_configuration_id));
     }
 
     public function deleted(W1awBulletin $bulletin): void
     {
-        $this->syncService->sync($bulletin->eventConfiguration);
+        event(new W1awBulletinChanged($bulletin, $bulletin->event_configuration_id));
     }
 
     public function restored(W1awBulletin $bulletin): void
     {
-        $this->syncService->sync($bulletin->eventConfiguration);
+        event(new W1awBulletinChanged($bulletin, $bulletin->event_configuration_id));
     }
 }

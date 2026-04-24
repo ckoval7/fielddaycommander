@@ -8,8 +8,8 @@
     >
         <x-slot:actions>
             <x-button
-                label="Cancel"
-                icon="phosphor-x"
+                label="{{ $stationId ? 'Back to Stations' : 'Cancel' }}"
+                icon="{{ $stationId ? 'phosphor-arrow-left' : 'phosphor-x' }}"
                 class="btn-ghost"
                 link="{{ route('stations.index') }}"
                 wire:navigate

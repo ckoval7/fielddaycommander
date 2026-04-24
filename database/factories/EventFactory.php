@@ -2,10 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\Event;
+use App\Models\EventType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Event>
+ * @extends Factory<Event>
  */
 class EventFactory extends Factory
 {
@@ -17,9 +19,9 @@ class EventFactory extends Factory
     public function definition(): array
     {
         // Try to get Field Day event type, or create one if it doesn't exist
-        $eventType = \App\Models\EventType::where('code', 'FD')->first();
+        $eventType = EventType::where('code', 'FD')->first();
         if (! $eventType) {
-            $eventType = \App\Models\EventType::create([
+            $eventType = EventType::create([
                 'name' => 'Field Day',
                 'code' => 'FD',
                 'description' => 'ARRL Field Day',
@@ -39,5 +41,19 @@ class EventFactory extends Factory
             'is_active' => true,
             'is_current' => false,
         ];
+    }
+
+    /**
+     * Configure the model factory.
+     *
+     * Defaults rules_version to the event's year when not explicitly provided.
+     */
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Event $event) {
+            if ($event->rules_version === null) {
+                $event->rules_version = (string) $event->year;
+            }
+        });
     }
 }

@@ -2,17 +2,35 @@
 
 namespace App\Models;
 
+use Database\Factories\BonusTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BonusType extends Model
 {
-    /** @use HasFactory<\Database\Factories\BonusTypeFactory> */
+    /** @use HasFactory<BonusTypeFactory> */
     use HasFactory;
+
+    /**
+     * Resolve the BonusType row that matches a given code for the scoring
+     * ruleset currently applied to the event. Uses resolved_rules_version so
+     * events pinned to a yet-unregistered version pick the same fallback row
+     * the RuleSetFactory uses for scoring.
+     */
+    public static function resolveFor(Event $event, string $code): ?self
+    {
+        return static::query()
+            ->where('event_type_id', $event->event_type_id)
+            ->where('rules_version', $event->resolved_rules_version)
+            ->where('code', $code)
+            ->first();
+    }
 
     protected $fillable = [
         'event_type_id',
+        'rules_version',
         'code',
+        'trigger_type',
         'name',
         'description',
         'base_points',

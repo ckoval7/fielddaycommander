@@ -23,6 +23,20 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('flatpickr', flatpickrComponent);
 });
 
+// Suppress only the W3C-spec'd benign "ResizeObserver loop completed with
+// undelivered notifications" message. The browser raises this intentionally
+// when it breaks a potential observer feedback loop; the spec authors
+// document it as harmless. It is emitted from inside Floating UI (used by
+// Livewire/Alpine and Mary UI for select, anchor, and tooltip positioning),
+// which we do not control. Match the message string exactly so real errors
+// — including any other ResizeObserver issue — still surface.
+const RESIZE_OBSERVER_LOOP_MESSAGE = 'ResizeObserver loop completed with undelivered notifications.';
+globalThis.addEventListener('error', (event) => {
+    if (event.message === RESIZE_OBSERVER_LOOP_MESSAGE) {
+        event.stopImmediatePropagation();
+    }
+});
+
 // Livewire rejects every pending action promise when a request errors
 // (livewire.js rejectActionPromises -> { status, body, json, errors }).
 // Poll-driven actions have no .catch() attached, so those rejections surface

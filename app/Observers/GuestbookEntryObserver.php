@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\NotificationCategory;
 use App\Models\GuestbookEntry;
+use App\Scoring\DomainEvents\GuestbookEntryChanged;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 
@@ -33,5 +34,15 @@ class GuestbookEntryObserver
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    public function saved(GuestbookEntry $entry): void
+    {
+        event(new GuestbookEntryChanged($entry, $entry->event_configuration_id));
+    }
+
+    public function deleted(GuestbookEntry $entry): void
+    {
+        event(new GuestbookEntryChanged($entry, $entry->event_configuration_id));
     }
 }

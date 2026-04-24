@@ -2,10 +2,15 @@
 
 namespace Database\Factories;
 
+use App\Models\BonusType;
+use App\Models\EventBonus;
+use App\Models\EventConfiguration;
+use App\Models\EventType;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\EventBonus>
+ * @extends Factory<EventBonus>
  */
 class EventBonusFactory extends Factory
 {
@@ -17,18 +22,18 @@ class EventBonusFactory extends Factory
     public function definition(): array
     {
         // Ensure we have required reference data
-        $eventType = \App\Models\EventType::where('code', 'FD')->first();
+        $eventType = EventType::where('code', 'FD')->first();
         if (! $eventType) {
-            $eventType = \App\Models\EventType::create([
+            $eventType = EventType::create([
                 'name' => 'Field Day',
                 'code' => 'FD',
                 'description' => 'ARRL Field Day',
             ]);
         }
 
-        $bonusType = \App\Models\BonusType::first();
+        $bonusType = BonusType::first();
         if (! $bonusType) {
-            $bonusType = \App\Models\BonusType::create([
+            $bonusType = BonusType::create([
                 'event_type_id' => $eventType->id,
                 'code' => 'TEST_BONUS',
                 'name' => 'Test Bonus',
@@ -38,10 +43,11 @@ class EventBonusFactory extends Factory
         }
 
         return [
-            'event_configuration_id' => \App\Models\EventConfiguration::factory(),
+            'event_configuration_id' => EventConfiguration::factory(),
             'bonus_type_id' => $bonusType->id,
-            'claimed_by_user_id' => \App\Models\User::factory(),
+            'claimed_by_user_id' => User::factory(),
             'quantity' => 1,
+            'manual_quantity_adjustment' => null,
             'calculated_points' => fake()->numberBetween(10, 500),
             'notes' => null,
             'proof_file_path' => null,

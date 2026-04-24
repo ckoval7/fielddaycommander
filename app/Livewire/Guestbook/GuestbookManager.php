@@ -6,7 +6,6 @@ use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
-use App\Services\GuestbookBonusSyncService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
@@ -254,7 +253,6 @@ class GuestbookManager extends Component
             ],
         );
 
-        app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
         $this->dispatch('bonus-claimed');
 
         $this->closeVerifyModal();
@@ -340,7 +338,6 @@ class GuestbookManager extends Component
             ],
         );
 
-        app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
         $this->dispatch('bonus-claimed');
 
         $count = count($this->selectedIds);
@@ -378,7 +375,6 @@ class GuestbookManager extends Component
             ],
         );
 
-        app(GuestbookBonusSyncService::class)->sync($this->eventConfig);
         $this->dispatch('bonus-claimed');
 
         $count = count($this->selectedIds);

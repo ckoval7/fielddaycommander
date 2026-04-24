@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\NotificationCategory;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,11 +12,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
@@ -87,10 +90,10 @@ class User extends Authenticatable implements MustVerifyEmail
         // In dev mode with role override, return the overridden role for the logged-in user only
         if (config('developer.enabled') && session()->has('dev_role_override') && auth()->check() && $this->id === auth()->id()) {
             try {
-                $role = \Spatie\Permission\Models\Role::findByName(session('dev_role_override'), 'web');
+                $role = Role::findByName(session('dev_role_override'), 'web');
 
                 return collect([$role]);
-            } catch (\Spatie\Permission\Exceptions\RoleDoesNotExist $e) {
+            } catch (RoleDoesNotExist $e) {
                 // Invalid role, fall through to normal relationship
             }
         }
@@ -126,7 +129,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isSystemAdmin(): bool
     {
-        return $this->hasRole('system-admin');
+        return $this->hasRole('System Administrator');
     }
 
     /**

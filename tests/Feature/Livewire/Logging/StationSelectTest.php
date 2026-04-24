@@ -128,6 +128,105 @@ test('opens setup modal when selecting available station', function () {
         ->assertSet('selectedStationId', $station->id);
 });
 
+test('default power is capped by radio power limit when selecting station', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $qrpRadio = Equipment::factory()->create([
+        'type' => 'radio',
+        'power_output_watts' => 5,
+    ]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $qrpRadio->id,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->call('selectStation', $station->id)
+        ->assertSet('powerWatts', 5);
+});
+
+test('default power stays at 100 when radio limit is higher', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $radio = Equipment::factory()->create([
+        'type' => 'radio',
+        'power_output_watts' => 1500,
+    ]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $radio->id,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->call('selectStation', $station->id)
+        ->assertSet('powerWatts', 100);
+});
+
+test('default power falls back to 100 when station has no radio', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => null,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->call('selectStation', $station->id)
+        ->assertSet('powerWatts', 100);
+});
+
+test('takeover caps default power by radio limit', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $qrpRadio = Equipment::factory()->create([
+        'type' => 'radio',
+        'power_output_watts' => 10,
+    ]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $qrpRadio->id,
+    ]);
+
+    $otherUser = User::factory()->create();
+    OperatingSession::factory()->create([
+        'station_id' => $station->id,
+        'operator_user_id' => $otherUser->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'start_time' => now()->subHours(2),
+        'end_time' => null,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->set('takeoverStationId', $station->id)
+        ->call('confirmTakeover')
+        ->assertSet('powerWatts', 10);
+});
+
 test('starting session creates operating session and redirects', function () {
     $this->actingAs($this->user);
 

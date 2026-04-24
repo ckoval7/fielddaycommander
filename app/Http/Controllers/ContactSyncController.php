@@ -51,7 +51,7 @@ class ContactSyncController extends Controller
         );
 
         $mode = $session->mode;
-        $contactPoints = $isGotaContact ? 5 : $mode->points_fd;
+        $contactPoints = $session->station->eventConfiguration->pointsForContact($mode, $session->station);
 
         try {
             $contact = Contact::create([
