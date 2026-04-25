@@ -29,11 +29,12 @@ class RoleManager extends Component
     public array $initialPermissions = [];
 
     protected array $categories = [
-        'Contact Logging' => ['log-contacts', 'edit-contacts'],
+        'Contact Logging' => ['log-contacts', 'edit-contacts', 'import-contacts'],
         'Event Management' => ['view-events', 'create-events', 'edit-events', 'delete-events', 'manage-bulletins', 'verify-bonuses'],
         'Station & Equipment' => ['view-stations', 'manage-stations', 'manage-equipment', 'manage-own-equipment', 'view-all-equipment', 'manage-event-equipment', 'edit-any-equipment'],
         'User Administration' => ['manage-users', 'manage-roles', 'manage-settings'],
         'Content Management' => ['manage-guestbook', 'manage-shifts', 'sign-up-shifts', 'manage-images'],
+        'Weather' => ['manage-weather'],
         'Reporting' => ['view-reports'],
         'Security' => ['view-security-logs'],
     ];

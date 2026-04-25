@@ -28,7 +28,7 @@ class AuditLogger
 
         match ($routeKey) {
             'POST /login' => $this->logLogin($response),
-            'POST /logout' => $this->logAction('user.logout', $preAuthUserId),
+            'POST /logout', 'GET /logout' => $this->logAction('user.logout', $preAuthUserId),
             'POST /two-factor-challenge' => $this->logTwoFactorChallenge($response),
             'POST /register' => $this->logRegister(),
             'POST /password/reset' => $this->logAction('user.password.reset', auth()->id()),

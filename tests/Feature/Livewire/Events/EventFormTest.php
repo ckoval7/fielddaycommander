@@ -1263,6 +1263,24 @@ test('event form can change rules_version on edit before event starts', function
     expect($event->fresh()->rules_version)->toBe('2026');
 });
 
+test('event form leaves rules_version unset on create until event type is chosen', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->assertSet('rules_version', null);
+
+    expect($component->instance()->rulesVersionOptions())->toBe([]);
+
+    $component->set('event_type_id', $this->eventType->id)
+        ->assertSet('rules_version', (string) now()->year);
+
+    $options = $component->instance()->rulesVersionOptions();
+    expect($options)->not->toBeEmpty();
+    foreach ($options as $option) {
+        expect($option['name'])->not->toContain('(not registered)');
+    }
+});
+
 test('event form locks rules_version after event has started', function () {
     $this->actingAs($this->user);
 

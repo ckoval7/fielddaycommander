@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AlbumExportController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\ContactSyncController;
 use App\Http\Controllers\DashboardController;
@@ -61,6 +62,9 @@ Route::prefix('setup')->group(function () {
 // User Invitation Routes
 Route::get('/register/invite/{token}', [InvitationController::class, 'show'])->name('invitation.show');
 Route::post('/register/invite/{token}', [InvitationController::class, 'accept'])->name('invitation.accept');
+
+// Allow GET /logout in addition to Fortify's POST /logout (some browsers / link clicks send GET)
+Route::get('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout.get');
 
 // Registration Pending (approval required mode)
 Route::view('/registration-pending', 'auth.registration-pending')
