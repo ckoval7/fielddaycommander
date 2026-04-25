@@ -3,6 +3,7 @@
 use App\Livewire\Settings\RoleManager;
 use App\Models\AuditLog;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -147,4 +148,17 @@ test('deleting role logs to audit log', function () {
     $auditLog = AuditLog::where('action', 'role.deleted')->first();
     expect($auditLog)->not->toBeNull();
     expect($auditLog->old_values['role'])->toBe('Temp Role');
+});
+
+test('every seeded permission is exposed in a role-manager category', function () {
+    $this->seed(PermissionSeeder::class);
+
+    $reflection = new ReflectionClass(RoleManager::class);
+    $categories = $reflection->getDefaultProperties()['categories'];
+    $categorized = collect($categories)->flatten()->all();
+
+    $allPermissions = Permission::pluck('name')->all();
+    $missing = array_diff($allPermissions, $categorized);
+
+    expect($missing)->toBe([], 'Permissions missing from RoleManager $categories: '.implode(', ', $missing));
 });
