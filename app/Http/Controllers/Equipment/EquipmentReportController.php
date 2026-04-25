@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Equipment;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Services\EquipmentReportService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -100,17 +102,13 @@ class EquipmentReportController extends Controller
      *
      * Gate check-in checklist for equipment delivery with checkboxes.
      */
-    public function deliveryChecklist(Event $event): StreamedResponse
+    public function deliveryChecklist(Event $event): Response
     {
         $this->authorize('manage-event-equipment');
 
         $data = $this->reportService->generateDeliveryChecklist($event->id);
 
-        $filename = $this->generateFilename($event, 'delivery-checklist', 'html');
-
-        return $this->exportPdf($filename, function () use ($data) {
-            return $this->generateDeliveryChecklistHtml($data);
-        });
+        return $this->exportPdf('equipment.reports.delivery-checklist', $data, $event, 'delivery-checklist');
     }
 
     /**
@@ -118,17 +116,13 @@ class EquipmentReportController extends Controller
      *
      * Per-station equipment listing with capabilities and owner contacts.
      */
-    public function stationInventoryPdf(Event $event): StreamedResponse
+    public function stationInventoryPdf(Event $event): Response
     {
         $this->authorize('manage-event-equipment');
 
         $data = $this->reportService->generateStationInventory($event->id);
 
-        $filename = $this->generateFilename($event, 'station-inventory', 'html');
-
-        return $this->exportPdf($filename, function () use ($data) {
-            return $this->generateStationInventoryHtml($data);
-        });
+        return $this->exportPdf('equipment.reports.station-inventory', $data, $event, 'station-inventory');
     }
 
     /**
@@ -171,17 +165,13 @@ class EquipmentReportController extends Controller
      *
      * Simple contact reference list for equipment owners.
      */
-    public function ownerContactListPdf(Event $event): StreamedResponse
+    public function ownerContactListPdf(Event $event): Response
     {
         $this->authorize('manage-event-equipment');
 
         $data = $this->reportService->generateOwnerContactList($event->id);
 
-        $filename = $this->generateFilename($event, 'owner-contacts', 'html');
-
-        return $this->exportPdf($filename, function () use ($data) {
-            return $this->generateOwnerContactsHtml($data);
-        });
+        return $this->exportPdf('equipment.reports.owner-contacts', $data, $event, 'owner-contacts');
     }
 
     /**
@@ -224,17 +214,13 @@ class EquipmentReportController extends Controller
      *
      * Post-event return tracking with checkboxes and signature lines.
      */
-    public function returnChecklist(Event $event): StreamedResponse
+    public function returnChecklist(Event $event): Response
     {
         $this->authorize('manage-event-equipment');
 
         $data = $this->reportService->generateReturnChecklist($event->id);
 
-        $filename = $this->generateFilename($event, 'return-checklist', 'html');
-
-        return $this->exportPdf($filename, function () use ($data) {
-            return $this->generateReturnChecklistHtml($data);
-        });
+        return $this->exportPdf('equipment.reports.return-checklist', $data, $event, 'return-checklist');
     }
 
     /**
@@ -242,17 +228,13 @@ class EquipmentReportController extends Controller
      *
      * Lost/damaged equipment report with circumstances and value.
      */
-    public function incidentReportPdf(Event $event): StreamedResponse
+    public function incidentReportPdf(Event $event): Response
     {
         $this->authorize('manage-event-equipment');
 
         $data = $this->reportService->generateIncidentReport($event->id);
 
-        $filename = $this->generateFilename($event, 'incident-report', 'html');
-
-        return $this->exportPdf($filename, function () use ($data) {
-            return $this->generateIncidentReportHtml($data);
-        });
+        return $this->exportPdf('equipment.reports.incident-report', $data, $event, 'incident-report');
     }
 
     /**
@@ -409,153 +391,17 @@ class EquipmentReportController extends Controller
     }
 
     /**
-     * Export data as PDF (simple HTML).
+     * Render a report blade view as a downloadable PDF.
      *
-     * For now, we're using HTML export. In the future, this could be
-     * enhanced with a proper PDF library like dompdf or wkhtmltopdf.
+     * @param  array<string, mixed>  $data  Data passed through to the view
      */
-    protected function exportPdf(string $filename, callable $callback): StreamedResponse
+    protected function exportPdf(string $view, array $data, Event $event, string $reportType): Response
     {
-        $html = $callback();
+        $filename = $this->generateFilename($event, $reportType, 'pdf');
 
-        return response()->streamDownload(function () use ($html) {
-            echo $html;
-        }, $filename, [
-            'Content-Type' => 'text/html',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
-    }
+        $pdf = Pdf::loadView($view, $data + ['generated_at' => now()])
+            ->setPaper('letter', 'portrait');
 
-    /**
-     * Generate simple HTML for delivery checklist.
-     */
-    protected function generateDeliveryChecklistHtml(array $data): string
-    {
-        $html = '<!DOCTYPE html><html><head><title>Delivery Checklist</title></head><body>';
-        $html .= '<h1>Equipment Delivery Checklist</h1>';
-        $html .= '<p><strong>Event:</strong> '.$data['event']->name.'</p>';
-        $html .= '<p><strong>Generated:</strong> '.now()->format(self::DATETIME_FORMAT).'</p>';
-        $html .= '<table border="1" cellpadding="5"><thead><tr>';
-        $html .= '<th>☐</th><th>Expected Delivery</th><th>Equipment</th><th>Owner</th><th>Contact</th><th>Signature</th>';
-        $html .= '</tr></thead><tbody>';
-        foreach ($data['checklist_items'] as $item) {
-            $html .= '<tr>';
-            $html .= '<td>☐</td>';
-            $html .= '<td>'.($item['expected_delivery'] ?? 'TBD').'</td>';
-            $html .= '<td>'.$item['equipment_description'].'</td>';
-            $html .= '<td>'.$item['owner_name'].' ('.$item['owner_callsign'].')</td>';
-            $html .= '<td>'.$item['owner_phone'].'</td>';
-            $html .= '<td>_______________________</td>';
-            $html .= '</tr>';
-        }
-        $html .= '</tbody></table></body></html>';
-
-        return $html;
-    }
-
-    /**
-     * Generate simple HTML for station inventory.
-     */
-    protected function generateStationInventoryHtml(array $data): string
-    {
-        $html = '<!DOCTYPE html><html><head><title>Station Inventory</title></head><body>';
-        $html .= '<h1>Station Equipment Inventory</h1>';
-        $html .= '<p><strong>Event:</strong> '.$data['event']->name.'</p>';
-        foreach ($data['stations'] as $station) {
-            $html .= '<h2>'.$station['station_name'].'</h2>';
-            $html .= '<table border="1" cellpadding="5"><thead><tr>';
-            $html .= '<th>Type</th><th>Description</th><th>Owner</th><th>Contact</th><th>Status</th>';
-            $html .= '</tr></thead><tbody>';
-            foreach ($station['equipment'] as $eq) {
-                $html .= '<tr>';
-                $html .= '<td>'.ucfirst(str_replace('_', ' ', $eq['type'])).'</td>';
-                $html .= '<td>'.$eq['description'].'</td>';
-                $html .= '<td>'.$eq['owner_name'].' ('.$eq['owner_callsign'].')</td>';
-                $html .= '<td>'.$eq['owner_contact'].'</td>';
-                $html .= '<td>'.ucfirst(str_replace('_', ' ', $eq['status'])).'</td>';
-                $html .= '</tr>';
-            }
-            $html .= '</tbody></table><br>';
-        }
-        $html .= '</body></html>';
-
-        return $html;
-    }
-
-    /**
-     * Generate simple HTML for owner contacts.
-     */
-    protected function generateOwnerContactsHtml(array $data): string
-    {
-        $html = '<!DOCTYPE html><html><head><title>Owner Contacts</title></head><body>';
-        $html .= '<h1>Equipment Owner Contact List</h1>';
-        $html .= '<p><strong>Event:</strong> '.$data['event']->name.'</p>';
-        $html .= '<table border="1" cellpadding="5"><thead><tr>';
-        $html .= '<th>Owner</th><th>Callsign</th><th>Email</th><th>Phone</th><th>Equipment Count</th>';
-        $html .= '</tr></thead><tbody>';
-        foreach ($data['contacts'] as $contact) {
-            $html .= '<tr>';
-            $html .= '<td>'.$contact['owner_name'].'</td>';
-            $html .= '<td>'.$contact['callsign'].'</td>';
-            $html .= '<td>'.$contact['email'].'</td>';
-            $html .= '<td>'.$contact['primary_phone'].'</td>';
-            $html .= '<td>'.$contact['equipment_count'].'</td>';
-            $html .= '</tr>';
-        }
-        $html .= '</tbody></table></body></html>';
-
-        return $html;
-    }
-
-    /**
-     * Generate simple HTML for return checklist.
-     */
-    protected function generateReturnChecklistHtml(array $data): string
-    {
-        $html = '<!DOCTYPE html><html><head><title>Return Checklist</title></head><body>';
-        $html .= '<h1>Equipment Return Checklist</h1>';
-        $html .= '<p><strong>Event:</strong> '.$data['event']->name.'</p>';
-        $html .= '<table border="1" cellpadding="5"><thead><tr>';
-        $html .= '<th>☐</th><th>Equipment</th><th>Owner</th><th>Station</th><th>Signature</th>';
-        $html .= '</tr></thead><tbody>';
-        foreach ($data['return_items'] as $item) {
-            $html .= '<tr>';
-            $html .= '<td>☐</td>';
-            $html .= '<td>'.$item['equipment_description'].'</td>';
-            $html .= '<td>'.$item['owner_name'].' ('.$item['owner_callsign'].')</td>';
-            $html .= '<td>'.$item['station'].'</td>';
-            $html .= '<td>_______________________</td>';
-            $html .= '</tr>';
-        }
-        $html .= '</tbody></table></body></html>';
-
-        return $html;
-    }
-
-    /**
-     * Generate simple HTML for incident report.
-     */
-    protected function generateIncidentReportHtml(array $data): string
-    {
-        $html = '<!DOCTYPE html><html><head><title>Incident Report</title></head><body>';
-        $html .= '<h1>Equipment Incident Report</h1>';
-        $html .= '<p><strong>Event:</strong> '.$data['event']->name.'</p>';
-        $html .= '<p><strong>Total Incidents:</strong> '.$data['summary']['total_incidents'].'</p>';
-        $html .= '<p><strong>Total Value at Risk:</strong> $'.$data['summary']['total_value_at_risk'].'</p>';
-        $html .= '<table border="1" cellpadding="5"><thead><tr>';
-        $html .= '<th>Equipment</th><th>Status</th><th>Owner</th><th>Value</th><th>Circumstances</th>';
-        $html .= '</tr></thead><tbody>';
-        foreach ($data['incidents'] as $incident) {
-            $html .= '<tr>';
-            $html .= '<td>'.$incident['equipment_description'].'</td>';
-            $html .= '<td>'.ucfirst(str_replace('_', ' ', $incident['status'])).'</td>';
-            $html .= '<td>'.$incident['owner_name'].' ('.$incident['owner_callsign'].')</td>';
-            $html .= '<td>$'.number_format($incident['value_usd'] ?? 0, 2).'</td>';
-            $html .= '<td>'.$incident['circumstances'].'</td>';
-            $html .= '</tr>';
-        }
-        $html .= '</tbody></table></body></html>';
-
-        return $html;
+        return $pdf->download($filename);
     }
 }

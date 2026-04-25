@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\EquipmentEvent;
 use App\Models\Event;
 use Illuminate\Support\Collection;
 
@@ -37,7 +38,7 @@ class EquipmentReportService
         $event = Event::findOrFail($eventId);
 
         // Get all equipment commitments with relationships
-        $commitments = \App\Models\EquipmentEvent::query()
+        $commitments = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->with([
                 'equipment.owner',
@@ -150,7 +151,7 @@ class EquipmentReportService
     {
         $event = Event::findOrFail($eventId);
 
-        $checklistItems = \App\Models\EquipmentEvent::query()
+        $checklistItems = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->whereIn('status', ['committed', 'delivered'])
             ->with([
@@ -162,7 +163,7 @@ class EquipmentReportService
             ->map(fn ($c) => [
                 'id' => $c->id,
                 'checkbox' => '☐',
-                'expected_delivery' => $c->expected_delivery_at?->format('Y-m-d H:i') ?? 'TBD',
+                'expected_delivery' => $c->expected_delivery_at?->format('Y-m-d') ?? 'TBD',
                 'equipment_description' => trim("{$c->equipment->make} {$c->equipment->model}") ?: $c->equipment->description,
                 'type' => $c->equipment->type,
                 'owner_name' => $c->equipment->owner_name,
@@ -197,7 +198,7 @@ class EquipmentReportService
         $event = Event::findOrFail($eventId);
 
         // Get equipment commitments grouped by station
-        $commitments = \App\Models\EquipmentEvent::query()
+        $commitments = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->whereIn('status', ['committed', 'delivered'])
             ->with([
@@ -272,7 +273,7 @@ class EquipmentReportService
     {
         $event = Event::findOrFail($eventId);
 
-        $commitments = \App\Models\EquipmentEvent::query()
+        $commitments = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->with([
                 'equipment.owner',
@@ -329,7 +330,7 @@ class EquipmentReportService
     {
         $event = Event::findOrFail($eventId);
 
-        $returnItems = \App\Models\EquipmentEvent::query()
+        $returnItems = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->whereIn('status', ['delivered'])
             ->with([
@@ -387,7 +388,7 @@ class EquipmentReportService
     {
         $event = Event::findOrFail($eventId);
 
-        $incidents = \App\Models\EquipmentEvent::query()
+        $incidents = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->whereIn('status', ['lost', 'damaged', 'cancelled'])
             ->with([
@@ -450,7 +451,7 @@ class EquipmentReportService
     {
         $event = Event::findOrFail($eventId);
 
-        $equipmentRecords = \App\Models\EquipmentEvent::query()
+        $equipmentRecords = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->with([
                 'equipment.owner',
