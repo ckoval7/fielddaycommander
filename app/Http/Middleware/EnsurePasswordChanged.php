@@ -18,6 +18,7 @@ class EnsurePasswordChanged
             && $request->user()->requires_password_change
             && ! $request->routeIs('profile')
             && ! $request->routeIs('logout')
+            && ! $request->routeIs('logout.get')
             && ! $request->ajax()
             && ! $request->wantsJson()
             && $request->isMethod('GET')
