@@ -22,8 +22,8 @@
   .docs-toc-toggle { display: none; }
   .docs-layout {
     display: grid;
-    grid-template-columns: 240px 1fr;
-    max-width: 1200px;
+    grid-template-columns: 280px 1fr;
+    max-width: 1600px;
     margin: 0 auto;
     padding-top: 64px;
     min-height: 100vh;
@@ -61,8 +61,8 @@
   }
 
   .docs-content {
-    padding: 3rem 4rem;
-    max-width: 800px;
+    padding: 2.5rem 3.5rem;
+    max-width: 1000px;
   }
   .docs-content .breadcrumb {
     font-size: 0.8rem; color: var(--text-muted);
@@ -369,10 +369,12 @@
       <a class="sidebar-link" href="#scoring">Scoring</a>
       <a class="sidebar-link" href="#section-map">Section Map</a>
       <a class="sidebar-link" href="#guestbook">Visitor Guestbook</a>
+      <a class="sidebar-link" href="#weather">Weather</a>
       <a class="sidebar-link" href="#messages">NTS Messages</a>
       <a class="sidebar-link" href="#w1aw">W1AW Bulletin</a>
       <a class="sidebar-link" href="#photos">Photos</a>
-      <a class="sidebar-link" href="#cabrillo">Cabrillo Export</a>
+      <a class="sidebar-link" href="#reports">Reports</a>
+      <a class="sidebar-link" href="#audit-logs">Audit Logs</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Advanced</div>
@@ -416,7 +418,7 @@
 
     <div class="callout info">
       <div class="callout-title">No Internet Required at Runtime</div>
-      FD Commander is fully air-gapped once deployed. The install script downloads dependencies, so you need internet during setup. After that, zero external connectivity is needed. Do the install at home before the event.
+      FD Commander runs fully offline once deployed. The install script downloads dependencies, so you need internet during setup. After that, no external connectivity is required, though an optional weather API integration is available if your site has internet access. Do the install at home before the event.
     </div>
 
     <h2>Install Steps</h2>
@@ -539,10 +541,12 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="first-event">First Event Setup</h2>
-    <p>The first time you open FD Commander, a setup wizard walks you through three steps: setting the admin password (the deploy script pre-creates a System Administrator account), configuring site branding, and entering your organization details and system preferences like timezone and date format. After that, you'll be redirected to the login page — sign in with <code>admin@localhost</code> and the password you just set. The dashboard shows a setup checklist that guides you through configuring your event. See the <a href="how-to/first-event.html">First Event Setup how-to</a> for a detailed walkthrough.</p>
+    <p>The first time you open FD Commander, a setup wizard walks you through three steps. Step 1 sets the admin password for the pre-created <code>SYSTEM</code> account (callsign SYSTEM, email <code>admin@localhost</code>). Step 2 configures site branding: your site name (defaults to "Field Day Commander"), an optional tagline, and an optional logo upload. Step 3 sets your organization information and system preferences including timezone, date format, and time format. After the wizard completes, you're redirected to the login page.</p>
+
+    <p>Sign in with <code>admin@localhost</code> and the password you set. The app will display a prominent warning that the SYSTEM account is for initial configuration only. Your first action should be to create a personal account tied to your own callsign. Go to <strong>Administration &gt; Users</strong>, click <strong>Add User</strong>, fill in your callsign, email, name, and password, and set the role to <strong>System Administrator</strong>. Then log out via the account menu in the top-right corner and sign back in with your personal account. From that point on the SYSTEM account can be left alone. See the <a href="how-to/first-event.html">First Event Setup how-to</a> for a detailed walkthrough.</p>
 
     <h3>Create an Event</h3>
-    <p>Click <strong>+ Create Event</strong> from the dashboard (or go to <strong>Administration &gt; Events</strong>). Give the event a name, pick the event type (Field Day or Winter Field Day), and the start/end times auto-populate from the official ARRL schedule. Then fill in your station callsign, club name, ARRL/RAC section, operating class, and number of transmitters. Under Power Configuration, enter your maximum wattage and check your power sources — the form calculates your power multiplier as you go. You can also enable a visitor guestbook for your site.</p>
+    <p>Click <strong>+ Create Event</strong> on the dashboard. The form has four sections. Under <strong>Event Information</strong>, give the event a name and pick the event type. When you select Field Day or Winter Field Day, the start and end times auto-populate from the official ARRL schedule in UTC, and the scoring rules default to the correct year. You can adjust these manually if needed. Under <strong>Event Location</strong>, the fields are technically optional, but latitude and longitude are required for the weather widget and NWS severe weather alerts to function. Fill them in if your site has internet access and you want weather data. City and state appear in auto-filled Section Manager messages, grid square is shown as reference for operators, and talk-in frequency lets visitors know what frequency to tune to for directions to your site. Under <strong>Station Configuration</strong>, fill in your station callsign, club name, ARRL/RAC section, operating class, and number of transmitters. Under <strong>Power Configuration</strong>, enter your maximum wattage and select your power sources (Commercial Power, Generator, Battery, or Alternate Power). The form shows the applicable power multiplier as you go. You can also enable a GOTA (Get On The Air) station, which lets novice operators make contacts under supervision, and a visitor guestbook for public sign-ins at your site.</p>
 
     <h3>Setup Checklist</h3>
     <p>The dashboard tracks five setup milestones:</p>
@@ -592,22 +596,23 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="user-roles">User Roles</h2>
-    <p>FD Commander ships with four built-in roles. Each role has a specific set of permissions that control what parts of the system a user can access. Roles are managed under <strong>Settings &gt; Role Management</strong>.</p>
+    <p>FD Commander ships with five built-in roles. Each role has a specific set of permissions that control what parts of the system a user can access. Roles are managed under <strong>Settings &gt; Role Management</strong> (a tab on the Settings page).</p>
 
     <div class="req-table-wrapper">
       <table class="req-table">
         <thead><tr><th>Role</th><th>What They Can Do</th></tr></thead>
         <tbody>
-          <tr><td>System Administrator</td><td>24 permissions. Full access to all settings, events, users, roles, stations, equipment, scheduling, safety, reports, security logs, and audit logs. Cannot log or edit contacts by default (to keep the admin role distinct from operators). Marked as <em>System Protected</em>, so this role always exists and can't be deleted.</td></tr>
-          <tr><td>Event Manager</td><td>22 permissions. Manage events, stations, equipment, schedules, bonuses, guestbook, photos, security logs, and reports. Has every permission except user administration, system settings, and signing the guestbook. The person running your Field Day operation.</td></tr>
-          <tr><td>Station Captain</td><td>5 permissions. Log and edit contacts, view and manage stations, manage equipment inventory. Runs a single operating position and keeps their operators on task.</td></tr>
-          <tr><td>Operator</td><td>3 permissions. Log contacts, view stations, manage their own personal equipment catalog. The default role for new registrations. Intentionally minimal so new hams can get on the air without seeing admin clutter.</td></tr>
+          <tr><td>System Administrator</td><td>26 permissions. Full access to everything: contact logging, all event management, all station and equipment functions, user administration, scheduling, content management, reporting, security logs, contact import, and weather management. Marked as <em>System Protected</em>, so this role always exists and can't be deleted.</td></tr>
+          <tr><td>Event Manager</td><td>23 permissions. Manages the full operational side of Field Day: logging and importing contacts, managing events, stations, equipment, schedules, bonuses, guestbook, photos, security logs, and weather. Cannot administer users, roles, or system settings.</td></tr>
+          <tr><td>Station Captain</td><td>10 permissions. Logs and edits contacts, manages stations and equipment inventory, handles equipment assignments, manages the W1AW bulletin schedule, views all equipment, and signs up for shifts. Runs an operating position and keeps operators on task.</td></tr>
+          <tr><td>Operator</td><td>4 permissions. Logs contacts, views stations, manages personal equipment, and signs up for shifts. The default role for new registrations. Intentionally minimal so new hams can get on the air without seeing admin clutter.</td></tr>
+          <tr><td>Config Only</td><td>8 permissions. A restricted bootstrap role: can manage users, roles, and settings, and has read-only access to events, stations, equipment, reports, and security logs. Cannot log contacts, manage events operationally, or participate in operations. Assigned exclusively to the built-in SYSTEM account. Marked as <em>System Protected</em>.</td></tr>
         </tbody>
       </table>
     </div>
 
     <h3>Permissions Reference</h3>
-    <p>The permission system is organized into seven categories with 26 individual permissions. Each permission controls access to a specific area of FD Commander. The table below shows what each default role gets out of the box.</p>
+    <p>The permission system is organized into eight categories with 26 individual permissions. Each permission controls access to a specific area of FD Commander. The table below shows what each operational role gets out of the box. Config Only (the SYSTEM account role) is not shown here since it is not used for normal operations.</p>
 
     <div class="req-table-wrapper">
       <table class="req-table">
@@ -623,28 +628,36 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Contact Logging (2) -->
+          <!-- Contact Logging (3) -->
           <tr>
-            <td rowspan="2"><strong>Contact Logging</strong></td>
-            <td>log-contacts</td>
+            <td rowspan="3"><strong>Contact Logging</strong></td>
+            <td><code>log-contacts</code></td>
             <td>Create new QSO entries</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
-            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>edit-contacts</td>
+            <td><code>edit-contacts</code></td>
             <td>Edit or delete existing QSOs</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
-            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
           </tr>
-          <!-- Event Management (8) -->
           <tr>
-            <td rowspan="8"><strong>Event Management</strong></td>
-            <td>view-events</td>
+            <td><code>import-contacts</code></td>
+            <td>Import contacts from ADIF files</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <!-- Event Management (6) -->
+          <tr>
+            <td rowspan="6"><strong>Event Management</strong></td>
+            <td><code>view-events</code></td>
             <td>View events list and details</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -652,7 +665,7 @@
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>create-events</td>
+            <td><code>create-events</code></td>
             <td>Create new Field Day events</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -660,7 +673,7 @@
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>edit-events</td>
+            <td><code>edit-events</code></td>
             <td>Edit existing Field Day events</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -668,7 +681,7 @@
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>delete-events</td>
+            <td><code>delete-events</code></td>
             <td>Delete Field Day events</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -676,31 +689,15 @@
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>activate-events</td>
-            <td>Activate or deactivate events</td>
-            <td style="text-align:center">-</td>
+            <td><code>manage-bulletins</code></td>
+            <td>Manage W1AW bulletin schedule</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">&check;</td>
-            <td style="text-align:center">&check;</td>
-          </tr>
-          <tr>
-            <td>manage-events</td>
-            <td>Create and edit Field Day events</td>
-            <td style="text-align:center">-</td>
-            <td style="text-align:center">-</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-event-config</td>
-            <td>Configure event settings</td>
-            <td style="text-align:center">-</td>
-            <td style="text-align:center">-</td>
-            <td style="text-align:center">&check;</td>
-            <td style="text-align:center">&check;</td>
-          </tr>
-          <tr>
-            <td>verify-bonuses</td>
+            <td><code>verify-bonuses</code></td>
             <td>Approve or reject bonus point claims</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -710,7 +707,7 @@
           <!-- Station & Equipment (7) -->
           <tr>
             <td rowspan="7"><strong>Station &amp; Equipment</strong></td>
-            <td>view-stations</td>
+            <td><code>view-stations</code></td>
             <td>View stations list and details</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
@@ -718,7 +715,7 @@
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-stations</td>
+            <td><code>manage-stations</code></td>
             <td>Add and edit operating stations</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">&check;</td>
@@ -726,39 +723,39 @@
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-equipment</td>
-            <td>Manage equipment inventory</td>
+            <td><code>manage-equipment</code></td>
+            <td>Manage shared equipment inventory</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-own-equipment</td>
+            <td><code>manage-own-equipment</code></td>
             <td>Create, edit, and delete personal equipment in catalog</td>
             <td style="text-align:center">&check;</td>
-            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>view-all-equipment</td>
+            <td><code>view-all-equipment</code></td>
             <td>View everyone's equipment catalog</td>
             <td style="text-align:center">-</td>
-            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-event-equipment</td>
+            <td><code>manage-event-equipment</code></td>
             <td>Manage equipment assignments for events</td>
             <td style="text-align:center">-</td>
-            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>edit-any-equipment</td>
+            <td><code>edit-any-equipment</code></td>
             <td>Edit equipment details for any user</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -768,7 +765,7 @@
           <!-- User Administration (3) -->
           <tr>
             <td rowspan="3"><strong>User Administration</strong></td>
-            <td>manage-users</td>
+            <td><code>manage-users</code></td>
             <td>Create, edit, and delete user accounts</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -776,7 +773,7 @@
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-roles</td>
+            <td><code>manage-roles</code></td>
             <td>Create roles and assign permissions</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -784,7 +781,7 @@
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-settings</td>
+            <td><code>manage-settings</code></td>
             <td>Configure system settings and preferences</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -794,15 +791,15 @@
           <!-- Content Management (4) -->
           <tr>
             <td rowspan="4"><strong>Content Management</strong></td>
-            <td>sign-guestbook</td>
-            <td>Sign the guestbook for events</td>
-            <td style="text-align:center">-</td>
-            <td style="text-align:center">-</td>
-            <td style="text-align:center">-</td>
+            <td><code>sign-up-shifts</code></td>
+            <td>Sign up for and check in/out of volunteer shifts</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-guestbook</td>
+            <td><code>manage-guestbook</code></td>
             <td>Manage guestbook entries (verify, edit, delete, export)</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -810,15 +807,15 @@
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-shifts</td>
-            <td>Create, edit, and manage shift schedules</td>
+            <td><code>manage-shifts</code></td>
+            <td>Create, edit, and manage shift schedules and assignments</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
           </tr>
           <tr>
-            <td>manage-images</td>
+            <td><code>manage-images</code></td>
             <td>Upload and delete event photos</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -828,7 +825,7 @@
           <!-- Reporting (1) -->
           <tr>
             <td><strong>Reporting</strong></td>
-            <td>view-reports</td>
+            <td><code>view-reports</code></td>
             <td>Access detailed score reports</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
@@ -838,8 +835,18 @@
           <!-- Security (1) -->
           <tr>
             <td><strong>Security</strong></td>
-            <td>view-security-logs</td>
+            <td><code>view-security-logs</code></td>
             <td>View security logs and activity records</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <!-- Weather (1) -->
+          <tr>
+            <td><strong>Weather</strong></td>
+            <td><code>manage-weather</code></td>
+            <td>Manually enter weather data and trigger storm alerts</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">&check;</td>
@@ -849,10 +856,8 @@
       </table>
     </div>
 
-    <p>Notice that System Administrator intentionally lacks contact logging permissions by default. This keeps the admin role separate from operating. If your admin also wants to get on the air, just add log-contacts to their role or assign them a second role.</p>
-
     <h3>Creating Custom Roles</h3>
-    <p>The four default roles cover most clubs, but you can create your own. Go to <strong>Settings &gt; Role Management</strong> and click <strong>+ Create New Role</strong>. Give the role a name, then check the permissions you want it to have. Permissions are grouped by category with a <em>Select All</em> toggle at the top of each group, so you can quickly grant an entire category at once or pick individual permissions one by one. Click <strong>Save Permissions</strong> when you're done.</p>
+    <p>The five default roles cover most clubs, but you can create your own. Go to <strong>Settings &gt; Role Management</strong> and click <strong>+ Create New Role</strong>. Give the role a name, then check the permissions you want it to have. Permissions are grouped by category with a <em>Select All</em> toggle at the top of each group, so you can quickly grant an entire category at once or pick individual permissions one by one. Click <strong>Save Permissions</strong> when you're done.</p>
 
     <p>A few ideas for custom roles: a <em>Logger</em> role with log-contacts and edit-contacts for experienced operators who need to fix mistakes, a <em>Safety Officer</em> with just manage-guestbook and view-reports for the person running the public information table, or a <em>Tech Lead</em> with manage-stations and manage-equipment but no event management access.</p>
 
@@ -874,7 +879,7 @@
     <h3>Creating a Station</h3>
     <p>Click <strong>+ Add Station</strong> to open the station form. The Configuration tab has four sections:</p>
 
-    <p><strong>Basic Information:</strong> Give the station a name (must be unique within the event) and confirm which event it belongs to.</p>
+    <p><strong>Basic Information:</strong> Give the station a name (must be unique within the event), an optional hostname (the NetBIOS machine name of the PC running that station's logger, used for automatic station matching with N1MM+ and other external loggers), and confirm which event it belongs to.</p>
 
     <p><strong>Station Type:</strong> Check any special designations that apply. GOTA (Get On The Air) marks it as the special station for new operators; only one GOTA station is allowed per event. VHF/UHF Only restricts the station to those bands. Satellite marks it for satellite communications.</p>
 
@@ -893,32 +898,35 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="scheduling">Volunteer Scheduling</h2>
-    <p>The scheduling system lets you define shift blocks and roles, then lets volunteers self-sign-up for open slots. There are two views: <strong>Event Management &gt; Schedule</strong> is the operator-facing board where people browse and claim shifts, and <strong>Administration &gt; Manage Schedule</strong> is where the event manager builds the schedule.</p>
+    <p>The scheduling system lets you define shift blocks and roles, then lets volunteers self-sign-up for open slots. There are two views: <strong>Event Management &gt; Shift Schedule</strong> is the operator-facing board where people browse and claim shifts, and <strong>Administration &gt; Manage Schedule</strong> is where the event manager builds the schedule.</p>
 
     <h3>Setting Up Roles</h3>
-    <p>Before creating shifts, define the roles you need. Go to <strong>Administration &gt; Manage Schedule</strong> and click the <strong>Roles</strong> tab. FD Commander ships with sample roles that cover common Field Day positions: Safety Officer, Public Information Table, Public Greeter, GOTA Coach, Message Handler, Event Manager, and Station Captain. Each role has a description, an optional bonus point value, and two key settings:</p>
+    <p>Before creating shifts, define the roles you need. Go to <strong>Administration &gt; Manage Schedule</strong> and click the <strong>Roles</strong> tab. FD Commander ships with sample roles that cover common Field Day positions: Safety Officer, Public Information Table, Public Greeter, GOTA Coach, Message Handler, Event Manager, Station Captain, and Operator. Each role has a description, an optional bonus point value, and two key settings:</p>
 
     <p><strong>Eligibility only</strong> vs. <strong>Auto-awarded on confirmation</strong> controls whether the associated bonus points are granted automatically when the shift is confirmed, or just tracked for eligibility. <strong>Requires Confirmation</strong> means the event manager must approve the sign-up before it counts.</p>
 
-    <p>Click <strong>+ Add Custom Role</strong> to create roles specific to your club, like "Antenna Setup Crew" or "Food Coordinator." You can delete or edit the sample roles if they don't fit.</p>
+    <p>Click <strong>Add Custom Role</strong> to create roles specific to your club, like "Antenna Setup Crew" or "Food Coordinator." You can delete or edit the sample roles if they don't fit.</p>
 
     <h3>Creating Shifts</h3>
-    <p>Switch to the <strong>Shifts</strong> tab and click <strong>+ Add Shift</strong>. Each shift needs a role (from the dropdown), a start time and end time (entered in UTC, displayed to volunteers in local time), a capacity (how many people can fill the slot), and optionally notes. The <strong>Open for Sign-ups</strong> toggle controls whether operators can self-assign or whether the manager must assign them manually.</p>
+    <p>Switch to the <strong>Shifts</strong> tab and click <strong>Add Shift</strong>. Each shift needs a role (from the dropdown), a start time and end time (entered in UTC, displayed to volunteers in local time), a capacity (how many people can fill the slot), and optionally notes. The <strong>Open for Sign-ups</strong> toggle controls whether operators can self-assign or whether the manager must assign them manually.</p>
 
     <p>For events with lots of shifts, use the <strong>Bulk Create</strong> button to generate multiple shift blocks at once instead of creating them one at a time.</p>
 
+    <h3>Managing Shifts</h3>
+    <p>Each shift card on the admin Shifts tab has an edit button to modify the shift details and a delete button to remove it. Unfilled slots have an <strong>Assign</strong> button so the event manager can manually place someone without waiting for self-sign-up. For each person already assigned to a shift, the manager can <strong>Check In</strong>, <strong>Check Out</strong>, <strong>Mark No-Show</strong>, or <strong>Remove</strong> the assignment directly from the card.</p>
+
     <h3>The Operator View</h3>
-    <p>Operators go to <strong>Event Management &gt; Schedule</strong> to see available shifts filtered by role. They can sign up for open slots and check the <strong>My Shifts</strong> button in the top right to see only their own assignments. The <strong>Confirmations</strong> tab on the admin side shows pending sign-ups that need approval.</p>
+    <p>Operators go to <strong>Event Management &gt; Shift Schedule</strong> to see available shifts filtered by role. They can sign up for open slots and click <strong>My Shifts</strong> to see only their own assignments. The <strong>Confirmations</strong> tab on the admin side shows all sign-ups awaiting approval, with <strong>Confirm</strong> and <strong>Reject</strong> buttons on each entry.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  EQUIPMENT                                 -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="equipment">Equipment Tracking</h2>
-    <p>FD Commander gives every operator a personal equipment catalog and ties it into the event workflow so you always know what gear is where.</p>
+    <p>FD Commander gives every operator a personal equipment catalog and ties it into the event workflow so you always know what gear is where. There are four equipment pages depending on your role and what you're looking at.</p>
 
-    <h3>Adding Equipment</h3>
-    <p>Go to <strong>Equipment &gt; My Catalog</strong> and click <strong>+ Add Equipment</strong>. The form captures everything you'd want to know about a piece of gear:</p>
+    <h3>My Catalog</h3>
+    <p>Go to <strong>Equipment &gt; My Catalog</strong> and click <strong>Add Equipment</strong>. The form captures everything you'd want to know about a piece of gear:</p>
 
     <p><strong>Equipment Details:</strong> Make and model (required), type (Radio, Antenna, Amplifier, Computer, Power Supply, Accessory, Tool, Furniture, or Other), serial number, and a free-text description. Admins also see an <strong>Owner</strong> dropdown to assign equipment to any registered user; operators creating their own gear won't see this field — their equipment is automatically assigned to them.</p>
 
@@ -931,15 +939,20 @@
     <p><strong>Equipment Photo:</strong> Upload a PNG or JPEG (up to 5 MB) so people can visually identify the gear on-site.</p>
 
     <h3>Club Equipment</h3>
-    <p>Admins and event managers can click <strong>Add Club Equipment</strong> (on the My Catalog page or under <strong>Equipment &gt; Club Equipment</strong>) for gear that belongs to the club rather than any individual member. Operators won't see this button. The form is the same as personal equipment except there's no owner field — instead there's an optional <strong>Managed By</strong> field to assign a specific person to be responsible for it. Club equipment has its own dedicated listing page where you can filter by type and status.</p>
+    <p>Admins and event managers can click <strong>Add Club Equipment</strong> (visible on both the My Catalog page and under <strong>Equipment &gt; Club Equipment</strong>) for gear that belongs to the club rather than any individual member. Operators won't see this button. The form is the same as personal equipment except there's no owner field — instead there's an optional <strong>Managed By</strong> field to assign a specific person to be responsible for it. Club equipment has its own dedicated listing page where you can filter by type and status.</p>
+
+    <h3>All User Catalogs</h3>
+    <p>Admins and event managers can go to <strong>Equipment &gt; All User Catalogs</strong> to see every piece of equipment in the system across all members, filterable by owner, type, and status. This page also has an <strong>Add Equipment for User</strong> button so an admin can add gear directly to any member's catalog without logging in as that user.</p>
 
     <h3>Committing to an Event</h3>
     <p>Equipment needs to be committed to an event before it can be assigned to stations. There are two commitment paths:</p>
-    <p><strong>Operators commit their own gear</strong> directly from <strong>Equipment &gt; My Catalog</strong>. Click the actions menu (<strong>⋮</strong>) on any item and choose <strong>Commit to Event</strong>. A dialog asks which event to commit to, an expected delivery date, and optional delivery notes.</p>
-    <p><strong>Admins commit club equipment</strong> from the Equipment Dashboard at <strong>Administration &gt; Event Equipment</strong>. Click <strong>+ Commit Club Equipment</strong> to assign club gear to the event in bulk. Committed gear can then be assigned to specific stations on the station's Equipment tab.</p>
+    <p><strong>Operators commit their own gear</strong> directly from <strong>Equipment &gt; My Catalog</strong>. Click the actions menu on any item and choose <strong>Commit to Event</strong>. A dialog asks which event to commit to, an expected delivery date, and optional delivery notes.</p>
+    <p><strong>Admins commit club equipment</strong> from the Equipment Dashboard at <strong>Administration &gt; Event Equipment</strong>. Click <strong>Commit Club Equipment</strong> to assign club gear to the event. Committed gear can then be assigned to specific stations on the station's Equipment tab.</p>
 
-    <h3>Status Tracking</h3>
-    <p>The Equipment Dashboard tracks each item through its lifecycle: <strong>Committed</strong> (pledged for the event), <strong>Delivered</strong> (physically on-site), <strong>Returned</strong> (back with the owner after the event), or flagged with issues (<strong>Lost</strong>, <strong>Damaged</strong>, or <strong>Cancelled</strong>). Status cards at the top give a quick count, and you can view equipment grouped by owner, type, or station. The dashboard also offers exports: commitment summaries, delivery checklists, station inventory sheets, return checklists, owner contacts, and incident reports in CSV and PDF.</p>
+    <h3>Equipment Dashboard</h3>
+    <p>The Equipment Dashboard (<strong>Administration &gt; Event Equipment</strong>) tracks each item through its lifecycle: <strong>Committed</strong> (pledged for the event), <strong>Delivered</strong> (physically on-site), <strong>Returned</strong> (back with the owner after the event), or flagged with issues (<strong>Lost</strong>, <strong>Damaged</strong>, or <strong>Cancelled</strong>). Status cards at the top give a quick count across all items. You can view equipment in four groupings: Overview (all equipment in one table), By Owner, By Type, and By Station.</p>
+
+    <p>The <strong>Export</strong> button offers reports grouped by phase. Pre-event: Commitment Summary (CSV) and Delivery Checklist (PDF), Station Inventory (PDF and CSV). Post-event: Return Checklist (PDF) and Historical Record (CSV). Reference and incidents: Owner Contacts (PDF and CSV) and Incident Report (PDF and CSV).</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  SAFETY                                    -->
@@ -952,25 +965,31 @@
     <p>FD Commander ships with the 15-item ARRL Field Day safety checklist. Items cover the essentials you'd expect at a field site: safety officer on-site for the duration, fuel properly stored, fire extinguisher located, first aid kit on hand, CPR/AED-trained person present, NWS weather monitoring, tent stakes marked, antenna structures secured, tripping hazards cleared, site arranged to reduce hazards, stations and equipment grounded, access to police/fire/rescue, designated safety point of contact, and minimizing risk to the public. Each item is marked Required.</p>
 
     <h3>Working Through the Checklist</h3>
-    <p>During setup, walk the site and check off each item as you verify it. FD Commander records who completed each item and when. The progress counter updates in real time, and once all required items are checked, the scoring page automatically awards the 100-point Safety Officer bonus.</p>
+    <p>You must be signed on to an active Safety Officer shift before you can check off items. Once you are, walk the site during setup and check off each item as you verify it. FD Commander records who completed each item and when. The progress counter updates in real time, and once all required items are checked, the scoring page automatically awards the 100-point Safety Officer bonus.</p>
 
     <h3>Customizing the Checklist</h3>
-    <p>Go to <strong>Administration &gt; Manage Safety Checklist</strong> to add, edit, or remove items. If your club has additional safety requirements beyond the ARRL defaults (like generator exhaust ventilation or lightning grounding), add them here.</p>
+    <p>Go to <strong>Administration &gt; Manage Safety Checklist</strong> to add, edit, or remove items. Click <strong>Add Item</strong> to create new entries. Each item has a role assignment that controls who can check it off, so you can gate specific items to specific shift roles. If your club has additional safety requirements beyond the ARRL defaults (like generator exhaust ventilation or lightning grounding), add them here.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  CONTACT LOGGING                           -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="logging">Contact Logging</h2>
-    <p>Operators log contacts under <strong>Logging &gt; View Log</strong>. The first step is selecting which station you're operating. This ties every contact to the correct transmitter, band, and power level for scoring purposes.</p>
+    <p>Operators log contacts under <strong>Logging &gt; Log Contact</strong>. The station selection screen shows every station with its current status (Available, Occupied, or In Use), the current operator's callsign, active band and mode, and running QSO count. Click a station to claim it.</p>
+
+    <h3>Starting a Session</h3>
+    <p>After selecting a station, you choose the band, mode, and power in watts before the logging interface opens. Band and mode are locked for the duration of the session. To change them you must end the session and start a new one. For GOTA stations, there's an additional option to mark the session as supervised (GOTA Coach present), which enables the 100-point coach bonus if 10 or more contacts are supervised.</p>
 
     <h3>Making Contacts</h3>
-    <p>The logging interface is a single-field entry flow: type the callsign, the exchange fields populate, and hit Enter. Dupe checks run in real time against every contact logged by every station on every band, so you'll see an immediate warning if the callsign has already been worked on that band. Section and class validation catches typos before they're saved.</p>
+    <p>The logging interface shows a sticky bar at the top with the station name, band, mode, power, and a live QSO counter. The entry field accepts the full exchange in one shot (callsign, class, section) with autocomplete suggestions as you type. Hit Enter to log. Dupe checks run in real time against every contact logged by every station on every band, so you'll see an immediate warning if the callsign has already been worked on that band. If a contact fails to sync, it appears in a failed contacts dropdown in the header with a retry button.</p>
 
     <p>All contacts go into a shared database via WebSocket (Laravel Reverb), so every connected browser sees updates as they happen. The scoring dashboard, logbook, and band activity all reflect new contacts instantly.</p>
 
+    <h3>GOTA Operator Tracking</h3>
+    <p>On a GOTA station, the logging interface shows additional fields to identify the operator making the contact: search for a registered user by name or callsign, or manually enter a first name, last name, and callsign for unregistered visitors. This attaches the GOTA operator to each contact for reporting purposes.</p>
+
     <h3>Browsing the Logbook</h3>
-    <p>The Logbook Browser at the top of the View Log page shows running totals: total QSOs, total points, unique sections worked, QSOs by band, and QSOs by mode. Below that, a full set of filters lets you slice the log by band, mode, station, operator, ARRL section, callsign, time range, duplicate status (all, exclude dupes, dupes only), and whether the contact was transcribed from paper.</p>
+    <p>Go to <strong>Logging &gt; View Log</strong> to open the Logbook Browser. Stats at the top show running totals: total QSOs, total points, unique sections worked, QSOs by mode, and QSOs by band. Below that, a full set of filters lets you slice the log by band, mode, station, operator, ARRL section, callsign, time range, duplicate status (all, exclude dupes, dupes only), and whether the contact was transcribed from paper. The contact table shows QSO time (UTC), callsign, band, mode, class, section, points, station, and the logger who entered it. Use the <strong>Export CSV</strong> button to download the filtered log.</p>
 
     <h3>Post-Event Editing</h3>
     <p>After the event, operators with the right permissions can edit contacts to fix exchange errors or delete accidental entries. There's a configurable grace period (default: 30 days) during which late contacts can still be added. This is useful for transcribing paper logs (see <a href="#paper-transcription">Paper Log Transcription</a>).</p>
@@ -982,7 +1001,7 @@
     <h2 id="external-loggers">External Logger Integration</h2>
     <p>FD Commander can receive contacts from external logging programs in real time over UDP, and it can import ADIF files after the fact. This means operators running WSJT-X, N1MM Logger+, fldigi, or any other logger that outputs ADIF don't need to double-log their contacts. The external logger handles the RF side and FD Commander handles scoring, deduplication, and Cabrillo export.</p>
 
-    <p>All external logger settings are found under <strong>Administration &gt; External Loggers</strong>. Each listener can be enabled or disabled independently, and the UDP port is configurable.</p>
+    <p>All external logger settings are found under <strong>Logging &gt; External Loggers</strong>. Each listener can be enabled or disabled independently, and the UDP port is configurable.</p>
 
     <div class="callout warning">
       <div class="callout-title">Security Notice</div>
@@ -1019,7 +1038,7 @@
     </ul>
 
     <h3>ADIF File Import</h3>
-    <p>If you have contacts in an ADIF file (from a previous logging session, a backup, or another program), you can import them through a three-step wizard under <strong>Administration &gt; External Loggers &gt; Import ADIF</strong>.</p>
+    <p>If you have contacts in an ADIF file (from a previous logging session, a backup, or another program), you can import them through a three-step wizard. Click <strong>Import ADIF</strong> at the top of the <strong>Logging &gt; External Loggers</strong> page.</p>
     <ul>
       <li><strong>Step 1: Upload.</strong> Select your .adi or .adif file and click Parse &amp; Continue. FD Commander reads the file and shows a summary: record count, date range, bands, and modes.</li>
       <li><strong>Step 2: Map Fields.</strong> If the ADIF file contains station identifiers that don't match your configured stations, you'll see them listed under "Unmapped Stations" with a dropdown to assign each one to an event station.</li>
@@ -1036,36 +1055,35 @@
 
     <div class="callout info">
       <div class="callout-title">Scoring Formula</div>
-      (QSO Base Points x Power Multiplier) + Bonus Points = Final Score
+      (QSO Base Points x Power Multiplier) + Bonus Points + GOTA Bonus = Final Score
     </div>
 
-    <p><strong>QSO points</strong> are weighted by mode: CW and digital contacts are worth 2 points each, phone contacts are worth 1. <strong>Power multiplier</strong> is determined automatically from your configured power sources (5x for &le;5W natural power, 2x for &le;5W or 6-100W with commercial/generator, 1x for over 100W). <strong>Bonus points</strong> come from 18 ARRL categories defined in the official rules.</p>
+    <p><strong>QSO points</strong> are weighted by mode: CW and digital contacts are worth 2 points each, phone contacts are worth 1. <strong>Power multiplier</strong> is determined automatically from your configured power sources (5x for &le;5W natural power, 2x for &le;5W or 6-100W with commercial/generator, 1x for over 100W). <strong>Bonus points</strong> come from 17 ARRL categories defined in the official rules. <strong>GOTA bonus</strong> is calculated separately: 5 points per GOTA contact, plus a 100-point coach bonus if 10 or more contacts are supervised.</p>
 
     <h3>Bonus Categories</h3>
-    <p>The scoring page lists all 18 categories with their status: verified, claimed, or unclaimed. Some bonuses are tracked automatically (like the safety checklist completion or visitor guestbook count). Others are claimed manually by the event manager (like media publicity or satellite QSO). Availability depends on your entry class.</p>
+    <p>The scoring page lists all 17 categories with their status: verified, claimed, or unclaimed. Some bonuses are tracked automatically (like the safety checklist completion or visitor guestbook count). Others are claimed manually by the event manager (like media publicity or satellite QSO). Availability depends on your entry class.</p>
 
     <div class="req-table-wrapper">
       <table class="req-table">
         <thead><tr><th>Bonus</th><th>Points</th><th>Tracking</th></tr></thead>
         <tbody>
-          <tr><td>100% Emergency Power</td><td>100/transmitter (max 2,000)</td><td>Based on configured power sources</td></tr>
+          <tr><td>Emergency Power</td><td>100/transmitter (max 2,000)</td><td>Based on configured power sources</td></tr>
           <tr><td>Media Publicity</td><td>100</td><td>Manual claim</td></tr>
           <tr><td>Public Location</td><td>100</td><td>Manual claim</td></tr>
-          <tr><td>Public Information Table</td><td>100</td><td>Manual claim</td></tr>
+          <tr><td>Information Booth</td><td>100</td><td>Manual claim</td></tr>
           <tr><td>Section Manager Message</td><td>100</td><td>Automatic (NTS message tracking)</td></tr>
           <tr><td>NTS Messages Handled</td><td>10 each (max 100)</td><td>Automatic (per radiogram logged)</td></tr>
           <tr><td>Satellite QSO</td><td>100</td><td>Manual claim</td></tr>
-          <tr><td>Alternate Power</td><td>100</td><td>Manual claim</td></tr>
+          <tr><td>Natural Power QSOs</td><td>100</td><td>Manual claim</td></tr>
           <tr><td>W1AW Field Day Bulletin</td><td>100</td><td>Automatic (W1AW Bulletin page)</td></tr>
           <tr><td>Educational Activity</td><td>100</td><td>Manual claim</td></tr>
           <tr><td>Elected Official Visit</td><td>100</td><td>Automatic (guestbook visitor category)</td></tr>
-          <tr><td>Agency Representative Visit</td><td>100</td><td>Automatic (guestbook visitor category)</td></tr>
-          <tr><td>GOTA</td><td>5/contact + 100 (coach)</td><td>Automatic (GOTA station logging)</td></tr>
+          <tr><td>Served Agency Visit</td><td>100</td><td>Automatic (guestbook visitor category)</td></tr>
           <tr><td>Web Submission</td><td>50</td><td>Manual claim</td></tr>
           <tr><td>Youth Participation</td><td>20 each (max 100)</td><td>Automatic (youth accounts) + manual entry</td></tr>
           <tr><td>Social Media</td><td>100</td><td>Manual claim</td></tr>
           <tr><td>Safety Officer</td><td>100</td><td>Automatic (safety checklist completion)</td></tr>
-          <tr><td>Site Responsibilities</td><td>50</td><td>Automatic (site responsibilities checklist)</td></tr>
+          <tr><td>Site Responsibilities</td><td>50</td><td>Manual claim (Classes B, C, D, E, F only)</td></tr>
         </tbody>
       </table>
     </div>
@@ -1075,7 +1093,7 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="section-map">Section Map</h2>
-    <p>The Section Map is an interactive visualization of all 86 ARRL and RAC sections across the United States and Canada. As contacts are logged, sections light up on the map in real time. It's accessible from the main sidebar under <strong>Section Map</strong>, right below Dashboard.</p>
+    <p>The Section Map is an interactive visualization of the 85 ARRL and RAC sections across the United States and Canada (71 US sections including territories, plus 14 Canadian RAC sections). DX contacts are scored normally but do not appear on the map. As contacts are logged, sections light up on the map in real time. It's accessible from the main sidebar under <strong>Section Map</strong>.</p>
 
     <h3>Region Filters</h3>
     <p>Across the top of the map, a row of filter buttons lets you focus on a specific region: <strong>All</strong>, <strong>US</strong>, <strong>Canada</strong>, or individual call areas (<strong>W1</strong> through <strong>W0</strong>). Selecting a call area zooms the view and dims sections outside that area so you can quickly see which sections within a region you've worked and which you still need.</p>
@@ -1099,7 +1117,7 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="guestbook">Visitor Guestbook</h2>
-    <p>Field Day is a public event, and the ARRL awards bonus points for public outreach. The guestbook (<strong>Event Management &gt; Guestbook</strong>) makes it easy to track who stopped by. It supports location-based check-in so you can verify that visitors are actually at your site, and it categorizes guests for cleaner reporting after the event.</p>
+    <p>Field Day is a public event, and the ARRL awards bonus points for public outreach. The guestbook (<strong>Guestbook</strong> in the sidebar) makes it easy to track who stopped by. It supports location-based check-in so you can verify that visitors are actually at your site, and it categorizes guests for cleaner reporting after the event.</p>
 
     <h3>How It Works</h3>
     <p>The guestbook page is designed to be handed to a visitor on a tablet. It shows a friendly welcome message and a simple form. No account, no password, no friction. During an active event, visitors fill it out and tap submit. When the event isn't running, the page shows a "No Active Event" notice so nobody signs a stale book.</p>
@@ -1118,15 +1136,13 @@
     <p>Licensed hams and general public are tracked separately. Guest counts feed into the Public Information bonus point tracking on the scoring page.</p>
 
     <h3>Setting Up the Guestbook</h3>
-    <p>Guestbook settings live inside the event configuration. Go to <strong>Event Management &gt; Edit Event</strong> and scroll down to the <strong>Guestbook Settings</strong> section. There are four things to configure:</p>
+    <p>Guestbook settings live inside the event configuration. Go to <strong>Event Management &gt; Edit Event</strong>. The coordinates used for proximity detection are set in the <strong>Event Location</strong> section (latitude and longitude are required for this feature to work). Scroll further down to the <strong>Guestbook Settings</strong> section, which has three settings:</p>
 
     <p><strong>1. Enable the guestbook.</strong> Toggle the "Enable Guestbook" switch to on. The description reads "Allow visitors to sign in when physically at your event location." When this is off, the guestbook page is hidden entirely.</p>
 
-    <p><strong>2. Set your event coordinates.</strong> Enter the latitude and longitude of your Field Day site. These are labeled "Optional," but they are required if you want the location-based check-in feature to work. For example, a site in Denver might use Latitude <code>39.7392</code> and Longitude <code>-104.9903</code>. You can get these from Google Maps by right-clicking your site and copying the coordinates.</p>
+    <p><strong>2. Set the detection radius.</strong> A slider lets you choose how far from your coordinates a visitor can be and still count as "in-person." The range is 100 to 2,000 meters. The current value displays in both metric and imperial (for example, "500m (1,640 feet)"). If your Field Day site covers a large park or fairground, increase the radius. For a smaller backyard setup, bring it down.</p>
 
-    <p><strong>3. Set the detection radius.</strong> A slider lets you choose how far from your coordinates a visitor can be and still count as "in-person." The range is 100 to 2,000 meters, and the default is 500 meters. The current value displays in both metric and imperial (for example, "500m (1,640 feet)"). If your Field Day site covers a large park or fairground, increase the radius. For a smaller backyard setup, bring it down.</p>
-
-    <p><strong>4. Add local subnets (optional).</strong> If you have a known network at your site, you can enter one or more subnets in CIDR notation, one per line. For example, <code>192.168.1.0/24</code> or <code>10.0.0.0/8</code>. Visitors whose IP address falls within any of these subnets are automatically considered "in-person," even if GPS is unavailable. This is the fallback mechanism described below.</p>
+    <p><strong>3. Add local subnets (optional).</strong> If you have a known network at your site, you can enter one or more subnets in CIDR notation, one per line. For example, <code>192.168.1.0/24</code> or <code>10.0.0.0/8</code>. Visitors whose IP address falls within any of these subnets are automatically considered "in-person," even if GPS is unavailable. This is the fallback mechanism described below.</p>
 
     <h3>Location-Based Check-In</h3>
     <p>When a visitor opens the guestbook page, the system tries to determine whether they are physically at your event site. It does this in two steps:</p>
@@ -1148,17 +1164,38 @@
     <p>The event manager can view and manage all entries under <strong>Administration &gt; Manage Guestbook</strong>. Each entry shows the visitor's name, callsign (if provided), category, presence type (in-person or online), and timestamp. This is useful for cleaning up duplicates, reviewing visitor categories for bonus claims, or exporting totals after the event wraps up.</p>
 
     <!-- ═══════════════════════════════════════════ -->
+    <!--  WEATHER                                   -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="weather">Weather</h2>
+    <p>The weather page (<strong>Weather</strong> in the sidebar) shows live conditions and forecasts for your Field Day site. It requires latitude and longitude to be set in your event configuration. Data comes from two sources: <strong>Open-Meteo</strong> for forecasts and current conditions, and <strong>NWS</strong> (National Weather Service) for official weather alerts. Both are fetched automatically with no API key required.</p>
+
+    <h3>Weather Dashboard</h3>
+    <p>The page shows current conditions (temperature, wind speed and direction, gusts), an hourly table for the next 12 hours, and a multi-day daily forecast. Active NWS alerts appear as banners at the top of the page. If an admin has entered a manual override, a notice indicates who entered it and when. The data source and last-updated time are shown at the bottom.</p>
+
+    <h3>Managing Weather</h3>
+    <p>Users with the <code>manage-weather</code> permission can access <strong>Administration &gt; Manage Weather</strong>, which has four sections:</p>
+
+    <p><strong>Unit System.</strong> Switch between metric and imperial. This affects all temperature and wind displays site-wide.</p>
+
+    <p><strong>API Status.</strong> Shows the connection status for Open-Meteo and NWS. NWS alert polling can be toggled on or off independently. When enabled, you can filter which NWS event types are shown (e.g. hide watch-level alerts and only show warnings). Disabling NWS clears stored NWS alerts but preserves any manual alerts you've entered.</p>
+
+    <p><strong>Manual Forecast Override.</strong> If your site has no internet access, you can enter conditions manually: temperature, wind speed, wind direction, rain chance, and optional notes. The dashboard shows the override data with a notice that it was manually entered. Clear the override at any time to return to live data.</p>
+
+    <p><strong>Storm / Lightning Alert.</strong> Post a custom alert message that broadcasts immediately to all connected users as a prominent banner. Useful for calling operators inside during lightning. NWS alerts will display alongside or override this when available. Active alerts can be cleared from the same panel.</p>
+
+    <!-- ═══════════════════════════════════════════ -->
     <!--  NTS MESSAGES                              -->
     <!-- ═══════════════════════════════════════════ -->
 
-    <h2 id="messages">NTS Messages</h2>
-    <p>The National Traffic System (NTS) bonus awards 10 points for every radiogram your station handles during the event. FD Commander tracks three types: originated, relayed, and received. Each one you log adds to your score automatically.</p>
+    <h2 id="messages">NTS Messages / Message Traffic</h2>
+    <p>The National Traffic System (NTS) bonus awards 10 points for every radiogram your station handles during the event, up to a maximum of 100 points. FD Commander tracks three types: originated, relayed, and received &amp; delivered. Each one you log adds to your score automatically. Find this page under <strong>Message Traffic</strong> in the Event Management section of the sidebar.</p>
 
     <h3>Logging Messages</h3>
-    <p>Use the NTS message form to record each radiogram with its type and details. The running count shows on the scoring page under "NTS Messages Handled."</p>
+    <p>Click <strong>New Message</strong> to record each radiogram with its type and details. The running count and point total show at the top of the page alongside the SM/SEC and W1AW tallies.</p>
 
     <h3>Section Manager Message</h3>
-    <p>The Section Manager message bonus (100 points) has its own dedicated form within the NTS section. Send a formal message to your ARRL Section Manager or Section Emergency Coordinator from your site to claim it. This is tracked separately from the per-radiogram bonus.</p>
+    <p>The Section Manager/SEC message bonus (100 points) has its own button on the page: <strong>SM/SEC Message</strong>. Send a formal message to your ARRL Section Manager or Section Emergency Coordinator from your site to claim it. This is tracked separately from the per-radiogram bonus.</p>
 
     <h3>ICS-213 Support</h3>
     <p>If your group practices ARES/RACES emergency communications, FD Commander also supports the ICS-213 General Message format. Enable it under <strong>Settings &gt; System Preferences &gt; Enable ICS-213 Message Format</strong> to get the standardized form alongside the traditional radiogram format.</p>
@@ -1190,13 +1227,31 @@
     <p>The gallery persists after the event ends, so you can browse and download photos later for your club newsletter, social media, or the ARRL Field Day submission page. Photos from previous events stay in their own albums and don't clutter the current one.</p>
 
     <!-- ═══════════════════════════════════════════ -->
-    <!--  CABRILLO                                  -->
+    <!--  REPORTS / CABRILLO                        -->
     <!-- ═══════════════════════════════════════════ -->
 
-    <h2 id="cabrillo">Cabrillo Export</h2>
-    <p>When the event wraps up, go to <strong>Reports</strong> to generate your Cabrillo file. FD Commander pulls together every QSO across all stations and formats the output to the Cabrillo specification for ARRL Field Day, including your callsign, class, section, and all contact records with correct timestamps, bands, and modes.</p>
+    <h2 id="reports">Reports</h2>
+    <p>When the event wraps up, go to <strong>Reports</strong> in the Administration section of the sidebar. Three exports are available:</p>
 
-    <p>The exported file is ready to upload directly to the <a href="https://field-day.arrl.org/" target="_blank">ARRL Field Day submission page</a>. If you transcribed paper logs after the event, those contacts are included too. Nothing gets left out.</p>
+    <h3>Cabrillo Export</h3>
+    <p>FD Commander pulls together every QSO across all stations and formats the output to the Cabrillo specification for ARRL Field Day, including your callsign, class, section, and all contact records with correct timestamps, bands, and modes. The exported file is ready to upload directly to the <a href="https://field-day.arrl.org/" target="_blank">ARRL Field Day submission page</a>. If you transcribed paper logs after the event, those contacts are included too.</p>
+
+    <h3>ARRL Submission Sheet</h3>
+    <p>Downloads a PDF formatted to the official ARRL Field Day submission sheet. This includes your event details, score summary, and bonus claims in the layout ARRL expects for paper submissions. Useful as a backup record even if you submit electronically.</p>
+
+    <h3>Logbook Export</h3>
+    <p>Downloads a CSV of all contacts in the logbook. Useful for post-event analysis, sharing with club members, or importing into other logging software.</p>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  AUDIT LOGS                                -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="audit-logs">Audit Logs</h2>
+    <p>The Audit Logs page (<strong>Administration &gt; Audit Logs</strong>) is a complete tamper-evident record of every significant action taken in the system. It's accessible to System Administrators only.</p>
+
+    <p>Each log entry shows the timestamp, the user who performed the action, the action type, and the IP address. Clicking an entry opens a detail modal with the full context, including any changes made. Critical security events are flagged with a warning indicator.</p>
+
+    <p>You can filter the log by user, action type, date range, or IP address. Quick-filter buttons let you jump to the last 24 hours, last 7 days, or last 30 days. Results are paginated with 25, 50, 100, or 250 entries per page. The full filtered set can be downloaded as a CSV via the <strong>Export CSV</strong> button.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  OFFLINE RESILIENCE                        -->
@@ -1287,189 +1342,4 @@
 
     <div class="callout info">
       <div class="callout-title">How detection works</div>
-      FD Commander checks the <code>MAIL_MAILER</code> value. If it's <code>log</code> or <code>array</code> (the defaults), all email features are disabled and hidden. Any real transport enables them. A backend guard in <code>ReminderService</code> also prevents email sends even if a preference is set in the database while email is unconfigured.
-    </div>
-
-    <p>For a detailed walkthrough with provider-specific settings (Gmail, SES, Mailgun), see the <a href="how-to/email-setup.html">Email Setup how-to guide</a>.</p>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!--  DOCKER                                    -->
-    <!-- ═══════════════════════════════════════════ -->
-
-    <h2 id="docker">Docker</h2>
-    <p>FD Commander includes a Docker Compose setup for containerized deployment. The stack runs two services: an application container (web server, WebSockets, queue worker, scheduler) and a MySQL database container.</p>
-
-    <h3>Quick Start</h3>
-    <div class="code-block">
-      <div class="code-header">bash <span class="code-copy">Copy</span></div>
-      <div class="code-body">
-        <div><span class="prompt">#</span> <span class="cmd">Generate .env with secure defaults (DB password, Reverb keys, etc.)</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">bash docker/setup.sh</span></div>
-        <div>&nbsp;</div>
-        <div><span class="prompt">#</span> <span class="cmd">Build and start</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">docker compose up -d</span></div>
-        <div>&nbsp;</div>
-        <div><span class="prompt">#</span> <span class="cmd">Check logs (first run will migrate and seed the database)</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">docker compose logs -f app</span></div>
-      </div>
-    </div>
-
-    <p>The setup script creates <code>.env</code> from <code>.env.example</code> and auto-generates all secrets (<code>DB_PASSWORD</code>, <code>REVERB_APP_KEY</code>, etc.). Run it again on an existing <code>.env</code> to fill in any missing secrets without overwriting existing values. The app will be available at <code>http://localhost</code> (or whichever port you set with <code>APP_PORT</code>).</p>
-
-    <h3>Configuration</h3>
-    <p>These environment variables in <code>.env</code> are used by <code>docker-compose.yml</code>:</p>
-    <div class="req-table-wrapper">
-      <table class="flag-table">
-        <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
-        <tbody>
-          <tr><td>APP_PORT</td><td>80</td><td>Host port mapped to the container</td></tr>
-          <tr><td>DB_DATABASE</td><td>fd_commander</td><td>MySQL database name</td></tr>
-          <tr><td>DB_USERNAME</td><td>fd_commander</td><td>MySQL user</td></tr>
-          <tr><td>DB_PASSWORD</td><td>(required)</td><td>MySQL password (auto-generated by setup.sh)</td></tr>
-          <tr><td>DB_ROOT_PASSWORD</td><td>rootsecret</td><td>MySQL root password</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>To run on a custom port:</p>
-    <div class="code-block">
-      <div class="code-header">bash <span class="code-copy">Copy</span></div>
-      <div class="code-body">
-        <div><span class="prompt">$</span> <span class="cmd">APP_PORT=8080 docker compose up -d</span></div>
-      </div>
-    </div>
-
-    <h3>Architecture</h3>
-    <p>The app container runs four processes via supervisord:</p>
-    <div class="req-table-wrapper">
-      <table class="flag-table">
-        <thead><tr><th>Process</th><th>Purpose</th></tr></thead>
-        <tbody>
-          <tr><td>Octane (FrankenPHP)</td><td>HTTP server on port 80</td></tr>
-          <tr><td>Reverb</td><td>WebSocket server (port 8080, internal)</td></tr>
-          <tr><td>Queue Worker</td><td>Background job processing</td></tr>
-          <tr><td>Scheduler</td><td>Scheduled tasks (runs every 60s)</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>WebSocket connections reach Reverb through Caddy's reverse proxy at the <code>/app</code> path, so only port 80 is exposed to the network.</p>
-
-    <h3>First Run</h3>
-    <p>On first startup, the entrypoint script automatically waits for the database, runs all migrations, runs production seeders (event types, bands, modes, sections, roles, permissions, etc.), generates an <code>APP_KEY</code> if not set, generates Reverb WebSocket credentials if not set, and caches configuration, routes, views, and events. Seeders only run once. A marker file in the persistent storage volume prevents re-seeding on subsequent starts.</p>
-
-    <h3>Data Persistence</h3>
-    <p>Two named volumes store persistent data:</p>
-    <div class="req-table-wrapper">
-      <table class="flag-table">
-        <thead><tr><th>Volume</th><th>Contents</th></tr></thead>
-        <tbody>
-          <tr><td>app-storage</td><td>Uploaded files, logs, framework cache</td></tr>
-          <tr><td>mysql-data</td><td>Database files</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>These survive <code>docker compose down</code>. Use <code>docker compose down -v</code> to remove them (this destroys all data).</p>
-
-    <h3>HTTPS with a Reverse Proxy</h3>
-    <p>The container serves plain HTTP on port 80. For HTTPS, place a reverse proxy (like Nginx) in front of it. The app includes <code>trustProxies(at: '*')</code> so <code>X-Forwarded-Proto</code> and <code>X-Forwarded-For</code> headers are respected automatically. When behind a TLS proxy, update your <code>.env</code>:</p>
-    <div class="code-block">
-      <div class="code-header">env <span class="code-copy">Copy</span></div>
-      <div class="code-body">
-        <div><span class="cmd">APP_URL=https://your-domain.com</span></div>
-        <div><span class="cmd">REVERB_HOST=your-domain.com</span></div>
-        <div><span class="cmd">REVERB_PORT=443</span></div>
-        <div><span class="cmd">REVERB_SCHEME=https</span></div>
-      </div>
-    </div>
-
-    <h3>Managing Services</h3>
-    <div class="code-block">
-      <div class="code-header">bash <span class="code-copy">Copy</span></div>
-      <div class="code-body">
-        <div><span class="prompt">#</span> <span class="cmd">View all process statuses</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">docker compose exec app supervisorctl status</span></div>
-        <div>&nbsp;</div>
-        <div><span class="prompt">#</span> <span class="cmd">Restart a specific process</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">docker compose exec app supervisorctl restart queue-worker</span></div>
-        <div>&nbsp;</div>
-        <div><span class="prompt">#</span> <span class="cmd">View logs</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">docker compose logs -f app</span></div>
-        <div>&nbsp;</div>
-        <div><span class="prompt">#</span> <span class="cmd">Stop everything</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">docker compose down</span></div>
-      </div>
-    </div>
-
-    <h3>Rebuilding After Updates</h3>
-    <div class="code-block">
-      <div class="code-header">bash <span class="code-copy">Copy</span></div>
-      <div class="code-body">
-        <div><span class="prompt">$</span> <span class="cmd">docker compose build</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">docker compose up -d</span></div>
-      </div>
-    </div>
-    <p>The entrypoint runs <code>php artisan migrate --force</code> on every start, so new migrations are applied automatically.</p>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!--  UPDATING                                  -->
-    <!-- ═══════════════════════════════════════════ -->
-
-    <h2 id="updating">Updating</h2>
-    <p>FD Commander includes an <code>update.sh</code> script that pulls the latest code, updates dependencies, runs new database migrations, and restarts services.</p>
-
-    <div class="code-block">
-      <div class="code-header">bash <span class="code-copy">Copy</span></div>
-      <div class="code-body">
-        <div><span class="prompt">$</span> <span class="cmd">sudo ./update.sh</span></div>
-      </div>
-    </div>
-
-    <p>Run this at home when preparing for the next event, not during the event itself.</p>
-
-  </main>
-</div>
-
-<footer></footer>
-<script src="footer.js"></script>
-
-<script>
-(function() {
-  const links = document.querySelectorAll('.sidebar-link');
-  const sections = [];
-  links.forEach(function(link) {
-    const id = link.getAttribute('href').slice(1);
-    const el = document.getElementById(id);
-    if (el) sections.push({ id: id, el: el, link: link });
-  });
-
-  function update() {
-    let current = sections[0];
-    const offset = 100;
-    for (let i = sections.length - 1; i >= 0; i--) {
-      if (sections[i].el.getBoundingClientRect().top <= offset) {
-        current = sections[i];
-        break;
-      }
-    }
-    links.forEach(function(l) { l.classList.remove('active'); });
-    if (current) current.link.classList.add('active');
-  }
-
-  window.addEventListener('scroll', update);
-  update();
-
-  // Close mobile TOC when a sidebar link is tapped
-  links.forEach(function(link) {
-    link.addEventListener('click', function() {
-      var sidebar = document.querySelector('.sidebar');
-      var toggle = document.querySelector('.docs-toc-toggle');
-      if (sidebar && toggle && window.innerWidth <= 768) {
-        sidebar.classList.remove('open');
-        toggle.classList.remove('open');
-      }
-    });
-  });
-})();
-</script>
-</body>
-</html>
+      FD Commander checks the <code>MAIL_MAILER</code> value. If it's <code>log</code> or <code>array</code> (the defaults), all email features are disabled and hidden. Any real transport enables them. A backend guard in <code>ReminderService</code> also prevents e
