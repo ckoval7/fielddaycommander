@@ -29,16 +29,18 @@ Celebration features:
 >
 <div class="flex-1 flex flex-col gap-3 relative">
     {{-- Numbers Display --}}
-    <div class="flex items-baseline justify-between">
-        <div class="@if($size === 'tv') text-5xl @else text-4xl @endif font-black tabular-nums">
+    <div class="flex items-baseline justify-between gap-3">
+        <div class="@if($size === 'tv') text-5xl @else text-4xl @endif font-black tabular-nums whitespace-nowrap min-w-0 truncate">
             <span x-text="displayCurrent"></span>
             <span class="@if($size === 'tv') text-xl @else text-base @endif font-normal text-base-content/50">
-                / {{ $data['target'] }}
+                / {{ number_format($data['target']) }}
             </span>
         </div>
-        <div class="@if($size === 'tv') text-xl @else text-sm @endif font-medium text-base-content/70">
-            <span x-text="displayPercentage"></span>%
-        </div>
+        @if($showPercentage)
+            <div class="@if($size === 'tv') text-xl @else text-sm @endif font-medium text-base-content/70 tabular-nums whitespace-nowrap flex-shrink-0">
+                <span x-text="displayPercentage"></span>%
+            </div>
+        @endif
     </div>
 
     {{-- Progress Bar with Smooth Transition --}}
@@ -55,10 +57,11 @@ Celebration features:
 
     {{-- Label --}}
     <div class="@if($size === 'tv') text-lg @else text-sm @endif text-center text-base-content/70">
-        To next milestone
+        {{ $data['footer_label'] ?? 'Progress' }}
     </div>
 
     {{-- Milestone Celebration Overlay --}}
+    @if($celebratesMilestones)
     <div
         x-show="isCelebrating"
         x-transition:enter="transition ease-out duration-300"
@@ -84,11 +87,12 @@ Celebration features:
                     Milestone!
                 </div>
                 <div class="@if($size === 'tv') text-xl @else text-base @endif font-semibold text-base-content mt-1">
-                    <span x-text="displayCurrent"></span> QSOs logged!
+                    <span x-text="displayCurrent"></span> {{ $data['unit_label'] ?? 'QSOs' }} logged!
                 </div>
             </div>
         </div>
     </div>
+    @endif
 </div>
 
     {{-- Last updated timestamp --}}

@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Database\Factories\DashboardFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Dashboard Model
@@ -19,13 +21,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $is_default Whether this is the user's default dashboard
  * @property string $layout_type Layout type (grid, list, etc.)
  * @property string|null $description Optional dashboard description
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  * @property-read User $user
  */
 class Dashboard extends Model
 {
-    /** @use HasFactory<\Database\Factories\DashboardFactory> */
+    /** @use HasFactory<DashboardFactory> */
     use HasFactory;
 
     /**
@@ -148,7 +150,7 @@ class Dashboard extends Model
         return [
             'config' => ['required', 'array'],
             'config.*.id' => ['required', 'string'],
-            'config.*.type' => ['required', 'string', 'in:stat_card,chart,progress_bar,list_widget,timer,info_card,feed,message_traffic_score'],
+            'config.*.type' => ['required', 'string', 'in:stat_card,chart,progress_bar,list_widget,timer,info_card,feed'],
             'config.*.config' => ['sometimes', 'array'],
             'config.*.order' => ['sometimes', 'integer', 'min:0'],
             'config.*.visible' => ['sometimes', 'boolean'],

@@ -5,6 +5,7 @@ namespace App\Livewire\Dashboard\Widgets;
 use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use App\Models\Contact;
 use App\Models\Equipment;
+use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\OperatingSession;
 use App\Models\Station;
@@ -107,7 +108,7 @@ class ListWidget extends Component
      */
     protected function getRecentContacts(Event $event): array
     {
-        $limit = $this->isTvSize() ? 10 : 15;
+        $limit = $this->itemLimit();
 
         return Contact::query()
             ->where('event_configuration_id', $event->eventConfiguration->id)
@@ -137,7 +138,7 @@ class ListWidget extends Component
      */
     protected function getActiveStations(Event $event): array
     {
-        $limit = $this->isTvSize() ? 10 : 15;
+        $limit = $this->itemLimit();
 
         $activeSessions = OperatingSession::query()
             ->whereHas('station', function ($query) use ($event) {
@@ -169,9 +170,9 @@ class ListWidget extends Component
      */
     protected function getEquipmentStatus(Event $event): array
     {
-        $limit = $this->isTvSize() ? 10 : 15;
+        $limit = $this->itemLimit();
 
-        $commitments = \App\Models\EquipmentEvent::query()
+        $commitments = EquipmentEvent::query()
             ->where('event_id', $event->id)
             ->with(['equipment', 'station'])
             ->whereIn('status', ['committed', 'delivered'])
@@ -186,7 +187,7 @@ class ListWidget extends Component
             })
             ->take($limit);
 
-        return $commitments->map(function (\App\Models\EquipmentEvent $commitment) {
+        return $commitments->map(function (EquipmentEvent $commitment) {
             $equipment = $commitment->equipment;
             $equipmentName = $equipment
                 ? trim("{$equipment->make} {$equipment->model}")
@@ -200,6 +201,26 @@ class ListWidget extends Component
                 'assigned_to' => $commitment->station?->name ?? 'Unassigned',
             ];
         })->values()->all();
+    }
+
+    /**
+     * Resolve the number of rows to render from widget config.
+     *
+     * Falls back to a size-aware default when no explicit count is configured.
+     */
+    protected function itemLimit(): int
+    {
+        $configured = $this->config['item_count'] ?? null;
+
+        if ($configured !== null && $configured !== '') {
+            $limit = (int) $configured;
+
+            if ($limit > 0) {
+                return $limit;
+            }
+        }
+
+        return $this->isTvSize() ? 10 : 15;
     }
 
     /**

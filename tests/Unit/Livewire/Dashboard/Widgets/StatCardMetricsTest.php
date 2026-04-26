@@ -605,6 +605,107 @@ test('stat card guestbook count only counts current event', function () {
     expect($data['value'])->toBe('3');
 });
 
+test('stat card calculates points per hour from total score and elapsed time', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(4),
+        'end_time' => now()->addHours(20),
+    ]);
+    $eventConfig = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'power_multiplier' => 1,
+    ]);
+
+    $user = User::factory()->create();
+    $station = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
+    $band = Band::factory()->create();
+    $mode = Mode::factory()->create();
+    $section = Section::factory()->create();
+
+    $session = OperatingSession::factory()->create([
+        'station_id' => $station->id,
+        'operator_user_id' => $user->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+    ]);
+
+    Contact::factory()->count(10)->create([
+        'event_configuration_id' => $eventConfig->id,
+        'operating_session_id' => $session->id,
+        'logger_user_id' => $user->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'section_id' => $section->id,
+        'qso_time' => now()->subHours(2),
+        'is_duplicate' => false,
+        'is_gota_contact' => false,
+        'points' => 8,
+    ]);
+
+    $component = Livewire::test(StatCard::class, [
+        'config' => ['metric' => 'points_per_hour'],
+        'size' => 'normal',
+    ]);
+
+    $data = $component->viewData('data');
+
+    expect($data)
+        ->toBeArray()
+        ->and($data['label'])->toBe('Points / Hour')
+        ->and($data['icon'])->toBe('phosphor-lightning')
+        ->and($data['color'])->toBe('text-success')
+        ->and((float) str_replace(',', '', $data['value']))->toBeGreaterThan(0.0);
+});
+
+test('stat card counts stations with at least one open operating session', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $eventConfig = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $user = User::factory()->create();
+    $band = Band::factory()->create();
+    $mode = Mode::factory()->create();
+
+    $activeStationA = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
+    $activeStationB = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
+    $idleStation = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
+
+    foreach ([$activeStationA, $activeStationB] as $station) {
+        OperatingSession::factory()->create([
+            'station_id' => $station->id,
+            'operator_user_id' => $user->id,
+            'band_id' => $band->id,
+            'mode_id' => $mode->id,
+            'start_time' => now()->subHour(),
+            'end_time' => null,
+        ]);
+    }
+
+    OperatingSession::factory()->create([
+        'station_id' => $idleStation->id,
+        'operator_user_id' => $user->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->subHour(),
+    ]);
+
+    $component = Livewire::test(StatCard::class, [
+        'config' => ['metric' => 'stations_count'],
+        'size' => 'normal',
+    ]);
+
+    $data = $component->viewData('data');
+
+    expect($data)
+        ->toBeArray()
+        ->and($data['value'])->toBe('2')
+        ->and($data['label'])->toBe('Active Stations')
+        ->and($data['icon'])->toBe('phosphor-broadcast')
+        ->and($data['color'])->toBe('text-warning');
+});
+
 test('stat card returns empty metric for new metrics when no active event', function () {
     $metrics = [
         'avg_qso_rate_4h' => ['Avg QSO Rate (4h)', 'phosphor-chart-bar', 'text-info'],
@@ -612,6 +713,8 @@ test('stat card returns empty metric for new metrics when no active event', func
         'hours_remaining' => ['Hours Remaining', 'phosphor-clock', 'text-warning'],
         'bonus_points_earned' => ['Bonus Points', 'phosphor-star', 'text-accent'],
         'guestbook_count' => ['Guestbook Entries', 'phosphor-book-open', 'text-info'],
+        'points_per_hour' => ['Points / Hour', 'phosphor-lightning', 'text-success'],
+        'stations_count' => ['Active Stations', 'phosphor-broadcast', 'text-warning'],
     ];
 
     foreach ($metrics as $metricName => [$label, $icon, $color]) {

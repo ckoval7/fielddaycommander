@@ -168,6 +168,35 @@ describe('Recent Contacts List', function () {
         expect($data['items'])->toHaveCount(15);
     });
 
+    it('honours item_count config override for recent contacts', function () {
+        $band = Band::factory()->create();
+        $mode = Mode::factory()->create();
+        $station = Station::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+        $session = OperatingSession::factory()->create([
+            'station_id' => $station->id,
+            'band_id' => $band->id,
+            'mode_id' => $mode->id,
+        ]);
+
+        Contact::factory()->count(20)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'operating_session_id' => $session->id,
+            'band_id' => $band->id,
+            'mode_id' => $mode->id,
+        ]);
+
+        $component = Livewire::test(ListWidget::class, [
+            'config' => ['list_type' => 'recent_contacts', 'item_count' => '5'],
+            'size' => 'normal',
+        ]);
+
+        $data = $component->instance()->getData();
+
+        expect($data['items'])->toHaveCount(5);
+    });
+
     it('limits recent contacts to 10 for tv size', function () {
         $band = Band::factory()->create();
         $mode = Mode::factory()->create();

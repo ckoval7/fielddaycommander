@@ -18,7 +18,7 @@ Props from component:
                     <div class="text-sm text-base-content/60 mb-2 {{ $size === 'tv' ? 'text-xl' : '' }}">
                         {{ $data['label'] }}
                     </div>
-                    <div class="font-mono font-black {{ $size === 'tv' ? 'text-5xl lg:text-7xl' : 'text-3xl sm:text-4xl' }} text-base-content/70">
+                    <div class="font-mono font-black whitespace-nowrap {{ $size === 'tv' ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl' }} text-base-content/70">
                         00:00:00
                     </div>
                 </div>
@@ -36,7 +36,7 @@ Props from component:
 
                     <div>
                         <div
-                            class="font-mono font-black text-primary {{ $size === 'tv' ? 'text-6xl lg:text-8xl' : 'text-4xl sm:text-5xl' }}"
+                            class="font-mono font-black text-primary whitespace-nowrap {{ $size === 'tv' ? 'text-5xl sm:text-6xl' : 'text-4xl sm:text-5xl' }}"
                             ::class="{ 'text-warning': isWarning, 'text-error': isCritical }"
                             x-text="formattedTime"
                         >

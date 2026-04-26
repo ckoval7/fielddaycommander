@@ -39,6 +39,31 @@ class Chart extends Component
     protected const DATA_SOURCES = ['qsos_per_hour', 'qsos_per_band', 'qsos_per_mode'];
 
     /**
+     * Supported time ranges, mapped to the lookback applied at query time.
+     * `null` means "no lookback — use full event window".
+     *
+     * @var array<string, ?int>
+     */
+    protected const TIME_RANGE_HOURS = [
+        'last_hour' => 1,
+        'last_4_hours' => 4,
+        'last_12_hours' => 12,
+        'event' => null,
+    ];
+
+    /**
+     * Human-readable suffix appended to chart titles per time range.
+     *
+     * @var array<string, string>
+     */
+    protected const TIME_RANGE_LABELS = [
+        'last_hour' => 'Last Hour',
+        'last_4_hours' => 'Last 4 Hours',
+        'last_12_hours' => 'Last 12 Hours',
+        'event' => 'Entire Event',
+    ];
+
+    /**
      * Cache duration in seconds for chart data.
      */
     protected const CACHE_TTL = 5;
@@ -94,6 +119,7 @@ class Chart extends Component
         return Cache::remember($this->cacheKey(), self::CACHE_TTL, function () {
             $dataSource = $this->config['data_source'] ?? 'qsos_per_hour';
             $chartType = $this->config['chart_type'] ?? 'bar';
+            $timeRange = $this->config['time_range'] ?? 'event';
 
             if (! in_array($chartType, self::CHART_TYPES)) {
                 $chartType = 'bar';
@@ -103,19 +129,25 @@ class Chart extends Component
                 $dataSource = 'qsos_per_hour';
             }
 
+            if (! array_key_exists($timeRange, self::TIME_RANGE_HOURS)) {
+                $timeRange = 'event';
+            }
+
             $rawData = match ($dataSource) {
-                'qsos_per_hour' => $this->getQsosPerHour(),
-                'qsos_per_band' => $this->getQsosPerBand(),
-                'qsos_per_mode' => $this->getQsosPerMode(),
-                default => $this->getQsosPerHour(),
+                'qsos_per_hour' => $this->getQsosPerHour($timeRange),
+                'qsos_per_band' => $this->getQsosPerBand($timeRange),
+                'qsos_per_mode' => $this->getQsosPerMode($timeRange),
+                default => $this->getQsosPerHour($timeRange),
             };
 
-            $title = match ($dataSource) {
+            $baseTitle = match ($dataSource) {
                 'qsos_per_hour' => 'QSOs per Hour',
                 'qsos_per_band' => 'QSOs per Band',
                 'qsos_per_mode' => 'QSOs per Mode',
                 default => 'QSOs per Hour',
             };
+
+            $title = $baseTitle.' — '.self::TIME_RANGE_LABELS[$timeRange];
 
             return $this->formatChartData($rawData, $chartType, $title, $dataSource);
         });
@@ -149,7 +181,7 @@ class Chart extends Component
      *
      * @return array<array{label: string, value: int}>
      */
-    protected function getQsosPerHour(): array
+    protected function getQsosPerHour(string $timeRange = 'event'): array
     {
         $service = app(EventContextService::class);
         $event = $service->getContextEvent();
@@ -170,10 +202,18 @@ class Chart extends Component
             default => DB::raw('DATE_FORMAT(qso_time, "%Y-%m-%d %H:00") as hour_label'),
         };
 
-        $contacts = Contact::query()
+        $query = Contact::query()
             ->where('event_configuration_id', $eventConfig->id)
             ->where('is_duplicate', false)
-            ->whereNotNull('qso_time')
+            ->whereNotNull('qso_time');
+
+        $since = $this->resolveSince($timeRange);
+
+        if ($since !== null) {
+            $query->where('qso_time', '>=', $since);
+        }
+
+        $contacts = $query
             ->select($hourExpression, DB::raw('COUNT(*) as count'))
             ->groupBy('hour_label')
             ->orderBy('hour_label')
@@ -181,7 +221,12 @@ class Chart extends Component
 
         $contactsByHour = $contacts->pluck('count', 'hour_label')->toArray();
 
-        $startHour = $event->start_time->copy()->startOfHour();
+        $startHour = ($since ?? $event->start_time)->copy()->startOfHour();
+
+        if ($startHour->lt($event->start_time)) {
+            $startHour = $event->start_time->copy()->startOfHour();
+        }
+
         $endHour = appNow()->copy()->startOfHour();
 
         if ($endHour->gt($event->end_time)) {
@@ -214,7 +259,7 @@ class Chart extends Component
      *
      * @return array<array{label: string, value: int}>
      */
-    protected function getQsosPerBand(): array
+    protected function getQsosPerBand(string $timeRange = 'event'): array
     {
         $service = app(EventContextService::class);
         $event = $service->getContextEvent();
@@ -229,10 +274,18 @@ class Chart extends Component
             return [];
         }
 
-        return Contact::query()
+        $query = Contact::query()
             ->where('event_configuration_id', $eventConfig->id)
             ->where('is_duplicate', false)
-            ->join('bands', 'contacts.band_id', '=', 'bands.id')
+            ->join('bands', 'contacts.band_id', '=', 'bands.id');
+
+        $since = $this->resolveSince($timeRange);
+
+        if ($since !== null) {
+            $query->where('qso_time', '>=', $since);
+        }
+
+        return $query
             ->select('bands.name as label', DB::raw('COUNT(*) as value'))
             ->groupBy('bands.name', 'bands.sort_order')
             ->orderBy('bands.sort_order')
@@ -248,7 +301,7 @@ class Chart extends Component
      *
      * @return array<array{label: string, value: int}>
      */
-    protected function getQsosPerMode(): array
+    protected function getQsosPerMode(string $timeRange = 'event'): array
     {
         $service = app(EventContextService::class);
         $event = $service->getContextEvent();
@@ -263,16 +316,40 @@ class Chart extends Component
             return [];
         }
 
-        return Contact::query()
+        $query = Contact::query()
             ->where('event_configuration_id', $eventConfig->id)
             ->where('is_duplicate', false)
-            ->join('modes', 'contacts.mode_id', '=', 'modes.id')
+            ->join('modes', 'contacts.mode_id', '=', 'modes.id');
+
+        $since = $this->resolveSince($timeRange);
+
+        if ($since !== null) {
+            $query->where('qso_time', '>=', $since);
+        }
+
+        return $query
             ->select('modes.name as label', DB::raw('COUNT(*) as value'))
             ->groupBy('modes.name')
             ->orderByDesc('value')
             ->get()
             ->map(fn ($row) => ['label' => $row->label, 'value' => (int) $row->value])
             ->toArray();
+    }
+
+    /**
+     * Resolve the lower-bound timestamp for the configured time range.
+     *
+     * Returns null for the full-event view, in which case no qso_time filter is applied.
+     */
+    protected function resolveSince(string $timeRange): ?\DateTimeInterface
+    {
+        $hours = self::TIME_RANGE_HOURS[$timeRange] ?? null;
+
+        if ($hours === null) {
+            return null;
+        }
+
+        return appNow()->copy()->subHours($hours);
     }
 
     /**

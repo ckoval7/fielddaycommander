@@ -314,15 +314,6 @@
                                     />
                                     @break
 
-                                @case('message_traffic_score')
-                                    <livewire:dashboard.widgets.message-traffic-score
-                                        :config="$widget['config']"
-                                        :widget-id="$widget['id']"
-                                        size="normal"
-                                        wire:key="mts-{{ $widget['id'] }}"
-                                    />
-                                    @break
-
                                 @case('sections_worked')
                                     <livewire:dashboard.widgets.sections-worked
                                         :config="$widget['config']"
