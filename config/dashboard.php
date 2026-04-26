@@ -35,7 +35,6 @@ return [
                         'contacts_last_hour' => 'Contacts Last Hour',
                         'hours_remaining' => 'Hours Remaining',
                         'bonus_points_earned' => 'Bonus Points Earned',
-                        'multipliers' => 'Total Multipliers',
                         'guestbook_count' => 'Guestbook Entries',
                     ],
                     'default' => 'total_score',
@@ -117,17 +116,12 @@ return [
                     'label' => 'Progress Metric',
                     'options' => [
                         'next_milestone' => 'Next Milestone (50 QSO increments)',
-                        'event_goal' => 'Event Goal',
-                        'class_target' => 'Operating Class Target',
+                        'event_goal' => 'Event Score Goal',
+                        'class_target' => 'Operating Class QSO Target',
                         'bonus_progress' => 'Bonus Point Progress',
                     ],
                     'default' => 'next_milestone',
                     'required' => true,
-                ],
-                'custom_target' => [
-                    'type' => 'number',
-                    'label' => 'Custom Target (optional)',
-                    'placeholder' => 'Leave empty for automatic',
                 ],
                 'show_percentage' => [
                     'type' => 'toggle',
@@ -171,33 +165,9 @@ return [
         'timer' => [
             'component' => 'dashboard.widgets.timer',
             'name' => 'Timer',
-            'description' => 'Display countdown timers or elapsed time',
+            'description' => 'Countdown to event start or end, with a setup-window heads-up',
             'icon' => 'phosphor-clock',
-            'config_schema' => [
-                'timer_type' => [
-                    'type' => 'select',
-                    'label' => 'Timer Type',
-                    'options' => [
-                        'event_countdown' => 'Event Countdown',
-                        'time_remaining' => 'Time Remaining',
-                        'elapsed_time' => 'Elapsed Time',
-                        'next_hour_mark' => 'Next Hour Mark',
-                    ],
-                    'default' => 'event_countdown',
-                    'required' => true,
-                ],
-                'show_seconds' => [
-                    'type' => 'toggle',
-                    'label' => 'Show Seconds',
-                    'default' => true,
-                ],
-                'alert_when_near' => [
-                    'type' => 'number',
-                    'label' => 'Alert Minutes Before End (0 to disable)',
-                    'default' => 60,
-                    'min' => 0,
-                ],
-            ],
+            'config_schema' => [],
         ],
 
         'info_card' => [
@@ -212,18 +182,10 @@ return [
                     'options' => [
                         'event_details' => 'Event Details',
                         'location' => 'Location & Grid Square',
-                        'operating_class' => 'Operating Class',
-                        'bonus_points' => 'Bonus Points Summary',
-                        'station_info' => 'Station Information',
+                        'operating_class' => 'Operating Class & Power',
                     ],
                     'default' => 'event_details',
                     'required' => true,
-                ],
-                'compact_mode' => [
-                    'type' => 'toggle',
-                    'label' => 'Compact Mode',
-                    'description' => 'Show fewer details',
-                    'default' => false,
                 ],
             ],
         ],
@@ -242,45 +204,6 @@ return [
             'description' => 'All ARRL sections grouped by call area, showing worked vs not worked',
             'icon' => 'phosphor-map-trifold',
             'config_schema' => [],
-        ],
-
-        'feed' => [
-            'component' => 'dashboard.widgets.feed',
-            'name' => 'Activity Feed',
-            'description' => 'Live stream of recent activity and events',
-            'icon' => 'phosphor-rss',
-            'config_schema' => [
-                'feed_type' => [
-                    'type' => 'select',
-                    'label' => 'Feed Type',
-                    'options' => [
-                        'all_activity' => 'All Activity',
-                        'contacts_only' => 'Contacts Only',
-                        'milestones_only' => 'Milestones Only',
-                        'equipment_events' => 'Equipment Events',
-                        'guestbook' => 'Guestbook Entries',
-                        'photos' => 'Photo Uploads',
-                    ],
-                    'default' => 'all_activity',
-                    'required' => true,
-                ],
-                'item_count' => [
-                    'type' => 'select',
-                    'label' => 'Number of Items',
-                    'options' => [
-                        '10' => '10 items',
-                        '15' => '15 items',
-                        '20' => '20 items',
-                        '30' => '30 items',
-                    ],
-                    'default' => '20',
-                ],
-                'auto_scroll' => [
-                    'type' => 'toggle',
-                    'label' => 'Auto-scroll to New Items',
-                    'default' => true,
-                ],
-            ],
         ],
 
     ],
@@ -373,11 +296,7 @@ return [
                 [
                     'id' => 'timer-countdown',
                     'type' => 'timer',
-                    'config' => [
-                        'timer_type' => 'event_countdown',
-                        'show_seconds' => true,
-                        'alert_when_near' => 60,
-                    ],
+                    'config' => [],
                     'row_span' => 2,
                     'order' => 5,
                     'visible' => true,
@@ -498,11 +417,7 @@ return [
                 [
                     'id' => 'timer-countdown',
                     'type' => 'timer',
-                    'config' => [
-                        'timer_type' => 'event_countdown',
-                        'show_seconds' => true,
-                        'alert_when_near' => 60,
-                    ],
+                    'config' => [],
                     'row_span' => 2,
                     'order' => 5,
                     'visible' => true,
@@ -586,11 +501,7 @@ return [
                 [
                     'id' => 'tv-timer-countdown',
                     'type' => 'timer',
-                    'config' => [
-                        'timer_type' => 'event_countdown',
-                        'show_seconds' => false,
-                        'alert_when_near' => 0,
-                    ],
+                    'config' => [],
                     'order' => 2,
                     'visible' => true,
                 ],

@@ -27,7 +27,7 @@ Props from component:
                             ::class="{ 'scale-110': isAnimating }"
                         />
                     </div>
-                    @if(isset($data['trend']) && $data['trend'] !== 'stable')
+                    @if($showTrend && isset($data['trend']) && $data['trend'] !== 'stable')
                         <div class="flex items-center gap-2 text-lg font-medium px-3 py-1 rounded-full {{ $data['trend'] === 'up' ? 'bg-success/10 text-success' : 'bg-error/10 text-error' }}">
                             @if($data['trend'] === 'up')
                                 <x-icon name="phosphor-trend-up" class="w-6 h-6" />
@@ -67,7 +67,7 @@ Props from component:
                             ::class="{ 'scale-110': isAnimating }"
                         />
                     </div>
-                    @if(isset($data['trend']) && $data['trend'] !== 'stable')
+                    @if($showTrend && isset($data['trend']) && $data['trend'] !== 'stable')
                         <div class="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full {{ $data['trend'] === 'up' ? 'bg-success/10 text-success' : 'bg-error/10 text-error' }}">
                             @if($data['trend'] === 'up')
                                 <x-icon name="phosphor-trend-up" class="w-3.5 h-3.5" />

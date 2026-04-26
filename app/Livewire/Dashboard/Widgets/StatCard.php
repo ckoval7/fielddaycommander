@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\GuestbookEntry;
+use App\Models\Station;
 use App\Services\EventContextService;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -94,7 +95,9 @@ class StatCard extends Component
             'qso_count' => $this->getQsoCount($event),
             'sections_worked' => $this->getSectionsWorked($event),
             'operators_count' => $this->getOperatorsCount($event),
+            'stations_count' => $this->getStationsCount($event),
             'qso_per_hour' => $this->getQsoPerHour($event),
+            'points_per_hour' => $this->getPointsPerHour($event),
             'avg_qso_rate_4h' => $this->getAvgQsoRate4h($event),
             'contacts_last_hour' => $this->getContactsLastHour($event),
             'hours_remaining' => $this->getHoursRemaining($event),
@@ -181,6 +184,25 @@ class StatCard extends Component
     }
 
     /**
+     * Get count of stations with at least one open operating session.
+     */
+    protected function getStationsCount(Event $event): array
+    {
+        $count = Station::query()
+            ->where('event_configuration_id', $event->eventConfiguration->id)
+            ->whereHas('operatingSessions', fn ($query) => $query->active())
+            ->count();
+
+        return [
+            'value' => number_format($count),
+            'label' => 'Active Stations',
+            'icon' => 'phosphor-broadcast',
+            'color' => 'text-warning',
+            'last_updated_at' => appNow(),
+        ];
+    }
+
+    /**
      * Get QSOs-per-hour rate since event start.
      */
     protected function getQsoPerHour(Event $event): array
@@ -199,6 +221,26 @@ class StatCard extends Component
             'label' => 'QSOs / Hour',
             'icon' => 'phosphor-lightning',
             'color' => 'text-info',
+            'last_updated_at' => appNow(),
+        ];
+    }
+
+    /**
+     * Get points-per-hour rate since event start.
+     */
+    protected function getPointsPerHour(Event $event): array
+    {
+        $elapsedHours = $event->start_time->diffInMinutes(appNow()) / 60;
+
+        $score = $event->eventConfiguration->calculateFinalScore();
+
+        $rate = $elapsedHours > 0 ? $score / $elapsedHours : 0;
+
+        return [
+            'value' => number_format($rate, 1),
+            'label' => 'Points / Hour',
+            'icon' => 'phosphor-lightning',
+            'color' => 'text-success',
             'last_updated_at' => appNow(),
         ];
     }
@@ -319,7 +361,9 @@ class StatCard extends Component
             'qso_count' => ['QSOs', 'phosphor-chat-centered-dots', 'text-primary'],
             'sections_worked' => ['Sections', 'phosphor-map-trifold', 'text-info'],
             'operators_count' => ['Operators', 'phosphor-users', 'text-warning'],
+            'stations_count' => ['Active Stations', 'phosphor-broadcast', 'text-warning'],
             'qso_per_hour' => ['QSOs / Hour', 'phosphor-lightning', 'text-info'],
+            'points_per_hour' => ['Points / Hour', 'phosphor-lightning', 'text-success'],
             'avg_qso_rate_4h' => ['Avg QSO Rate (4h)', 'phosphor-chart-bar', 'text-info'],
             'contacts_last_hour' => ['Contacts Last Hour', 'phosphor-clock', 'text-success'],
             'hours_remaining' => ['Hours Remaining', 'phosphor-clock', 'text-warning'],
@@ -418,6 +462,7 @@ class StatCard extends Component
 
         return view('livewire.dashboard.widgets.stat-card', [
             'data' => $data,
+            'showTrend' => (bool) ($this->config['show_trend'] ?? true),
         ]);
     }
 }

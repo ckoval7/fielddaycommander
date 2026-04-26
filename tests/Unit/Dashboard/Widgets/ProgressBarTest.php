@@ -40,7 +40,7 @@ test('progress bar returns empty progress when no active event', function () {
         ->toHaveKeys(['current', 'target', 'percentage'])
         ->and($data['current'])->toBe(0)
         ->and($data['target'])->toBe(50)
-        ->and($data['percentage'])->toBe(0);
+        ->and($data['percentage'])->toBe(0.0);
 });
 
 test('progress bar calculates milestone progress correctly', function () {
@@ -401,4 +401,87 @@ test('progress bar returns empty listeners array', function () {
     $listeners = $component->instance()->getWidgetListeners();
 
     expect($listeners)->toBeArray()->toBeEmpty();
+});
+
+test('progress bar event_goal metric reports score-based progress', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'power_multiplier' => 1,
+    ]);
+
+    $component = Livewire::test(ProgressBar::class, [
+        'config' => ['metric' => 'event_goal'],
+        'size' => 'normal',
+    ]);
+
+    $data = $component->viewData('data');
+
+    expect($data)
+        ->toHaveKeys(['current', 'target', 'percentage', 'unit_label', 'footer_label'])
+        ->and($data['target'])->toBe(5000)
+        ->and($data['unit_label'])->toBe('points')
+        ->and($data['footer_label'])->toBe('To event score goal');
+});
+
+test('progress bar class_target metric scales target by transmitter count', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $component = Livewire::test(ProgressBar::class, [
+        'config' => ['metric' => 'class_target'],
+        'size' => 'normal',
+    ]);
+
+    $data = $component->viewData('data');
+
+    // EventConfigurationFactory pins to class "1A" → 1 transmitter × 200 = 200.
+    expect($data)
+        ->toHaveKeys(['current', 'target', 'percentage', 'unit_label', 'footer_label'])
+        ->and($data['target'])->toBe(200)
+        ->and($data['unit_label'])->toBe('QSOs')
+        ->and($data['footer_label'])->toBe('Toward Class 1A target');
+});
+
+test('progress bar bonus_progress metric reports bonus point ceiling', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $component = Livewire::test(ProgressBar::class, [
+        'config' => ['metric' => 'bonus_progress'],
+        'size' => 'normal',
+    ]);
+
+    $data = $component->viewData('data');
+
+    expect($data)
+        ->toHaveKeys(['current', 'target', 'percentage', 'unit_label', 'footer_label'])
+        ->and($data['current'])->toBe(0)
+        ->and($data['target'])->toBeGreaterThanOrEqual(1)
+        ->and($data['unit_label'])->toBe('bonus pts')
+        ->and($data['footer_label'])->toBe('Toward maximum bonus points');
+});
+
+test('progress bar render passes show_percentage flag from config', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $component = Livewire::test(ProgressBar::class, [
+        'config' => ['metric' => 'next_milestone', 'show_percentage' => false],
+        'size' => 'normal',
+    ]);
+
+    expect($component->viewData('showPercentage'))->toBeFalse();
 });

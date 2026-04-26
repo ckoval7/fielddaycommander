@@ -133,7 +133,7 @@ test('getData returns expected structure with no active event', function () {
         ->and($data['labels'])->toBeArray()
         ->and($data['datasets'])->toBeArray()
         ->and($data['chart_type'])->toBe('bar')
-        ->and($data['title'])->toBe('QSOs per Hour')
+        ->and($data['title'])->toBe('QSOs per Hour — Entire Event')
         ->and($data['data_source'])->toBe('qsos_per_hour');
 });
 
@@ -156,9 +156,9 @@ test('getData returns correct title for each data source', function (string $dat
 
     expect($data['title'])->toBe($expectedTitle);
 })->with([
-    ['qsos_per_hour', 'QSOs per Hour'],
-    ['qsos_per_band', 'QSOs per Band'],
-    ['qsos_per_mode', 'QSOs per Mode'],
+    ['qsos_per_hour', 'QSOs per Hour — Entire Event'],
+    ['qsos_per_band', 'QSOs per Band — Entire Event'],
+    ['qsos_per_mode', 'QSOs per Mode — Entire Event'],
 ]);
 
 // ────────────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ test('getData defaults to qsos_per_hour for invalid data source', function () {
     $data = $chart->getData();
 
     expect($data['data_source'])->toBe('qsos_per_hour')
-        ->and($data['title'])->toBe('QSOs per Hour');
+        ->and($data['title'])->toBe('QSOs per Hour — Entire Event');
 });
 
 // ────────────────────────────────────────────────────────────────
@@ -755,4 +755,68 @@ test('returns empty data when event has no configuration', function () {
     $data = $chart->getData();
 
     expect($data['labels'])->toBeEmpty();
+});
+
+test('time_range filter excludes contacts older than the lookback window', function () {
+    ['eventConfig' => $eventConfig] = createActiveEventWithConfig();
+    $bands = createTestBands();
+    $modes = createTestModes();
+
+    // 3 contacts inside the 1-hour window
+    Contact::factory()->count(3)->create([
+        'event_configuration_id' => $eventConfig->id,
+        'band_id' => $bands['20m']->id,
+        'mode_id' => $modes['SSB']->id,
+        'is_duplicate' => false,
+        'qso_time' => now()->subMinutes(15),
+    ]);
+
+    // 5 contacts outside the 1-hour window
+    Contact::factory()->count(5)->create([
+        'event_configuration_id' => $eventConfig->id,
+        'band_id' => $bands['20m']->id,
+        'mode_id' => $modes['SSB']->id,
+        'is_duplicate' => false,
+        'qso_time' => now()->subHours(3),
+    ]);
+
+    $chart = new Chart;
+    $chart->config = [
+        'chart_type' => 'bar',
+        'data_source' => 'qsos_per_band',
+        'time_range' => 'last_hour',
+    ];
+    $chart->widgetId = 'test-time-range';
+
+    $data = $chart->getData();
+
+    expect(array_sum($data['datasets'][0]['data']))->toBe(3)
+        ->and($data['title'])->toBe('QSOs per Band — Last Hour');
+});
+
+test('invalid time_range falls back to entire event', function () {
+    ['eventConfig' => $eventConfig] = createActiveEventWithConfig();
+    $bands = createTestBands();
+    $modes = createTestModes();
+
+    Contact::factory()->count(2)->create([
+        'event_configuration_id' => $eventConfig->id,
+        'band_id' => $bands['20m']->id,
+        'mode_id' => $modes['SSB']->id,
+        'is_duplicate' => false,
+        'qso_time' => now()->subHours(6),
+    ]);
+
+    $chart = new Chart;
+    $chart->config = [
+        'chart_type' => 'bar',
+        'data_source' => 'qsos_per_band',
+        'time_range' => 'last_century',
+    ];
+    $chart->widgetId = 'test-time-range-invalid';
+
+    $data = $chart->getData();
+
+    expect(array_sum($data['datasets'][0]['data']))->toBe(2)
+        ->and($data['title'])->toBe('QSOs per Band — Entire Event');
 });

@@ -94,11 +94,10 @@ Props from controller:
 
                 // Calculate widget height to fit screen
                 const viewportHeight = window.innerHeight;
-                const headerHeight = this.kiosk ? 0 : 80; // Header height when not in kiosk mode
                 const padding = 32; // Total vertical padding
                 const gap = 24 * (this.gridRows - 1); // Gap between rows
 
-                const availableHeight = viewportHeight - headerHeight - padding - gap;
+                const availableHeight = viewportHeight - padding - gap;
                 this.widgetHeight = Math.floor(availableHeight / this.gridRows);
             },
 
@@ -113,80 +112,7 @@ Props from controller:
         :class="{ 'kiosk-mode': kiosk }"
         x-init="calculateGrid"
     >
-        {{-- TV Dashboard Header (hidden in kiosk mode) --}}
-        <div
-            x-show="!kiosk"
-            x-transition
-            class="bg-base-200 border-b border-base-300 px-6 py-4"
-        >
-            <div class="container mx-auto flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold text-base-content">{{ $title }}</h1>
-                    @if($description)
-                        <p class="text-lg text-base-content/70 mt-1">{{ $description }}</p>
-                    @endif
-                </div>
-
-                <div class="flex items-center gap-4">
-                    {{-- Event Countdown Timer --}}
-                    @php
-                        $activeEvent = \App\Models\Event::active()->first();
-                    @endphp
-                    @if($activeEvent)
-                        <div
-                            x-data="{
-                                endTime: new Date(@js($activeEvent->end_time->toIso8601String())).getTime(),
-                                serverNow: new Date(@js(appNow()->toIso8601String())).getTime(),
-                                timeLeft: '',
-
-                                init() {
-                                    this.updateTimer();
-                                    setInterval(() => {
-                                        this.serverNow += 1000;
-                                        this.updateTimer();
-                                    }, 1000);
-                                },
-
-                                updateTimer() {
-                                    const diff = this.endTime - this.serverNow;
-
-                                    if (diff <= 0) {
-                                        this.timeLeft = 'Event Ended';
-                                        return;
-                                    }
-
-                                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                                    if (days > 0) {
-                                        this.timeLeft = `${days}d ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                                    } else {
-                                        this.timeLeft = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                                    }
-                                }
-                            }"
-                            class="badge badge-lg badge-primary gap-2 px-4 py-3"
-                        >
-                            <x-icon name="phosphor-clock" class="w-5 h-5" />
-                            <span class="font-mono text-lg font-bold" x-text="timeLeft"></span>
-                        </div>
-                    @endif
-
-                    {{-- Fullscreen Toggle --}}
-                    <button
-                        @click="fullscreen = !fullscreen; kiosk = fullscreen; if (fullscreen) requestFullscreen();"
-                        class="btn btn-ghost btn-sm gap-2"
-                    >
-                        <x-icon :name="$kiosk ? 'phosphor-arrows-in' : 'phosphor-arrows-out'" class="w-5 h-5" />
-                        <span x-text="fullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'"></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        {{-- TV Widget Grid --}}
+        {{-- TV Widget Grid (no header — F toggles fullscreen, ESC exits kiosk) --}}
         <div class="tv-dashboard-content" :class="{ 'px-4 py-4': !kiosk, 'p-0': kiosk }">
             @if($widgets && count($widgets) > 0)
                 <div
@@ -221,14 +147,12 @@ Props from controller:
                                         @break
 
                                     @case('progress_bar')
-                                        <x-card class="h-full flex items-center justify-center">
-                                            <livewire:dashboard.widgets.progress-bar
-                                                :config="$widget['config']"
-                                                :widget-id="$widget['id']"
-                                                size="tv"
-                                                wire:key="tv-progress-{{ $widget['id'] }}"
-                                            />
-                                        </x-card>
+                                        <livewire:dashboard.widgets.progress-bar
+                                            :config="$widget['config']"
+                                            :widget-id="$widget['id']"
+                                            size="tv"
+                                            wire:key="tv-progress-{{ $widget['id'] }}"
+                                        />
                                         @break
 
                                     @case('list_widget')
@@ -241,14 +165,12 @@ Props from controller:
                                         @break
 
                                     @case('timer')
-                                        <x-card class="h-full flex items-center justify-center">
-                                            <livewire:dashboard.widgets.timer
-                                                :config="$widget['config']"
-                                                :widget-id="$widget['id']"
-                                                size="tv"
-                                                wire:key="tv-timer-{{ $widget['id'] }}"
-                                            />
-                                        </x-card>
+                                        <livewire:dashboard.widgets.timer
+                                            :config="$widget['config']"
+                                            :widget-id="$widget['id']"
+                                            size="tv"
+                                            wire:key="tv-timer-{{ $widget['id'] }}"
+                                        />
                                         @break
 
                                     @case('info_card')
@@ -330,11 +252,10 @@ Props from controller:
         }
 
         .tv-dashboard-content {
-            height: calc(100vh - 80px); /* Subtract header height */
+            height: 100vh;
         }
 
         .kiosk-mode .tv-dashboard-content {
-            height: 100vh;
             padding: 1rem !important;
         }
 
