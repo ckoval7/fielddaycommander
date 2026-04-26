@@ -77,3 +77,21 @@ test('mobile user can tap a transcribed contact to recall and delete it', functi
 
     expect(Contact::onlyTrashed()->where('callsign', 'K1ABC')->count())->toBe(1);
 });
+
+test('tablet user can tap a transcribed contact row in the desktop table to recall', function () {
+    $this->actingAs($this->user);
+
+    $page = visit('/logging/transcribe/'.$this->station->id)
+        ->resize(768, 1024);
+
+    $page->assertVisible('tr[wire\\:key="contact-'.$this->contact->id.'"]')
+        ->assertSee('K1ABC');
+
+    $page->click('tr[wire\\:key="contact-'.$this->contact->id.'"]')
+        ->waitForText('Editing recalled QSO');
+
+    $page->click('button:has-text("Delete")')
+        ->assertDontSee('Editing recalled QSO');
+
+    expect(Contact::onlyTrashed()->where('callsign', 'K1ABC')->count())->toBe(1);
+});
