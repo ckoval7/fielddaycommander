@@ -190,14 +190,6 @@ return [
             ],
         ],
 
-        'message_traffic_score' => [
-            'component' => 'dashboard.widgets.message-traffic-score',
-            'name' => 'Message Traffic Score',
-            'description' => 'Display SM/SEC message, traffic count, and W1AW bulletin bonus point status',
-            'icon' => 'phosphor-envelope',
-            'config_schema' => [],
-        ],
-
         'sections_worked' => [
             'component' => 'dashboard.widgets.sections-worked',
             'name' => 'Sections Worked',
