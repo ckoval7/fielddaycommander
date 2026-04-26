@@ -81,3 +81,27 @@ test('mobile user can tap a QSO card to enter recall mode and delete it', functi
 
     expect(Contact::onlyTrashed()->where('callsign', 'W1AW')->count())->toBe(1);
 });
+
+test('tablet user can tap a QSO row in the desktop table to enter recall mode', function () {
+    $this->actingAs($this->user);
+
+    $page = visit('/logging/session/'.$this->session->id)
+        ->resize(768, 1024);
+
+    $contactId = Contact::first()->id;
+
+    $page->assertVisible('tr[wire\\:key="contact-'.$contactId.'"]')
+        ->assertSee('W1AW');
+
+    $page->click('tr[wire\\:key="contact-'.$contactId.'"]')
+        ->waitForText('Editing recalled QSO');
+
+    $page->assertSee('Save')
+        ->assertSee('Delete')
+        ->assertSee('Cancel');
+
+    $page->click('button:has-text("Delete")')
+        ->assertDontSee('Editing recalled QSO');
+
+    expect(Contact::onlyTrashed()->where('callsign', 'W1AW')->count())->toBe(1);
+});

@@ -416,7 +416,10 @@
                     <tbody>
                         {{-- Pending/Failed contacts from local queue --}}
                         <template x-for="contact in queue" :key="contact.uuid">
-                            <tr :class="{
+                            <tr
+                                @click="recallByUuid(contact.uuid)"
+                                class="cursor-pointer hover:bg-base-200"
+                                :class="{
                                 'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
                                 'bg-error/5': contact.status === 'failed',
                                 'ring-2 ring-primary': recalledUuid === contact.uuid,
@@ -440,12 +443,16 @@
                         {{-- Server-confirmed contacts --}}
                         @foreach($this->recentContacts as $contact)
                             <tr wire:key="contact-{{ $contact->id }}"
+                                @if(! $contact->trashed())
+                                    @click="recallByContactId({{ $contact->id }})"
+                                @endif
                                 :class="{
                                     'ring-2 ring-primary': recalledContactId === {{ $contact->id }},
                                 }"
                                 @class([
                                     'opacity-40 line-through' => $contact->trashed(),
                                     'opacity-50' => ! $contact->trashed() && $contact->is_duplicate,
+                                    'cursor-pointer hover:bg-base-200' => ! $contact->trashed(),
                                 ])>
                                 <td class="font-mono">{{ $contact->trashed() ? '-' : '' }}</td>
                                 <td class="font-mono">{{ $contact->qso_time->format('H:i') }}</td>

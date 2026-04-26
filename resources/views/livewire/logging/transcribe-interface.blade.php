@@ -498,12 +498,16 @@
                                     @endphp
                                     <tr wire:key="contact-{{ $contact->id }}"
                                         data-recall-value="{{ $displayTime->format('Hi') }} {{ $contact->callsign }} {{ $contact->exchange_class }} {{ $contact->section->code ?? '' }}"
+                                        @if(! $contact->trashed())
+                                            @click="recallByContactId({{ $contact->id }})"
+                                        @endif
                                         :class="{
                                             'ring-2 ring-primary': recalledContactId === {{ $contact->id }},
                                         }"
                                         @class([
                                             'opacity-40 line-through' => $contact->trashed(),
                                             'opacity-50' => ! $contact->trashed() && $contact->is_duplicate,
+                                            'cursor-pointer hover:bg-base-200' => ! $contact->trashed(),
                                         ])>
                                         <td class="font-mono text-sm">{{ $displayTime->format('H:i') }}</td>
                                         <td class="font-bold font-mono uppercase">
