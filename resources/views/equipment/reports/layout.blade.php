@@ -25,12 +25,12 @@
             line-height: 1.35;
         }
 
-        @page { margin: 48px 0 72px; }
+        @page { margin: 56px 36px 88px; }
 
         .header-bar {
             background-color: #1e3ea8;
             color: #fff;
-            padding: 12px 48px 8px;
+            padding: 12px 12px 8px;
             margin-bottom: 12px;
             text-align: center;
         }
@@ -45,7 +45,7 @@
         .header-sub { font-size: 12px; margin-top: 3px; color: #bfcfef; }
         .header-meta { font-size: 9px; margin-top: 3px; color: #bfcfef; letter-spacing: .04em; }
 
-        .section { margin: 0 48px 10px; }
+        .section { margin: 0 12px 10px; }
         .section-title {
             font-size: 9px; font-weight: bold; text-transform: uppercase;
             letter-spacing: .1em; color: #64748b;
@@ -57,6 +57,8 @@
         }
 
         table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        thead { display: table-header-group; }
+        tr { page-break-inside: avoid; }
 
         th {
             background: #f1f5f9; color: #475569; font-weight: bold;
@@ -89,7 +91,7 @@
         }
         .page-footer table { width: 100%; border-collapse: collapse; }
         .page-footer td {
-            padding: 4px 48px; font-size: 9px; color: #475569;
+            padding: 4px 12px; font-size: 9px; color: #475569;
             border: none;
         }
         .page-footer td.right { text-align: right; }

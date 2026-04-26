@@ -122,17 +122,16 @@ class InfoCard extends Component
         $config = $event?->eventConfiguration;
 
         $classCode = $config?->operatingClass?->code;
-        $classDisplay = $classCode
-            ? "{$classCode}".($config?->operatingClass?->name ? " — {$config->operatingClass->name}" : '')
-            : 'N/A';
+        $className = $config?->operatingClass?->name;
+        $classSuffix = $className ? " — {$className}" : '';
+        $classDisplay = $classCode ? "{$classCode}{$classSuffix}" : 'N/A';
 
         $transmitters = $config?->transmitter_count !== null
             ? (string) $config->transmitter_count
             : 'N/A';
 
-        $gota = $config?->has_gota_station
-            ? ($config->gota_callsign ? "Yes ({$config->gota_callsign})" : 'Yes')
-            : 'No';
+        $gotaLabel = $config?->gota_callsign ? "Yes ({$config->gota_callsign})" : 'Yes';
+        $gota = $config?->has_gota_station ? $gotaLabel : 'No';
 
         $maxWatts = $config?->max_power_watts !== null
             ? number_format((int) $config->max_power_watts).' W'
