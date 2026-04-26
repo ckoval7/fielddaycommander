@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Station;
 use App\Models\User;
+use App\Services\EquipmentReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
@@ -92,18 +93,22 @@ test('commitment summary csv contains equipment data', function () {
         ->toContain($this->equipment->model);
 });
 
-test('delivery checklist export returns html', function () {
+test('delivery checklist export returns pdf', function () {
     $response = $this->actingAs($this->admin)->get(route('events.equipment.reports.delivery-checklist', ['event' => $this->event]));
 
     $response->assertOk();
-    $response->assertHeader('content-type', 'text/html; charset=UTF-8');
+    expect($response->headers->get('content-type'))->toStartWith('application/pdf');
+    expect($response->headers->get('content-disposition'))->toContain('.pdf');
+    expect($response->getContent())->toStartWith('%PDF-');
 });
 
-test('station inventory pdf export returns html', function () {
+test('station inventory pdf export returns pdf', function () {
     $response = $this->actingAs($this->admin)->get(route('events.equipment.reports.station-inventory-pdf', ['event' => $this->event]));
 
     $response->assertOk();
-    $response->assertHeader('content-type', 'text/html; charset=UTF-8');
+    expect($response->headers->get('content-type'))->toStartWith('application/pdf');
+    expect($response->headers->get('content-disposition'))->toContain('.pdf');
+    expect($response->getContent())->toStartWith('%PDF-');
 });
 
 test('station inventory csv export returns csv', function () {
@@ -124,11 +129,13 @@ test('station inventory csv contains station data', function () {
         ->toContain($this->equipment->make);
 });
 
-test('owner contacts pdf export returns html', function () {
+test('owner contacts pdf export returns pdf', function () {
     $response = $this->actingAs($this->admin)->get(route('events.equipment.reports.owner-contacts-pdf', ['event' => $this->event]));
 
     $response->assertOk();
-    $response->assertHeader('content-type', 'text/html; charset=UTF-8');
+    expect($response->headers->get('content-type'))->toStartWith('application/pdf');
+    expect($response->headers->get('content-disposition'))->toContain('.pdf');
+    expect($response->getContent())->toStartWith('%PDF-');
 });
 
 test('owner contacts csv export returns csv', function () {
@@ -148,21 +155,25 @@ test('owner contacts csv contains contact data', function () {
         ->toContain($this->owner->call_sign);
 });
 
-test('return checklist export returns html', function () {
+test('return checklist export returns pdf', function () {
     $response = $this->actingAs($this->admin)->get(route('events.equipment.reports.return-checklist', ['event' => $this->event]));
 
     $response->assertOk();
-    $response->assertHeader('content-type', 'text/html; charset=UTF-8');
+    expect($response->headers->get('content-type'))->toStartWith('application/pdf');
+    expect($response->headers->get('content-disposition'))->toContain('.pdf');
+    expect($response->getContent())->toStartWith('%PDF-');
 });
 
-test('incident report pdf export returns html', function () {
+test('incident report pdf export returns pdf', function () {
     // Set equipment to damaged status
     $this->commitment->update(['status' => 'damaged']);
 
     $response = $this->actingAs($this->admin)->get(route('events.equipment.reports.incident-report-pdf', ['event' => $this->event]));
 
     $response->assertOk();
-    $response->assertHeader('content-type', 'text/html; charset=UTF-8');
+    expect($response->headers->get('content-type'))->toStartWith('application/pdf');
+    expect($response->headers->get('content-disposition'))->toContain('.pdf');
+    expect($response->getContent())->toStartWith('%PDF-');
 });
 
 test('incident report csv export returns csv', function () {
@@ -206,6 +217,19 @@ test('historical record csv contains complete data', function () {
         ->toContain($this->event->name)
         ->toContain($this->equipment->make)
         ->toContain($this->equipment->model);
+});
+
+test('pdf header includes both club name and event name', function () {
+    $this->eventConfig->update(['club_name' => 'Acme Repeater Society']);
+
+    $service = app(EquipmentReportService::class);
+    $data = $service->generateDeliveryChecklist($this->event->id);
+
+    $html = view('equipment.reports.delivery-checklist', $data + ['generated_at' => now()])->render();
+
+    expect($html)
+        ->toContain('Acme Repeater Society')
+        ->toContain($this->event->name);
 });
 
 test('export filenames contain event name and date', function () {

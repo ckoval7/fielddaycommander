@@ -20,6 +20,7 @@ Props from controller:
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title }} - {{ config('app.name') }}</title>
 
+    <x-silence-livewire-rejections />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>

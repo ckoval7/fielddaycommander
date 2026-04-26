@@ -9,6 +9,7 @@ use App\Notifications\Equipment\EquipmentCommitted;
 use App\Notifications\Equipment\EquipmentDelivered;
 use App\Notifications\Equipment\EquipmentIncident;
 use App\Notifications\Equipment\EquipmentStatusChanged;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -161,7 +162,7 @@ class EquipmentEventObserver
         }
 
         // Notify admins immediately
-        $admins = User::role('system-admin')->get();
+        $admins = User::role('System Administrator')->get();
         foreach ($admins as $admin) {
             $admin->notifyNow($notification);
         }
@@ -193,9 +194,9 @@ class EquipmentEventObserver
      * Event Managers are users with 'manage-event-equipment' permission.
      *
      * @param  int  $eventId  The event ID
-     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     * @return Collection<int, User>
      */
-    protected function getEventManagers(int $eventId): \Illuminate\Database\Eloquent\Collection
+    protected function getEventManagers(int $eventId): Collection
     {
         return User::permission('manage-event-equipment')->get();
     }

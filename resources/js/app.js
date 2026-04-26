@@ -37,72 +37,57 @@ globalThis.addEventListener('error', (event) => {
     }
 });
 
-// Livewire rejects every pending action promise when a request errors
-// (livewire.js rejectActionPromises -> { status, body, json, errors }).
-// Poll-driven actions have no .catch() attached, so those rejections surface
-// as "Uncaught (in promise)" noise even though our Livewire.hook('request')
-// fail handler already dealt with the response. Silence those specific
-// rejections for the statuses we explicitly handle below.
-globalThis.addEventListener('unhandledrejection', (event) => {
-    const reason = event.reason;
-    if (!reason || typeof reason !== 'object') {
-        return;
-    }
-    const hasLivewireShape = 'status' in reason
-        && 'body' in reason
-        && 'json' in reason
-        && 'errors' in reason;
-    if (!hasLivewireShape) {
-        return;
-    }
-    const status = reason.status;
-    if (status === 419 || status === 0 || (typeof status === 'number' && status >= 500)) {
-        event.preventDefault();
-    }
-});
-
 // Graceful handling of failed Livewire XHR requests. We suppress Livewire's
 // default "Page Expired" / Whoops modals and surface a toast (or a redirect,
 // for 419) so the app degrades more gracefully when the session expires or
-// the server is unhealthy.
+// the server is unhealthy. The unhandled-rejection noise from Livewire's
+// rejected action promises is silenced earlier in the page lifecycle by the
+// inline <x-silence-livewire-rejections /> partial — registering there means
+// it runs before laravel/boost's BrowserLogger listener.
 document.addEventListener('livewire:init', () => {
-    Livewire.hook('request', ({ fail }) => {
-        fail(({ status, response, preventDefault }) => {
+    Livewire.interceptRequest(({ onError, onFailure }) => {
+        onError(({ response, body, preventDefault }) => {
+            const status = response?.status;
+
             if (status === 419) {
                 preventDefault();
                 const fallback = '/?session_expired=1';
-                try {
-                    response.clone().json().then((payload) => {
+                let target = fallback;
+                if (typeof body === 'string' && body.length > 0) {
+                    try {
+                        const payload = JSON.parse(body);
                         if (payload && typeof payload.redirect === 'string') {
-                            globalThis.location.assign(payload.redirect);
-                        } else {
-                            globalThis.location.assign(fallback);
+                            target = payload.redirect;
                         }
-                    }).catch(() => globalThis.location.assign(fallback));
-                } catch (e) {
-                    console.error('Livewire 419 handler failed to parse response', e);
-                    globalThis.location.assign(fallback);
+                    } catch {
+                        // 419 body wasn't JSON; fall through to the fallback.
+                    }
                 }
+                globalThis.location.assign(target);
                 return;
             }
 
-            // 5xx responses and network failures (status 0) mean the server
-            // is unhealthy or unreachable. Swap Livewire's default error
-            // modal for a toast so the UI stays usable.
-            if (status >= 500 || status === 0) {
+            if (typeof status === 'number' && status >= 500) {
                 preventDefault();
-                const isUnreachable = status === 0;
                 globalThis.Livewire.dispatch('toast', [{
                     type: 'error',
-                    title: isUnreachable
-                        ? 'Can’t reach the server.'
-                        : 'Something went wrong on the server.',
-                    description: isUnreachable
-                        ? 'Check your connection and try again.'
-                        : 'Please try again in a moment. If this keeps happening, contact your administrator.',
+                    title: 'Something went wrong on the server.',
+                    description: 'Please try again in a moment. If this keeps happening, contact your administrator.',
                     timeout: 8000,
                 }]);
             }
+        });
+
+        onFailure(() => {
+            // Network failure / unreachable server. The new interceptor API
+            // does not expose a preventDefault() here; the unhandledrejection
+            // guard above keeps the console quiet.
+            globalThis.Livewire.dispatch('toast', [{
+                type: 'error',
+                title: 'Can’t reach the server.',
+                description: 'Check your connection and try again.',
+                timeout: 8000,
+            }]);
         });
     });
 });

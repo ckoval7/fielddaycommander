@@ -5,6 +5,7 @@ use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Organization;
 use App\Models\Station;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -423,7 +424,7 @@ test('manager can open commit club equipment modal', function () {
 test('manager can commit club equipment to event', function () {
     $this->actingAs($this->manager);
 
-    $org = \App\Models\Organization::factory()->create();
+    $org = Organization::factory()->create();
     $clubEquipment = Equipment::factory()->create([
         'owner_user_id' => null,
         'owner_organization_id' => $org->id,
@@ -464,7 +465,7 @@ test('cannot commit non-club equipment from dashboard', function () {
 test('cannot commit club equipment already committed to overlapping event', function () {
     $this->actingAs($this->manager);
 
-    $org = \App\Models\Organization::factory()->create();
+    $org = Organization::factory()->create();
     $clubEquipment = Equipment::factory()->create([
         'owner_user_id' => null,
         'owner_organization_id' => $org->id,
@@ -491,7 +492,7 @@ test('cannot commit club equipment already committed to overlapping event', func
 test('viewer cannot commit club equipment', function () {
     $this->actingAs($this->viewer);
 
-    $org = \App\Models\Organization::factory()->create();
+    $org = Organization::factory()->create();
     $clubEquipment = Equipment::factory()->create([
         'owner_user_id' => null,
         'owner_organization_id' => $org->id,
@@ -511,7 +512,7 @@ test('viewer cannot commit club equipment', function () {
 test('available club equipment excludes already committed items', function () {
     $this->actingAs($this->manager);
 
-    $org = \App\Models\Organization::factory()->create();
+    $org = Organization::factory()->create();
 
     $committedClubEquipment = Equipment::factory()->create([
         'owner_user_id' => null,
@@ -555,7 +556,7 @@ test('available club equipment excludes already committed items', function () {
 test('can recommit cancelled club equipment to same event', function () {
     $this->actingAs($this->manager);
 
-    $org = \App\Models\Organization::factory()->create();
+    $org = Organization::factory()->create();
     $clubEquipment = Equipment::factory()->create([
         'owner_user_id' => null,
         'owner_organization_id' => $org->id,
@@ -590,4 +591,33 @@ test('can recommit cancelled club equipment to same event', function () {
     $this->assertEquals(1, EquipmentEvent::where('equipment_id', $clubEquipment->id)
         ->where('event_id', $this->event->id)
         ->count());
+});
+
+// Export Menu Tests
+
+test('export menu links opt out of wire:navigate so the browser downloads the file', function () {
+    $this->actingAs($this->manager);
+
+    $downloadRoutes = [
+        'events.equipment.reports.commitment-summary',
+        'events.equipment.reports.station-inventory-csv',
+        'events.equipment.reports.historical-record',
+        'events.equipment.reports.owner-contacts-csv',
+        'events.equipment.reports.incident-report-csv',
+        'events.equipment.reports.delivery-checklist',
+        'events.equipment.reports.station-inventory-pdf',
+        'events.equipment.reports.owner-contacts-pdf',
+        'events.equipment.reports.return-checklist',
+        'events.equipment.reports.incident-report-pdf',
+    ];
+
+    $html = Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])->html();
+
+    foreach ($downloadRoutes as $name) {
+        $href = route($name, ['event' => $this->event->id]);
+        $pattern = '/<a\b[^>]*\bhref="'.preg_quote($href, '/').'"[^>]*>/';
+
+        expect(preg_match($pattern, $html, $matches))->toBe(1, "Missing anchor for {$name}");
+        expect($matches[0])->not->toContain('wire:navigate', "{$name} must not be wire:navigated — it intercepts the file download");
+    }
 });

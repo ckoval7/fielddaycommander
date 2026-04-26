@@ -18,7 +18,7 @@ beforeEach(function () {
 
     // Create required permissions and roles for tests
     Permission::create(['name' => 'manage-event-equipment']);
-    Role::create(['name' => 'system-admin']);
+    Role::create(['name' => 'System Administrator']);
 });
 
 test('observer sends notifications when equipment is committed', function () {
@@ -94,7 +94,7 @@ test('observer sends notifications when equipment status changes to returned', f
 test('observer sends incident notifications when equipment is lost', function () {
     $owner = User::factory()->create();
     $admin = User::factory()->create();
-    $admin->assignRole('system-admin');
+    $admin->assignRole('System Administrator');
     $manager = User::factory()->create();
     $manager->givePermissionTo('manage-event-equipment');
 
@@ -123,7 +123,7 @@ test('observer sends incident notifications when equipment is lost', function ()
 test('observer sends incident notifications when equipment is damaged', function () {
     $owner = User::factory()->create();
     $admin = User::factory()->create();
-    $admin->assignRole('system-admin');
+    $admin->assignRole('System Administrator');
     $manager = User::factory()->create();
     $manager->givePermissionTo('manage-event-equipment');
 

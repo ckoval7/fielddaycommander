@@ -32,21 +32,25 @@
                         title="Commitment Summary (CSV)"
                         icon="phosphor-file-text"
                         link="{{ route('events.equipment.reports.commitment-summary', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
                     <x-menu-item
                         title="Delivery Checklist (PDF)"
                         icon="phosphor-clipboard-text"
                         link="{{ route('events.equipment.reports.delivery-checklist', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
                     <x-menu-item
                         title="Station Inventory (PDF)"
                         icon="phosphor-buildings"
                         link="{{ route('events.equipment.reports.station-inventory-pdf', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
                     <x-menu-item
                         title="Station Inventory (CSV)"
                         icon="phosphor-squares-four"
                         link="{{ route('events.equipment.reports.station-inventory-csv', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
 
                     {{-- Post-Event Reports --}}
@@ -55,11 +59,13 @@
                         title="Return Checklist (PDF)"
                         icon="phosphor-arrow-u-up-left"
                         link="{{ route('events.equipment.reports.return-checklist', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
                     <x-menu-item
                         title="Historical Record (CSV)"
                         icon="phosphor-archive"
                         link="{{ route('events.equipment.reports.historical-record', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
 
                     {{-- Other Reports --}}
@@ -68,21 +74,25 @@
                         title="Owner Contacts (PDF)"
                         icon="phosphor-users"
                         link="{{ route('events.equipment.reports.owner-contacts-pdf', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
                     <x-menu-item
                         title="Owner Contacts (CSV)"
                         icon="phosphor-squares-four"
                         link="{{ route('events.equipment.reports.owner-contacts-csv', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
                     <x-menu-item
                         title="Incident Report (PDF)"
                         icon="phosphor-warning"
                         link="{{ route('events.equipment.reports.incident-report-pdf', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
                     <x-menu-item
                         title="Incident Report (CSV)"
                         icon="phosphor-squares-four"
                         link="{{ route('events.equipment.reports.incident-report-csv', ['event' => $event->id]) }}"
+                        no-wire-navigate
                     />
                 </x-dropdown>
             @endif
