@@ -25,7 +25,7 @@
             line-height: 1.35;
         }
 
-        @page { margin: 48px 0; }
+        @page { margin: 48px 0 72px; }
 
         .header-bar {
             background-color: #1e3ea8;
