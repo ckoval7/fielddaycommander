@@ -55,15 +55,65 @@
                 </div>
             </x-tab>
 
-            {{-- Activity Tab (Future) --}}
+            {{-- Activity Tab --}}
             <x-tab name="activity" label="Activity" icon="phosphor-chart-bar">
-                <div class="mt-6">
+                <div class="mt-6 space-y-6">
+                    {{-- Summary stats --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <x-card>
+                            <div class="text-sm text-base-content/60">Total QSOs</div>
+                            <div class="text-3xl font-bold">{{ $this->totalQsoCount }}</div>
+                        </x-card>
+                        <x-card>
+                            <div class="text-sm text-base-content/60">Total Sessions</div>
+                            <div class="text-3xl font-bold">{{ $this->sessions->count() }}</div>
+                        </x-card>
+                    </div>
+
+                    {{-- Sessions table --}}
                     <x-card>
-                        <div class="text-center py-12 text-base-content/60">
-                            <x-icon name="phosphor-chart-bar" class="w-16 h-16 mx-auto mb-4 opacity-50" />
-                            <p class="text-lg font-semibold mb-2">Operating Sessions & Contacts</p>
-                            <p class="text-sm">Activity tracking coming soon...</p>
-                        </div>
+                        <h3 class="card-title">Operating Sessions</h3>
+
+                        @if($this->sessions->isEmpty())
+                            <x-alert icon="phosphor-info">
+                                No operating sessions logged for this station yet.
+                            </x-alert>
+                        @else
+                            <div class="overflow-x-auto">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Operator</th>
+                                            <th>Band</th>
+                                            <th>Mode</th>
+                                            <th>Start</th>
+                                            <th>End</th>
+                                            <th>Duration</th>
+                                            <th>QSOs</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($this->sessions as $session)
+                                            <tr>
+                                                <td>{{ $session->operator->call_sign ?? '—' }}</td>
+                                                <td>{{ $session->band->name ?? '—' }}</td>
+                                                <td>{{ $session->mode->name ?? '—' }}</td>
+                                                <td>{{ $session->start_time ? toLocalTime($session->start_time)->format('M j, g:i A T') : '' }}</td>
+                                                <td>
+                                                    @if($session->end_time)
+                                                        {{ toLocalTime($session->end_time)->format('M j, g:i A T') }}
+                                                    @else
+                                                        <x-badge value="Active" class="badge-success" />
+                                                    @endif
+                                                </td>
+                                                <td>{{ $session->duration ?? '—' }}</td>
+                                                <td>{{ $session->qso_count ?? 0 }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
                     </x-card>
                 </div>
             </x-tab>
