@@ -10,34 +10,18 @@
         @if ($contacts->isEmpty())
             <p class="muted">No equipment owners on record for this event.</p>
         @else
-            <table>
-                <thead>
-                    <tr>
-                        <th>Owner</th>
-                        <th style="width: 12%;">Callsign</th>
-                        <th>Email</th>
-                        <th>Emergency Contacts</th>
-                        <th class="r" style="width: 11%;">Equipment</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($contacts as $i => $contact)
-                        <tr class="{{ $i % 2 === 1 ? 'alt' : '' }}">
-                            <td>{{ $contact['owner_name'] }}</td>
-                            <td class="m">{{ $contact['callsign'] }}</td>
-                            <td>{{ $contact['email'] }}</td>
-                            <td>
-                                @if ($contact['emergency_contacts']->isNotEmpty())
-                                    {{ $contact['emergency_contacts']->implode(', ') }}
-                                @else
-                                    <span class="muted">—</span>
-                                @endif
-                            </td>
-                            <td class="r">{{ $contact['equipment_count'] }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+            @include('equipment.reports.partials.paginated-table', [
+                'rows' => $contacts,
+                'columns' => [
+                    ['label' => 'Owner'],
+                    ['label' => 'Callsign', 'attrs' => 'style="width: 12%;"'],
+                    ['label' => 'Email'],
+                    ['label' => 'Emergency Contacts'],
+                    ['label' => 'Equipment', 'attrs' => 'class="r" style="width: 11%;"'],
+                ],
+                'rowPartial' => 'equipment.reports.partials.owner-contact-row',
+                'rowHeight' => fn ($r) => 20,
+            ])
         @endif
     </div>
 @endsection

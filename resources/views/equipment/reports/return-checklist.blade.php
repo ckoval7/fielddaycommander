@@ -10,38 +10,38 @@
         @if ($return_items->isEmpty())
             <p class="muted">No equipment is currently delivered and pending return.</p>
         @else
-            <table>
-                <thead>
-                    <tr>
-                        <th class="c" style="width: 24px;">&#9744;</th>
-                        <th>Equipment</th>
-                        <th style="width: 14%;">Serial #</th>
-                        <th>Owner</th>
-                        <th style="width: 16%;">Station</th>
-                        <th class="c" style="width: 22%;">Signature</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($return_items as $i => $item)
-                        <tr class="{{ $i % 2 === 1 ? 'alt' : '' }}">
-                            <td class="c"><span class="check-box">&#9744;</span></td>
-                            <td>
-                                <strong>{{ $item['equipment_description'] }}</strong>
-                                <div style="font-size: 8px; color: #64748b;">{{ ucfirst(str_replace('_', ' ', $item['type'])) }}</div>
-                            </td>
-                            <td class="m">{{ $item['serial_number'] ?: '—' }}</td>
-                            <td>
-                                {{ $item['owner_name'] }}
-                                @if (! empty($item['owner_callsign']) && $item['owner_callsign'] !== 'N/A')
-                                    <span class="m" style="font-size: 9px; color: #64748b;">{{ $item['owner_callsign'] }}</span>
-                                @endif
-                            </td>
-                            <td>{{ $item['station'] ?? 'Unassigned' }}</td>
-                            <td class="c"><span class="signature-line">&nbsp;</span></td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+            @php
+                $rows = collect();
+                $return_items
+                    ->sortBy(fn ($item) => strtolower($item['owner_name']))
+                    ->groupBy('owner_name')
+                    ->each(function ($items, $ownerName) use ($rows) {
+                        $first = $items->first();
+                        $rows->push([
+                            '_type' => 'group',
+                            'owner_name' => $ownerName,
+                            'owner_callsign' => $first['owner_callsign'] ?? null,
+                            'count' => $items->count(),
+                        ]);
+                        foreach ($items as $item) {
+                            $rows->push(['_type' => 'item'] + $item);
+                        }
+                    });
+            @endphp
+
+            @include('equipment.reports.partials.paginated-table', [
+                'rows' => $rows,
+                'columns' => [
+                    ['label' => '&#9744;', 'attrs' => 'class="c" style="width: 24px;"'],
+                    ['label' => 'Equipment'],
+                    ['label' => 'Serial #', 'attrs' => 'style="width: 18%;"'],
+                    ['label' => 'Station', 'attrs' => 'style="width: 18%;"'],
+                    ['label' => 'Signature', 'attrs' => 'class="c" style="width: 22%;"'],
+                ],
+                'rowPartial' => 'equipment.reports.partials.return-row',
+                'rowHeight' => fn ($r) => ($r['_type'] ?? 'item') === 'group' ? 22 : 30,
+                'keepWithNext' => fn ($r) => ($r['_type'] ?? 'item') === 'group',
+            ])
         @endif
     </div>
 @endsection
