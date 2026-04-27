@@ -6,6 +6,7 @@ use App\Enums\PowerSource;
 use App\Models\Equipment;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
@@ -133,6 +134,25 @@ class StationForm extends Component
     public function allowsGota(): bool
     {
         return $this->selectedEvent?->operatingClass?->allows_gota ?? false;
+    }
+
+    #[Computed]
+    public function sessions(): \Illuminate\Database\Eloquent\Collection
+    {
+        if (! $this->stationId) {
+            return new \Illuminate\Database\Eloquent\Collection;
+        }
+
+        return OperatingSession::forStation($this->stationId)
+            ->with(['operator', 'band', 'mode'])
+            ->orderByDesc('start_time')
+            ->get();
+    }
+
+    #[Computed]
+    public function totalQsoCount(): int
+    {
+        return (int) $this->sessions->sum('qso_count');
     }
 
     /**
