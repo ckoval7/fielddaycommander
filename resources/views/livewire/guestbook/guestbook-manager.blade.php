@@ -21,7 +21,7 @@
                     label="Export CSV"
                     icon="phosphor-download-simple"
                     class="btn-outline"
-                    wire:click="$dispatch('toast', { title: 'Coming Soon', description: 'CSV export will be available in a future update', icon: 'phosphor-info', css: 'alert-info' })"
+                    wire:click="exportCsv"
                 />
             </div>
         </div>
