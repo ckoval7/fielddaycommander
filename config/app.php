@@ -15,7 +15,7 @@ return [
 
     'name' => env('APP_NAME', 'Field Day Commander'),
 
-    'version' => '2.0.0-dev',
+    'version' => trim((string) @file_get_contents(__DIR__.'/../VERSION')) ?: '0.0.0-dev',
 
     /*
     |--------------------------------------------------------------------------

@@ -10,38 +10,41 @@
         @if ($checklist_items->isEmpty())
             <p class="muted">No equipment scheduled for delivery.</p>
         @else
-            <table>
-                <thead>
-                    <tr>
-                        <th class="c" style="width: 24px;">&#9744;</th>
-                        <th style="width: 18%;">Expected</th>
-                        <th>Equipment</th>
-                        <th>Owner</th>
-                        <th>Contact</th>
-                        <th class="c" style="width: 22%;">Signature</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($checklist_items as $i => $item)
-                        <tr class="{{ $i % 2 === 1 ? 'alt' : '' }}">
-                            <td class="c"><span class="check-box">&#9744;</span></td>
-                            <td class="m">{{ $item['expected_delivery'] }}</td>
-                            <td>
-                                <strong>{{ $item['equipment_description'] }}</strong>
-                                <div style="font-size: 8px; color: #64748b;">{{ ucfirst(str_replace('_', ' ', $item['type'])) }}</div>
-                            </td>
-                            <td>
-                                {{ $item['owner_name'] }}
-                                @if ($item['owner_callsign'] && $item['owner_callsign'] !== 'N/A')
-                                    <span class="m" style="font-size: 9px; color: #64748b;">{{ $item['owner_callsign'] }}</span>
-                                @endif
-                            </td>
-                            <td>{{ $item['owner_phone'] }}</td>
-                            <td class="c"><span class="signature-line">&nbsp;</span></td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+            @php
+                // Group items by owner so each owner's deliveries stay together,
+                // with an inline header row before each group.
+                $rows = collect();
+                $checklist_items
+                    ->sortBy(fn ($item) => strtolower($item['owner_name']))
+                    ->groupBy('owner_name')
+                    ->each(function ($items, $ownerName) use ($rows) {
+                        $first = $items->first();
+                        $rows->push([
+                            '_type' => 'group',
+                            'owner_name' => $ownerName,
+                            'owner_callsign' => $first['owner_callsign'] ?? null,
+                            'owner_phone' => $first['owner_phone'] ?? null,
+                            'count' => $items->count(),
+                        ]);
+                        foreach ($items as $item) {
+                            $rows->push(['_type' => 'item'] + $item);
+                        }
+                    });
+            @endphp
+
+            @include('equipment.reports.partials.paginated-table', [
+                'rows' => $rows,
+                'columns' => [
+                    ['label' => '&#9744;', 'attrs' => 'class="c" style="width: 24px;"'],
+                    ['label' => 'Expected', 'attrs' => 'style="width: 18%;"'],
+                    ['label' => 'Equipment'],
+                    ['label' => 'Contact', 'attrs' => 'style="width: 22%;"'],
+                    ['label' => 'Signature', 'attrs' => 'class="c" style="width: 22%;"'],
+                ],
+                'rowPartial' => 'equipment.reports.partials.delivery-row',
+                'rowHeight' => fn ($r) => ($r['_type'] ?? 'item') === 'group' ? 22 : 30,
+                'keepWithNext' => fn ($r) => ($r['_type'] ?? 'item') === 'group',
+            ])
         @endif
     </div>
 @endsection

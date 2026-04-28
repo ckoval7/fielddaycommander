@@ -26,42 +26,22 @@
         @if ($incidents->isEmpty())
             <p class="muted">No incidents recorded for this event.</p>
         @else
-            <table>
-                <thead>
-                    <tr>
-                        <th>Equipment</th>
-                        <th style="width: 11%;">Status</th>
-                        <th>Owner</th>
-                        <th style="width: 13%;">Station</th>
-                        <th class="r" style="width: 10%;">Value</th>
-                        <th style="width: 13%;">Changed</th>
-                        <th>Circumstances</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($incidents as $i => $incident)
-                        <tr class="{{ $i % 2 === 1 ? 'alt' : '' }}">
-                            <td>
-                                <strong>{{ $incident['equipment_description'] }}</strong>
-                                @if ($incident['serial_number'])
-                                    <div style="font-size: 8px; color: #64748b;">SN: {{ $incident['serial_number'] }}</div>
-                                @endif
-                            </td>
-                            <td class="c">{{ ucfirst(str_replace('_', ' ', $incident['status'])) }}</td>
-                            <td>
-                                {{ $incident['owner_name'] }}
-                                @if (! empty($incident['owner_callsign']) && $incident['owner_callsign'] !== 'N/A')
-                                    <span class="m" style="font-size: 9px; color: #64748b;">{{ $incident['owner_callsign'] }}</span>
-                                @endif
-                            </td>
-                            <td>{{ $incident['station'] }}</td>
-                            <td class="r">{{ $incident['value_usd'] ? '$'.number_format($incident['value_usd'], 2) : '—' }}</td>
-                            <td class="m" style="font-size: 8px;">{{ $incident['status_changed_at'] ?? '—' }}</td>
-                            <td>{{ $incident['circumstances'] ?: '—' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+            @include('equipment.reports.partials.paginated-table', [
+                'rows' => $incidents,
+                'columns' => [
+                    ['label' => 'Equipment'],
+                    ['label' => 'Status', 'attrs' => 'style="width: 11%;"'],
+                    ['label' => 'Owner'],
+                    ['label' => 'Station', 'attrs' => 'style="width: 13%;"'],
+                    ['label' => 'Value', 'attrs' => 'class="r" style="width: 10%;"'],
+                    ['label' => 'Changed', 'attrs' => 'style="width: 13%;"'],
+                    ['label' => 'Circumstances'],
+                ],
+                'rowPartial' => 'equipment.reports.partials.incident-row',
+                'rowHeight' => fn ($r) => ! empty($r['serial_number']) || (! empty($r['owner_callsign']) && $r['owner_callsign'] !== 'N/A') ? 30 : 20,
+                // Page 1 also carries the Summary section (~70pt) above this table.
+                'firstChunkBudget' => 465,
+            ])
         @endif
     </div>
 @endsection
