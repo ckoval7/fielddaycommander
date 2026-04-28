@@ -51,28 +51,29 @@ class Release extends Command
         file_put_contents(base_path('VERSION'), $next."\n");
         $this->info("Updated VERSION → {$next}");
 
-        if ($this->option('tag')) {
-            $tag = "v{$next}";
+        return $this->option('tag') ? $this->cutTag($next) : self::SUCCESS;
+    }
 
-            $commit = $this->git(['commit', '-am', "chore(release): {$tag}"]);
+    protected function cutTag(string $next): int
+    {
+        $tag = "v{$next}";
 
-            if (! $commit) {
-                $this->warn('No changes to commit (VERSION may already be staged or unchanged).');
-            }
+        if (! $this->git(['commit', '-am', "chore(release): {$tag}"])) {
+            $this->warn('No changes to commit (VERSION may already be staged or unchanged).');
+        }
 
-            if (! $this->git(['tag', '-a', $tag, '-m', "Release {$tag}"])) {
-                $this->error("Failed to create tag {$tag}");
+        if (! $this->git(['tag', '-a', $tag, '-m', "Release {$tag}"])) {
+            $this->error("Failed to create tag {$tag}");
 
-                return self::FAILURE;
-            }
+            return self::FAILURE;
+        }
 
-            $this->info("Tagged {$tag}");
+        $this->info("Tagged {$tag}");
 
-            if ($this->option('push')) {
-                $this->git(['push']);
-                $this->git(['push', 'origin', $tag]);
-                $this->info("Pushed {$tag} to origin");
-            }
+        if ($this->option('push')) {
+            $this->git(['push']);
+            $this->git(['push', 'origin', $tag]);
+            $this->info("Pushed {$tag} to origin");
         }
 
         return self::SUCCESS;
