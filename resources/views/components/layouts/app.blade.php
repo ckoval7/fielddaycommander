@@ -459,7 +459,7 @@
             <span class="hidden sm:inline text-base-content/30">&middot;</span>
             <a href="https://fielddaycommander.org/" target="_blank" rel="noopener noreferrer" class="link link-hover">Website</a>
             <span class="hidden sm:inline text-base-content/30">&middot;</span>
-            <a href="https://github.com/ckoval7/fd-commander" target="_blank" rel="noopener noreferrer" class="link link-hover">GitHub</a>
+            <a href="https://github.com/ckoval7/fielddaycommander" target="_blank" rel="noopener noreferrer" class="link link-hover">GitHub</a>
         </div>
     </footer>
 
