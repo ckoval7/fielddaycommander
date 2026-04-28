@@ -239,7 +239,41 @@ test('section data includes latest QSO time and time bounds', function () {
     $component = Livewire\Livewire::test(SectionMap::class);
     $sectionData = $component->viewData('sectionData');
 
-    expect($sectionData['CT']['latestQsoTime'])->toBe($lateTime->timestamp);
+    expect($sectionData['CT']['latestQsoTime'])->toBe($lateTime->timestamp)
+        ->and($sectionData['CT']['latestBand'])->toBe('40m');
+});
+
+test('latestBand reflects the most recent QSO even when another band has more QSOs', function () {
+    $session = OperatingSession::factory()->create([
+        'station_id' => $this->station->id,
+    ]);
+
+    Contact::factory()->count(3)->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $session->id,
+        'section_id' => $this->sectionCT->id,
+        'band_id' => $this->band20->id,
+        'mode_id' => $this->modeSSB->id,
+        'logger_user_id' => $this->user->id,
+        'is_duplicate' => false,
+        'qso_time' => now()->subHours(4),
+    ]);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $session->id,
+        'section_id' => $this->sectionCT->id,
+        'band_id' => $this->band40->id,
+        'mode_id' => $this->modeCW->id,
+        'logger_user_id' => $this->user->id,
+        'is_duplicate' => false,
+        'qso_time' => now()->subMinutes(5),
+    ]);
+
+    $component = Livewire\Livewire::test(SectionMap::class);
+    $sectionData = $component->viewData('sectionData');
+
+    expect($sectionData['CT']['latestBand'])->toBe('40m');
 });
 
 test('section map page is publicly accessible', function () {

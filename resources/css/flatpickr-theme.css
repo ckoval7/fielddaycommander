@@ -12,6 +12,15 @@
     font-family: inherit;
 }
 
+/* When rendered with `static: true`, the calendar lives inline in the input's
+ * wrapper. Each sibling form row is its own stacking context (daisyUI `.input`
+ * sets position:relative), so the open calendar can't escape its parent's
+ * stacking context via z-index alone — we have to lift the whole wrapper. */
+.flatpickr-wrapper-open {
+    position: relative;
+    z-index: 50;
+}
+
 .flatpickr-months .flatpickr-month,
 .flatpickr-current-month .flatpickr-monthDropdown-months,
 .flatpickr-weekdays,
