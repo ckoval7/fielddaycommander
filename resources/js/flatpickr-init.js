@@ -6,13 +6,24 @@ export default function flatpickrComponent({ mode = 'datetime', min = null, max 
         nowUtc,
 
         init() {
+            const inputEl = this.$el.querySelector('input');
+
             const config = {
                 allowInput: true,
-                appendTo: document.body,
+                // Render inline so the calendar stays inside any focus-trapped
+                // ancestor (e.g. Mary's modal uses x-trap, which would yank
+                // focus out of the picker's hour/minute fields if it were
+                // appended to document.body).
+                static: true,
                 onChange: (selectedDates, dateStr) => {
-                    this.$el.querySelector('input').value = dateStr;
-                    this.$el.querySelector('input').dispatchEvent(new Event('input', { bubbles: true }));
+                    inputEl.value = dateStr;
+                    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
                 },
+                // Each sibling form row is its own stacking context (daisyUI
+                // `.input` sets position:relative), so the calendar can't
+                // escape via z-index alone — lift the whole wrapper while open.
+                onOpen: () => this.$el.classList.add('flatpickr-wrapper-open'),
+                onClose: () => this.$el.classList.remove('flatpickr-wrapper-open'),
             };
 
             if (mode === 'datetime') {
@@ -34,7 +45,7 @@ export default function flatpickrComponent({ mode = 'datetime', min = null, max 
             if (min) config.minDate = min;
             if (max) config.maxDate = max;
 
-            this.instance = flatpickr(this.$el.querySelector('input'), config);
+            this.instance = flatpickr(inputEl, config);
 
             if (model && this.$wire) {
                 const initialValue = this.$wire.get(model);
@@ -43,7 +54,32 @@ export default function flatpickrComponent({ mode = 'datetime', min = null, max 
                 }
 
                 this.$wire.$watch(model, (value) => {
-                    this.instance.setDate(value || '', true);
+                    const active = document.activeElement;
+                    const calendar = this.instance?.calendarContainer;
+
+                    // While the user is typing in the main input or the
+                    // picker's own fields, setDate would re-render and steal
+                    // focus mid-keystroke.
+                    if (active === inputEl || calendar?.contains(active)) {
+                        return;
+                    }
+
+                    if (!value) {
+                        this.instance.clear();
+                        return;
+                    }
+
+                    // Avoids the onChange -> wire:model -> $watch -> setDate
+                    // -> onChange feedback loop.
+                    if (inputEl.value === value) {
+                        return;
+                    }
+
+                    try {
+                        this.instance.setDate(value, true);
+                    } catch (e) {
+                        // Ignore partial values flatpickr can't parse yet.
+                    }
                 });
             }
         },
