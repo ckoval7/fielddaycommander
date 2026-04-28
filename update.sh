@@ -31,6 +31,7 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 # --- Defaults ---
 APP_PATH="/var/www/fd-commander"
 BRANCH="main"
+TAG=""
 FORCE=0
 NO_REDIS=0
 WITH_REDIS=0
@@ -44,6 +45,8 @@ Updates an existing FD Commander deployment with the latest code.
 Options:
   --app-path <path>     Deploy path (default: /var/www/fd-commander)
   --branch <branch>     Git branch (default: main)
+  --tag <tag>           Deploy a specific release tag (e.g. v26.05.1).
+                        Overrides --branch and pins the deploy in detached HEAD.
   --force               Run full update pipeline even if already up to date
   --no-redis            Skip Redis install and .env driver migration
                         (keep existing cache/session/queue drivers)
@@ -58,6 +61,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --app-path)  APP_PATH="$2"; shift 2 ;;
         --branch)    BRANCH="$2"; shift 2 ;;
+        --tag)       TAG="$2"; shift 2 ;;
         --force)     FORCE=1; shift ;;
         --no-redis)  NO_REDIS=1; shift ;;
         --with-redis) WITH_REDIS=1; shift ;;
@@ -125,11 +129,28 @@ DEPLOYED_REV_FILE="$APP_PATH/.deployed-revision"
 fetch_updates() {
     log_phase "Checking for updates"
 
+    if [[ -n "$TAG" ]]; then
+        log_info "Pinning to tag: $TAG"
+    else
+        log_info "Following branch: $BRANCH"
+    fi
+
     if [[ "$DEPLOY_METHOD" == "git" ]]; then
         cd "$APP_PATH"
-        sudo -u fdcommander git fetch origin "$BRANCH"
+
+        if [[ -n "$TAG" ]]; then
+            sudo -u fdcommander git fetch origin --tags --prune --prune-tags
+            REMOTE=$(sudo -u fdcommander git rev-list -n 1 "$TAG" 2>/dev/null || true)
+            if [[ -z "$REMOTE" ]]; then
+                log_error "Tag $TAG not found after fetch from origin"
+                exit 1
+            fi
+        else
+            sudo -u fdcommander git fetch origin "$BRANCH"
+            REMOTE=$(sudo -u fdcommander git rev-parse "origin/$BRANCH")
+        fi
+
         LOCAL=$(sudo -u fdcommander git rev-parse HEAD)
-        REMOTE=$(sudo -u fdcommander git rev-parse "origin/$BRANCH")
 
         if [[ "$LOCAL" == "$REMOTE" ]]; then
             if [[ $FORCE -eq 1 ]]; then
@@ -143,18 +164,29 @@ fetch_updates() {
         fi
     else
         cd "$SCRIPT_DIR"
-        git fetch origin "$BRANCH"
 
-        # Pull source to latest if behind remote
-        LOCAL=$(git rev-parse HEAD)
-        REMOTE=$(git rev-parse "origin/$BRANCH")
-        if [[ "$LOCAL" != "$REMOTE" ]]; then
-            log_info "Source repo is behind remote, pulling..."
-            git pull origin "$BRANCH"
+        if [[ -n "$TAG" ]]; then
+            git fetch origin --tags --prune --prune-tags
+            SOURCE_REV=$(git rev-list -n 1 "$TAG" 2>/dev/null || true)
+            if [[ -z "$SOURCE_REV" ]]; then
+                log_error "Tag $TAG not found after fetch from origin"
+                exit 1
+            fi
+        else
+            git fetch origin "$BRANCH"
+
+            # Pull source to latest if behind remote
+            LOCAL=$(git rev-parse HEAD)
+            REMOTE=$(git rev-parse "origin/$BRANCH")
+            if [[ "$LOCAL" != "$REMOTE" ]]; then
+                log_info "Source repo is behind remote, pulling..."
+                git pull origin "$BRANCH"
+            fi
+
+            SOURCE_REV=$(git rev-parse HEAD)
         fi
 
         # Compare source HEAD against last deployed revision
-        SOURCE_REV=$(git rev-parse HEAD)
         DEPLOYED_REV=""
         if [[ -f "$DEPLOYED_REV_FILE" ]]; then
             DEPLOYED_REV=$(cat "$DEPLOYED_REV_FILE")
@@ -181,9 +213,21 @@ pull_updates() {
 
     if [[ "$DEPLOY_METHOD" == "git" ]]; then
         cd "$APP_PATH"
-        sudo -u fdcommander git pull origin "$BRANCH"
+        if [[ -n "$TAG" ]]; then
+            sudo -u fdcommander git checkout --detach "$TAG"
+        else
+            # If a prior deploy left us detached on a tag, reattach to the branch first.
+            sudo -u fdcommander git checkout "$BRANCH"
+            sudo -u fdcommander git pull --ff-only origin "$BRANCH"
+        fi
         chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH"
     else
+        cd "$SCRIPT_DIR"
+        if [[ -n "$TAG" ]]; then
+            log_info "Checking out source repo at tag $TAG (detached)"
+            git checkout --detach "$TAG"
+        fi
+
         log_info "Syncing files to $APP_PATH..."
         rsync -a --delete \
             --exclude='.git' \
@@ -500,7 +544,14 @@ main() {
     echo -e "${GREEN}${BOLD}  FD Commander Update Complete!${NC}"
     echo -e "${BOLD}============================================${NC}"
     echo ""
-    echo -e "  Version:  $(cd "$APP_PATH" && sudo -u fdcommander git rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
+    local app_version="unknown"
+    if [[ -f "$APP_PATH/VERSION" ]]; then
+        app_version=$(tr -d '[:space:]' < "$APP_PATH/VERSION")
+    fi
+    local git_sha
+    git_sha=$(cd "$APP_PATH" && sudo -u fdcommander git rev-parse --short HEAD 2>/dev/null || echo 'unknown')
+
+    echo -e "  Version:  ${app_version} (${git_sha})"
     echo -e "  App URL:  $(grep '^APP_URL=' "$APP_PATH/.env" | cut -d= -f2-)"
     echo ""
     echo -e "${BOLD}Service Status${NC}"
