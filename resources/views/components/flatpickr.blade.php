@@ -17,7 +17,6 @@
 @endphp
 
 <div
-    wire:ignore
     x-data="{!! $xData !!}"
     class="w-full"
 >
@@ -33,37 +32,39 @@
             </legend>
         @endif
 
-        {{-- Input --}}
-        @if($nowButton)
-            <div class="flex items-end gap-1.5">
-        @endif
-
-        <label class="input w-full">
-            @if($icon)
-                <x-icon :name="$icon" class="pointer-events-none w-4 h-4 opacity-40" />
+        {{-- Input (wire:ignore protects flatpickr's DOM mutations from Livewire morphing) --}}
+        <div wire:ignore>
+            @if($nowButton)
+                <div class="flex items-end gap-1.5">
             @endif
 
-            <input
-                id="{{ $uuid }}"
-                type="text"
-                placeholder="{{ $mode === 'time' ? 'HH:MM' : ($mode === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:MM') }}"
-                {{ $attributes->except('disabled')->class(['w-full']) }}
-                autocomplete="off"
-                @if($disabled) disabled @endif
-            />
-        </label>
+            <label class="input w-full">
+                @if($icon)
+                    <x-icon :name="$icon" class="pointer-events-none w-4 h-4 opacity-40" />
+                @endif
 
-        @if($nowButton)
-                <button
-                    type="button"
-                    class="btn btn-sm btn-soft btn-secondary"
-                    x-on:click="setNow()"
-                    title="Set to current {{ $nowUtc ? 'UTC' : 'local' }} time"
-                >
-                    Now
-                </button>
-            </div>
-        @endif
+                <input
+                    id="{{ $uuid }}"
+                    type="text"
+                    placeholder="{{ $mode === 'time' ? 'HH:MM' : ($mode === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:MM') }}"
+                    {{ $attributes->except('disabled')->class(['w-full']) }}
+                    autocomplete="off"
+                    @if($disabled) disabled @endif
+                />
+            </label>
+
+            @if($nowButton)
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-soft btn-secondary"
+                        x-on:click="setNow()"
+                        title="Set to current {{ $nowUtc ? 'UTC' : 'local' }} time"
+                    >
+                        Now
+                    </button>
+                </div>
+            @endif
+        </div>
 
         {{-- Hint --}}
         @if($hint)
