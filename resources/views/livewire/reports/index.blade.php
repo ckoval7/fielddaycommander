@@ -415,6 +415,37 @@
                 <p class="text-sm" style="color: var(--reports-text-muted);">No volunteer hours logged yet.</p>
             </div>
         @else
+            {{-- Totals summary --}}
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                <div class="rounded-lg p-4 flex flex-col gap-1"
+                     style="border: 1px solid var(--reports-border); background-color: var(--reports-surface);">
+                    <div class="text-xs font-semibold uppercase tracking-wide"
+                         style="color: var(--reports-text-muted);">Total Hours Worked</div>
+                    <div class="font-mono font-bold tabular-nums text-2xl"
+                         style="color: var(--reports-section-bar);">
+                        {{ number_format($this->volunteerHoursTotals['hours_worked'], 1) }}
+                    </div>
+                </div>
+                <div class="rounded-lg p-4 flex flex-col gap-1"
+                     style="border: 1px solid var(--reports-border); background-color: var(--reports-surface);">
+                    <div class="text-xs font-semibold uppercase tracking-wide"
+                         style="color: var(--reports-text-muted);">Total Hours Scheduled</div>
+                    <div class="font-mono font-bold tabular-nums text-2xl"
+                         style="color: var(--reports-text);">
+                        {{ number_format($this->volunteerHoursTotals['hours_signed_up'], 1) }}
+                    </div>
+                </div>
+                <div class="rounded-lg p-4 flex flex-col gap-1"
+                     style="border: 1px solid var(--reports-border); background-color: var(--reports-surface);">
+                    <div class="text-xs font-semibold uppercase tracking-wide"
+                         style="color: var(--reports-text-muted);">Volunteers</div>
+                    <div class="font-mono font-bold tabular-nums text-2xl"
+                         style="color: var(--reports-text);">
+                        {{ $this->volunteerHoursTotals['volunteer_count'] }}
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                 @foreach ($this->volunteerHours as $row)
                     <div class="rounded p-2.5 flex flex-col"

@@ -140,6 +140,21 @@ class ReportsIndex extends Component
     }
 
     /**
+     * @return array{hours_worked: float, hours_signed_up: float, volunteer_count: int}
+     */
+    #[Computed]
+    public function volunteerHoursTotals(): array
+    {
+        $rows = $this->volunteerHours;
+
+        return [
+            'hours_worked' => round(array_sum(array_column($rows, 'hours_worked')), 1),
+            'hours_signed_up' => round(array_sum(array_column($rows, 'hours_signed_up')), 1),
+            'volunteer_count' => count($rows),
+        ];
+    }
+
+    /**
      * @return array<int, array{user_id: int, name: string, hours_worked: float, hours_signed_up: float}>
      */
     #[Computed]
