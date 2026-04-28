@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Console\Commands\DemoSimulateActivity;
 use App\Models\DemoEvent;
 use App\Models\DemoSession;
 use App\Models\User;
@@ -58,6 +59,20 @@ class DemoController extends Controller
             '--force' => true,
             '--no-interaction' => true,
         ]);
+
+        $seededSessionIds = DB::connection('demo')
+            ->table('operating_sessions')
+            ->join('stations', 'stations.id', '=', 'operating_sessions.station_id')
+            ->whereNull('operating_sessions.end_time')
+            ->where('stations.is_gota', false)
+            ->pluck('operating_sessions.id')
+            ->all();
+
+        DemoSimulateActivity::registerSeededSessions(
+            $dbName,
+            $seededSessionIds,
+            (int) config('demo.ttl_hours', 24),
+        );
 
         $user = $this->resolveUserForRole($request->role);
         Auth::login($user);

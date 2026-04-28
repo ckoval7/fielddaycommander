@@ -9,6 +9,7 @@ use App\Models\Section;
 use App\Support\CallsignGenerator;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -177,16 +178,39 @@ class DemoSimulateActivity extends Command
      */
     private function resolveSimulatedSessionIds(string $dbName, int $ttlHours): array
     {
-        $store = Cache::store(config('demo.simulator_cache_store'));
-        $cacheKey = "demo:{$dbName}:simulated_session_ids";
-
-        return $store->remember(
-            $cacheKey,
+        return self::cacheStore()->remember(
+            self::cacheKey($dbName),
             now()->addHours($ttlHours),
             fn (): array => OperatingSession::active()
                 ->whereHas('station', fn ($q) => $q->where('is_gota', false))
                 ->pluck('id')
                 ->all(),
         );
+    }
+
+    /**
+     * Register the seeded session IDs for a freshly provisioned demo DB so the
+     * simulator never races against a visitor who starts their own session
+     * before the first cron tick.
+     *
+     * @param  array<int, int>  $sessionIds
+     */
+    public static function registerSeededSessions(string $dbName, array $sessionIds, int $ttlHours): void
+    {
+        self::cacheStore()->put(
+            self::cacheKey($dbName),
+            array_values($sessionIds),
+            now()->addHours($ttlHours),
+        );
+    }
+
+    private static function cacheStore(): Repository
+    {
+        return Cache::store(config('demo.simulator_cache_store'));
+    }
+
+    private static function cacheKey(string $dbName): string
+    {
+        return "demo:{$dbName}:simulated_session_ids";
     }
 }
