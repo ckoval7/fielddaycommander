@@ -9,6 +9,7 @@ use App\Models\Section;
 use App\Support\CallsignGenerator;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
@@ -62,7 +63,7 @@ class DemoSimulateActivity extends Command
                     continue;
                 }
 
-                $logged = $this->simulateForDatabase();
+                $logged = $this->simulateForDatabase($dbName, $ttlHours);
                 $totalLogged += $logged;
 
             } catch (\Throwable $e) {
@@ -77,9 +78,16 @@ class DemoSimulateActivity extends Command
         return self::SUCCESS;
     }
 
-    private function simulateForDatabase(): int
+    public function simulateForDatabase(string $dbName, int $ttlHours): int
     {
+        $simulatedIds = $this->resolveSimulatedSessionIds($dbName, $ttlHours);
+
+        if (empty($simulatedIds)) {
+            return 0;
+        }
+
         $activeSessions = OperatingSession::active()
+            ->whereIn('id', $simulatedIds)
             ->whereHas('station', fn ($q) => $q->where('is_gota', false))
             ->with(['station.eventConfiguration.event', 'band', 'mode'])
             ->get();
@@ -158,5 +166,27 @@ class DemoSimulateActivity extends Command
         }
 
         return $logged;
+    }
+
+    /**
+     * Snapshot the seeded operating-session IDs for a demo database the first
+     * time we see it, then keep using that snapshot. Sessions a visitor starts
+     * later in the UI are never adopted by the simulator.
+     *
+     * @return array<int, int>
+     */
+    private function resolveSimulatedSessionIds(string $dbName, int $ttlHours): array
+    {
+        $store = Cache::store(config('demo.simulator_cache_store'));
+        $cacheKey = "demo:{$dbName}:simulated_session_ids";
+
+        return $store->remember(
+            $cacheKey,
+            now()->addHours($ttlHours),
+            fn (): array => OperatingSession::active()
+                ->whereHas('station', fn ($q) => $q->where('is_gota', false))
+                ->pluck('id')
+                ->all(),
+        );
     }
 }

@@ -50,6 +50,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Simulator Cache Store
+    |--------------------------------------------------------------------------
+    |
+    | Cache store used by the activity simulator to remember which operating
+    | sessions it owns per demo database. Must be a store that lives outside
+    | the demo databases themselves (Redis in production, array in tests) so
+    | that the simulator does not pollute sessions started by demo visitors.
+    |
+    */
+
+    'simulator_cache_store' => env('DEMO_SIMULATOR_CACHE_STORE', 'redis'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Weather
     |--------------------------------------------------------------------------
     |
