@@ -253,13 +253,11 @@
                                     : `hsl(${hue}, 65%, 50%)`;
                             }
                         } else {
-                            const bandCounts = data.bandCounts || {};
-                            const entries = Object.entries(bandCounts);
-                            if (entries.length === 0) return { fill: '#d1d5db' };
+                            const latestBand = data.latestBand;
+                            const numBands = (data.bands || []).length;
+                            if (!latestBand) return { fill: '#d1d5db' };
 
-                            const dominant = entries.reduce((a, b) => b[1] > a[1] ? b : a)[0];
-                            const hsl = this.bandHsl[dominant];
-                            const numBands = entries.length;
+                            const hsl = this.bandHsl[latestBand];
 
                             if (!hsl) {
                                 fill = '#d1d5db';

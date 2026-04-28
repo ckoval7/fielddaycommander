@@ -98,18 +98,16 @@ class SectionMap extends Component
                 $count = $sectionContacts->count();
                 $bands = $sectionContacts->pluck('band.name')->filter()->unique()->sort()->values()->all();
                 $modes = $sectionContacts->pluck('mode.name')->filter()->unique()->sort()->values()->all();
-                $bandCounts = $sectionContacts->groupBy(fn ($c) => $c->band?->name)
-                    ->filter(fn ($group, $key) => $key !== null && $key !== '')
-                    ->mapWithKeys(fn ($group, $name) => [$name => $group->count()])
-                    ->all();
-                $latestQsoTime = $sectionContacts->max('qso_time')?->timestamp;
+                $latestContact = $sectionContacts->sortByDesc('qso_time')->first();
+                $latestBand = $latestContact?->band?->name;
+                $latestQsoTime = $latestContact?->qso_time?->timestamp;
 
                 $this->sectionData[$code] = [
                     'name' => $this->sectionData[$code]['name'] ?? $code,
                     'count' => $count,
                     'bands' => $bands,
                     'modes' => $modes,
-                    'bandCounts' => $bandCounts,
+                    'latestBand' => $latestBand,
                     'latestQsoTime' => $latestQsoTime,
                 ];
 
