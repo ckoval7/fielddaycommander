@@ -123,6 +123,7 @@
                                     type="text"
                                     x-model="search"
                                     placeholder="Search timezones..."
+                                    aria-label="Search timezones"
                                     class="input input-sm input-bordered w-full"
                                     @click.stop
                                     x-ref="searchInput"

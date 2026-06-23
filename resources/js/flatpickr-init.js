@@ -79,6 +79,7 @@ export default function flatpickrComponent({ mode = 'datetime', min = null, max 
                         this.instance.setDate(value, true);
                     } catch (e) {
                         // Ignore partial values flatpickr can't parse yet.
+                        void e;
                     }
                 });
             }

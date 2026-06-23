@@ -24,6 +24,7 @@
                     <input
                         type="date"
                         wire:model.live="workingDate"
+                        aria-label="Log date"
                         min="{{ $this->event->start_time->format('Y-m-d') }}"
                         max="{{ $this->event->end_time->format('Y-m-d') }}"
                         class="input input-bordered input-sm font-mono border-amber-300 focus:border-amber-500 bg-base-100"
@@ -323,6 +324,7 @@
                                     @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
                                     class="input input-bordered input-lg w-full text-2xl font-mono uppercase tracking-wider"
                                     placeholder="1423 W1AW 3A CT"
+                                    aria-label="Exchange input"
                                     autofocus
                                 />
 

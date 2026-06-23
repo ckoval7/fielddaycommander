@@ -14,6 +14,7 @@
                                 <input
                                     type="checkbox"
                                     class="checkbox checkbox-sm checkbox-success"
+                                    aria-label="Claim bonus: {{ $bonusType->name }}"
                                     @checked($claimed)
                                     wire:click="{{ $claimed
                                         ? "unclaim({$bonusType->id})"
@@ -65,6 +66,7 @@
                                     type="text"
                                     class="input input-bordered input-xs w-full max-w-sm"
                                     placeholder="{{ $bonusType->code === 'social_media' ? 'Paste social media URL (optional)' : 'Notes (optional)' }}"
+                                    aria-label="Notes for {{ $bonusType->name }}"
                                     wire:model.blur="notes.{{ $bonusType->id }}"
                                 />
                             </div>

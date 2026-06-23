@@ -84,6 +84,7 @@
                                                 <input
                                                     type="checkbox"
                                                     class="checkbox checkbox-sm mt-0.5"
+                                                    aria-label="Mark complete: {{ $item->label }}"
                                                     @checked($item->entry?->is_completed)
                                                     wire:click="toggleItem({{ $item->id }})"
                                                 />
@@ -91,6 +92,7 @@
                                                 <input
                                                     type="checkbox"
                                                     class="checkbox checkbox-sm mt-0.5"
+                                                    aria-label="Completion status: {{ $item->label }}"
                                                     @checked($item->entry?->is_completed)
                                                     disabled
                                                 />
@@ -153,6 +155,7 @@
                                                         type="text"
                                                         class="input input-xs input-bordered w-full mt-2"
                                                         placeholder="Add notes..."
+                                                        aria-label="Notes: {{ $item->label }}"
                                                         value="{{ $item->entry?->notes }}"
                                                         wire:change="updateNotes({{ $item->id }}, $event.target.value)"
                                                     />

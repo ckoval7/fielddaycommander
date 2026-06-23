@@ -55,6 +55,7 @@
                     <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-3 relative z-10">
                             <input type="checkbox" class="toggle toggle-sm toggle-primary"
+                                aria-label="Toggle Open-Meteo forecast polling"
                                 wire:click.stop="toggleOpenMeteo"
                                 @checked($openMeteoEnabled)
                                 wire:confirm="{{ $openMeteoEnabled ? 'Disable Open-Meteo? The stored forecast will be cleared.' : 'Enable Open-Meteo forecast polling?' }}" />
@@ -145,6 +146,7 @@
                     <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-3 relative z-10">
                             <input type="checkbox" class="toggle toggle-sm toggle-primary"
+                                aria-label="Toggle NWS alert polling"
                                 wire:click.stop="toggleNws"
                                 @checked($nwsEnabled)
                                 wire:confirm="{{ $nwsEnabled ? 'Disable NWS Alerts? Stored NWS alerts will be cleared. Manual alerts are unaffected.' : 'Enable NWS alert polling?' }}" />

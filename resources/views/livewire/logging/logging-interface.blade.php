@@ -217,6 +217,7 @@
                         @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
                         class="input input-bordered input-lg w-full text-2xl font-mono uppercase tracking-wider"
                         placeholder="W1AW 3A CT"
+                        aria-label="Exchange input"
                         autofocus
                     />
 
