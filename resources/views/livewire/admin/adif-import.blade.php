@@ -61,9 +61,9 @@
                         <p class="text-sm text-base-content/70 mb-4">These band names from the ADIF file couldn't be matched automatically. Select the correct band for each.</p>
                         @foreach ($mappingReport['unmapped_bands'] as $bandName)
                             <div class="flex items-center gap-4 mb-3">
-                                <span class="font-mono font-bold w-24">{{ $bandName }}</span>
+                                <span id="band-label-{{ $loop->index }}" class="font-mono font-bold w-24">{{ $bandName }}</span>
                                 <span class="text-base-content/50">&rarr;</span>
-                                <select wire:model="bandMappings.{{ $bandName }}" aria-label="Band mapping for {{ $bandName }}" class="select select-bordered select-sm w-48">
+                                <select wire:model="bandMappings.{{ $bandName }}" aria-labelledby="band-label-{{ $loop->index }}" class="select select-bordered select-sm w-48">
                                     <option value="">Select band...</option>
                                     @foreach ($this->availableBands as $band)
                                         <option value="{{ $band->id }}">{{ $band->name }}</option>
@@ -80,9 +80,9 @@
                         <p class="text-sm text-base-content/70 mb-4">These modes from the ADIF file couldn't be matched automatically.</p>
                         @foreach ($mappingReport['unmapped_modes'] as $modeName)
                             <div class="flex items-center gap-4 mb-3">
-                                <span class="font-mono font-bold w-24">{{ $modeName }}</span>
+                                <span id="mode-label-{{ $loop->index }}" class="font-mono font-bold w-24">{{ $modeName }}</span>
                                 <span class="text-base-content/50">&rarr;</span>
-                                <select wire:model="modeMappings.{{ $modeName }}" aria-label="Mode mapping for {{ $modeName }}" class="select select-bordered select-sm w-48">
+                                <select wire:model="modeMappings.{{ $modeName }}" aria-labelledby="mode-label-{{ $loop->index }}" class="select select-bordered select-sm w-48">
                                     <option value="">Select mode...</option>
                                     @foreach ($this->availableModes as $mode)
                                         <option value="{{ $mode->id }}">{{ $mode->name }} ({{ $mode->category }})</option>
@@ -99,9 +99,9 @@
                         <p class="text-sm text-base-content/70 mb-4">These ARRL section codes couldn't be matched.</p>
                         @foreach ($mappingReport['unmapped_sections'] as $sectionCode)
                             <div class="flex items-center gap-4 mb-3">
-                                <span class="font-mono font-bold w-24">{{ $sectionCode }}</span>
+                                <span id="section-label-{{ $loop->index }}" class="font-mono font-bold w-24">{{ $sectionCode }}</span>
                                 <span class="text-base-content/50">&rarr;</span>
-                                <select wire:model="sectionMappings.{{ $sectionCode }}" aria-label="Section mapping for {{ $sectionCode }}" class="select select-bordered select-sm w-48">
+                                <select wire:model="sectionMappings.{{ $sectionCode }}" aria-labelledby="section-label-{{ $loop->index }}" class="select select-bordered select-sm w-48">
                                     <option value="">Select section...</option>
                                     @foreach ($this->availableSections as $section)
                                         <option value="{{ $section->id }}">{{ $section->code }} - {{ $section->name }}</option>
@@ -118,9 +118,9 @@
                         <p class="text-sm text-base-content/70 mb-4">These station identifiers couldn't be matched to event stations.</p>
                         @foreach ($mappingReport['unmapped_stations'] as $stationName)
                             <div class="flex items-center gap-4 mb-3">
-                                <span class="font-mono font-bold w-48">{{ $stationName }}</span>
+                                <span id="station-label-{{ $loop->index }}" class="font-mono font-bold w-48">{{ $stationName }}</span>
                                 <span class="text-base-content/50">&rarr;</span>
-                                <select wire:model="stationMappings.{{ $stationName }}" aria-label="Station mapping for {{ $stationName }}" class="select select-bordered select-sm w-48">
+                                <select wire:model="stationMappings.{{ $stationName }}" aria-labelledby="station-label-{{ $loop->index }}" class="select select-bordered select-sm w-48">
                                     <option value="">Select station...</option>
                                     @foreach ($this->availableStations as $station)
                                         <option value="{{ $station->id }}">{{ $station->name }}</option>
