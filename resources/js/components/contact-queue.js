@@ -23,7 +23,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             globalThis.addEventListener('online', () => {
                 this.isOnline = true;
-                this.syncNext();
+                void this.syncNext();
             });
             globalThis.addEventListener('offline', () => {
                 this.isOnline = false;
@@ -117,7 +117,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             this.queue.unshift(entry);
             this.saveQueue();
-            this.syncNext();
+            void this.syncNext();
         },
 
         /**
@@ -317,7 +317,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 contact.attempts = 0;
                 contact.last_error = null;
                 this.saveQueue();
-                this.syncNext();
+                void this.syncNext();
             }
         },
 
@@ -554,7 +554,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 // so _releaseRecallLock is a no-op.
                 this.recalledUuid = null;
                 this.exitRecall(inputEl);
-                this.syncNext();
+                void this.syncNext();
                 return;
             }
 

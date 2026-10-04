@@ -420,6 +420,8 @@
                         <template x-for="contact in queue" :key="contact.uuid">
                             <tr
                                 @click="recallByUuid(contact.uuid)"
+                                @keydown.enter="recallByUuid(contact.uuid)"
+                                tabindex="0"
                                 class="cursor-pointer hover:bg-base-200"
                                 :class="{
                                 'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
@@ -447,6 +449,8 @@
                             <tr wire:key="contact-{{ $contact->id }}"
                                 @if(! $contact->trashed())
                                     @click="recallByContactId({{ $contact->id }})"
+                                    @keydown.enter="recallByContactId({{ $contact->id }})"
+                                    tabindex="0"
                                 @endif
                                 :class="{
                                     'ring-2 ring-primary': recalledContactId === {{ $contact->id }},

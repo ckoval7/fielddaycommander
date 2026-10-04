@@ -168,6 +168,7 @@
                                         <div
                                             x-show="showSizePicker"
                                             @click.outside="showSizePicker = false"
+                                            @keydown.escape="showSizePicker = false"
                                             x-transition
                                             x-cloak
                                             class="absolute right-0 top-full mt-1 z-30 bg-base-100 border border-base-300 rounded-lg shadow-lg p-3 min-w-[180px]"

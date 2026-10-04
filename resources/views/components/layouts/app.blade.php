@@ -232,6 +232,30 @@
                         if (!el) return;
                         this.canScrollUp = el.scrollTop > 10;
                         this.canScrollDown = el.scrollTop + el.clientHeight < el.scrollHeight - 10;
+                    },
+                    showTooltip(event) {
+                        if (!this.isSidebarCollapsed) return;
+                        const target = event.target.closest('[data-tooltip]');
+                        const tip = this.tooltipEl;
+                        if (!tip) return;
+                        if (target) {
+                            clearTimeout(this.tooltipTimer);
+                            if (tip) tip.style.display = 'none';
+                            this.tooltipTimer = setTimeout(() => {
+                                const rect = target.getBoundingClientRect();
+                                tip.textContent = target.dataset.tooltip;
+                                tip.style.top = (rect.top + rect.height / 2) + 'px';
+                                tip.style.left = (rect.right + 10) + 'px';
+                                tip.style.display = 'block';
+                            }, 150);
+                        } else {
+                            clearTimeout(this.tooltipTimer);
+                            tip.style.display = 'none';
+                        }
+                    },
+                    hideTooltip() {
+                        clearTimeout(this.tooltipTimer);
+                        if (this.tooltipEl) this.tooltipEl.style.display = 'none';
                     }
                 }"
                 x-init="$nextTick(() => {
@@ -270,30 +294,10 @@
                     x-ref="scrollArea"
                     @scroll="checkScroll"
                     class="flex-1 overflow-y-auto min-h-0 sidebar-scroll-area"
-                    @mouseover="
-                        if (!isSidebarCollapsed) return;
-                        const target = $event.target.closest('[data-tooltip]');
-                        const tip = tooltipEl;
-                        if (!tip) return;
-                        if (target) {
-                            clearTimeout(tooltipTimer);
-                            if (tip) tip.style.display = 'none';
-                            tooltipTimer = setTimeout(() => {
-                                const rect = target.getBoundingClientRect();
-                                tip.textContent = target.dataset.tooltip;
-                                tip.style.top = (rect.top + rect.height / 2) + 'px';
-                                tip.style.left = (rect.right + 10) + 'px';
-                                tip.style.display = 'block';
-                            }, 150);
-                        } else {
-                            clearTimeout(tooltipTimer);
-                            tip.style.display = 'none';
-                        }
-                    "
-                    @mouseleave="
-                        clearTimeout(tooltipTimer);
-                        if (tooltipEl) tooltipEl.style.display = 'none';
-                    "
+                    @mouseover="showTooltip($event)"
+                    @focusin="showTooltip($event)"
+                    @mouseleave="hideTooltip()"
+                    @focusout="hideTooltip()"
                     @sidebar-toggled.window="isSidebarCollapsed = $event.detail; clearTimeout(tooltipTimer); if (tooltipEl) tooltipEl.style.display = 'none';"
                 >
                     <x-menu activate-by-route class="mt-2">

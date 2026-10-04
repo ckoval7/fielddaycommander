@@ -155,10 +155,14 @@
                     handleWindowClick(event) {
                         if (this.lastPointerType !== 'touch' || !this.pinnedSection) return;
                         if (!event.target.closest('svg')) {
-                            this.pinnedSection = null;
-                            this.highlightSection = null;
-                            this.hoverSection = null;
+                            this.clearPinned();
                         }
+                    },
+
+                    clearPinned() {
+                        this.pinnedSection = null;
+                        this.highlightSection = null;
+                        this.hoverSection = null;
                     },
 
                     getTooltipStyle() {
@@ -278,6 +282,7 @@
                     }
                 }"
                 @click.window="handleWindowClick($event)"
+                @keydown.escape.window="clearPinned()"
             >
                 <div class="flex flex-wrap justify-center gap-2 mb-3">
                     <div class="join">

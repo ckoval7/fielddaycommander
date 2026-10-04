@@ -2,6 +2,7 @@
 <div
     x-data="{ open: false }"
     @click.away="open = false"
+    @keydown.escape="open = false"
     class="relative"
 >
     {{-- Bell Button --}}

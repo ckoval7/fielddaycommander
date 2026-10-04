@@ -17,6 +17,7 @@
         }
     }"
     @click.away="open = false"
+    @keydown.escape="open = false"
     class="relative"
 >
     {{-- Dropdown Button --}}
