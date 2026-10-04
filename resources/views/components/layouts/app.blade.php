@@ -295,9 +295,9 @@
                     @scroll="checkScroll"
                     class="flex-1 overflow-y-auto min-h-0 sidebar-scroll-area"
                     @mouseover="showTooltip($event)"
-                    @focusin="showTooltip($event)"
+                    @focus.capture="showTooltip($event)"
                     @mouseleave="hideTooltip()"
-                    @focusout="hideTooltip()"
+                    @blur.capture="hideTooltip()"
                     @sidebar-toggled.window="isSidebarCollapsed = $event.detail; clearTimeout(tooltipTimer); if (tooltipEl) tooltipEl.style.display = 'none';"
                 >
                     <x-menu activate-by-route class="mt-2">
