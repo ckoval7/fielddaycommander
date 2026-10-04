@@ -98,6 +98,7 @@
                         }
                     }"
                     @click.outside="open = false"
+                    @keydown.escape="open = false"
                     class="form-control w-full"
                 >
                     <label class="label" for="timezone-selector"><span class="label-text font-semibold">Timezone <span class="text-error">*</span></span></label>
@@ -134,6 +135,9 @@
                                 <template x-for="tz in filtered" :key="tz.id">
                                     <li
                                         @click="select(tz)"
+                                        @keydown.enter.prevent="select(tz)"
+                                        @keydown.space.prevent="select(tz)"
+                                        tabindex="0"
                                         class="px-3 py-1.5 cursor-pointer hover:bg-base-200 text-sm"
                                         :class="selected === tz.id ? 'bg-primary/10 font-medium' : ''"
                                         x-text="tz.name"
