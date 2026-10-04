@@ -20,14 +20,6 @@
 
             this.tick();
             this._interval = setInterval(() => this.tick(), 1000);
-
-            $wire.$watch('targetTimestamp', (v) => {
-                this.targetTs = v;
-                this.serverTs = $wire.serverTimestamp;
-                this.initRealTs = Math.floor(Date.now() / 1000);
-            });
-            $wire.$watch('state', (v) => { this.state = v; });
-            $wire.$watch('timezone', (v) => { this.tz = v; });
         },
 
         destroy() {
@@ -38,7 +30,22 @@
             return this.serverTs + (Math.floor(Date.now() / 1000) - this.initRealTs);
         },
 
+        // Pulled from $wire each tick rather than via $wire.$watch: this lazy
+        // component is initialised while Livewire clones its DOM, where Alpine
+        // hands watchers a stub whose cleanup throws on destroy, silently
+        // aborting wire:navigate away from every page.
+        syncFromServer() {
+            if ($wire.targetTimestamp !== this.targetTs) {
+                this.targetTs = $wire.targetTimestamp;
+                this.serverTs = $wire.serverTimestamp;
+                this.initRealTs = Math.floor(Date.now() / 1000);
+            }
+            this.state = $wire.state;
+            this.tz = $wire.timezone;
+        },
+
         tick() {
+            this.syncFromServer();
             const now = new Date(this.effectiveNow() * 1000);
             try {
                 this.localTime = now.toLocaleTimeString('en-US', {

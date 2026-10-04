@@ -3,6 +3,8 @@
 use App\Livewire\Components\EventCountdown;
 use App\Models\Event;
 use App\Models\EventType;
+use App\Models\Setting;
+use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -120,7 +122,7 @@ test('component displays both timezone and UTC times', function () {
 });
 
 test('component displays user preferred timezone abbreviation when user is authenticated', function () {
-    $user = \App\Models\User::factory()->create([
+    $user = User::factory()->create([
         'preferred_timezone' => 'America/New_York',
     ]);
 
@@ -143,11 +145,11 @@ test('component displays user preferred timezone abbreviation when user is authe
 });
 
 test('component falls back to system timezone when user has no preferred timezone', function () {
-    $user = \App\Models\User::factory()->create([
+    $user = User::factory()->create([
         'preferred_timezone' => null,
     ]);
 
-    \App\Models\Setting::set('timezone', 'America/Chicago');
+    Setting::set('timezone', 'America/Chicago');
 
     Event::factory()->create([
         'event_type_id' => $this->eventType->id,
@@ -165,7 +167,7 @@ test('component falls back to system timezone when user has no preferred timezon
 });
 
 test('component uses system timezone when no user is authenticated', function () {
-    \App\Models\Setting::set('timezone', 'America/Los_Angeles');
+    Setting::set('timezone', 'America/Los_Angeles');
 
     Event::factory()->create([
         'event_type_id' => $this->eventType->id,
@@ -195,7 +197,7 @@ test('component displays correct timezone abbreviation for different timezones',
     ]);
 
     foreach ($testCases as $testCase) {
-        $user = \App\Models\User::factory()->create([
+        $user = User::factory()->create([
             'preferred_timezone' => $testCase['timezone'],
         ]);
 
@@ -303,4 +305,18 @@ test('component does not render when event ended more than 4 weeks ago and no up
 
     // Component should render (root div) but have no event
     expect($component->get('event'))->toBeNull();
+});
+
+test('view syncs from $wire on tick instead of registering $wire watchers', function () {
+    Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(22),
+    ]);
+
+    // $wire.$watch inside this lazy component's init() throws on teardown and
+    // silently aborts wire:navigate, so the countdown must not register any.
+    Livewire::test(EventCountdown::class)
+        ->assertSeeHtml('syncFromServer()')
+        ->assertDontSeeHtml('$wire.$watch(');
 });
