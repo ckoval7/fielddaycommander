@@ -131,13 +131,15 @@
                                     x-init="$watch('open', v => v && $nextTick(() => $refs.searchInput.focus()))"
                                 />
                             </div>
-                            <ul class="max-h-60 overflow-y-auto py-1">
+                            <ul class="max-h-60 overflow-y-auto py-1" role="listbox" aria-label="Timezones">
                                 <template x-for="tz in filtered" :key="tz.id">
                                     <li
                                         @click="select(tz)"
                                         @keydown.enter.prevent="select(tz)"
                                         @keydown.space.prevent="select(tz)"
                                         tabindex="0"
+                                        role="option"
+                                        :aria-selected="selected === tz.id"
                                         class="px-3 py-1.5 cursor-pointer hover:bg-base-200 text-sm"
                                         :class="selected === tz.id ? 'bg-primary/10 font-medium' : ''"
                                         x-text="tz.name"
