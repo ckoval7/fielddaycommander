@@ -820,3 +820,14 @@ test('invalid time_range falls back to entire event', function () {
     expect(array_sum($data['datasets'][0]['data']))->toBe(2)
         ->and($data['title'])->toBe('QSOs per Band — Entire Event');
 });
+
+test('view keeps the Chart.js instance out of reactive Alpine state', function () {
+    // A Chart.js instance on the reactive x-data object recurses endlessly
+    // through Alpine's Proxy on destroy(), aborting wire:navigate.
+    Livewire::test(Chart::class, [
+        'config' => ['chart_type' => 'bar', 'data_source' => 'qsos_per_hour'],
+        'size' => 'normal',
+    ])
+        ->assertSeeHtml('let chartInstance = null;')
+        ->assertDontSeeHtml('this.chartInstance');
+});

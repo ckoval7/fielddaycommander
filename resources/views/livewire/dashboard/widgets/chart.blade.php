@@ -1,8 +1,11 @@
+{{-- The Chart.js instance lives in a closure, not on the reactive x-data
+     object: Alpine's reactive Proxy around it recurses endlessly through
+     Chart.js's own option-resolver proxies, which throws on destroy() and
+     aborts wire:navigate away from the dashboard. --}}
 <div
     wire:key="{{ $widgetId }}"
     wire:poll.visible.15s
-    x-data="{
-        chartInstance: null,
+    x-data="(() => { let chartInstance = null; return {
         chartData: @js($chartData),
         isTv: @js($size === 'tv'),
         canvasId: @js('chart-canvas-' . $widgetId),
@@ -21,8 +24,8 @@
             // Resize chart when edit mode changes (container padding shifts)
             this.editModeHandler = () => {
                 this.$nextTick(() => {
-                    if (this.chartInstance) {
-                        this.chartInstance.resize();
+                    if (chartInstance) {
+                        chartInstance.resize();
                     }
                 });
             };
@@ -34,9 +37,9 @@
                 window.removeEventListener('edit-mode-changed', this.editModeHandler);
                 this.editModeHandler = null;
             }
-            if (this.chartInstance) {
-                this.chartInstance.destroy();
-                this.chartInstance = null;
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
             }
         },
 
@@ -46,9 +49,9 @@
                 return;
             }
 
-            if (this.chartInstance) {
-                this.chartInstance.destroy();
-                this.chartInstance = null;
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
             }
 
             // Use globally available Chart.js
@@ -60,11 +63,12 @@
             const ctx = canvas.getContext('2d');
             const config = this.buildConfig();
 
-            this.chartInstance = new window.Chart(ctx, config);
+            chartInstance = new window.Chart(ctx, config);
         },
 
         buildConfig() {
-            const data = this.chartData;
+            // Hand Chart.js a plain copy so it never mutates Alpine's reactive arrays
+            const data = JSON.parse(JSON.stringify(this.chartData));
             const type = data.chart_type || 'bar';
             const isTv = this.isTv;
             const isPie = type === 'pie' || type === 'doughnut';
@@ -157,25 +161,25 @@
             // Note: chartData is already updated by Livewire/Alpine reactivity
             // We don't need to manually set this.chartData = newData here
 
-            if (!this.chartInstance) {
+            if (!chartInstance) {
                 this.renderChart();
                 return;
             }
 
             const config = this.buildConfig();
 
-            if (this.chartInstance.config.type !== config.type) {
+            if (chartInstance.config.type !== config.type) {
                 // Chart type changed, need to re-render
                 this.renderChart();
                 return;
             }
 
             // Update chart data and options
-            this.chartInstance.data = config.data;
-            this.chartInstance.options = config.options;
-            this.chartInstance.update('none');
+            chartInstance.data = config.data;
+            chartInstance.options = config.options;
+            chartInstance.update('none');
         },
-    }"
+    }; })()"
     class="h-full"
 >
     <x-card
