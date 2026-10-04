@@ -937,11 +937,11 @@
                         <div class="flex items-center gap-1">
                             <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
                         </div>
-                        <span>&gt;12h</span>
-                        <div class="flex items-center gap-1">
-                            <div class="h-3 w-48 rounded" style="background: linear-gradient(to right, hsl(0,65%,50%), hsl(60,65%,50%), hsl(130,65%,45%))"></div>
-                        </div>
                         <span>&lt;5m</span>
+                        <div class="flex items-center gap-1">
+                            <div class="h-3 w-48 rounded" style="background: linear-gradient(to right, hsl(130,65%,45%), hsl(60,65%,50%), hsl(0,65%,50%))"></div>
+                        </div>
+                        <span>&gt;12h</span>
                     </div>
                 </div>
             </div>

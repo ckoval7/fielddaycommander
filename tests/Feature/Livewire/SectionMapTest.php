@@ -74,6 +74,11 @@ test('section map renders with active event', function () {
         ->assertDontSee('No active event');
 });
 
+test('recency legend runs from newest on the left to oldest on the right', function () {
+    Livewire\Livewire::test(SectionMap::class)
+        ->assertSeeHtmlInOrder(['&lt;5m', 'hsl(130,65%,45%), hsl(60,65%,50%), hsl(0,65%,50%)', '&gt;12h']);
+});
+
 test('section data includes QSO counts grouped by section code', function () {
     $session = OperatingSession::factory()->create([
         'station_id' => $this->station->id,
