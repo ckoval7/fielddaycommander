@@ -230,7 +230,7 @@ test('recent contacts shows session contacts only', function () {
         ->assertDontSee('N0OTHER');
 });
 
-test('recent contacts ordered newest first', function () {
+test('recent contacts render oldest first so the newest sits above the input', function () {
     $this->actingAs($this->user);
 
     Contact::factory()->create([
@@ -255,7 +255,7 @@ test('recent contacts ordered newest first', function () {
         'exchange_class' => '3A',
     ]);
 
-    // The newest contact (W1NEW) should appear before the older one (K5OLD)
+    // The older contact (K5OLD) should appear before the newest one (W1NEW)
     // in the rendered HTML
     $html = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->html();
@@ -263,7 +263,7 @@ test('recent contacts ordered newest first', function () {
     $posNew = strpos($html, 'W1NEW');
     $posOld = strpos($html, 'K5OLD');
 
-    expect($posNew)->toBeLessThan($posOld);
+    expect($posOld)->toBeLessThan($posNew);
 });
 
 test('end session sets end time and redirects', function () {
@@ -1042,7 +1042,7 @@ test('logging interface renders mobile card list for recent QSOs', function () {
     expect($html)->toContain('sm:hidden space-y-1.5')
         ->toContain('recallByContactId(')
         ->toContain('recallByUuid(contact.uuid)')
-        ->toContain('hidden sm:block overflow-x-auto');
+        ->toContain('class="hidden sm:block"');
 });
 
 test('logging interface renders button-morph templates for recall mode', function () {
@@ -1092,7 +1092,7 @@ test('recentContacts includes trashed contacts during active session', function 
         ->and($callsigns)->toContain('W1DEL');
 });
 
-test('desktop QSO table renders oldest to newest while mobile cards stay newest first', function () {
+test('QSO history renders oldest to newest on both mobile and desktop', function () {
     $this->actingAs($this->user);
 
     $older = Contact::factory()->create([
@@ -1117,19 +1117,32 @@ test('desktop QSO table renders oldest to newest while mobile cards stay newest 
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->assertSeeHtmlInOrder([
-            'wire:key="card-'.$newer->id.'"',
             'wire:key="card-'.$older->id.'"',
+            'wire:key="card-'.$newer->id.'"',
             'wire:key="contact-'.$older->id.'"',
             'wire:key="contact-'.$newer->id.'"',
         ]);
 });
 
-test('recent QSOs card is placed above the exchange input on desktop', function () {
+test('exchange input is docked below the QSO history', function () {
     $this->actingAs($this->user);
 
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1AW',
+        'qso_time' => now(),
+    ]);
+
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->assertSeeHtml('sm:order-2" x-data="{ si: -1 }"')
-        ->assertSeeHtml('sm:order-1');
+        ->assertSeeHtmlInOrder([
+            'wire:key="card-'.$contact->id.'"',
+            'wire:key="contact-'.$contact->id.'"',
+            'id="exchange-input"',
+        ]);
 });
 
 test('recent QSOs are numbered by session order, skipping deleted contacts', function () {
