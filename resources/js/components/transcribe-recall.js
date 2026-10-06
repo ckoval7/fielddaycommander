@@ -29,7 +29,7 @@ export default function transcribeRecall() {
             const contacts = [];
             rows.forEach(row => {
                 if (row.classList.contains('line-through')) return;
-                const contactId = parseInt(row.getAttribute('wire:key').replace('contact-', ''));
+                const contactId = Number.parseInt(row.getAttribute('wire:key').replace('contact-', ''));
                 const recallValue = row.dataset.recallValue;
                 if (contactId && recallValue) {
                     contacts.push({ id: contactId, exchange: recallValue });
