@@ -17,6 +17,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         recallIndex: -1,
         recalledContactId: null,
         recalledUuid: null,
+        recalledExchange: '',
 
         init() {
             this.loadQueue();
@@ -334,7 +335,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         get recallableContacts() {
             const contacts = [];
 
-            // Queue items first — newest first, matching table render order.
+            // Queue items first — newest first (recall walks back in time).
             // Skip entries whose fetch is in flight; the response handler will
             // mutate them and race with the user's edit. The currently-recalled
             // entry (status === 'editing') stays in the list so navigation
@@ -352,8 +353,9 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 });
             }
 
-            // Server-confirmed contacts from the DOM table rows
-            const rows = document.querySelectorAll(String.raw`tr[wire\:key^="contact-"]`);
+            // Server-confirmed contacts from the DOM table rows. The desktop
+            // table renders oldest → newest, so walk it backwards.
+            const rows = [...document.querySelectorAll(String.raw`tr[wire\:key^="contact-"]`)].reverse();
             rows.forEach(row => {
                 // Skip deleted rows (they have line-through class)
                 if (row.classList.contains('line-through')) return;
@@ -449,6 +451,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             this._releaseRecallLock();
 
             inputEl.value = contact.fullExchange;
+            this.recalledExchange = contact.fullExchange;
 
             if (contact.source === 'queue') {
                 this.recalledUuid = contact.uuid;
@@ -484,6 +487,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             this.recallIndex = -1;
             this.recalledContactId = null;
             this.recalledUuid = null;
+            this.recalledExchange = '';
             if (inputEl) {
                 inputEl.value = '';
                 const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));

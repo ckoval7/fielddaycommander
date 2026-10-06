@@ -1091,3 +1091,93 @@ test('recentContacts includes trashed contacts during active session', function 
     expect($callsigns)->toContain('W1ACT')
         ->and($callsigns)->toContain('W1DEL');
 });
+
+test('desktop QSO table renders oldest to newest while mobile cards stay newest first', function () {
+    $this->actingAs($this->user);
+
+    $older = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1OLD',
+        'qso_time' => now()->subMinutes(5),
+    ]);
+
+    $newer = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1NEW',
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtmlInOrder([
+            'wire:key="card-'.$newer->id.'"',
+            'wire:key="card-'.$older->id.'"',
+            'wire:key="contact-'.$older->id.'"',
+            'wire:key="contact-'.$newer->id.'"',
+        ]);
+});
+
+test('recent QSOs card is placed above the exchange input on desktop', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtml('sm:order-2" x-data="{ si: -1 }"')
+        ->assertSeeHtml('sm:order-1');
+});
+
+test('recent QSOs are numbered by session order, skipping deleted contacts', function () {
+    $this->actingAs($this->user);
+
+    $makeContact = fn (string $callsign, int $minutesAgo, bool $deleted = false) => Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => $callsign,
+        'qso_time' => now()->subMinutes($minutesAgo),
+        'deleted_at' => $deleted ? now() : null,
+    ]);
+
+    $first = $makeContact('W1ONE', 30);
+    $deleted = $makeContact('W1DEL', 20, deleted: true);
+    $second = $makeContact('W1TWO', 10);
+    $third = $makeContact('W1THR', 0);
+
+    $numbers = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->get('recentContactNumbers');
+
+    expect($numbers)->toBe([
+        $first->id => 1,
+        $second->id => 2,
+        $third->id => 3,
+    ]);
+});
+
+test('recent QSO numbers continue from contacts older than the recent list', function () {
+    $this->actingAs($this->user);
+
+    Contact::factory()->count(55)->sequence(fn ($sequence) => [
+        'qso_time' => now()->subMinutes(100 - $sequence->index),
+    ])->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+    ]);
+
+    $numbers = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->get('recentContactNumbers');
+
+    expect($numbers)->toHaveCount(50)
+        ->and(min($numbers))->toBe(6)
+        ->and(max($numbers))->toBe(55);
+});

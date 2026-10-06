@@ -70,14 +70,14 @@ test('mobile user can tap a QSO card to enter recall mode and delete it', functi
         ->assertSee('W1AW');
 
     $page->click('button[wire\\:key="card-'.$contactId.'"]')
-        ->waitForText('Editing recalled QSO');
+        ->waitForText('change the exchange above');
 
     $page->assertSee('Save')
         ->assertSee('Delete')
         ->assertSee('Cancel');
 
     $page->click('button:has-text("Delete")')
-        ->assertDontSee('Editing recalled QSO');
+        ->assertDontSee('change the exchange above');
 
     expect(Contact::onlyTrashed()->where('callsign', 'W1AW')->count())->toBe(1);
 });
@@ -94,14 +94,14 @@ test('tablet user can tap a QSO row in the desktop table to enter recall mode', 
         ->assertSee('W1AW');
 
     $page->click('tr[wire\\:key="contact-'.$contactId.'"]')
-        ->waitForText('Editing recalled QSO');
+        ->waitForText('change the exchange above');
 
     $page->assertSee('Save')
         ->assertSee('Delete')
         ->assertSee('Cancel');
 
     $page->click('button:has-text("Delete")')
-        ->assertDontSee('Editing recalled QSO');
+        ->assertDontSee('change the exchange above');
 
     expect(Contact::onlyTrashed()->where('callsign', 'W1AW')->count())->toBe(1);
 });
