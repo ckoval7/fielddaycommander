@@ -236,6 +236,11 @@ class StationSelect extends Component
             'selectedBandId' => 'required|exists:bands,id',
             'selectedModeId' => 'required|exists:modes,id',
             'powerWatts' => 'required|integer|min:1|max:1500',
+        ], attributes: [
+            'selectedStationId' => 'station',
+            'selectedBandId' => 'band',
+            'selectedModeId' => 'mode',
+            'powerWatts' => 'power',
         ]);
 
         $station = Station::find($this->selectedStationId);

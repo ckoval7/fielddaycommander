@@ -177,6 +177,10 @@ class TranscribeInterface extends Component
             'selectedBandId' => 'required|exists:bands,id',
             'selectedModeId' => 'required|exists:modes,id',
             'powerWatts' => 'required|integer|min:1|max:1500',
+        ], attributes: [
+            'selectedBandId' => 'band',
+            'selectedModeId' => 'mode',
+            'powerWatts' => 'power',
         ]);
 
         $exchange = $this->getExchangeWithoutTime();
