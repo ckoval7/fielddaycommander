@@ -96,7 +96,7 @@
         </div>
     </div>
 
-    <div class="px-4 py-4 max-w-4xl mx-auto space-y-4">
+    <div class="px-4 py-4 max-w-4xl mx-auto flex flex-col gap-4">
         {{-- Your Exchange --}}
         <div class="text-center">
             <span class="text-base-content/70 text-sm uppercase tracking-wider">Your Exchange</span>
@@ -174,8 +174,8 @@
             To change band or mode, end this session and start a new one.
         </div>
 
-        {{-- Exchange Input --}}
-        <div class="space-y-2" x-data="{ si: -1 }">
+        {{-- Exchange Input (below the log on desktop so ↑ walks visually up through history) --}}
+        <div class="space-y-2 sm:order-2" x-data="{ si: -1 }">
             <div class="flex flex-col sm:flex-row gap-2">
                 <div class="relative flex-1">
                     <input
@@ -297,7 +297,7 @@
                         <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                     </svg>
                     <span>
-                        Editing recalled QSO <span x-text="recallIndex + 1" class="font-bold"></span>
+                        Editing <span x-text="recalledExchange" class="font-bold font-mono"></span>
                         — change the exchange above, then tap
                         <span class="font-semibold">Save</span>,
                         <span class="font-semibold">Delete</span>, or
@@ -323,13 +323,13 @@
         </div>
 
         {{-- Recent QSOs --}}
-        <x-card title="Recent QSOs" subtitle="This session only">
+        <x-card title="Recent QSOs" subtitle="This session only" class="sm:order-1">
             {{-- Empty state: no server contacts and no queued contacts --}}
             @if($this->recentContacts->isEmpty())
                 <div x-show="queue.length === 0">
                     <div class="text-center py-4 text-base-content/50 space-y-1">
                         <p>No contacts logged yet.</p>
-                        <p class="text-xs">Type the other station's exchange above, e.g. <span class="font-mono font-bold">W1AW 3A CT</span></p>
+                        <p class="text-xs">Type the other station's exchange, e.g. <span class="font-mono font-bold">W1AW 3A CT</span></p>
                     </div>
                 </div>
             @endif
@@ -404,8 +404,43 @@
                 @endforeach
             </div>
 
-            <div class="hidden sm:block overflow-x-auto" @if($this->recentContacts->isEmpty()) x-show="queue.length > 0" x-cloak @endif>
-                <table class="table table-sm">
+            {{-- Desktop: oldest → newest, scrolled to the bottom so the newest QSO sits next to the input --}}
+            <div
+                class="hidden sm:block overflow-x-auto overflow-y-auto max-h-80"
+                x-data="{
+                    pinned: true,
+                    scrollToBottom() {
+                        this.$el.scrollTop = this.$el.scrollHeight;
+                        this.pinned = true;
+                    },
+                    revealRecalled(uuid, contactId) {
+                        this.$nextTick(() => {
+                            const row = this.$el.querySelector('tbody tr[aria-current=true]');
+                            if (!row) {
+                                this.scrollToBottom();
+                                return;
+                            }
+                            const box = this.$el.getBoundingClientRect();
+                            const rowBox = row.getBoundingClientRect();
+                            const headerHeight = this.$el.querySelector('thead').offsetHeight;
+                            if (rowBox.top < box.top + headerHeight) {
+                                this.$el.scrollTop -= box.top + headerHeight - rowBox.top;
+                            } else if (rowBox.bottom > box.bottom) {
+                                this.$el.scrollTop += rowBox.bottom - box.bottom;
+                            }
+                        });
+                    },
+                }"
+                x-init="
+                    scrollToBottom();
+                    new MutationObserver(() => { if (pinned) scrollToBottom(); }).observe($refs.qsoRows, { childList: true });
+                "
+                x-effect="revealRecalled(recalledUuid, recalledContactId)"
+                @scroll="pinned = $el.scrollTop + $el.clientHeight >= $el.scrollHeight - 8"
+                @contact-logged.window="$nextTick(() => scrollToBottom())"
+                @if($this->recentContacts->isEmpty()) x-show="queue.length > 0" x-cloak @endif
+            >
+                <table class="table table-sm table-pin-rows">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -415,52 +450,25 @@
                             <th>Section</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {{-- Pending/Failed contacts from local queue --}}
-                        <template x-for="contact in queue" :key="contact.uuid">
-                            <tr
-                                @click="recallByUuid(contact.uuid)"
-                                @keydown.enter="recallByUuid(contact.uuid)"
-                                tabindex="0"
-                                class="cursor-pointer hover:bg-base-200"
-                                :class="{
-                                'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
-                                'bg-error/5': contact.status === 'failed',
-                                'ring-2 ring-primary': recalledUuid === contact.uuid,
-                            }">
-                                <td class="font-mono">-</td>
-                                <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
-                                <td class="font-bold font-mono uppercase">
-                                    <span x-text="contact.callsign"></span>
-                                    <template x-if="contact.status === 'failed'">
-                                        <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span>
-                                    </template>
-                                    <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
-                                        <span class="badge badge-xs badge-info ml-1">SYNC</span>
-                                    </template>
-                                </td>
-                                <td class="font-mono" x-text="contact.exchange_class"></td>
-                                <td x-text="contact.section_code || '-'"></td>
-                            </tr>
-                        </template>
-
+                    <tbody x-ref="qsoRows">
                         {{-- Server-confirmed contacts --}}
-                        @foreach($this->recentContacts as $contact)
+                        @foreach($this->recentContacts->reverse() as $contact)
                             <tr wire:key="contact-{{ $contact->id }}"
                                 @if(! $contact->trashed())
                                     @click="recallByContactId({{ $contact->id }})"
                                     @keydown.enter="recallByContactId({{ $contact->id }})"
                                     tabindex="0"
                                 @endif
+                                :aria-current="recalledContactId === {{ $contact->id }}"
                                 :class="{
-                                    'ring-2 ring-primary': recalledContactId === {{ $contact->id }},
+                                    '!bg-primary/25': recalledContactId === {{ $contact->id }},
                                 }"
                                 @class([
                                     'opacity-40 line-through' => $contact->trashed(),
                                     'opacity-50' => ! $contact->trashed() && $contact->is_duplicate,
                                     'cursor-pointer hover:bg-base-200' => ! $contact->trashed(),
                                 ])>
-                                <td class="font-mono">{{ $contact->trashed() ? '-' : '' }}</td>
+                                <td class="font-mono">{{ $this->recentContactNumbers[$contact->id] ?? '-' }}</td>
                                 <td class="font-mono">{{ $contact->qso_time->format('H:i') }}</td>
                                 <td class="font-bold font-mono uppercase">
                                     {{ $contact->callsign }}
@@ -480,6 +488,35 @@
                                 <td>{{ $contact->section->code ?? '-' }}</td>
                             </tr>
                         @endforeach
+
+                        {{-- Pending/Failed contacts from local queue (newest, so last) --}}
+                        <template x-for="contact in [...queue].reverse()" :key="contact.uuid">
+                            <tr
+                                @click="recallByUuid(contact.uuid)"
+                                @keydown.enter="recallByUuid(contact.uuid)"
+                                tabindex="0"
+                                class="cursor-pointer hover:bg-base-200"
+                                :aria-current="recalledUuid === contact.uuid"
+                                :class="{
+                                'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
+                                'bg-error/5': contact.status === 'failed',
+                                '!bg-primary/25': recalledUuid === contact.uuid,
+                            }">
+                                <td class="font-mono">-</td>
+                                <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
+                                <td class="font-bold font-mono uppercase">
+                                    <span x-text="contact.callsign"></span>
+                                    <template x-if="contact.status === 'failed'">
+                                        <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span>
+                                    </template>
+                                    <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
+                                        <span class="badge badge-xs badge-info ml-1">SYNC</span>
+                                    </template>
+                                </td>
+                                <td class="font-mono" x-text="contact.exchange_class"></td>
+                                <td x-text="contact.section_code || '-'"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>

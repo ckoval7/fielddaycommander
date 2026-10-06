@@ -436,6 +436,24 @@ class LoggingInterface extends Component
             ->get();
     }
 
+    /**
+     * Session QSO numbers (1 = first QSO of the session) for the non-deleted
+     * contacts shown in the recent list, keyed by contact id.
+     *
+     * @return array<int, int>
+     */
+    #[Computed]
+    public function recentContactNumbers(): array
+    {
+        $activeRecent = $this->recentContacts->reject(fn (Contact $contact) => $contact->trashed());
+        $olderCount = $this->operatingSession->contacts()->count() - $activeRecent->count();
+
+        return $activeRecent->reverse()
+            ->values()
+            ->mapWithKeys(fn (Contact $contact, int $index) => [$contact->id => $olderCount + $index + 1])
+            ->all();
+    }
+
     public function render(): View
     {
         return view('livewire.logging.logging-interface')
