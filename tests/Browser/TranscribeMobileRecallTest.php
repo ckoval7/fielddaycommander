@@ -70,10 +70,10 @@ test('mobile user can tap a transcribed contact to recall and delete it', functi
     $page->assertSourceHas('grid-cols-1 sm:grid-cols-3');
 
     $page->click('button[wire\\:key="card-'.$this->contact->id.'"]')
-        ->waitForText('Editing recalled QSO');
+        ->waitForText('edit it below');
 
     $page->click('button:has-text("Delete")')
-        ->assertDontSee('Editing recalled QSO');
+        ->assertDontSee('edit it below');
 
     expect(Contact::onlyTrashed()->where('callsign', 'K1ABC')->count())->toBe(1);
 });
@@ -88,10 +88,10 @@ test('tablet user can tap a transcribed contact row in the desktop table to reca
         ->assertSee('K1ABC');
 
     $page->click('tr[wire\\:key="contact-'.$this->contact->id.'"]')
-        ->waitForText('Editing recalled QSO');
+        ->waitForText('edit it below');
 
     $page->click('button:has-text("Delete")')
-        ->assertDontSee('Editing recalled QSO');
+        ->assertDontSee('edit it below');
 
     expect(Contact::onlyTrashed()->where('callsign', 'K1ABC')->count())->toBe(1);
 });

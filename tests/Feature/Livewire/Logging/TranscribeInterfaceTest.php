@@ -932,7 +932,7 @@ test('transcribe interface renders mobile card list for recent contacts', functi
 
     expect($html)->toContain('sm:hidden space-y-1.5')
         ->toContain('recallByContactId(')
-        ->toContain('hidden sm:block overflow-x-auto');
+        ->toContain('class="hidden sm:block"');
 });
 
 test('transcribe interface renders button-morph for recall mode', function () {
@@ -981,4 +981,58 @@ test('logContact dispatches ContactLogged event', function () {
         return $event->contact->callsign === 'W5TEST'
             && $event->event->id === $this->event->id;
     });
+});
+
+test('transcribed QSO history renders oldest to newest with the exchange input docked below', function () {
+    $this->actingAs($this->user);
+
+    $older = createTranscriptionContact($this, [
+        'callsign' => 'W1OLD',
+        'qso_time' => $this->event->start_time->copy()->addMinutes(5),
+    ]);
+    $newer = createTranscriptionContact($this, [
+        'callsign' => 'W1NEW',
+        'qso_time' => $this->event->start_time->copy()->addMinutes(10),
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->assertSeeHtmlInOrder([
+            'wire:key="card-'.$older->id.'"',
+            'wire:key="card-'.$newer->id.'"',
+            'wire:key="contact-'.$older->id.'"',
+            'wire:key="contact-'.$newer->id.'"',
+            'id="exchange-input"',
+        ]);
+});
+
+test('transcribe log shows an empty state with the exchange input when nothing is transcribed', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->assertSee('No contacts logged yet.')
+        ->assertSeeHtml('id="exchange-input"');
+});
+
+test('transcribed QSOs are numbered by time order, skipping deleted contacts', function () {
+    $this->actingAs($this->user);
+
+    $makeContact = fn (string $callsign, int $minutes, bool $deleted = false) => createTranscriptionContact($this, [
+        'callsign' => $callsign,
+        'qso_time' => $this->event->start_time->copy()->addMinutes($minutes),
+        'deleted_at' => $deleted ? now() : null,
+    ]);
+
+    $first = $makeContact('W1ONE', 10);
+    $makeContact('W1DEL', 20, deleted: true);
+    $second = $makeContact('W1TWO', 30);
+    $third = $makeContact('W1THR', 40);
+
+    $numbers = Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->get('recentContactNumbers');
+
+    expect($numbers)->toBe([
+        $first->id => 1,
+        $second->id => 2,
+        $third->id => 3,
+    ]);
 });
