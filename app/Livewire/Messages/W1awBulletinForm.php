@@ -320,4 +320,21 @@ class W1awBulletinForm extends Component
         return view('livewire.messages.w1aw-bulletin-form')
             ->layout('components.layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'receivedAt' => 'received time',
+            'scheduleMode' => 'mode',
+            'scheduleFrequencies' => 'frequencies',
+            'scheduleScheduledAt' => 'scheduled time',
+            'scheduleSource' => 'source',
+            'scheduleNotes' => 'notes',
+        ];
+    }
 }

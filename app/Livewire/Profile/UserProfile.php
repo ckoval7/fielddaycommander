@@ -457,4 +457,18 @@ class UserProfile extends Component
             'activityLog' => $activityLog,
         ])->layout('layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'shiftReminderMinute' => 'reminder minutes',
+            'bulletinReminderMinute' => 'reminder minutes',
+            'twoFactorCode' => 'authentication code',
+        ];
+    }
 }

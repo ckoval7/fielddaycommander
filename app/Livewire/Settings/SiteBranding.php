@@ -121,4 +121,16 @@ class SiteBranding extends Component
     {
         return view('livewire.settings.site-branding');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'new_logo' => 'logo',
+        ];
+    }
 }

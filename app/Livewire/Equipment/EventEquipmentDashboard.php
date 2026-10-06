@@ -660,4 +660,18 @@ class EventEquipmentDashboard extends Component
     {
         return view('livewire.equipment.event-equipment-dashboard')->layout('layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'commitEquipmentId' => 'equipment',
+            'commitExpectedDeliveryAt' => 'expected delivery date',
+            'commitDeliveryNotes' => 'delivery notes',
+        ];
+    }
 }

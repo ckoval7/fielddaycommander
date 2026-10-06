@@ -433,4 +433,18 @@ class StationForm extends Component
     {
         return view('livewire.stations.station-form')->layout('layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'event_configuration_id' => 'event',
+            'radio_equipment_id' => 'primary radio',
+            'max_power_watts' => 'max power output',
+        ];
+    }
 }

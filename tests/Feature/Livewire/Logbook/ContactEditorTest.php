@@ -151,7 +151,8 @@ describe('save', function () {
             ->call('openEdit', $this->contact->id)
             ->set('bandId', 99999)
             ->call('save')
-            ->assertHasErrors(['bandId']);
+            ->assertHasErrors(['bandId'])
+            ->assertSee('The selected band is invalid.');
     });
 
     test('validates mode_id exists', function () {

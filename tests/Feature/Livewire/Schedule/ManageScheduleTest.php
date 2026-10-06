@@ -213,6 +213,21 @@ describe('shift management', function () {
             ->assertHasErrors('shiftEndTime');
     });
 
+    test('shift validation errors use friendly field names', function () {
+        $this->actingAs($this->admin);
+
+        $errors = Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal')
+            ->set('shiftRoleId', null)
+            ->set('shiftCapacity', 0)
+            ->call('saveShift')
+            ->assertHasErrors(['shiftRoleId', 'shiftCapacity'])
+            ->errors();
+
+        expect($errors->first('shiftRoleId'))->toBe('The role field is required.')
+            ->and($errors->first('shiftCapacity'))->toBe('The capacity field must be at least 1.');
+    });
+
     test('can delete a shift', function () {
         $shift = Shift::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,

@@ -192,4 +192,17 @@ class SystemPreferences extends Component
     {
         return view('livewire.settings.system-preferences');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'post_event_grace_period_days' => 'post-event grace period',
+            'api_key' => 'API key',
+        ];
+    }
 }

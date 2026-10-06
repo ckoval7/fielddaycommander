@@ -158,6 +158,7 @@ class WidgetConfigurator extends Component
             $messages["widgetConfig.{$fieldName}.required"] = "The {$label} field is required.";
             $messages["widgetConfig.{$fieldName}.in"] = "Please select a valid {$label}.";
             $messages["widgetConfig.{$fieldName}.numeric"] = "The {$label} must be a number.";
+            $messages["widgetConfig.{$fieldName}.string"] = "The {$label} must be text.";
             $messages["widgetConfig.{$fieldName}.boolean"] = "The {$label} must be true or false.";
 
             if (isset($fieldConfig['min'])) {

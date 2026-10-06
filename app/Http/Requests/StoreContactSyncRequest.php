@@ -98,4 +98,26 @@ class StoreContactSyncRequest extends FormRequest
             'exchange_class.regex' => 'The exchange class must be a number followed by a valid class letter (e.g. 3A, 2M)',
         ];
     }
+
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'uuid' => 'UUID',
+            'operating_session_id' => 'operating session',
+            'band_id' => 'band',
+            'mode_id' => 'mode',
+            'section_id' => 'section',
+            'power_watts' => 'power',
+            'qso_time' => 'QSO time',
+            'gota_operator_first_name' => 'GOTA operator first name',
+            'gota_operator_last_name' => 'GOTA operator last name',
+            'gota_operator_callsign' => 'GOTA operator callsign',
+            'gota_operator_user_id' => 'GOTA operator',
+        ];
+    }
 }
