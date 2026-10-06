@@ -27,6 +27,7 @@ use App\Models\ShiftRole;
 use App\Models\Station;
 use App\Models\User;
 use App\Support\CallsignGenerator;
+use App\Support\TransmitterCountGenerator;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -738,14 +739,7 @@ class DemoSeeder extends Seeder
     {
         $letter = $classPool[array_rand($classPool)];
 
-        $transmitterCount = match ($letter) {
-            'A' => random_int(1, 20),
-            'F', 'O' => random_int(2, 10),
-            'B', 'I' => random_int(1, 2),
-            default => 1,
-        };
-
-        return $transmitterCount.$letter;
+        return TransmitterCountGenerator::forClass($letter).$letter;
     }
 
     private function seedBonuses(EventConfiguration $config, User $manager, Event $event): void

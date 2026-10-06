@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Support\CallsignGenerator;
+use App\Support\TransmitterCountGenerator;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Cache\Repository;
@@ -187,14 +188,7 @@ class DemoSimulateActivity extends Command
 
         $letter = $classPool[array_rand($classPool)];
 
-        $transmitterCount = match ($letter) {
-            'A' => random_int(1, 20),
-            'F', 'O' => random_int(2, 10),
-            'B', 'I' => random_int(1, 2),
-            default => 1,
-        };
-
-        return $transmitterCount.$letter;
+        return TransmitterCountGenerator::forClass($letter).$letter;
     }
 
     /**
