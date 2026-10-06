@@ -214,6 +214,23 @@ test('syncing a contact with invalid data returns validation error', function ()
         ->assertUnprocessable();
 });
 
+test('validation errors use friendly field names', function () {
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $this->session->id,
+            'band_id' => null,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'exchange_class' => '3A',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['band_id' => 'The band field is required.']);
+});
+
 test('cannot sync contacts to another users session', function () {
     $otherUser = User::factory()->create();
     $otherUser->assignRole('Operator');

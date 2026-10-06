@@ -457,4 +457,18 @@ class ExternalLoggerManagement extends Component
         $this->wsjtxLastLog = Cache::get("external-logger:wsjtx:{$this->eventConfigId}:last-log");
         $this->udpAdifLastLog = Cache::get("external-logger:udp-adif:{$this->eventConfigId}:last-log");
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'n1mmPort' => 'N1MM port',
+            'wsjtxPort' => 'WSJT-X port',
+            'udpAdifPort' => 'UDP ADIF port',
+        ];
+    }
 }

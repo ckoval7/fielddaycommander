@@ -264,4 +264,18 @@ class ManageSafetyChecklist extends Component
         return view('livewire.safety.manage-safety-checklist')
             ->layout('layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'itemLabel' => 'label',
+            'itemHelpText' => 'help text',
+            'itemChecklistType' => 'checklist type',
+        ];
+    }
 }

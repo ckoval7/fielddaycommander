@@ -216,6 +216,7 @@ class UserManagement extends Component
         ], [
             'call_sign.unique' => 'This call sign is already registered',
             'email.unique' => 'This email is already registered',
+            'password.required_if' => 'A password is required when not sending an invitation.',
         ]);
 
         $user = User::create([
@@ -631,5 +632,17 @@ class UserManagement extends Component
     public function render()
     {
         return view('livewire.users.user-management')->layout('layouts.app');
+    }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'role_id' => 'role',
+        ];
     }
 }

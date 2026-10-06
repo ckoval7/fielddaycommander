@@ -407,4 +407,16 @@ class EventDashboard extends Component
     {
         return view('livewire.events.event-dashboard')->layout('layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'rescoreTargetVersion' => 'rules version',
+        ];
+    }
 }

@@ -867,4 +867,30 @@ class ManageSchedule extends Component
     {
         return view('livewire.schedule.manage-schedule')->layout('layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'roleName' => 'name',
+            'roleDescription' => 'description',
+            'roleBonusPoints' => 'bonus points',
+            'shiftRoleId' => 'role',
+            'shiftStartTime' => 'start time',
+            'shiftEndTime' => 'end time',
+            'shiftCapacity' => 'capacity',
+            'shiftNotes' => 'notes',
+            'bulkRoleId' => 'role',
+            'bulkStartTime' => 'start time',
+            'bulkEndTime' => 'end time',
+            'bulkDurationMinutes' => 'shift duration (minutes)',
+            'bulkCapacity' => 'capacity',
+            'assignUserId' => 'user',
+            'assignShiftId' => 'shift',
+        ];
+    }
 }

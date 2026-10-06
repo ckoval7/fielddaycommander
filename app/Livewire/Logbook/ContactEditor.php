@@ -322,4 +322,20 @@ class ContactEditor extends Component
     {
         return view('livewire.logbook.contact-editor');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'sectionId' => 'section',
+            'bandId' => 'band',
+            'modeId' => 'mode',
+            'qsoTime' => 'QSO time',
+            'bulkLoggerUserId' => 'logger',
+        ];
+    }
 }

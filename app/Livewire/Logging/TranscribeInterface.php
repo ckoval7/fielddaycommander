@@ -177,10 +177,6 @@ class TranscribeInterface extends Component
             'selectedBandId' => 'required|exists:bands,id',
             'selectedModeId' => 'required|exists:modes,id',
             'powerWatts' => 'required|integer|min:1|max:1500',
-        ], attributes: [
-            'selectedBandId' => 'band',
-            'selectedModeId' => 'mode',
-            'powerWatts' => 'power',
         ]);
 
         $exchange = $this->getExchangeWithoutTime();
@@ -714,5 +710,19 @@ class TranscribeInterface extends Component
     {
         return view('livewire.logging.transcribe-interface')
             ->layout('layouts.app');
+    }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'selectedBandId' => 'band',
+            'selectedModeId' => 'mode',
+            'powerWatts' => 'power',
+        ];
     }
 }

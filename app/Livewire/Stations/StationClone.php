@@ -403,4 +403,18 @@ class StationClone extends Component
             'targetEvents' => $this->targetEvents,
         ])->layout('layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'sourceEventId' => 'source event',
+            'selectedStationIds.*' => 'station',
+            'targetEventId' => 'target event',
+        ];
+    }
 }

@@ -384,4 +384,27 @@ class MessageForm extends Component
         $locationPlaceholder = $location ?? '[CITY STATE]';
         $this->messageText = "{$clubName} FIELD DAY {$year} X\n[NUMBER] PARTICIPANTS X\nLOCATION {$locationPlaceholder} X\n[NUMBER] ARES OPERATORS PARTICIPATING";
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'filedAt' => 'filed time',
+            'modeCategory' => 'mode',
+            'hxCode' => 'HX code',
+            'hxValue' => 'HX value',
+            'checkCount' => 'check',
+            'addresseeZip' => 'ZIP code',
+            'icsSubject' => 'subject',
+            'icsToPosition' => '"To" position',
+            'icsFromPosition' => '"From" position',
+            'icsReplyDate' => 'reply date',
+            'icsReplyName' => 'reply name',
+            'icsReplyPosition' => 'reply position',
+        ];
+    }
 }

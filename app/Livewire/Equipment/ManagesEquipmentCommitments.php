@@ -411,4 +411,22 @@ trait ManagesEquipmentCommitments
             })
             ->exists();
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'commitEquipmentId' => 'equipment',
+            'commitEventId' => 'event',
+            'commitExpectedDeliveryAt' => 'expected delivery date',
+            'commitDeliveryNotes' => 'delivery notes',
+            'bulkCommitEventId' => 'event',
+            'bulkCommitExpectedDeliveryAt' => 'expected delivery date',
+            'bulkCommitDeliveryNotes' => 'delivery notes',
+        ];
+    }
 }

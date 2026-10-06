@@ -369,4 +369,16 @@ class AdifImport extends Component
             'stations' => $records->pluck('station_identifier')->unique()->filter()->values()->toArray(),
         ];
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'adifFile' => 'ADIF file',
+        ];
+    }
 }

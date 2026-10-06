@@ -973,4 +973,23 @@ class EventForm extends Component
     {
         return view('livewire.events.event-form')->layout('layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'event_type_id' => 'event type',
+            'section_id' => 'section',
+            'operating_class_id' => 'operating class',
+            'max_power_watts' => 'maximum power',
+            'gota_callsign' => 'GOTA callsign',
+            'uses_other_power' => 'other power source',
+            'talk_in_frequency' => 'talk-in frequency',
+            'guestbook_detection_radius' => 'detection radius',
+        ];
+    }
 }

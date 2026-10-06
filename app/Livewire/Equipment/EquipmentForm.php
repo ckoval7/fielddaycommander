@@ -384,4 +384,20 @@ class EquipmentForm extends Component
     {
         return view('livewire.equipment.equipment-form')->layout('layouts.app');
     }
+
+    /**
+     * Get friendly field names for validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'value_usd' => 'value (USD)',
+            'power_output_watts' => 'power output',
+            'owner_user_id' => 'owner',
+            'managed_by_user_id' => 'manager',
+            'selectedBands.*' => 'band',
+        ];
+    }
 }
