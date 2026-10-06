@@ -1,6 +1,7 @@
 import './bootstrap';
 import dashboardSortable from './components/dashboard-sortable';
 import contactQueue from './components/contact-queue';
+import transcribeRecall from './components/transcribe-recall';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
 
@@ -20,6 +21,7 @@ document.documentElement.dataset.theme = theme;
 document.addEventListener('alpine:init', () => {
     Alpine.data('dashboardSortable', dashboardSortable);
     Alpine.data('contactQueue', contactQueue);
+    Alpine.data('transcribeRecall', transcribeRecall);
     Alpine.data('flatpickr', flatpickrComponent);
 });
 

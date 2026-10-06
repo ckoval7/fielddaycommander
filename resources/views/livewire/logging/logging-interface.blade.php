@@ -12,7 +12,7 @@
         class_codes: {{ Js::from(\App\Models\OperatingClass::where('event_type_id', $operatingSession->station->eventConfiguration?->event?->event_type_id)->pluck('code')->map(fn ($code) => strtoupper($code))->all()) }}
      })">
     {{-- Sticky Session Info Bar --}}
-    <div class="sticky top-0 max-lg:top-[var(--mobile-header-height,0px)] max-lg:z-10 lg:z-30 bg-base-100 border-b border-base-300 shadow-sm">
+    <div data-log-sticky-bar class="sticky top-0 max-lg:top-[var(--mobile-header-height,0px)] max-lg:z-10 lg:z-30 bg-base-100 border-b border-base-300 shadow-sm">
         <div class="px-4 py-2.5 flex items-center justify-between gap-3">
             {{-- Left: Station name --}}
             <div class="min-w-0">
@@ -175,262 +175,88 @@
         </div>
 
         {{-- Log: QSO history (oldest → newest) with the exchange input docked underneath, chat-style --}}
-        <div
-            class="bg-base-100 sm:rounded-lg sm:shadow-sm border-y sm:border border-base-300 flex flex-col max-sm:h-[70dvh]"
-            x-data="{
-                aligning: true,
-                {{-- Phones: size the log to fill the screen below the sticky header and session bar,
-                     and on load scroll so the input sits at the bottom of the screen. --}}
-                fitToViewport() {
-                    if (!window.matchMedia('(max-width: 639px)').matches) {
-                        this.$el.style.removeProperty('height');
-                        return;
-                    }
-                    const content = this.$el.parentElement;
-                    const sessionBar = content.previousElementSibling;
-                    const headerHeight = document.querySelector('header.sticky')?.offsetHeight ?? 0;
-                    const aboveCard = this.$el.getBoundingClientRect().top - content.getBoundingClientRect().top;
-                    const height = window.innerHeight - headerHeight - sessionBar.offsetHeight - aboveCard;
-                    this.$el.style.height = Math.max(320, height) + 'px';
-
-                    if (this.aligning) {
-                        requestAnimationFrame(() => window.scrollBy(0, this.$el.getBoundingClientRect().bottom - window.innerHeight));
-                    }
-                },
-            }"
-            x-init="
-                const observer = new ResizeObserver(() => fitToViewport());
-                observer.observe(document.body);
-                observer.observe(document.querySelector('header.sticky') ?? document.body);
-                setTimeout(() => aligning = false, 1500);
-            "
-            @resize.window.debounce.150ms="fitToViewport()"
+        <x-logging.qso-log
+            title="Recent QSOs"
+            subtitle="This session only"
+            :is-empty="$this->recentContacts->isEmpty()"
+            has-pending="queue.length > 0"
         >
-            <div class="px-4 py-2.5 flex items-baseline justify-between border-b border-base-300">
-                <h2 class="font-semibold">Recent QSOs</h2>
-                <span class="text-xs text-base-content/50">This session only</span>
-            </div>
+            <x-slot:cards>
+                {{-- Server-confirmed --}}
+                @foreach($this->recentContacts->reverse() as $contact)
+                    <x-logging.contact-card :contact="$contact" />
+                @endforeach
 
-            {{-- History: stays pinned to the bottom so the newest QSO sits right above the input --}}
-            <div
-                class="max-sm:flex-1 max-sm:min-h-0 sm:h-80 overflow-y-auto overflow-x-auto"
-                x-data="{
-                    pinned: true,
-                    scrollToBottom() {
-                        this.$el.scrollTop = this.$el.scrollHeight;
-                        this.pinned = true;
-                    },
-                    revealRecalled(uuid, contactId) {
-                        this.$nextTick(() => {
-                            const row = [...this.$el.querySelectorAll('[aria-current=true]')].find(el => el.offsetParent !== null);
-                            if (!row) {
-                                this.scrollToBottom();
-                                return;
-                            }
-                            const box = this.$el.getBoundingClientRect();
-                            const rowBox = row.getBoundingClientRect();
-                            const headerHeight = this.$el.querySelector('thead').offsetHeight;
-                            if (rowBox.top < box.top + headerHeight) {
-                                this.$el.scrollTop -= box.top + headerHeight - rowBox.top;
-                            } else if (rowBox.bottom > box.bottom) {
-                                this.$el.scrollTop += rowBox.bottom - box.bottom;
-                            }
-                        });
-                    },
-                }"
-                x-init="
-                    scrollToBottom();
-                    new MutationObserver(() => { if (pinned) scrollToBottom(); }).observe($el, { childList: true, subtree: true });
-                    new ResizeObserver(() => { if (pinned) scrollToBottom(); }).observe($el);
-                "
-                x-effect="revealRecalled(recalledUuid, recalledContactId)"
-                @scroll="pinned = $el.scrollTop + $el.clientHeight >= $el.scrollHeight - 8"
-                @contact-logged.window="$nextTick(() => scrollToBottom())"
-            >
-                {{-- Empty state: no server contacts and no queued contacts --}}
-                @if($this->recentContacts->isEmpty())
-                    <div x-show="queue.length === 0" class="h-full flex items-center justify-center">
-                        <div class="text-center text-base-content/50 space-y-1">
-                            <p>No contacts logged yet.</p>
-                            <p class="text-xs">Type the other station's exchange, e.g. <span class="font-mono font-bold">W1AW 3A CT</span></p>
+                {{-- Pending/failed from the JS queue (newest, so last) --}}
+                <template x-for="contact in [...queue].reverse()" :key="contact.uuid">
+                    <button
+                        type="button"
+                        @click="recallByUuid(contact.uuid)"
+                        :aria-current="recalledUuid === contact.uuid"
+                        :class="{
+                            'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
+                            'bg-error/5': contact.status === 'failed',
+                            'ring-2 ring-primary': recalledUuid === contact.uuid,
+                        }"
+                        class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 text-left"
+                    >
+                        <div class="min-w-0">
+                            <div class="font-bold font-mono uppercase text-lg truncate" x-text="contact.callsign"></div>
+                            <div class="text-xs text-base-content/60 font-mono" x-text="contact.exchange_class + ' · ' + (contact.section_code || '—')"></div>
                         </div>
-                    </div>
-                @endif
-
-                {{-- Mobile: card list --}}
-                <div class="sm:hidden space-y-1.5 p-3" @if($this->recentContacts->isEmpty()) x-show="queue.length > 0" x-cloak @endif>
-                    {{-- Server-confirmed --}}
-                    @foreach($this->recentContacts->reverse() as $contact)
-                        @if($contact->trashed())
-                            <div wire:key="card-{{ $contact->id }}"
-                                class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 opacity-40 line-through">
-                                <div class="min-w-0">
-                                    <div class="font-bold font-mono uppercase text-lg truncate">
-                                        {{ $contact->callsign }}
-                                        <button wire:click="restoreContact({{ $contact->id }})" class="btn btn-ghost btn-xs ml-1 no-underline">Undo</button>
-                                    </div>
-                                    <div class="text-xs text-base-content/60 font-mono">{{ $contact->exchange_class }} · {{ $contact->section->code ?? '—' }}</div>
-                                </div>
-                                <span class="font-mono text-xs text-base-content/60 flex-shrink-0">{{ $contact->qso_time->format('H:i') }}</span>
-                            </div>
-                        @else
-                            <button
-                                type="button"
-                                wire:key="card-{{ $contact->id }}"
-                                @click="recallByContactId({{ $contact->id }})"
-                                :aria-current="recalledContactId === {{ $contact->id }}"
-                                :class="{ 'ring-2 ring-primary': recalledContactId === {{ $contact->id }} }"
-                                @class([
-                                    'w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 text-left',
-                                    'opacity-50' => $contact->is_duplicate,
-                                ])
-                            >
-                                <div class="min-w-0">
-                                    <div class="font-bold font-mono uppercase text-lg truncate">
-                                        {{ $contact->callsign }}
-                                        @if($contact->is_duplicate)
-                                            <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
-                                        @endif
-                                    </div>
-                                    <div class="text-xs text-base-content/60 font-mono">{{ $contact->exchange_class }} · {{ $contact->section->code ?? '—' }}</div>
-                                </div>
-                                <span class="font-mono text-xs text-base-content/60 flex-shrink-0">{{ $contact->qso_time->format('H:i') }}</span>
-                            </button>
-                        @endif
-                    @endforeach
-
-                    {{-- Pending/failed from the JS queue (newest, so last) --}}
-                    <template x-for="contact in [...queue].reverse()" :key="contact.uuid">
-                        <button
-                            type="button"
-                            @click="recallByUuid(contact.uuid)"
-                            :aria-current="recalledUuid === contact.uuid"
-                            :class="{
-                                'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
-                                'bg-error/5': contact.status === 'failed',
-                                'ring-2 ring-primary': recalledUuid === contact.uuid,
-                            }"
-                            class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 text-left"
-                        >
-                            <div class="min-w-0">
-                                <div class="font-bold font-mono uppercase text-lg truncate" x-text="contact.callsign"></div>
-                                <div class="text-xs text-base-content/60 font-mono" x-text="contact.exchange_class + ' · ' + (contact.section_code || '—')"></div>
-                            </div>
-                            <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
-                                <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></span>
-                                <template x-if="contact.status === 'failed'">
-                                    <span class="badge badge-xs badge-error" :title="contact.last_error">FAIL</span>
-                                </template>
-                                <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
-                                    <span class="badge badge-xs badge-info">SYNC</span>
-                                </template>
-                            </div>
-                        </button>
-                    </template>
-                </div>
-
-                {{-- Desktop: table --}}
-                <div class="hidden sm:block" @if($this->recentContacts->isEmpty()) x-show="queue.length > 0" x-cloak @endif>
-                    <table class="table table-sm table-pin-rows">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Time</th>
-                                <th>Callsign</th>
-                                <th>Exchange</th>
-                                <th>Section</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{-- Server-confirmed contacts --}}
-                            @foreach($this->recentContacts->reverse() as $contact)
-                                <tr wire:key="contact-{{ $contact->id }}"
-                                    @if(! $contact->trashed())
-                                        @click="recallByContactId({{ $contact->id }})"
-                                        @keydown.enter="recallByContactId({{ $contact->id }})"
-                                        tabindex="0"
-                                    @endif
-                                    :aria-current="recalledContactId === {{ $contact->id }}"
-                                    :class="{
-                                        '!bg-primary/25': recalledContactId === {{ $contact->id }},
-                                    }"
-                                    @class([
-                                        'opacity-40 line-through' => $contact->trashed(),
-                                        'opacity-50' => ! $contact->trashed() && $contact->is_duplicate,
-                                        'cursor-pointer hover:bg-base-200' => ! $contact->trashed(),
-                                    ])>
-                                    <td class="font-mono">{{ $this->recentContactNumbers[$contact->id] ?? '-' }}</td>
-                                    <td class="font-mono">{{ $contact->qso_time->format('H:i') }}</td>
-                                    <td class="font-bold font-mono uppercase">
-                                        {{ $contact->callsign }}
-                                        @if($contact->trashed())
-                                            <button
-                                                wire:click="restoreContact({{ $contact->id }})"
-                                                class="btn btn-ghost btn-xs ml-1"
-                                                title="Undo delete"
-                                            >
-                                                Undo
-                                            </button>
-                                        @elseif($contact->is_duplicate)
-                                            <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
-                                        @endif
-                                    </td>
-                                    <td class="font-mono">{{ $contact->exchange_class }}</td>
-                                    <td>{{ $contact->section->code ?? '-' }}</td>
-                                </tr>
-                            @endforeach
-
-                            {{-- Pending/Failed contacts from local queue (newest, so last) --}}
-                            <template x-for="contact in [...queue].reverse()" :key="contact.uuid">
-                                <tr
-                                    @click="recallByUuid(contact.uuid)"
-                                    @keydown.enter="recallByUuid(contact.uuid)"
-                                    tabindex="0"
-                                    class="cursor-pointer hover:bg-base-200"
-                                    :aria-current="recalledUuid === contact.uuid"
-                                    :class="{
-                                    'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
-                                    'bg-error/5': contact.status === 'failed',
-                                    '!bg-primary/25': recalledUuid === contact.uuid,
-                                }">
-                                    <td class="font-mono">-</td>
-                                    <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
-                                    <td class="font-bold font-mono uppercase">
-                                        <span x-text="contact.callsign"></span>
-                                        <template x-if="contact.status === 'failed'">
-                                            <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span>
-                                        </template>
-                                        <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
-                                            <span class="badge badge-xs badge-info ml-1">SYNC</span>
-                                        </template>
-                                    </td>
-                                    <td class="font-mono" x-text="contact.exchange_class"></td>
-                                    <td x-text="contact.section_code || '-'"></td>
-                                </tr>
+                        <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+                            <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></span>
+                            <template x-if="contact.status === 'failed'">
+                                <span class="badge badge-xs badge-error" :title="contact.last_error">FAIL</span>
                             </template>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {{-- Composer --}}
-            <div class="border-t border-base-300 p-3 space-y-2" x-data="{ si: -1 }">
-                {{-- Recall Mode Indicator --}}
-                <template x-if="isRecalling">
-                    <div class="alert alert-info py-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                        </svg>
-                        <span>
-                            Editing <span x-text="recalledExchange" class="font-bold font-mono"></span>
-                            — edit it below, then tap
-                            <span class="font-semibold">Save</span>,
-                            <span class="font-semibold">Delete</span>, or
-                            <span class="font-semibold">Cancel</span>.
-                        </span>
-                    </div>
+                            <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
+                                <span class="badge badge-xs badge-info">SYNC</span>
+                            </template>
+                        </div>
+                    </button>
                 </template>
+            </x-slot:cards>
 
+            <x-slot:rows>
+                {{-- Server-confirmed contacts --}}
+                @foreach($this->recentContacts->reverse() as $contact)
+                    <x-logging.contact-row :contact="$contact" :number="$this->recentContactNumbers[$contact->id] ?? null" />
+                @endforeach
+
+                {{-- Pending/Failed contacts from local queue (newest, so last) --}}
+                <template x-for="contact in [...queue].reverse()" :key="contact.uuid">
+                    <tr
+                        @click="recallByUuid(contact.uuid)"
+                        @keydown.enter="recallByUuid(contact.uuid)"
+                        tabindex="0"
+                        class="cursor-pointer hover:bg-base-200"
+                        :aria-current="recalledUuid === contact.uuid"
+                        :class="{
+                        'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
+                        'bg-error/5': contact.status === 'failed',
+                        '!bg-primary/25': recalledUuid === contact.uuid,
+                    }">
+                        <td class="font-mono">-</td>
+                        <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
+                        <td class="font-bold font-mono uppercase">
+                            <span x-text="contact.callsign"></span>
+                            <template x-if="contact.status === 'failed'">
+                                <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span>
+                            </template>
+                            <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
+                                <span class="badge badge-xs badge-info ml-1">SYNC</span>
+                            </template>
+                        </td>
+                        <td class="font-mono" x-text="contact.exchange_class"></td>
+                        <td x-text="contact.section_code || '-'"></td>
+                    </tr>
+                </template>
+            </x-slot:rows>
+
+            <x-logging.exchange-composer
+                :suggestions="$suggestions"
+                :duplicate-warning="$isDuplicate ? $dupeWarning : null"
+            >
                 <template x-if="parseError">
                     <div class="alert alert-error">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -439,128 +265,10 @@
                         <span x-text="parseError"></span>
                     </div>
                 </template>
+            </x-logging.exchange-composer>
+        </x-logging.qso-log>
 
-                @if($isDuplicate)
-                    <x-alert x-show="!isRecalling" icon="phosphor-warning" class="alert-warning">
-                        Duplicate: {{ $dupeWarning }}
-                    </x-alert>
-                @endif
-
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <div class="relative flex-1">
-                        <input
-                            type="text"
-                            id="exchange-input"
-                            wire:model.live.debounce.300ms="exchangeInput"
-                            x-ref="exchangeInput"
-                            @input="si = -1"
-                            @keydown.enter.prevent="
-                                si >= 0 && $wire.suggestions?.length > 0
-                                    ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1)
-                                    : (isRecalling
-                                        ? saveRecalled($refs.exchangeInput)
-                                        : logContact($refs.exchangeInput))
-                            "
-                            @keydown.escape.prevent="
-                                si >= 0
-                                    ? (si = -1)
-                                    : (isRecalling
-                                        ? exitRecall($refs.exchangeInput)
-                                        : (($refs.exchangeInput.value = ''), $wire.clearInput()))
-                            "
-                            @keydown.arrow-down.prevent="
-                                $wire.suggestions?.length > 0
-                                    ? (si = Math.min(si + 1, $wire.suggestions.length - 1))
-                                    : (isRecalling ? recallDown($refs.exchangeInput) : null)
-                            "
-                            @keydown.arrow-up.prevent="
-                                $wire.suggestions?.length > 0
-                                    ? (si = Math.max(si - 1, -1))
-                                    : ($refs.exchangeInput.value.trim() === '' || isRecalling
-                                        ? recallUp($refs.exchangeInput)
-                                        : null)
-                            "
-                            @keydown.delete="
-                                if (isRecalling) { $event.preventDefault(); deleteRecalled($refs.exchangeInput); }
-                            "
-                            @keydown.tab.prevent="si >= 0 && $wire.suggestions.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : null"
-                            @contact-logged.window="$refs.exchangeInput.focus(); $refs.exchangeInput.select(); si = -1"
-                            @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
-                            class="input input-bordered input-lg w-full text-2xl font-mono uppercase tracking-wider"
-                            placeholder="W1AW 3A CT"
-                            aria-label="Exchange input"
-                            autofocus
-                        />
-
-                        {{-- Autocomplete Suggestions --}}
-                        @if(count($suggestions) > 0)
-                            <div class="absolute z-50 w-full bottom-full mb-1 bg-base-100 border border-base-300 rounded-box shadow-lg max-h-48 overflow-y-auto">
-                                @foreach($suggestions as $index => $suggestion)
-                                    <button
-                                        wire:click="selectSuggestion('{{ $suggestion['exchange'] }}')"
-                                        :class="{ 'bg-primary text-primary-content': si === {{ $index }} }"
-                                        @mouseenter="si = {{ $index }}"
-                                        class="w-full px-3 py-2 text-left hover:bg-base-200 flex items-center justify-between font-mono"
-                                        type="button"
-                                    >
-                                        <span class="font-bold">{{ $suggestion['exchange'] }}</span>
-                                        <span class="text-xs opacity-60" :class="{ 'text-primary-content/60': si === {{ $index }} }">{{ $suggestion['worked_on'] }}</span>
-                                    </button>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                    <template x-if="!isRecalling">
-                        <div class="flex gap-2 sm:contents">
-                            <x-button
-                                label="Log"
-                                icon="phosphor-check"
-                                class="btn-primary btn-lg flex-1 sm:flex-initial"
-                                @click="logContact($refs.exchangeInput)"
-                                tooltip="Enter"
-                                tooltip-position="tooltip-bottom"
-                            />
-                            <x-button
-                                label="Clear"
-                                icon="phosphor-x"
-                                class="btn-ghost btn-lg flex-1 sm:flex-initial"
-                                wire:click="clearInput"
-                                tooltip="Esc"
-                                tooltip-position="tooltip-bottom"
-                            />
-                        </div>
-                    </template>
-                    <template x-if="isRecalling">
-                        <div class="flex gap-2 sm:contents">
-                            <button type="button"
-                                class="btn btn-primary btn-lg flex-1 min-w-0 max-sm:px-2 sm:flex-initial"
-                                @click="saveRecalled($refs.exchangeInput)">
-                                <x-icon name="phosphor-check" class="w-5 h-5 max-sm:hidden" /> Save
-                            </button>
-                            <button type="button"
-                                class="btn btn-error btn-lg flex-1 min-w-0 max-sm:px-2 sm:flex-initial"
-                                @click="deleteRecalled($refs.exchangeInput)">
-                                <x-icon name="phosphor-trash" class="w-5 h-5 max-sm:hidden" /> Delete
-                            </button>
-                            <button type="button"
-                                class="btn btn-ghost btn-lg flex-1 min-w-0 max-sm:px-2 sm:flex-initial"
-                                @click="exitRecall($refs.exchangeInput)">
-                                <x-icon name="phosphor-x" class="w-5 h-5 max-sm:hidden" /> Cancel
-                            </button>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </div>
-
-        {{-- Keyboard Shortcuts Help --}}
-        <div class="hidden sm:flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-base-content/40">
-            <span><kbd class="kbd kbd-xs text-base-content">Enter</kbd> Log contact</span>
-            <span><kbd class="kbd kbd-xs text-base-content">Esc</kbd> Clear input</span>
-            <span><kbd class="kbd kbd-xs text-base-content">&uarr;</kbd><kbd class="kbd kbd-xs text-base-content">&darr;</kbd> Recall QSOs</span>
-            <span><kbd class="kbd kbd-xs text-base-content">Del</kbd> Delete recalled</span>
-            <span><kbd class="kbd kbd-xs text-base-content">Tab</kbd> Accept suggestion</span>
-        </div>
+        <x-logging.keyboard-shortcuts />
     </div>
 </div>
 </div>
