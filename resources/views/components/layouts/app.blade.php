@@ -58,7 +58,7 @@
                 }
             },
         }"
-        x-init="onScroll(); window.addEventListener('scroll', () => onScroll(), { passive: true }); window.addEventListener('resize', () => onScroll(), { passive: true })"
+        x-init="onScroll(); window.addEventListener('scroll', () => onScroll(), { passive: true }); window.addEventListener('resize', () => onScroll(), { passive: true }); new ResizeObserver(() => document.documentElement.style.setProperty('--mobile-header-height', $el.offsetHeight + 'px')).observe($el)"
     >
         {{-- Row 1: brand + right cluster --}}
         <div class="flex items-center gap-1.5 min-h-14 pl-3 pr-1.5 py-2">
