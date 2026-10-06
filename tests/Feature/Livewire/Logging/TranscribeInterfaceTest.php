@@ -81,6 +81,21 @@ test('rejects contact time outside event bounds with buffer', function () {
         ->assertSet('parseError', 'Contact time must be within the event window (±5 minutes).');
 });
 
+test('shows friendly validation messages when band and mode are missing', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('selectedBandId', null)
+        ->set('selectedModeId', null)
+        ->set('exchangeInput', 'W5XYZ 1B CT')
+        ->call('logContact')
+        ->assertHasErrors(['selectedBandId' => 'required', 'selectedModeId' => 'required']);
+
+    $errors = $component->errors();
+    expect($errors->first('selectedBandId'))->toBe('The band field is required.')
+        ->and($errors->first('selectedModeId'))->toBe('The mode field is required.');
+});
+
 test('allows contact time within 5 minute buffer before start', function () {
     $this->actingAs($this->user);
 
