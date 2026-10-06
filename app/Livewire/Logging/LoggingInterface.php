@@ -4,6 +4,7 @@ namespace App\Livewire\Logging;
 
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
+use App\Livewire\Logging\Concerns\HasRecentContactNumbers;
 use App\Models\AuditLog;
 use App\Models\Contact;
 use App\Models\OperatingSession;
@@ -18,7 +19,7 @@ use Livewire\Component;
 
 class LoggingInterface extends Component
 {
-    use HasContactForm, HasDuplicateDetection;
+    use HasContactForm, HasDuplicateDetection, HasRecentContactNumbers;
 
     public OperatingSession $operatingSession;
 
@@ -436,22 +437,9 @@ class LoggingInterface extends Component
             ->get();
     }
 
-    /**
-     * Session QSO numbers (1 = first QSO of the session) for the non-deleted
-     * contacts shown in the recent list, keyed by contact id.
-     *
-     * @return array<int, int>
-     */
-    #[Computed]
-    public function recentContactNumbers(): array
+    protected function activeContactCount(): int
     {
-        $activeRecent = $this->recentContacts->reject(fn (Contact $contact) => $contact->trashed());
-        $olderCount = $this->operatingSession->contacts()->count() - $activeRecent->count();
-
-        return $activeRecent->reverse()
-            ->values()
-            ->mapWithKeys(fn (Contact $contact, int $index) => [$contact->id => $olderCount + $index + 1])
-            ->all();
+        return $this->operatingSession->contacts()->count();
     }
 
     public function render(): View

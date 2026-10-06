@@ -5,6 +5,7 @@ namespace App\Livewire\Logging;
 use App\Events\ContactLogged;
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
+use App\Livewire\Logging\Concerns\HasRecentContactNumbers;
 use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
@@ -18,13 +19,14 @@ use App\Services\EventContextService;
 use App\Services\ExchangeParserService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class TranscribeInterface extends Component
 {
-    use AuthorizesRequests, HasContactForm, HasDuplicateDetection;
+    use AuthorizesRequests, HasContactForm, HasDuplicateDetection, HasRecentContactNumbers;
 
     /**
      * Splits an exchange string on any run of whitespace.
@@ -510,24 +512,36 @@ class TranscribeInterface extends Component
     #[Computed]
     public function recentContacts()
     {
-        return Contact::query()
+        return $this->transcribedContactsQuery()
             ->withTrashed()
-            ->where('event_configuration_id', $this->station->event_configuration_id)
-            ->where('is_transcribed', true)
-            ->whereHas('operatingSession', fn ($q) => $q->where('station_id', $this->station->id))
             ->with('section', 'band', 'mode')
             ->latest('qso_time')
             ->limit(50)
             ->get();
     }
 
-    protected function findTranscribedContact(int $contactId): ?Contact
+    /**
+     * Contacts transcribed for this station.
+     *
+     * @return Builder<Contact>
+     */
+    protected function transcribedContactsQuery(): Builder
     {
         return Contact::query()
-            ->where('id', $contactId)
             ->where('event_configuration_id', $this->station->event_configuration_id)
             ->where('is_transcribed', true)
-            ->whereHas('operatingSession', fn ($q) => $q->where('station_id', $this->station->id))
+            ->whereHas('operatingSession', fn ($q) => $q->where('station_id', $this->station->id));
+    }
+
+    protected function activeContactCount(): int
+    {
+        return $this->transcribedContactsQuery()->count();
+    }
+
+    protected function findTranscribedContact(int $contactId): ?Contact
+    {
+        return $this->transcribedContactsQuery()
+            ->where('id', $contactId)
             ->first();
     }
 
