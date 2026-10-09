@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\EventType;
+use App\Models\OperatingClass;
 use Illuminate\Database\Seeder;
 
 class OperatingClassSeeder extends Seeder
@@ -11,8 +13,8 @@ class OperatingClassSeeder extends Seeder
      */
     public function run(): void
     {
-        $fdEventType = \App\Models\EventType::where('code', 'FD')->first();
-        $wfdEventType = \App\Models\EventType::where('code', 'WFD')->first();
+        $fdEventType = EventType::where('code', 'FD')->first();
+        $wfdEventType = EventType::where('code', 'WFD')->first();
 
         $fdClasses = [
             [
@@ -111,7 +113,10 @@ class OperatingClassSeeder extends Seeder
         ];
 
         foreach (array_merge($fdClasses, $wfdClasses) as $class) {
-            \App\Models\OperatingClass::create($class);
+            OperatingClass::firstOrCreate(
+                ['event_type_id' => $class['event_type_id'], 'code' => $class['code']],
+                $class,
+            );
         }
     }
 }

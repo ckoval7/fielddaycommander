@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Section;
 use Illuminate\Database\Seeder;
 
 class SectionSeeder extends Seeder
@@ -130,7 +131,7 @@ class SectionSeeder extends Seeder
         ];
 
         foreach ($sections as $section) {
-            \App\Models\Section::create($section);
+            Section::firstOrCreate(['code' => $section['code']], $section);
         }
     }
 }

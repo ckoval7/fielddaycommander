@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\EventType;
 use Illuminate\Database\Seeder;
 
 class EventTypeSeeder extends Seeder
@@ -29,7 +30,7 @@ class EventTypeSeeder extends Seeder
         ];
 
         foreach ($eventTypes as $eventType) {
-            \App\Models\EventType::create($eventType);
+            EventType::firstOrCreate(['code' => $eventType['code']], $eventType);
         }
     }
 }
