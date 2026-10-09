@@ -108,5 +108,6 @@
     </div>
 
     <x-toast />
+    <x-form-error-summary />
 </body>
 </html>

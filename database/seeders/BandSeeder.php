@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Band;
 use Illuminate\Database\Seeder;
 
 class BandSeeder extends Seeder
@@ -28,7 +29,7 @@ class BandSeeder extends Seeder
         ];
 
         foreach ($bands as $band) {
-            \App\Models\Band::create($band);
+            Band::firstOrCreate(['name' => $band['name']], $band);
         }
     }
 }

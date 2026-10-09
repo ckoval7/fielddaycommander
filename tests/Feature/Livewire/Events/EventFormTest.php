@@ -334,6 +334,17 @@ test('event form validates required fields', function () {
         ]);
 });
 
+test('event form highlights date pickers that fail validation', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->assertDontSeeHtml('[&_.input]:border-error');
+
+    $component->call('save')
+        ->assertHasErrors(['start_time', 'end_time'])
+        ->assertSeeHtml('[&_.input]:border-error');
+});
+
 test('event form validates callsign format', function () {
     $this->actingAs($this->user);
 
@@ -1340,4 +1351,19 @@ test('the power multiplier badge is hidden for event types that have no multipli
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('event_type_id', $this->eventType->id)
         ->assertSee('Power Multiplier Rules');
+});
+
+test('event form highlights power source checkboxes when none are selected', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('uses_commercial_power', false)
+        ->set('uses_generator', false)
+        ->set('uses_battery', false)
+        ->set('uses_alternate_power', false)
+        ->call('save')
+        ->assertHasErrors(['uses_commercial_power'])
+        ->assertSeeHtml('checkbox checkbox-sm checkbox-error')
+        ->assertSeeHtml('border-error bg-error/5')
+        ->assertSee('At least one power source must be selected.');
 });

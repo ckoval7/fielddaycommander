@@ -1,7 +1,11 @@
 <?php
 
+use App\Models\Event;
+use App\Models\EventConfiguration;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     DB::table('system_config')->updateOrInsert(
@@ -58,4 +62,43 @@ test('guest home page renders Phosphor nav icons', function () {
     expect($html)->toContain('viewBox="0 0 256 256"');
     expect($html)->toContain(phosphorPathSignature('phosphor-house')); // Home
     expect($html)->toContain(phosphorPathSignature('phosphor-list-bullets')); // View Log
+});
+
+/**
+ * @return array<int, string> Titles of the sidebar menu items rendered as active.
+ */
+function activeMenuTitles(string $html): array
+{
+    preg_match_all('/<a[^>]*mary-active-menu[^>]*>.*?<\/a>/s', $html, $matches);
+
+    return array_map(fn (string $anchor) => trim(preg_replace('/\s+/', ' ', strip_tags($anchor))), $matches[0]);
+}
+
+test('a manage page does not also highlight the nav item whose link prefixes its URL', function () {
+    Permission::findOrCreate('manage-shifts');
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-shifts');
+
+    $event = Event::factory()->create([
+        'start_time' => appNow()->subHours(12),
+        'end_time' => appNow()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+    Setting::set('active_event_id', $event->id);
+
+    $html = $this->actingAs($user)->get(route('site-safety.manage'))->assertOk()->getContent();
+
+    expect(activeMenuTitles($html))->toBe(['Manage Safety Checklist']);
+});
+
+test('sidebar items with an explicit active rule opt out of URL-prefix matching', function () {
+    $layout = file_get_contents(resource_path('views/components/layouts/app.blade.php'));
+
+    preg_match_all('/<x-menu-item\b[^>]*?:active="/s', $layout, $items);
+
+    expect($items[0])->not->toBeEmpty();
+
+    foreach ($items[0] as $item) {
+        expect($item)->toMatch('/\sexact\s/');
+    }
 });

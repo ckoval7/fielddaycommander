@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Mode;
 use Illuminate\Database\Seeder;
 
 class ModeSeeder extends Seeder
@@ -36,7 +37,7 @@ class ModeSeeder extends Seeder
         ];
 
         foreach ($modes as $mode) {
-            \App\Models\Mode::create($mode);
+            Mode::firstOrCreate(['name' => $mode['name']], $mode);
         }
     }
 }
