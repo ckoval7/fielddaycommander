@@ -10,16 +10,13 @@
         <x-icon name="phosphor-warning" class="w-5 h-5 shrink-0 mt-0.5" />
         <div class="flex-1 min-w-0">
             <div class="font-bold">Please fix the following errors:</div>
-            <ul class="list-disc pl-5 text-sm mt-1 max-h-48 overflow-y-auto space-y-0.5">
+            <ul class="text-sm mt-1 max-h-48 overflow-y-auto space-y-0.5">
                 <template x-for="error in $store.formErrors.messages" :key="error.id">
-                    <li
-                        role="button"
-                        tabindex="0"
-                        class="cursor-pointer hover:underline"
-                        x-on:click="$store.formErrors.focusField(error.field)"
-                        x-on:keydown.enter.prevent="$store.formErrors.focusField(error.field)"
-                        x-text="error.message"
-                    ></li>
+                    {{-- Bullet is drawn manually: a <button> is always laid out inline-block, which pushes a native list marker down to its last line. --}}
+                    <li class="flex items-start gap-2">
+                        <span aria-hidden="true">&bull;</span>
+                        <button type="button" class="text-left cursor-pointer hover:underline" x-on:click="$store.formErrors.focusField(error.field)" x-text="error.message"></button>
+                    </li>
                 </template>
             </ul>
         </div>
