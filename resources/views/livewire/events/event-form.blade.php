@@ -24,20 +24,6 @@
         </x-alert>
     @endif
 
-    {{-- Validation Error Summary --}}
-    @if($errors->any())
-        <x-alert icon="phosphor-warning" class="alert-error mb-4">
-            <div>
-                <div class="font-bold">Please fix the following errors:</div>
-                <ul class="list-disc list-inside text-sm mt-1">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        </x-alert>
-    @endif
-
     <form wire:submit="save" novalidate>
         <!-- Section 1: Event Information -->
         <x-card class="mb-6">
@@ -292,13 +278,18 @@
                 <div>
                     <fieldset>
                     <legend class="block text-sm font-medium mb-3">Power Sources</legend>
+                    <div @class([
+                        'rounded-box border p-3 -mx-3 transition-colors',
+                        'border-error bg-error/5' => $errors->has('uses_commercial_power'),
+                        'border-transparent' => ! $errors->has('uses_commercial_power'),
+                    ])>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="form-control">
                             <label class="label cursor-pointer justify-start gap-3">
                                 <input
                                     type="checkbox"
                                     wire:model.live="uses_commercial_power"
-                                    class="checkbox checkbox-sm"
+                                    @class(['checkbox checkbox-sm', 'checkbox-error' => $errors->has('uses_commercial_power')])
                                     @if($isLocked) disabled @endif
                                 />
                                 <span class="label-text">Commercial Power (Grid)</span>
@@ -310,7 +301,7 @@
                                 <input
                                     type="checkbox"
                                     wire:model.live="uses_generator"
-                                    class="checkbox checkbox-sm"
+                                    @class(['checkbox checkbox-sm', 'checkbox-error' => $errors->has('uses_commercial_power')])
                                     @if($isLocked) disabled @endif
                                 />
                                 <span class="label-text">Generator</span>
@@ -322,7 +313,7 @@
                                 <input
                                     type="checkbox"
                                     wire:model.live="uses_battery"
-                                    class="checkbox checkbox-sm"
+                                    @class(['checkbox checkbox-sm', 'checkbox-error' => $errors->has('uses_commercial_power')])
                                     @if($isLocked) disabled @endif
                                 />
                                 <span class="label-text">Battery</span>
@@ -334,7 +325,7 @@
                                 <input
                                     type="checkbox"
                                     wire:model.live="uses_alternate_power"
-                                    class="checkbox checkbox-sm"
+                                    @class(['checkbox checkbox-sm', 'checkbox-error' => $errors->has('uses_commercial_power')])
                                     @if($isLocked) disabled @endif
                                 />
                                 <span class="label-text">Alternate Power</span>
@@ -343,6 +334,10 @@
                                 Examples: Solar, Wind, Water (Hydro), Methane
                             </p>
                         </div>
+                    </div>
+                    @error('uses_commercial_power')
+                        <div class="text-error text-sm mt-2">{{ $message }}</div>
+                    @enderror
                     </div>
                     </fieldset>
                 </div>

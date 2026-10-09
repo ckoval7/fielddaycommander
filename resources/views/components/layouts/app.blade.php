@@ -494,6 +494,7 @@
 
     {{--  TOAST area --}}
     <x-toast />
+    <x-form-error-summary />
 
     {{-- Toast notification listener: bridges Livewire "toast" events to MaryUI's window.toast() --}}
     <script>

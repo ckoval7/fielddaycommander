@@ -1,16 +1,6 @@
 <div>
     <x-modal wire:model="showModal" title="Edit Contact" class="modal-lg">
         <form wire:submit.prevent>
-            @if ($errors->any())
-                <x-alert title="Please fix the following errors:" icon="phosphor-warning" class="alert-error mb-4">
-                    <ul class="list-disc list-inside">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </x-alert>
-            @endif
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 <x-input
                     label="Callsign"

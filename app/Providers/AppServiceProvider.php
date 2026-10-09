@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Livewire\Hooks\ReportValidationFailures;
 use App\Models\Contact;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -48,6 +50,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->alias(EventContextService::class, ActiveEventService::class);
 
         $this->app->singleton(RuleSetFactory::class);
+
+        // Flag Livewire actions that fail validation so the frontend can show the
+        // floating error summary (resources/js/components/form-error-summary.js).
+        // Must be registered before Livewire boots its component hooks.
+        Livewire::componentHook(ReportValidationFailures::class);
     }
 
     /**

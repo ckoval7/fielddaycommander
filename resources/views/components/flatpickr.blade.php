@@ -20,7 +20,8 @@
     x-data="{!! $xData !!}"
     class="w-full"
 >
-    <fieldset class="fieldset py-0">
+    {{-- The input sits under wire:ignore, so the error border is driven from this (morphable) fieldset. --}}
+    <fieldset @class(['fieldset py-0', '[&_.input]:border-error' => $modelName && $errors->has($modelName)])>
         {{-- Label --}}
         @if($label)
             <legend class="fieldset-legend mb-0.5">

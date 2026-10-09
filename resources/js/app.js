@@ -2,6 +2,7 @@ import './bootstrap';
 import dashboardSortable from './components/dashboard-sortable';
 import contactQueue from './components/contact-queue';
 import transcribeRecall from './components/transcribe-recall';
+import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
 
@@ -22,6 +23,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('dashboardSortable', dashboardSortable);
     Alpine.data('contactQueue', contactQueue);
     Alpine.data('transcribeRecall', transcribeRecall);
+    Alpine.data('formErrorSummaryPanel', formErrorSummaryPanel);
     Alpine.data('flatpickr', flatpickrComponent);
 });
 
@@ -47,6 +49,8 @@ globalThis.addEventListener('error', (event) => {
 // inline <x-silence-livewire-rejections /> partial — registering there means
 // it runs before laravel/boost's BrowserLogger listener.
 document.addEventListener('livewire:init', () => {
+    registerFormErrorSummary(globalThis.Alpine, globalThis.Livewire);
+
     Livewire.interceptRequest(({ onError, onFailure }) => {
         onError(({ response, body, preventDefault }) => {
             const status = response?.status;
