@@ -53,6 +53,16 @@ sudo bash deploy.sh --domain yourdomain.com
 
 The interactive script handles installing dependencies, configuring the database, building assets, and setting up the web server.
 
+### Backups
+
+`backup.sh` saves the database, uploaded photos and `.env` (its `APP_KEY` is needed to restore two-factor logins); `restore.sh` puts them back. Turn on hourly database and nightly full backups with:
+
+```bash
+sudo /var/www/fd-commander/backup.sh --install-schedule
+```
+
+Run either script with `--help` for options. Docker installs: see [DOCKER.md](DOCKER.md#backups).
+
 ### Manual Setup
 
 If you prefer to configure things yourself, or need to adapt the install to your environment, see the [documentation on the website](https://fielddaycommander.org/fd-commander-docs.html).

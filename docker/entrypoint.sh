@@ -10,6 +10,14 @@ if [[ -z "$DB_PASSWORD" ]]; then
     exit 1
 fi
 
+if [[ -z "$APP_KEY" || "$APP_KEY" = "base64:" ]]; then
+    echo "ERROR: APP_KEY is not set."
+    echo "A key generated inside the container is lost on every restart, which"
+    echo "invalidates sessions and two-factor secrets. Run 'bash docker/setup.sh'"
+    echo "to add one to .env, then 'docker compose up -d' again."
+    exit 1
+fi
+
 # 1. Ensure storage directory structure exists (volume may be fresh)
 echo "Setting up storage directories..."
 mkdir -p /app/storage/{app/public,framework/{cache/data,sessions,views,testing},logs}
@@ -30,15 +38,7 @@ env | grep -E '^[A-Z_]+=' | sort | while IFS='=' read -r key value; do
     echo "${key}=\"${value}\"" >> /app/.env
 done
 
-# 4. Generate APP_KEY if not set
-if [[ -z "$APP_KEY" || "$APP_KEY" = "base64:" ]]; then
-    echo "Generating application key..."
-    php artisan key:generate --force
-    # Re-export so downstream commands see it
-    export APP_KEY=$(grep '^APP_KEY=' /app/.env | cut -d= -f2-)
-fi
-
-# 5. Generate Reverb credentials if not set
+# 4. Generate Reverb credentials if not set
 if [[ -z "$REVERB_APP_KEY" ]]; then
     echo "Generating Reverb credentials..."
     REVERB_APP_KEY=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 20 || true)
@@ -51,7 +51,7 @@ if [[ -z "$REVERB_APP_KEY" ]]; then
     echo "REVERB_APP_ID=$REVERB_APP_ID" >> /app/.env
 fi
 
-# 6. Wait for database
+# 5. Wait for database
 echo "Waiting for database connection..."
 until php artisan db:show > /dev/null 2>&1; do
     echo "  Database not ready, retrying in 3s..."
@@ -59,11 +59,11 @@ until php artisan db:show > /dev/null 2>&1; do
 done
 echo "Database connected."
 
-# 7. Run migrations
+# 6. Run migrations
 echo "Running migrations..."
 php artisan migrate --force
 
-# 8. Run production seeders on first run
+# 7. Run production seeders on first run
 SEEDER_MARKER="/app/storage/.seeders-complete"
 if [[ ! -f "$SEEDER_MARKER" ]]; then
     echo "First run detected — running production seeders..."
@@ -82,7 +82,7 @@ else
     echo "Seeders already ran (marker exists), skipping."
 fi
 
-# 9. Cache configuration
+# 8. Cache configuration
 echo "Optimizing application (config/route/view/event caches)..."
 php artisan optimize
 

@@ -3,7 +3,7 @@ set -euo pipefail
 
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
-FRANKENPHP_VERSION="1.12.1"
+FRANKENPHP_VERSION="1.13.0"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 readonly DISTRO_DEBIAN="debian"
 readonly DISTRO_RHEL="rhel"
@@ -601,6 +601,10 @@ setup_app() {
     # Step 8: Set permissions
     chmod -R 775 "$APP_PATH/storage" "$APP_PATH/bootstrap/cache"
     chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH/storage" "$APP_PATH/bootstrap/cache"
+    # Operator scripts run as root; older tags may not ship them.
+    for script in backup.sh restore.sh; do
+        [[ -f "$APP_PATH/$script" ]] && chmod 755 "$APP_PATH/$script"
+    done
 
     log_info "Application setup complete"
 }
@@ -837,6 +841,11 @@ configure_systemd() {
     # even a single-core box can handle a polling request alongside a user
     # request. Each Octane FrankenPHP worker is a thread inside one process,
     # so per-worker memory cost is small.
+    #
+    # Octane is started with the PHP CLI, not `frankenphp php-cli`: since
+    # FrankenPHP 1.13, php-cli puts the script path in $argv[1], which artisan
+    # misreads as the command name. Octane still runs the server through the
+    # frankenphp binary on PATH.
     local octane_workers
     octane_workers=$(compute_octane_workers)
     log_info "Creating FrankenPHP/Octane service with ${octane_workers} workers..."
@@ -850,7 +859,7 @@ User=fdcommander
 Group=${WEB_GROUP}
 WorkingDirectory=${APP_PATH}
 EnvironmentFile=${APP_PATH}/.env
-ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=${APP_PORT} --workers=${octane_workers} --caddyfile=${APP_PATH}/Caddyfile
+ExecStart=/usr/bin/php artisan octane:frankenphp --host=0.0.0.0 --port=${APP_PORT} --workers=${octane_workers} --caddyfile=${APP_PATH}/Caddyfile
 Restart=always
 RestartSec=5
 $( [[ "$APP_PORT" -lt 1024 ]] && printf 'CapabilityBoundingSet=CAP_NET_BIND_SERVICE\nAmbientCapabilities=CAP_NET_BIND_SERVICE' || echo '# No privileged port capabilities needed' )
@@ -1028,6 +1037,7 @@ finalize() {
         echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} and complete initial setup"
         echo "  2. The SystemAdminSeeder created the first admin user"
         echo "  3. Review firewall settings if not configured"
+        echo "  4. Schedule backups: sudo ${APP_PATH}/backup.sh --install-schedule"
     fi
     if ! $SSL_ENABLED; then
         echo "  For HTTPS: set DOMAIN to a real domain and Caddy handles SSL automatically"
