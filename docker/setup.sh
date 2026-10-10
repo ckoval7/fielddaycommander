@@ -67,6 +67,11 @@ compute_redis_maxmemory() {
 echo ""
 echo "Checking secrets..."
 
+# Application key — must live in the host .env so it survives container
+# restarts. Fortify encrypts two-factor secrets with it, and a backup restored
+# without its key locks out every user with two-factor authentication.
+set_env "APP_KEY" "base64:$(head -c 32 /dev/urandom | base64)"
+
 # Database password
 set_env "DB_PASSWORD" "$(random_string 32)"
 
