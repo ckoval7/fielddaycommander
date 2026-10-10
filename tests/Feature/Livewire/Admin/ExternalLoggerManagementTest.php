@@ -198,6 +198,11 @@ test('WSJTX setup instructions do not point to multicast outgoing interfaces', f
         ->assertSee('Special operating activity');
 });
 
+test('WSJTX and UDP ADIF setup instructions explain station callsign matching', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSeeInOrder(['WSJTX / JTDX', 'station callsign', 'UDP ADIF (fldigi, etc.)', 'station callsign']);
+});
+
 test('renders UDP ADIF section with stopped status', function () {
     Livewire::test(ExternalLoggerManagement::class)
         ->assertSee('UDP ADIF (fldigi, etc.)')
