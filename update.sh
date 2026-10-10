@@ -352,6 +352,78 @@ SCHEDEOF
     return 0
 }
 
+# Install the FrankenPHP version deploy.sh pins if this server runs a different
+# one, so a version bump only needs changing in deploy.sh. A failed download
+# keeps the current binary rather than aborting the update.
+sync_frankenphp_version() {
+    local binary="/usr/local/bin/frankenphp"
+    local desired current
+    desired=$(grep -m1 -E '^FRANKENPHP_VERSION=' "$APP_PATH/deploy.sh" 2>/dev/null | cut -d'"' -f2 || true)
+    if [[ -z "$desired" ]]; then
+        log_warn "Could not read FRANKENPHP_VERSION from $APP_PATH/deploy.sh — skipping FrankenPHP upgrade"
+        return 0
+    fi
+    if [[ ! -x "$binary" ]]; then
+        log_warn "FrankenPHP not found at ${binary} — skipping upgrade"
+        return 0
+    fi
+
+    current=$("$binary" version 2>/dev/null | awk '{print $2}' | sed 's/^v//' || true)
+    if [[ "$current" == "$desired" ]]; then
+        log_info "FrankenPHP already at ${desired}"
+        return 0
+    fi
+
+    local arch
+    case "$(uname -m)" in
+        x86_64)  arch="linux-x86_64" ;;
+        aarch64) arch="linux-aarch64" ;;
+        *)       log_warn "Unsupported architecture $(uname -m) — keeping FrankenPHP ${current}"
+                 return 0 ;;
+    esac
+
+    local url="https://github.com/php/frankenphp/releases/download/v${desired}/frankenphp-${arch}"
+    local tmp="${binary}.new"
+    log_info "Upgrading FrankenPHP ${current:-unknown} → ${desired}..."
+    if ! curl -fSL -o "$tmp" "$url"; then
+        rm -f "$tmp"
+        log_warn "Download failed — keeping FrankenPHP ${current}"
+        return 0
+    fi
+    chmod +x "$tmp"
+    if ! "$tmp" version &>/dev/null; then
+        rm -f "$tmp"
+        log_warn "Downloaded FrankenPHP binary did not run — keeping FrankenPHP ${current}"
+        return 0
+    fi
+    setcap cap_net_bind_service=+ep "$tmp" || log_warn "setcap failed — FrankenPHP relies on the unit's capabilities to bind ports below 1024"
+
+    # Rename over the old binary so the running server is never left with a
+    # half-written file.
+    mv -f "$tmp" "$binary"
+    if command -v restorecon &>/dev/null; then
+        restorecon "$binary" 2>/dev/null || true
+    fi
+    log_info "FrankenPHP $("$binary" version | awk '{print $2}') installed"
+    return 0
+}
+
+# Start Octane with the PHP CLI instead of `frankenphp php-cli` (older
+# installs). Since FrankenPHP 1.13, php-cli puts the script path in $argv[1],
+# which artisan misreads as the command name, so Octane never starts.
+# Idempotent: no-ops once converted.
+migrate_octane_unit() {
+    local unit_file="/etc/systemd/system/fdcommander.service"
+    if [[ ! -f "$unit_file" ]] || ! grep -q 'frankenphp php-cli artisan octane:frankenphp' "$unit_file"; then
+        return 0
+    fi
+
+    log_info "Switching the Octane unit to start through the PHP CLI"
+    sed -i -E 's|^ExecStart=[^ ]*frankenphp php-cli artisan octane:frankenphp|ExecStart=/usr/bin/php artisan octane:frankenphp|' "$unit_file"
+    systemctl daemon-reload
+    return 0
+}
+
 # Pick a Redis maxmemory value sized to the host (Pi-friendly).
 # Buckets by total RAM: ≤1G→128mb, ≤2G→256mb, ≤4G→512mb, ≤8G→1gb, else 2gb.
 compute_redis_maxmemory() {
@@ -561,6 +633,8 @@ rebuild_caches() {
 restart_services() {
     log_phase "Restarting services"
 
+    sync_frankenphp_version
+    migrate_octane_unit
     sync_octane_workers
     migrate_scheduler_unit
 

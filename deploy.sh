@@ -3,7 +3,7 @@ set -euo pipefail
 
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
-FRANKENPHP_VERSION="1.12.1"
+FRANKENPHP_VERSION="1.13.0"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 readonly DISTRO_DEBIAN="debian"
 readonly DISTRO_RHEL="rhel"
@@ -789,6 +789,11 @@ configure_systemd() {
     # even a single-core box can handle a polling request alongside a user
     # request. Each Octane FrankenPHP worker is a thread inside one process,
     # so per-worker memory cost is small.
+    #
+    # Octane is started with the PHP CLI, not `frankenphp php-cli`: since
+    # FrankenPHP 1.13, php-cli puts the script path in $argv[1], which artisan
+    # misreads as the command name. Octane still runs the server through the
+    # frankenphp binary on PATH.
     local octane_workers
     octane_workers=$(compute_octane_workers)
     log_info "Creating FrankenPHP/Octane service with ${octane_workers} workers..."
@@ -802,7 +807,7 @@ User=fdcommander
 Group=${WEB_GROUP}
 WorkingDirectory=${APP_PATH}
 EnvironmentFile=${APP_PATH}/.env
-ExecStart=/usr/local/bin/frankenphp php-cli artisan octane:frankenphp --host=0.0.0.0 --port=${APP_PORT} --workers=${octane_workers} --caddyfile=${APP_PATH}/Caddyfile
+ExecStart=/usr/bin/php artisan octane:frankenphp --host=0.0.0.0 --port=${APP_PORT} --workers=${octane_workers} --caddyfile=${APP_PATH}/Caddyfile
 Restart=always
 RestartSec=5
 $( [[ "$APP_PORT" -lt 1024 ]] && printf 'CapabilityBoundingSet=CAP_NET_BIND_SERVICE\nAmbientCapabilities=CAP_NET_BIND_SERVICE' || echo '# No privileged port capabilities needed' )
