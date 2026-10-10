@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>External Loggers - FD Commander</title>
+<meta name="description" content="Connect N1MM Logger+, WSJT-X, JTDX, and fldigi to FD Commander over UDP so every contact lands in your Field Day log automatically.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/external-loggers.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="External Loggers - FD Commander">
+<meta property="og:description" content="Send contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi straight into FD Commander over UDP.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/external-loggers.html">
+<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="External Loggers - FD Commander">
+<meta name="twitter:description" content="Connect N1MM Logger+, WSJT-X, JTDX, and fldigi to FD Commander.">
+<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .cmd { color: var(--text-primary); }
+  .code-block .output { color: var(--accent-sky); }
+  .code-block .prompt { color: var(--text-muted); }
+
+  .feature-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  .feature-list li {
+    padding-left: 1.5rem;
+    position: relative;
+  }
+  .feature-list li::before {
+    content: "~";
+    position: absolute;
+    left: 0;
+    color: var(--accent-emerald);
+    font-weight: 700;
+  }
+  .feature-list li.hidden::before {
+    content: "~";
+    color: var(--text-muted);
+  }
+
+  .badge-advanced {
+    display: inline-block;
+    background: rgba(251, 146, 60, 0.15);
+    color: var(--accent-orange);
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+
+  .port-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+  .port-table th, .port-table td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  .port-table th {
+    color: var(--text-primary);
+    font-weight: 600;
+    background: var(--bg-card);
+  }
+  .table-wrap {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+  }
+  .table-wrap .port-table { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Connect <span class="gradient">External Loggers</span></h1>
+    <p>Send contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi straight into FD Commander.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; External Loggers
+      </div>
+
+      <div class="badge-advanced">Logging &middot; Optional</div>
+
+      <p>Your operators already know their favorite logging programs, and there's no reason to make them give those up for the weekend. FD Commander can listen on the local network for contacts sent by N1MM Logger+, WSJT-X, JTDX, fldigi, and anything else that sends ADIF over UDP. Each contact lands in the log a moment after the operator saves it, where it counts toward the score, gets checked for dupes, and shows up on the dashboards.</p>
+
+      <p>This guide walks through one logging PC from start to finish. Plan on about fifteen minutes for the first PC and a few minutes for each one after that.</p>
+
+      <h2>Before You Start</h2>
+
+      <ul>
+        <li><strong>FD Commander is running on your field network</strong> with a fixed IP address. If you haven't set that up yet, start with <a href="lan-setup.html">Set Up a LAN for Field Operations</a>. The examples below use <code>192.168.1.50</code> as the server address.</li>
+        <li><strong>Your event exists.</strong> Listeners attach to the current event, which is the active one or, if none is active yet, the next upcoming one. Create it first with <a href="first-event.html">First Event Setup</a>.</li>
+        <li><strong>You can sign in as a System Administrator or Event Manager.</strong> The External Loggers page requires the permission to import contacts, and those two roles have it by default.</li>
+        <li><strong>The logging PCs are on the same network as the server.</strong> A guest Wi-Fi network with client isolation turned on will quietly drop the traffic.</li>
+      </ul>
+
+      <div class="callout warning">
+        <div class="callout-title">Private networks only</div>
+        <p>UDP has no authentication. Anyone who can reach these ports can send contacts into your log. Only turn the listeners on when FD Commander is on a private, firewalled network, and never on a server that is reachable from the internet.</p>
+      </div>
+
+      <h2>How It Works</h2>
+
+      <p>Each logging program sends a small UDP packet to the server every time a contact is logged. FD Commander runs a separate listener for each kind of program, and each listener has its own port:</p>
+
+      <div class="table-wrap">
+      <table class="port-table">
+        <thead><tr><th>Logging program</th><th>Listener</th><th>Default port</th><th>Station is matched by</th></tr></thead>
+        <tbody>
+          <tr><td>N1MM Logger+</td><td>N1MM Logger+</td><td>12060</td><td>The PC's computer (NetBIOS) name</td></tr>
+          <tr><td>WSJT-X, JTDX</td><td>WSJTX / JTDX</td><td>2237</td><td>The station callsign</td></tr>
+          <tr><td>fldigi and other ADIF senders</td><td>UDP ADIF (fldigi, etc.)</td><td>2238</td><td>The station callsign</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>When a contact arrives, FD Commander works out which station it came from, who was operating, and which band and mode were in use. It then opens an operating session for that station automatically, so the station shows up as <strong>Occupied</strong> on the Log Contact page just as if someone had signed in through the browser. A session closes on its own after about 30 minutes without a new contact.</p>
+
+      <div class="callout info">
+        <div class="callout-title">One path per contact</div>
+        <p>Some stations chain programs together, such as WSJT-X or fldigi feeding N1MM Logger+. In that case, let N1MM Logger+ send the contacts and leave the other program pointed at N1MM. If both programs send the same contact to FD Commander, it arrives twice and the second copy is marked as a dupe.</p>
+      </div>
+
+      <h2>Step 1: Open the Firewall on the Server</h2>
+
+      <p>The deploy script opens the web port but not the logger ports. If your server runs UFW, check whether it's active:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ufw status</span></div>
+
+      <p>If the status is <code>active</code>, open the port for each listener you plan to use:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ufw allow 12060/udp</span>  <span class="comment"># N1MM Logger+</span>
+<span class="prompt">$</span> <span class="cmd">sudo ufw allow 2237/udp</span>   <span class="comment"># WSJT-X / JTDX</span>
+<span class="prompt">$</span> <span class="cmd">sudo ufw allow 2238/udp</span>   <span class="comment"># fldigi and other ADIF senders</span></div>
+
+      <p>On a server that uses firewalld instead, the equivalent is:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo firewall-cmd --permanent --add-port=12060/udp</span>
+<span class="prompt">$</span> <span class="cmd">sudo firewall-cmd --reload</span></div>
+
+      <p>Repeat the first command with <code>2237</code> and <code>2238</code> if you use those listeners.</p>
+
+      <p>If neither firewall is active, there's nothing to do here. Raspberry Pi OS doesn't turn one on by default.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Running in Docker?</div>
+        <p>The included <code>docker-compose.yml</code> already publishes all three UDP ports. If you change a listener's port in FD Commander, set the matching <code>N1MM_PORT</code>, <code>WSJTX_PORT</code>, or <code>UDP_ADIF_PORT</code> value in your <code>.env</code> file to the same number, then run <code>docker compose up -d</code> so the container picks it up.</p>
+      </div>
+
+      <h2>Step 2: Turn On the Listener</h2>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Sign in to FD Commander and open <strong>Logging &gt; External Loggers</strong>.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> Find the card for your logging program and flip its toggle on. The status changes from <strong>Starting listener...</strong> to <strong>Listening on port 12060</strong> (or whichever port that listener uses), followed by packet and error counters.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> Leave the page open. The packet counter is the quickest way to tell whether the logging PC can reach the server, and you'll use it in a moment.</p>
+      </div>
+
+      <p>The default ports work for nearly everyone. If you need a different one, turn the listener off first, since the port field is locked while the listener is switched on. Ports from 1024 to 65535 are allowed.</p>
+
+      <p>You don't need to babysit the listeners. If one stops unexpectedly while the External Loggers page is open, the page restarts it within a few seconds.</p>
+
+      <h2>Step 3: Match Logging PCs to Stations</h2>
+
+      <p>Every contact carries an identifier for where it came from. FD Commander compares that identifier with the <strong>name</strong> of each station in your event, then with each station's <strong>Hostname (NetBIOS Name)</strong> field. Neither comparison cares about capitalization. If nothing matches, FD Commander creates a new station named after the identifier, so contacts are never lost, but they may land somewhere you didn't expect. A few minutes of setup here keeps the stations tidy.</p>
+
+      <h3>N1MM Logger+ stations</h3>
+
+      <p>N1MM Logger+ identifies itself by the PC's computer name. To find it, open a Command Prompt on the logging PC and run:</p>
+
+      <div class="code-block"><span class="prompt">C:\&gt;</span> <span class="cmd">echo %COMPUTERNAME%</span>
+<span class="output">SHACK-PC-2</span></div>
+
+      <p>In FD Commander, open <strong>Stations</strong>, edit the station that PC will run, and enter that name in the <strong>Hostname (NetBIOS Name)</strong> field. Repeat for each N1MM Logger+ PC.</p>
+
+      <h3>WSJT-X, JTDX, and fldigi stations</h3>
+
+      <p>These programs identify contacts by the station callsign in the log record, which is normally your club or event callsign. That means every digital PC using the same callsign lands on the same FD Commander station. Pick the station that should receive those contacts, usually your digital station, and enter the event callsign (for example, <code>W3XYZ</code>) in its <strong>Hostname (NetBIOS Name)</strong> field.</p>
+
+      <h3>Operator credit</h3>
+
+      <p>Contacts are credited to the operator whose callsign the logging program reports. If that callsign belongs to an FD Commander user, the contact goes to them. If it doesn't, FD Commander creates a locked placeholder account for that callsign, labeled <strong>(Imported)</strong>, so the contact still has an operator. Inviting your operators before the event, with their callsigns filled in, avoids a pile of placeholders.</p>
+
+      <p>If the logging program doesn't report an operator at all, the contact may end up with no operator, or with a placeholder for whatever callsign the program fills in by default. Each program section below shows where the operator's callsign goes, and it's worth making that part of every operator change.</p>
+
+      <h2>Step 4: Configure the Logging Program</h2>
+
+      <p>Follow the section for your program, then come back for Step 5. Repeat this step on every logging PC, since these settings are stored on each PC.</p>
+
+      <h3>N1MM Logger+</h3>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> In the Entry Window, open <strong>Config &gt; Configure Ports, Mode Control, Audio, Other</strong> and select the <strong>Broadcast Data</strong> tab.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> Check <strong>Radio</strong> and <strong>Contacts</strong>. Leave <strong>All Computers</strong> unchecked, since each PC will report its own contacts. In a networked N1MM setup, misconfigured stations with <strong>All Computers</strong> turned on can send contacts around in a loop.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> Enter the server's address and port as the destination, written as <code>192.168.1.50:12060</code>. To send to more than one program, separate the destinations with a space, as in <code>127.0.0.1:12060 192.168.1.50:12060</code>. If your version shows a separate address box for Radio and for Contacts, fill in both.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">4</span> Click <strong>OK</strong>. N1MM Logger+ sends a radio status packet at least every 10 seconds, so the packet counter on the External Loggers page should start climbing almost right away.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">5</span> Make sure the PC is logging in an <strong>ARRL Field Day</strong> contest log, so the received class and section are sent in their own fields.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">6</span> When an operator sits down, have them press <strong>Ctrl+O</strong> (or type <code>OPON</code> in the callsign box) and enter their own callsign. That's the callsign FD Commander uses for operator credit.</p>
+      </div>
+
+      <p>If an operator deletes a contact in N1MM Logger+, FD Commander removes it from the log too.</p>
+
+      <h3>WSJT-X</h3>
+
+      <p>These steps match WSJT-X 3.0. Open the settings with <strong>File &gt; Settings</strong> (or press F2).</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> On the <strong>General</strong> tab, set <strong>My Call</strong> to your event callsign.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> On the <strong>Advanced</strong> tab, check <strong>Special operating activity</strong>, choose <strong>ARRL Field Day</strong>, and enter your own exchange in <strong>FD Exch</strong>, such as <code>3A MDC</code>. In this mode, WSJT-X logs the other station's class and section in their own fields. Without it, contacts still arrive, but they won't have a section for the section map.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> On the <strong>Reporting</strong> tab, enter the operator's callsign in <strong>Op Call</strong>. Update it at each operator change, or contacts will be credited to the previous operator.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">4</span> In the <strong>UDP Server</strong> group on the same tab, set <strong>UDP Server</strong> to the server's IP address (<code>192.168.1.50</code>) and <strong>UDP Server port number</strong> to <code>2237</code>. Use the server's regular address, not a multicast group. The <strong>Outgoing interfaces</strong> field only appears for multicast addresses, so you won't see it with this setup.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">5</span> Click <strong>OK</strong>. WSJT-X sends a heartbeat packet every 15 seconds, so the packet counter should start climbing within 15 seconds. Contacts are sent when the operator clicks <strong>OK</strong> in the Log QSO window.</p>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-title">WSJT-X sends to one place</div>
+        <p>The UDP Server setting holds a single address. If this PC also runs JTAlert, GridTracker, or N1MM Logger+'s WSJT-X integration, those programs expect WSJT-X's traffic as well. Either point WSJT-X at FD Commander and do without the companion program, or leave WSJT-X pointed at the companion program and have it pass contacts along. With N1MM Logger+, that means letting its broadcast carry the contacts, as described above. Some companion programs, such as GridTracker, can rebroadcast WSJT-X traffic to another port; check that program's documentation for details.</p>
+      </div>
+
+      <h3>JTDX</h3>
+
+      <p>JTDX is built on WSJT-X and sends the same UDP messages, so it uses the same <strong>WSJTX / JTDX</strong> listener on port 2237. Its UDP server settings are on the <strong>Reporting</strong> tab of its Settings window. Enter the server's address and port there, just as you would in WSJT-X.</p>
+
+      <h3>fldigi</h3>
+
+      <p>These steps match fldigi 4.2. Open <strong>Configure &gt; Config Dialog</strong>.</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> On the <strong>Operator-Station</strong> page, set <strong>Station Callsign</strong> to your event callsign and <strong>Operator Callsign</strong> to the current operator's callsign.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> On the <strong>Contests/Field Day</strong> page, fill in your class and section.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> Go to the <strong>Logging/Cloud-UDP</strong> page. In the <strong>Broadcast UDP ADIF record</strong> group, set <strong>Address</strong> to <code>192.168.1.50</code> and <strong>Port</strong> to <code>2238</code>. fldigi defaults to port 9876, so this one needs changing.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">4</span> Click <strong>Select Fields</strong> and confirm that the callsign, date, time on, band, frequency, mode, station callsign, operator, class, and section fields are selected. They're all selected out of the box, so this is only a check.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">5</span> Check <strong>Enable</strong>, then click <strong>TEST</strong>. The packet counter on the External Loggers page should go up by one. The test packet isn't a real contact, so <strong>Last Log Received</strong> won't change.</p>
+      </div>
+
+      <h3>Other programs</h3>
+
+      <p>Any program that can send plain ADIF records over UDP can use the <strong>UDP ADIF (fldigi, etc.)</strong> listener on port 2238. FD Commander needs at least the callsign, date, and time of each contact. Include the band or frequency, mode, station callsign, operator, class, and section for full credit and a complete log.</p>
+
+      <h2>Step 5: Log a Test Contact</h2>
+
+      <p>A climbing packet counter proves the network path works. A test contact proves the whole chain works.</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Log a contact in the logging program.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> On the External Loggers page, expand <strong>Last Log Received</strong> under that listener. You should see the callsign, band, mode, section, and QSO time.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> Look at the badge next to it. <strong>Accepted</strong> means the contact is in the log. <strong>outside event window</strong> means the contact's time falls outside the event's start and end times, so FD Commander turned it away.</p>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">Testing before the event</div>
+        <p>Contacts are only accepted between the event's start and end times, so any test you run the week before will show <strong>outside event window</strong>. That's a good result. It means the packet made it all the way through and was read correctly, and nothing landed in your real log. Once the event starts, check that the station shows as <strong>Occupied</strong> on the <strong>Log Contact</strong> page, with the operator's callsign and the source program next to it.</p>
+      </div>
+
+      <h2>Troubleshooting</h2>
+
+      <h3>The packet counter stays at zero</h3>
+
+      <ul>
+        <li>Confirm the logging PC can reach the server at all by opening FD Commander in a browser on that PC.</li>
+        <li>Double-check the address and port in the logging program. A typo in either one is the most common cause.</li>
+        <li>Check the server's firewall (Step 1). The listener can be running perfectly and still never see a packet.</li>
+        <li>On Docker, make sure the port in FD Commander matches the port published in <code>.env</code>.</li>
+      </ul>
+
+      <h3>The status says the process crashed</h3>
+
+      <p>FD Commander tries to restart it automatically, and you can click <strong>Retry</strong>. If it keeps crashing, another program on the server is probably using the same port. Pick a different port for the listener and update the logging programs to match.</p>
+
+      <h3>Packets arrive, but contacts don't</h3>
+
+      <ul>
+        <li>Check the <strong>Last Log Received</strong> badge. If it says <strong>outside event window</strong>, compare the event's start and end times with the contact's QSO time.</li>
+        <li>If the error counter is climbing, the server log has the details. On a server set up with the deploy script, run <code>sudo tail -50 /var/www/fd-commander/storage/logs/laravel.log</code> and look for "packet processing error."</li>
+        <li>For fldigi and other ADIF senders, make sure the callsign, date, and time fields are included. Records missing any of them are skipped.</li>
+      </ul>
+
+      <h3>A new station appeared with a computer name or callsign</h3>
+
+      <p>The identifier didn't match any station's name or hostname, so FD Commander created one. Add the identifier to the <strong>Hostname (NetBIOS Name)</strong> field of the station it belongs to (Step 3). New contacts will go to the right place from then on. Contacts that already arrived stay on the station that was created for them.</p>
+
+      <h3>Contacts are credited to a callsign marked "(Imported)"</h3>
+
+      <p>The operator's callsign in the logging program didn't match any FD Commander user. Check for typos in N1MM Logger+'s operator login, WSJT-X's Op Call, or fldigi's Operator Callsign, and make sure the operator's FD Commander account has their callsign filled in.</p>
+
+      <h3>WSJT-X contacts don't show up on the section map</h3>
+
+      <p>WSJT-X only logs the class and section in their own fields when <strong>ARRL Field Day</strong> is selected under <strong>Special operating activity</strong>. Turn it on (see the WSJT-X steps above).</p>
+
+      <h2>Quick Reference</h2>
+
+      <p>Fill this in before Field Day and tape a copy to each logging table:</p>
+
+      <div class="step-box">
+        <p><strong>Server IP:</strong> _______________</p>
+        <p><strong>N1MM Logger+ port:</strong> 12060</p>
+        <p><strong>WSJT-X / JTDX port:</strong> 2237</p>
+        <p><strong>fldigi / ADIF port:</strong> 2238</p>
+        <p><strong>Event callsign:</strong> _______________</p>
+      </div>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="email-setup.html">Email Setup &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+
+</body>
+</html>
