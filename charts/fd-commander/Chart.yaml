@@ -3,7 +3,7 @@ name: fd-commander
 description: Field Day Commander — Amateur Radio Field Day logging and scoring
 type: application
 version: 0.1.0
-appVersion: "26.10.1"
+appVersion: "26.10.2"
 home: https://github.com/ckoval7/fielddaycommander
 sources:
   - https://github.com/ckoval7/fielddaycommander
