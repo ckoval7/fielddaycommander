@@ -152,7 +152,36 @@ Two named volumes store persistent data:
 | `app-storage` | Uploaded files, logs, framework cache |
 | `mysql-data` | Database files |
 
-These survive `docker compose down`. Use `docker compose down -v` to remove them (destructive).
+These survive `docker compose down`. Use `docker compose down -v` to remove them (destructive). See [Backups](#backups) to copy them somewhere safe.
+
+## Backups
+
+`backup.sh` and `restore.sh` in the repo root back up and restore a Docker install. Run them as root from the directory holding `docker-compose.yml` (or pass `--compose-dir`):
+
+```bash
+# Database, storage/app (uploaded photos, logo) and .env, written to ./backups
+sudo ./backup.sh --docker
+
+# Database only; delete backups older than 14 days instead of 7
+sudo ./backup.sh --docker --db-only --keep-days 14
+```
+
+Each run writes `fdc-db-STAMP.sql.gz`, `fdc-files-STAMP.tar.gz` and `fdc-env-STAMP`. Copy them off the host; a backup on the same disk won't survive a disk failure. `--install-schedule` is for native installs only, so schedule Docker backups with cron or a systemd timer on the host, for example:
+
+```cron
+0 * * * *  root  cd /opt/fd-commander && ./backup.sh --docker --db-only
+30 2 * * * root  cd /opt/fd-commander && ./backup.sh --docker
+```
+
+To restore, pass the database file; the matching files archive is picked up from the same directory:
+
+```bash
+sudo ./restore.sh backups/fdc-db-20261009-023000.sql.gz --docker
+```
+
+The script asks you to type `yes`, then saves the current data to `backups/pre-restore-*` before replacing anything, so a restore can be undone the same way.
+
+**The `.env` file is not restored automatically.** Its `APP_KEY` encrypts two-factor secrets, and users with two-factor authentication are locked out if the database is restored under a different key. When restoring onto a new host, or after `.env` was regenerated, copy `APP_KEY` (and any `MAIL_*` settings) from the backup's `fdc-env-STAMP` into `.env` and run `docker compose up -d`. Keep the host's own `DB_PASSWORD` and `DB_ROOT_PASSWORD`, because the MySQL volume was created with them.
 
 ## Rebuilding
 

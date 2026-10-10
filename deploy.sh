@@ -574,6 +574,10 @@ setup_app() {
     # Step 8: Set permissions
     chmod -R 775 "$APP_PATH/storage" "$APP_PATH/bootstrap/cache"
     chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH/storage" "$APP_PATH/bootstrap/cache"
+    # Operator scripts run as root; older tags may not ship them.
+    for script in backup.sh restore.sh; do
+        [[ -f "$APP_PATH/$script" ]] && chmod 755 "$APP_PATH/$script"
+    done
 
     log_info "Application setup complete"
 }
@@ -959,8 +963,9 @@ finalize() {
     echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} and complete initial setup"
     echo "  2. The SystemAdminSeeder created the first admin user"
     echo "  3. Review firewall settings if not configured"
+    echo "  4. Schedule backups: sudo ${APP_PATH}/backup.sh --install-schedule"
     if ! $SSL_ENABLED; then
-        echo "  4. For HTTPS: set DOMAIN to a real domain and Caddy handles SSL automatically"
+        echo "  5. For HTTPS: set DOMAIN to a real domain and Caddy handles SSL automatically"
     fi
     echo ""
 }

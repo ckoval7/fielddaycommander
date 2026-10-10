@@ -249,6 +249,18 @@ pull_updates() {
         chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH"
     fi
 
+    # Operator scripts run as root; older tags may not ship them.
+    for script in backup.sh restore.sh; do
+        [[ -f "$APP_PATH/$script" ]] && chmod 755 "$APP_PATH/$script"
+    done
+
+    # Refresh the root-owned copy the backup timers run, if they are installed.
+    # (update.sh never installs the schedule itself — see backup.sh --install-schedule.)
+    if [[ -f /usr/local/sbin/fdcommander-backup && -f "$APP_PATH/backup.sh" ]]; then
+        install -m 755 -o root -g root "$APP_PATH/backup.sh" /usr/local/sbin/fdcommander-backup
+        log_info "Refreshed /usr/local/sbin/fdcommander-backup"
+    fi
+
     # Ensure storage symlink exists
     if [[ ! -L "$APP_PATH/public/storage" ]]; then
         cd "$APP_PATH"
