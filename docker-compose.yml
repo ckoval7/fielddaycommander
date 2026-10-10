@@ -8,7 +8,7 @@ services:
       # network (N1MM Logger+, WSJT-X, fldigi, etc.) to send contacts into the
       # container. The host-side port (left of the colon) can be changed via
       # env vars in .env; the container-side port (right) must match the port
-      # configured in the FD Commander admin UI (Settings > External Loggers).
+      # configured in the FD Commander admin UI (Logging > External Loggers).
       - "${N1MM_PORT:-12060}:${N1MM_PORT:-12060}/udp"       # N1MM Logger+
       - "${WSJTX_PORT:-2237}:${WSJTX_PORT:-2237}/udp"       # WSJT-X / JTDX
       - "${UDP_ADIF_PORT:-2238}:${UDP_ADIF_PORT:-2238}/udp" # Plain UDP ADIF (fldigi, etc.)
