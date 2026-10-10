@@ -336,7 +336,7 @@
 
       <p>The default ports work for nearly everyone. If you need a different one, turn the listener off first, since the port field is locked while the listener is switched on. Ports from 1024 to 65535 are allowed.</p>
 
-      <p>You don't need to babysit the listeners. If one stops unexpectedly while the External Loggers page is open, the page restarts it within a few seconds.</p>
+      <p>You don't need to babysit the listeners. FD Commander checks on them every minute and restarts any that have stopped unexpectedly. If the External Loggers page is open, it restarts them within a few seconds.</p>
 
       <h2>Step 3: Match Logging PCs to Stations</h2>
 
@@ -386,7 +386,7 @@
         <p><span class="step-number">6</span> When an operator sits down, have them press <strong>Ctrl+O</strong> (or type <code>OPON</code> in the callsign box) and enter their own callsign. That's the callsign FD Commander uses for operator credit.</p>
       </div>
 
-      <p>If an operator deletes a contact in N1MM Logger+, FD Commander removes it from the log too.</p>
+      <p>If an operator edits or deletes a contact in N1MM Logger+, the change carries over to FD Commander.</p>
 
       <h3>WSJT-X</h3>
 

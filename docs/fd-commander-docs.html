@@ -879,7 +879,7 @@
     <h3>Creating a Station</h3>
     <p>Click <strong>+ Add Station</strong> to open the station form. The Configuration tab has four sections:</p>
 
-    <p><strong>Basic Information:</strong> Give the station a name (must be unique within the event), an optional hostname (the NetBIOS machine name of the PC running that station's logger, used for automatic station matching with N1MM+ and other external loggers), and confirm which event it belongs to.</p>
+    <p><strong>Basic Information:</strong> Give the station a name (must be unique within the event), an optional hostname, and confirm which event it belongs to. The hostname matches external logger contacts to this station. N1MM+ matches on the computer (NetBIOS) name of the PC running the logger, while WSJT-X, JTDX, and ADIF loggers match on the station callsign.</p>
 
     <p><strong>Station Type:</strong> Check any special designations that apply. GOTA (Get On The Air) marks it as the special station for new operators; only one GOTA station is allowed per event. VHF/UHF Only restricts the station to those bands. Satellite marks it for satellite communications.</p>
 
@@ -1015,16 +1015,19 @@
       <li>Check the <strong>Contacts</strong> and <strong>Radio</strong> checkboxes.</li>
       <li>Ensure the server's firewall allows inbound UDP on the configured port (default: 12060). For example: <code>sudo ufw allow 12060/udp</code></li>
       <li>Set the destination IP to the FD Commander server's address with the configured port.</li>
-      <li>Optionally, configure Station hostnames on the Stations page for automatic station matching.</li>
+      <li>Optionally, enter each logging PC's computer name in its station's <strong>Hostname (NetBIOS Name)</strong> field on the Stations page for automatic station matching.</li>
     </ul>
-    <p>The listener shows live stats: packets received, errors, and uptime. You can expand "Last Log Received" to see the most recent contact data.</p>
+    <p>The listener shows live stats: packets received, errors, and uptime. You can expand "Last Log Received" to see the most recent contact data. When an operator edits or deletes a contact in N1MM+, the change carries over to FD Commander.</p>
 
     <h3>WSJT-X / JTDX</h3>
     <p>WSJT-X and JTDX can send logged QSOs as ADIF records over UDP. This is ideal for FT8, FT4, JT65, and other digital modes where WSJT-X handles the decoding and the operator logs contacts from within WSJT-X. To set it up:</p>
     <ul>
       <li>In WSJT-X, go to <strong>File &gt; Settings &gt; Reporting &gt; UDP Server</strong>.</li>
       <li>Set the UDP server address to the FD Commander server's IP and port (default: 2237).</li>
-      <li>Under Outgoing Interfaces, select the network interface that can reach the server.</li>
+      <li>Use the server's regular IP address, not a multicast address.</li>
+      <li>Set <strong>Settings &gt; Reporting &gt; Op Call</strong> to the operator's callsign so contacts are credited to them.</li>
+      <li>Turn on <strong>Settings &gt; Advanced &gt; Special operating activity &gt; ARRL Field Day</strong> so the class and section are logged.</li>
+      <li>Contacts are matched to a station by the station callsign (<strong>My Call</strong>), so give the receiving station's name or hostname that callsign on the Stations page.</li>
       <li>Ensure the server's firewall allows inbound UDP on the configured port. For example: <code>sudo ufw allow 2237/udp</code></li>
     </ul>
 
@@ -1033,9 +1036,12 @@
     <ul>
       <li>Configure your logging application to send ADIF records via UDP.</li>
       <li>Set the destination to the FD Commander server's IP and the configured port.</li>
-      <li>In fldigi specifically: <strong>Configure &gt; Config Dialog &gt; Logging &gt; Cloud-UDP</strong>, then set the UDP address and port and check enable.</li>
+      <li>In fldigi specifically: <strong>Configure &gt; Config Dialog &gt; Logging/Cloud-UDP</strong>, then set the address and port in the <strong>Broadcast UDP ADIF record</strong> group and check <strong>Enable</strong>.</li>
+      <li>Contacts are matched to a station by the station callsign (fldigi's <strong>Station Callsign</strong>), so give the receiving station's name or hostname that callsign on the Stations page.</li>
       <li>Ensure the server's firewall allows inbound UDP on the configured port. For example: <code>sudo ufw allow 2238/udp</code></li>
     </ul>
+
+    <p>For a step-by-step walkthrough, including firewall setup, operator credit, and testing, see <a href="how-to/external-loggers.html">Connect External Loggers</a>.</p>
 
     <h3>ADIF File Import</h3>
     <p>If you have contacts in an ADIF file (from a previous logging session, a backup, or another program), you can import them through a three-step wizard. Click <strong>Import ADIF</strong> at the top of the <strong>Logging &gt; External Loggers</strong> page.</p>
