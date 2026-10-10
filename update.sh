@@ -306,6 +306,42 @@ sync_octane_workers() {
     return 0
 }
 
+# Convert the scheduler from a oneshot unit + timer (older installs) to a
+# long-running schedule:work service. A oneshot unit's cgroup is killed when
+# schedule:run exits, which also kills any external-logger listener that
+# external-logger:monitor just restarted. Idempotent: no-ops once converted.
+migrate_scheduler_unit() {
+    local unit_file="/etc/systemd/system/fdcommander-scheduler.service"
+    local timer_file="/etc/systemd/system/fdcommander-scheduler.timer"
+    if [[ ! -f "$unit_file" ]]; then
+        log_warn "Scheduler unit not found at ${unit_file} — skipping scheduler migration"
+        return 0
+    fi
+
+    if ! grep -q '^Type=oneshot' "$unit_file"; then
+        return 0
+    fi
+
+    log_info "Converting scheduler from a oneshot timer to a long-running service"
+    if [[ -f "$timer_file" ]]; then
+        systemctl disable --now fdcommander-scheduler.timer || true
+        rm -f "$timer_file"
+    fi
+
+    sed -i -E -e '/^Type=oneshot$/d' -e 's/schedule:run --no-interaction/schedule:work --no-interaction/' "$unit_file"
+    cat >> "$unit_file" <<'SCHEDEOF'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+SCHEDEOF
+
+    systemctl daemon-reload
+    systemctl enable fdcommander-scheduler.service
+    return 0
+}
+
 # Pick a Redis maxmemory value sized to the host (Pi-friendly).
 # Buckets by total RAM: ≤1G→128mb, ≤2G→256mb, ≤4G→512mb, ≤8G→1gb, else 2gb.
 compute_redis_maxmemory() {
@@ -569,10 +605,12 @@ restart_services() {
     log_phase "Restarting services"
 
     sync_octane_workers
+    migrate_scheduler_unit
 
     systemctl restart fdcommander.service
     systemctl restart fdcommander-queue.service
     systemctl restart fdcommander-reverb.service
+    systemctl restart fdcommander-scheduler.service
 
     log_info "Services restarted"
 }
@@ -613,6 +651,7 @@ main() {
     echo "  FrankenPHP:   $(systemctl is-active fdcommander.service)"
     echo "  Queue Worker: $(systemctl is-active fdcommander-queue.service)"
     echo "  Reverb:       $(systemctl is-active fdcommander-reverb.service)"
+    echo "  Scheduler:    $(systemctl is-active fdcommander-scheduler.service)"
     echo ""
     echo "  Update log:   ${LOG_FILE}"
     echo ""

@@ -881,31 +881,33 @@ RestartSec=5
 WantedBy=multi-user.target
 QUEUEEOF
 
-    # Scheduler (oneshot + timer)
-    log_info "Creating scheduler service and timer..."
+    # Scheduler (long-running schedule:work)
+    #
+    # Must stay running: external-logger:monitor restarts crashed listeners
+    # as detached children, and they live in this unit's cgroup. A oneshot
+    # unit's cgroup is killed as soon as schedule:run exits, taking any
+    # listener it just restarted with it.
+    log_info "Creating scheduler service..."
+    if [[ -f /etc/systemd/system/fdcommander-scheduler.timer ]]; then
+        systemctl disable --now fdcommander-scheduler.timer || true
+        rm -f /etc/systemd/system/fdcommander-scheduler.timer
+    fi
     cat > /etc/systemd/system/fdcommander-scheduler.service <<SCHEDEOF
 [Unit]
 Description=FD Commander Task Scheduler
+After=network.target ${DB_SERVICE}.service ${REDIS_SERVICE}.service
 
 [Service]
 User=fdcommander
 Group=${WEB_GROUP}
 WorkingDirectory=${APP_PATH}
-ExecStart=/usr/bin/php artisan schedule:run --no-interaction
-Type=oneshot
-SCHEDEOF
-
-    cat > /etc/systemd/system/fdcommander-scheduler.timer <<TIMEREOF
-[Unit]
-Description=Run FD Commander scheduler every minute
-
-[Timer]
-OnCalendar=*:*:00
-Persistent=true
+ExecStart=/usr/bin/php artisan schedule:work --no-interaction
+Restart=always
+RestartSec=5
 
 [Install]
-WantedBy=timers.target
-TIMEREOF
+WantedBy=multi-user.target
+SCHEDEOF
 
     # Reverb WebSocket server
     log_info "Creating Reverb WebSocket service..."
@@ -930,7 +932,7 @@ REVERBEOF
     systemctl daemon-reload
     systemctl enable --now fdcommander.service
     systemctl enable --now fdcommander-queue.service
-    systemctl enable --now fdcommander-scheduler.timer
+    systemctl enable --now fdcommander-scheduler.service
     systemctl enable --now fdcommander-reverb.service
 
     log_info "All systemd services enabled and started"
@@ -995,7 +997,7 @@ finalize() {
     echo ""
     echo -e "${BOLD}Services${NC}"
     echo "  Queue Worker:   $(systemctl is-active fdcommander-queue.service)"
-    echo "  Scheduler:      $(systemctl is-active fdcommander-scheduler.timer)"
+    echo "  Scheduler:      $(systemctl is-active fdcommander-scheduler.service)"
     echo "  Reverb:         $(systemctl is-active fdcommander-reverb.service)"
     echo "  FrankenPHP:     $(systemctl is-active fdcommander.service)"
     echo "  Redis:          $(systemctl is-active ${REDIS_SERVICE}.service)"

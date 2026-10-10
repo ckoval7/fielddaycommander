@@ -75,6 +75,12 @@ test('component can render for create mode', function () {
         ->assertSee('Basic Information');
 });
 
+test('hostname hint explains how each external logger matches a station', function () {
+    Livewire::test(StationForm::class)
+        ->assertSee('N1MM+ matches on the PC\'s computer name')
+        ->assertSee('WSJT-X, JTDX, and ADIF loggers match on the station callsign');
+});
+
 test('component can render for edit mode', function () {
     $station = Station::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,

@@ -5,6 +5,7 @@ use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\OperatingSession;
+use App\Models\Station;
 use App\Services\DuplicateCheckService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -42,7 +43,7 @@ beforeEach(function () {
 
     $this->eventConfig = EventConfiguration::factory()->create();
     $this->session = OperatingSession::factory()->create([
-        'station_id' => \App\Models\Station::factory()->create([
+        'station_id' => Station::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
         ])->id,
         'band_id' => $this->band->id,
@@ -109,7 +110,7 @@ test('not duplicate across different events', function () {
     Contact::factory()->create([
         'event_configuration_id' => $otherEventConfig->id,
         'operating_session_id' => OperatingSession::factory()->create([
-            'station_id' => \App\Models\Station::factory()->create([
+            'station_id' => Station::factory()->create([
                 'event_configuration_id' => $otherEventConfig->id,
             ])->id,
         ])->id,
@@ -229,6 +230,21 @@ test('ignores contacts already marked as duplicates', function () {
     ]);
 
     $result = $this->service->check('W1AW', $this->band->id, $this->mode->id, $this->eventConfig->id);
+
+    expect($result['is_duplicate'])->toBeFalse();
+});
+
+test('excludes the given contact when re-checking an existing contact', function () {
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $this->session->id,
+        'callsign' => 'W1AW',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_duplicate' => false,
+    ]);
+
+    $result = $this->service->check('W1AW', $this->band->id, $this->mode->id, $this->eventConfig->id, excludeContactId: $contact->id);
 
     expect($result['is_duplicate'])->toBeFalse();
 });

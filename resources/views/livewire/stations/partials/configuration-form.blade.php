@@ -22,7 +22,7 @@
             placeholder="e.g., CONTEST-PC"
             autocomplete="off"
             maxlength="50"
-            hint="Used for automatic station matching with external loggers like N1MM+"
+            hint="Matches external logger contacts to this station. N1MM+ matches on the PC's computer name; WSJT-X, JTDX, and ADIF loggers match on the station callsign."
         />
 
         {{-- Event Selection --}}

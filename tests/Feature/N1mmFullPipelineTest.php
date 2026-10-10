@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ExternalContactUpdated;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
@@ -266,4 +267,117 @@ test('full pipeline: auto-creates station for unknown StationName', function () 
     expect($station)->not->toBeNull()
         ->and($station->hostname)->toBe('NEW-LAPTOP')
         ->and($station->event_configuration_id)->toBe($this->config->id);
+});
+
+test('full pipeline: edit in N1MM (delete then replace) restores and updates the contact', function () {
+    $ts = $this->testTimestampStr;
+    $xmlCreate = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+    <contactinfo>
+        <app>N1MM</app>
+        <timestamp>{$ts}</timestamp>
+        <mycall>W2XYZ</mycall>
+        <band>3.5</band>
+        <rxfreq>352519</rxfreq>
+        <txfreq>352519</txfreq>
+        <operator>K3CPK</operator>
+        <mode>CW</mode>
+        <call>W1AX</call>
+        <snt>599</snt>
+        <sntnr>5</sntnr>
+        <rcv>599</rcv>
+        <rcvnr>0</rcvnr>
+        <section>CT</section>
+        <StationName>CONTEST-PC</StationName>
+        <ID>edit_test_id</ID>
+    </contactinfo>";
+
+    $xmlDelete = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+    <contactdelete>
+        <app>N1MM</app>
+        <timestamp>{$ts}</timestamp>
+        <mycall>W2XYZ</mycall>
+        <band>3.5</band>
+        <call>W1AX</call>
+        <contestnr>1</contestnr>
+        <StationName>CONTEST-PC</StationName>
+        <ID>edit_test_id</ID>
+    </contactdelete>";
+
+    $xmlReplace = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+    <contactreplace>
+        <app>N1MM</app>
+        <timestamp>{$ts}</timestamp>
+        <mycall>W2XYZ</mycall>
+        <band>3.5</band>
+        <rxfreq>352519</rxfreq>
+        <txfreq>352519</txfreq>
+        <operator>K3CPK</operator>
+        <mode>CW</mode>
+        <call>W1AW</call>
+        <snt>599</snt>
+        <sntnr>5</sntnr>
+        <rcv>599</rcv>
+        <rcvnr>0</rcvnr>
+        <section>CT</section>
+        <StationName>CONTEST-PC</StationName>
+        <ID>edit_test_id</ID>
+        <oldtimestamp>{$ts}</oldtimestamp>
+        <oldcall>W1AX</oldcall>
+    </contactreplace>";
+
+    $contact = $this->handler->handleContact($this->parser->parse($xmlCreate), $this->config);
+    $session = $contact->operatingSession;
+    expect($session->fresh()->qso_count)->toBe(1);
+
+    $this->handler->handleDelete($this->parser->parse($xmlDelete), $this->config);
+    expect($session->fresh()->qso_count)->toBe(0);
+
+    $this->handler->handleReplace($this->parser->parse($xmlReplace), $this->config);
+
+    $contacts = Contact::where('external_id', 'edit_test_id')->get();
+    expect($contacts)->toHaveCount(1)
+        ->and($contacts->first()->callsign)->toBe('W1AW')
+        ->and($contacts->first()->id)->toBe($contact->id)
+        ->and(Contact::withTrashed()->where('external_id', 'edit_test_id')->count())->toBe(1)
+        ->and($session->fresh()->qso_count)->toBe(1);
+
+    Event::assertDispatched(ExternalContactUpdated::class);
+});
+
+test('full pipeline: contact resent after delete restores instead of duplicating', function () {
+    $ts = $this->testTimestampStr;
+    $xmlCreate = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+    <contactinfo>
+        <app>N1MM</app>
+        <timestamp>{$ts}</timestamp>
+        <mycall>W2XYZ</mycall>
+        <band>3.5</band>
+        <rxfreq>352519</rxfreq>
+        <txfreq>352519</txfreq>
+        <operator>K3CPK</operator>
+        <mode>CW</mode>
+        <call>W1AW</call>
+        <section>CT</section>
+        <StationName>CONTEST-PC</StationName>
+        <ID>resend_test_id</ID>
+    </contactinfo>";
+
+    $xmlDelete = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+    <contactdelete>
+        <app>N1MM</app>
+        <timestamp>{$ts}</timestamp>
+        <call>W1AW</call>
+        <StationName>CONTEST-PC</StationName>
+        <ID>resend_test_id</ID>
+    </contactdelete>";
+
+    $contact = $this->handler->handleContact($this->parser->parse($xmlCreate), $this->config);
+    $this->handler->handleDelete($this->parser->parse($xmlDelete), $this->config);
+    $this->handler->handleContact($this->parser->parse($xmlCreate), $this->config);
+
+    expect(Contact::withTrashed()->where('external_id', 'resend_test_id')->count())->toBe(1)
+        ->and(Contact::where('external_id', 'resend_test_id')->first()?->id)->toBe($contact->id)
+        ->and($contact->operatingSession->fresh()->qso_count)->toBe(1)
+        ->and($contact->fresh()->is_duplicate)->toBeFalse()
+        ->and($contact->fresh()->points)->toBe(2);
 });

@@ -11,10 +11,12 @@ class DuplicateCheckService
      *
      * A contact is duplicate if the same callsign has already been worked
      * on the same band and mode within the same event configuration.
+     * Pass $excludeContactId when re-checking a contact that already exists
+     * so it is not reported as a duplicate of itself.
      *
      * @return array{is_duplicate: bool, duplicate_of_contact_id: ?int}
      */
-    public function check(string $callsign, int $bandId, int $modeId, int $eventConfigurationId, bool $isGotaContact = false): array
+    public function check(string $callsign, int $bandId, int $modeId, int $eventConfigurationId, bool $isGotaContact = false, ?int $excludeContactId = null): array
     {
         $existing = Contact::query()
             ->where('event_configuration_id', $eventConfigurationId)
@@ -23,6 +25,7 @@ class DuplicateCheckService
             ->where('mode_id', $modeId)
             ->where('is_gota_contact', $isGotaContact)
             ->where('is_duplicate', false)
+            ->when($excludeContactId !== null, fn ($query) => $query->whereKeyNot($excludeContactId))
             ->first();
 
         return [
