@@ -30,8 +30,9 @@ class ExternalContactHandler
     {
         // Idempotency: if we already have this external ID, treat as replace
         if ($dto->externalId !== null) {
-            $existing = Contact::where('external_id', $dto->externalId)->first();
+            $existing = Contact::withTrashed()->where('external_id', $dto->externalId)->first();
             if ($existing !== null) {
+                $this->restoreIfTrashed($existing);
                 $this->updateContact($existing, $dto, $config);
 
                 return $existing;
@@ -119,7 +120,9 @@ class ExternalContactHandler
             return;
         }
 
-        $contact = Contact::where('external_id', $dto->externalId)->first();
+        // N1MM+ sends contactdelete then contactreplace with the same ID when an
+        // operator edits a QSO, so the contact may already be soft-deleted.
+        $contact = Contact::withTrashed()->where('external_id', $dto->externalId)->first();
         if ($contact === null) {
             return;
         }
@@ -130,6 +133,7 @@ class ExternalContactHandler
             return;
         }
 
+        $this->restoreIfTrashed($contact);
         $this->updateContact($contact, $dto, $config);
     }
 
@@ -149,6 +153,7 @@ class ExternalContactHandler
         $callsign = $contact->callsign;
 
         $contact->delete();
+        $contact->operatingSession?->decrement('qso_count');
 
         ExternalContactDeleted::dispatch($contactId, $callsign, $config->id, $dto->source, $stationName);
     }
@@ -185,6 +190,16 @@ class ExternalContactHandler
         return "external_radio_info:{$source}:{$stationIdentifier}";
     }
 
+    private function restoreIfTrashed(Contact $contact): void
+    {
+        if (! $contact->trashed()) {
+            return;
+        }
+
+        $contact->restore();
+        $contact->operatingSession?->increment('qso_count');
+    }
+
     private function updateContact(Contact $contact, ExternalContactDto $dto, EventConfiguration $config): void
     {
         $bandId = $dto->frequencyHz
@@ -203,7 +218,7 @@ class ExternalContactHandler
         ]);
 
         if ($bandId !== null && $modeId !== null) {
-            $dupeCheck = $this->dupeChecker->check($dto->callsign, $bandId, $modeId, $config->id);
+            $dupeCheck = $this->dupeChecker->check($dto->callsign, $bandId, $modeId, $config->id, excludeContactId: $contact->id);
             $contact->update([
                 'is_duplicate' => $dupeCheck['is_duplicate'],
                 'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
