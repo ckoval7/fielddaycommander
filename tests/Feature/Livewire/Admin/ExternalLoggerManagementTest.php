@@ -190,6 +190,14 @@ test('displays WSJTX setup instructions', function () {
         ->assertSee('File > Settings > Reporting > UDP Server');
 });
 
+test('WSJTX setup instructions do not point to multicast outgoing interfaces', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertDontSee('Outgoing Interfaces')
+        ->assertSee('not a multicast address')
+        ->assertSee('Op Call')
+        ->assertSee('Special operating activity');
+});
+
 test('renders UDP ADIF section with stopped status', function () {
     Livewire::test(ExternalLoggerManagement::class)
         ->assertSee('UDP ADIF (fldigi, etc.)')
