@@ -294,7 +294,7 @@
                             <li>Ensure your firewall allows inbound UDP on port {{ $wsjtxPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $wsjtxPort }}/udp</code>)</li>
                             <li>Set Settings &gt; Reporting &gt; Op Call to the operator's callsign so contacts are credited to them</li>
                             <li>Turn on Settings &gt; Advanced &gt; Special operating activity &gt; ARRL Field Day so the class and section are logged</li>
-                            <li>Contacts are matched to a station by the station callsign (My Call), so give each station's name or hostname that callsign on the Stations page</li>
+                            <li>Contacts are matched to a station by the station callsign (My Call), so give the receiving station's name or hostname that callsign on the Stations page</li>
                         </ol>
                     </div>
                 </div>
@@ -430,7 +430,7 @@
                             <li>Configure your logging application to send ADIF records via UDP</li>
                             <li>Set the destination to this server's IP and port {{ $udpAdifPort }}</li>
                             <li>In fldigi: Configure &gt; Config Dialog &gt; Logging &gt; Cloud-UDP &gt; set UDP address and port and check enable</li>
-                            <li>Contacts are matched to a station by the station callsign (fldigi's Station Callsign), so give each station's name or hostname that callsign on the Stations page</li>
+                            <li>Contacts are matched to a station by the station callsign (fldigi's Station Callsign), so give the receiving station's name or hostname that callsign on the Stations page</li>
                             <li>Ensure your firewall allows inbound UDP on port {{ $udpAdifPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $udpAdifPort }}/udp</code>)</li>
                         </ol>
                     </div>
