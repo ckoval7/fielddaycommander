@@ -5,16 +5,16 @@ echo "=== FD Commander Docker Entrypoint ==="
 
 # 0. Validate required environment
 if [[ -z "$DB_PASSWORD" ]]; then
-    echo "ERROR: DB_PASSWORD is not set."
-    echo "Run 'bash docker/setup.sh' to generate a .env file with secure defaults."
+    echo "ERROR: DB_PASSWORD is not set." >&2
+    echo "Run 'bash docker/setup.sh' to generate a .env file with secure defaults." >&2
     exit 1
 fi
 
 if [[ -z "$APP_KEY" || "$APP_KEY" = "base64:" ]]; then
-    echo "ERROR: APP_KEY is not set."
-    echo "A key generated inside the container is lost on every restart, which"
-    echo "invalidates sessions and two-factor secrets. Run 'bash docker/setup.sh'"
-    echo "to add one to .env, then 'docker compose up -d' again."
+    echo "ERROR: APP_KEY is not set." >&2
+    echo "A key generated inside the container is lost on every restart, which" >&2
+    echo "invalidates sessions and two-factor secrets. Run 'bash docker/setup.sh'" >&2
+    echo "to add one to .env, then 'docker compose up -d' again." >&2
     exit 1
 fi
 

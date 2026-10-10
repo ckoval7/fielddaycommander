@@ -395,7 +395,7 @@ install_frankenphp() {
     local url="https://github.com/php/frankenphp/releases/download/v${FRANKENPHP_VERSION}/frankenphp-${arch}"
     local dest="/usr/local/bin/frankenphp"
     log_info "Downloading FrankenPHP from ${url}..."
-    curl -fSL -o "$dest" "$url"
+    curl -fSL --proto '=https' --tlsv1.2 -o "$dest" "$url"
     chmod +x "$dest"
     setcap cap_net_bind_service=+ep "$dest"
     if ! "$dest" version &>/dev/null; then

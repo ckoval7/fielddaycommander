@@ -385,7 +385,7 @@ sync_frankenphp_version() {
     local url="https://github.com/php/frankenphp/releases/download/v${desired}/frankenphp-${arch}"
     local tmp="${binary}.new"
     log_info "Upgrading FrankenPHP ${current:-unknown} → ${desired}..."
-    if ! curl -fSL -o "$tmp" "$url"; then
+    if ! curl -fSL --proto '=https' --tlsv1.2 -o "$tmp" "$url"; then
         rm -f "$tmp"
         log_warn "Download failed — keeping FrankenPHP ${current}"
         return 0

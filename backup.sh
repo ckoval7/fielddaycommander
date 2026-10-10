@@ -18,15 +18,15 @@ NC='\033[0m'
 
 # --- Early root check ---
 if [[ $EUID -ne 0 ]]; then
-    echo -e "\033[0;31m[ERROR]\033[0m This script must be run as root (or via sudo)"
+    echo -e "\033[0;31m[ERROR]\033[0m This script must be run as root (or via sudo)" >&2
     exit 1
 fi
 
 # --- Logging ---
-log_info()    { echo -e "${GREEN}[INFO]${NC} $1" | tee -a "$LOG_FILE"; }
-log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1" | tee -a "$LOG_FILE"; }
-log_error()   { echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"; }
-log_phase()   { echo -e "\n${CYAN}${BOLD}=== $1 ===${NC}" | tee -a "$LOG_FILE"; }
+log_info()    { local message="$1"; echo -e "${GREEN}[INFO]${NC} ${message}" | tee -a "$LOG_FILE"; }
+log_warn()    { local message="$1"; echo -e "${YELLOW}[WARN]${NC} ${message}" | tee -a "$LOG_FILE"; }
+log_error()   { local message="$1"; echo -e "${RED}[ERROR]${NC} ${message}" | tee -a "$LOG_FILE" >&2; }
+log_phase()   { local title="$1"; echo -e "\n${CYAN}${BOLD}=== ${title} ===${NC}" | tee -a "$LOG_FILE"; }
 
 # Redirect all stdout/stderr to log file as well
 exec > >(tee -a "$LOG_FILE") 2>&1
