@@ -18,7 +18,7 @@
                 dominant-baseline: central;
                 pointer-events: none;
                 paint-order: stroke;
-                stroke: oklch(var(--b1));
+                stroke: var(--color-base-100);
                 stroke-width: 3px;
                 stroke-linecap: round;
                 stroke-linejoin: round;

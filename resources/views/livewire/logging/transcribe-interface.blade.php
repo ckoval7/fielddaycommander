@@ -27,7 +27,7 @@
                         aria-label="Log date"
                         min="{{ $this->event->start_time->format('Y-m-d') }}"
                         max="{{ $this->event->end_time->format('Y-m-d') }}"
-                        class="input input-bordered input-sm font-mono border-amber-300 focus:border-amber-500 bg-base-100"
+                        class="input input-sm font-mono border-amber-300 focus:border-amber-500 bg-base-100"
                     />
 
                     {{-- UTC / Local toggle --}}
@@ -84,8 +84,8 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-sm:px-4">
                 {{-- Band --}}
                 <div>
-                    <label for="transcribe-band" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Band <span class="text-error">*</span></label>
-                    <select id="transcribe-band" wire:model.live="selectedBandId" class="select select-bordered select-sm w-full">
+                    <label for="transcribe-band" class="block py-1 text-xs font-semibold uppercase tracking-wider mb-1">Band <span class="text-error">*</span></label>
+                    <select id="transcribe-band" wire:model.live="selectedBandId" class="select select-sm w-full">
                         <option value="">— Band —</option>
                         @foreach($this->bands as $band)
                             <option value="{{ $band->id }}">{{ $band->name }}</option>
@@ -98,8 +98,8 @@
 
                 {{-- Mode --}}
                 <div>
-                    <label for="transcribe-mode" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Mode <span class="text-error">*</span></label>
-                    <select id="transcribe-mode" wire:model.live="selectedModeId" class="select select-bordered select-sm w-full">
+                    <label for="transcribe-mode" class="block py-1 text-xs font-semibold uppercase tracking-wider mb-1">Mode <span class="text-error">*</span></label>
+                    <select id="transcribe-mode" wire:model.live="selectedModeId" class="select select-sm w-full">
                         <option value="">— Mode —</option>
                         @foreach($this->modes as $mode)
                             <option value="{{ $mode->id }}">{{ $mode->name }}</option>
@@ -112,14 +112,14 @@
 
                 {{-- Power --}}
                 <div>
-                    <label for="transcribe-power" class="label label-text text-xs font-semibold uppercase tracking-wider mb-1">Power (W)</label>
+                    <label for="transcribe-power" class="block py-1 text-xs font-semibold uppercase tracking-wider mb-1">Power (W)</label>
                     <input
                         id="transcribe-power"
                         type="number"
                         wire:model="powerWatts"
                         min="1"
                         max="1500"
-                        class="input input-bordered input-sm w-full"
+                        class="input input-sm w-full"
                         placeholder="100"
                     />
                     @error('powerWatts')

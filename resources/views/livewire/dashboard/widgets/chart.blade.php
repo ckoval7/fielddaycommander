@@ -16,9 +16,11 @@
                 this.renderChart();
             });
 
-            // Watch for Livewire updates to chartData
-            this.$watch('chartData', (newData) => {
-                this.updateChart(newData);
+            // Polled renders update the server-side payload; x-data is not
+            // re-evaluated on morph, so follow the payload through $wire.
+            this.$wire.$watch('chartPayload', (newData) => {
+                this.chartData = newData;
+                this.updateChart();
             });
 
             // Resize chart when edit mode changes (container padding shifts)
@@ -147,20 +149,23 @@
             };
         },
 
+        isDarkTheme() {
+            const theme = document.documentElement.dataset.theme;
+            if (theme) {
+                return theme === 'dark';
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        },
+
         getTextColor() {
-            const theme = document.documentElement.getAttribute('data-theme');
-            return theme === 'dark' ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+            return this.isDarkTheme() ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
         },
 
         getGridColor() {
-            const theme = document.documentElement.getAttribute('data-theme');
-            return theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            return this.isDarkTheme() ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
         },
 
-        updateChart(newData) {
-            // Note: chartData is already updated by Livewire/Alpine reactivity
-            // We don't need to manually set this.chartData = newData here
-
+        updateChart() {
             if (!chartInstance) {
                 this.renderChart();
                 return;
@@ -182,23 +187,23 @@
     }; })()"
     class="h-full"
 >
-    <x-card
+    <x-card body-class="flex flex-col min-h-0"
         class="h-full flex flex-col {{ $size === 'tv' ? 'shadow-lg' : 'shadow-sm' }}"
     >
         {{-- Header with title and summary value --}}
-        <div class="flex items-baseline justify-between mb-2">
-            <h3 class="{{ $size === 'tv' ? 'text-xl font-bold' : 'text-sm font-semibold' }} text-base-content">
+        <div class="flex items-baseline justify-between gap-3 mb-2">
+            <h3 class="min-w-0 truncate {{ $size === 'tv' ? 'text-xl font-bold' : 'text-sm font-semibold' }} text-base-content" title="{{ $chartData['title'] ?? 'Chart' }}">
                 {{ $chartData['title'] ?? 'Chart' }}
             </h3>
             @if(!empty($chartData['summary_value']))
-                <span class="{{ $size === 'tv' ? 'text-2xl' : 'text-lg' }} font-bold tabular-nums text-primary">
+                <span class="shrink-0 whitespace-nowrap {{ $size === 'tv' ? 'text-2xl' : 'text-lg' }} font-bold tabular-nums text-primary">
                     {{ $chartData['summary_value'] }}
                 </span>
             @endif
         </div>
         {{-- Chart container --}}
         <div
-            class="relative flex-1 {{ $size === 'tv' ? 'min-h-[280px]' : 'min-h-[200px]' }}"
+            class="relative flex-1 {{ $size === 'tv' ? 'min-h-0' : 'min-h-[200px]' }}"
             role="img"
             :aria-label="chartData.description || 'Chart visualization'"
         >
@@ -239,6 +244,6 @@
         @endif
 
         {{-- Last updated timestamp --}}
-        <div class="text-xs text-base-content/40 text-right mt-auto pt-2 border-t border-base-content/5">Updated {{ formatTimeAgo($chartData['last_updated_at'] ?? null) }}</div>
+        <x-dashboard.updated-at :at="$chartData['last_updated_at'] ?? null" class="border-t border-base-content/5" />
     </x-card>
 </div>

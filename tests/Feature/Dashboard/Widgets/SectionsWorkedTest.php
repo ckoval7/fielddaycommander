@@ -5,12 +5,15 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Section;
+use Database\Seeders\BandSeeder;
+use Database\Seeders\ModeSeeder;
+use Database\Seeders\SectionSeeder;
 use Livewire\Livewire;
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\SectionSeeder::class);
-    $this->seed(\Database\Seeders\BandSeeder::class);
-    $this->seed(\Database\Seeders\ModeSeeder::class);
+    $this->seed(SectionSeeder::class);
+    $this->seed(BandSeeder::class);
+    $this->seed(ModeSeeder::class);
 });
 
 describe('SectionsWorked Widget', function () {
@@ -64,7 +67,7 @@ describe('SectionsWorked Widget', function () {
 
         expect($data['total_worked'])->toBe(2);
 
-        $area1 = collect($data['groups'])->firstWhere('label', '1');
+        $area1 = collect($data['groups'])->firstWhere('label', 'W1');
         expect($area1['worked_count'])->toBe(2);
         expect($area1['total_count'])->toBe(7);
 
@@ -133,8 +136,8 @@ describe('SectionsWorked Widget', function () {
 
         $labels = collect($data['groups'])->pluck('label')->all();
 
-        expect($labels)->toContain('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
-        expect($labels)->not->toContain('W1', 'W2', 'W3');
+        expect($labels)->toContain('W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W0');
+        expect($labels)->not->toContain('1', '2', '3');
     });
 
     test('groups are in correct display order', function () {
@@ -152,7 +155,7 @@ describe('SectionsWorked Widget', function () {
         $labels = collect($data['groups'])->pluck('label')->all();
 
         expect($labels)->toBe([
-            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+            'W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W0',
             'KH6 / KL7 / KP4', 'VE', 'DX',
         ]);
     });

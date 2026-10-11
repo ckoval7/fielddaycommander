@@ -284,51 +284,51 @@
                         'border-transparent' => ! $errors->has('uses_commercial_power'),
                     ])>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="form-control">
-                            <label class="label cursor-pointer justify-start gap-3">
+                        <div class="flex flex-col">
+                            <label class="flex items-center gap-3 cursor-pointer py-2">
                                 <input
                                     type="checkbox"
                                     wire:model.live="uses_commercial_power"
                                     @class(['checkbox checkbox-sm', 'checkbox-error' => $errors->has('uses_commercial_power')])
                                     @if($isLocked) disabled @endif
                                 />
-                                <span class="label-text">Commercial Power (Grid)</span>
+                                <span class="text-sm">Commercial Power (Grid)</span>
                             </label>
                         </div>
 
-                        <div class="form-control">
-                            <label class="label cursor-pointer justify-start gap-3">
+                        <div class="flex flex-col">
+                            <label class="flex items-center gap-3 cursor-pointer py-2">
                                 <input
                                     type="checkbox"
                                     wire:model.live="uses_generator"
                                     @class(['checkbox checkbox-sm', 'checkbox-error' => $errors->has('uses_commercial_power')])
                                     @if($isLocked) disabled @endif
                                 />
-                                <span class="label-text">Generator</span>
+                                <span class="text-sm">Generator</span>
                             </label>
                         </div>
 
-                        <div class="form-control">
-                            <label class="label cursor-pointer justify-start gap-3">
+                        <div class="flex flex-col">
+                            <label class="flex items-center gap-3 cursor-pointer py-2">
                                 <input
                                     type="checkbox"
                                     wire:model.live="uses_battery"
                                     @class(['checkbox checkbox-sm', 'checkbox-error' => $errors->has('uses_commercial_power')])
                                     @if($isLocked) disabled @endif
                                 />
-                                <span class="label-text">Battery</span>
+                                <span class="text-sm">Battery</span>
                             </label>
                         </div>
 
-                        <div class="form-control">
-                            <label class="label cursor-pointer justify-start gap-3">
+                        <div class="flex flex-col">
+                            <label class="flex items-center gap-3 cursor-pointer py-2">
                                 <input
                                     type="checkbox"
                                     wire:model.live="uses_alternate_power"
                                     @class(['checkbox checkbox-sm', 'checkbox-error' => $errors->has('uses_commercial_power')])
                                     @if($isLocked) disabled @endif
                                 />
-                                <span class="label-text">Alternate Power</span>
+                                <span class="text-sm">Alternate Power</span>
                             </label>
                             <p class="text-xs text-base-content/60 ml-9 -mt-2">
                                 Examples: Solar, Wind, Water (Hydro), Methane
@@ -372,15 +372,15 @@
                 <x-slot:title>GOTA Station (Get On The Air)</x-slot:title>
 
                 <div class="space-y-4">
-                    <div class="form-control">
-                        <label class="label cursor-pointer justify-start gap-3">
+                    <div class="flex flex-col">
+                        <label class="flex items-center gap-3 cursor-pointer py-2">
                             <input
                                 type="checkbox"
                                 wire:model.live="has_gota_station"
                                 class="checkbox"
                                 @if($isLocked) disabled @endif
                             />
-                            <span class="label-text">Enable GOTA Station</span>
+                            <span class="text-sm">Enable GOTA Station</span>
                         </label>
                         <p class="text-sm text-base-content/60 mt-1 ml-9">
                             Allow novice operators to make contacts under supervision

@@ -59,7 +59,7 @@
                                             type="number"
                                             min="1"
                                             max="{{ $bonusType->max_occurrences }}"
-                                            class="input input-bordered input-xs w-20"
+                                            class="input input-xs w-20"
                                             wire:model.blur="quantities.{{ $bonusType->id }}"
                                             placeholder="1"
                                         />
@@ -70,7 +70,7 @@
                                 @endif
                                 <input
                                     type="text"
-                                    class="input input-bordered input-xs w-full max-w-sm"
+                                    class="input input-xs w-full max-w-sm"
                                     placeholder="{{ $bonusType->code === 'social_media' ? 'Paste social media URL (optional)' : 'Notes (optional)' }}"
                                     aria-label="Notes for {{ $bonusType->name }}"
                                     wire:model.blur="notes.{{ $bonusType->id }}"
@@ -100,7 +100,7 @@
                                 type="number"
                                 min="0"
                                 max="5"
-                                class="input input-bordered input-xs w-20"
+                                class="input input-xs w-20"
                                 wire:model.blur="additionalYouth"
                                 wire:change="saveAdditionalYouth"
                             />

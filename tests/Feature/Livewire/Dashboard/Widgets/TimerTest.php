@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use App\Livewire\Dashboard\Widgets\Timer;
 use App\Models\Event;
 use App\Models\EventType;
@@ -18,7 +19,7 @@ afterEach(function () {
 it('implements IsWidget trait', function () {
     $traits = class_uses_recursive(Timer::class);
 
-    expect($traits)->toContain(\App\Livewire\Dashboard\Widgets\Concerns\IsWidget::class);
+    expect($traits)->toContain(IsWidget::class);
 });
 
 it('displays countdown for active event', function () {
@@ -175,7 +176,7 @@ it('supports tv size variant', function () {
     ])
         ->assertOk()
         ->assertSee('Time Remaining')
-        ->assertSee('sm:text-6xl'); // TV-specific font cap
+        ->assertSee('text-[clamp(1.75rem,2.4vw,3.75rem)]'); // TV-specific font, scaled to the tile
 });
 
 it('renders Alpine.js countdown component', function () {

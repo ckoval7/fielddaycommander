@@ -16,7 +16,7 @@ Props from component:
 >
     @if ($size === 'tv')
         {{-- TV Mode: Left-aligned stat display for kiosk/TV dashboards --}}
-        <x-card class="h-full flex flex-col p-6 sm:p-8" shadow>
+        <x-card body-class="flex flex-col min-h-0" class="h-full flex flex-col p-6" shadow>
             <div class="flex-1 flex flex-col">
                 {{-- Top row: icon badge left, trend right --}}
                 <div class="flex items-start justify-between mb-auto">
@@ -42,21 +42,21 @@ Props from component:
 
                 {{-- Big number --}}
                 <div
-                    class="text-5xl sm:text-6xl lg:text-7xl font-black tabular-nums {{ $data['color'] }} transition-all duration-300 mt-4"
-                    ::class="{ 'scale-105': isAnimating }"
-                    x-text="displayValue"
-                ></div>
+                    class="text-[clamp(2.5rem,3.4vw,4.5rem)] leading-none font-black tabular-nums whitespace-nowrap {{ $data['color'] }} transition-all duration-300 mt-4"
+                    :class="{ 'scale-105': isAnimating }"
+                    x-text="formattedValue"
+                >{{ $data['value'] }}</div>
 
                 {{-- Label --}}
                 <div class="text-xl sm:text-2xl text-base-content/70 mt-2">
                     {{ $data['label'] }}
                 </div>
             </div>
-            <div class="text-xs text-base-content/40 text-right mt-auto pt-2">Updated {{ formatTimeAgo($data['last_updated_at'] ?? null) }}</div>
+            <x-dashboard.updated-at :at="$data['last_updated_at'] ?? null" />
         </x-card>
     @else
         {{-- Normal Mode: Left-aligned stat display with icon badge and trend --}}
-        <x-card class="h-full flex flex-col" shadow>
+        <x-card body-class="flex flex-col min-h-0" class="h-full flex flex-col" shadow>
             <div class="flex-1 flex flex-col py-2">
                 {{-- Top row: icon badge left, trend right --}}
                 <div class="flex items-start justify-between mb-auto">
@@ -83,16 +83,16 @@ Props from component:
                 {{-- Big number --}}
                 <div
                     class="text-6xl font-black tabular-nums {{ $data['color'] }} transition-all duration-200 mt-2"
-                    ::class="{ 'scale-105': isAnimating }"
-                    x-text="displayValue"
-                ></div>
+                    :class="{ 'scale-105': isAnimating }"
+                    x-text="formattedValue"
+                >{{ $data['value'] }}</div>
 
                 {{-- Label --}}
                 <div class="text-sm text-base-content/60 mt-1">
                     {{ $data['label'] }}
                 </div>
             </div>
-            <div class="text-xs text-base-content/40 text-right mt-auto pt-2 border-t border-base-content/5">Updated {{ formatTimeAgo($data['last_updated_at'] ?? null) }}</div>
+            <x-dashboard.updated-at :at="$data['last_updated_at'] ?? null" class="border-t border-base-content/5" />
         </x-card>
     @endif
 </div>
@@ -101,50 +101,74 @@ Props from component:
 <script>
     Alpine.data('statCardWidget', () => ({
         displayValue: 0,
-        targetValue: 0,
+        decimals: 0,
         isAnimating: false,
+        frameId: null,
 
         init() {
-            this.displayValue = parseFloat(String(this.$wire.statValue).replace(/,/g, '')) || 0;
-            this.targetValue = this.displayValue;
+            this.displayValue = this.parse(this.$wire.statValue);
+            this.decimals = this.countDecimals(this.$wire.statValue);
 
             this.$wire.$watch('statValue', (newValue) => {
-                this.animateValue(parseFloat(String(newValue).replace(/,/g, '')) || 0);
+                this.decimals = this.countDecimals(newValue);
+                this.animateValue(this.parse(newValue));
             });
         },
 
-        animateValue(newValue) {
-            if (this.isAnimating) return;
+        destroy() {
+            if (this.frameId) cancelAnimationFrame(this.frameId);
+        },
 
-            const start = parseFloat(this.displayValue) || 0;
-            const end = parseFloat(newValue) || 0;
+        get formattedValue() {
+            return Number(this.displayValue).toLocaleString(undefined, {
+                minimumFractionDigits: this.decimals,
+                maximumFractionDigits: this.decimals,
+            });
+        },
 
-            if (start === end) return;
+        parse(value) {
+            return parseFloat(String(value).replace(/,/g, '')) || 0;
+        },
+
+        countDecimals(value) {
+            const fraction = String(value).split('.')[1];
+            return fraction ? fraction.length : 0;
+        },
+
+        // A new value arriving mid-animation retargets from wherever the
+        // display currently is, rather than being dropped.
+        animateValue(end) {
+            if (this.frameId) cancelAnimationFrame(this.frameId);
+
+            const start = this.displayValue;
+
+            if (start === end) {
+                this.isAnimating = false;
+                return;
+            }
 
             this.isAnimating = true;
-            this.targetValue = end;
 
             const duration = this.$wire.size === 'tv' ? 800 : 500;
-            const startTime = Date.now();
+            const factor = 10 ** this.decimals;
+            const startTime = performance.now();
 
-            const animate = () => {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-
+            const animate = (timestamp) => {
+                const progress = Math.min((timestamp - startTime) / duration, 1);
                 const eased = 1 - Math.pow(1 - progress, 3);
 
-                const current = start + (end - start) * eased;
-                this.displayValue = Math.round(current);
+                this.displayValue = Math.round((start + (end - start) * eased) * factor) / factor;
 
                 if (progress < 1) {
-                    requestAnimationFrame(animate);
+                    this.frameId = requestAnimationFrame(animate);
                 } else {
                     this.displayValue = end;
                     this.isAnimating = false;
+                    this.frameId = null;
                 }
             };
 
-            requestAnimationFrame(animate);
+            this.frameId = requestAnimationFrame(animate);
         }
     }));
 </script>

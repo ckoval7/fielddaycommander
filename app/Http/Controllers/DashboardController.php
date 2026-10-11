@@ -135,22 +135,50 @@ class DashboardController extends Controller
     /**
      * Display the public TV dashboard.
      *
-     * Loads static TV dashboard configuration from config file.
-     * Handles optional kiosk mode via query parameter.
+     * Loads the static TV dashboard configuration from the config file and
+     * sizes a fixed grid from the visible widgets' column/row spans so the
+     * whole board fits one screen. Handles optional kiosk mode via ?kiosk=1.
      */
     public function tv(Request $request): View
     {
         $tvConfig = config('dashboard.default_dashboards.tv');
+        $columns = max(1, (int) ($tvConfig['columns'] ?? 5));
 
-        // Check if kiosk mode is requested
-        $kioskMode = $request->boolean('kiosk', false);
+        $widgets = collect($tvConfig['widgets'])
+            ->filter(fn (array $widget): bool => $widget['visible'] ?? true)
+            ->sortBy('order')
+            ->map(fn (array $widget): array => [
+                ...$widget,
+                'col_span' => $this->tvSpan($widget, 'col_span', $columns),
+                'row_span' => $this->tvSpan($widget, 'row_span'),
+            ])
+            ->values();
+
+        $occupiedCells = $widgets->sum(fn (array $widget): int => $widget['col_span'] * $widget['row_span']);
 
         return view('dashboard.tv', [
             'title' => $tvConfig['title'],
             'description' => $tvConfig['description'],
             'layout_type' => $tvConfig['layout_type'],
-            'widgets' => collect($tvConfig['widgets']),
-            'kiosk' => $kioskMode,
+            'widgets' => $widgets,
+            'columns' => $columns,
+            'rows' => max(1, (int) ceil($occupiedCells / $columns)),
+            'kiosk' => $request->boolean('kiosk', false),
+            'kioskShortcut' => strtolower((string) config('dashboard.kiosk.shortcut', 'f')),
+            'showKioskHint' => (bool) config('dashboard.kiosk.show_exit_hint', true),
         ]);
+    }
+
+    /**
+     * Resolve a TV widget's column or row span, clamped to at least 1 (and to
+     * the grid width for columns).
+     *
+     * @param  array<string, mixed>  $widget
+     */
+    protected function tvSpan(array $widget, string $key, ?int $max = null): int
+    {
+        $span = max(1, (int) ($widget[$key] ?? 1));
+
+        return $max === null ? $span : min($span, $max);
     }
 }

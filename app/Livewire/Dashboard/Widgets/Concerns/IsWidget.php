@@ -178,6 +178,29 @@ trait IsWidget
     }
 
     /**
+     * Listener map for real-time ContactLogged broadcasts on the event channel.
+     *
+     * ContactLogged is broadcast only on the private event.{id} channel, and
+     * that channel authorizes signed-in users only. Guests (e.g. the public TV
+     * dashboard) get no listener and rely on the widget's polling instead of a
+     * subscription that would be refused.
+     *
+     * @return array<string, string>
+     */
+    protected function contactLoggedListener(string $method = 'handleUpdate'): array
+    {
+        $eventId = app(EventContextService::class)->getContextEventId();
+
+        if (! $eventId || ! auth()->check()) {
+            return [];
+        }
+
+        return [
+            "echo-private:event.{$eventId},.ContactLogged" => $method,
+        ];
+    }
+
+    /**
      * Check if this widget is in TV/kiosk display mode.
      */
     public function isTvSize(): bool

@@ -94,8 +94,8 @@ Props from controller:
         }
 
         @keyframes widget-update-pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(var(--p), 0); }
-            50% { box-shadow: 0 0 0 8px rgba(var(--p), 0.3); }
+            0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-primary) 0%, transparent); }
+            50% { box-shadow: 0 0 0 8px color-mix(in oklab, var(--color-primary) 30%, transparent); }
         }
 
         .animate-fade-in {

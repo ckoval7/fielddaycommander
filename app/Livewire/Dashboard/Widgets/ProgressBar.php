@@ -34,6 +34,11 @@ class ProgressBar extends Component
     protected const QSOS_PER_TRANSMITTER_TARGET = 200;
 
     /**
+     * QSO spacing between next_milestone targets.
+     */
+    public const MILESTONE_INTERVAL = 50;
+
+    /**
      * Current value exposed as a reactive Livewire property.
      * Alpine watches this via $wire.$watch to trigger animations.
      */
@@ -84,11 +89,11 @@ class ProgressBar extends Component
         return [
             'current' => $current,
             'target' => $target,
-            'percentage' => $this->calculatePercentage($current, $target),
+            'percentage' => $this->calculateMilestonePercentage($current, $target),
             'label' => "{$current}/{$target} QSOs to next milestone",
             'unit_label' => 'QSOs',
             'footer_label' => 'To next milestone',
-            'is_milestone' => $current > 0 && $current % 50 === 0,
+            'is_milestone' => $current > 0 && $current % self::MILESTONE_INTERVAL === 0,
         ];
     }
 
@@ -114,10 +119,10 @@ class ProgressBar extends Component
     }
 
     /**
-     * QSO progress toward a target derived from operating class transmitter count.
+     * QSO progress toward a target derived from the configured transmitter count.
      *
-     * Class codes like "3A" → 3 transmitters → 600 QSO target (200 per tx).
-     * Falls back to 200 when no class is configured.
+     * A "3A" entry → 3 transmitters → 600 QSO target (200 per transmitter).
+     * Falls back to a single transmitter when nothing is configured.
      *
      * @return array{current: int, target: int, percentage: float, label: string, unit_label: string, footer_label: string, is_milestone: bool}
      */
@@ -126,11 +131,12 @@ class ProgressBar extends Component
         $config = $event?->eventConfiguration;
         $current = $config?->contacts()->notDuplicate()->count() ?? 0;
 
-        $classCode = $config?->operatingClass?->code;
-        $transmitters = $this->parseTransmitterCount($classCode);
-        $target = max(self::QSOS_PER_TRANSMITTER_TARGET, $transmitters * self::QSOS_PER_TRANSMITTER_TARGET);
+        $transmitters = max(1, (int) ($config?->transmitter_count ?? 1));
+        $target = $transmitters * self::QSOS_PER_TRANSMITTER_TARGET;
 
-        $classLabel = $classCode ? "Class {$classCode}" : 'class target';
+        $classCode = $config?->operatingClass?->code;
+        $entryClass = $classCode ? "{$transmitters}{$classCode}" : null;
+        $classLabel = $entryClass ? "Class {$entryClass}" : 'class target';
 
         return [
             'current' => $current,
@@ -138,7 +144,7 @@ class ProgressBar extends Component
             'percentage' => $this->calculatePercentage($current, $target),
             'label' => "{$current}/{$target} QSOs toward {$classLabel}",
             'unit_label' => 'QSOs',
-            'footer_label' => $classCode ? "Toward Class {$classCode} target" : 'Toward class target',
+            'footer_label' => $entryClass ? "Toward Class {$entryClass} target" : 'Toward class target',
             'is_milestone' => false,
         ];
     }
@@ -182,24 +188,6 @@ class ProgressBar extends Component
     }
 
     /**
-     * Extract the leading transmitter count from an operating class code.
-     *
-     * Examples: "1A" → 1, "20A" → 20, "B" → 0, null → 0.
-     */
-    protected function parseTransmitterCount(?string $classCode): int
-    {
-        if ($classCode === null || $classCode === '') {
-            return 0;
-        }
-
-        if (preg_match('/^(\d+)/', $classCode, $matches) === 1) {
-            return (int) $matches[1];
-        }
-
-        return 0;
-    }
-
-    /**
      * Calculate the next milestone (next multiple of 50).
      *
      * Examples:
@@ -209,19 +197,29 @@ class ProgressBar extends Component
      */
     public function calculateNextMilestone(int $current): int
     {
-        $milestoneInterval = 50;
-
-        // If exactly on a milestone, next one is current + interval
-        if ($current % $milestoneInterval === 0) {
-            return $current + $milestoneInterval;
-        }
-
-        // Otherwise, round up to next milestone
-        return (int) (ceil($current / $milestoneInterval) * $milestoneInterval);
+        return (intdiv($current, self::MILESTONE_INTERVAL) + 1) * self::MILESTONE_INTERVAL;
     }
 
     /**
-     * Calculate percentage progress from current to next milestone.
+     * Calculate progress made since the previous milestone toward the next one.
+     *
+     * Measuring from zero would pin the bar near 100% once the count grows
+     * (1,001 of 1,050 is already 95%), so only the current 50-QSO stretch counts.
+     *
+     * Examples:
+     * - 37 toward 50 → 74%
+     * - 132 toward 150 → 64%
+     * - 150 toward 200 → 0%
+     */
+    public function calculateMilestonePercentage(int $current, int $target): float
+    {
+        $previousMilestone = $target - self::MILESTONE_INTERVAL;
+
+        return $this->calculatePercentage($current - $previousMilestone, self::MILESTONE_INTERVAL);
+    }
+
+    /**
+     * Calculate percentage progress from current toward a target.
      *
      * Examples:
      * - 37/50 → 74%

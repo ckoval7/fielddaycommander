@@ -9,35 +9,39 @@ Props from component:
 - $size: 'normal' or 'tv'
 --}}
 
-<div class="h-full">
-    <x-card class="h-full flex flex-col p-6 sm:p-8" shadow>
+{{-- Polls so phase changes (setup → running → ended) reach the page even
+     if the client-side refresh at zero is missed. --}}
+<div class="h-full" wire:poll.visible.60s>
+    <x-card body-class="flex flex-col min-h-0" class="h-full flex flex-col p-6 sm:p-8" shadow>
         <div class="flex-1 flex flex-col items-center justify-center">
             @if ($data['is_ended'])
                 {{-- Event has ended --}}
                 <div class="text-center">
-                    <div class="text-sm text-base-content/60 mb-2 {{ $size === 'tv' ? 'text-xl' : '' }}">
+                    <div class="{{ $size === 'tv' ? 'text-xl' : 'text-sm' }} text-base-content/60 mb-2">
                         {{ $data['label'] }}
                     </div>
-                    <div class="font-mono font-black whitespace-nowrap {{ $size === 'tv' ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl' }} text-base-content/70">
+                    <div class="font-mono font-black whitespace-nowrap {{ $size === 'tv' ? 'text-[clamp(1.75rem,2.4vw,3.75rem)]' : 'text-3xl sm:text-4xl' }} text-base-content/70">
                         00:00:00
                     </div>
                 </div>
             @else
                 {{-- Active countdown timer --}}
+                {{-- Keyed by target + label so a phase change replaces this element
+                     and re-runs x-data; a plain morph would keep the old target. --}}
                 <div
+                    wire:key="countdown-{{ $data['end_time'] }}-{{ $data['label'] }}"
                     x-data="countdown(@js($data['end_time']), @js($data['now']))"
-                    x-init="init()"
                     class="text-center w-full"
                 >
                     {{-- Small label --}}
-                    <div class="text-sm text-base-content/60 mb-2 {{ $size === 'tv' ? 'text-xl' : '' }}">
+                    <div class="{{ $size === 'tv' ? 'text-xl' : 'text-sm' }} text-base-content/60 mb-2">
                         {{ $data['label'] }}
                     </div>
 
                     <div>
                         <div
-                            class="font-mono font-black text-primary whitespace-nowrap {{ $size === 'tv' ? 'text-5xl sm:text-6xl' : 'text-4xl sm:text-5xl' }}"
-                            ::class="{ 'text-warning': isWarning, 'text-error': isCritical }"
+                            class="font-mono font-black whitespace-nowrap {{ $size === 'tv' ? 'text-[clamp(1.75rem,2.4vw,3.75rem)]' : 'text-4xl sm:text-5xl' }}"
+                            :class="isCritical ? 'text-error' : (isWarning ? 'text-warning' : 'text-primary')"
                             x-text="formattedTime"
                         >
                             --:--:--
@@ -46,9 +50,6 @@ Props from component:
                 </div>
             @endif
         </div>
-
-        {{-- Last updated timestamp --}}
-        <div class="text-xs text-base-content/40 text-right mt-auto pt-2 border-t border-base-content/5">Updated {{ formatTimeAgo($data['last_updated_at'] ?? null) }}</div>
     </x-card>
 </div>
 
@@ -92,9 +93,13 @@ Alpine.data('countdown', (endTimeIso, nowIso) => ({
         const diff = this.endTime.getTime() - this.effectiveNow();
 
         if (diff <= 0) {
-            this.formattedTime = 'Event Ended';
+            // The target was either the event start (setup phase) or its end;
+            // the server decides which phase comes next, so ask it to re-render.
+            this.formattedTime = '00:00:00';
             if (this.intervalId) {
                 clearInterval(this.intervalId);
+                this.intervalId = null;
+                this.$wire.$refresh();
             }
             return;
         }

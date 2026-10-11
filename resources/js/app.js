@@ -2,6 +2,7 @@ import './bootstrap';
 import dashboardSortable from './components/dashboard-sortable';
 import contactQueue from './components/contact-queue';
 import transcribeRecall from './components/transcribe-recall';
+import updatedAgo from './components/updated-ago';
 import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
@@ -23,6 +24,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('dashboardSortable', dashboardSortable);
     Alpine.data('contactQueue', contactQueue);
     Alpine.data('transcribeRecall', transcribeRecall);
+    Alpine.data('updatedAgo', updatedAgo);
     Alpine.data('formErrorSummaryPanel', formErrorSummaryPanel);
     Alpine.data('flatpickr', flatpickrComponent);
 });
@@ -57,6 +59,14 @@ document.addEventListener('livewire:init', () => {
 
             if (status === 419) {
                 preventDefault();
+
+                // Unattended displays (the TV dashboard) opt in to reloading
+                // themselves rather than being sent away to the landing page.
+                if (document.documentElement.dataset.reloadOnSessionExpiry !== undefined) {
+                    globalThis.location.reload();
+                    return;
+                }
+
                 const fallback = '/?session_expired=1';
                 let target = fallback;
                 if (typeof body === 'string' && body.length > 0) {

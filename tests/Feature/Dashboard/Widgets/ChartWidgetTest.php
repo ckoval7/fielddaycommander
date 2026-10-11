@@ -688,7 +688,7 @@ test('tv size uses larger minimum height', function () {
         'config' => ['chart_type' => 'bar', 'data_source' => 'qsos_per_hour'],
         'size' => 'tv',
     ])
-        ->assertSeeHtml('min-h-[280px]');
+        ->assertSeeHtml('min-h-0');
 });
 
 test('normal size uses standard minimum height', function () {

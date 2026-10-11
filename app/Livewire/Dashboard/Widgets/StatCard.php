@@ -40,6 +40,13 @@ class StatCard extends Component
     public string $statValue = '0';
 
     /**
+     * How long comparison samples are kept beyond the comparison interval,
+     * so a baseline exists even when no one rendered the widget at the exact
+     * minute one interval ago.
+     */
+    protected const COMPARISON_SAMPLE_GRACE_SECONDS = 900;
+
+    /**
      * Fetch the metric data for this widget.
      *
      * Returns an array with the metric value, label, and icon.
@@ -170,6 +177,7 @@ class StatCard extends Component
     {
         $count = Contact::query()
             ->where('event_configuration_id', $event->eventConfiguration->id)
+            ->where('contacts.is_duplicate', false)
             ->join('operating_sessions', 'contacts.operating_session_id', '=', 'operating_sessions.id')
             ->distinct('operating_sessions.operator_user_id')
             ->count('operating_sessions.operator_user_id');
@@ -385,12 +393,15 @@ class StatCard extends Component
     /**
      * Add comparison data to the metric if enabled.
      *
-     * Compares current value with historical snapshot from cache.
-     * Calculates change amount, percentage, and trend direction.
+     * Every render records the current value as a per-minute sample; the
+     * comparison baseline is the newest sample that is at least one full
+     * interval old. Without that age check the baseline would be whatever the
+     * previous poll wrote, so "vs 1h ago" would really mean "vs 10s ago".
      */
     protected function addComparisonData(array $current, Event $event): array
     {
-        $showComparison = $this->config['show_comparison'] ?? true;
+        $showComparison = ($this->config['show_comparison'] ?? true)
+            && ($this->config['show_trend'] ?? true);
 
         if (! $showComparison || ! $event->eventConfiguration) {
             return $current;
@@ -400,11 +411,25 @@ class StatCard extends Component
         $configHash = hash('xxh128', json_encode($this->config));
         $historicalKey = "dashboard:widget:StatCard:{$configHash}:{$event->eventConfiguration->id}:history:{$interval}";
 
-        $previousValue = Cache::get($historicalKey);
         $currentNumeric = (float) str_replace(',', '', $current['value']);
+        $intervalSeconds = $this->comparisonIntervalSeconds($interval);
+        $now = appNow()->getTimestamp();
 
-        $ttl = $this->comparisonCacheTtl($interval);
-        Cache::put($historicalKey, $currentNumeric, $ttl);
+        $samples = Cache::get($historicalKey);
+        $samples = is_array($samples) ? $samples : [];
+        // First value seen in each minute; later polls in that minute don't move it.
+        $samples[$now - ($now % 60)] ??= $currentNumeric;
+
+        $samples = array_filter(
+            $samples,
+            fn (int $recordedAt): bool => $recordedAt >= $now - $intervalSeconds - self::COMPARISON_SAMPLE_GRACE_SECONDS,
+            ARRAY_FILTER_USE_KEY
+        );
+        ksort($samples);
+
+        Cache::put($historicalKey, $samples, now()->addSeconds($intervalSeconds + self::COMPARISON_SAMPLE_GRACE_SECONDS));
+
+        $previousValue = $this->comparisonBaseline($samples, $now - $intervalSeconds);
 
         if ($previousValue === null) {
             return $current;
@@ -414,14 +439,34 @@ class StatCard extends Component
     }
 
     /**
-     * Get the cache TTL for comparison historical data.
+     * Find the newest sample recorded at or before the cutoff timestamp.
+     *
+     * @param  array<int, float>  $samples  Values keyed by minute timestamp, sorted ascending
      */
-    protected function comparisonCacheTtl(string $interval): \DateTimeInterface
+    protected function comparisonBaseline(array $samples, int $cutoff): ?float
+    {
+        $baseline = null;
+
+        foreach ($samples as $recordedAt => $value) {
+            if ($recordedAt > $cutoff) {
+                break;
+            }
+
+            $baseline = (float) $value;
+        }
+
+        return $baseline;
+    }
+
+    /**
+     * Get the comparison look-back window in seconds.
+     */
+    protected function comparisonIntervalSeconds(string $interval): int
     {
         return match ($interval) {
-            '1h' => now()->addHours(1)->addHour(),
-            '4h' => now()->addHours(4)->addHour(),
-            default => now()->addHours(2),
+            '1h' => 3600,
+            '4h' => 14400,
+            default => 7200,
         };
     }
 

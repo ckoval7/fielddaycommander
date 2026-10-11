@@ -2,18 +2,29 @@
 TV Dashboard Layout
 
 Large-format dashboard optimized for TV displays and kiosk mode.
-Fixed 5-column grid with calculated row heights to fit 1080p screens without scrolling.
-Supports kiosk mode via ?kiosk=1 parameter.
+Fixed grid sized from the config: `columns` columns, rows derived from the
+widgets' col_span/row_span, every row an equal share of the viewport so the
+board fits one screen without scrolling.
+
+Unattended-display behaviour:
+- F (configurable) toggles real browser fullscreen; Esc exits it.
+- ?kiosk=1 applies kiosk styling (no cursor/selection, hint pill).
+- A 419 reloads this page instead of leaving it (see app.js).
+- If no Livewire request has succeeded for a while, the page checks the
+  health endpoint and reloads once the server answers, so a TV recovers
+  from a restart or network drop without someone touching it.
 
 Props from controller:
-- $title: Dashboard title
-- $description: Dashboard description
-- $widgets: Collection of widget configurations
+- $title, $description: Dashboard title / description
+- $widgets: Visible widget configurations, ordered, spans resolved
+- $columns, $rows: Grid dimensions
 - $kiosk: Boolean - kiosk mode enabled
+- $kioskShortcut: Fullscreen toggle key
+- $showKioskHint: Whether to show the kiosk hint pill
 --}}
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ session('theme', 'light') }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ session('theme', 'light') }}" data-reload-on-session-expiry>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,189 +43,201 @@ Props from controller:
         class="tv-dashboard"
         x-data="{
             kiosk: @js($kiosk),
-            fullscreen: $persist(@js($kiosk)).as('tv-dashboard-fullscreen'),
-            widgetCount: @js(count($widgets)),
-            gridRows: 0,
-            widgetHeight: 0,
-            resizeTimer: null,
-            resizeHandler: null,
+            isFullscreen: false,
+            showHint: false,
+            shortcut: @js($kioskShortcut),
+            showKioskHint: @js($showKioskHint),
+            lastSuccessfulRequestAt: Date.now(),
+            staleAfterMs: 120000,
+            watchdogId: null,
+            hintTimer: null,
             keydownHandler: null,
+            fullscreenHandler: null,
+            removeRequestInterceptor: null,
 
             init() {
-                this.calculateGrid();
-
-                // Recalculate on window resize (debounced)
-                this.resizeHandler = () => {
-                    clearTimeout(this.resizeTimer);
-                    this.resizeTimer = setTimeout(() => this.calculateGrid(), 200);
-                };
-                window.addEventListener('resize', this.resizeHandler);
-
-                // Global fullscreen keyboard shortcut (F key)
                 this.keydownHandler = (e) => {
-                    if (e.key === 'f' || e.key === 'F') {
+                    if (e.key.toLowerCase() === this.shortcut && !e.ctrlKey && !e.metaKey && !e.altKey) {
                         e.preventDefault();
-                        this.fullscreen = !this.fullscreen;
-                        this.kiosk = this.fullscreen;
-                    }
-
-                    // ESC key exits kiosk mode
-                    if (e.key === 'Escape' && this.kiosk) {
-                        this.kiosk = false;
-                        this.fullscreen = false;
+                        this.toggleFullscreen();
                     }
                 };
                 document.addEventListener('keydown', this.keydownHandler);
 
-                // Auto-enable fullscreen if kiosk param present
-                if (this.kiosk && !document.fullscreenElement) {
-                    this.requestFullscreen();
-                }
+                // Browsers swallow Esc while exiting fullscreen, so follow the
+                // fullscreen state itself rather than key presses.
+                this.fullscreenHandler = () => {
+                    this.isFullscreen = !!document.fullscreenElement;
+                    this.flashHint();
+                };
+                document.addEventListener('fullscreenchange', this.fullscreenHandler);
+
+                this.removeRequestInterceptor = Livewire.interceptRequest(({ onSuccess }) => {
+                    onSuccess(() => {
+                        this.lastSuccessfulRequestAt = Date.now();
+                    });
+                });
+                this.watchdogId = setInterval(() => this.checkForStaleness(), 30000);
+
+                this.flashHint();
             },
 
             destroy() {
-                if (this.resizeHandler) {
-                    window.removeEventListener('resize', this.resizeHandler);
-                    this.resizeHandler = null;
+                document.removeEventListener('keydown', this.keydownHandler);
+                document.removeEventListener('fullscreenchange', this.fullscreenHandler);
+                if (typeof this.removeRequestInterceptor === 'function') {
+                    this.removeRequestInterceptor();
                 }
-                if (this.keydownHandler) {
-                    document.removeEventListener('keydown', this.keydownHandler);
-                    this.keydownHandler = null;
-                }
-                if (this.resizeTimer) {
-                    clearTimeout(this.resizeTimer);
-                    this.resizeTimer = null;
-                }
+                clearInterval(this.watchdogId);
+                clearTimeout(this.hintTimer);
             },
 
-            calculateGrid() {
-                // 5 columns fixed
-                const columns = 5;
-                this.gridRows = Math.ceil(this.widgetCount / columns);
-
-                // Calculate widget height to fit screen
-                const viewportHeight = window.innerHeight;
-                const padding = 32; // Total vertical padding
-                const gap = 24 * (this.gridRows - 1); // Gap between rows
-
-                const availableHeight = viewportHeight - padding - gap;
-                this.widgetHeight = Math.floor(availableHeight / this.gridRows);
+            get kioskStyling() {
+                return this.kiosk || this.isFullscreen;
             },
 
-            requestFullscreen() {
-                if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen().catch(err => {
-                        console.log('Fullscreen request failed:', err);
-                    });
+            toggleFullscreen() {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen?.();
+                    return;
                 }
-            }
+
+                document.documentElement.requestFullscreen?.().catch((err) => {
+                    console.warn('TV Dashboard: fullscreen request failed', err);
+                });
+            },
+
+            flashHint() {
+                if (!this.showKioskHint || !this.kioskStyling) {
+                    this.showHint = false;
+                    return;
+                }
+
+                this.showHint = true;
+                clearTimeout(this.hintTimer);
+                this.hintTimer = setTimeout(() => { this.showHint = false; }, 6000);
+            },
+
+            // Widgets poll every 10-30s; a long gap without a successful
+            // request means the page lost the server. Reload only once the
+            // health check answers, so a reload never strands the TV on a
+            // browser error page.
+            async checkForStaleness() {
+                if (document.hidden || Date.now() - this.lastSuccessfulRequestAt < this.staleAfterMs) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/up', { cache: 'no-store' });
+                    if (response.ok) {
+                        window.location.reload();
+                    }
+                } catch {
+                    // Server still unreachable; try again on the next tick.
+                }
+            },
         }"
-        :class="{ 'kiosk-mode': kiosk }"
-        x-init="calculateGrid"
+        :class="{ 'kiosk-mode': kioskStyling }"
     >
-        {{-- TV Widget Grid (no header — F toggles fullscreen, ESC exits kiosk) --}}
-        <div class="tv-dashboard-content" :class="{ 'px-4 py-4': !kiosk, 'p-0': kiosk }">
-            @if($widgets && count($widgets) > 0)
+        <div class="tv-dashboard-content">
+            @if($widgets->isNotEmpty())
                 <div
                     class="tv-widget-grid"
-                    :style="`grid-template-rows: repeat(${gridRows}, ${widgetHeight}px);`"
+                    style="grid-template-columns: repeat({{ $columns }}, minmax(0, 1fr)); grid-template-rows: repeat({{ $rows }}, minmax(0, 1fr));"
                 >
-                    @foreach($widgets as $index => $widget)
-                        @if($widget['visible'] ?? true)
-                            <div
-                                class="tv-widget-item"
-                                wire:key="tv-widget-{{ $widget['id'] }}"
-                                :style="`min-height: ${widgetHeight}px;`"
-                            >
-                                {{-- Render Widget Component in TV size --}}
-                                @switch($widget['type'])
-                                    @case('stat_card')
-                                        <livewire:dashboard.widgets.stat-card
-                                            :config="$widget['config']"
-                                            :widget-id="$widget['id']"
-                                            size="tv"
-                                            wire:key="tv-stat-{{ $widget['id'] }}"
-                                        />
-                                        @break
+                    @foreach($widgets as $widget)
+                        <div
+                            class="tv-widget-item"
+                            style="grid-column: span {{ $widget['col_span'] }} / span {{ $widget['col_span'] }}; grid-row: span {{ $widget['row_span'] }} / span {{ $widget['row_span'] }};"
+                        >
+                            {{-- Render Widget Component in TV size --}}
+                            @switch($widget['type'])
+                                @case('stat_card')
+                                    <livewire:dashboard.widgets.stat-card
+                                        :config="$widget['config']"
+                                        :widget-id="$widget['id']"
+                                        size="tv"
+                                        wire:key="tv-stat-{{ $widget['id'] }}"
+                                    />
+                                    @break
 
-                                    @case('chart')
-                                        <livewire:dashboard.widgets.chart
-                                            :config="$widget['config']"
-                                            :widget-id="$widget['id']"
-                                            size="tv"
-                                            wire:key="tv-chart-{{ $widget['id'] }}"
-                                        />
-                                        @break
+                                @case('chart')
+                                    <livewire:dashboard.widgets.chart
+                                        :config="$widget['config']"
+                                        :widget-id="$widget['id']"
+                                        size="tv"
+                                        wire:key="tv-chart-{{ $widget['id'] }}"
+                                    />
+                                    @break
 
-                                    @case('progress_bar')
-                                        <livewire:dashboard.widgets.progress-bar
-                                            :config="$widget['config']"
-                                            :widget-id="$widget['id']"
-                                            size="tv"
-                                            wire:key="tv-progress-{{ $widget['id'] }}"
-                                        />
-                                        @break
+                                @case('progress_bar')
+                                    <livewire:dashboard.widgets.progress-bar
+                                        :config="$widget['config']"
+                                        :widget-id="$widget['id']"
+                                        size="tv"
+                                        wire:key="tv-progress-{{ $widget['id'] }}"
+                                    />
+                                    @break
 
-                                    @case('list_widget')
-                                        <livewire:dashboard.widgets.list-widget
-                                            :config="$widget['config']"
-                                            :widget-id="$widget['id']"
-                                            size="tv"
-                                            wire:key="tv-list-{{ $widget['id'] }}"
-                                        />
-                                        @break
+                                @case('list_widget')
+                                    <livewire:dashboard.widgets.list-widget
+                                        :config="$widget['config']"
+                                        :widget-id="$widget['id']"
+                                        size="tv"
+                                        wire:key="tv-list-{{ $widget['id'] }}"
+                                    />
+                                    @break
 
-                                    @case('timer')
-                                        <livewire:dashboard.widgets.timer
-                                            :config="$widget['config']"
-                                            :widget-id="$widget['id']"
-                                            size="tv"
-                                            wire:key="tv-timer-{{ $widget['id'] }}"
-                                        />
-                                        @break
+                                @case('timer')
+                                    <livewire:dashboard.widgets.timer
+                                        :config="$widget['config']"
+                                        :widget-id="$widget['id']"
+                                        size="tv"
+                                        wire:key="tv-timer-{{ $widget['id'] }}"
+                                    />
+                                    @break
 
-                                    @case('info_card')
-                                        <livewire:dashboard.widgets.info-card
-                                            :config="$widget['config']"
-                                            :widget-id="$widget['id']"
-                                            size="tv"
-                                            wire:key="tv-info-{{ $widget['id'] }}"
-                                        />
-                                        @break
+                                @case('info_card')
+                                    <livewire:dashboard.widgets.info-card
+                                        :config="$widget['config']"
+                                        :widget-id="$widget['id']"
+                                        size="tv"
+                                        wire:key="tv-info-{{ $widget['id'] }}"
+                                    />
+                                    @break
 
-                                    @case('feed')
-                                        <livewire:dashboard.widgets.feed
-                                            :config="$widget['config']"
-                                            :widget-id="$widget['id']"
-                                            size="tv"
-                                            wire:key="tv-feed-{{ $widget['id'] }}"
-                                        />
-                                        @break
+                                @case('feed')
+                                    <livewire:dashboard.widgets.feed
+                                        :config="$widget['config']"
+                                        :widget-id="$widget['id']"
+                                        size="tv"
+                                        wire:key="tv-feed-{{ $widget['id'] }}"
+                                    />
+                                    @break
 
-                                    @case('sections_worked')
-                                        <livewire:dashboard.widgets.sections-worked
-                                            :config="$widget['config']"
-                                            :widget-id="$widget['id']"
-                                            size="tv"
-                                            wire:key="tv-sections-{{ $widget['id'] }}"
-                                        />
-                                        @break
+                                @case('sections_worked')
+                                    <livewire:dashboard.widgets.sections-worked
+                                        :config="$widget['config']"
+                                        :widget-id="$widget['id']"
+                                        size="tv"
+                                        wire:key="tv-sections-{{ $widget['id'] }}"
+                                    />
+                                    @break
 
-                                    @default
-                                        <x-card class="h-full flex items-center justify-center">
-                                            <div class="text-center text-base-content/50">
-                                                <x-icon name="phosphor-question" class="w-16 h-16 mx-auto mb-4" />
-                                                <p class="text-xl">Unknown widget type: {{ $widget['type'] }}</p>
-                                            </div>
-                                        </x-card>
-                                @endswitch
-                            </div>
-                        @endif
+                                @default
+                                    <x-card class="h-full flex items-center justify-center">
+                                        <div class="text-center text-base-content/50">
+                                            <x-icon name="phosphor-question" class="w-16 h-16 mx-auto mb-4" />
+                                            <p class="text-xl">Unknown widget type: {{ $widget['type'] }}</p>
+                                        </div>
+                                    </x-card>
+                            @endswitch
+                        </div>
                     @endforeach
                 </div>
             @else
                 {{-- Empty State --}}
-                <div class="flex flex-col items-center justify-center h-screen text-center">
+                <div class="flex flex-col items-center justify-center h-full text-center">
                     <x-icon name="phosphor-television" class="w-32 h-32 text-base-content/30 mb-6" />
                     <h2 class="text-4xl font-bold text-base-content mb-4">No widgets configured</h2>
                     <p class="text-2xl text-base-content/60">Configure widgets in the main dashboard to display here</p>
@@ -222,10 +245,11 @@ Props from controller:
             @endif
         </div>
 
-        {{-- Kiosk Mode Indicator (bottom corner) --}}
+        {{-- Kiosk hint (bottom corner, fades after a few seconds) --}}
         <div
-            x-show="kiosk"
+            x-show="showHint"
             x-transition
+            x-cloak
             class="fixed bottom-4 left-4 bg-base-300/90 backdrop-blur-sm text-base-content/70 px-3 py-1 rounded-lg text-xs font-medium shadow-lg"
         >
             <span class="inline-flex items-center gap-1.5">
@@ -233,7 +257,7 @@ Props from controller:
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
                 </span>
-                Kiosk Mode • Press F or ESC to exit
+                <span x-text="isFullscreen ? `Press ${shortcut.toUpperCase()} or Esc to exit fullscreen` : `Press ${shortcut.toUpperCase()} for fullscreen`"></span>
             </span>
         </div>
     </div>
@@ -242,7 +266,8 @@ Props from controller:
         /* TV Dashboard Styles */
         .tv-dashboard {
             min-height: 100vh;
-            background: oklch(var(--b1));
+            background: var(--color-base-100);
+            font-size: 1.125rem; /* 18px base */
         }
 
         .tv-dashboard.kiosk-mode {
@@ -253,16 +278,11 @@ Props from controller:
 
         .tv-dashboard-content {
             height: 100vh;
+            padding: 1rem;
         }
 
-        .kiosk-mode .tv-dashboard-content {
-            padding: 1rem !important;
-        }
-
-        /* TV Widget Grid - 5 columns fixed */
         .tv-widget-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
             gap: 1.5rem;
             width: 100%;
             height: 100%;
@@ -271,6 +291,7 @@ Props from controller:
         .tv-widget-item {
             display: flex;
             flex-direction: column;
+            min-height: 0;
             overflow: hidden;
             animation: tv-fade-in 0.5s ease-out;
             animation-fill-mode: both;
@@ -309,44 +330,24 @@ Props from controller:
             }
         }
 
-        /* TV-specific text sizing (larger, bolder) */
-        .tv-dashboard {
-            font-size: 1.125rem; /* 18px base */
-        }
-
-        .tv-dashboard h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-        }
-
-        .tv-dashboard h2 {
-            font-size: 2rem;
-            font-weight: 700;
-        }
-
-        .tv-dashboard h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
         /* High contrast for TV viewing */
         .tv-dashboard .card {
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.15);
-            border: 1px solid oklch(var(--bc) / 0.1);
+            border: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
         }
 
         /* Ensure widgets fill their containers */
         .tv-widget-item > * {
             flex: 1;
+            min-height: 0;
             display: flex;
             flex-direction: column;
         }
 
-        /* Prevent text selection and context menus in kiosk mode */
+        /* Prevent text selection and pointer affordances in kiosk mode */
         .kiosk-mode {
             user-select: none;
             -webkit-user-select: none;
-            -moz-user-select: none;
         }
 
         .kiosk-mode * {

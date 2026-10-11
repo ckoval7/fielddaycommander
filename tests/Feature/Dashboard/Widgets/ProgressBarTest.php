@@ -314,7 +314,7 @@ describe('rendering and display', function () {
 
         Livewire::test(ProgressBar::class)
             ->assertSee('50') // target
-            ->assertSeeHtml('x-text="displayCurrent"') // Alpine binding for current
+            ->assertSeeHtml('x-text="Number(displayCurrent).toLocaleString()"') // Alpine binding for current
             ->assertSeeHtml('x-text="displayPercentage"') // Alpine binding for percentage
             ->assertSeeHtml('%'); // percentage symbol
     });
@@ -326,8 +326,8 @@ describe('rendering and display', function () {
 
     it('applies TV size styling when size is tv', function () {
         Livewire::test(ProgressBar::class, ['size' => 'tv'])
-            ->assertSeeHtml('text-5xl') // Larger numbers
-            ->assertSeeHtml('h-10'); // Larger progress bar
+            ->assertSeeHtml('text-[clamp(1.75rem,2.6vw,3rem)]') // Larger numbers, scaled to the tile
+            ->assertSeeHtml('h-[clamp(1rem,2vw,2.5rem)]'); // Larger progress bar
     });
 
     it('applies normal size styling by default', function () {
@@ -346,7 +346,7 @@ describe('rendering and display', function () {
     it('includes Alpine.js celebration logic', function () {
         Livewire::test(ProgressBar::class)
             ->assertSeeHtml('isCelebrating: false') // Alpine data
-            ->assertSeeHtml('lastMilestone: 0') // Milestone tracking
+            ->assertSeeHtml('lastMilestoneReached: 0') // Milestone tracking
             ->assertSeeHtml('celebrate(current)'); // Celebration function
     });
 
@@ -428,7 +428,7 @@ describe('real-world scenarios', function () {
         expect($widget->getData())->toMatchArray([
             'current' => 50,
             'target' => 100,
-            'percentage' => 50.0, // 50/100 = 50%
+            'percentage' => 0.0, // just reached 50, nothing yet toward 100
         ]);
     });
 
@@ -453,7 +453,7 @@ describe('real-world scenarios', function () {
 
         expect($data['current'])->toBe(187);
         expect($data['target'])->toBe(200);
-        expect($data['percentage'])->toBe(93.5); // 187/200 * 100 = 93.5%
+        expect($data['percentage'])->toBe(74.0); // 37 of the 50 since the 150 milestone
         expect($data['label'])->toBe('187/200 QSOs to next milestone');
     });
 });

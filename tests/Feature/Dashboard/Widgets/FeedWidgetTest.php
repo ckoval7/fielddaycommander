@@ -702,3 +702,22 @@ test('item count badge is shown in normal mode', function () {
     ])
         ->assertSeeHtml('1');
 });
+
+test('feed highlights only notifications that arrived since the previous render', function () {
+    $user = createFeedUser();
+    sendNotification($user, NotificationCategory::QsoMilestone, 'Milestone', '50 QSOs');
+    $this->actingAs($user);
+
+    $component = Livewire::test(Feed::class, ['config' => ['feed_type' => 'all_activity']]);
+
+    expect($component->viewData('newItemKeys'))->toBe([]);
+
+    sendNotification($user, NotificationCategory::NewSection, 'New Section', 'Worked NNY');
+    Cache::flush();
+    $component->call('$refresh');
+
+    $newId = (string) $user->notifications()->where('data->title', 'New Section')->value('id');
+
+    expect($component->viewData('newItemKeys'))->toBe([$newId])
+        ->and(substr_count($component->html(), 'dashboard-item-new'))->toBe(1);
+});

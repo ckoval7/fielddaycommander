@@ -434,7 +434,7 @@
                             </x-slot:title>
 
                             <div class="overflow-x-auto">
-                                <table class="table table-compact">
+                                <table class="table table-xs">
                                     <thead>
                                         <tr>
                                             <th>Equipment</th>
@@ -621,7 +621,7 @@
                             </x-slot:title>
 
                             <div class="overflow-x-auto">
-                                <table class="table table-compact">
+                                <table class="table table-xs">
                                     <thead>
                                         <tr>
                                             <th>Equipment</th>

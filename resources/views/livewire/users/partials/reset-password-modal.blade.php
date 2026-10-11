@@ -15,7 +15,7 @@
         @if($resetMethod === 'manual')
             <div class="space-y-4">
                 <div>
-                    <label for="generated-password" class="label label-text font-semibold">Generated Password</label>
+                    <label for="generated-password" class="block py-1 text-sm font-semibold">Generated Password</label>
                     <div class="flex gap-2">
                         <x-input
                             id="generated-password"

@@ -26,7 +26,7 @@
                 <form wire:submit="uploadFile">
                     <div class="space-y-4">
                         <div>
-                            <input type="file" wire:model="adifFile" accept=".adi,.adif" aria-label="ADIF file to import" class="file-input file-input-bordered w-full" />
+                            <input type="file" wire:model="adifFile" accept=".adi,.adif" aria-label="ADIF file to import" class="file-input w-full" />
                             @error('adifFile') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                         </div>
 
@@ -63,7 +63,7 @@
                             <div class="flex items-center gap-4 mb-3">
                                 <span id="band-label-{{ $loop->index }}" class="font-mono font-bold w-24">{{ $bandName }}</span>
                                 <span class="text-base-content/50">&rarr;</span>
-                                <select wire:model="bandMappings.{{ $bandName }}" aria-labelledby="band-label-{{ $loop->index }}" class="select select-bordered select-sm w-48">
+                                <select wire:model="bandMappings.{{ $bandName }}" aria-labelledby="band-label-{{ $loop->index }}" class="select select-sm w-48">
                                     <option value="">Select band...</option>
                                     @foreach ($this->availableBands as $band)
                                         <option value="{{ $band->id }}">{{ $band->name }}</option>
@@ -82,7 +82,7 @@
                             <div class="flex items-center gap-4 mb-3">
                                 <span id="mode-label-{{ $loop->index }}" class="font-mono font-bold w-24">{{ $modeName }}</span>
                                 <span class="text-base-content/50">&rarr;</span>
-                                <select wire:model="modeMappings.{{ $modeName }}" aria-labelledby="mode-label-{{ $loop->index }}" class="select select-bordered select-sm w-48">
+                                <select wire:model="modeMappings.{{ $modeName }}" aria-labelledby="mode-label-{{ $loop->index }}" class="select select-sm w-48">
                                     <option value="">Select mode...</option>
                                     @foreach ($this->availableModes as $mode)
                                         <option value="{{ $mode->id }}">{{ $mode->name }} ({{ $mode->category }})</option>
@@ -101,7 +101,7 @@
                             <div class="flex items-center gap-4 mb-3">
                                 <span id="section-label-{{ $loop->index }}" class="font-mono font-bold w-24">{{ $sectionCode }}</span>
                                 <span class="text-base-content/50">&rarr;</span>
-                                <select wire:model="sectionMappings.{{ $sectionCode }}" aria-labelledby="section-label-{{ $loop->index }}" class="select select-bordered select-sm w-48">
+                                <select wire:model="sectionMappings.{{ $sectionCode }}" aria-labelledby="section-label-{{ $loop->index }}" class="select select-sm w-48">
                                     <option value="">Select section...</option>
                                     @foreach ($this->availableSections as $section)
                                         <option value="{{ $section->id }}">{{ $section->code }} - {{ $section->name }}</option>
@@ -120,7 +120,7 @@
                             <div class="flex items-center gap-4 mb-3">
                                 <span id="station-label-{{ $loop->index }}" class="font-mono font-bold w-48">{{ $stationName }}</span>
                                 <span class="text-base-content/50">&rarr;</span>
-                                <select wire:model="stationMappings.{{ $stationName }}" aria-labelledby="station-label-{{ $loop->index }}" class="select select-bordered select-sm w-48">
+                                <select wire:model="stationMappings.{{ $stationName }}" aria-labelledby="station-label-{{ $loop->index }}" class="select select-sm w-48">
                                     <option value="">Select station...</option>
                                     @foreach ($this->availableStations as $station)
                                         <option value="{{ $station->id }}">{{ $station->name }}</option>

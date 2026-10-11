@@ -459,9 +459,14 @@ return [
         | TV Dashboard (Large Display Mode)
         |----------------------------------------------------------------------
         |
-        | Optimized for 16:9 widescreen viewing (1920x1080).
-        | 10 widgets in 5-column × 2-row fixed grid layout.
-        | Larger fonts, high contrast, bold colors, no scrolling.
+        | Optimized for 16:9 widescreen viewing (1920x1080), no scrolling.
+        | Widgets flow in order through a fixed grid of `columns` columns;
+        | `col_span` / `row_span` (default 1) size each tile and the row count
+        | is derived from the total cells used. Default layout (6 × 3):
+        |
+        |   Score | QSOs | Sections | Operators | Milestone | Timer
+        |   QSOs/hour     | Recent contacts     | Sections worked
+        |   QSOs/band     | (rows 2-3)          | (rows 2-3)
         |
         */
 
@@ -469,6 +474,7 @@ return [
             'title' => 'TV Dashboard',
             'description' => 'Large format dashboard for display screens',
             'layout_type' => 'tv',
+            'columns' => 6,
             'widgets' => [
                 [
                     'id' => 'tv-stat-total-score',
@@ -491,10 +497,23 @@ return [
                     'visible' => true,
                 ],
                 [
-                    'id' => 'tv-timer-countdown',
-                    'type' => 'timer',
-                    'config' => [],
+                    'id' => 'tv-stat-sections',
+                    'type' => 'stat_card',
+                    'config' => [
+                        'metric' => 'sections_worked',
+                        'show_trend' => false,
+                    ],
                     'order' => 2,
+                    'visible' => true,
+                ],
+                [
+                    'id' => 'tv-stat-operators',
+                    'type' => 'stat_card',
+                    'config' => [
+                        'metric' => 'operators_count',
+                        'show_trend' => false,
+                    ],
+                    'order' => 3,
                     'visible' => true,
                 ],
                 [
@@ -504,7 +523,14 @@ return [
                         'metric' => 'next_milestone',
                         'show_percentage' => true,
                     ],
-                    'order' => 3,
+                    'order' => 4,
+                    'visible' => true,
+                ],
+                [
+                    'id' => 'tv-timer-countdown',
+                    'type' => 'timer',
+                    'config' => [],
+                    'order' => 5,
                     'visible' => true,
                 ],
                 [
@@ -516,39 +542,7 @@ return [
                         'time_range' => 'event',
                     ],
                     'col_span' => 2,
-                    'order' => 4,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'tv-chart-qsos-band',
-                    'type' => 'chart',
-                    'config' => [
-                        'chart_type' => 'bar',
-                        'data_source' => 'qsos_per_band',
-                        'time_range' => 'event',
-                    ],
-                    'col_span' => 2,
-                    'order' => 5,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'tv-stat-sections',
-                    'type' => 'stat_card',
-                    'config' => [
-                        'metric' => 'sections_worked',
-                        'show_trend' => false,
-                    ],
                     'order' => 6,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'tv-stat-operators',
-                    'type' => 'stat_card',
-                    'config' => [
-                        'metric' => 'operators_count',
-                        'show_trend' => false,
-                    ],
-                    'order' => 7,
                     'visible' => true,
                 ],
                 [
@@ -560,7 +554,7 @@ return [
                     ],
                     'col_span' => 2,
                     'row_span' => 2,
-                    'order' => 8,
+                    'order' => 7,
                     'visible' => true,
                 ],
                 [
@@ -569,6 +563,18 @@ return [
                     'config' => [],
                     'col_span' => 2,
                     'row_span' => 2,
+                    'order' => 8,
+                    'visible' => true,
+                ],
+                [
+                    'id' => 'tv-chart-qsos-band',
+                    'type' => 'chart',
+                    'config' => [
+                        'chart_type' => 'bar',
+                        'data_source' => 'qsos_per_band',
+                        'time_range' => 'event',
+                    ],
+                    'col_span' => 2,
                     'order' => 9,
                     'visible' => true,
                 ],
@@ -645,14 +651,11 @@ return [
     */
 
     'kiosk' => [
-        // Keyboard shortcut to toggle kiosk mode (case-insensitive)
+        // Keyboard shortcut to toggle browser fullscreen (case-insensitive)
         'shortcut' => 'f',
 
-        // Show exit hint in kiosk mode
+        // Show the kiosk hint pill (bottom-left) in kiosk mode
         'show_exit_hint' => true,
-
-        // Auto-enable kiosk mode on TV dashboard
-        'auto_enable_on_tv' => true,
     ],
 
 ];

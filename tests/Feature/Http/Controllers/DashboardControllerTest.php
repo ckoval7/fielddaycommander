@@ -85,8 +85,41 @@ test('tv dashboard loads config from file', function () {
 
     $response->assertStatus(200);
     $response->assertViewHas('title', config('dashboard.default_dashboards.tv.title'));
-    $response->assertViewHas('widgets', collect(config('dashboard.default_dashboards.tv.widgets')));
+    $response->assertViewHas('widgets', fn ($widgets) => $widgets->pluck('id')->all()
+        === collect(config('dashboard.default_dashboards.tv.widgets'))->sortBy('order')->pluck('id')->values()->all());
     $response->assertViewHas('layout_type', 'tv');
+});
+
+test('tv dashboard default layout fills a 6 by 3 grid exactly', function () {
+    $response = $this->get(route('dashboard.tv'));
+
+    $response->assertViewHas('columns', 6);
+    $response->assertViewHas('rows', 3);
+    $response->assertViewHas('widgets', fn ($widgets) => $widgets->sum(fn ($widget) => $widget['col_span'] * $widget['row_span']) === 18);
+});
+
+test('tv dashboard honours spans, skips hidden widgets and sizes rows from them', function () {
+    config(['dashboard.default_dashboards.tv.columns' => 4]);
+    config(['dashboard.default_dashboards.tv.widgets' => [
+        ['id' => 'b', 'type' => 'timer', 'config' => [], 'order' => 1, 'col_span' => 9, 'row_span' => 2],
+        ['id' => 'a', 'type' => 'timer', 'config' => [], 'order' => 0],
+        ['id' => 'hidden', 'type' => 'timer', 'config' => [], 'order' => 2, 'visible' => false],
+    ]]);
+
+    $response = $this->get(route('dashboard.tv'));
+
+    $response->assertOk();
+    $response->assertViewHas('widgets', fn ($widgets) => $widgets->pluck('id')->all() === ['a', 'b']
+        && $widgets[1]['col_span'] === 4
+        && $widgets[1]['row_span'] === 2
+        && $widgets[0]['col_span'] === 1);
+    // 1 cell + 4×2 cells = 9 cells over 4 columns → 3 rows
+    $response->assertViewHas('rows', 3);
+    $response->assertSee('grid-column: span 4 / span 4; grid-row: span 2 / span 2;', false);
+});
+
+test('tv dashboard reloads itself rather than leaving when the session expires', function () {
+    $this->get(route('dashboard.tv'))->assertSee('data-reload-on-session-expiry', false);
 });
 
 test('tv dashboard handles kiosk query parameter', function () {

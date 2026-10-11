@@ -153,7 +153,7 @@
                                                 @if($canEdit)
                                                     <input
                                                         type="text"
-                                                        class="input input-xs input-bordered w-full mt-2"
+                                                        class="input input-xs w-full mt-2"
                                                         placeholder="Add notes..."
                                                         aria-label="Notes: {{ $item->label }}"
                                                         value="{{ $item->entry?->notes }}"

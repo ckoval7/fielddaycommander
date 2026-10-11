@@ -10,10 +10,10 @@
 
     <!-- Controls -->
     <div class="flex items-center justify-between gap-4">
-        <div class="form-control">
-            <label class="label cursor-pointer gap-2">
+        <div class="flex flex-col">
+            <label class="flex items-center gap-2 cursor-pointer py-2">
                 <input type="checkbox" wire:model.live="showArchived" class="checkbox checkbox-sm" />
-                <span class="label-text">Show Archived Events</span>
+                <span class="text-sm">Show Archived Events</span>
             </label>
         </div>
     </div>

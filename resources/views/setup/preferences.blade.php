@@ -99,16 +99,16 @@
                     }"
                     @click.outside="open = false"
                     @keydown.escape="open = false"
-                    class="form-control w-full"
+                    class="flex flex-col w-full"
                 >
-                    <label class="label" for="timezone-selector"><span class="label-text font-semibold">Timezone <span class="text-error">*</span></span></label>
+                    <label class="block py-1" for="timezone-selector"><span class="text-sm font-semibold">Timezone <span class="text-error">*</span></span></label>
                     <input type="hidden" name="timezone" :value="selected" required />
                     <div class="relative">
                         <button
                             id="timezone-selector"
                             type="button"
                             @click="open = !open"
-                            class="select select-bordered w-full text-left flex items-center justify-between"
+                            class="select w-full text-left flex items-center justify-between"
                             :class="{ 'select-error': !selected }"
                         >
                             <span x-text="selectedLabel || 'Select timezone...'" :class="selectedLabel ? '' : 'text-base-content/40'"></span>
@@ -125,7 +125,7 @@
                                     x-model="search"
                                     placeholder="Search timezones..."
                                     aria-label="Search timezones"
-                                    class="input input-sm input-bordered w-full"
+                                    class="input input-sm w-full"
                                     @click.stop
                                     x-ref="searchInput"
                                     x-init="$watch('open', v => v && $nextTick(() => $refs.searchInput.focus()))"

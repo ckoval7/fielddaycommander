@@ -3,6 +3,7 @@
 namespace App\Livewire\Dashboard\Widgets;
 
 use App\Enums\NotificationCategory;
+use App\Livewire\Dashboard\Widgets\Concerns\HighlightsNewItems;
 use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,6 +32,7 @@ use Livewire\Component;
  */
 class Feed extends Component
 {
+    use HighlightsNewItems;
     use IsWidget;
 
     /**
@@ -115,8 +117,11 @@ class Feed extends Component
      */
     public function render(): View
     {
+        $data = $this->getData();
+
         return view('livewire.dashboard.widgets.feed', [
-            'data' => $this->getData(),
+            'data' => $data,
+            'newItemKeys' => $this->newItemKeys(array_map('strval', array_column($data['items'], 'id'))),
         ]);
     }
 

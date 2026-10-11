@@ -2,7 +2,7 @@
 Feed Widget View
 
 Displays a scrollable list of recent activity notifications with animations.
-New items fade in from top with 2-second highlight.
+Items new since the previous render get the dashboard-item-new highlight.
 
 Props from component:
 - $data: Array with 'items' (feed items), 'feed_type', 'feed_label'
@@ -13,43 +13,7 @@ Each item: id, icon, title, message, time_ago, read
 
 <div class="h-full">
 <x-card class="h-full flex flex-col" shadow>
-<div
-    class="flex-1 flex flex-col"
-    x-data="{
-        itemIds: @js(array_column($data['items'], 'id')),
-        newItems: new Set(),
-
-        init() {
-            // Track initial items as seen
-            this.itemIds.forEach(id => this.newItems.add(id));
-
-            // Remove highlight after 2 seconds
-            setTimeout(() => {
-                this.newItems.clear();
-            }, @js($size === 'tv' ? 3000 : 2000));
-        },
-
-        checkNewItems(currentIds) {
-            const previous = new Set(this.itemIds);
-            const current = new Set(currentIds);
-
-            // Find items that are in current but not in previous
-            current.forEach(id => {
-                if (!previous.has(id)) {
-                    this.newItems.add(id);
-
-                    // Remove highlight after delay
-                    setTimeout(() => {
-                        this.newItems.delete(id);
-                    }, @js($size === 'tv' ? 3000 : 2000));
-                }
-            });
-
-            this.itemIds = currentIds;
-        }
-    }"
-    x-effect="checkNewItems(@js(array_column($data['items'], 'id')))"
->
+<div class="flex-1 flex flex-col">
     @if ($size === 'tv')
         {{-- TV Mode: Larger text and spacing for kiosk/TV dashboards --}}
         <div class="flex items-center justify-between mb-4">
@@ -63,19 +27,13 @@ Each item: id, icon, title, message, time_ago, read
             @forelse ($data['items'] as $item)
                 <div
                     wire:key="feed-item-{{ $item['id'] }}"
-                    x-data="{ itemId: '{{ $item['id'] }}' }"
                     class="flex items-start gap-4 p-4 rounded-xl transition-all duration-300
-                        {{ $item['read'] ? 'bg-base-100 border border-base-content/10' : 'bg-base-100 border-l-4 border-primary border-y border-r border-base-content/10' }}"
-                    ::class="{
-                        'animate-fade-in-down': newItems.has(itemId),
-                        'bg-primary/20 border-l-4 border-primary shadow-lg shadow-primary/30': newItems.has(itemId)
-                    }"
+                        {{ $item['read'] ? 'bg-base-100 border border-base-content/10' : 'bg-base-100 border-l-4 border-primary border-y border-r border-base-content/10' }} {{ in_array((string) $item['id'], $newItemKeys, true) ? 'dashboard-item-new' : '' }}"
                 >
                     <div class="flex-shrink-0 mt-1">
                         <x-icon
                             :name="$item['icon']"
                             class="w-8 h-8 transition-all duration-300 {{ $item['read'] ? 'text-base-content/50' : 'text-primary' }}"
-                            ::class="{ 'scale-125 text-primary drop-shadow-lg': newItems.has(itemId) }"
                         />
                     </div>
 
@@ -113,19 +71,13 @@ Each item: id, icon, title, message, time_ago, read
             @forelse ($data['items'] as $item)
                 <div
                     wire:key="feed-item-{{ $item['id'] }}"
-                    x-data="{ itemId: '{{ $item['id'] }}' }"
                     class="flex items-start gap-2 p-2 rounded-lg transition-all duration-200
-                        {{ $item['read'] ? 'hover:bg-base-content/5' : 'bg-base-100 border-l-2 border-primary border-y border-r border-base-content/10' }}"
-                    ::class="{
-                        'animate-fade-in-down': newItems.has(itemId),
-                        'bg-primary/20 border-l-2 border-primary shadow-md shadow-primary/20': newItems.has(itemId)
-                    }"
+                        {{ $item['read'] ? 'hover:bg-base-content/5' : 'bg-base-100 border-l-2 border-primary border-y border-r border-base-content/10' }} {{ in_array((string) $item['id'], $newItemKeys, true) ? 'dashboard-item-new' : '' }}"
                 >
                     <div class="flex-shrink-0 mt-0.5">
                         <x-icon
                             :name="$item['icon']"
                             class="w-5 h-5 transition-all duration-200 {{ $item['read'] ? 'text-base-content/40' : 'text-primary' }}"
-                            ::class="{ 'scale-110 text-primary drop-shadow': newItems.has(itemId) }"
                         />
                     </div>
 
@@ -154,23 +106,7 @@ Each item: id, icon, title, message, time_ago, read
 </div>
 
     {{-- Last updated timestamp --}}
-    <div class="text-xs text-base-content/40 text-right mt-auto pt-2 border-t border-base-content/5">Updated {{ formatTimeAgo($data['last_updated_at'] ?? null) }}</div>
+    <x-dashboard.updated-at :at="$data['last_updated_at'] ?? null" class="border-t border-base-content/5" />
 </x-card>
 
-    <style>
-        @keyframes fade-in-down {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in-down {
-            animation: fade-in-down 0.3s ease-out;
-        }
-    </style>
 </div>
