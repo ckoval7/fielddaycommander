@@ -121,11 +121,11 @@
                         :draggable="String(enabled)"
                         :aria-grabbed="keyboardGrabbedIndex === {{ $index }} ? 'true' : 'false'"
                         :class="sortableItemClasses({{ $index }})"
+                        :style="previewStyle(@js($widget['id']))"
                         x-on:dragstart="dragStart($event, {{ $index }})"
                         x-on:dragover.prevent="dragOver($event, {{ $index }})"
                         x-on:dragenter.prevent="dragEnter($event, {{ $index }})"
                         x-on:dragleave="dragLeave($event, {{ $index }})"
-                        x-on:drop.prevent="drop($event, {{ $index }})"
                         x-on:dragend="dragEnd()"
                         x-on:touchstart.passive="touchStart($event, {{ $index }})"
                         x-on:keydown="keyDown($event, {{ $index }})"
@@ -344,7 +344,7 @@
                 @endforeach
 
                 {{-- Add Widget Card (edit mode only) --}}
-                <li x-show="editMode" x-cloak class="row-span-2 list-none">
+                <li x-show="editMode" x-cloak class="row-span-2 list-none" style="order: 9999">
                     <button
                         wire:click="openWidgetPicker"
                         class="w-full h-full min-h-[120px] border-2 border-dashed border-base-300 rounded-lg p-6 text-center text-base-content/50 hover:border-primary hover:text-primary transition-colors"
