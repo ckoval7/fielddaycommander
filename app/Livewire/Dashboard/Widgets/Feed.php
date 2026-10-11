@@ -99,16 +99,20 @@ class Feed extends Component
     /**
      * Define Livewire event listeners for this widget.
      *
-     * Listens to notification broadcast events for immediate updates.
-     * All notification types trigger a refresh to show new activity.
+     * Refreshes immediately when a notification is broadcast to the viewer,
+     * when real-time broadcasting is available; the widget also polls.
      *
      * @return array<string, string>
      */
     public function getWidgetListeners(): array
     {
+        if (! $this->canListenForBroadcasts()) {
+            return [];
+        }
+
+        // NotificationService broadcasts NewNotification on the user's private channel.
         return [
-            'echo:notifications,DatabaseNotificationCreated' => 'handleUpdate',
-            'notification.created' => 'handleUpdate',
+            'echo-private:user.'.auth()->id().',NewNotification' => 'handleUpdate',
         ];
     }
 

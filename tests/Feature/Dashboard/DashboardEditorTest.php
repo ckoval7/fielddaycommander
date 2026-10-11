@@ -211,13 +211,14 @@ test('reorder widgets does nothing when not in edit mode', function () {
     expect($widgets[0]['id'])->toBe('widget-1');
 });
 
-test('reorder widgets ignores unknown widget ids', function () {
+test('reorder widgets ignores unknown widget ids and never drops unlisted widgets', function () {
     $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
         ->call('enterEditMode')
-        ->call('reorderWidgets', ['widget-1', 'unknown-widget', 'widget-2']);
+        ->call('reorderWidgets', ['widget-2', 'unknown-widget', 'widget-1']);
 
     $widgets = $component->get('widgets');
-    expect($widgets)->toHaveCount(2);
+    expect($widgets->pluck('id')->all())->toBe(['widget-2', 'widget-1', 'widget-3'])
+        ->and($widgets->pluck('order')->all())->toBe([0, 1, 2]);
 });
 
 // ── Toggle Visibility ────────────────────────────────────────────────
@@ -547,11 +548,11 @@ test('full edit workflow: add widget and save', function () {
 test('resize widget updates col_span and row_span', function () {
     $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
         ->call('enterEditMode')
-        ->call('resizeWidget', 'widget-1', 2, 1);
+        ->call('resizeWidget', 'widget-1', 2, 3);
 
     $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
     expect($widget['col_span'])->toBe(2);
-    expect($widget['row_span'])->toBe(1);
+    expect($widget['row_span'])->toBe(3);
 });
 
 test('resize widget does nothing when not in edit mode', function () {
@@ -571,23 +572,32 @@ test('resize widget clamps col_span to valid range', function () {
     expect($widget['col_span'])->toBe(4);
 });
 
+test('resize widget keeps the Tall height the picker offers', function () {
+    $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->call('enterEditMode')
+        ->call('resizeWidget', 'widget-1', 1, 6);
+
+    $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
+    expect($widget['row_span'])->toBe(6);
+});
+
 test('resize widget clamps row_span to valid range', function () {
     $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
         ->call('enterEditMode')
-        ->call('resizeWidget', 'widget-1', 1, 4);
+        ->call('resizeWidget', 'widget-1', 1, 9);
 
     $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
-    expect($widget['row_span'])->toBe(3);
+    expect($widget['row_span'])->toBe(6);
 });
 
-test('resize widget enforces minimum of 1', function () {
+test('resize widget enforces minimum width and the Short height', function () {
     $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
         ->call('enterEditMode')
         ->call('resizeWidget', 'widget-1', 0, 0);
 
     $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
     expect($widget['col_span'])->toBe(1);
-    expect($widget['row_span'])->toBe(1);
+    expect($widget['row_span'])->toBe(2);
 });
 
 test('resize widget ignores unknown widget id', function () {

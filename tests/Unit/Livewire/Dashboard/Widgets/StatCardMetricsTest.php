@@ -377,6 +377,8 @@ test('stat card contacts last hour excludes duplicates', function () {
 });
 
 test('stat card calculates hours remaining correctly for ongoing event', function () {
+    $this->freezeSecond();
+
     // Create an event that ends in 6 hours
     $event = Event::factory()->create([
         'start_time' => now()->subHours(18),
@@ -418,6 +420,8 @@ test('stat card hours remaining returns zero for ended event', function () {
 });
 
 test('stat card hours remaining uses appNow for time travel', function () {
+    $this->freezeSecond();
+
     // Create an event ending in 10 hours from "real now"
     $event = Event::factory()->create([
         'start_time' => now()->subHours(14),

@@ -6,6 +6,7 @@ use App\Models\BulletinScheduleEntry;
 use App\Models\Dashboard;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
+use App\Services\DashboardService;
 use App\Services\EventContextService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,7 @@ class DashboardController extends Controller
      * Shows the get-ready view for upcoming events, the widget dashboard
      * for active/grace-period events, or the no-event view when no events exist.
      */
-    public function index(Request $request, EventContextService $eventContext): View
+    public function index(Request $request, EventContextService $eventContext, DashboardService $dashboardService): View
     {
         if (! Auth::check()) {
             return view('public-landing');
@@ -54,24 +55,7 @@ class DashboardController extends Controller
             ? Dashboard::query()->forUser($user)->find($requestedId)
             : null;
 
-        $dashboard ??= Dashboard::query()
-            ->forUser($user)
-            ->default()
-            ->first();
-
-        // If user doesn't have a default dashboard, create one
-        if (! $dashboard) {
-            $defaultConfig = config('dashboard.default_dashboards.user');
-
-            $dashboard = Dashboard::create([
-                'user_id' => $user->id,
-                'title' => $defaultConfig['title'],
-                'description' => $defaultConfig['description'],
-                'layout_type' => $defaultConfig['layout_type'],
-                'config' => $defaultConfig['widgets'],
-                'is_default' => true,
-            ]);
-        }
+        $dashboard ??= $dashboardService->getDefaultDashboard($user);
 
         return view('dashboard.default', [
             'dashboard' => $dashboard,

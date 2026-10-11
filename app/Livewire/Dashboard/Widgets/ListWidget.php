@@ -38,6 +38,11 @@ class ListWidget extends Component
     use IsWidget;
 
     /**
+     * Most rows any list renders, whatever the stored settings say.
+     */
+    protected const MAX_ITEMS = 50;
+
+    /**
      * Fetch the list data for this widget.
      *
      * Returns an array of items formatted for display.
@@ -213,8 +218,9 @@ class ListWidget extends Component
         if ($configured !== null && $configured !== '') {
             $limit = (int) $configured;
 
+            // Configs saved before server-side settings cleanup could hold any value.
             if ($limit > 0) {
-                return $limit;
+                return min($limit, self::MAX_ITEMS);
             }
         }
 

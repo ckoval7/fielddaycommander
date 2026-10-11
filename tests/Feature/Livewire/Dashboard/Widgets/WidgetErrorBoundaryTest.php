@@ -1,7 +1,6 @@
 <?php
 
-use App\Livewire\Dashboard\Widgets\QsoCount;
-use App\Livewire\Dashboard\Widgets\Score;
+use App\Livewire\Dashboard\Widgets\BandModeGrid;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
@@ -27,15 +26,8 @@ beforeEach(function () {
     ]);
 });
 
-test('QsoCount widget has error boundary trait', function () {
-    $component = Livewire::test(QsoCount::class);
-
-    $component->assertSet('hasError', false);
-    $component->assertSet('errorMessage', '');
-});
-
-test('Score widget has error boundary trait', function () {
-    $component = Livewire::test(Score::class);
+test('BandModeGrid widget has error boundary trait', function () {
+    $component = Livewire::test(BandModeGrid::class);
 
     $component->assertSet('hasError', false);
     $component->assertSet('errorMessage', '');

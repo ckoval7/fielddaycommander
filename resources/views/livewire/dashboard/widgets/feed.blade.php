@@ -11,7 +11,7 @@ Props from component:
 Each item: id, icon, title, message, time_ago, read
 --}}
 
-<div class="h-full">
+<div class="h-full" wire:poll.visible.15s>
 <x-card class="h-full flex flex-col" shadow>
 <div class="flex-1 flex flex-col">
     @if ($size === 'tv')
