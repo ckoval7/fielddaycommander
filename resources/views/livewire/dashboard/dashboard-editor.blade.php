@@ -2,7 +2,23 @@
     {{-- Edit Toolbar Banner --}}
     @if($editMode)
         <div class="bg-info/10 border border-info/30 rounded-lg p-4 mb-4"
-             x-data
+             x-data="{
+                 // Ctrl+Z / Cmd+Z undoes the last layout change. Text fields and
+                 // open dialogs keep the browser's own undo.
+                 undoShortcut(event) {
+                     const isUndo = (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey
+                         && event.key.toLowerCase() === 'z';
+
+                     if (!isUndo || event.target.closest('input, textarea, select, [contenteditable]')
+                         || document.querySelector('dialog[open]')) {
+                         return;
+                     }
+
+                     event.preventDefault();
+                     $wire.undo();
+                 },
+             }"
+             x-on:keydown.window="undoShortcut($event)"
              x-init="
                 window.__dashboardEditUnsaved = true;
                 window.onbeforeunload = (e) => {
@@ -28,6 +44,16 @@
                         icon="phosphor-plus"
                         class="btn-outline btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                         wire:click="openWidgetPicker"
+                    />
+                    <x-button
+                        label="Undo"
+                        icon="phosphor-arrow-counter-clockwise"
+                        class="btn-ghost btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
+                        wire:click="undo"
+                        :disabled="! $this->canUndo()"
+                        title="Undo last change (Ctrl+Z)"
+                        aria-keyshortcuts="Control+Z Meta+Z"
+                        spinner="undo"
                     />
                     <x-button
                         label="Save"
