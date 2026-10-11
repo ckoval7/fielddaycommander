@@ -57,6 +57,7 @@ Slots:
                 id="exchange-input"
                 wire:model.live.debounce.300ms="exchangeInput"
                 x-ref="exchangeInput"
+                x-init="$nextTick(() => $el.focus())"
                 @input="si = -1"
                 @keydown.enter.prevent="
                     si >= 0 && $wire.suggestions?.length > 0
@@ -93,7 +94,6 @@ Slots:
                 class="input input-lg w-full text-2xl font-mono uppercase tracking-wider"
                 placeholder="{{ $placeholder }}"
                 aria-label="Exchange input"
-                autofocus
             />
 
             {{-- Autocomplete Suggestions --}}

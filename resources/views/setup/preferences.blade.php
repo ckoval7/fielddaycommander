@@ -131,19 +131,18 @@
                                     x-init="$watch('open', v => v && $nextTick(() => $refs.searchInput.focus()))"
                                 />
                             </div>
-                            <ul class="max-h-60 overflow-y-auto py-1" role="listbox" aria-label="Timezones">
+                            <ul class="max-h-60 overflow-y-auto py-1" aria-label="Timezones">
                                 <template x-for="tz in filtered" :key="tz.id">
-                                    <li
-                                        @click="select(tz)"
-                                        @keydown.enter.prevent="select(tz)"
-                                        @keydown.space.prevent="select(tz)"
-                                        tabindex="0"
-                                        role="option"
-                                        :aria-selected="selected === tz.id"
-                                        class="px-3 py-1.5 cursor-pointer hover:bg-base-200 text-sm"
-                                        :class="selected === tz.id ? 'bg-primary/10 font-medium' : ''"
-                                        x-text="tz.name"
-                                    ></li>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            @click="select(tz)"
+                                            :aria-pressed="selected === tz.id"
+                                            class="w-full text-left px-3 py-1.5 cursor-pointer hover:bg-base-200 focus:bg-base-200 focus:outline-none text-sm"
+                                            :class="selected === tz.id ? 'bg-primary/10 font-medium' : ''"
+                                            x-text="tz.name"
+                                        ></button>
+                                    </li>
                                 </template>
                                 <li x-show="filtered.length === 0" class="px-3 py-2 text-sm text-base-content/50">No results found.</li>
                             </ul>
