@@ -104,14 +104,6 @@ class Equipment extends Model
         return self::TYPES[$type]['icon'] ?? 'phosphor-cube';
     }
 
-    /**
-     * Get the display label for a given equipment type.
-     */
-    public static function typeLabel(string $type): string
-    {
-        return self::TYPES[$type]['label'] ?? ucfirst(str_replace('_', ' ', $type));
-    }
-
     protected $fillable = [
         'owner_user_id',
         'owner_organization_id',
