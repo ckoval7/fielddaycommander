@@ -7,6 +7,7 @@ use App\Services\DashboardService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -46,6 +47,20 @@ class DashboardEditor extends Component
 
     /** @var string|null Original description before entering edit mode (for cancel) */
     public ?string $originalDescription = null;
+
+    /**
+     * Widget layouts before each change made in this edit session, newest last.
+     * Locked so the client can't plant a layout to "undo" into.
+     *
+     * @var array<int, array<int, array<string, mixed>>>
+     */
+    #[Locked]
+    public array $undoStack = [];
+
+    /**
+     * How many layout changes Undo can step back through.
+     */
+    public const MAX_UNDO_STEPS = 30;
 
     public function mount(Dashboard $dashboard): void
     {
@@ -95,6 +110,7 @@ class DashboardEditor extends Component
         $this->originalWidgets = $this->widgets->map(fn ($w) => $w)->values();
         $this->originalTitle = $this->title;
         $this->originalDescription = $this->description;
+        $this->undoStack = [];
         $this->editMode = true;
         $this->dispatch('edit-mode-changed', enabled: true);
     }
@@ -108,6 +124,7 @@ class DashboardEditor extends Component
         $this->showDeleteConfirmation = false;
         $this->widgetToDelete = null;
         $this->configuringWidgetId = null;
+        $this->undoStack = [];
         // Clear original snapshots
         $this->originalTitle = null;
         $this->originalDescription = null;
@@ -212,6 +229,7 @@ class DashboardEditor extends Component
             return;
         }
 
+        $before = $this->layoutSnapshot();
         $widgetMap = $this->widgets->keyBy('id');
         $listedIds = collect($widgetIds)
             ->filter(fn ($widgetId) => is_string($widgetId) && $widgetMap->has($widgetId))
@@ -227,6 +245,8 @@ class DashboardEditor extends Component
 
                 return $widget;
             });
+
+        $this->rememberForUndo($before);
 
         // Dispatch event to notify Alpine component of the new order
         $this->dispatch('widgets-reordered', widgetIds: $this->widgetIds);
@@ -244,6 +264,8 @@ class DashboardEditor extends Component
             return;
         }
 
+        $before = $this->layoutSnapshot();
+
         $this->widgets = $this->widgets->map(function ($widget) use ($widgetId) {
             if ($widget['id'] === $widgetId) {
                 $widget['visible'] = ! ($widget['visible'] ?? true);
@@ -251,6 +273,8 @@ class DashboardEditor extends Component
 
             return $widget;
         });
+
+        $this->rememberForUndo($before);
 
         // Re-sync Alpine enabled state after Livewire re-render
         $this->dispatch('edit-mode-changed', enabled: $this->editMode);
@@ -272,6 +296,7 @@ class DashboardEditor extends Component
         $colSpan = $this->dashboardService()->clampColSpan($colSpan);
         $rowSpan = $this->dashboardService()->clampRowSpan($rowSpan);
 
+        $before = $this->layoutSnapshot();
         $found = false;
         $this->widgets = $this->widgets->map(function ($widget) use ($widgetId, $colSpan, $rowSpan, &$found) {
             if ($widget['id'] === $widgetId) {
@@ -282,6 +307,8 @@ class DashboardEditor extends Component
 
             return $widget;
         });
+
+        $this->rememberForUndo($before);
 
         if ($found) {
             $this->dispatch('edit-mode-changed', enabled: $this->editMode);
@@ -315,6 +342,8 @@ class DashboardEditor extends Component
             return;
         }
 
+        $before = $this->layoutSnapshot();
+
         $this->widgets = $this->widgets
             ->reject(fn ($widget) => $widget['id'] === $this->widgetToDelete)
             ->values()
@@ -324,6 +353,7 @@ class DashboardEditor extends Component
                 return $widget;
             });
 
+        $this->rememberForUndo($before);
         $this->cancelRemoveWidget();
 
         // Notify Alpine component of the updated widget order
@@ -375,7 +405,9 @@ class DashboardEditor extends Component
             'row_span' => $this->dashboardService()->clampRowSpan($rowSpan),
         ];
 
+        $before = $this->layoutSnapshot();
         $this->widgets->push($newWidget);
+        $this->rememberForUndo($before);
 
         // Notify Alpine component of the new widget order
         $this->dispatch('widgets-reordered', widgetIds: $this->widgetIds);
@@ -437,6 +469,8 @@ class DashboardEditor extends Component
             $this->addWidget($type, $config, $colSpan, $rowSpan);
             $this->dispatch('edit-mode-changed', enabled: $this->editMode);
         } elseif ($mode === 'edit' && $this->configuringWidgetId) {
+            $before = $this->layoutSnapshot();
+
             $this->widgets = $this->widgets->map(function ($widget) use ($service, $type, $config, $colSpan, $rowSpan) {
                 if ($widget['id'] === $this->configuringWidgetId) {
                     $widget['type'] = $type;
@@ -448,6 +482,7 @@ class DashboardEditor extends Component
                 return $widget;
             });
 
+            $this->rememberForUndo($before);
             $this->configuringWidgetId = null;
 
             $this->dispatch('toast', [
@@ -458,6 +493,60 @@ class DashboardEditor extends Component
             ]);
 
             $this->dispatch('edit-mode-changed', enabled: $this->editMode);
+        }
+    }
+
+    /**
+     * Step back to the layout before the most recent change in this edit session.
+     */
+    public function undo(): void
+    {
+        if (! $this->editMode || $this->undoStack === []) {
+            return;
+        }
+
+        $this->widgets = collect(array_pop($this->undoStack));
+        $this->configuringWidgetId = null;
+        $this->cancelRemoveWidget();
+
+        // Keep the drag-and-drop order and edit state in sync with the restored layout
+        $this->dispatch('widgets-reordered', widgetIds: $this->widgetIds);
+        $this->dispatch('edit-mode-changed', enabled: $this->editMode);
+    }
+
+    /**
+     * Whether there is a change Undo can step back from.
+     */
+    public function canUndo(): bool
+    {
+        return $this->editMode && $this->undoStack !== [];
+    }
+
+    /**
+     * The current layout as plain arrays, for undo history.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function layoutSnapshot(): array
+    {
+        return $this->widgets->values()->all();
+    }
+
+    /**
+     * Record the layout as it was before a change, if the change did anything.
+     *
+     * @param  array<int, array<string, mixed>>  $before
+     */
+    protected function rememberForUndo(array $before): void
+    {
+        if ($before === $this->layoutSnapshot()) {
+            return;
+        }
+
+        $this->undoStack[] = $before;
+
+        if (count($this->undoStack) > self::MAX_UNDO_STEPS) {
+            array_shift($this->undoStack);
         }
     }
 
