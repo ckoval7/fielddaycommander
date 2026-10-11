@@ -150,6 +150,19 @@ describe('editor behaviour', function () {
             ->assertSeeHtml('wire:key="chart-hidden-1-');
     });
 
+    it('guards leaving the page from the always-present root, based on real changes', function () {
+        $component = Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard]);
+
+        // The guard must not live on the edit toolbar, which Cancel removes
+        // before its "editing ended" event can disarm a global handler.
+        $component->assertSeeHtml('x-on:beforeunload.window="if (hasUnsavedChanges())')
+            ->assertDontSeeHtml('onbeforeunload');
+
+        $component->call('enterEditMode')
+            ->assertSeeHtml('x-on:beforeunload.window="if (hasUnsavedChanges())')
+            ->assertDontSeeHtml('onbeforeunload');
+    });
+
     it('offers the activity feed in the widget picker', function () {
         expect(config('dashboard.widget_types'))->toHaveKey('feed');
 
