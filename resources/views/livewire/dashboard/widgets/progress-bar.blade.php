@@ -21,34 +21,42 @@ Celebration features:
 - Tracks last seen milestone to prevent duplicate celebrations
 --}}
 
-<x-card
+<x-card body-class="flex flex-col min-h-0"
     class="h-full flex flex-col"
     shadow
     wire:poll.visible.10s
-    x-data="progressBarWidget"
+    x-data="progressBarWidget({{ $celebratesMilestones ? 'true' : 'false' }}, {{ \App\Livewire\Dashboard\Widgets\ProgressBar::MILESTONE_INTERVAL }})"
 >
 <div class="flex-1 flex flex-col gap-3 relative">
-    {{-- Numbers Display --}}
-    <div class="flex items-baseline justify-between gap-3">
-        <div class="@if($size === 'tv') text-5xl @else text-4xl @endif font-black tabular-nums whitespace-nowrap min-w-0 truncate">
-            <span x-text="displayCurrent"></span>
-            <span class="@if($size === 'tv') text-xl @else text-base @endif font-normal text-base-content/50">
-                / {{ number_format($data['target']) }}
-            </span>
+    {{-- Numbers Display. On TV tiles the target wraps under the count
+         rather than truncating it, and the percentage moves to the label row. --}}
+    @if($size === 'tv')
+        <div class="flex flex-wrap items-baseline gap-x-2 font-black tabular-nums leading-none">
+            <span class="text-[clamp(1.75rem,2.6vw,3rem)]" x-text="Number(displayCurrent).toLocaleString()">{{ number_format($data['current']) }}</span>
+            <span class="text-[clamp(1rem,1.1vw,1.25rem)] font-normal text-base-content/50 whitespace-nowrap">/ {{ number_format($data['target']) }}</span>
         </div>
-        @if($showPercentage)
-            <div class="@if($size === 'tv') text-xl @else text-sm @endif font-medium text-base-content/70 tabular-nums whitespace-nowrap flex-shrink-0">
-                <span x-text="displayPercentage"></span>%
+    @else
+        <div class="flex items-baseline justify-between gap-3">
+            <div class="text-4xl font-black tabular-nums whitespace-nowrap min-w-0 truncate">
+                <span x-text="Number(displayCurrent).toLocaleString()">{{ number_format($data['current']) }}</span>
+                <span class="text-base font-normal text-base-content/50">
+                    / {{ number_format($data['target']) }}
+                </span>
             </div>
-        @endif
-    </div>
+            @if($showPercentage)
+                <div class="text-sm font-medium text-base-content/70 tabular-nums whitespace-nowrap flex-shrink-0">
+                    <span x-text="displayPercentage">{{ $data['percentage'] }}</span>%
+                </div>
+            @endif
+        </div>
+    @endif
 
     {{-- Progress Bar with Smooth Transition --}}
-    <div class="relative @if($size === 'tv') h-10 @else h-5 @endif bg-base-200 rounded-full overflow-hidden">
+    <div class="relative @if($size === 'tv') h-[clamp(1rem,2vw,2.5rem)] @else h-5 @endif bg-base-200 rounded-full overflow-hidden">
         <div
             class="h-full bg-primary rounded-full @if($size === 'tv') transition-all duration-800 @else transition-all duration-500 @endif ease-out"
             :style="`width: ${displayPercentage}%`"
-            ::class="{
+            :class="{
                 'shadow-lg shadow-primary/50': isAnimating && @js($size === 'tv'),
                 'animate-pulse-glow': isCelebrating
             }"
@@ -57,6 +65,10 @@ Celebration features:
 
     {{-- Label --}}
     <div class="@if($size === 'tv') text-lg @else text-sm @endif text-center text-base-content/70">
+        @if($size === 'tv' && $showPercentage)
+            <span class="font-semibold tabular-nums text-base-content"><span x-text="displayPercentage">{{ $data['percentage'] }}</span>%</span>
+            <span class="text-base-content/40">·</span>
+        @endif
         {{ $data['footer_label'] ?? 'Progress' }}
     </div>
 
@@ -87,7 +99,7 @@ Celebration features:
                     Milestone!
                 </div>
                 <div class="@if($size === 'tv') text-xl @else text-base @endif font-semibold text-base-content mt-1">
-                    <span x-text="displayCurrent"></span> {{ $data['unit_label'] ?? 'QSOs' }} logged!
+                    <span x-text="celebratedMilestone.toLocaleString()"></span> {{ $data['unit_label'] ?? 'QSOs' }} logged!
                 </div>
             </div>
         </div>
@@ -96,34 +108,49 @@ Celebration features:
 </div>
 
     {{-- Last updated timestamp --}}
-    <div class="text-xs text-base-content/40 text-right mt-auto pt-2 border-t border-base-content/5">Updated {{ formatTimeAgo($data['last_updated_at'] ?? null) }}</div>
+    <x-dashboard.updated-at :at="$data['last_updated_at'] ?? null" class="border-t border-base-content/5" />
 </x-card>
 
 @script
 <script>
-    Alpine.data('progressBarWidget', () => ({
+    Alpine.data('progressBarWidget', (celebratesMilestones, milestoneInterval) => ({
         displayCurrent: 0,
         displayPercentage: 0,
         isAnimating: false,
         isCelebrating: false,
-        lastMilestone: 0,
+        celebratedMilestone: 0,
+        lastMilestoneReached: 0,
+        frameId: null,
+        celebrationTimer: null,
 
         init() {
             this.displayCurrent = this.$wire.current;
             this.displayPercentage = this.$wire.percentage;
+            this.lastMilestoneReached = this.milestoneReached(this.$wire.current);
 
-            this.$wire.$watch('current', (newCurrent) => {
-                this.animateNumbers(newCurrent, this.$wire.percentage);
-                this.celebrate(newCurrent);
-            });
-            this.$wire.$watch('percentage', (newPercentage) => {
-                this.animateNumbers(this.$wire.current, newPercentage);
-            });
+            // Both properties change in the same response; one watcher reading
+            // both avoids starting two competing animations.
+            this.$wire.$watch('current', () => this.onUpdate());
+            this.$wire.$watch('percentage', () => this.onUpdate());
         },
 
-        animateNumbers(newCurrent, newPercentage) {
-            if (this.isAnimating) return;
+        destroy() {
+            if (this.frameId) cancelAnimationFrame(this.frameId);
+            if (this.celebrationTimer) clearTimeout(this.celebrationTimer);
+        },
 
+        onUpdate() {
+            this.animateNumbers(this.$wire.current, this.$wire.percentage);
+            this.celebrate(this.$wire.current);
+        },
+
+        milestoneReached(current) {
+            return Math.floor((parseFloat(current) || 0) / milestoneInterval) * milestoneInterval;
+        },
+
+        // A new value arriving mid-animation retargets from the current
+        // display rather than being dropped.
+        animateNumbers(newCurrent, newPercentage) {
             const startCurrent = parseFloat(this.displayCurrent) || 0;
             const endCurrent = parseFloat(newCurrent) || 0;
             const startPercentage = parseFloat(this.displayPercentage) || 0;
@@ -131,40 +158,49 @@ Celebration features:
 
             if (startCurrent === endCurrent && startPercentage === endPercentage) return;
 
+            if (this.frameId) cancelAnimationFrame(this.frameId);
             this.isAnimating = true;
 
             const duration = this.$wire.size === 'tv' ? 800 : 500;
-            const startTime = Date.now();
+            const startTime = performance.now();
 
-            const animate = () => {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-
+            const animate = (timestamp) => {
+                const progress = Math.min((timestamp - startTime) / duration, 1);
                 const eased = 1 - Math.pow(1 - progress, 3);
 
                 this.displayCurrent = Math.round(startCurrent + (endCurrent - startCurrent) * eased);
                 this.displayPercentage = Math.round(startPercentage + (endPercentage - startPercentage) * eased);
 
                 if (progress < 1) {
-                    requestAnimationFrame(animate);
+                    this.frameId = requestAnimationFrame(animate);
                 } else {
                     this.displayCurrent = endCurrent;
                     this.displayPercentage = endPercentage;
                     this.isAnimating = false;
+                    this.frameId = null;
                 }
             };
 
-            requestAnimationFrame(animate);
+            this.frameId = requestAnimationFrame(animate);
         },
 
+        // Celebrate whenever a poll crosses a milestone, not only when it lands
+        // exactly on one; busy logging routinely jumps 148 → 153 between polls.
         celebrate(current) {
-            if (current > 0 && current % 50 === 0 && current !== this.lastMilestone) {
+            if (!celebratesMilestones) return;
+
+            const reached = this.milestoneReached(current);
+
+            if (reached > this.lastMilestoneReached) {
+                this.celebratedMilestone = reached;
                 this.isCelebrating = true;
-                this.lastMilestone = current;
-                setTimeout(() => {
+                if (this.celebrationTimer) clearTimeout(this.celebrationTimer);
+                this.celebrationTimer = setTimeout(() => {
                     this.isCelebrating = false;
                 }, 5000);
             }
+
+            this.lastMilestoneReached = reached;
         }
     }));
 </script>

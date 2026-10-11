@@ -15,6 +15,16 @@ use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
+/**
+ * Seed a comparison sample recorded the given number of minutes ago.
+ */
+function seedComparisonSample(string $historicalKey, float $value, int $minutesAgo): void
+{
+    $recordedAt = appNow()->subMinutes($minutesAgo)->getTimestamp();
+
+    Cache::put($historicalKey, [$recordedAt - ($recordedAt % 60) => $value], now()->addHours(5));
+}
+
 beforeEach(function () {
     // Create active event for testing
     $this->event = Event::factory()->create([
@@ -96,12 +106,21 @@ it('calculates comparison data with previous value', function () {
         'mode_id' => $this->mode->id,
     ]);
 
-    // Clear component cache to force recalculation
-    Cache::forget('dashboard:widget:StatCard:'.hash('xxh128', json_encode([
-        'metric' => 'qso_count',
-        'show_comparison' => true,
-        'comparison_interval' => '1h',
-    ])).':'.$this->eventConfig->id);
+    // Reloading straight away must not compare against the sample written
+    // moments ago - that was the old "vs 1h ago really means vs last poll" bug.
+    $this->travel(5)->seconds();
+    $immediate = Livewire::test(StatCard::class, [
+        'widgetId' => 'stat-card-1',
+        'config' => [
+            'metric' => 'qso_count',
+            'show_comparison' => true,
+            'comparison_interval' => '1h',
+        ],
+        'size' => 'normal',
+    ]);
+    expect($immediate->viewData('data'))->not->toHaveKey('trend');
+
+    $this->travel(61)->minutes();
 
     // Second load - should show comparison
     $component = Livewire::test(StatCard::class, [
@@ -134,7 +153,7 @@ it('calculates trend as up when value increases', function () {
         'comparison_interval' => '1h',
     ]));
     $historicalKey = "dashboard:widget:StatCard:{$configHash}:{$this->eventConfig->id}:history:1h";
-    Cache::put($historicalKey, 10, now()->addHours(2));
+    seedComparisonSample($historicalKey, 10, 61);
 
     // Create more contacts (15 total)
     Contact::factory()->count(15)->create([
@@ -169,7 +188,7 @@ it('calculates trend as down when value decreases', function () {
         'comparison_interval' => '1h',
     ]));
     $historicalKey = "dashboard:widget:StatCard:{$configHash}:{$this->eventConfig->id}:history:1h";
-    Cache::put($historicalKey, 20, now()->addHours(2));
+    seedComparisonSample($historicalKey, 20, 61);
 
     // Create fewer contacts (10 total)
     Contact::factory()->count(10)->create([
@@ -204,7 +223,7 @@ it('calculates trend as stable when value unchanged', function () {
         'comparison_interval' => '1h',
     ]));
     $historicalKey = "dashboard:widget:StatCard:{$configHash}:{$this->eventConfig->id}:history:1h";
-    Cache::put($historicalKey, 10, now()->addHours(2));
+    seedComparisonSample($historicalKey, 10, 61);
 
     // Create same number of contacts
     Contact::factory()->count(10)->create([
@@ -239,7 +258,7 @@ it('supports different comparison intervals', function () {
         'comparison_interval' => '4h',
     ]));
     $historicalKey = "dashboard:widget:StatCard:{$configHash}:{$this->eventConfig->id}:history:4h";
-    Cache::put($historicalKey, 5, now()->addHours(5));
+    seedComparisonSample($historicalKey, 5, 241);
 
     Contact::factory()->count(10)->create([
         'event_configuration_id' => $this->eventConfig->id,
@@ -333,7 +352,7 @@ it('handles formatted numbers correctly', function () {
         'comparison_interval' => '1h',
     ]));
     $historicalKey = "dashboard:widget:StatCard:{$configHash}:{$this->eventConfig->id}:history:1h";
-    Cache::put($historicalKey, 1000, now()->addHours(2));
+    seedComparisonSample($historicalKey, 1000, 61);
 
     $component = Livewire::test(StatCard::class, [
         'widgetId' => 'stat-card-1',

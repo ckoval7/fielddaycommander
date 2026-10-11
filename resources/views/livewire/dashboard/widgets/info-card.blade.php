@@ -24,7 +24,7 @@ Renders a row-based key/value card. Shape:
             </div>
 
             {{-- Last updated timestamp --}}
-            <div class="text-xs text-base-content/40 text-right mt-auto pt-2 border-t border-base-content/5">Updated {{ formatTimeAgo($data['last_updated_at'] ?? null) }}</div>
+            <x-dashboard.updated-at :at="$data['last_updated_at'] ?? null" class="border-t border-base-content/5" />
         </x-card>
     @else
         {{-- Normal Mode: Compact info display --}}
@@ -46,7 +46,7 @@ Renders a row-based key/value card. Shape:
             </div>
 
             {{-- Last updated timestamp --}}
-            <div class="text-xs text-base-content/40 text-right mt-auto pt-2 border-t border-base-content/5">Updated {{ formatTimeAgo($data['last_updated_at'] ?? null) }}</div>
+            <x-dashboard.updated-at :at="$data['last_updated_at'] ?? null" class="border-t border-base-content/5" />
         </x-card>
     @endif
 </div>

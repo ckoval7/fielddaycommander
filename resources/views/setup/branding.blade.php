@@ -35,20 +35,18 @@
                 hint="Optional subtitle or motto"
             />
 
-            <div class="form-control w-full">
-                <label for="logo-input" class="label">
-                    <span class="label-text">Site Logo</span>
+            <div class="flex flex-col w-full">
+                <label for="logo-input" class="block py-1">
+                    <span class="text-sm">Site Logo</span>
                 </label>
                 <input
                     type="file"
                     name="logo"
                     id="logo-input"
                     accept="image/png,image/jpeg,image/svg+xml"
-                    class="file-input file-input-bordered w-full"
+                    class="file-input w-full"
                 />
-                <span class="label">
-                    <span class="label-text-alt">PNG, JPG, or SVG. Maximum 2MB. Recommended: square image, 200x200px or larger</span>
-                </span>
+                <span class="block py-1 text-xs">PNG, JPG, or SVG. Maximum 2MB. Recommended: square image, 200x200px or larger</span>
             </div>
 
             <div class="flex justify-between">

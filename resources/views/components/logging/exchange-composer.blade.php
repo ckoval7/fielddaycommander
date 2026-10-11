@@ -90,7 +90,7 @@ Slots:
                 @keydown.tab.prevent="si >= 0 && $wire.suggestions?.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : null"
                 @contact-logged.window="$refs.exchangeInput.focus(); $refs.exchangeInput.select(); si = -1"
                 @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
-                class="input input-bordered input-lg w-full text-2xl font-mono uppercase tracking-wider"
+                class="input input-lg w-full text-2xl font-mono uppercase tracking-wider"
                 placeholder="{{ $placeholder }}"
                 aria-label="Exchange input"
                 autofocus

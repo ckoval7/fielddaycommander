@@ -413,6 +413,28 @@
             box-shadow: 0 0 40px rgba(96, 165, 250, 1);
         }
     }
+
+    /* Dashboard list/feed rows that arrived since the widget's previous
+       render (flagged server-side by HighlightsNewItems). Slides in, then the
+       highlight fades back to the row's own styling. */
+    @keyframes dashboard-item-new {
+        0% {
+            opacity: 0;
+            transform: translateY(-12px);
+            background-color: color-mix(in oklab, var(--color-primary) 25%, var(--color-base-100));
+            border-color: var(--color-primary);
+        }
+        12% {
+            opacity: 1;
+            transform: translateY(0);
+            background-color: color-mix(in oklab, var(--color-primary) 25%, var(--color-base-100));
+            border-color: var(--color-primary);
+        }
+    }
+
+    .dashboard-item-new {
+        animation: dashboard-item-new 3s ease-out;
+    }
 }
 
 /* Mobile-responsive badges — outside any cascade layer so this wins over DaisyUI's

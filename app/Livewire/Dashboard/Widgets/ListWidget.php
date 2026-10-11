@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard\Widgets;
 
+use App\Livewire\Dashboard\Widgets\Concerns\HighlightsNewItems;
 use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use App\Models\Contact;
 use App\Models\Equipment;
@@ -33,6 +34,7 @@ use Livewire\Component;
  */
 class ListWidget extends Component
 {
+    use HighlightsNewItems;
     use IsWidget;
 
     /**
@@ -52,22 +54,15 @@ class ListWidget extends Component
     /**
      * Define Livewire event listeners for this widget.
      *
-     * Different list types listen to different events:
-     * - recent_contacts: ContactLogged (immediate update)
-     * - active_stations: StationStatusChanged (immediate update)
-     * - equipment_status: Polling (no event listeners)
+     * Recent contacts also refresh immediately on ContactLogged when the
+     * viewer may subscribe to the event channel; every list type polls.
      */
     public function getWidgetListeners(): array
     {
         $listType = $this->config['list_type'] ?? 'recent_contacts';
 
         return match ($listType) {
-            'recent_contacts' => [
-                'echo:contacts,ContactLogged' => 'handleUpdate',
-            ],
-            'active_stations' => [
-                'echo:stations,StationStatusChanged' => 'handleUpdate',
-            ],
+            'recent_contacts' => $this->contactLoggedListener(),
             default => [],
         };
     }
@@ -120,6 +115,7 @@ class ListWidget extends Component
             ->map(function (Contact $contact) {
                 return [
                     'type' => 'recent_contact',
+                    'key' => "contact-{$contact->id}",
                     'time_ago' => $this->formatTimeAgo($contact->qso_time),
                     'callsign' => $contact->callsign,
                     'band' => $contact->band?->name ?? 'Unknown',
@@ -153,6 +149,7 @@ class ListWidget extends Component
         return $activeSessions->map(function (OperatingSession $session) {
             return [
                 'type' => 'active_station',
+                'key' => "session-{$session->id}",
                 'station_name' => $session->station?->name ?? 'Unknown',
                 'operator_name' => $session->operator?->call_sign ?? 'Unknown',
                 'band' => $session->band?->name ?? 'Unknown',
@@ -195,6 +192,7 @@ class ListWidget extends Component
 
             return [
                 'type' => 'equipment',
+                'key' => "equipment-{$commitment->id}",
                 'equipment_name' => $equipmentName,
                 'status' => ucfirst($commitment->status),
                 'status_color' => $this->getStatusColor($commitment->status),
@@ -258,10 +256,12 @@ class ListWidget extends Component
     {
         $listType = $this->config['list_type'] ?? 'recent_contacts';
         $data = $this->getData();
+        $items = $data['items'] ?? [];
 
         return view('livewire.dashboard.widgets.list-widget', [
             'data' => $data,
-            'items' => $data['items'] ?? [],
+            'items' => $items,
+            'newItemKeys' => $this->newItemKeys(array_column($items, 'key')),
             'listType' => $listType,
             'size' => $this->size ?? 'normal',
         ]);

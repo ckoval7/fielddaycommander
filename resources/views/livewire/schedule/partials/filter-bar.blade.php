@@ -59,21 +59,21 @@
             {{-- Search --}}
             @if($showSearch)
                 <div>
-                    <label for="schedule-search" class="label label-text text-xs font-semibold">Search by name / call sign</label>
+                    <label for="schedule-search" class="block py-1 text-xs font-semibold">Search by name / call sign</label>
                     <input
                         id="schedule-search"
                         type="text"
                         wire:model.live.debounce.300ms="search"
                         placeholder="Search..."
-                        class="input input-bordered input-sm w-full"
+                        class="input input-sm w-full"
                     />
                 </div>
             @endif
 
             {{-- Role dropdown --}}
             <div>
-                <label for="schedule-role" class="label label-text text-xs font-semibold">Role</label>
-                <label class="select select-bordered select-sm w-full">
+                <label for="schedule-role" class="block py-1 text-xs font-semibold">Role</label>
+                <label class="select select-sm w-full">
                     <select id="schedule-role" wire:model.live="role">
                         <option value="">All Roles</option>
                         @foreach($this->filterRoles as $filterRole)
@@ -86,8 +86,8 @@
             {{-- Status dropdown --}}
             @if($showStatusFilter && count($statuses) > 0)
                 <div>
-                    <label for="schedule-status" class="label label-text text-xs font-semibold">Status</label>
-                    <label class="select select-bordered select-sm w-full">
+                    <label for="schedule-status" class="block py-1 text-xs font-semibold">Status</label>
+                    <label class="select select-sm w-full">
                         <select id="schedule-status" wire:model.live="status">
                             <option value="">All Statuses</option>
                             @foreach($statuses as $value => $label)
@@ -101,8 +101,8 @@
             {{-- Availability dropdown --}}
             @if($showAvailability)
                 <div>
-                    <label for="schedule-availability" class="label label-text text-xs font-semibold">Availability</label>
-                    <label class="select select-bordered select-sm w-full">
+                    <label for="schedule-availability" class="block py-1 text-xs font-semibold">Availability</label>
+                    <label class="select select-sm w-full">
                         <select id="schedule-availability" wire:model.live="availability">
                             <option value="">All</option>
                             <option value="unfilled">Unfilled Only</option>
@@ -115,8 +115,8 @@
             {{-- Time filter --}}
             @if($showTimeFilter)
                 <div>
-                    <label for="schedule-time" class="label label-text text-xs font-semibold">Time</label>
-                    <label class="select select-bordered select-sm w-full">
+                    <label for="schedule-time" class="block py-1 text-xs font-semibold">Time</label>
+                    <label class="select select-sm w-full">
                         <select id="schedule-time" wire:model.live="timeFilter">
                             <option value="">Current &amp; Upcoming</option>
                             <option value="current">Current</option>
@@ -130,9 +130,9 @@
 
             {{-- Sort --}}
             <div>
-                <label for="schedule-sort" class="label label-text text-xs font-semibold">Sort by</label>
+                <label for="schedule-sort" class="block py-1 text-xs font-semibold">Sort by</label>
                 <div class="flex gap-1">
-                    <label class="select select-bordered select-sm flex-1">
+                    <label class="select select-sm flex-1">
                         <select id="schedule-sort" wire:model.live="sortBy">
                             <option value="time">Time</option>
                             <option value="role">Role</option>

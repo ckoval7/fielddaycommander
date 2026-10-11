@@ -54,15 +54,15 @@
                 />
 
                 {{-- Youth Flag --}}
-                <label class="label cursor-pointer justify-start gap-3 mt-2">
+                <label class="flex items-center gap-3 cursor-pointer py-2 mt-2">
                     <input type="checkbox" class="checkbox checkbox-sm" wire:model="is_youth" />
-                    <span class="label-text">Youth (age 18 or younger)</span>
+                    <span class="text-sm">Youth (age 18 or younger)</span>
                 </label>
 
                 {{-- CPR / AED Trained --}}
-                <label class="label cursor-pointer justify-start gap-3">
+                <label class="flex items-center gap-3 cursor-pointer py-2">
                     <input type="checkbox" class="checkbox checkbox-sm" wire:model="is_cpr_aed_trained" />
-                    <span class="label-text">CPR / AED trained</span>
+                    <span class="text-sm">CPR / AED trained</span>
                 </label>
             </div>
         </div>

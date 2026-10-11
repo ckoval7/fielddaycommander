@@ -93,13 +93,13 @@ if (! function_exists('formatTimeAgo')) {
         }
 
         $time = $timestamp instanceof Carbon ? $timestamp : Carbon::parse($timestamp);
-        $diffInSeconds = appNow()->diffInSeconds($time);
+        $diffInSeconds = (int) $time->diffInSeconds(appNow());
 
         return match (true) {
             $diffInSeconds < 60 => 'just now',
-            $diffInSeconds < 3600 => appNow()->diffInMinutes($time).'m ago',
-            $diffInSeconds < 86400 => appNow()->diffInHours($time).'h ago',
-            default => appNow()->diffInDays($time).'d ago',
+            $diffInSeconds < 3600 => (int) $time->diffInMinutes(appNow()).'m ago',
+            $diffInSeconds < 86400 => (int) $time->diffInHours(appNow()).'h ago',
+            default => (int) $time->diffInDays(appNow()).'d ago',
         };
     }
 }

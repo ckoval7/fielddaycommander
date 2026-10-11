@@ -21,8 +21,8 @@ class SectionsWorked extends Component
     ];
 
     private const AREA_LABELS = [
-        'W1' => '1', 'W2' => '2', 'W3' => '3', 'W4' => '4', 'W5' => '5',
-        'W6' => '6', 'W7' => '7', 'W8' => '8', 'W9' => '9', 'W0' => '0',
+        'W1' => 'W1', 'W2' => 'W2', 'W3' => 'W3', 'W4' => 'W4', 'W5' => 'W5',
+        'W6' => 'W6', 'W7' => 'W7', 'W8' => 'W8', 'W9' => 'W9', 'W0' => 'W0',
         'VE' => 'VE', 'DX' => 'DX',
     ];
 
@@ -48,16 +48,7 @@ class SectionsWorked extends Component
 
     public function getWidgetListeners(): array
     {
-        $service = app(EventContextService::class);
-        $eventId = $service->getContextEventId();
-
-        if (! $eventId) {
-            return [];
-        }
-
-        return [
-            "echo-private:event.{$eventId},.ContactLogged" => 'handleUpdate',
-        ];
+        return $this->contactLoggedListener();
     }
 
     protected function buildSectionData(int $eventConfigId): array

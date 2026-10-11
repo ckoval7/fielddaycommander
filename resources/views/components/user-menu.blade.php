@@ -5,7 +5,7 @@
             @if(auth()->user()->avatar_path && file_exists(public_path(auth()->user()->avatar_path)))
                 <img src="{{ asset(auth()->user()->avatar_path) }}" alt="{{ auth()->user()->call_sign }}" class="rounded-full">
             @else
-                <div class="avatar placeholder">
+                <div class="avatar avatar-placeholder">
                     <div class="bg-slate-600 text-white rounded-full w-10 flex items-center justify-center">
                         <span class="text-sm">{{ auth()->user()->getInitials() }}</span>
                     </div>

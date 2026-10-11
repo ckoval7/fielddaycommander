@@ -58,8 +58,13 @@ describe('ListWidget Component', function () {
         ]);
 
         expect($component->instance()->getWidgetListeners())->toBe([
-            'echo:contacts,ContactLogged' => 'handleUpdate',
+            "echo-private:event.{$this->event->id},.ContactLogged" => 'handleUpdate',
         ]);
+
+        // Guests (the public TV) cannot join the private event channel and rely on polling.
+        auth()->logout();
+
+        expect($component->instance()->getWidgetListeners())->toBe([]);
     });
 
     it('generates unique cache key', function () {

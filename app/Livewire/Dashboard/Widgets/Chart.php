@@ -6,6 +6,7 @@ use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use App\Models\Contact;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -67,6 +68,17 @@ class Chart extends Component
      * Cache duration in seconds for chart data.
      */
     protected const CACHE_TTL = 5;
+
+    /**
+     * Chart.js payload mirrored to the client on every render.
+     *
+     * Alpine watches this through $wire; data baked into x-data is never
+     * re-read after the first render because Livewire's morph keeps Alpine
+     * state, which left polled charts frozen at their page-load data.
+     *
+     * @var array<string, mixed>
+     */
+    public array $chartPayload = [];
 
     /**
      * Color palette for chart datasets.
@@ -149,7 +161,7 @@ class Chart extends Component
 
             $title = $baseTitle.' — '.self::TIME_RANGE_LABELS[$timeRange];
 
-            return $this->formatChartData($rawData, $chartType, $title, $dataSource);
+            return $this->formatChartData($rawData, $chartType, $title, $dataSource, $this->elapsedHoursInRange($timeRange));
         });
     }
 
@@ -168,8 +180,12 @@ class Chart extends Component
      */
     public function render(): View
     {
+        $chartData = $this->getData();
+
+        $this->chartPayload = collect($chartData)->except('last_updated_at')->all();
+
         return view('livewire.dashboard.widgets.chart', [
-            'chartData' => $this->getData(),
+            'chartData' => $chartData,
         ]);
     }
 
@@ -198,8 +214,8 @@ class Chart extends Component
 
         $driver = DB::connection()->getDriverName();
         $hourExpression = match ($driver) {
-            'sqlite' => DB::raw('strftime("%Y-%m-%d %H:00", qso_time) as hour_label'),
-            default => DB::raw('DATE_FORMAT(qso_time, "%Y-%m-%d %H:00") as hour_label'),
+            'sqlite' => DB::raw("strftime('%Y-%m-%d %H:00', qso_time) as hour_label"),
+            default => DB::raw("DATE_FORMAT(qso_time, '%Y-%m-%d %H:00') as hour_label"),
         };
 
         $query = Contact::query()
@@ -337,6 +353,30 @@ class Chart extends Component
     }
 
     /**
+     * Hours of operating time covered by the time range, clamped to the event window.
+     *
+     * Returns 0 when there is no context event or the event has not started.
+     */
+    protected function elapsedHoursInRange(string $timeRange): float
+    {
+        $event = app(EventContextService::class)->getContextEvent();
+
+        if (! $event?->start_time || ! $event->end_time) {
+            return 0.0;
+        }
+
+        $windowEnd = appNow()->min($event->end_time);
+        $windowStart = $event->start_time->copy();
+        $since = $this->resolveSince($timeRange);
+
+        if ($since !== null && $windowStart->lt($since)) {
+            $windowStart = Carbon::instance($since);
+        }
+
+        return max(0.0, $windowStart->diffInMinutes($windowEnd) / 60);
+    }
+
+    /**
      * Resolve the lower-bound timestamp for the configured time range.
      *
      * Returns null for the full-event view, in which case no qso_time filter is applied.
@@ -361,7 +401,7 @@ class Chart extends Component
      * @param  array<array{label: string, value: int}>  $rawData
      * @return array{labels: array<string>, datasets: array<array<string, mixed>>, chart_type: string, title: string, description: string}
      */
-    protected function formatChartData(array $rawData, string $chartType, string $title, string $dataSource): array
+    protected function formatChartData(array $rawData, string $chartType, string $title, string $dataSource, float $elapsedHours = 0.0): array
     {
         $labels = array_column($rawData, 'label');
         $values = array_column($rawData, 'value');
@@ -400,7 +440,7 @@ class Chart extends Component
             'title' => $title,
             'description' => $description,
             'data_source' => $dataSource,
-            'summary_value' => $this->formatSummaryValue($rawData, $dataSource),
+            'summary_value' => $this->formatSummaryValue($rawData, $dataSource, $elapsedHours),
             'last_updated_at' => appNow(),
         ];
     }
@@ -429,9 +469,13 @@ class Chart extends Component
     /**
      * Generate a concise summary value for at-a-glance display.
      *
+     * The hourly rate divides by real elapsed operating time, not by the
+     * number of hour buckets: buckets include the partial first and current
+     * hours, which would understate the rate.
+     *
      * @param  array<array{label: string, value: int}>  $rawData
      */
-    protected function formatSummaryValue(array $rawData, string $dataSource): string
+    protected function formatSummaryValue(array $rawData, string $dataSource, float $elapsedHours = 0.0): string
     {
         if (empty($rawData)) {
             return '0';
@@ -440,7 +484,7 @@ class Chart extends Component
         $total = array_sum(array_column($rawData, 'value'));
 
         return match ($dataSource) {
-            'qsos_per_hour' => number_format($total / max(count($rawData), 1), 1).'/hr',
+            'qsos_per_hour' => number_format($total / max($elapsedHours, 1.0), 1).'/hr',
             'qsos_per_band' => number_format($total).' Qs',
             'qsos_per_mode' => number_format($total).' Qs',
             default => number_format($total),
