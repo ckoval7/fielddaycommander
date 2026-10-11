@@ -56,6 +56,20 @@ test('registration requires all fields', function () {
     $this->assertGuest();
 });
 
+test('registration rejects a call sign longer than 12 characters', function () {
+    $response = $this->post('/register', [
+        'call_sign' => 'W1AWTOOLONG12',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'email' => 'test@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $response->assertSessionHasErrors(['call_sign']);
+    $this->assertGuest();
+});
+
 test('registration requires valid email', function () {
     $response = $this->post('/register', [
         'call_sign' => 'W1AW',
