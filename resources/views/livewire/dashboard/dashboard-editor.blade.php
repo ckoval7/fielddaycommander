@@ -1,4 +1,23 @@
-<div>
+{{-- The leave-page warning lives on this always-present root, not on the edit
+     toolbar: the toolbar disappears on Cancel before any "editing ended" event
+     reaches it, which left the warning armed after editing was over. It checks
+     the real state when the visitor tries to leave instead. --}}
+<div
+    x-data="{
+        hasUnsavedChanges() {
+            if (!$wire.editMode) {
+                return false;
+            }
+
+            const layoutChanged = JSON.stringify($wire.widgets) !== JSON.stringify($wire.originalWidgets);
+            const titleChanged = ($wire.title ?? '') !== ($wire.originalTitle ?? '');
+            const descriptionChanged = ($wire.description ?? '') !== ($wire.originalDescription ?? '');
+
+            return layoutChanged || titleChanged || descriptionChanged;
+        },
+    }"
+    x-on:beforeunload.window="if (hasUnsavedChanges()) { $event.preventDefault(); $event.returnValue = ''; }"
+>
     {{-- Edit Toolbar Banner --}}
     @if($editMode)
         <div class="bg-info/10 border border-info/30 rounded-lg p-4 mb-4"
@@ -19,17 +38,6 @@
                  },
              }"
              x-on:keydown.window="undoShortcut($event)"
-             x-init="
-                window.__dashboardEditUnsaved = true;
-                window.onbeforeunload = (e) => {
-                    if (window.__dashboardEditUnsaved) {
-                        e.preventDefault();
-                        return '';
-                    }
-                };
-             "
-             x-on:dashboard-saved.window="window.__dashboardEditUnsaved = false; window.onbeforeunload = null;"
-             x-on:edit-mode-changed.window="if (!$event.detail.enabled) { window.__dashboardEditUnsaved = false; window.onbeforeunload = null; }"
         >
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-center gap-2 text-info">
@@ -60,7 +68,6 @@
                         icon="phosphor-check"
                         class="btn-primary btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                         wire:click="saveLayout"
-                        x-on:click="window.__dashboardEditUnsaved = false; window.onbeforeunload = null;"
                         spinner="saveLayout"
                     />
                     <x-button
