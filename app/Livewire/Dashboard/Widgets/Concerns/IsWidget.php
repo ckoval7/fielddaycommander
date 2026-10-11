@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Cache;
  */
 trait IsWidget
 {
+    use ListensForBroadcasts;
+
     /**
      * Widget size variant.
      *
@@ -191,7 +193,7 @@ trait IsWidget
     {
         $eventId = app(EventContextService::class)->getContextEventId();
 
-        if (! $eventId || ! auth()->check()) {
+        if (! $eventId || ! $this->canListenForBroadcasts()) {
             return [];
         }
 

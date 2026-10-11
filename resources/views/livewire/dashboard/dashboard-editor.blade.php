@@ -98,7 +98,8 @@
                     @php
                         $isVisible = $widget['visible'] ?? true;
                         $colSpan = $widget['col_span'] ?? 1;
-                        $rowSpan = $widget['row_span'] ?? 2;
+                        $rowSpan = $widget['row_span'] ?? \App\Services\DashboardService::MIN_ROW_SPAN;
+                        $componentKey = $this->widgetComponentKey($widget);
                         $spanClasses = match($colSpan) {
                             2 => 'sm:col-span-2',
                             3 => 'sm:col-span-3',
@@ -134,20 +135,21 @@
                         x-on:widget-updating.window="if ($event.detail.widgetId === '{{ $widget['id'] }}') updating = true"
                         x-on:widget-updated.window="if ($event.detail.widgetId === '{{ $widget['id'] }}') { updating = false; $el.classList.add('widget-pulse'); setTimeout(() => $el.classList.remove('widget-pulse'), 600); }"
                     >
-                        {{-- Edit Mode Overlay Controls --}}
+                        {{-- Edit Mode Controls: a compact toolbar pinned to the top-right corner so it
+                             covers as little of the widget as possible. --}}
                         <div
                             x-show="editMode"
                             x-transition:enter="transition ease-out duration-150"
                             x-transition:enter-start="opacity-0 -translate-y-1"
                             x-transition:enter-end="opacity-100 translate-y-0"
-                            class="absolute top-0 inset-x-0 z-20 bg-base-300/85 backdrop-blur-sm rounded-t-lg border-b border-base-300 px-3 py-2"
+                            class="absolute top-2 right-2 z-20 max-w-[calc(100%-1rem)] bg-base-300/90 backdrop-blur-sm rounded-lg border border-base-content/10 shadow-md px-2 py-1"
                             x-cloak
                         >
                             <div class="flex items-center justify-between gap-2">
                                 {{-- Drag Handle + Label --}}
                                 <div class="flex items-center gap-2 min-w-0 cursor-grab active:cursor-grabbing">
                                     <x-icon name="phosphor-list" class="w-5 h-5 text-base-content/50 flex-shrink-0" />
-                                    <span class="text-xs font-medium truncate text-base-content/80">
+                                    <span class="text-xs font-medium truncate max-w-[9rem] text-base-content/80">
                                         {{ config("dashboard.widget_types.{$widget['type']}.name", ucfirst($widget['type'])) }}
                                     </span>
                                 </div>
@@ -234,7 +236,9 @@
                         </div>
 
                         {{-- Widget Content --}}
-                        <div class="relative h-full overflow-y-auto" :class="{ 'pt-10': editMode }">
+                        {{-- The edit controls float over the top of the widget rather than
+                             pushing it down, so fixed-height tiles never clip their content. --}}
+                        <div class="relative h-full overflow-y-auto">
                             {{-- Loading indicator overlay --}}
                             <div
                                 x-show="updating"
@@ -250,14 +254,16 @@
                                 <span class="loading loading-spinner loading-md text-primary"></span>
                             </div>
 
-                            {{-- Render Live Widget Component --}}
+                            {{-- Render Live Widget Component. Hidden widgets are only mounted
+                                 while editing, so they don't query and poll in the background. --}}
+                            @if($isVisible || $editMode)
                             @switch($widget['type'])
                                 @case('stat_card')
                                     <livewire:dashboard.widgets.stat-card
                                         :config="$widget['config']"
                                         :widget-id="$widget['id']"
                                         size="normal"
-                                        wire:key="stat-{{ $widget['id'] }}"
+                                        wire:key="stat-{{ $componentKey }}"
                                     />
                                     @break
 
@@ -266,7 +272,7 @@
                                         :config="$widget['config']"
                                         :widget-id="$widget['id']"
                                         size="normal"
-                                        wire:key="chart-{{ $widget['id'] }}"
+                                        wire:key="chart-{{ $componentKey }}"
                                     />
                                     @break
 
@@ -275,7 +281,7 @@
                                         :config="$widget['config']"
                                         :widget-id="$widget['id']"
                                         size="normal"
-                                        wire:key="progress-{{ $widget['id'] }}"
+                                        wire:key="progress-{{ $componentKey }}"
                                     />
                                     @break
 
@@ -284,7 +290,7 @@
                                         :config="$widget['config']"
                                         :widget-id="$widget['id']"
                                         size="normal"
-                                        wire:key="list-{{ $widget['id'] }}"
+                                        wire:key="list-{{ $componentKey }}"
                                     />
                                     @break
 
@@ -293,7 +299,7 @@
                                         :config="$widget['config']"
                                         :widget-id="$widget['id']"
                                         size="normal"
-                                        wire:key="timer-{{ $widget['id'] }}"
+                                        wire:key="timer-{{ $componentKey }}"
                                     />
                                     @break
 
@@ -302,7 +308,7 @@
                                         :config="$widget['config']"
                                         :widget-id="$widget['id']"
                                         size="normal"
-                                        wire:key="info-{{ $widget['id'] }}"
+                                        wire:key="info-{{ $componentKey }}"
                                     />
                                     @break
 
@@ -311,7 +317,7 @@
                                         :config="$widget['config']"
                                         :widget-id="$widget['id']"
                                         size="normal"
-                                        wire:key="feed-{{ $widget['id'] }}"
+                                        wire:key="feed-{{ $componentKey }}"
                                     />
                                     @break
 
@@ -320,7 +326,7 @@
                                         :config="$widget['config']"
                                         :widget-id="$widget['id']"
                                         size="normal"
-                                        wire:key="sections-{{ $widget['id'] }}"
+                                        wire:key="sections-{{ $componentKey }}"
                                     />
                                     @break
 
@@ -332,6 +338,7 @@
                                         </div>
                                     </x-card>
                             @endswitch
+                            @endif
                         </div>
                     </li>
                 @endforeach

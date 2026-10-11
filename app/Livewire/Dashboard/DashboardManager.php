@@ -7,6 +7,7 @@ use App\Models\Dashboard;
 use App\Services\DashboardService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -31,8 +32,15 @@ class DashboardManager extends Component
 
     public ?int $copyFrom = null;
 
-    public function mount(): void
+    /**
+     * Dashboard the page is currently showing, so deleting it can move the
+     * viewer somewhere that still exists.
+     */
+    public ?int $currentDashboardId = null;
+
+    public function mount(?int $currentDashboardId = null): void
     {
+        $this->currentDashboardId = $currentDashboardId;
         $this->loadDashboards();
     }
 
@@ -76,7 +84,7 @@ class DashboardManager extends Component
         $validated = $this->validate([
             'newTitle' => ['required', 'string', 'max:255'],
             'newDescription' => ['nullable', 'string'],
-            'copyFrom' => ['nullable', 'integer', 'exists:dashboards,id'],
+            'copyFrom' => ['nullable', 'integer', Rule::exists('dashboards', 'id')->where('user_id', auth()->id())],
         ], [
             'newTitle.required' => 'Please provide a title for your dashboard.',
             'newTitle.max' => 'The title cannot exceed 255 characters.',
@@ -86,8 +94,8 @@ class DashboardManager extends Component
         try {
             if ($validated['copyFrom']) {
                 // Duplicate existing dashboard
-                $sourceDashboard = Dashboard::findOrFail($validated['copyFrom']);
-                $newDashboard = $service->duplicateDashboard($sourceDashboard, $validated['newTitle']);
+                $sourceDashboard = Dashboard::query()->forUser(auth()->user())->findOrFail($validated['copyFrom']);
+                $newDashboard = $service->duplicateDashboard($sourceDashboard, $validated['newTitle'], auth()->user());
             } else {
                 // Create blank dashboard
                 $newDashboard = $service->createDashboard(
@@ -165,6 +173,13 @@ class DashboardManager extends Component
             }
 
             $service->deleteDashboard($dashboard);
+
+            if ($dashboard->id === $this->currentDashboardId) {
+                $this->redirect(route('dashboard'));
+
+                return;
+            }
+
             $this->loadDashboards();
             $this->cancelDelete();
 

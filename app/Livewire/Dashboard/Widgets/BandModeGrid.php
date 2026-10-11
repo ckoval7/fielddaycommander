@@ -2,14 +2,64 @@
 
 namespace App\Livewire\Dashboard\Widgets;
 
+use App\Livewire\Dashboard\Concerns\HasErrorBoundary;
+use App\Livewire\Dashboard\Widgets\Concerns\ListensForBroadcasts;
 use App\Models\Band;
 use App\Models\Contact;
+use App\Models\Event;
 use App\Models\Mode;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
 
-class BandModeGrid extends AbstractContactWidget
+/**
+ * Band/mode contact-count grid for the active event (public landing page).
+ *
+ * Polls for updates; signed-in viewers also refresh immediately on
+ * ContactLogged broadcasts when real-time broadcasting is available.
+ */
+class BandModeGrid extends Component
 {
+    use HasErrorBoundary;
+    use ListensForBroadcasts;
+
+    public ?Event $event = null;
+
+    public function mount(): void
+    {
+        $this->event = Event::active()->with('eventConfiguration')->first();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getListeners(): array
+    {
+        // Guests on the public landing page can't join the private channel;
+        // the widget polls instead.
+        if (! $this->event || ! $this->canListenForBroadcasts()) {
+            return [];
+        }
+
+        return [
+            "echo-private:event.{$this->event->id},.ContactLogged" => 'handleContactLogged',
+        ];
+    }
+
+    /**
+     * Handle real-time ContactLogged broadcast.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function handleContactLogged(array $payload): void
+    {
+        try {
+            unset($this->gridData);
+        } catch (\Throwable $e) {
+            $this->handleWidgetError($e);
+        }
+    }
+
     #[Computed]
     public function bands(): Collection
     {
@@ -54,18 +104,20 @@ class BandModeGrid extends AbstractContactWidget
         return $data;
     }
 
-    protected function computedPropertiesToClear(): array
-    {
-        return ['gridData'];
-    }
-
     protected function getWidgetName(): string
     {
         return 'Band/Mode Activity Grid';
     }
 
-    protected function getViewName(): string
+    public function render()
     {
-        return 'livewire.dashboard.widgets.band-mode-grid';
+        if ($this->hasError) {
+            return view('livewire.dashboard.widgets.error-fallback', [
+                'widgetName' => $this->getWidgetName(),
+                'errorMessage' => $this->errorMessage,
+            ]);
+        }
+
+        return view('livewire.dashboard.widgets.band-mode-grid');
     }
 }

@@ -590,13 +590,24 @@ test('cached data is returned on subsequent calls', function () {
 // Widget listeners
 // ────────────────────────────────────────────────────────────────
 
-test('getWidgetListeners returns correct listeners', function () {
-    $feed = new Feed;
+test('feed listens for its own notification broadcasts when broadcasting is available', function () {
+    $user = createFeedUser();
+    $this->actingAs($user);
+    config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
 
-    expect($feed->getWidgetListeners())->toBe([
-        'echo:notifications,DatabaseNotificationCreated' => 'handleUpdate',
-        'notification.created' => 'handleUpdate',
+    expect((new Feed)->getWidgetListeners())->toBe([
+        "echo-private:user.{$user->id},NewNotification" => 'handleUpdate',
     ]);
+});
+
+test('feed registers no listeners when broadcasting is unavailable', function () {
+    $this->actingAs(createFeedUser());
+
+    config(['broadcasting.default' => 'log', 'reverb.apps.apps.0.key' => 'test-key']);
+    expect((new Feed)->getWidgetListeners())->toBe([]);
+
+    config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => null]);
+    expect((new Feed)->getWidgetListeners())->toBe([]);
 });
 
 // ────────────────────────────────────────────────────────────────

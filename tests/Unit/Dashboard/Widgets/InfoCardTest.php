@@ -158,7 +158,7 @@ test('event_details variant displays event name, callsign, section, class', func
     expect($data['title'])->toBe('Event Info')
         ->and(infoRow($data, 'Event'))->toBe('Field Day 2025')
         ->and(infoRow($data, 'Location'))->toBe('Eastern Massachusetts')
-        ->and(infoRow($data, 'Class'))->toBe('Class D')
+        ->and(infoRow($data, 'Class'))->toBe('1D')
         ->and(infoRow($data, 'Call Sign'))->toBe('K1MZ');
 });
 

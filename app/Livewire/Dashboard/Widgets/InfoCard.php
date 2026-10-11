@@ -74,7 +74,7 @@ class InfoCard extends Component
             'rows' => [
                 ['label' => 'Event', 'value' => $event?->name ?? 'N/A'],
                 ['label' => 'Location', 'value' => $config?->section?->name ?? 'N/A'],
-                ['label' => 'Class', 'value' => $config?->operatingClass?->name ?? 'N/A'],
+                ['label' => 'Class', 'value' => $this->entryClass($config) ?? 'N/A'],
                 ['label' => 'Call Sign', 'value' => $config?->callsign ?? 'N/A', 'highlight' => true],
             ],
             'last_updated_at' => appNow(),
@@ -121,10 +121,10 @@ class InfoCard extends Component
     {
         $config = $event?->eventConfiguration;
 
-        $classCode = $config?->operatingClass?->code;
+        $entryClass = $this->entryClass($config);
         $className = $config?->operatingClass?->name;
         $classSuffix = $className ? " — {$className}" : '';
-        $classDisplay = $classCode ? "{$classCode}{$classSuffix}" : 'N/A';
+        $classDisplay = $entryClass ? "{$entryClass}{$classSuffix}" : 'N/A';
 
         $transmitters = $config?->transmitter_count !== null
             ? (string) $config->transmitter_count
@@ -155,6 +155,28 @@ class InfoCard extends Component
     /**
      * Format the configured power sources as a comma-separated list.
      */
+    /**
+     * Field Day entry class as reported, e.g. "3A": transmitter count plus
+     * the operating class letter. Null when no class is configured.
+     */
+    protected function entryClass(mixed $config): ?string
+    {
+        $classCode = $config?->operatingClass?->code;
+
+        if (! $classCode) {
+            return null;
+        }
+
+        // Some data stores the full entry class ("3A") as the code already.
+        if (ctype_digit($classCode[0])) {
+            return $classCode;
+        }
+
+        $transmitters = $config->transmitter_count;
+
+        return $transmitters ? "{$transmitters}{$classCode}" : $classCode;
+    }
+
     protected function describePowerSources(mixed $config): string
     {
         if (! $config) {

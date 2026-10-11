@@ -77,7 +77,7 @@ test('createDashboard throws OverflowException when max dashboards reached', fun
         ->create();
 
     $this->service->createDashboard($this->user, 'One Too Many');
-})->throws(\OverflowException::class);
+})->throws(OverflowException::class);
 
 test('createDashboard throws InvalidArgumentException for invalid config', function () {
     $invalidConfig = [
@@ -85,7 +85,7 @@ test('createDashboard throws InvalidArgumentException for invalid config', funct
     ];
 
     $this->service->createDashboard($this->user, 'Bad Config', null, $invalidConfig);
-})->throws(\InvalidArgumentException::class);
+})->throws(InvalidArgumentException::class);
 
 test('createDashboard throws OverflowException when config exceeds max widgets', function () {
     $widgets = [];
@@ -102,7 +102,7 @@ test('createDashboard throws OverflowException when config exceeds max widgets',
     }
 
     $this->service->createDashboard($this->user, 'Too Many Widgets', null, $widgets);
-})->throws(\OverflowException::class);
+})->throws(OverflowException::class);
 
 // ── updateDashboard ──────────────────────────────────────────────────
 
@@ -128,7 +128,7 @@ test('updateDashboard validates config before saving', function () {
     $this->service->updateDashboard($dashboard, [
         'config' => [['id' => 'w1', 'type' => 'completely_fake']],
     ]);
-})->throws(\InvalidArgumentException::class);
+})->throws(InvalidArgumentException::class);
 
 test('updateDashboard saves valid config', function () {
     $dashboard = Dashboard::factory()->for($this->user)->create();
@@ -136,8 +136,8 @@ test('updateDashboard saves valid config', function () {
     $newConfig = [
         [
             'id' => 'w1',
-            'type' => 'timer',
-            'config' => ['timer_type' => 'event_countdown'],
+            'type' => 'stat_card',
+            'config' => ['metric' => 'qso_count', 'show_trend' => false],
             'order' => 1,
             'visible' => true,
         ],
@@ -164,7 +164,7 @@ test('updateDashboard throws OverflowException when config exceeds max widgets',
     }
 
     $this->service->updateDashboard($dashboard, ['config' => $widgets]);
-})->throws(\OverflowException::class);
+})->throws(OverflowException::class);
 
 // ── deleteDashboard ──────────────────────────────────────────────────
 
@@ -183,14 +183,14 @@ test('deleteDashboard throws LogicException when deleting the only dashboard', f
     $dashboard = Dashboard::factory()->for($this->user)->create();
 
     $this->service->deleteDashboard($dashboard);
-})->throws(\LogicException::class, 'Cannot delete the only dashboard');
+})->throws(LogicException::class, 'Cannot delete the only dashboard');
 
 test('deleteDashboard throws LogicException when deleting the default dashboard', function () {
     Dashboard::factory()->default()->for($this->user)->create();
     $default = Dashboard::factory()->default()->for($this->user)->create();
 
     $this->service->deleteDashboard($default);
-})->throws(\LogicException::class, 'Cannot delete the default dashboard');
+})->throws(LogicException::class, 'Cannot delete the default dashboard');
 
 // ── duplicateDashboard ───────────────────────────────────────────────
 
@@ -220,7 +220,7 @@ test('duplicateDashboard throws OverflowException when max dashboards reached', 
         ->create();
 
     $this->service->duplicateDashboard($dashboards->first(), 'Too Many');
-})->throws(\OverflowException::class);
+})->throws(OverflowException::class);
 
 // ── getDefaultDashboard ──────────────────────────────────────────────
 
@@ -361,12 +361,6 @@ test('validateConfig accepts all valid widget types', function () {
 });
 
 // ── applyDefaultLayout ───────────────────────────────────────────────
-
-test('applyDefaultLayout returns guest layout', function () {
-    $layout = $this->service->applyDefaultLayout('guest');
-
-    expect($layout)->toBe(config('dashboard.default_dashboards.guest')['widgets']);
-});
 
 test('applyDefaultLayout returns user layout', function () {
     $layout = $this->service->applyDefaultLayout('user');

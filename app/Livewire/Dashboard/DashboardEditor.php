@@ -79,7 +79,9 @@ class DashboardEditor extends Component
     public function toggleEditMode(): void
     {
         if ($this->editMode) {
-            $this->exitEditMode();
+            // Leaving edit mode without saving must restore the saved layout,
+            // otherwise unsaved edits stay on screen looking saved.
+            $this->cancelEdit();
         } else {
             $this->enterEditMode();
         }
@@ -199,6 +201,9 @@ class DashboardEditor extends Component
     /**
      * Update widget order from the drag-and-drop component.
      *
+     * Widgets missing from the client's list keep their relative order after
+     * the listed ones, so a stale or partial list can never drop a widget.
+     *
      * @param  array<int, string>  $widgetIds  Ordered array of widget IDs
      */
     public function reorderWidgets(array $widgetIds): void
@@ -208,17 +213,20 @@ class DashboardEditor extends Component
         }
 
         $widgetMap = $this->widgets->keyBy('id');
-        $reordered = collect();
+        $listedIds = collect($widgetIds)
+            ->filter(fn ($widgetId) => is_string($widgetId) && $widgetMap->has($widgetId))
+            ->unique()
+            ->values();
 
-        foreach ($widgetIds as $order => $widgetId) {
-            if ($widgetMap->has($widgetId)) {
+        $this->widgets = $listedIds
+            ->concat($widgetMap->keys()->diff($listedIds))
+            ->values()
+            ->map(function (string $widgetId, int $order) use ($widgetMap) {
                 $widget = $widgetMap->get($widgetId);
                 $widget['order'] = $order;
-                $reordered->push($widget);
-            }
-        }
 
-        $this->widgets = $reordered->values();
+                return $widget;
+            });
 
         // Dispatch event to notify Alpine component of the new order
         $this->dispatch('widgets-reordered', widgetIds: $this->widgetIds);
@@ -253,7 +261,7 @@ class DashboardEditor extends Component
      *
      * @param  string  $widgetId  The widget to resize
      * @param  int  $colSpan  Desired column span (clamped to 1-4)
-     * @param  int  $rowSpan  Desired row span (clamped to 1-3)
+     * @param  int  $rowSpan  Desired row span (clamped to Short-Tall, 2-6)
      */
     public function resizeWidget(string $widgetId, int $colSpan, int $rowSpan): void
     {
@@ -261,8 +269,8 @@ class DashboardEditor extends Component
             return;
         }
 
-        $colSpan = max(1, min(4, $colSpan));
-        $rowSpan = max(1, min(3, $rowSpan));
+        $colSpan = $this->dashboardService()->clampColSpan($colSpan);
+        $rowSpan = $this->dashboardService()->clampRowSpan($rowSpan);
 
         $found = false;
         $this->widgets = $this->widgets->map(function ($widget) use ($widgetId, $colSpan, $rowSpan, &$found) {
@@ -338,13 +346,13 @@ class DashboardEditor extends Component
      * @param  string  $type  Widget type from config
      * @param  array<string, mixed>  $config  Widget configuration
      */
-    public function addWidget(string $type, array $config = [], int $colSpan = 1, int $rowSpan = 1): void
+    public function addWidget(string $type, array $config = [], int $colSpan = 1, int $rowSpan = DashboardService::MIN_ROW_SPAN): void
     {
-        if (! $this->editMode) {
+        if (! $this->editMode || ! $this->isKnownWidgetType($type)) {
             return;
         }
 
-        $maxWidgets = (int) config('dashboard.max_widgets_per_dashboard', 20);
+        $maxWidgets = $this->dashboardService()->maxWidgetsPerDashboard();
         if ($this->widgets->count() >= $maxWidgets) {
             $this->dispatch('toast', [
                 'title' => 'Limit Reached',
@@ -360,11 +368,11 @@ class DashboardEditor extends Component
         $newWidget = [
             'id' => $widgetId,
             'type' => $type,
-            'config' => $config,
+            'config' => $this->dashboardService()->sanitizeWidgetConfig($type, $config),
             'order' => $this->widgets->count(),
             'visible' => true,
-            'col_span' => max(1, min(4, $colSpan)),
-            'row_span' => max(1, min(3, $rowSpan)),
+            'col_span' => $this->dashboardService()->clampColSpan($colSpan),
+            'row_span' => $this->dashboardService()->clampRowSpan($rowSpan),
         ];
 
         $this->widgets->push($newWidget);
@@ -409,7 +417,7 @@ class DashboardEditor extends Component
             widgetType: $widget['type'],
             config: $widget['config'] ?? [],
             colSpan: $widget['col_span'] ?? 1,
-            rowSpan: $widget['row_span'] ?? 1
+            rowSpan: $widget['row_span'] ?? DashboardService::MIN_ROW_SPAN
         );
     }
 
@@ -417,18 +425,24 @@ class DashboardEditor extends Component
      * Handle widget-configured event from WidgetConfigurator.
      */
     #[On('widget-configured')]
-    public function handleWidgetConfigured(string $type, array $config, string $mode, int $colSpan = 1, int $rowSpan = 1): void
+    public function handleWidgetConfigured(string $type, array $config, string $mode, int $colSpan = 1, int $rowSpan = DashboardService::MIN_ROW_SPAN): void
     {
+        if (! $this->editMode || ! $this->isKnownWidgetType($type)) {
+            return;
+        }
+
+        $service = $this->dashboardService();
+
         if ($mode === 'add') {
             $this->addWidget($type, $config, $colSpan, $rowSpan);
             $this->dispatch('edit-mode-changed', enabled: $this->editMode);
         } elseif ($mode === 'edit' && $this->configuringWidgetId) {
-            $this->widgets = $this->widgets->map(function ($widget) use ($type, $config, $colSpan, $rowSpan) {
+            $this->widgets = $this->widgets->map(function ($widget) use ($service, $type, $config, $colSpan, $rowSpan) {
                 if ($widget['id'] === $this->configuringWidgetId) {
                     $widget['type'] = $type;
-                    $widget['config'] = $config;
-                    $widget['col_span'] = max(1, min(4, $colSpan));
-                    $widget['row_span'] = max(1, min(3, $rowSpan));
+                    $widget['config'] = $service->sanitizeWidgetConfig($type, $config);
+                    $widget['col_span'] = $service->clampColSpan($colSpan);
+                    $widget['row_span'] = $service->clampRowSpan($rowSpan);
                 }
 
                 return $widget;
@@ -445,6 +459,31 @@ class DashboardEditor extends Component
 
             $this->dispatch('edit-mode-changed', enabled: $this->editMode);
         }
+    }
+
+    /**
+     * Whether the type is one the dashboard can render and save.
+     */
+    protected function isKnownWidgetType(string $type): bool
+    {
+        return array_key_exists($type, config('dashboard.widget_types', []));
+    }
+
+    protected function dashboardService(): DashboardService
+    {
+        return app(DashboardService::class);
+    }
+
+    /**
+     * Livewire key for a widget's component, changing whenever its settings
+     * change so an edited widget remounts with the new settings instead of
+     * keeping the ones it was first mounted with.
+     *
+     * @param  array<string, mixed>  $widget
+     */
+    public function widgetComponentKey(array $widget): string
+    {
+        return $widget['id'].'-'.substr(hash('xxh128', json_encode($widget['config'] ?? [])), 0, 12);
     }
 
     /**

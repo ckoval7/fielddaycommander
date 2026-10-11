@@ -2,9 +2,6 @@
 
 use App\Events\ContactLogged;
 use App\Livewire\Dashboard\Widgets\BandModeGrid;
-use App\Livewire\Dashboard\Widgets\QsoCount;
-use App\Livewire\Dashboard\Widgets\RecentContacts;
-use App\Livewire\Dashboard\Widgets\Score;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
@@ -73,104 +70,26 @@ beforeEach(function () {
     ]);
 });
 
-// --- QsoCount widget listener tests ---
-
-test('QsoCount registers echo listener for active event', function () {
-    $component = Livewire::test(QsoCount::class);
-
-    $listeners = $component->instance()->getListeners();
-
-    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},.ContactLogged");
-});
-
-test('QsoCount has no listeners when no active event', function () {
-    // Make event non-active (in the future)
-    $this->event->update([
-        'start_time' => now()->addDays(30),
-        'end_time' => now()->addDays(31),
-    ]);
-
-    $component = Livewire::test(QsoCount::class);
-
-    $listeners = $component->instance()->getListeners();
-
-    expect($listeners)->toBeEmpty();
-});
-
-test('QsoCount handleContactLogged updates cached count from payload', function () {
-    $component = Livewire::test(QsoCount::class);
-
-    $component->call('handleContactLogged', [
-        'qso_count' => 42,
-        'callsign' => 'W1AW',
-        'band' => '20m',
-        'mode' => 'Phone',
-    ]);
-
-    expect($component->get('cachedCount'))->toBe(42);
-});
-
-test('QsoCount handleContactLogged dispatches qso-logged browser event', function () {
-    $component = Livewire::test(QsoCount::class);
-
-    $component->call('handleContactLogged', [
-        'qso_count' => 10,
-        'callsign' => 'K5ABC',
-    ]);
-
-    $component->assertDispatched('qso-logged');
-});
-
-// --- Score widget listener tests ---
-
-test('Score registers echo listener for active event', function () {
-    $component = Livewire::test(Score::class);
-
-    $listeners = $component->instance()->getListeners();
-
-    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},.ContactLogged");
-});
-
-test('Score handleContactLogged does not error', function () {
-    $component = Livewire::test(Score::class);
-
-    $component->call('handleContactLogged', [
-        'qso_count' => 5,
-        'callsign' => 'W1AW',
-    ]);
-
-    $component->assertSet('hasError', false);
-});
-
-// --- RecentContacts widget listener tests ---
-
-test('RecentContacts registers echo listener for active event', function () {
-    $component = Livewire::test(RecentContacts::class);
-
-    $listeners = $component->instance()->getListeners();
-
-    expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},.ContactLogged");
-});
-
-test('RecentContacts handleContactLogged does not error', function () {
-    $component = Livewire::test(RecentContacts::class);
-
-    $component->call('handleContactLogged', [
-        'qso_count' => 5,
-        'callsign' => 'W1AW',
-    ]);
-
-    $component->assertSet('hasError', false);
-});
-
 // --- BandModeGrid widget listener tests ---
 
-test('BandModeGrid registers echo listener for active event', function () {
+test('BandModeGrid registers echo listener for signed-in viewers when broadcasting is available', function () {
+    config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+    $this->actingAs($this->user);
+
     $component = Livewire::test(BandModeGrid::class);
 
     $listeners = $component->instance()->getListeners();
 
     expect($listeners)->toHaveKey("echo-private:event.{$this->event->id},.ContactLogged");
+});
+
+test('BandModeGrid relies on polling for guests', function () {
+    config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+
+    $component = Livewire::test(BandModeGrid::class)
+        ->assertSeeHtml('wire:poll.visible.30s');
+
+    expect($component->instance()->getListeners())->toBe([]);
 });
 
 test('BandModeGrid handleContactLogged does not error', function () {

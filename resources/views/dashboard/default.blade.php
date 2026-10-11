@@ -80,7 +80,7 @@ Props from controller:
         <livewire:dashboard.dashboard-editor :dashboard="$dashboard" />
 
         {{-- Dashboard Manager Modal --}}
-        <livewire:dashboard.dashboard-manager />
+        <livewire:dashboard.dashboard-manager :current-dashboard-id="$dashboard->id" />
     </div>
 
     @push('styles')

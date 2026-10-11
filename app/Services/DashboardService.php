@@ -17,6 +17,26 @@ use Illuminate\Support\Facades\Log;
 class DashboardService
 {
     /**
+     * Widest a widget may be, in grid columns.
+     */
+    public const MAX_COL_SPAN = 4;
+
+    /**
+     * Shortest widget height, in grid rows ("Short").
+     */
+    public const MIN_ROW_SPAN = 2;
+
+    /**
+     * Tallest widget height, in grid rows ("Tall").
+     */
+    public const MAX_ROW_SPAN = 6;
+
+    /**
+     * Longest value kept for free-text widget settings.
+     */
+    protected const MAX_TEXT_SETTING_LENGTH = 255;
+
+    /**
      * Create a new dashboard for a user.
      *
      * Applies the default 'user' layout when no config is provided.
@@ -52,7 +72,7 @@ class DashboardService
             'user_id' => $user->id,
             'title' => $title,
             'description' => $description,
-            'config' => $config,
+            'config' => $this->normalizeWidgets($config),
             'is_default' => $isDefault,
             'layout_type' => 'grid',
         ]);
@@ -77,6 +97,8 @@ class DashboardService
             }
 
             $this->enforceMaxWidgets($data['config']);
+
+            $data['config'] = $this->normalizeWidgets($data['config']);
         }
 
         $dashboard->update($data);
@@ -115,20 +137,25 @@ class DashboardService
     /**
      * Duplicate a dashboard with a new title.
      *
-     * Copies all widget configuration from the source dashboard.
+     * Copies all widget configuration from the source dashboard into the
+     * owner's account (the source's owner when none is given). Callers must
+     * only pass a source dashboard the owner is allowed to read.
      * The duplicated dashboard is never set as the default.
      *
      * @param  Dashboard  $dashboard  The dashboard to duplicate
      * @param  string  $newTitle  Title for the duplicated dashboard
+     * @param  User|null  $owner  Account that receives the copy
      *
-     * @throws \OverflowException When the user has reached the max dashboards limit
+     * @throws \OverflowException When the owner has reached the max dashboards limit
      */
-    public function duplicateDashboard(Dashboard $dashboard, string $newTitle): Dashboard
+    public function duplicateDashboard(Dashboard $dashboard, string $newTitle, ?User $owner = null): Dashboard
     {
-        $this->enforceMaxDashboards($dashboard->user);
+        $owner ??= $dashboard->user;
+
+        $this->enforceMaxDashboards($owner);
 
         return Dashboard::create([
-            'user_id' => $dashboard->user_id,
+            'user_id' => $owner->id,
             'title' => $newTitle,
             'description' => $dashboard->description,
             'config' => $dashboard->config,
@@ -170,7 +197,8 @@ class DashboardService
 
         return Dashboard::create([
             'user_id' => $user->id,
-            'title' => 'My Dashboard',
+            'title' => config('dashboard.default_dashboards.user.title', 'My Dashboard'),
+            'description' => config('dashboard.default_dashboards.user.description'),
             'config' => $this->applyDefaultLayout('user'),
             'is_default' => true,
             'layout_type' => 'grid',
@@ -239,6 +267,8 @@ class DashboardService
             'config' => fn ($v) => is_array($v),
             'order' => fn ($v) => is_int($v),
             'visible' => fn ($v) => is_bool($v),
+            'col_span' => fn ($v) => is_int($v),
+            'row_span' => fn ($v) => is_int($v),
         ];
 
         foreach ($optionalTypeChecks as $field => $check) {
@@ -276,13 +306,119 @@ class DashboardService
     }
 
     /**
+     * Maximum widgets allowed on one dashboard.
+     */
+    public function maxWidgetsPerDashboard(): int
+    {
+        return (int) config('dashboard.limits.max_widgets_per_dashboard', 20);
+    }
+
+    /**
+     * Clamp a column span to the supported range.
+     */
+    public function clampColSpan(int $colSpan): int
+    {
+        return max(1, min(self::MAX_COL_SPAN, $colSpan));
+    }
+
+    /**
+     * Clamp a row span to the supported range (Short through Tall).
+     */
+    public function clampRowSpan(int $rowSpan): int
+    {
+        return max(self::MIN_ROW_SPAN, min(self::MAX_ROW_SPAN, $rowSpan));
+    }
+
+    /**
+     * Bring stored widget entries into canonical shape before saving.
+     *
+     * Settings are cleaned against the widget type's schema and spans are
+     * clamped, so values the client sent outside the configurator's choices
+     * (e.g. a 100,000-row list) never reach the widgets.
+     *
+     * @param  array<int, array<string, mixed>>  $widgets  Entries already passed validateConfig()
+     * @return array<int, array<string, mixed>>
+     */
+    public function normalizeWidgets(array $widgets): array
+    {
+        return array_values(array_map(function (array $widget): array {
+            $widget['config'] = $this->sanitizeWidgetConfig($widget['type'], $widget['config'] ?? []);
+
+            if (isset($widget['col_span'])) {
+                $widget['col_span'] = $this->clampColSpan((int) $widget['col_span']);
+            }
+
+            if (isset($widget['row_span'])) {
+                $widget['row_span'] = $this->clampRowSpan((int) $widget['row_span']);
+            }
+
+            return $widget;
+        }, $widgets));
+    }
+
+    /**
+     * Keep only the settings a widget type's schema defines, with valid values.
+     *
+     * Unknown keys are dropped; invalid values fall back to the schema default,
+     * or are dropped when the field has none so the widget's own default applies.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    public function sanitizeWidgetConfig(string $type, array $config): array
+    {
+        $schema = config("dashboard.widget_types.{$type}.config_schema", []);
+        $clean = [];
+
+        foreach ($schema as $field => $definition) {
+            if (! array_key_exists($field, $config)) {
+                continue;
+            }
+
+            $value = $this->sanitizeSettingValue($config[$field], $definition);
+
+            if ($value === null && array_key_exists('default', $definition)) {
+                $value = $definition['default'];
+            }
+
+            if ($value !== null) {
+                $clean[$field] = $value;
+            }
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Validate one setting value against its schema definition.
+     *
+     * @param  array<string, mixed>  $definition
+     */
+    protected function sanitizeSettingValue(mixed $value, array $definition): mixed
+    {
+        return match ($definition['type'] ?? 'text') {
+            'select' => is_scalar($value)
+                && in_array((string) $value, array_map('strval', array_keys($definition['options'] ?? [])), true)
+                    ? (string) $value
+                    : null,
+            'toggle', 'checkbox' => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+            'number' => is_numeric($value)
+                ? max($definition['min'] ?? PHP_INT_MIN, min($definition['max'] ?? PHP_INT_MAX, $value + 0))
+                : null,
+            default => is_scalar($value)
+                ? mb_substr((string) $value, 0, self::MAX_TEXT_SETTING_LENGTH)
+                : null,
+        };
+    }
+
+    /**
      * Enforce the maximum dashboards per user constraint.
      *
      * @throws \OverflowException When the limit is reached
      */
     protected function enforceMaxDashboards(User $user): void
     {
-        $max = (int) config('dashboard.max_dashboards_per_user', 10);
+        $max = (int) config('dashboard.limits.max_dashboards_per_user', 10);
         $currentCount = $user->dashboards()->count();
 
         if ($currentCount >= $max) {
@@ -301,7 +437,7 @@ class DashboardService
      */
     protected function enforceMaxWidgets(array $config): void
     {
-        $max = (int) config('dashboard.max_widgets_per_dashboard', 20);
+        $max = $this->maxWidgetsPerDashboard();
 
         if (count($config) > $max) {
             throw new \OverflowException(

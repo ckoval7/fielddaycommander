@@ -136,11 +136,6 @@ Props:
                 this.showBanner = true;
                 this.dismissedAt = null;
             }
-
-            // Dispatch event to widgets to enable polling fallback
-            window.dispatchEvent(new CustomEvent('connection-lost', {
-                detail: { pollingRate: 10000 }
-            }));
         },
 
         handleReconnect() {
@@ -150,9 +145,6 @@ Props:
             this.hasEverConnected = true;
 
             if (wasDisconnected) {
-                // Dispatch event to widgets to restore real-time updates
-                window.dispatchEvent(new CustomEvent('connection-restored'));
-
                 if (!@js($tvMode)) {
                     // Show success banner
                     this.showBanner = true;

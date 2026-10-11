@@ -71,9 +71,16 @@ test('component renders toggle field for toggle type schema', function () {
 });
 
 test('component renders number field for number type schema', function () {
+    config(['dashboard.widget_types.test_widget' => [
+        'name' => 'Test Widget',
+        'config_schema' => [
+            'target' => ['type' => 'number', 'label' => 'Custom Target', 'min' => 0, 'max' => 100],
+        ],
+    ]]);
+
     Livewire::test(WidgetConfigurator::class)
         ->set('showModal', true)
-        ->call('setWidgetType', 'progress_bar')
+        ->call('setWidgetType', 'test_widget')
         ->assertSee('Custom Target');
 });
 
@@ -112,19 +119,33 @@ test('component validates select field values', function () {
 });
 
 test('component validates number field type', function () {
+    config(['dashboard.widget_types.test_widget' => [
+        'name' => 'Test Widget',
+        'config_schema' => [
+            'target' => ['type' => 'number', 'label' => 'Custom Target', 'min' => 0, 'max' => 100],
+        ],
+    ]]);
+
     Livewire::test(WidgetConfigurator::class)
-        ->call('setWidgetType', 'timer')
-        ->set('widgetConfig.alert_when_near', 'not-a-number')
+        ->call('setWidgetType', 'test_widget')
+        ->set('widgetConfig.target', 'not-a-number')
         ->call('save')
-        ->assertHasErrors(['widgetConfig.alert_when_near' => 'numeric']);
+        ->assertHasErrors(['widgetConfig.target' => 'numeric']);
 });
 
 test('component validates number field minimum value', function () {
+    config(['dashboard.widget_types.test_widget' => [
+        'name' => 'Test Widget',
+        'config_schema' => [
+            'target' => ['type' => 'number', 'label' => 'Custom Target', 'min' => 0, 'max' => 100],
+        ],
+    ]]);
+
     Livewire::test(WidgetConfigurator::class)
-        ->call('setWidgetType', 'timer')
-        ->set('widgetConfig.alert_when_near', -1)
+        ->call('setWidgetType', 'test_widget')
+        ->set('widgetConfig.target', -1)
         ->call('save')
-        ->assertHasErrors(['widgetConfig.alert_when_near' => 'min']);
+        ->assertHasErrors(['widgetConfig.target' => 'min']);
 });
 
 test('component validates toggle field as boolean', function () {

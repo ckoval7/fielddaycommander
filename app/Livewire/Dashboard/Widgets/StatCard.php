@@ -9,6 +9,7 @@ use App\Models\EventBonus;
 use App\Models\GuestbookEntry;
 use App\Models\Station;
 use App\Services\EventContextService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
@@ -211,11 +212,31 @@ class StatCard extends Component
     }
 
     /**
-     * Get QSOs-per-hour rate since event start.
+     * Hours of operating time between the start of the window and now,
+     * clamped to the event so rates stop changing once the event ends.
+     *
+     * @param  \DateTimeInterface|null  $since  Window start; the event start when null or earlier
+     * @param  \DateTimeInterface|null  $now  Reference time, so a window and its query share one instant
+     */
+    protected function operatingHours(Event $event, ?\DateTimeInterface $since = null, ?\DateTimeInterface $now = null): float
+    {
+        $windowStart = $event->start_time->copy();
+
+        if ($since !== null && $windowStart->lt($since)) {
+            $windowStart = Carbon::instance($since);
+        }
+
+        $windowEnd = Carbon::instance($now ?? appNow())->min($event->end_time);
+
+        return max(0.0, $windowStart->diffInMinutes($windowEnd) / 60);
+    }
+
+    /**
+     * Get QSOs-per-hour rate since event start (to the event end once over).
      */
     protected function getQsoPerHour(Event $event): array
     {
-        $elapsedHours = $event->start_time->diffInMinutes(appNow()) / 60;
+        $elapsedHours = $this->operatingHours($event);
 
         $count = Contact::query()
             ->where('event_configuration_id', $event->eventConfiguration->id)
@@ -234,11 +255,11 @@ class StatCard extends Component
     }
 
     /**
-     * Get points-per-hour rate since event start.
+     * Get points-per-hour rate since event start (to the event end once over).
      */
     protected function getPointsPerHour(Event $event): array
     {
-        $elapsedHours = $event->start_time->diffInMinutes(appNow()) / 60;
+        $elapsedHours = $this->operatingHours($event);
 
         $score = $event->eventConfiguration->calculateFinalScore();
 
@@ -255,10 +276,14 @@ class StatCard extends Component
 
     /**
      * Get 4-hour rolling average QSO rate metric.
+     *
+     * Divides by the operating time actually inside the window, so the first
+     * hours of the event and the hours after it ends aren't diluted.
      */
     protected function getAvgQsoRate4h(Event $event): array
     {
-        $fourHoursAgo = appNow()->subHours(4);
+        $now = appNow();
+        $fourHoursAgo = $now->copy()->subHours(4);
 
         $count = Contact::query()
             ->where('event_configuration_id', $event->eventConfiguration->id)
@@ -266,8 +291,8 @@ class StatCard extends Component
             ->where('qso_time', '>=', $fourHoursAgo)
             ->count();
 
-        // Calculate hourly average: (count / 4)
-        $avgRate = $count / 4;
+        $windowHours = $this->operatingHours($event, $fourHoursAgo, $now);
+        $avgRate = $windowHours > 0 ? $count / $windowHours : 0;
 
         return [
             'value' => number_format($avgRate, 1),
@@ -307,12 +332,9 @@ class StatCard extends Component
     {
         // Calculate hours remaining
         // If end_time is in the future, this returns positive; if past, returns negative
-        $hoursRemaining = appNow()->diffInHours($event->end_time, false);
-
-        // If negative (event ended), return 0
-        if ($hoursRemaining < 0) {
-            $hoursRemaining = 0;
-        }
+        // Carbon 3 returns fractional hours; floor so 21.9 hours shows "21",
+        // matching the countdown, rather than rounding up to "22".
+        $hoursRemaining = max(0, (int) floor(appNow()->diffInHours($event->end_time, false)));
 
         return [
             'value' => number_format($hoursRemaining),

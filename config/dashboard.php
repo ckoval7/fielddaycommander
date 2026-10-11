@@ -190,6 +190,27 @@ return [
             ],
         ],
 
+        'feed' => [
+            'component' => 'dashboard.widgets.feed',
+            'name' => 'Activity Feed',
+            'description' => 'Live stream of your notifications: QSO milestones, new sections and equipment events',
+            'icon' => 'phosphor-bell',
+            'config_schema' => [
+                'feed_type' => [
+                    'type' => 'select',
+                    'label' => 'Show',
+                    'options' => [
+                        'all_activity' => 'All Activity',
+                        'contacts_only' => 'Contacts (milestones and new sections)',
+                        'milestones_only' => 'QSO Milestones Only',
+                        'equipment_events' => 'Equipment Events',
+                    ],
+                    'default' => 'all_activity',
+                    'required' => true,
+                ],
+            ],
+        ],
+
         'sections_worked' => [
             'component' => 'dashboard.widgets.sections-worked',
             'name' => 'Sections Worked',
@@ -211,127 +232,6 @@ return [
     */
 
     'default_dashboards' => [
-
-        /*
-        |----------------------------------------------------------------------
-        | Guest Dashboard (Unauthenticated Users)
-        |----------------------------------------------------------------------
-        |
-        | Balanced overview for visitors and unauthenticated users.
-        | 9 widgets providing essential event information.
-        |
-        */
-
-        'guest' => [
-            'title' => 'Event Dashboard',
-            'description' => 'Default dashboard for guests',
-            'layout_type' => 'grid',
-            'widgets' => [
-                [
-                    'id' => 'stat-total-score',
-                    'type' => 'stat_card',
-                    'config' => [
-                        'metric' => 'total_score',
-                        'show_trend' => true,
-                        'show_comparison' => true,
-                        'comparison_interval' => '1h',
-                    ],
-                    'row_span' => 2,
-                    'order' => 0,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'stat-qso-rate',
-                    'type' => 'stat_card',
-                    'config' => [
-                        'metric' => 'qso_per_hour',
-                        'show_trend' => true,
-                        'show_comparison' => true,
-                        'comparison_interval' => '1h',
-                    ],
-                    'row_span' => 2,
-                    'order' => 1,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'stat-contacts-last-hour',
-                    'type' => 'stat_card',
-                    'config' => [
-                        'metric' => 'contacts_last_hour',
-                        'show_trend' => true,
-                        'show_comparison' => true,
-                        'comparison_interval' => '1h',
-                    ],
-                    'row_span' => 2,
-                    'order' => 2,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'sections-worked',
-                    'type' => 'sections_worked',
-                    'config' => [],
-                    'row_span' => 6,
-                    'order' => 3,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'progress-milestone',
-                    'type' => 'progress_bar',
-                    'config' => [
-                        'metric' => 'next_milestone',
-                        'show_percentage' => true,
-                    ],
-                    'row_span' => 2,
-                    'order' => 4,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'timer-countdown',
-                    'type' => 'timer',
-                    'config' => [],
-                    'row_span' => 2,
-                    'order' => 5,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'chart-qsos-band',
-                    'type' => 'chart',
-                    'config' => [
-                        'chart_type' => 'bar',
-                        'data_source' => 'qsos_per_band',
-                        'time_range' => 'event',
-                    ],
-                    'col_span' => 2,
-                    'row_span' => 3,
-                    'order' => 6,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'chart-qsos-hour',
-                    'type' => 'chart',
-                    'config' => [
-                        'chart_type' => 'line',
-                        'data_source' => 'qsos_per_hour',
-                        'time_range' => 'last_12_hours',
-                    ],
-                    'col_span' => 2,
-                    'row_span' => 3,
-                    'order' => 7,
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'stat-bonus-points',
-                    'type' => 'stat_card',
-                    'config' => [
-                        'metric' => 'bonus_points_earned',
-                        'show_trend' => false,
-                    ],
-                    'row_span' => 2,
-                    'order' => 8,
-                    'visible' => true,
-                ],
-            ],
-        ],
 
         /*
         |----------------------------------------------------------------------
@@ -596,49 +496,6 @@ return [
     'limits' => [
         'max_dashboards_per_user' => 10,
         'max_widgets_per_dashboard' => 20,
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Real-time Update Settings
-    |--------------------------------------------------------------------------
-    |
-    | Configure how widgets handle real-time updates via WebSockets.
-    |
-    */
-
-    'realtime' => [
-        // Batch updates every N seconds for high-frequency events
-        'batch_interval' => 3,
-
-        // Fallback polling interval when WebSocket disconnects (seconds)
-        'polling_interval' => 10,
-
-        // Show "reconnecting" banner after this many seconds
-        'reconnect_banner_delay' => 5,
-
-        // Mark data as stale after this many seconds
-        'stale_threshold' => 30,
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cache Settings
-    |--------------------------------------------------------------------------
-    |
-    | Widget data caching configuration for performance optimization.
-    |
-    */
-
-    'cache' => [
-        // Default cache TTL in seconds
-        'ttl' => 3,
-
-        // Cache key prefix
-        'prefix' => 'dashboard:widget',
-
-        // TV dashboard cache TTL (can be longer, fewer viewers)
-        'tv_ttl' => 5,
     ],
 
     /*

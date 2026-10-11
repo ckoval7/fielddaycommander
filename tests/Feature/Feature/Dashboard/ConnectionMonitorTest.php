@@ -1,7 +1,5 @@
 <?php
 
-use function Pest\Laravel\get;
-
 it('renders connection monitor component', function () {
     $html = view('components.dashboard.connection-monitor')->render();
 
@@ -44,12 +42,4 @@ it('connection monitor uses appropriate transitions', function () {
 
     expect($html)->toContain('x-transition');
     expect($html)->toContain('transition ease-out');
-});
-
-it('connection monitor dispatches connection events', function () {
-    $html = view('components.dashboard.connection-monitor')->render();
-
-    expect($html)->toContain('connection-lost');
-    expect($html)->toContain('connection-restored');
-    expect($html)->toContain('window.dispatchEvent');
 });

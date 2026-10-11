@@ -53,6 +53,8 @@ describe('ListWidget Component', function () {
     });
 
     it('returns correct listeners for recent_contacts', function () {
+        config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+
         $component = Livewire::test(ListWidget::class, [
             'config' => ['list_type' => 'recent_contacts'],
         ]);
