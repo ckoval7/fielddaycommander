@@ -100,6 +100,32 @@ test('dashboard sortable implements visual feedback classes', function () {
         ->toContain('bg-primary/10');
 });
 
+test('dashboard sortable previews the new order while dragging', function () {
+    $content = file_get_contents(resource_path('js/components/dashboard-sortable.js'));
+
+    expect($content)
+        ->toContain('previewOrder')
+        ->toContain('previewStyle(')
+        ->toContain('movePreview(')
+        ->toContain('applyPreview(')
+        ->toContain('commitPreview(')
+        ->toContain('cancelPreview(')
+        // FLIP animation of the items sliding into their previewed places
+        ->toContain('getBoundingClientRect()')
+        ->toContain('.animate(');
+});
+
+test('dashboard editor applies the drag preview order to each widget', function () {
+    $content = file_get_contents(resource_path('views/livewire/dashboard/dashboard-editor.blade.php'));
+
+    expect($content)
+        ->toContain(':style="previewStyle(@js($widget[\'id\']))"')
+        // The add-widget tile must stay last while widgets carry preview orders.
+        ->toContain('style="order: 9999"')
+        // Drops are handled once, by the grid, so the tile itself must not commit too.
+        ->not->toContain('x-on:drop.prevent="drop(');
+});
+
 test('built js bundle includes dashboard sortable component', function () {
     $manifestPath = public_path('build/manifest.json');
 

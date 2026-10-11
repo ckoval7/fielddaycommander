@@ -9,6 +9,13 @@
  * Designed for use with Livewire components. When the order changes, the
  * component calls `$wire.reorderWidgets(newOrder)` to persist the new layout.
  *
+ * Live preview: while a widget is dragged (mouse or touch), the other widgets
+ * slide into the places they will take after the drop. The preview never
+ * moves DOM nodes — Livewire owns the DOM — it sets each item's CSS `order`
+ * (see previewStyle) and animates the change with FLIP. Dropping anywhere in
+ * the grid commits the previewed order; ending the drag elsewhere, or
+ * cancelling it, slides everything back.
+ *
  * Usage in Blade:
  *   <div x-data="dashboardSortable($wire, widgetIds)">
  *       <div x-bind="sortableContainer">
@@ -30,9 +37,6 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
     /** @type {HTMLElement|null} Reference to the element being dragged. */
     draggedElement: null,
 
-    /** @type {number|null} Index of the current drop target. */
-    dropTargetIndex: null,
-
     /** @type {string[]} Current widget ID order. Mutated during reorder. */
     widgetOrder: [...initialOrder],
 
@@ -50,6 +54,24 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
 
     /** @type {string} Screen reader announcement text. */
     announceMessage: '',
+
+    /** @type {string[]|null} Order shown while dragging; null when not previewing. */
+    previewOrder: null,
+
+    /** @type {string|null} ID of the widget being dragged (mouse or touch). */
+    draggedId: null,
+
+    /** @type {number} Timestamp until which preview moves are ignored (animation in flight). */
+    previewLockedUntil: 0,
+
+    /** @type {{x: number, y: number}|null} Pointer position at the last preview move. */
+    lastPreviewPoint: null,
+
+    /** @type {boolean} Whether the current drag ended in a drop that commits the preview. */
+    dropCommitted: false,
+
+    /** @type {number|null} Timer that retries a move skipped while an animation was running. */
+    previewRetryTimer: null,
 
     /**
      * Lifecycle: runs automatically when Alpine initializes this component.
@@ -72,6 +94,7 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
      * Cleans up any leftover touch clone and global listeners.
      */
     destroy() {
+        clearTimeout(this.previewRetryTimer);
         this.cleanupTouchClone();
         document.removeEventListener('touchmove', this._boundTouchMove);
         document.removeEventListener('touchend', this._boundTouchEnd);
@@ -101,6 +124,176 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
     },
 
     // -------------------------------------------------------------------------
+    // Live drag preview
+    // -------------------------------------------------------------------------
+
+    /**
+     * Inline style for an item: its CSS grid `order` while a preview is shown.
+     *
+     * @param {string} widgetId
+     * @returns {Object}
+     */
+    previewStyle(widgetId) {
+        if (!this.previewOrder) {
+            return {};
+        }
+
+        return { order: this.previewOrder.indexOf(widgetId) };
+    },
+
+    /**
+     * Begin previewing a drag of the given widget.
+     *
+     * @param {string} widgetId
+     */
+    startPreview(widgetId) {
+        this.draggedId = widgetId;
+        this.previewOrder = [...this.widgetOrder];
+        this.previewLockedUntil = 0;
+        this.lastPreviewPoint = null;
+        this.dropCommitted = false;
+    },
+
+    /**
+     * Move the dragged widget into the slot of the widget under the pointer.
+     *
+     * Ignored while the previous move is still animating, and until the
+     * pointer has moved a little since that move, so a widget sliding under a
+     * stationary pointer can't bounce the order back and forth.
+     *
+     * @param {string|null} targetId - Widget currently under the pointer.
+     * @param {number} x - Pointer clientX.
+     * @param {number} y - Pointer clientY.
+     */
+    movePreview(targetId, x, y) {
+        if (!this.previewOrder || !targetId || targetId === this.draggedId) {
+            return;
+        }
+
+        const lockRemaining = this.previewLockedUntil - performance.now();
+
+        if (lockRemaining > 0) {
+            // Mid-slide, hit testing still sees widgets at their old positions,
+            // so this target may be stale. Once the slide finishes, look again
+            // at what is really under the pointer (the browser may send no
+            // further drag events if the pointer stays still).
+            clearTimeout(this.previewRetryTimer);
+            this.previewRetryTimer = setTimeout(() => {
+                this.movePreview(this.findDropTarget(x, y)?.dataset.widgetId ?? null, x, y);
+            }, lockRemaining + 10);
+            return;
+        }
+
+        if (this.lastPreviewPoint && Math.hypot(x - this.lastPreviewPoint.x, y - this.lastPreviewPoint.y) < 8) {
+            return;
+        }
+
+        const from = this.previewOrder.indexOf(this.draggedId);
+        const to = this.previewOrder.indexOf(targetId);
+
+        if (from < 0 || to < 0 || from === to) {
+            return;
+        }
+
+        const nextOrder = [...this.previewOrder];
+        nextOrder.splice(from, 1);
+        nextOrder.splice(to, 0, this.draggedId);
+
+        this.lastPreviewPoint = { x, y };
+        this.applyPreview(nextOrder);
+        this.announce(`Widget will move to position ${to + 1} of ${nextOrder.length}.`);
+    },
+
+    /**
+     * Show a new preview order, animating every item from where it was (FLIP).
+     *
+     * @param {string[]|null} nextOrder - Order to show, or null to restore the saved order.
+     */
+    applyPreview(nextOrder) {
+        const duration = 200;
+        const items = [...this.$root.querySelectorAll('[data-widget-id]')];
+        const before = new Map(items.map((el) => [el, el.getBoundingClientRect()]));
+
+        this.previewOrder = nextOrder;
+        this.previewLockedUntil = performance.now() + duration;
+
+        this.$nextTick(() => {
+            for (const el of items) {
+                const from = before.get(el);
+                const to = el.getBoundingClientRect();
+                const dx = from.left - to.left;
+                const dy = from.top - to.top;
+
+                if (dx === 0 && dy === 0) {
+                    continue;
+                }
+
+                el.animate(
+                    [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }],
+                    { duration, easing: 'cubic-bezier(0.2, 0, 0, 1)' }
+                );
+            }
+        });
+    },
+
+    /**
+     * Save the previewed order. The preview stays applied until Livewire has
+     * re-rendered the widgets in that order, so nothing flickers back.
+     */
+    commitPreview() {
+        // A drop bubbles from the tile to the grid; only the first one counts.
+        if (!this.previewOrder || this.dropCommitted) {
+            return;
+        }
+
+        clearTimeout(this.previewRetryTimer);
+        this.previewRetryTimer = null;
+
+        const changed = this.previewOrder.some((id, i) => id !== this.widgetOrder[i]);
+        this.dropCommitted = true;
+
+        if (!changed) {
+            this.previewOrder = null;
+            return;
+        }
+
+        const position = this.previewOrder.indexOf(this.draggedId);
+        this.widgetOrder = [...this.previewOrder];
+        this.announce(`Widget moved to position ${position + 1} of ${this.widgetOrder.length}.`);
+        this.persistOrder(() => {
+            this.previewOrder = null;
+        });
+    },
+
+    /**
+     * Abandon the preview and slide everything back to the saved order.
+     */
+    cancelPreview() {
+        if (!this.previewOrder) {
+            return;
+        }
+
+        this.applyPreview(null);
+        this.announce('Move cancelled.');
+    },
+
+    /**
+     * End-of-drag bookkeeping shared by mouse and touch.
+     */
+    finishPreview() {
+        clearTimeout(this.previewRetryTimer);
+        this.previewRetryTimer = null;
+
+        if (!this.dropCommitted) {
+            this.cancelPreview();
+        }
+
+        this.draggedId = null;
+        this.lastPreviewPoint = null;
+        this.dropCommitted = false;
+    },
+
+    // -------------------------------------------------------------------------
     // Bindable attribute objects for x-bind
     // -------------------------------------------------------------------------
 
@@ -112,6 +305,10 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
         return {
             'role': 'list',
             'aria-label': 'Reorderable widget list',
+            // Accept drops in the gaps between widgets too, so the drop
+            // commits whatever the preview is showing.
+            '@dragover.prevent': () => {},
+            '@drop.prevent': () => { this.drop(); },
         };
     },
 
@@ -133,8 +330,8 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
      */
     sortableItemClasses(index) {
         return {
-            'opacity-50 scale-95': this.draggedIndex === index,
-            'ring-2 ring-primary ring-offset-2 bg-primary/10': this.dropTargetIndex === index && this.draggedIndex !== index,
+            // The dragged tile stays in the grid as the placeholder for where it will land.
+            'opacity-50 ring-2 ring-primary ring-offset-2 bg-primary/10': this.draggedIndex === index,
             'ring-2 ring-accent scale-105 shadow-lg': this.keyboardGrabbedIndex === index,
             'cursor-grab': this.enabled && this.draggedIndex === null && this.keyboardGrabbedIndex === null,
             'cursor-grabbing': this.draggedIndex === index,
@@ -176,7 +373,8 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
         }
 
         this.draggedIndex = index;
-        this.draggedElement = event.target;
+        this.draggedElement = event.currentTarget ?? event.target;
+        this.startPreview(this.draggedElement.dataset.widgetId);
 
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', String(index));
@@ -200,12 +398,12 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
      * @param {number} index
      */
     dragOver(event, index) {
-        if (this.draggedIndex === null || this.draggedIndex === index) {
+        if (this.draggedIndex === null) {
             return;
         }
 
         event.dataTransfer.dropEffect = 'move';
-        this.dropTargetIndex = index;
+        this.movePreview(event.currentTarget?.dataset?.widgetId ?? this.widgetOrder[index], event.clientX, event.clientY);
     },
 
     /**
@@ -215,11 +413,7 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
      * @param {number} index
      */
     dragEnter(event, index) {
-        if (this.draggedIndex === null || this.draggedIndex === index) {
-            return;
-        }
-
-        this.dropTargetIndex = index;
+        // Targeting happens in dragOver, which also carries the pointer position.
     },
 
     /**
@@ -229,35 +423,30 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
      * @param {number} index
      */
     dragLeave(event, index) {
-        if (this.dropTargetIndex === index) {
-            this.dropTargetIndex = null;
-        }
+        // Nothing to clear: the preview keeps its last order until drop or cancel.
     },
 
     /**
-     * Handle drop: reorder the widget array and notify Livewire.
-     *
-     * @param {DragEvent} event
-     * @param {number} targetIndex
+     * Handle drop anywhere in the grid: commit the previewed order.
      */
-    drop(event, targetIndex) {
-        if (this.draggedIndex === null || this.draggedIndex === targetIndex) {
-            this.dragEnd();
+    drop() {
+        if (this.draggedIndex === null) {
             return;
         }
 
-        this.reorder(this.draggedIndex, targetIndex);
-        this.announce(`Widget moved to position ${targetIndex + 1} of ${this.widgetOrder.length}.`);
-        this.dragEnd();
+        this.commitPreview();
     },
 
     /**
      * Handle dragend: clean up all drag state and visual classes.
      */
     dragEnd() {
+        if (this.draggedId !== null) {
+            this.finishPreview();
+        }
+
         this.draggedIndex = null;
         this.draggedElement = null;
-        this.dropTargetIndex = null;
     },
 
     // -------------------------------------------------------------------------
@@ -301,6 +490,7 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
     beginTouchDrag(index, touch) {
         this.isTouchDragging = true;
         this.draggedIndex = index;
+        this.startPreview(this._touchElement.dataset.widgetId);
 
         this.triggerHapticFeedback();
 
@@ -338,14 +528,7 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
         this.moveTouchClone(touch.clientX, touch.clientY);
 
         const targetElement = this.findDropTarget(touch.clientX, touch.clientY);
-        if (targetElement) {
-            const targetIndex = this.getIndexFromElement(targetElement);
-            if (targetIndex !== null && targetIndex !== this.draggedIndex) {
-                this.dropTargetIndex = targetIndex;
-            }
-        } else {
-            this.dropTargetIndex = null;
-        }
+        this.movePreview(targetElement?.dataset.widgetId ?? null, touch.clientX, touch.clientY);
     },
 
     /**
@@ -360,11 +543,10 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
         if (this.isTouchDragging) {
             event.preventDefault();
 
-            if (this.dropTargetIndex !== null && this.draggedIndex !== this.dropTargetIndex) {
-                this.reorder(this.draggedIndex, this.dropTargetIndex);
-                this.announce(`Widget moved to position ${this.dropTargetIndex + 1}.`);
-            } else {
-                this.announce('Drop cancelled.');
+            // Lifting the finger inside the grid commits the preview; outside it cancels.
+            const touch = event.changedTouches[0];
+            if (touch && this.findDropTarget(touch.clientX, touch.clientY)) {
+                this.commitPreview();
             }
 
             this.cleanupTouchClone();
@@ -676,9 +858,15 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
      * Calls `$wire.reorderWidgets(order)` which the DashboardEditor
      * component should implement.
      */
-    persistOrder() {
+    persistOrder(onSettled = null) {
         if (wire && typeof wire.reorderWidgets === 'function') {
-            wire.reorderWidgets([...this.widgetOrder]);
+            const request = wire.reorderWidgets([...this.widgetOrder]);
+
+            if (onSettled) {
+                Promise.resolve(request).finally(onSettled);
+            }
+        } else if (onSettled) {
+            onSettled();
         }
     },
 
