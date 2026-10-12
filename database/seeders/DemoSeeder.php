@@ -242,7 +242,7 @@ class DemoSeeder extends Seeder
         $this->seedSafetyChecklist($captain1);
 
         // 10. Guestbook entries
-        $this->seedGuestbook($config);
+        $this->seedGuestbook($config, $event, $manager);
 
         // 11. Shift schedule
         $this->seedShifts($config, $event, $admin, $manager, $captain1, $captain2, $operators);
@@ -846,7 +846,15 @@ class DemoSeeder extends Seeder
         }
     }
 
-    private function seedGuestbook(EventConfiguration $config): void
+    /**
+     * Sign the guestbook over the hours the event has been running.
+     *
+     * Visitors arrive one by one rather than all at the moment the demo was
+     * provisioned, and each entry is verified by the event manager a few
+     * minutes after it was signed, never before. The newest signing is left
+     * pending so the manager has one to review.
+     */
+    private function seedGuestbook(EventConfiguration $config, Event $event, User $manager): void
     {
         $entries = [
             // Licensed hams visiting in person
@@ -896,8 +904,18 @@ class DemoSeeder extends Seeder
             ],
         ];
 
-        foreach ($entries as $entry) {
-            GuestbookEntry::create([
+        $earliest = $event->start_time->copy()->addMinutes(10)->timestamp;
+        $latest = now()->subMinutes(5)->timestamp;
+        $signedAt = collect($entries)
+            ->map(fn (): int => random_int($earliest, max($earliest, $latest)))
+            ->sort()
+            ->values();
+
+        foreach ($entries as $index => $entry) {
+            $createdAt = Carbon::createFromTimestamp($signedAt[$index]);
+            $isPending = $index === count($entries) - 1;
+
+            $guestbookEntry = new GuestbookEntry([
                 'event_configuration_id' => $config->id,
                 'callsign' => $entry['callsign'],
                 'first_name' => $entry['first_name'],
@@ -906,9 +924,13 @@ class DemoSeeder extends Seeder
                 'comments' => $entry['comments'],
                 'presence_type' => $entry['presence_type'],
                 'visitor_category' => $entry['visitor_category'],
-                'is_verified' => true,
-                'verified_at' => now()->subMinutes(random_int(5, 120)),
+                'is_verified' => ! $isPending,
+                'verified_by' => $isPending ? null : $manager->id,
+                'verified_at' => $isPending ? null : $createdAt->copy()->addMinutes(random_int(2, 20))->min(now()),
             ]);
+            $guestbookEntry->created_at = $createdAt;
+            $guestbookEntry->updated_at = $guestbookEntry->verified_at ?? $createdAt;
+            $guestbookEntry->save();
         }
     }
 

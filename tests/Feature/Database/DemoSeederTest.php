@@ -123,6 +123,27 @@ test('seeder creates guestbook entries', function () {
     expect(GuestbookEntry::count())->toBeGreaterThanOrEqual(6);
 });
 
+test('seeder spreads guestbook signings across the event and verifies them afterwards', function () {
+    $event = Event::where('is_active', true)->first();
+    $entries = GuestbookEntry::orderBy('created_at')->orderBy('id')->get();
+    $pending = $entries->pop();
+
+    expect($pending->is_verified)->toBeFalse();
+    expect($pending->verified_at)->toBeNull();
+    expect($pending->verified_by)->toBeNull();
+    expect($pending->created_at->betweenIncluded($event->start_time, now()))->toBeTrue();
+
+    $entries->each(function (GuestbookEntry $entry) use ($event) {
+        expect($entry->is_verified)->toBeTrue();
+        expect($entry->created_at->betweenIncluded($event->start_time, now()))->toBeTrue();
+        expect($entry->verified_at->gte($entry->created_at))->toBeTrue();
+        expect($entry->verified_at->isFuture())->toBeFalse();
+        expect($entry->verified_by)->not->toBeNull();
+    });
+
+    expect($entries->map->created_at->map->timestamp->unique()->count())->toBeGreaterThan(1);
+});
+
 test('seeder stores demo_provisioned_at in system_config', function () {
     $value = DB::table('system_config')
         ->where('key', 'demo_provisioned_at')
