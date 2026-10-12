@@ -8,6 +8,8 @@ use App\Models\GuestbookEntry;
 use App\Models\OperatingSession;
 use App\Models\Organization;
 use App\Models\Setting;
+use App\Models\Shift;
+use App\Models\ShiftAssignment;
 use App\Models\Station;
 use App\Models\User;
 use Carbon\Carbon;
@@ -68,6 +70,46 @@ test('seeder spreads contact times across each operating session window', functi
             expect($times->max()->diffInMinutes($times->min(), true))->toBeGreaterThan(1);
         }
     });
+});
+
+test('seeder starts the event on the hour so the schedule lands on clean boundaries', function () {
+    $event = Event::where('is_active', true)->first();
+
+    expect($event->start_time->minute)->toBe(0);
+    expect($event->start_time->second)->toBe(0);
+    expect($event->start_time->diffInHours($event->end_time))->toEqual(24.0);
+
+    Shift::all()->each(function (Shift $shift) {
+        expect($shift->start_time->minute)->toBe(0);
+        expect($shift->end_time->minute)->toBe(0);
+    });
+});
+
+test('seeder sets shift attendance by where each shift sits in time', function () {
+    ShiftAssignment::with('shift')->get()->each(function (ShiftAssignment $assignment) {
+        $shift = $assignment->shift;
+
+        if ($shift->end_time->isPast()) {
+            expect($assignment->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
+            expect($assignment->checked_out_at)->not->toBeNull();
+            expect($assignment->checked_out_at->gt($assignment->checked_in_at))->toBeTrue();
+        } elseif ($shift->start_time->isPast()) {
+            expect($assignment->status)->toBe(ShiftAssignment::STATUS_CHECKED_IN);
+            expect($assignment->checked_out_at)->toBeNull();
+        } else {
+            expect($assignment->status)->toBe(ShiftAssignment::STATUS_SCHEDULED);
+            expect($assignment->checked_in_at)->toBeNull();
+
+            return;
+        }
+
+        expect(abs($assignment->checked_in_at->diffInMinutes($shift->start_time)))->toBeLessThanOrEqual(10);
+        expect($assignment->checked_in_at->isFuture())->toBeFalse();
+    });
+
+    expect(ShiftAssignment::where('status', ShiftAssignment::STATUS_CHECKED_OUT)->exists())->toBeTrue();
+    expect(ShiftAssignment::where('status', ShiftAssignment::STATUS_CHECKED_IN)->exists())->toBeTrue();
+    expect(ShiftAssignment::where('status', ShiftAssignment::STATUS_SCHEDULED)->exists())->toBeTrue();
 });
 
 test('seeder creates contacts only on the band and mode of their operating session', function () {

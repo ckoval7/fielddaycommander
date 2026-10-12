@@ -153,20 +153,22 @@ class DemoSeeder extends Seeder
         // Patricia Davis (index 7) is a youth operator
         $operators[7]->update(['is_youth' => true]);
 
-        // 5. Event (in progress: started 2h ago, ends 22h from now)
+        // 5. Event (in progress: started on the hour, 2–3 hours ago)
         //
         // WFD runs a 30-hour period against Field Day's 27, but the demo keeps
         // the same "2 hours in" framing for both so the dashboard, shift
         // schedule and contact history line up regardless of which event the
-        // visitor picked.
+        // visitor picked. Starting on the hour keeps the schedule on clean
+        // boundaries instead of the minute the visitor happened to click.
+        $eventStart = now()->startOfHour()->subHours(2);
         $eventType = EventType::where('code', $this->eventTypeCode)->first();
         $event = Event::create([
             'event_type_id' => $eventType->id,
             'name' => $eventType->name.' '.now()->year,
             'year' => now()->year,
-            'start_time' => now()->subHours(2),
-            'end_time' => now()->addHours(22),
-            'setup_allowed_from' => now()->subHours(26),
+            'start_time' => $eventStart,
+            'end_time' => $eventStart->copy()->addHours(24),
+            'setup_allowed_from' => $eventStart->copy()->subHours(24),
             'max_setup_hours' => 24,
             'is_active' => true,
             'is_current' => true,
@@ -228,7 +230,7 @@ class DemoSeeder extends Seeder
         }
 
         // 7. Build stations, operating sessions, contacts
-        $this->seedStationsAndContacts($config, [$captain1, $captain2], $operators);
+        $this->seedStationsAndContacts($config, $event, [$captain1, $captain2], $operators);
 
         // 7b. Equipment inventory and station assignments
         $this->seedEquipment($config, $organization, $manager, $event, $captain2);
@@ -243,7 +245,7 @@ class DemoSeeder extends Seeder
         $this->seedGuestbook($config);
 
         // 11. Shift schedule
-        $this->seedShifts($config, $admin, $manager, $captain1, $captain2, $operators);
+        $this->seedShifts($config, $event, $admin, $manager, $captain1, $captain2, $operators);
     }
 
     private function makeUser(
@@ -271,6 +273,7 @@ class DemoSeeder extends Seeder
 
     private function seedStationsAndContacts(
         EventConfiguration $config,
+        Event $event,
         array $captains,
         array $operators
     ): void {
@@ -403,8 +406,8 @@ class DemoSeeder extends Seeder
                 'max_power_watts' => 100,
             ]);
 
-            // Historical session (closed): 2h ago → 35min ago
-            $historicalStart = now()->subHours(2);
+            // Historical session (closed): event start → 35min ago
+            $historicalStart = $event->start_time->copy();
             $historicalEnd = now()->subMinutes(35);
             $historicalSession = OperatingSession::create([
                 'station_id' => $station->id,
@@ -949,6 +952,7 @@ class DemoSeeder extends Seeder
 
     private function seedShifts(
         EventConfiguration $config,
+        Event $event,
         User $admin,
         User $manager,
         User $captain1,
@@ -959,76 +963,80 @@ class DemoSeeder extends Seeder
             ->get()
             ->keyBy('name');
 
-        // ── Operator shifts: 2-hour blocks, 5 slots overlapping now ─────────
-        // We show two past slots, the current slot, and two upcoming slots.
-        // 4-5 operators per slot covers the 4–5 active stations.
+        // Every block is laid out from the event start (always on the hour),
+        // so the schedule reads like one a club would actually publish.
+        $at = fn (int $hours): Carbon => $event->start_time->copy()->addHours($hours);
+
+        // ── Operator shifts: 2-hour blocks over the first 12 hours ───────────
+        // One finished block, the current block, and four upcoming blocks.
+        // 4 operators per slot covers the 4 HF stations.
         $operatorSlots = [
-            ['start' => now()->subHours(4), 'end' => now()->subHours(2), 'ops' => [0, 1, 2, 3]],
-            ['start' => now()->subHours(2), 'end' => now(),              'ops' => [4, 5, 6, 7]],
-            ['start' => now(),              'end' => now()->addHours(2), 'ops' => [8, 9, 0, 1]],
-            ['start' => now()->addHours(2), 'end' => now()->addHours(4), 'ops' => [2, 3, 4, 5]],
-            ['start' => now()->addHours(4), 'end' => now()->addHours(6), 'ops' => [6, 7, 8, 9]],
-            ['start' => now()->addHours(6), 'end' => now()->addHours(8), 'ops' => [0, 2, 4, 6]],
+            ['start' => 0,  'ops' => [0, 1, 2, 3]],
+            ['start' => 2,  'ops' => [4, 5, 6, 7]],
+            ['start' => 4,  'ops' => [8, 9, 0, 1]],
+            ['start' => 6,  'ops' => [2, 3, 4, 5]],
+            ['start' => 8,  'ops' => [6, 7, 8, 9]],
+            ['start' => 10, 'ops' => [0, 2, 4, 6]],
         ];
 
         if ($roles->has('Operator')) {
             foreach ($operatorSlots as $slot) {
-                $shift = $this->makeShift($config, $roles['Operator'], $slot['start'], $slot['end'], 5);
+                $shift = $this->makeShift($config, $roles['Operator'], $at($slot['start']), $at($slot['start'] + 2), 5);
                 foreach ($slot['ops'] as $i) {
                     $this->assign($shift, $operators[$i]);
                 }
             }
         }
 
-        // ── Station Captain: one long block each, covering the event ─────────
+        // ── Station Captain: two 12-hour halves ──────────────────────────────
         if ($roles->has(self::ROLE_STATION_CAPTAIN)) {
-            $cap1Shift = $this->makeShift($config, $roles[self::ROLE_STATION_CAPTAIN], now()->subHours(2), now()->addHours(10), 2);
+            $cap1Shift = $this->makeShift($config, $roles[self::ROLE_STATION_CAPTAIN], $at(0), $at(12), 2);
             $this->assign($cap1Shift, $captain1);
 
-            $cap2Shift = $this->makeShift($config, $roles[self::ROLE_STATION_CAPTAIN], now()->addHours(10), now()->addHours(22), 2);
+            $cap2Shift = $this->makeShift($config, $roles[self::ROLE_STATION_CAPTAIN], $at(12), $at(24), 2);
             $this->assign($cap2Shift, $captain2);
         }
 
         // ── Event Manager: full event ─────────────────────────────────────────
         if ($roles->has('Event Manager')) {
-            $mgr = $this->makeShift($config, $roles['Event Manager'], now()->subHours(2), now()->addHours(22), 1);
+            $mgr = $this->makeShift($config, $roles['Event Manager'], $at(0), $at(24), 1);
             $this->assign($mgr, $manager);
         }
 
         // ── Safety Officer: two people, 12-hour handoff ────────────────────────
         if ($roles->has('Safety Officer')) {
-            $so1 = $this->makeShift($config, $roles['Safety Officer'], now()->subHours(2), now()->addHours(10), 1);
+            $so1 = $this->makeShift($config, $roles['Safety Officer'], $at(0), $at(12), 1);
             $this->assign($so1, $captain1);
 
-            $so2 = $this->makeShift($config, $roles['Safety Officer'], now()->addHours(10), now()->addHours(22), 1);
+            $so2 = $this->makeShift($config, $roles['Safety Officer'], $at(12), $at(24), 1);
             $this->assign($so2, $admin);
         }
 
         // ── GOTA Coach: daytime coverage ──────────────────────────────────────
         if ($roles->has('GOTA Coach')) {
-            $gc1 = $this->makeShift($config, $roles['GOTA Coach'], now()->subHours(2), now()->addHours(6), 1);
+            $gc1 = $this->makeShift($config, $roles['GOTA Coach'], $at(0), $at(8), 1);
             $this->assign($gc1, $operators[3]);
 
-            $gc2 = $this->makeShift($config, $roles['GOTA Coach'], now()->addHours(6), now()->addHours(14), 1);
+            $gc2 = $this->makeShift($config, $roles['GOTA Coach'], $at(8), $at(16), 1);
             $this->assign($gc2, $operators[7]);
         }
 
-        // ── Public Greeter: morning/afternoon ────────────────────────────────
+        // ── Public Greeter: afternoon visiting hours ─────────────────────────
         if ($roles->has('Public Greeter')) {
-            $pg = $this->makeShift($config, $roles['Public Greeter'], now(), now()->addHours(8), 2);
+            $pg = $this->makeShift($config, $roles['Public Greeter'], $at(2), $at(10), 2);
             $this->assign($pg, $operators[5]);
             $this->assign($pg, $operators[9]);
         }
 
         // ── Site Responsibilities: one person, full event ─────────────────────
         if ($roles->has('Site Responsibilities')) {
-            $site = $this->makeShift($config, $roles['Site Responsibilities'], now()->subHours(2), now()->addHours(22), 1);
+            $site = $this->makeShift($config, $roles['Site Responsibilities'], $at(0), $at(24), 1);
             $this->assign($site, $captain2);
         }
 
         // ── Message Handler: one shift ─────────────────────────────────────────
         if ($roles->has('Message Handler')) {
-            $msg = $this->makeShift($config, $roles['Message Handler'], now()->addHours(2), now()->addHours(10), 1);
+            $msg = $this->makeShift($config, $roles['Message Handler'], $at(4), $at(12), 1);
             $this->assign($msg, $operators[1]);
         }
     }
@@ -1050,15 +1058,37 @@ class DemoSeeder extends Seeder
         ]);
     }
 
+    /**
+     * Assign a user with attendance that matches where the shift sits in time.
+     *
+     * People rarely arrive or leave on the exact minute, so finished and
+     * in-progress shifts get check-in/out times scattered around the
+     * scheduled boundaries. Future shifts stay scheduled for the simulator
+     * (or the visitor) to check in later.
+     */
     private function assign(Shift $shift, User $user): void
     {
-        $isPast = $shift->start_time->isPast();
+        $status = ShiftAssignment::STATUS_SCHEDULED;
+        $checkedInAt = null;
+        $checkedOutAt = null;
+
+        if ($shift->start_time->isPast()) {
+            $status = ShiftAssignment::STATUS_CHECKED_IN;
+            $checkedInAt = $shift->start_time->copy()->addMinutes(random_int(-10, 8))->min(now());
+        }
+
+        if ($shift->end_time->isPast()) {
+            $status = ShiftAssignment::STATUS_CHECKED_OUT;
+            $checkedOutAt = $shift->end_time->copy()->addMinutes(random_int(-5, 12))->min(now());
+        }
+
         ShiftAssignment::create([
             'shift_id' => $shift->id,
             'user_id' => $user->id,
-            'status' => $isPast ? ShiftAssignment::STATUS_CHECKED_IN : ShiftAssignment::STATUS_SCHEDULED,
+            'status' => $status,
             'signup_type' => ShiftAssignment::SIGNUP_TYPE_ASSIGNED,
-            'checked_in_at' => $isPast ? $shift->start_time : null,
+            'checked_in_at' => $checkedInAt,
+            'checked_out_at' => $checkedOutAt,
         ]);
     }
 }

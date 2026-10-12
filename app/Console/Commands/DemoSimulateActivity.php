@@ -6,6 +6,7 @@ use App\Events\ContactLogged;
 use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Models\Section;
+use App\Models\ShiftAssignment;
 use App\Support\CallsignGenerator;
 use App\Support\DemoCache;
 use App\Support\TransmitterCountGenerator;
@@ -69,6 +70,8 @@ class DemoSimulateActivity extends Command
 
                 $logged = $this->simulateForDatabase($dbName, $ttlHours);
                 $totalLogged += $logged;
+
+                $this->simulateShiftAttendance($dbName);
 
             } catch (\Throwable $e) {
                 $this->warn("Could not simulate for {$dbName}: {$e->getMessage()}");
@@ -165,6 +168,73 @@ class DemoSimulateActivity extends Command
     }
 
     /**
+     * Check simulated volunteers in and out around their shift boundaries.
+     *
+     * Each tick gives a volunteer a chance to arrive from 15 minutes before
+     * their shift starts and to leave from 5 minutes before it ends, so
+     * arrivals and departures trickle in instead of landing on the exact
+     * minute. Anyone still pending 10 minutes past the boundary is moved
+     * along so the schedule never stalls. Only seeded assignments for
+     * non-visitor users are touched; the visitor's own shifts are theirs.
+     *
+     * @return array{checked_in: int, checked_out: int}
+     */
+    public function simulateShiftAttendance(string $dbName): array
+    {
+        $assignmentIds = self::cacheStore()->get(self::shiftCacheKey($dbName), []);
+        $counts = ['checked_in' => 0, 'checked_out' => 0];
+
+        if (empty($assignmentIds)) {
+            return $counts;
+        }
+
+        $now = now();
+
+        $assignments = ShiftAssignment::whereIn('id', $assignmentIds)
+            ->whereIn('status', [ShiftAssignment::STATUS_SCHEDULED, ShiftAssignment::STATUS_CHECKED_IN])
+            ->with('shift')
+            ->get();
+
+        foreach ($assignments as $assignment) {
+            $shift = $assignment->shift;
+
+            if (! $shift) {
+                continue;
+            }
+
+            if ($assignment->status === ShiftAssignment::STATUS_SCHEDULED) {
+                $arrivalOpens = $shift->start_time->copy()->subMinutes(15);
+
+                if ($now->lt($arrivalOpens) || $now->gte($shift->end_time)) {
+                    continue;
+                }
+
+                $isOverdue = $now->gte($shift->start_time->copy()->addMinutes(10));
+
+                if ($isOverdue || random_int(1, 100) <= 30) {
+                    $assignment->checkIn();
+                    $counts['checked_in']++;
+                }
+
+                continue;
+            }
+
+            if ($now->lt($shift->end_time->copy()->subMinutes(5))) {
+                continue;
+            }
+
+            $isOverdue = $now->gte($shift->end_time->copy()->addMinutes(10));
+
+            if ($isOverdue || random_int(1, 100) <= 30) {
+                $assignment->checkOut();
+                $counts['checked_out']++;
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
      * Build a plausible received exchange class for the event being simulated.
      *
      * Field Day sends classes A-F; Winter Field Day sends H (home), I (indoor),
@@ -228,6 +298,22 @@ class DemoSimulateActivity extends Command
         );
     }
 
+    /**
+     * Register the seeded shift assignments the simulator may check in and
+     * out. The provisioner leaves out the visitor's own users so their
+     * shifts wait for them to act.
+     *
+     * @param  array<int, int>  $assignmentIds
+     */
+    public static function registerSeededShiftAssignments(string $dbName, array $assignmentIds, int $ttlHours): void
+    {
+        self::cacheStore()->put(
+            self::shiftCacheKey($dbName),
+            array_values($assignmentIds),
+            now()->addHours($ttlHours),
+        );
+    }
+
     private static function cacheStore(): Repository
     {
         return Cache::store(config('demo.simulator_cache_store'));
@@ -236,5 +322,10 @@ class DemoSimulateActivity extends Command
     private static function cacheKey(string $dbName): string
     {
         return "demo:{$dbName}:simulated_session_ids";
+    }
+
+    private static function shiftCacheKey(string $dbName): string
+    {
+        return "demo:{$dbName}:simulated_shift_assignment_ids";
     }
 }

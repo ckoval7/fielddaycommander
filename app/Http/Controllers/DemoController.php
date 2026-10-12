@@ -94,6 +94,22 @@ class DemoController extends Controller
         // skips the provisioning route, so flush it here too.
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        // The visitor signs in as one of these personas, so their shifts are
+        // left for the visitor to check in and out themselves.
+        $personaUserIds = collect(['operator', 'station_captain', 'event_manager', 'system_admin'])
+            ->map(fn (string $role): int => $this->resolveUserForRole($role)->id)
+            ->all();
+
+        DemoSimulateActivity::registerSeededShiftAssignments(
+            $dbName,
+            DB::connection('demo')
+                ->table('shift_assignments')
+                ->whereNotIn('user_id', $personaUserIds)
+                ->pluck('id')
+                ->all(),
+            (int) config('demo.ttl_hours', 24),
+        );
+
         $user = $this->resolveUserForRole($request->role);
         Auth::login($user);
 

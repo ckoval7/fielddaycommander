@@ -4,6 +4,8 @@ use App\Console\Commands\DemoSimulateActivity;
 use App\Events\ContactLogged;
 use App\Models\Contact;
 use App\Models\OperatingSession;
+use App\Models\Shift;
+use App\Models\ShiftAssignment;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -118,4 +120,59 @@ test('simulate-activity does not log contacts to expired sessions', function () 
         ->assertSuccessful();
 
     Event::assertNotDispatched(ContactLogged::class);
+});
+
+test('shift attendance does nothing without registered assignments', function () {
+    $this->seed(DemoSeeder::class);
+
+    $command = new DemoSimulateActivity;
+    $statuses = ShiftAssignment::pluck('status', 'id');
+
+    $this->travelTo(now()->addHours(30));
+
+    expect($command->simulateShiftAttendance('demo_'.str_repeat('c', 32)))
+        ->toBe(['checked_in' => 0, 'checked_out' => 0]);
+    expect(ShiftAssignment::pluck('status', 'id'))->toEqual($statuses);
+});
+
+test('shift attendance checks volunteers in once their shift is underway', function () {
+    $this->seed(DemoSeeder::class);
+
+    $dbName = 'demo_'.str_repeat('d', 32);
+    $upcoming = Shift::where('start_time', '>', now())->orderBy('start_time')->first();
+    $assignments = $upcoming->assignments()->get();
+
+    DemoSimulateActivity::registerSeededShiftAssignments($dbName, $assignments->pluck('id')->all(), 24);
+
+    // Before the arrival window opens, nobody shows up.
+    $this->travelTo($upcoming->start_time->copy()->subMinutes(30));
+    (new DemoSimulateActivity)->simulateShiftAttendance($dbName);
+    expect($upcoming->assignments()->where('status', ShiftAssignment::STATUS_SCHEDULED)->count())
+        ->toBe($assignments->count());
+
+    // Ten minutes past the start, anyone still missing is checked in.
+    $this->travelTo($upcoming->start_time->copy()->addMinutes(10));
+    (new DemoSimulateActivity)->simulateShiftAttendance($dbName);
+
+    $assignments->each(function (ShiftAssignment $assignment) {
+        $assignment->refresh();
+        expect($assignment->status)->toBe(ShiftAssignment::STATUS_CHECKED_IN);
+        expect($assignment->checked_in_at)->not->toBeNull();
+    });
+});
+
+test('shift attendance checks volunteers out after their shift ends', function () {
+    $this->seed(DemoSeeder::class);
+
+    $dbName = 'demo_'.str_repeat('e', 32);
+    $current = ShiftAssignment::where('status', ShiftAssignment::STATUS_CHECKED_IN)->with('shift')->first();
+
+    DemoSimulateActivity::registerSeededShiftAssignments($dbName, [$current->id], 24);
+
+    $this->travelTo($current->shift->end_time->copy()->addMinutes(10));
+    (new DemoSimulateActivity)->simulateShiftAttendance($dbName);
+
+    $current->refresh();
+    expect($current->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
+    expect($current->checked_out_at)->not->toBeNull();
 });
