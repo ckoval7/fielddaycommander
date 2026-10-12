@@ -147,7 +147,7 @@ test('duplicate detection runs on save and updates points', function () {
     Livewire::test(ContactEditor::class)
         ->call('openEdit', $editableContact->id)
         ->set('callsign', 'K1ABC')
-        ->set('exchange_class', '3A')
+        ->set('exchangeClass', '3A')
         ->call('save');
 
     $editableContact->refresh();

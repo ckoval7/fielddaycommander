@@ -448,8 +448,9 @@ it('excludes bonus types not applicable to the current operating class', functio
     ]);
 
     $config = makeActiveEvent();
-    $classA = OperatingClass::first();
-    $classA->update(['code' => 'A']);
+    $classA = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'A')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $classA->id]);
 
     $component = Livewire::test(Scoring::class);
@@ -471,8 +472,9 @@ it('includes bonus types applicable to the current operating class', function ()
     ]);
 
     $config = makeActiveEvent();
-    $classB = OperatingClass::first();
-    $classB->update(['code' => 'B']);
+    $classB = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'B')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $classB->id]);
 
     $component = Livewire::test(Scoring::class);
@@ -484,8 +486,9 @@ it('includes bonus types applicable to the current operating class', function ()
 it('always includes bonus types with null eligible_classes regardless of class', function () {
     // web_submission has null eligible_classes (created in beforeEach)
     $config = makeActiveEvent();
-    $classC = OperatingClass::first();
-    $classC->update(['code' => 'C']);
+    $classC = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'C')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $classC->id]);
 
     $component = Livewire::test(Scoring::class);
@@ -506,8 +509,9 @@ it('auto-computes emergency power bonus as 100 pts per transmitter', function ()
     ]);
 
     // Set operating class to one eligible for emergency power
-    $eligibleClass = OperatingClass::first();
-    $eligibleClass->update(['code' => 'A']);
+    $eligibleClass = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'A')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $eligibleClass->id]);
     $config->refresh();
 
@@ -527,8 +531,9 @@ it('caps emergency power bonus at 20 transmitters', function () {
         'uses_generator' => true,
     ]);
 
-    $eligibleClass = OperatingClass::first();
-    $eligibleClass->update(['code' => 'A']);
+    $eligibleClass = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'A')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $eligibleClass->id]);
     $config->refresh();
 
@@ -546,8 +551,9 @@ it('does not award emergency power bonus when using commercial power', function 
         'uses_commercial_power' => true,
     ]);
 
-    $eligibleClass = OperatingClass::first();
-    $eligibleClass->update(['code' => 'A']);
+    $eligibleClass = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'A')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $eligibleClass->id]);
     $config->refresh();
 
@@ -568,8 +574,9 @@ it('includes emergency power bonus in final score', function () {
         'max_power_watts' => 200, // 1x multiplier
     ]);
 
-    $eligibleClass = OperatingClass::first();
-    $eligibleClass->update(['code' => 'A']);
+    $eligibleClass = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'A')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $eligibleClass->id]);
     $config->refresh();
 
@@ -587,8 +594,9 @@ it('includes emergency power bonus in final score', function () {
 it('auto-computes satellite bonus when satellite contact exists', function () {
     $config = makeActiveEvent();
 
-    $eligibleClass = OperatingClass::first();
-    $eligibleClass->update(['code' => 'A']);
+    $eligibleClass = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'A')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $eligibleClass->id]);
     $config->refresh();
 
@@ -612,8 +620,9 @@ it('auto-computes satellite bonus when satellite contact exists', function () {
 it('does not award satellite bonus when no satellite contacts exist', function () {
     $config = makeActiveEvent();
 
-    $eligibleClass = OperatingClass::first();
-    $eligibleClass->update(['code' => 'A']);
+    $eligibleClass = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'A')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $eligibleClass->id]);
     $config->refresh();
 
@@ -629,8 +638,9 @@ it('does not award satellite bonus when no satellite contacts exist', function (
 it('does not award satellite bonus for duplicate satellite contacts', function () {
     $config = makeActiveEvent();
 
-    $eligibleClass = OperatingClass::first();
-    $eligibleClass->update(['code' => 'A']);
+    $eligibleClass = OperatingClass::where('event_type_id', $this->eventType->id)
+        ->where('code', 'A')
+        ->firstOrFail();
     $config->update(['operating_class_id' => $eligibleClass->id]);
     $config->refresh();
 

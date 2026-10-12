@@ -74,6 +74,11 @@ it('returns data without comparison on first load', function () {
 });
 
 it('calculates comparison data with previous value', function () {
+    // Samples are bucketed per minute; start on a minute boundary so the
+    // 5-second reload below cannot land in the next bucket and become the
+    // 1h baseline instead of the first load.
+    $this->travelTo(now()->startOfMinute());
+
     // Create initial contacts
     Contact::factory()->count(10)->create([
         'event_configuration_id' => $this->eventConfig->id,

@@ -681,8 +681,8 @@ describe('Caching', function () {
         expect($data1['items'])->toHaveCount(1)
             ->and($data2['items'])->toHaveCount(1);
 
-        // Wait for cache to expire and fetch again
-        sleep(4);
+        // Move past the 3-second cache TTL and fetch again
+        $this->travel(4)->seconds();
         $data3 = $component->instance()->getData();
 
         // Now should return fresh data (2 contacts)
