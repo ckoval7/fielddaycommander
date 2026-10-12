@@ -89,7 +89,7 @@ The landing page presents both events; the choice drives how `DemoSeeder` builds
 | Shift roles seeded | 8 | 5 |
 | Safety checklist | Seeded | Empty — it backs an ARRL-only bonus |
 
-The chosen code is recorded twice: in the sandbox's own `system_config` under `demo_event_type`, and on the `demo_sessions` analytics row as `event_type`, so usage can be broken down by rulebook. Rows predating the picker default to `FD`.
+The chosen code is recorded on the `demo_sessions` analytics row as `event_type`, so usage can be broken down by rulebook. Rows predating the picker default to `FD`.
 
 Only manually-claimed objectives are seeded for WFD. Derived ones — alternative power, band and mode counts, QRP — belong to their strategies in `app/Scoring/Bonuses/WinterFieldDay2026/` and are reconciled from the logged contacts.
 
@@ -129,7 +129,13 @@ The analytics dashboard and API routes require a valid signed URL — they canno
 
 ### `demo:simulate-activity`
 
-Log simulated contacts to all active demo sessions. Each active operating session has a ~40% chance of receiving a new contact per invocation. Designed to run on a schedule (e.g. every minute via `schedule:run`) to keep demo dashboards lively.
+Keep each active demo sandbox moving. Designed to run on a schedule (e.g. every minute via `schedule:run`) to keep demo dashboards lively. Each invocation:
+
+- **Rotates operators.** When an operator's shift ends and they check out, their session closes and a free on-duty operator takes the station over. Idle stations are occasionally picked back up.
+- **Logs contacts.** Each simulated operating session has a ~25% chance of a new contact (~15 QSOs/hour per station), matching the rate of the seeded history.
+- **Checks volunteers in and out.** Volunteers arrive from 15 minutes before a shift starts and leave from 5 minutes before it ends; anyone still pending 10 minutes past the boundary is moved along.
+
+It only touches what was seeded: the stations, sessions and shift assignments registered when the sandbox was provisioned. Sessions the visitor starts, and shifts belonging to the persona users a visitor can sign in as, are left alone.
 
 ```bash
 php artisan demo:simulate-activity

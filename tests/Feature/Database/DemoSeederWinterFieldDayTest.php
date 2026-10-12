@@ -4,7 +4,6 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\OperatingSession;
-use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\ShiftRole;
 use App\Models\Station;
@@ -27,10 +26,6 @@ test('seeds a Winter Field Day event as the active event', function () {
     expect($event->name)->toContain('Winter Field Day');
     expect($event->start_time->isPast())->toBeTrue();
     expect($event->end_time->isFuture())->toBeTrue();
-});
-
-test('records the chosen event type in system config', function () {
-    expect(Setting::get('demo_event_type'))->toBe('WFD');
 });
 
 test('configures a WFD operating class with no GOTA station', function () {

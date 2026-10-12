@@ -138,7 +138,6 @@ class DemoSeeder extends Seeder
         // 3. System config
         Setting::set('setup_completed', 'true');
         Setting::set('demo_provisioned_at', now()->toIso8601String());
-        Setting::set('demo_event_type', $this->eventTypeCode);
         Setting::set('site_name', 'Field Day Commander — Demo');
         Setting::set('timezone', 'America/New_York');
         Setting::set('default_organization_id', $organization->id);
@@ -402,7 +401,6 @@ class DemoSeeder extends Seeder
                 'is_gota' => false,
                 'is_vhf_only' => true,
                 'captain' => $captain2,
-                'has_active' => false,
                 'radio_make' => 'Kenwood',
                 'radio_model' => 'TM-V71A',
                 'radio_bands' => ['2m', '70cm'],
@@ -415,7 +413,6 @@ class DemoSeeder extends Seeder
                 'is_gota' => true,
                 'is_vhf_only' => false,
                 'captain' => $captain1,
-                'has_active' => false,
                 'radio_make' => 'Icom',
                 'radio_model' => 'IC-718',
                 'radio_bands' => ['160m', '80m', '40m', '20m', '15m', '10m'],
