@@ -19,23 +19,26 @@ class Setting extends Model
     protected $fillable = ['key', 'value'];
 
     /**
+     * Cached in place of a missing key, because Cache::remember() never
+     * stores null.
+     */
+    private const MISSING = "\0setting:missing\0";
+
+    /**
      * Get a setting value with optional default
      *
      * Only the raw stored value is cached, so the same key resolves
-     * consistently regardless of which default a caller passes. The value is
-     * wrapped so a missing key is cached too; Cache::remember() never stores
-     * null, which would otherwise re-query hot keys such as dev.fake_time on
-     * every appNow() call.
+     * consistently regardless of which default a caller passes. A missing key
+     * is cached as a sentinel so hot keys such as dev.fake_time are not
+     * re-queried on every appNow() call.
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $cached = Cache::remember("setting.{$key}", 3600, function () use ($key) {
-            return ['value' => static::where('key', $key)->value('value')];
+        $value = Cache::remember("setting.{$key}", 3600, function () use ($key) {
+            return static::where('key', $key)->value('value') ?? self::MISSING;
         });
 
-        $value = is_array($cached) ? $cached['value'] : $cached;
-
-        if ($value === null) {
+        if ($value === self::MISSING || $value === null) {
             return $default;
         }
 
