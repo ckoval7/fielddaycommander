@@ -32,6 +32,9 @@ class MigrateDashboardImprovements extends Command
      */
     public function handle(): int
     {
+        $this->dashboardsUpdated = 0;
+        $this->widgetsUpdated = 0;
+
         $this->info('🚀 Dashboard Improvements Migration');
         $this->newLine();
 
@@ -230,7 +233,7 @@ class MigrateDashboardImprovements extends Command
 
         if (! empty($changes)) {
             $widget['config'] = $config;
-            $this->line('    • Stat Card ('.$config['metric'].'): '.implode(', ', $changes));
+            $this->line('    • Stat Card ('.($config['metric'] ?? 'no metric').'): '.implode(', ', $changes));
         }
 
         return $widget;
