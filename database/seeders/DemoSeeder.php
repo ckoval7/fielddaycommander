@@ -611,7 +611,7 @@ class DemoSeeder extends Seeder
     ): void {
         $allSections = Section::where('is_active', true)->get()->keyBy('code');
         $canadianSections = $allSections->filter(fn (Section $s) => $s->country === 'CA');
-        $windowSeconds = max(1, $windowEnd->diffInSeconds($windowStart));
+        $windowSeconds = max(1, (int) $windowStart->diffInSeconds($windowEnd));
 
         $classPool = $this->exchangeClassPool();
 

@@ -56,6 +56,20 @@ test('seeder creates a realistic early-event contact count', function () {
     expect(Contact::count())->toBeGreaterThanOrEqual(94)->toBeLessThan(175);
 });
 
+test('seeder spreads contact times across each operating session window', function () {
+    OperatingSession::with('contacts')->get()->each(function (OperatingSession $session) {
+        $times = $session->contacts->pluck('qso_time');
+        $windowEnd = $session->end_time ?? now();
+
+        $times->each(fn (Carbon $time) => expect($time->betweenIncluded($session->start_time, $windowEnd))->toBeTrue());
+
+        if ($times->count() >= 3) {
+            expect($times->map->timestamp->unique()->count())->toBeGreaterThan(1);
+            expect($times->max()->diffInMinutes($times->min(), true))->toBeGreaterThan(1);
+        }
+    });
+});
+
 test('seeder creates contacts only on the band and mode of their operating session', function () {
     Contact::with('operatingSession')->each(function (Contact $contact) {
         expect($contact->band_id)->toBe($contact->operatingSession->band_id);
