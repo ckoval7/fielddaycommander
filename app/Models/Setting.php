@@ -22,13 +22,18 @@ class Setting extends Model
      * Get a setting value with optional default
      *
      * Only the raw stored value is cached, so the same key resolves
-     * consistently regardless of which default a caller passes.
+     * consistently regardless of which default a caller passes. The value is
+     * wrapped so a missing key is cached too; Cache::remember() never stores
+     * null, which would otherwise re-query hot keys such as dev.fake_time on
+     * every appNow() call.
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $value = Cache::remember("setting.{$key}", 3600, function () use ($key) {
-            return static::where('key', $key)->value('value');
+        $cached = Cache::remember("setting.{$key}", 3600, function () use ($key) {
+            return ['value' => static::where('key', $key)->value('value')];
         });
+
+        $value = is_array($cached) ? $cached['value'] : $cached;
 
         if ($value === null) {
             return $default;
