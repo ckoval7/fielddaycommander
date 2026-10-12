@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\ShiftAssignment;
+use App\Models\Station;
 use App\Support\CallsignGenerator;
 use App\Support\DemoCache;
 use App\Support\TransmitterCountGenerator;
@@ -87,6 +88,8 @@ class DemoSimulateActivity extends Command
 
     public function simulateForDatabase(string $dbName, int $ttlHours): int
     {
+        $this->rotateOperators($dbName, $ttlHours);
+
         $simulatedIds = $this->resolveSimulatedSessionIds($dbName, $ttlHours);
 
         if (empty($simulatedIds)) {
@@ -110,8 +113,9 @@ class DemoSimulateActivity extends Command
         $canadianSections = $sections->filter(fn (Section $s) => $s->country === 'CA');
 
         foreach ($activeSessions as $session) {
-            // ~40% chance to log a contact this tick per active session
-            if (random_int(1, 100) > 40) {
+            // ~25% chance per tick (~15 QSOs/hour per station), in line with
+            // the rate the seeded history was logged at
+            if (random_int(1, 100) > 25) {
                 continue;
             }
 
@@ -165,6 +169,93 @@ class DemoSimulateActivity extends Command
         }
 
         return $logged;
+    }
+
+    /**
+     * Hand the simulated HF stations from operator to operator as shifts turn
+     * over.
+     *
+     * An operator keeps their station while they are checked in to a current
+     * Operator shift. Once they are off duty their session ends and, if an
+     * on-duty operator is free, that operator takes the station over. An idle
+     * station is picked up now and then by a free on-duty operator, the way a
+     * station gets reopened after a break. Stations with a session the
+     * visitor started are left alone, and only simulated volunteers are
+     * brought on.
+     *
+     * @return array{ended: int, started: int}
+     */
+    public function rotateOperators(string $dbName, int $ttlHours): array
+    {
+        $counts = ['ended' => 0, 'started' => 0];
+        $stationIds = self::cacheStore()->get(self::stationCacheKey($dbName), []);
+
+        if (empty($stationIds)) {
+            return $counts;
+        }
+
+        $simulatedSessionIds = array_map('intval', $this->resolveSimulatedSessionIds($dbName, $ttlHours));
+        $now = now();
+
+        $onDutyUserIds = ShiftAssignment::whereIn('id', self::cacheStore()->get(self::shiftCacheKey($dbName), []))
+            ->where('status', ShiftAssignment::STATUS_CHECKED_IN)
+            ->whereHas('shift', fn ($q) => $q->where('start_time', '<=', $now)
+                ->where('end_time', '>', $now)
+                ->whereHas('shiftRole', fn ($r) => $r->where('name', 'Operator')))
+            ->pluck('user_id')
+            ->unique();
+
+        $operatingUserIds = OperatingSession::active()->pluck('operator_user_id');
+        $freeOperatorIds = $onDutyUserIds->diff($operatingUserIds)->shuffle()->values();
+
+        foreach (Station::whereIn('id', $stationIds)->get() as $station) {
+            $openSession = OperatingSession::active()->where('station_id', $station->id)->first();
+
+            if ($openSession && ! in_array($openSession->id, $simulatedSessionIds, true)) {
+                continue;
+            }
+
+            if ($openSession && $onDutyUserIds->contains($openSession->operator_user_id)) {
+                continue;
+            }
+
+            if ($openSession) {
+                $openSession->update([
+                    'end_time' => $now,
+                    'qso_count' => $openSession->contacts()->count(),
+                ]);
+                $counts['ended']++;
+            } elseif (random_int(1, 100) > 10) {
+                continue;
+            }
+
+            $incomingId = $freeOperatorIds->shift();
+            $lastSession = $openSession ?? OperatingSession::where('station_id', $station->id)->latest('start_time')->first();
+
+            if (! $incomingId || ! $lastSession) {
+                continue;
+            }
+
+            $session = OperatingSession::create([
+                'station_id' => $station->id,
+                'operator_user_id' => $incomingId,
+                'band_id' => $lastSession->band_id,
+                'mode_id' => $lastSession->mode_id,
+                'start_time' => $now,
+                'end_time' => null,
+                'power_watts' => $lastSession->power_watts ?? 100,
+                'qso_count' => 0,
+                'is_transcription' => false,
+                'is_supervised' => false,
+            ]);
+
+            $simulatedSessionIds[] = $session->id;
+            $counts['started']++;
+        }
+
+        self::registerSeededSessions($dbName, $simulatedSessionIds, $ttlHours);
+
+        return $counts;
     }
 
     /**
@@ -314,6 +405,21 @@ class DemoSimulateActivity extends Command
         );
     }
 
+    /**
+     * Register the seeded HF stations the simulator staffs from the operator
+     * rotation.
+     *
+     * @param  array<int, int>  $stationIds
+     */
+    public static function registerSeededStations(string $dbName, array $stationIds, int $ttlHours): void
+    {
+        self::cacheStore()->put(
+            self::stationCacheKey($dbName),
+            array_values($stationIds),
+            now()->addHours($ttlHours),
+        );
+    }
+
     private static function cacheStore(): Repository
     {
         return Cache::store(config('demo.simulator_cache_store'));
@@ -322,6 +428,11 @@ class DemoSimulateActivity extends Command
     private static function cacheKey(string $dbName): string
     {
         return "demo:{$dbName}:simulated_session_ids";
+    }
+
+    private static function stationCacheKey(string $dbName): string
+    {
+        return "demo:{$dbName}:simulated_station_ids";
     }
 
     private static function shiftCacheKey(string $dbName): string

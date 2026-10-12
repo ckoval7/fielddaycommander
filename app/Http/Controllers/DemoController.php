@@ -86,6 +86,17 @@ class DemoController extends Controller
             (int) config('demo.ttl_hours', 24),
         );
 
+        DemoSimulateActivity::registerSeededStations(
+            $dbName,
+            DB::connection('demo')
+                ->table('stations')
+                ->where('is_gota', false)
+                ->where('is_vhf_only', false)
+                ->pluck('id')
+                ->all(),
+            (int) config('demo.ttl_hours', 24),
+        );
+
         // Spatie caches role and permission IDs in the shared default cache
         // store (Redis in production). Those IDs are per-database, so a cache
         // populated by another visitor's sandbox resolves to IDs that do not

@@ -2,14 +2,17 @@
 
 use App\Models\BonusType;
 use App\Models\Contact;
+use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\GuestbookEntry;
 use App\Models\OperatingSession;
 use App\Models\Organization;
+use App\Models\SafetyChecklistEntry;
 use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
+use App\Models\ShiftRole;
 use App\Models\Station;
 use App\Models\User;
 use Carbon\Carbon;
@@ -54,8 +57,57 @@ test('seeder creates exactly 3 open operating sessions (GOTA left for user)', fu
 });
 
 test('seeder creates a realistic early-event contact count', function () {
-    // 4 HF stations × 20–30 hist + VHF 4–8 + GOTA 5–10 + active sessions ≈ 94–172
-    expect(Contact::count())->toBeGreaterThanOrEqual(94)->toBeLessThan(175);
+    // 4 HF stations at 10–16 QSOs/hour over the 2–3 hours since the event
+    // started, plus a short VHF run (4–8) and a GOTA run (5–10)
+    expect(Contact::count())->toBeGreaterThanOrEqual(70)->toBeLessThan(220);
+});
+
+test('seeder stamps contacts as logged when they were made', function () {
+    Contact::all()->each(function (Contact $contact) {
+        expect($contact->created_at->equalTo($contact->qso_time))->toBeTrue();
+    });
+});
+
+test('seeder hands each station over without overlapping sessions', function () {
+    $stationsWithHandoffs = 0;
+
+    OperatingSession::all()->groupBy('station_id')->each(function ($sessions) use (&$stationsWithHandoffs) {
+        $ordered = $sessions->sortBy('start_time')->values();
+
+        for ($i = 1; $i < $ordered->count(); $i++) {
+            expect($ordered[$i - 1]->end_time)->not->toBeNull();
+            expect($ordered[$i - 1]->end_time->lte($ordered[$i]->start_time))->toBeTrue();
+            expect($ordered[$i]->operator_user_id)->not->toBe($ordered[$i - 1]->operator_user_id);
+            $stationsWithHandoffs++;
+        }
+    });
+
+    expect($stationsWithHandoffs)->toBeGreaterThan(0);
+    expect(OperatingSession::whereNull('end_time')->get()->pluck('operator_user_id')->duplicates())->toBeEmpty();
+});
+
+test('seeder staffs HF stations from the operator shift on duty', function () {
+    $operatorRole = ShiftRole::where('name', 'Operator')->firstOrFail();
+
+    OperatingSession::with('station')->get()
+        ->filter(fn (OperatingSession $session) => ! $session->station->is_gota && ! $session->station->is_vhf_only)
+        ->each(function (OperatingSession $session) use ($operatorRole) {
+            $assignment = ShiftAssignment::where('user_id', $session->operator_user_id)
+                ->whereHas('shift', fn ($q) => $q->where('shift_role_id', $operatorRole->id)
+                    ->where('start_time', '<=', $session->start_time->copy()->addMinutes(15))
+                    ->where('end_time', '>=', $session->start_time))
+                ->first();
+
+            expect($assignment)->not->toBeNull();
+        });
+});
+
+test('seeder staggers HF sessions instead of starting them together', function () {
+    $starts = OperatingSession::whereNull('end_time')->pluck('start_time')->map->timestamp;
+
+    expect(OperatingSession::count())->toBeGreaterThan(Station::count());
+    expect(OperatingSession::pluck('start_time')->map->timestamp->unique()->count())->toBeGreaterThan(2);
+    expect($starts->every(fn (int $start) => $start <= now()->timestamp))->toBeTrue();
 });
 
 test('seeder spreads contact times across each operating session window', function () {
@@ -202,4 +254,77 @@ test('seeder creates organization and sets default_organization_id', function ()
 
     $settingId = Setting::get('default_organization_id');
     expect((int) $settingId)->toBe($org->id);
+});
+
+test('seeder claims setup bonuses before the event and leaves media publicity pending', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+
+    EventBonus::with('bonusType')->get()->each(function (EventBonus $bonus) use ($event) {
+        if ($bonus->bonusType->code === 'media_publicity') {
+            expect($bonus->is_verified)->toBeFalse();
+            expect($bonus->verified_at)->toBeNull();
+            expect($bonus->created_at->gt($event->start_time))->toBeTrue();
+            expect($bonus->created_at->isFuture())->toBeFalse();
+
+            return;
+        }
+
+        expect($bonus->created_at->lt($event->start_time))->toBeTrue();
+        expect($bonus->verified_at->gt($bonus->created_at))->toBeTrue();
+    });
+});
+
+test('seeder completes safety checklist items during setup', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+    $completed = SafetyChecklistEntry::where('is_completed', true)->get();
+
+    expect($completed)->not->toBeEmpty();
+    $completed->each(fn (SafetyChecklistEntry $entry) => expect($entry->completed_at->lt($event->start_time))->toBeTrue());
+});
+
+test('seeder commits equipment ahead of time and delivers it during setup', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+    $equipmentEvents = EquipmentEvent::all();
+
+    $equipmentEvents->each(function (EquipmentEvent $equipmentEvent) use ($event) {
+        expect($equipmentEvent->committed_at->lt($event->start_time->copy()->subDays(2)))->toBeTrue();
+        expect($equipmentEvent->status_changed_at->lte($event->start_time))->toBeTrue();
+        expect($equipmentEvent->status_changed_at->gte($equipmentEvent->committed_at))->toBeTrue();
+    });
+
+    expect($equipmentEvents->map->status_changed_at->map->timestamp->unique()->count())->toBeGreaterThan(1);
+});
+
+test('seeder backdates the club, its members and the event plan', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+
+    User::all()->each(function (User $user) {
+        expect($user->created_at->lt(now()->subDays(30)))->toBeTrue();
+        expect($user->email_verified_at->gte($user->created_at))->toBeTrue();
+    });
+
+    expect(Organization::first()->created_at->lt(now()->subYear()))->toBeTrue();
+    expect($event->created_at->lt($event->start_time->copy()->subWeeks(4)))->toBeTrue();
+    expect($event->eventConfiguration->created_at->gte($event->created_at))->toBeTrue();
+});
+
+test('seeder replays a notification feed spread over the event', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+    $user = User::first();
+    $notifications = $user->notifications()->get();
+
+    expect($notifications)->not->toBeEmpty();
+    expect($notifications->pluck('data.category')->unique())->toContain('station_status', 'new_section', 'guestbook');
+    expect($notifications->map->created_at->map->timestamp->unique()->count())->toBeGreaterThan(5);
+
+    $notifications->each(function ($notification) use ($event) {
+        expect($notification->created_at->gte($event->start_time))->toBeTrue();
+        expect($notification->created_at->isFuture())->toBeFalse();
+
+        if ($notification->updated_at->lt(now()->subMinutes(30))) {
+            expect($notification->read_at)->not->toBeNull();
+        }
+    });
+
+    expect($user->unreadNotifications()->count())->toBeLessThan($notifications->count());
 });

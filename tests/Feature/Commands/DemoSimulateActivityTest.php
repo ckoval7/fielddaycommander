@@ -6,6 +6,8 @@ use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
+use App\Models\Station;
+use App\Models\User;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -175,4 +177,97 @@ test('shift attendance checks volunteers out after their shift ends', function (
     $current->refresh();
     expect($current->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
     expect($current->checked_out_at)->not->toBeNull();
+});
+
+/**
+ * Register the seeded stations, sessions and non-persona shift assignments
+ * the way the provisioner does.
+ */
+function registerSeededDemo(string $dbName): void
+{
+    $stationIds = Station::where('is_gota', false)->where('is_vhf_only', false)->pluck('id')->all();
+    DemoSimulateActivity::registerSeededStations($dbName, $stationIds, 24);
+    DemoSimulateActivity::registerSeededSessions($dbName, OperatingSession::active()->whereIn('station_id', $stationIds)->pluck('id')->all(), 24);
+    DemoSimulateActivity::registerSeededShiftAssignments($dbName, ShiftAssignment::pluck('id')->all(), 24);
+}
+
+test('operator rotation leaves on-duty operators at their stations', function () {
+    $this->seed(DemoSeeder::class);
+    $dbName = 'demo_'.str_repeat('f', 32);
+    registerSeededDemo($dbName);
+
+    $before = OperatingSession::active()->pluck('operator_user_id', 'station_id');
+
+    $counts = (new DemoSimulateActivity)->rotateOperators($dbName, 24);
+
+    expect($counts['ended'])->toBe(0);
+    expect(OperatingSession::active()->pluck('operator_user_id', 'station_id')->only($before->keys()->all()))->toEqual($before);
+});
+
+test('operator rotation hands stations to the incoming crew', function () {
+    $this->seed(DemoSeeder::class);
+    $dbName = 'demo_'.str_repeat('1', 32);
+    registerSeededDemo($dbName);
+
+    $outgoing = OperatingSession::active()->pluck('operator_user_id');
+    $nextShift = Shift::whereHas('shiftRole', fn ($q) => $q->where('name', 'Operator'))
+        ->where('start_time', '>', now())
+        ->orderBy('start_time')
+        ->firstOrFail();
+
+    // Outgoing crew has checked out and the incoming crew has arrived.
+    $this->travelTo($nextShift->start_time->copy()->addMinutes(5));
+    ShiftAssignment::whereIn('user_id', $outgoing)->where('status', ShiftAssignment::STATUS_CHECKED_IN)->get()->each->checkOut();
+    $nextShift->assignments()->each(fn (ShiftAssignment $assignment) => $assignment->checkIn());
+
+    $counts = (new DemoSimulateActivity)->rotateOperators($dbName, 24);
+
+    expect($counts['ended'])->toBe($outgoing->count());
+    expect($counts['started'])->toBeGreaterThan(0);
+
+    $incoming = $nextShift->assignments()->pluck('user_id');
+    OperatingSession::active()->get()->each(function (OperatingSession $session) use ($incoming, $outgoing) {
+        expect($incoming)->toContain($session->operator_user_id);
+        expect($outgoing)->not->toContain($session->operator_user_id);
+    });
+
+    // New sessions are adopted by the contact simulator.
+    $simulated = Cache::store('array')->get("demo:{$dbName}:simulated_session_ids");
+    OperatingSession::active()->pluck('id')->each(fn (int $id) => expect($simulated)->toContain($id));
+});
+
+test('operator rotation never takes over a session the visitor started', function () {
+    $this->seed(DemoSeeder::class);
+    $dbName = 'demo_'.str_repeat('2', 32);
+    registerSeededDemo($dbName);
+
+    $idleStation = Station::where('is_gota', false)->where('is_vhf_only', false)
+        ->whereDoesntHave('operatingSessions', fn ($q) => $q->whereNull('end_time'))
+        ->firstOrFail();
+    $template = OperatingSession::where('station_id', $idleStation->id)->latest('start_time')->firstOrFail();
+
+    $visitorSession = OperatingSession::create([
+        'station_id' => $idleStation->id,
+        'operator_user_id' => User::role('Operator')->orderBy('id')->firstOrFail()->id,
+        'band_id' => $template->band_id,
+        'mode_id' => $template->mode_id,
+        'start_time' => now(),
+        'end_time' => null,
+        'power_watts' => 100,
+        'qso_count' => 0,
+        'is_transcription' => false,
+        'is_supervised' => false,
+    ]);
+
+    $this->travelTo(now()->addHours(30));
+    (new DemoSimulateActivity)->rotateOperators($dbName, 24);
+
+    expect($visitorSession->fresh()->end_time)->toBeNull();
+});
+
+test('operator rotation is a no-op for demos provisioned without stations', function () {
+    $this->seed(DemoSeeder::class);
+
+    expect((new DemoSimulateActivity)->rotateOperators('demo_'.str_repeat('3', 32), 24))
+        ->toBe(['ended' => 0, 'started' => 0]);
 });

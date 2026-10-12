@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\NotificationCategory;
 use App\Enums\PowerSource;
 use App\Models\Band;
 use App\Models\BonusType;
@@ -26,15 +27,27 @@ use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Models\Station;
 use App\Models\User;
+use App\Notifications\InAppNotification;
 use App\Support\CallsignGenerator;
 use App\Support\TransmitterCountGenerator;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DemoSeeder extends Seeder
 {
     private const ROLE_STATION_CAPTAIN = 'Station Captain';
+
+    /**
+     * Operator indexes for the two HF crews that alternate in 2-hour blocks.
+     * Each crew member's position maps to an HF station (Alpha–Delta).
+     *
+     * @var array<int, array<int, int>>
+     */
+    private const HF_OPERATOR_CREWS = [[0, 1, 2, 3], [4, 5, 6, 7]];
 
     /**
      * Container key carrying the event type code the sandbox is built around.
@@ -120,6 +133,7 @@ class DemoSeeder extends Seeder
             'address' => '42 Hilltop Park, Hartford, CT 06103',
             'is_active' => true,
         ]);
+        $this->backdate($organization, now()->subYears(6)->subDays(random_int(0, 300)));
 
         // 3. System config
         Setting::set('setup_completed', 'true');
@@ -213,6 +227,11 @@ class DemoSeeder extends Seeder
             'state' => 'CT',
         ]);
 
+        // Planning starts weeks ahead of the operating weekend.
+        $plannedAt = $eventStart->copy()->subDays(random_int(35, 60))->setTime(19, random_int(0, 59));
+        $this->backdate($event, $plannedAt);
+        $this->backdate($config, $plannedAt->copy()->addMinutes(random_int(10, 40)));
+
         // Seed checklist items and shift roles.
         //
         // Both helpers key off the operating class letter. The WFD classes
@@ -229,8 +248,10 @@ class DemoSeeder extends Seeder
             ShiftRole::seedDefaults($config);
         }
 
-        // 7. Build stations, operating sessions, contacts
-        $this->seedStationsAndContacts($config, $event, [$captain1, $captain2], $operators);
+        // 7. Shift schedule, then the stations, operating sessions and
+        // contacts that follow the operator rotation it lays out.
+        $operatorShifts = $this->seedShifts($config, $event, $admin, $manager, $captain1, $captain2, $operators);
+        $this->seedStationsAndContacts($config, $event, [$captain1, $captain2], $operatorShifts, $operators);
 
         // 7b. Equipment inventory and station assignments
         $this->seedEquipment($config, $organization, $manager, $event, $captain2);
@@ -239,13 +260,13 @@ class DemoSeeder extends Seeder
         $this->seedBonuses($config, $manager, $event);
 
         // 9. Safety checklist (~60% complete)
-        $this->seedSafetyChecklist($captain1);
+        $this->seedSafetyChecklist($captain1, $event);
 
         // 10. Guestbook entries
         $this->seedGuestbook($config, $event, $manager);
 
-        // 11. Shift schedule
-        $this->seedShifts($config, $event, $admin, $manager, $captain1, $captain2, $operators);
+        // 11. Notification feed history, replayed from everything above
+        $this->seedNotificationHistory($config);
     }
 
     private function makeUser(
@@ -268,13 +289,56 @@ class DemoSeeder extends Seeder
 
         $user->assignRole($role);
 
+        // Members joined the club over the past few years, not today.
+        $joinedAt = now()->subDays(random_int(60, 1500))->setTime(random_int(8, 21), random_int(0, 59));
+        $this->backdate($user, $joinedAt, [
+            'email_verified_at' => $joinedAt->copy()->addMinutes(random_int(2, 90)),
+        ]);
+
         return $user;
     }
 
+    /**
+     * Stamp a seeded record with when it would really have been created.
+     *
+     * @param  array<string, mixed>  $extra
+     */
+    private function backdate(Model $model, Carbon $createdAt, array $extra = []): void
+    {
+        $model->forceFill([
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+            ...$extra,
+        ])->saveQuietly();
+    }
+
+    /**
+     * The later of two times, as a fresh instance so callers can adjust it
+     * without moving a model's own timestamp.
+     */
+    private function later(Carbon $first, Carbon $second): Carbon
+    {
+        return ($first->gt($second) ? $first : $second)->copy();
+    }
+
+    /**
+     * The earlier of two times, as a fresh instance.
+     */
+    private function earlier(Carbon $first, Carbon $second): Carbon
+    {
+        return ($first->lt($second) ? $first : $second)->copy();
+    }
+
+    /**
+     * @param  array<int, User>  $captains
+     * @param  array<int, Shift>  $operatorShifts
+     * @param  array<int, User>  $operators
+     */
     private function seedStationsAndContacts(
         EventConfiguration $config,
         Event $event,
         array $captains,
+        array $operatorShifts,
         array $operators
     ): void {
         [$captain1, $captain2] = $captains;
@@ -290,7 +354,6 @@ class DemoSeeder extends Seeder
                 'is_gota' => false,
                 'is_vhf_only' => false,
                 'captain' => $captain1,
-                'operator' => $operators[0],
                 'has_active' => true,
                 'radio_make' => 'Icom',
                 'radio_model' => 'IC-7300',
@@ -303,7 +366,6 @@ class DemoSeeder extends Seeder
                 'is_gota' => false,
                 'is_vhf_only' => false,
                 'captain' => $captain1,
-                'operator' => $operators[2],
                 'has_active' => true,
                 'radio_make' => 'Yaesu',
                 'radio_model' => 'FT-991A',
@@ -316,7 +378,6 @@ class DemoSeeder extends Seeder
                 'is_gota' => false,
                 'is_vhf_only' => false,
                 'captain' => $captain2,
-                'operator' => $operators[4],
                 'has_active' => false,
                 'radio_make' => 'Elecraft',
                 'radio_model' => 'K3S',
@@ -329,7 +390,6 @@ class DemoSeeder extends Seeder
                 'is_gota' => false,
                 'is_vhf_only' => false,
                 'captain' => $captain2,
-                'operator' => $operators[6],
                 'has_active' => true,
                 'radio_make' => 'Kenwood',
                 'radio_model' => 'TS-590SG',
@@ -342,12 +402,11 @@ class DemoSeeder extends Seeder
                 'is_gota' => false,
                 'is_vhf_only' => true,
                 'captain' => $captain2,
-                'operator' => $operators[7],
                 'has_active' => false,
                 'radio_make' => 'Kenwood',
                 'radio_model' => 'TM-V71A',
                 'radio_bands' => ['2m', '70cm'],
-                'historical_count' => [4, 8],
+                'contact_count' => [4, 8],
             ],
             [
                 'name' => 'GOTA',
@@ -356,13 +415,11 @@ class DemoSeeder extends Seeder
                 'is_gota' => true,
                 'is_vhf_only' => false,
                 'captain' => $captain1,
-                'operator' => $operators[8],
                 'has_active' => false,
                 'radio_make' => 'Icom',
                 'radio_model' => 'IC-718',
                 'radio_bands' => ['160m', '80m', '40m', '20m', '15m', '10m'],
-                'historical_count' => [5, 10],
-                'active_count' => [1, 3],
+                'contact_count' => [5, 10],
             ],
         ];
 
@@ -374,6 +431,8 @@ class DemoSeeder extends Seeder
                 fn (array $def): bool => ! $def['is_gota'],
             ));
         }
+
+        $hfStations = [];
 
         foreach ($stationDefs as $def) {
             $band = Band::where('name', $def['band'])->first();
@@ -406,60 +465,125 @@ class DemoSeeder extends Seeder
                 'max_power_watts' => 100,
             ]);
 
-            // Historical session (closed): event start → 35min ago
-            $historicalStart = $event->start_time->copy();
-            $historicalEnd = now()->subMinutes(35);
-            $historicalSession = OperatingSession::create([
-                'station_id' => $station->id,
-                'operator_user_id' => $def['operator']->id,
-                'band_id' => $band->id,
-                'mode_id' => $mode->id,
-                'start_time' => $historicalStart,
-                'end_time' => $historicalEnd,
-                'power_watts' => 100,
-                'qso_count' => 0,
-                'is_transcription' => false,
-                'is_supervised' => $def['is_gota'],
-            ]);
+            if (! $def['is_gota'] && ! $def['is_vhf_only']) {
+                $hfStations[] = ['station' => $station, 'band' => $band, 'mode' => $mode, 'has_active' => $def['has_active']];
 
-            $gotaOperators = null;
-            if ($def['is_gota']) {
-                $gotaOperators = [
-                    ['first_name' => 'Jamie', 'last_name' => 'Rivera', 'callsign' => null],
-                    ['first_name' => 'Morgan', 'last_name' => 'Chen', 'callsign' => null],
-                    ['first_name' => 'Taylor', 'last_name' => 'Brooks', 'callsign' => null],
-                ];
+                continue;
             }
 
-            [$histMin, $histMax] = $def['historical_count'] ?? [20, 30];
-            $historicalCount = random_int($histMin, $histMax);
-            $this->seedContacts($config, $historicalSession, $historicalCount, $historicalStart, $historicalEnd, $gotaOperators);
+            // VHF and GOTA each ran one short session early in the event. The
+            // VHF operator is free until greeting starts; GOTA is run by the
+            // on-duty coach with visitors at the mic.
+            $operator = $def['is_gota'] ? $operators[8] : $operators[9];
+            $start = $event->start_time->copy()->addMinutes(random_int(15, 35));
+            $end = $this->earlier($start->copy()->addMinutes(random_int(55, 80)), now()->subMinutes(5));
+            $gotaOperators = $def['is_gota'] ? [
+                ['first_name' => 'Jamie', 'last_name' => 'Rivera', 'callsign' => null],
+                ['first_name' => 'Morgan', 'last_name' => 'Chen', 'callsign' => null],
+                ['first_name' => 'Taylor', 'last_name' => 'Brooks', 'callsign' => null],
+            ] : null;
 
-            $historicalSession->update(['qso_count' => $historicalCount]);
+            [$countMin, $countMax] = $def['contact_count'];
+            $this->seedSession($config, $station, $operator, $band, $mode, $start, $end, random_int($countMin, $countMax), $gotaOperators);
+        }
 
-            // Active session (open): started 25min ago, no end_time
-            if ($def['has_active']) {
-                $activeStart = now()->subMinutes(25);
-                $activeSession = OperatingSession::create([
-                    'station_id' => $station->id,
-                    'operator_user_id' => $def['operator']->id,
-                    'band_id' => $band->id,
-                    'mode_id' => $mode->id,
-                    'start_time' => $activeStart,
-                    'end_time' => null,
-                    'power_watts' => 100,
-                    'qso_count' => 0,
-                    'is_transcription' => false,
-                    'is_supervised' => $def['is_gota'],
-                ]);
+        $this->seedHfSessions($config, $hfStations, $operatorShifts, $operators);
+    }
 
-                [$actMin, $actMax] = $def['active_count'] ?? [3, 8];
-                $activeCount = random_int($actMin, $actMax);
-                $this->seedContacts($config, $activeSession, $activeCount, $activeStart, now(), $gotaOperators);
+    /**
+     * Staff the HF stations from the operator rotation.
+     *
+     * Each crew member takes the station matching their crew position. A
+     * session starts a few minutes after the operator checks in (and after
+     * the outgoing operator has cleared the station) and ends when they
+     * check out, so handoffs are staggered rather than simultaneous. In the
+     * current block, a station without an active session is one whose
+     * operator stepped away a little while ago.
+     *
+     * @param  array<int, array{station: Station, band: Band, mode: Mode, has_active: bool}>  $hfStations
+     * @param  array<int, Shift>  $operatorShifts
+     * @param  array<int, User>  $operators
+     */
+    private function seedHfSessions(EventConfiguration $config, array $hfStations, array $operatorShifts, array $operators): void
+    {
+        $latestStart = now()->subMinute();
 
-                $activeSession->update(['qso_count' => $activeCount]);
+        foreach ($hfStations as $position => $hf) {
+            $previousEnd = null;
+
+            foreach ($operatorShifts as $block => $shift) {
+                if ($shift->start_time->isFuture()) {
+                    break;
+                }
+
+                $operator = $operators[self::HF_OPERATOR_CREWS[$block % 2][$position]];
+                $assignment = $shift->assignments->firstWhere('user_id', $operator->id);
+
+                $start = $this->later($assignment?->checked_in_at ?? $shift->start_time, $shift->start_time)
+                    ->addMinutes(random_int(1, 4));
+
+                if ($previousEnd) {
+                    $start = $this->later($start, $previousEnd->copy()->addMinutes(random_int(1, 3)));
+                }
+
+                $start = $this->earlier($start, $latestStart);
+
+                if ($previousEnd) {
+                    $start = $this->later($start, $previousEnd);
+                }
+
+                if ($shift->end_time->isFuture()) {
+                    $end = null;
+
+                    if (! $hf['has_active']) {
+                        $end = now()->subMinutes(random_int(10, 30));
+
+                        if ($end->lt($start->copy()->addMinutes(15))) {
+                            continue;
+                        }
+                    }
+                } else {
+                    $end = $this->later($this->earlier($assignment?->checked_out_at ?? $shift->end_time, $latestStart), $start);
+                }
+
+                $count = (int) round(abs($start->diffInMinutes($end ?? now())) * random_int(10, 16) / 60);
+                $this->seedSession($config, $hf['station'], $operator, $hf['band'], $hf['mode'], $start, $end, $count);
+
+                $previousEnd = $end;
             }
         }
+    }
+
+    /**
+     * @param  array<int, array{first_name: string, last_name: string, callsign: string|null}>|null  $gotaOperators
+     */
+    private function seedSession(
+        EventConfiguration $config,
+        Station $station,
+        User $operator,
+        Band $band,
+        Mode $mode,
+        Carbon $start,
+        ?Carbon $end,
+        int $contactCount,
+        ?array $gotaOperators = null,
+    ): void {
+        $session = OperatingSession::create([
+            'station_id' => $station->id,
+            'operator_user_id' => $operator->id,
+            'band_id' => $band->id,
+            'mode_id' => $mode->id,
+            'start_time' => $start,
+            'end_time' => $end,
+            'power_watts' => 100,
+            'qso_count' => 0,
+            'is_transcription' => false,
+            'is_supervised' => $station->is_gota,
+        ]);
+
+        $this->seedContacts($config, $session, $contactCount, $start, $end ?? now(), $gotaOperators);
+
+        $session->update(['qso_count' => $contactCount]);
     }
 
     private function seedEquipment(
@@ -535,8 +659,8 @@ class DemoSeeder extends Seeder
                 'station_id' => $station->id,
                 'assigned_by_user_id' => $manager->id,
                 'status' => 'delivered',
-                'committed_at' => $event->start_time,
-                'status_changed_at' => $event->start_time,
+                'committed_at' => $this->committedAt($event),
+                'status_changed_at' => $this->deliveredAt($event),
             ]);
 
             foreach ($items as $item) {
@@ -563,8 +687,8 @@ class DemoSeeder extends Seeder
                     'station_id' => $station->id,
                     'assigned_by_user_id' => $manager->id,
                     'status' => 'delivered',
-                    'committed_at' => $event->start_time,
-                    'status_changed_at' => $event->start_time,
+                    'committed_at' => $this->committedAt($event),
+                    'status_changed_at' => $this->deliveredAt($event),
                 ]);
             }
         }
@@ -589,16 +713,34 @@ class DemoSeeder extends Seeder
                 $equipment->bands()->attach($bandIds);
             }
 
+            $committedAt = $this->committedAt($event);
+
             EquipmentEvent::create([
                 'equipment_id' => $equipment->id,
                 'event_id' => $event->id,
                 'station_id' => null,
                 'assigned_by_user_id' => $manager->id,
                 'status' => 'committed',
-                'committed_at' => $event->start_time,
-                'status_changed_at' => $event->start_time,
+                'committed_at' => $committedAt,
+                'status_changed_at' => $committedAt,
             ]);
         }
+    }
+
+    /**
+     * When gear was pledged to the event: an evening in the weeks before.
+     */
+    private function committedAt(Event $event): Carbon
+    {
+        return $event->start_time->copy()->subDays(random_int(3, 21))->setTime(random_int(18, 21), random_int(0, 59));
+    }
+
+    /**
+     * When gear arrived on site: sometime during the setup window.
+     */
+    private function deliveredAt(Event $event): Carbon
+    {
+        return $event->start_time->copy()->subMinutes(random_int(30, 600));
     }
 
     /**
@@ -696,7 +838,7 @@ class DemoSeeder extends Seeder
                 'is_satellite' => false,
                 'points' => $contactPoints,
                 'is_duplicate' => false,
-            ]);
+            ])->forceFill(['created_at' => $qsoTime, 'updated_at' => $qsoTime])->saveQuietly();
         }
     }
 
@@ -745,6 +887,13 @@ class DemoSeeder extends Seeder
         return TransmitterCountGenerator::forClass($letter).$letter;
     }
 
+    /**
+     * Claim the bonuses a club would have in hand by now.
+     *
+     * Emergency power and the public location are set up and signed off
+     * during setup. The media publicity claim went in after the event started
+     * and is still waiting on the manager's review.
+     */
     private function seedBonuses(EventConfiguration $config, User $manager, Event $event): void
     {
         if ($this->isWinter()) {
@@ -761,7 +910,10 @@ class DemoSeeder extends Seeder
                 continue;
             }
 
-            EventBonus::create([
+            $claimedAt = $event->start_time->copy()->subMinutes(random_int(60, 240));
+            $verifiedAt = $claimedAt->copy()->addMinutes(random_int(10, 45));
+
+            $bonus = EventBonus::create([
                 'event_configuration_id' => $config->id,
                 'bonus_type_id' => $bonusType->id,
                 'claimed_by_user_id' => $manager->id,
@@ -769,23 +921,23 @@ class DemoSeeder extends Seeder
                 'calculated_points' => $bonusType->base_points,
                 'is_verified' => true,
                 'verified_by_user_id' => $manager->id,
-                'verified_at' => now()->subMinutes(30),
+                'verified_at' => $verifiedAt,
             ]);
+            $this->backdate($bonus, $claimedAt, ['updated_at' => $verifiedAt]);
         }
 
         $mediaBonusType = BonusType::resolveFor($event, 'media_publicity');
         if ($mediaBonusType) {
-            EventBonus::create([
+            $bonus = EventBonus::create([
                 'event_configuration_id' => $config->id,
                 'bonus_type_id' => $mediaBonusType->id,
                 'claimed_by_user_id' => $manager->id,
                 'quantity' => 1,
-                'calculated_points' => $mediaBonusType->base_points,
+                'calculated_points' => 0,
                 'notes' => 'Local newspaper article submitted for review',
-                'is_verified' => true,
-                'verified_by_user_id' => $manager->id,
-                'verified_at' => now()->subMinutes(20),
+                'is_verified' => false,
             ]);
+            $this->backdate($bonus, $event->start_time->copy()->addMinutes(random_int(40, 100))->min(now()->subMinutes(5)));
         }
     }
 
@@ -796,6 +948,8 @@ class DemoSeeder extends Seeder
      * alternative power, band and mode counts, QRP — are owned by their
      * strategies and reconciled from the logged contacts, so writing them here
      * would either duplicate or contradict what the scoring engine computes.
+     * Both are set up before the operating period, so they are claimed and
+     * verified during setup.
      */
     private function seedWinterObjectives(EventConfiguration $config, User $manager, Event $event): void
     {
@@ -811,7 +965,10 @@ class DemoSeeder extends Seeder
                 continue;
             }
 
-            EventBonus::create([
+            $claimedAt = $event->start_time->copy()->subMinutes(random_int(60, 240));
+            $verifiedAt = $claimedAt->copy()->addMinutes(random_int(10, 45));
+
+            $bonus = EventBonus::create([
                 'event_configuration_id' => $config->id,
                 'bonus_type_id' => $bonusType->id,
                 'claimed_by_user_id' => $manager->id,
@@ -820,12 +977,17 @@ class DemoSeeder extends Seeder
                 'notes' => $notes,
                 'is_verified' => true,
                 'verified_by_user_id' => $manager->id,
-                'verified_at' => now()->subMinutes(25),
+                'verified_at' => $verifiedAt,
             ]);
+            $this->backdate($bonus, $claimedAt, ['updated_at' => $verifiedAt]);
         }
     }
 
-    private function seedSafetyChecklist(User $captain): void
+    /**
+     * Work through most of the safety walk-through during setup, before the
+     * operating period begins.
+     */
+    private function seedSafetyChecklist(User $captain, Event $event): void
     {
         $items = SafetyChecklistItem::all();
 
@@ -841,7 +1003,7 @@ class DemoSeeder extends Seeder
                 ->update([
                     'is_completed' => true,
                     'completed_by_user_id' => $captain->id,
-                    'completed_at' => now()->subMinutes(random_int(10, 90)),
+                    'completed_at' => $event->start_time->copy()->subMinutes(random_int(15, 240)),
                 ]);
         }
     }
@@ -972,6 +1134,16 @@ class DemoSeeder extends Seeder
         }
     }
 
+    /**
+     * Lay out the volunteer schedule and return the operator shifts in order.
+     *
+     * The two HF crews alternate in 2-hour blocks across the whole event, and
+     * nobody holds two jobs at the same moment: GOTA coaching, greeting and
+     * VHF fall to the operators outside the HF rotation.
+     *
+     * @param  array<int, User>  $operators
+     * @return array<int, Shift>
+     */
     private function seedShifts(
         EventConfiguration $config,
         Event $event,
@@ -980,7 +1152,7 @@ class DemoSeeder extends Seeder
         User $captain1,
         User $captain2,
         array $operators
-    ): void {
+    ): array {
         $roles = ShiftRole::where('event_configuration_id', $config->id)
             ->get()
             ->keyBy('name');
@@ -989,24 +1161,19 @@ class DemoSeeder extends Seeder
         // so the schedule reads like one a club would actually publish.
         $at = fn (int $hours): Carbon => $event->start_time->copy()->addHours($hours);
 
-        // ── Operator shifts: 2-hour blocks over the first 12 hours ───────────
-        // One finished block, the current block, and four upcoming blocks.
-        // 4 operators per slot covers the 4 HF stations.
-        $operatorSlots = [
-            ['start' => 0,  'ops' => [0, 1, 2, 3]],
-            ['start' => 2,  'ops' => [4, 5, 6, 7]],
-            ['start' => 4,  'ops' => [8, 9, 0, 1]],
-            ['start' => 6,  'ops' => [2, 3, 4, 5]],
-            ['start' => 8,  'ops' => [6, 7, 8, 9]],
-            ['start' => 10, 'ops' => [0, 2, 4, 6]],
-        ];
+        // ── Operator shifts: 2-hour blocks, crews alternating ─────────────────
+        // One spot per block is left open for a walk-in volunteer.
+        $operatorShifts = [];
 
         if ($roles->has('Operator')) {
-            foreach ($operatorSlots as $slot) {
-                $shift = $this->makeShift($config, $roles['Operator'], $at($slot['start']), $at($slot['start'] + 2), 5);
-                foreach ($slot['ops'] as $i) {
+            for ($block = 0; $block < 12; $block++) {
+                $shift = $this->makeShift($config, $roles['Operator'], $at($block * 2), $at($block * 2 + 2), 5);
+
+                foreach (self::HF_OPERATOR_CREWS[$block % 2] as $i) {
                     $this->assign($shift, $operators[$i]);
                 }
+
+                $operatorShifts[] = $shift->load('assignments');
             }
         }
 
@@ -1037,16 +1204,15 @@ class DemoSeeder extends Seeder
         // ── GOTA Coach: daytime coverage ──────────────────────────────────────
         if ($roles->has('GOTA Coach')) {
             $gc1 = $this->makeShift($config, $roles['GOTA Coach'], $at(0), $at(8), 1);
-            $this->assign($gc1, $operators[3]);
+            $this->assign($gc1, $operators[8]);
 
             $gc2 = $this->makeShift($config, $roles['GOTA Coach'], $at(8), $at(16), 1);
-            $this->assign($gc2, $operators[7]);
+            $this->assign($gc2, $operators[9]);
         }
 
-        // ── Public Greeter: afternoon visiting hours ─────────────────────────
+        // ── Public Greeter: afternoon visiting hours, one spot still open ────
         if ($roles->has('Public Greeter')) {
-            $pg = $this->makeShift($config, $roles['Public Greeter'], $at(2), $at(10), 2);
-            $this->assign($pg, $operators[5]);
+            $pg = $this->makeShift($config, $roles['Public Greeter'], $at(2), $at(8), 2);
             $this->assign($pg, $operators[9]);
         }
 
@@ -1059,7 +1225,132 @@ class DemoSeeder extends Seeder
         // ── Message Handler: one shift ─────────────────────────────────────────
         if ($roles->has('Message Handler')) {
             $msg = $this->makeShift($config, $roles['Message Handler'], $at(4), $at(12), 1);
-            $this->assign($msg, $operators[1]);
+            $this->assign($msg, $admin);
+        }
+
+        return $operatorShifts;
+    }
+
+    /**
+     * Rebuild the notification feed as it would have filled in during the
+     * event so far.
+     *
+     * The notifying observers are silenced while seeding, so this walks the
+     * seeded sessions, contacts and guestbook in time order and writes the
+     * notifications they would have raised, batched the way
+     * NotificationService debounces them. They are written straight to the
+     * table rather than through the service so seeding never broadcasts.
+     * Anything older than half an hour has already been read.
+     */
+    private function seedNotificationHistory(EventConfiguration $config): void
+    {
+        $timeline = collect();
+        $push = function (Carbon $at, NotificationCategory $category, string $title, string $message, string $url, string $groupKey) use ($timeline): void {
+            $timeline->push(compact('at', 'category', 'title', 'message', 'url', 'groupKey'));
+        };
+
+        OperatingSession::with(['operator', 'station'])->get()->each(function (OperatingSession $session) use ($push) {
+            $stationName = $session->station?->name ?? 'a station';
+            $groupKey = "station_status_{$session->station_id}";
+
+            $push($session->start_time, NotificationCategory::StationStatus, 'Station Occupied',
+                ($session->operator?->call_sign ?? 'Someone')." started operating at {$stationName}", '/stations', $groupKey);
+
+            if ($session->end_time) {
+                $push($session->end_time, NotificationCategory::StationStatus, 'Station Available',
+                    "{$stationName} is now available", '/stations', $groupKey);
+            }
+        });
+
+        $sectionsWorked = [];
+        $contactsLogged = 0;
+
+        Contact::with(['section', 'band', 'mode', 'operatingSession.operator'])
+            ->orderBy('qso_time')
+            ->orderBy('id')
+            ->get()
+            ->each(function (Contact $contact) use ($push, $config, &$sectionsWorked, &$contactsLogged) {
+                $contactsLogged++;
+
+                if (! isset($sectionsWorked[$contact->section_id])) {
+                    $sectionsWorked[$contact->section_id] = true;
+                    $opCall = $contact->operatingSession?->operator?->call_sign ?? 'Unknown';
+
+                    $push($contact->qso_time, NotificationCategory::NewSection, 'New Section Worked!',
+                        "{$opCall} worked {$contact->section?->code} on {$contact->band?->name} {$contact->mode?->name}",
+                        '/logbook', "new_section_event_{$config->id}");
+                }
+
+                if ($contactsLogged % 50 === 0) {
+                    $push($contact->qso_time, NotificationCategory::QsoMilestone, 'QSO Milestone!',
+                        "Congratulations! {$contactsLogged} QSOs logged for this event!", '/logbook', "qso_milestone_{$contactsLogged}");
+                }
+            });
+
+        GuestbookEntry::all()->each(function (GuestbookEntry $entry) use ($push) {
+            $visitorName = trim("{$entry->first_name} {$entry->last_name}");
+            $callsign = $entry->callsign ? " ({$entry->callsign})" : '';
+
+            $push($entry->created_at, NotificationCategory::Guestbook, 'New Guestbook Entry',
+                "{$visitorName}{$callsign} signed the guestbook", '/guestbook', 'guestbook_entries');
+        });
+
+        $notifications = [];
+        $latestByGroup = [];
+
+        foreach ($timeline->sortBy(fn (array $item): int => $item['at']->getTimestamp())->values() as $item) {
+            $index = $latestByGroup[$item['groupKey']] ?? null;
+            $debounceSeconds = $item['category']->debounceSeconds();
+
+            if ($index !== null && $debounceSeconds > 0
+                && $item['at']->getTimestamp() - $notifications[$index]['at']->getTimestamp() <= $debounceSeconds) {
+                $notifications[$index]['count']++;
+                $notifications[$index]['message'] = $item['message'];
+                $notifications[$index]['title'] = $item['category']->batchedTitle($notifications[$index]['count']) ?? $notifications[$index]['title'];
+                $notifications[$index]['updatedAt'] = $item['at'];
+
+                continue;
+            }
+
+            $latestByGroup[$item['groupKey']] = count($notifications);
+            $notifications[] = $item + ['count' => 1, 'updatedAt' => $item['at']];
+        }
+
+        $readBefore = now()->subMinutes(30);
+        $rows = [];
+
+        foreach (User::all() as $user) {
+            foreach ($notifications as $notification) {
+                if (! $user->isSubscribedTo($notification['category'])) {
+                    continue;
+                }
+
+                $payload = (new InAppNotification(
+                    category: $notification['category'],
+                    title: $notification['title'],
+                    message: $notification['message'],
+                    url: $notification['url'],
+                    groupKey: $notification['groupKey'],
+                    count: $notification['count'],
+                ))->toArray($user);
+
+                $rows[] = [
+                    'id' => (string) Str::uuid(),
+                    'type' => InAppNotification::class,
+                    'notifiable_type' => $user->getMorphClass(),
+                    'notifiable_id' => $user->id,
+                    'data' => json_encode($payload),
+                    'read_at' => $notification['updatedAt']->lt($readBefore)
+                        ? $notification['updatedAt']->copy()->addMinutes(random_int(1, 15))
+                        : null,
+                    'created_at' => $notification['at'],
+                    'updated_at' => $notification['updatedAt'],
+                ];
+            }
+        }
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            DB::table('notifications')->insert($chunk);
         }
     }
 
