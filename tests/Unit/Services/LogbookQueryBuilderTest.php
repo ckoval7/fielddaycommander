@@ -530,12 +530,8 @@ describe('forCallsign', function () {
 
 describe('forSection', function () {
     test('filters contacts by a single section ID', function () {
-        $section = Section::where('code', 'CT')->first();
-        $otherSection = Section::where('code', '!=', 'CT')->first();
-
-        if (! $section || ! $otherSection) {
-            $this->markTestSkipped('Required sections not found in database');
-        }
+        $section = Section::firstOrCreate(['code' => 'CT'], ['name' => 'Connecticut', 'region' => 'W1']);
+        $otherSection = Section::factory()->create(['code' => 'ME', 'name' => 'Maine']);
 
         Contact::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
@@ -555,19 +551,9 @@ describe('forSection', function () {
     });
 
     test('filters contacts by multiple section IDs', function () {
-        $sections = Section::orderBy('code')->take(2)->get();
-
-        if ($sections->count() < 2) {
-            $this->markTestSkipped('Not enough sections in database');
-        }
-
-        $section1 = $sections->first();
-        $section2 = $sections->last();
-        $otherSection = Section::whereNotIn('id', [$section1->id, $section2->id])->first();
-
-        if (! $otherSection) {
-            $this->markTestSkipped('Not enough sections in database');
-        }
+        $section1 = Section::firstOrCreate(['code' => 'CT'], ['name' => 'Connecticut', 'region' => 'W1']);
+        $section2 = Section::factory()->create(['code' => 'ME', 'name' => 'Maine']);
+        $otherSection = Section::factory()->create(['code' => 'VT', 'name' => 'Vermont']);
 
         Contact::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
@@ -821,10 +807,7 @@ describe('applyFilters with deleted_filter', function () {
 
 describe('applyFilters', function () {
     test('applies all filters together', function () {
-        $section = Section::where('code', 'CT')->first();
-        if (! $section) {
-            $this->markTestSkipped('Required section not found in database');
-        }
+        $section = Section::firstOrCreate(['code' => 'CT'], ['name' => 'Connecticut', 'region' => 'W1']);
 
         $session = OperatingSession::factory()->create([
             'station_id' => $this->station->id,

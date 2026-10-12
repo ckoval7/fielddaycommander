@@ -50,77 +50,115 @@ test('component sets no event configuration when no active event', function () {
     expect($component->eventConfigurationId)->toBeNull();
 });
 
-test('bandIds property can be set', function () {
-    $component = new LogbookBrowser;
+/**
+ * Render the browser with the given filter state and return the visible contact IDs.
+ *
+ * @param  array<string, mixed>  $filters
+ * @return array<int, int>
+ */
+function filteredContactIds(array $filters): array
+{
+    $component = Livewire::test(LogbookBrowser::class);
 
-    $component->bandIds = [$this->band->id];
+    foreach ($filters as $property => $value) {
+        $component->set($property, $value);
+    }
 
-    expect($component->bandIds)->toBe([$this->band->id]);
-});
+    return collect($component->instance()->contacts->items())->pluck('id')->sort()->values()->all();
+}
 
-test('modeIds property can be set', function () {
-    $component = new LogbookBrowser;
+describe('filters narrow the contact results', function () {
+    beforeEach(function () {
+        $this->contactFor = fn (array $attributes = []) => Contact::factory()->create(array_merge([
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'section_id' => $this->section->id,
+        ], $attributes));
+    });
 
-    $component->modeIds = [$this->mode->id];
+    test('bandIds limits results to the selected bands', function () {
+        $otherBand = Band::create(['name' => '40m', 'meters' => 40, 'frequency_mhz' => 7.075]);
+        $match = ($this->contactFor)();
+        ($this->contactFor)(['band_id' => $otherBand->id]);
 
-    expect($component->modeIds)->toBe([$this->mode->id]);
-});
+        expect(filteredContactIds(['bandIds' => [$this->band->id]]))->toBe([$match->id]);
+    });
 
-test('stationIds property can be set', function () {
-    $component = new LogbookBrowser;
+    test('modeIds limits results to the selected modes', function () {
+        $otherMode = Mode::create(['name' => 'CW', 'category' => 'CW']);
+        $match = ($this->contactFor)();
+        ($this->contactFor)(['mode_id' => $otherMode->id]);
 
-    $component->stationIds = [$this->station->id];
+        expect(filteredContactIds(['modeIds' => [$this->mode->id]]))->toBe([$match->id]);
+    });
 
-    expect($component->stationIds)->toBe([$this->station->id]);
-});
+    test('stationIds limits results to sessions on the selected stations', function () {
+        $otherStation = Station::factory()->create(['event_configuration_id' => $this->eventConfiguration->id]);
+        $match = ($this->contactFor)([
+            'operating_session_id' => OperatingSession::factory()->create(['station_id' => $this->station->id])->id,
+        ]);
+        ($this->contactFor)([
+            'operating_session_id' => OperatingSession::factory()->create(['station_id' => $otherStation->id])->id,
+        ]);
 
-test('operatorIds property can be set', function () {
-    $operator = User::factory()->create();
+        expect(filteredContactIds(['stationIds' => [$this->station->id]]))->toBe([$match->id]);
+    });
 
-    $component = new LogbookBrowser;
-    $component->operatorIds = [$operator->id];
+    test('operatorIds limits results to contacts logged by the selected operators', function () {
+        $operator = User::factory()->create();
+        $match = ($this->contactFor)(['logger_user_id' => $operator->id]);
+        ($this->contactFor)(['logger_user_id' => User::factory()->create()->id]);
 
-    expect($component->operatorIds)->toBe([$operator->id]);
-});
+        expect(filteredContactIds(['operatorIds' => [$operator->id]]))->toBe([$match->id]);
+    });
 
-test('timeFrom property can be set', function () {
-    $component = new LogbookBrowser;
+    test('timeFrom excludes contacts before the start of the range', function () {
+        ($this->contactFor)(['qso_time' => '2025-02-07 09:00:00']);
+        $match = ($this->contactFor)(['qso_time' => '2025-02-07 11:00:00']);
 
-    $component->timeFrom = '2025-02-07 10:00:00';
+        expect(filteredContactIds(['timeFrom' => '2025-02-07 10:00:00']))->toBe([$match->id]);
+    });
 
-    expect($component->timeFrom)->toBe('2025-02-07 10:00:00');
-});
+    test('timeTo excludes contacts after the end of the range', function () {
+        $match = ($this->contactFor)(['qso_time' => '2025-02-07 19:00:00']);
+        ($this->contactFor)(['qso_time' => '2025-02-07 21:00:00']);
 
-test('timeTo property can be set', function () {
-    $component = new LogbookBrowser;
+        expect(filteredContactIds(['timeTo' => '2025-02-07 20:00:00']))->toBe([$match->id]);
+    });
 
-    $component->timeTo = '2025-02-07 20:00:00';
+    test('callsignSearch matches partial callsigns case-insensitively', function () {
+        $match = ($this->contactFor)(['callsign' => 'W1AW']);
+        ($this->contactFor)(['callsign' => 'K2XYZ']);
 
-    expect($component->timeTo)->toBe('2025-02-07 20:00:00');
-});
+        expect(filteredContactIds(['callsignSearch' => '1aw']))->toBe([$match->id]);
+    });
 
-test('callsignSearch property can be set', function () {
-    $component = new LogbookBrowser;
+    test('sectionIds limits results to the selected sections', function () {
+        $otherSection = Section::factory()->create(['code' => 'ME', 'name' => 'Maine']);
+        $match = ($this->contactFor)();
+        ($this->contactFor)(['section_id' => $otherSection->id]);
 
-    $component->callsignSearch = 'W1AW';
+        expect(filteredContactIds(['sectionIds' => [$this->section->id]]))->toBe([$match->id]);
+    });
 
-    expect($component->callsignSearch)->toBe('W1AW');
-});
+    test('showDuplicates filters by duplicate status', function (string $value, bool $expectDuplicate) {
+        $unique = ($this->contactFor)();
+        $duplicate = ($this->contactFor)(['is_duplicate' => true, 'points' => 0]);
 
-test('sectionIds property can be set', function () {
-    $component = new LogbookBrowser;
+        $expected = $expectDuplicate ? $duplicate->id : $unique->id;
 
-    $component->sectionIds = [$this->section->id];
+        expect(filteredContactIds(['showDuplicates' => $value]))->toBe([$expected]);
+    })->with([
+        'only' => ['only', true],
+        'exclude' => ['exclude', false],
+    ]);
 
-    expect($component->sectionIds)->toBe([$this->section->id]);
-});
+    test('no filters returns every active contact for the event', function () {
+        $contacts = collect([($this->contactFor)(), ($this->contactFor)()]);
 
-test('showDuplicates property can be set', function () {
-    $component = new LogbookBrowser;
-
-    $component->showDuplicates = 'only';
-
-    expect($component->showDuplicates)->toBe('only');
+        expect(filteredContactIds([]))->toBe($contacts->pluck('id')->sort()->values()->all());
+    });
 });
 
 test('reset filters clears all filter values', function () {
@@ -144,10 +182,12 @@ test('updated filter property clears selections and resets page', function (stri
     $component = new LogbookBrowser;
     $component->mount();
     $component->selectedIds = [1, 2, 3];
+    $component->setPage(3);
 
     $component->updated($property);
 
-    expect($component->selectedIds)->toBe([]);
+    expect($component->selectedIds)->toBe([])
+        ->and($component->getPage())->toBe(1);
 })->with([
     'bandIds',
     'modeIds',
@@ -317,20 +357,26 @@ describe('showDeleted filter', function () {
 });
 
 describe('event listeners', function () {
-    test('contact-updated refreshes contacts', function () {
-        Livewire::test(LogbookBrowser::class)
-            ->dispatch('contact-updated');
-    });
+    test('contact change events clear the selection and re-query contacts and stats', function (string $event) {
+        $component = Livewire::test(LogbookBrowser::class)
+            ->set('selectedIds', [1, 2]);
 
-    test('contact-deleted refreshes contacts', function () {
-        Livewire::test(LogbookBrowser::class)
-            ->dispatch('contact-deleted');
-    });
+        expect($component->instance()->stats['total_qsos'])->toBe(0);
 
-    test('contact-restored refreshes contacts', function () {
-        Livewire::test(LogbookBrowser::class)
-            ->dispatch('contact-restored');
-    });
+        $contact = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'N1NEW',
+        ]);
+
+        $component->dispatch($event)
+            ->assertSet('selectedIds', [])
+            ->assertSee('N1NEW');
+
+        expect($component->instance()->stats['total_qsos'])->toBe(1)
+            ->and($component->instance()->contacts->items()[0]->id)->toBe($contact->id);
+    })->with(['contact-updated', 'contact-deleted', 'contact-restored']);
 });
 
 describe('activeFilterCount', function () {

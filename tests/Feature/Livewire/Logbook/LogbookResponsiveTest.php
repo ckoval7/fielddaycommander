@@ -126,10 +126,7 @@ describe('responsive class validation', function () {
     });
 
     test('contacts are filtered by band', function () {
-        $band = Band::first();
-        if (! $band) {
-            $this->markTestSkipped('No bands in database');
-        }
+        $band = Band::firstWhere('name', '6m') ?? Band::factory()->create(['name' => '6m', 'meters' => 6]);
 
         // Create contacts with specific band
         Contact::factory(3)->create([
@@ -141,15 +138,13 @@ describe('responsive class validation', function () {
         $component = Livewire::test(LogbookBrowser::class)
             ->set('bandIds', [$band->id]);
 
-        $contacts = $component->get('contacts');
-        expect($contacts->every(fn ($contact) => $contact->band_id === $band->id))->toBeTrue();
+        $contacts = collect($component->get('contacts')->items());
+        expect($contacts)->toHaveCount(3)
+            ->and($contacts->every(fn ($contact) => $contact->band_id === $band->id))->toBeTrue();
     });
 
     test('contacts are filtered by mode', function () {
-        $mode = Mode::first();
-        if (! $mode) {
-            $this->markTestSkipped('No modes in database');
-        }
+        $mode = Mode::firstWhere('name', 'FT8') ?? Mode::factory()->create(['name' => 'FT8', 'category' => 'Digital']);
 
         // Create contacts with specific mode
         Contact::factory(3)->create([
@@ -161,8 +156,9 @@ describe('responsive class validation', function () {
         $component = Livewire::test(LogbookBrowser::class)
             ->set('modeIds', [$mode->id]);
 
-        $contacts = $component->get('contacts');
-        expect($contacts->every(fn ($contact) => $contact->mode_id === $mode->id))->toBeTrue();
+        $contacts = collect($component->get('contacts')->items());
+        expect($contacts)->toHaveCount(3)
+            ->and($contacts->every(fn ($contact) => $contact->mode_id === $mode->id))->toBeTrue();
     });
 
     test('callsign search filters contacts', function () {
