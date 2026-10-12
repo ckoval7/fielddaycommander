@@ -3,6 +3,7 @@
 use App\Models\EventConfiguration;
 use App\Models\ExternalLoggerSetting;
 use App\Services\ExternalLoggerManager;
+use App\Services\ListenerProcessRunner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,49 @@ beforeEach(function () {
     );
 
     $this->config = EventConfiguration::factory()->create();
-    $this->manager = new ExternalLoggerManager;
+
+    // Fake the OS process layer so no real processes are spawned or signalled.
+    $this->processRunner = new class extends ListenerProcessRunner
+    {
+        /** @var list<string> */
+        public array $spawnedCommands = [];
+
+        /** @var list<int> */
+        public array $terminatedPids = [];
+
+        /** @var list<int> */
+        public array $alivePids = [];
+
+        /** @var array<int, string> */
+        public array $commandLines = [];
+
+        public ?int $nextPid = 424242;
+
+        public function spawnDetached(string $command): ?int
+        {
+            $this->spawnedCommands[] = $command;
+
+            return $this->nextPid;
+        }
+
+        public function isAlive(int $pid): bool
+        {
+            return in_array($pid, $this->alivePids, true);
+        }
+
+        public function terminate(int $pid): void
+        {
+            $this->terminatedPids[] = $pid;
+            $this->alivePids = array_values(array_diff($this->alivePids, [$pid]));
+        }
+
+        public function commandLine(int $pid): ?string
+        {
+            return $this->commandLines[$pid] ?? null;
+        }
+    };
+
+    $this->manager = new ExternalLoggerManager($this->processRunner);
 });
 
 test('creates setting when enabling for first time', function () {
@@ -118,7 +161,7 @@ test('gets all enabled settings across events', function () {
         ->and($enabled->first()->event_configuration_id)->toBe($this->config->id);
 });
 
-test('startProcess spawns background process and stores pid', function () {
+test('startProcess spawns detached listener command and stores pid', function () {
     $setting = ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
@@ -126,42 +169,65 @@ test('startProcess spawns background process and stores pid', function () {
         'port' => 12060,
     ]);
 
-    $this->manager->startProcess($this->config->id, 'n1mm');
+    $pid = $this->manager->startProcess($this->config->id, 'n1mm');
 
-    $setting->refresh();
-    expect($setting->pid)->toBeInt()
-        ->and($setting->pid)->toBeGreaterThan(0);
+    expect($pid)->toBe(424242)
+        ->and($setting->refresh()->pid)->toBe(424242)
+        ->and($this->processRunner->spawnedCommands)->toHaveCount(1)
+        ->and($this->processRunner->spawnedCommands[0])
+        ->toContain("external-logger:n1mm --event={$this->config->id}")
+        ->toContain('artisan')
+        ->toEndWith('& echo $!');
+});
 
-    // Clean up: kill the spawned process
-    if ($setting->pid && posix_kill($setting->pid, 0)) {
-        posix_kill($setting->pid, SIGTERM);
-    }
+test('startProcess returns null and leaves pid unset when spawn reports no pid', function () {
+    $setting = ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+    ]);
+    $this->processRunner->nextPid = null;
+
+    expect($this->manager->startProcess($this->config->id, 'n1mm'))->toBeNull()
+        ->and($setting->refresh()->pid)->toBeNull();
+});
+
+test('startProcess returns null without spawning when no setting exists', function () {
+    expect($this->manager->startProcess($this->config->id, 'n1mm'))->toBeNull()
+        ->and($this->processRunner->spawnedCommands)->toBeEmpty();
 });
 
 test('stopProcess sends SIGTERM and clears pid', function () {
-    // Start a dummy sleep process to get a real PID
-    $output = [];
-    exec('sleep 60 & echo $!', $output);
-    $dummyPid = (int) $output[0];
+    $this->processRunner->alivePids = [31337];
 
     $setting = ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
         'is_enabled' => true,
         'port' => 12060,
-        'pid' => $dummyPid,
+        'pid' => 31337,
     ]);
 
     $this->manager->stopProcess($this->config->id, 'n1mm');
 
-    $setting->refresh();
-    expect($setting->pid)->toBeNull();
+    expect($setting->refresh()->pid)->toBeNull()
+        ->and($this->processRunner->terminatedPids)->toBe([31337]);
+});
 
-    // Give process time to terminate
-    usleep(50000);
+test('stopProcess clears pid without signalling a dead process', function () {
+    $setting = ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => 31337,
+    ]);
 
-    // Verify the process was killed
-    expect(posix_kill($dummyPid, 0))->toBeFalse();
+    $this->manager->stopProcess($this->config->id, 'n1mm');
+
+    expect($setting->refresh()->pid)->toBeNull()
+        ->and($this->processRunner->terminatedPids)->toBeEmpty();
 });
 
 test('getProcessStatus returns stopped when disabled', function () {
@@ -217,37 +283,30 @@ test('getProcessStatus returns crashed when enabled with dead pid and no heartbe
 });
 
 test('getProcessStatus returns starting when enabled with alive listener pid but no heartbeat', function () {
-    // Spawn a process whose /proc/pid/cmdline contains the listener signature
-    $output = [];
-    exec("bash -c 'sleep 60; true' external-logger:n1mm > /dev/null 2>&1 & echo \$!", $output);
-    $listenerPid = (int) $output[0];
+    $this->processRunner->commandLines[31337] = "php\0artisan\0external-logger:n1mm\0--event={$this->config->id}\0";
 
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
         'is_enabled' => true,
         'port' => 12060,
-        'pid' => $listenerPid,
+        'pid' => 31337,
     ]);
 
     $status = $this->manager->getProcessStatus($this->config->id, 'n1mm');
 
     expect($status)->toBe('starting');
-
-    // Clean up
-    posix_kill($listenerPid, SIGTERM);
 });
 
 test('getProcessStatus returns crashed when pid reused by unrelated process', function () {
-    // Current PHP process is alive but its cmdline is not our listener
-    $unrelatedPid = getmypid();
+    $this->processRunner->commandLines[31337] = "/usr/sbin/sshd\0-D\0";
 
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
         'is_enabled' => true,
         'port' => 12060,
-        'pid' => $unrelatedPid,
+        'pid' => 31337,
     ]);
 
     $status = $this->manager->getProcessStatus($this->config->id, 'n1mm');
@@ -294,7 +353,9 @@ test('getHeartbeat returns null when no heartbeat cached', function () {
     expect($result)->toBeNull();
 });
 
-test('attemptRestart starts process and returns true when no cooldown', function () {
+test('attemptRestart stops old process, starts a new one and sets cooldown', function () {
+    $this->processRunner->alivePids = [99999];
+
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
@@ -311,17 +372,24 @@ test('attemptRestart starts process and returns true when no cooldown', function
         ->where('listener_type', 'n1mm')
         ->first();
 
-    // Should have a new PID
-    expect($setting->pid)->not->toBe(99999)
-        ->and($setting->pid)->toBeGreaterThan(0);
+    expect($setting->pid)->toBe(424242)
+        ->and($this->processRunner->terminatedPids)->toBe([99999])
+        ->and($this->processRunner->spawnedCommands)->toHaveCount(1)
+        ->and(Cache::has("external-logger:n1mm:{$this->config->id}:restart-cooldown"))->toBeTrue();
+});
 
-    // Cooldown should be set
-    expect(Cache::has("external-logger:n1mm:{$this->config->id}:restart-cooldown"))->toBeTrue();
+test('attemptRestart returns false without cooldown when spawn fails', function () {
+    $this->processRunner->nextPid = null;
 
-    // Clean up spawned process
-    if ($setting->pid && posix_kill($setting->pid, 0)) {
-        posix_kill($setting->pid, SIGTERM);
-    }
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+    ]);
+
+    expect($this->manager->attemptRestart($this->config->id, 'n1mm'))->toBeFalse()
+        ->and(Cache::has("external-logger:n1mm:{$this->config->id}:restart-cooldown"))->toBeFalse();
 });
 
 test('attemptRestart returns false during cooldown', function () {
@@ -337,5 +405,7 @@ test('attemptRestart returns false during cooldown', function () {
 
     $result = $this->manager->attemptRestart($this->config->id, 'n1mm');
 
-    expect($result)->toBeFalse();
+    expect($result)->toBeFalse()
+        ->and($this->processRunner->spawnedCommands)->toBeEmpty()
+        ->and($this->processRunner->terminatedPids)->toBeEmpty();
 });

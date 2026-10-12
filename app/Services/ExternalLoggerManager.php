@@ -10,6 +10,8 @@ use function Illuminate\Support\php_binary;
 
 class ExternalLoggerManager
 {
+    public function __construct(private ListenerProcessRunner $processRunner = new ListenerProcessRunner) {}
+
     public function enable(int $eventConfigurationId, string $listenerType, int $port): ExternalLoggerSetting
     {
         return ExternalLoggerSetting::updateOrCreate(
@@ -61,8 +63,6 @@ class ExternalLoggerManager
             return null;
         }
 
-        // Start as a detached background process. Using exec() with & instead of
-        // Symfony Process because its __destruct() kills the child on GC.
         $command = sprintf(
             '%s %s external-logger:%s --event=%d > /dev/null 2>&1 & echo $!',
             escapeshellarg(php_binary()),
@@ -71,11 +71,9 @@ class ExternalLoggerManager
             $eventConfigurationId,
         );
 
-        $output = [];
-        exec($command, $output);
-        $pid = (int) ($output[0] ?? 0);
+        $pid = $this->processRunner->spawnDetached($command);
 
-        if ($pid > 0) {
+        if ($pid !== null) {
             $setting->update(['pid' => $pid]);
 
             return $pid;
@@ -91,8 +89,8 @@ class ExternalLoggerManager
             return;
         }
 
-        if ($setting->pid !== null && posix_kill($setting->pid, 0)) {
-            posix_kill($setting->pid, SIGTERM);
+        if ($setting->pid !== null && $this->processRunner->isAlive($setting->pid)) {
+            $this->processRunner->terminate($setting->pid);
         }
 
         $setting->update(['pid' => null]);
@@ -131,9 +129,9 @@ class ExternalLoggerManager
      */
     private function isListenerProcess(int $pid, string $listenerType): bool
     {
-        $cmdline = @file_get_contents("/proc/{$pid}/cmdline");
+        $cmdline = $this->processRunner->commandLine($pid);
 
-        if ($cmdline === false) {
+        if ($cmdline === null) {
             return false;
         }
 
