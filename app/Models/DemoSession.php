@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DemoSession extends Model
 {
-    protected $connection = 'mysql';
-
     protected $fillable = [
         'session_uuid',
         'role',
@@ -70,5 +68,14 @@ class DemoSession extends Model
     public static function visitorHash(string $ip): string
     {
         return hash('sha256', $ip.config('app.key'));
+    }
+
+    /**
+     * Analytics always live on the main database, never the per-visitor
+     * demo connection that DemoMiddleware swaps in.
+     */
+    public function getConnectionName(): ?string
+    {
+        return $this->connection ?? config('demo.analytics_connection');
     }
 }

@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DemoEvent extends Model
 {
-    protected $connection = 'mysql';
-
     public $timestamps = false;
 
     protected $fillable = [
@@ -38,5 +36,14 @@ class DemoEvent extends Model
         static::creating(function (self $event) {
             $event->created_at ??= now();
         });
+    }
+
+    /**
+     * Analytics always live on the main database, never the per-visitor
+     * demo connection that DemoMiddleware swaps in.
+     */
+    public function getConnectionName(): ?string
+    {
+        return $this->connection ?? config('demo.analytics_connection');
     }
 }

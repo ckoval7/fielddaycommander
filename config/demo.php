@@ -50,6 +50,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Analytics Connection
+    |--------------------------------------------------------------------------
+    |
+    | Database connection that stores demo sessions and events. It must be the
+    | main database, not the per-visitor demo connection.
+    |
+    */
+
+    'analytics_connection' => env('DEMO_ANALYTICS_CONNECTION', 'mysql'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Simulator Cache Store
     |--------------------------------------------------------------------------
     |

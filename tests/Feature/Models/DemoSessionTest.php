@@ -126,3 +126,25 @@ it('exposes a visitor_id accessor with the first 8 chars of visitor_hash', funct
 
     expect($session->visitor_id)->toBe('a3f9c2b1');
 });
+
+it('stores analytics on the configured analytics connection', function () {
+    config(['demo.analytics_connection' => 'analytics-test']);
+
+    expect((new DemoSession)->getConnectionName())->toBe('analytics-test')
+        ->and((new DemoEvent)->getConnectionName())->toBe('analytics-test');
+});
+
+it('defaults the analytics connection to the main mysql database', function () {
+    expect(require config_path('demo.php'))->toHaveKey('analytics_connection');
+
+    $previous = getenv('DEMO_ANALYTICS_CONNECTION');
+    putenv('DEMO_ANALYTICS_CONNECTION');
+    unset($_ENV['DEMO_ANALYTICS_CONNECTION'], $_SERVER['DEMO_ANALYTICS_CONNECTION']);
+
+    try {
+        expect((require config_path('demo.php'))['analytics_connection'])->toBe('mysql');
+    } finally {
+        putenv("DEMO_ANALYTICS_CONNECTION={$previous}");
+        $_ENV['DEMO_ANALYTICS_CONNECTION'] = $_SERVER['DEMO_ANALYTICS_CONNECTION'] = $previous;
+    }
+});
