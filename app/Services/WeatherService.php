@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Events\WeatherAlertChanged;
 use App\Models\Setting;
 use App\Support\GeoJsonGeometry;
+use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -39,6 +41,17 @@ class WeatherService
     public function __construct(
         protected readonly EventContextService $eventContextService,
     ) {}
+
+    /**
+     * Cache store holding weather data.
+     *
+     * Demo sessions all share one location and one scheduler-fetched feed, so
+     * in demo mode this bypasses the per-session cache scope.
+     */
+    public function cacheStore(): Repository
+    {
+        return Cache::store(config('demo.enabled') ? config('demo.shared_cache_store') : null);
+    }
 
     public function getActiveEventCoordinates(): ?array
     {
@@ -109,7 +122,7 @@ class WeatherService
         $lon = round($coords['lon'], 4);
         $cacheKey = "weather.nws_points.{$lat},{$lon}";
 
-        $points = cache()->get($cacheKey);
+        $points = $this->cacheStore()->get($cacheKey);
 
         if (! is_array($points) || empty($points['zone']) || empty($points['county'])) {
             return null;
@@ -149,7 +162,7 @@ class WeatherService
 
             if (! $response->successful()) {
                 Log::warning('Open-Meteo API error', ['status' => $response->status()]);
-                cache()->put('weather.forecast_status', [
+                $this->cacheStore()->put('weather.forecast_status', [
                     'last_attempt' => now()->toIso8601String(),
                     'success' => false,
                     'error' => 'HTTP '.$response->status(),
@@ -160,20 +173,20 @@ class WeatherService
 
             if (config('demo.enabled')) {
                 $ttl = now()->addMinutes((int) config('demo.weather.cache_ttl_minutes', 30));
-                cache()->put('weather:demo:forecast', $response->json(), $ttl);
-                cache()->put('weather:demo:last_fetch', now()->toIso8601String(), $ttl);
+                $this->cacheStore()->put('weather:demo:forecast', $response->json(), $ttl);
+                $this->cacheStore()->put('weather:demo:last_fetch', now()->toIso8601String(), $ttl);
             } else {
                 Setting::set('weather.forecast', $response->json());
                 Setting::set('weather.last_fetch', now()->toIso8601String());
             }
-            cache()->put('weather.forecast_status', [
+            $this->cacheStore()->put('weather.forecast_status', [
                 'last_attempt' => now()->toIso8601String(),
                 'success' => true,
                 'error' => null,
             ], now()->addHours(2));
         } catch (\Throwable $e) {
             Log::error('Failed to fetch weather forecast', ['error' => $e->getMessage()]);
-            cache()->put('weather.forecast_status', [
+            $this->cacheStore()->put('weather.forecast_status', [
                 'last_attempt' => now()->toIso8601String(),
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -194,7 +207,7 @@ class WeatherService
             $points = $this->fetchNwsPoints($lat, $lon);
 
             if ($points === null) {
-                cache()->put('weather.alerts_status', [
+                $this->cacheStore()->put('weather.alerts_status', [
                     'last_attempt' => now()->toIso8601String(),
                     'success' => false,
                     'error' => 'Failed to resolve NWS zone/county for coordinates',
@@ -213,7 +226,7 @@ class WeatherService
 
             if (! $response->successful()) {
                 Log::warning('NWS API error', ['status' => $response->status()]);
-                cache()->put('weather.alerts_status', [
+                $this->cacheStore()->put('weather.alerts_status', [
                     'last_attempt' => now()->toIso8601String(),
                     'success' => false,
                     'error' => 'HTTP '.$response->status(),
@@ -248,7 +261,7 @@ class WeatherService
             $fingerprint = hash('xxh128', json_encode($alerts));
             $isDemo = (bool) config('demo.enabled');
             $previousFingerprint = $isDemo
-                ? cache()->get('weather:demo:alert_fingerprint')
+                ? $this->cacheStore()->get('weather:demo:alert_fingerprint')
                 : Setting::get('weather.alert_fingerprint');
 
             $preserveExistingManualAlert = false;
@@ -261,10 +274,10 @@ class WeatherService
 
             if ($isDemo) {
                 $ttl = now()->addMinutes((int) config('demo.weather.cache_ttl_minutes', 30));
-                cache()->put('weather:demo:alerts', $alerts, $ttl);
+                $this->cacheStore()->put('weather:demo:alerts', $alerts, $ttl);
 
                 if ($fingerprint !== $previousFingerprint) {
-                    cache()->put('weather:demo:alert_fingerprint', $fingerprint, $ttl);
+                    $this->cacheStore()->put('weather:demo:alert_fingerprint', $fingerprint, $ttl);
                     WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false);
                 }
             } elseif (! $preserveExistingManualAlert) {
@@ -276,14 +289,14 @@ class WeatherService
                 }
             }
 
-            cache()->put('weather.alerts_status', [
+            $this->cacheStore()->put('weather.alerts_status', [
                 'last_attempt' => now()->toIso8601String(),
                 'success' => true,
                 'error' => null,
             ], now()->addHours(2));
         } catch (\Throwable $e) {
             Log::error('Failed to check NWS alerts', ['error' => $e->getMessage()]);
-            cache()->put('weather.alerts_status', [
+            $this->cacheStore()->put('weather.alerts_status', [
                 'last_attempt' => now()->toIso8601String(),
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -300,7 +313,7 @@ class WeatherService
         }
 
         if (config('demo.enabled')) {
-            return ['manual' => false, 'data' => cache()->get('weather:demo:forecast', [])];
+            return ['manual' => false, 'data' => $this->cacheStore()->get('weather:demo:forecast', [])];
         }
 
         return ['manual' => false, 'data' => Setting::get('weather.forecast', [])];
@@ -320,7 +333,7 @@ class WeatherService
                 return $manualAlerts;
             }
 
-            return cache()->get('weather:demo:alerts', []);
+            return $this->cacheStore()->get('weather:demo:alerts', []);
         }
 
         return $sessionAlerts;
@@ -329,7 +342,7 @@ class WeatherService
     public function getLastFetch(): ?string
     {
         if (config('demo.enabled')) {
-            return cache()->get('weather:demo:last_fetch');
+            return $this->cacheStore()->get('weather:demo:last_fetch');
         }
 
         return Setting::get('weather.last_fetch');
@@ -432,7 +445,7 @@ class WeatherService
         if ($coords !== null) {
             $lat = round($coords['lat'], 4);
             $lon = round($coords['lon'], 4);
-            cache()->forget("weather.nws_points.{$lat},{$lon}");
+            $this->cacheStore()->forget("weather.nws_points.{$lat},{$lon}");
         }
 
         Setting::set('weather.location', null);
@@ -449,7 +462,7 @@ class WeatherService
     {
         $cacheKey = "weather.nws_points.{$lat},{$lon}";
 
-        $cached = cache()->get($cacheKey);
+        $cached = $this->cacheStore()->get($cacheKey);
         if ($cached !== null) {
             return $cached;
         }
@@ -457,7 +470,7 @@ class WeatherService
         $points = $this->requestNwsPoints($lat, $lon);
 
         if ($points !== null) {
-            cache()->forever($cacheKey, $points);
+            $this->cacheStore()->forever($cacheKey, $points);
         }
 
         return $points;

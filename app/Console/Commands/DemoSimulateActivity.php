@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Support\CallsignGenerator;
+use App\Support\DemoCache;
 use App\Support\TransmitterCountGenerator;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -55,6 +56,7 @@ class DemoSimulateActivity extends Command
             try {
                 Config::set('database.connections.demo.database', $dbName);
                 DB::purge('demo');
+                DemoCache::scopeTo($dbName);
 
                 $provisionedAt = DB::connection('demo')
                     ->table('system_config')

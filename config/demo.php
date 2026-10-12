@@ -76,6 +76,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Shared Cache Store
+    |--------------------------------------------------------------------------
+    |
+    | Store that demo sessions are scoped within. Each visitor's requests get
+    | a per-database copy of it as their default store so cached widgets and
+    | settings never leak between sessions. Data meant to be shared across
+    | sessions (the demo weather feed) reads and writes this store directly.
+    |
+    */
+
+    'shared_cache_store' => env('DEMO_SHARED_CACHE_STORE', env('CACHE_STORE', 'database')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Weather
     |--------------------------------------------------------------------------
     |

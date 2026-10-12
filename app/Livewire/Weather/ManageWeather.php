@@ -49,8 +49,9 @@ class ManageWeather extends Component
         $this->currentOverride = Setting::get('weather.manual_override');
         $this->overrideActive = $this->currentOverride !== null;
         $this->currentAlerts = Setting::get('weather.alerts', []);
-        $this->forecastStatus = cache()->get('weather.forecast_status');
-        $this->alertsStatus = cache()->get('weather.alerts_status');
+        $weatherCache = app(WeatherService::class)->cacheStore();
+        $this->forecastStatus = $weatherCache->get('weather.forecast_status');
+        $this->alertsStatus = $weatherCache->get('weather.alerts_status');
         $this->units = Setting::get('weather.units', 'imperial');
         $this->openMeteoEnabled = (bool) Setting::get('weather.openmeteo_enabled', true);
         $this->nwsEnabled = (bool) Setting::get('weather.nws_enabled', true);

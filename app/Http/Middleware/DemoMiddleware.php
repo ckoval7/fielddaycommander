@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Support\DemoCache;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -68,6 +69,9 @@ class DemoMiddleware
         // Switch the demo connection to this visitor's isolated database
         Config::set('database.connections.demo.database', $dbName);
         DB::purge('demo');
+
+        // Every demo DB reuses the same IDs, so cached data must be kept per visitor
+        DemoCache::scopeTo($dbName);
 
         // Clear Spatie permission cache so it re-loads from the demo DB
         app(PermissionRegistrar::class)->forgetCachedPermissions();

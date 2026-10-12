@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\DemoSession;
+use App\Support\DemoCache;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
@@ -65,6 +66,7 @@ class DemoCleanup extends Command
                         DB::purge('demo');
                         Config::set('database.connections.demo.database', $adminDemoDb);
                         DB::connection('demo')->statement("DROP DATABASE `{$dbName}`");
+                        DemoCache::forget($dbName);
                         $this->info("Dropped expired demo database: {$dbName}");
                         $dropped++;
                     }
