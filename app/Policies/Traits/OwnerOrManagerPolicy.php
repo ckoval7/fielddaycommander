@@ -9,7 +9,7 @@ trait OwnerOrManagerPolicy
 {
     protected function canManageOrOwns(User $user, Model $model): bool
     {
-        if ($user->can('manage-bonuses')) {
+        if ($user->can('verify-bonuses')) {
             return true;
         }
 

@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\AuditLog;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -39,8 +40,15 @@ class RoleManager extends Component
         'Security' => ['view-security-logs'],
     ];
 
+    public function mount(): void
+    {
+        Gate::authorize('manage-settings');
+    }
+
     public function selectRole(int $roleId): void
     {
+        Gate::authorize('manage-settings');
+
         $this->selectedRoleId = $roleId;
         $role = Role::findById($roleId);
         $this->selectedPermissions = $role->permissions->pluck('name')->toArray();
@@ -48,6 +56,8 @@ class RoleManager extends Component
 
     public function savePermissions(): void
     {
+        Gate::authorize('manage-settings');
+
         if (! $this->selectedRoleId) {
             return;
         }
@@ -90,6 +100,8 @@ class RoleManager extends Component
 
     public function createRole(): void
     {
+        Gate::authorize('manage-settings');
+
         $this->validate([
             'roleName' => ['required', 'string', 'max:255', 'unique:roles,name'],
             'roleDescription' => ['nullable', 'string', 'max:500'],
@@ -115,6 +127,8 @@ class RoleManager extends Component
 
     public function confirmDelete(int $roleId): void
     {
+        Gate::authorize('manage-settings');
+
         $role = Role::findById($roleId);
 
         // System Administrator protection
@@ -143,6 +157,8 @@ class RoleManager extends Component
 
     public function deleteRole(): void
     {
+        Gate::authorize('manage-settings');
+
         if (! $this->roleToDelete) {
             return;
         }
