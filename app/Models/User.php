@@ -74,8 +74,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'last_login_at' => 'datetime',
             'password_changed_at' => 'datetime',
             'requires_password_change' => 'boolean',
-            'two_factor_bypass_enabled' => 'boolean',
-            'two_factor_bypass_expires_at' => 'datetime',
             'notification_preferences' => 'array',
             'is_youth' => 'boolean',
             'is_cpr_aed_trained' => 'boolean',
@@ -141,14 +139,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if the user has two-factor authentication enabled.
-     */
-    public function has2FAEnabled(): bool
-    {
-        return $this->two_factor_secret !== null;
-    }
-
-    /**
      * Get the user's invitations.
      */
     public function invitations(): HasMany
@@ -186,22 +176,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function defaultDashboard(): HasOne
     {
         return $this->hasOne(Dashboard::class)->where('is_default', true);
-    }
-
-    /**
-     * Check if user has event notifications enabled.
-     */
-    public function hasEventNotificationsEnabled(): bool
-    {
-        return $this->notification_preferences['event_notifications'] ?? true;
-    }
-
-    /**
-     * Check if user has system announcements enabled.
-     */
-    public function hasSystemAnnouncementsEnabled(): bool
-    {
-        return $this->notification_preferences['system_announcements'] ?? true;
     }
 
     /**
@@ -273,14 +247,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasShiftReminderEmailEnabled(): bool
     {
         return $this->notification_preferences['shift_reminder_email'] ?? false;
-    }
-
-    /**
-     * Get user's preferred timezone or system default.
-     */
-    public function getTimezone(): string
-    {
-        return $this->preferred_timezone ?? config('app.timezone');
     }
 
     /**

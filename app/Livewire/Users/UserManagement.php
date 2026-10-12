@@ -190,6 +190,8 @@ class UserManagement extends Component
     {
         Gate::authorize('manage-users');
 
+        $this->call_sign = mb_strtoupper(trim($this->call_sign));
+
         if ($this->editingUserId) {
             $this->updateUser();
         } else {
@@ -204,7 +206,7 @@ class UserManagement extends Component
         }
 
         $validated = $this->validate([
-            'call_sign' => ['required', 'string', 'max:255', 'unique:users'],
+            'call_sign' => ['required', 'string', 'max:12', 'unique:users'],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users'],
@@ -284,7 +286,7 @@ class UserManagement extends Component
     protected function updateUser(): void
     {
         $validated = $this->validate([
-            'call_sign' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($this->editingUserId)],
+            'call_sign' => ['required', 'string', 'max:12', Rule::unique('users')->ignore($this->editingUserId)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($this->editingUserId)],

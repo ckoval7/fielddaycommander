@@ -148,14 +148,4 @@ class ImageService
 
         return true;
     }
-
-    public function getAllowedMimeTypes(): array
-    {
-        return self::ALLOWED_MIMES;
-    }
-
-    public function getMaxFileSize(): int
-    {
-        return self::MAX_FILE_SIZE;
-    }
 }

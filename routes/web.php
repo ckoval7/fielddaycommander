@@ -138,12 +138,6 @@ Route::middleware(['auth', 'verified', 'can:manage-images'])->group(function () 
     Route::get('/gallery/{eventConfiguration}/export/{filename}', [AlbumExportController::class, 'download'])->name('album-export.download');
 });
 
-Route::middleware(['auth', 'verified', 'can:manage-bonuses'])->group(function () {
-    Route::get('/bonuses', function () {
-        return view('bonuses.index');
-    })->name('bonuses.index');
-});
-
 Route::middleware(['auth', 'verified', 'can:view-stations'])->group(function () {
     Route::get('/stations', StationsList::class)->name('stations.index');
 });

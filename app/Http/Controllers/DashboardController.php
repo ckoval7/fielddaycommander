@@ -27,29 +27,37 @@ class DashboardController extends Controller
             return view('public-landing');
         }
 
-        $user = Auth::user();
         $event = $eventContext->getContextEvent();
 
-        // If there's a context event that hasn't started yet, show get-ready
-        if ($event && $event->start_time && $event->start_time->isAfter(appNow())) {
-            return $this->getReadyView($event);
+        // Active or grace-period event — show the widget dashboard
+        if ($event && ! $event->start_time?->isAfter(appNow())) {
+            return $this->widgetDashboardView($request, $dashboardService);
         }
 
-        // No context event at all — check for upcoming events or show empty state
-        if (! $event) {
-            $upcoming = Event::upcoming()->orderBy('start_time')->first();
+        return $this->preEventView($event);
+    }
 
-            if ($upcoming) {
-                return $this->getReadyView($upcoming);
-            }
+    /**
+     * Show the get-ready view for a context event that hasn't started yet,
+     * or for the next upcoming event, falling back to the no-event view.
+     */
+    protected function preEventView(?Event $event): View
+    {
+        $upcoming = $event ?? Event::upcoming()->orderBy('start_time')->first();
 
-            return view('dashboard-no-event', [
-                'upcomingEvents' => collect(),
-            ]);
-        }
+        return $upcoming
+            ? $this->getReadyView($upcoming)
+            : view('dashboard-no-event', ['upcomingEvents' => collect()]);
+    }
 
-        // Active or grace-period event (or no event fallback) — show widget dashboard
-        // Load a specific dashboard if requested, falling back to the default
+    /**
+     * Show the widget dashboard, loading a specific dashboard if requested
+     * and falling back to the user's default.
+     */
+    protected function widgetDashboardView(Request $request, DashboardService $dashboardService): View
+    {
+        $user = Auth::user();
+
         $requestedId = $request->integer('dashboard');
         $dashboard = $requestedId
             ? Dashboard::query()->forUser($user)->find($requestedId)

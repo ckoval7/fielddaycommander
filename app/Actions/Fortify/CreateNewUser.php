@@ -29,7 +29,7 @@ class CreateNewUser implements CreatesNewUsers
             'call_sign' => [
                 'required',
                 'string',
-                'max:255',
+                'max:12',
                 Rule::unique(User::class)->withoutTrashed(),
             ],
             'first_name' => ['required', 'string', 'max:255'],

@@ -67,7 +67,7 @@ describe('basic time override', function () {
         $service->setFakeTime($fakeTime, frozen: true);
 
         $firstCall = appNow()->toDateTimeString();
-        sleep(1); // Wait a second
+        $this->travel(1)->seconds();
         $secondCall = appNow()->toDateTimeString();
 
         expect($firstCall)->toBe('2025-06-28 18:00:00');
@@ -78,11 +78,13 @@ describe('basic time override', function () {
     test('flowing time advances from fake starting point', function () {
         $fakeTime = Carbon::parse('2025-06-28 18:00:00');
 
+        $this->freezeSecond();
+
         $service = app(DeveloperClockService::class);
         $service->setFakeTime($fakeTime, frozen: false);
 
         $firstCall = appNow();
-        sleep(1); // Wait a second
+        $this->travel(1)->seconds();
         $secondCall = appNow();
 
         // Time should have advanced

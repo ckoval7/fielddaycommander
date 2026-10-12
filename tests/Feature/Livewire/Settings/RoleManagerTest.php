@@ -4,6 +4,7 @@ use App\Livewire\Settings\RoleManager;
 use App\Models\AuditLog;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -11,8 +12,8 @@ use Spatie\Permission\Models\Role;
 beforeEach(function () {
     $this->user = User::factory()->create();
     $role = Role::create(['name' => 'Admin', 'guard_name' => 'web']);
-    Permission::create(['name' => 'manage-roles']);
-    $role->givePermissionTo('manage-roles');
+    Permission::create(['name' => 'manage-settings']);
+    $role->givePermissionTo('manage-settings');
     $this->user->assignRole($role);
     $this->actingAs($this->user);
 
@@ -104,6 +105,59 @@ test('deletes role without users', function () {
         ->assertDispatched('notify');
 
     expect(Role::where('name', 'Empty Role')->exists())->toBeFalse();
+});
+
+// =============================================================================
+// Authorization
+// =============================================================================
+
+test('user without manage-settings cannot mount the component', function () {
+    $this->actingAs(User::factory()->create());
+
+    Livewire::test(RoleManager::class)
+        ->assertForbidden();
+});
+
+test('user without manage-settings cannot save permissions', function () {
+    $role = Role::create(['name' => 'Test Role', 'guard_name' => 'web']);
+    $component = Livewire::test(RoleManager::class)
+        ->call('selectRole', $role->id)
+        ->set('selectedPermissions', ['manage-users']);
+
+    $this->actingAs(User::factory()->create());
+
+    $component->call('savePermissions')
+        ->assertForbidden();
+
+    expect($role->fresh()->hasPermissionTo('manage-users'))->toBeFalse();
+});
+
+test('user without manage-settings cannot create or delete roles', function () {
+    $role = Role::create(['name' => 'Doomed Role', 'guard_name' => 'web']);
+    $deleteComponent = Livewire::test(RoleManager::class)
+        ->call('confirmDelete', $role->id);
+    $createComponent = Livewire::test(RoleManager::class)
+        ->set('roleName', 'Sneaky Role');
+
+    $this->actingAs(User::factory()->create());
+
+    $deleteComponent->call('deleteRole')->assertForbidden();
+    $createComponent->call('createRole')->assertForbidden();
+
+    expect(Role::where('name', 'Doomed Role')->exists())->toBeTrue();
+    expect(Role::where('name', 'Sneaky Role')->exists())->toBeFalse();
+});
+
+test('settings page is forbidden to a user holding only manage-roles', function () {
+    DB::table('system_config')->updateOrInsert(
+        ['key' => 'setup_completed'],
+        ['value' => 'true'],
+    );
+    Permission::create(['name' => 'manage-roles']);
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-roles');
+
+    $this->actingAs($user)->get(route('settings.index'))->assertForbidden();
 });
 
 // =============================================================================

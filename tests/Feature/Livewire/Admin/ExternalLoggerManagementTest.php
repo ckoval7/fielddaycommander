@@ -4,12 +4,12 @@ use App\Livewire\Admin\ExternalLoggerManagement;
 use App\Models\EventConfiguration;
 use App\Models\ExternalLoggerSetting;
 use App\Models\User;
+use App\Services\ListenerProcessRunner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
-use Symfony\Component\Process\Process;
 
 uses(RefreshDatabase::class);
 
@@ -24,6 +24,39 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $this->user->givePermissionTo('import-contacts');
     $this->actingAs($this->user);
+
+    // Fake the OS process layer so toggling never spawns real listeners or binds ports.
+    $this->processRunner = new class extends ListenerProcessRunner
+    {
+        /** @var list<string> */
+        public array $spawnedCommands = [];
+
+        /** @var list<int> */
+        public array $terminatedPids = [];
+
+        public function spawnDetached(string $command): ?int
+        {
+            $this->spawnedCommands[] = $command;
+
+            return 424242;
+        }
+
+        public function isAlive(int $pid): bool
+        {
+            return true;
+        }
+
+        public function terminate(int $pid): void
+        {
+            $this->terminatedPids[] = $pid;
+        }
+
+        public function commandLine(int $pid): ?string
+        {
+            return null;
+        }
+    };
+    $this->app->instance(ListenerProcessRunner::class, $this->processRunner);
 });
 
 test('renders with correct process status when stopped', function () {
@@ -73,25 +106,18 @@ test('toggleN1mm enables and starts process', function () {
         ->first();
 
     expect($setting->is_enabled)->toBeTrue()
-        ->and($setting->pid)->toBeGreaterThan(0);
-
-    // Clean up spawned process
-    if ($setting->pid && posix_kill($setting->pid, 0)) {
-        posix_kill($setting->pid, SIGTERM);
-    }
+        ->and($setting->pid)->toBe(424242)
+        ->and($this->processRunner->spawnedCommands)->toHaveCount(1)
+        ->and($this->processRunner->spawnedCommands[0])->toContain("external-logger:{$setting->listener_type} ");
 });
 
 test('toggleN1mm disables and stops process', function () {
-    // Start a dummy process to have a PID to kill
-    $process = new Process(['sleep', '60']);
-    $process->start();
-
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
         'is_enabled' => true,
         'port' => 12060,
-        'pid' => $process->getPid(),
+        'pid' => 31337,
     ]);
 
     Livewire::test(ExternalLoggerManagement::class)
@@ -103,7 +129,8 @@ test('toggleN1mm disables and stops process', function () {
         ->first();
 
     expect($setting->is_enabled)->toBeFalse()
-        ->and($setting->pid)->toBeNull();
+        ->and($setting->pid)->toBeNull()
+        ->and($this->processRunner->terminatedPids)->toBe([31337]);
 });
 
 test('displays firewall reminder in setup instructions', function () {
@@ -152,25 +179,18 @@ test('toggleWsjtx enables and starts process', function () {
         ->first();
 
     expect($setting->is_enabled)->toBeTrue()
-        ->and($setting->pid)->toBeGreaterThan(0);
-
-    // Clean up spawned process
-    if ($setting->pid && posix_kill($setting->pid, 0)) {
-        posix_kill($setting->pid, SIGTERM);
-    }
+        ->and($setting->pid)->toBe(424242)
+        ->and($this->processRunner->spawnedCommands)->toHaveCount(1)
+        ->and($this->processRunner->spawnedCommands[0])->toContain("external-logger:{$setting->listener_type} ");
 });
 
 test('toggleWsjtx disables and stops process', function () {
-    // Start a dummy process to have a PID to kill
-    $process = new Process(['sleep', '60']);
-    $process->start();
-
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'wsjtx',
         'is_enabled' => true,
         'port' => 2237,
-        'pid' => $process->getPid(),
+        'pid' => 31337,
     ]);
 
     Livewire::test(ExternalLoggerManagement::class)
@@ -182,7 +202,8 @@ test('toggleWsjtx disables and stops process', function () {
         ->first();
 
     expect($setting->is_enabled)->toBeFalse()
-        ->and($setting->pid)->toBeNull();
+        ->and($setting->pid)->toBeNull()
+        ->and($this->processRunner->terminatedPids)->toBe([31337]);
 });
 
 test('displays WSJTX setup instructions', function () {
@@ -246,25 +267,18 @@ test('toggleUdpAdif enables and starts process', function () {
         ->first();
 
     expect($setting->is_enabled)->toBeTrue()
-        ->and($setting->pid)->toBeGreaterThan(0);
-
-    // Clean up spawned process
-    if ($setting->pid && posix_kill($setting->pid, 0)) {
-        posix_kill($setting->pid, SIGTERM);
-    }
+        ->and($setting->pid)->toBe(424242)
+        ->and($this->processRunner->spawnedCommands)->toHaveCount(1)
+        ->and($this->processRunner->spawnedCommands[0])->toContain("external-logger:{$setting->listener_type} ");
 });
 
 test('toggleUdpAdif disables and stops process', function () {
-    // Start a dummy process to have a PID to kill
-    $process = new Process(['sleep', '60']);
-    $process->start();
-
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'udp-adif',
         'is_enabled' => true,
         'port' => 2238,
-        'pid' => $process->getPid(),
+        'pid' => 31337,
     ]);
 
     Livewire::test(ExternalLoggerManagement::class)
@@ -276,7 +290,8 @@ test('toggleUdpAdif disables and stops process', function () {
         ->first();
 
     expect($setting->is_enabled)->toBeFalse()
-        ->and($setting->pid)->toBeNull();
+        ->and($setting->pid)->toBeNull()
+        ->and($this->processRunner->terminatedPids)->toBe([31337]);
 });
 
 test('displays UDP ADIF setup instructions', function () {

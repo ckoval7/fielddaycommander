@@ -20,20 +20,42 @@ test('command exits with failure when listener is not enabled', function () {
         ->assertExitCode(1);
 });
 
-test('command stores pid in setting on startup', function () {
+test('command clears pid when the port cannot be bound', function () {
+    // Hold a UDP port without SO_REUSEADDR so the command's bind fails with
+    // EADDRINUSE regardless of privileges. Relying on port 1 being privileged
+    // breaks under root (e.g. in Docker): the bind succeeds and the command
+    // enters its listen loop forever.
+    $occupant = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+    socket_bind($occupant, '0.0.0.0', 0);
+    socket_getsockname($occupant, $address, $port);
+
+    // Mirror the command's socket options to prove its bind will fail before
+    // running it, so this test can never hang in the listen loop.
+    $probe = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+    socket_set_option($probe, SOL_SOCKET, SO_REUSEADDR, 1);
+    $probeBound = @socket_bind($probe, '0.0.0.0', $port);
+    socket_close($probe);
+
+    if ($probeBound) {
+        socket_close($occupant);
+        $this->fail("Port {$port} could be bound twice; refusing to start a listener that would never exit.");
+    }
+
     $setting = ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
         'is_enabled' => true,
-        'port' => 1, // Port 1 requires root — bind will fail, but PID should be written first
+        'port' => $port,
     ]);
 
-    // The command will fail to bind port 1 (permission denied), but we can verify
-    // PID was stored before that point by checking it was set then cleared
-    $this->artisan('external-logger:n1mm')
-        ->assertExitCode(1);
+    try {
+        $this->artisan('external-logger:n1mm')
+            ->expectsOutputToContain("Failed to bind to port {$port}")
+            ->assertExitCode(1);
+    } finally {
+        socket_close($occupant);
+    }
 
-    // After failure, PID should be cleared
-    $setting->refresh();
-    expect($setting->pid)->toBeNull();
+    // The PID is written before binding and cleared once the bind fails.
+    expect($setting->refresh()->pid)->toBeNull();
 });

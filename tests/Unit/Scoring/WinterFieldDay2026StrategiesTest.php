@@ -50,7 +50,7 @@ function objectiveRow(EventType $wfd, string $code, int $multiplier): BonusType
 /**
  * Log $count non-duplicate contacts on a freshly created band.
  */
-function contactsOnNewBand(EventConfiguration $config, Mode $mode, int $count, int $meters, ?int $powerWatts = null): void
+function contactsOnNewBand(EventConfiguration $config, Mode $mode, int $count, int $meters, ?int $powerWatts = null): Band
 {
     $band = Band::factory()->create(['name' => "{$meters}m", 'meters' => $meters]);
 
@@ -64,6 +64,8 @@ function contactsOnNewBand(EventConfiguration $config, Mode $mode, int $count, i
         // that care about power must pin it rather than inherit a random value.
         'power_watts' => $powerWatts,
     ]);
+
+    return $band;
 }
 
 function achieved(EventConfiguration $config, BonusType $objective): bool
@@ -82,17 +84,22 @@ test('six bands objective needs three contacts on each of six bands', function (
     $objective = objectiveRow($this->wfd, 'six_bands', 6);
     $mode = Mode::factory()->create(['category' => 'Phone']);
 
-    // Five qualifying bands plus one band two contacts short.
+    // Five qualifying bands plus a sixth band one contact short.
     foreach ([160, 80, 40, 20, 15] as $meters) {
         contactsOnNewBand($this->config, $mode, 3, $meters);
     }
-    contactsOnNewBand($this->config, $mode, 2, 10);
+    $sixthBand = contactsOnNewBand($this->config, $mode, 2, 10);
 
     (new SixBandsStrategy)->reconcile($this->config);
     expect(achieved($this->config, $objective))->toBeFalse();
 
-    // One more contact on the sixth band tips it over.
-    contactsOnNewBand($this->config, $mode, 3, 6);
+    // A third contact on the sixth band crosses the per-band threshold.
+    Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'band_id' => $sixthBand->id,
+        'mode_id' => $mode->id,
+        'is_duplicate' => false,
+    ]);
 
     (new SixBandsStrategy)->reconcile($this->config);
     expect(achieved($this->config, $objective))->toBeTrue();

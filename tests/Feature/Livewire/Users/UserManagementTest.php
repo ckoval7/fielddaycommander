@@ -523,6 +523,54 @@ test('can update user details', function () {
         ->and($user->license_class)->toBe('General');
 });
 
+test('updating a call sign normalizes it to uppercase', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['call_sign' => 'W1AW']);
+    $user->assignRole('Operator');
+
+    Livewire::test(UserManagement::class)
+        ->call('openEditModal', $user->id)
+        ->set('call_sign', ' k2xyz ')
+        ->call('saveUser')
+        ->assertHasNoErrors();
+
+    expect($user->refresh()->call_sign)->toBe('K2XYZ');
+
+    $log = AuditLog::where('action', 'user.updated')->latest('id')->first();
+    expect($log->old_values['call_sign'])->toBe('W1AW')
+        ->and($log->new_values['call_sign'])->toBe('K2XYZ');
+});
+
+test('rejects a call sign longer than the column allows', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['call_sign' => 'W1AW']);
+    $user->assignRole('Operator');
+
+    Livewire::test(UserManagement::class)
+        ->call('openEditModal', $user->id)
+        ->set('call_sign', 'W1AWTOOLONG12')
+        ->call('saveUser')
+        ->assertHasErrors(['call_sign' => 'max']);
+
+    expect($user->refresh()->call_sign)->toBe('W1AW');
+});
+
+test('prevents changing a call sign to one that differs only by case', function () {
+    $this->actingAs($this->admin);
+
+    User::factory()->create(['call_sign' => 'K2XYZ']);
+    $user = User::factory()->create(['call_sign' => 'W1AW']);
+    $user->assignRole('Operator');
+
+    Livewire::test(UserManagement::class)
+        ->call('openEditModal', $user->id)
+        ->set('call_sign', 'k2xyz')
+        ->call('saveUser')
+        ->assertHasErrors(['call_sign' => 'unique']);
+});
+
 test('can change user role', function () {
     $this->actingAs($this->admin);
 

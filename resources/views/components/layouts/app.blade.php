@@ -339,10 +339,6 @@
 
                         <x-menu-item title="Scoring" icon="phosphor-trophy" link="/scoring" />
 
-                        @can('manage-bonuses')
-                            <x-menu-item title="Bonuses" icon="phosphor-star" link="/bonuses" />
-                        @endcan
-
                         @can('view-stations')
                             <x-menu-item title="Stations" icon="phosphor-hard-drives" link="{{ route('stations.index') }}" route="stations.index" />
                         @endcan

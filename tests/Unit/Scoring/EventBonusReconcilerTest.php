@@ -86,10 +86,10 @@ it('is a no-op when the config has no event', function () {
     $event->delete();
     $config->refresh();
 
+    expect($config->event)->toBeNull();
+
     $factory = Mockery::mock(RuleSetFactory::class);
-    $factory->shouldNotReceive('forEvent');
+    $factory->shouldReceive('forEvent')->never();
 
     (new EventBonusReconciler($factory))->reconcileAll($config);
-
-    expect(true)->toBeTrue();
-})->throwsNoExceptions();
+});

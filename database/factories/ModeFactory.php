@@ -16,9 +16,13 @@ class ModeFactory extends Factory
      */
     public function definition(): array
     {
+        $category = fake()->randomElement(['CW', 'Phone', 'Digital']);
+
         return [
-            'name' => fake()->randomElement(['CW', 'Phone', 'Digital']),
-            'category' => fake()->randomElement(['CW', 'Phone', 'Digital']),
+            // modes.name is unique, so suffix the category to avoid collisions
+            // when a test creates several modes or also uses a named state.
+            'name' => $category.' '.fake()->unique()->numerify('####'),
+            'category' => $category,
             'points_fd' => fake()->randomElement([1, 2]),
             'points_wfd' => fake()->randomElement([1, 2]),
             'description' => fake()->sentence(),

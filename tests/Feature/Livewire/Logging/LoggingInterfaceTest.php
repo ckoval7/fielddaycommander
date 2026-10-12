@@ -13,7 +13,6 @@ use App\Models\Station;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -24,9 +23,6 @@ beforeEach(function () {
     DB::table('system_config')->insert(
         ['key' => 'setup_completed', 'value' => 'true'],
     );
-
-    // Register the route temporarily for testing
-    Route::middleware(['web', 'auth'])->get('/logging/session/{operatingSession}', LoggingInterface::class)->name('logging.session');
 
     // Create reference data
     $this->band = Band::first() ?? Band::create([
@@ -88,8 +84,21 @@ beforeEach(function () {
 });
 
 test('unauthenticated user is redirected', function () {
-    $this->get("/logging/session/{$this->session->id}")
-        ->assertRedirect();
+    $this->get(route('logging.session', $this->session))
+        ->assertRedirect(route('login'));
+});
+
+test('user without log-contacts permission is forbidden', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('logging.session', $this->session))
+        ->assertForbidden();
+});
+
+test('session operator with log-contacts can open the logging page', function () {
+    $this->actingAs($this->user)
+        ->get(route('logging.session', $this->session))
+        ->assertOk()
+        ->assertSeeLivewire(LoggingInterface::class);
 });
 
 test('user cannot access another users session', function () {

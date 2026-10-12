@@ -863,7 +863,7 @@ export default function dashboardSortable(wire, initialOrder = []) { return ({
             const request = wire.reorderWidgets([...this.widgetOrder]);
 
             if (onSettled) {
-                Promise.resolve(request).finally(onSettled);
+                Promise.resolve(request).finally(onSettled).catch(() => {});
             }
         } else if (onSettled) {
             onSettled();

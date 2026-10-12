@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
+    $this->withoutVite();
     Storage::fake('public');
     Storage::fake('local');
     Setting::where('key', 'setup_completed')->delete();
@@ -27,10 +28,13 @@ test('setup routes redirect to home when setup is already complete', function ()
 });
 
 test('step 1 displays admin password form', function () {
-    // View rendering has a known issue with Mary UI icon parsing
-    // Backend logic is fully tested in other tests
-    expect(route('setup.welcome'))->toBe(url('/'));
-})->skip('View rendering issue with Mary UI - backend logic tested separately');
+    $this->get(route('setup.welcome'))
+        ->assertOk()
+        ->assertSee('Admin Password Setup')
+        ->assertSee('name="admin_password"', false)
+        ->assertSee('name="admin_password_confirmation"', false)
+        ->assertSee('action="'.route('setup.step-1').'"', false);
+});
 
 test('step 1 validates password requirements', function () {
     $response = $this->post(route('setup.step-1'), [
@@ -80,10 +84,14 @@ test('step 1 stores password in session and redirects to step 2', function () {
 });
 
 test('step 2 displays branding form', function () {
-    // View rendering has a known issue with Mary UI icon parsing
-    // Backend logic is fully tested in other tests
-    expect(route('setup.branding'))->toBe(url('/setup/branding'));
-})->skip('View rendering issue with Mary UI - backend logic tested separately');
+    $this->get(route('setup.branding'))
+        ->assertOk()
+        ->assertSee('Step 2: Site Branding')
+        ->assertSee('name="site_name"', false)
+        ->assertSee('name="site_tagline"', false)
+        ->assertSee('name="logo"', false)
+        ->assertSee('action="'.route('setup.step-2').'"', false);
+});
 
 test('step 2 validates site name required', function () {
     $response = $this->post(route('setup.step-2'), [
@@ -115,10 +123,14 @@ test('step 2 stores data in session and redirects to step 3', function () {
 });
 
 test('step 3 displays preferences form', function () {
-    // View rendering has a known issue with Mary UI icon parsing
-    // Backend logic is fully tested in other tests
-    expect(route('setup.preferences'))->toBe(url('/setup/preferences'));
-})->skip('View rendering issue with Mary UI - backend logic tested separately');
+    $this->get(route('setup.preferences'))
+        ->assertOk()
+        ->assertSee('Step 3: System Preferences')
+        ->assertSee('name="organization_name"', false)
+        ->assertSee('name="timezone"', false)
+        ->assertSee('name="date_format"', false)
+        ->assertSee('action="'.route('setup.complete').'"', false);
+});
 
 test('step 3 validates timezone required', function () {
     $this->session(['setup_wizard.step1' => ['admin_password' => 'pass']]);

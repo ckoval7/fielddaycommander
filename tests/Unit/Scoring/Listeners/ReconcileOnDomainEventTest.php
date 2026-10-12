@@ -70,4 +70,4 @@ it('is a no-op when eventConfigurationId is null', function () {
 
     (new ReconcileOnDomainEvent($factory, app()))
         ->handle(new MessageChanged($message, null));
-})->throwsNoExceptions();
+});

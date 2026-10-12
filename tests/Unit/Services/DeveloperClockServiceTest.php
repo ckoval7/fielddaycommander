@@ -270,11 +270,13 @@ describe('now() tests', function () {
         Config::set('developer.enabled', true);
         app()->detectEnvironment(fn () => 'local');
 
+        $this->freezeSecond();
+
         $fakeTime = Carbon::parse('2025-01-15 12:00:00');
         $this->service->setFakeTime($fakeTime, false);
 
-        // Wait a moment to simulate elapsed time
-        sleep(2);
+        // Advance the real clock to simulate elapsed time
+        $this->travel(2)->seconds();
 
         $result = $this->service->now();
 
@@ -307,7 +309,7 @@ describe('now() tests', function () {
 
         $firstNow = $this->service->now();
 
-        sleep(1);
+        $this->travel(1)->seconds();
 
         $secondNow = $this->service->now();
 

@@ -2,6 +2,7 @@
 
 use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     Cache::flush();
@@ -38,4 +39,28 @@ it('returns the default again after the setting is deleted', function () {
 
     Setting::set('weather.forecast', null);
     expect(Setting::get('weather.forecast', []))->toBe([]);
+});
+
+it('caches a missing setting so repeated reads do not re-query the database', function () {
+    Setting::get('dev.fake_time');
+
+    DB::enableQueryLog();
+    Setting::get('dev.fake_time');
+    Setting::get('dev.fake_time', 'fallback');
+
+    expect(DB::getQueryLog())->toBeEmpty();
+});
+
+it('picks up a setting created after a cached miss', function () {
+    expect(Setting::get('timezone'))->toBeNull();
+
+    Setting::set('timezone', 'America/New_York');
+
+    expect(Setting::get('timezone'))->toBe('America/New_York');
+});
+
+it('reads values cached in the previous unwrapped format', function () {
+    Cache::put('setting.site_name', 'Legacy Cached Name', 3600);
+
+    expect(Setting::get('site_name'))->toBe('Legacy Cached Name');
 });

@@ -96,8 +96,6 @@ test('activates earliest created when multiple match', function () {
         'created_at' => now()->subDays(2),
     ]);
 
-    sleep(1); // Ensure different timestamps
-
     $secondEvent = Event::factory()->create([
         'name' => 'Second Event',
         'start_time' => now()->subHours(6),

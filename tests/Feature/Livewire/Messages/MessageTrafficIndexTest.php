@@ -22,7 +22,7 @@ beforeEach(function () {
     $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
 
     Permission::firstOrCreate(['name' => 'log-contacts']);
-    Permission::firstOrCreate(['name' => 'manage-bonuses']);
+    Permission::firstOrCreate(['name' => 'verify-bonuses']);
 
     $this->eventType = EventType::where('code', 'FD')->first();
     $this->event = Event::factory()->create(['event_type_id' => $this->eventType->id]);

@@ -4,10 +4,11 @@ use App\Services\DatabaseSnapshotService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
-    // Set up temporary test directory
-    $this->testPath = storage_path('framework/testing/snapshots');
+    // Unique directory per test so parallel workers never share or delete each other's files
+    $this->testPath = storage_path('framework/testing/snapshots-'.Str::uuid());
     Config::set('developer.snapshot_path', $this->testPath);
     Config::set('developer.max_snapshots', 10);
 
@@ -113,9 +114,9 @@ describe('createSnapshot', function () {
 
         // Create 3 snapshots
         $this->service->createSnapshot('snapshot-1');
-        sleep(1); // Ensure different timestamps
+        $this->travel(1)->seconds(); // Ensure different timestamps
         $this->service->createSnapshot('snapshot-2');
-        sleep(1);
+        $this->travel(1)->seconds();
         $this->service->createSnapshot('snapshot-3');
 
         // Should only have 2 snapshots (newest)
