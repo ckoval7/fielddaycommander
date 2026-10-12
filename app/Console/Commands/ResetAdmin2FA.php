@@ -10,7 +10,7 @@ class ResetAdmin2FA extends Command
 {
     protected $signature = 'app:reset-admin-2fa {--reason=Emergency 2FA reset}';
 
-    protected $description = 'Enable emergency 2FA bypass for system admin account';
+    protected $description = 'Remove the system admin account\'s 2FA so it can be set up again';
 
     public function handle(): int
     {
@@ -22,8 +22,8 @@ class ResetAdmin2FA extends Command
             return 1;
         }
 
-        $this->warn('⚠️  This will allow system admin to bypass 2FA on next login.');
-        $this->warn('⚠️  The bypass will expire in 1 hour if not used.');
+        $this->warn('⚠️  This removes the system admin\'s authenticator and recovery codes.');
+        $this->warn('⚠️  The next login will not ask for a 2FA code.');
 
         if (! $this->confirm('Continue?', false)) {
             $this->info('Cancelled.');
@@ -31,22 +31,21 @@ class ResetAdmin2FA extends Command
             return 0;
         }
 
-        $admin->update([
-            'two_factor_bypass_enabled' => true,
-            'two_factor_bypass_expires_at' => now()->addHour(),
-            'two_factor_bypass_reason' => $this->option('reason'),
-        ]);
+        $admin->forceFill([
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ])->save();
 
         AuditLog::log(
-            action: 'admin.2fa.bypass_enabled',
+            action: 'admin.2fa.reset',
             userId: $admin->id,
             newValues: ['reason' => $this->option('reason')],
             isCritical: true
         );
 
-        $this->info('✓ Admin 2FA bypass enabled for 1 hour');
-        $this->warn('⚠️  Admin MUST set up new 2FA on next login');
-        $this->info('⚠️  This bypass expires at: '.$admin->two_factor_bypass_expires_at);
+        $this->info('✓ Admin 2FA has been reset');
+        $this->warn('⚠️  Set up 2FA again right after logging in');
 
         return 0;
     }

@@ -74,8 +74,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'last_login_at' => 'datetime',
             'password_changed_at' => 'datetime',
             'requires_password_change' => 'boolean',
-            'two_factor_bypass_enabled' => 'boolean',
-            'two_factor_bypass_expires_at' => 'datetime',
             'notification_preferences' => 'array',
             'is_youth' => 'boolean',
             'is_cpr_aed_trained' => 'boolean',

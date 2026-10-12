@@ -9,7 +9,7 @@ class Admin2FAStatus extends Command
 {
     protected $signature = 'app:admin-2fa-status';
 
-    protected $description = 'Check admin 2FA bypass status';
+    protected $description = 'Check whether the system admin account has 2FA set up';
 
     public function handle(): int
     {
@@ -21,13 +21,13 @@ class Admin2FAStatus extends Command
             return 1;
         }
 
-        if ($admin->two_factor_bypass_enabled &&
-            $admin->two_factor_bypass_expires_at?->isFuture()) {
-            $this->info('2FA Bypass: ACTIVE');
-            $this->info('Expires: '.$admin->two_factor_bypass_expires_at);
-            $this->info('Reason: '.$admin->two_factor_bypass_reason);
+        if ($admin->two_factor_confirmed_at) {
+            $this->info('2FA: Enabled');
+            $this->info('Confirmed: '.$admin->two_factor_confirmed_at);
+        } elseif ($admin->two_factor_secret) {
+            $this->info('2FA: Pending confirmation');
         } else {
-            $this->info('2FA Bypass: Not active');
+            $this->info('2FA: Not set up');
         }
 
         return 0;
