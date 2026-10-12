@@ -51,6 +51,12 @@ it('caches a missing setting so repeated reads do not re-query the database', fu
     expect(DB::getQueryLog())->toBeEmpty();
 });
 
+it('returns each caller its own default for a cached missing setting', function () {
+    expect(Setting::get('weather.location', []))->toBe([])
+        ->and(Setting::get('weather.location', 'fallback'))->toBe('fallback')
+        ->and(Setting::get('weather.location'))->toBeNull();
+});
+
 it('picks up a setting created after a cached miss', function () {
     expect(Setting::get('timezone'))->toBeNull();
 
@@ -59,7 +65,7 @@ it('picks up a setting created after a cached miss', function () {
     expect(Setting::get('timezone'))->toBe('America/New_York');
 });
 
-it('reads values cached in the previous unwrapped format', function () {
+it('reads raw values cached by earlier versions', function () {
     Cache::put('setting.site_name', 'Legacy Cached Name', 3600);
 
     expect(Setting::get('site_name'))->toBe('Legacy Cached Name');
