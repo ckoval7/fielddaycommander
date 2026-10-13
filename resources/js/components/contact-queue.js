@@ -18,6 +18,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         recalledContactId: null,
         recalledUuid: null,
         recalledExchange: '',
+        pendingIndicatorDelayMs: 1000,
+        now: Date.now(),
 
         init() {
             this.loadQueue();
@@ -51,6 +53,29 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             return this.pendingContacts.length;
         },
 
+        /**
+         * Contacts that have been waiting long enough to surface a pending
+         * indicator. Hides the momentary flash on a fast connection.
+         */
+        get visiblePendingCount() {
+            return this.pendingContacts.filter(c => this.isPendingIndicatorVisible(c)).length;
+        },
+
+        isPendingIndicatorVisible(contact) {
+            return this.now - (contact.queued_at || 0) >= this.pendingIndicatorDelayMs;
+        },
+
+        /**
+         * Re-check pending indicators once the delay elapses for a freshly queued contact.
+         */
+        schedulePendingIndicator(entry) {
+            entry.queued_at = Date.now();
+            this.now = entry.queued_at;
+            setTimeout(() => {
+                this.now = Date.now();
+            }, this.pendingIndicatorDelayMs);
+        },
+
         get failedCount() {
             return this.failedContacts.length;
         },
@@ -62,7 +87,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             if (this.failedCount > 0) {
                 return 'failed';
             }
-            if (this.pendingCount > 0) {
+            if (this.visiblePendingCount > 0) {
                 return 'syncing';
             }
             return 'synced';
@@ -116,6 +141,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 last_error: null,
             };
 
+            this.schedulePendingIndicator(entry);
             this.queue.unshift(entry);
             this.saveQueue();
             void this.syncNext();
@@ -550,6 +576,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     entry.last_error = null;
                     entry.lastAttemptTime = 0;
                     delete entry._prevStatus;
+                    this.schedulePendingIndicator(entry);
                     this.saveQueue();
                 }
 

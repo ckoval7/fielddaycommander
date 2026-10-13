@@ -194,7 +194,7 @@
                         @click="recallByUuid(contact.uuid)"
                         :aria-current="recalledUuid === contact.uuid"
                         :class="{
-                            'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
+                            'opacity-60': (contact.status === 'pending' || contact.status === 'syncing') && isPendingIndicatorVisible(contact),
                             'bg-error/5': contact.status === 'failed',
                             'ring-2 ring-primary': recalledUuid === contact.uuid,
                         }"
@@ -209,7 +209,7 @@
                             <template x-if="contact.status === 'failed'">
                                 <span class="badge badge-xs badge-error" :title="contact.last_error">FAIL</span>
                             </template>
-                            <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
+                            <template x-if="contact.status !== 'failed' && contact.status !== 'editing' && isPendingIndicatorVisible(contact)">
                                 <span class="badge badge-xs badge-info">SYNC</span>
                             </template>
                         </div>
@@ -232,7 +232,7 @@
                         class="cursor-pointer hover:bg-base-200"
                         :aria-current="recalledUuid === contact.uuid"
                         :class="{
-                        'opacity-60': contact.status === 'pending' || contact.status === 'syncing',
+                        'opacity-60': (contact.status === 'pending' || contact.status === 'syncing') && isPendingIndicatorVisible(contact),
                         'bg-error/5': contact.status === 'failed',
                         '!bg-primary/25': recalledUuid === contact.uuid,
                     }">
@@ -243,7 +243,7 @@
                             <template x-if="contact.status === 'failed'">
                                 <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span>
                             </template>
-                            <template x-if="contact.status !== 'failed' && contact.status !== 'editing'">
+                            <template x-if="contact.status !== 'failed' && contact.status !== 'editing' && isPendingIndicatorVisible(contact)">
                                 <span class="badge badge-xs badge-info ml-1">SYNC</span>
                             </template>
                         </td>
