@@ -13,6 +13,7 @@ use App\Models\Station;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -1160,6 +1161,24 @@ test('exchange input is docked below the QSO history', function () {
             'wire:key="contact-'.$contact->id.'"',
             'id="exchange-input"',
         ]);
+});
+
+test('recent QSO rows expose the contact uuid so queued copies can be pruned', function () {
+    $this->actingAs($this->user);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'uuid' => (string) Str::uuid(),
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtml('data-contact-uuid="'.$contact->uuid.'"')
+        ->assertSeeHtml('parseInt('.$this->session->fresh()->qso_count.') + queue.length');
 });
 
 test('recent QSOs are numbered by session order, skipping deleted contacts', function () {

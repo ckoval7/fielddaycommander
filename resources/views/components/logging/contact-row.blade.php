@@ -20,6 +20,9 @@ Slots:
 @endphp
 
 <tr wire:key="contact-{{ $contact->id }}"
+    @if($contact->uuid)
+        data-contact-uuid="{{ $contact->uuid }}"
+    @endif
     @if(! $contact->trashed())
         @click="recallByContactId({{ $contact->id }})"
         @keydown.enter="recallByContactId({{ $contact->id }})"
