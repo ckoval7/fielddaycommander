@@ -256,7 +256,7 @@
 
       <div class="badge-advanced">Logging &middot; Optional</div>
 
-      <p>Your operators already know their favorite logging programs, and there's no reason to make them give those up for the weekend. FD Commander can listen on the local network for contacts sent by N1MM Logger+, WSJT-X, JTDX, fldigi, and anything else that sends ADIF over UDP. Each contact lands in the log a moment after the operator saves it, where it counts toward the score, gets checked for dupes, and shows up on the dashboards.</p>
+      <p>Your operators already know their favorite programs, and there's no reason to make them give those up for the weekend. FD Commander can listen on the local network for contacts sent by N1MM Logger+, digital-mode programs like WSJT-X, JTDX, and fldigi, and anything else that sends ADIF over UDP. Each contact lands in the log a moment after the operator saves it, where it counts toward the score, gets checked for dupes, and shows up on the dashboards. This is optional: stations that don't run any of this software log in FD Commander's built-in logger with nothing to configure.</p>
 
       <p>This guide walks through one logging PC from start to finish. Plan on about fifteen minutes for the first PC and a few minutes for each one after that.</p>
 
@@ -276,11 +276,11 @@
 
       <h2>How It Works</h2>
 
-      <p>Each logging program sends a small UDP packet to the server every time a contact is logged. FD Commander runs a separate listener for each kind of program, and each listener has its own port:</p>
+      <p>Each program sends a small UDP packet to the server every time a contact is logged. FD Commander runs a separate listener for each kind of program, and each listener has its own port:</p>
 
       <div class="table-wrap">
       <table class="port-table">
-        <thead><tr><th>Logging program</th><th>Listener</th><th>Default port</th><th>Station is matched by</th></tr></thead>
+        <thead><tr><th>Program</th><th>Listener</th><th>Default port</th><th>Station is matched by</th></tr></thead>
         <tbody>
           <tr><td>N1MM Logger+</td><td>N1MM Logger+</td><td>12060</td><td>The PC's computer (NetBIOS) name</td></tr>
           <tr><td>WSJT-X, JTDX</td><td>WSJTX / JTDX</td><td>2237</td><td>The station callsign</td></tr>
@@ -298,7 +298,7 @@
 
       <h2>Step 1: Open the Firewall on the Server</h2>
 
-      <p>The deploy script opens the web port but not the logger ports. If your server runs UFW, check whether it's active:</p>
+      <p>The deploy script opens the web port but not the listener ports. If your server runs UFW, check whether it's active:</p>
 
       <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ufw status</span></div>
 
@@ -328,7 +328,7 @@
         <p><span class="step-number">1</span> Sign in to FD Commander and open <strong>Logging &gt; External Loggers</strong>.</p>
       </div>
       <div class="step-box">
-        <p><span class="step-number">2</span> Find the card for your logging program and flip its toggle on. The status changes from <strong>Starting listener...</strong> to <strong>Listening on port 12060</strong> (or whichever port that listener uses), followed by packet and error counters.</p>
+        <p><span class="step-number">2</span> Find the card for your program and flip its toggle on. The status changes from <strong>Starting listener...</strong> to <strong>Listening on port 12060</strong> (or whichever port that listener uses), followed by packet and error counters.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">3</span> Leave the page open. The packet counter is the quickest way to tell whether the logging PC can reach the server, and you'll use it in a moment.</p>
@@ -357,11 +357,11 @@
 
       <h3>Operator credit</h3>
 
-      <p>Contacts are credited to the operator whose callsign the logging program reports. If that callsign belongs to an FD Commander user, the contact goes to them. If it doesn't, FD Commander creates a locked placeholder account for that callsign, labeled <strong>(Imported)</strong>, so the contact still has an operator. Inviting your operators before the event, with their callsigns filled in, avoids a pile of placeholders.</p>
+      <p>Contacts are credited to the operator whose callsign the sending program reports. If that callsign belongs to an FD Commander user, the contact goes to them. If it doesn't, FD Commander creates a locked placeholder account for that callsign, labeled <strong>(Imported)</strong>, so the contact still has an operator. Inviting your operators before the event, with their callsigns filled in, avoids a pile of placeholders.</p>
 
-      <p>If the logging program doesn't report an operator at all, the contact may end up with no operator, or with a placeholder for whatever callsign the program fills in by default. Each program section below shows where the operator's callsign goes, and it's worth making that part of every operator change.</p>
+      <p>If the sending program doesn't report an operator at all, the contact may end up with no operator, or with a placeholder for whatever callsign the program fills in by default. Each program section below shows where the operator's callsign goes, and it's worth making that part of every operator change.</p>
 
-      <h2>Step 4: Configure the Logging Program</h2>
+      <h2>Step 4: Configure the Sending Program</h2>
 
       <p>Follow the section for your program, then come back for Step 5. Repeat this step on every logging PC, since these settings are stored on each PC.</p>
 
@@ -446,7 +446,7 @@
       <p>A climbing packet counter proves the network path works. A test contact proves the whole chain works.</p>
 
       <div class="step-box">
-        <p><span class="step-number">1</span> Log a contact in the logging program.</p>
+        <p><span class="step-number">1</span> Log a contact in the sending program.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">2</span> On the External Loggers page, expand <strong>Last Log Received</strong> under that listener. You should see the callsign, band, mode, section, and QSO time.</p>
@@ -466,7 +466,7 @@
 
       <ul>
         <li>Confirm the logging PC can reach the server at all by opening FD Commander in a browser on that PC.</li>
-        <li>Double-check the address and port in the logging program. A typo in either one is the most common cause.</li>
+        <li>Double-check the address and port in the sending program. A typo in either one is the most common cause.</li>
         <li>Check the server's firewall (Step 1). The listener can be running perfectly and still never see a packet.</li>
         <li>On Docker, make sure the port in FD Commander matches the port published in <code>.env</code>.</li>
       </ul>
@@ -489,7 +489,7 @@
 
       <h3>Contacts are credited to a callsign marked "(Imported)"</h3>
 
-      <p>The operator's callsign in the logging program didn't match any FD Commander user. Check for typos in N1MM Logger+'s operator login, WSJT-X's Op Call, or fldigi's Operator Callsign, and make sure the operator's FD Commander account has their callsign filled in.</p>
+      <p>The operator's callsign in the sending program didn't match any FD Commander user. Check for typos in N1MM Logger+'s operator login, WSJT-X's Op Call, or fldigi's Operator Callsign, and make sure the operator's FD Commander account has their callsign filled in.</p>
 
       <h3>WSJT-X contacts don't show up on the section map</h3>
 
@@ -509,7 +509,7 @@
 
       <div class="guide-nav">
         <a href="index.html">&larr; All Guides</a>
-        <a href="email-setup.html">Email Setup &rarr;</a>
+        <a href="backup-restore.html">Back Up and Restore &rarr;</a>
       </div>
 
     </div>

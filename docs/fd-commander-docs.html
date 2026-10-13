@@ -452,7 +452,7 @@
       <div class="code-header">bash <span class="code-copy">Copy</span></div>
       <div class="code-body">
         <div><span class="prompt">$</span> <span class="cmd">git clone https://github.com/ckoval7/fielddaycommander.git</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">cd fd-commander</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">cd fielddaycommander</span></div>
       </div>
     </div>
 
@@ -879,7 +879,7 @@
     <h3>Creating a Station</h3>
     <p>Click <strong>+ Add Station</strong> to open the station form. The Configuration tab has four sections:</p>
 
-    <p><strong>Basic Information:</strong> Give the station a name (must be unique within the event), an optional hostname, and confirm which event it belongs to. The hostname matches external logger contacts to this station. N1MM+ matches on the computer (NetBIOS) name of the PC running the logger, while WSJT-X, JTDX, and ADIF loggers match on the station callsign.</p>
+    <p><strong>Basic Information:</strong> Give the station a name (must be unique within the event), an optional hostname, and confirm which event it belongs to. The hostname matches contacts from external software to this station. N1MM Logger+ matches on the computer (NetBIOS) name of the PC running it, while WSJT-X, JTDX, and other ADIF senders match on the station callsign.</p>
 
     <p><strong>Station Type:</strong> Check any special designations that apply. GOTA (Get On The Air) marks it as the special station for new operators; only one GOTA station is allowed per event. VHF/UHF Only restricts the station to those bands. Satellite marks it for satellite communications.</p>
 
@@ -908,7 +908,7 @@
     <p>Click <strong>Add Custom Role</strong> to create roles specific to your club, like "Antenna Setup Crew" or "Food Coordinator." You can delete or edit the sample roles if they don't fit.</p>
 
     <h3>Creating Shifts</h3>
-    <p>Switch to the <strong>Shifts</strong> tab and click <strong>Add Shift</strong>. Each shift needs a role (from the dropdown), a start time and end time (entered in UTC, displayed to volunteers in local time), a capacity (how many people can fill the slot), and optionally notes. The <strong>Open for Sign-ups</strong> toggle controls whether operators can self-assign or whether the manager must assign them manually.</p>
+    <p>Switch to the <strong>Shifts</strong> tab and click <strong>Add Shift</strong>. Each shift needs a role (from the dropdown), a start time and end time (entered in your local timezone and shown to each volunteer in theirs), a capacity (how many people can fill the slot), and optionally notes. The <strong>Open for Sign-ups</strong> toggle controls whether operators can self-assign or whether the manager must assign them manually.</p>
 
     <p>For events with lots of shifts, use the <strong>Bulk Create</strong> button to generate multiple shift blocks at once instead of creating them one at a time.</p>
 
@@ -999,9 +999,9 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="external-loggers">External Logger Integration</h2>
-    <p>FD Commander can receive contacts from external logging programs in real time over UDP, and it can import ADIF files after the fact. This means operators running WSJT-X, N1MM Logger+, fldigi, or any other logger that outputs ADIF don't need to double-log their contacts. The external logger handles the RF side and FD Commander handles scoring, deduplication, and Cabrillo export.</p>
+    <p>FD Commander can receive contacts from external software in real time over UDP, and it can import ADIF files after the fact. This means operators running N1MM Logger+, digital-mode programs like WSJT-X and fldigi, or any other program that outputs ADIF don't need to double-log their contacts. That software handles the radio side and FD Commander handles scoring, deduplication, and Cabrillo export. All of this is optional: stations without external software log directly in FD Commander.</p>
 
-    <p>All external logger settings are found under <strong>Logging &gt; External Loggers</strong>. Each listener can be enabled or disabled independently, and the UDP port is configurable.</p>
+    <p>All listener settings are found under <strong>Logging &gt; External Loggers</strong>. Each listener can be enabled or disabled independently, and the UDP port is configurable.</p>
 
     <div class="callout warning">
       <div class="callout-title">Security Notice</div>
@@ -1032,9 +1032,9 @@
     </ul>
 
     <h3>Generic UDP ADIF (fldigi, etc.)</h3>
-    <p>For any logging application that can send plain ADIF text over UDP, FD Commander provides a generic ADIF listener (default port: 2238). This works with fldigi, and any other logger that supports ADIF UDP output. To set it up:</p>
+    <p>For any application that can send plain ADIF text over UDP, FD Commander provides a generic ADIF listener (default port: 2238). This works with fldigi and any other program that supports ADIF UDP output. To set it up:</p>
     <ul>
-      <li>Configure your logging application to send ADIF records via UDP.</li>
+      <li>Configure the application to send ADIF records via UDP.</li>
       <li>Set the destination to the FD Commander server's IP and the configured port.</li>
       <li>In fldigi specifically: <strong>Configure &gt; Config Dialog &gt; Logging/Cloud-UDP</strong>, then set the address and port in the <strong>Broadcast UDP ADIF record</strong> group and check <strong>Enable</strong>.</li>
       <li>Contacts are matched to a station by the station callsign (fldigi's <strong>Station Callsign</strong>), so give the receiving station's name or hostname that callsign on the Stations page.</li>

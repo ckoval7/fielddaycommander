@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Field Day Commander - Open-Source Field Day Event Management</title>
-<meta name="description" content="Free, open-source Field Day event management for ARRL Field Day and Winter Field Day. Volunteer scheduling, real-time scoring, multi-station logging, and full bonus tracking. Runs on any device, no internet required.">
+<title>Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring</title>
+<meta name="description" content="Free, open-source Field Day planning, logging, and scoring for ARRL Field Day and Winter Field Day. Volunteer scheduling, equipment tracking, and safety checklists, plus a built-in multi-station logger with live dupe checking and Cabrillo export. No internet required.">
 <link rel="canonical" href="https://fielddaycommander.org/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Field Day Commander - Open-Source Field Day Event Management">
-<meta property="og:description" content="Free Field Day event management with volunteer scheduling, real-time scoring, multi-station logging, and all 18 ARRL bonus categories. Runs on a Raspberry Pi.">
+<meta property="og:title" content="Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring">
+<meta property="og:description" content="Free Field Day planning, logging, and scoring: volunteer scheduling, a built-in multi-station logger, live scoring with all 18 ARRL bonus categories, and Cabrillo export. Runs on a Raspberry Pi.">
 <meta property="og:url" content="https://fielddaycommander.org/">
 <meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Field Day Commander - Open-Source Field Day Event Management">
-<meta name="twitter:description" content="Free Field Day event management with volunteer scheduling, real-time scoring, multi-station logging, and all 18 ARRL bonus categories.">
+<meta name="twitter:title" content="Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring">
+<meta name="twitter:description" content="Free Field Day planning, logging, and scoring: volunteer scheduling, a built-in multi-station logger, live scoring, and all 18 ARRL bonus categories.">
 <meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fd-commander.css">
@@ -248,6 +248,46 @@
     .hero { padding: 8rem 1.5rem 4rem; }
   }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Field Day Commander",
+  "alternateName": "FD Commander",
+  "url": "https://fielddaycommander.org/",
+  "description": "Free, open-source Field Day logging software and event management platform for ARRL Field Day and Winter Field Day. Includes a built-in multi-station logger with real-time dupe checking, live scoring, and Cabrillo export, so no other logging software is required. Also handles volunteer scheduling, equipment tracking, and safety checklists. Runs on a local network with no internet connection, including on a Raspberry Pi.",
+  "applicationCategory": "UtilitiesApplication",
+  "applicationSubCategory": "Amateur radio Field Day logger",
+  "operatingSystem": "Linux (server); any modern web browser (operators)",
+  "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "keywords": "Field Day logger, Field Day logging software, ARRL Field Day, Winter Field Day, ham radio logging, amateur radio, multi-station logging, Cabrillo",
+  "featureList": [
+    "Built-in browser-based Field Day logger; no other logging software required",
+    "Multi-station, multi-operator logging with real-time dupe checking across all stations and bands",
+    "Cabrillo export for ARRL Field Day and Winter Field Day submission",
+    "Live scoring with power multiplier and all 18 ARRL Field Day bonus categories",
+    "Runs offline on a local network, including on a Raspberry Pi",
+    "Contacts queue on the device and sync automatically if a browser loses its server connection",
+    "Volunteer and operator shift scheduling",
+    "Station and equipment management",
+    "15-item ARRL safety checklist",
+    "Visitor guestbook",
+    "NTS radiogram and W1AW bulletin tracking",
+    "Live ARRL/RAC section map",
+    "Optional contact intake over UDP from N1MM Logger+ and digital-mode software such as WSJT-X, JTDX, and fldigi",
+    "ADIF file import"
+  ],
+  "sameAs": [
+    "https://github.com/ckoval7/fielddaycommander"
+  ]
+}
+</script>
 </head>
 <body>
 <div class="topo-bg"></div>
@@ -264,7 +304,7 @@
     <p>
       More than a Field Day logger. FD Commander handles the whole event:
       schedule volunteers, assign stations and equipment, run safety checklists,
-      then log contacts across multiple operators in real time. All from any device on your LAN, no internet required.
+      then log contacts across every station with the built-in logger, or bring them in from N1MM Logger+ and WSJT-X. All from any device on your LAN, no internet required.
     </p>
     <div class="hero-actions">
       <a href="https://demo.fielddaycommander.org/" target="_blank" rel="noopener" class="btn-primary">Try the Live Demo</a>
@@ -282,7 +322,7 @@
       <div class="terminal-body">
         <div><span class="comment"># Clone and deploy in minutes</span></div>
         <div><span class="prompt">$</span> <span class="cmd">git clone https://github.com/ckoval7/fielddaycommander.git</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">cd fd-commander</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">cd fielddaycommander</span></div>
         <div><span class="prompt">$</span> <span class="cmd">sudo ./deploy.sh --domain fd.local</span></div>
         <div><span class="output">&#10003; Dependencies installed</span></div>
         <div><span class="output">&#10003; Database configured</span></div>
@@ -332,8 +372,8 @@
       </div>
       <div class="feature-card">
         <div class="feature-icon amber">&#9889;</div>
-        <h3>Real-Time Contact Logging</h3>
-        <p>Log contacts with a fast single-field entry flow, or pull them in from N1MM Logger+, WSJT-X, fldigi, and other programs over UDP. Import ADIF files with a guided wizard. Either way, dupes are caught instantly across all stations and everything feeds the same live score.</p>
+        <h3>Built-In Multi-Station Logging</h3>
+        <p>Operators log from any browser with a fast single-field entry flow, with no other logging software needed. Prefer N1MM Logger+, or running FT8 in WSJT-X? Those contacts arrive over UDP, and ADIF files import through a guided wizard. Either way, dupes are caught instantly across all stations and everything feeds the same live score.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon green">&#9776;</div>

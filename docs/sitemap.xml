@@ -41,6 +41,10 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://fielddaycommander.org/how-to/backup-restore.html</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://fielddaycommander.org/how-to/email-setup.html</loc>
     <priority>0.7</priority>
   </url>
