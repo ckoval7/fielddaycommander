@@ -132,6 +132,10 @@ docker compose exec app supervisorctl status
 # Restart a specific process
 docker compose exec app supervisorctl restart queue-worker
 
+# Run artisan as www-data, the user the app processes run as. Running it as
+# root can leave root-owned log files the app cannot write until a restart.
+docker compose exec -u www-data app php artisan about
+
 # View logs
 docker compose logs -f app
 docker compose logs -f mysql

@@ -86,5 +86,12 @@ fi
 echo "Optimizing application (config/route/view/event caches)..."
 php artisan optimize
 
+# 9. Hand runtime-writable paths to www-data. The steps above run as root
+#    and may have created root-owned logs/caches; supervisord runs every
+#    program as www-data.
+chown -R www-data:www-data /app/storage /app/bootstrap/cache
+chown www-data:www-data /app/.env
+chmod 640 /app/.env
+
 echo "=== Starting services via supervisord ==="
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
