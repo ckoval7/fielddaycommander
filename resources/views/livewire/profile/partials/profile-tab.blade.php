@@ -263,6 +263,20 @@
                         </div>
                         <x-toggle wire:model="notifyWeatherAlert" />
                     </div>
+
+                    {{-- Shift Confirmations (shift managers only) --}}
+                    @can('manage-shifts')
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <x-icon name="phosphor-seal-check" class="w-5 h-5 text-primary shrink-0" />
+                                <div class="min-w-0">
+                                    <div class="font-medium">Shift Confirmations</div>
+                                    <div class="text-sm text-base-content/60">Volunteer check-ins waiting for your confirmation</div>
+                                </div>
+                            </div>
+                            <x-toggle wire:model="notifyShiftConfirmation" />
+                        </div>
+                    @endcan
                 </div>
 
                 {{-- Shift Reminder Settings --}}

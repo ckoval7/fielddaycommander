@@ -59,8 +59,8 @@ test('category icons match specification', function () {
     expect(NotificationCategory::WeatherAlert->icon())->toBe('phosphor-cloud-lightning-duotone');
 });
 
-test('there are exactly ten categories', function () {
-    expect(NotificationCategory::cases())->toHaveCount(10);
+test('there are exactly eleven categories', function () {
+    expect(NotificationCategory::cases())->toHaveCount(11);
 });
 
 test('shift checkin reminder has correct properties', function () {

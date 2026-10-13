@@ -14,6 +14,7 @@ enum NotificationCategory: string
     case ShiftCheckinReminder = 'shift_checkin_reminder';
     case ShiftCheckoutReminder = 'shift_checkout_reminder';
     case WeatherAlert = 'weather_alert';
+    case ShiftConfirmation = 'shift_confirmation';
 
     /**
      * Get the human-readable label for the category.
@@ -31,6 +32,7 @@ enum NotificationCategory: string
             self::ShiftCheckinReminder => 'Shift Check-in Reminders',
             self::ShiftCheckoutReminder => 'Shift Check-out Reminders',
             self::WeatherAlert => 'Weather Alerts',
+            self::ShiftConfirmation => 'Shift Confirmations',
         };
     }
 
@@ -50,6 +52,7 @@ enum NotificationCategory: string
             self::ShiftCheckinReminder => 'phosphor-clock',
             self::ShiftCheckoutReminder => 'phosphor-sign-out',
             self::WeatherAlert => 'phosphor-cloud-lightning-duotone',
+            self::ShiftConfirmation => 'phosphor-seal-check',
         };
     }
 
@@ -69,6 +72,7 @@ enum NotificationCategory: string
             self::ShiftCheckinReminder => 0,
             self::ShiftCheckoutReminder => 0,
             self::WeatherAlert => 0,
+            self::ShiftConfirmation => 300,
         };
     }
 
@@ -79,6 +83,7 @@ enum NotificationCategory: string
     {
         return match ($this) {
             self::NewSection => "{$count} New Sections Worked!",
+            self::ShiftConfirmation => "{$count} Shift Check-ins to Confirm",
             default => null,
         };
     }
@@ -99,6 +104,7 @@ enum NotificationCategory: string
             self::ShiftCheckinReminder => 'Reminders before your scheduled shifts',
             self::ShiftCheckoutReminder => 'Reminders when you forget to check out of a shift',
             self::WeatherAlert => 'NWS and manual weather alerts',
+            self::ShiftConfirmation => 'Volunteer check-ins waiting for manager confirmation',
         };
     }
 }

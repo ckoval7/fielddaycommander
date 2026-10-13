@@ -10,6 +10,7 @@ use App\Models\GuestbookEntry;
 use App\Models\Image;
 use App\Models\Message;
 use App\Models\OperatingSession;
+use App\Models\ShiftAssignment;
 use App\Models\Station;
 use App\Models\W1awBulletin;
 use App\Observers\ContactObserver;
@@ -19,6 +20,7 @@ use App\Observers\GuestbookEntryObserver;
 use App\Observers\ImageObserver;
 use App\Observers\MessageObserver;
 use App\Observers\OperatingSessionObserver;
+use App\Observers\ShiftAssignmentObserver;
 use App\Observers\StationObserver;
 use App\Observers\W1awBulletinObserver;
 use App\Policies\GuestbookEntryPolicy;
@@ -92,6 +94,7 @@ class AppServiceProvider extends ServiceProvider
         Image::observe(ImageObserver::class);
         Message::observe(MessageObserver::class);
         OperatingSession::observe(OperatingSessionObserver::class);
+        ShiftAssignment::observe(ShiftAssignmentObserver::class);
         Station::observe(StationObserver::class);
         W1awBulletin::observe(W1awBulletinObserver::class);
     }
