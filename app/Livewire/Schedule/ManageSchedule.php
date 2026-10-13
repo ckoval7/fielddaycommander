@@ -13,10 +13,14 @@ use App\Models\User;
 use App\Services\EventContextService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ManageSchedule extends Component
@@ -32,6 +36,7 @@ class ManageSchedule extends Component
     public ?EventConfiguration $eventConfig = null;
 
     // Tab state
+    #[Url(as: 'tab', except: 'shifts')]
     public string $activeTab = 'shifts';
 
     // Role modal
@@ -776,28 +781,67 @@ class ManageSchedule extends Component
         $assignment = ShiftAssignment::findOrFail($assignmentId);
         $assignment->load(['user', 'shift']);
 
-        $assignment->checked_in_at = $assignment->shift->start_time;
-        $assignment->checked_out_at = $assignment->shift->end_time;
-        $assignment->status = ShiftAssignment::STATUS_CHECKED_OUT;
-        $assignment->confirmed_by_user_id = Auth::id();
-        $assignment->confirmed_at = appNow();
-        $assignment->save();
+        $this->applyMarkWorked($assignment);
 
-        AuditLog::log(
-            action: 'shift.mark_worked_by_manager',
-            auditable: $assignment,
-            newValues: [
-                'status' => $assignment->status,
-                'user' => $assignment->user->call_sign,
-                'managed_by' => Auth::user()->call_sign,
-                'shift_start' => $assignment->shift->start_time->toDateTimeString(),
-                'shift_end' => $assignment->shift->end_time->toDateTimeString(),
-            ]
-        );
-
-        unset($this->shifts);
+        unset($this->shifts, $this->unresolvedPastAssignmentCount);
 
         $this->dispatch('toast', title: 'Success', description: 'Marked as worked', icon: 'phosphor-check-circle', css: 'alert-success');
+    }
+
+    /**
+     * Mark every unresolved assignment on an ended shift as worked.
+     * No-shows and real check-outs are left alone.
+     */
+    public function markShiftWorked(int $shiftId): void
+    {
+        Gate::authorize('manage-shifts');
+
+        $shift = Shift::findOrFail($shiftId);
+
+        $count = $this->markUnresolvedWorked(
+            ShiftAssignment::query()->where('shift_id', $shift->id)
+        );
+
+        $this->dispatch('toast', title: 'Success', description: $this->markedWorkedMessage($count), icon: 'phosphor-check-circle', css: 'alert-success');
+    }
+
+    /**
+     * Mark every unresolved assignment on every ended shift in the event as worked.
+     */
+    public function markAllPastWorked(): void
+    {
+        Gate::authorize('manage-shifts');
+
+        if (! $this->eventConfig) {
+            return;
+        }
+
+        $count = $this->markUnresolvedWorked(
+            ShiftAssignment::query()->whereHas('shift', function ($query) {
+                $query->where('event_configuration_id', $this->eventConfig->id);
+            })
+        );
+
+        $this->dispatch('toast', title: 'Success', description: $this->markedWorkedMessage($count), icon: 'phosphor-check-circle', css: 'alert-success');
+    }
+
+    /**
+     * Number of assignments on ended shifts in this event still awaiting worked/no-show.
+     */
+    #[Computed]
+    public function unresolvedPastAssignmentCount(): int
+    {
+        if (! $this->eventConfig) {
+            return 0;
+        }
+
+        return ShiftAssignment::query()
+            ->unresolved()
+            ->whereHas('shift', function ($query) {
+                $query->where('event_configuration_id', $this->eventConfig->id)
+                    ->where('end_time', '<', appNow());
+            })
+            ->count();
     }
 
     public function unmarkWorked(int $assignmentId): void
@@ -824,9 +868,65 @@ class ManageSchedule extends Component
             ]
         );
 
-        unset($this->shifts);
+        unset($this->shifts, $this->unresolvedPastAssignmentCount);
 
         $this->dispatch('toast', title: 'Success', description: 'Mark Worked undone', icon: 'phosphor-check-circle', css: 'alert-success');
+    }
+
+    // --- Mark Worked Helpers ---
+
+    /**
+     * Credit the assignment with the full shift window and confirm it.
+     */
+    private function applyMarkWorked(ShiftAssignment $assignment): void
+    {
+        $assignment->checked_in_at = $assignment->shift->start_time;
+        $assignment->checked_out_at = $assignment->shift->end_time;
+        $assignment->status = ShiftAssignment::STATUS_CHECKED_OUT;
+        $assignment->confirmed_by_user_id = Auth::id();
+        $assignment->confirmed_at = appNow();
+        $assignment->save();
+
+        AuditLog::log(
+            action: 'shift.mark_worked_by_manager',
+            auditable: $assignment,
+            newValues: [
+                'status' => $assignment->status,
+                'user' => $assignment->user->call_sign,
+                'managed_by' => Auth::user()->call_sign,
+                'shift_start' => $assignment->shift->start_time->toDateTimeString(),
+                'shift_end' => $assignment->shift->end_time->toDateTimeString(),
+            ]
+        );
+    }
+
+    /**
+     * Mark the unresolved, ended-shift assignments matched by the query as worked.
+     *
+     * @param  Builder<ShiftAssignment>  $query
+     */
+    private function markUnresolvedWorked(Builder $query): int
+    {
+        $assignments = $query
+            ->unresolved()
+            ->whereHas('shift', fn ($shiftQuery) => $shiftQuery->where('end_time', '<', appNow()))
+            ->with(['user', 'shift'])
+            ->get();
+
+        DB::transaction(function () use ($assignments) {
+            $assignments->each(fn (ShiftAssignment $assignment) => $this->applyMarkWorked($assignment));
+        });
+
+        unset($this->shifts, $this->unresolvedPastAssignmentCount);
+
+        return $assignments->count();
+    }
+
+    private function markedWorkedMessage(int $count): string
+    {
+        return $count === 0
+            ? 'Nothing left to mark as worked'
+            : 'Marked '.$count.' '.Str::plural('assignment', $count).' as worked';
     }
 
     // --- Form Resets ---

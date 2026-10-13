@@ -1,4 +1,17 @@
-<div>
+<div
+    x-data="{
+        confirmDialog: { message: '', confirmLabel: '', action: null, args: [], danger: true },
+        askConfirm({ message, confirmLabel, action, args = [], danger = true }) {
+            this.confirmDialog = { message, confirmLabel, action, args, danger };
+            this.$refs.confirmDialog.showModal();
+        },
+        runConfirmed() {
+            const { action, args } = this.confirmDialog;
+            this.$refs.confirmDialog.close();
+            this.$wire[action](...args);
+        },
+    }"
+>
     <x-slot:title>Manage Schedule{{ $event ? ' - ' . $event->name : '' }}</x-slot:title>
 
     <div class="p-4 md:p-6">
@@ -55,6 +68,31 @@
                             'statuses' => $this->getFilterStatuses(),
                         ])
 
+                        {{-- Unresolved past assignments --}}
+                        @if($this->unresolvedPastAssignmentCount > 0)
+                            <x-alert
+                                icon="phosphor-seal-question"
+                                class="alert-info"
+                                title="{{ $this->unresolvedPastAssignmentCount }} {{ Str::plural('assignment', $this->unresolvedPastAssignmentCount) }} on ended shifts {{ $this->unresolvedPastAssignmentCount === 1 ? 'needs' : 'need' }} to be marked worked or no-show"
+                            >
+                                <x-slot:actions>
+                                    @if($timeFilter !== 'past')
+                                        <x-button
+                                            label="Show past shifts"
+                                            class="btn-ghost btn-sm"
+                                            wire:click="$set('timeFilter', 'past')"
+                                        />
+                                    @endif
+                                    <x-button
+                                        label="Mark all worked"
+                                        icon="phosphor-seal-check"
+                                        class="btn-success btn-sm"
+                                        x-on:click="askConfirm({ message: {{ Js::from('Mark all ' . $this->unresolvedPastAssignmentCount . ' unresolved ' . Str::plural('assignment', $this->unresolvedPastAssignmentCount) . ' on ended shifts as fully worked? No-shows and existing check-outs are not changed.') }}, confirmLabel: 'Mark all worked', action: 'markAllPastWorked', danger: false })"
+                                    />
+                                </x-slot:actions>
+                            </x-alert>
+                        @endif
+
                         {{-- Shifts list --}}
                         @if($this->shifts->isEmpty())
                             <x-card shadow>
@@ -99,6 +137,22 @@
                                             {{-- Assigned users --}}
                                             <div class="flex-1 min-w-0">
                                                 @if($shift->assignments->isNotEmpty())
+                                                    @php
+                                                        $unresolvedOnShift = $shift->end_time->isPast()
+                                                            ? $shift->assignments->whereIn('status', [\App\Models\ShiftAssignment::STATUS_SCHEDULED, \App\Models\ShiftAssignment::STATUS_CHECKED_IN])->count()
+                                                            : 0;
+                                                    @endphp
+                                                    @if($unresolvedOnShift > 1)
+                                                        <div class="flex justify-end mb-2">
+                                                            <x-button
+                                                                label="Mark {{ $unresolvedOnShift }} worked"
+                                                                icon="phosphor-seal-check"
+                                                                class="btn-outline btn-success btn-xs"
+                                                                wire:click="markShiftWorked({{ $shift->id }})"
+                                                                spinner="markShiftWorked({{ $shift->id }})"
+                                                            />
+                                                        </div>
+                                                    @endif
                                                     <div class="space-y-2">
                                                         @foreach($shift->assignments as $assignment)
                                                             <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
@@ -135,7 +189,6 @@
                                                                             class="btn-ghost btn-xs"
                                                                             wire:click="managerCheckIn({{ $assignment->id }})"
                                                                             tooltip="Check In"
-                                                                            wire:confirm="Check in this user?"
                                                                         />
                                                                     @endif
                                                                     @if($assignment->status === 'checked_in')
@@ -144,16 +197,14 @@
                                                                             class="btn-ghost btn-xs"
                                                                             wire:click="managerCheckOut({{ $assignment->id }})"
                                                                             tooltip="Check Out"
-                                                                            wire:confirm="Check out this user?"
                                                                         />
                                                                     @endif
                                                                     @if($assignment->status === 'scheduled' || $assignment->status === 'checked_in')
                                                                         <x-button
                                                                             icon="phosphor-x"
                                                                             class="btn-ghost btn-xs text-error"
-                                                                            wire:click="markNoShow({{ $assignment->id }})"
+                                                                            x-on:click="askConfirm({ message: {{ Js::from('Mark ' . $assignment->user->first_name . ' ' . $assignment->user->last_name . ' as a no-show?') }}, confirmLabel: 'Mark no-show', action: 'markNoShow', args: [{{ $assignment->id }}] })"
                                                                             tooltip="Mark No-Show"
-                                                                            wire:confirm="Mark this user as a no-show?"
                                                                         />
                                                                     @endif
                                                                     @if($shift->end_time->isPast())
@@ -167,7 +218,6 @@
                                                                                 class="btn-ghost btn-xs text-warning"
                                                                                 wire:click="unmarkWorked({{ $assignment->id }})"
                                                                                 tooltip="Undo Mark Worked"
-                                                                                wire:confirm="Undo Mark Worked for this user?"
                                                                             />
                                                                         @else
                                                                             <x-button
@@ -175,16 +225,14 @@
                                                                                 class="btn-ghost btn-xs text-success"
                                                                                 wire:click="markWorked({{ $assignment->id }})"
                                                                                 tooltip="Mark Worked"
-                                                                                wire:confirm="Mark this user's shift as fully worked?"
                                                                             />
                                                                         @endif
                                                                     @endif
                                                                     <x-button
                                                                         icon="phosphor-user-minus"
                                                                         class="btn-ghost btn-xs text-error"
-                                                                        wire:click="removeAssignment({{ $assignment->id }})"
+                                                                        x-on:click="askConfirm({ message: {{ Js::from('Remove ' . $assignment->user->first_name . ' ' . $assignment->user->last_name . ' from this shift?') }}, confirmLabel: 'Remove', action: 'removeAssignment', args: [{{ $assignment->id }}] })"
                                                                         tooltip="Remove Assignment"
-                                                                        wire:confirm="Remove this assignment?"
                                                                     />
                                                                 </div>
                                                             </div>
@@ -214,8 +262,7 @@
                                                 <x-button
                                                     icon="phosphor-trash"
                                                     class="btn-ghost btn-sm text-error"
-                                                    wire:click="deleteShift({{ $shift->id }})"
-                                                    wire:confirm="Delete this shift{{ $shift->assignments->count() > 0 ? ' and its ' . $shift->assignments->count() . ' assignment(s)' : '' }}?"
+                                                    x-on:click="askConfirm({ message: {{ Js::from('Delete this shift' . ($shift->assignments->count() > 0 ? ' and its ' . $shift->assignments->count() . ' ' . Str::plural('assignment', $shift->assignments->count()) : '') . '?') }}, confirmLabel: 'Delete', action: 'deleteShift', args: [{{ $shift->id }}] })"
                                                     tooltip="Delete Shift"
                                                 />
                                             </div>
@@ -289,8 +336,7 @@
                                                 <x-button
                                                     icon="phosphor-trash"
                                                     class="btn-ghost btn-sm text-error"
-                                                    wire:click="deleteRole({{ $role->id }})"
-                                                    wire:confirm="Delete this role? Any shifts without assignments will also be deleted."
+                                                    x-on:click="askConfirm({ message: 'Delete this role? Any shifts without assignments will also be deleted.', confirmLabel: 'Delete', action: 'deleteRole', args: [{{ $role->id }}] })"
                                                     tooltip="Delete Role"
                                                 />
                                             </div>
@@ -352,8 +398,7 @@
                                                     label="Reject"
                                                     icon="phosphor-x"
                                                     class="btn-error btn-sm btn-outline"
-                                                    wire:click="revokeConfirmation({{ $confirmation->id }})"
-                                                    wire:confirm="Reject this confirmation?"
+                                                    x-on:click="askConfirm({ message: 'Reject this confirmation?', confirmLabel: 'Reject', action: 'revokeConfirmation', args: [{{ $confirmation->id }}] })"
                                                 />
                                             </div>
                                         </div>
@@ -366,6 +411,22 @@
             </x-tabs>
         @endif
     </div>
+
+    {{-- In-page confirmation dialog (replaces browser confirm()) --}}
+    <dialog x-ref="confirmDialog" class="modal" wire:ignore.self>
+        <div class="modal-box max-w-sm">
+            <p class="text-base" x-text="confirmDialog.message"></p>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn btn-ghost btn-sm">Cancel</button>
+                </form>
+                <button type="button" class="btn btn-sm" :class="confirmDialog.danger ? 'btn-error' : 'btn-success'" x-on:click="runConfirmed()" x-text="confirmDialog.confirmLabel"></button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>Close</button>
+        </form>
+    </dialog>
 
     {{-- Role Form Modal --}}
     <x-modal wire:model="showRoleModal" title="{{ $editingRoleId ? 'Edit Role' : 'Add Custom Role' }}">

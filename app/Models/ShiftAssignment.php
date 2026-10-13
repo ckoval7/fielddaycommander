@@ -100,6 +100,15 @@ class ShiftAssignment extends Model
     }
 
     /**
+     * Scope a query to assignments that still need a manager to mark them
+     * worked or no-show (never checked out and not marked as a no-show).
+     */
+    public function scopeUnresolved(Builder $query): Builder
+    {
+        return $query->whereIn('status', [self::STATUS_SCHEDULED, self::STATUS_CHECKED_IN]);
+    }
+
+    /**
      * Scope a query to only include confirmed assignments.
      */
     public function scopeConfirmed(Builder $query): Builder

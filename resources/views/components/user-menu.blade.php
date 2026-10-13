@@ -62,6 +62,12 @@
                 Profile
             </a>
         </li>
+        <li>
+            <a href="{{ route('schedule.my-shifts') }}" wire:navigate>
+                <x-icon name="phosphor-calendar-dots" class="w-4 h-4" />
+                My Shifts
+            </a>
+        </li>
 
         @can('manage-users')
             <div class="divider my-1"></div>
