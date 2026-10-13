@@ -152,6 +152,14 @@ test('session info displays correctly', function () {
         ->assertSee('100W');
 });
 
+test('queued contact sync indicators wait for the pending delay', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSee("contact.status !== 'editing' && isPendingIndicatorVisible(contact)", false)
+        ->assertSee("contact.status === 'syncing') && isPendingIndicatorVisible(contact)", false);
+});
+
 test('club exchange is displayed with callsign', function () {
     $this->actingAs($this->user);
 
