@@ -871,6 +871,215 @@ describe('manager overrides', function () {
             ->assertSeeHtml('wire:click="markWorked('.$naturalCheckout->id.')"');
     });
 
+    test('mark worked, undo, check in and check out do not use a browser confirm', function () {
+        $pastShift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $pastShift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->set('timeFilter', 'all')
+            ->assertDontSeeHtml('wire:confirm');
+    });
+
+    test('mark shift worked marks unresolved assignments and leaves no-shows and check-outs alone', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'capacity' => 4,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $scheduled = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'checked_in_at' => null,
+            'checked_out_at' => null,
+        ]);
+        $checkedIn = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow()->subHours(2),
+            'checked_out_at' => null,
+        ]);
+        $noShow = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'status' => ShiftAssignment::STATUS_NO_SHOW,
+            'checked_in_at' => null,
+            'checked_out_at' => null,
+        ]);
+        $realCheckoutTime = appNow()->subMinutes(90);
+        $checkedOut = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_OUT,
+            'checked_in_at' => appNow()->subHours(3),
+            'checked_out_at' => $realCheckoutTime,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('markShiftWorked', $shift->id)
+            ->assertDispatched('toast', title: 'Success', description: 'Marked 2 assignments as worked');
+
+        foreach ([$scheduled, $checkedIn] as $assignment) {
+            $fresh = $assignment->fresh();
+            expect($fresh->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT)
+                ->and($fresh->checked_in_at->equalTo($shift->start_time))->toBeTrue()
+                ->and($fresh->checked_out_at->equalTo($shift->end_time))->toBeTrue()
+                ->and($fresh->confirmed_by_user_id)->toBe($this->admin->id);
+        }
+
+        expect($noShow->fresh()->status)->toBe(ShiftAssignment::STATUS_NO_SHOW)
+            ->and($checkedOut->fresh()->checked_out_at->toDateTimeString())->toBe($realCheckoutTime->toDateTimeString())
+            ->and(AuditLog::where('action', 'shift.mark_worked_by_manager')->count())->toBe(2);
+    });
+
+    test('mark shift worked does nothing for a shift that has not ended', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHour(),
+            'end_time' => appNow()->addHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('markShiftWorked', $shift->id)
+            ->assertDispatched('toast', description: 'Nothing left to mark as worked');
+
+        expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_SCHEDULED);
+    });
+
+    test('mark all past worked covers every ended shift in the event only', function () {
+        $endedShifts = Shift::factory()->count(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+        $futureShift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHour(),
+            'end_time' => appNow()->addHours(2),
+        ]);
+        $otherEventShift = Shift::factory()->create([
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $ended = $endedShifts->map(fn (Shift $shift) => ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]));
+        $future = ShiftAssignment::factory()->create([
+            'shift_id' => $futureShift->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+        $otherEvent = ShiftAssignment::factory()->create([
+            'shift_id' => $otherEventShift->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('markAllPastWorked')
+            ->assertDispatched('toast', title: 'Success', description: 'Marked 2 assignments as worked')
+            ->assertSet('unresolvedPastAssignmentCount', 0);
+
+        $ended->each(fn (ShiftAssignment $assignment) => expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT));
+        expect($future->fresh()->status)->toBe(ShiftAssignment::STATUS_SCHEDULED)
+            ->and($otherEvent->fresh()->status)->toBe(ShiftAssignment::STATUS_SCHEDULED);
+    });
+
+    test('unresolved banner and per-shift button appear for ended shifts needing review', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'capacity' => 3,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        ShiftAssignment::factory()->count(3)->create([
+            'shift_id' => $shift->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->assertSee('3 assignments on ended shifts need to be marked worked or no-show')
+            ->assertSee('Show past shifts')
+            ->set('timeFilter', 'past')
+            ->assertDontSee('Show past shifts')
+            ->assertSeeHtml('wire:click="markShiftWorked('.$shift->id.')"')
+            ->assertSee('Mark 3 worked');
+    });
+
+    test('unresolved banner hidden when every ended shift is resolved', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'status' => ShiftAssignment::STATUS_NO_SHOW,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->assertDontSee('on ended shifts need')
+            ->assertDontSee('Mark all worked');
+    });
+
+    test('bulk mark worked requires manage-shifts permission', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(3),
+            'end_time' => appNow()->subHour(),
+        ]);
+
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        foreach (['markShiftWorked' => [$shift->id], 'markAllPastWorked' => []] as $method => $params) {
+            $this->admin->givePermissionTo('manage-shifts');
+            $component = Livewire::actingAs($this->admin)->test(ManageSchedule::class);
+            $this->admin->revokePermissionTo('manage-shifts');
+
+            $component->call($method, ...$params)->assertForbidden();
+        }
+
+        expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_SCHEDULED);
+    });
+
 });
 
 // =============================================================================
