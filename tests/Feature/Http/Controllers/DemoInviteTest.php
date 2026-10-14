@@ -5,6 +5,7 @@ use App\Models\DemoParticipant;
 use App\Models\DemoSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -299,4 +300,21 @@ test('a full sandbox does not rename a seeded member for a guest it turns away',
     $this->post(route('demo.join.store', $demoSession->invite_token), joinDetails());
 
     expect($seeded->fresh()->call_sign)->toBe('K1ADA');
+});
+
+test('a guest still signed in from another sandbox is given the role they chose', function () {
+    Config::set('developer.enabled', true);
+    Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $demoSession = invitedDemoSession();
+
+    // Every sandbox numbers its users alike, so the lingering login points at
+    // the ID the guest's new account is about to take.
+    $this->withSession([
+        Auth::guard('web')->getName() => User::max('id') + 1,
+        'dev_role_override' => 'Operator',
+    ])->post(route('demo.join.store', $demoSession->invite_token), joinDetails());
+
+    $guest = User::where('call_sign', 'K1ADA')->sole();
+
+    expect($guest->roles()->pluck('name')->all())->toBe(['Operator']);
 });

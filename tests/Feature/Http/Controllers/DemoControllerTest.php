@@ -284,3 +284,14 @@ test('the identity fields remember what the visitor typed in their browser', fun
         ->assertSee('data-demo-identity', false)
         ->assertSee('localStorage.setItem(storageKey', false);
 })->with(['landing', 'join']);
+
+test('provision signs out whoever the browser was last signed in as', function () {
+    Config::set('demo.max_sessions', 0);
+
+    $this->actingAs(User::factory()->create())
+        ->withSession(['dev_role_override' => 'Event Manager'])
+        ->post(route('demo.provision'), ['role' => 'event_manager', 'event_type' => 'FD'])
+        ->assertSessionMissing('dev_role_override');
+
+    $this->assertGuest();
+});

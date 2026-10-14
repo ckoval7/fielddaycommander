@@ -77,6 +77,8 @@ class DemoController extends Controller
             ...self::IDENTITY_RULES,
         ], self::IDENTITY_MESSAGES);
 
+        $this->forgetPreviousVisitor();
+
         $currentCount = $this->countDemoSessions($pool);
 
         if ($currentCount >= config('demo.max_sessions', 25)) {
@@ -245,6 +247,8 @@ class DemoController extends Controller
         if (DemoCookie::fromRequest($request)?->uuid === $demoSession->session_uuid) {
             return redirect('/');
         }
+
+        $this->forgetPreviousVisitor();
 
         DemoDatabase::activate(DemoDatabasePool::databaseName($demoSession->session_uuid));
 
@@ -517,6 +521,20 @@ class DemoController extends Controller
         $user->assignRole(DemoCookie::roleName($validated['role']));
 
         return $user;
+    }
+
+    /**
+     * Sign out whoever this browser was last signed in as, in any sandbox.
+     *
+     * Every sandbox numbers its users the same way, so a lingering login and
+     * dev role override would attach to whichever new member reuses that ID.
+     * The override then tells Spatie the member already holds the role, so
+     * seeding or guest creation never actually assigns it.
+     */
+    private function forgetPreviousVisitor(): void
+    {
+        Auth::logout();
+        session()->forget('dev_role_override');
     }
 
     private function resolveUserForRole(string $role): User
