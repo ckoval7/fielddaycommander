@@ -88,7 +88,7 @@ test('banner offers an invite link for the visitor\'s sandbox', function () {
         'expires_at' => now()->addHours(24),
     ]);
 
-    Livewire::withCookies(['demo_session' => $demoSession->session_uuid.'|operator'])
+    Livewire::withCookies(['demo_session' => $demoSession->session_uuid.'|1'])
         ->test(DemoBanner::class)
         ->assertSet('inviteUrl', route('demo.join', $demoSession->fresh()->invite_token))
         ->assertSee('Invite')
@@ -104,8 +104,46 @@ test('banner hides the invite link when invitations are turned off', function ()
     );
     Cache::flush();
 
-    Livewire::withCookies(['demo_session' => Str::uuid().'|operator'])
+    Livewire::withCookies(['demo_session' => Str::uuid().'|1'])
         ->test(DemoBanner::class)
         ->assertSet('inviteUrl', null)
         ->assertDontSee('Invite others');
+});
+
+function bannerDemoSession(): DemoSession
+{
+    Config::set('demo.max_users_per_session', 4);
+
+    DB::table('system_config')->updateOrInsert(
+        ['key' => 'demo_provisioned_at'],
+        ['value' => now()->toIso8601String(), 'updated_at' => now(), 'created_at' => now()]
+    );
+    Cache::flush();
+
+    return DemoSession::create([
+        'session_uuid' => (string) Str::uuid(),
+        'role' => 'operator',
+        'event_type' => 'FD',
+        'invite_token' => Str::random(48),
+        'visitor_hash' => str_repeat('a', 64),
+        'user_agent' => 'Pest',
+        'provisioned_at' => now(),
+        'last_seen_at' => now(),
+        'expires_at' => now()->addHours(24),
+    ]);
+}
+
+test('anyone in the sandbox can replace the invite link', function () {
+    $demoSession = bannerDemoSession();
+    $oldToken = $demoSession->invite_token;
+
+    $component = Livewire::withCookies(['demo_session' => $demoSession->session_uuid.'|42'])
+        ->test(DemoBanner::class)
+        ->assertSee('Make a new link')
+        ->call('rotateInvite');
+
+    $newToken = $demoSession->fresh()->invite_token;
+
+    expect($newToken)->not->toBe($oldToken);
+    $component->assertSet('inviteUrl', route('demo.join', $newToken));
 });

@@ -2,14 +2,13 @@
 
 namespace App\Http\Middleware;
 
-use App\Http\Controllers\DemoController;
 use App\Models\User;
+use App\Support\DemoCookie;
 use App\Support\DemoDatabase;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class DemoMiddleware
@@ -39,17 +38,14 @@ class DemoMiddleware
             return $next($request);
         }
 
-        $cookie = $request->cookie('demo_session');
-
-        // Cookie format: "uuid|role_slug" (e.g. "abc-123|system_admin")
-        [$uuid, $roleSlug] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
+        $visitor = DemoCookie::fromRequest($request);
 
         // Missing or malformed cookie → redirect to landing
-        if (! $uuid || ! Str::isUuid($uuid)) {
+        if ($visitor === null) {
             return redirect()->route('demo.landing');
         }
 
-        $dbName = 'demo_'.str_replace('-', '_', $uuid);
+        $dbName = 'demo_'.str_replace('-', '_', $visitor->uuid);
 
         // Under Octane, `config()` mutations persist across requests in the same
         // worker. If this worker is already pointed at the visitor's DB from a
@@ -62,19 +58,15 @@ class DemoMiddleware
 
         if (! $this->demoDatabaseExists($dbName)) {
             return redirect()->route('demo.landing')
-                ->withoutCookie('demo_session')
-                ->withoutCookie(DemoController::GUEST_COOKIE);
+                ->withoutCookie(DemoCookie::NAME);
         }
 
         // Switch the demo connection to this visitor's isolated database
         DemoDatabase::activate($dbName);
 
         // On visitor change, re-authenticate so the session guard doesn't serve
-        // a stale user resolved against the previous visitor's demo DB. Guests
-        // who joined through an invite have their own account; everyone else
-        // signs in as the persona for the cookie's role slug.
-        $user = $this->resolveGuestUser($request, $uuid)
-            ?? ($roleSlug ? User::role($this->resolveRoleName($roleSlug))->first() : null);
+        // a stale user resolved against the previous visitor's demo DB.
+        $user = User::find($visitor->userId);
 
         if ($user) {
             Auth::setUser($user);
@@ -82,36 +74,6 @@ class DemoMiddleware
         }
 
         return $next($request);
-    }
-
-    /**
-     * The account created for a visitor who joined this sandbox by invite.
-     *
-     * The guest cookie is encrypted, so its user ID can be trusted as long as
-     * it was issued for the sandbox the visitor is currently in.
-     */
-    protected function resolveGuestUser(Request $request, string $uuid): ?User
-    {
-        [$guestUuid, $userId] = array_pad(explode('|', (string) $request->cookie(DemoController::GUEST_COOKIE), 2), 2, null);
-
-        if ($guestUuid !== $uuid || ! ctype_digit((string) $userId)) {
-            return null;
-        }
-
-        return User::find((int) $userId);
-    }
-
-    /**
-     * Map a cookie role slug to a Spatie role name.
-     */
-    protected function resolveRoleName(string $slug): string
-    {
-        return match ($slug) {
-            'system_admin' => 'System Administrator',
-            'event_manager' => 'Event Manager',
-            'station_captain' => 'Station Captain',
-            default => 'Operator',
-        };
     }
 
     /**

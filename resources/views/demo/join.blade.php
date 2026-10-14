@@ -34,7 +34,7 @@
 
     @if($demoSession->isFull())
         <div class="alert alert-warning mb-6">
-            This sandbox is full. Ask the person who invited you to free up a spot, or start your own demo.
+            This sandbox is full. Start your own demo instead.
         </div>
 
         <a href="{{ route('demo.landing') }}" class="btn btn-primary w-full">Start my own demo</a>
@@ -43,28 +43,9 @@
             @csrf
 
             <div>
-                <p class="text-sm font-semibold mb-2">1. Tell everyone who you are</p>
-                <p class="text-xs text-base-content/60 mb-3">You'll get your own account in this sandbox, so others can see what you log.</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <label class="form-control">
-                        <span class="label-text text-sm mb-1">First name</span>
-                        <input type="text" name="first_name" value="{{ old('first_name') }}" required maxlength="50"
-                               autocomplete="given-name" class="input input-bordered w-full @error('first_name') input-error @enderror">
-                        @error('first_name') <span class="text-error text-xs mt-1">{{ $message }}</span> @enderror
-                    </label>
-                    <label class="form-control">
-                        <span class="label-text text-sm mb-1">Last name</span>
-                        <input type="text" name="last_name" value="{{ old('last_name') }}" required maxlength="50"
-                               autocomplete="family-name" class="input input-bordered w-full @error('last_name') input-error @enderror">
-                        @error('last_name') <span class="text-error text-xs mt-1">{{ $message }}</span> @enderror
-                    </label>
-                    <label class="form-control col-span-2">
-                        <span class="label-text text-sm mb-1">Call sign <span class="text-base-content/50">(optional)</span></span>
-                        <input type="text" name="call_sign" value="{{ old('call_sign') }}" maxlength="12"
-                               autocapitalize="characters" class="input input-bordered w-full uppercase @error('call_sign') input-error @enderror">
-                        @error('call_sign') <span class="text-error text-xs mt-1">{{ $message }}</span> @enderror
-                    </label>
-                </div>
+                <p class="text-sm font-semibold mb-2">1. Tell everyone who you are <span class="font-normal text-base-content/50">(optional)</span></p>
+                <p class="text-xs text-base-content/60 mb-3">You'll get your own account in this sandbox, so others can see what you log. Leave these blank to use a made-up name and call sign.</p>
+                @include('demo.partials.identity-fields')
             </div>
 
             <fieldset>

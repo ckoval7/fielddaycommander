@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\DemoController;
 use App\Models\DemoEvent;
 use App\Models\DemoSession;
 use App\Models\User;
@@ -60,10 +59,18 @@ test('claiming seats stops at the configured limit', function () {
         ->and($demoSession->participant_count)->toBe(3)
         ->and($demoSession->isFull())->toBeTrue();
 
-    $demoSession->releaseSeat();
+});
 
-    expect($demoSession->participant_count)->toBe(2)
-        ->and($demoSession->claimSeat())->toBeTrue();
+test('rotating the invite token stops the old link working', function () {
+    $demoSession = invitedDemoSession();
+    $oldToken = $demoSession->invite_token;
+
+    $newToken = $demoSession->rotateInviteToken();
+
+    expect($newToken)->not->toBe($oldToken)->toHaveLength(48);
+
+    $this->get(route('demo.join', $oldToken))->assertRedirect(route('demo.landing'));
+    $this->get(route('demo.join', $newToken))->assertOk();
 });
 
 test('join page shows the shared sandbox and role choices', function () {
@@ -88,7 +95,7 @@ test('join page tells the visitor when the sandbox is full', function () {
 test('join page sends visitors already in the sandbox straight to it', function () {
     $demoSession = invitedDemoSession();
 
-    $this->withUnencryptedCookies(['demo_session' => $demoSession->session_uuid.'|operator'])
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|1'])
         ->get(route('demo.join', $demoSession->invite_token))
         ->assertRedirect('/');
 });
@@ -129,8 +136,7 @@ test('joining gives the visitor their own account with the chosen role', functio
     $guest = User::where('call_sign', 'K1ADA')->sole();
 
     $response->assertRedirect('/');
-    $response->assertCookie('demo_session', $demoSession->session_uuid.'|operator', encrypted: false);
-    $response->assertCookie(DemoController::GUEST_COOKIE, $demoSession->session_uuid.'|'.$guest->id);
+    $response->assertCookie('demo_session', $demoSession->session_uuid.'|'.$guest->id);
     $this->assertAuthenticatedAs($guest);
 
     expect($guest->id)->not->toBe($persona->id)
@@ -154,11 +160,11 @@ test('each guest who joins gets a separate account', function () {
 
     expect($guests)->toHaveCount(2)
         ->and($guests->pluck('call_sign')->unique())->toHaveCount(2)
-        ->and($guests->pluck('call_sign')->every(fn (string $callSign): bool => str_starts_with($callSign, 'GUEST')))->toBeTrue();
+        ->and($guests->pluck('call_sign')->every(fn (string $callSign): bool => preg_match('/^[AKNW][A-Z]?\d[A-Z]{1,3}$/', $callSign) === 1))->toBeTrue();
 });
 
-test('joining with a call sign already used in the sandbox is refused without taking a seat', function () {
-    demoPersona('Operator')->update(['call_sign' => 'K1ADA']);
+test('joining with a call sign another participant uses is refused without taking a seat', function () {
+    demoPersona('Operator')->update(['call_sign' => 'K1ADA', 'email' => 'visitor-abc@demo.invalid']);
     $demoSession = invitedDemoSession();
 
     $this->post(route('demo.join.store', $demoSession->invite_token), joinDetails())
@@ -168,11 +174,26 @@ test('joining with a call sign already used in the sandbox is refused without ta
     $this->assertGuest();
 });
 
-test('joining requires a name', function () {
+test('joining without a name or call sign gives the guest a generated identity', function () {
+    Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
     $demoSession = invitedDemoSession();
 
     $this->post(route('demo.join.store', $demoSession->invite_token), ['role' => 'operator'])
-        ->assertSessionHasErrors(['first_name', 'last_name']);
+        ->assertRedirect('/');
+
+    $guest = User::sole();
+
+    expect($guest->first_name)->toMatch('/^[A-Z][a-z]+$/')
+        ->and($guest->last_name)->toMatch('/^[A-Z][a-z]+$/')
+        ->and($guest->call_sign)->toMatch('/^[AKNW][A-Z]?\d[A-Z]{1,3}$/')
+        ->and($guest->email)->toEndWith('@demo.invalid');
+});
+
+test('joining with a last name but no first name is refused', function () {
+    $demoSession = invitedDemoSession();
+
+    $this->post(route('demo.join.store', $demoSession->invite_token), ['role' => 'operator', 'last_name' => 'Lovelace'])
+        ->assertSessionHasErrors('first_name');
 });
 
 test('joining a full sandbox is refused without taking a seat', function () {
@@ -199,44 +220,39 @@ test('joining rejects an unknown role', function () {
     expect($demoSession->fresh()->participant_count)->toBe(1);
 });
 
-test('joining from another sandbox gives up the seat there', function () {
-    Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
-    $previous = invitedDemoSession(['participant_count' => 2]);
-    $demoSession = invitedDemoSession();
-
-    $this->withUnencryptedCookies(['demo_session' => $previous->session_uuid.'|operator'])
-        ->post(route('demo.join.store', $demoSession->invite_token), joinDetails())
-        ->assertRedirect('/');
-
-    expect($previous->fresh()->participant_count)->toBe(1)
-        ->and($demoSession->fresh()->participant_count)->toBe(2);
-});
-
-test('a guest leaving frees their seat without marking the sandbox reset', function () {
+test('anyone starting over keeps their seat taken and marks the sandbox reset', function () {
     $demoSession = invitedDemoSession(['participant_count' => 2]);
 
-    $this->withUnencryptedCookies(['demo_session' => $demoSession->session_uuid.'|operator'])
-        ->withCookie(DemoController::GUEST_COOKIE, $demoSession->session_uuid.'|42')
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|42'])
         ->post(route('demo.reset'))
         ->assertRedirect(route('demo.landing'))
-        ->assertCookieExpired(DemoController::GUEST_COOKIE);
+        ->assertCookieExpired('demo_session');
 
     $demoSession->refresh();
 
-    expect($demoSession->participant_count)->toBe(1)
-        ->and($demoSession->was_reset)->toBeFalse()
-        ->and(DemoEvent::where('name', 'session.guest_left')->count())->toBe(1);
+    expect($demoSession->participant_count)->toBe(2)
+        ->and($demoSession->was_reset)->toBeTrue()
+        ->and(DemoEvent::where('name', 'session.reset')->count())->toBe(1);
 });
 
-test('the host starting over frees their seat and marks the sandbox reset', function () {
-    $demoSession = invitedDemoSession(['participant_count' => 2]);
+test('a guest\'s call sign wins over a seeded member who happens to hold it', function () {
+    $seeded = demoPersona('Operator');
+    $seeded->update(['call_sign' => 'K1ADA']);
+    $demoSession = invitedDemoSession();
 
-    $this->withUnencryptedCookies(['demo_session' => $demoSession->session_uuid.'|event_manager'])
-        ->post(route('demo.reset'))
-        ->assertRedirect(route('demo.landing'));
+    $this->post(route('demo.join.store', $demoSession->invite_token), joinDetails())
+        ->assertRedirect('/');
 
-    $demoSession->refresh();
+    expect(User::where('call_sign', 'K1ADA')->sole()->first_name)->toBe('Ada')
+        ->and($seeded->fresh()->call_sign)->not->toBe('K1ADA')->toMatch('/^[AKNW][A-Z]?\d[A-Z]{1,3}$/');
+});
 
-    expect($demoSession->participant_count)->toBe(1)
-        ->and($demoSession->was_reset)->toBeTrue();
+test('a full sandbox does not rename a seeded member for a guest it turns away', function () {
+    $seeded = demoPersona('Operator');
+    $seeded->update(['call_sign' => 'K1ADA']);
+    $demoSession = invitedDemoSession(['participant_count' => 3]);
+
+    $this->post(route('demo.join.store', $demoSession->invite_token), joinDetails());
+
+    expect($seeded->fresh()->call_sign)->toBe('K1ADA');
 });

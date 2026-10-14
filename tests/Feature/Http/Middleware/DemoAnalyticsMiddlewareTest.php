@@ -24,7 +24,7 @@ it('tracks page view for demo session', function () {
     ]);
 
     $request = Request::create('/dashboard', 'GET');
-    $request->cookies->set('demo_session', $uuid.'|operator');
+    $request->cookies->set('demo_session', $uuid.'|1');
 
     $middleware = app(DemoAnalyticsMiddleware::class);
     $middleware->handle($request, fn ($req) => response('ok'));
@@ -76,7 +76,7 @@ it('skips tracking when demo session not found in database', function () {
     $uuid = fake()->uuid();
 
     $request = Request::create('/dashboard', 'GET');
-    $request->cookies->set('demo_session', $uuid.'|operator');
+    $request->cookies->set('demo_session', $uuid.'|1');
 
     $middleware = app(DemoAnalyticsMiddleware::class);
     $middleware->handle($request, fn ($req) => response('ok'));

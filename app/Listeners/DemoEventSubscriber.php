@@ -8,8 +8,8 @@ use App\Models\DemoSession;
 use App\Models\EventBonus;
 use App\Models\OperatingSession;
 use App\Models\ShiftAssignment;
+use App\Support\DemoCookie;
 use Illuminate\Events\Dispatcher;
-use Illuminate\Support\Str;
 
 class DemoEventSubscriber
 {
@@ -85,10 +85,9 @@ class DemoEventSubscriber
             return null;
         }
 
-        $cookie = request()->cookie('demo_session');
-        [$uuid] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
+        $uuid = DemoCookie::fromRequest(request())?->uuid;
 
-        if (! $uuid || ! Str::isUuid($uuid)) {
+        if ($uuid === null) {
             return null;
         }
 

@@ -78,9 +78,15 @@ class DemoSession extends Model
      */
     public function ensureInviteToken(): string
     {
-        if ($this->invite_token === null) {
-            $this->update(['invite_token' => Str::random(48)]);
-        }
+        return $this->invite_token ?? $this->rotateInviteToken();
+    }
+
+    /**
+     * Replace the invite token so links shared earlier stop working.
+     */
+    public function rotateInviteToken(): string
+    {
+        $this->update(['invite_token' => Str::random(48)]);
 
         return $this->invite_token;
     }
@@ -96,10 +102,12 @@ class DemoSession extends Model
     }
 
     /**
-     * Take a seat in the sandbox for a new participant.
+     * Admit one more person through the invite link.
      *
-     * The check and the increment happen in one conditional UPDATE so two
-     * people opening the same link at once can never push it past the limit.
+     * Seats are never given back: the limit caps how many people a link can
+     * ever let in, so a widely shared link cannot fill the sandbox again once
+     * earlier guests drift away. The check and the increment happen in one
+     * conditional UPDATE so two people joining at once cannot exceed it.
      */
     public function claimSeat(): bool
     {
@@ -111,19 +119,6 @@ class DemoSession extends Model
         $this->refresh();
 
         return $claimed;
-    }
-
-    /**
-     * Give up a participant's seat so someone else can join.
-     */
-    public function releaseSeat(): void
-    {
-        static::query()
-            ->whereKey($this->getKey())
-            ->where('participant_count', '>', 0)
-            ->decrement('participant_count');
-
-        $this->refresh();
     }
 
     public static function parseDeviceType(string $userAgent): string

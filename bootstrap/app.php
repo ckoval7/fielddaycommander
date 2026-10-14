@@ -9,10 +9,12 @@ use App\Http\Middleware\EnforceRegistrationMode;
 use App\Http\Middleware\Ensure2FAEnabled;
 use App\Http\Middleware\EnsurePasswordChanged;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -23,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
-            \Illuminate\Support\Facades\Route::middleware('web')
+            Route::middleware('web')
                 ->group(base_path('routes/demo.php'));
         },
     )
@@ -32,7 +34,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => EnsureEmailIsVerified::class,
         ]);
         $middleware->trustProxies(at: '*');
-        $middleware->encryptCookies(except: ['demo_session']);
         $middleware->web(append: [
             DemoMiddleware::class,
             DemoAnalyticsMiddleware::class,
@@ -47,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Ensure DemoMiddleware swaps the DB connection before Laravel's
         // auth middleware tries to resolve the user from the session.
         $middleware->prependToPriorityList(
-            before: \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            before: AuthenticatesRequests::class,
             prepend: DemoMiddleware::class,
         );
     })

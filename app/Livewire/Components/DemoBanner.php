@@ -4,9 +4,9 @@ namespace App\Livewire\Components;
 
 use App\Models\DemoSession;
 use App\Models\Setting;
+use App\Support\DemoCookie;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Str;
 use Livewire\Component;
 
 class DemoBanner extends Component
@@ -20,6 +20,8 @@ class DemoBanner extends Component
     public int $participantCount = 1;
 
     public int $maxParticipants = 1;
+
+    public bool $isFull = false;
 
     public function mount(): void
     {
@@ -44,17 +46,7 @@ class DemoBanner extends Component
      */
     private function loadInvite(): void
     {
-        if (! DemoSession::invitesEnabled()) {
-            return;
-        }
-
-        [$uuid] = explode('|', (string) request()->cookie('demo_session'), 2);
-
-        if (! Str::isUuid($uuid)) {
-            return;
-        }
-
-        $demoSession = DemoSession::where('session_uuid', $uuid)->first();
+        $demoSession = $this->visitorDemoSession();
 
         if ($demoSession === null) {
             return;
@@ -63,6 +55,33 @@ class DemoBanner extends Component
         $this->inviteUrl = route('demo.join', $demoSession->ensureInviteToken());
         $this->participantCount = $demoSession->participant_count;
         $this->maxParticipants = DemoSession::maxParticipants();
+        $this->isFull = $demoSession->isFull();
+    }
+
+    /**
+     * Give the sandbox a new invite link so the one shared earlier stops
+     * admitting people. Anyone in the sandbox may do this.
+     */
+    public function rotateInvite(): void
+    {
+        $demoSession = $this->visitorDemoSession();
+
+        if ($demoSession === null) {
+            return;
+        }
+
+        $this->inviteUrl = route('demo.join', $demoSession->rotateInviteToken());
+    }
+
+    private function visitorDemoSession(): ?DemoSession
+    {
+        if (! DemoSession::invitesEnabled()) {
+            return null;
+        }
+
+        $uuid = DemoCookie::fromRequest(request())?->uuid;
+
+        return $uuid === null ? null : DemoSession::where('session_uuid', $uuid)->first();
     }
 
     public function render(): View

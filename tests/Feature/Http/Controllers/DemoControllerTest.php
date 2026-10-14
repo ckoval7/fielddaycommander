@@ -2,11 +2,15 @@
 
 use App\Http\Controllers\DemoController;
 use App\Models\DemoPoolDatabase;
+use App\Models\DemoSession;
+use App\Models\User;
 use App\Services\DemoDatabasePool;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -80,7 +84,7 @@ test('provision redirects back with error when session cap is reached', function
 test('reset redirects to role picker and clears cookie', function () {
     $uuid = fake()->uuid();
 
-    $response = $this->withUnencryptedCookies(['demo_session' => $uuid.'|operator'])
+    $response = $this->withCookies(['demo_session' => $uuid.'|1'])
         ->post(route('demo.reset'));
 
     $response->assertRedirect(route('demo.landing'));
@@ -134,6 +138,8 @@ test('provision sends the visitor back to retry when every provisioning slot is 
         'role' => 'station_captain',
         'event_type' => 'WFD',
         'attempt' => 2,
+        'first_name' => 'Ada',
+        'call_sign' => 'K1ADA',
     ]);
 
     $response->assertRedirect(route('demo.landing'));
@@ -141,6 +147,9 @@ test('provision sends the visitor back to retry when every provisioning slot is 
         'role' => 'station_captain',
         'event_type' => 'WFD',
         'attempt' => 3,
+        'first_name' => 'Ada',
+        'last_name' => null,
+        'call_sign' => 'K1ADA',
     ]);
     expect(DemoPoolDatabase::count())->toBe(0);
 });
@@ -167,6 +176,9 @@ test('landing page resubmits a visitor who is waiting for a provisioning slot', 
         'role' => 'event_manager',
         'event_type' => 'WFD',
         'attempt' => 4,
+        'first_name' => 'Ada',
+        'last_name' => 'Lovelace',
+        'call_sign' => 'K1ADA',
     ]])->get(route('demo.landing'));
 
     $response->assertOk();
@@ -174,6 +186,9 @@ test('landing page resubmits a visitor who is waiting for a provisioning slot', 
     $response->assertSee('name="role" value="event_manager"', false);
     $response->assertSee('name="event_type" value="WFD"', false);
     $response->assertSee('name="attempt" value="4"', false);
+    $response->assertSee('name="first_name" value="Ada"', false);
+    $response->assertSee('name="last_name" value="Lovelace"', false);
+    $response->assertSee('name="call_sign" value="K1ADA"', false);
 });
 
 test('landing page does not resubmit without a pending retry', function () {
@@ -181,3 +196,91 @@ test('landing page does not resubmit without a pending retry', function () {
         ->assertOk()
         ->assertDontSee('id="provision-retry"', false);
 });
+
+test('provision rejects a malformed call sign before building a sandbox', function () {
+    $this->post(route('demo.provision'), [
+        'role' => 'operator',
+        'event_type' => 'FD',
+        'call_sign' => 'not a call',
+    ])->assertSessionHasErrors('call_sign');
+
+    expect(DemoPoolDatabase::count())->toBe(0);
+});
+
+test('landing page asks for an optional name and call sign', function () {
+    $this->get(route('demo.landing'))
+        ->assertOk()
+        ->assertSee('name="first_name"', false)
+        ->assertSee('name="call_sign"', false)
+        ->assertSee('name="role" value="system_admin"', false);
+});
+
+function applyDemoIdentity(User $user, array $validated): void
+{
+    (new ReflectionMethod(DemoController::class, 'applyIdentity'))
+        ->invoke(new DemoController, $user, $validated);
+}
+
+test('the visitor who starts a sandbox takes over the persona under their own name', function () {
+    $persona = User::factory()->create(['first_name' => 'Carol', 'last_name' => 'Jones', 'call_sign' => 'N4DEF']);
+
+    applyDemoIdentity($persona, ['first_name' => 'Ada', 'last_name' => 'Lovelace', 'call_sign' => 'k1ada']);
+
+    expect($persona->fresh())
+        ->first_name->toBe('Ada')
+        ->last_name->toBe('Lovelace')
+        ->call_sign->toBe('K1ADA');
+});
+
+test('a visitor who leaves their identity blank keeps the persona\'s generated one', function () {
+    $persona = User::factory()->create(['first_name' => 'Carol', 'last_name' => 'Jones', 'call_sign' => 'N4DEF']);
+
+    applyDemoIdentity($persona, ['first_name' => null, 'last_name' => null, 'call_sign' => null]);
+
+    expect($persona->fresh())
+        ->first_name->toBe('Carol')
+        ->call_sign->toBe('N4DEF');
+});
+
+test('a visitor starting a sandbox keeps their call sign when a seeded member holds it', function () {
+    $seeded = User::factory()->create(['call_sign' => 'W1ABC']);
+    $persona = User::factory()->create(['call_sign' => 'N4DEF']);
+
+    applyDemoIdentity($persona, ['call_sign' => 'w1abc']);
+
+    expect($persona->fresh()->call_sign)->toBe('W1ABC')
+        ->and($seeded->fresh()->call_sign)->not->toBe('W1ABC')->toMatch('/^[AKNW][A-Z]?\d[A-Z]{1,3}$/');
+});
+
+test('the persona a visitor takes over is marked as theirs', function () {
+    $persona = User::factory()->create(['email' => 'admin@demo.example']);
+
+    applyDemoIdentity($persona, []);
+
+    expect($persona->fresh()->email)->toEndWith('@demo.invalid');
+});
+
+test('a visitor cannot take the reserved system call sign', function () {
+    applyDemoIdentity(User::factory()->create(), ['call_sign' => 'system']);
+})->throws(ValidationException::class);
+
+test('the identity fields remember what the visitor typed in their browser', function (string $page) {
+    $url = $page === 'landing'
+        ? route('demo.landing')
+        : route('demo.join', DemoSession::create([
+            'session_uuid' => (string) Str::uuid(),
+            'role' => 'operator',
+            'event_type' => 'FD',
+            'invite_token' => Str::random(48),
+            'visitor_hash' => str_repeat('a', 64),
+            'user_agent' => 'Pest',
+            'provisioned_at' => now(),
+            'last_seen_at' => now(),
+            'expires_at' => now()->addHours(24),
+        ])->invite_token);
+
+    $this->get($url)
+        ->assertOk()
+        ->assertSee('data-demo-identity', false)
+        ->assertSee('localStorage.setItem(storageKey', false);
+})->with(['landing', 'join']);

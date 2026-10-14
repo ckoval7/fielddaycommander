@@ -26,7 +26,7 @@ beforeEach(function () {
 });
 
 it('records a time_on_page beacon event', function () {
-    $this->withCredentials()->withUnencryptedCookie('demo_session', $this->uuid.'|operator')
+    $this->withCredentials()->withCookie('demo_session', $this->uuid.'|1')
         ->postJson(route('demo.analytics.beacon'), [
             'page' => '/dashboard',
             'seconds' => 42,
@@ -45,7 +45,7 @@ it('records a time_on_page beacon event', function () {
 });
 
 it('rejects beacon with invalid seconds', function () {
-    $this->withCredentials()->withUnencryptedCookie('demo_session', $this->uuid.'|operator')
+    $this->withCredentials()->withCookie('demo_session', $this->uuid.'|1')
         ->postJson(route('demo.analytics.beacon'), [
             'page' => '/dashboard',
             'seconds' => -5,
@@ -71,7 +71,7 @@ it('rejects beacon when demo mode is disabled', function () {
 
 it('returns no content when session not found', function () {
     $unknownUuid = fake()->uuid();
-    $this->withCredentials()->withUnencryptedCookie('demo_session', $unknownUuid.'|operator')
+    $this->withCredentials()->withCookie('demo_session', $unknownUuid.'|1')
         ->postJson(route('demo.analytics.beacon'), [
             'page' => '/dashboard',
             'seconds' => 10,

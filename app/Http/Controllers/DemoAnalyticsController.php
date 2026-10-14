@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DemoEvent;
 use App\Models\DemoSession;
+use App\Support\DemoCookie;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,10 +20,9 @@ class DemoAnalyticsController extends Controller
     {
         abort_unless(config('demo.enabled'), 404);
 
-        $cookie = $request->cookie('demo_session');
-        [$uuid] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
+        $uuid = DemoCookie::fromRequest($request)?->uuid;
 
-        if (! $uuid || ! Str::isUuid($uuid)) {
+        if ($uuid === null) {
             return response('', 302, ['Location' => route('demo.landing')]);
         }
 

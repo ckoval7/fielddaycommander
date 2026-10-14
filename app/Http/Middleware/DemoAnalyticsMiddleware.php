@@ -4,9 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Models\DemoEvent;
 use App\Models\DemoSession;
+use App\Support\DemoCookie;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class DemoAnalyticsMiddleware
@@ -24,10 +24,9 @@ class DemoAnalyticsMiddleware
             return $next($request);
         }
 
-        $cookie = $request->cookie('demo_session');
-        [$uuid] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
+        $uuid = DemoCookie::fromRequest($request)?->uuid;
 
-        if (! $uuid || ! Str::isUuid($uuid)) {
+        if ($uuid === null) {
             return $next($request);
         }
 

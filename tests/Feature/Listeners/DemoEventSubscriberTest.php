@@ -26,7 +26,7 @@ beforeEach(function () {
     ]);
 
     // Set the demo_session cookie after creating fixtures so factory side-effects are not tracked
-    $this->app['request']->cookies->set('demo_session', $this->uuid.'|operator');
+    $this->app['request']->cookies->set('demo_session', $this->uuid.'|1');
 });
 
 it('logs contact.logged event when ContactLogged fires', function () {
@@ -78,7 +78,7 @@ it('does not log events when cookie has invalid uuid', function () {
 });
 
 it('does not log events when demo session does not exist in database', function () {
-    $this->app['request']->cookies->set('demo_session', fake()->uuid().'|operator');
+    $this->app['request']->cookies->set('demo_session', fake()->uuid().'|1');
 
     event(new ContactLogged($this->contact, $this->event));
 

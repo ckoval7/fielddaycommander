@@ -37,11 +37,14 @@
             <input type="hidden" name="role" value="{{ $retry['role'] }}">
             <input type="hidden" name="event_type" value="{{ $retry['event_type'] }}">
             <input type="hidden" name="attempt" value="{{ $retry['attempt'] }}">
+            <input type="hidden" name="first_name" value="{{ $retry['first_name'] ?? '' }}">
+            <input type="hidden" name="last_name" value="{{ $retry['last_name'] ?? '' }}">
+            <input type="hidden" name="call_sign" value="{{ $retry['call_sign'] ?? '' }}">
         </form>
     @endif
 
     {{-- Step 1: which rulebook the sandbox is built around. The choice is
-         mirrored into each role form's hidden input by the script below. --}}
+         mirrored into the provision form's hidden input by the script below. --}}
     <div class="mb-6">
         <p class="text-sm font-semibold mb-2">1. Choose an event</p>
         <div class="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Event">
@@ -61,28 +64,35 @@
         </div>
     </div>
 
-    <p class="text-sm font-semibold mb-2">2. Choose a role</p>
-    <div class="grid gap-4">
-        @foreach([
-            ['role' => 'operator',        'label' => 'Operator',        'desc' => 'Log contacts and view the live dashboard', 'icon' => 'o-pencil-square'],
-            ['role' => 'station_captain', 'label' => 'Station Captain', 'desc' => 'Manage a station, assign operators, log contacts', 'icon' => 'o-server-stack'],
-            ['role' => 'event_manager',   'label' => 'Event Manager',   'desc' => 'Full event control — scoring, bonuses, schedule', 'icon' => 'o-trophy'],
-            ['role' => 'system_admin',    'label' => 'System Admin',    'desc' => 'Everything, including settings and user management', 'icon' => 'o-cog-6-tooth'],
-        ] as $option)
-        <form method="POST" action="{{ route('demo.provision') }}">
-            @csrf
-            <input type="hidden" name="role" value="{{ $option['role'] }}">
-            <input type="hidden" name="event_type" value="FD" class="demo-event-input">
-            <button type="submit" class="btn btn-outline w-full justify-start gap-4 h-auto py-4">
+    <form method="POST" action="{{ route('demo.provision') }}" id="demo-provision-form">
+        @csrf
+        <input type="hidden" name="event_type" value="FD" class="demo-event-input">
+
+        <div class="mb-6">
+            <p class="text-sm font-semibold mb-2">2. Tell us who you are <span class="font-normal text-base-content/50">(optional)</span></p>
+            <p class="text-xs text-base-content/60 mb-3">Leave these blank to use a made-up name and call sign. If you invite others, this is how they'll see you.</p>
+            @include('demo.partials.identity-fields')
+        </div>
+
+        <p class="text-sm font-semibold mb-2">3. Choose a role</p>
+        @error('role') <p class="text-error text-xs mb-2">{{ $message }}</p> @enderror
+        <div class="grid gap-4">
+            @foreach([
+                ['role' => 'operator',        'label' => 'Operator',        'desc' => 'Log contacts and view the live dashboard', 'icon' => 'o-pencil-square'],
+                ['role' => 'station_captain', 'label' => 'Station Captain', 'desc' => 'Manage a station, assign operators, log contacts', 'icon' => 'o-server-stack'],
+                ['role' => 'event_manager',   'label' => 'Event Manager',   'desc' => 'Full event control — scoring, bonuses, schedule', 'icon' => 'o-trophy'],
+                ['role' => 'system_admin',    'label' => 'System Admin',    'desc' => 'Everything, including settings and user management', 'icon' => 'o-cog-6-tooth'],
+            ] as $option)
+            <button type="submit" name="role" value="{{ $option['role'] }}" class="btn btn-outline w-full justify-start gap-4 h-auto py-4">
                 <x-icon name="{{ $option['icon'] }}" class="w-6 h-6 shrink-0" />
                 <div class="text-left">
                     <div class="font-semibold">{{ $option['label'] }}</div>
                     <div class="text-sm text-base-content/60">{{ $option['desc'] }}</div>
                 </div>
             </button>
-        </form>
-        @endforeach
-    </div>
+            @endforeach
+        </div>
+    </form>
 
     <p class="text-center text-xs text-base-content/40 mt-8">
         Demo data is isolated per visitor. Nothing you do affects anyone else.

@@ -24,7 +24,7 @@
                                 {{ $participantCount }} of {{ $maxParticipants }} spots taken.
                             </p>
 
-                            @if($participantCount >= $maxParticipants)
+                            @if($isFull)
                                 <p class="text-xs text-warning mt-2">This sandbox is full, so the link won't admit anyone new.</p>
                             @endif
 
@@ -37,6 +37,11 @@
                                     <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
                                 </button>
                             </div>
+
+                            <button type="button" class="btn btn-xs btn-ghost mt-2" wire:click="rotateInvite"
+                                    wire:confirm="Make a new link? The current one will stop letting people in.">
+                                Make a new link
+                            </button>
                         </div>
                     </div>
                 @endif

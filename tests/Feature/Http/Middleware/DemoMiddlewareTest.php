@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\DemoController;
 use App\Http\Middleware\DemoMiddleware;
 use App\Models\User;
 use Illuminate\Support\Facades\Config;
@@ -25,13 +24,13 @@ test('redirects to demo landing when no session cookie is present', function () 
 });
 
 test('redirects to demo landing when cookie contains non-UUID value', function () {
-    $response = $this->withUnencryptedCookies(['demo_session' => 'not-a-uuid'])->get('/');
+    $response = $this->withCookies(['demo_session' => 'not-a-uuid'])->get('/');
     $response->assertRedirect(route('demo.landing'));
 });
 
 test('redirects to demo landing when demo database does not exist', function () {
     $uuid = (string) Str::uuid();
-    $response = $this->withUnencryptedCookies(['demo_session' => $uuid])->get('/');
+    $response = $this->withCookies(['demo_session' => $uuid])->get('/');
     $response->assertRedirect(route('demo.landing'));
 });
 
@@ -58,7 +57,7 @@ test('skips expensive swap when worker is already pointed at visitor DB', functi
     // swapped the demo connection to this visitor's database.
     Config::set('database.connections.demo.database', $dbName);
 
-    $response = $this->withUnencryptedCookies(['demo_session' => $uuid.'|operator'])->get('/');
+    $response = $this->withCookies(['demo_session' => $uuid.'|1'])->get('/');
 
     // The fast path must not bounce the visitor to the landing page: that
     // response is reserved for a genuine missing-DB scenario and would wipe
@@ -92,32 +91,38 @@ function assumeDemoDatabasesExist(): void
     });
 }
 
-test('re-authenticates an invited guest as their own account', function () {
+test('signs the visitor in as the account in their cookie', function () {
     assumeDemoDatabasesExist();
     $role = Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
     User::factory()->create()->assignRole($role);
-    $guest = User::factory()->create();
-    $guest->assignRole($role);
-    $uuid = (string) Str::uuid();
+    $visitor = User::factory()->create();
+    $visitor->assignRole($role);
 
-    $this->withUnencryptedCookies(['demo_session' => $uuid.'|operator'])
-        ->withCookie(DemoController::GUEST_COOKIE, $uuid.'|'.$guest->id)
+    $this->withCookies(['demo_session' => Str::uuid().'|'.$visitor->id])
         ->get('/');
 
-    $this->assertAuthenticatedAs($guest);
+    $this->assertAuthenticatedAs($visitor);
 });
 
-test('ignores a guest cookie issued for a different sandbox', function () {
+test('does not fall back to another account when the visitor\'s is gone', function () {
     assumeDemoDatabasesExist();
-    $role = Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
-    $persona = User::factory()->create();
-    $persona->assignRole($role);
-    $guest = User::factory()->create();
-    $guest->assignRole($role);
+    $role = Role::firstOrCreate(['name' => 'System Administrator', 'guard_name' => 'web']);
+    User::factory()->create()->assignRole($role);
 
-    $this->withUnencryptedCookies(['demo_session' => Str::uuid().'|operator'])
-        ->withCookie(DemoController::GUEST_COOKIE, Str::uuid().'|'.$guest->id)
+    $this->withCookies(['demo_session' => Str::uuid().'|999999'])
         ->get('/');
 
-    $this->assertAuthenticatedAs($persona);
+    $this->assertGuest();
+});
+
+test('ignores a demo_session cookie that was not encrypted by the app', function () {
+    assumeDemoDatabasesExist();
+    $admin = User::factory()->create();
+    $admin->assignRole(Role::firstOrCreate(['name' => 'System Administrator', 'guard_name' => 'web']));
+
+    $this->withUnencryptedCookies(['demo_session' => Str::uuid().'|'.$admin->id])
+        ->get('/')
+        ->assertRedirect(route('demo.landing'));
+
+    $this->assertGuest();
 });
