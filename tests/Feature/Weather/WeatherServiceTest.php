@@ -1166,7 +1166,7 @@ test('checkAlerts in demo mode writes shared cache and broadcasts on fingerprint
     expect(cache()->get('weather:demo:alerts'))->toHaveCount(1);
     expect(cache()->get('weather:demo:alert_fingerprint'))->not->toBeNull();
     expect(Setting::get('weather.alerts', 'unset'))->toEqual('unset');
-    EventFacade::assertDispatched(WeatherAlertChanged::class);
+    EventFacade::assertDispatched(WeatherAlertChanged::class, fn ($event) => $event->shared === true);
 });
 
 test('checkAlerts in demo mode does not rebroadcast when fingerprint unchanged', function () {

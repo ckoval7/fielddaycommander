@@ -9,13 +9,12 @@ use App\Models\Section;
 use App\Models\ShiftAssignment;
 use App\Models\Station;
 use App\Support\CallsignGenerator;
-use App\Support\DemoCache;
+use App\Support\DemoDatabase;
 use App\Support\TransmitterCountGenerator;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 class DemoSimulateActivity extends Command
@@ -51,14 +50,12 @@ class DemoSimulateActivity extends Command
         foreach ($rows as $row) {
             $dbName = $row->schema_name ?? $row->SCHEMA_NAME;
 
-            if (! preg_match('/^demo_[a-f0-9_]{32,40}$/', $dbName)) {
+            if (! DemoDatabase::isVisitorDatabase($dbName)) {
                 continue;
             }
 
             try {
-                Config::set('database.connections.demo.database', $dbName);
-                DB::purge('demo');
-                DemoCache::scopeTo($dbName);
+                DemoDatabase::activate($dbName);
 
                 $provisionedAt = DB::connection('demo')
                     ->table('system_config')

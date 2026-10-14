@@ -17,11 +17,16 @@ class WeatherAlertChanged implements ShouldBroadcast
         public readonly array $alerts,
         public readonly bool $hasAlerts,
         public readonly bool $manual,
+        public readonly bool $shared = false,
     ) {}
 
+    /**
+     * Shared alerts (the demo's weather feed) reach every visitor; the rest
+     * stay on the visitor's own weather channel.
+     */
     public function broadcastOn(): Channel
     {
-        return new Channel(BroadcastChannels::weather());
+        return new Channel($this->shared ? BroadcastChannels::sharedWeather() : BroadcastChannels::weather());
     }
 
     public function broadcastWith(): array

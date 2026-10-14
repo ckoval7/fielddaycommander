@@ -25,9 +25,27 @@ class WeatherAlertBanner extends Component
      */
     public function getListeners(): array
     {
-        return [
+        $listeners = [
             BroadcastChannels::publicListener(BroadcastChannels::weather(), 'WeatherAlertChanged') => 'handleAlertUpdate',
         ];
+
+        if (BroadcastChannels::sharedWeather() !== BroadcastChannels::weather()) {
+            $listeners[BroadcastChannels::publicListener(BroadcastChannels::sharedWeather(), 'WeatherAlertChanged')] = 'handleSharedAlertUpdate';
+        }
+
+        return $listeners;
+    }
+
+    /**
+     * Reload alerts after a shared demo weather feed update.
+     *
+     * The feed's payload is the same for every visitor, so the visitor's own
+     * alerts are re-read to keep a manual alert ahead of the feed.
+     */
+    public function handleSharedAlertUpdate(): void
+    {
+        $this->alerts = app(WeatherService::class)->getAlerts();
+        $this->dismissedFingerprint = null;
     }
 
     public function handleAlertUpdate(array $data): void

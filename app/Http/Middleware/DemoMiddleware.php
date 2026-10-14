@@ -3,14 +3,12 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
-use App\Support\DemoCache;
+use App\Support\DemoDatabase;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Spatie\Permission\PermissionRegistrar;
 use Symfony\Component\HttpFoundation\Response;
 
 class DemoMiddleware
@@ -67,14 +65,7 @@ class DemoMiddleware
         }
 
         // Switch the demo connection to this visitor's isolated database
-        Config::set('database.connections.demo.database', $dbName);
-        DB::purge('demo');
-
-        // Every demo DB reuses the same IDs, so cached data must be kept per visitor
-        DemoCache::scopeTo($dbName);
-
-        // Clear Spatie permission cache so it re-loads from the demo DB
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        DemoDatabase::activate($dbName);
 
         // On visitor change, re-authenticate from the cookie's role slug so the
         // session guard doesn't serve a stale user resolved against the previous
