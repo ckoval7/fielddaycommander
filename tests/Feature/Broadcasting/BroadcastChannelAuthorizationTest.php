@@ -8,6 +8,8 @@ use App\Events\ExternalLoggerStatusChanged;
 use App\Events\NewNotification;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\User;
+use App\Support\BroadcastChannels;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Support\Facades\Broadcast;
@@ -45,3 +47,13 @@ test('every private channel an event broadcasts on has an authorization callback
     'ExternalLoggerStatusChanged' => fn () => new ExternalLoggerStatusChanged('n1mm', 'running', 12),
     'NewNotification' => fn () => new NewNotification(3),
 ]);
+
+test('channel authorization callbacks admit the expected users', function () {
+    $channels = Broadcast::driver()->getChannels();
+    $user = (new User)->forceFill(['id' => 3]);
+
+    expect($channels[BroadcastChannels::event('{eventId}')]($user, '7'))->toBeTrue()
+        ->and($channels[BroadcastChannels::externalLogger('{eventConfigId}')]($user, '12'))->toBeTrue()
+        ->and($channels[BroadcastChannels::user('{id}')]($user, '3'))->toBeTrue()
+        ->and($channels[BroadcastChannels::user('{id}')]($user, '4'))->toBeFalse();
+});
