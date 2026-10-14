@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Broadcast;
 /**
  * Dashboard event channel - authenticated users can listen for real-time updates.
  */
-Broadcast::channel(BroadcastChannels::event('{eventId}'), function ($user, int $eventId) {
+Broadcast::channel(BroadcastChannels::event('{eventId}'), function ($user) {
     return $user !== null;
 });
 
