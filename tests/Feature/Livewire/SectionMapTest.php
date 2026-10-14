@@ -74,6 +74,11 @@ test('section map renders with active event', function () {
         ->assertDontSee('No active event');
 });
 
+test('call area filter wraps instead of overflowing on narrow screens', function () {
+    Livewire\Livewire::test(SectionMap::class)
+        ->assertSeeHtml('<div class="join flex-wrap justify-center" x-show="view !== \'ca\'" x-cloak>');
+});
+
 test('recency legend runs from newest on the left to oldest on the right', function () {
     Livewire\Livewire::test(SectionMap::class)
         ->assertSeeHtmlInOrder(['&lt;5m', 'hsl(130,65%,45%), hsl(60,65%,50%), hsl(0,65%,50%)', '&gt;12h']);

@@ -290,9 +290,9 @@
                         <button class="join-item btn btn-sm" :class="view === 'us' ? 'btn-primary' : 'btn-ghost'" @click="view = 'us'; hoverSection = null">US</button>
                         <button class="join-item btn btn-sm" :class="view === 'ca' ? 'btn-primary' : 'btn-ghost'" @click="view = 'ca'; hoverSection = null">Canada</button>
                     </div>
-                    <div class="join" x-show="view !== 'ca'" x-cloak>
+                    <div class="join flex-wrap justify-center" x-show="view !== 'ca'" x-cloak>
                         <template x-for="n in callAreas" :key="n">
-                            <button class="join-item btn btn-sm"
+                            <button class="join-item btn btn-sm max-sm:px-2"
                                     :class="view === 'w' + n ? 'btn-primary' : 'btn-ghost'"
                                     @click="view = 'w' + n; hoverSection = null"
                                     x-text="'W' + n">
