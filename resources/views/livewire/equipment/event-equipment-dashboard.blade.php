@@ -138,7 +138,7 @@
 
         <x-card class="bg-neutral/10 cursor-pointer hover:bg-neutral/20 transition-colors" wire:click="$set('statusFilter', 'returned')">
             <div class="text-center">
-                <div class="text-3xl font-bold text-neutral">{{ $this->statsCards['returned'] }}</div>
+                <div class="text-3xl font-bold text-base-content/80">{{ $this->statsCards['returned'] }}</div>
                 <div class="text-sm text-base-content/60 flex items-center justify-center">
                     <x-icon name="phosphor-check-circle" class="w-4 h-4 mr-2" />
                     Returned
@@ -378,7 +378,7 @@
                                             $statusColor = match($activity->status) {
                                                 'committed' => 'text-info',
                                                 'delivered' => 'text-success',
-                                                'returned' => 'text-neutral',
+                                                'returned' => 'text-base-content/80',
                                                 'cancelled', 'lost', 'damaged' => 'text-error',
                                                 default => 'text-base-content/60'
                                             };
