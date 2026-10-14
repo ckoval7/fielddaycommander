@@ -36,7 +36,7 @@ Slots:
     class="bg-base-100 sm:rounded-lg sm:shadow-sm border-y sm:border border-base-300 flex flex-col max-sm:h-[70dvh]"
     x-data="{
         aligning: true,
-        {{-- Phones: size the log to fill the screen below the sticky header and status bar,
+        {{-- Phones: size the log to fill the screen below the sticky header, weather alert and status bar,
              and on load scroll so the input sits at the bottom of the screen. --}}
         fitToViewport() {
             if (!window.matchMedia('(max-width: 639px)').matches) {
@@ -46,8 +46,9 @@ Slots:
             const content = this.$el.parentElement;
             const stickyBarHeight = document.querySelector('[data-log-sticky-bar]')?.offsetHeight ?? 0;
             const headerHeight = document.querySelector('header.sticky')?.offsetHeight ?? 0;
+            const alertBannerHeight = document.querySelector('[data-weather-alert-sticky]')?.offsetHeight ?? 0;
             const aboveCard = this.$el.getBoundingClientRect().top - content.getBoundingClientRect().top;
-            const height = window.innerHeight - headerHeight - stickyBarHeight - aboveCard;
+            const height = window.innerHeight - headerHeight - alertBannerHeight - stickyBarHeight - aboveCard;
             this.$el.style.height = Math.max(320, height) + 'px';
 
             if (this.aligning) {
@@ -59,6 +60,7 @@ Slots:
         const observer = new ResizeObserver(() => fitToViewport());
         observer.observe(document.body);
         observer.observe(document.querySelector('header.sticky') ?? document.body);
+        observer.observe(document.querySelector('[data-weather-alert-sticky]') ?? document.body);
         setTimeout(() => aligning = false, 1500);
     "
     @resize.window.debounce.150ms="fitToViewport()"

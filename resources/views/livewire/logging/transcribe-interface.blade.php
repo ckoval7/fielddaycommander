@@ -13,7 +13,7 @@
         </div>
     @else
         {{-- Date & Timezone Bar — sticky at top --}}
-        <div data-log-sticky-bar class="sticky top-0 max-lg:top-[var(--mobile-header-height,0px)] max-lg:z-10 lg:z-40 bg-amber-50 dark:bg-amber-900/30 border-b-2 border-amber-300 dark:border-amber-600 shadow-md">
+        <div data-log-sticky-bar class="sticky lg:top-[calc(var(--desktop-header-height,0px)+var(--weather-banner-height,0px))] max-lg:top-[calc(var(--mobile-header-height,0px)+var(--weather-banner-height,0px))] max-lg:z-10 lg:z-40 bg-amber-50 dark:bg-amber-900/30 border-b-2 border-amber-300 dark:border-amber-600 shadow-md">
             <div class="px-4 py-2.5 max-w-5xl mx-auto">
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="flex items-center gap-2 flex-shrink-0">

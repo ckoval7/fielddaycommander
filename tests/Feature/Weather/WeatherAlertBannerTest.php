@@ -153,3 +153,12 @@ test('local alerts render as red alerts', function () {
         ->assertSee('Lightning within 10 miles')
         ->assertSeeHtml('alert alert-error');
 });
+
+test('app layout pins the weather alert banner below the header at any scroll position', function () {
+    $html = view('components.layouts.app', ['slot' => ''])->render();
+
+    expect($html)
+        ->toMatch('/data-weather-alert-sticky\s+class="sticky top-\[var\(--mobile-header-height,0px\)\] lg:top-\[var\(--desktop-header-height,0px\)\]/')
+        ->toContain("setProperty('--desktop-header-height'")
+        ->toContain("setProperty('--weather-banner-height'");
+});
