@@ -377,6 +377,17 @@ describe('event listeners', function () {
         expect($component->instance()->stats['total_qsos'])->toBe(1)
             ->and($component->instance()->contacts->items()[0]->id)->toBe($contact->id);
     })->with(['contact-updated', 'contact-deleted', 'contact-restored']);
+
+    test('bulk action buttons read selected ids client-side without escaped json', function () {
+        Permission::findOrCreate('edit-contacts', 'web');
+        $this->user->givePermissionTo('edit-contacts');
+
+        Livewire::test(LogbookBrowser::class)
+            ->set('selectedIds', ['1', '2'])
+            ->assertSeeHtml("\$dispatch('open-bulk-change-logger', { contactIds: \$wire.selectedIds })")
+            ->assertSeeHtml("\$dispatch('bulk-delete-contacts', { contactIds: \$wire.selectedIds })")
+            ->assertDontSeeHtml('&amp;quot;');
+    });
 });
 
 describe('activeFilterCount', function () {
