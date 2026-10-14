@@ -388,6 +388,16 @@ describe('event listeners', function () {
             ->assertSeeHtml("\$dispatch('bulk-delete-contacts', { contactIds: \$wire.selectedIds })")
             ->assertDontSeeHtml('&amp;quot;');
     });
+
+    test('bulk action bar wraps on narrow screens', function () {
+        Permission::findOrCreate('edit-contacts', 'web');
+        $this->user->givePermissionTo('edit-contacts');
+
+        Livewire::test(LogbookBrowser::class)
+            ->set('selectedIds', ['1'])
+            ->assertSeeHtml('flex flex-wrap items-center gap-x-4 gap-y-2 mb-4')
+            ->assertSeeHtml('flex gap-2 w-full sm:w-auto');
+    });
 });
 
 describe('activeFilterCount', function () {
