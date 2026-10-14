@@ -14,6 +14,7 @@ class DemoSession extends Model
         'event_type',
         'invite_token',
         'participant_count',
+        'host_user_id',
         'visitor_hash',
         'user_agent',
         'device_type',
@@ -44,6 +45,7 @@ class DemoSession extends Model
             'total_page_views' => 'integer',
             'total_actions' => 'integer',
             'participant_count' => 'integer',
+            'host_user_id' => 'integer',
         ];
     }
 
@@ -94,6 +96,15 @@ class DemoSession extends Model
         $this->update(['invite_token' => Str::random(48)]);
 
         return $this->invite_token;
+    }
+
+    /**
+     * Whether the given account belongs to the visitor who provisioned the
+     * sandbox. Sessions from before hosts were recorded count everyone as host.
+     */
+    public function isHostedBy(int $userId): bool
+    {
+        return $this->host_user_id === null || $this->host_user_id === $userId;
     }
 
     public function hasExpired(): bool

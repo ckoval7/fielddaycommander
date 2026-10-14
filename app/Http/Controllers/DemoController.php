@@ -177,6 +177,7 @@ class DemoController extends Controller
             'session_uuid' => $uuid,
             'role' => $request->role,
             'event_type' => $validated['event_type'],
+            'host_user_id' => $user->id,
             'visitor_hash' => DemoSession::visitorHash($request->ip()),
             'user_agent' => $request->userAgent() ?? '',
             'device_type' => DemoSession::parseDeviceType($request->userAgent() ?? ''),
@@ -310,15 +311,19 @@ class DemoController extends Controller
             if ($visitor !== null) {
                 $demoSession = DemoSession::where('session_uuid', $visitor->uuid)->first();
                 if ($demoSession) {
+                    // Only the visitor who started the sandbox resets it; a guest
+                    // starting over just leaves, and the sandbox carries on.
+                    $isHost = $demoSession->isHostedBy($visitor->userId);
+
                     DemoEvent::create([
                         'demo_session_id' => $demoSession->id,
                         'type' => 'action',
-                        'name' => 'session.reset',
-                        'metadata' => ['role' => $demoSession->role],
+                        'name' => $isHost ? 'session.reset' : 'session.guest_left',
+                        'metadata' => $isHost ? ['role' => $demoSession->role] : ['user_id' => $visitor->userId],
                     ]);
 
                     $demoSession->update([
-                        'was_reset' => true,
+                        'was_reset' => $demoSession->was_reset || $isHost,
                         'last_seen_at' => now(),
                     ]);
                 }

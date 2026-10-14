@@ -233,8 +233,8 @@ test('joining rejects an unknown role', function () {
     expect($demoSession->fresh()->participant_count)->toBe(1);
 });
 
-test('anyone starting over keeps their seat taken and marks the sandbox reset', function () {
-    $demoSession = invitedDemoSession(['participant_count' => 2]);
+test('a guest starting over keeps their seat taken without marking the sandbox reset', function () {
+    $demoSession = invitedDemoSession(['participant_count' => 2, 'host_user_id' => 7]);
 
     $this->withCookies(['demo_session' => $demoSession->session_uuid.'|42'])
         ->post(route('demo.reset'))
@@ -244,8 +244,39 @@ test('anyone starting over keeps their seat taken and marks the sandbox reset', 
     $demoSession->refresh();
 
     expect($demoSession->participant_count)->toBe(2)
-        ->and($demoSession->was_reset)->toBeTrue()
-        ->and(DemoEvent::where('name', 'session.reset')->count())->toBe(1);
+        ->and($demoSession->was_reset)->toBeFalse()
+        ->and(DemoEvent::where('name', 'session.reset')->exists())->toBeFalse()
+        ->and(DemoEvent::where('name', 'session.guest_left')->sole()->metadata)->toBe(['user_id' => 42]);
+});
+
+test('the host starting over marks the sandbox reset', function () {
+    $demoSession = invitedDemoSession(['participant_count' => 2, 'host_user_id' => 7]);
+
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|7'])
+        ->post(route('demo.reset'))
+        ->assertRedirect(route('demo.landing'));
+
+    expect($demoSession->fresh()->was_reset)->toBeTrue()
+        ->and(DemoEvent::where('name', 'session.reset')->sole()->metadata)->toBe(['role' => 'event_manager'])
+        ->and(DemoEvent::where('name', 'session.guest_left')->exists())->toBeFalse();
+});
+
+test('a guest starting over after the host does not clear the reset', function () {
+    $demoSession = invitedDemoSession(['host_user_id' => 7, 'was_reset' => true]);
+
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|42'])
+        ->post(route('demo.reset'));
+
+    expect($demoSession->fresh()->was_reset)->toBeTrue();
+});
+
+test('starting over in a sandbox with no recorded host still marks it reset', function () {
+    $demoSession = invitedDemoSession(['host_user_id' => null]);
+
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|42'])
+        ->post(route('demo.reset'));
+
+    expect($demoSession->fresh()->was_reset)->toBeTrue();
 });
 
 test('a guest\'s call sign wins over a seeded member who happens to hold it', function () {
