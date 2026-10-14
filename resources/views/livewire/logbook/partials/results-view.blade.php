@@ -114,11 +114,11 @@
                 @endscope
 
                 @scope('cell_class', $contact)
-                    <span class="text-sm font-mono">{{ $contact->exchange_class ?? 'N/A' }}</span>
+                    <span class="text-sm">{{ $contact->exchange_class ?? 'N/A' }}</span>
                 @endscope
 
                 @scope('cell_section', $contact)
-                    <x-badge :value="$contact->section?->code ?? 'N/A'" class="badge-sm badge-primary" />
+                    <span class="text-sm">{{ $contact->section?->code ?? 'N/A' }}</span>
                 @endscope
 
                 @scope('cell_points', $contact)
@@ -245,8 +245,8 @@
                                 <span>{{ $contact->mode?->name ?? 'N/A' }}</span>
                             </div>
                             <span class="text-base-content/30">•</span>
-                            <span class="font-mono">{{ $contact->exchange_class ?? 'N/A' }}</span>
-                            <x-badge :value="$contact->section?->code ?? 'N/A'" class="badge-sm badge-primary" />
+                            <span>{{ $contact->exchange_class ?? 'N/A' }}</span>
+                            <span>{{ $contact->section?->code ?? 'N/A' }}</span>
                         </div>
 
                         {{-- Points, Station, Logger --}}
