@@ -48,9 +48,13 @@ class WeatherAlertBanner extends Component
         $this->dismissedFingerprint = null;
     }
 
-    public function handleAlertUpdate(array $data): void
+    /**
+     * Reload rather than trust the payload: in demo mode a visitor's own
+     * broadcast carries only their local alert, not the shared NWS feed.
+     */
+    public function handleAlertUpdate(): void
     {
-        $this->alerts = $data['alerts'] ?? [];
+        $this->alerts = app(WeatherService::class)->getAlerts();
         $this->dismissedFingerprint = null;
     }
 

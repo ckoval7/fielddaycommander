@@ -55,7 +55,7 @@
                         <button
                             wire:click.stop="deleteImage({{ $image->id }})"
                             wire:confirm="Are you sure you want to delete this photo?"
-                            class="absolute top-2 right-2 p-1.5 bg-error/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error"
+                            class="absolute top-2 right-2 p-1.5 bg-red-700/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-800"
                         >
                             <x-icon name="phosphor-trash" class="w-4 h-4" />
                         </button>

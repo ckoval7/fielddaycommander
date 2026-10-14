@@ -1,11 +1,13 @@
 <?php
 
+use App\Enums\CannedWeatherAlert;
 use App\Livewire\Weather\WeatherDashboard;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\EventContextService;
+use App\Services\WeatherService;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
@@ -117,6 +119,25 @@ test('dashboard shows active alerts section when alerts are present', function (
     Livewire::actingAs($user)
         ->test(WeatherDashboard::class)
         ->assertSee('Severe Thunderstorm Warning for New Haven County');
+});
+
+test('dashboard shows instructions for a canned local alert', function () {
+    Setting::set('weather.forecast', [
+        'current' => ['temperature_2m' => 70.0, 'wind_speed_10m' => 5.0, 'wind_gusts_10m' => 10.0, 'precipitation' => 0.0, 'weather_code' => 0],
+        'hourly' => ['time' => [], 'temperature_2m' => [], 'precipitation_probability' => [], 'wind_speed_10m' => [], 'weather_code' => [], 'cape' => []],
+        'daily' => ['time' => [], 'temperature_2m_max' => [], 'temperature_2m_min' => [], 'precipitation_probability_max' => [], 'wind_speed_10m_max' => [], 'wind_gusts_10m_max' => [], 'weather_code' => []],
+    ]);
+    app(WeatherService::class)->setManualAlert(
+        CannedWeatherAlert::LightningWithinTenMiles->headline(),
+        CannedWeatherAlert::LightningWithinTenMiles->description(),
+    );
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(WeatherDashboard::class)
+        ->assertSee(CannedWeatherAlert::LightningWithinTenMiles->headline())
+        ->assertSee(CannedWeatherAlert::LightningWithinTenMiles->description());
 });
 
 test('dashboard hourly strip shows CAPE warning at or above 500', function () {

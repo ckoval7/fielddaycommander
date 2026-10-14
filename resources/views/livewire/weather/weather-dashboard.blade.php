@@ -215,6 +215,8 @@
                             </div>
                             @if(! $isLocalAlert && ! empty($alert['description']))
                                 <div x-show="expanded" x-cloak class="text-sm mt-2 whitespace-pre-line">{{ $alert['description'] }}</div>
+                            @elseif($isLocalAlert && ! empty($alert['description']) && $alert['description'] !== $alert['headline'])
+                                <div class="text-sm whitespace-pre-line">{{ $alert['description'] }}</div>
                             @endif
                         </div>
                     @endforeach

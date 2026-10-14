@@ -258,35 +258,10 @@ class WeatherService
                 ->values()
                 ->all();
 
-            $fingerprint = hash('xxh128', json_encode($alerts));
-            $isDemo = (bool) config('demo.enabled');
-            $previousFingerprint = $isDemo
-                ? $this->cacheStore()->get('weather:demo:alert_fingerprint')
-                : Setting::get('weather.alert_fingerprint');
-
-            $preserveExistingManualAlert = false;
-            if (empty($alerts) && ! $isDemo) {
-                $existingAlerts = Setting::get('weather.alerts', []);
-                $preserveExistingManualAlert = collect($existingAlerts)->contains(
-                    fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT
-                );
-            }
-
-            if ($isDemo) {
-                $ttl = now()->addMinutes((int) config('demo.weather.cache_ttl_minutes', 30));
-                $this->cacheStore()->put('weather:demo:alerts', $alerts, $ttl);
-
-                if ($fingerprint !== $previousFingerprint) {
-                    $this->cacheStore()->put('weather:demo:alert_fingerprint', $fingerprint, $ttl);
-                    WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false, shared: true);
-                }
-            } elseif (! $preserveExistingManualAlert) {
-                Setting::set('weather.alerts', $alerts);
-
-                if ($fingerprint !== $previousFingerprint) {
-                    Setting::set('weather.alert_fingerprint', $fingerprint);
-                    WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false);
-                }
+            if (config('demo.enabled')) {
+                $this->storeSharedDemoAlerts($alerts);
+            } else {
+                $this->storeAlerts([...$this->currentManualAlerts(), ...$alerts], manual: false);
             }
 
             $this->cacheStore()->put('weather.alerts_status', [
@@ -319,24 +294,19 @@ class WeatherService
         return ['manual' => false, 'data' => Setting::get('weather.forecast', [])];
     }
 
+    /**
+     * The active local alert stacked above NWS alerts. In demo mode the NWS
+     * alerts come from the shared feed rather than the visitor's session.
+     *
+     * @return list<array<string, mixed>>
+     */
     public function getAlerts(): array
     {
-        $sessionAlerts = Setting::get('weather.alerts', []);
-
         if (config('demo.enabled')) {
-            $manualAlerts = array_values(array_filter(
-                $sessionAlerts,
-                fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT,
-            ));
-
-            if (! empty($manualAlerts)) {
-                return $manualAlerts;
-            }
-
-            return $this->cacheStore()->get('weather:demo:alerts', []);
+            return [...$this->currentManualAlerts(), ...$this->cacheStore()->get('weather:demo:alerts', [])];
         }
 
-        return $sessionAlerts;
+        return Setting::get('weather.alerts', []);
     }
 
     public function getLastFetch(): ?string
@@ -358,27 +328,33 @@ class WeatherService
         Setting::set('weather.manual_override', null);
     }
 
-    public function setManualAlert(string $message): void
+    /**
+     * Replaces any active local alert while keeping NWS alerts stacked beneath it.
+     */
+    public function setManualAlert(string $message, ?string $description = null): void
     {
-        $alerts = [[
+        $manualAlert = [
             'event' => self::MANUAL_ALERT_EVENT,
             'headline' => $message,
-            'description' => $message,
+            'description' => $description ?? $message,
             'severity' => 'Severe',
             'expires' => null,
-        ]];
+        ];
 
-        Setting::set('weather.alerts', $alerts);
-        Setting::set('weather.alert_fingerprint', hash('xxh128', json_encode($alerts)));
-        WeatherAlertChanged::dispatch($alerts, true, true);
+        $this->storeAlerts([$manualAlert, ...$this->currentNwsAlerts()], manual: true, broadcastUnchanged: true);
     }
 
+    /**
+     * Removes the local alert; any active NWS alerts remain.
+     */
     public function clearManualAlert(): void
     {
-        $alerts = [];
-        Setting::set('weather.alerts', $alerts);
-        Setting::set('weather.alert_fingerprint', hash('xxh128', json_encode($alerts)));
-        WeatherAlertChanged::dispatch($alerts, false, true);
+        $this->storeAlerts($this->currentNwsAlerts(), manual: true, broadcastUnchanged: true);
+    }
+
+    public function hasManualAlert(): bool
+    {
+        return $this->currentManualAlerts() !== [];
     }
 
     public function isOpenMeteoEnabled(): bool
@@ -423,14 +399,7 @@ class WeatherService
     {
         Setting::set('weather.nws_enabled', false);
 
-        $alerts = Setting::get('weather.alerts', []);
-        $isManual = collect($alerts)->contains(fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT);
-
-        if (! $isManual) {
-            Setting::set('weather.alerts', []);
-            Setting::set('weather.alert_fingerprint', hash('xxh128', json_encode([])));
-            WeatherAlertChanged::dispatch([], false, false);
-        }
+        $this->storeAlerts($this->currentManualAlerts(), manual: false);
     }
 
     /**
@@ -453,6 +422,66 @@ class WeatherService
         if ($coords !== null && $this->isNwsEnabled()) {
             $this->checkAlerts($coords['lat'], $coords['lon']);
         }
+    }
+
+    /**
+     * Demo mode keeps NWS alerts in the shared cache so every visitor sees one
+     * feed; each visitor's local alert stays in their own session database.
+     *
+     * @param  list<array<string, mixed>>  $alerts
+     */
+    private function storeSharedDemoAlerts(array $alerts): void
+    {
+        $fingerprint = hash('xxh128', json_encode($alerts));
+        $ttl = now()->addMinutes((int) config('demo.weather.cache_ttl_minutes', 30));
+        $previousFingerprint = $this->cacheStore()->get('weather:demo:alert_fingerprint');
+
+        $this->cacheStore()->put('weather:demo:alerts', $alerts, $ttl);
+
+        if ($fingerprint !== $previousFingerprint) {
+            $this->cacheStore()->put('weather:demo:alert_fingerprint', $fingerprint, $ttl);
+            WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false, shared: true);
+        }
+    }
+
+    /**
+     * Persists the combined alert list and broadcasts when it changed.
+     *
+     * @param  list<array<string, mixed>>  $alerts
+     */
+    private function storeAlerts(array $alerts, bool $manual, bool $broadcastUnchanged = false): void
+    {
+        $fingerprint = hash('xxh128', json_encode($alerts));
+
+        if (! $broadcastUnchanged && $fingerprint === Setting::get('weather.alert_fingerprint')) {
+            return;
+        }
+
+        Setting::set('weather.alerts', $alerts);
+        Setting::set('weather.alert_fingerprint', $fingerprint);
+        WeatherAlertChanged::dispatch($alerts, $alerts !== [], $manual);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function currentManualAlerts(): array
+    {
+        return collect(Setting::get('weather.alerts', []))
+            ->filter(fn (array $alert): bool => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function currentNwsAlerts(): array
+    {
+        return collect(Setting::get('weather.alerts', []))
+            ->reject(fn (array $alert): bool => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT)
+            ->values()
+            ->all();
     }
 
     /**

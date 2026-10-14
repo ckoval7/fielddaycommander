@@ -17,7 +17,9 @@ class SendWeatherAlertNotifications
     public function handle(WeatherAlertChanged $event): void
     {
         [$title, $message] = $this->buildMessage($event);
-        $shouldSendEmail = $event->hasAlerts && config('mail.email_configured');
+        $shouldSendEmail = $event->hasAlerts
+            && ! $this->isLocalAlertLifted($event)
+            && config('mail.email_configured');
 
         User::all()->each(function (User $user) use ($event, $title, $message, $shouldSendEmail) {
             $this->notificationService->notify(
@@ -39,21 +41,28 @@ class SendWeatherAlertNotifications
      */
     private function buildMessage(WeatherAlertChanged $event): array
     {
-        if (! $event->hasAlerts) {
-            return ['Weather Alert Lifted', 'The active weather alert has been cleared'];
-        }
-
         $count = count($event->alerts);
+        $localAlert = collect($event->alerts)->firstWhere('event', 'Local Alert');
 
-        if ($count === 1) {
-            return [
-                $event->alerts[0]['event'],
-                $event->alerts[0]['headline'],
-            ];
-        }
+        return match (true) {
+            ! $event->hasAlerts => ['Weather Alert Lifted', 'The active weather alert has been cleared'],
+            $this->isLocalAlertLifted($event) => [
+                'Local Alert Lifted',
+                "The local alert has been cleared; {$count} NWS ".str('alert')->plural($count).' still active',
+            ],
+            $event->manual && $localAlert !== null => [$localAlert['event'], $localAlert['headline']],
+            $count === 1 => [$event->alerts[0]['event'], $event->alerts[0]['headline']],
+            default => ["{$count} Active Weather Alerts", implode(', ', array_column($event->alerts, 'event'))],
+        };
+    }
 
-        $eventNames = implode(', ', array_column($event->alerts, 'event'));
-
-        return ["{$count} Active Weather Alerts", $eventNames];
+    /**
+     * A manual change that leaves only NWS alerts behind means the local alert was cleared.
+     */
+    private function isLocalAlertLifted(WeatherAlertChanged $event): bool
+    {
+        return $event->manual
+            && $event->hasAlerts
+            && ! collect($event->alerts)->contains(fn (array $alert): bool => ($alert['event'] ?? '') === 'Local Alert');
     }
 }

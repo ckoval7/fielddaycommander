@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Services\ActiveEventService;
 use App\Services\WeatherService;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\Event as EventFacade;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -712,9 +713,11 @@ test('disableNws sets flag to false and clears NWS alerts', function () {
 test('disableNws does not clear alerts when a manual alert is active', function () {
     EventFacade::fake([WeatherAlertChanged::class]);
 
-    Setting::set('weather.alerts', [
+    $manualAlerts = [
         ['event' => 'Local Alert', 'headline' => 'Lightning within 10 miles', 'description' => 'Lightning within 10 miles', 'severity' => 'Severe', 'expires' => null],
-    ]);
+    ];
+    Setting::set('weather.alerts', $manualAlerts);
+    Setting::set('weather.alert_fingerprint', hash('xxh128', json_encode($manualAlerts)));
 
     $service = makeWeatherService();
     $service->disableNws();
@@ -1081,13 +1084,13 @@ test('getDisplayData in demo mode returns per-session override when set', functi
 
 // --- demo mode: getAlerts + getLastFetch layering ---
 
-test('getAlerts returns per-session manual alerts regardless of demo mode', function () {
+test('getAlerts in demo mode stacks per-session manual alerts above the shared cache', function () {
     config()->set('demo.enabled', true);
     $manualAlerts = [['event' => 'Local Alert', 'headline' => 'test']];
     Setting::set('weather.alerts', $manualAlerts);
     cache()->put('weather:demo:alerts', [['event' => 'Shared']], now()->addHour());
 
-    expect(makeWeatherService()->getAlerts())->toEqual($manualAlerts);
+    expect(makeWeatherService()->getAlerts())->toEqual([...$manualAlerts, ['event' => 'Shared']]);
 });
 
 test('getAlerts in demo mode falls through to shared cache when session has no alerts', function () {
@@ -1208,4 +1211,122 @@ test('checkAlerts in demo mode does not rebroadcast when fingerprint unchanged',
     makeWeatherService()->checkAlerts(44.9778, -93.2650);
 
     EventFacade::assertNotDispatched(WeatherAlertChanged::class);
+});
+
+// --- alert stacking ---
+
+function fakeNwsSevereThunderstormWarning(): void
+{
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response([
+            'features' => [[
+                'geometry' => null,
+                'properties' => [
+                    'event' => 'Severe Thunderstorm Warning',
+                    'headline' => 'Warning issued for New Haven County',
+                    'description' => 'A severe thunderstorm capable of producing...',
+                    'severity' => 'Severe',
+                    'expires' => '2026-04-14T20:00:00-04:00',
+                ],
+            ]],
+        ], 200),
+    ]);
+}
+
+test('checkAlerts stacks NWS alerts beneath an active manual alert', function () {
+    EventFacade::fake([WeatherAlertChanged::class]);
+    fakeNwsSevereThunderstormWarning();
+
+    $service = makeWeatherService();
+    $service->setManualAlert('Lightning within 10 miles — seek shelter immediately');
+    $service->checkAlerts(41.3083, -72.9279);
+
+    $alerts = Setting::get('weather.alerts');
+    expect($alerts)->toHaveCount(2)
+        ->and($alerts[0]['event'])->toBe('Local Alert')
+        ->and($alerts[1]['event'])->toBe('Severe Thunderstorm Warning');
+
+    EventFacade::assertDispatched(WeatherAlertChanged::class, fn ($e) => $e->manual === false && count($e->alerts) === 2);
+});
+
+test('checkAlerts keeps manual alert when NWS alerts expire', function () {
+    $service = makeWeatherService();
+    $service->setManualAlert('Lightning within 15 miles — disconnect radios');
+
+    fakeNwsSevereThunderstormWarning();
+    $service->checkAlerts(41.3083, -72.9279);
+    expect(Setting::get('weather.alerts'))->toHaveCount(2);
+
+    Http::swap(new Factory);
+    Http::fake([
+        'api.weather.gov/points/*' => Http::response([
+            'properties' => [
+                'forecastZone' => 'https://api.weather.gov/zones/forecast/CTZ009',
+                'county' => 'https://api.weather.gov/zones/county/CTC003',
+            ],
+        ], 200),
+        'api.weather.gov/alerts/active*' => Http::response(['features' => []], 200),
+    ]);
+    $service->checkAlerts(41.3083, -72.9279);
+
+    $alerts = Setting::get('weather.alerts');
+    expect($alerts)->toHaveCount(1)
+        ->and($alerts[0]['headline'])->toBe('Lightning within 15 miles — disconnect radios');
+});
+
+test('setManualAlert replaces the previous manual alert and keeps NWS alerts', function () {
+    fakeNwsSevereThunderstormWarning();
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+    $service->setManualAlert('Lightning within 15 miles');
+    $service->setManualAlert('Lightning within 10 miles', 'Seek shelter now');
+
+    $alerts = Setting::get('weather.alerts');
+    expect($alerts)->toHaveCount(2)
+        ->and($alerts[0]['headline'])->toBe('Lightning within 10 miles')
+        ->and($alerts[0]['description'])->toBe('Seek shelter now')
+        ->and($alerts[1]['event'])->toBe('Severe Thunderstorm Warning')
+        ->and($service->hasManualAlert())->toBeTrue();
+});
+
+test('clearManualAlert leaves NWS alerts active', function () {
+    fakeNwsSevereThunderstormWarning();
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+    $service->setManualAlert('Lightning within 10 miles');
+
+    EventFacade::fake([WeatherAlertChanged::class]);
+    $service->clearManualAlert();
+
+    $alerts = Setting::get('weather.alerts');
+    expect($alerts)->toHaveCount(1)
+        ->and($alerts[0]['event'])->toBe('Severe Thunderstorm Warning')
+        ->and($service->hasManualAlert())->toBeFalse();
+
+    EventFacade::assertDispatched(WeatherAlertChanged::class, fn ($e) => $e->manual === true && $e->hasAlerts === true);
+});
+
+test('disableNws removes NWS alerts but keeps the manual alert', function () {
+    fakeNwsSevereThunderstormWarning();
+
+    $service = makeWeatherService();
+    $service->checkAlerts(41.3083, -72.9279);
+    $service->setManualAlert('Lightning within 10 miles');
+
+    EventFacade::fake([WeatherAlertChanged::class]);
+    $service->disableNws();
+
+    $alerts = Setting::get('weather.alerts');
+    expect($alerts)->toHaveCount(1)
+        ->and($alerts[0]['event'])->toBe('Local Alert');
+
+    EventFacade::assertDispatched(WeatherAlertChanged::class, fn ($e) => $e->hasAlerts === true && $e->manual === false);
 });

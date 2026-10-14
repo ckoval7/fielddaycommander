@@ -80,7 +80,9 @@ test('banner reappears when new alert arrives with different fingerprint', funct
         ->call('dismiss')
         ->assertDontSee('Wind warning');
 
-    $newAlerts = [['alerts' => [['event' => 'Tornado Warning', 'headline' => 'Tornado incoming', 'description' => '', 'severity' => 'Extreme', 'expires' => null, 'severity_level' => 'red']], 'has_alerts' => true]];
+    $tornadoAlerts = [['event' => 'Tornado Warning', 'headline' => 'Tornado incoming', 'description' => '', 'severity' => 'Extreme', 'expires' => null, 'severity_level' => 'red']];
+    Setting::set('weather.alerts', $tornadoAlerts);
+    $newAlerts = [['alerts' => $tornadoAlerts, 'has_alerts' => true]];
 
     $component->dispatch('echo:weather,WeatherAlertChanged', ...$newAlerts)
         ->assertSee('Tornado incoming');
@@ -116,7 +118,7 @@ test('banner in demo mode reads alerts from shared cache when session has none',
         ->assertSee('Shared demo alert');
 });
 
-test('banner in demo mode prefers per-session manual alert over shared cache', function () {
+test('banner in demo mode stacks the per-session manual alert above the shared cache', function () {
     config()->set('demo.enabled', true);
     Setting::set('weather.alerts', [[
         'event' => 'Local Alert',
@@ -135,6 +137,19 @@ test('banner in demo mode prefers per-session manual alert over shared cache', f
     ]], now()->addHour());
 
     Livewire::test(WeatherAlertBanner::class)
-        ->assertSee('Session override')
-        ->assertDontSee('Shared demo alert');
+        ->assertSeeInOrder(['Session override', 'Shared demo alert']);
+});
+
+test('local alerts render as red alerts', function () {
+    Setting::set('weather.alerts', [[
+        'event' => 'Local Alert',
+        'headline' => 'Lightning within 10 miles',
+        'description' => 'Lightning within 10 miles',
+        'severity' => 'Severe',
+        'expires' => null,
+    ]]);
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->assertSee('Lightning within 10 miles')
+        ->assertSeeHtml('alert alert-error');
 });

@@ -26,6 +26,21 @@
     --color-secondary-content: oklch(92.9% 0.006 264.531); /* slate-100 */
 }
 
+/* Solid error surfaces fill with --color-error-strong so white text passes AA
+ * in both themes; dark mode's --color-error is tuned for text, not fills. */
+.alert-error:not(.alert-soft, .alert-outline, .alert-dash) {
+    --alert-color: var(--color-error-strong);
+    --alert-border-color: var(--color-error-strong);
+}
+
+.badge-error:not(.badge-soft, .badge-outline, .badge-dash, .badge-ghost) {
+    --badge-color: var(--color-error-strong);
+}
+
+.checkbox-error {
+    --input-color: var(--color-error-strong);
+}
+
 /* maryUI */
 @source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";
 
