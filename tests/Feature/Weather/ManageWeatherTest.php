@@ -154,7 +154,9 @@ test('page shows canned lightning alerts and monitoring guidance', function () {
         ->test(ManageWeather::class)
         ->assertSee('Lightning < 15 mi')
         ->assertSee('Lightning < 10 mi')
-        ->assertSee('How to monitor for lightning');
+        ->assertSee('How to monitor for lightning')
+        ->assertSee('typically a safety officer')
+        ->assertSee('Count the seconds from flash to thunder');
 });
 
 test('NWS-only alerts show without a clear button and keep the custom alert form', function () {
