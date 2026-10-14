@@ -7,38 +7,92 @@
 /* Flatpickr datetime picker */
 @import './flatpickr-theme.css';
 
-/* Alpine.js x-cloak - prevents flash of unstyled content */
-[x-cloak] { display: none !important; }
+/* Alpine.js x-cloak - prevents flash of unstyled content.
+ * Unlayered, so it beats Tailwind's layered display utilities without !important. */
+[x-cloak] { display: none; }
 
-/* daisyUI */
+/* daisyUI
+ * The built-in light/dark themes are customised below so daisy's components
+ * render the app palette natively.
+ *
+ * Every semantic colour has three roles:
+ *   --color-X          text on base backgrounds (>= 4.5:1 on base-100/200)
+ *   --color-X-strong   solid fills that carry white text (>= 4.5:1)
+ *   --color-X-content  text on a --color-X fill (>= 4.5:1), so any fill not
+ *                      routed to -strong below still reads
+ * Light mode is dark enough for one shade to cover text and fills. Dark mode
+ * needs a light shade for text and a deep one for white-text fills.
+ * tests/Unit/ThemeContrastTest.php enforces these ratios. */
 @plugin "daisyui" {
     themes: light --default, dark --prefersdark;
 }
 
-/* Override DaisyUI's pink secondary with slate */
-[data-theme="light"], :root {
-    --color-secondary: oklch(44.6% 0.043 257.281);       /* slate-600 */
-    --color-secondary-content: oklch(92.9% 0.006 264.531); /* slate-100 */
+@plugin "daisyui/theme" {
+    name: "light";
+    default: true;
+    color-scheme: light;
+    --color-base-100: oklch(100% 0 0);
+    --color-base-200: oklch(98% 0 0);
+    --color-base-300: oklch(95% 0 0);
+    --color-base-content: oklch(21% 0.006 285.885);
+    --color-primary: hsl(223, 71%, 40%);
+    --color-primary-strong: hsl(223, 71%, 40%);
+    --color-primary-content: oklch(100% 0 0);
+    --color-secondary: oklch(44.6% 0.043 257.281);
+    --color-secondary-strong: oklch(44.6% 0.043 257.281);
+    --color-secondary-content: oklch(100% 0 0);
+    --color-accent: oklch(55.5% 0.163 48.998);
+    --color-accent-strong: oklch(55.5% 0.163 48.998);
+    --color-accent-content: oklch(100% 0 0);
+    --color-neutral: oklch(37.2% 0.044 257.287);
+    --color-neutral-strong: oklch(37.2% 0.044 257.287);
+    --color-neutral-content: oklch(100% 0 0);
+    --color-info: oklch(50% 0.134 242.749);
+    --color-info-strong: oklch(50% 0.134 242.749);
+    --color-info-content: oklch(100% 0 0);
+    --color-success: oklch(50% 0.15 150.069);
+    --color-success-strong: oklch(50% 0.15 150.069);
+    --color-success-content: oklch(100% 0 0);
+    --color-warning: oklch(55.5% 0.163 48.998);
+    --color-warning-strong: oklch(55.5% 0.163 48.998);
+    --color-warning-content: oklch(100% 0 0);
+    --color-error: oklch(50.5% 0.213 27.518);
+    --color-error-strong: oklch(50.5% 0.213 27.518);
+    --color-error-content: oklch(100% 0 0);
 }
 
-[data-theme="dark"] {
-    --color-secondary: oklch(55.4% 0.046 257.417);       /* slate-500 */
-    --color-secondary-content: oklch(92.9% 0.006 264.531); /* slate-100 */
-}
-
-/* Solid error surfaces fill with --color-error-strong so white text passes AA
- * in both themes; dark mode's --color-error is tuned for text, not fills. */
-.alert-error:not(.alert-soft, .alert-outline, .alert-dash) {
-    --alert-color: var(--color-error-strong);
-    --alert-border-color: var(--color-error-strong);
-}
-
-.badge-error:not(.badge-soft, .badge-outline, .badge-dash, .badge-ghost) {
-    --badge-color: var(--color-error-strong);
-}
-
-.checkbox-error {
-    --input-color: var(--color-error-strong);
+@plugin "daisyui/theme" {
+    name: "dark";
+    prefersdark: true;
+    color-scheme: dark;
+    --color-base-100: oklch(25.33% 0.016 252.42);
+    --color-base-200: oklch(23.26% 0.014 253.1);
+    --color-base-300: oklch(21.15% 0.012 254.09);
+    --color-base-content: oklch(97.807% 0.029 256.847);
+    --color-primary: oklch(70.7% 0.165 254.624);
+    --color-primary-strong: oklch(54.6% 0.245 262.881);
+    --color-primary-content: oklch(12.9% 0.042 264.695);
+    --color-secondary: oklch(70.4% 0.04 256.788);
+    --color-secondary-strong: oklch(55.4% 0.046 257.417);
+    --color-secondary-content: oklch(12.9% 0.042 264.695);
+    --color-accent: oklch(82.8% 0.189 84.429);
+    --color-accent-strong: oklch(55.5% 0.163 48.998);
+    --color-accent-content: oklch(12.9% 0.042 264.695);
+    --color-neutral: oklch(70.4% 0.04 256.788);
+    --color-neutral-strong: oklch(44.6% 0.043 257.281);
+    --color-neutral-content: oklch(12.9% 0.042 264.695);
+    --color-info: oklch(74.6% 0.16 232.661);
+    --color-info-strong: oklch(50% 0.134 242.749);
+    --color-info-content: oklch(12.9% 0.042 264.695);
+    --color-success: oklch(79.2% 0.209 151.711);
+    --color-success-strong: oklch(52.7% 0.154 150.069);
+    --color-success-content: oklch(12.9% 0.042 264.695);
+    --color-warning: oklch(82.8% 0.189 84.429);
+    --color-warning-strong: oklch(55.5% 0.163 48.998);
+    --color-warning-content: oklch(12.9% 0.042 264.695);
+    --color-error: oklch(70.4% 0.191 22.216);
+    --color-error-strong: oklch(44.4% 0.177 26.899);
+    --color-error-content: oklch(12.9% 0.042 264.695);
 }
 
 /* maryUI */
@@ -54,218 +108,15 @@
 @source "../**/*.js";
 @source "../../app/**/*.php";
 
-/* Custom button styles
- * All buttons tested for WCAG AA compliance (4.5:1 minimum for normal text)
- * Contrast ratios calculated for white text on colored backgrounds
- */
 @layer components {
-    /* Primary Button
-     * Light mode: blue-800 = 8.72:1 (WCAG AAA), hover = 10.36:1, active = 14.69:1
-     * Dark mode: blue-500 = 3.68:1 (below AA for text, meets 3:1 for UI components)
-     *            hover blue-600 = 5.17:1 (WCAG AA)
-     */
-    .btn-primary {
-        @apply px-4 py-2 rounded-lg font-medium;
-        @apply text-white;
-        background-color: var(--color-primary) !important;
-        border-color: var(--color-primary) !important;
-        @apply hover:bg-blue-900 hover:border-blue-900;
-        @apply active:bg-blue-950 active:border-blue-950;
-        @apply focus:ring-2 focus:ring-offset-2;
-        --tw-ring-color: var(--color-focus);
-        @apply disabled:bg-blue-400 disabled:border-blue-400 disabled:cursor-not-allowed;
-        @apply transition-colors duration-150;
-    }
-
-    [data-theme="dark"] .btn-primary {
-        @apply bg-blue-500 text-white border-blue-500;
-        @apply hover:bg-blue-600 hover:border-blue-600;
-        @apply active:bg-blue-700 active:border-blue-700;
-        @apply focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900;
-        --tw-ring-color: var(--color-focus);
-        @apply disabled:bg-blue-800 disabled:border-blue-800 disabled:cursor-not-allowed;
-    }
-
-    /* Success Button
-     * Changed from green-600 to green-700 for WCAG AA compliance
-     * Light mode: green-700 = 5.02:1 (WCAG AA), hover = 7.13:1 (AAA)
-     * Dark mode: green-600 = 3.30:1 (below AA), hover green-700 = 5.02:1 (AA)
-     * Previous: green-600 = 3.30:1 (FAILED WCAG AA)
-     */
-    .btn-success {
-        @apply px-4 py-2 rounded-lg font-medium;
-        @apply bg-green-700 text-white border-green-700;
-        @apply hover:bg-green-800 hover:border-green-800;
-        @apply active:bg-green-900 active:border-green-900;
-        @apply focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
-        @apply disabled:bg-green-400 disabled:border-green-400 disabled:cursor-not-allowed;
-        @apply transition-colors duration-150;
-    }
-
-    [data-theme="dark"] .btn-success {
-        @apply bg-green-600 text-white border-green-600;
-        @apply hover:bg-green-700 hover:border-green-700;
-        @apply active:bg-green-800 active:border-green-800;
-        @apply focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-gray-900;
-        @apply disabled:bg-green-800 disabled:border-green-800 disabled:cursor-not-allowed;
-    }
-
-    /* Warning Button
-     * Changed from amber-500 to amber-700 for WCAG AA compliance
-     * Light mode: amber-700 = 5.02:1 (WCAG AA), hover = 7.09:1 (AAA)
-     * Dark mode: amber-700 = 5.02:1 (WCAG AA), hover = 9.07:1 (AAA)
-     * Previous: amber-500 = 2.15:1 (FAILED WCAG AA)
-     */
-    .btn-warning {
-        @apply px-4 py-2 rounded-lg font-medium;
-        @apply bg-amber-700 text-white border-amber-700;
-        @apply hover:bg-amber-800 hover:border-amber-800;
-        @apply active:bg-amber-900 active:border-amber-900;
-        @apply focus:ring-2 focus:ring-amber-500 focus:ring-offset-2;
-        @apply disabled:bg-amber-400 disabled:border-amber-400 disabled:cursor-not-allowed;
-        @apply transition-colors duration-150;
-    }
-
-    [data-theme="dark"] .btn-warning {
-        @apply bg-amber-700 text-white border-amber-700;
-        @apply hover:bg-amber-800 hover:border-amber-800;
-        @apply active:bg-amber-900 active:border-amber-900;
-        @apply focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-gray-900;
-        @apply disabled:bg-amber-800 disabled:border-amber-800 disabled:cursor-not-allowed;
-    }
-
-    /* Error Button
-     * Light mode: red-600 = 4.83:1 (WCAG AA), hover = 6.47:1 (AA), active = 8.31:1 (AAA)
-     * Dark mode: red-500 = 3.76:1 (below AA), hover red-600 = 4.83:1 (AA)
-     */
-    .btn-error {
-        @apply px-4 py-2 rounded-lg font-medium;
-        @apply bg-red-600 text-white border-red-600;
-        @apply hover:bg-red-700 hover:border-red-700;
-        @apply active:bg-red-800 active:border-red-800;
-        @apply focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
-        @apply disabled:bg-red-400 disabled:border-red-400 disabled:cursor-not-allowed;
-        @apply transition-colors duration-150;
-    }
-
-    [data-theme="dark"] .btn-error {
-        @apply bg-red-500 text-white border-red-500;
-        @apply hover:bg-red-600 hover:border-red-600;
-        @apply active:bg-red-700 active:border-red-700;
-        @apply focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-gray-900;
-        @apply disabled:bg-red-800 disabled:border-red-800 disabled:cursor-not-allowed;
-    }
-
-    /* Club Button
-     * Light mode: indigo-600 = 6.29:1 (WCAG AA), hover = 7.90:1 (AAA), active = 9.93:1 (AAA)
-     * Dark mode: indigo-500 = 4.47:1 (below AA), hover indigo-600 = 6.29:1 (AA)
-     */
-    .btn-club {
-        @apply px-4 py-2 rounded-lg font-medium;
-        color: white !important;
-        background-color: var(--color-club) !important;
-        border-color: var(--color-club) !important;
-        @apply hover:bg-indigo-700 hover:border-indigo-700;
-        @apply active:bg-indigo-800 active:border-indigo-800;
-        @apply focus:ring-2 focus:ring-offset-2;
-        --tw-ring-color: var(--color-focus);
-        @apply disabled:bg-indigo-400 disabled:border-indigo-400 disabled:cursor-not-allowed;
-        @apply transition-colors duration-150;
-    }
-
-    [data-theme="dark"] .btn-club {
-        @apply bg-indigo-500 text-white border-indigo-500;
-        @apply hover:bg-indigo-600 hover:border-indigo-600;
-        @apply active:bg-indigo-700 active:border-indigo-700;
-        @apply focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900;
-        --tw-ring-color: var(--color-focus);
-        @apply disabled:bg-indigo-800 disabled:border-indigo-800 disabled:cursor-not-allowed;
-    }
-
-    /* Secondary Button
-     * Slate tone — subordinate to primary, suitable for secondary actions
-     * Light mode: slate-600 = 5.58:1 (WCAG AA), hover slate-700 = 7.69:1 (AAA)
-     * Dark mode: slate-500 = 4.64:1 (WCAG AA), hover slate-400 = 3.18:1 (UI components)
-     */
-    .btn-secondary {
-        @apply px-4 py-2 rounded-lg font-medium;
-        @apply bg-slate-600 text-white border-slate-600;
-        @apply hover:bg-slate-700 hover:border-slate-700;
-        @apply active:bg-slate-800 active:border-slate-800;
-        @apply focus:ring-2 focus:ring-slate-500 focus:ring-offset-2;
-        @apply disabled:bg-slate-400 disabled:border-slate-400 disabled:cursor-not-allowed;
-        @apply transition-colors duration-150;
-    }
-
-    [data-theme="dark"] .btn-secondary {
-        @apply bg-slate-500 text-white border-slate-500;
-        @apply hover:bg-slate-600 hover:border-slate-600;
-        @apply active:bg-slate-700 active:border-slate-700;
-        @apply focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-gray-900;
-        @apply disabled:bg-slate-800 disabled:border-slate-800 disabled:cursor-not-allowed;
-    }
-
-    /* Small button size */
-    .btn-sm {
-        @apply px-3 py-1.5 text-sm rounded-md;
-    }
-
-    /* Checkbox styling */
-    .checkbox {
-        @apply w-5 h-5 rounded border-2 border-gray-300 bg-white;
-        @apply checked:border-blue-600;
-        background-color: white;
-        @apply focus:ring-2 focus:ring-offset-2;
-        --tw-ring-color: var(--color-focus);
-        @apply cursor-pointer transition-colors duration-150;
-    }
-
-    .checkbox:checked {
-        background-color: var(--color-primary);
-    }
-
-    [data-theme="dark"] .checkbox {
-        @apply border-gray-600 bg-gray-800;
-        @apply checked:border-blue-500;
-        @apply focus:ring-offset-gray-900;
-        --tw-ring-color: var(--color-focus);
-    }
-
-    [data-theme="dark"] .checkbox:checked {
-        background-color: var(--color-primary);
-    }
-
     /* Profile tab content visibility (avoid conflict with daisyUI's tab-content) */
     .profile-tab-content {
         @apply block w-full;
     }
 
-    /* Enhanced tab active state for better visibility */
-    .tabs-border .tab {
-        @apply border-b-2 border-transparent;
-        @apply text-gray-600 hover:text-gray-900;
-        @apply transition-all duration-200;
-    }
-
-    .tabs-border .tab-active {
-        border-bottom-width: 2px !important;
-        border-color: var(--color-primary) !important;
-        @apply text-blue-800 font-semibold;
-    }
-
-    [data-theme="dark"] .tabs-border .tab {
-        @apply text-gray-400 hover:text-gray-100;
-    }
-
-    [data-theme="dark"] .tabs-border .tab-active {
-        border-color: var(--color-primary) !important;
-        @apply text-blue-400 font-semibold;
-    }
-
-    /* Sidebar layout — override MaryUI's overflow-y-auto so we control
-       scrolling from our own inner scroll area (.sidebar-scroll-area). */
+    /* Sidebar layout — scrolling is controlled from our own inner scroll area
+       (.sidebar-scroll-area); see the unlayered overflow override below. */
     .drawer-side > div {
-        overflow-y: hidden !important;
         @apply flex flex-col;
     }
 
@@ -328,14 +179,6 @@
     .drawer-side > div > .flex-1 .menu-title,
     .drawer-side > div > .flex-1 hr {
         @apply transition-opacity duration-100;
-    }
-
-    /* When sidebar is collapsed, hide separators and their lines.
-       Target Alpine's !w-[62px] (with ! prefix) which toggles correctly,
-       not the server-rendered w-[62px] which persists after expand. */
-    .drawer-side > div[class*="!w-[62px]"] .menu-title,
-    .drawer-side > div[class*="!w-[62px]"] hr {
-        display: none !important;
     }
 
     /* Club Equipment Badge - Custom Styling */
@@ -456,10 +299,86 @@
    layer-scoped height. Allows badge height to grow with content on narrow screens. */
 @media (max-width: 640px) {
     .badge {
-        height: auto !important;
+        height: auto;
         min-height: var(--size-field-xs, 1.25rem);
         white-space: normal;
         padding-top: 0.125rem;
         padding-bottom: 0.125rem;
     }
+}
+
+/* ==========================================================================
+   daisyUI overrides
+   daisyUI 5 emits its components inside Tailwind's `utilities` layer, which
+   outranks `@layer components`. Rules that must beat a daisyUI component (or
+   a maryUI utility class) live here, unlayered, instead of using !important.
+   ========================================================================== */
+
+/* Solid fills: route each semantic colour's solid button, badge, alert and
+ * checkbox to its -strong shade with white text. Soft, outline, dash, ghost
+ * and link variants use the colour as text, so they keep --color-X. */
+:is(.btn, .badge, .alert, .checkbox):is(.btn-primary, .badge-primary, .alert-primary, .checkbox-primary) { --semantic-fill: var(--color-primary-strong); }
+:is(.btn, .badge, .alert, .checkbox):is(.btn-secondary, .badge-secondary, .alert-secondary, .checkbox-secondary) { --semantic-fill: var(--color-secondary-strong); }
+:is(.btn, .badge, .alert, .checkbox):is(.btn-accent, .badge-accent, .alert-accent, .checkbox-accent) { --semantic-fill: var(--color-accent-strong); }
+:is(.btn, .badge, .alert, .checkbox):is(.btn-neutral, .badge-neutral, .alert-neutral, .checkbox-neutral) { --semantic-fill: var(--color-neutral-strong); }
+:is(.btn, .badge, .alert, .checkbox):is(.btn-info, .badge-info, .alert-info, .checkbox-info) { --semantic-fill: var(--color-info-strong); }
+:is(.btn, .badge, .alert, .checkbox):is(.btn-success, .badge-success, .alert-success, .checkbox-success) { --semantic-fill: var(--color-success-strong); }
+:is(.btn, .badge, .alert, .checkbox):is(.btn-warning, .badge-warning, .alert-warning, .checkbox-warning) { --semantic-fill: var(--color-warning-strong); }
+:is(.btn, .badge, .alert, .checkbox):is(.btn-error, .badge-error, .alert-error, .checkbox-error) { --semantic-fill: var(--color-error-strong); }
+
+.btn:is(.btn-primary, .btn-secondary, .btn-accent, .btn-neutral, .btn-info, .btn-success, .btn-warning, .btn-error):not(.btn-soft, .btn-outline, .btn-dash, .btn-ghost, .btn-link) {
+    --btn-color: var(--semantic-fill);
+    --btn-fg: white;
+}
+
+.badge:is(.badge-primary, .badge-secondary, .badge-accent, .badge-neutral, .badge-info, .badge-success, .badge-warning, .badge-error):not(.badge-soft, .badge-outline, .badge-dash, .badge-ghost) {
+    --badge-color: var(--semantic-fill);
+    --badge-fg: white;
+}
+
+.alert:is(.alert-primary, .alert-secondary, .alert-accent, .alert-neutral, .alert-info, .alert-success, .alert-warning, .alert-error):not(.alert-soft, .alert-outline, .alert-dash) {
+    --alert-color: var(--semantic-fill);
+    --alert-border-color: var(--semantic-fill);
+    color: white;
+}
+
+.checkbox:is(.checkbox-primary, .checkbox-secondary, .checkbox-accent, .checkbox-neutral, .checkbox-info, .checkbox-success, .checkbox-warning, .checkbox-error) {
+    --input-color: var(--semantic-fill);
+    color: white;
+}
+
+/* Checkboxes without a colour class use the brand blue. */
+.checkbox:not(.checkbox-primary, .checkbox-secondary, .checkbox-accent, .checkbox-neutral, .checkbox-info, .checkbox-success, .checkbox-warning, .checkbox-error) {
+    --input-color: var(--color-primary-strong);
+    color: white;
+}
+
+/* Club equipment button: an app-specific daisy button variant. */
+.btn-club {
+    --btn-color: var(--color-club-strong);
+    --btn-fg: white;
+}
+
+/* Tabs: the active tab (and daisy's underline, drawn in currentColor) uses the
+ * brand colour; inactive labels sit at 70% so they pass AA in both themes. */
+.tabs-border .tab-active {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.tabs-border .tab:not(.tab-active, :hover) {
+    color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
+/* Override maryUI's overflow-y-auto on the sidebar wrapper. */
+.drawer-side > div {
+    overflow-y: hidden;
+}
+
+/* When sidebar is collapsed, hide separators and their lines.
+   Target Alpine's !w-[62px] (with ! prefix) which toggles correctly,
+   not the server-rendered w-[62px] which persists after expand. */
+.drawer-side > div[class*="!w-[62px]"] .menu-title,
+.drawer-side > div[class*="!w-[62px]"] hr {
+    display: none;
 }

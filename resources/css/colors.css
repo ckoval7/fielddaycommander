@@ -51,8 +51,8 @@
      Main brand identity colors for buttons, links, and key UI elements
      ========================================================================== */
 
-  /* Primary brand color - Blue-800 equivalent (rgb(30, 64, 175)) */
-  --color-primary: hsl(223, 71%, 40%);         /* Deep blue - professional, trustworthy */
+  /* Base primary/accent/status colors are daisyUI theme tokens (resources/css/app.css). */
+  /* Primary state shades */
   --color-primary-hover: hsl(223, 71%, 32%);   /* Darker blue - hover state */
   --color-primary-active: hsl(223, 71%, 24%);  /* Even darker - active/pressed state */
   --color-primary-light: hsl(223, 90%, 90%);   /* Very light blue - backgrounds/badges */
@@ -62,8 +62,7 @@
      Secondary brand color for highlights and important actions
      ========================================================================== */
 
-  /* Accent color - Amber-500 equivalent (#f59e0b) */
-  --color-accent: hsl(38, 92%, 50%);           /* Warm amber - energetic, attention-grabbing */
+  /* Accent state shades */
   --color-accent-hover: hsl(38, 92%, 42%);     /* Darker amber - hover state */
   --color-accent-active: hsl(38, 92%, 34%);    /* Even darker - active/pressed state */
 
@@ -72,31 +71,23 @@
      Color-coded feedback for different states and messages
      ========================================================================== */
 
-  /* Success - Green-600 equivalent (#16a34a) */
-  --color-success: hsl(142, 71%, 45%);         /* Positive actions, confirmations */
+  /* Success state shades */
   --color-success-hover: hsl(142, 71%, 38%);   /* Darker green - hover state */
   --color-success-light: hsl(142, 60%, 90%);   /* Light green - backgrounds/alerts */
 
-  /* Warning - Amber-500 (same as accent) */
-  --color-warning: hsl(38, 92%, 50%);          /* Caution, requires attention */
+  /* Warning state shades */
   --color-warning-hover: hsl(38, 92%, 42%);    /* Darker amber - hover state */
   --color-warning-light: hsl(38, 90%, 90%);    /* Light amber - backgrounds/alerts */
 
-  /* Error - Red-700 equivalent (#b91c1c)
-   * Text: 6.47:1 on white, 5.58:1 on base-300. White on fill: 6.47:1 */
-  --color-error: hsl(0, 74%, 42%);             /* Errors, destructive actions */
+  /* Error state shades */
   --color-error-hover: hsl(0, 70%, 35%);       /* Darker red - hover state */
-  --color-error-content: hsl(0, 0%, 100%);     /* Text on solid error fills */
-  --color-error-strong: hsl(0, 74%, 42%);      /* Solid fills (alerts, badges) */
   --color-error-light: hsl(0, 70%, 92%);       /* Light red - backgrounds/alerts */
 
-  /* Info - Sky-500 equivalent (#0ea5e9) */
-  --color-info: hsl(199, 89%, 48%);            /* Informational messages, tips */
+  /* Info state shades */
   --color-info-hover: hsl(199, 89%, 40%);      /* Darker sky - hover state */
   --color-info-light: hsl(199, 90%, 90%);      /* Light blue - backgrounds/alerts */
 
-  /* Neutral - Slate-400 equivalent (#94a3b8) */
-  --color-neutral: hsl(215, 20%, 65%);         /* Neutral/inactive states */
+  /* Neutral state shades */
   --color-neutral-hover: hsl(215, 20%, 55%);   /* Darker slate - hover state */
   --color-neutral-light: hsl(215, 20%, 90%);   /* Light gray - backgrounds/badges */
 
@@ -107,6 +98,7 @@
 
   /* Club equipment color - Indigo-600 equivalent (rgb(79, 70, 229)) */
   --color-club: hsl(244, 75%, 59%);            /* Distinguishes club-owned equipment */
+  --color-club-strong: hsl(244, 75%, 59%);     /* Club button fill - white text 6.4:1 */
   --color-club-hover: hsl(244, 75%, 51%);      /* Darker indigo - hover state */
   --color-club-light: hsl(244, 70%, 92%);      /* Light indigo - backgrounds/badges */
 
@@ -201,37 +193,13 @@
      BRAND COLORS - Lighter for better contrast on dark backgrounds
      ========================================================================== */
 
-  /* Primary - Blue-500 equivalent (#3b82f6) - lighter than light mode */
-  --color-primary: hsl(217, 91%, 60%);         /* Bright blue - pops on dark */
+  /* Base primary/accent/status colors are daisyUI theme tokens (resources/css/app.css). */
+  /* Primary state shades */
   --color-primary-hover: hsl(217, 91%, 68%);   /* Lighter blue - hover */
   --color-primary-active: hsl(217, 91%, 76%);  /* Even lighter - active */
 
-  /* Accent - Amber-400 equivalent (#fbbf24) - lighter amber */
-  --color-accent: hsl(43, 96%, 56%);           /* Bright amber */
+  /* Accent state shades */
   --color-accent-hover: hsl(43, 96%, 64%);     /* Lighter amber - hover */
-
-  /* ============================================================================
-     SEMANTIC COLORS - Adjusted for dark backgrounds
-     ========================================================================== */
-
-  /* Success - Green-500 equivalent (#22c55e) */
-  --color-success: hsl(142, 76%, 48%);         /* Bright green */
-
-  /* Warning - Amber-400 (same as accent) */
-  --color-warning: hsl(43, 96%, 56%);          /* Bright amber */
-
-  /* Error - Red-400 equivalent (#f87171)
-   * Text: 5.72:1 on base-100, 6.51:1 on base-300. Too light for white text,
-   * so solid fills use --color-error-strong (red-800, white = 8.31:1) */
-  --color-error: hsl(0, 91%, 71%);             /* Lighter red for visibility */
-  --color-error-content: hsl(0, 0%, 100%);     /* Text on solid error fills */
-  --color-error-strong: hsl(0, 70%, 35%);      /* Red-800 - solid fills */
-
-  /* Info - Sky-400 equivalent (#38bdf8) */
-  --color-info: hsl(199, 89%, 58%);            /* Bright sky blue */
-
-  /* Neutral - Slate-400 (same as light mode) */
-  --color-neutral: hsl(215, 20%, 65%);         /* Medium slate */
 
   /* ============================================================================
      SPECIAL PURPOSE - Lighter variants
@@ -239,6 +207,7 @@
 
   /* Club - Indigo-400 equivalent (#818cf8) */
   --color-club: hsl(244, 75%, 65%);            /* Lighter indigo */
+  --color-club-strong: hsl(244, 75%, 59%);     /* Club button fill - white text 6.4:1 */
 
   /* ============================================================================
      BORDERS - Lighter for visibility on dark backgrounds
