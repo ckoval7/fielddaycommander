@@ -46,7 +46,7 @@ spec:
           {{- end }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8000
               protocol: TCP
             {{- if .Values.reverb.enabled }}
             - name: reverb

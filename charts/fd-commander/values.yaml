@@ -23,25 +23,22 @@ serviceAccount:
 podAnnotations: {}
 podLabels: {}
 
+# The image runs everything as www-data (uid/gid 33) and listens on 8000, so
+# no capabilities are needed. fsGroup makes the storage volume writable by
+# www-data; OnRootMismatch skips the recursive walk once ownership is right.
 podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 33
+  runAsGroup: 33
+  fsGroup: 33
+  fsGroupChangePolicy: OnRootMismatch
   seccompProfile:
     type: RuntimeDefault
-# The entrypoint chowns storage and runs migrations as root, then supervisord
-# runs Octane, Reverb, the queue worker and the scheduler as www-data. Keep
-# the capabilities that root setup and that privilege drop need; everything
-# else is dropped. allowPrivilegeEscalation must stay unset: no_new_privs
-# would ignore the file capability that lets www-data bind port 80.
 securityContext:
+  allowPrivilegeEscalation: false
   capabilities:
     drop:
       - ALL
-    add:
-      - CHOWN
-      - DAC_OVERRIDE
-      - FOWNER
-      - SETGID
-      - SETUID
-      - NET_BIND_SERVICE
 
 # ---------------------------------------------------------------------------
 # Application settings (mapped to the container environment)
