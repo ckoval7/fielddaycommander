@@ -6,19 +6,25 @@ use App\Console\Commands\DemoSimulateActivity;
 use App\Models\DemoEvent;
 use App\Models\DemoSession;
 use App\Models\User;
+use App\Services\DemoDatabasePool;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Permission\PermissionRegistrar;
 
 class DemoController extends Controller
 {
+    /**
+     * How many times the landing page resubmits a visitor who found every
+     * provisioning slot busy before giving up and asking them to come back.
+     */
+    private const MAX_PROVISION_ATTEMPTS = 10;
+
     public function landing(): View
     {
         abort_unless(config('demo.enabled'), 404);
@@ -26,51 +32,53 @@ class DemoController extends Controller
         return view('demo.landing');
     }
 
-    public function provision(Request $request): RedirectResponse
+    public function provision(Request $request, DemoDatabasePool $pool): RedirectResponse
     {
         abort_unless(config('demo.enabled'), 404);
 
         $validated = $request->validate([
             'role' => 'required|in:operator,station_captain,event_manager,system_admin',
             'event_type' => 'required|in:FD,WFD',
+            'attempt' => 'nullable|integer|min:0|max:'.self::MAX_PROVISION_ATTEMPTS,
         ]);
 
-        $currentCount = $this->countDemoSessions();
+        $currentCount = $this->countDemoSessions($pool);
 
         if ($currentCount >= config('demo.max_sessions', 25)) {
             return redirect()->route('demo.landing')
                 ->with('error', 'Demo capacity is currently full. Please try again in a few minutes.');
         }
 
-        $uuid = (string) Str::uuid();
-        $dbName = $this->safeDemoDbName($uuid);
+        $slot = $pool->acquireProvisioningSlot();
 
-        DB::statement("CREATE DATABASE `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        if ($slot === null) {
+            return $this->retryProvisionLater($validated);
+        }
 
-        Config::set('database.connections.demo.database', $dbName);
-        DB::purge('demo');
+        try {
+            $uuid = $pool->claim() ?? $pool->createDatabase();
+            $dbName = DemoDatabasePool::databaseName($uuid);
 
-        Artisan::call('migrate', [
-            '--database' => 'demo',
-            '--force' => true,
-            '--no-interaction' => true,
-        ]);
+            $pool->migrate($uuid);
 
-        // `db:seed` takes no custom arguments, so the chosen event type is
-        // handed to the seeder through the container. Running it via Artisan
-        // (rather than resolving the seeder here) keeps the console command
-        // wired up that the shared reference seeders write their output to.
-        app()->instance(DemoSeeder::EVENT_TYPE_KEY, $validated['event_type']);
+            // `db:seed` takes no custom arguments, so the chosen event type is
+            // handed to the seeder through the container. Running it via Artisan
+            // (rather than resolving the seeder here) keeps the console command
+            // wired up that the shared reference seeders write their output to.
+            app()->instance(DemoSeeder::EVENT_TYPE_KEY, $validated['event_type']);
 
-        // `--database` is required: without it the seeder writes every model
-        // to the default connection, filling the shared app database instead
-        // of the visitor's freshly provisioned sandbox.
-        Artisan::call('db:seed', [
-            '--class' => DemoSeeder::class,
-            '--database' => 'demo',
-            '--force' => true,
-            '--no-interaction' => true,
-        ]);
+            // `--database` is required: without it the seeder writes every model
+            // to the default connection, filling the shared app database instead
+            // of the visitor's freshly provisioned sandbox.
+            Artisan::call('db:seed', [
+                '--class' => DemoSeeder::class,
+                '--database' => 'demo',
+                '--force' => true,
+                '--no-interaction' => true,
+            ]);
+        } finally {
+            $slot->release();
+        }
 
         $seededSessionIds = DB::connection('demo')
             ->table('operating_sessions')
@@ -189,7 +197,35 @@ class DemoController extends Controller
             ->withoutCookie('demo_session');
     }
 
-    private function countDemoSessions(): int
+    /**
+     * Send a visitor who found every provisioning slot busy back to the
+     * landing page, which resubmits their choice after a short pause. Waiting
+     * in the browser rather than in this request keeps web workers free for
+     * visitors already exploring their sandbox.
+     *
+     * @param  array{role: string, event_type: string, attempt?: int|null}  $validated
+     */
+    private function retryProvisionLater(array $validated): RedirectResponse
+    {
+        $attempt = (int) ($validated['attempt'] ?? 0) + 1;
+
+        if ($attempt > self::MAX_PROVISION_ATTEMPTS) {
+            return redirect()->route('demo.landing')
+                ->with('error', 'The demo is very busy right now. Please try again in a minute or two.');
+        }
+
+        return redirect()->route('demo.landing')->with('provision_retry', [
+            'role' => $validated['role'],
+            'event_type' => $validated['event_type'],
+            'attempt' => $attempt,
+        ]);
+    }
+
+    /**
+     * Count visitor sandboxes. Pooled databases nobody has claimed yet are
+     * left out so the pool never eats into the session cap.
+     */
+    private function countDemoSessions(DemoDatabasePool $pool): int
     {
         if (DB::getDriverName() !== 'mysql') {
             return 0;
@@ -199,20 +235,13 @@ class DemoController extends Controller
             "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'demo\_%'"
         );
 
-        return count(array_filter($rows, function ($row): bool {
+        $pooled = $pool->pooledDatabaseNames();
+
+        return count(array_filter($rows, function ($row) use ($pooled): bool {
             $name = $row->schema_name ?? $row->SCHEMA_NAME;
 
-            return (bool) preg_match('/^demo_[a-f0-9_]{32,40}$/', $name);
+            return preg_match('/^demo_[a-f0-9_]{32,40}$/', $name) && ! in_array($name, $pooled, true);
         }));
-    }
-
-    private function safeDemoDbName(string $uuid): string
-    {
-        $dbName = 'demo_'.str_replace('-', '_', $uuid);
-
-        abort_unless(preg_match('/^demo_[a-f0-9_]{32,40}$/', $dbName), 400, 'Invalid demo session identifier.');
-
-        return $dbName;
     }
 
     private function resolveUserForRole(string $role): User

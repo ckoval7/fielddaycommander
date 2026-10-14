@@ -28,6 +28,13 @@ Schedule::command('demo:cleanup')
     ->hourly()
     ->when(fn () => config('demo.enabled'));
 
+// Keep migrated demo databases ready so new visitors only wait for seeding
+Schedule::command('demo:fill-pool')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->when(fn () => config('demo.enabled'));
+
 // Simulate live contacts in demo sessions
 Schedule::command('demo:simulate-activity')
     ->everyMinute()

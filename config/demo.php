@@ -39,6 +39,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Database Pool
+    |--------------------------------------------------------------------------
+    |
+    | Number of migrated, unclaimed demo databases kept ready by the
+    | demo:fill-pool command. A visitor who claims one only waits for
+    | seeding. Pooled databases do not count toward max_sessions.
+    |
+    */
+
+    'pool_size' => (int) env('DEMO_POOL_SIZE', 5),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Provisioning Concurrency
+    |--------------------------------------------------------------------------
+    |
+    | How many sandboxes may be built at once, and how many seconds a request
+    | waits for a free slot. Each build holds a web worker, so this keeps a
+    | burst of visitors from stalling the site. A visitor who still finds no
+    | free slot is sent back to the landing page, which retries for them.
+    |
+    */
+
+    'provision_concurrency' => (int) env('DEMO_PROVISION_CONCURRENCY', 2),
+
+    'provision_wait_seconds' => (int) env('DEMO_PROVISION_WAIT_SECONDS', 3),
+
+    /*
+    |--------------------------------------------------------------------------
     | Analytics Retention
     |--------------------------------------------------------------------------
     |

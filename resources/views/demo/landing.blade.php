@@ -14,7 +14,7 @@
     <span class="loading loading-spinner loading-lg text-primary"></span>
     <div class="text-center">
         <p id="provision-status" class="font-semibold text-lg">Provisioning your sandbox&hellip;</p>
-        <p class="text-base-content/50 text-sm mt-1">This takes about 30&ndash;40 seconds</p>
+        <p class="text-base-content/50 text-sm mt-1">This usually takes a few seconds</p>
     </div>
 </div>
 
@@ -27,6 +27,17 @@
 
     @if(session('error'))
         <div class="alert alert-error mb-6">{{ session('error') }}</div>
+    @endif
+
+    {{-- Every provisioning slot was busy: the script below resubmits the
+         visitor's choice after a short pause instead of making them click again. --}}
+    @if($retry = session('provision_retry'))
+        <form id="provision-retry" method="POST" action="{{ route('demo.provision') }}" hidden>
+            @csrf
+            <input type="hidden" name="role" value="{{ $retry['role'] }}">
+            <input type="hidden" name="event_type" value="{{ $retry['event_type'] }}">
+            <input type="hidden" name="attempt" value="{{ $retry['attempt'] }}">
+        </form>
     @endif
 
     {{-- Step 1: which rulebook the sandbox is built around. The choice is
@@ -128,6 +139,15 @@
             next.focus();
         });
     });
+
+    var retryForm = document.getElementById('provision-retry');
+
+    if (retryForm) {
+        overlay.style.display = 'flex';
+        content.style.display = 'none';
+        statusEl.textContent  = 'Lots of visitors right now \u2014 waiting for a free spot\u2026';
+        setTimeout(function () { retryForm.submit(); }, 3000);
+    }
 
     document.querySelectorAll('form').forEach(function (form) {
         form.addEventListener('submit', function () {

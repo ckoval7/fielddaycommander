@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\DemoController;
+use App\Models\DemoPoolDatabase;
+use App\Services\DemoDatabasePool;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
@@ -101,7 +104,80 @@ test('session cap excludes demo_base and malformed schema names', function () {
 
     $reflection = new ReflectionMethod(DemoController::class, 'countDemoSessions');
     $reflection->setAccessible(true);
-    $count = $reflection->invoke(new DemoController);
+    $count = $reflection->invoke(new DemoController, new DemoDatabasePool);
 
     expect($count)->toBe(1);
+});
+
+test('session cap leaves out pooled databases nobody has claimed', function () {
+    DemoPoolDatabase::create(['session_uuid' => 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa']);
+
+    DB::shouldReceive('getDriverName')->andReturn('mysql');
+    DB::shouldReceive('select')->once()->andReturn([
+        (object) ['schema_name' => 'demo_aaaaaaaa_aaaa_aaaa_aaaa_aaaaaaaaaaaa'],
+        (object) ['schema_name' => 'demo_bbbbbbbb_bbbb_bbbb_bbbb_bbbbbbbbbbbb'],
+    ]);
+
+    $reflection = new ReflectionMethod(DemoController::class, 'countDemoSessions');
+    $count = $reflection->invoke(new DemoController, new DemoDatabasePool);
+
+    expect($count)->toBe(1);
+});
+
+test('provision sends the visitor back to retry when every provisioning slot is busy', function () {
+    Config::set('demo.shared_cache_store', 'array');
+    Config::set('demo.provision_concurrency', 1);
+    Config::set('demo.provision_wait_seconds', 0);
+    Cache::store('array')->lock('demo:provision-slot:1', 60)->get();
+
+    $response = $this->post(route('demo.provision'), [
+        'role' => 'station_captain',
+        'event_type' => 'WFD',
+        'attempt' => 2,
+    ]);
+
+    $response->assertRedirect(route('demo.landing'));
+    $response->assertSessionHas('provision_retry', [
+        'role' => 'station_captain',
+        'event_type' => 'WFD',
+        'attempt' => 3,
+    ]);
+    expect(DemoPoolDatabase::count())->toBe(0);
+});
+
+test('provision gives up retrying after the final attempt', function () {
+    Config::set('demo.shared_cache_store', 'array');
+    Config::set('demo.provision_concurrency', 1);
+    Config::set('demo.provision_wait_seconds', 0);
+    Cache::store('array')->lock('demo:provision-slot:1', 60)->get();
+
+    $response = $this->post(route('demo.provision'), [
+        'role' => 'operator',
+        'event_type' => 'FD',
+        'attempt' => 10,
+    ]);
+
+    $response->assertRedirect(route('demo.landing'));
+    $response->assertSessionMissing('provision_retry');
+    $response->assertSessionHas('error', fn (string $message): bool => str_contains($message, 'very busy'));
+});
+
+test('landing page resubmits a visitor who is waiting for a provisioning slot', function () {
+    $response = $this->withSession(['provision_retry' => [
+        'role' => 'event_manager',
+        'event_type' => 'WFD',
+        'attempt' => 4,
+    ]])->get(route('demo.landing'));
+
+    $response->assertOk();
+    $response->assertSee('id="provision-retry"', false);
+    $response->assertSee('name="role" value="event_manager"', false);
+    $response->assertSee('name="event_type" value="WFD"', false);
+    $response->assertSee('name="attempt" value="4"', false);
+});
+
+test('landing page does not resubmit without a pending retry', function () {
+    $this->get(route('demo.landing'))
+        ->assertOk()
+        ->assertDontSee('id="provision-retry"', false);
 });
