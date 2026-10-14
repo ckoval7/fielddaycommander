@@ -3,6 +3,7 @@
 namespace App\Livewire\Dashboard\Widgets\Concerns;
 
 use App\Services\EventContextService;
+use App\Support\BroadcastChannels;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -198,7 +199,7 @@ trait IsWidget
         }
 
         return [
-            "echo-private:event.{$eventId},.ContactLogged" => $method,
+            BroadcastChannels::privateListener(BroadcastChannels::event($eventId), '.ContactLogged') => $method,
         ];
     }
 

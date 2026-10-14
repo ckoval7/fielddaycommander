@@ -4,6 +4,7 @@ namespace App\Events;
 
 use App\Models\Contact;
 use App\Models\Event;
+use App\Support\BroadcastChannels;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -31,7 +32,7 @@ class ContactLogged implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel("event.{$this->event->id}"),
+            new PrivateChannel(BroadcastChannels::event($this->event->id)),
         ];
     }
 

@@ -2,6 +2,8 @@
 
 namespace App\Events;
 
+use App\Support\BroadcastChannels;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -14,12 +16,12 @@ class NewNotification implements ShouldBroadcast
     public function __construct(public int $userId) {}
 
     /**
-     * @return array<int, \Illuminate\Broadcasting\Channel>
+     * @return array<int, Channel>
      */
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel("user.{$this->userId}"),
+            new PrivateChannel(BroadcastChannels::user($this->userId)),
         ];
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\Section;
 use App\Services\EventContextService;
+use App\Support\BroadcastChannels;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -41,7 +42,7 @@ class SectionMap extends Component
         }
 
         return [
-            "echo-private:event.{$this->event->id},.ContactLogged" => 'handleContactLogged',
+            BroadcastChannels::privateListener(BroadcastChannels::event($this->event->id), '.ContactLogged') => 'handleContactLogged',
         ];
     }
 

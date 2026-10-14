@@ -15,6 +15,7 @@ use App\Scoring\Dto\Nomenclature;
 use App\Scoring\Dto\ScoreBreakdown;
 use App\Scoring\Dto\ScoreTerm;
 use App\Services\EventContextService;
+use App\Support\BroadcastChannels;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -49,7 +50,7 @@ class Scoring extends Component
         }
 
         return [
-            "echo-private:event.{$this->event->id},.ContactLogged" => 'handleContactLogged',
+            BroadcastChannels::privateListener(BroadcastChannels::event($this->event->id), '.ContactLogged') => 'handleContactLogged',
         ];
     }
 

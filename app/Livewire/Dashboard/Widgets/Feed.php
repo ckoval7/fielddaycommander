@@ -5,6 +5,7 @@ namespace App\Livewire\Dashboard\Widgets;
 use App\Enums\NotificationCategory;
 use App\Livewire\Dashboard\Widgets\Concerns\HighlightsNewItems;
 use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
+use App\Support\BroadcastChannels;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -112,7 +113,7 @@ class Feed extends Component
 
         // NotificationService broadcasts NewNotification on the user's private channel.
         return [
-            'echo-private:user.'.auth()->id().',NewNotification' => 'handleUpdate',
+            BroadcastChannels::privateListener(BroadcastChannels::user(auth()->id()), 'NewNotification') => 'handleUpdate',
         ];
     }
 

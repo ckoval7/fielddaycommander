@@ -8,6 +8,7 @@ use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\Mode;
+use App\Support\BroadcastChannels;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -42,7 +43,7 @@ class BandModeGrid extends Component
         }
 
         return [
-            "echo-private:event.{$this->event->id},.ContactLogged" => 'handleContactLogged',
+            BroadcastChannels::privateListener(BroadcastChannels::event($this->event->id), '.ContactLogged') => 'handleContactLogged',
         ];
     }
 
