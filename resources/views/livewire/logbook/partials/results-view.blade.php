@@ -27,16 +27,14 @@
                         label="Change Logger"
                         icon="phosphor-user"
                         class="btn-primary btn-sm"
-                        wire:click="$dispatch('open-bulk-change-logger', { contactIds: {{ json_encode($selectedIds) }} })"
-                        spinner
+                        wire:click="$dispatch('open-bulk-change-logger', { contactIds: $wire.selectedIds })"
                     />
                     <x-button
                         label="Delete"
                         icon="phosphor-trash"
                         class="btn-error btn-sm"
-                        wire:click="$dispatch('bulk-delete-contacts', { contactIds: {{ json_encode($selectedIds) }} })"
+                        wire:click="$dispatch('bulk-delete-contacts', { contactIds: $wire.selectedIds })"
                         wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} contact(s)?"
-                        spinner
                     />
                 </div>
                 <x-button
