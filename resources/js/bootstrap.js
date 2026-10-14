@@ -27,10 +27,11 @@ try {
             wsPort: reverbConfig.port || currentPort,
             wssPort: reverbConfig.port || currentPort,
             forceTLS: useTLS,
-            // pusher-js builds wss:// connections from the transport named 'ws'
-            // when forceTLS is set; enabling only 'wss' leaves it no transport
-            // and the connection goes straight to "failed".
-            enabledTransports: ['ws', 'wss'],
+            // pusher-js's 'ws' transport opens wss:// when forceTLS is set and
+            // ws:// otherwise. 'wss' is only its fallback for non-TLS pages, so
+            // enabling just 'ws' avoids spurious wss:// attempts on HTTP
+            // installs, while enabling just 'wss' leaves TLS with no transport.
+            enabledTransports: ['ws'],
         });
     }
 } catch (error) {
