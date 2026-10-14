@@ -12,6 +12,9 @@ vendor
 .playwright-mcp/
 test-results/
 tests/
+# Package/config caches from a local checkout name dev-only providers and break
+# package:discover in the image.
+bootstrap/cache/*.php
 *.log
 .DS_Store
 .phpunit.result.cache

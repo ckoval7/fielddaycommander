@@ -41,7 +41,10 @@ FROM dunglas/frankenphp:1.13.0-php8.4 AS production
 LABEL maintainer="FD Commander"
 LABEL description="Field Day Commander - Amateur Radio Field Day Logging"
 
-# Install PHP extensions and supervisor
+# Install PHP extensions and supervisor. The container runs as www-data on
+# unprivileged ports, so FrankenPHP's cap_net_bind_service file capability is
+# removed: exec of a binary with a file capability fails outright wherever
+# NET_BIND_SERVICE is dropped (e.g. Kubernetes with capabilities: drop ALL).
 RUN install-php-extensions \
     pdo_mysql \
     mbstring \
@@ -55,7 +58,8 @@ RUN install-php-extensions \
     pcntl \
     && apt-get update \
     && apt-get install -y --no-install-recommends supervisor \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && setcap -r /usr/local/bin/frankenphp
 
 WORKDIR /app
 
@@ -74,21 +78,28 @@ COPY docker/Caddyfile ./Caddyfile
 
 # Copy Docker support files
 COPY docker/php.ini /usr/local/etc/php/conf.d/99-fd-commander.ini
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Replaces the Debian main config so a bare `supervisorctl` finds our socket.
+COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Set entrypoint permissions and create storage structure
+# Set entrypoint permissions and create storage structure. The entrypoint
+# rewrites .env from the container environment, so it must be www-data owned;
+# the public/storage symlink is created here because /app/public is not.
 RUN chmod +x /usr/local/bin/entrypoint.sh \
-    && mkdir -p storage/{app/public,framework/{cache/data,sessions,views,testing},logs} \
-        bootstrap/cache \
+    && mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions \
+        storage/framework/views storage/framework/testing storage/logs bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache /data /config
+    && ln -s /app/storage/app/public public/storage \
+    && touch .env \
+    && chown -R www-data:www-data storage bootstrap/cache .env /data /config
 
-EXPOSE 80
+USER www-data
+
+EXPOSE 8000
 
 # First boot waits for the database and runs migrations/seeders before Octane
 # listens, hence the long start period.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=3 \
-    CMD curl -fsS http://127.0.0.1/up > /dev/null || exit 1
+    CMD curl -fsS http://127.0.0.1:8000/up > /dev/null || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

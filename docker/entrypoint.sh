@@ -18,16 +18,22 @@ if [[ -z "$APP_KEY" || "$APP_KEY" = "base64:" ]]; then
     exit 1
 fi
 
-# 1. Ensure storage directory structure exists (volume may be fresh)
+# 1. The container runs as www-data and cannot fix ownership itself. Storage
+#    written by an older root-run image, a root `docker exec`, or a bind mount
+#    owned by another uid has to be handed over once from the host.
+UNWRITABLE=$(find /app/storage /app/bootstrap/cache ! -writable -print -quit)
+if [[ -n "$UNWRITABLE" ]]; then
+    echo "ERROR: $UNWRITABLE is not writable by $(id -un) (uid $(id -u))." >&2
+    echo "Hand the storage volume to www-data once, then start the app again:" >&2
+    echo "  docker compose run --rm --no-deps -u root --entrypoint chown app -R www-data:www-data /app/storage" >&2
+    echo "For a bind mount, run 'chown -R 33:33 <host dir>' on the host instead." >&2
+    exit 1
+fi
+
+# 2. Ensure storage directory structure exists (volume may be fresh). The
+#    public/storage symlink pointing into it is baked into the image.
 echo "Setting up storage directories..."
 mkdir -p /app/storage/{app/public,framework/{cache/data,sessions,views,testing},logs}
-chmod -R 775 /app/storage /app/bootstrap/cache
-chown -R www-data:www-data /app/storage /app/bootstrap/cache
-
-# 2. Create storage symlink (idempotent)
-if [[ ! -L /app/public/storage ]]; then
-    php artisan storage:link
-fi
 
 # 3. Build .env inside container from environment variables
 #    Docker Compose injects env vars from env_file + environment directives.
@@ -86,12 +92,8 @@ fi
 echo "Optimizing application (config/route/view/event caches)..."
 php artisan optimize
 
-# 9. Hand runtime-writable paths to www-data. The steps above run as root
-#    and may have created root-owned logs/caches; supervisord runs every
-#    program as www-data.
-chown -R www-data:www-data /app/storage /app/bootstrap/cache
-chown www-data:www-data /app/.env
+# 9. Keep the generated .env (database and Reverb secrets) private.
 chmod 640 /app/.env
 
 echo "=== Starting services via supervisord ==="
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf

@@ -42,16 +42,16 @@ APP_PORT=8080 docker compose up -d
 
 ## Architecture
 
-The app container runs four processes via supervisord:
+The app container runs as the unprivileged `www-data` user (uid 33) and runs four processes via supervisord:
 
 | Process | Command | Purpose |
 |---------|---------|---------|
-| Octane | `frankenphp php-cli artisan octane:frankenphp` | HTTP server (port 80) |
+| Octane | `frankenphp php-cli artisan octane:frankenphp` | HTTP server (port 8000, mapped to `APP_PORT` on the host) |
 | Reverb | `php artisan reverb:start` | WebSocket server (port 8080, internal) |
 | Queue Worker | `php artisan queue:work` | Background job processing |
 | Scheduler | `php artisan schedule:run` (every 60s) | Scheduled tasks |
 
-WebSocket connections reach Reverb through Caddy's reverse proxy at the `/app` path — only port 80 is exposed.
+WebSocket connections reach Reverb through Caddy's reverse proxy at the `/app` path — only the HTTP port is exposed.
 
 ## First Run
 
@@ -67,7 +67,7 @@ Seeders only run once. A marker file in the persistent storage volume prevents r
 
 ## Reverse Proxy (HTTPS)
 
-The container serves plain HTTP on port 80. For HTTPS, place a reverse proxy in front of it. The app includes `trustProxies(at: '*')` so `X-Forwarded-Proto` and `X-Forwarded-For` headers are respected automatically.
+The container serves plain HTTP (port 8000 inside the container, `APP_PORT` on the host). For HTTPS, place a reverse proxy in front of it. The app includes `trustProxies(at: '*')` so `X-Forwarded-Proto` and `X-Forwarded-For` headers are respected automatically.
 
 Example with Nginx:
 
@@ -132,9 +132,11 @@ docker compose exec app supervisorctl status
 # Restart a specific process
 docker compose exec app supervisorctl restart queue-worker
 
-# Run artisan as www-data, the user the app processes run as. Running it as
-# root can leave root-owned log files the app cannot write until a restart.
-docker compose exec -u www-data app php artisan about
+# Run artisan (exec runs as www-data, the container user)
+docker compose exec app php artisan about
+
+# Open a root shell for debugging
+docker compose exec -u root app bash
 
 # View logs
 docker compose logs -f app
@@ -197,6 +199,20 @@ docker compose up -d
 ```
 
 The entrypoint runs `php artisan migrate --force` on every start, so new migrations are applied automatically.
+
+### Upgrading to the non-root image
+
+The app container no longer runs as root: it runs as `www-data` and listens on port 8000 inside the container. Users still reach it on `APP_PORT` (80 by default) because Docker maps the host port.
+
+- If you have a `docker-compose.override.yml` or a copy of the compose file, change the app port mapping from `"<host>:80"` to `"<host>:8000"`.
+- Named volumes from earlier releases are already owned by `www-data` and need nothing. If the app exits with `ERROR: ... is not writable by www-data`, hand storage over once and start it again:
+
+  ```bash
+  docker compose run --rm --no-deps -u root --entrypoint chown app -R www-data:www-data /app/storage
+  docker compose up -d
+  ```
+
+  For a bind-mounted storage directory, run `sudo chown -R 33:33 <host dir>` on the host instead.
 
 ## Local Development & Testing (Laravel Sail)
 
