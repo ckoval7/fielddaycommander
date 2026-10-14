@@ -141,6 +141,13 @@
 
   /* Status chips */
   --score-verified:    hsl(162, 55%, 30%);  /* teal — "verified" bonus */
+
+  /* Chip fills: the teal/amber above are tuned for text, so filled chips use
+   * these pairs instead (>= 4.5:1, checked in tests/Unit/ThemeContrastTest.php) */
+  --score-verified-fill:    hsl(162, 55%, 30%);  /* white text 5.4:1 */
+  --score-on-verified-fill: hsl(0, 0%, 100%);
+  --score-amber-fill:       hsl(38, 88%, 52%);   /* dark ink 9.9:1 */
+  --score-on-amber-fill:    hsl(220, 20%, 12%);
   --score-warning:     hsl(38, 80%, 38%);   /* amber — claimed/unverified, high dupes */
   --score-error:       hsl(2, 68%, 46%);    /* red — data errors */
   --score-opportunity: hsl(210, 65%, 42%);  /* blue — unclaimed bonus opportunity */
@@ -235,6 +242,13 @@
   --score-headline-lg: hsl(40, 92%, 60%);   /* final score */
 
   --score-verified:    hsl(162, 58%, 48%);  /* teal glow */
+
+  /* Chip fills: the teal/amber above are tuned for text, so filled chips use
+   * these pairs instead (>= 4.5:1, checked in tests/Unit/ThemeContrastTest.php) */
+  --score-verified-fill:    hsl(162, 55%, 30%);  /* white text 5.4:1 */
+  --score-on-verified-fill: hsl(0, 0%, 100%);
+  --score-amber-fill:       hsl(38, 88%, 52%);   /* dark ink 9.9:1 */
+  --score-on-amber-fill:    hsl(220, 20%, 12%);
   --score-warning:     hsl(38, 88%, 52%);   /* amber warning glow */
   --score-error:       hsl(2, 68%, 60%);    /* red (lighter on dark) */
   --score-opportunity: hsl(210, 68%, 58%);  /* blue */

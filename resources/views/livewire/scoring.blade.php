@@ -227,7 +227,7 @@
                     @foreach ($this->powerSources as $source)
                         @if ($source['active'])
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
-                                  style="background: var(--score-headline); color: white;">
+                                  style="background: var(--score-amber-fill); color: var(--score-on-amber-fill);">
                                 {{ $source['label'] }}
                             </span>
                         @else
@@ -357,12 +357,12 @@
 
                             @if ($item['status'] === 'verified')
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold"
-                                      style="background: var(--score-verified); color: white;">
+                                      style="background: var(--score-verified-fill); color: var(--score-on-verified-fill);">
                                     Verified
                                 </span>
                             @elseif ($item['status'] === 'claimed')
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold"
-                                      style="background: var(--score-warning); color: white;">
+                                      style="background: var(--score-amber-fill); color: var(--score-on-amber-fill);">
                                     Claimed
                                 </span>
                             @else
