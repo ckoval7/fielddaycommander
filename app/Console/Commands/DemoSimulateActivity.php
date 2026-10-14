@@ -9,6 +9,7 @@ use App\Models\Section;
 use App\Models\ShiftAssignment;
 use App\Models\Station;
 use App\Support\CallsignGenerator;
+use App\Support\CanadianSectionPicker;
 use App\Support\DemoDatabase;
 use App\Support\TransmitterCountGenerator;
 use Carbon\Carbon;
@@ -124,11 +125,9 @@ class DemoSimulateActivity extends Command
             }
 
             // Match callsign nationality to section
-            $isCanadian = random_int(1, 100) > 85;
-
-            if ($isCanadian && $canadianSections->isNotEmpty()) {
+            if ($canadianSections->isNotEmpty() && CanadianSectionPicker::isCanadianContact()) {
                 $callsign = CallsignGenerator::canada();
-                $section = $canadianSections->random();
+                $section = CanadianSectionPicker::pick($canadianSections);
             } else {
                 $callsign = CallsignGenerator::us();
                 $section = $usSections->isNotEmpty() ? $usSections->random() : $sections->random();

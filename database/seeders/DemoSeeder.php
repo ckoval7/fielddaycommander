@@ -29,6 +29,7 @@ use App\Models\Station;
 use App\Models\User;
 use App\Notifications\InAppNotification;
 use App\Support\CallsignGenerator;
+use App\Support\CanadianSectionPicker;
 use App\Support\TransmitterCountGenerator;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -797,11 +798,9 @@ class DemoSeeder extends Seeder
         for ($i = 0; $i < $count; $i++) {
             // Match callsign nationality to section: US callsigns get US sections,
             // Canadian callsigns get Canadian sections.
-            $isCanadian = random_int(1, 100) > 85;
-
-            if ($isCanadian) {
+            if ($canadianSections->isNotEmpty() && CanadianSectionPicker::isCanadianContact()) {
                 $callsign = CallsignGenerator::canada();
-                $section = $canadianSections->random();
+                $section = CanadianSectionPicker::pick($canadianSections);
             } else {
                 $callsign = CallsignGenerator::us();
                 $bucket = $weightedPool[array_rand($weightedPool)];
