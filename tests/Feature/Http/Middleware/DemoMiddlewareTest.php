@@ -1,8 +1,12 @@
 <?php
 
+use App\Http\Controllers\DemoController;
+use App\Http\Middleware\DemoMiddleware;
+use App\Models\User;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     Config::set('demo.enabled', true);
@@ -69,4 +73,51 @@ test('middleware is no-op when demo mode is disabled', function () {
     $response = $this->get('/');
     $response->assertStatus(200);
     expect($response->isRedirect())->toBeFalse();
+});
+
+/**
+ * Treat every demo database as present, since the test suite runs on SQLite
+ * and cannot create the per-visitor MySQL schemas.
+ */
+function assumeDemoDatabasesExist(): void
+{
+    Config::set('demo.shared_cache_store', 'array');
+
+    app()->bind(DemoMiddleware::class, fn () => new class extends DemoMiddleware
+    {
+        protected function demoDatabaseExists(string $dbName): bool
+        {
+            return true;
+        }
+    });
+}
+
+test('re-authenticates an invited guest as their own account', function () {
+    assumeDemoDatabasesExist();
+    $role = Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    User::factory()->create()->assignRole($role);
+    $guest = User::factory()->create();
+    $guest->assignRole($role);
+    $uuid = (string) Str::uuid();
+
+    $this->withUnencryptedCookies(['demo_session' => $uuid.'|operator'])
+        ->withCookie(DemoController::GUEST_COOKIE, $uuid.'|'.$guest->id)
+        ->get('/');
+
+    $this->assertAuthenticatedAs($guest);
+});
+
+test('ignores a guest cookie issued for a different sandbox', function () {
+    assumeDemoDatabasesExist();
+    $role = Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $persona = User::factory()->create();
+    $persona->assignRole($role);
+    $guest = User::factory()->create();
+    $guest->assignRole($role);
+
+    $this->withUnencryptedCookies(['demo_session' => Str::uuid().'|operator'])
+        ->withCookie(DemoController::GUEST_COOKIE, Str::uuid().'|'.$guest->id)
+        ->get('/');
+
+    $this->assertAuthenticatedAs($persona);
 });

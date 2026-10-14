@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\DemoController;
 use App\Models\User;
 use App\Support\DemoDatabase;
 use Closure;
@@ -61,24 +62,43 @@ class DemoMiddleware
 
         if (! $this->demoDatabaseExists($dbName)) {
             return redirect()->route('demo.landing')
-                ->withoutCookie('demo_session');
+                ->withoutCookie('demo_session')
+                ->withoutCookie(DemoController::GUEST_COOKIE);
         }
 
         // Switch the demo connection to this visitor's isolated database
         DemoDatabase::activate($dbName);
 
-        // On visitor change, re-authenticate from the cookie's role slug so the
-        // session guard doesn't serve a stale user resolved against the previous
-        // visitor's demo DB.
-        if ($roleSlug) {
-            $user = User::role($this->resolveRoleName($roleSlug))->first();
-            if ($user) {
-                Auth::setUser($user);
-                session(['dev_role_override' => $user->roles->first()?->name ?? '']);
-            }
+        // On visitor change, re-authenticate so the session guard doesn't serve
+        // a stale user resolved against the previous visitor's demo DB. Guests
+        // who joined through an invite have their own account; everyone else
+        // signs in as the persona for the cookie's role slug.
+        $user = $this->resolveGuestUser($request, $uuid)
+            ?? ($roleSlug ? User::role($this->resolveRoleName($roleSlug))->first() : null);
+
+        if ($user) {
+            Auth::setUser($user);
+            session(['dev_role_override' => $user->roles->first()?->name ?? '']);
         }
 
         return $next($request);
+    }
+
+    /**
+     * The account created for a visitor who joined this sandbox by invite.
+     *
+     * The guest cookie is encrypted, so its user ID can be trusted as long as
+     * it was issued for the sandbox the visitor is currently in.
+     */
+    protected function resolveGuestUser(Request $request, string $uuid): ?User
+    {
+        [$guestUuid, $userId] = array_pad(explode('|', (string) $request->cookie(DemoController::GUEST_COOKIE), 2), 2, null);
+
+        if ($guestUuid !== $uuid || ! ctype_digit((string) $userId)) {
+            return null;
+        }
+
+        return User::find((int) $userId);
     }
 
     /**

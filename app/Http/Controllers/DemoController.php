@@ -15,8 +15,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\PermissionRegistrar;
 
 class DemoController extends Controller
@@ -42,7 +44,8 @@ class DemoController extends Controller
 
     /**
      * Cookie that marks a visitor who joined someone else's sandbox through
-     * an invite link. It holds that sandbox's UUID.
+     * an invite link. It holds "sandbox UUID|user ID" for the account created
+     * for them, and is encrypted so a guest cannot sign in as someone else.
      */
     public const GUEST_COOKIE = 'demo_guest';
 
@@ -217,6 +220,11 @@ class DemoController extends Controller
 
         $validated = $request->validate([
             'role' => ['required', Rule::in(array_keys(self::ROLES))],
+            'first_name' => ['required', 'string', 'max:50'],
+            'last_name' => ['required', 'string', 'max:50'],
+            'call_sign' => ['nullable', 'string', 'regex:/^[A-Za-z0-9\/]{3,12}$/'],
+        ], [
+            'call_sign.regex' => 'Enter a call sign of 3–12 letters, numbers or slashes, or leave it blank.',
         ]);
 
         $demoSession = $this->findInvitedSession($token);
@@ -231,15 +239,23 @@ class DemoController extends Controller
             return redirect('/');
         }
 
+        try {
+            DemoDatabase::activate(DemoDatabasePool::databaseName($demoSession->session_uuid));
+
+            $callSign = $this->guestCallSign($validated['call_sign'] ?? null);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable) {
+            return $this->invalidInvite();
+        }
+
         if (! $demoSession->claimSeat()) {
             return redirect()->route('demo.join', $token)
                 ->with('error', 'This sandbox is full. Ask the person who invited you to free up a spot, or start your own demo.');
         }
 
         try {
-            DemoDatabase::activate(DemoDatabasePool::databaseName($demoSession->session_uuid));
-
-            $user = $this->resolveUserForRole($validated['role']);
+            $user = $this->createGuestUser($validated, $callSign);
         } catch (\Throwable) {
             $demoSession->releaseSeat();
 
@@ -285,7 +301,7 @@ class DemoController extends Controller
 
         $guestCookie = cookie(
             self::GUEST_COOKIE,
-            $demoSession->session_uuid,
+            $demoSession->session_uuid.'|'.$user->id,
             $minutes,
             '/',
             null,
@@ -302,7 +318,8 @@ class DemoController extends Controller
         abort_unless(config('demo.enabled'), 404);
 
         $uuid = $this->visitorSessionUuid($request);
-        $isGuest = $uuid !== null && $request->cookie(self::GUEST_COOKIE) === $uuid;
+        [$guestUuid] = explode('|', (string) $request->cookie(self::GUEST_COOKIE), 2);
+        $isGuest = $uuid !== null && $guestUuid === $uuid;
 
         try {
             if ($uuid !== null) {
@@ -419,6 +436,54 @@ class DemoController extends Controller
     {
         return redirect()->route('demo.landing')
             ->with('error', 'That invite link is no longer valid. The sandbox may have expired — start your own demo below.');
+    }
+
+    /**
+     * The call sign a guest asked for, or a generated one when they left it
+     * blank. Call signs must be unique within the sandbox they are joining.
+     *
+     * @throws ValidationException
+     */
+    private function guestCallSign(?string $requested): string
+    {
+        if ($requested !== null && $requested !== '') {
+            $callSign = Str::upper($requested);
+
+            if (User::where('call_sign', $callSign)->exists()) {
+                throw ValidationException::withMessages([
+                    'call_sign' => 'Someone in this sandbox already uses that call sign.',
+                ]);
+            }
+
+            return $callSign;
+        }
+
+        do {
+            $callSign = 'GUEST'.random_int(100, 999);
+        } while (User::where('call_sign', $callSign)->exists());
+
+        return $callSign;
+    }
+
+    /**
+     * Give a guest their own account in the sandbox, holding the role they picked.
+     *
+     * @param  array{role: string, first_name: string, last_name: string}  $validated
+     */
+    private function createGuestUser(array $validated, string $callSign): User
+    {
+        $user = User::create([
+            'call_sign' => $callSign,
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => 'guest-'.Str::lower(Str::random(16)).'@demo.invalid',
+            'password' => Hash::make(Str::random(40)),
+            'email_verified_at' => now(),
+        ]);
+
+        $user->assignRole(self::ROLES[$validated['role']]);
+
+        return $user;
     }
 
     private function resolveUserForRole(string $role): User
