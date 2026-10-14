@@ -20,29 +20,29 @@
     {{-- Bulk Action Bar --}}
     @can('edit-contacts')
         @if(count($selectedIds) > 0)
-            <div class="flex items-center gap-4 mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                <span class="text-sm font-semibold">{{ count($selectedIds) }} contact(s) selected</span>
-                <div class="flex gap-2">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                <span class="text-sm font-semibold whitespace-nowrap">{{ count($selectedIds) }} contact(s) selected</span>
+                <x-button
+                    label="Clear"
+                    icon="phosphor-x"
+                    class="btn-ghost btn-sm ml-auto sm:order-last"
+                    wire:click="deselectAll"
+                />
+                <div class="flex gap-2 w-full sm:w-auto">
                     <x-button
                         label="Change Logger"
                         icon="phosphor-user"
-                        class="btn-primary btn-sm"
+                        class="btn-primary btn-sm flex-1 sm:flex-none"
                         wire:click="$dispatch('open-bulk-change-logger', { contactIds: $wire.selectedIds })"
                     />
                     <x-button
                         label="Delete"
                         icon="phosphor-trash"
-                        class="btn-error btn-sm"
+                        class="btn-error btn-sm flex-1 sm:flex-none"
                         wire:click="$dispatch('bulk-delete-contacts', { contactIds: $wire.selectedIds })"
                         wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} contact(s)?"
                     />
                 </div>
-                <x-button
-                    label="Clear"
-                    icon="phosphor-x"
-                    class="btn-ghost btn-sm ml-auto"
-                    wire:click="deselectAll"
-                />
             </div>
         @endif
     @endcan
