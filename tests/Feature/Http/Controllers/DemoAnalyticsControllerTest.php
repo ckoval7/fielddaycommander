@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\DemoEvent;
+use App\Models\DemoParticipant;
 use App\Models\DemoSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -358,4 +359,78 @@ it('includes visitor_id in repeat_visitors from api endpoint', function () {
 
     expect($response->json('repeat_visitors.0.visitor_id'))
         ->toBe(substr(hash('sha256', 'test'), 0, 8));
+});
+
+test('dashboard lists participants with the names and call signs they entered', function () {
+    DemoParticipant::record($this->demoSession, ['role' => 'event_manager', 'first_name' => 'Ada', 'last_name' => 'Lovelace', 'call_sign' => 'k1ada'], viaInvite: false);
+    DemoParticipant::record($this->demoSession, ['role' => 'operator'], viaInvite: true);
+
+    $url = URL::temporarySignedRoute('demo.analytics.dashboard', now()->addHour(), ['range' => '7d']);
+
+    $this->get($url)
+        ->assertOk()
+        ->assertSee('Participants (2)')
+        ->assertSee('Ada Lovelace')
+        ->assertSee('K1ADA')
+        ->assertSee('Started sandbox')
+        ->assertSee('Invited');
+});
+
+test('api includes participants', function () {
+    DemoParticipant::record($this->demoSession, ['role' => 'operator', 'first_name' => 'Ada', 'call_sign' => 'K1ADA'], viaInvite: true);
+
+    $url = URL::temporarySignedRoute('demo.analytics.api', now()->addHour(), ['range' => '7d']);
+
+    $this->getJson($url)
+        ->assertOk()
+        ->assertJsonPath('participants.0.name', 'Ada')
+        ->assertJsonPath('participants.0.call_sign', 'K1ADA')
+        ->assertJsonPath('participants.0.via_invite', true)
+        ->assertJsonPath('participants.0.visitor_id', $this->demoSession->visitor_id);
+});
+
+test('session events include the session\'s participants', function () {
+    DemoParticipant::record($this->demoSession, ['role' => 'operator', 'call_sign' => 'K1ADA'], viaInvite: false);
+
+    $url = URL::temporarySignedRoute('demo.analytics.session-events', now()->addHour(), ['session' => $this->demoSession->id]);
+
+    $this->getJson($url)
+        ->assertOk()
+        ->assertJsonPath('participants.0.name', null)
+        ->assertJsonPath('participants.0.call_sign', 'K1ADA');
+});
+
+test('all time range includes sessions and participants older than 90 days', function () {
+    $oldSession = DemoSession::create([
+        'session_uuid' => fake()->uuid(),
+        'role' => 'system_admin',
+        'visitor_hash' => hash('sha256', 'old'),
+        'user_agent' => 'Test',
+        'device_type' => 'desktop',
+        'provisioned_at' => now()->subYear(),
+        'last_seen_at' => now()->subYear(),
+        'expires_at' => now()->subYear()->addDay(),
+    ]);
+    DemoParticipant::record($oldSession, ['role' => 'system_admin', 'first_name' => 'Ada'], viaInvite: false);
+
+    $ninetyDays = URL::temporarySignedRoute('demo.analytics.api', now()->addHour(), ['range' => '90d']);
+    $allTime = URL::temporarySignedRoute('demo.analytics.api', now()->addHour(), ['range' => 'all']);
+
+    $this->getJson($ninetyDays)
+        ->assertJsonPath('overview.total_sessions', 1)
+        ->assertJsonCount(0, 'participants');
+
+    $this->getJson($allTime)
+        ->assertJsonPath('range', 'all')
+        ->assertJsonPath('overview.total_sessions', 2)
+        ->assertJsonPath('participants.0.name', 'Ada');
+});
+
+test('dashboard offers an all time range', function () {
+    $url = URL::temporarySignedRoute('demo.analytics.dashboard', now()->addHour(), ['range' => 'all']);
+
+    $this->get($url)
+        ->assertOk()
+        ->assertSee('All time')
+        ->assertSee('All Sessions (All time)');
 });

@@ -1,10 +1,11 @@
 <?php
 
 use App\Models\DemoEvent;
+use App\Models\DemoParticipant;
 use App\Models\DemoSession;
 use Illuminate\Support\Facades\DB;
 
-it('prunes analytics data older than retention period', function () {
+it('prunes events older than the retention period but keeps every session', function () {
     config(['demo.enabled' => true, 'demo.analytics_retention_days' => 30]);
 
     DB::shouldReceive('select')->once()->andReturn([]);
@@ -24,6 +25,7 @@ it('prunes analytics data older than retention period', function () {
         'demo_session_id' => $oldSession->id,
         'type' => 'page_view',
         'name' => 'old.page',
+        'created_at' => now()->subDays(60),
     ]);
 
     $recentSession = DemoSession::create([
@@ -45,9 +47,8 @@ it('prunes analytics data older than retention period', function () {
 
     $this->artisan('demo:cleanup')->assertSuccessful();
 
-    expect(DemoSession::count())->toBe(1)
-        ->and(DemoSession::first()->id)->toBe($recentSession->id)
-        ->and(DemoEvent::count())->toBe(1);
+    expect(DemoSession::count())->toBe(2)
+        ->and(DemoEvent::sole()->demo_session_id)->toBe($recentSession->id);
 });
 
 it('does not prune when all data is within retention', function () {
@@ -69,4 +70,29 @@ it('does not prune when all data is within retention', function () {
     $this->artisan('demo:cleanup')->assertSuccessful();
 
     expect(DemoSession::count())->toBe(1);
+});
+
+it('keeps participants of sessions older than the retention period', function () {
+    config(['demo.enabled' => true, 'demo.analytics_retention_days' => 30]);
+
+    DB::shouldReceive('select')->once()->andReturn([]);
+
+    $oldSession = DemoSession::create([
+        'session_uuid' => fake()->uuid(),
+        'role' => 'operator',
+        'visitor_hash' => hash('sha256', 'old'),
+        'user_agent' => 'Test',
+        'device_type' => 'desktop',
+        'provisioned_at' => now()->subDays(60),
+        'last_seen_at' => now()->subDays(60),
+        'expires_at' => now()->subDays(59),
+    ]);
+
+    DemoParticipant::record($oldSession, ['role' => 'operator', 'first_name' => 'Ada', 'call_sign' => 'K1ADA'], viaInvite: false);
+
+    $this->artisan('demo:cleanup')->assertSuccessful();
+
+    expect(DemoParticipant::sole())
+        ->demo_session_id->toBe($oldSession->id)
+        ->call_sign->toBe('K1ADA');
 });

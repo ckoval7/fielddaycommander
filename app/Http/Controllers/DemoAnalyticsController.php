@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DemoEvent;
+use App\Models\DemoParticipant;
 use App\Models\DemoSession;
 use App\Support\DemoCookie;
 use Illuminate\Contracts\View\View;
@@ -16,6 +17,19 @@ use Illuminate\Support\Str;
 
 class DemoAnalyticsController extends Controller
 {
+    /**
+     * Date ranges the dashboard and API can show, with their labels.
+     *
+     * @var array<string, string>
+     */
+    public const RANGES = [
+        'today' => 'Today',
+        '7d' => '7 Days',
+        '30d' => '30 Days',
+        '90d' => '90 Days',
+        'all' => 'All time',
+    ];
+
     public function beacon(Request $request): Response
     {
         abort_unless(config('demo.enabled'), 404);
@@ -59,7 +73,7 @@ class DemoAnalyticsController extends Controller
         [$range, $sessions, $sessionIds] = $this->resolveAnalyticsData($request);
 
         $rangeLinks = [];
-        foreach (['today', '7d', '30d', '90d'] as $r) {
+        foreach (array_keys(self::RANGES) as $r) {
             $rangeLinks[$r] = URL::temporarySignedRoute(
                 'demo.analytics.dashboard',
                 now()->addHours(24),
@@ -79,6 +93,7 @@ class DemoAnalyticsController extends Controller
 
         return view('demo.analytics', [
             'range' => $range,
+            'ranges' => self::RANGES,
             'rangeLinks' => $rangeLinks,
             'overview' => $this->buildOverview($sessions),
             'roleDistribution' => $this->buildRoleDistribution($sessions),
@@ -89,6 +104,7 @@ class DemoAnalyticsController extends Controller
             'repeatVisitors' => $this->buildRepeatVisitors($sessions),
             'recentSessions' => $sessions->take(25),
             'allSessions' => $sessionsWithUrls,
+            'participants' => $this->fetchParticipants($sessionIds),
         ]);
     }
 
@@ -121,6 +137,7 @@ class DemoAnalyticsController extends Controller
                 'total_page_views' => $session->total_page_views,
                 'total_actions' => $session->total_actions,
             ],
+            'participants' => $session->participants->map(fn (DemoParticipant $participant) => $this->participantData($participant)),
             'events' => $events,
         ]);
     }
@@ -151,6 +168,10 @@ class DemoAnalyticsController extends Controller
                 'referrer' => $s->referrer,
                 'provisioned_at' => $s->provisioned_at->toIso8601String(),
             ]),
+            'participants' => $this->fetchParticipants($sessionIds)->map(fn (DemoParticipant $participant) => [
+                'visitor_id' => $participant->demoSession->visitor_id,
+                ...$this->participantData($participant),
+            ]),
         ]);
     }
 
@@ -169,12 +190,13 @@ class DemoAnalyticsController extends Controller
 
     private function resolveRange(?string $range): string
     {
-        return in_array($range, ['today', '7d', '30d', '90d'], true) ? $range : '7d';
+        return array_key_exists((string) $range, self::RANGES) ? $range : '7d';
     }
 
-    private function startDateForRange(string $range): Carbon
+    private function startDateForRange(string $range): ?Carbon
     {
         return match ($range) {
+            'all' => null,
             'today' => now()->startOfDay(),
             '7d' => now()->subDays(7)->startOfDay(),
             '30d' => now()->subDays(30)->startOfDay(),
@@ -183,11 +205,41 @@ class DemoAnalyticsController extends Controller
         };
     }
 
-    private function fetchSessions(Carbon $startDate): Collection
+    private function fetchSessions(?Carbon $startDate): Collection
     {
-        return DemoSession::where('provisioned_at', '>=', $startDate)
+        return DemoSession::query()
+            ->when($startDate, fn ($query) => $query->where('provisioned_at', '>=', $startDate))
             ->orderByDesc('provisioned_at')
             ->get();
+    }
+
+    /**
+     * Everyone who signed into the sessions in range, newest first.
+     *
+     * @param  Collection<int, int>  $sessionIds
+     * @return Collection<int, DemoParticipant>
+     */
+    private function fetchParticipants(Collection $sessionIds): Collection
+    {
+        return DemoParticipant::with('demoSession')
+            ->whereIn('demo_session_id', $sessionIds)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /**
+     * @return array{name: string|null, call_sign: string|null, role: string, via_invite: bool, joined_at: string}
+     */
+    private function participantData(DemoParticipant $participant): array
+    {
+        return [
+            'name' => $participant->displayName(),
+            'call_sign' => $participant->call_sign,
+            'role' => $participant->role,
+            'via_invite' => $participant->via_invite,
+            'joined_at' => $participant->created_at->toIso8601String(),
+        ];
     }
 
     private function buildOverview(Collection $sessions): array

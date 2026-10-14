@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Console\Commands\DemoSimulateActivity;
 use App\Models\DemoEvent;
+use App\Models\DemoParticipant;
 use App\Models\DemoSession;
 use App\Models\User;
 use App\Services\DemoDatabasePool;
@@ -172,7 +173,7 @@ class DemoController extends Controller
 
         session(['dev_role_override' => $user->roles->first()?->name ?? '']);
 
-        DemoSession::create([
+        $demoSession = DemoSession::create([
             'session_uuid' => $uuid,
             'role' => $request->role,
             'event_type' => $validated['event_type'],
@@ -184,6 +185,12 @@ class DemoController extends Controller
             'last_seen_at' => now(),
             'expires_at' => now()->addHours(config('demo.ttl_hours', 24)),
         ]);
+
+        try {
+            DemoParticipant::record($demoSession, $validated, viaInvite: false);
+        } catch (\Throwable) {
+            // Analytics tracking is best-effort; don't block the demo.
+        }
 
         $cookie = DemoCookie::make($uuid, $user->id, config('demo.ttl_hours', 24) * 60, $request->isSecure());
 
@@ -280,6 +287,8 @@ class DemoController extends Controller
                     'participant_count' => $demoSession->participant_count,
                 ],
             ]);
+
+            DemoParticipant::record($demoSession, $validated, viaInvite: true);
         } catch (\Throwable) {
             // Analytics tracking is best-effort; don't block the join.
         }

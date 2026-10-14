@@ -57,6 +57,11 @@ class DemoSession extends Model
         return $this->hasMany(DemoEvent::class)->orderBy('id');
     }
 
+    public function participants(): HasMany
+    {
+        return $this->hasMany(DemoParticipant::class)->orderBy('id');
+    }
+
     /**
      * Whether more people can join this sandbox with its invite link.
      */

@@ -48,3 +48,9 @@ it('rejects invalid range values', function () {
     $this->artisan('demo:analytics-link', ['--range' => 'bogus'])
         ->assertFailed();
 });
+
+it('accepts the all time range', function () {
+    $this->artisan('demo:analytics-link', ['--range' => 'all'])
+        ->assertSuccessful()
+        ->expectsOutputToContain('range=all');
+});

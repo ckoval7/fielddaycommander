@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\DemoEvent;
+use App\Models\DemoParticipant;
 use App\Models\DemoSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -145,6 +146,13 @@ test('joining gives the visitor their own account with the chosen role', functio
         ->and($guest->hasRole('Operator'))->toBeTrue()
         ->and($demoSession->fresh()->participant_count)->toBe(2)
         ->and(DemoEvent::where('name', 'session.guest_joined')->count())->toBe(1);
+
+    expect(DemoParticipant::sole())
+        ->demo_session_id->toBe($demoSession->id)
+        ->via_invite->toBeTrue()
+        ->first_name->toBe('Ada')
+        ->last_name->toBe('Lovelace')
+        ->call_sign->toBe('K1ADA');
 });
 
 test('each guest who joins gets a separate account', function () {
@@ -187,6 +195,11 @@ test('joining without a name or call sign gives the guest a generated identity',
         ->and($guest->last_name)->toMatch('/^[A-Z][a-z]+$/')
         ->and($guest->call_sign)->toMatch('/^[AKNW][A-Z]?\d[A-Z]{1,3}$/')
         ->and($guest->email)->toEndWith('@demo.invalid');
+
+    expect(DemoParticipant::sole())
+        ->first_name->toBeNull()
+        ->last_name->toBeNull()
+        ->call_sign->toBeNull();
 });
 
 test('joining with a last name but no first name is refused', function () {

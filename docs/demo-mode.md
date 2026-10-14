@@ -14,7 +14,7 @@ Set these values in `.env`:
 | `DEMO_TTL_HOURS`                | `24`    | Hours before a demo database is eligible for cleanup |
 | `DEMO_MAX_SESSIONS`             | `25`    | Maximum concurrent demo databases                |
 | `DEMO_MAX_USERS_PER_SESSION`    | `5`     | People one sandbox's invite link may ever admit, including the visitor who provisioned it (`1` turns invites off) |
-| `DEMO_ANALYTICS_RETENTION_DAYS` | `90`    | Days to keep analytics data before pruning       |
+| `DEMO_ANALYTICS_RETENTION_DAYS` | `90`    | Days to keep analytics events before pruning (sessions and participants are kept indefinitely) |
 | `DEMO_WEATHER_LAT`              | `41.8781`  | Latitude used for the shared demo weather location |
 | `DEMO_WEATHER_LON`              | `-87.6298` | Longitude used for the shared demo weather location |
 | `DEMO_WEATHER_STATE`            | `IL`    | State abbreviation paired with the weather coordinates |
@@ -123,10 +123,12 @@ php artisan demo:analytics-link --api
 | Option       | Default | Description                                          |
 |--------------|---------|------------------------------------------------------|
 | `--hours=N`  | `24`    | How many hours the signed link is valid              |
-| `--range=R`  | `7d`    | Date range to embed (`today`, `7d`, `30d`, `90d`)    |
+| `--range=R`  | `7d`    | Date range to embed (`today`, `7d`, `30d`, `90d`, `all`) |
 | `--api`      | —       | Generate the JSON API URL instead of the dashboard   |
 
 The analytics dashboard and API routes require a valid signed URL — they cannot be accessed directly.
+
+The dashboard's **Participants** table, the API's `participants` array and each session timeline list everyone who signed into a sandbox: their role, whether they started it or were invited, and the name and call sign they typed in. Fields a visitor left blank are recorded as empty, not as the identity generated for them. Participant rows live in `demo_participants`.
 
 ### `demo:simulate-activity`
 
@@ -144,7 +146,7 @@ php artisan demo:simulate-activity
 
 ### `demo:cleanup`
 
-Drop expired demo databases whose `demo_provisioned_at` timestamp exceeds the configured TTL. Also prunes analytics session records older than the retention period.
+Drop expired demo databases whose `demo_provisioned_at` timestamp exceeds the configured TTL. Also prunes analytics events (page views, actions and time on page) older than the retention period. Session summaries and participants are kept indefinitely, so the dashboard's **All time** range covers every session; the funnel, page, feature and time-on-page panels and session timelines only reflect events still within retention.
 
 ```bash
 php artisan demo:cleanup

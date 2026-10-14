@@ -12,6 +12,7 @@
     activeTab: 'dashboard',
     selectedSession: null,
     events: [],
+    participants: [],
     loadingEvents: false,
 
     async loadEvents(url) {
@@ -20,8 +21,10 @@
             const res = await fetch(url);
             const data = await res.json();
             this.selectedSession = data.session;
+            this.participants = data.participants;
             this.events = data.events;
         } catch (e) {
+            this.participants = [];
             this.events = [];
         }
         this.loadingEvents = false;
@@ -29,6 +32,7 @@
 
     backToList() {
         this.selectedSession = null;
+        this.participants = [];
         this.events = [];
     },
 
@@ -56,7 +60,7 @@
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Demo Analytics</h1>
         <div class="flex items-center gap-2">
-            @foreach(['today' => 'Today', '7d' => '7 Days', '30d' => '30 Days', '90d' => '90 Days'] as $key => $label)
+            @foreach($ranges as $key => $label)
                 <a href="{{ $rangeLinks[$key] }}"
                    class="btn btn-sm {{ $range === $key ? 'btn-primary' : 'btn-ghost' }}">
                     {{ $label }}
@@ -301,6 +305,44 @@
                 </table>
             </div>
         </div>
+
+        {{-- Participants --}}
+        <div class="bg-base-100 rounded-box shadow-sm p-6 mt-6">
+            <h3 class="font-semibold mb-1">Participants ({{ $participants->count() }})</h3>
+            <p class="text-xs text-base-content/60 mb-4">Names and call signs as visitors entered them. A dash means they left it blank.</p>
+            <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Call sign</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                            <th>Visitor</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($participants as $participant)
+                            <tr>
+                                <td>{{ $participant->displayName() ?? '—' }}</td>
+                                <td class="font-mono">{{ $participant->call_sign ?? '—' }}</td>
+                                <td>
+                                    <span class="badge badge-sm badge-outline">
+                                        {{ str_replace('_', ' ', $participant->role) }}
+                                    </span>
+                                </td>
+                                <td>{{ $participant->via_invite ? 'Invited' : 'Started sandbox' }}</td>
+                                <td class="font-mono text-xs text-base-content/60">{{ $participant->demoSession->visitor_id }}</td>
+                                <td class="text-xs">{{ $participant->created_at->format('M j, g:ia') }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="text-center text-base-content/50">No participants yet</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     {{-- Session Timelines Tab --}}
@@ -308,7 +350,7 @@
         {{-- Session List --}}
         <div x-show="!selectedSession">
             <div class="bg-base-100 rounded-box shadow-sm p-6">
-                <h3 class="font-semibold mb-4">All Sessions ({{ $range }})</h3>
+                <h3 class="font-semibold mb-4">All Sessions ({{ $ranges[$range] }})</h3>
                 <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                     <table class="table table-sm">
                         <thead>
@@ -362,6 +404,16 @@
                     <div><span class="text-base-content/60">Device:</span> <span x-text="selectedSession.device_type"></span></div>
                     <div><span class="text-base-content/60">Pages:</span> <span x-text="selectedSession.total_page_views"></span></div>
                     <div><span class="text-base-content/60">Actions:</span> <span x-text="selectedSession.total_actions"></span></div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-3 text-sm" x-show="participants.length">
+                    <span class="text-base-content/60">Participants:</span>
+                    <template x-for="(participant, index) in participants" :key="index">
+                        <span class="badge badge-sm badge-ghost gap-1">
+                            <span x-text="participant.name || 'Unnamed'"></span>
+                            <span class="font-mono" x-show="participant.call_sign" x-text="participant.call_sign"></span>
+                            <span class="text-base-content/50" x-text="participant.via_invite ? '(invited)' : '(started)'"></span>
+                        </span>
+                    </template>
                 </div>
             </div>
 
