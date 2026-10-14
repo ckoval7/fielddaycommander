@@ -107,7 +107,9 @@ test('shows station as occupied when active session exists', function () {
 
     Livewire::test(StationSelect::class)
         ->assertSee('Busy Station')
-        ->assertSee('Occupied');
+        ->assertSee('Occupied')
+        ->assertSeeHtml('data-station-in-use')
+        ->assertSee('In Use');
 });
 
 test('opens setup modal when selecting available station', function () {

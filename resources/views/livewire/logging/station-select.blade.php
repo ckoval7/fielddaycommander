@@ -82,12 +82,10 @@
                                 spinner="selectStation({{ $station->id }})"
                             />
                         @else
-                            <x-button
-                                label="In Use"
-                                class="btn-ghost btn-sm w-full"
-                                icon="phosphor-lock"
-                                disabled
-                            />
+                            <div class="flex items-center justify-center gap-2 h-8 text-sm font-medium text-base-content/70" data-station-in-use>
+                                <x-icon name="phosphor-lock" class="w-4 h-4" />
+                                In Use
+                            </div>
                         @endif
                     </div>
                 </x-card>

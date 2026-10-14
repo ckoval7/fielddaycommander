@@ -92,12 +92,12 @@ test('semantic text colours meet WCAG AA on base backgrounds', function (string 
     }
 })->with(['light', 'dark']);
 
-test('white text meets WCAG AA on strong semantic fills', function (string $theme) {
+test('strong-content text meets WCAG AA on strong semantic fills', function (string $theme) {
     $tokens = daisyThemeTokens($theme);
 
     foreach (SEMANTIC_COLORS as $color) {
-        expect(contrastRatio($tokens["--color-{$color}-strong"], 'oklch(100% 0 0)'))
-            ->toBeGreaterThanOrEqual(4.5, "{$theme} white on {$color}-strong");
+        expect(contrastRatio($tokens["--color-{$color}-strong"], $tokens["--color-{$color}-strong-content"]))
+            ->toBeGreaterThanOrEqual(4.5, "{$theme} {$color}-strong-content on {$color}-strong");
     }
 
     expect(contrastRatio(colorsCssToken($theme, '--color-club-strong'), 'oklch(100% 0 0)'))
@@ -110,6 +110,13 @@ test('content colours meet WCAG AA on their semantic fills', function (string $t
     foreach (SEMANTIC_COLORS as $color) {
         expect(contrastRatio($tokens["--color-{$color}-content"], $tokens["--color-{$color}"]))
             ->toBeGreaterThanOrEqual(4.5, "{$theme} {$color}-content on {$color}");
+    }
+})->with(['light', 'dark']);
+
+test('scoring chips meet WCAG AA on their fills', function (string $theme) {
+    foreach (['verified-fill', 'amber-fill'] as $fill) {
+        expect(contrastRatio(colorsCssToken($theme, "--score-{$fill}"), colorsCssToken($theme, "--score-on-{$fill}")))
+            ->toBeGreaterThanOrEqual(4.5, "{$theme} score {$fill}");
     }
 })->with(['light', 'dark']);
 

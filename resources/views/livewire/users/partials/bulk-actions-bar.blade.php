@@ -16,7 +16,7 @@
             <x-button
                 label="Assign"
                 icon="phosphor-users-three"
-                class="btn-sm btn-primary"
+                class="btn-sm btn-primary border-white/70"
                 wire:click="bulkAssignRole"
                 :disabled="!$bulk_role_id"
                 spinner="bulkAssignRole"
