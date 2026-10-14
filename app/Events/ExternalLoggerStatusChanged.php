@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Support\BroadcastChannels;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -24,7 +25,7 @@ class ExternalLoggerStatusChanged implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel("event.{$this->eventConfigurationId}.external-logger"),
+            new PrivateChannel(BroadcastChannels::externalLogger($this->eventConfigurationId)),
         ];
     }
 

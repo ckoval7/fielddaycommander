@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Components;
 
+use App\Support\BroadcastChannels;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -26,7 +27,7 @@ class NotificationBell extends Component
         $userId = auth()->id();
 
         return $userId ? [
-            "echo-private:user.{$userId},NewNotification" => 'loadNotifications',
+            BroadcastChannels::privateListener(BroadcastChannels::user($userId), 'NewNotification') => 'loadNotifications',
         ] : [];
     }
 

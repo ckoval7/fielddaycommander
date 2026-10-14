@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\ExternalLoggerSetting;
 use App\Services\EventContextService;
 use App\Services\ExternalLoggerManager;
+use App\Support\BroadcastChannels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Livewire\Component;
@@ -173,7 +174,7 @@ class ExternalLoggerManagement extends Component
         }
 
         return [
-            "echo-private:event.{$this->eventConfigId}.external-logger,ExternalLoggerStatusChanged" => 'handleStatusChanged',
+            BroadcastChannels::privateListener(BroadcastChannels::externalLogger($this->eventConfigId), 'ExternalLoggerStatusChanged') => 'handleStatusChanged',
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace App\Livewire\Components;
 
 use App\Models\Setting;
+use App\Support\BroadcastChannels;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Session;
 use Livewire\Component;
@@ -25,7 +26,7 @@ class WeatherAlertBanner extends Component
     public function getListeners(): array
     {
         return [
-            'echo:weather,WeatherAlertChanged' => 'handleAlertUpdate',
+            BroadcastChannels::publicListener(BroadcastChannels::weather(), 'WeatherAlertChanged') => 'handleAlertUpdate',
         ];
     }
 
