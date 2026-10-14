@@ -133,6 +133,7 @@ it('returns JSON analytics via signed API URL', function () {
             'bounce_rate',
         ],
         'role_distribution' => ['labels', 'data'],
+        'event_type_distribution' => ['labels', 'data'],
         'session_funnel',
         'page_popularity',
         'feature_engagement',
@@ -247,7 +248,7 @@ it('returns session events via signed URL', function () {
     $response = $this->getJson($url)->assertOk();
 
     $response->assertJsonStructure([
-        'session' => ['role', 'device_type', 'provisioned_at', 'last_seen_at', 'total_page_views', 'total_actions'],
+        'session' => ['role', 'event_type', 'device_type', 'provisioned_at', 'last_seen_at', 'total_page_views', 'total_actions'],
         'events' => [['type', 'name', 'route_name', 'metadata', 'created_at', 'seconds_from_start']],
     ]);
 
@@ -433,4 +434,35 @@ test('dashboard offers an all time range', function () {
         ->assertOk()
         ->assertSee('All time')
         ->assertSee('All Sessions (All time)');
+});
+
+it('breaks analytics down by the event type each visitor chose', function () {
+    foreach (['WFD', 'WFD'] as $eventType) {
+        DemoSession::create([
+            'session_uuid' => fake()->uuid(),
+            'role' => 'operator',
+            'event_type' => $eventType,
+            'visitor_hash' => hash('sha256', 'test'),
+            'user_agent' => 'Test',
+            'device_type' => 'desktop',
+            'provisioned_at' => now(),
+            'last_seen_at' => now(),
+            'expires_at' => now()->addHours(24),
+        ]);
+    }
+
+    $response = $this->getJson(URL::temporarySignedRoute('demo.analytics.api', now()->addHour(), ['range' => '7d']))
+        ->assertOk();
+
+    expect($response->json('event_type_distribution'))->toBe([
+        'labels' => ['Winter Field Day', 'ARRL Field Day'],
+        'data' => [2, 1],
+    ])
+        ->and(collect($response->json('recent_sessions'))->pluck('event_type')->sort()->values()->all())->toBe(['FD', 'WFD', 'WFD'])
+        ->and($response->json('repeat_visitors.0.event_types_tried'))->toEqualCanonicalizing(['FD', 'WFD']);
+
+    $this->get(URL::temporarySignedRoute('demo.analytics.dashboard', now()->addHour(), ['range' => '7d']))
+        ->assertOk()
+        ->assertSee('Event Type')
+        ->assertSee('Winter Field Day');
 });

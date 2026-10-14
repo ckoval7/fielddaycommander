@@ -30,6 +30,16 @@ class DemoAnalyticsController extends Controller
         'all' => 'All time',
     ];
 
+    /**
+     * Display names for the event types a visitor can pick on the landing page.
+     *
+     * @var array<string, string>
+     */
+    public const EVENT_TYPES = [
+        'FD' => 'ARRL Field Day',
+        'WFD' => 'Winter Field Day',
+    ];
+
     public function beacon(Request $request): Response
     {
         abort_unless(config('demo.enabled'), 404);
@@ -97,6 +107,7 @@ class DemoAnalyticsController extends Controller
             'rangeLinks' => $rangeLinks,
             'overview' => $this->buildOverview($sessions),
             'roleDistribution' => $this->buildRoleDistribution($sessions),
+            'eventTypeDistribution' => $this->buildEventTypeDistribution($sessions),
             'sessionFunnel' => $this->buildSessionFunnel($sessions, $sessionIds),
             'pagePopularity' => $this->buildPagePopularity($sessionIds),
             'featureEngagement' => $this->buildFeatureEngagement($sessionIds),
@@ -131,6 +142,7 @@ class DemoAnalyticsController extends Controller
             'session' => [
                 'visitor_id' => $session->visitor_id,
                 'role' => $session->role,
+                'event_type' => $session->event_type,
                 'device_type' => $session->device_type,
                 'provisioned_at' => $session->provisioned_at->toIso8601String(),
                 'last_seen_at' => $session->last_seen_at->toIso8601String(),
@@ -153,6 +165,7 @@ class DemoAnalyticsController extends Controller
             'generated_at' => now()->toIso8601String(),
             'overview' => $this->buildOverview($sessions),
             'role_distribution' => $this->buildRoleDistribution($sessions),
+            'event_type_distribution' => $this->buildEventTypeDistribution($sessions),
             'session_funnel' => $this->buildSessionFunnel($sessions, $sessionIds),
             'page_popularity' => $this->buildPagePopularity($sessionIds),
             'feature_engagement' => $this->buildFeatureEngagement($sessionIds),
@@ -161,6 +174,7 @@ class DemoAnalyticsController extends Controller
             'recent_sessions' => $sessions->take(25)->map(fn ($s) => [
                 'visitor_id' => $s->visitor_id,
                 'role' => $s->role,
+                'event_type' => $s->event_type,
                 'total_page_views' => $s->total_page_views,
                 'total_actions' => $s->total_actions,
                 'duration_minutes' => round($s->last_seen_at->diffInMinutes($s->provisioned_at), 1),
@@ -285,6 +299,19 @@ class DemoAnalyticsController extends Controller
         $data = $counts->values()->toArray();
 
         return ['labels' => $labels, 'data' => $data];
+    }
+
+    /**
+     * @return array{labels: array<int, string>, data: array<int, int>}
+     */
+    private function buildEventTypeDistribution(Collection $sessions): array
+    {
+        $counts = $sessions->groupBy('event_type')->map->count()->sortDesc();
+
+        return [
+            'labels' => $counts->keys()->map(fn ($code) => self::EVENT_TYPES[$code] ?? $code)->values()->toArray(),
+            'data' => $counts->values()->toArray(),
+        ];
     }
 
     private function buildSessionFunnel(Collection $sessions, Collection $sessionIds): array
@@ -437,6 +464,7 @@ class DemoAnalyticsController extends Controller
                 'visitor_id' => substr($group->first()->visitor_hash, 0, 8),
                 'sessions_count' => $group->count(),
                 'roles_tried' => $group->pluck('role')->unique()->values()->toArray(),
+                'event_types_tried' => $group->pluck('event_type')->unique()->values()->toArray(),
                 'first_visit' => $group->min('provisioned_at')->toIso8601String(),
                 'last_visit' => $group->max('provisioned_at')->toIso8601String(),
                 'device_type' => $group->first()->device_type,

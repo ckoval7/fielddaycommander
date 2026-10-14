@@ -101,7 +101,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {{-- Role Distribution Chart --}}
             <div class="bg-base-100 rounded-box shadow-sm p-6" x-data="{
                 init() {
@@ -123,6 +123,31 @@
                 <h3 class="font-semibold mb-4">Role Distribution</h3>
                 <canvas x-ref="roleCanvas" height="200"></canvas>
                 @if(empty($roleDistribution['labels']))
+                    <p class="text-base-content/50 text-center py-8">No data yet</p>
+                @endif
+            </div>
+
+            {{-- Event Type Distribution Chart --}}
+            <div class="bg-base-100 rounded-box shadow-sm p-6" x-data="{
+                init() {
+                    const data = @js($eventTypeDistribution);
+                    if (!data.labels.length) return;
+                    new Chart(this.$refs.eventTypeCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                data: data.data,
+                                backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444'],
+                            }]
+                        },
+                        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                    });
+                }
+            }">
+                <h3 class="font-semibold mb-4">Event Type</h3>
+                <canvas x-ref="eventTypeCanvas" height="200"></canvas>
+                @if(empty($eventTypeDistribution['labels']))
                     <p class="text-base-content/50 text-center py-8">No data yet</p>
                 @endif
             </div>
@@ -241,6 +266,7 @@
                                 <th>Visitor</th>
                                 <th>Sessions</th>
                                 <th>Roles Tried</th>
+                                <th>Events Tried</th>
                                 <th>Device</th>
                                 <th>First Visit</th>
                                 <th>Last Visit</th>
@@ -252,12 +278,13 @@
                                     <td class="font-mono text-xs text-base-content/60">{{ $visitor['visitor_id'] }}</td>
                                     <td>{{ $visitor['sessions_count'] }}</td>
                                     <td class="text-xs">{{ implode(', ', $visitor['roles_tried']) }}</td>
+                                    <td class="text-xs">{{ implode(', ', $visitor['event_types_tried']) }}</td>
                                     <td>{{ $visitor['device_type'] }}</td>
                                     <td class="text-xs">{{ \Carbon\Carbon::parse($visitor['first_visit'])->format('M j, g:ia') }}</td>
                                     <td class="text-xs">{{ \Carbon\Carbon::parse($visitor['last_visit'])->format('M j, g:ia') }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="text-center text-base-content/50">No repeat visitors yet</td></tr>
+                                <tr><td colspan="7" class="text-center text-base-content/50">No repeat visitors yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -273,6 +300,7 @@
                     <thead>
                         <tr>
                             <th>Role</th>
+                            <th>Event</th>
                             <th>Visitor</th>
                             <th class="text-right">Pages</th>
                             <th class="text-right">Actions</th>
@@ -290,6 +318,7 @@
                                         {{ str_replace('_', ' ', $session->role) }}
                                     </span>
                                 </td>
+                                <td class="text-xs">{{ $session->event_type }}</td>
                                 <td class="font-mono text-xs text-base-content/60">{{ substr($session->visitor_hash, 0, 8) }}</td>
                                 <td class="text-right">{{ $session->total_page_views }}</td>
                                 <td class="text-right">{{ $session->total_actions }}</td>
@@ -299,7 +328,7 @@
                                 <td class="text-xs">{{ $session->provisioned_at->format('M j, g:ia') }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="8" class="text-center text-base-content/50">No sessions yet</td></tr>
+                            <tr><td colspan="9" class="text-center text-base-content/50">No sessions yet</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -356,6 +385,7 @@
                         <thead>
                             <tr>
                                 <th>Role</th>
+                                <th>Event</th>
                                 <th>Visitor</th>
                                 <th class="text-right">Pages</th>
                                 <th class="text-right">Actions</th>
@@ -373,6 +403,7 @@
                                             {{ str_replace('_', ' ', $session->role) }}
                                         </span>
                                     </td>
+                                    <td class="text-xs">{{ $session->event_type }}</td>
                                     <td class="font-mono text-xs text-base-content/60">{{ substr($session->visitor_hash, 0, 8) }}</td>
                                     <td class="text-right">{{ $session->total_page_views }}</td>
                                     <td class="text-right">{{ $session->total_actions }}</td>
@@ -382,7 +413,7 @@
                                     <td class="text-right text-xs text-primary">View &rarr;</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="8" class="text-center text-base-content/50">No sessions yet</td></tr>
+                                <tr><td colspan="9" class="text-center text-base-content/50">No sessions yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -401,6 +432,7 @@
                 <div class="flex flex-wrap gap-4 text-sm">
                     <div><span class="text-base-content/60">Visitor:</span> <span class="font-mono text-xs" x-text="selectedSession.visitor_id"></span></div>
                     <div><span class="text-base-content/60">Role:</span> <span class="badge badge-sm badge-outline" x-text="selectedSession.role"></span></div>
+                    <div><span class="text-base-content/60">Event:</span> <span x-text="selectedSession.event_type"></span></div>
                     <div><span class="text-base-content/60">Device:</span> <span x-text="selectedSession.device_type"></span></div>
                     <div><span class="text-base-content/60">Pages:</span> <span x-text="selectedSession.total_page_views"></span></div>
                     <div><span class="text-base-content/60">Actions:</span> <span x-text="selectedSession.total_actions"></span></div>
