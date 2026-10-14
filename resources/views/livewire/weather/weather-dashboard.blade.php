@@ -2,7 +2,7 @@
     @php $headerText = $locationLabel !== null ? 'Weather for '.$locationLabel : 'Weather'; @endphp
     <x-slot:title>{{ $headerText }}</x-slot:title>
 
-    <div class="p-6">
+    <div class="p-6 max-sm:px-0">
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold">{{ $headerText }}</h1>

@@ -22,3 +22,9 @@ test('guest layout re-applies theme attribute after wire:navigate', function () 
         ->toContain("document.documentElement.setAttribute('data-theme', theme)")
         ->toContain("document.addEventListener('livewire:navigated', applyTheme)");
 });
+
+test('app layout content keeps a narrow gutter on mobile', function () {
+    $html = view('components.layouts.app', ['slot' => ''])->render();
+
+    expect($html)->toMatch('/class="drawer-content[^"]*max-sm:px-3/');
+});

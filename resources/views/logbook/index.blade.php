@@ -1,7 +1,7 @@
 <x-layouts.app>
     <x-slot:title>Logbook Browser</x-slot:title>
 
-    <div class="p-6">
+    <div class="p-6 max-sm:px-0">
         <!-- Breadcrumb Navigation -->
         <div class="breadcrumbs text-sm mb-6">
             <ul>

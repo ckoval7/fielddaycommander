@@ -1,7 +1,7 @@
 <div wire:poll.visible.60s>
     <x-slot:title>Shift Schedule{{ $event ? ' - ' . $event->name : '' }}</x-slot:title>
 
-    <div class="p-4 md:p-6">
+    <div class="p-4 md:p-6 max-sm:px-0">
         {{-- Header --}}
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
             <div>

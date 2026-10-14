@@ -461,7 +461,7 @@
         </x-slot:sidebar>
 
         {{-- The `$slot` goes here --}}
-        <x-slot:content>
+        <x-slot:content class="max-sm:px-3">
             @auth
                 <livewire:components.event-context-banner />
             @endauth
