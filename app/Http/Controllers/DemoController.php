@@ -7,6 +7,7 @@ use App\Models\DemoEvent;
 use App\Models\DemoSession;
 use App\Models\User;
 use App\Services\DemoDatabasePool;
+use App\Support\DemoDatabase;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\PermissionRegistrar;
 
 class DemoController extends Controller
@@ -24,6 +26,25 @@ class DemoController extends Controller
      * provisioning slot busy before giving up and asking them to come back.
      */
     private const MAX_PROVISION_ATTEMPTS = 10;
+
+    /**
+     * Personas a visitor can sign in as, keyed by the slug stored in the
+     * demo_session cookie.
+     *
+     * @var array<string, string>
+     */
+    private const ROLES = [
+        'system_admin' => 'System Administrator',
+        'event_manager' => 'Event Manager',
+        'station_captain' => 'Station Captain',
+        'operator' => 'Operator',
+    ];
+
+    /**
+     * Cookie that marks a visitor who joined someone else's sandbox through
+     * an invite link. It holds that sandbox's UUID.
+     */
+    public const GUEST_COOKIE = 'demo_guest';
 
     public function landing(): View
     {
@@ -158,31 +179,151 @@ class DemoController extends Controller
             sameSite: 'Lax'
         );
 
-        return redirect('/')->withCookie($cookie);
+        return redirect('/')->withCookie($cookie)->withoutCookie(self::GUEST_COOKIE);
+    }
+
+    /**
+     * Show the page a visitor lands on from an invite link, where they pick
+     * which role to join the shared sandbox as.
+     */
+    public function showJoin(Request $request, string $token): View|RedirectResponse
+    {
+        abort_unless(config('demo.enabled'), 404);
+
+        $demoSession = $this->findInvitedSession($token);
+
+        if ($demoSession === null) {
+            return $this->invalidInvite();
+        }
+
+        if ($this->visitorSessionUuid($request) === $demoSession->session_uuid) {
+            return redirect('/');
+        }
+
+        return view('demo.join', [
+            'token' => $token,
+            'demoSession' => $demoSession,
+            'maxParticipants' => DemoSession::maxParticipants(),
+        ]);
+    }
+
+    /**
+     * Sign a visitor into the sandbox they were invited to, provided it still
+     * has room under the per-session user limit.
+     */
+    public function join(Request $request, string $token): RedirectResponse
+    {
+        abort_unless(config('demo.enabled'), 404);
+
+        $validated = $request->validate([
+            'role' => ['required', Rule::in(array_keys(self::ROLES))],
+        ]);
+
+        $demoSession = $this->findInvitedSession($token);
+
+        if ($demoSession === null) {
+            return $this->invalidInvite();
+        }
+
+        $previousUuid = $this->visitorSessionUuid($request);
+
+        if ($previousUuid === $demoSession->session_uuid) {
+            return redirect('/');
+        }
+
+        if (! $demoSession->claimSeat()) {
+            return redirect()->route('demo.join', $token)
+                ->with('error', 'This sandbox is full. Ask the person who invited you to free up a spot, or start your own demo.');
+        }
+
+        try {
+            DemoDatabase::activate(DemoDatabasePool::databaseName($demoSession->session_uuid));
+
+            $user = $this->resolveUserForRole($validated['role']);
+        } catch (\Throwable) {
+            $demoSession->releaseSeat();
+
+            return $this->invalidInvite();
+        }
+
+        // A visitor leaving another sandbox for this one gives up their seat there.
+        if ($previousUuid !== null) {
+            DemoSession::where('session_uuid', $previousUuid)->first()?->releaseSeat();
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        session(['dev_role_override' => $user->roles->first()?->name ?? '']);
+
+        try {
+            DemoEvent::create([
+                'demo_session_id' => $demoSession->id,
+                'type' => 'action',
+                'name' => 'session.guest_joined',
+                'metadata' => [
+                    'role' => $validated['role'],
+                    'participant_count' => $demoSession->participant_count,
+                ],
+            ]);
+        } catch (\Throwable) {
+            // Analytics tracking is best-effort; don't block the join.
+        }
+
+        $minutes = max(1, (int) ceil(now()->diffInMinutes($demoSession->expires_at, true)));
+
+        $sessionCookie = cookie(
+            'demo_session',
+            $demoSession->session_uuid.'|'.$validated['role'],
+            $minutes,
+            '/',
+            null,
+            secure: $request->isSecure(),
+            httpOnly: true,
+            sameSite: 'Lax'
+        );
+
+        $guestCookie = cookie(
+            self::GUEST_COOKIE,
+            $demoSession->session_uuid,
+            $minutes,
+            '/',
+            null,
+            secure: $request->isSecure(),
+            httpOnly: true,
+            sameSite: 'Lax'
+        );
+
+        return redirect('/')->withCookie($sessionCookie)->withCookie($guestCookie);
     }
 
     public function reset(Request $request): RedirectResponse
     {
         abort_unless(config('demo.enabled'), 404);
 
-        $cookie = $request->cookie('demo_session');
-        [$uuid] = array_pad(explode('|', $cookie ?? '', 2), 2, null);
+        $uuid = $this->visitorSessionUuid($request);
+        $isGuest = $uuid !== null && $request->cookie(self::GUEST_COOKIE) === $uuid;
 
         try {
-            if ($uuid && Str::isUuid($uuid)) {
+            if ($uuid !== null) {
                 $demoSession = DemoSession::where('session_uuid', $uuid)->first();
                 if ($demoSession) {
                     DemoEvent::create([
                         'demo_session_id' => $demoSession->id,
                         'type' => 'action',
-                        'name' => 'session.reset',
+                        'name' => $isGuest ? 'session.guest_left' : 'session.reset',
                         'metadata' => ['role' => $demoSession->role],
                     ]);
 
-                    $demoSession->update([
-                        'was_reset' => true,
-                        'last_seen_at' => now(),
-                    ]);
+                    // A guest leaving does not reset the sandbox for everyone else.
+                    if (! $isGuest) {
+                        $demoSession->update([
+                            'was_reset' => true,
+                            'last_seen_at' => now(),
+                        ]);
+                    }
+
+                    $demoSession->releaseSeat();
                 }
             }
         } catch (\Throwable) {
@@ -194,7 +335,8 @@ class DemoController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('demo.landing')
-            ->withoutCookie('demo_session');
+            ->withoutCookie('demo_session')
+            ->withoutCookie(self::GUEST_COOKIE);
     }
 
     /**
@@ -244,16 +386,44 @@ class DemoController extends Controller
         }));
     }
 
+    /**
+     * The sandbox UUID from the visitor's demo_session cookie, if it is valid.
+     */
+    private function visitorSessionUuid(Request $request): ?string
+    {
+        [$uuid] = explode('|', (string) $request->cookie('demo_session'), 2);
+
+        return Str::isUuid($uuid) ? $uuid : null;
+    }
+
+    /**
+     * The live sandbox an invite token belongs to, or null when the token is
+     * unknown, invitations are off, or the sandbox has expired.
+     */
+    private function findInvitedSession(string $token): ?DemoSession
+    {
+        if (! DemoSession::invitesEnabled()) {
+            return null;
+        }
+
+        $demoSession = DemoSession::where('invite_token', $token)->first();
+
+        if ($demoSession === null || $demoSession->hasExpired()) {
+            return null;
+        }
+
+        return $demoSession;
+    }
+
+    private function invalidInvite(): RedirectResponse
+    {
+        return redirect()->route('demo.landing')
+            ->with('error', 'That invite link is no longer valid. The sandbox may have expired — start your own demo below.');
+    }
+
     private function resolveUserForRole(string $role): User
     {
-        $roleMap = [
-            'system_admin' => 'System Administrator',
-            'event_manager' => 'Event Manager',
-            'station_captain' => 'Station Captain',
-            'operator' => 'Operator',
-        ];
-
-        $spatieRoleName = $roleMap[$role] ?? 'Operator';
+        $spatieRoleName = self::ROLES[$role] ?? 'Operator';
 
         return User::role($spatieRoleName)->firstOrFail();
     }

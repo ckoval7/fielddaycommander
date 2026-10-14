@@ -11,6 +11,12 @@ Route::post('/demo/provision', [DemoController::class, 'provision'])
 Route::post('/demo/reset', [DemoController::class, 'reset'])
     ->name('demo.reset')
     ->middleware('throttle:5,1');
+Route::get('/demo/join/{token}', [DemoController::class, 'showJoin'])
+    ->name('demo.join')
+    ->middleware('throttle:30,1');
+Route::post('/demo/join/{token}', [DemoController::class, 'join'])
+    ->name('demo.join.store')
+    ->middleware('throttle:10,1');
 Route::post('/demo/analytics/beacon', [DemoAnalyticsController::class, 'beacon'])
     ->name('demo.analytics.beacon')
     ->middleware('throttle:60,1');

@@ -39,6 +39,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Users Per Session
+    |--------------------------------------------------------------------------
+    |
+    | How many people may share one demo sandbox, counting the visitor who
+    | provisioned it. Visitors invite others with a join link; once this many
+    | people are in, the link stops admitting anyone new. Set to 1 to turn
+    | invitations off.
+    |
+    */
+
+    'max_users_per_session' => (int) env('DEMO_MAX_USERS_PER_SESSION', 5),
+
+    /*
+    |--------------------------------------------------------------------------
     | Database Pool
     |--------------------------------------------------------------------------
     |

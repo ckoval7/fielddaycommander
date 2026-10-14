@@ -13,6 +13,7 @@ Set these values in `.env`:
 | `DEMO_MODE`                     | `false` | Enable or disable demo mode                      |
 | `DEMO_TTL_HOURS`                | `24`    | Hours before a demo database is eligible for cleanup |
 | `DEMO_MAX_SESSIONS`             | `25`    | Maximum concurrent demo databases                |
+| `DEMO_MAX_USERS_PER_SESSION`    | `5`     | People who may share one sandbox via its invite link, including the visitor who provisioned it (`1` turns invites off) |
 | `DEMO_ANALYTICS_RETENTION_DAYS` | `90`    | Days to keep analytics data before pruning       |
 | `DEMO_WEATHER_LAT`              | `41.8781`  | Latitude used for the shared demo weather location |
 | `DEMO_WEATHER_LON`              | `-87.6298` | Longitude used for the shared demo weather location |
@@ -156,8 +157,14 @@ php artisan demo:cleanup
 | GET    | `/demo`                    | `demo.landing`              | Public     |
 | POST   | `/demo/provision`          | `demo.provision`            | Throttled  |
 | POST   | `/demo/reset`              | `demo.reset`                | Throttled  |
+| GET    | `/demo/join/{token}`       | `demo.join`                 | Throttled  |
+| POST   | `/demo/join/{token}`       | `demo.join.store`           | Throttled  |
 | POST   | `/demo/analytics/beacon`   | `demo.analytics.beacon`     | Throttled  |
 | GET    | `/demo/analytics`          | `demo.analytics.dashboard`  | Signed URL |
 | GET    | `/demo/analytics/api`      | `demo.analytics.api`        | Signed URL |
 
 `POST /demo/provision` requires both a `role` (`operator`, `station_captain`, `event_manager`, `system_admin`) and an `event_type` (`FD` or `WFD`). Either one missing or unrecognised is a validation error.
+
+### Inviting others
+
+The demo banner's **Invite** button shows a join link (`/demo/join/{token}`) for the visitor's sandbox. Whoever opens it picks a role and is signed into the same database, so everyone sees and changes the same data. Each join takes a seat on the sandbox's `participant_count`; once it reaches `DEMO_MAX_USERS_PER_SESSION`, the link turns new visitors away. Pressing **Start over** gives up a seat — a guest leaving does not mark the sandbox as reset for analytics. Links stop working when the sandbox expires.
