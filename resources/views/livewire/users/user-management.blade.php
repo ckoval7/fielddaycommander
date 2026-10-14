@@ -1,7 +1,7 @@
 <div>
     <x-slot:title>User Management</x-slot:title>
 
-    <div class="p-4 md:p-6">
+    <div class="p-4 md:p-6 max-sm:px-0">
         {{-- Header --}}
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-3xl font-bold">Users</h1>

@@ -401,3 +401,11 @@
 .drawer-side > div[class*="!w-[62px]"] hr {
     display: none;
 }
+
+/* Phones: the page gutter supplies the breathing room, so cards drop most of
+ * their own padding instead of stacking another 20-32px inside it. */
+@media (width < 40rem) {
+    .card.p-4, .card.p-5, .card.p-6, .card.p-8 { padding: 0.75rem; }
+    .card-body { padding-inline: 0.75rem; }
+    .card-body:not([class*="py-"]) { padding-block: 1rem; }
+}

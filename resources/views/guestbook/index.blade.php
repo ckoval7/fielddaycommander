@@ -6,7 +6,7 @@
 <x-layouts.app>
     <x-slot:title>Sign Our Guestbook</x-slot:title>
 
-    <div class="p-4 sm:p-6">
+    <div class="p-4 sm:p-6 max-sm:px-0">
         {{-- Page Title and Welcome Message --}}
         <div class="mb-8">
             <h1 class="text-3xl sm:text-4xl font-bold mb-3">Sign Our Guestbook</h1>

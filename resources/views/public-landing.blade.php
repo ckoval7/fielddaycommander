@@ -32,7 +32,7 @@
 <x-layouts.app>
     <x-slot:title>Welcome</x-slot:title>
 
-    <div class="p-4 sm:p-6 lg:p-8">
+    <div class="p-4 sm:p-6 lg:p-8 max-sm:px-0">
         {{-- Hero Section --}}
         <div class="text-center mb-10">
             {{-- Logo --}}

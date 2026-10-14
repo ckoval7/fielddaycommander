@@ -1,6 +1,6 @@
 <x-layouts.app>
     <x-slot:title>Dashboard</x-slot:title>
-    <div class="p-6">
+    <div class="p-6 max-sm:px-0">
         <h1 class="text-3xl font-bold mb-6">Field Day Dashboard</h1>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

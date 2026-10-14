@@ -1,7 +1,7 @@
 <div>
     <x-slot:title>Equipment</x-slot:title>
 
-    <div class="p-6">
+    <div class="p-6 max-sm:px-0">
         {{-- Header --}}
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
             <h1 class="text-3xl font-bold">My Equipment</h1>

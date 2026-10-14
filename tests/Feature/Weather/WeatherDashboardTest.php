@@ -26,6 +26,10 @@ test('dashboard is accessible to guests', function () {
     Livewire::test(WeatherDashboard::class)->assertOk();
 });
 
+test('dashboard drops side padding on mobile', function () {
+    Livewire::test(WeatherDashboard::class)->assertSeeHtml('class="p-6 max-sm:px-0"');
+});
+
 test('dashboard renders for authenticated users', function () {
     $user = User::factory()->create();
 

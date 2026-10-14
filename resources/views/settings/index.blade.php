@@ -1,5 +1,5 @@
 <x-layouts.app>
-    <div class="max-w-7xl mx-auto py-8 px-4">
+    <div class="max-w-7xl mx-auto py-8 px-4 max-sm:px-0">
         <div class="mb-6">
             <h1 class="text-3xl font-bold">Settings</h1>
             <p class="text-gray-600 dark:text-gray-400">Configure system preferences, branding, and roles</p>

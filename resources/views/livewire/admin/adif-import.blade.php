@@ -1,7 +1,7 @@
 <div>
     <x-slot:title>Import ADIF</x-slot:title>
 
-    <div class="p-6">
+    <div class="p-6 max-sm:px-0">
         {{-- Step indicator --}}
         <div class="flex items-center gap-2 mb-6">
             @foreach ([1 => 'Upload', 2 => 'Map Fields', 3 => 'Review & Import'] as $num => $label)

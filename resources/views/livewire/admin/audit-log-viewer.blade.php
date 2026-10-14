@@ -1,7 +1,7 @@
 <div>
     <x-slot:title>Audit Logs</x-slot:title>
 
-    <div class="p-6">
+    <div class="p-6 max-sm:px-0">
         {{-- Header --}}
         <div class="flex justify-between items-center mb-6">
             <div>

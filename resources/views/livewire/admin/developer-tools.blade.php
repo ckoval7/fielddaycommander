@@ -1,7 +1,7 @@
 <div>
     <x-slot:title>Developer Tools</x-slot:title>
 
-    <div class="p-6 space-y-6">
+    <div class="p-6 space-y-6 max-sm:px-0">
         {{-- Header --}}
         <div class="flex justify-between items-center">
             <div>

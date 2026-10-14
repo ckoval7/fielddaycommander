@@ -1,6 +1,6 @@
 <x-layouts.app>
     <x-slot:title>Dashboard</x-slot:title>
-    <div class="p-6">
+    <div class="p-6 max-sm:px-0">
         <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
             <x-mary-icon name="phosphor-calendar" class="w-16 h-16 text-base-content/30 mb-4" />
             <h1 class="text-2xl font-bold mb-2">No Active Event</h1>
