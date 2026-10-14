@@ -63,7 +63,7 @@ class SiteBranding extends Component
         $this->validate([
             'site_name' => ['required', 'string', 'max:100'],
             'site_tagline' => ['nullable', 'string', 'max:200'],
-            'new_logo' => ['nullable', 'image', 'max:2048', 'mimes:png,jpg,jpeg,svg'],
+            'new_logo' => ['nullable', 'image:allow_svg', 'max:2048', 'mimes:png,jpg,jpeg,svg'],
             'footer_text' => ['nullable', 'string', 'max:500'],
             'welcome_message' => ['nullable', 'string', 'max:2000'],
         ]);

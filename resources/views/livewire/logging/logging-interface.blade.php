@@ -32,7 +32,7 @@
             <div class="flex items-center gap-3 flex-shrink-0">
                 <div class="flex items-center gap-1">
                     <span class="text-xs uppercase tracking-wider text-base-content/50 hidden sm:inline">QSOs</span>
-                    <span class="font-mono font-bold text-xl sm:text-2xl tabular-nums" x-text="parseInt({{ $operatingSession->qso_count }}) + pendingCount + failedCount">{{ $operatingSession->qso_count }}</span>
+                    <span class="font-mono font-bold text-xl sm:text-2xl tabular-nums" x-text="parseInt({{ $operatingSession->qso_count }}) + queue.length">{{ $operatingSession->qso_count }}</span>
                 </div>
 
                 {{-- Sync Status Indicator --}}

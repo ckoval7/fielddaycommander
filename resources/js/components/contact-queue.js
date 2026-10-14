@@ -19,7 +19,9 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         recalledUuid: null,
         recalledExchange: '',
         pendingIndicatorDelayMs: 1000,
+        syncedFallbackMs: 10000,
         now: Date.now(),
+        unhookMorphed: null,
 
         init() {
             this.loadQueue();
@@ -33,11 +35,33 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             });
 
             this.syncIntervalId = setInterval(() => this.syncNext(), 3000);
+
+            // Drop queued copies once the server-rendered row for the same
+            // contact lands, so the log never shows both or neither.
+            this.unhookMorphed = globalThis.Livewire?.hook('morphed', () => this.pruneConfirmed()) ?? null;
         },
 
         destroy() {
             if (this.syncIntervalId) {
                 clearInterval(this.syncIntervalId);
+            }
+            this.unhookMorphed?.();
+        },
+
+        /**
+         * Remove queue entries whose contact the server has already rendered.
+         * Failed and in-edit entries stay so the operator can act on them.
+         */
+        pruneConfirmed() {
+            const rendered = new Set(
+                [...document.querySelectorAll('[data-contact-uuid]')].map(el => el.dataset.contactUuid)
+            );
+            const remaining = this.queue.filter(c =>
+                !rendered.has(c.uuid) || c.status === 'failed' || c.status === 'editing'
+            );
+            if (remaining.length !== this.queue.length) {
+                this.queue = remaining;
+                this.saveQueue();
             }
         },
 
@@ -62,6 +86,9 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         isPendingIndicatorVisible(contact) {
+            if (contact.status !== 'pending' && contact.status !== 'syncing') {
+                return false;
+            }
             return this.now - (contact.queued_at || 0) >= this.pendingIndicatorDelayMs;
         },
 
@@ -300,8 +327,19 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
                 if (response.ok) {
                     await response.json();
-                    this.queue = this.queue.filter(c => c.uuid !== candidate.uuid);
-                    this.saveQueue();
+
+                    // Keep the entry on screen as 'synced' until the refreshed
+                    // server row replaces it (see pruneConfirmed), so the log
+                    // doesn't drop a line and then re-add it.
+                    const synced = this.queue.find(c => c.uuid === candidate.uuid);
+                    if (synced) {
+                        synced.status = 'synced';
+                        this.saveQueue();
+                        setTimeout(() => {
+                            this.queue = this.queue.filter(c => !(c.uuid === candidate.uuid && c.status === 'synced'));
+                            this.saveQueue();
+                        }, this.syncedFallbackMs);
+                    }
 
                     // Notify the Livewire component to refresh the recent
                     // contacts list. Uses Livewire's event dispatch which is
@@ -367,7 +405,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             // entry (status === 'editing') stays in the list so navigation
             // indices remain stable.
             for (const entry of this.queue) {
-                if (entry.status === 'syncing') continue;
+                if (entry.status === 'syncing' || entry.status === 'synced') continue;
                 contacts.push({
                     source: 'queue',
                     uuid: entry.uuid,
@@ -604,7 +642,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             try {
                 const stored = localStorage.getItem(this.storageKey);
                 if (stored) {
-                    this.queue = JSON.parse(stored);
+                    // Synced entries are already on the server; the page load renders them.
+                    this.queue = JSON.parse(stored).filter(c => c.status !== 'synced');
                     // Reset any contacts stuck in 'syncing' or 'editing' state
                     // (from page reload mid-sync or mid-edit)
                     this.queue.forEach(c => {

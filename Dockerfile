@@ -82,8 +82,13 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
     && mkdir -p storage/{app/public,framework/{cache/data,sessions,views,testing},logs} \
         bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
+    && chown -R www-data:www-data storage bootstrap/cache /data /config
 
 EXPOSE 80
+
+# First boot waits for the database and runs migrations/seeders before Octane
+# listens, hence the long start period.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=3 \
+    CMD curl -fsS http://127.0.0.1/up > /dev/null || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
