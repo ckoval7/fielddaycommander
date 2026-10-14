@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Weather;
 
+use App\Enums\CannedWeatherAlert;
 use App\Models\Setting;
 use App\Services\WeatherService;
 use Illuminate\View\View;
@@ -28,6 +29,8 @@ class ManageWeather extends Component
 
     public ?array $currentAlerts = null;
 
+    public bool $manualAlertActive = false;
+
     public ?array $forecastStatus = null;
 
     public ?array $alertsStatus = null;
@@ -49,6 +52,7 @@ class ManageWeather extends Component
         $this->currentOverride = Setting::get('weather.manual_override');
         $this->overrideActive = $this->currentOverride !== null;
         $this->currentAlerts = Setting::get('weather.alerts', []);
+        $this->manualAlertActive = app(WeatherService::class)->hasManualAlert();
         $this->forecastStatus = cache()->get('weather.forecast_status');
         $this->alertsStatus = cache()->get('weather.alerts_status');
         $this->units = Setting::get('weather.units', 'imperial');
@@ -96,6 +100,23 @@ class ManageWeather extends Component
 
         $weatherService->setManualAlert($this->alertMessage);
         $this->alertMessage = '';
+        $this->loadCurrentState();
+        $this->dispatch('toast', title: 'Alert triggered', type: 'warning');
+    }
+
+    public function triggerCannedAlert(WeatherService $weatherService, string $preset): void
+    {
+        $this->authorize('manage-weather');
+
+        $cannedAlert = CannedWeatherAlert::tryFrom($preset);
+
+        if ($cannedAlert === null) {
+            $this->dispatch('toast', title: 'Unknown alert preset', type: 'error');
+
+            return;
+        }
+
+        $weatherService->setManualAlert($cannedAlert->headline(), $cannedAlert->description());
         $this->loadCurrentState();
         $this->dispatch('toast', title: 'Alert triggered', type: 'warning');
     }

@@ -204,3 +204,46 @@ test('does not send in-app notification to user unsubscribed from weather alerts
 
     Notification::assertNotSentTo($user, InAppNotification::class);
 });
+
+test('announces the local alert headline when it is stacked with NWS alerts', function () {
+    $user = User::factory()->create();
+
+    $event = new WeatherAlertChanged(
+        alerts: [
+            ['event' => 'Local Alert', 'headline' => 'Lightning within 10 miles', 'severity' => 'Severe', 'expires' => null, 'description' => ''],
+            ['event' => 'Severe Thunderstorm Warning', 'headline' => 'Warning in effect', 'severity' => 'Severe', 'expires' => null, 'description' => '', 'severity_level' => 'red'],
+        ],
+        hasAlerts: true,
+        manual: true,
+    );
+
+    app(SendWeatherAlertNotifications::class)->handle($event);
+
+    Notification::assertSentTo($user, InAppNotification::class, function ($notification) {
+        return $notification->title === 'Local Alert'
+            && $notification->message === 'Lightning within 10 miles';
+    });
+});
+
+test('announces local alert lifted without emailing when NWS alerts remain', function () {
+    Config::set('mail.email_configured', true);
+    $user = User::factory()->create([
+        'notification_preferences' => ['weather_alert_email' => true],
+    ]);
+
+    $event = new WeatherAlertChanged(
+        alerts: [
+            ['event' => 'Severe Thunderstorm Warning', 'headline' => 'Warning in effect', 'severity' => 'Severe', 'expires' => null, 'description' => '', 'severity_level' => 'red'],
+        ],
+        hasAlerts: true,
+        manual: true,
+    );
+
+    app(SendWeatherAlertNotifications::class)->handle($event);
+
+    Notification::assertSentTo($user, InAppNotification::class, function ($notification) {
+        return $notification->title === 'Local Alert Lifted'
+            && $notification->message === 'The local alert has been cleared; 1 NWS alert still active';
+    });
+    Notification::assertNotSentTo($user, WeatherAlertMail::class);
+});

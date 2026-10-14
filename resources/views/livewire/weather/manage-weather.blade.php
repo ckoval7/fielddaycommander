@@ -149,7 +149,7 @@
                                 aria-label="Toggle NWS alert polling"
                                 wire:click.stop="toggleNws"
                                 @checked($nwsEnabled)
-                                wire:confirm="{{ $nwsEnabled ? 'Disable NWS Alerts? Stored NWS alerts will be cleared. Manual alerts are unaffected.' : 'Enable NWS alert polling?' }}" />
+                                wire:confirm="{{ $nwsEnabled ? 'Disable NWS Alerts? Stored NWS alerts will be cleared. Local alerts are unaffected.' : 'Enable NWS alert polling?' }}" />
                             <span class="text-sm font-medium">NWS Alerts</span>
                         </div>
                         <div class="flex items-center gap-2">
@@ -335,27 +335,58 @@
         <div class="card-body space-y-4">
             <div class="flex items-center justify-between">
                 <h2 class="card-title text-base">Storm / Lightning Alert</h2>
-                @if(!empty($currentAlerts))
-                    <div class="badge badge-warning">Alert Active</div>
+                @if($manualAlertActive)
+                    <div class="badge badge-error">Local Alert Active</div>
+                @elseif(!empty($currentAlerts))
+                    <div class="badge badge-warning">NWS Alert Active</div>
                 @endif
             </div>
 
             @if(!empty($currentAlerts))
-                <div class="alert alert-warning text-sm">
-                    <x-icon name="phosphor-warning-duotone" class="w-5 h-5 shrink-0" />
-                    <div>
-                        @foreach($currentAlerts as $alert)
-                            <p>{{ $alert['headline'] }}</p>
-                        @endforeach
-                    </div>
-                </div>
-                <button wire:click="clearAlert" wire:confirm="Clear the active alert for all users?"
+                <ul class="space-y-2 text-sm">
+                    @foreach($currentAlerts as $alert)
+                        @php($isLocalAlert = ($alert['event'] ?? '') === 'Local Alert')
+                        <li class="alert {{ $isLocalAlert ? 'alert-error' : 'bg-amber-100 text-amber-950 dark:bg-yellow-400/20 dark:text-yellow-100' }} py-2">
+                            <x-icon name="{{ $isLocalAlert ? 'phosphor-warning-octagon-duotone' : 'phosphor-warning-duotone' }}" class="w-5 h-5 shrink-0" />
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide opacity-70">{{ $isLocalAlert ? 'Local Alert' : 'NWS · '.$alert['event'] }}</p>
+                                <p>{{ $alert['headline'] }}</p>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+
+            @if($manualAlertActive)
+                <button wire:click="clearAlert" wire:confirm="Clear the local alert for all users? NWS alerts stay active."
                     class="btn btn-outline btn-sm">
-                    Clear Alert
+                    Clear Local Alert
                 </button>
-            @else
+            @endif
+
+            <div class="space-y-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60">Quick lightning alerts</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    @foreach(\App\Enums\CannedWeatherAlert::cases() as $cannedAlert)
+                        <button wire:click="triggerCannedAlert('{{ $cannedAlert->value }}')"
+                            wire:confirm="Broadcast to all users: {{ $cannedAlert->headline() }}?"
+                            class="btn btn-sm {{ $cannedAlert->buttonClass() }} h-auto py-2 flex-col items-start text-left gap-0.5">
+                            <span class="flex items-center gap-1">
+                                <x-icon name="phosphor-lightning-duotone" class="w-4 h-4" />
+                                {{ $cannedAlert->label() }}
+                            </span>
+                            <span class="text-xs font-normal normal-case">{{ \Illuminate\Support\Str::after($cannedAlert->headline(), '— ') }}</span>
+                        </button>
+                    @endforeach
+                </div>
+                @if($manualAlertActive)
+                    <p class="text-xs text-base-content/50">Triggering a quick alert replaces the active local alert — use it to escalate or step down.</p>
+                @endif
+            </div>
+
+            @if(! $manualAlertActive)
                 <div class="space-y-2">
-                    <label for="weather-alert-message" class="block py-1 text-sm text-xs">Alert Message</label>
+                    <label for="weather-alert-message" class="block py-1 text-sm text-xs">Custom Alert Message</label>
                     <input id="weather-alert-message" wire:model="alertMessage" type="text" class="input w-full"
                         placeholder="Lightning within 10 miles — seek shelter immediately" />
                     @error('alertMessage') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
@@ -367,8 +398,52 @@
 
             <p class="text-xs text-base-content/50">
                 Triggering an alert broadcasts immediately to all connected users via the alert banner.
-                NWS alerts are automatic and will override this when available.
+                Local alerts stay active alongside any NWS alerts until you clear them.
             </p>
+
+            {{-- Lightning monitoring guidance --}}
+            <details class="border border-base-300 rounded px-3 py-2 bg-base-100">
+                <summary class="cursor-pointer text-sm font-medium">How to monitor for lightning</summary>
+                <div class="mt-3 space-y-3 text-sm">
+                    <div>
+                        <p class="font-semibold">NWS alerts won't tell you distance</p>
+                        <p class="text-base-content/70">NWS alerts cover zones and storm polygons, not individual strikes, and ordinary thunderstorms often produce lightning without any NWS alert. Someone has to watch for lightning and trigger these alerts by hand.</p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold">Assign a weather watcher</p>
+                        <p class="text-base-content/70">Name one person per shift to own lightning monitoring whenever storms are in the forecast. Check at least every 10 minutes, and continuously once storms are within 30 miles.</p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold">Sources for strike distance</p>
+                        <ul class="list-disc pl-5 text-base-content/70 space-y-1">
+                            <li><span class="font-medium text-base-content">Lightning maps</span> — LightningMaps.org (Blitzortung) shows strikes in near real time; use its distance rings around the site. Commercial apps backed by Vaisala or Earth Networks data (e.g. My Lightning Tracker, WeatherBug Spark) are also reliable.</li>
+                            <li><span class="font-medium text-base-content">Personal lightning detectors</span> — a handheld or AS3935-based detector gives distance estimates with no internet connection, which helps on sites with poor cell coverage.</li>
+                            <li><span class="font-medium text-base-content">Radar</span> — use it to track storm movement and estimate arrival, not strike distance.</li>
+                            <li><span class="font-medium text-base-content">Your ears and receivers</span> — loud static crashes on HF/AM are an early sign. Treat any thunder you hear as lightning within 10 miles.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold">Flash-to-bang</p>
+                        <p class="text-base-content/70">Count the seconds from flash to thunder and divide by 5 for miles. 50 seconds or less is within 10 miles.</p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold">Alert levels</p>
+                        <ul class="list-disc pl-5 text-base-content/70 space-y-1">
+                            <li><span class="font-medium text-base-content">Lightning &lt; 15 mi</span> — stop operating; disconnect radios from power and antennas.</li>
+                            <li><span class="font-medium text-base-content">Lightning &lt; 10 mi, or thunder heard</span> — hands off all wired equipment; everyone to a hard-topped vehicle or enclosed building. Tents and canopies are not shelter.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold">All clear</p>
+                        <p class="text-base-content/70">Wait 30 minutes after the last lightning or thunder within 10 miles; restart the clock on every new strike. Step down to the 15-mile alert first if storms are still nearby, then clear.</p>
+                    </div>
+                </div>
+            </details>
         </div>
     </div>
 

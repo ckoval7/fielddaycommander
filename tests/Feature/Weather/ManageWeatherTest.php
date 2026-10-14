@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\CannedWeatherAlert;
 use App\Events\WeatherAlertChanged;
 use App\Livewire\Weather\ManageWeather;
 use App\Models\EventConfiguration;
@@ -91,6 +92,86 @@ test('triggering manual alert stores and broadcasts', function () {
     expect($alerts[0]['headline'])->toBe('Lightning within 5 miles — all antennas down now');
 
     Event::assertDispatched(WeatherAlertChanged::class, fn ($e) => $e->manual === true);
+});
+
+test('triggering a canned lightning alert stores its headline and description', function (CannedWeatherAlert $cannedAlert) {
+    Event::fake([WeatherAlertChanged::class]);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->call('triggerCannedAlert', $cannedAlert->value)
+        ->assertHasNoErrors();
+
+    $alerts = Setting::get('weather.alerts');
+    expect($alerts)->toHaveCount(1)
+        ->and($alerts[0]['event'])->toBe('Local Alert')
+        ->and($alerts[0]['headline'])->toBe($cannedAlert->headline())
+        ->and($alerts[0]['description'])->toBe($cannedAlert->description());
+
+    Event::assertDispatched(WeatherAlertChanged::class, fn ($e) => $e->manual === true && $e->hasAlerts === true);
+})->with([
+    'within 15 miles' => [CannedWeatherAlert::LightningWithinFifteenMiles],
+    'within 10 miles' => [CannedWeatherAlert::LightningWithinTenMiles],
+]);
+
+test('triggering a canned alert replaces the active alert to escalate', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->call('triggerCannedAlert', CannedWeatherAlert::LightningWithinFifteenMiles->value)
+        ->call('triggerCannedAlert', CannedWeatherAlert::LightningWithinTenMiles->value);
+
+    $alerts = Setting::get('weather.alerts');
+    expect($alerts)->toHaveCount(1)
+        ->and($alerts[0]['headline'])->toBe(CannedWeatherAlert::LightningWithinTenMiles->headline());
+});
+
+test('unknown canned alert preset is rejected', function () {
+    Event::fake([WeatherAlertChanged::class]);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->call('triggerCannedAlert', 'not_a_preset')
+        ->assertDispatched('toast', title: 'Unknown alert preset', type: 'error');
+
+    expect(Setting::get('weather.alerts', []))->toBeEmpty();
+    Event::assertNotDispatched(WeatherAlertChanged::class);
+});
+
+test('page shows canned lightning alerts and monitoring guidance', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSee('Lightning < 15 mi')
+        ->assertSee('Lightning < 10 mi')
+        ->assertSee('How to monitor for lightning');
+});
+
+test('NWS-only alerts show without a clear button and keep the custom alert form', function () {
+    Setting::set('weather.alerts', [
+        ['event' => 'Severe Thunderstorm Warning', 'headline' => 'Warning for New Haven County', 'description' => '', 'severity' => 'Severe', 'expires' => null],
+    ]);
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(ManageWeather::class)
+        ->assertSet('manualAlertActive', false)
+        ->assertSee('Warning for New Haven County')
+        ->assertSee('NWS Alert Active')
+        ->assertDontSee('Clear Local Alert')
+        ->assertSee('Custom Alert Message');
 });
 
 test('clearing manual alert broadcasts all-clear', function () {

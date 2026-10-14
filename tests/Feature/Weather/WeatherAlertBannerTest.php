@@ -99,3 +99,17 @@ test('manual Local Alert shows Local Alert label', function () {
         ->assertSee('Local Alert')
         ->assertSee('Lightning within 10 miles');
 });
+
+test('local alerts render as red alerts', function () {
+    Setting::set('weather.alerts', [[
+        'event' => 'Local Alert',
+        'headline' => 'Lightning within 10 miles',
+        'description' => 'Lightning within 10 miles',
+        'severity' => 'Severe',
+        'expires' => null,
+    ]]);
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->assertSee('Lightning within 10 miles')
+        ->assertSeeHtml('alert alert-error');
+});

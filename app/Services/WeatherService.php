@@ -231,25 +231,7 @@ class WeatherService
                 ->values()
                 ->all();
 
-            $fingerprint = hash('xxh128', json_encode($alerts));
-            $previousFingerprint = Setting::get('weather.alert_fingerprint');
-
-            $preserveExistingManualAlert = false;
-            if (empty($alerts)) {
-                $existingAlerts = Setting::get('weather.alerts', []);
-                $preserveExistingManualAlert = collect($existingAlerts)->contains(
-                    fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT
-                );
-            }
-
-            if (! $preserveExistingManualAlert) {
-                Setting::set('weather.alerts', $alerts);
-
-                if ($fingerprint !== $previousFingerprint) {
-                    Setting::set('weather.alert_fingerprint', $fingerprint);
-                    WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false);
-                }
-            }
+            $this->storeAlerts([...$this->currentManualAlerts(), ...$alerts], manual: false);
 
             cache()->put('weather.alerts_status', [
                 'last_attempt' => now()->toIso8601String(),
@@ -287,27 +269,33 @@ class WeatherService
         Setting::set('weather.manual_override', null);
     }
 
-    public function setManualAlert(string $message): void
+    /**
+     * Replaces any active local alert while keeping NWS alerts stacked beneath it.
+     */
+    public function setManualAlert(string $message, ?string $description = null): void
     {
-        $alerts = [[
+        $manualAlert = [
             'event' => self::MANUAL_ALERT_EVENT,
             'headline' => $message,
-            'description' => $message,
+            'description' => $description ?? $message,
             'severity' => 'Severe',
             'expires' => null,
-        ]];
+        ];
 
-        Setting::set('weather.alerts', $alerts);
-        Setting::set('weather.alert_fingerprint', hash('xxh128', json_encode($alerts)));
-        WeatherAlertChanged::dispatch($alerts, true, true);
+        $this->storeAlerts([$manualAlert, ...$this->currentNwsAlerts()], manual: true, broadcastUnchanged: true);
     }
 
+    /**
+     * Removes the local alert; any active NWS alerts remain.
+     */
     public function clearManualAlert(): void
     {
-        $alerts = [];
-        Setting::set('weather.alerts', $alerts);
-        Setting::set('weather.alert_fingerprint', hash('xxh128', json_encode($alerts)));
-        WeatherAlertChanged::dispatch($alerts, false, true);
+        $this->storeAlerts($this->currentNwsAlerts(), manual: true, broadcastUnchanged: true);
+    }
+
+    public function hasManualAlert(): bool
+    {
+        return $this->currentManualAlerts() !== [];
     }
 
     public function isOpenMeteoEnabled(): bool
@@ -352,14 +340,7 @@ class WeatherService
     {
         Setting::set('weather.nws_enabled', false);
 
-        $alerts = Setting::get('weather.alerts', []);
-        $isManual = collect($alerts)->contains(fn ($alert) => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT);
-
-        if (! $isManual) {
-            Setting::set('weather.alerts', []);
-            Setting::set('weather.alert_fingerprint', hash('xxh128', json_encode([])));
-            WeatherAlertChanged::dispatch([], false, false);
-        }
+        $this->storeAlerts($this->currentManualAlerts(), manual: false);
     }
 
     /**
@@ -382,6 +363,46 @@ class WeatherService
         if ($coords !== null && $this->isNwsEnabled()) {
             $this->checkAlerts($coords['lat'], $coords['lon']);
         }
+    }
+
+    /**
+     * Persists the combined alert list and broadcasts when it changed.
+     *
+     * @param  list<array<string, mixed>>  $alerts
+     */
+    private function storeAlerts(array $alerts, bool $manual, bool $broadcastUnchanged = false): void
+    {
+        $fingerprint = hash('xxh128', json_encode($alerts));
+
+        if (! $broadcastUnchanged && $fingerprint === Setting::get('weather.alert_fingerprint')) {
+            return;
+        }
+
+        Setting::set('weather.alerts', $alerts);
+        Setting::set('weather.alert_fingerprint', $fingerprint);
+        WeatherAlertChanged::dispatch($alerts, $alerts !== [], $manual);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function currentManualAlerts(): array
+    {
+        return collect(Setting::get('weather.alerts', []))
+            ->filter(fn (array $alert): bool => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function currentNwsAlerts(): array
+    {
+        return collect(Setting::get('weather.alerts', []))
+            ->reject(fn (array $alert): bool => ($alert['event'] ?? '') === self::MANUAL_ALERT_EVENT)
+            ->values()
+            ->all();
     }
 
     /**
