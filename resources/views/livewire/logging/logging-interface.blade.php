@@ -12,7 +12,7 @@
         class_codes: {{ Js::from(\App\Models\OperatingClass::where('event_type_id', $operatingSession->station->eventConfiguration?->event?->event_type_id)->pluck('code')->map(fn ($code) => strtoupper($code))->all()) }}
      })">
     {{-- Sticky Session Info Bar --}}
-    <div data-log-sticky-bar class="sticky top-0 max-lg:top-[var(--mobile-header-height,0px)] max-lg:z-10 lg:z-30 bg-base-100 border-b border-base-300 shadow-sm">
+    <div data-log-sticky-bar class="sticky lg:top-[calc(var(--desktop-header-height,0px)+var(--weather-banner-height,0px))] max-lg:top-[calc(var(--mobile-header-height,0px)+var(--weather-banner-height,0px))] max-lg:z-10 lg:z-30 bg-base-100 border-b border-base-300 shadow-sm">
         <div class="px-4 py-2.5 flex items-center justify-between gap-3">
             {{-- Left: Station name --}}
             <div class="min-w-0">

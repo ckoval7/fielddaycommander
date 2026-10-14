@@ -177,7 +177,11 @@
     </header>
 
     {{-- Desktop header - spans full width above sidebar and content --}}
-    <div class="hidden lg:block sticky top-0 z-50 bg-base-100 border-b border-base-300">
+    <div
+        class="hidden lg:block sticky top-0 z-50 bg-base-100 border-b border-base-300"
+        x-data
+        x-init="new ResizeObserver(() => document.documentElement.style.setProperty('--desktop-header-height', $el.offsetHeight + 'px')).observe($el)"
+    >
         <div class="flex items-center justify-between px-6 py-2.5">
             {{-- Left: App Brand --}}
             <div class="flex items-center gap-4">
@@ -213,8 +217,15 @@
         <livewire:components.system-account-banner />
     @endauth
 
-    {{-- Weather Alert Banner --}}
-    <livewire:components.weather-alert-banner />
+    {{-- Weather Alert Banner: pinned under the header so it shows at any scroll position --}}
+    <div
+        data-weather-alert-sticky
+        class="sticky top-[var(--mobile-header-height,0px)] lg:top-[var(--desktop-header-height,0px)] z-[15] lg:z-40"
+        x-data
+        x-init="new ResizeObserver(() => document.documentElement.style.setProperty('--weather-banner-height', $el.offsetHeight + 'px')).observe($el)"
+    >
+        <livewire:components.weather-alert-banner />
+    </div>
 
     {{-- MAIN --}}
     <x-main full-width with-nav>
