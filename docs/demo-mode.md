@@ -14,7 +14,7 @@ Set these values in `.env`:
 | `DEMO_TTL_HOURS`                | `24`    | Hours before a demo database is eligible for cleanup |
 | `DEMO_MAX_SESSIONS`             | `25`    | Maximum concurrent demo databases                |
 | `DEMO_MAX_USERS_PER_SESSION`    | `5`     | People one sandbox's invite link may ever admit, including the visitor who provisioned it (`1` turns invites off) |
-| `DEMO_ANALYTICS_RETENTION_DAYS` | `90`    | Days to keep analytics events before pruning (sessions and participants are kept indefinitely) |
+| `DEMO_ANALYTICS_RETENTION_DAYS` | `90`    | Days to keep analytics data (sessions, events and participants) before pruning |
 | `DEMO_WEATHER_LAT`              | `41.8781`  | Latitude used for the shared demo weather location |
 | `DEMO_WEATHER_LON`              | `-87.6298` | Longitude used for the shared demo weather location |
 | `DEMO_WEATHER_STATE`            | `IL`    | State abbreviation paired with the weather coordinates |
@@ -146,7 +146,7 @@ php artisan demo:simulate-activity
 
 ### `demo:cleanup`
 
-Drop expired demo databases whose `demo_provisioned_at` timestamp exceeds the configured TTL. Also prunes analytics events (page views, actions and time on page) older than the retention period. Session summaries and participants are kept indefinitely, so the dashboard's **All time** range covers every session; the funnel, page, feature and time-on-page panels and session timelines only reflect events still within retention.
+Drop expired demo databases whose `demo_provisioned_at` timestamp exceeds the configured TTL. Also prunes analytics sessions older than the retention period, along with their events and participants. The dashboard's **All time** range covers every session still within retention.
 
 ```bash
 php artisan demo:cleanup

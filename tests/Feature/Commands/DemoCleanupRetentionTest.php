@@ -5,7 +5,7 @@ use App\Models\DemoParticipant;
 use App\Models\DemoSession;
 use Illuminate\Support\Facades\DB;
 
-it('prunes events older than the retention period but keeps every session', function () {
+it('prunes analytics sessions and their events older than the retention period', function () {
     config(['demo.enabled' => true, 'demo.analytics_retention_days' => 30]);
 
     DB::shouldReceive('select')->once()->andReturn([]);
@@ -47,7 +47,7 @@ it('prunes events older than the retention period but keeps every session', func
 
     $this->artisan('demo:cleanup')->assertSuccessful();
 
-    expect(DemoSession::count())->toBe(2)
+    expect(DemoSession::sole()->id)->toBe($recentSession->id)
         ->and(DemoEvent::sole()->demo_session_id)->toBe($recentSession->id);
 });
 
@@ -72,7 +72,7 @@ it('does not prune when all data is within retention', function () {
     expect(DemoSession::count())->toBe(1);
 });
 
-it('keeps participants of sessions older than the retention period', function () {
+it('prunes participants along with sessions older than the retention period', function () {
     config(['demo.enabled' => true, 'demo.analytics_retention_days' => 30]);
 
     DB::shouldReceive('select')->once()->andReturn([]);
@@ -88,11 +88,23 @@ it('keeps participants of sessions older than the retention period', function ()
         'expires_at' => now()->subDays(59),
     ]);
 
+    $recentSession = DemoSession::create([
+        'session_uuid' => fake()->uuid(),
+        'role' => 'operator',
+        'visitor_hash' => hash('sha256', 'recent'),
+        'user_agent' => 'Test',
+        'device_type' => 'desktop',
+        'provisioned_at' => now()->subDays(5),
+        'last_seen_at' => now()->subDays(5),
+        'expires_at' => now()->subDays(4),
+    ]);
+
     DemoParticipant::record($oldSession, ['role' => 'operator', 'first_name' => 'Ada', 'call_sign' => 'K1ADA'], viaInvite: false);
+    DemoParticipant::record($recentSession, ['role' => 'operator', 'first_name' => 'Grace', 'call_sign' => 'K1GMH'], viaInvite: false);
 
     $this->artisan('demo:cleanup')->assertSuccessful();
 
     expect(DemoParticipant::sole())
-        ->demo_session_id->toBe($oldSession->id)
-        ->call_sign->toBe('K1ADA');
+        ->demo_session_id->toBe($recentSession->id)
+        ->call_sign->toBe('K1GMH');
 });

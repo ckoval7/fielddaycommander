@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Everyone who signed into a demo sandbox, with the name and call sign
      * they typed in. Generated identities are left null, so only what a
-     * visitor supplied is kept. Like sessions, rows are kept indefinitely.
+     * visitor supplied is kept. Rows are pruned along with their session.
      */
     public function up(): void
     {

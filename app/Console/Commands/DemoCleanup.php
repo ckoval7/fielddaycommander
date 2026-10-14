@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\DemoEvent;
+use App\Models\DemoSession;
 use App\Services\DemoDatabasePool;
 use App\Support\DemoCache;
 use Carbon\Carbon;
@@ -116,12 +116,11 @@ class DemoCleanup extends Command
         $retentionDays = config('demo.analytics_retention_days', 90);
         $cutoff = Carbon::now()->subDays($retentionDays);
 
-        // Sessions and participants are kept for good; only the detailed event
-        // stream behind each session timeline expires.
-        $pruned = DemoEvent::where('created_at', '<', $cutoff)->delete();
+        // Deleting a session cascades to its events and participants.
+        $pruned = DemoSession::where('provisioned_at', '<', $cutoff)->delete();
 
         if ($pruned > 0) {
-            $this->info("Pruned {$pruned} analytics event(s) older than {$retentionDays} days.");
+            $this->info("Pruned {$pruned} analytics session(s) older than {$retentionDays} days.");
         }
     }
 }

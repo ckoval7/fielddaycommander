@@ -85,8 +85,8 @@ return [
     | Analytics Retention
     |--------------------------------------------------------------------------
     |
-    | How many days to keep the page views and actions behind each session
-    | timeline. Session summaries and participants are kept indefinitely.
+    | How many days to keep demo analytics before pruning: sessions, their
+    | events and the names and call signs participants entered.
     |
     */
 
