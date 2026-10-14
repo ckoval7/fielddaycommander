@@ -3,19 +3,21 @@
 namespace App\Console\Commands;
 
 use App\Models\DemoSession;
+use App\Services\DemoDatabasePool;
 use App\Support\DemoCache;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DemoCleanup extends Command
 {
     protected $signature = 'demo:cleanup';
 
-    protected $description = 'Drop expired demo_* databases based on demo_provisioned_at timestamp';
+    protected $description = 'Drop expired demo_* databases based on demo_provisioned_at timestamp, plus abandoned unfinished ones';
 
-    public function handle(): int
+    public function handle(DemoDatabasePool $pool): int
     {
         if (! config('demo.enabled')) {
             $this->info('Demo mode is disabled. Nothing to clean up.');
@@ -53,6 +55,11 @@ class DemoCleanup extends Command
                     Config::set('database.connections.demo.database', $dbName);
                     DB::purge('demo');
 
+                    // Unfinished databases are left to the orphan sweep below.
+                    if (! Schema::connection('demo')->hasTable('system_config')) {
+                        continue;
+                    }
+
                     $provisionedAt = DB::connection('demo')
                         ->table('system_config')
                         ->where('key', 'demo_provisioned_at')
@@ -83,11 +90,25 @@ class DemoCleanup extends Command
             } else {
                 $this->info("Dropped {$dropped} expired demo database(s).");
             }
+
+            $this->dropOrphans($pool, $rows);
         }
 
         $this->pruneAnalytics();
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  list<object>  $rows
+     */
+    private function dropOrphans(DemoDatabasePool $pool, array $rows): void
+    {
+        $names = array_map(fn (object $row): string => $row->schema_name ?? $row->SCHEMA_NAME, $rows);
+
+        foreach ($pool->dropOrphans($names) as $dbName) {
+            $this->info("Dropped orphaned demo database: {$dbName}");
+        }
     }
 
     private function pruneAnalytics(): void

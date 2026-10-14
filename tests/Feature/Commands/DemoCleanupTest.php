@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\DemoDatabasePool;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
@@ -32,5 +33,20 @@ test('cleanup command exits early when demo mode is disabled', function () {
 
     $this->artisan('demo:cleanup')
         ->expectsOutputToContain('Demo mode is disabled')
+        ->assertSuccessful();
+});
+
+test('cleanup sweeps abandoned unfinished databases', function () {
+    DB::shouldReceive('select')->once()->andReturn([(object) ['schema_name' => 'demo_unexpected']]);
+    DB::shouldReceive('purge');
+
+    $this->mock(DemoDatabasePool::class)
+        ->shouldReceive('dropOrphans')
+        ->once()
+        ->with(['demo_unexpected'])
+        ->andReturn(['demo_aaaaaaaa_aaaa_aaaa_aaaa_aaaaaaaaaaaa']);
+
+    $this->artisan('demo:cleanup')
+        ->expectsOutputToContain('Dropped orphaned demo database: demo_aaaaaaaa_aaaa_aaaa_aaaa_aaaaaaaaaaaa')
         ->assertSuccessful();
 });

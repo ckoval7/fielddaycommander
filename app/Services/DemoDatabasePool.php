@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Models\DemoPoolDatabase;
+use App\Support\DemoCache;
 use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Throwable;
@@ -29,6 +31,13 @@ class DemoDatabasePool
     private const SLOT_LOCK_SECONDS = 120;
 
     private const SLOT_RETRY_MICROSECONDS = 250_000;
+
+    /**
+     * How long a database must stay unfinished before it counts as orphaned.
+     * Provisioning finishes in seconds, so anything unfinished across two
+     * hourly cleanups was abandoned.
+     */
+    private const ORPHAN_GRACE_MINUTES = 30;
 
     public static function databaseName(string $uuid): string
     {
@@ -121,7 +130,7 @@ class DemoDatabasePool
             try {
                 $this->migrate($uuid);
             } catch (Throwable $e) {
-                $this->dropDatabase($uuid, $baseDatabase);
+                $this->dropDatabase(self::databaseName($uuid), $baseDatabase);
 
                 throw $e;
             }
@@ -132,7 +141,7 @@ class DemoDatabasePool
         }
 
         while ($ready > $target && ($uuid = $this->claim()) !== null) {
-            $this->dropDatabase($uuid, $baseDatabase);
+            $this->dropDatabase(self::databaseName($uuid), $baseDatabase);
             $ready--;
             $dropped++;
         }
@@ -183,6 +192,86 @@ class DemoDatabasePool
     }
 
     /**
+     * Drop demo databases that were abandoned before they were finished.
+     *
+     * A sandbox whose migration or seeding died, or a pool database whose
+     * build was cut short, never records demo_provisioned_at, so TTL cleanup
+     * never removes it and it counts against the session cap forever. Such a
+     * database is only dropped once it has stayed unfinished and unpooled
+     * across cleanups, so a visitor's sandbox that is still being seeded is
+     * never touched.
+     *
+     * @param  list<string>  $databaseNames  Existing demo_* schema names.
+     * @return list<string> The databases that were dropped.
+     */
+    public function dropOrphans(array $databaseNames): array
+    {
+        $baseDatabase = config('database.connections.demo.database');
+        $cache = Cache::store(config('demo.shared_cache_store'));
+        $pooled = $this->pooledDatabaseNames();
+        $dropped = [];
+
+        foreach ($databaseNames as $dbName) {
+            if (! preg_match('/^demo_[a-f0-9_]{32,40}$/', $dbName)) {
+                continue;
+            }
+
+            $firstSeenKey = "demo:orphan-first-seen:{$dbName}";
+
+            try {
+                if (in_array($dbName, $pooled, true) || $this->isProvisioned($dbName)) {
+                    $cache->forget($firstSeenKey);
+
+                    continue;
+                }
+
+                $firstSeen = $cache->get($firstSeenKey);
+
+                if ($firstSeen === null) {
+                    $cache->put($firstSeenKey, now()->getTimestamp(), now()->addDay());
+
+                    continue;
+                }
+
+                if (now()->getTimestamp() - $firstSeen < self::ORPHAN_GRACE_MINUTES * 60) {
+                    continue;
+                }
+
+                $this->dropDatabase($dbName, $baseDatabase);
+                DemoCache::forget($dbName);
+                $cache->forget($firstSeenKey);
+                $dropped[] = $dbName;
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+
+        Config::set('database.connections.demo.database', $baseDatabase);
+        DB::purge('demo');
+
+        return $dropped;
+    }
+
+    /**
+     * Whether the database finished seeding. One that never got as far as
+     * creating system_config is unfinished too.
+     */
+    protected function isProvisioned(string $dbName): bool
+    {
+        Config::set('database.connections.demo.database', $dbName);
+        DB::purge('demo');
+
+        if (! Schema::connection('demo')->hasTable('system_config')) {
+            return false;
+        }
+
+        return DB::connection('demo')
+            ->table('system_config')
+            ->where('key', 'demo_provisioned_at')
+            ->exists();
+    }
+
+    /**
      * @return list<string>
      */
     protected function existingDemoDatabases(): array
@@ -198,10 +287,8 @@ class DemoDatabasePool
      * The demo_provisioner user only has privileges on demo_* schemas, so the
      * connection is pointed back at the base demo database before dropping.
      */
-    protected function dropDatabase(string $uuid, string $baseDatabase): void
+    protected function dropDatabase(string $dbName, string $baseDatabase): void
     {
-        $dbName = self::databaseName($uuid);
-
         Config::set('database.connections.demo.database', $baseDatabase);
         DB::purge('demo');
 

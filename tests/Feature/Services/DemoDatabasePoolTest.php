@@ -100,7 +100,7 @@ test('fill drops a database whose migration fails and never pools it', function 
     $pool = fakeDemoPool();
     $pool->shouldReceive('createDatabase')->once()->andReturn($uuid);
     $pool->shouldReceive('migrate')->once()->andThrow(new RuntimeException('migration failed'));
-    $pool->shouldReceive('dropDatabase')->once()->with($uuid, Mockery::any());
+    $pool->shouldReceive('dropDatabase')->once()->with(DemoDatabasePool::databaseName($uuid), Mockery::any());
 
     expect(fn () => $pool->fill(1))->toThrow(RuntimeException::class, 'migration failed');
     expect(DemoPoolDatabase::count())->toBe(0);
@@ -126,4 +126,62 @@ test('no slot is granted while every slot is held elsewhere', function () {
     Cache::store('array')->lock('demo:provision-slot:2', 60)->get();
 
     expect((new DemoDatabasePool)->acquireProvisioningSlot())->toBeNull();
+});
+
+test('an unfinished database is only marked on the first sweep', function () {
+    $dbName = 'demo_aaaaaaaa_aaaa_aaaa_aaaa_aaaaaaaaaaaa';
+
+    $pool = fakeDemoPool();
+    $pool->shouldReceive('isProvisioned')->with($dbName)->andReturnFalse();
+    $pool->shouldNotReceive('dropDatabase');
+
+    expect($pool->dropOrphans([$dbName]))->toBe([]);
+});
+
+test('an unfinished database is dropped once it stays unfinished past the grace period', function () {
+    $dbName = 'demo_aaaaaaaa_aaaa_aaaa_aaaa_aaaaaaaaaaaa';
+
+    $pool = fakeDemoPool();
+    $pool->shouldReceive('isProvisioned')->with($dbName)->andReturnFalse();
+    $pool->shouldReceive('dropDatabase')->once()->with($dbName, Mockery::any());
+
+    $pool->dropOrphans([$dbName]);
+
+    $this->travel(20)->minutes();
+    expect($pool->dropOrphans([$dbName]))->toBe([]);
+
+    $this->travel(40)->minutes();
+    expect($pool->dropOrphans([$dbName]))->toBe([$dbName]);
+});
+
+test('a database that finishes provisioning between sweeps is spared', function () {
+    $dbName = 'demo_aaaaaaaa_aaaa_aaaa_aaaa_aaaaaaaaaaaa';
+
+    $pool = fakeDemoPool();
+    $pool->shouldReceive('isProvisioned')->with($dbName)->andReturn(false, true, false);
+    $pool->shouldNotReceive('dropDatabase');
+
+    $pool->dropOrphans([$dbName]);
+    $this->travel(2)->hours();
+    $pool->dropOrphans([$dbName]);
+
+    // Finishing reset the clock, so this sighting only marks it again.
+    $this->travel(2)->hours();
+    expect($pool->dropOrphans([$dbName]))->toBe([]);
+});
+
+test('pooled databases and unexpected schema names are never treated as orphans', function () {
+    $pooledUuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    DemoPoolDatabase::create(['session_uuid' => $pooledUuid]);
+
+    $pool = fakeDemoPool();
+    $pool->shouldNotReceive('isProvisioned');
+    $pool->shouldNotReceive('dropDatabase');
+
+    $names = ['demo_base', DemoDatabasePool::databaseName($pooledUuid)];
+
+    $pool->dropOrphans($names);
+    $this->travel(2)->hours();
+
+    expect($pool->dropOrphans($names))->toBe([]);
 });
