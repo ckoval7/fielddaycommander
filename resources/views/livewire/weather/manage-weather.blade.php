@@ -407,34 +407,24 @@
                 <div class="mt-3 space-y-3 text-sm">
                     <div>
                         <p class="font-semibold">NWS alerts won't tell you distance</p>
-                        <p class="text-base-content/70">NWS alerts cover zones and storm polygons, not individual strikes, and ordinary thunderstorms often produce lightning without any NWS alert. Someone has to watch for lightning and trigger these alerts by hand.</p>
-                    </div>
-
-                    <div>
-                        <p class="font-semibold">Assign a weather watcher</p>
-                        <p class="text-base-content/70">Name one person per shift to own lightning monitoring whenever storms are in the forecast. Check at least every 10 minutes, and continuously once storms are within 30 miles.</p>
+                        <p class="text-base-content/70">NWS alerts cover the local area, but not individual strikes. Ordinary thunderstorms often produce lightning without any NWS alerts. Someone, typically a safety officer, should watch for lightning and trigger these alerts by hand. Check at least every 10 minutes, and continuously once storms are within 30 miles.</p>
                     </div>
 
                     <div>
                         <p class="font-semibold">Sources for strike distance</p>
                         <ul class="list-disc pl-5 text-base-content/70 space-y-1">
-                            <li><span class="font-medium text-base-content">Lightning maps</span> — LightningMaps.org (Blitzortung) shows strikes in near real time; use its distance rings around the site. Commercial apps backed by Vaisala or Earth Networks data (e.g. My Lightning Tracker, WeatherBug Spark) are also reliable.</li>
-                            <li><span class="font-medium text-base-content">Personal lightning detectors</span> — a handheld or AS3935-based detector gives distance estimates with no internet connection, which helps on sites with poor cell coverage.</li>
-                            <li><span class="font-medium text-base-content">Radar</span> — use it to track storm movement and estimate arrival, not strike distance.</li>
-                            <li><span class="font-medium text-base-content">Your ears and receivers</span> — loud static crashes on HF/AM are an early sign. Treat any thunder you hear as lightning within 10 miles.</li>
+                            <li><span class="font-medium text-base-content">Lightning maps</span> at LightningMaps.org (Blitzortung) show strikes in near real time. Use its distance rings around the site. Commercial apps backed by Vaisala or Earth Networks data (e.g. My Lightning Tracker, WeatherBug Spark) are also reliable.</li>
+                            <li><span class="font-medium text-base-content">Personal lightning detectors</span>, such as an AS3935-based detector, give distance estimates with no internet connection, which can help on sites with poor cell coverage.</li>
+                            <li><span class="font-medium text-base-content">Radar</span> is useful to track storm movement and estimate arrival, but does not show strike distance.</li>
+                            <li><span class="font-medium text-base-content">Use your ears and receivers.</span> Loud static crashes on HF/AM are an early sign. Treat any thunder you hear as lightning within 10 miles. Count the seconds from flash to thunder and divide by 5 for miles. 50 seconds or less is within 10 miles.</li>
                         </ul>
-                    </div>
-
-                    <div>
-                        <p class="font-semibold">Flash-to-bang</p>
-                        <p class="text-base-content/70">Count the seconds from flash to thunder and divide by 5 for miles. 50 seconds or less is within 10 miles.</p>
                     </div>
 
                     <div>
                         <p class="font-semibold">Alert levels</p>
                         <ul class="list-disc pl-5 text-base-content/70 space-y-1">
-                            <li><span class="font-medium text-base-content">Lightning &lt; 15 mi</span> — stop operating; disconnect radios from power and antennas.</li>
-                            <li><span class="font-medium text-base-content">Lightning &lt; 10 mi, or thunder heard</span> — hands off all wired equipment; everyone to a hard-topped vehicle or enclosed building. Tents and canopies are not shelter.</li>
+                            <li><span class="font-medium text-base-content">Lightning &lt; 15 mi:</span> Immediately stop operating; disconnect radios from power and antennas.</li>
+                            <li><span class="font-medium text-base-content">Lightning &lt; 10 mi, or thunder heard:</span> hands off all wired equipment; everyone to a hard-topped vehicle or enclosed building. Tents and canopies are not shelter.</li>
                         </ul>
                     </div>
 
