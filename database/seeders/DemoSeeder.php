@@ -59,6 +59,15 @@ class DemoSeeder extends Seeder
     public const EVENT_TYPE_KEY = 'demo.seed.event_type';
 
     /**
+     * Season a Winter Field Day sandbox is seeded for.
+     *
+     * WFD runs in late January, so for most of the calendar year the event
+     * visitors are preparing for is next year's. Pinned rather than derived so
+     * the sandbox only moves to a season once its ruleset exists.
+     */
+    public const WINTER_FIELD_DAY_YEAR = 2027;
+
+    /**
      * Event type code the sandbox is seeded for: 'FD' or 'WFD'.
      *
      * Set by {@see forEventType()} before the seeder runs. Defaults to ARRL
@@ -176,10 +185,11 @@ class DemoSeeder extends Seeder
         // boundaries instead of the minute the visitor happened to click.
         $eventStart = now()->startOfHour()->subHours(2);
         $eventType = EventType::where('code', $this->eventTypeCode)->first();
+        $eventYear = $this->isWinter() ? self::WINTER_FIELD_DAY_YEAR : now()->year;
         $event = Event::create([
             'event_type_id' => $eventType->id,
-            'name' => $eventType->name.' '.now()->year,
-            'year' => now()->year,
+            'name' => $eventType->name.' '.$eventYear,
+            'year' => $eventYear,
             'start_time' => $eventStart,
             'end_time' => $eventStart->copy()->addHours(24),
             'setup_allowed_from' => $eventStart->copy()->subHours(24),

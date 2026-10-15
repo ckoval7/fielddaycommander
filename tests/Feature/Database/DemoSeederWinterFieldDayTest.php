@@ -7,7 +7,7 @@ use App\Models\OperatingSession;
 use App\Models\Shift;
 use App\Models\ShiftRole;
 use App\Models\Station;
-use App\Scoring\Rules\WinterFieldDay2026;
+use App\Scoring\Rules\WinterFieldDay2027;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -23,7 +23,8 @@ test('seeds a Winter Field Day event as the active event', function () {
     $event = Event::where('is_active', true)->firstOrFail();
 
     expect($event->eventType->code)->toBe('WFD');
-    expect($event->name)->toContain('Winter Field Day');
+    expect($event->name)->toBe('Winter Field Day 2027');
+    expect($event->year)->toBe(2027);
     expect($event->start_time->isPast())->toBeTrue();
     expect($event->end_time->isFuture())->toBeTrue();
 });
@@ -83,7 +84,7 @@ test('claims only manually-triggered objectives', function () {
 test('produces a positive score under the WFD ruleset', function () {
     $config = Event::where('is_active', true)->firstOrFail()->eventConfiguration;
 
-    $breakdown = app(WinterFieldDay2026::class)->score($config);
+    $breakdown = app(WinterFieldDay2027::class)->score($config);
 
     expect($breakdown->total)->toBeGreaterThan(0);
 });
