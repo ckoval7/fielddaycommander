@@ -28,7 +28,7 @@ test('strategy triggerType matches seeded BonusType.trigger_type for every regis
     $factory = app(RuleSetFactory::class);
     $checked = 0;
 
-    foreach (['FD'] as $typeCode) {
+    foreach (['FD', 'WFD'] as $typeCode) {
         $eventTypeId = EventType::query()->where('code', $typeCode)->value('id');
         expect($eventTypeId)->not->toBeNull();
 

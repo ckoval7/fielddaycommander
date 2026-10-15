@@ -11,9 +11,11 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\Station;
+use App\Scoring\Contracts\ImpliesObjectives;
 use App\Scoring\Dto\Nomenclature;
 use App\Scoring\Dto\ScoreBreakdown;
 use App\Scoring\Dto\ScoreTerm;
+use App\Scoring\RuleSetFactory;
 use App\Services\EventContextService;
 use App\Support\BroadcastChannels;
 use Illuminate\Database\Eloquent\Builder;
@@ -369,6 +371,42 @@ class Scoring extends Component
 
             $eventBonus = $claimedBonuses->get($bonusType->id);
             $list[] = $this->buildBonusEntry($bonusType, $eventBonus);
+        }
+
+        return $this->withImpliedObjectivesVerified($list);
+    }
+
+    /**
+     * Mark objectives the rulebook implies from another verified objective as verified.
+     *
+     * Keeps the checklist and its summed multiplier in step with the score,
+     * which already counts the implied objective (e.g. WFD 2027's 100%
+     * alternative power earning the station-equipment objective).
+     *
+     * @param  array<int, array{type: BonusType, bonus: mixed, status: string, points: int}>  $list
+     * @return array<int, array{type: BonusType, bonus: mixed, status: string, points: int}>
+     */
+    private function withImpliedObjectivesVerified(array $list): array
+    {
+        $rules = $this->event ? app(RuleSetFactory::class)->forEvent($this->event) : null;
+
+        if (! $rules instanceof ImpliesObjectives) {
+            return $list;
+        }
+
+        $verifiedCodes = collect($list)
+            ->where('status', 'verified')
+            ->map(fn (array $item) => $item['type']->code);
+
+        $impliedCodes = collect($rules->impliedObjectives())
+            ->only($verifiedCodes->all())
+            ->flatten()
+            ->all();
+
+        foreach ($list as $index => $item) {
+            if ($item['status'] !== 'verified' && in_array($item['type']->code, $impliedCodes, true)) {
+                $list[$index]['status'] = 'verified';
+            }
         }
 
         return $list;
