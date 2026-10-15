@@ -1409,3 +1409,57 @@ test('event form highlights power source checkboxes when none are selected', fun
         ->assertSeeHtml('border-error bg-error/5')
         ->assertSee('At least one power source must be selected.');
 });
+
+test('WFD rules guidance shows for WFD events only', function () {
+    $wfdType = EventType::create([
+        'code' => 'WFD',
+        'name' => 'Winter Field Day',
+        'description' => 'Winter Field Day event',
+        'is_active' => true,
+        'setup_offset_hours' => null,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $wfdType->id)
+        ->assertSee('WFD rules: class, category and location')
+        ->assertSee('300 m diameter')
+        ->set('event_type_id', $this->eventType->id)
+        ->assertDontSee('WFD rules: class, category and location')
+        ->assertDontSee('300 m diameter');
+});
+
+test('public visitor details save, validate and reload on edit', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+    ]);
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->set('is_open_to_public', true)
+        ->set('public_directions', str_repeat('a', 1001))
+        ->call('save')
+        ->assertHasErrors(['public_directions' => 'max']);
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->set('is_open_to_public', true)
+        ->set('public_directions', 'Behind the library')
+        ->set('public_visiting_hours', 'Sat 10-4')
+        ->set('public_contact', 'info@example.org')
+        ->set('public_description', 'Come visit.')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $config->refresh();
+    expect($config->is_open_to_public)->toBeTrue()
+        ->and($config->public_directions)->toBe('Behind the library')
+        ->and($config->public_contact)->toBe('info@example.org');
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->assertSet('public_description', 'Come visit.');
+});

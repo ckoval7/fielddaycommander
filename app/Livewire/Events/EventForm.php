@@ -94,6 +94,17 @@ class EventForm extends Component
 
     public ?string $talk_in_frequency = null;
 
+    // Public visitor details (all optional)
+    public bool $is_open_to_public = false;
+
+    public ?string $public_directions = null;
+
+    public ?string $public_visiting_hours = null;
+
+    public ?string $public_contact = null;
+
+    public ?string $public_description = null;
+
     // Section 5: Guestbook Settings
     public bool $guestbook_enabled = false;
 
@@ -280,6 +291,12 @@ class EventForm extends Component
             $this->city = $this->configuration->city;
             $this->state = $this->configuration->state;
             $this->talk_in_frequency = $this->configuration->talk_in_frequency;
+
+            $this->is_open_to_public = (bool) $this->configuration->is_open_to_public;
+            $this->public_directions = $this->configuration->public_directions;
+            $this->public_visiting_hours = $this->configuration->public_visiting_hours;
+            $this->public_contact = $this->configuration->public_contact;
+            $this->public_description = $this->configuration->public_description;
 
             // Load guestbook settings
             $this->guestbook_enabled = $this->configuration->guestbook_enabled;
@@ -489,6 +506,19 @@ class EventForm extends Component
         return OperatingClass::where('event_type_id', $this->event_type_id)->get();
     }
 
+    /**
+     * Whether the selected event type is Winter Field Day.
+     */
+    #[Computed]
+    public function isWinterFieldDay(): bool
+    {
+        if (! $this->event_type_id) {
+            return false;
+        }
+
+        return EventType::query()->whereKey($this->event_type_id)->value('code') === 'WFD';
+    }
+
     #[Computed]
     public function selectedOperatingClass(): ?OperatingClass
     {
@@ -670,6 +700,11 @@ class EventForm extends Component
             'city' => $validated['city'] ?? null,
             'state' => $validated['state'] ?? null,
             'talk_in_frequency' => $validated['talk_in_frequency'] ?? null,
+            'is_open_to_public' => $validated['is_open_to_public'] ?? false,
+            'public_directions' => $validated['public_directions'] ?? null,
+            'public_visiting_hours' => $validated['public_visiting_hours'] ?? null,
+            'public_contact' => $validated['public_contact'] ?? null,
+            'public_description' => $validated['public_description'] ?? null,
             'guestbook_enabled' => $validated['guestbook_enabled'] ?? false,
             'guestbook_detection_radius' => $validated['guestbook_detection_radius'] ?? 500,
             'guestbook_local_subnets' => $subnets,
@@ -736,6 +771,11 @@ class EventForm extends Component
             'city' => $validated['city'] ?? null,
             'state' => $validated['state'] ?? null,
             'talk_in_frequency' => $validated['talk_in_frequency'] ?? null,
+            'is_open_to_public' => $validated['is_open_to_public'] ?? false,
+            'public_directions' => $validated['public_directions'] ?? null,
+            'public_visiting_hours' => $validated['public_visiting_hours'] ?? null,
+            'public_contact' => $validated['public_contact'] ?? null,
+            'public_description' => $validated['public_description'] ?? null,
             'guestbook_enabled' => $validated['guestbook_enabled'] ?? false,
             'guestbook_detection_radius' => $validated['guestbook_detection_radius'] ?? 500,
             'guestbook_local_subnets' => $subnets,
@@ -785,6 +825,7 @@ class EventForm extends Component
             ...$this->powerRules(),
             ...$this->gotaRules(),
             ...$this->locationRules(),
+            ...$this->publicVisitorRules(),
             ...$this->guestbookRules(),
         ];
     }
@@ -882,6 +923,22 @@ class EventForm extends Component
             'city' => ['nullable', 'string', 'max:100'],
             'state' => ['nullable', 'string', 'size:2', 'alpha'],
             'talk_in_frequency' => ['nullable', 'string', 'max:50'],
+        ];
+    }
+
+    /**
+     * Validation rules for the optional public visitor details.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    private function publicVisitorRules(): array
+    {
+        return [
+            'is_open_to_public' => ['boolean'],
+            'public_directions' => ['nullable', 'string', 'max:1000'],
+            'public_visiting_hours' => ['nullable', 'string', 'max:500'],
+            'public_contact' => ['nullable', 'string', 'max:255'],
+            'public_description' => ['nullable', 'string', 'max:2000'],
         ];
     }
 
@@ -989,6 +1046,10 @@ class EventForm extends Component
             'gota_callsign' => 'GOTA callsign',
             'uses_other_power' => 'other power source',
             'talk_in_frequency' => 'talk-in frequency',
+            'public_directions' => 'directions',
+            'public_visiting_hours' => 'visiting hours',
+            'public_contact' => 'public contact',
+            'public_description' => 'public description',
             'guestbook_detection_radius' => 'detection radius',
         ];
     }

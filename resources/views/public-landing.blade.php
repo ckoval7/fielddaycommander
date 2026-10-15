@@ -99,6 +99,48 @@
             </div>
         </div>
 
+        {{-- Visit us (public site details) --}}
+        @if($eventConfig && $eventConfig->is_open_to_public && ($eventConfig->public_directions || $eventConfig->public_visiting_hours || $eventConfig->public_contact || $eventConfig->public_description || $eventConfig->talk_in_frequency))
+            <div class="border-t border-base-300 pt-8 mb-10" data-testid="public-visit-details">
+                <h2 class="text-2xl font-bold text-center mb-6">Visit Us</h2>
+                <div class="max-w-2xl mx-auto space-y-4 text-base-content/80">
+                    <p class="text-center font-medium">
+                        Open to the public
+                        @if($eventConfig->club_name)
+                            &mdash; hosted by {{ $eventConfig->club_name }}
+                        @endif
+                    </p>
+                    @if($eventConfig->public_description)
+                        <p class="leading-relaxed whitespace-pre-line">{{ $eventConfig->public_description }}</p>
+                    @endif
+                    @if($eventConfig->public_directions)
+                        <div>
+                            <h3 class="font-semibold">Finding us</h3>
+                            <p class="whitespace-pre-line">{{ $eventConfig->public_directions }}</p>
+                        </div>
+                    @endif
+                    @if($eventConfig->public_visiting_hours)
+                        <div>
+                            <h3 class="font-semibold">Best times to visit</h3>
+                            <p class="whitespace-pre-line">{{ $eventConfig->public_visiting_hours }}</p>
+                        </div>
+                    @endif
+                    @if($eventConfig->talk_in_frequency)
+                        <div>
+                            <h3 class="font-semibold">Talk-in frequency</h3>
+                            <p>{{ $eventConfig->talk_in_frequency }}</p>
+                        </div>
+                    @endif
+                    @if($eventConfig->public_contact)
+                        <div>
+                            <h3 class="font-semibold">Contact</h3>
+                            <p class="break-words">{{ $eventConfig->public_contact }}</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
+
         {{-- Live Stats Section --}}
         @if($activeEvent && $eventConfig)
             <div class="border-t border-base-300 pt-8">

@@ -55,6 +55,11 @@ class EventConfiguration extends Model
         'talk_in_frequency',
         'guestbook_detection_radius',
         'guestbook_local_subnets',
+        'is_open_to_public',
+        'public_directions',
+        'public_visiting_hours',
+        'public_contact',
+        'public_description',
     ];
 
     protected function casts(): array
@@ -70,6 +75,7 @@ class EventConfiguration extends Model
             'uses_water' => 'boolean',
             'uses_methane' => 'boolean',
             'guestbook_enabled' => 'boolean',
+            'is_open_to_public' => 'boolean',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'guestbook_detection_radius' => 'integer',
