@@ -9,7 +9,6 @@ use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -412,9 +411,9 @@ describe('re-check-in', function () {
 
         $this->actingAs($this->user);
 
-        expect(fn () => Livewire::test(ScheduleTimeline::class)
+        Livewire::test(ScheduleTimeline::class)
             ->call('reCheckIn', $assignment->id)
-        )->toThrow(ModelNotFoundException::class);
+            ->assertNotFound();
     });
 });
 

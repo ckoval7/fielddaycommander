@@ -10,7 +10,6 @@ use App\Models\ShiftRole;
 use App\Models\User;
 use App\Services\EventContextService;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Date;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -244,9 +243,9 @@ test('user cannot drop an assigned shift', function () {
 
     $this->actingAs($this->user);
 
-    expect(fn () => Livewire::test(MyShifts::class)
+    Livewire::test(MyShifts::class)
         ->call('cancelSignUp', $assignment->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 });
 
 test('user cannot check in to another users shift', function () {
@@ -267,9 +266,9 @@ test('user cannot check in to another users shift', function () {
 
     $this->actingAs($this->user);
 
-    expect(fn () => Livewire::test(MyShifts::class)
+    Livewire::test(MyShifts::class)
         ->call('checkIn', $assignment->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 });
 
 test('my shifts shows confirmation badge for bonus roles', function () {
@@ -665,9 +664,9 @@ test('user cannot re-check-in to another users assignment', function () {
 
     $this->actingAs($this->user);
 
-    expect(fn () => Livewire::test(MyShifts::class)
+    Livewire::test(MyShifts::class)
         ->call('reCheckIn', $assignment->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 });
 
 test('my shifts summary totals hours worked and signed up for the event', function () {
