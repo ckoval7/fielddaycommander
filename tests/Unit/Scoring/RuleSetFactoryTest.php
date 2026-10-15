@@ -5,6 +5,7 @@ use App\Models\EventType;
 use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Scoring\Rules\FieldDay2025;
 use App\Scoring\Rules\WinterFieldDay2026;
+use App\Scoring\Rules\WinterFieldDay2027;
 use App\Scoring\RuleSetFactory;
 use Illuminate\Support\Facades\DB;
 
@@ -120,19 +121,30 @@ test('resolves WinterFieldDay2026 for a WFD event', function () {
         ->toBeInstanceOf(WinterFieldDay2026::class);
 });
 
-test('a WFD event pinned to an unregistered version falls back to 2026', function () {
+test('resolves WinterFieldDay2027 for a WFD event pinned to 2027', function () {
+    $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day']);
+    $event = Event::factory()->create([
+        'event_type_id' => $wfd->id,
+        'rules_version' => '2027',
+    ]);
+
+    expect(app(RuleSetFactory::class)->forEvent($event))
+        ->toBeInstanceOf(WinterFieldDay2027::class);
+});
+
+test('a WFD event pinned to an unregistered version falls back to the newest WFD ruleset', function () {
     $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day']);
     $event = Event::factory()->create([
         'event_type_id' => $wfd->id,
         'rules_version' => '2025',
     ]);
 
-    expect(app(RuleSetFactory::class)->forEvent($event)->version())->toBe('2026');
+    expect(app(RuleSetFactory::class)->forEvent($event)->version())->toBe('2027');
 });
 
 test('WFD reports its registered versions, keeping FD and WFD separate', function () {
     $factory = app(RuleSetFactory::class);
 
-    expect($factory->versionsFor('WFD'))->toBe(['2026'])
+    expect($factory->versionsFor('WFD'))->toBe(['2026', '2027'])
         ->and($factory->versionsFor('FD'))->not->toContain('WFD');
 });

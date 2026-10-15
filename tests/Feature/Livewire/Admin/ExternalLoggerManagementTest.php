@@ -2,8 +2,10 @@
 
 use App\Livewire\Admin\ExternalLoggerManagement;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\ExternalLoggerSetting;
 use App\Models\User;
+use App\Scoring\Rules\WinterFieldDay2027;
 use App\Services\ListenerProcessRunner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -450,4 +452,18 @@ test('demo mode does not auto-restart crashed processes during poll', function (
 
     // No new PID should be assigned
     expect(ExternalLoggerSetting::where('listener_type', 'n1mm')->first()->pid)->toBeNull();
+});
+
+test('warns that WSJT-X contacts earn no credit under WFD 2027', function () {
+    $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day']);
+    $this->config->event->update(['event_type_id' => $wfd->id, 'rules_version' => '2027']);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee(WinterFieldDay2027::NO_CREDIT_WSJT)
+        ->assertSee('Contacts in those modes (FT8, FT4 and the like) are still logged');
+});
+
+test('does not warn about WSJT-X credit for rulesets that allow it', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertDontSee('Contacts in those modes (FT8, FT4 and the like) are still logged');
 });

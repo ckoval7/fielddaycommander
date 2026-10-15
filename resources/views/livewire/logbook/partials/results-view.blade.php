@@ -82,13 +82,16 @@
                 }
             @endphp
 
-            @php $canEdit = auth()->check() && auth()->user()->can('edit-contacts'); @endphp
+            @php
+                $canEdit = auth()->check() && auth()->user()->can('edit-contacts');
+                $noCreditReasons = $this->noCreditReasons;
+            @endphp
             <x-table :headers="$headers" :rows="$this->contacts" class="table-sm" :selectable="$canEdit" wire:model.live="selectedIds">
                 @scope('cell_qso_time', $contact)
                     <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') . ' UTC' : 'N/A' }}</span>
                 @endscope
 
-                @scope('cell_callsign', $contact)
+                @scope('cell_callsign', $contact, $noCreditReasons)
                     <div class="flex items-center gap-2">
                         <span class="font-mono font-semibold {{ $contact->trashed() ? 'line-through text-base-content/40' : '' }}">{{ $contact->callsign }}</span>
                         @if($contact->trashed())
@@ -100,6 +103,9 @@
                         @if($contact->is_transcribed)
                             <span class="badge badge-outline badge-xs badge-warning ml-1">transcribed</span>
                         @endif
+                        @isset($noCreditReasons[$contact->id])
+                            <span class="badge badge-outline badge-xs badge-error whitespace-nowrap cursor-help" title="{{ $noCreditReasons[$contact->id] }}">no credit</span>
+                        @endisset
                     </div>
                 @endscope
 
@@ -108,7 +114,7 @@
                 @endscope
 
                 @scope('cell_mode', $contact)
-                    <span class="text-sm">{{ $contact->mode?->name ?? 'N/A' }}</span>
+                    <span class="text-sm">{{ $contact->mode?->name ?? 'N/A' }}@if($contact->submode)<span class="text-base-content/60"> &middot; {{ $contact->submode }}</span>@endif</span>
                 @endscope
 
                 @scope('cell_class', $contact)
@@ -188,6 +194,7 @@
 
         {{-- Mobile Card View --}}
         <div class="lg:hidden grid grid-cols-1 gap-4">
+            @php $noCreditReasons = $this->noCreditReasons; @endphp
             @foreach($this->contacts as $contact)
                 <x-card class="shadow-sm {{ $contact->is_duplicate ? 'border-l-4 border-l-warning bg-warning/5' : '' }} {{ $contact->trashed() ? 'opacity-60' : '' }}">
                     <div class="flex flex-col gap-3">
@@ -212,6 +219,9 @@
                                 @if($contact->is_transcribed)
                                     <span class="badge badge-outline badge-xs badge-warning">transcribed</span>
                                 @endif
+                                @isset($noCreditReasons[$contact->id])
+                                    <span class="badge badge-outline badge-xs badge-error whitespace-nowrap cursor-help" title="{{ $noCreditReasons[$contact->id] }}">no credit</span>
+                                @endisset
                                 @if($contact->operatingSession?->station?->is_gota ?? false)
                                     <x-badge value="GOTA" class="badge-xs badge-info" />
                                 @endif
@@ -220,6 +230,9 @@
                                 @endif
                             </div>
                         </div>
+                        @isset($noCreditReasons[$contact->id])
+                            <div class="text-xs text-error">{{ $noCreditReasons[$contact->id] }}</div>
+                        @endisset
                         @if($contact->is_gota_contact && ($contact->gota_operator_first_name || $contact->gotaOperator))
                             <div class="text-xs text-base-content/60">
                                 GOTA Op:
@@ -240,7 +253,7 @@
                             <span class="text-base-content/30">•</span>
                             <div class="flex items-center gap-1">
                                 <x-icon name="phosphor-radio" class="w-4 h-4 text-base-content/50" />
-                                <span>{{ $contact->mode?->name ?? 'N/A' }}</span>
+                                <span>{{ $contact->mode?->name ?? 'N/A' }}@if($contact->submode) &middot; {{ $contact->submode }}@endif</span>
                             </div>
                             <span class="text-base-content/30">•</span>
                             <span>{{ $contact->exchange_class ?? 'N/A' }}</span>

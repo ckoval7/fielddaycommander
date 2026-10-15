@@ -189,7 +189,13 @@ class EventDashboard extends Component
     #[Computed]
     public function bands(): Collection
     {
-        return Band::allowedForFieldDay()->ordered()->get();
+        $query = Band::allowedForFieldDay()->ordered();
+
+        if ($this->config()) {
+            $query->withExtremeBandsOnlyWhenWorked($this->config()->id);
+        }
+
+        return $query->get();
     }
 
     #[Computed]
@@ -355,6 +361,7 @@ class EventDashboard extends Component
                 'bonuses_repointed' => $result['bonuses_repointed'],
                 'bonuses_recomputed' => $result['bonuses_recomputed'],
                 'bonuses_invalidated' => $result['bonuses_invalidated'],
+                'bonuses_restored' => $result['bonuses_restored'],
             ],
             isCritical: true,
         );
@@ -371,6 +378,10 @@ class EventDashboard extends Component
             $result['bonuses_recomputed'],
             $result['bonuses_invalidated'],
         );
+
+        if ($result['bonuses_restored'] > 0) {
+            $bonusSummary .= sprintf(', %d restored', $result['bonuses_restored']);
+        }
 
         $this->dispatch(
             'notify',

@@ -110,7 +110,7 @@ class SectionSeeder extends Seeder
             // KL7 - Alaska (1 section)
             ['code' => 'AK', 'name' => 'Alaska', 'region' => 'KL7', 'country' => 'US'],
 
-            // VE - Canada RAC (14 sections) - Updated 2025
+            // VE - Canada RAC (15 sections; YT is WFD-only, ARRL folds it into TER)
             ['code' => 'AB', 'name' => 'Alberta', 'region' => 'VE', 'country' => 'CA'],
             ['code' => 'BC', 'name' => 'British Columbia', 'region' => 'VE', 'country' => 'CA'],
             ['code' => 'GH', 'name' => 'Golden Horseshoe', 'region' => 'VE', 'country' => 'CA'],
@@ -125,9 +125,11 @@ class SectionSeeder extends Seeder
             ['code' => 'QC', 'name' => 'Quebec', 'region' => 'VE', 'country' => 'CA'],
             ['code' => 'SK', 'name' => 'Saskatchewan', 'region' => 'VE', 'country' => 'CA'],
             ['code' => 'TER', 'name' => 'Territories', 'region' => 'VE', 'country' => 'CA'],
+            ['code' => 'YT', 'name' => 'Yukon', 'region' => 'VE', 'country' => 'CA'],
 
-            // DX - International (1 section)
+            // DX - International (2 sections; Mexico is MX for WFD 2027)
             ['code' => 'DX', 'name' => 'DX (International)', 'region' => 'DX', 'country' => 'DX'],
+            ['code' => 'MX', 'name' => 'Mexico', 'region' => 'DX', 'country' => 'MX'],
         ];
 
         foreach ($sections as $section) {

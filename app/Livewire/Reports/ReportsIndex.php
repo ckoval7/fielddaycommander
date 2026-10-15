@@ -42,6 +42,19 @@ class ReportsIndex extends Component
     }
 
     /**
+     * Whether to offer the Winter Field Day event summary PDF.
+     *
+     * It stands in for the ARRL submission sheet on rulebooks that do not use it.
+     */
+    #[Computed]
+    public function showsWfdEventSummary(): bool
+    {
+        $config = app(EventContextService::class)->getEventConfiguration();
+
+        return $config !== null && ! $config->usesArrlSubmissionSheet();
+    }
+
+    /**
      * @return array<int, array{hour: string, total: int, cw: int, phone: int, digital: int}>
      */
     #[Computed]

@@ -112,3 +112,20 @@ test('full import flow creates contacts', function () {
 
     expect(Contact::where('callsign', 'W1AW')->exists())->toBeTrue();
 });
+
+test('full import flow stores the ADIF submode on the contact', function () {
+    $qsoDate = now()->format('Ymd');
+    $adifContent = "ADIF Export\n<EOH>\n <CALL:4>W1AW <QSO_DATE:8>{$qsoDate} <TIME_ON:6>120000 <ARRL_SECT:2>CT <BAND:3>20M <STATION_CALLSIGN:5>K3CPK <MODE:4>MFSK <SUBMODE:3>FT8 <OPERATOR:5>K3CPK <APP_N1MM_EXCHANGE1:2>3A <APP_N1MM_NETBIOSNAME:15>DESKTOP-11-2024 <EOR>\n <CALL:5>W2WSX <QSO_DATE:8>{$qsoDate} <TIME_ON:6>121000 <ARRL_SECT:3>NNJ <BAND:3>40M <STATION_CALLSIGN:5>K3CPK <MODE:3>SSB <OPERATOR:5>K3CPK <APP_N1MM_EXCHANGE1:2>2B <APP_N1MM_NETBIOSNAME:15>DESKTOP-11-2024 <EOR>";
+
+    $file = UploadedFile::fake()->createWithContent('test.adi', $adifContent);
+
+    Livewire::actingAs($this->user)
+        ->test(AdifImport::class)
+        ->set('adifFile', $file)
+        ->call('uploadFile')
+        ->call('applyMappingsAndContinue')
+        ->call('executeImport');
+
+    expect(Contact::where('callsign', 'W1AW')->value('submode'))->toBe('FT8')
+        ->and(Contact::where('callsign', 'W2WSX')->value('submode'))->toBe('SSB');
+});

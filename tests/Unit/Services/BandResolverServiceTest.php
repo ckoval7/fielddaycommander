@@ -79,3 +79,17 @@ test('returns null for frequency outside any band', function () {
 test('returns null for null frequency', function () {
     expect($this->resolver->resolveByFrequencyHz(null))->toBeNull();
 });
+
+test('resolves LF and microwave bands from frequency in Hz', function () {
+    $bands = [
+        '630m' => Band::create(['name' => '630m', 'meters' => 630, 'frequency_mhz' => 0.472, 'sort_order' => 2]),
+        '13cm' => Band::create(['name' => '13cm', 'frequency_mhz' => 2300, 'is_hf' => false, 'is_vhf_uhf' => true, 'sort_order' => 15]),
+        '3cm' => Band::create(['name' => '3cm', 'frequency_mhz' => 10000, 'is_hf' => false, 'is_vhf_uhf' => true, 'sort_order' => 18]),
+        '1mm' => Band::create(['name' => '1mm', 'frequency_mhz' => 241000, 'is_hf' => false, 'is_vhf_uhf' => true, 'sort_order' => 24]),
+    ];
+
+    expect($this->resolver->resolveByFrequencyHz(475_000))->toBe($bands['630m']->id)
+        ->and($this->resolver->resolveByFrequencyHz(2_320_000_000))->toBe($bands['13cm']->id)
+        ->and($this->resolver->resolveByFrequencyHz(10_368_000_000))->toBe($bands['3cm']->id)
+        ->and($this->resolver->resolveByFrequencyHz(241_500_000_000))->toBe($bands['1mm']->id);
+});

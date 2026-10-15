@@ -7,8 +7,10 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\GuestbookEntry;
+use App\Models\Section;
 use App\Models\Station;
 use App\Services\EventContextService;
+use App\Support\EventSections;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -155,12 +157,18 @@ class StatCard extends Component
      */
     protected function getSectionsWorked(Event $event): array
     {
-        $count = Contact::query()
+        $workedSectionIds = Contact::query()
             ->where('event_configuration_id', $event->eventConfiguration->id)
             ->notDuplicate()
             ->whereNotNull('section_id')
-            ->distinct('section_id')
-            ->count('section_id');
+            ->distinct()
+            ->pluck('section_id');
+
+        $count = Section::whereIn('id', $workedSectionIds)
+            ->pluck('code')
+            ->map(fn (string $code) => EventSections::countedCode($code, $event))
+            ->unique()
+            ->count();
 
         return [
             'value' => number_format($count),

@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Section;
 use App\Services\EventContextService;
 use App\Support\BroadcastChannels;
+use App\Support\EventSections;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -25,6 +26,12 @@ class SectionMap extends Component
     public int $totalSections = 0;
 
     public bool $hasEvent = false;
+
+    /**
+     * Whether Yukon (YT) is mapped as its own section. Winter Field Day
+     * recognises YT; ARRL events still fold it into Territories (TER).
+     */
+    public bool $splitsYukon = false;
 
     public function mount(): void
     {
@@ -65,8 +72,10 @@ class SectionMap extends Component
     {
         $eventConfigId = $this->event?->eventConfiguration?->id;
         $this->hasEvent = $eventConfigId !== null;
+        $this->splitsYukon = EventSections::recognisesWfdSections($this->event);
 
         $allSections = Section::where('is_active', true)
+            ->whereNotIn('code', EventSections::foldedCodes($this->event))
             ->orderBy('code')
             ->get()
             ->keyBy('code');
@@ -93,7 +102,7 @@ class SectionMap extends Component
                 ->with(['band', 'mode', 'section'])
                 ->get();
 
-            $grouped = $contacts->groupBy(fn ($c) => $c->section->code);
+            $grouped = $contacts->groupBy(fn ($c) => EventSections::countedCode($c->section->code, $this->event));
 
             foreach ($grouped as $code => $sectionContacts) {
                 $count = $sectionContacts->count();

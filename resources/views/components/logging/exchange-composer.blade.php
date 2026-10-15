@@ -14,6 +14,7 @@ Props:
 - $placeholder: string - Example exchange shown in the empty input
 - $suggestions: array - Autocomplete suggestions from the Livewire component
 - $duplicateWarning: string|null - Duplicate warning to show, if any
+- $participantWarning: string|null - Own-participant contact warning to show, if any
 
 Slots:
 - $slot: Page-specific alerts and hints, shown above the duplicate warning
@@ -23,6 +24,7 @@ Slots:
     'placeholder' => 'W1AW 3A CT',
     'suggestions' => [],
     'duplicateWarning' => null,
+    'participantWarning' => null,
 ])
 
 <div class="border-t border-base-300 p-3 space-y-2" x-data="{ si: -1 }">
@@ -47,6 +49,12 @@ Slots:
     @if($duplicateWarning)
         <x-alert x-show="!isRecalling" icon="phosphor-warning" class="alert-warning">
             Duplicate: {{ $duplicateWarning }}
+        </x-alert>
+    @endif
+
+    @if($participantWarning)
+        <x-alert x-show="!isRecalling" icon="phosphor-warning" class="alert-warning">
+            {{ $participantWarning }}
         </x-alert>
     @endif
 

@@ -1051,3 +1051,31 @@ test('transcribed QSOs are numbered by time order, skipping deleted contacts', f
         $third->id => 3,
     ]);
 });
+
+test('transcribed contact stores the optional submode', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('submode', 'sstv')
+        ->set('workingDate', $this->event->start_time->format('Y-m-d'))
+        ->set('exchangeInput', 'W5XYZ 1B CT')
+        ->call('logContact')
+        ->assertSet('parseError', '');
+
+    expect(Contact::where('callsign', 'W5XYZ')->value('submode'))->toBe('SSTV');
+});
+
+test('transcribed contact without a submode stores null', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('workingDate', $this->event->start_time->format('Y-m-d'))
+        ->set('exchangeInput', 'W5XYZ 1B CT')
+        ->call('logContact');
+
+    expect(Contact::where('callsign', 'W5XYZ')->value('submode'))->toBeNull();
+});

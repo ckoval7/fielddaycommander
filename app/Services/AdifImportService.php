@@ -98,6 +98,7 @@ class AdifImportService
             'logger_user_id' => $record->operator_user_id,
             'band_id' => $record->band_id,
             'mode_id' => $record->mode_id,
+            'submode' => $record->raw_data['SUBMODE'] ?? $record->mode_name,
             'qso_time' => $record->qso_time,
             'callsign' => $record->callsign,
             'section_id' => $record->section_id,

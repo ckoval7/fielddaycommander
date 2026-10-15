@@ -4,6 +4,7 @@ namespace App\Livewire\Logbook;
 
 use App\Models\Band;
 use App\Models\Event;
+use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\Section;
 use App\Models\Station;
@@ -253,6 +254,41 @@ class LogbookBrowser extends Component
         $query = $queryBuilder->applyFilters($filters);
 
         return $query->cursorPaginate($this->perPage);
+    }
+
+    /**
+     * Why each contact on this page earns no credit, keyed by contact id.
+     *
+     * Empty unless the event's rulebook withholds credit from some contacts
+     * (e.g. WFD 2027 WSJT-mode and satellite contacts). The rules are resolved
+     * once per page; contacts arrive with their band already loaded.
+     *
+     * @return array<int, string>
+     */
+    #[Computed]
+    public function noCreditReasons(): array
+    {
+        if (! $this->eventConfigurationId) {
+            return [];
+        }
+
+        $rules = EventConfiguration::query()->find($this->eventConfigurationId)?->contactCreditRules();
+
+        if ($rules === null) {
+            return [];
+        }
+
+        $reasons = [];
+
+        foreach ($this->contacts as $contact) {
+            $reason = $rules->noCreditReason($contact);
+
+            if ($reason !== null) {
+                $reasons[$contact->id] = $reason;
+            }
+        }
+
+        return $reasons;
     }
 
     #[Computed]

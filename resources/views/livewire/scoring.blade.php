@@ -185,6 +185,15 @@
                         <span class="text-sm font-normal">({{ number_format($this->duplicateRate, 1) }}%)</span>
                     </div>
                 </div>
+                @if ($this->noCreditContactCount > 0)
+                    <div>
+                        <div class="text-xs uppercase tracking-wide" style="color: var(--score-text-muted);">No Credit</div>
+                        <div class="text-xl font-semibold tabular-nums mt-0.5" style="color: var(--score-warning);"
+                             title="{{ $this->breakdown?->line('no_credit_contacts')?->detail }}">
+                            {{ $this->noCreditContactCount }}
+                        </div>
+                    </div>
+                @endif
                 @if ($this->gotaContactCount > 0)
                     <div>
                         <div class="text-xs uppercase tracking-wide" style="color: var(--score-text-muted);">GOTA Contacts</div>

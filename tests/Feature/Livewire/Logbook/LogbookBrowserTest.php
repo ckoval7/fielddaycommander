@@ -5,11 +5,13 @@ use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use App\Scoring\Rules\WinterFieldDay2027;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
@@ -533,5 +535,50 @@ describe('removeFilter', function () {
         $component->removeFilter('unknownKey');
 
         expect($component->bandIds)->toBe([$this->band->id]);
+    });
+});
+
+describe('no-credit badge', function () {
+    test('marks WFD 2027 WSJT-mode contacts with the reason', function () {
+        $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day']);
+        $this->event->updateQuietly(['event_type_id' => $wfd->id, 'rules_version' => '2027']);
+
+        $ft8 = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'submode' => 'FT8',
+            'callsign' => 'K1FT',
+        ]);
+        $rtty = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'submode' => 'RTTY',
+            'callsign' => 'K1RT',
+        ]);
+
+        $component = Livewire::test(LogbookBrowser::class);
+
+        expect($component->instance()->noCreditReasons)
+            ->toBe([$ft8->id => WinterFieldDay2027::NO_CREDIT_WSJT])
+            ->not->toHaveKey($rtty->id);
+
+        $component->assertSee('no credit')
+            ->assertSee('title="'.WinterFieldDay2027::NO_CREDIT_WSJT.'"', false);
+    });
+
+    test('shows no badge for rulesets that credit every contact', function () {
+        Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'submode' => 'FT8',
+        ]);
+
+        $component = Livewire::test(LogbookBrowser::class);
+
+        expect($component->instance()->noCreditReasons)->toBe([]);
+        $component->assertDontSee('no credit');
     });
 });

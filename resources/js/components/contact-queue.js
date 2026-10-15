@@ -152,6 +152,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 operating_session_id: sessionId,
                 band_id: contactData.band_id,
                 mode_id: contactData.mode_id,
+                submode: contactData.submode || null,
                 callsign: contactData.callsign,
                 section_id: contactData.section_id,
                 section_code: contactData.section_code || '',
@@ -191,6 +192,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             this.enqueue({
                 band_id: sessionContext.band_id,
                 mode_id: sessionContext.mode_id,
+                submode: sessionContext.submode || null,
                 callsign: parsed.callsign,
                 section_id: parsed.section_id,
                 section_code: parsed.section_code,
@@ -312,6 +314,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                         operating_session_id: candidate.operating_session_id,
                         band_id: candidate.band_id,
                         mode_id: candidate.mode_id,
+                        submode: candidate.submode || null,
                         callsign: candidate.callsign,
                         section_id: candidate.section_id,
                         exchange_class: candidate.exchange_class,

@@ -54,6 +54,7 @@ abstract class AbstractBonusStrategy implements BonusStrategy
             $existing->quantity = $quantity;
             $existing->calculated_points = (int) $points;
             $existing->is_verified = true;
+            $existing->invalidated_by_rescore = false;
             $existing->save();
 
             return;

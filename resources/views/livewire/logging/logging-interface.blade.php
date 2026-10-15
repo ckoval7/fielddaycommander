@@ -3,6 +3,7 @@
         band_id: {{ $operatingSession->band_id }},
         mode_id: {{ $operatingSession->mode_id }},
         power_watts: {{ $operatingSession->power_watts }},
+        get submode() { return document.querySelector('[data-submode-input]')?.value?.trim() || null },
         is_gota: {{ $operatingSession->station->is_gota ? 'true' : 'false' }},
         get gota_operator_first_name() { return document.querySelector('[wire\\:model=gotaOperatorFirstName]')?.value || null },
         get gota_operator_last_name() { return document.querySelector('[wire\\:model=gotaOperatorLastName]')?.value || null },
@@ -96,12 +97,39 @@
         </div>
     </div>
 
+    <div wire:poll.30s="refreshBandModeWarning">
+        @if($bandModeWarning)
+            <x-alert icon="phosphor-warning" class="alert-warning rounded-none" data-band-mode-warning>
+                {{ $bandModeWarning }}
+            </x-alert>
+        @endif
+    </div>
+
     <div class="sm:px-4 py-2 sm:py-4 max-w-4xl mx-auto flex flex-col gap-2 sm:gap-4">
         {{-- Your Exchange --}}
         <div class="text-center max-sm:px-4">
             <span class="text-base-content/70 text-sm uppercase tracking-wider">Your Exchange</span>
             <div class="text-2xl font-bold font-mono">{{ $this->clubExchange }}</div>
             <div class="text-sm text-base-content/60 italic">{{ $this->phoneticExchange }}</div>
+        </div>
+
+        {{-- Optional sub-mode (e.g. FT8, SSTV); stays set between contacts --}}
+        <div class="flex items-center justify-center gap-2 max-sm:px-4">
+            <label for="log-submode" class="text-xs uppercase tracking-wider text-base-content/60">Sub-mode</label>
+            <input
+                id="log-submode"
+                data-submode-input
+                type="text"
+                list="log-submodes"
+                maxlength="20"
+                class="input input-xs w-32 uppercase font-mono"
+                placeholder="Optional"
+            />
+            <datalist id="log-submodes">
+                @foreach(\App\Services\ModeResolverService::submodeSuggestions($operatingSession->mode?->category) as $suggestion)
+                    <option value="{{ $suggestion }}"></option>
+                @endforeach
+            </datalist>
         </div>
 
         {{-- GOTA Operator Fields --}}
@@ -256,6 +284,7 @@
             <x-logging.exchange-composer
                 :suggestions="$suggestions"
                 :duplicate-warning="$isDuplicate ? $dupeWarning : null"
+                :participant-warning="$participantWarning ?: null"
             >
                 <template x-if="parseError">
                     <div class="alert alert-error">

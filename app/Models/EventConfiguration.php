@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PowerSource;
+use App\Scoring\Contracts\DeterminesContactCredit;
 use App\Scoring\Contracts\FieldDayRuleSet;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Dto\Nomenclature;
@@ -55,6 +56,13 @@ class EventConfiguration extends Model
         'talk_in_frequency',
         'guestbook_detection_radius',
         'guestbook_local_subnets',
+        'is_open_to_public',
+        'public_directions',
+        'public_visiting_hours',
+        'public_contact_email',
+        'public_contact_phone',
+        'public_website_url',
+        'public_description',
     ];
 
     protected function casts(): array
@@ -70,6 +78,7 @@ class EventConfiguration extends Model
             'uses_water' => 'boolean',
             'uses_methane' => 'boolean',
             'guestbook_enabled' => 'boolean',
+            'is_open_to_public' => 'boolean',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'guestbook_detection_radius' => 'integer',
@@ -190,6 +199,50 @@ class EventConfiguration extends Model
     public function pointsForContact(Mode $mode, Station $station): int
     {
         return $this->ruleSet()->pointsForContact($mode, $station);
+    }
+
+    /**
+     * Non-duplicate contacts that earn credit under this configuration's rulebook.
+     *
+     * The single entry point for "which contacts count": QSO points, objectives,
+     * and submitted logs (Cabrillo, ADIF, summary sheets) should all start here.
+     * Contacts a rulebook gives no credit (e.g. WFD 2027 WSJT-mode or satellite
+     * contacts) are left out; rulebooks without such rules return every
+     * non-duplicate contact. GOTA contacts are included — filter them yourself
+     * where the rulebook scores them separately.
+     *
+     * @return HasMany<Contact, EventConfiguration>
+     */
+    public function creditableContacts(): HasMany
+    {
+        $query = $this->contacts()->where('is_duplicate', false);
+
+        $this->contactCreditRules()?->constrainToCreditable($query);
+
+        return $query;
+    }
+
+    /**
+     * Why a contact earns no credit under this rulebook, or null when it does.
+     *
+     * Duplicates are a separate concern and are not reported here. Reads the
+     * contact's `band` relation; eager-load it when checking many contacts.
+     */
+    public function contactNoCreditReason(Contact $contact): ?string
+    {
+        return $this->contactCreditRules()?->noCreditReason($contact);
+    }
+
+    /**
+     * The rulebook's contact-credit rules, or null when every contact earns credit.
+     *
+     * Exposed so callers checking a page of contacts can resolve the rules once.
+     */
+    public function contactCreditRules(): ?DeterminesContactCredit
+    {
+        $rules = $this->ruleSet();
+
+        return $rules instanceof DeterminesContactCredit ? $rules : null;
     }
 
     /**

@@ -159,6 +159,56 @@
                 </div>
             </a>
 
+            {{-- ADIF LOG — neutral --}}
+            <a href="{{ route('reports.adif') }}"
+               class="group no-underline block rounded-lg p-5 transition-shadow hover:shadow-md"
+               style="background-color: var(--reports-csv-bg); border: 2px solid var(--reports-csv-border);">
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
+                         style="background-color: var(--reports-csv-border); color: white;">
+                        <x-mary-icon name="phosphor-squares-four" class="w-5 h-5" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
+                            ADIF Log
+                        </div>
+                        <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
+                            Universal log format · .adi file
+                        </div>
+                        <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
+                             style="color: var(--reports-csv-icon);">
+                            Download &rarr;
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            {{-- WFD EVENT SUMMARY — blue. Stands in for the ARRL sheet on other rulebooks. --}}
+            @if ($this->showsWfdEventSummary)
+            <a href="{{ route('reports.wfd-event-summary') }}"
+               class="group no-underline block rounded-lg p-5 transition-shadow hover:shadow-md"
+               style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
+                         style="background-color: var(--reports-pdf-border); color: white;">
+                        <x-mary-icon name="phosphor-file-text" class="w-5 h-5" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
+                            WFD Event Summary (PDF)
+                        </div>
+                        <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
+                            Objectives and score worksheet · .pdf
+                        </div>
+                        <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
+                             style="color: var(--reports-pdf-icon);">
+                            Download &rarr;
+                        </div>
+                    </div>
+                </div>
+            </a>
+            @endif
+
             {{-- ARRL SUBMISSION SHEET — blue border. Field Day only; WFD entrants
                  upload their log on winterfieldday.org instead. --}}
             @if ($this->showsArrlSubmissionSheet)

@@ -206,10 +206,11 @@ test('Cabrillo export identifies the log as WFD, not ARRL Field Day', function (
 
     expect($log)->toContain('CONTEST: WFD')
         ->and($log)->not->toContain('ARRL-FD')
-        // Outdoor operation, so Cabrillo station category is PORTABLE.
-        ->and($log)->toContain('CATEGORY-STATION: PORTABLE')
+        // WFDA's format carries the exchange in X-EXCHANGE, not ARRL category lines.
+        ->and($log)->toContain('X-EXCHANGE: 3O')
+        ->and($log)->not->toContain('CATEGORY-STATION')
         ->and(app(CabrilloExporter::class)->filename($config))
-        ->toContain('winter-field-day.log');
+        ->toBe('K4SCO.log');
 });
 
 test('the scoring page renders for a WFD event with objective wording', function () {
@@ -320,4 +321,80 @@ test('the scoring page shows objective completion as WFDA tracks it', function (
         ->toBe(['achieved' => 3, 'available' => 12, 'percent' => 25]);
 
     $component->assertSee('Objectives Completed')->assertSee('3/12');
+});
+
+test('a WFD 2027 event resolves the 2027 ruleset and scores its objectives', function () {
+    $this->config->event->update(['rules_version' => '2027']);
+    $config = $this->config->fresh();
+
+    expect(app(RuleSetFactory::class)->forEvent($config->event)->id())->toBe('WFD-2027')
+        ->and($config->usesArrlSubmissionSheet())->toBeFalse()
+        ->and($config->nomenclature()->awardPlural)->toBe('Objectives');
+});
+
+test('the scoring checklist shows station-equipment power as verified when 100% is claimed', function () {
+    $user = User::factory()->create();
+
+    $this->config->update(['is_active' => true]);
+    $this->config->event->update(['is_active' => true, 'rules_version' => '2027']);
+
+    $band = Band::factory()->create(['name' => '20m', 'meters' => 20]);
+    logContacts($this->config, $this->phone, $band, 3);
+
+    $full = BonusType::where('event_type_id', $this->wfd->id)
+        ->where('rules_version', '2027')
+        ->where('code', 'alt_power_full')
+        ->firstOrFail();
+
+    $this->config->bonuses()->create([
+        'bonus_type_id' => $full->id,
+        'quantity' => 1,
+        'calculated_points' => 0,
+        'is_verified' => true,
+        'verified_at' => now(),
+    ]);
+
+    $component = Livewire::actingAs($user)->test(Scoring::class);
+
+    $statuses = collect($component->get('bonusList'))
+        ->mapWithKeys(fn (array $item) => [$item['type']->code => $item['status']]);
+
+    // Score: 3 QSO points x (OM 3 + 1). The checklist must agree with it.
+    expect($statuses['alt_power_full'])->toBe('verified')
+        ->and($statuses['alt_power_equipment'])->toBe('verified')
+        ->and($component->get('bonusSummary')['verified_multiplier'])->toBe(3)
+        ->and($component->get('objectiveProgress'))->toBe(['achieved' => 2, 'available' => 13, 'percent' => 15])
+        ->and($this->config->fresh()->scoreBreakdown()->total)->toBe(12);
+});
+
+test('WFD 2027 logs WSJT-mode and satellite contacts but gives them no credit', function () {
+    $user = User::factory()->create();
+
+    $this->config->update(['is_active' => true]);
+    $this->config->event->update(['is_active' => true, 'rules_version' => '2027']);
+    $config = $this->config->fresh();
+
+    $digital = Mode::create(['name' => 'Digital', 'category' => 'Digital', 'points_fd' => 2, 'points_wfd' => 2]);
+    $band = Band::factory()->create(['name' => '20m', 'meters' => 20]);
+    logContacts($config, $this->phone, $band, 3, ['submode' => 'USB']);
+    logContacts($config, $digital, $band, 2, ['submode' => 'FT8']);
+    logContacts($config, $this->phone, $band, 1, ['submode' => 'FM', 'is_satellite' => true]);
+
+    expect($config->contacts()->count())->toBe(6)
+        ->and((int) $config->contacts()->sum('points'))->toBe(3)
+        ->and($config->creditableContacts()->count())->toBe(3)
+        ->and($config->scoreBreakdown()->value('qso_points'))->toBe(3)
+        ->and($config->scoreBreakdown()->value('no_credit_contacts'))->toBe(3);
+
+    $multipleModes = BonusType::where('event_type_id', $this->wfd->id)
+        ->where('rules_version', '2027')
+        ->where('code', 'multiple_modes')
+        ->firstOrFail();
+
+    expect($config->bonuses()->where('bonus_type_id', $multipleModes->id)->where('is_verified', true)->exists())->toBeFalse();
+
+    $component = Livewire::actingAs($user)->test(Scoring::class);
+
+    expect($component->get('noCreditContactCount'))->toBe(3);
+    $component->assertSee('No Credit');
 });

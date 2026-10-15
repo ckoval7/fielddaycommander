@@ -19,7 +19,7 @@ class SubmissionReportService
     {
         $config->loadMissing(['section', 'operatingClass', 'event', 'bonuses.bonusType']);
 
-        $bands = $this->bands();
+        $bands = $this->bands($config);
         $modes = Mode::orderBy('id')->get();
 
         return [
@@ -251,13 +251,29 @@ class SubmissionReportService
     }
 
     /**
+     * Bands on the ARRL form, plus LF and microwave bands only when the event has contacts on them.
+     *
      * @return array<int, array{id: int, name: string}>
      */
-    private function bands(): array
+    private function bands(EventConfiguration $config): array
     {
+        $bandIdsWithQsos = Contact::where('event_configuration_id', $config->id)
+            ->notDuplicate()
+            ->where('is_gota_contact', false)
+            ->distinct()
+            ->pluck('band_id')
+            ->all();
+
         return Band::allowedForFieldDay()
             ->ordered()
             ->get()
+            ->filter(function (Band $b) use ($bandIdsWithQsos): bool {
+                $frequency = $b->frequency_mhz === null ? null : (float) $b->frequency_mhz;
+                $isOutsideFormBands = $frequency !== null && ($frequency < 1.8 || $frequency > 1300);
+
+                return ! $isOutsideFormBands || in_array($b->id, $bandIdsWithQsos);
+            })
+            ->values()
             ->map(fn ($b) => ['id' => $b->id, 'name' => $b->name])
             ->all();
     }

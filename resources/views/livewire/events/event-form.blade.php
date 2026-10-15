@@ -246,6 +246,40 @@
                     :disabled="$isLocked"
                 />
             </div>
+
+            @if($this->isWinterFieldDay)
+                <div class="collapse collapse-arrow bg-base-200 mt-4" data-testid="wfd-rules-guidance">
+                    <input type="checkbox" aria-label="Toggle WFD rules guidance" />
+                    <div class="collapse-title text-sm font-medium">
+                        <x-icon name="phosphor-info" class="w-4 h-4 inline" />
+                        WFD rules: class, category and location
+                    </div>
+                    <div class="collapse-content text-sm space-y-3">
+                        <p>
+                            <strong>Class</strong> is the number of transmitters that can transmit at the same time
+                            and that you have operators for. Do not count a station left unattended while you operate another.
+                        </p>
+                        <div>
+                            <p><strong>Category</strong>: pick the one that applies to the majority of stations at your site.</p>
+                            <ul class="list-disc ml-5 mt-1 space-y-0.5">
+                                <li><strong>H, Home:</strong> inside a permanent livable residence.</li>
+                                <li><strong>I, Indoor:</strong> away from home, inside an insulated building on a permanent foundation (club shack, EOC, church, cabin).</li>
+                                <li><strong>O, Outdoor:</strong> tents, pavilions, canopies or other shelter without plumbing or HVAC.</li>
+                                <li><strong>M, Mobile:</strong> an RV, car, van, trailer or anything able to become mobile.</li>
+                            </ul>
+                        </div>
+                        <p>
+                            Class, category and location identifier stay the same for the whole event, even if you move.
+                            A moving station uses the section of its first contact: ARRL/RAC section for the US and Canada,
+                            MX for Mexico, DX for everyone else.
+                        </p>
+                        <p>
+                            All operators, antennas and feed lines must fit within a 300 m diameter circle.
+                            No remote operation, and 100 W PEP maximum.
+                        </p>
+                    </div>
+                </div>
+            @endif
         </x-card>
 
         <!-- Section 4: Power Configuration -->
@@ -409,6 +443,79 @@
                 The selected operating class does not permit a GOTA station.
             </x-alert>
         @endif
+
+        <!-- Public Visitors -->
+        <x-card class="mb-6">
+            <x-slot:title>Public Visitors</x-slot:title>
+
+            <div class="collapse collapse-arrow bg-base-200" data-testid="public-visitors-section">
+                <input type="checkbox" aria-label="Toggle public visitor details" @checked($is_open_to_public) />
+                <div class="collapse-title text-sm font-medium">
+                    Optional details for visitors (shown on the public landing page)
+                </div>
+                <div class="collapse-content space-y-4">
+                    <x-toggle
+                        label="Open to the public"
+                        wire:model.live="is_open_to_public"
+                        hint="Visitors are welcome. Details below are published only when this is on."
+                    />
+
+                    <x-textarea
+                        label="Directions / how to find us"
+                        wire:model="public_directions"
+                        rows="3"
+                        maxlength="1000"
+                        hint="Address, landmarks, parking. Plain text only."
+                    />
+
+                    <x-textarea
+                        label="Setup, operating and best visiting times"
+                        wire:model="public_visiting_hours"
+                        rows="2"
+                        maxlength="500"
+                        hint="Plain text only."
+                    />
+
+                    <x-input
+                        label="Contact email"
+                        wire:model="public_contact_email"
+                        type="email"
+                        icon="phosphor-envelope"
+                        maxlength="255"
+                        placeholder="info@example.org"
+                        hint="Optional. Shown on the public page."
+                    />
+
+                    <x-input
+                        label="Contact phone"
+                        wire:model="public_contact_phone"
+                        type="tel"
+                        icon="phosphor-phone"
+                        maxlength="50"
+                        placeholder="555-555-0100"
+                        hint="Optional. Shown on the public page."
+                    />
+
+                    <x-input
+                        label="Website or social page"
+                        wire:model="public_website_url"
+                        type="url"
+                        icon="phosphor-globe"
+                        maxlength="255"
+                        placeholder="https://example.org"
+                        hint="Optional. Website or Facebook page; must start with http:// or https://. Shown on the public page."
+                    />
+
+                    <x-textarea
+                        label="What visitors will see"
+                        wire:model="public_description"
+                        rows="5"
+                        maxlength="2000"
+                        hint="Two or three short paragraphs about what is happening at your site. Plain text only."
+                    />
+                </div>
+            </div>
+        </x-card>
 
         <!-- Section 6: Guestbook Settings -->
         <x-card class="mb-6">

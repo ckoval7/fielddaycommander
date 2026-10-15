@@ -32,6 +32,7 @@ class StoreContactSyncRequest extends FormRequest
             'operating_session_id' => ['required', 'integer', 'exists:operating_sessions,id'],
             'band_id' => ['required', 'integer', 'exists:bands,id'],
             'mode_id' => ['required', 'integer', 'exists:modes,id'],
+            'submode' => ['nullable', 'string', 'max:20'],
             'callsign' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9\/]+$/'],
             'section_id' => ['required', 'integer', 'exists:sections,id'],
             'exchange_class' => ['required', 'string', 'max:5', 'regex:'.ExchangeParserService::EXCHANGE_CLASS_PATTERN],

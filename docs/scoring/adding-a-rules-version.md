@@ -4,7 +4,7 @@ This is the checklist we follow **every year** when ARRL publishes Field Day (or
 
 ## When this applies
 
-ARRL typically announces Field Day rule tweaks in the spring. Symptoms that we need a new rules version:
+ARRL typically announces Field Day rule tweaks in the spring, and WFDA publishes Winter Field Day changes each autumn. Symptoms that we need a new rules version:
 
 - Per-mode point values changed (e.g. CW from 2pt → 3pt).
 - Power multiplier thresholds or values changed (e.g. QRP ceiling moves from 5W to 10W).
@@ -22,11 +22,16 @@ There are two shapes of rulebook, and a new version must extend the right one.
 `FieldDayRuleSet`. It scores `(QSO points x power multiplier) + bonuses`,
 awards additive point bonuses, and has GOTA, youth and emergency-power rules.
 
-**Winter Field Day** (`WinterFieldDay2026`) implements `RuleSet` directly. It
-scores `QSO points x (OM + 1)`: awards are *objectives* carrying an Objective
-Multiplier in `bonus_types.objective_multiplier` rather than points, satellite
-QSOs earn no QSO credit, there is no power multiplier (every station is capped
-at 100 W PEP), and there is no GOTA station.
+**Winter Field Day** (`WinterFieldDay2026`, `WinterFieldDay2027`) implements
+`RuleSet` directly. It scores `QSO points x (OM + 1)`: awards are *objectives*
+carrying an Objective Multiplier in `bonus_types.objective_multiplier` rather
+than points, there is no power multiplier (every station is capped at 100 W
+PEP), and there is no GOTA station.
+
+Satellite QSOs differ by year. In 2026 they earned no QSO points but still had
+objectives. In 2027, satellite (relayed, cross-band) contacts and WSJT-mode
+contacts are invalid: they are accepted and logged, but earn no credit, via
+`DeterminesContactCredit`.
 
 Do not make a WFD ruleset extend a `FieldDay*` class, or vice versa. Each
 rulebook owns its own score composition through `score()`, which is what lets
@@ -34,9 +39,11 @@ one scoring page render both. Rule text and terminology follow the same split:
 WFD objectives are labelled "Objectives", not "Bonus Points", via
 `nomenclature()`.
 
-The WFD source of truth is the WFDA Standard Operating Procedure at
-<https://winterfieldday.org/sop.php>. WFDA publishes changes each autumn; the
-2026 edition's own change list is a good signal that a new version is needed.
+Each WFD year cites the document it came from. `WinterFieldDay2026` came from
+the WFDA Standard Operating Procedure at <https://winterfieldday.org/sop.php>.
+`WinterFieldDay2027` came from the WFDA rules PDF, "Winter Field Day 2027",
+Version 3, 04 OCT 2026. A new WFD year's own change list is a good signal that a
+new version is needed.
 
 ## The golden rule
 
@@ -115,7 +122,7 @@ Never remove old entries. Historical events continue to resolve to their frozen 
 
 ### 5. Seed `bonus_types` rows for the new version
 
-Write a migration. **Do not update the seeder** — seeders run on fresh databases and the existing bonus rows must remain as-is for any already-installed 2025/2026 data.
+Write a migration. **Do not update the seeder** (ARRL years; for Winter Field Day objectives see the WFD section below) — seeders run on fresh databases and the existing bonus rows must remain as-is for any already-installed 2025/2026 data.
 
 ```php
 // database/migrations/YYYY_MM_DD_NNNNNN_seed_bonus_types_for_2027.php
@@ -267,7 +274,7 @@ Before opening the PR, confirm:
 
 - [ ] No file under `app/Scoring/Rules/FieldDayYYYY.php` (for any `YYYY < 2027`) was modified.
 - [ ] No existing `bonus_types` or `mode_rule_points` rows were updated; only new rows with `rules_version='2027'` were inserted.
-- [ ] `BonusTypeSeeder` was **not** edited.
+- [ ] `BonusTypeSeeder` was **not** edited. This applies to ARRL Field Day years, which inherit rows via `INHERITED_VERSIONS`. A Winter Field Day year with new objectives *does* edit the seeder, plus a migration (see the WFD section).
 - [ ] `FieldDay2027` is registered in `RuleSetFactory`.
 - [ ] `ruleReferences()` is overridden for any bonus whose ARRL wording or section number changed; new/retired bonuses are reflected.
 - [ ] Tests cover every ARRL-changed rule.
@@ -278,6 +285,38 @@ Before opening the PR, confirm:
 Ideally merge **before** any event pinned to `rules_version='2027'` is created. The factory has a soft-fallback safety net: a 2027 event with no registered `FieldDay2027` resolves to the newest registered version (`FieldDay2026`) and logs `scoring.rules_version_fallback`. That keeps demo and pre-announcement testing unblocked, but the warning means the scores on that event are computed against the *previous* year's rules — not what you want for a real submission. Check logs before submitting.
 
 `UnknownRuleSet` is still thrown if the event type has **no** registered rulesets at all (e.g. someone creates an `XYZ` event type with no ruleset class).
+
+## Adding a Winter Field Day year
+
+The steps above are written for ARRL. For WFD, the differences are:
+
+- **Standalone class.** Implement `RuleSet` directly, as `WinterFieldDay2027`
+  does, rather than extending the previous year. WFD changes its objectives
+  wholesale, and `WinterFieldDay2026` resolves its strategy index through
+  `self::`, so overrides in a subclass would not be picked up. Inheriting from a
+  frozen year would also let an accidental edit there change the new scores.
+- **Objectives go in two places.** Add the rows to `BonusTypeSeeder` (fresh
+  installs) *and* to a data migration (existing installs; `update.sh` does not
+  run seeders). Model the migration on
+  `2026_10_15_164535_seed_winter_field_day_2027_objectives.php`. It inserts only
+  rows that are missing, so re-running it is harmless. Keep the seeder and the
+  migration in sync.
+- **Objectives that earn other objectives.** Implement `ImpliesObjectives` and
+  return the map from `impliedObjectives()`. `WinterFieldDay2027` uses it so that
+  `alt_power_full` also achieves `alt_power_equipment`. The score applies the map,
+  and the Scoring page reads the same map so its checklist matches the multiplier.
+- **Contact validity.** Implement `DeterminesContactCredit`. `noCreditReason()`
+  and `constrainToCreditable()` state the same rules once for a loaded contact
+  and once in SQL, so they must agree. Test both against the same contacts.
+  Callers go through `EventConfiguration::creditableContacts()` and
+  `contactNoCreditReason()`, not the contract directly. The Cabrillo and ADIF
+  exports and the WFD Event Summary PDF all read `creditableContacts()`, so a new
+  rule is applied to them automatically. No-credit contacts are stored with 0
+  points, by `ContactObserver::saving` and `RescoreService`.
+- **Rule text.** `ruleReferences()` holds the verbatim objective text, keyed by
+  code. The WFDA rules do not number their objectives, so the section label is the
+  document heading the text appears under.
+- **Register it** in `RuleSetFactory` under `'WFD'`, and never remove older years.
 
 ## Where scoring lives (reference map)
 
@@ -292,7 +331,9 @@ Ideally merge **before** any event pinned to `rules_version='2027'` is created. 
 | Power multiplier | `FieldDayRuleSet::powerMultiplier(PowerContext)` |
 | Youth bonus formula | `FieldDayRuleSet::youthMaxCount()` / `::youthPointsPerYouth()` |
 | Emergency power cap | `FieldDayRuleSet::emergencyPowerMaxTransmitters()` |
-| WFD objective multipliers | `bonus_types.objective_multiplier`, summed by `WinterFieldDay2026::objectiveMultiplier()` |
+| WFD objective multipliers | `bonus_types.objective_multiplier`, summed by `WinterFieldDay2026::objectiveMultiplier()` / `WinterFieldDay2027::objectiveMultiplier()` |
+| WFD implied objectives | `ImpliesObjectives::impliedObjectives()` (e.g. `WinterFieldDay2027`) |
+| Contacts that earn no credit | `DeterminesContactCredit` on the ruleset, reached via `EventConfiguration::creditableContacts()` / `contactNoCreditReason()` |
 | Satellite/emergency/public-location bonus values & eligible classes | `bonus_types` row via `RuleSet::bonus(code)` |
 | ARRL rule section & wording shown next to each bonus | `RuleSet::bonusRuleReference(code)` (backed by `FieldDayYYYY::ruleReferences()`) |
 | Ruleset selection for an event | `RuleSetFactory::forEvent($event)` |

@@ -4,8 +4,10 @@ namespace App\Livewire\Dashboard\Widgets;
 
 use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use App\Models\Contact;
+use App\Models\Event;
 use App\Models\Section;
 use App\Services\EventContextService;
+use App\Support\EventSections;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
@@ -39,11 +41,11 @@ class SectionsWorked extends Component
             return Cache::remember(
                 $this->cacheKey(),
                 now()->addSeconds(3),
-                fn () => $this->buildSectionData($event->eventConfiguration->id)
+                fn () => $this->buildSectionData($event)
             );
         }
 
-        return $this->buildSectionData($event->eventConfiguration->id);
+        return $this->buildSectionData($event);
     }
 
     public function getWidgetListeners(): array
@@ -51,17 +53,22 @@ class SectionsWorked extends Component
         return $this->contactLoggedListener();
     }
 
-    protected function buildSectionData(int $eventConfigId): array
+    protected function buildSectionData(Event $event): array
     {
         $allSections = Section::where('is_active', true)
+            ->whereNotIn('code', EventSections::foldedCodes($event))
             ->orderBy('code')
             ->get();
 
-        $workedSectionIds = Contact::where('event_configuration_id', $eventConfigId)
+        $workedSectionIds = Contact::where('event_configuration_id', $event->eventConfiguration->id)
             ->notDuplicate()
             ->whereNotNull('section_id')
             ->distinct()
-            ->pluck('section_id')
+            ->pluck('section_id');
+
+        $workedCodes = Section::whereIn('id', $workedSectionIds)
+            ->pluck('code')
+            ->map(fn (string $code) => EventSections::countedCode($code, $event))
             ->flip();
 
         $sectionsByRegion = $allSections->groupBy('region');
@@ -79,7 +86,7 @@ class SectionsWorked extends Component
                 $sections = $combinedSections->map(fn (Section $s) => [
                     'code' => $s->code,
                     'name' => $s->name,
-                    'worked' => $workedSectionIds->has($s->id),
+                    'worked' => $workedCodes->has($s->code),
                 ])->values()->all();
 
                 $workedCount = collect($sections)->where('worked', true)->count();
@@ -96,7 +103,7 @@ class SectionsWorked extends Component
                 $sections = $regionSections->map(fn (Section $s) => [
                     'code' => $s->code,
                     'name' => $s->name,
-                    'worked' => $workedSectionIds->has($s->id),
+                    'worked' => $workedCodes->has($s->code),
                 ])->values()->all();
 
                 $workedCount = collect($sections)->where('worked', true)->count();

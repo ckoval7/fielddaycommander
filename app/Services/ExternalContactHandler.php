@@ -95,6 +95,7 @@ class ExternalContactHandler
             'logger_user_id' => $operatorUserId,
             'band_id' => $bandId,
             'mode_id' => $modeId,
+            'submode' => $modeName,
             'qso_time' => $dto->timestamp,
             'callsign' => $dto->callsign,
             'section_id' => $sectionId,
@@ -213,6 +214,7 @@ class ExternalContactHandler
             'qso_time' => $dto->timestamp,
             'band_id' => $bandId,
             'mode_id' => $modeId,
+            'submode' => $dto->modeName ?? $contact->submode,
             'section_id' => $sectionId,
             'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange) ?? $contact->exchange_class,
         ]);

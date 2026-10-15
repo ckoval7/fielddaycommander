@@ -22,6 +22,7 @@ class EventBonus extends Model
         'notes',
         'proof_file_path',
         'is_verified',
+        'invalidated_by_rescore',
         'verified_by_user_id',
         'verified_at',
     ];
@@ -30,6 +31,7 @@ class EventBonus extends Model
     {
         return [
             'is_verified' => 'boolean',
+            'invalidated_by_rescore' => 'boolean',
             'verified_at' => 'datetime',
         ];
     }

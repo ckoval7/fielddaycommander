@@ -5,6 +5,7 @@ use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Section;
@@ -313,4 +314,72 @@ test('section map has no listeners when no active event', function () {
 test('section map view includes polling directive for fallback updates', function () {
     Livewire\Livewire::test(SectionMap::class)
         ->assertSeeHtml('wire:poll.visible.10s');
+});
+
+/**
+ * Log non-duplicate contacts with the given section for the test event.
+ */
+function logSectionMapContacts(object $test, Section $section, int $count): void
+{
+    $session = OperatingSession::factory()->create([
+        'station_id' => $test->station->id,
+    ]);
+
+    Contact::factory()->count($count)->create([
+        'event_configuration_id' => $test->eventConfig->id,
+        'operating_session_id' => $session->id,
+        'section_id' => $section->id,
+        'band_id' => $test->band20->id,
+        'mode_id' => $test->modeSSB->id,
+        'logger_user_id' => $test->user->id,
+        'is_duplicate' => false,
+    ]);
+}
+
+describe('Yukon (YT) section', function () {
+    beforeEach(function () {
+        $this->sectionTER = Section::firstOrCreate(
+            ['code' => 'TER'],
+            ['name' => 'Territories', 'region' => 'VE', 'country' => 'CA', 'is_active' => true]
+        );
+        $this->sectionYT = Section::firstOrCreate(
+            ['code' => 'YT'],
+            ['name' => 'Yukon', 'region' => 'VE', 'country' => 'CA', 'is_active' => true]
+        );
+    });
+
+    test('ARRL events fold YT contacts into TER and draw the combined Territories', function () {
+        logSectionMapContacts($this, $this->sectionYT, 2);
+        logSectionMapContacts($this, $this->sectionTER, 1);
+
+        $component = Livewire\Livewire::test(SectionMap::class);
+        $sectionData = $component->viewData('sectionData');
+
+        expect($sectionData)->not->toHaveKey('YT')
+            ->and($sectionData['TER']['count'])->toBe(3)
+            ->and($component->viewData('sectionsWorked'))->toBe(1)
+            ->and($component->viewData('totalSections'))->toBe(Section::where('is_active', true)->whereNotIn('code', ['MX', 'YT'])->count());
+
+        $component->assertDontSeeHtml('id="YT"')
+            ->assertSeeHtml('d="m 649.32031,0.65429688');
+    });
+
+    test('Winter Field Day maps YT as its own section', function () {
+        $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'is_active' => true]);
+        $this->event->update(['event_type_id' => $wfd->id]);
+
+        logSectionMapContacts($this, $this->sectionYT, 2);
+        logSectionMapContacts($this, $this->sectionTER, 1);
+
+        $component = Livewire\Livewire::test(SectionMap::class);
+        $sectionData = $component->viewData('sectionData');
+
+        expect($sectionData['YT']['count'])->toBe(2)
+            ->and($sectionData['TER']['count'])->toBe(1)
+            ->and($component->viewData('sectionsWorked'))->toBe(2)
+            ->and($component->viewData('totalSections'))->toBe(Section::where('is_active', true)->count());
+
+        $component->assertSeeHtml('id="YT"')
+            ->assertDontSeeHtml('d="m 649.32031,0.65429688');
+    });
 });

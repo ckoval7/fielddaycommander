@@ -1051,6 +1051,48 @@ test('creating a WFD event leaves setup_allowed_from null', function () {
     expect($event->setup_allowed_from)->toBeNull();
 });
 
+test('creating a WFD event sets setup_allowed_from 24 hours before the 1600Z start', function () {
+    $wfdType = EventType::create([
+        'code' => 'WFD',
+        'name' => 'Winter Field Day',
+        'description' => 'Winter Field Day Association event - held the 4th full weekend in January',
+        'is_active' => true,
+        'setup_offset_hours' => 24,
+    ]);
+
+    $wfdClass = OperatingClass::create([
+        'event_type_id' => $wfdType->id,
+        'code' => 'I',
+        'name' => 'Indoor',
+        'description' => 'Indoor operation',
+        'allows_gota' => false,
+        'max_power_watts' => 500,
+        'requires_emergency_power' => false,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $wfdType->id)
+        ->set('name', 'Test WFD 2027 Setup')
+        ->set('start_time', '2027-01-23 16:00')
+        ->set('end_time', '2027-01-24 21:59')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $wfdClass->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->set('uses_commercial_power', false)
+        ->set('uses_generator', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $event = Event::where('name', 'Test WFD 2027 Setup')->first();
+    expect($event)->not->toBeNull();
+    expect($event->setup_allowed_from->toDateTimeString())->toBe('2027-01-22 16:00:00');
+});
+
 test('setupAllowedFrom computed property returns null for event type without offset', function () {
     $wfdType = EventType::create([
         'code' => 'WFD',
@@ -1366,4 +1408,83 @@ test('event form highlights power source checkboxes when none are selected', fun
         ->assertSeeHtml('checkbox checkbox-sm checkbox-error')
         ->assertSeeHtml('border-error bg-error/5')
         ->assertSee('At least one power source must be selected.');
+});
+
+test('WFD rules guidance shows for WFD events only', function () {
+    $wfdType = EventType::create([
+        'code' => 'WFD',
+        'name' => 'Winter Field Day',
+        'description' => 'Winter Field Day event',
+        'is_active' => true,
+        'setup_offset_hours' => null,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $wfdType->id)
+        ->assertSee('WFD rules: class, category and location')
+        ->assertSee('300 m diameter')
+        ->set('event_type_id', $this->eventType->id)
+        ->assertDontSee('WFD rules: class, category and location')
+        ->assertDontSee('300 m diameter');
+});
+
+test('public visitor details save, validate and reload on edit', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+    ]);
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->set('is_open_to_public', true)
+        ->set('public_directions', str_repeat('a', 1001))
+        ->call('save')
+        ->assertHasErrors(['public_directions' => 'max']);
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->set('is_open_to_public', true)
+        ->set('public_directions', 'Behind the library')
+        ->set('public_visiting_hours', 'Sat 10-4')
+        ->set('public_contact_email', 'info@example.org')
+        ->set('public_contact_phone', '+1 (555) 010-0100 ext. 5')
+        ->set('public_website_url', 'https://facebook.com/club')
+        ->set('public_description', 'Come visit.')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $config->refresh();
+    expect($config->is_open_to_public)->toBeTrue()
+        ->and($config->public_directions)->toBe('Behind the library')
+        ->and($config->public_contact_email)->toBe('info@example.org')
+        ->and($config->public_contact_phone)->toBe('+1 (555) 010-0100 ext. 5')
+        ->and($config->public_website_url)->toBe('https://facebook.com/club');
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->assertSet('public_description', 'Come visit.')
+        ->assertSet('public_contact_email', 'info@example.org')
+        ->assertSet('public_contact_phone', '+1 (555) 010-0100 ext. 5')
+        ->assertSet('public_website_url', 'https://facebook.com/club');
+});
+
+it('rejects invalid public contact email, phone and website', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+    ]);
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->set('public_contact_email', 'not-an-email')
+        ->set('public_contact_phone', 'call me <b>')
+        ->set('public_website_url', 'javascript:alert(1)')
+        ->call('save')
+        ->assertHasErrors(['public_contact_email', 'public_contact_phone', 'public_website_url']);
 });

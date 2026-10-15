@@ -4,6 +4,7 @@ namespace App\Livewire\Logging;
 
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
+use App\Livewire\Logging\Concerns\HasParticipantWarning;
 use App\Livewire\Logging\Concerns\HasRecentContactNumbers;
 use App\Models\AuditLog;
 use App\Models\Contact;
@@ -11,6 +12,7 @@ use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Models\User;
 use App\Services\ExchangeParserService;
+use App\Services\LoggingWarningService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Computed;
@@ -19,7 +21,7 @@ use Livewire\Component;
 
 class LoggingInterface extends Component
 {
-    use HasContactForm, HasDuplicateDetection, HasRecentContactNumbers;
+    use HasContactForm, HasDuplicateDetection, HasParticipantWarning, HasRecentContactNumbers;
 
     public OperatingSession $operatingSession;
 
@@ -32,6 +34,8 @@ class LoggingInterface extends Component
     public ?int $gotaOperatorUserId = null;
 
     public string $gotaUserSearch = '';
+
+    public string $bandModeWarning = '';
 
     public function mount(OperatingSession $operatingSession): void
     {
@@ -61,6 +65,16 @@ class LoggingInterface extends Component
         }
 
         $this->operatingSession = $operatingSession;
+        $this->refreshBandModeWarning();
+    }
+
+    public function refreshBandModeWarning(): void
+    {
+        $this->bandModeWarning = app(LoggingWarningService::class)->bandModeConflictWarning(
+            $this->operatingSession->station,
+            $this->operatingSession->band_id,
+            $this->operatingSession->mode_id,
+        ) ?? '';
     }
 
     public function updatedExchangeInput(): void
@@ -68,10 +82,13 @@ class LoggingInterface extends Component
         $this->parseError = '';
         $this->clearDuplicateState();
         $this->parsePreview = [];
+        $this->participantWarning = '';
 
         if (trim($this->exchangeInput) === '') {
             return;
         }
+
+        $this->refreshParticipantWarning($this->operatingSession->station->event_configuration_id);
 
         // Cannot perform duplicate detection or suggestions without knowing current band/mode
         if ($this->operatingSession->band_id === null || $this->operatingSession->mode_id === null) {
@@ -111,6 +128,7 @@ class LoggingInterface extends Component
         $this->exchangeInput = '';
         $this->parsePreview = [];
         $this->parseError = '';
+        $this->participantWarning = '';
         $this->clearDuplicateState();
     }
 
@@ -118,6 +136,7 @@ class LoggingInterface extends Component
     public function onContactSynced(): void
     {
         $this->operatingSession->refresh();
+        $this->refreshBandModeWarning();
         unset($this->recentContacts);
     }
 
@@ -132,6 +151,7 @@ class LoggingInterface extends Component
         $this->exchangeInput = strtoupper(trim($exchange));
         $this->suggestions = [];
         $this->parseError = '';
+        $this->refreshParticipantWarning($this->operatingSession->station->event_configuration_id);
 
         $callsign = $this->extractCallsign();
         if ($callsign && $this->operatingSession->band_id !== null && $this->operatingSession->mode_id !== null) {

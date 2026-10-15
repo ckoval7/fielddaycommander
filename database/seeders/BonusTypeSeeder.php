@@ -47,6 +47,7 @@ class BonusTypeSeeder extends Seeder
             $this->fieldDayBonuses($fdEventType->id),
             $this->winterFieldDayBonuses($wfdEventType->id),
             $this->winterFieldDayObjectives($wfdEventType->id),
+            $this->winterFieldDay2027Objectives($wfdEventType->id),
         );
 
         $bonuses = $this->withInheritedVersions($bonuses, [
@@ -636,5 +637,49 @@ class BonusTypeSeeder extends Seeder
                 'eligible_classes' => null,
             ],
         ];
+    }
+
+    /**
+     * Winter Field Day 2027 objectives.
+     *
+     * Same multiplier model as 2026. The satellite objectives are gone,
+     * alternative power is split into a station-equipment objective and a 100%
+     * objective that also earns it, and SSTV image and cross-band repeater
+     * objectives are new. Source: WFDA "Winter Field Day 2027" rules, Version 3,
+     * 04 OCT 2026. Mirrored by the `seed_winter_field_day_2027_objectives`
+     * migration, since production updates do not run seeders.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function winterFieldDay2027Objectives(int $eventTypeId): array
+    {
+        /** @var array<int, array{code: string, name: string, objective_multiplier: int, trigger_type: string, requires_proof: bool, description: string}> $objectives */
+        $objectives = [
+            ['code' => 'alt_power_equipment', 'name' => 'Station Equipment on Alternative Power', 'objective_multiplier' => 1, 'trigger_type' => 'manual', 'requires_proof' => false, 'description' => 'Run all station equipment, including laptops, networking and accessories, on alternative power for the whole operating period.'],
+            ['code' => 'alt_power_full', 'name' => 'Operate 100% on Alternative Power', 'objective_multiplier' => 2, 'trigger_type' => 'manual', 'requires_proof' => false, 'description' => 'Run everything, including lights, HVAC and other appliances, on alternative power for the whole operating period. Also earns the station-equipment objective.'],
+            ['code' => 'away_from_home', 'name' => 'Operate Away From Home', 'objective_multiplier' => 3, 'trigger_type' => 'manual', 'requires_proof' => false, 'description' => 'Set up the field station more than half a mile from home.'],
+            ['code' => 'multiple_antennas', 'name' => 'Deploy Multiple Antennas', 'objective_multiplier' => 1, 'trigger_type' => 'manual', 'requires_proof' => false, 'description' => 'Deploy two or more not-previously-installed antennas and make at least one contact on each.'],
+            ['code' => 'sstv_image', 'name' => 'Send and Receive the WFD SSTV Image', 'objective_multiplier' => 2, 'trigger_type' => 'manual', 'requires_proof' => true, 'description' => 'Send and receive the official WFD SSTV image and the WFD exchange in a logged QSO.'],
+            ['code' => 'crossband_repeater', 'name' => 'Cross-Band Repeater Contacts', 'objective_multiplier' => 3, 'trigger_type' => 'manual', 'requires_proof' => true, 'description' => 'Set up a cross-band repeater during the setup period and make three contacts through it. Do not log these contacts.'],
+            ['code' => 'winlink_email', 'name' => 'Send and Receive a Winlink Email', 'objective_multiplier' => 1, 'trigger_type' => 'manual', 'requires_proof' => true, 'description' => 'Send and receive at least one email from a winlink.org address over amateur RF within the operational period.'],
+            ['code' => 'bulletin', 'name' => 'Copy the WFD Bulletin', 'objective_multiplier' => 1, 'trigger_type' => 'manual', 'requires_proof' => true, 'description' => 'Accurately copy the WFD Bulletin and submit the copy with the log.'],
+            ['code' => 'six_bands', 'name' => 'Three Contacts on Six Bands', 'objective_multiplier' => 6, 'trigger_type' => 'derived', 'requires_proof' => false, 'description' => 'Log at least three contacts on each of six or more different bands. Satellite contacts do not count.'],
+            ['code' => 'twelve_bands', 'name' => 'Three Contacts on Twelve Bands', 'objective_multiplier' => 6, 'trigger_type' => 'derived', 'requires_proof' => false, 'description' => 'Log at least three contacts on each of twelve or more different bands. The six-band objective counts toward this one.'],
+            ['code' => 'multiple_modes', 'name' => 'Use Multiple Modes', 'objective_multiplier' => 2, 'trigger_type' => 'derived', 'requires_proof' => false, 'description' => 'Complete a QSO in at least two of the three mode groups (CW, Phone, Digital). Using all three earns no more.'],
+            ['code' => 'qrp', 'name' => 'Operate the Event QRP', 'objective_multiplier' => 4, 'trigger_type' => 'derived', 'requires_proof' => false, 'description' => 'Every station runs 10 W or less on Phone, or 5 W or less on CW and Digital, for the whole time operated.'],
+            ['code' => 'six_continuous_hours', 'name' => 'Operate Six Continuous Hours', 'objective_multiplier' => 2, 'trigger_type' => 'manual', 'requires_proof' => false, 'description' => 'Staff the radio for six continuous hours, monitoring and ready to respond.'],
+        ];
+
+        return array_map(fn (array $objective): array => [
+            'event_type_id' => $eventTypeId,
+            'rules_version' => '2027',
+            ...$objective,
+            'base_points' => 0,
+            'is_per_transmitter' => false,
+            'is_per_occurrence' => false,
+            'max_points' => 0,
+            'max_occurrences' => 1,
+            'eligible_classes' => null,
+        ], $objectives);
     }
 }
