@@ -307,7 +307,7 @@ install_packages_debian() {
     # Add NodeSource repo
     if node_needs_install; then
         log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
-        curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        curl -fsSL --proto '=https' --tlsv1.2 "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
     else
         log_warn "Node.js $(node --version) already installed, skipping NodeSource"
     fi
@@ -333,7 +333,7 @@ install_packages_rhel() {
     if node_needs_install; then
         log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
         dnf module disable -y nodejs &>/dev/null || true
-        curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        curl -fsSL --proto '=https' --tlsv1.2 "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
     else
         log_warn "Node.js $(node --version) already installed, skipping NodeSource"
     fi
