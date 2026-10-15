@@ -206,10 +206,11 @@ test('Cabrillo export identifies the log as WFD, not ARRL Field Day', function (
 
     expect($log)->toContain('CONTEST: WFD')
         ->and($log)->not->toContain('ARRL-FD')
-        // Outdoor operation, so Cabrillo station category is PORTABLE.
-        ->and($log)->toContain('CATEGORY-STATION: PORTABLE')
+        // WFDA's format carries the exchange in X-EXCHANGE, not ARRL category lines.
+        ->and($log)->toContain('X-EXCHANGE: 3O')
+        ->and($log)->not->toContain('CATEGORY-STATION')
         ->and(app(CabrilloExporter::class)->filename($config))
-        ->toContain('winter-field-day.log');
+        ->toBe('K4SCO.log');
 });
 
 test('the scoring page renders for a WFD event with objective wording', function () {
