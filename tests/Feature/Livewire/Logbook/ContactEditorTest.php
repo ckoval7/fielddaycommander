@@ -236,3 +236,28 @@ describe('restoreContact', function () {
             ->assertForbidden();
     });
 });
+
+describe('submode', function () {
+    test('loads and saves the submode', function () {
+        $this->contact->update(['submode' => 'FT8']);
+
+        Livewire::test(ContactEditor::class)
+            ->call('openEdit', $this->contact->id)
+            ->assertSet('submode', 'FT8')
+            ->set('submode', 'rtty')
+            ->call('save');
+
+        expect($this->contact->fresh()->submode)->toBe('RTTY');
+    });
+
+    test('clearing the submode stores null', function () {
+        $this->contact->update(['submode' => 'FT8']);
+
+        Livewire::test(ContactEditor::class)
+            ->call('openEdit', $this->contact->id)
+            ->set('submode', '')
+            ->call('save');
+
+        expect($this->contact->fresh()->submode)->toBeNull();
+    });
+});

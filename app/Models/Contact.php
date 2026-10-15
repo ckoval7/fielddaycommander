@@ -20,6 +20,7 @@ class Contact extends Model
         'logger_user_id',
         'band_id',
         'mode_id',
+        'submode',
         'qso_time',
         'callsign',
         'section_id',
@@ -142,6 +143,15 @@ class Contact extends Model
     protected function setExchangeClassAttribute(?string $value): void
     {
         $this->attributes['exchange_class'] = $value ? mb_strtoupper(trim($value)) : null;
+    }
+
+    /**
+     * Normalize the sub-mode (e.g. FT8, SSTV, USB) to uppercase; blank becomes null.
+     */
+    protected function setSubmodeAttribute(?string $value): void
+    {
+        $value = $value !== null ? mb_strtoupper(trim($value)) : '';
+        $this->attributes['submode'] = $value !== '' ? mb_substr($value, 0, 20) : null;
     }
 
     /**

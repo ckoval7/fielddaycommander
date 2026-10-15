@@ -121,3 +121,29 @@ test('full pipeline: non-ADIF WSJTX packets are ignored', function () {
 
     expect($result)->toBeNull();
 });
+
+test('full pipeline: WSJT-X logged packet stores the uppercase submode', function () {
+    $adifText = "<adif_ver:5>3.0.7\n<programid:6>WSJT-X\n<EOH>\n"
+        .'<call:4>W1AW <mode:4>MFSK <submode:3>ft4 <qso_date:8>20260628 <time_on:6>184300 '
+        .'<band:3>20m <freq:6>14.076 <station_callsign:5>K3CPK <operator:5>K3CPK '
+        .'<SRX_STRING:5>3A CT <arrl_sect:2>CT <EOR>';
+
+    $rawAdif = $this->wsjtxParser->parse(buildTestPacket($adifText));
+    $parsed = $this->adifParser->parse($rawAdif);
+    $contact = $this->handler->handleContact($this->mapper->map($parsed['records'][0], 'wsjtx'), $this->config);
+
+    expect($contact->fresh()->submode)->toBe('FT4')
+        ->and($contact->mode->name)->toBe('Digital');
+});
+
+test('full pipeline: submode falls back to MODE when SUBMODE is absent', function () {
+    $adifText = "<adif_ver:5>3.0.7\n<EOH>\n"
+        .'<call:4>W1AW <mode:4>RTTY <qso_date:8>20260628 <time_on:6>184300 '
+        .'<band:3>20m <freq:6>14.076 <station_callsign:5>K3CPK <operator:5>K3CPK '
+        .'<SRX_STRING:5>3A CT <arrl_sect:2>CT <EOR>';
+
+    $parsed = $this->adifParser->parse($adifText);
+    $contact = $this->handler->handleContact($this->mapper->map($parsed['records'][0], 'udp-adif'), $this->config);
+
+    expect($contact->fresh()->submode)->toBe('RTTY');
+});

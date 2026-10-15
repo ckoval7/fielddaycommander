@@ -128,6 +128,27 @@
                 </div>
             </div>
 
+            <div class="max-sm:px-4 sm:max-w-xs">
+                    <label for="transcribe-submode" class="block py-1 text-xs font-semibold uppercase tracking-wider mb-1">Sub-mode</label>
+                    <input
+                        id="transcribe-submode"
+                        type="text"
+                        wire:model="submode"
+                        list="transcribe-submodes"
+                        maxlength="20"
+                        class="input input-sm w-full uppercase"
+                        placeholder="Optional (FT8, SSTV...)"
+                    />
+                    <datalist id="transcribe-submodes">
+                        @foreach(array_merge(...array_map(fn ($category) => \App\Services\ModeResolverService::submodeSuggestions($category), ['Digital', 'Phone', 'CW'])) as $suggestion)
+                            <option value="{{ $suggestion }}"></option>
+                        @endforeach
+                    </datalist>
+                    @error('submode')
+                        <p class="text-error text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
             {{-- GOTA Operator Fields --}}
             @if($this->isGotaStation)
                 <div class="max-sm:mx-4 bg-info/10 border border-info/30 rounded-lg p-4 space-y-3">

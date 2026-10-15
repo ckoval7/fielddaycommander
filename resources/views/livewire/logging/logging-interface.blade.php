@@ -3,6 +3,7 @@
         band_id: {{ $operatingSession->band_id }},
         mode_id: {{ $operatingSession->mode_id }},
         power_watts: {{ $operatingSession->power_watts }},
+        get submode() { return document.querySelector('[data-submode-input]')?.value?.trim() || null },
         is_gota: {{ $operatingSession->station->is_gota ? 'true' : 'false' }},
         get gota_operator_first_name() { return document.querySelector('[wire\\:model=gotaOperatorFirstName]')?.value || null },
         get gota_operator_last_name() { return document.querySelector('[wire\\:model=gotaOperatorLastName]')?.value || null },
@@ -102,6 +103,25 @@
             <span class="text-base-content/70 text-sm uppercase tracking-wider">Your Exchange</span>
             <div class="text-2xl font-bold font-mono">{{ $this->clubExchange }}</div>
             <div class="text-sm text-base-content/60 italic">{{ $this->phoneticExchange }}</div>
+        </div>
+
+        {{-- Optional sub-mode (e.g. FT8, SSTV); stays set between contacts --}}
+        <div class="flex items-center justify-center gap-2 max-sm:px-4">
+            <label for="log-submode" class="text-xs uppercase tracking-wider text-base-content/60">Sub-mode</label>
+            <input
+                id="log-submode"
+                data-submode-input
+                type="text"
+                list="log-submodes"
+                maxlength="20"
+                class="input input-xs w-32 uppercase font-mono"
+                placeholder="Optional"
+            />
+            <datalist id="log-submodes">
+                @foreach(\App\Services\ModeResolverService::submodeSuggestions($operatingSession->mode?->category) as $suggestion)
+                    <option value="{{ $suggestion }}"></option>
+                @endforeach
+            </datalist>
         </div>
 
         {{-- GOTA Operator Fields --}}

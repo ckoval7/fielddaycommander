@@ -108,7 +108,7 @@
                 @endscope
 
                 @scope('cell_mode', $contact)
-                    <span class="text-sm">{{ $contact->mode?->name ?? 'N/A' }}</span>
+                    <span class="text-sm">{{ $contact->mode?->name ?? 'N/A' }}@if($contact->submode)<span class="text-base-content/60"> &middot; {{ $contact->submode }}</span>@endif</span>
                 @endscope
 
                 @scope('cell_class', $contact)
@@ -240,7 +240,7 @@
                             <span class="text-base-content/30">•</span>
                             <div class="flex items-center gap-1">
                                 <x-icon name="phosphor-radio" class="w-4 h-4 text-base-content/50" />
-                                <span>{{ $contact->mode?->name ?? 'N/A' }}</span>
+                                <span>{{ $contact->mode?->name ?? 'N/A' }}@if($contact->submode) &middot; {{ $contact->submode }}@endif</span>
                             </div>
                             <span class="text-base-content/30">•</span>
                             <span>{{ $contact->exchange_class ?? 'N/A' }}</span>

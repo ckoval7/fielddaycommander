@@ -26,6 +26,21 @@ class ModeResolverService
     ];
 
     /**
+     * Suggested sub-mode names for a mode group category (CW, Phone, Digital).
+     *
+     * @return array<int, string>
+     */
+    public static function submodeSuggestions(?string $category): array
+    {
+        return match ($category) {
+            'CW' => ['CW'],
+            'Phone' => ['USB', 'LSB', 'FM', 'AM'],
+            'Digital' => ['RTTY', 'PSK31', 'SSTV', 'FT8', 'FT4', 'JS8', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'VARA', 'FREEDV'],
+            default => [],
+        };
+    }
+
+    /**
      * Resolve a raw mode string to a FD Commander Mode ID.
      */
     public function resolve(?string $modeName): ?int

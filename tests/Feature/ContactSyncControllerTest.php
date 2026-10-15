@@ -446,3 +446,62 @@ test('syncing a contact rejects an unknown exchange class letter', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors('exchange_class');
 });
+
+test('syncing a contact stores an optional uppercase submode', function () {
+    $uuid = fake()->uuid();
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => $uuid,
+            'operating_session_id' => $this->session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'submode' => 'ssb',
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'exchange_class' => '3A',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+        ])
+        ->assertCreated();
+
+    expect(Contact::where('uuid', $uuid)->value('submode'))->toBe('SSB');
+});
+
+test('syncing a contact without a submode stores null', function () {
+    $uuid = fake()->uuid();
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => $uuid,
+            'operating_session_id' => $this->session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'exchange_class' => '3A',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+        ])
+        ->assertCreated();
+
+    expect(Contact::where('uuid', $uuid)->value('submode'))->toBeNull();
+});
+
+test('syncing a contact rejects an overlong submode', function () {
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $this->session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'submode' => str_repeat('X', 21),
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'exchange_class' => '3A',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('submode');
+});

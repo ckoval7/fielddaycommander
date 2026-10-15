@@ -54,6 +54,20 @@
                     required
                 />
 
+                <x-input
+                    label="Sub-mode (optional)"
+                    wire:model="submode"
+                    list="contact-editor-submodes"
+                    maxlength="20"
+                    placeholder="e.g. FT8, SSTV, USB"
+                    class="uppercase"
+                />
+                <datalist id="contact-editor-submodes">
+                    @foreach(array_merge(\App\Services\ModeResolverService::submodeSuggestions('Digital'), \App\Services\ModeResolverService::submodeSuggestions('Phone')) as $suggestion)
+                        <option value="{{ $suggestion }}"></option>
+                    @endforeach
+                </datalist>
+
                 <x-flatpickr
                     label="QSO Time"
                     wire:model="qsoTime"

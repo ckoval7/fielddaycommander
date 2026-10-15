@@ -47,6 +47,8 @@ class TranscribeInterface extends Component
 
     public ?int $powerWatts = null;
 
+    public string $submode = '';
+
     // GOTA operator fields (sticky between contacts)
     public string $gotaOperatorFirstName = '';
 
@@ -177,6 +179,7 @@ class TranscribeInterface extends Component
             'selectedBandId' => 'required|exists:bands,id',
             'selectedModeId' => 'required|exists:modes,id',
             'powerWatts' => 'required|integer|min:1|max:1500',
+            'submode' => 'nullable|string|max:20',
         ]);
 
         $exchange = $this->getExchangeWithoutTime();
@@ -213,6 +216,7 @@ class TranscribeInterface extends Component
             'logger_user_id' => auth()->id(),
             'band_id' => $this->selectedBandId,
             'mode_id' => $this->selectedModeId,
+            'submode' => $this->submode,
             'qso_time' => $resolvedTime,
             'callsign' => $parsed['callsign'],
             'section_id' => $parsed['section_id'],

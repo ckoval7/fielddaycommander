@@ -61,6 +61,7 @@ class ContactSyncController extends Controller
                 'logger_user_id' => $request->user()->id,
                 'band_id' => $request->band_id,
                 'mode_id' => $request->mode_id,
+                'submode' => $request->submode,
                 'qso_time' => $request->qso_time,
                 'callsign' => $request->callsign,
                 'section_id' => $request->section_id,

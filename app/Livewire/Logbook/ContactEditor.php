@@ -35,6 +35,8 @@ class ContactEditor extends Component
 
     public ?int $modeId = null;
 
+    public string $submode = '';
+
     public string $qsoTime = '';
 
     public string $notes = '';
@@ -57,6 +59,7 @@ class ContactEditor extends Component
         $this->sectionId = $contact->section_id;
         $this->bandId = $contact->band_id;
         $this->modeId = $contact->mode_id;
+        $this->submode = $contact->submode ?? '';
         $this->qsoTime = $contact->qso_time?->format('Y-m-d H:i') ?? '';
         $this->notes = $contact->notes ?? '';
         $this->resetValidation();
@@ -74,6 +77,7 @@ class ContactEditor extends Component
             'sectionId' => 'required|exists:sections,id',
             'bandId' => 'required|exists:bands,id',
             'modeId' => 'required|exists:modes,id',
+            'submode' => 'nullable|string|max:20',
             'qsoTime' => 'required|date',
             'notes' => 'nullable|string|max:500',
         ]);
@@ -99,6 +103,7 @@ class ContactEditor extends Component
             'section_id' => $contact->section_id,
             'band_id' => $contact->band_id,
             'mode_id' => $contact->mode_id,
+            'submode' => $contact->submode,
             'qso_time' => $contact->qso_time?->toDateTimeString(),
             'notes' => $contact->notes,
         ]);
@@ -125,6 +130,7 @@ class ContactEditor extends Component
             'exchange_class' => $validated['exchangeClass'],
             'band_id' => $validated['bandId'],
             'mode_id' => $validated['modeId'],
+            'submode' => $validated['submode'] ?? null,
             'qso_time' => $validated['qsoTime'],
             'section_id' => $validated['sectionId'],
             'notes' => $validated['notes'] ?: null,
@@ -138,6 +144,7 @@ class ContactEditor extends Component
             'section_id' => $contact->section_id,
             'band_id' => $contact->band_id,
             'mode_id' => $contact->mode_id,
+            'submode' => $contact->submode,
             'qso_time' => $contact->qso_time?->toDateTimeString(),
             'notes' => $contact->notes,
         ]);
