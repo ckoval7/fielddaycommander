@@ -64,7 +64,13 @@ class BandModeGrid extends Component
     #[Computed]
     public function bands(): Collection
     {
-        return Band::allowedForFieldDay()->ordered()->get();
+        $query = Band::allowedForFieldDay()->ordered();
+
+        if ($this->event?->eventConfiguration) {
+            $query->withExtremeBandsOnlyWhenWorked($this->event->eventConfiguration->id);
+        }
+
+        return $query->get();
     }
 
     #[Computed]

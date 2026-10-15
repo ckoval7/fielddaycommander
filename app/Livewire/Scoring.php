@@ -620,7 +620,7 @@ class Scoring extends Component
             ->pluck('band_id')
             ->all();
 
-        return $all->filter(fn (Band $band) => ! $band->is_vhf_uhf || in_array($band->id, $bandIdsWithQsos))
+        return $all->filter(fn (Band $band) => ! $band->isShownOnlyWithContacts() || in_array($band->id, $bandIdsWithQsos))
             ->values();
     }
 

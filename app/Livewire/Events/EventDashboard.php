@@ -189,7 +189,13 @@ class EventDashboard extends Component
     #[Computed]
     public function bands(): Collection
     {
-        return Band::allowedForFieldDay()->ordered()->get();
+        $query = Band::allowedForFieldDay()->ordered();
+
+        if ($this->config()) {
+            $query->withExtremeBandsOnlyWhenWorked($this->config()->id);
+        }
+
+        return $query->get();
     }
 
     #[Computed]

@@ -114,9 +114,7 @@ class CabrilloExporter
 
     private function formatQso(EventConfiguration $config, Contact $contact): string
     {
-        $freqKhz = $contact->band->frequency_mhz !== null
-            ? (int) ($contact->band->frequency_mhz * 1000)
-            : 0;
+        $freqKhz = $this->cabrilloFrequency($contact->band->frequency_mhz);
         $mode = $this->cabrilloMode($contact->mode->category);
         $date = $contact->qso_time->format('Y-m-d');
         $time = $contact->qso_time->format('Hi');
@@ -132,7 +130,7 @@ class CabrilloExporter
         $rcvdSection = $contact->section?->code ?? '';
 
         return sprintf(
-            'QSO: %5d %s %s %s %-13s %-4s %-5s %-13s %-4s %-5s',
+            'QSO: %5s %s %s %s %-13s %-4s %-5s %-13s %-4s %-5s',
             $freqKhz,
             $mode,
             $date,
@@ -144,6 +142,29 @@ class CabrilloExporter
             $rcvdClass,
             $rcvdSection
         );
+    }
+
+    /**
+     * Cabrillo frequency field: kHz below 1.2 GHz, band designators (1.2G, 10G, ...) above it.
+     */
+    private function cabrilloFrequency(float|string|null $frequencyMhz): int|string
+    {
+        if ($frequencyMhz === null) {
+            return 0;
+        }
+
+        $frequencyMhz = (float) $frequencyMhz;
+
+        if ($frequencyMhz < 1000) {
+            return (int) round($frequencyMhz * 1000);
+        }
+
+        $designators = [
+            1240 => '1.2G', 2300 => '2.3G', 3300 => '3.4G', 5650 => '5.7G', 10000 => '10G',
+            24000 => '24G', 47000 => '47G', 76000 => '75G', 122250 => '122G', 134000 => '134G', 241000 => '241G',
+        ];
+
+        return $designators[(int) $frequencyMhz] ?? ((int) round($frequencyMhz / 1000)).'G';
     }
 
     private function cabrilloMode(string $category): string

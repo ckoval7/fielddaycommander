@@ -252,3 +252,25 @@ test('non-gota contacts use primary callsign in qso line', function () {
     expect($qsoLines->first())->toContain('W1AW');
     expect($qsoLines->first())->not->toContain('K1GOT');
 });
+
+test('uses band designators for microwave bands and kHz below 1.2 GHz', function () {
+    $config = makeCabrilloExporterConfig();
+    $mode = Mode::factory()->create(['category' => 'CW']);
+
+    foreach (['23cm' => 1240, '3cm' => 10000, '630m' => 0.472, '2m' => 144] as $name => $mhz) {
+        Contact::factory()->create([
+            'event_configuration_id' => $config->id,
+            'band_id' => Band::factory()->create(['name' => $name, 'frequency_mhz' => $mhz])->id,
+            'mode_id' => $mode->id,
+            'callsign' => 'K1'.strtoupper(substr($name, 0, 2)),
+            'is_duplicate' => false,
+        ]);
+    }
+
+    $output = app(CabrilloExporter::class)->export($config);
+
+    expect($output)->toContain('QSO:  1.2G CW')
+        ->and($output)->toContain('QSO:   10G CW')
+        ->and($output)->toContain('QSO:   472 CW')
+        ->and($output)->toContain('QSO: 144000 CW');
+});
