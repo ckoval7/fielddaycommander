@@ -81,7 +81,7 @@ test('other modes earn credit', function (?string $submode) {
     $contact = new Contact(['submode' => $submode, 'is_satellite' => false]);
 
     expect($this->rules->noCreditReason($contact))->toBeNull();
-})->with(['RTTY', 'PSK31', 'JS8', 'SSTV', 'OLIVIA', 'USB', 'FM', 'CW', null]);
+})->with(['RTTY', 'PSK31', 'JS8', 'JTTY', 'SSTV', 'OLIVIA', 'USB', 'FM', 'CW', null]);
 
 test('a satellite contact earns no credit', function () {
     $contact = new Contact(['submode' => 'FM', 'is_satellite' => true, 'band_id' => $this->hfBand->id]);
@@ -98,7 +98,7 @@ test('a contact on the Satellite pseudo-band earns no credit', function () {
 test('the SQL rules agree with the per-contact rules', function () {
     $config = creditConfig($this->wfd, '2027');
 
-    foreach ([null, 'FT8', 'JT65A', 'Q65-30A', 'RTTY', 'JS8', 'USB', 'MSK144', 'ECHO', 'FST4W'] as $submode) {
+    foreach ([null, 'FT8', 'JT65A', 'Q65-30A', 'RTTY', 'JS8', 'JTTY', 'USB', 'MSK144', 'ECHO', 'FST4W'] as $submode) {
         foreach ([$this->hfBand, $this->satBand] as $band) {
             foreach ([false, true] as $isSatellite) {
                 creditContact($config, $band, $this->digital, ['submode' => $submode, 'is_satellite' => $isSatellite]);
@@ -116,7 +116,7 @@ test('the SQL rules agree with the per-contact rules', function () {
     $this->rules->constrainToCreditable($query);
 
     expect($query->pluck('id')->sort()->values()->all())->toBe($creditableInPhp)
-        ->and($creditableInPhp)->toHaveCount(5)
+        ->and($creditableInPhp)->toHaveCount(6)
         ->and($config->creditableContacts()->pluck('id')->sort()->values()->all())->toBe($creditableInPhp);
 });
 

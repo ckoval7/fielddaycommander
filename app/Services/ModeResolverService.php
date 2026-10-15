@@ -24,6 +24,7 @@ class ModeResolverService
         'ROS', 'THROB', 'SSTV', 'FAX', 'PKT', 'DSTAR', 'DMR', 'C4FM',
         'FREEDV', 'ARDOP', 'WINMOR', 'VARA',
         'FT2', 'FST4', 'FST4W', 'JT4', 'Q65', 'MSK144', 'WSPR', 'ECHO',
+        'JTTY',
     ];
 
     /**
@@ -36,7 +37,7 @@ class ModeResolverService
         return match ($category) {
             'CW' => ['CW'],
             'Phone' => ['USB', 'LSB', 'FM', 'AM'],
-            'Digital' => ['RTTY', 'PSK31', 'SSTV', 'FT8', 'FT4', 'JS8', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'VARA', 'FREEDV'],
+            'Digital' => ['RTTY', 'PSK31', 'SSTV', 'JTTY', 'FT8', 'FT4', 'JS8', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'VARA', 'FREEDV'],
             default => [],
         };
     }

@@ -59,6 +59,10 @@ test('resolves every WSJT mode to Digital', function (string $mode) {
     expect($this->resolver->resolve($mode))->toBe($this->modeDigital->id);
 })->with(['FT2', 'FST4', 'FT4', 'FT8', 'JT4', 'JT9', 'JT65', 'Q65', 'MSK144', 'WSPR', 'FST4W', 'ECHO']);
 
+test('resolves JTTY, which WFD 2027 permits, to Digital', function () {
+    expect($this->resolver->resolve('JTTY'))->toBe($this->modeDigital->id);
+});
+
 test('returns null for unknown mode', function () {
     expect($this->resolver->resolve('UNKNOWN_MODE'))->toBeNull();
 });

@@ -370,10 +370,10 @@ test('warns that WSJT-X contacts earn no credit under WFD 2027', function () {
 
     Livewire::test(ExternalLoggerManagement::class)
         ->assertSee(WinterFieldDay2027::NO_CREDIT_WSJT)
-        ->assertSee('WSJT-X contacts are still logged');
+        ->assertSee('Contacts in those modes (FT8, FT4 and the like) are still logged');
 });
 
 test('does not warn about WSJT-X credit for rulesets that allow it', function () {
     Livewire::test(ExternalLoggerManagement::class)
-        ->assertDontSee('WSJT-X contacts are still logged');
+        ->assertDontSee('Contacts in those modes (FT8, FT4 and the like) are still logged');
 });

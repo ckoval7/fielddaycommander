@@ -168,7 +168,7 @@
 
                     @if ($wsjtxNoCreditReason)
                         <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 mb-4">
-                            <p class="text-sm text-yellow-800 dark:text-yellow-200"><strong>No credit:</strong> {{ $wsjtxNoCreditReason }}. WSJT-X contacts are still logged, but they earn no QSO points and count toward no objective.</p>
+                            <p class="text-sm text-yellow-800 dark:text-yellow-200"><strong>No credit:</strong> {{ $wsjtxNoCreditReason }}. Contacts in those modes (FT8, FT4 and the like) are still logged, but they earn no QSO points and count toward no objective. Other WSJT-X modes, such as JTTY, score normally.</p>
                         </div>
                     @endif
 
