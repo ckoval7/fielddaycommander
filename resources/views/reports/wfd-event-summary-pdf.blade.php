@@ -59,7 +59,7 @@
             border-top: 2px solid #1e3ea8; background: #fff;
         }
         .page-footer-left, .page-footer-right { padding: 4px 48px; font-size: 9px; color: #475569; }
-        .page-footer-right { float: right; }
+        .page-footer-right { position: absolute; top: 0; right: 0; }
     </style>
 </head>
 <body>
