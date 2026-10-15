@@ -6,7 +6,6 @@
         @click="open = !open"
         class="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-left hover:bg-base-200 transition-colors"
         :aria-expanded="open"
-        aria-label="{{ $contextEvent ? 'Change event' : 'Select event' }}"
         title="{{ $contextEvent ? 'Change event' : 'Select event' }}"
     >
         @if($contextEvent)
