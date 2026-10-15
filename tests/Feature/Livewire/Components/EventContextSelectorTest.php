@@ -24,6 +24,20 @@ test('component renders with active event', function () {
         ->assertSee('Active');
 });
 
+test('event toggle is named by its visible label, not an aria-label', function () {
+    $event = Event::factory()->create([
+        'name' => 'Field Day 2025',
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    Livewire::actingAs($this->user)
+        ->test(EventContextSelector::class)
+        ->assertDontSeeHtml('aria-label="Change event"')
+        ->assertSeeHtml('title="Change event"');
+});
+
 test('component renders with no event', function () {
     Livewire::actingAs($this->user)
         ->test(EventContextSelector::class)
