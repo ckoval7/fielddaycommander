@@ -29,5 +29,22 @@ final class Nomenclature
          * Multipliers".
          */
         public readonly string $rulebookName = 'ARRL',
+        /**
+         * What operators call the over-the-air bulletin they copy for credit —
+         * ARRL's W1AW Field Day bulletin, or the bulletin WFDA publishes.
+         */
+        public readonly string $bulletinName = 'W1AW Bulletin',
+        /**
+         * Stations the rulebook names as sending the bulletin, offered as the
+         * schedule's source choices. Empty when the rulebook does not fix the
+         * senders, so the schedule takes a free-text callsign instead.
+         *
+         * @var list<string>
+         */
+        public readonly array $bulletinSources = ['W1AW', 'K6KPH'],
+        /**
+         * Badge shown once the bulletin copy is saved and its award earned.
+         */
+        public readonly string $bulletinCapturedLabel = 'Bonus Earned: 100 pts',
     ) {}
 }

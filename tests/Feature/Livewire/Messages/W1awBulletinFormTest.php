@@ -2,6 +2,7 @@
 
 use App\Livewire\Messages\W1awBulletinForm;
 use App\Models\AuditLog;
+use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
@@ -228,5 +229,46 @@ describe('edit history', function () {
             ->test(W1awBulletinForm::class)
             ->assertSee('Edit History')
             ->assertSee('Created bulletin');
+    });
+});
+
+describe('per-event naming', function () {
+    beforeEach(function () {
+        Permission::firstOrCreate(['name' => 'manage-bulletins']);
+        $this->operator->givePermissionTo('manage-bulletins');
+    });
+
+    test('field day names the W1AW bulletin and offers its senders', function () {
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->assertSee('W1AW Bulletin')
+            ->assertSee('K6KPH')
+            ->assertSet('scheduleSource', 'W1AW');
+    });
+
+    test('winter field day names the WFD bulletin without W1AW', function () {
+        $this->event->update(['event_type_id' => EventType::where('code', 'WFD')->first()->id]);
+
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->assertSee('WFD')
+            ->assertDontSee('W1AW')
+            ->assertDontSee('K6KPH')
+            ->assertSet('scheduleSource', '');
+    });
+
+    test('winter field day accepts any sending callsign as the schedule source', function () {
+        $this->event->update(['event_type_id' => EventType::where('code', 'WFD')->first()->id]);
+
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->set('scheduleMode', 'cw')
+            ->set('scheduleFrequencies', '7.040')
+            ->set('scheduleScheduledAt', now()->addDay()->format('Y-m-d\TH:i'))
+            ->set('scheduleSource', 'K4WFD')
+            ->call('addScheduleEntry')
+            ->assertHasNoErrors();
+
+        expect(BulletinScheduleEntry::where('event_id', $this->event->id)->value('source'))->toBe('K4WFD');
     });
 });

@@ -17,6 +17,10 @@ function runWfd2027ObjectivesMigration(): void
 {
     $migration = require database_path('migrations/2026_10_15_164535_seed_winter_field_day_2027_objectives.php');
     $migration->up();
+
+    // Production applies this one right after, moving the bulletin to derived.
+    $derive = require database_path('migrations/2026_10_15_181619_derive_winter_field_day_bulletin_objectives.php');
+    $derive->up();
 }
 
 /**
@@ -82,4 +86,23 @@ test('the migration never touches 2026 rows', function () {
     runWfd2027ObjectivesMigration();
 
     expect(BonusType::query()->where('rules_version', '2026')->orderBy('id')->get()->toArray())->toBe($before);
+});
+
+test('the bulletin migration makes both WFD bulletin objectives derived and reverses cleanly', function () {
+    $this->seed(BonusTypeSeeder::class);
+    BonusType::query()->whereIn('code', ['special_bulletin', 'bulletin'])->update(['trigger_type' => 'manual']);
+
+    $migration = require database_path('migrations/2026_10_15_181619_derive_winter_field_day_bulletin_objectives.php');
+    $triggerTypes = fn () => BonusType::query()
+        ->where('event_type_id', $this->wfd->id)
+        ->whereIn('code', ['special_bulletin', 'bulletin'])
+        ->orderBy('code')
+        ->pluck('trigger_type', 'code')
+        ->all();
+
+    $migration->up();
+    expect($triggerTypes())->toBe(['bulletin' => 'derived', 'special_bulletin' => 'derived']);
+
+    $migration->down();
+    expect($triggerTypes())->toBe(['bulletin' => 'manual', 'special_bulletin' => 'manual']);
 });

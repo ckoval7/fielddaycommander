@@ -6,10 +6,12 @@ use App\Models\AuditLog;
 use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\W1awBulletin;
+use App\Scoring\Dto\Nomenclature;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -51,6 +53,7 @@ class W1awBulletinForm extends Component
         }
 
         $this->event = $event;
+        $this->scheduleSource = $this->defaultScheduleSource();
         $bulletin = W1awBulletin::where('event_configuration_id', $event->eventConfiguration->id)->first();
 
         if ($bulletin) {
@@ -139,7 +142,7 @@ class W1awBulletinForm extends Component
             );
         }
 
-        $this->dispatch('toast', title: 'W1AW bulletin saved', type: 'success');
+        $this->dispatch('toast', title: "{$this->nomenclature()->bulletinName} saved", type: 'success');
     }
 
     public function deleteBulletin(): void
@@ -187,7 +190,7 @@ class W1awBulletinForm extends Component
             'scheduleMode' => 'required|in:cw,digital,phone',
             'scheduleFrequencies' => 'required|string|max:255',
             'scheduleScheduledAt' => 'required|date',
-            'scheduleSource' => 'required|in:W1AW,K6KPH',
+            'scheduleSource' => $this->scheduleSourceRules(),
             'scheduleNotes' => 'nullable|string|max:500',
         ]);
 
@@ -202,7 +205,7 @@ class W1awBulletinForm extends Component
         ]);
 
         $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt', 'scheduleNotes']);
-        $this->scheduleSource = 'W1AW';
+        $this->scheduleSource = $this->defaultScheduleSource();
         $this->dispatch('toast', title: 'Transmission added', type: 'success');
     }
 
@@ -231,7 +234,7 @@ class W1awBulletinForm extends Component
             'scheduleMode' => 'required|in:cw,digital,phone',
             'scheduleFrequencies' => 'required|string|max:255',
             'scheduleScheduledAt' => 'required|date',
-            'scheduleSource' => 'required|in:W1AW,K6KPH',
+            'scheduleSource' => $this->scheduleSourceRules(),
             'scheduleNotes' => 'nullable|string|max:500',
         ]);
 
@@ -246,7 +249,7 @@ class W1awBulletinForm extends Component
 
         $this->editingEntryId = null;
         $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt', 'scheduleNotes']);
-        $this->scheduleSource = 'W1AW';
+        $this->scheduleSource = $this->defaultScheduleSource();
         $this->dispatch('toast', title: 'Transmission updated', type: 'success');
     }
 
@@ -254,7 +257,7 @@ class W1awBulletinForm extends Component
     {
         $this->editingEntryId = null;
         $this->reset(['scheduleMode', 'scheduleFrequencies', 'scheduleScheduledAt', 'scheduleNotes']);
-        $this->scheduleSource = 'W1AW';
+        $this->scheduleSource = $this->defaultScheduleSource();
     }
 
     public function deleteScheduleEntry(int $entryId): void
@@ -265,6 +268,37 @@ class W1awBulletinForm extends Component
 
         BulletinScheduleEntry::findOrFail($entryId)->delete();
         $this->dispatch('toast', title: 'Transmission removed', type: 'success');
+    }
+
+    /**
+     * The bulletin wording of the rulebook this event is scored under.
+     */
+    #[Computed]
+    public function nomenclature(): Nomenclature
+    {
+        return $this->event->nomenclature();
+    }
+
+    /**
+     * The first sender the rulebook names, or blank when it names none.
+     */
+    protected function defaultScheduleSource(): string
+    {
+        return $this->nomenclature()->bulletinSources[0] ?? '';
+    }
+
+    /**
+     * Restrict the source to the rulebook's named senders when it has any.
+     *
+     * @return list<mixed>
+     */
+    protected function scheduleSourceRules(): array
+    {
+        $sources = $this->nomenclature()->bulletinSources;
+
+        return $sources === []
+            ? ['required', 'string', 'max:10']
+            : ['required', Rule::in($sources)];
     }
 
     /** @return Collection<int, AuditLog> */

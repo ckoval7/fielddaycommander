@@ -80,6 +80,10 @@
         .page-footer td.right { text-align: right; }
         .page-current:before { content: counter(page); }
         .page-break { page-break-before: always; }
+        .bulletin-text {
+            font-family: DejaVu Sans Mono, monospace; font-size: 10px; line-height: 1.5;
+            white-space: pre-wrap; border: 1px solid #e2e8f0; padding: 8px 10px;
+        }
     </style>
 </head>
 <body>
@@ -392,6 +396,39 @@
         </div>
     @endif
 
+
+    {{-- ============================================================
+         BULLETIN COPY — own page; the rules require it with the entry
+    ============================================================ --}}
+    @if ($bulletin)
+        <div class="page-break"></div>
+
+        <div class="header-bar">
+            <div class="header-callsign">{{ $callsign }}</div>
+            <div class="header-sub">ARRL Field Day {{ $event_year }} — {{ $bulletin['name'] }}</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Reception</div>
+            <table>
+                <tr>
+                    <th>Received (UTC)</th>
+                    <th>Frequency (MHz)</th>
+                    <th>Mode</th>
+                </tr>
+                <tr>
+                    <td>{{ $bulletin['received_at']->format('Y-m-d H:i') }}</td>
+                    <td class="m">{{ $bulletin['frequency'] }}</td>
+                    <td>{{ ucfirst($bulletin['mode']) }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Bulletin Text <span class="section-note">as copied</span></div>
+            <div class="bulletin-text">{{ $bulletin['text'] }}</div>
+        </div>
+    @endif
 
 </body>
 </html>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Observers\EventObserver;
+use App\Scoring\Dto\Nomenclature;
 use App\Scoring\RuleSetFactory;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -118,6 +119,21 @@ class Event extends Model
     public function getResolvedRulesVersionAttribute(): string
     {
         return app(RuleSetFactory::class)->forEvent($this)->version();
+    }
+
+    /**
+     * The terminology of the rulebook this event is scored under.
+     *
+     * Falls back to Field Day wording for an event with no type yet, so
+     * labels render before the event is fully configured.
+     */
+    public function nomenclature(): Nomenclature
+    {
+        if (! $this->loadMissing('eventType')->eventType) {
+            return new Nomenclature;
+        }
+
+        return app(RuleSetFactory::class)->forEvent($this)->nomenclature();
     }
 
     public function getStatusAttribute(): string

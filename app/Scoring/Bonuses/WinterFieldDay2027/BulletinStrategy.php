@@ -2,33 +2,17 @@
 
 namespace App\Scoring\Bonuses\WinterFieldDay2027;
 
-use App\Models\EventConfiguration;
-use App\Scoring\Bonuses\AbstractBonusStrategy;
+use App\Scoring\Bonuses\WinterFieldDay2026\SpecialBulletinStrategy;
 
 /**
- * WFD 2027 objective "bulletin".
+ * WFD 2027 objective "bulletin". OM x1.
  *
- * OM x1. The bulletin copy is submitted as supporting documentation rather than logged, so the objective is claimed by hand.
+ * The 2026 special bulletin renamed; still earned by saving the copy.
  */
-class BulletinStrategy extends AbstractBonusStrategy
+class BulletinStrategy extends SpecialBulletinStrategy
 {
     public function code(): string
     {
         return 'bulletin';
-    }
-
-    public function triggerType(): string
-    {
-        return 'manual';
-    }
-
-    public function subscribesTo(): array
-    {
-        return [];
-    }
-
-    public function reconcile(EventConfiguration $config): void
-    {
-        // Manual objective — the UI writes the claim row directly.
     }
 }

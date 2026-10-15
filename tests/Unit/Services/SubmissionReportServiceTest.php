@@ -11,6 +11,7 @@ use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
 use App\Models\User;
+use App\Models\W1awBulletin;
 use App\Services\SubmissionReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -154,6 +155,29 @@ test('total_pages is 3 with a GOTA station', function () {
     $data = app(SubmissionReportService::class)->getData($config);
 
     expect($data['total_pages'])->toBe(3);
+});
+
+test('includes the saved W1AW bulletin copy on its own page', function () {
+    $config = makeSubmissionConfig(['has_gota_station' => false]);
+    W1awBulletin::factory()->create([
+        'event_configuration_id' => $config->id,
+        'bulletin_text' => 'QST DE W1AW FIELD DAY MESSAGE',
+        'frequency' => '7.0475',
+        'mode' => 'cw',
+    ]);
+
+    $data = app(SubmissionReportService::class)->getData($config->fresh());
+
+    expect($data['bulletin']['name'])->toBe('W1AW Bulletin')
+        ->and($data['bulletin']['text'])->toBe('QST DE W1AW FIELD DAY MESSAGE')
+        ->and($data['bulletin']['frequency'])->toBe('7.0475')
+        ->and($data['total_pages'])->toBe(3);
+});
+
+test('bulletin is null without a saved copy', function () {
+    $data = app(SubmissionReportService::class)->getData(makeSubmissionConfig());
+
+    expect($data['bulletin'])->toBeNull();
 });
 
 test('participant count includes unique loggers and GOTA operators', function () {

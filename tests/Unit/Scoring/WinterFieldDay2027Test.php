@@ -434,6 +434,8 @@ test('nomenclature uses WFD objective wording', function () {
     expect($terms->awardPlural)->toBe('Objectives')
         ->and($terms->awardsAreMultipliers)->toBeTrue()
         ->and($terms->rulebookName)->toBe('WFDA')
+        ->and($terms->bulletinName)->toBe('WFD Bulletin')
+        ->and($terms->bulletinSources)->toBe([])
         ->and($this->rules->cabrilloContestName())->toBe('WFD');
 });
 

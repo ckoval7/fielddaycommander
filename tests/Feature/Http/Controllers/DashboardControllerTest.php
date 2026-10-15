@@ -179,7 +179,7 @@ test('get-ready checklist hides routes for unprivileged users', function () {
     $checklist = $response->viewData('checklist');
 
     // Items accessible to all users (no permission gating)
-    $alwaysVisible = ['W1AW bulletin schedule set up', 'Equipment inventoried'];
+    $alwaysVisible = ['W1AW Bulletin schedule set up', 'Equipment inventoried'];
 
     // Items gated by permissions should have null routes for unprivileged users
     $gatedItems = array_filter($checklist, fn ($item) => ! in_array($item['label'], $alwaysVisible));

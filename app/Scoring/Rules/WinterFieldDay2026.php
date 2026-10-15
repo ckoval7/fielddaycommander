@@ -25,6 +25,7 @@ use App\Scoring\Contracts\BonusStrategy;
 use App\Scoring\Contracts\FieldDayRuleSet;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\DomainEvents\QsoLogged;
+use App\Scoring\DomainEvents\W1awBulletinChanged;
 use App\Scoring\Dto\Nomenclature;
 use App\Scoring\Dto\ScoreBreakdown;
 use App\Scoring\Dto\ScoreLine;
@@ -214,6 +215,9 @@ class WinterFieldDay2026 implements RuleSet
             awardValueLabel: 'Multiplier',
             awardsAreMultipliers: true,
             rulebookName: 'WFDA',
+            bulletinName: 'WFD Special Bulletin',
+            bulletinSources: [],
+            bulletinCapturedLabel: 'Objective Earned: OM x1',
         );
     }
 
@@ -242,6 +246,9 @@ class WinterFieldDay2026 implements RuleSet
             MultipleModesStrategy::class,
             QrpStrategy::class,
             AlternativePowerStrategy::class,
+        ],
+        W1awBulletinChanged::class => [
+            SpecialBulletinStrategy::class,
         ],
     ];
 

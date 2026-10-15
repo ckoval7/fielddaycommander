@@ -292,7 +292,7 @@ test('every objective code maps to a strategy', function () {
 test('both alternative power objectives are claimed by hand', function () {
     $rules = new WinterFieldDay2027;
 
-    foreach (['alt_power_equipment', 'alt_power_full', 'sstv_image', 'crossband_repeater', 'bulletin'] as $code) {
+    foreach (['alt_power_equipment', 'alt_power_full', 'sstv_image', 'crossband_repeater'] as $code) {
         $strategy = app($rules->strategies()[$code]);
 
         expect($strategy->triggerType())->toBe('manual')

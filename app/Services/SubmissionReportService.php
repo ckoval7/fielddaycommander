@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\User;
+use Carbon\CarbonInterface;
 
 class SubmissionReportService
 {
@@ -21,6 +22,7 @@ class SubmissionReportService
 
         $bands = $this->bands($config);
         $modes = Mode::orderBy('id')->get();
+        $bulletin = $this->bulletinCopy($config);
 
         return [
             // Section 1: Station Identification
@@ -68,13 +70,38 @@ class SubmissionReportService
             // Operator List
             'operators' => $this->operatorList($config),
 
+            // Bulletin copy, submitted with the entry
+            'bulletin' => $bulletin,
+
             // Metadata
             'event_year' => $config->event->start_time->year,
             'event_start' => $config->event->start_time,
             'event_end' => $config->event->end_time,
             'generated_at' => now(),
-            'total_pages' => $config->has_gota_station ? 3 : 2,
+            'total_pages' => 2 + (int) $config->has_gota_station + (int) ($bulletin !== null),
             'rules_version' => $config->event->resolved_rules_version,
+        ];
+    }
+
+    /**
+     * The saved bulletin copy, which the rules require be submitted with the log.
+     *
+     * @return array{name: string, text: string, frequency: string, mode: string, received_at: CarbonInterface}|null
+     */
+    private function bulletinCopy(EventConfiguration $config): ?array
+    {
+        $bulletin = $config->w1awBulletin;
+
+        if (! $bulletin) {
+            return null;
+        }
+
+        return [
+            'name' => $config->event->nomenclature()->bulletinName,
+            'text' => $bulletin->bulletin_text,
+            'frequency' => $bulletin->frequency,
+            'mode' => $bulletin->mode,
+            'received_at' => $bulletin->received_at,
         ];
     }
 

@@ -30,6 +30,7 @@ use App\Scoring\Contracts\FieldDayRuleSet;
 use App\Scoring\Contracts\ImpliesObjectives;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\DomainEvents\QsoLogged;
+use App\Scoring\DomainEvents\W1awBulletinChanged;
 use App\Scoring\Dto\Nomenclature;
 use App\Scoring\Dto\ScoreBreakdown;
 use App\Scoring\Dto\ScoreLine;
@@ -127,6 +128,9 @@ class WinterFieldDay2027 implements DeterminesContactCredit, ImpliesObjectives, 
             TwelveBandsStrategy::class,
             MultipleModesStrategy::class,
             QrpStrategy::class,
+        ],
+        W1awBulletinChanged::class => [
+            BulletinStrategy::class,
         ],
     ];
 
@@ -400,6 +404,9 @@ class WinterFieldDay2027 implements DeterminesContactCredit, ImpliesObjectives, 
             awardValueLabel: 'Multiplier',
             awardsAreMultipliers: true,
             rulebookName: 'WFDA',
+            bulletinName: 'WFD Bulletin',
+            bulletinSources: [],
+            bulletinCapturedLabel: 'Objective Earned: OM x1',
         );
     }
 

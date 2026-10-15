@@ -100,7 +100,7 @@ enum NotificationCategory: string
             self::StationStatus => 'Station becomes available or occupied',
             self::QsoMilestone => 'QSO count milestones (every 50)',
             self::Equipment => 'Equipment status changes',
-            self::BulletinReminder => 'W1AW bulletin transmission reminders',
+            self::BulletinReminder => 'Bulletin transmission reminders',
             self::ShiftCheckinReminder => 'Reminders before your scheduled shifts',
             self::ShiftCheckoutReminder => 'Reminders when you forget to check out of a shift',
             self::WeatherAlert => 'NWS and manual weather alerts',

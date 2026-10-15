@@ -6,6 +6,7 @@ use App\Models\EventType;
 use App\Models\OperatingClass;
 use App\Models\Section;
 use App\Models\User;
+use App\Models\W1awBulletin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
@@ -103,6 +104,15 @@ describe('submission-sheet endpoint', function () {
     });
 
     test('returns 200 with application/pdf content type for authorised user', function () {
+        $this->actingAs($this->user)
+            ->get(route('reports.submission-sheet'))
+            ->assertSuccessful()
+            ->assertHeader('Content-Type', 'application/pdf');
+    });
+
+    test('renders with a saved bulletin copy', function () {
+        W1awBulletin::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+
         $this->actingAs($this->user)
             ->get(route('reports.submission-sheet'))
             ->assertSuccessful()

@@ -13,6 +13,7 @@ use App\Models\OperatingClass;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use App\Models\W1awBulletin;
 use App\Services\AdifExporter;
 use App\Services\AdifParserService;
 use App\Services\WfdEventSummaryService;
@@ -273,6 +274,22 @@ describe('WFD event summary', function () {
         $response->assertSuccessful()->assertHeader('Content-Type', 'application/pdf');
         expect($response->headers->get('Content-Disposition'))->toContain('k4sco_p-')->toContain('event-summary.pdf');
     })->with(['2027', '2026']);
+
+    test('includes the saved bulletin copy under its WFD name', function () {
+        $config = makeReportEvent('WFD', '2027');
+        W1awBulletin::factory()->create([
+            'event_configuration_id' => $config->id,
+            'bulletin_text' => 'WINTER FIELD DAY BULLETIN TEXT',
+        ]);
+
+        $data = app(WfdEventSummaryService::class)->getData($config->fresh());
+
+        expect($data['bulletin']['name'])->toBe('WFD Bulletin')
+            ->and($data['bulletin']['text'])->toBe('WINTER FIELD DAY BULLETIN TEXT')
+            ->and(collect($data['objectives'])->firstWhere('code', 'bulletin')['achieved'])->toBeTrue();
+
+        $this->actingAs($this->user)->get(route('reports.wfd-event-summary'))->assertSuccessful();
+    });
 
     test('route is not available for Field Day events', function () {
         makeReportEvent('FD', '2025');

@@ -7,6 +7,7 @@ use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Scoring\Contracts\ImpliesObjectives;
 use App\Scoring\RuleSetFactory;
+use Carbon\CarbonInterface;
 
 /**
  * Assembles the figures for the Winter Field Day "Event Summary" sheet.
@@ -55,8 +56,31 @@ class WfdEventSummaryService
             'total_multiplier' => $score->value('total_multiplier'),
             'final_points' => $score->total,
             'no_credit_contacts' => $score->value('no_credit_contacts'),
+            'bulletin' => $this->bulletinCopy($config),
             'rules_version' => $rules->version(),
             'generated_at' => now(),
+        ];
+    }
+
+    /**
+     * The saved bulletin copy, which the rules require be submitted with the log.
+     *
+     * @return array{name: string, text: string, frequency: string, mode: string, received_at: CarbonInterface}|null
+     */
+    protected function bulletinCopy(EventConfiguration $config): ?array
+    {
+        $bulletin = $config->w1awBulletin;
+
+        if (! $bulletin) {
+            return null;
+        }
+
+        return [
+            'name' => $config->event->nomenclature()->bulletinName,
+            'text' => $bulletin->bulletin_text,
+            'frequency' => $bulletin->frequency,
+            'mode' => $bulletin->mode,
+            'received_at' => $bulletin->received_at,
         ];
     }
 
