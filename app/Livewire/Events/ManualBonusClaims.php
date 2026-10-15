@@ -278,6 +278,7 @@ class ManualBonusClaims extends Component
                     'calculated_points' => $total * $bonusType->base_points,
                     'manual_quantity_adjustment' => $additional > 0 ? $additional : null,
                     'is_verified' => true,
+                    'invalidated_by_rescore' => false,
                     'verified_by_user_id' => auth()->id(),
                     'verified_at' => now(),
                 ]

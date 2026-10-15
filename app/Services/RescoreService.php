@@ -34,6 +34,7 @@ class RescoreService
      *     bonuses_repointed: int,
      *     bonuses_recomputed: int,
      *     bonuses_invalidated: int,
+     *     bonuses_restored: int,
      * }
      */
     public function rescoreEvent(Event $event): array
@@ -47,6 +48,7 @@ class RescoreService
                 'bonuses_repointed' => 0,
                 'bonuses_recomputed' => 0,
                 'bonuses_invalidated' => 0,
+                'bonuses_restored' => 0,
             ];
         }
 
@@ -60,7 +62,7 @@ class RescoreService
 
         $rescored = 0;
         $unchanged = 0;
-        $bonuses = ['repointed' => 0, 'recomputed' => 0, 'invalidated' => 0];
+        $bonuses = ['repointed' => 0, 'recomputed' => 0, 'invalidated' => 0, 'restored' => 0];
 
         DB::transaction(function () use ($event, $config, $ruleSet, &$rescored, &$unchanged, &$bonuses) {
             Contact::query()
@@ -96,6 +98,7 @@ class RescoreService
             'bonuses_repointed' => $bonuses['repointed'],
             'bonuses_recomputed' => $bonuses['recomputed'],
             'bonuses_invalidated' => $bonuses['invalidated'],
+            'bonuses_restored' => $bonuses['restored'],
         ];
     }
 
@@ -108,11 +111,11 @@ class RescoreService
      *   (is_verified = false, calculated_points = 0) and surfaced in the count
      *   so the admin can re-examine it.
      *
-     * @return array{repointed: int, recomputed: int, invalidated: int}
+     * @return array{repointed: int, recomputed: int, invalidated: int, restored: int}
      */
     private function migrateEventBonuses(EventConfiguration $config, string $targetVersion): array
     {
-        $counts = ['repointed' => 0, 'recomputed' => 0, 'invalidated' => 0];
+        $counts = ['repointed' => 0, 'recomputed' => 0, 'invalidated' => 0, 'restored' => 0];
 
         $eventTypeId = $config->event?->event_type_id;
 
@@ -142,7 +145,7 @@ class RescoreService
      * Apply migration to a single EventBonus, mutating $counts in place.
      *
      * @param  Collection<string, BonusType>  $targetByCode
-     * @param  array{repointed: int, recomputed: int, invalidated: int}  $counts
+     * @param  array{repointed: int, recomputed: int, invalidated: int, restored: int}  $counts
      */
     private function migrateBonus(EventBonus $bonus, $targetByCode, array &$counts): void
     {
@@ -164,7 +167,7 @@ class RescoreService
     }
 
     /**
-     * @param  array{repointed: int, recomputed: int, invalidated: int}  $counts
+     * @param  array{repointed: int, recomputed: int, invalidated: int, restored: int}  $counts
      */
     private function invalidateBonus(EventBonus $bonus, array &$counts): void
     {
@@ -172,6 +175,9 @@ class RescoreService
             return;
         }
 
+        // Only a claim the rescore itself un-verified may be restored later;
+        // one already pending or rejected by a person stays as they left it.
+        $bonus->invalidated_by_rescore = $bonus->is_verified || $bonus->invalidated_by_rescore;
         $bonus->is_verified = false;
         $bonus->calculated_points = 0;
         $bonus->save();
@@ -179,7 +185,7 @@ class RescoreService
     }
 
     /**
-     * @param  array{repointed: int, recomputed: int, invalidated: int}  $counts
+     * @param  array{repointed: int, recomputed: int, invalidated: int, restored: int}  $counts
      */
     private function applyBonusTarget(EventBonus $bonus, BonusType $target, array &$counts): void
     {
@@ -192,13 +198,21 @@ class RescoreService
 
         $repointedThis = $bonus->bonus_type_id !== $target->id;
         $recomputedThis = (int) $bonus->calculated_points !== $newPoints;
+        $restoredThis = (bool) $bonus->invalidated_by_rescore;
 
-        if (! $repointedThis && ! $recomputedThis) {
+        if (! $repointedThis && ! $recomputedThis && ! $restoredThis) {
             return;
         }
 
         $bonus->bonus_type_id = $target->id;
         $bonus->calculated_points = $newPoints;
+
+        if ($restoredThis) {
+            $bonus->is_verified = true;
+            $bonus->invalidated_by_rescore = false;
+            $counts['restored']++;
+        }
+
         $bonus->save();
 
         if ($repointedThis) {

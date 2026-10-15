@@ -328,3 +328,93 @@ test('confirmRescore rejects a version that is not in availableRulesVersions', f
     // No audit log was written
     expect(AuditLog::where('action', 'event.rules_rescored')->count())->toBe(0);
 });
+
+/**
+ * Create a 2025-only bonus claim on a scored 2025 event.
+ *
+ * @param  array<string, mixed>  $claimState
+ * @return array{0: Event, 1: EventBonus}
+ */
+function makeRetiredClaim(EventType $fd, array $claimState): array
+{
+    $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
+    [$event, $config] = makeScoredEvent($fd, $mode, pointsStored: 2);
+
+    $bonus2025 = BonusType::factory()->create([
+        'event_type_id' => $fd->id,
+        'rules_version' => '2025',
+        'code' => 'retired_bonus',
+        'base_points' => 100,
+        'is_active' => true,
+    ]);
+
+    $claim = EventBonus::factory()->create([
+        'event_configuration_id' => $config->id,
+        'bonus_type_id' => $bonus2025->id,
+        'quantity' => 1,
+        'calculated_points' => 100,
+        ...$claimState,
+    ]);
+
+    return [$event, $claim];
+}
+
+/**
+ * @return array<string, int>
+ */
+function rescoreTo(Event $event, string $version): array
+{
+    Event::withoutRulesVersionLock(function () use ($event, $version) {
+        $event->rules_version = $version;
+        $event->save();
+    });
+
+    return app(RescoreService::class)->rescoreEvent($event->fresh());
+}
+
+test('a claim the rescore invalidated is restored when rescoring back', function () {
+    [$event, $claim] = makeRetiredClaim($this->fd, ['is_verified' => true]);
+
+    rescoreTo($event, '2026');
+
+    expect($claim->fresh()->is_verified)->toBeFalse()
+        ->and($claim->fresh()->invalidated_by_rescore)->toBeTrue();
+
+    $result = rescoreTo($event, '2025');
+
+    $claim->refresh();
+    expect($result['bonuses_restored'])->toBe(1)
+        ->and($claim->is_verified)->toBeTrue()
+        ->and($claim->invalidated_by_rescore)->toBeFalse()
+        ->and((int) $claim->calculated_points)->toBe(100);
+});
+
+test('a claim already unverified by a person is not restored by a rescore', function () {
+    [$event, $claim] = makeRetiredClaim($this->fd, ['is_verified' => false]);
+
+    rescoreTo($event, '2026');
+    $result = rescoreTo($event, '2025');
+
+    $claim->refresh();
+    expect($claim->invalidated_by_rescore)->toBeFalse()
+        ->and($result['bonuses_restored'])->toBe(0)
+        ->and($claim->is_verified)->toBeFalse();
+});
+
+test('a person deciding on a rescore-invalidated claim clears the flag so a rescore never overrides them', function () {
+    [$event, $claim] = makeRetiredClaim($this->fd, ['is_verified' => true]);
+
+    rescoreTo($event, '2026');
+    expect($claim->fresh()->invalidated_by_rescore)->toBeTrue();
+
+    // A person re-verifies through the manual claim path (updateOrCreate clears the flag)...
+    $claim->refresh();
+    $claim->update(['is_verified' => true, 'invalidated_by_rescore' => false]);
+    // ...then rejects it again.
+    $claim->update(['is_verified' => false]);
+
+    $result = rescoreTo($event, '2025');
+
+    expect($result['bonuses_restored'])->toBe(0)
+        ->and($claim->fresh()->is_verified)->toBeFalse();
+});
