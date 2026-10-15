@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
+use App\Scoring\Contracts\DeterminesContactCredit;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\EventBonusReconciler;
 use App\Scoring\Exceptions\UnknownRuleSet;
@@ -64,7 +65,7 @@ class RescoreService
         DB::transaction(function () use ($event, $config, $ruleSet, &$rescored, &$unchanged, &$bonuses) {
             Contact::query()
                 ->where('event_configuration_id', $config->id)
-                ->with(['mode', 'operatingSession.station'])
+                ->with(['mode', 'band', 'operatingSession.station'])
                 ->chunkById(500, function ($contacts) use ($ruleSet, &$rescored, &$unchanged) {
                     foreach ($contacts as $contact) {
                         $newPoints = $this->pointsFor($contact, $ruleSet);
@@ -211,6 +212,10 @@ class RescoreService
     private function pointsFor(Contact $contact, RuleSet $ruleSet): int
     {
         if ($contact->is_duplicate) {
+            return 0;
+        }
+
+        if ($ruleSet instanceof DeterminesContactCredit && $ruleSet->noCreditReason($contact) !== null) {
             return 0;
         }
 

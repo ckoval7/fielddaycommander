@@ -23,6 +23,7 @@ class ModeResolverService
         'JT9', 'MFSK', 'OLIVIA', 'CONTESTI', 'DOMINO', 'FSK', 'HELL',
         'ROS', 'THROB', 'SSTV', 'FAX', 'PKT', 'DSTAR', 'DMR', 'C4FM',
         'FREEDV', 'ARDOP', 'WINMOR', 'VARA',
+        'FT2', 'FST4', 'FST4W', 'JT4', 'Q65', 'MSK144', 'WSPR', 'ECHO',
     ];
 
     /**

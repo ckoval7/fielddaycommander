@@ -2,12 +2,9 @@
 
 namespace App\Scoring\Bonuses\WinterFieldDay2027;
 
-use App\Models\Band;
-use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Scoring\Bonuses\AbstractBonusStrategy;
 use App\Scoring\DomainEvents\QsoLogged;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Shared logic for the WFD 2027 "three contacts on N different bands" objectives.
@@ -16,13 +13,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * authorized band, not just HF." The twelve-band objective counts the same
  * bands, so both objectives differ only in the threshold.
  *
- * Unlike 2026, satellite contacts do not count: the 2027 rules give no credit
- * to cross-band or relayed contacts, so a satellite QSO is not a WFD QSO. Both
- * contacts flagged as satellite and contacts on the Satellite pseudo-band are
- * left out of the tally.
+ * Unlike 2026, only contacts that earn credit count: the 2027 rules give no
+ * credit to cross-band or relayed contacts (satellite contacts, and anything on
+ * the Satellite pseudo-band) or to WSJT-mode contacts.
  */
 abstract class BandCountStrategy extends AbstractBonusStrategy
 {
+    use CountsCreditableContacts;
+
     /** Minimum qualifying contacts a band needs before it counts. */
     protected const CONTACTS_PER_BAND = 3;
 
@@ -49,29 +47,16 @@ abstract class BandCountStrategy extends AbstractBonusStrategy
     }
 
     /**
-     * Distinct bands holding at least CONTACTS_PER_BAND countable contacts.
+     * Distinct bands holding at least CONTACTS_PER_BAND creditable contacts.
      */
     protected function qualifyingBandCount(EventConfiguration $config): int
     {
-        return $this->countableContacts($config)
+        return $this->creditableContacts($config)
             ->whereNotNull('band_id')
             ->selectRaw('band_id')
             ->groupBy('band_id')
             ->havingRaw('COUNT(*) >= ?', [static::CONTACTS_PER_BAND])
             ->get()
             ->count();
-    }
-
-    /**
-     * Contacts that may count toward a band: non-duplicate and not via satellite.
-     *
-     * @return HasMany<Contact, EventConfiguration>
-     */
-    protected function countableContacts(EventConfiguration $config): HasMany
-    {
-        return $config->contacts()
-            ->where('is_duplicate', false)
-            ->where('is_satellite', false)
-            ->whereNotIn('band_id', Band::query()->where('is_satellite', true)->select('id'));
     }
 }

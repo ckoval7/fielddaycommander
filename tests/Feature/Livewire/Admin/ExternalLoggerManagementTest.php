@@ -2,8 +2,10 @@
 
 use App\Livewire\Admin\ExternalLoggerManagement;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\ExternalLoggerSetting;
 use App\Models\User;
+use App\Scoring\Rules\WinterFieldDay2027;
 use App\Services\ListenerProcessRunner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -360,4 +362,18 @@ test('shows rejection reason badge and callsign when last log was out of period'
         ->assertSee('Last Log Received')
         ->assertSee('outside event window')
         ->assertSee('K1XYZ');
+});
+
+test('warns that WSJT-X contacts earn no credit under WFD 2027', function () {
+    $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day']);
+    $this->config->event->update(['event_type_id' => $wfd->id, 'rules_version' => '2027']);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee(WinterFieldDay2027::NO_CREDIT_WSJT)
+        ->assertSee('WSJT-X contacts are still logged');
+});
+
+test('does not warn about WSJT-X credit for rulesets that allow it', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertDontSee('WSJT-X contacts are still logged');
 });

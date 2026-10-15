@@ -4,13 +4,42 @@ namespace App\Observers;
 
 use App\Enums\NotificationCategory;
 use App\Models\Contact;
+use App\Models\EventConfiguration;
 use App\Scoring\DomainEvents\QsoLogged;
+use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 
 class ContactObserver
 {
     public function __construct(protected NotificationService $notificationService) {}
+
+    /**
+     * Store zero points on a contact its rulebook gives no credit.
+     *
+     * Every ingest path prices a contact by mode before it is saved; this is the
+     * one place that sees the finished contact (sub-mode, satellite flag, band),
+     * so a WFD 2027 FT8 or satellite contact is zeroed here whichever way it
+     * arrived. Anything summing `contacts.points` then agrees with the score.
+     */
+    public function saving(Contact $contact): void
+    {
+        if ($contact->is_duplicate || (int) $contact->points === 0 || $contact->event_configuration_id === null) {
+            return;
+        }
+
+        $config = $contact->relationLoaded('eventConfiguration')
+            ? $contact->eventConfiguration
+            : EventConfiguration::query()->find($contact->event_configuration_id);
+
+        try {
+            if ($config?->contactNoCreditReason($contact) !== null) {
+                $contact->points = 0;
+            }
+        } catch (UnknownRuleSet) {
+            // No rulebook to judge by: leave the points as priced.
+        }
+    }
 
     /**
      * Handle the Contact "created" event.

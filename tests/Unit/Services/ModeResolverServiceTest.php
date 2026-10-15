@@ -55,6 +55,10 @@ test('resolves PSK31 to Digital', function () {
     expect($this->resolver->resolve('PSK31'))->toBe($this->modeDigital->id);
 });
 
+test('resolves every WSJT mode to Digital', function (string $mode) {
+    expect($this->resolver->resolve($mode))->toBe($this->modeDigital->id);
+})->with(['FT2', 'FST4', 'FT4', 'FT8', 'JT4', 'JT9', 'JT65', 'Q65', 'MSK144', 'WSPR', 'FST4W', 'ECHO']);
+
 test('returns null for unknown mode', function () {
     expect($this->resolver->resolve('UNKNOWN_MODE'))->toBeNull();
 });

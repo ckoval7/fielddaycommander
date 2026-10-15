@@ -2,6 +2,7 @@
 
 namespace App\Scoring\Rules;
 
+use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\EventBonus;
@@ -24,6 +25,7 @@ use App\Scoring\Bonuses\WinterFieldDay2027\SstvImageStrategy;
 use App\Scoring\Bonuses\WinterFieldDay2027\TwelveBandsStrategy;
 use App\Scoring\Bonuses\WinterFieldDay2027\WinlinkEmailStrategy;
 use App\Scoring\Contracts\BonusStrategy;
+use App\Scoring\Contracts\DeterminesContactCredit;
 use App\Scoring\Contracts\FieldDayRuleSet;
 use App\Scoring\Contracts\ImpliesObjectives;
 use App\Scoring\Contracts\RuleSet;
@@ -60,10 +62,36 @@ use Illuminate\Support\Collection;
  * Changes from 2026: the satellite objectives are gone; alternative power is
  * split into a station-equipment objective (OM x1) and a 100% objective (OM x2)
  * that also qualifies for the equipment one; SSTV image and cross-band repeater
- * objectives are new; the Special Bulletin is now just the Bulletin.
+ * objectives are new; the Special Bulletin is now just the Bulletin. WSJT
+ * modes are no longer permitted, and satellite contacts no longer earn credit;
+ * both are still logged but count toward nothing ({@see noCreditReason()}).
  */
-class WinterFieldDay2027 implements ImpliesObjectives, RuleSet
+class WinterFieldDay2027 implements DeterminesContactCredit, ImpliesObjectives, RuleSet
 {
+    /**
+     * "All modes, except WSJT modes, may be used." Footnote: "WSJT modes
+     * include: FT2, FST4, FT4, FT8, JT4, JT9, JT65, Q65, MSK144, WSPR, FST4W,
+     * and Echo." Matched against the contact's sub-mode.
+     *
+     * @var array<int, string>
+     */
+    protected const WSJT_SUBMODES = [
+        'FT2', 'FST4', 'FT4', 'FT8', 'JT4', 'JT9', 'JT65', 'Q65',
+        'MSK144', 'WSPR', 'FST4W', 'ECHO',
+    ];
+
+    /**
+     * Sub-mode prefixes whose speed or tone-spacing variants (JT9-1, JT65A,
+     * Q65-30A, FST4-60 ...) are the same banned WSJT mode family.
+     *
+     * @var array<int, string>
+     */
+    protected const WSJT_SUBMODE_PREFIXES = ['JT4', 'JT9', 'JT65', 'Q65', 'FST4'];
+
+    public const NO_CREDIT_WSJT = 'WSJT modes are not permitted in WFD 2027';
+
+    public const NO_CREDIT_SATELLITE = 'Satellite (relayed, cross-band) contacts earn no WFD credit';
+
     /**
      * Phone is 1 point; CW and Digital are 2 points each ("QSO Points").
      * Used only when a mode has no `points_wfd` value of its own.
@@ -148,19 +176,89 @@ class WinterFieldDay2027 implements ImpliesObjectives, RuleSet
     }
 
     /**
-     * Contacts that earn QSO credit: non-duplicate, and not via satellite.
-     *
-     * "You may only claim credit for contacts that are on one band, one mode,
-     * simplex, and made directly to the receiving station." A satellite
-     * contact is cross-band and relayed, so it earns nothing.
+     * Non-duplicate contacts that earn credit under these rules.
      *
      * @return HasMany<Contact, EventConfiguration>
      */
     protected function creditableContacts(EventConfiguration $config): HasMany
     {
-        return $config->contacts()
-            ->where('is_duplicate', false)
-            ->where('is_satellite', false);
+        $query = $config->contacts()->where('is_duplicate', false);
+
+        $this->constrainToCreditable($query);
+
+        return $query;
+    }
+
+    /**
+     * Non-duplicate contacts logged but earning no credit (WSJT mode, satellite).
+     */
+    protected function noCreditContactCount(EventConfiguration $config): int
+    {
+        return $config->contacts()->where('is_duplicate', false)->count()
+            - $this->creditableContacts($config)->count();
+    }
+
+    /**
+     * WSJT-mode and satellite contacts earn no credit.
+     *
+     * "All modes, except WSJT modes, may be used." And: "You may only claim
+     * credit for contacts that are on one band, one mode, simplex, and made
+     * directly to the receiving station." A satellite contact is cross-band
+     * and relayed.
+     */
+    public function noCreditReason(Contact $contact): ?string
+    {
+        if ($this->isWsjtSubmode($contact->submode)) {
+            return static::NO_CREDIT_WSJT;
+        }
+
+        if ($contact->is_satellite || ($contact->band_id !== null && $contact->band?->is_satellite)) {
+            return static::NO_CREDIT_SATELLITE;
+        }
+
+        return null;
+    }
+
+    /**
+     * SQL form of {@see noCreditReason()}. Null sub-modes and bands are creditable.
+     */
+    public function constrainToCreditable(Builder|HasMany $query): void
+    {
+        $query
+            ->where(fn ($q) => $q->whereNull('submode')->orWhereNot(function ($wsjt) {
+                $wsjt->whereIn('submode', static::WSJT_SUBMODES);
+
+                foreach (static::WSJT_SUBMODE_PREFIXES as $prefix) {
+                    $wsjt->orWhere('submode', 'like', $prefix.'%');
+                }
+            }))
+            ->where('is_satellite', false)
+            ->where(fn ($q) => $q->whereNull('band_id')
+                ->orWhereNotIn('band_id', Band::query()->where('is_satellite', true)->select('id')));
+    }
+
+    /**
+     * Whether a (stored, upper-cased) sub-mode is one of the banned WSJT modes.
+     */
+    protected function isWsjtSubmode(?string $submode): bool
+    {
+        if ($submode === null || $submode === '') {
+            return false;
+        }
+
+        $submode = mb_strtoupper($submode);
+
+        if (in_array($submode, static::WSJT_SUBMODES, true)) {
+            return true;
+        }
+
+        foreach (static::WSJT_SUBMODE_PREFIXES as $prefix) {
+            if (str_starts_with($submode, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -269,11 +367,18 @@ class WinterFieldDay2027 implements ImpliesObjectives, RuleSet
         $objectiveMultiplier = $this->objectiveMultiplier($config);
         $multiplier = $objectiveMultiplier + 1;
         $progress = $this->objectiveProgress($config);
+        $noCreditContacts = $this->noCreditContactCount($config);
 
         return new ScoreBreakdown(
             total: $qsoPoints * $multiplier,
             lines: [
                 new ScoreLine('qso_points', 'QSO Points', $qsoPoints),
+                new ScoreLine(
+                    'no_credit_contacts',
+                    'No-Credit Contacts',
+                    $noCreditContacts,
+                    'WSJT-mode and satellite contacts, logged but not counted',
+                ),
                 new ScoreLine(
                     'objectives_achieved',
                     'Objectives Achieved',

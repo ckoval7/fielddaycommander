@@ -166,6 +166,12 @@
                         </button>
                     </div>
 
+                    @if ($wsjtxNoCreditReason)
+                        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 mb-4">
+                            <p class="text-sm text-yellow-800 dark:text-yellow-200"><strong>No credit:</strong> {{ $wsjtxNoCreditReason }}. WSJT-X contacts are still logged, but they earn no QSO points and count toward no objective.</p>
+                        </div>
+                    @endif
+
                     {{-- Process Status Indicator --}}
                     <div class="flex items-center gap-2 mb-4">
                         @if ($wsjtxProcessStatus === 'running')

@@ -365,3 +365,35 @@ test('the scoring checklist shows station-equipment power as verified when 100% 
         ->and($component->get('objectiveProgress'))->toBe(['achieved' => 2, 'available' => 13, 'percent' => 15])
         ->and($this->config->fresh()->scoreBreakdown()->total)->toBe(12);
 });
+
+test('WFD 2027 logs WSJT-mode and satellite contacts but gives them no credit', function () {
+    $user = User::factory()->create();
+
+    $this->config->update(['is_active' => true]);
+    $this->config->event->update(['is_active' => true, 'rules_version' => '2027']);
+    $config = $this->config->fresh();
+
+    $digital = Mode::create(['name' => 'Digital', 'category' => 'Digital', 'points_fd' => 2, 'points_wfd' => 2]);
+    $band = Band::factory()->create(['name' => '20m', 'meters' => 20]);
+    logContacts($config, $this->phone, $band, 3, ['submode' => 'USB']);
+    logContacts($config, $digital, $band, 2, ['submode' => 'FT8']);
+    logContacts($config, $this->phone, $band, 1, ['submode' => 'FM', 'is_satellite' => true]);
+
+    expect($config->contacts()->count())->toBe(6)
+        ->and((int) $config->contacts()->sum('points'))->toBe(3)
+        ->and($config->creditableContacts()->count())->toBe(3)
+        ->and($config->scoreBreakdown()->value('qso_points'))->toBe(3)
+        ->and($config->scoreBreakdown()->value('no_credit_contacts'))->toBe(3);
+
+    $multipleModes = BonusType::where('event_type_id', $this->wfd->id)
+        ->where('rules_version', '2027')
+        ->where('code', 'multiple_modes')
+        ->firstOrFail();
+
+    expect($config->bonuses()->where('bonus_type_id', $multipleModes->id)->where('is_verified', true)->exists())->toBeFalse();
+
+    $component = Livewire::actingAs($user)->test(Scoring::class);
+
+    expect($component->get('noCreditContactCount'))->toBe(3);
+    $component->assertSee('No Credit');
+});

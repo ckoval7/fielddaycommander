@@ -266,6 +266,16 @@ class Scoring extends Component
             ->count();
     }
 
+    /**
+     * Non-duplicate contacts the rulebook logs but gives no credit (e.g. WFD
+     * 2027 WSJT-mode and satellite contacts). Zero for rulebooks without such rules.
+     */
+    #[Computed]
+    public function noCreditContactCount(): int
+    {
+        return $this->breakdown?->value('no_credit_contacts') ?? 0;
+    }
+
     #[Computed]
     public function duplicateRate(): float
     {
