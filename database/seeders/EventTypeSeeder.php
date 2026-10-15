@@ -23,9 +23,9 @@ class EventTypeSeeder extends Seeder
             [
                 'code' => 'WFD',
                 'name' => 'Winter Field Day',
-                'description' => 'Winter Field Day Association event - held the last full weekend in January',
+                'description' => 'Winter Field Day Association event - held the 4th full weekend in January',
                 'is_active' => true,
-                'setup_offset_hours' => null,
+                'setup_offset_hours' => 24,
             ],
         ];
 

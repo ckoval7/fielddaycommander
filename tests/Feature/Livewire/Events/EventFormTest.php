@@ -1051,6 +1051,48 @@ test('creating a WFD event leaves setup_allowed_from null', function () {
     expect($event->setup_allowed_from)->toBeNull();
 });
 
+test('creating a WFD event sets setup_allowed_from 24 hours before the 1600Z start', function () {
+    $wfdType = EventType::create([
+        'code' => 'WFD',
+        'name' => 'Winter Field Day',
+        'description' => 'Winter Field Day Association event - held the 4th full weekend in January',
+        'is_active' => true,
+        'setup_offset_hours' => 24,
+    ]);
+
+    $wfdClass = OperatingClass::create([
+        'event_type_id' => $wfdType->id,
+        'code' => 'I',
+        'name' => 'Indoor',
+        'description' => 'Indoor operation',
+        'allows_gota' => false,
+        'max_power_watts' => 500,
+        'requires_emergency_power' => false,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $wfdType->id)
+        ->set('name', 'Test WFD 2027 Setup')
+        ->set('start_time', '2027-01-23 16:00')
+        ->set('end_time', '2027-01-24 21:59')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $wfdClass->id)
+        ->set('transmitter_count', 1)
+        ->set('max_power_watts', 100)
+        ->set('uses_battery', true)
+        ->set('uses_commercial_power', false)
+        ->set('uses_generator', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $event = Event::where('name', 'Test WFD 2027 Setup')->first();
+    expect($event)->not->toBeNull();
+    expect($event->setup_allowed_from->toDateTimeString())->toBe('2027-01-22 16:00:00');
+});
+
 test('setupAllowedFrom computed property returns null for event type without offset', function () {
     $wfdType = EventType::create([
         'code' => 'WFD',
