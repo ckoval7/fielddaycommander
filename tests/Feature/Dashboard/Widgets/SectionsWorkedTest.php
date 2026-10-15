@@ -4,6 +4,7 @@ use App\Livewire\Dashboard\Widgets\SectionsWorked;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Section;
 use Database\Seeders\BandSeeder;
 use Database\Seeders\ModeSeeder;
@@ -160,8 +161,9 @@ describe('SectionsWorked Widget', function () {
         ]);
     });
 
-    test('lists Mexico under the DX group and marks it worked', function () {
+    test('lists Mexico under the DX group and marks it worked for Winter Field Day', function () {
         $event = Event::factory()->create([
+            'event_type_id' => EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'is_active' => true])->id,
             'start_time' => appNow()->subHours(12),
             'end_time' => appNow()->addHours(12),
         ]);
@@ -181,5 +183,56 @@ describe('SectionsWorked Widget', function () {
         expect(collect($dxGroup['sections'])->pluck('code')->all())->toContain('DX', 'MX')
             ->and(collect($dxGroup['sections'])->firstWhere('code', 'MX')['worked'])->toBeTrue()
             ->and($dxGroup['worked_count'])->toBe(1);
+    });
+
+    test('lists Yukon under the VE group for Winter Field Day', function () {
+        $event = Event::factory()->create([
+            'event_type_id' => EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'is_active' => true])->id,
+            'start_time' => appNow()->subHours(12),
+            'end_time' => appNow()->addHours(12),
+        ]);
+        $config = EventConfiguration::factory()->create([
+            'event_id' => $event->id,
+        ]);
+
+        Contact::factory()->create([
+            'event_configuration_id' => $config->id,
+            'section_id' => Section::where('code', 'YT')->value('id'),
+            'is_duplicate' => false,
+        ]);
+
+        $component = Livewire::test(SectionsWorked::class, ['config' => [], 'size' => 'normal']);
+        $veGroup = collect($component->instance()->getData()['groups'])->firstWhere('label', 'VE');
+
+        expect(collect($veGroup['sections'])->firstWhere('code', 'YT')['worked'])->toBeTrue()
+            ->and(collect($veGroup['sections'])->firstWhere('code', 'TER')['worked'])->toBeFalse();
+    });
+
+    test('ARRL events fold Mexico into DX and Yukon into TER', function () {
+        $event = Event::factory()->create([
+            'start_time' => appNow()->subHours(12),
+            'end_time' => appNow()->addHours(12),
+        ]);
+        $config = EventConfiguration::factory()->create([
+            'event_id' => $event->id,
+        ]);
+
+        foreach (['MX', 'YT'] as $code) {
+            Contact::factory()->create([
+                'event_configuration_id' => $config->id,
+                'section_id' => Section::where('code', $code)->value('id'),
+                'is_duplicate' => false,
+            ]);
+        }
+
+        $component = Livewire::test(SectionsWorked::class, ['config' => [], 'size' => 'normal']);
+        $data = $component->instance()->getData();
+        $sections = collect($data['groups'])->flatMap(fn (array $group) => $group['sections']);
+
+        expect($sections->pluck('code')->all())->not->toContain('MX', 'YT')
+            ->and($sections->firstWhere('code', 'DX')['worked'])->toBeTrue()
+            ->and($sections->firstWhere('code', 'TER')['worked'])->toBeTrue()
+            ->and($data['total_worked'])->toBe(2)
+            ->and($data['total_sections'])->toBe(Section::where('is_active', true)->count() - 2);
     });
 });

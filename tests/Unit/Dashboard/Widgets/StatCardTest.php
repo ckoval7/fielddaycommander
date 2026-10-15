@@ -5,6 +5,7 @@ use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Section;
@@ -424,4 +425,47 @@ test('stat card returns empty listeners array', function () {
     $listeners = $component->instance()->getWidgetListeners();
 
     expect($listeners)->toBeArray()->toBeEmpty();
+});
+
+/**
+ * Log one contact in each of the given sections and return the stat card's sections value.
+ *
+ * @param  list<string>  $codes
+ */
+function sectionsWorkedStatFor(?EventType $eventType, array $codes): string
+{
+    $event = Event::factory()->create(array_filter([
+        'event_type_id' => $eventType?->id,
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]));
+    $eventConfig = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    foreach ($codes as $code) {
+        $section = Section::firstOrCreate(
+            ['code' => $code],
+            ['name' => $code, 'region' => in_array($code, ['DX', 'MX'], true) ? 'DX' : 'VE', 'country' => 'CA', 'is_active' => true]
+        );
+
+        Contact::factory()->create([
+            'event_configuration_id' => $eventConfig->id,
+            'section_id' => $section->id,
+            'is_duplicate' => false,
+        ]);
+    }
+
+    return Livewire::test(StatCard::class, [
+        'config' => ['metric' => 'sections_worked'],
+        'size' => 'normal',
+    ])->viewData('data')['value'];
+}
+
+test('stat card counts Yukon as TER and Mexico as DX for ARRL events', function () {
+    expect(sectionsWorkedStatFor(null, ['TER', 'YT', 'DX', 'MX']))->toBe('2');
+});
+
+test('stat card counts Yukon and Mexico separately for Winter Field Day', function () {
+    $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'is_active' => true]);
+
+    expect(sectionsWorkedStatFor($wfd, ['TER', 'YT', 'DX', 'MX']))->toBe('4');
 });
