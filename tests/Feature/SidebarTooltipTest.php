@@ -43,8 +43,8 @@ test('sidebar scroll indicators use opacity instead of x-show to prevent layout 
     $response->assertSee('aria-label="Scroll down"', false);
 
     // They should use :class binding with opacity, not x-show
-    $response->assertSee("canScrollUp ? 'opacity-100' : 'opacity-0 pointer-events-none'", false);
-    $response->assertSee("canScrollDown ? 'opacity-100' : 'opacity-0 pointer-events-none'", false);
+    $response->assertSee("canScrollUp ? 'opacity-100' : 'opacity-0 invisible'", false);
+    $response->assertSee("canScrollDown ? 'opacity-100' : 'opacity-0 invisible'", false);
 
     // Ensure x-show is NOT used on scroll indicators (it causes layout jumps)
     $content = $response->getContent();

@@ -283,21 +283,22 @@
                 class="flex flex-col flex-1 min-h-0"
             >
                 @auth
-                    <div class="mary-hideable px-2 py-1.5 shrink-0">
+                    <div class="mary-hideable px-2 py-1.5 shrink-0 border-b border-base-content/10">
                         <livewire:components.event-context-selector />
                     </div>
-                    <x-menu-separator />
                 @endauth
 
+                {{-- Scroll indicators overlay the menu edges so they take no space when hidden --}}
+                <div class="relative flex flex-col flex-1 min-h-0">
                 {{-- Scroll-up indicator --}}
                 <button
-                    :class="canScrollUp ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                    :class="canScrollUp ? 'opacity-100' : 'opacity-0 invisible'"
                     @click="$refs.scrollArea.scrollBy({ top: -120, behavior: 'smooth' })"
                     type="button"
-                    class="flex justify-center py-1 border-b border-base-300/50 text-base-content/40 hover:text-base-content/70 transition-all duration-150 shrink-0"
+                    class="absolute inset-x-0 top-0 z-10 flex justify-center pt-1 pb-3 bg-linear-to-b from-base-100 lg:from-base-200 to-transparent text-base-content/60 hover:text-base-content transition-[opacity,visibility] duration-150"
                     aria-label="Scroll up"
                 >
-                    <x-icon name="phosphor-caret-up" class="w-4 h-4" />
+                    <x-icon name="phosphor-caret-up" class="size-4" />
                 </button>
 
                 {{-- Scrollable menu area --}}
@@ -311,7 +312,7 @@
                     @blur.capture="hideTooltip()"
                     @sidebar-toggled.window="isSidebarCollapsed = $event.detail; clearTimeout(tooltipTimer); if (tooltipEl) tooltipEl.style.display = 'none';"
                 >
-                    <x-menu activate-by-route class="mt-2">
+                    <x-menu activate-by-route>
                     @auth
                         <x-menu-item title="Dashboard" icon="phosphor-house" link="/" />
                         <x-menu-item title="Public Page" icon="phosphor-globe" link="{{ route('public.landing') }}" />
@@ -437,14 +438,15 @@
 
                 {{-- Scroll-down indicator --}}
                 <button
-                    :class="canScrollDown ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                    :class="canScrollDown ? 'opacity-100' : 'opacity-0 invisible'"
                     @click="$refs.scrollArea.scrollBy({ top: 120, behavior: 'smooth' })"
                     type="button"
-                    class="flex justify-center py-1 border-t border-base-300/50 text-base-content/60 hover:text-base-content/90 transition-all duration-150 shrink-0"
+                    class="absolute inset-x-0 bottom-0 z-10 flex justify-center pt-3 pb-1 bg-linear-to-t from-base-100 lg:from-base-200 to-transparent text-base-content/60 hover:text-base-content transition-[opacity,visibility] duration-150"
                     aria-label="Scroll down"
                 >
-                    <x-icon name="phosphor-caret-down" class="w-4 h-4" />
+                    <x-icon name="phosphor-caret-down" class="size-4" />
                 </button>
+                </div>
             </div>
         </x-slot:sidebar>
 
