@@ -34,6 +34,25 @@ services:
         depends_on:
             - mysql
             - redis
+        restart: unless-stopped
+
+    # Runs the Laravel scheduler (demo pool/cleanup/simulator, reminders, weather,
+    # external-logger monitor) so it survives container and host restarts.
+    scheduler:
+        image: sail-8.4/app
+        command: ['php', '/var/www/html/artisan', 'schedule:work']
+        environment:
+            WWWUSER: '${WWWUSER:-1000}'
+            LARAVEL_SAIL: 1
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - sail
+        depends_on:
+            - laravel.test
+            - mysql
+            - redis
+        restart: unless-stopped
 
     mysql:
         image: 'mysql:8.4'
@@ -55,6 +74,7 @@ services:
             test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD:-password}']
             retries: 3
             timeout: 5s
+        restart: unless-stopped
 
     redis:
         image: 'redis:alpine'
@@ -68,6 +88,7 @@ services:
             test: ['CMD', 'redis-cli', 'ping']
             retries: 3
             timeout: 5s
+        restart: unless-stopped
 
     # Aqua Security Trivy — vulnerability scanner for dependencies (composer.lock,
     # package-lock.json), container images, and IaC. Runs on demand rather than as a
