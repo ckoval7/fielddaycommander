@@ -18,7 +18,7 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts
 # ---------------------------------------------------------------------------
 # Stage 2: Build frontend assets (Vite + Tailwind)
 # ---------------------------------------------------------------------------
-FROM node:20-alpine AS node
+FROM node:22-alpine AS node
 
 WORKDIR /app
 

@@ -10,14 +10,13 @@
         "@tailwindcss/vite": "^4.1.18",
         "alpinejs": "^3.4.2",
         "axios": "^1.15.0",
-        "concurrently": "^9.0.1",
+        "concurrently": "^10.0.6",
         "daisyui": "^5.5.14",
-        "laravel-vite-plugin": "^2.0.0",
+        "laravel-vite-plugin": "^3.2.0",
         "tailwindcss": "^4.1.18",
-        "vite": "^7.3.2"
+        "vite": "^8.3.4"
     },
     "overrides": {
-        "rollup": ">=4.59.0",
         "socket.io-parser": ">=4.2.6",
         "picomatch": ">=4.0.4"
     },
