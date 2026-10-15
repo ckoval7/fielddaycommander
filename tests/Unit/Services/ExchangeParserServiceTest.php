@@ -126,6 +126,18 @@ test('rejects unknown section', function () {
         ->and($result['errors'][0])->toContain('Unknown section');
 });
 
+test('resolves Mexico exchange to the MX section', function () {
+    Section::firstOrCreate(['code' => 'MX'], ['name' => 'Mexico', 'region' => 'DX', 'country' => 'MX', 'is_active' => true]);
+
+    $result = $this->parser->parse('W1AW 1H MX');
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['class_code'])->toBe('H')
+        ->and($result['section_code'])->toBe('MX')
+        ->and($result['section_id'])->toBe(Section::where('code', 'MX')->value('id'))
+        ->and($result['errors'])->toBeEmpty();
+});
+
 test('parses multi-letter section code', function () {
     $result = $this->parser->parse('W1AW 3A STX');
 

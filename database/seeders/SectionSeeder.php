@@ -126,8 +126,9 @@ class SectionSeeder extends Seeder
             ['code' => 'SK', 'name' => 'Saskatchewan', 'region' => 'VE', 'country' => 'CA'],
             ['code' => 'TER', 'name' => 'Territories', 'region' => 'VE', 'country' => 'CA'],
 
-            // DX - International (1 section)
+            // DX - International (2 sections; Mexico is MX for WFD 2027)
             ['code' => 'DX', 'name' => 'DX (International)', 'region' => 'DX', 'country' => 'DX'],
+            ['code' => 'MX', 'name' => 'Mexico', 'region' => 'DX', 'country' => 'MX'],
         ];
 
         foreach ($sections as $section) {
