@@ -234,7 +234,7 @@
                             <x-icon name="phosphor-radio" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">Bulletin Reminders</div>
-                                <div class="text-sm text-base-content/60">W1AW bulletin transmission reminders</div>
+                                <div class="text-sm text-base-content/60">Bulletin transmission reminders</div>
                             </div>
                         </div>
                         <x-toggle wire:model="notify_bulletin_reminder" />

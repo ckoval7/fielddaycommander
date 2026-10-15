@@ -53,6 +53,25 @@ describe('per-user configurable reminders', function () {
         });
     });
 
+    test('names the bulletin after the event rulebook', function () {
+        Notification::fake();
+
+        $this->event->update(['event_type_id' => EventType::where('code', 'WFD')->first()->id]);
+
+        BulletinScheduleEntry::factory()->create([
+            'event_id' => $this->event->id,
+            'scheduled_at' => now()->addMinutes(15),
+            'created_by' => $this->user->id,
+        ]);
+
+        $this->artisan('reminders:send')->assertSuccessful();
+
+        Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) {
+            return str_starts_with($notification->toArray($this->user)['title'], 'WFD ')
+                && str_ends_with($notification->toArray($this->user)['title'], 'Bulletin in 15 minutes');
+        });
+    });
+
     test('user with default preferences gets 15-minute reminder', function () {
         Notification::fake();
 

@@ -374,7 +374,7 @@
                                     link="{{ route('events.messages.index', $activeEvent) }}"
                                     exact :active="request()->routeIs('events.messages.*')" />
                             @endcan
-                            <x-menu-item title="W1AW Bulletin" icon="phosphor-radio"
+                            <x-menu-item :title="$activeEvent->nomenclature()->bulletinName" icon="phosphor-radio"
                                 link="{{ route('events.w1aw-bulletin') }}"
                                 exact :active="request()->routeIs('events.w1aw-bulletin')" />
                         @endif

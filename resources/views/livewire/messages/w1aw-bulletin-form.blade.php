@@ -1,8 +1,8 @@
 <div class="space-y-6">
     {{-- Header --}}
     <x-header
-        title="W1AW Field Day Bulletin"
-        subtitle="Capture the W1AW bulletin received during Field Day"
+        :title="$this->nomenclature->bulletinName"
+        :subtitle="'Capture the ' . $this->nomenclature->bulletinName . ' as copied over the air'"
         separator
         progress-indicator
     >
@@ -20,7 +20,7 @@
     {{-- Status Badge --}}
     <div>
         @if($bulletinId)
-            <x-badge value="Bonus Earned: 100 pts" class="badge-success" icon="phosphor-check-circle" />
+            <x-badge :value="$this->nomenclature->bulletinCapturedLabel" class="badge-success" icon="phosphor-check-circle" />
         @else
             <x-badge value="Not Yet Captured" class="badge-warning" icon="phosphor-clock" />
         @endif
@@ -138,16 +138,22 @@
                         wire:model="scheduleFrequencies"
                         placeholder="e.g., 7.0475, 14.0475"
                     />
-                    <x-select
-                        label="Source"
-                        wire:model="scheduleSource"
-                        :options="[
-                            ['id' => 'W1AW', 'name' => 'W1AW'],
-                            ['id' => 'K6KPH', 'name' => 'K6KPH'],
-                        ]"
-                        option-value="id"
-                        option-label="name"
-                    />
+                    @if($this->nomenclature->bulletinSources)
+                        <x-select
+                            label="Source"
+                            wire:model="scheduleSource"
+                            :options="collect($this->nomenclature->bulletinSources)->map(fn ($source) => ['id' => $source, 'name' => $source])->all()"
+                            option-value="id"
+                            option-label="name"
+                        />
+                    @else
+                        <x-input
+                            label="Source"
+                            wire:model="scheduleSource"
+                            placeholder="Sending callsign"
+                            maxlength="10"
+                        />
+                    @endif
                 </div>
                 <x-input
                     label="Notes (optional)"
@@ -236,7 +242,7 @@
                 <x-textarea
                     label="Bulletin Text"
                     wire:model="bulletinText"
-                    placeholder="Enter the W1AW bulletin text as received..."
+                    :placeholder="'Enter the ' . $this->nomenclature->bulletinName . ' text as received...'"
                     rows="10"
                     required
                     class="font-mono"

@@ -42,7 +42,7 @@ class BulletinReminderSource implements ReminderSource
         $minuteLabel = $minutes === 1 ? '1 minute' : "{$minutes} minutes";
 
         return [
-            'title' => "W1AW Bulletin in {$minuteLabel}",
+            'title' => "{$item->event->nomenclature()->bulletinName} in {$minuteLabel}",
             'message' => "{$item->mode_label} on {$item->frequencies} MHz at {$timeFormatted}",
             'url' => '/w1aw-bulletin',
         ];

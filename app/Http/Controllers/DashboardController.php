@@ -104,7 +104,7 @@ class DashboardController extends Controller
                 'route' => $user->can('manage-shifts') ? route('schedule.manage') : null,
             ],
             [
-                'label' => 'W1AW bulletin schedule set up',
+                'label' => "{$event->nomenclature()->bulletinName} schedule set up",
                 'done' => BulletinScheduleEntry::forEvent($event->id)->exists(),
                 'route' => route('events.w1aw-bulletin'),
             ],
