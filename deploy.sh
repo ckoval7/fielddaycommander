@@ -4,6 +4,7 @@ set -euo pipefail
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
 FRANKENPHP_VERSION="1.13.0"
+NODE_MAJOR="22"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 readonly DISTRO_DEBIAN="debian"
 readonly DISTRO_RHEL="rhel"
@@ -27,6 +28,14 @@ log_info()    { echo -e "${GREEN}[INFO]${NC} $1" | tee -a "$LOG_FILE"; }
 log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1" | tee -a "$LOG_FILE"; }
 log_error()   { echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"; }
 log_phase()   { echo -e "\n${CYAN}${BOLD}=== $1 ===${NC}" | tee -a "$LOG_FILE"; }
+
+# True when Node is missing or older than NODE_MAJOR (Vite needs a current LTS).
+node_needs_install() {
+    command -v node &>/dev/null || return 0
+    local installed_major
+    installed_major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
+    (( installed_major < NODE_MAJOR ))
+}
 
 # Redirect all stdout/stderr to log file as well
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -307,11 +316,11 @@ install_packages_debian() {
     fi
 
     # Add NodeSource repo
-    if ! command -v node &>/dev/null; then
-        log_info "Adding NodeSource repo for Node 20..."
-        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    if node_needs_install; then
+        log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
+        curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
     else
-        log_warn "Node.js already installed, skipping NodeSource"
+        log_warn "Node.js $(node --version) already installed, skipping NodeSource"
     fi
 
     log_info "Installing packages..."
@@ -332,11 +341,12 @@ install_packages_rhel() {
     dnf module enable php:remi-8.4 -y
 
     # NodeSource repo
-    if ! command -v node &>/dev/null; then
-        log_info "Adding NodeSource repo for Node 20..."
-        curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+    if node_needs_install; then
+        log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
+        dnf module disable -y nodejs &>/dev/null || true
+        curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
     else
-        log_warn "Node.js already installed, skipping NodeSource"
+        log_warn "Node.js $(node --version) already installed, skipping NodeSource"
     fi
 
     log_info "Installing packages..."

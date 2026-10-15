@@ -9,18 +9,18 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.4",
         "barryvdh/laravel-dompdf": "^3.1",
         "codeat3/blade-phosphor-icons": "^2.4",
         "enshrined/svg-sanitize": "^1.0",
         "laravel/fortify": "^1.34",
-        "laravel/framework": "^12.0",
+        "laravel/framework": "^13.0",
         "laravel/octane": "^2.17",
         "laravel/reverb": "^1.7",
-        "laravel/tinker": "^2.10.1",
+        "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.1",
         "robsontenorio/mary": "*",
-        "spatie/laravel-permission": "^6.24"
+        "spatie/laravel-permission": "^8.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -30,8 +30,8 @@
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "pestphp/pest": "^4.3",
-        "pestphp/pest-plugin-laravel": "^4.0"
+        "pestphp/pest": "^5.3",
+        "pestphp/pest-plugin-laravel": "^5.0"
     },
     "autoload": {
         "files": [

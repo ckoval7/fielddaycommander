@@ -40,6 +40,7 @@ use App\Livewire\Safety\SiteSafetyChecklist;
 use App\Livewire\Schedule\ManageSchedule;
 use App\Livewire\Schedule\MyShifts;
 use App\Livewire\Schedule\ScheduleTimeline;
+use App\Livewire\Settings\SettingsPage;
 use App\Livewire\Stations\StationForm;
 use App\Livewire\Stations\StationsList;
 use App\Livewire\Users\UserManagement;
@@ -255,9 +256,7 @@ Route::middleware(['auth', 'verified', 'can:manage-users'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-settings'])->group(function () {
-    Route::get('/settings', function () {
-        return view('settings.index');
-    })->name('settings.index');
+    Route::get('/settings', SettingsPage::class)->name('settings.index');
 });
 
 Route::middleware(['auth', 'verified', 'can:view-reports'])->group(function () {

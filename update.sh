@@ -4,6 +4,7 @@ set -euo pipefail
 # --- Constants ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="/var/log/fd-commander-update.log"
+NODE_MAJOR="22"
 
 # --- Colors ---
 RED='\033[0;31m'
@@ -598,6 +599,41 @@ migrate_env_to_redis() {
     fi
 }
 
+# --- Upgrade Node.js on installs older than NODE_MAJOR ---
+# The asset build (Vite) needs a current Node LTS. deploy.sh installs
+# NODE_MAJOR on new hosts; this brings existing hosts up to the same version.
+ensure_node_version() {
+    local installed_major=0
+    if command -v node &>/dev/null; then
+        installed_major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
+    fi
+
+    if (( installed_major >= NODE_MAJOR )); then
+        return 0
+    fi
+
+    log_phase "Upgrading Node.js to ${NODE_MAJOR}"
+
+    if [[ -z "$DISTRO_FAMILY" ]]; then
+        log_error "Node.js ${NODE_MAJOR}+ is required (found ${installed_major}). Install it manually and re-run."
+        exit 1
+    fi
+
+    if [[ "$PKG_MANAGER" == "apt" ]]; then
+        curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        apt-get install -y nodejs
+    else
+        dnf module disable -y nodejs &>/dev/null || true
+        curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        dnf install -y nodejs
+    fi
+
+    log_info "Node.js $(node --version) installed"
+
+    # Force a clean npm ci so native modules match the new runtime.
+    rm -f "$NPM_LOCK_HASH_FILE"
+}
+
 # --- Install dependencies ---
 install_dependencies() {
     log_phase "Installing dependencies"
@@ -713,6 +749,7 @@ main() {
     else
         log_warn "Skipping Redis bootstrap and .env driver migration"
     fi
+    ensure_node_version
     install_dependencies
     run_migrations
     rebuild_caches
