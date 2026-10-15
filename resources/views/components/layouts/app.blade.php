@@ -283,7 +283,7 @@
                 class="flex flex-col flex-1 min-h-0"
             >
                 @auth
-                    <div class="mary-hideable px-4 pt-2 pb-3 shrink-0">
+                    <div class="mary-hideable px-2 py-1.5 shrink-0">
                         <livewire:components.event-context-selector />
                     </div>
                     <x-menu-separator />

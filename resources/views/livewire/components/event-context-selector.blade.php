@@ -1,70 +1,54 @@
 <div>
-<div class="px-3 py-2" x-data="{ open: false }">
-    @if($contextEvent)
-        {{-- Current event info --}}
-        <div class="mb-1">
-            <div class="font-semibold text-sm text-base-content truncate" title="{{ $contextEvent->name }}">
-                {{ $contextEvent->name }}
-            </div>
-            <div class="mt-0.5">
-                @switch($gracePeriodStatus)
-                    @case('active')
-                        <span class="badge badge-success badge-sm gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-success-content inline-block"></span>
-                            Active
-                        </span>
-                        @break
-                    @case('grace')
-                        <span class="badge badge-warning badge-sm gap-1">
-                            Grace Period
-                        </span>
-                        @break
-                    @case('setup')
-                        <span class="badge badge-secondary badge-sm gap-1">
-                            Setup
-                        </span>
-                        @break
-                    @case('upcoming')
-                        <span class="badge badge-info badge-sm gap-1">
-                            Upcoming
-                        </span>
-                        @break
-                    @case('archived')
-                        <span class="badge badge-ghost badge-sm gap-1">
-                            Archived
-                        </span>
-                        @break
-                @endswitch
-            </div>
-        </div>
-
-        {{-- Return to active event button --}}
-        @if($isViewingPast)
-            <button
-                wire:click="returnToActive"
-                class="btn btn-xs btn-warning btn-outline w-full mt-1 mb-1"
-            >
-                <x-icon name="phosphor-arrow-u-up-left" class="w-3 h-3" />
-                Return to Active Event
-            </button>
-        @endif
-    @else
-        {{-- No event selected --}}
-        <div class="mb-1">
-            <div class="font-semibold text-sm text-base-content/60">
-                No Event Selected
-            </div>
-        </div>
-    @endif
-
-    {{-- Dropdown toggle --}}
+<div x-data="{ open: false }">
+    {{-- Current event header doubles as the dropdown toggle --}}
     <button
+        type="button"
         @click="open = !open"
-        class="btn btn-xs btn-ghost w-full justify-between mt-1"
+        class="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-left hover:bg-base-200 transition-colors"
+        :aria-expanded="open"
+        aria-label="{{ $contextEvent ? 'Change event' : 'Select event' }}"
+        title="{{ $contextEvent ? 'Change event' : 'Select event' }}"
     >
-        <span>{{ $contextEvent ? 'Change Event' : 'Select Event' }}</span>
-        <x-icon name="phosphor-caret-down" class="w-3 h-3 transition-transform" ::class="open && 'rotate-180'" />
+        @if($contextEvent)
+            <span class="font-semibold text-sm text-base-content truncate min-w-0" title="{{ $contextEvent->name }}">
+                {{ $contextEvent->name }}
+            </span>
+            @switch($gracePeriodStatus)
+                @case('active')
+                    <span class="badge badge-success badge-xs gap-1 shrink-0">
+                        <span class="w-1.5 h-1.5 rounded-full bg-success-content inline-block"></span>
+                        Active
+                    </span>
+                    @break
+                @case('grace')
+                    <span class="badge badge-warning badge-xs shrink-0">Grace Period</span>
+                    @break
+                @case('setup')
+                    <span class="badge badge-secondary badge-xs shrink-0">Setup</span>
+                    @break
+                @case('upcoming')
+                    <span class="badge badge-info badge-xs shrink-0">Upcoming</span>
+                    @break
+                @case('archived')
+                    <span class="badge badge-ghost badge-xs shrink-0">Archived</span>
+                    @break
+            @endswitch
+        @else
+            <span class="font-semibold text-sm text-base-content/60 truncate">No Event Selected</span>
+        @endif
+        <x-icon name="phosphor-caret-down" class="w-3 h-3 ml-auto shrink-0 text-base-content/60 transition-transform" ::class="open && 'rotate-180'" />
     </button>
+
+    {{-- Return to active event button --}}
+    @if($contextEvent && $isViewingPast)
+        <button
+            wire:click="returnToActive"
+            class="btn btn-xs btn-warning btn-outline w-full mt-1"
+        >
+            <x-icon name="phosphor-arrow-u-up-left" class="w-3 h-3" />
+            Return to Active Event
+        </button>
+    @endif
 
     {{-- Event list dropdown --}}
     <div x-show="open" x-cloak x-transition class="mt-1 max-h-64 overflow-y-auto">
