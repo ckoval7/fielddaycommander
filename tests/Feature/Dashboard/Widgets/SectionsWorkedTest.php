@@ -159,4 +159,27 @@ describe('SectionsWorked Widget', function () {
             'KH6 / KL7 / KP4', 'VE', 'DX',
         ]);
     });
+
+    test('lists Mexico under the DX group and marks it worked', function () {
+        $event = Event::factory()->create([
+            'start_time' => appNow()->subHours(12),
+            'end_time' => appNow()->addHours(12),
+        ]);
+        $config = EventConfiguration::factory()->create([
+            'event_id' => $event->id,
+        ]);
+
+        Contact::factory()->create([
+            'event_configuration_id' => $config->id,
+            'section_id' => Section::where('code', 'MX')->value('id'),
+            'is_duplicate' => false,
+        ]);
+
+        $component = Livewire::test(SectionsWorked::class, ['config' => [], 'size' => 'normal']);
+        $dxGroup = collect($component->instance()->getData()['groups'])->firstWhere('label', 'DX');
+
+        expect(collect($dxGroup['sections'])->pluck('code')->all())->toContain('DX', 'MX')
+            ->and(collect($dxGroup['sections'])->firstWhere('code', 'MX')['worked'])->toBeTrue()
+            ->and($dxGroup['worked_count'])->toBe(1);
+    });
 });
