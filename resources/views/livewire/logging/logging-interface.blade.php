@@ -97,6 +97,14 @@
         </div>
     </div>
 
+    <div wire:poll.30s="refreshBandModeWarning">
+        @if($bandModeWarning)
+            <x-alert icon="phosphor-warning" class="alert-warning rounded-none" data-band-mode-warning>
+                {{ $bandModeWarning }}
+            </x-alert>
+        @endif
+    </div>
+
     <div class="sm:px-4 py-2 sm:py-4 max-w-4xl mx-auto flex flex-col gap-2 sm:gap-4">
         {{-- Your Exchange --}}
         <div class="text-center max-sm:px-4">
@@ -276,6 +284,7 @@
             <x-logging.exchange-composer
                 :suggestions="$suggestions"
                 :duplicate-warning="$isDuplicate ? $dupeWarning : null"
+                :participant-warning="$participantWarning ?: null"
             >
                 <template x-if="parseError">
                     <div class="alert alert-error">

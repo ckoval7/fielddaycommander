@@ -8,6 +8,7 @@ use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Services\EventContextService;
+use App\Services\LoggingWarningService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Collection;
@@ -173,6 +174,22 @@ class StationSelect extends Component
         }
 
         return null;
+    }
+
+    #[Computed]
+    public function bandModeConflictWarning(): ?string
+    {
+        $station = $this->selectedStationId ? Station::find($this->selectedStationId) : null;
+
+        if (! $station) {
+            return null;
+        }
+
+        return app(LoggingWarningService::class)->bandModeConflictWarning(
+            $station,
+            $this->selectedBandId,
+            $this->selectedModeId,
+        );
     }
 
     #[Computed]

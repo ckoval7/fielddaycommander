@@ -154,12 +154,18 @@
 
             <x-select
                 label="Mode"
-                wire:model="selectedModeId"
+                wire:model.live="selectedModeId"
                 :options="$this->modes->map(fn($m) => ['value' => $m->id, 'label' => $m->name])"
                 option-value="value"
                 option-label="label"
                 placeholder="Select a mode..."
             />
+
+            @if($this->bandModeConflictWarning)
+                <x-alert icon="phosphor-warning" class="alert-warning" data-band-mode-warning>
+                    {{ $this->bandModeConflictWarning }}
+                </x-alert>
+            @endif
 
             <x-input
                 label="Power (watts)"

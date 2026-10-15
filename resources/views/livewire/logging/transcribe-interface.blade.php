@@ -274,6 +274,7 @@
                     placeholder="1423 W1AW 3A CT"
                     :suggestions="$suggestions"
                     :duplicate-warning="$isDuplicate ? $dupeWarning : null"
+                :participant-warning="$participantWarning ?: null"
                 >
                     @if($parseError)
                         <x-alert icon="phosphor-warning" class="alert-error">

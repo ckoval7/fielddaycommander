@@ -5,6 +5,7 @@ namespace App\Livewire\Logging;
 use App\Events\ContactLogged;
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
+use App\Livewire\Logging\Concerns\HasParticipantWarning;
 use App\Livewire\Logging\Concerns\HasRecentContactNumbers;
 use App\Models\AuditLog;
 use App\Models\Band;
@@ -26,7 +27,7 @@ use Livewire\Component;
 
 class TranscribeInterface extends Component
 {
-    use AuthorizesRequests, HasContactForm, HasDuplicateDetection, HasRecentContactNumbers;
+    use AuthorizesRequests, HasContactForm, HasDuplicateDetection, HasParticipantWarning, HasRecentContactNumbers;
 
     /**
      * Splits an exchange string on any run of whitespace.
@@ -100,6 +101,11 @@ class TranscribeInterface extends Component
         $this->parseError = '';
         $this->clearDuplicateState();
         $this->parsePreview = [];
+        $this->participantWarning = '';
+
+        if (trim($this->exchangeInput) !== '') {
+            $this->refreshParticipantWarning($this->station->event_configuration_id);
+        }
 
         if (trim($this->exchangeInput) === '' || ! $this->selectedBandId || ! $this->selectedModeId) {
             return;
@@ -237,6 +243,7 @@ class TranscribeInterface extends Component
 
         $this->clearInput();
         $this->clearDuplicateState();
+        $this->participantWarning = '';
 
         $this->dispatch('contact-logged');
     }
@@ -246,6 +253,7 @@ class TranscribeInterface extends Component
         $this->exchangeInput = strtoupper(trim($exchange));
         $this->suggestions = [];
         $this->parseError = '';
+        $this->refreshParticipantWarning($this->station->event_configuration_id);
 
         $callsign = $this->extractCallsign();
         if ($callsign && $this->selectedBandId && $this->selectedModeId) {
@@ -506,6 +514,7 @@ class TranscribeInterface extends Component
         $this->exchangeInput = '';
         $this->parseError = '';
         $this->clearDuplicateState();
+        $this->participantWarning = '';
         unset($this->recentContacts);
     }
 
