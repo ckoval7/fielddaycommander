@@ -477,12 +477,33 @@
                     />
 
                     <x-input
-                        label="Public contact"
-                        wire:model="public_contact"
+                        label="Contact email"
+                        wire:model="public_contact_email"
+                        type="email"
                         icon="phosphor-envelope"
                         maxlength="255"
-                        placeholder="info@example.org, 555-0100, example.org"
-                        hint="Email, phone, website or social media for visitors. The club name above is shown as the host."
+                        placeholder="info@example.org"
+                        hint="Optional. Shown on the public page."
+                    />
+
+                    <x-input
+                        label="Contact phone"
+                        wire:model="public_contact_phone"
+                        type="tel"
+                        icon="phosphor-phone"
+                        maxlength="50"
+                        placeholder="555-555-0100"
+                        hint="Optional. Shown on the public page."
+                    />
+
+                    <x-input
+                        label="Website or social page"
+                        wire:model="public_website_url"
+                        type="url"
+                        icon="phosphor-globe"
+                        maxlength="255"
+                        placeholder="https://example.org"
+                        hint="Optional. Website or Facebook page; must start with http:// or https://. Shown on the public page."
                     />
 
                     <x-textarea

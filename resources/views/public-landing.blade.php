@@ -100,7 +100,7 @@
         </div>
 
         {{-- Visit us (public site details) --}}
-        @if($eventConfig && $eventConfig->is_open_to_public && ($eventConfig->public_directions || $eventConfig->public_visiting_hours || $eventConfig->public_contact || $eventConfig->public_description || $eventConfig->talk_in_frequency))
+        @if($eventConfig && $eventConfig->is_open_to_public && ($eventConfig->public_directions || $eventConfig->public_visiting_hours || $eventConfig->public_contact_email || $eventConfig->public_contact_phone || $eventConfig->public_website_url || $eventConfig->public_description || $eventConfig->talk_in_frequency))
             <div class="border-t border-base-300 pt-8 mb-10" data-testid="public-visit-details">
                 <h2 class="text-2xl font-bold text-center mb-6">Visit Us</h2>
                 <div class="max-w-2xl mx-auto space-y-4 text-base-content/80">
@@ -131,10 +131,20 @@
                             <p>{{ $eventConfig->talk_in_frequency }}</p>
                         </div>
                     @endif
-                    @if($eventConfig->public_contact)
+                    @if($eventConfig->public_contact_email || $eventConfig->public_contact_phone || $eventConfig->public_website_url)
                         <div>
                             <h3 class="font-semibold">Contact</h3>
-                            <p class="break-words">{{ $eventConfig->public_contact }}</p>
+                            <ul class="break-words">
+                                @if($eventConfig->public_contact_email)
+                                    <li>Email: <a class="link" href="mailto:{{ $eventConfig->public_contact_email }}">{{ $eventConfig->public_contact_email }}</a></li>
+                                @endif
+                                @if($eventConfig->public_contact_phone)
+                                    <li>Phone: <a class="link" href="tel:{{ preg_replace('/(?!^\+)[^0-9]/', '', trim($eventConfig->public_contact_phone)) }}">{{ $eventConfig->public_contact_phone }}</a></li>
+                                @endif
+                                @if($eventConfig->public_website_url)
+                                    <li>Website: <a class="link" href="{{ $eventConfig->public_website_url }}" target="_blank" rel="noopener nofollow">{{ $eventConfig->public_website_url }}</a></li>
+                                @endif
+                            </ul>
                         </div>
                     @endif
                 </div>

@@ -58,7 +58,9 @@ class EventConfiguration extends Model
         'is_open_to_public',
         'public_directions',
         'public_visiting_hours',
-        'public_contact',
+        'public_contact_email',
+        'public_contact_phone',
+        'public_website_url',
         'public_description',
     ];
 

@@ -1450,7 +1450,9 @@ test('public visitor details save, validate and reload on edit', function () {
         ->set('is_open_to_public', true)
         ->set('public_directions', 'Behind the library')
         ->set('public_visiting_hours', 'Sat 10-4')
-        ->set('public_contact', 'info@example.org')
+        ->set('public_contact_email', 'info@example.org')
+        ->set('public_contact_phone', '+1 (555) 010-0100 ext. 5')
+        ->set('public_website_url', 'https://facebook.com/club')
         ->set('public_description', 'Come visit.')
         ->call('save')
         ->assertHasNoErrors();
@@ -1458,8 +1460,31 @@ test('public visitor details save, validate and reload on edit', function () {
     $config->refresh();
     expect($config->is_open_to_public)->toBeTrue()
         ->and($config->public_directions)->toBe('Behind the library')
-        ->and($config->public_contact)->toBe('info@example.org');
+        ->and($config->public_contact_email)->toBe('info@example.org')
+        ->and($config->public_contact_phone)->toBe('+1 (555) 010-0100 ext. 5')
+        ->and($config->public_website_url)->toBe('https://facebook.com/club');
 
     Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
-        ->assertSet('public_description', 'Come visit.');
+        ->assertSet('public_description', 'Come visit.')
+        ->assertSet('public_contact_email', 'info@example.org')
+        ->assertSet('public_contact_phone', '+1 (555) 010-0100 ext. 5')
+        ->assertSet('public_website_url', 'https://facebook.com/club');
+});
+
+it('rejects invalid public contact email, phone and website', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+    ]);
+
+    Livewire::test(EventForm::class, ['eventId' => $event->id, 'mode' => 'edit'])
+        ->set('public_contact_email', 'not-an-email')
+        ->set('public_contact_phone', 'call me <b>')
+        ->set('public_website_url', 'javascript:alert(1)')
+        ->call('save')
+        ->assertHasErrors(['public_contact_email', 'public_contact_phone', 'public_website_url']);
 });

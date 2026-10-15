@@ -101,7 +101,11 @@ class EventForm extends Component
 
     public ?string $public_visiting_hours = null;
 
-    public ?string $public_contact = null;
+    public ?string $public_contact_email = null;
+
+    public ?string $public_contact_phone = null;
+
+    public ?string $public_website_url = null;
 
     public ?string $public_description = null;
 
@@ -295,7 +299,9 @@ class EventForm extends Component
             $this->is_open_to_public = (bool) $this->configuration->is_open_to_public;
             $this->public_directions = $this->configuration->public_directions;
             $this->public_visiting_hours = $this->configuration->public_visiting_hours;
-            $this->public_contact = $this->configuration->public_contact;
+            $this->public_contact_email = $this->configuration->public_contact_email;
+            $this->public_contact_phone = $this->configuration->public_contact_phone;
+            $this->public_website_url = $this->configuration->public_website_url;
             $this->public_description = $this->configuration->public_description;
 
             // Load guestbook settings
@@ -703,7 +709,9 @@ class EventForm extends Component
             'is_open_to_public' => $validated['is_open_to_public'] ?? false,
             'public_directions' => $validated['public_directions'] ?? null,
             'public_visiting_hours' => $validated['public_visiting_hours'] ?? null,
-            'public_contact' => $validated['public_contact'] ?? null,
+            'public_contact_email' => $validated['public_contact_email'] ?? null,
+            'public_contact_phone' => $validated['public_contact_phone'] ?? null,
+            'public_website_url' => $validated['public_website_url'] ?? null,
             'public_description' => $validated['public_description'] ?? null,
             'guestbook_enabled' => $validated['guestbook_enabled'] ?? false,
             'guestbook_detection_radius' => $validated['guestbook_detection_radius'] ?? 500,
@@ -774,7 +782,9 @@ class EventForm extends Component
             'is_open_to_public' => $validated['is_open_to_public'] ?? false,
             'public_directions' => $validated['public_directions'] ?? null,
             'public_visiting_hours' => $validated['public_visiting_hours'] ?? null,
-            'public_contact' => $validated['public_contact'] ?? null,
+            'public_contact_email' => $validated['public_contact_email'] ?? null,
+            'public_contact_phone' => $validated['public_contact_phone'] ?? null,
+            'public_website_url' => $validated['public_website_url'] ?? null,
             'public_description' => $validated['public_description'] ?? null,
             'guestbook_enabled' => $validated['guestbook_enabled'] ?? false,
             'guestbook_detection_radius' => $validated['guestbook_detection_radius'] ?? 500,
@@ -937,7 +947,9 @@ class EventForm extends Component
             'is_open_to_public' => ['boolean'],
             'public_directions' => ['nullable', 'string', 'max:1000'],
             'public_visiting_hours' => ['nullable', 'string', 'max:500'],
-            'public_contact' => ['nullable', 'string', 'max:255'],
+            'public_contact_email' => ['nullable', 'email', 'max:255'],
+            'public_contact_phone' => ['nullable', 'string', 'max:50', 'regex:/^[0-9\s+\-().]*(?:ext\.?\s*[0-9]+)?$/i'],
+            'public_website_url' => ['nullable', 'url:http,https', 'max:255'],
             'public_description' => ['nullable', 'string', 'max:2000'],
         ];
     }
@@ -1048,7 +1060,9 @@ class EventForm extends Component
             'talk_in_frequency' => 'talk-in frequency',
             'public_directions' => 'directions',
             'public_visiting_hours' => 'visiting hours',
-            'public_contact' => 'public contact',
+            'public_contact_email' => 'contact email',
+            'public_contact_phone' => 'contact phone',
+            'public_website_url' => 'website',
             'public_description' => 'public description',
             'guestbook_detection_radius' => 'detection radius',
         ];

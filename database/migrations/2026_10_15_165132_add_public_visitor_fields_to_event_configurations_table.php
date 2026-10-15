@@ -12,7 +12,9 @@ return new class extends Migration
             $table->boolean('is_open_to_public')->default(false);
             $table->text('public_directions')->nullable();
             $table->text('public_visiting_hours')->nullable();
-            $table->string('public_contact', 255)->nullable();
+            $table->string('public_contact_email', 255)->nullable();
+            $table->string('public_contact_phone', 50)->nullable();
+            $table->string('public_website_url', 255)->nullable();
             $table->text('public_description')->nullable();
         });
     }
@@ -24,7 +26,9 @@ return new class extends Migration
                 'is_open_to_public',
                 'public_directions',
                 'public_visiting_hours',
-                'public_contact',
+                'public_contact_email',
+                'public_contact_phone',
+                'public_website_url',
                 'public_description',
             ]);
         });
