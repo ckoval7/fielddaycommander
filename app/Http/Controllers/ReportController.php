@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AdifExporter;
 use App\Services\CabrilloExporter;
 use App\Services\EventContextService;
 use App\Services\SubmissionReportService;
+use App\Services\WfdEventSummaryService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -12,12 +14,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * Controller for generating and downloading Field Day report files.
  *
- * Handles Cabrillo log export and ARRL submission sheet for the active event.
+ * Handles Cabrillo and ADIF log export, the ARRL submission sheet and the
+ * Winter Field Day event summary for the active event.
  */
 class ReportController extends Controller
 {
     public function __construct(
         protected CabrilloExporter $cabrilloExporter,
+        protected AdifExporter $adifExporter,
+        protected WfdEventSummaryService $wfdEventSummaryService,
         protected SubmissionReportService $submissionReportService,
         protected EventContextService $eventContextService,
     ) {}
@@ -43,6 +48,53 @@ class ReportController extends Controller
             $filename,
             ['Content-Type' => 'text/plain; charset=UTF-8'],
         );
+    }
+
+    /**
+     * Download the ADIF log for the active event.
+     */
+    public function adif(): StreamedResponse
+    {
+        $config = $this->eventContextService->getEventConfiguration();
+
+        if ($config === null) {
+            abort(404);
+        }
+
+        $content = $this->adifExporter->export($config);
+        $filename = $this->adifExporter->filename($config);
+
+        return response()->streamDownload(
+            function () use ($content) {
+                echo $content;
+            },
+            $filename,
+            ['Content-Type' => 'text/plain; charset=UTF-8'],
+        );
+    }
+
+    /**
+     * Download the Winter Field Day event summary PDF for the active event.
+     *
+     * The counterpart of the ARRL submission sheet for rulebooks that do not
+     * use it; Field Day events have no such document.
+     */
+    public function wfdEventSummary(): Response
+    {
+        $config = $this->eventContextService->getEventConfiguration();
+
+        if ($config === null || $config->usesArrlSubmissionSheet()) {
+            abort(404);
+        }
+
+        $data = $this->wfdEventSummaryService->getData($config);
+
+        $callsign = strtolower(str_replace('/', '_', $config->callsign));
+        $filename = "{$callsign}-{$data['event_year']}-event-summary.pdf";
+
+        return Pdf::loadView('reports.wfd-event-summary-pdf', $data)
+            ->setPaper('letter', 'portrait')
+            ->download($filename);
     }
 
     /**

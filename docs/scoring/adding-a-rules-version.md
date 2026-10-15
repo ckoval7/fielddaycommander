@@ -309,7 +309,9 @@ The steps above are written for ARRL. For WFD, the differences are:
   and `constrainToCreditable()` state the same rules once for a loaded contact
   and once in SQL, so they must agree. Test both against the same contacts.
   Callers go through `EventConfiguration::creditableContacts()` and
-  `contactNoCreditReason()`, not the contract directly. No-credit contacts are stored with 0
+  `contactNoCreditReason()`, not the contract directly. The Cabrillo and ADIF
+  exports and the WFD Event Summary PDF all read `creditableContacts()`, so a new
+  rule is applied to them automatically. No-credit contacts are stored with 0
   points, by `ContactObserver::saving` and `RescoreService`.
 - **Rule text.** `ruleReferences()` holds the verbatim objective text, keyed by
   code. The WFDA rules do not number their objectives, so the section label is the

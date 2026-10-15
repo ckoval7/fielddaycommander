@@ -101,6 +101,8 @@ $gatedEndpoints = [
     'events.equipment.reports.owner-contacts-pdf' => ['get', 'events.equipment.reports.owner-contacts-pdf', 'manage-event-equipment', fn () => ['event' => $this->event]],
     'events.equipment.reports.incident-report-pdf' => ['get', 'events.equipment.reports.incident-report-pdf', 'manage-event-equipment', fn () => ['event' => $this->event]],
     'reports.cabrillo' => ['get', 'reports.cabrillo', 'view-reports', fn () => []],
+    'reports.adif' => ['get', 'reports.adif', 'view-reports', fn () => []],
+    'reports.wfd-event-summary' => ['get', 'reports.wfd-event-summary', 'view-reports', fn () => []],
     'reports.submission-sheet' => ['get', 'reports.submission-sheet', 'view-reports', fn () => []],
     'album-export.store' => ['post', 'album-export.store', 'manage-images', fn () => ['eventConfiguration' => $this->eventConfiguration]],
     'album-export.download' => ['get', 'album-export.download', 'manage-images', fn () => ['eventConfiguration' => $this->eventConfiguration, 'filename' => 'album.zip']],
