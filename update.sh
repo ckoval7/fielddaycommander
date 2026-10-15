@@ -620,11 +620,11 @@ ensure_node_version() {
     fi
 
     if [[ "$PKG_MANAGER" == "apt" ]]; then
-        curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        curl -fsSL --proto '=https' --tlsv1.2 "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
         apt-get install -y nodejs
     else
         dnf module disable -y nodejs &>/dev/null || true
-        curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        curl -fsSL --proto '=https' --tlsv1.2 "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
         dnf install -y nodejs
     fi
 
