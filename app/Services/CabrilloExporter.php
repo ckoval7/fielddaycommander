@@ -19,6 +19,29 @@ class CabrilloExporter
             throw new CabrilloExportException('EventConfiguration is missing section or operating class.');
         }
 
+        $lines = $this->isWinterFieldDay($config)
+            ? $this->winterFieldDayHeader($config)
+            : $this->fieldDayHeader($config);
+
+        $contacts = $config->creditableContacts()
+            ->with(['band', 'mode', 'section'])
+            ->orderBy('qso_time')
+            ->get();
+
+        foreach ($contacts as $contact) {
+            $lines[] = $this->formatQso($config, $contact);
+        }
+
+        $lines[] = 'END-OF-LOG:';
+
+        return implode("\r\n", $lines)."\r\n";
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function fieldDayHeader(EventConfiguration $config): array
+    {
         $lines = [
             'START-OF-LOG: 3.0',
             'CREATED-BY: FD Commander',
@@ -72,19 +95,103 @@ class CabrilloExporter
             }
         }
 
-        $contacts = $config->contacts()
-            ->notDuplicate()
-            ->with(['band', 'mode'])
-            ->orderBy('qso_time')
-            ->get();
+        return $lines;
+    }
 
-        foreach ($contacts as $contact) {
-            $lines[] = $this->formatQso($config, $contact);
+    /**
+     * Header for a WFDA log, in the order the WFDA 2027 rules (page 10) show.
+     * WFDA does not use SOAPBOX, so none is emitted.
+     *
+     * @return list<string>
+     */
+    private function winterFieldDayHeader(EventConfiguration $config): array
+    {
+        $config->loadMissing('createdBy');
+
+        $lines = [
+            'START-OF-LOG: 3.0',
+            'CREATED-BY: FD Commander',
+            'LOCATION: '.$config->section->code,
+            'CALLSIGN: '.$config->callsign,
+        ];
+
+        if ($config->club_name) {
+            $lines[] = 'CLUB: '.$config->club_name;
         }
 
-        $lines[] = 'END-OF-LOG:';
+        $lines[] = 'CONTEST: '.$config->cabrilloContestName();
+        $lines[] = 'CATEGORY-POWER: '.$this->winterPowerCategory($config);
+        $lines[] = 'CLAIMED-SCORE: '.$config->calculateFinalScore();
 
-        return implode("\r\n", $lines)."\r\n";
+        $operators = $this->operatorCallsigns($config);
+        if ($operators !== []) {
+            $lines[] = 'OPERATORS: '.implode(', ', $operators);
+        }
+
+        $contact = $config->createdBy;
+        $name = $contact ? trim($contact->first_name.' '.$contact->last_name) : '';
+        if ($name !== '') {
+            $lines[] = 'NAME: '.$name;
+        }
+
+        $lines[] = 'X-EXCHANGE: '.$config->transmitter_count.$config->operatingClass->code;
+
+        if ($contact?->email) {
+            $lines[] = 'EMAIL: '.$contact->email;
+        }
+
+        return $lines;
+    }
+
+    private function isWinterFieldDay(EventConfiguration $config): bool
+    {
+        return $config->cabrilloContestName() === 'WFD';
+    }
+
+    /**
+     * QRP only when every non-duplicate contact stayed within WFD's ceilings
+     * (Phone 10 W, CW/Digital 5 W), else LOW. Contacts without recorded power
+     * fall back to the operation's configured maximum.
+     */
+    private function winterPowerCategory(EventConfiguration $config): string
+    {
+        $fallbackWatts = $config->effectiveMaxPowerWatts();
+
+        $exceeded = $config->contacts()
+            ->notDuplicate()
+            ->with('mode:id,category')
+            ->get(['id', 'mode_id', 'power_watts'])
+            ->contains(function (Contact $contact) use ($fallbackWatts) {
+                $ceiling = $contact->mode?->category === 'Phone' ? 10 : 5;
+
+                return ($contact->power_watts ?? $fallbackWatts) > $ceiling;
+            });
+
+        if ($exceeded) {
+            return 'LOW';
+        }
+
+        return $config->hasContacts() || $fallbackWatts <= 5 ? 'QRP' : 'LOW';
+    }
+
+    /**
+     * Distinct callsigns of the operators who made this event's contacts.
+     *
+     * @return list<string>
+     */
+    private function operatorCallsigns(EventConfiguration $config): array
+    {
+        return $config->contacts()
+            ->notDuplicate()
+            ->with(['operatingSession.operator', 'logger'])
+            ->get()
+            ->map(fn (Contact $contact) => $contact->operatingSession?->operator?->call_sign ?? $contact->logger?->call_sign)
+            ->filter()
+            ->map(fn (string $callsign) => strtoupper($callsign))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 
     /**
@@ -93,6 +200,12 @@ class CabrilloExporter
     public function filename(EventConfiguration $config): string
     {
         $config->loadMissing('event');
+
+        if ($this->isWinterFieldDay($config)) {
+            // WFDA requires the file be named for the callsign used; "/" cannot appear in a filename.
+            return str_replace('/', '_', strtoupper($config->callsign)).'.log';
+        }
+
         $year = $config->event->start_time->year;
         $callsign = strtolower($config->callsign);
 
