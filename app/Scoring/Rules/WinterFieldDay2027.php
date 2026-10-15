@@ -242,23 +242,15 @@ class WinterFieldDay2027 implements DeterminesContactCredit, ImpliesObjectives, 
      */
     protected function isWsjtSubmode(?string $submode): bool
     {
-        if ($submode === null || $submode === '') {
+        $submode = mb_strtoupper((string) $submode);
+
+        if ($submode === '') {
             return false;
         }
 
-        $submode = mb_strtoupper($submode);
-
-        if (in_array($submode, static::WSJT_SUBMODES, true)) {
-            return true;
-        }
-
-        foreach (static::WSJT_SUBMODE_PREFIXES as $prefix) {
-            if (str_starts_with($submode, $prefix)) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array($submode, static::WSJT_SUBMODES, true)
+            || collect(static::WSJT_SUBMODE_PREFIXES)
+                ->contains(fn (string $prefix): bool => str_starts_with($submode, $prefix));
     }
 
     /**
