@@ -30,6 +30,7 @@ use App\Policies\W1awBulletinPolicy;
 use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
+use App\View\Components\ChoicesOffline;
 use App\View\Components\Icon;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -78,6 +79,11 @@ class AppServiceProvider extends ServiceProvider
         Blade::component('icon', Icon::class);
         $this->app->booted(function (): void {
             Blade::component('mary-icon', Icon::class);
+        });
+
+        // Null-safe getters for <x-choices-offline>; see the class docblock.
+        $this->app->booted(function (): void {
+            Blade::component(config('mary.prefix').'choices-offline', ChoicesOffline::class);
         });
 
         // Register policies

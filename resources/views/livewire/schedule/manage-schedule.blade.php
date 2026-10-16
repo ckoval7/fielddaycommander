@@ -245,7 +245,7 @@
 
                                             {{-- Shift actions --}}
                                             <div class="flex items-center gap-1 shrink-0">
-                                                @if($shift->assignments->count() < $shift->capacity)
+                                                @if($shift->assignments->where('status', '!=', \App\Models\ShiftAssignment::STATUS_NO_SHOW)->count() < $shift->capacity)
                                                     <x-button
                                                         icon="phosphor-user-plus"
                                                         class="btn-ghost btn-sm"
@@ -625,26 +625,5 @@
         </div>
     </x-modal>
 
-    {{-- Assignment Modal --}}
-    <x-modal wire:model="showAssignModal" title="Assign User to Shift" class="!overflow-visible" box-class="!overflow-visible">
-        <div>
-            <div class="space-y-4">
-                <x-choices-offline
-                    label="User"
-                    wire:model="assignUserId"
-                    :options="$this->users"
-                    option-value="id"
-                    option-label="name"
-                    placeholder="Search for a user..."
-                    searchable
-                    single
-                />
-            </div>
-
-            <x-slot:actions>
-                <x-button label="Cancel" @click="$wire.showAssignModal = false" />
-                <x-button label="Assign" wire:click="assignUser" class="btn-primary" spinner="assignUser" />
-            </x-slot:actions>
-        </div>
-    </x-modal>
+    @include('livewire.schedule.partials.assign-modal')
 </div>

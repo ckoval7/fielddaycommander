@@ -40,6 +40,7 @@ use App\Livewire\Safety\SiteSafetyChecklist;
 use App\Livewire\Schedule\ManageSchedule;
 use App\Livewire\Schedule\MyShifts;
 use App\Livewire\Schedule\ScheduleTimeline;
+use App\Livewire\Schedule\ShiftDashboard;
 use App\Livewire\Settings\SettingsPage;
 use App\Livewire\Stations\StationForm;
 use App\Livewire\Stations\StationsList;
@@ -222,6 +223,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/schedule', ScheduleTimeline::class)->name('schedule.index');
     Route::get('/schedule/my-shifts', MyShifts::class)->name('schedule.my-shifts');
+    Route::get('/schedule/dashboard', ShiftDashboard::class)->name('schedule.dashboard');
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-shifts'])->group(function () {

@@ -113,7 +113,9 @@ class Shift extends Model
     protected function hasCapacity(): Attribute
     {
         return Attribute::make(
-            get: fn (): bool => $this->assignments()->count() < $this->capacity
+            get: fn (): bool => $this->assignments()
+                ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
+                ->count() < $this->capacity
         );
     }
 

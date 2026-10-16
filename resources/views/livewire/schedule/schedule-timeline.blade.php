@@ -20,6 +20,12 @@
                     />
                 @endcan
                 <x-button
+                    label="Dashboard"
+                    icon="phosphor-chart-bar-horizontal"
+                    class="btn-outline"
+                    link="{{ route('schedule.dashboard') }}"
+                />
+                <x-button
                     label="My Shifts"
                     icon="phosphor-calendar-dots"
                     class="btn-outline"

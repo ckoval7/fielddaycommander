@@ -343,7 +343,7 @@
                             <x-menu-item title="Stations" icon="phosphor-hard-drives" link="{{ route('stations.index') }}" route="stations.index" />
                         @endcan
 
-                        <x-menu-item title="Shift Schedule" icon="phosphor-calendar-dots" link="{{ route('schedule.index') }}" exact :active="request()->routeIs('schedule.index', 'schedule.my-shifts')" />
+                        <x-menu-item title="Shift Schedule" icon="phosphor-calendar-dots" link="{{ route('schedule.index') }}" exact :active="request()->routeIs('schedule.index', 'schedule.my-shifts', 'schedule.dashboard')" />
                         <x-menu-item title="Site Safety" icon="phosphor-shield-check" link="{{ route('site-safety.index') }}" exact :active="request()->routeIs('site-safety.index')" />
 
                         <x-menu-sub title="Equipment" icon="phosphor-toolbox">
