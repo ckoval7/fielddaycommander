@@ -212,7 +212,9 @@
             <livewire:components.developer-banner />
         @endunless
         @auth
-            <livewire:components.dev-role-switcher />
+            @unless(\App\Support\StationMode::isActive())
+                <livewire:components.dev-role-switcher />
+            @endunless
         @endauth
     @endif
 

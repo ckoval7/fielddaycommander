@@ -53,11 +53,24 @@
                 <x-button label="Start Logging" type="submit" class="btn-primary w-full" icon="phosphor-play" spinner="start" />
             </form>
 
-            <div class="text-center mt-6 pt-4 border-t border-base-300">
-                <button type="button" wire:click="openExitModal" class="link link-hover text-xs text-base-content/60">
-                    Station captain: exit station mode
-                </button>
-            </div>
+            @if($this->demoVisitor)
+                <x-alert icon="phosphor-info" class="alert-info text-sm mt-6" data-demo-station-mode-hint>
+                    Demo: type any callsign to try walk-up logging. When you're done, exit station mode to return to your demo as {{ $this->demoVisitor->call_sign }}.
+                </x-alert>
+                <x-button
+                    label="Exit Station Mode"
+                    wire:click="exitStationMode"
+                    class="btn-outline w-full mt-3"
+                    icon="phosphor-power"
+                    spinner="exitStationMode"
+                />
+            @else
+                <div class="text-center mt-6 pt-4 border-t border-base-300">
+                    <button type="button" wire:click="openExitModal" class="link link-hover text-xs text-base-content/60">
+                        Station captain: exit station mode
+                    </button>
+                </div>
+            @endif
 
             <x-modal wire:model="showExitModal" title="Exit Station Mode" persistent>
                 <div class="space-y-4">

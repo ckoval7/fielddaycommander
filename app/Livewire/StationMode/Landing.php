@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\StationDevice;
 use App\Models\User;
 use App\Services\UserResolverService;
+use App\Support\DemoCookie;
 use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +54,22 @@ class Landing extends Component
     public function device(): ?StationDevice
     {
         return StationMode::deviceFromCookie(request());
+    }
+
+    /**
+     * The demo visitor this browser belongs to. Any participant can exit
+     * station mode with one click and return to their own demo session.
+     */
+    #[Computed]
+    public function demoVisitor(): ?User
+    {
+        if (! config('demo.enabled')) {
+            return null;
+        }
+
+        $visitor = DemoCookie::fromRequest(request());
+
+        return $visitor ? User::find($visitor->userId) : null;
     }
 
     /**
@@ -163,6 +180,12 @@ class Landing extends Component
             return;
         }
 
+        if ($this->demoVisitor) {
+            $this->returnToDemoSession($device, $this->demoVisitor);
+
+            return;
+        }
+
         if ($this->canExitAsCurrentUser) {
             $this->revokeAndForget($device, Auth::id());
 
@@ -201,6 +224,19 @@ class Landing extends Component
         RateLimiter::clear($rateLimitKey);
 
         $this->revokeAndForget($device, $captain->id);
+    }
+
+    /**
+     * Exit station mode and sign the demo visitor back in as their own persona.
+     */
+    private function returnToDemoSession(StationDevice $device, User $visitor): void
+    {
+        session()->forget(StationMode::SESSION_KEY);
+        Auth::login($visitor);
+        session()->regenerate();
+        session(['dev_role_override' => $visitor->roles->first()?->name ?? '']);
+
+        $this->revokeAndForget($device, $visitor->id);
     }
 
     private function revokeAndForget(StationDevice $device, int $userId): void

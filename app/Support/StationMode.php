@@ -63,6 +63,7 @@ class StationMode
         'weather.index',
         'logout',
         'logout.get',
+        'demo.*',
         '*livewire.*',
     ];
 
@@ -76,6 +77,7 @@ class StationMode
         'login',
         'login.store',
         'two-factor.*',
+        'demo.*',
         '*livewire.*',
     ];
 

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\User;
 use App\Support\DemoCookie;
 use App\Support\DemoDatabase;
+use App\Support\StationMode;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +54,11 @@ class DemoMiddleware
         // cache flush, user reload) — the swapped connection, permission cache,
         // and session state all remain correct for this visitor.
         if (config('database.connections.demo.database') === $dbName) {
+            // A browser whose station mode was revoked elsewhere was left signed out.
+            if (! Auth::check() && $this->hasRevokedStationModeCookie($request)) {
+                $this->signInVisitor($visitor->userId);
+            }
+
             return $next($request);
         }
 
@@ -66,14 +72,44 @@ class DemoMiddleware
 
         // On visitor change, re-authenticate so the session guard doesn't serve
         // a stale user resolved against the previous visitor's demo DB.
-        $user = User::find($visitor->userId);
+        if (! $this->isStationModeBrowser($request)) {
+            $this->signInVisitor($visitor->userId);
+        }
+
+        return $next($request);
+    }
+
+    /**
+     * A station-mode browser belongs to whoever is at the station: the walk-up
+     * operator in the session, or nobody while it waits for one. Signing the
+     * visitor in there would log contacts under the wrong call.
+     */
+    protected function isStationModeBrowser(Request $request): bool
+    {
+        return $request->session()->has(StationMode::SESSION_KEY)
+            || StationMode::deviceFromCookie($request) !== null;
+    }
+
+    /**
+     * Whether this browser still holds a station-mode cookie for a device that was revoked.
+     */
+    protected function hasRevokedStationModeCookie(Request $request): bool
+    {
+        return filled($request->cookie(StationMode::COOKIE))
+            && ! $this->isStationModeBrowser($request);
+    }
+
+    /**
+     * Sign the visitor in as the account their cookie names, with its role override.
+     */
+    protected function signInVisitor(int $userId): void
+    {
+        $user = User::find($userId);
 
         if ($user) {
             Auth::setUser($user);
             session(['dev_role_override' => $user->roles->first()?->name ?? '']);
         }
-
-        return $next($request);
     }
 
     /**
