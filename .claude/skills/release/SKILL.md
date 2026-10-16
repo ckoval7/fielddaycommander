@@ -113,15 +113,16 @@ git commit -am "chore(release): vYY.MM.N"
 
 Then:
 
-1. **Ask the user** whether to open a PR or fast-forward `main` locally (`git switch main && git merge --ff-only release/vYY.MM.N`), and get their approval before pushing `main`.
-2. After the push, wait for SonarCloud's automatic analysis of the new `origin/main` HEAD. `$S cloud` prints the revision of the last analysis; it must match `origin/main` and show gate `OK` with 0 open issues. If it doesn't, return to step 1.
-3. Tag the release commit on `main` and push the tag. Pushing the tag publishes the release, so confirm with the user first.
+**Never push and never offer to push.** The user pushes branches, `main` and tags themselves, when they're ready.
+
+1. Fast-forward `main` locally: `git switch main && git merge --ff-only release/vYY.MM.N`. Then delete the release branch.
+2. Tell the user that `main` is ready for them to push, and stop there.
+3. Once the user says they've pushed, wait for SonarCloud's automatic analysis of the new `origin/main` HEAD. `$S cloud` prints the revision of the last analysis. It must match `origin/main` and show gate `OK` with 0 open issues. If it doesn't, return to step 1 of the release.
+4. Create the annotated tag on the release commit, locally only. The user pushes it.
 
    ```bash
    git tag -a vYY.MM.N -m vYY.MM.N
-   git push origin vYY.MM.N
    ```
-4. Delete the release branch.
 
 ## 5. Bring the release into demo, then clean up
 

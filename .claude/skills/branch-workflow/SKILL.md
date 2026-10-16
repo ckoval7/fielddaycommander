@@ -19,7 +19,8 @@ Demo mode (`feature/demo-mode`) is a long-lived branch that is **not** merged in
    - **No:** work in the main checkout on a new feature branch off an up-to-date `main`. Never commit directly to `main`.
 2. **Demo code never moves to `main`.** Don't suggest it, even when a demo fix looks generic.
 3. **A bug found while click-testing demo that isn't demo-specific** is fixed on a branch off `main`. Bring it into demo by merging `main` into `feature/demo-mode`. Don't fix it on demo.
-4. **Keep each checkout on its own branch.** Don't check out `feature/demo-mode` in the main checkout, or `main` in the worktree. Git refuses this anyway, because a branch can only be checked out in one worktree.
+4. **Never push and never offer to push.** Commits, merges and tags stay local, and the user pushes when they're ready.
+5. **Keep each checkout on its own branch.** Don't check out `feature/demo-mode` in the main checkout, or `main` in the worktree. Git refuses this anyway, because a branch can only be checked out in one worktree.
 
 ## Bringing main into demo
 
