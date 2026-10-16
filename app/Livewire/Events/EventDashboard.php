@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Enums\VisitorCategory;
 use App\Livewire\Concerns\HasBandModeGrid;
 use App\Models\AuditLog;
 use App\Models\Band;
@@ -139,12 +140,12 @@ class EventDashboard extends Component
         $total = GuestbookEntry::where('event_configuration_id', $configId)->count();
 
         $hasElected = GuestbookEntry::where('event_configuration_id', $configId)
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL)
+            ->where('visitor_category', VisitorCategory::ElectedOfficial)
             ->where('is_verified', true)
             ->exists();
 
         $hasAgency = GuestbookEntry::where('event_configuration_id', $configId)
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_AGENCY)
+            ->where('visitor_category', VisitorCategory::Agency)
             ->where('is_verified', true)
             ->exists();
 

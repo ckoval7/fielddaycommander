@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\PresenceType;
+use App\Enums\VisitorCategory;
 use App\Livewire\Guestbook\GuestbookForm;
 use App\Models\AuditLog;
 use App\Models\Event;
@@ -90,8 +92,8 @@ describe('validation', function () {
     test('requires name field', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', '')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasErrors('name');
     });
@@ -100,8 +102,8 @@ describe('validation', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
             ->set('email', 'invalid-email')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasErrors('email');
     });
@@ -110,7 +112,7 @@ describe('validation', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
             ->set('presence_type', 'invalid_type')
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasErrors('presence_type');
     });
@@ -118,7 +120,7 @@ describe('validation', function () {
     test('validates visitor category', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
+            ->set('presence_type', PresenceType::Online->value)
             ->set('visitor_category', 'invalid_category')
             ->call('save')
             ->assertHasErrors('visitor_category');
@@ -128,8 +130,8 @@ describe('validation', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
             ->set('comments', str_repeat('a', 501))
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasErrors('comments');
     });
@@ -151,8 +153,8 @@ describe('submission', function () {
             ->set('callsign', 'W1AW')
             ->set('email', 'john@example.com')
             ->set('comments', 'Great event!')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasNoErrors();
 
@@ -168,8 +170,8 @@ describe('submission', function () {
     test('captures ip address', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasNoErrors();
 
@@ -183,8 +185,8 @@ describe('submission', function () {
 
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasNoErrors();
 
@@ -195,8 +197,8 @@ describe('submission', function () {
     test('shows success message after submission', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertSet('showSuccess', true);
     });
@@ -207,8 +209,8 @@ describe('submission', function () {
             ->set('callsign', 'W1AW')
             ->set('email', 'john@example.com')
             ->set('comments', 'Great event!')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertSet('comments', '')
             ->assertSet('honeypot', '')
@@ -244,8 +246,8 @@ describe('submission', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
             ->set('callsign', 'w1aw')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasNoErrors();
 
@@ -258,8 +260,8 @@ describe('security', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
             ->set('honeypot', 'spam-value')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save');
 
         // Should silently fail (no entry created)
@@ -271,8 +273,8 @@ describe('security', function () {
         for ($i = 1; $i <= 5; $i++) {
             Livewire::test(GuestbookForm::class)
                 ->set('name', "Visitor {$i}")
-                ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-                ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+                ->set('presence_type', PresenceType::Online->value)
+                ->set('visitor_category', VisitorCategory::GeneralPublic->value)
                 ->call('save')
                 ->assertHasNoErrors();
         }
@@ -282,8 +284,8 @@ describe('security', function () {
         // 6th submission should be rate limited
         Livewire::test(GuestbookForm::class)
             ->set('name', 'Visitor 6')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasErrors('form');
 
@@ -295,16 +297,16 @@ describe('security', function () {
         for ($i = 1; $i <= 5; $i++) {
             Livewire::test(GuestbookForm::class)
                 ->set('name', "Visitor {$i}")
-                ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-                ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+                ->set('presence_type', PresenceType::Online->value)
+                ->set('visitor_category', VisitorCategory::GeneralPublic->value)
                 ->call('save');
         }
 
         // Next submission should show friendly error message with form error
         Livewire::test(GuestbookForm::class)
             ->set('name', 'Visitor 6')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasErrors('form');
     });
@@ -316,8 +318,8 @@ describe('security', function () {
         for ($i = 1; $i <= 5; $i++) {
             Livewire::test(GuestbookForm::class)
                 ->set('name', "Visitor {$i}")
-                ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-                ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+                ->set('presence_type', PresenceType::Online->value)
+                ->set('visitor_category', VisitorCategory::GeneralPublic->value)
                 ->call('save');
         }
 
@@ -329,8 +331,8 @@ describe('security', function () {
         // Should be able to submit again
         Livewire::test(GuestbookForm::class)
             ->set('name', 'Visitor 6')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasNoErrors();
 
@@ -342,8 +344,8 @@ describe('security', function () {
 
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasErrors('form');
 
@@ -355,8 +357,8 @@ describe('events', function () {
     test('dispatches guestbook-entry-created event on submission', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Doe')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertDispatched('guestbook-entry-created');
     });
@@ -373,8 +375,8 @@ describe('audit logging', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'Jane Smith')
             ->set('callsign', 'KC1ABC')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_IN_PERSON)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_MEDIA)
+            ->set('presence_type', PresenceType::InPerson->value)
+            ->set('visitor_category', VisitorCategory::Media->value)
             ->call('save')
             ->assertHasNoErrors();
 
@@ -388,8 +390,8 @@ describe('audit logging', function () {
         expect($auditLog->new_values)->toMatchArray([
             'name' => 'Jane Smith',
             'callsign' => 'KC1ABC',
-            'presence_type' => GuestbookEntry::PRESENCE_TYPE_IN_PERSON,
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'presence_type' => PresenceType::InPerson->value,
+            'visitor_category' => VisitorCategory::Media->value,
         ]);
     });
 
@@ -397,8 +399,8 @@ describe('audit logging', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'John Public')
             ->set('callsign', '')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasNoErrors();
 
@@ -412,8 +414,8 @@ describe('audit logging', function () {
         expect($auditLog->new_values)->toMatchArray([
             'name' => 'John Public',
             'callsign' => null,
-            'presence_type' => GuestbookEntry::PRESENCE_TYPE_ONLINE,
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'presence_type' => PresenceType::Online->value,
+            'visitor_category' => VisitorCategory::GeneralPublic->value,
         ]);
     });
 
@@ -421,8 +423,8 @@ describe('audit logging', function () {
         Livewire::test(GuestbookForm::class)
             ->set('name', 'Bot Name')
             ->set('honeypot', 'spam-value')
-            ->set('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)
-            ->set('visitor_category', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->set('presence_type', PresenceType::Online->value)
+            ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save');
 
         expect(AuditLog::where('action', 'guestbook.entry.signed')->count())->toBe(0);

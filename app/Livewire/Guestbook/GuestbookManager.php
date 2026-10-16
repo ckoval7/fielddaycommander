@@ -2,12 +2,15 @@
 
 namespace App\Livewire\Guestbook;
 
+use App\Enums\PresenceType;
+use App\Enums\VisitorCategory;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
+use Closure;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -20,7 +23,7 @@ class GuestbookManager extends Component
 {
     use WithPagination;
 
-    private const string BULK_ACTION_LIMIT_MESSAGE = 'Bulk actions limited to 100 entries';
+    private const int BULK_ACTION_LIMIT = 100;
 
     public Event $event;
 
@@ -66,24 +69,11 @@ class GuestbookManager extends Component
         $this->eventConfig = $event->eventConfiguration;
     }
 
-    public function updatedSearch(): void
+    public function updated(string $property): void
     {
-        $this->resetPage();
-    }
-
-    public function updatedFilterPresence(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterCategory(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterVerified(): void
-    {
-        $this->resetPage();
+        if (in_array($property, ['search', 'filterPresence', 'filterCategory', 'filterVerified'], true)) {
+            $this->resetPage();
+        }
     }
 
     #[Computed]
@@ -93,9 +83,28 @@ class GuestbookManager extends Component
             return GuestbookEntry::query()->whereRaw('1 = 0')->paginate(25);
         }
 
-        return GuestbookEntry::query()
+        return $this->filteredQuery()->paginate(25);
+    }
+
+    /**
+     * Entries belonging to this event's configuration.
+     *
+     * @return Builder<GuestbookEntry>
+     */
+    protected function eventEntries(): Builder
+    {
+        return GuestbookEntry::where('event_configuration_id', $this->eventConfig?->id);
+    }
+
+    /**
+     * Event entries narrowed by the current search, filters and sort.
+     *
+     * @return Builder<GuestbookEntry>
+     */
+    protected function filteredQuery(): Builder
+    {
+        return $this->eventEntries()
             ->with(['verifiedBy', 'user'])
-            ->where('event_configuration_id', $this->eventConfig->id)
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('first_name', 'like', "%{$this->search}%")
@@ -113,8 +122,7 @@ class GuestbookManager extends Component
             ->when($this->filterVerified !== null && $this->filterVerified !== '', function ($query) {
                 $query->where('is_verified', $this->filterVerified === 'verified');
             })
-            ->orderBy($this->sortBy['column'], $this->sortBy['direction'])
-            ->paginate(25);
+            ->orderBy($this->sortBy['column'], $this->sortBy['direction']);
     }
 
     #[Computed]
@@ -131,16 +139,20 @@ class GuestbookManager extends Component
             ];
         }
 
-        $baseQuery = GuestbookEntry::where('event_configuration_id', $this->eventConfig->id);
+        $bonusCategories = array_map(fn (VisitorCategory $category) => $category->value, VisitorCategory::bonusEligible());
+        $bonusPlaceholders = implode(', ', array_fill(0, count($bonusCategories), '?'));
 
-        return [
-            'total' => (clone $baseQuery)->count(),
-            'verified' => (clone $baseQuery)->where('is_verified', true)->count(),
-            'unverified' => (clone $baseQuery)->where('is_verified', false)->count(),
-            'in_person' => (clone $baseQuery)->where('presence_type', GuestbookEntry::PRESENCE_TYPE_IN_PERSON)->count(),
-            'online' => (clone $baseQuery)->where('presence_type', GuestbookEntry::PRESENCE_TYPE_ONLINE)->count(),
-            'bonus_eligible' => (clone $baseQuery)->where('is_verified', true)->bonusEligible()->count(),
-        ];
+        $row = $this->eventEntries()
+            ->toBase()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN is_verified = 1 THEN 1 ELSE 0 END) as verified')
+            ->selectRaw('SUM(CASE WHEN is_verified = 0 THEN 1 ELSE 0 END) as unverified')
+            ->selectRaw('SUM(CASE WHEN presence_type = ? THEN 1 ELSE 0 END) as in_person', [PresenceType::InPerson->value])
+            ->selectRaw('SUM(CASE WHEN presence_type = ? THEN 1 ELSE 0 END) as online', [PresenceType::Online->value])
+            ->selectRaw("SUM(CASE WHEN is_verified = 1 AND visitor_category IN ({$bonusPlaceholders}) THEN 1 ELSE 0 END) as bonus_eligible", $bonusCategories)
+            ->first();
+
+        return array_map(fn ($count) => (int) $count, (array) $row);
     }
 
     #[Computed]
@@ -150,7 +162,7 @@ class GuestbookManager extends Component
             return null;
         }
 
-        return GuestbookEntry::with(['verifiedBy', 'user'])->find($this->editingEntryId);
+        return $this->eventEntries()->with(['verifiedBy', 'user'])->find($this->editingEntryId);
     }
 
     #[Computed]
@@ -158,8 +170,7 @@ class GuestbookManager extends Component
     {
         return [
             ['value' => '', 'label' => 'All Presence Types'],
-            ['value' => GuestbookEntry::PRESENCE_TYPE_IN_PERSON, 'label' => 'In Person'],
-            ['value' => GuestbookEntry::PRESENCE_TYPE_ONLINE, 'label' => 'Online'],
+            ...PresenceType::options(),
         ];
     }
 
@@ -168,14 +179,7 @@ class GuestbookManager extends Component
     {
         return [
             ['value' => '', 'label' => 'All Categories'],
-            ['value' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL, 'label' => 'Elected Official'],
-            ['value' => GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL, 'label' => 'ARRL Official'],
-            ['value' => GuestbookEntry::VISITOR_CATEGORY_AGENCY, 'label' => 'Agency (FEMA, etc.)'],
-            ['value' => GuestbookEntry::VISITOR_CATEGORY_MEDIA, 'label' => 'Media'],
-            ['value' => GuestbookEntry::VISITOR_CATEGORY_ARES_RACES, 'label' => 'ARES/RACES'],
-            ['value' => GuestbookEntry::VISITOR_CATEGORY_HAM_CLUB, 'label' => 'Ham Club Member'],
-            ['value' => GuestbookEntry::VISITOR_CATEGORY_YOUTH, 'label' => 'Youth'],
-            ['value' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC, 'label' => 'General Public'],
+            ...VisitorCategory::options(),
         ];
     }
 
@@ -193,9 +197,9 @@ class GuestbookManager extends Component
     {
         Gate::authorize('manage-guestbook');
 
-        $entry = GuestbookEntry::findOrFail($entryId);
+        $entry = $this->eventEntries()->findOrFail($entryId);
         $this->editingEntryId = $entryId;
-        $this->editCategory = $entry->visitor_category;
+        $this->editCategory = $entry->visitor_category->value;
         $this->editVerified = $entry->is_verified;
         $this->showVerifyModal = true;
     }
@@ -216,7 +220,7 @@ class GuestbookManager extends Component
             return;
         }
 
-        $entry = GuestbookEntry::findOrFail($this->editingEntryId);
+        $entry = $this->eventEntries()->findOrFail($this->editingEntryId);
 
         $oldValues = [
             'visitor_category' => $entry->visitor_category,
@@ -263,7 +267,7 @@ class GuestbookManager extends Component
     {
         Gate::authorize('manage-guestbook');
 
-        $this->deletingEntryId = $entryId;
+        $this->deletingEntryId = $this->eventEntries()->findOrFail($entryId)->id;
         $this->showDeleteModal = true;
     }
 
@@ -281,7 +285,7 @@ class GuestbookManager extends Component
             return;
         }
 
-        $entry = GuestbookEntry::findOrFail($this->deletingEntryId);
+        $entry = $this->eventEntries()->findOrFail($this->deletingEntryId);
 
         AuditLog::log(
             action: 'guestbook.entry.deleted',
@@ -294,8 +298,8 @@ class GuestbookManager extends Component
 
         $entry->delete();
 
+        $this->selectedIds = array_values(array_diff($this->selectedIds, [$entry->id]));
         $this->closeDeleteModal();
-        $this->selectedIds = array_diff($this->selectedIds, [$this->deletingEntryId]);
         $this->dispatch('toast', title: 'Success', description: 'Entry deleted successfully', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
@@ -310,79 +314,52 @@ class GuestbookManager extends Component
 
     public function bulkVerify(): void
     {
-        Gate::authorize('manage-guestbook');
-
-        if (empty($this->selectedIds)) {
-            return;
-        }
-
-        if (count($this->selectedIds) > 100) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_ACTION_LIMIT_MESSAGE, icon: 'phosphor-x-circle', css: 'alert-error');
-
-            return;
-        }
-
-        $affected = GuestbookEntry::whereIn('id', $this->selectedIds)
-            ->where('is_verified', false)
-            ->update([
+        $this->runBulkAction(
+            action: 'bulk_verified',
+            verb: 'verified',
+            pending: fn (Builder $query) => $query->where('is_verified', false),
+            apply: fn (GuestbookEntry $entry) => $entry->update([
                 'is_verified' => true,
                 'verified_by' => auth()->id(),
                 'verified_at' => now(),
-            ]);
-
-        AuditLog::log(
-            action: 'guestbook.entry.bulk_verified',
-            newValues: [
-                'count' => $affected,
-                'entry_ids' => $this->selectedIds,
-            ],
+            ]),
         );
-
-        $this->dispatch('bonus-claimed');
-
-        $count = count($this->selectedIds);
-        $this->selectedIds = [];
-        $this->dispatch('toast', title: 'Success', description: "{$count} entries verified", icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function bulkUnverify(): void
     {
-        Gate::authorize('manage-guestbook');
-
-        if (empty($this->selectedIds)) {
-            return;
-        }
-
-        if (count($this->selectedIds) > 100) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_ACTION_LIMIT_MESSAGE, icon: 'phosphor-x-circle', css: 'alert-error');
-
-            return;
-        }
-
-        $affected = GuestbookEntry::whereIn('id', $this->selectedIds)
-            ->where('is_verified', true)
-            ->update([
+        $this->runBulkAction(
+            action: 'bulk_unverified',
+            verb: 'unverified',
+            pending: fn (Builder $query) => $query->where('is_verified', true),
+            apply: fn (GuestbookEntry $entry) => $entry->update([
                 'is_verified' => false,
                 'verified_by' => null,
                 'verified_at' => null,
-            ]);
-
-        AuditLog::log(
-            action: 'guestbook.entry.bulk_unverified',
-            newValues: [
-                'count' => $affected,
-                'entry_ids' => $this->selectedIds,
-            ],
+            ]),
         );
-
-        $this->dispatch('bonus-claimed');
-
-        $count = count($this->selectedIds);
-        $this->selectedIds = [];
-        $this->dispatch('toast', title: 'Success', description: "{$count} entries unverified", icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function bulkDelete(): void
+    {
+        $this->runBulkAction(
+            action: 'bulk_deleted',
+            verb: 'deleted',
+            pending: fn (Builder $query) => $query,
+            apply: fn (GuestbookEntry $entry) => $entry->delete(),
+            icon: 'phosphor-trash',
+        );
+    }
+
+    /**
+     * Apply a change to the selected entries in this event, then audit and report it.
+     *
+     * Entries are changed one model at a time so the observer fires and bonus scoring reconciles.
+     *
+     * @param  Closure(Builder<GuestbookEntry>): Builder<GuestbookEntry>  $pending  narrows the selection to entries the action would change
+     * @param  Closure(GuestbookEntry): mixed  $apply
+     */
+    protected function runBulkAction(string $action, string $verb, Closure $pending, Closure $apply, string $icon = 'phosphor-check-circle'): void
     {
         Gate::authorize('manage-guestbook');
 
@@ -390,25 +367,31 @@ class GuestbookManager extends Component
             return;
         }
 
-        if (count($this->selectedIds) > 100) {
-            $this->dispatch('toast', title: 'Error', description: self::BULK_ACTION_LIMIT_MESSAGE, icon: 'phosphor-x-circle', css: 'alert-error');
+        if (count($this->selectedIds) > self::BULK_ACTION_LIMIT) {
+            $this->dispatch('toast', title: 'Error', description: 'Bulk actions limited to '.self::BULK_ACTION_LIMIT.' entries', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
 
+        $selectedIds = $this->eventEntries()->whereIn('id', $this->selectedIds)->pluck('id')->all();
+        $entries = $pending($this->eventEntries()->whereIn('id', $selectedIds))->get();
+
+        foreach ($entries as $entry) {
+            $apply($entry);
+        }
+
         AuditLog::log(
-            action: 'guestbook.entry.bulk_deleted',
+            action: "guestbook.entry.{$action}",
             newValues: [
-                'count' => count($this->selectedIds),
-                'entry_ids' => $this->selectedIds,
+                'count' => $entries->count(),
+                'entry_ids' => $selectedIds,
             ],
         );
 
-        GuestbookEntry::whereIn('id', $this->selectedIds)->delete();
+        $this->dispatch('bonus-claimed');
 
-        $count = count($this->selectedIds);
         $this->selectedIds = [];
-        $this->dispatch('toast', title: 'Success', description: "{$count} entries deleted", icon: 'phosphor-trash', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: count($selectedIds)." entries {$verb}", icon: $icon, css: 'alert-success');
     }
 
     public function clearFilters(): void
@@ -420,21 +403,6 @@ class GuestbookManager extends Component
         $this->resetPage();
     }
 
-    public function getCategoryLabel(string $category): string
-    {
-        return match ($category) {
-            GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL => 'Elected Official',
-            GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL => 'ARRL Official',
-            GuestbookEntry::VISITOR_CATEGORY_AGENCY => 'Agency',
-            GuestbookEntry::VISITOR_CATEGORY_MEDIA => 'Media',
-            GuestbookEntry::VISITOR_CATEGORY_ARES_RACES => 'ARES/RACES',
-            GuestbookEntry::VISITOR_CATEGORY_HAM_CLUB => 'Ham Club',
-            GuestbookEntry::VISITOR_CATEGORY_YOUTH => 'Youth',
-            GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC => 'General Public',
-            default => ucfirst(str_replace('_', ' ', $category)),
-        };
-    }
-
     public function exportCsv(): StreamedResponse
     {
         Gate::authorize('manage-guestbook');
@@ -443,7 +411,7 @@ class GuestbookManager extends Component
             abort(404, 'Event configuration not found');
         }
 
-        $entries = $this->getFilteredEntriesForExport();
+        $entries = $this->filteredQuery()->get();
         $eventName = Str::slug($this->event->name);
         $filename = "guestbook-{$eventName}-".now()->format('Y-m-d').'.csv';
 
@@ -468,8 +436,8 @@ class GuestbookManager extends Component
                     trim(($entry->first_name ?? '').' '.($entry->last_name ?? '')),
                     $entry->callsign ?? '',
                     $entry->email ?? '',
-                    $this->getCategoryLabel($entry->visitor_category ?? ''),
-                    $entry->presence_type === GuestbookEntry::PRESENCE_TYPE_IN_PERSON ? 'In Person' : 'Online',
+                    $entry->visitor_category?->label() ?? '',
+                    $entry->presence_type?->label() ?? '',
                     $entry->is_verified ? 'Yes' : 'No',
                     $entry->verifiedBy ? trim(($entry->verifiedBy->first_name ?? '').' '.($entry->verifiedBy->last_name ?? '')) : '',
                     $entry->created_at?->format('Y-m-d H:i:s') ?? '',
@@ -481,37 +449,6 @@ class GuestbookManager extends Component
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
-    }
-
-    /**
-     * Get filtered entries for export (no pagination).
-     *
-     * @return Collection<int, GuestbookEntry>
-     */
-    protected function getFilteredEntriesForExport()
-    {
-        return GuestbookEntry::query()
-            ->with(['verifiedBy', 'user'])
-            ->where('event_configuration_id', $this->eventConfig->id)
-            ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('first_name', 'like', "%{$this->search}%")
-                        ->orWhere('last_name', 'like', "%{$this->search}%")
-                        ->orWhere('callsign', 'like', "%{$this->search}%")
-                        ->orWhere('email', 'like', "%{$this->search}%");
-                });
-            })
-            ->when($this->filterPresence, function ($query) {
-                $query->where('presence_type', $this->filterPresence);
-            })
-            ->when($this->filterCategory, function ($query) {
-                $query->where('visitor_category', $this->filterCategory);
-            })
-            ->when($this->filterVerified !== null && $this->filterVerified !== '', function ($query) {
-                $query->where('is_verified', $this->filterVerified === 'verified');
-            })
-            ->orderBy($this->sortBy['column'], $this->sortBy['direction'])
-            ->get();
     }
 
     public function render()

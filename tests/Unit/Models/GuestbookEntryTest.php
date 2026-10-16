@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\PresenceType;
+use App\Enums\VisitorCategory;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use App\Models\User;
@@ -83,7 +85,7 @@ describe('scopes', function () {
         $inPersonEntries = GuestbookEntry::inPerson()->get();
 
         expect($inPersonEntries)->toHaveCount(3);
-        expect($inPersonEntries->every(fn ($entry) => $entry->presence_type === GuestbookEntry::PRESENCE_TYPE_IN_PERSON))->toBeTrue();
+        expect($inPersonEntries->every(fn ($entry) => $entry->presence_type === PresenceType::InPerson))->toBeTrue();
     });
 
     test('it filters online entries with online scope', function () {
@@ -96,33 +98,32 @@ describe('scopes', function () {
         $onlineEntries = GuestbookEntry::online()->get();
 
         expect($onlineEntries)->toHaveCount(3);
-        expect($onlineEntries->every(fn ($entry) => $entry->presence_type === GuestbookEntry::PRESENCE_TYPE_ONLINE))->toBeTrue();
+        expect($onlineEntries->every(fn ($entry) => $entry->presence_type === PresenceType::Online))->toBeTrue();
     });
 
     test('it filters bonus-eligible entries with bonusEligible scope', function () {
-        // Create bonus-eligible entries (each of the 3 categories)
         GuestbookEntry::factory()->electedOfficial()->create();
         GuestbookEntry::factory()->agency()->create();
-        GuestbookEntry::factory()->media()->create();
 
-        // Create non-bonus-eligible entries
+        // Media visits are tracked but claimed manually, so they are not bonus eligible here
+        GuestbookEntry::factory()->media()->create();
         GuestbookEntry::factory()->create([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ARES_RACES,
+            'visitor_category' => VisitorCategory::AresRaces,
         ]);
         GuestbookEntry::factory()->create([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_HAM_CLUB,
+            'visitor_category' => VisitorCategory::HamClub,
         ]);
         GuestbookEntry::factory()->create([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_YOUTH,
+            'visitor_category' => VisitorCategory::Youth,
         ]);
         GuestbookEntry::factory()->create([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'visitor_category' => VisitorCategory::GeneralPublic,
         ]);
 
         $bonusEligibleEntries = GuestbookEntry::bonusEligible()->get();
 
-        expect($bonusEligibleEntries)->toHaveCount(3);
-        expect($bonusEligibleEntries->every(fn ($entry) => in_array($entry->visitor_category, GuestbookEntry::BONUS_ELIGIBLE_CATEGORIES)))->toBeTrue();
+        expect($bonusEligibleEntries)->toHaveCount(2);
+        expect($bonusEligibleEntries->every(fn ($entry) => $entry->visitor_category->isBonusEligible()))->toBeTrue();
     });
 });
 
@@ -134,21 +135,21 @@ describe('accessors', function () {
 
         expect($electedOfficial->is_bonus_eligible)->toBeTrue();
         expect($agency->is_bonus_eligible)->toBeTrue();
-        expect($media->is_bonus_eligible)->toBeTrue();
+        expect($media->is_bonus_eligible)->toBeFalse();
     });
 
     test('it identifies non-bonus categories correctly', function () {
         $aresRaces = GuestbookEntry::factory()->create([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ARES_RACES,
+            'visitor_category' => VisitorCategory::AresRaces,
         ]);
         $hamClub = GuestbookEntry::factory()->create([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_HAM_CLUB,
+            'visitor_category' => VisitorCategory::HamClub,
         ]);
         $youth = GuestbookEntry::factory()->create([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_YOUTH,
+            'visitor_category' => VisitorCategory::Youth,
         ]);
         $generalPublic = GuestbookEntry::factory()->create([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'visitor_category' => VisitorCategory::GeneralPublic,
         ]);
 
         expect($aresRaces->is_bonus_eligible)->toBeFalse();
@@ -190,47 +191,26 @@ describe('soft deletes', function () {
     });
 });
 
-describe('constants', function () {
-    test('it has correct presence types defined', function () {
-        expect(GuestbookEntry::PRESENCE_TYPES)->toBe([
-            GuestbookEntry::PRESENCE_TYPE_IN_PERSON,
-            GuestbookEntry::PRESENCE_TYPE_ONLINE,
-        ]);
+describe('enums', function () {
+    test('it casts presence type and visitor category to enums', function () {
+        $entry = GuestbookEntry::factory()->inPerson()->electedOfficial()->create();
 
-        expect(GuestbookEntry::PRESENCE_TYPE_IN_PERSON)->toBe('in_person');
-        expect(GuestbookEntry::PRESENCE_TYPE_ONLINE)->toBe('online');
+        expect($entry->fresh()->presence_type)->toBe(PresenceType::InPerson);
+        expect($entry->fresh()->visitor_category)->toBe(VisitorCategory::ElectedOfficial);
     });
 
-    test('it has correct visitor categories defined', function () {
-        expect(GuestbookEntry::VISITOR_CATEGORIES)->toBe([
-            GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
-            GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL,
-            GuestbookEntry::VISITOR_CATEGORY_AGENCY,
-            GuestbookEntry::VISITOR_CATEGORY_MEDIA,
-            GuestbookEntry::VISITOR_CATEGORY_ARES_RACES,
-            GuestbookEntry::VISITOR_CATEGORY_HAM_CLUB,
-            GuestbookEntry::VISITOR_CATEGORY_YOUTH,
-            GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+    test('only elected official and agency visits are bonus eligible', function () {
+        expect(VisitorCategory::bonusEligible())->toBe([
+            VisitorCategory::ElectedOfficial,
+            VisitorCategory::Agency,
         ]);
-
-        expect(GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL)->toBe('elected_official');
-        expect(GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL)->toBe('arrl_official');
-        expect(GuestbookEntry::VISITOR_CATEGORY_AGENCY)->toBe('agency');
-        expect(GuestbookEntry::VISITOR_CATEGORY_MEDIA)->toBe('media');
-        expect(GuestbookEntry::VISITOR_CATEGORY_ARES_RACES)->toBe('ares_races');
-        expect(GuestbookEntry::VISITOR_CATEGORY_HAM_CLUB)->toBe('ham_club');
-        expect(GuestbookEntry::VISITOR_CATEGORY_YOUTH)->toBe('youth');
-        expect(GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)->toBe('general_public');
     });
 
-    test('it has correct bonus-eligible categories defined', function () {
-        expect(GuestbookEntry::BONUS_ELIGIBLE_CATEGORIES)->toBe([
-            GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
-            GuestbookEntry::VISITOR_CATEGORY_AGENCY,
-            GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+    test('every visitor category has a label option', function () {
+        expect(VisitorCategory::options())->toHaveCount(count(VisitorCategory::cases()));
+        expect(PresenceType::options())->toBe([
+            ['value' => 'in_person', 'label' => 'In Person'],
+            ['value' => 'online', 'label' => 'Online'],
         ]);
-
-        // Verify these 3 categories are the only bonus-eligible ones
-        expect(GuestbookEntry::BONUS_ELIGIBLE_CATEGORIES)->toHaveCount(3);
     });
 });

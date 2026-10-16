@@ -2,11 +2,15 @@
 
 namespace Database\Factories;
 
+use App\Enums\PresenceType;
+use App\Enums\VisitorCategory;
+use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\GuestbookEntry>
+ * @extends Factory<GuestbookEntry>
  */
 class GuestbookEntryFactory extends Factory
 {
@@ -18,15 +22,15 @@ class GuestbookEntryFactory extends Factory
     public function definition(): array
     {
         return [
-            'event_configuration_id' => \App\Models\EventConfiguration::factory(),
+            'event_configuration_id' => EventConfiguration::factory(),
             'user_id' => null,
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'callsign' => strtoupper(fake()->bothify('??#???')),
             'email' => fake()->optional(0.7)->email(),
             'comments' => fake()->optional(0.6)->sentence(),
-            'presence_type' => fake()->randomElement(GuestbookEntry::PRESENCE_TYPES),
-            'visitor_category' => fake()->randomElement(GuestbookEntry::VISITOR_CATEGORIES),
+            'presence_type' => fake()->randomElement(PresenceType::cases()),
+            'visitor_category' => fake()->randomElement(VisitorCategory::cases()),
             'is_verified' => false,
             'verified_by' => null,
             'verified_at' => null,
@@ -41,7 +45,7 @@ class GuestbookEntryFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_verified' => true,
-            'verified_by' => \App\Models\User::factory(),
+            'verified_by' => User::factory(),
             'verified_at' => now(),
         ]);
     }
@@ -52,7 +56,7 @@ class GuestbookEntryFactory extends Factory
     public function inPerson(): static
     {
         return $this->state(fn (array $attributes) => [
-            'presence_type' => GuestbookEntry::PRESENCE_TYPE_IN_PERSON,
+            'presence_type' => PresenceType::InPerson,
         ]);
     }
 
@@ -62,7 +66,7 @@ class GuestbookEntryFactory extends Factory
     public function online(): static
     {
         return $this->state(fn (array $attributes) => [
-            'presence_type' => GuestbookEntry::PRESENCE_TYPE_ONLINE,
+            'presence_type' => PresenceType::Online,
         ]);
     }
 
@@ -72,7 +76,7 @@ class GuestbookEntryFactory extends Factory
     public function electedOfficial(): static
     {
         return $this->state(fn (array $attributes) => [
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+            'visitor_category' => VisitorCategory::ElectedOfficial,
         ]);
     }
 
@@ -82,7 +86,7 @@ class GuestbookEntryFactory extends Factory
     public function arrlOfficial(): static
     {
         return $this->state(fn (array $attributes) => [
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL,
+            'visitor_category' => VisitorCategory::ArrlOfficial,
         ]);
     }
 
@@ -92,7 +96,7 @@ class GuestbookEntryFactory extends Factory
     public function agency(): static
     {
         return $this->state(fn (array $attributes) => [
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
+            'visitor_category' => VisitorCategory::Agency,
         ]);
     }
 
@@ -102,7 +106,7 @@ class GuestbookEntryFactory extends Factory
     public function media(): static
     {
         return $this->state(fn (array $attributes) => [
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'visitor_category' => VisitorCategory::Media,
         ]);
     }
 
@@ -112,7 +116,7 @@ class GuestbookEntryFactory extends Factory
     public function withUser(): static
     {
         return $this->state(fn (array $attributes) => [
-            'user_id' => \App\Models\User::factory(),
+            'user_id' => User::factory(),
         ]);
     }
 }

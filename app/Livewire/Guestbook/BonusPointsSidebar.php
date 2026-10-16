@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Guestbook;
 
+use App\Enums\VisitorCategory;
 use App\Models\GuestbookEntry;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -15,40 +16,51 @@ class BonusPointsSidebar extends Component
         $this->eventConfigId = $eventConfigId;
     }
 
+    /**
+     * Verified entry counts keyed by visitor category value.
+     *
+     * @return array<string, int>
+     */
+    #[Computed]
+    public function verifiedCounts(): array
+    {
+        return GuestbookEntry::where('event_configuration_id', $this->eventConfigId)
+            ->verified()
+            ->toBase()
+            ->selectRaw('visitor_category, COUNT(*) as aggregate')
+            ->groupBy('visitor_category')
+            ->pluck('aggregate', 'visitor_category')
+            ->map(fn ($count) => (int) $count)
+            ->all();
+    }
+
+    public function verifiedCount(VisitorCategory $category): int
+    {
+        return $this->verifiedCounts[$category->value] ?? 0;
+    }
+
     #[Computed]
     public function electedOfficialCount(): int
     {
-        return GuestbookEntry::where('event_configuration_id', $this->eventConfigId)
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL)
-            ->where('is_verified', true)
-            ->count();
+        return $this->verifiedCount(VisitorCategory::ElectedOfficial);
     }
 
     #[Computed]
     public function agencyCount(): int
     {
-        return GuestbookEntry::where('event_configuration_id', $this->eventConfigId)
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_AGENCY)
-            ->where('is_verified', true)
-            ->count();
+        return $this->verifiedCount(VisitorCategory::Agency);
     }
 
     #[Computed]
     public function mediaCount(): int
     {
-        return GuestbookEntry::where('event_configuration_id', $this->eventConfigId)
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_MEDIA)
-            ->where('is_verified', true)
-            ->count();
+        return $this->verifiedCount(VisitorCategory::Media);
     }
 
     #[Computed]
     public function arrlOfficialCount(): int
     {
-        return GuestbookEntry::where('event_configuration_id', $this->eventConfigId)
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL)
-            ->where('is_verified', true)
-            ->count();
+        return $this->verifiedCount(VisitorCategory::ArrlOfficial);
     }
 
     /**

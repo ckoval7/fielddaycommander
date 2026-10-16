@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\VisitorCategory;
 use App\Livewire\Guestbook\BonusPointsSidebar;
 use App\Models\Event;
 use App\Models\EventConfiguration;
@@ -33,7 +34,7 @@ test('renders with bonus items showing zero counts when no entries exist', funct
 test('shows earned status when verified elected official entry exists', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
     ]);
 
@@ -45,7 +46,7 @@ test('shows earned status when verified elected official entry exists', function
 test('shows earned status when verified agency entry exists', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
+        'visitor_category' => VisitorCategory::Agency,
         'is_verified' => true,
     ]);
 
@@ -57,7 +58,7 @@ test('shows earned status when verified agency entry exists', function () {
 test('media representatives are listed as tracked but not bonus-eligible in this sidebar', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+        'visitor_category' => VisitorCategory::Media,
         'is_verified' => true,
     ]);
 
@@ -71,7 +72,7 @@ test('media representatives are listed as tracked but not bonus-eligible in this
 test('arrl officials show tracked but not bonus-eligible text when present', function () {
     GuestbookEntry::factory()->count(2)->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL,
+        'visitor_category' => VisitorCategory::ArrlOfficial,
         'is_verified' => true,
     ]);
 
@@ -89,7 +90,7 @@ test('arrl officials section is hidden when none exist', function () {
 test('total bonus points equals 100 per earned bonus type with max of 200', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
     ]);
 
@@ -102,13 +103,13 @@ test('total bonus points equals 100 per earned bonus type with max of 200', func
 test('shows all guestbook bonuses earned when both are earned', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
     ]);
 
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
+        'visitor_category' => VisitorCategory::Agency,
         'is_verified' => true,
     ]);
 
@@ -120,7 +121,7 @@ test('shows all guestbook bonuses earned when both are earned', function () {
 test('shows still needed alert listing missing bonuses when some are unearned', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
     ]);
 
@@ -133,13 +134,13 @@ test('shows still needed alert listing missing bonuses when some are unearned', 
 test('only counts verified entries for bonus status', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
     ]);
 
     GuestbookEntry::factory()->count(3)->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
+        'visitor_category' => VisitorCategory::Agency,
         'is_verified' => false,
     ]);
 
@@ -153,13 +154,13 @@ test('only counts entries for specific event configuration', function () {
 
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
     ]);
 
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $otherEventConfig->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
+        'visitor_category' => VisitorCategory::Agency,
         'is_verified' => true,
     ]);
 

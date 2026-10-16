@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\PresenceType;
+use App\Enums\VisitorCategory;
 use App\Livewire\Guestbook\GuestbookList;
 use App\Models\Event;
 use App\Models\EventConfiguration;
@@ -40,14 +42,14 @@ test('guestbook list shows presence type indicators', function () {
 
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $eventConfig->id,
-        'presence_type' => GuestbookEntry::PRESENCE_TYPE_IN_PERSON,
+        'presence_type' => PresenceType::InPerson,
         'first_name' => 'In',
         'last_name' => 'Person',
     ]);
 
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $eventConfig->id,
-        'presence_type' => GuestbookEntry::PRESENCE_TYPE_ONLINE,
+        'presence_type' => PresenceType::Online,
         'first_name' => 'Online',
         'last_name' => 'User',
     ]);
@@ -91,7 +93,7 @@ test('guestbook list shows bonus eligible badge for verified bonus entries', fun
         'event_configuration_id' => $eventConfig->id,
         'first_name' => 'Mayor',
         'last_name' => 'Smith',
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
         'verified_by' => $verifier->id,
     ]);
