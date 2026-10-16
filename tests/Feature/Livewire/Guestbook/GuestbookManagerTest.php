@@ -390,6 +390,18 @@ describe('entry deletion', function () {
 });
 
 describe('bulk action scoping and scoring', function () {
+    test('row checkboxes sync the selection live so the bulk actions bar appears', function () {
+        $this->actingAs($this->admin);
+
+        GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        $html = Livewire::test(GuestbookManager::class, ['event' => $this->event])->html();
+
+        expect($html)->toMatch("/entangle\\('selectedIds'\\)\\.live/");
+    });
+
     test('bulk actions ignore entries from other events', function (string $action) {
         $this->actingAs($this->admin);
 

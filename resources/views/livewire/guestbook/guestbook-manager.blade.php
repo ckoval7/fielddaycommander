@@ -185,7 +185,7 @@
                         :headers="$headers"
                         :rows="$this->entries"
                         :sort-by="$sortBy"
-                        wire:model="selectedIds"
+                        wire:model.live="selectedIds"
                         selectable
                         with-pagination
                     >
