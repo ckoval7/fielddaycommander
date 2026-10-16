@@ -7,6 +7,8 @@ use App\Models\EventType;
 use App\Models\Message;
 use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\BonusTypeSeeder;
+use Database\Seeders\EventTypeSeeder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -19,7 +21,7 @@ beforeEach(function () {
         'updated_at' => now(),
     ]);
 
-    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
 
     Permission::firstOrCreate(['name' => 'log-contacts']);
     Permission::firstOrCreate(['name' => 'verify-bonuses']);
@@ -323,5 +325,29 @@ describe('print view', function () {
 
         $response = $this->get(route('events.messages.print-all', $this->event));
         $response->assertOk();
+    });
+});
+
+describe('message bonus scoring by rulebook', function () {
+    test('shows bonus point cards for Field Day', function () {
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->assertSee('SM/SEC')
+            ->assertSee('W1AW')
+            ->assertDontSee('awards no points for message traffic');
+    });
+
+    test('hides bonus point cards but keeps SM/SEC available for Winter Field Day', function () {
+        $wfdEvent = Event::factory()->create([
+            'event_type_id' => EventType::where('code', 'WFD')->first()->id,
+        ]);
+        EventConfiguration::factory()->create(['event_id' => $wfdEvent->id]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $wfdEvent])
+            ->assertSee('awards no points for message traffic')
+            ->assertSee('SM/SEC Message')
+            ->assertDontSee('W1AW')
+            ->assertDontSee(' pts');
     });
 });

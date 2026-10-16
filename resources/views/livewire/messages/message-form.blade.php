@@ -318,7 +318,7 @@
                         <x-toggle
                             label="SM/SEC Message"
                             wire:model.live="isSmMessage"
-                            hint="Mark as the official Section Manager / Section Emergency Coordinator message"
+                            :hint="$scoresMessageBonuses ? 'Mark as the official Section Manager / Section Emergency Coordinator message' : 'Mark as the message to your Section Manager / Section Emergency Coordinator (not scored for this event)'"
                         />
 
                         @if($isSmMessage)
@@ -354,7 +354,7 @@
                         <x-toggle
                             label="SM/SEC Message"
                             wire:model.live="isSmMessage"
-                            hint="Mark as the official Section Manager / Section Emergency Coordinator message"
+                            :hint="$scoresMessageBonuses ? 'Mark as the official Section Manager / Section Emergency Coordinator message' : 'Mark as the message to your Section Manager / Section Emergency Coordinator (not scored for this event)'"
                         />
 
                         @if($isSmMessage)

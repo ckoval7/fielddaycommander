@@ -33,6 +33,7 @@
     </x-header>
 
     {{-- Bonus Summary Cards --}}
+    @if($scoresMessageBonuses)
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {{-- SM/SEC Message --}}
         <x-card class="shadow-sm">
@@ -87,6 +88,11 @@
             </div>
         </x-card>
     </div>
+    @else
+    <x-alert icon="phosphor-info" class="alert-info">
+        This event's rulebook awards no points for message traffic. Messages are tracked here for record-keeping only.
+    </x-alert>
+    @endif
 
     {{-- Role Filter Tabs --}}
     <div class="flex gap-2 flex-wrap">

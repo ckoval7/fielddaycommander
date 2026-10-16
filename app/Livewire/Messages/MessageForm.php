@@ -321,6 +321,7 @@ class MessageForm extends Component
         return view('livewire.messages.message-form', [
             'isEditing' => $this->message && $this->message->exists,
             'ics213Enabled' => Setting::getBoolean('enable_ics213', false),
+            'scoresMessageBonuses' => $this->event->scoresMessageBonuses(),
         ])->layout('layouts.app');
     }
 

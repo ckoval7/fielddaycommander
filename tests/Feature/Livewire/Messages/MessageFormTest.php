@@ -77,6 +77,26 @@ describe('creating messages', function () {
 });
 
 describe('SM/SEC template', function () {
+    test('notes the SM/SEC message is unscored for Winter Field Day', function () {
+        $wfdEvent = Event::factory()->create([
+            'event_type_id' => EventType::where('code', 'WFD')->first()->id,
+        ]);
+        EventConfiguration::factory()->create(['event_id' => $wfdEvent->id]);
+
+        Livewire::actingAs($this->operator)
+            ->withQueryParams(['template' => 'sm'])
+            ->test(MessageForm::class, ['event' => $wfdEvent])
+            ->assertSet('isSmMessage', true)
+            ->assertSee('not scored for this event');
+    });
+
+    test('does not mark the SM/SEC message unscored for Field Day', function () {
+        Livewire::actingAs($this->operator)
+            ->withQueryParams(['template' => 'sm'])
+            ->test(MessageForm::class, ['event' => $this->event])
+            ->assertDontSee('not scored for this event');
+    });
+
     test('pre-fills SM message template', function () {
         Livewire::actingAs($this->operator)
             ->withQueryParams(['template' => 'sm'])
