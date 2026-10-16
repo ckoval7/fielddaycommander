@@ -205,3 +205,23 @@ test('non-gota station does not show control operator instructions', function ()
         ->assertDontSee('GOTA station: control operator signs in')
         ->assertSee('Your callsign');
 });
+
+test('starting a session clears developer role and callsign overrides', function () {
+    config(['developer.enabled' => true]);
+    session(['dev_role_override' => 'Station Captain', 'dev_callsign_override' => 'N0FAKE']);
+
+    landing()
+        ->set('callSign', 'KD2ABC')
+        ->call('start')
+        ->set('firstName', 'Pat')
+        ->set('lastName', 'Jones')
+        ->call('start')
+        ->assertRedirect(route('logging.station-select'));
+
+    $ghost = User::where('call_sign', 'KD2ABC')->sole();
+
+    expect(session()->has('dev_role_override'))->toBeFalse()
+        ->and(session()->has('dev_callsign_override'))->toBeFalse()
+        ->and($ghost->effectiveCallSign())->toBe('KD2ABC')
+        ->and($ghost->roles)->toBeEmpty();
+});

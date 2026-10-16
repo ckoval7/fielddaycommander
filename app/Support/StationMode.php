@@ -167,10 +167,18 @@ class StationMode
     }
 
     /**
+     * Developer-mode overrides that must not carry over to a walk-up operator.
+     *
+     * @var list<string>
+     */
+    public const DEV_OVERRIDE_SESSION_KEYS = ['dev_role_override', 'dev_callsign_override'];
+
+    /**
      * Sign the operator in for this device.
      */
     public static function startSession(Request $request, StationDevice $device, int $userId): void
     {
+        session()->forget(self::DEV_OVERRIDE_SESSION_KEYS);
         Auth::loginUsingId($userId);
         session()->regenerate();
         session()->put(self::SESSION_KEY, $device->id);
