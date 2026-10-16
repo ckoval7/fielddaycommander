@@ -4,6 +4,7 @@ use App\Http\Middleware\AuditLogger;
 use App\Http\Middleware\CheckSystemSetupComplete;
 use App\Http\Middleware\DevRoleOverride;
 use App\Http\Middleware\EnforceRegistrationMode;
+use App\Http\Middleware\EnforceStationMode;
 use App\Http\Middleware\Ensure2FAEnabled;
 use App\Http\Middleware\EnsurePasswordChanged;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             DevRoleOverride::class,
             CheckSystemSetupComplete::class,
             EnforceRegistrationMode::class,
+            EnforceStationMode::class,
             EnsurePasswordChanged::class,
             Ensure2FAEnabled::class,
             AuditLogger::class,

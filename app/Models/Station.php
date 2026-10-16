@@ -100,6 +100,14 @@ class Station extends Model
     }
 
     /**
+     * Get the browsers enrolled to run station mode for this station.
+     */
+    public function devices(): HasMany
+    {
+        return $this->hasMany(StationDevice::class);
+    }
+
+    /**
      * Get all operating sessions for this station.
      */
     public function operatingSessions(): HasMany

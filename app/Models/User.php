@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\NotificationCategory;
+use App\Support\StationMode;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,15 +12,23 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Exceptions\RoleDoesNotExist;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
+
+use function Illuminate\Support\enum_value;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+
+    use HasRoles {
+        hasPermissionTo as protected roleBasedHasPermissionTo;
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -35,6 +44,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'license_class',
         'user_role',
+        'is_ghost',
         'account_locked_at',
         'failed_login_attempts',
         'last_login_at',
@@ -74,6 +84,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'last_login_at' => 'datetime',
             'password_changed_at' => 'datetime',
             'requires_password_change' => 'boolean',
+            'is_ghost' => 'boolean',
             'notification_preferences' => 'array',
             'is_youth' => 'boolean',
             'is_cpr_aed_trained' => 'boolean',
@@ -127,7 +138,34 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isSystemAdmin(): bool
     {
+        if ($this->isInStationMode()) {
+            return false;
+        }
+
         return $this->hasRole('System Administrator');
+    }
+
+    /**
+     * Check if this user is the operator signed in on a station-mode browser.
+     */
+    public function isInStationMode(): bool
+    {
+        return StationMode::isActive() && Auth::id() === $this->id;
+    }
+
+    /**
+     * Cap permissions while signed in through station mode, so walk-up sessions
+     * never carry an account's captain or admin powers and ghosts can still log.
+     */
+    public function hasPermissionTo($permission, ?string $guardName = null): bool
+    {
+        if ($this->isInStationMode()) {
+            $name = $permission instanceof Permission ? $permission->name : enum_value($permission);
+
+            return in_array($name, StationMode::ALLOWED_PERMISSIONS, true);
+        }
+
+        return $this->roleBasedHasPermissionTo($permission, $guardName);
     }
 
     /**
@@ -302,7 +340,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasVerifiedEmail(): bool
     {
-        if (config('auth-security.registration_mode') !== 'email_verification_required') {
+        if (config('auth-security.registration_mode') !== 'email_verification_required' || $this->isInStationMode()) {
             return true;
         }
 

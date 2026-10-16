@@ -4,7 +4,9 @@ use App\Livewire\Gallery\GalleryIndex;
 use App\Models\EventConfiguration;
 use App\Models\Image;
 use App\Models\Setting;
+use App\Models\StationDevice;
 use App\Models\User;
+use App\Support\StationMode;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
@@ -123,4 +125,16 @@ test('download button hidden on event cards for users without manage-images perm
     Livewire::actingAs($user)
         ->test(GalleryIndex::class)
         ->assertDontSee('Download');
+});
+
+test('gallery index hides the upload button in station mode', function () {
+    EventConfiguration::factory()->create();
+    $device = StationDevice::factory()->create();
+
+    $this->actingAs(User::factory()->create());
+    session([StationMode::SESSION_KEY => $device->id]);
+
+    Livewire::test(GalleryIndex::class)
+        ->assertDontSee('Upload Photo')
+        ->assertDontSee('Be the first to upload!');
 });

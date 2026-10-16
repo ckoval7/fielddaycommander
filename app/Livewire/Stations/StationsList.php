@@ -6,9 +6,12 @@ use App\Enums\StationUnavailableReason;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\Station;
+use App\Models\StationDevice;
 use App\Services\EventContextService;
+use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -161,6 +164,7 @@ class StationsList extends Component
                 'primaryRadio',
                 'additionalEquipment',
                 'unavailableBy',
+                'devices' => fn ($query) => $query->active()->latest(),
                 'operatingSessions' => function ($query) {
                     $query->whereNull('end_time')->latest();
                 },
@@ -319,6 +323,57 @@ class StationsList extends Component
             'description' => "{$station->name} is back in service.",
             'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
+        ]);
+    }
+
+    /**
+     * Enroll this browser as the station-mode terminal for a station, then sign the captain out.
+     */
+    public function enrollThisBrowser(int $stationId): void
+    {
+        $station = Station::findOrFail($stationId);
+
+        $this->authorize('updateReadiness', $station);
+
+        $device = StationMode::enroll($station->id, Auth::id(), request()->userAgent());
+
+        AuditLog::log(
+            action: 'station.device_enrolled',
+            auditable: $station,
+            newValues: ['device_id' => $device->id],
+        );
+
+        Auth::guard('web')->logout();
+        session()->invalidate();
+        session()->regenerateToken();
+
+        $this->redirectRoute('station-mode.landing');
+    }
+
+    /**
+     * Revoke a station-mode browser so it can no longer start sessions.
+     */
+    public function revokeDevice(int $deviceId): void
+    {
+        $device = StationDevice::with('station')->findOrFail($deviceId);
+
+        $this->authorize('updateReadiness', $device->station);
+
+        $device->update(['revoked_at' => now()]);
+
+        AuditLog::log(
+            action: 'station.device_revoked',
+            auditable: $device->station,
+            newValues: ['device_id' => $device->id],
+        );
+
+        unset($this->stations);
+
+        $this->dispatch('toast', [
+            'title' => 'Browser Revoked',
+            'description' => "A station-mode browser for {$device->station->name} was revoked.",
+            'icon' => 'phosphor-power',
+            'css' => 'alert-info',
         ]);
     }
 

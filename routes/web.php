@@ -10,6 +10,7 @@ use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SetupController;
+use App\Http\Controllers\StationModeController;
 use App\Livewire\Admin\AdifImport;
 use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\DeveloperTools;
@@ -42,6 +43,7 @@ use App\Livewire\Schedule\MyShifts;
 use App\Livewire\Schedule\ScheduleTimeline;
 use App\Livewire\Schedule\ShiftDashboard;
 use App\Livewire\Settings\SettingsPage;
+use App\Livewire\StationMode\Landing as StationModeLanding;
 use App\Livewire\Stations\StationForm;
 use App\Livewire\Stations\StationsList;
 use App\Livewire\Users\UserManagement;
@@ -67,6 +69,10 @@ Route::post('/register/invite/{token}', [InvitationController::class, 'accept'])
 
 // Allow GET /logout in addition to Fortify's POST /logout (some browsers / link clicks send GET)
 Route::get('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout.get');
+
+// Station Mode (walk-up logging on an enrolled browser)
+Route::get('/station-mode', StationModeLanding::class)->name('station-mode.landing');
+Route::post('/station-mode/end', [StationModeController::class, 'end'])->name('station-mode.end');
 
 // Registration Pending (approval required mode)
 Route::view('/registration-pending', 'auth.registration-pending')

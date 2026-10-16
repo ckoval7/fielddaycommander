@@ -3,7 +3,9 @@
 use App\Livewire\Gallery\GalleryShow;
 use App\Models\EventConfiguration;
 use App\Models\Image;
+use App\Models\StationDevice;
 use App\Models\User;
+use App\Support\StationMode;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
@@ -132,4 +134,20 @@ test('download button hidden when no images exist', function () {
     Livewire::actingAs($user)
         ->test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
         ->assertDontSee('Download Album');
+});
+
+test('gallery show hides the upload button in station mode', function () {
+    $eventConfig = EventConfiguration::factory()->create();
+    $device = StationDevice::factory()->create();
+
+    $this->actingAs(User::factory()->create());
+
+    Livewire::test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
+        ->assertSee('Upload the first photo!');
+
+    session([StationMode::SESSION_KEY => $device->id]);
+
+    Livewire::test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
+        ->assertDontSee('Upload the first photo!')
+        ->assertDontSee('Upload Photo');
 });

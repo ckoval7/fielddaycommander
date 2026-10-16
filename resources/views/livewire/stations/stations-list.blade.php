@@ -185,6 +185,40 @@
                         </div>
                     @endif
 
+                    {{-- Station-mode browsers --}}
+                    @can('updateReadiness', $station)
+                        <div class="mb-4" data-station-devices>
+                            <div class="text-xs text-base-content/60 mb-1">Station-Mode Browsers</div>
+                            @forelse($station->devices as $device)
+                                <div class="flex items-center justify-between gap-2 text-xs sm:text-sm py-1" wire:key="station-device-{{ $device->id }}">
+                                    <span class="truncate" title="{{ $device->name }}">
+                                        Enrolled {{ $device->created_at->diffForHumans() }}
+                                        @if($device->last_seen_at)
+                                            <span class="text-base-content/60">· seen {{ $device->last_seen_at->diffForHumans() }}</span>
+                                        @endif
+                                    </span>
+                                    <x-button
+                                        label="Revoke"
+                                        class="btn-xs btn-ghost text-error"
+                                        wire:click="revokeDevice({{ $device->id }})"
+                                        wire:confirm="Revoke this browser? It will no longer be able to start station-mode sessions."
+                                        spinner="revokeDevice({{ $device->id }})"
+                                    />
+                                </div>
+                            @empty
+                                <p class="text-xs text-base-content/60">None enrolled.</p>
+                            @endforelse
+                            <x-button
+                                label="Use This Browser for Station Mode"
+                                icon="phosphor-desktop-tower"
+                                class="btn-xs btn-outline mt-2"
+                                wire:click="enrollThisBrowser({{ $station->id }})"
+                                wire:confirm="Turn this browser into the station-mode terminal for '{{ $station->name }}'? You will be signed out, and operators will be able to log here by callsign."
+                                spinner="enrollThisBrowser({{ $station->id }})"
+                            />
+                        </div>
+                    @endcan
+
                     {{-- Actions --}}
                     <div class="flex flex-col sm:flex-row gap-2 pt-3 border-t border-base-300">
                         @can('updateReadiness', $station)

@@ -9,6 +9,7 @@ use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Services\EventContextService;
 use App\Services\LoggingWarningService;
+use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Collection;
@@ -49,6 +50,13 @@ class StationSelect extends Component
 
         if ($activeSession) {
             $this->redirect(route('logging.session', $activeSession), navigate: true);
+
+            return;
+        }
+
+        // A station-mode browser goes straight to setup for its bound station.
+        if (StationMode::isActive() && $this->stations->isNotEmpty()) {
+            $this->selectStation($this->stations->first()->id);
         }
     }
 
@@ -85,6 +93,7 @@ class StationSelect extends Component
         }
 
         return $event->eventConfiguration->stations()
+            ->when(StationMode::isActive(), fn ($query) => $query->whereKey(StationMode::boundStationId()))
             ->with([
                 'primaryRadio.bands',
                 'additionalEquipment.bands',
@@ -257,6 +266,12 @@ class StationSelect extends Component
 
         $station = Station::find($this->selectedStationId);
 
+        if (StationMode::isActive() && $station?->id !== StationMode::boundStationId()) {
+            $this->addError('selectedStationId', 'This browser can only log for its assigned station.');
+
+            return;
+        }
+
         if ($station?->isUnavailable()) {
             $this->addError('selectedStationId', "{$station->name} has been marked unavailable by a station captain.");
 
@@ -301,6 +316,12 @@ class StationSelect extends Component
         $this->validate([
             'takeoverStationId' => 'required|exists:stations,id',
         ]);
+
+        if (StationMode::isActive() && $this->takeoverStationId !== StationMode::boundStationId()) {
+            $this->cancelTakeover();
+
+            return;
+        }
 
         if (Station::find($this->takeoverStationId)?->isUnavailable()) {
             $this->cancelTakeover();

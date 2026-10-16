@@ -314,6 +314,7 @@
                 >
                     <x-menu activate-by-route>
                     @auth
+                        @php $isStationMode = \App\Support\StationMode::isActive(); @endphp
                         <x-menu-item title="Dashboard" icon="phosphor-house" link="/" />
                         <x-menu-item title="Public Page" icon="phosphor-globe" link="{{ route('public.landing') }}" />
                         <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
@@ -326,7 +327,9 @@
 
                         @can('log-contacts')
                             <x-menu-item title="Log Contact" icon="phosphor-pencil-line" link="{{ route('logging.station-select') }}" exact :active="request()->routeIs('logging.station-select', 'logging.session')" />
-                            <x-menu-item title="Transcribe Paper Log" icon="phosphor-note-pencil-duotone" link="{{ route('logging.transcribe.select') }}" exact :active="request()->routeIs('logging.transcribe.*')" />
+                            @unless($isStationMode)
+                                <x-menu-item title="Transcribe Paper Log" icon="phosphor-note-pencil-duotone" link="{{ route('logging.transcribe.select') }}" exact :active="request()->routeIs('logging.transcribe.*')" />
+                            @endunless
                         @endcan
 
                         <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
@@ -347,7 +350,9 @@
                         <x-menu-item title="Site Safety" icon="phosphor-shield-check" link="{{ route('site-safety.index') }}" exact :active="request()->routeIs('site-safety.index')" />
 
                         <x-menu-sub title="Equipment" icon="phosphor-toolbox">
-                            <x-menu-item title="My Catalog" link="{{ route('equipment.index') }}" route="equipment.index" />
+                            @unless($isStationMode)
+                                <x-menu-item title="My Catalog" link="{{ route('equipment.index') }}" route="equipment.index" />
+                            @endunless
                             <x-menu-item title="Club Equipment" link="{{ route('equipment.club') }}" route="equipment.club" />
                             @can('view-all-equipment')
                                 <x-menu-item title="All User Catalogs" link="{{ route('equipment.all') }}" route="equipment.all" />
@@ -357,7 +362,7 @@
                         <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
 
                         @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
-                        @if($activeEvent)
+                        @if($activeEvent && ! $isStationMode)
                             @can('log-contacts')
                                 <x-menu-item title="Message Traffic" icon="phosphor-envelope"
                                     link="{{ route('events.messages.index', $activeEvent) }}"
@@ -503,6 +508,10 @@
 
     {{--  TOAST area --}}
     <x-toast />
+
+    @if(\App\Support\StationMode::isActive())
+        <x-station-mode-idle-warning />
+    @endif
     <x-form-error-summary />
 
     {{-- Toast notification listener: bridges Livewire "toast" events to MaryUI's window.toast() --}}

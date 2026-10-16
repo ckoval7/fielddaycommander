@@ -11,6 +11,7 @@ use App\Models\SafetyChecklistItem;
 use App\Models\ShiftAssignment;
 use App\Models\User;
 use App\Services\EventContextService;
+use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -80,7 +81,7 @@ class SiteSafetyChecklist extends Component
     #[Computed]
     public function canEdit(): bool
     {
-        if (! $this->eventConfig || ! Auth::check()) {
+        if (! $this->eventConfig || ! Auth::check() || StationMode::isActive()) {
             return false;
         }
 

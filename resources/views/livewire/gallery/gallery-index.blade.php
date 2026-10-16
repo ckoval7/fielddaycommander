@@ -1,6 +1,6 @@
 <div>
     <x-header title="Photo Gallery" subtitle="Field Day memories">
-        @auth
+        @if($this->canUpload)
             <x-slot:actions>
                 @if($this->activeEventConfiguration)
                     {{-- Active event exists - direct link --}}
@@ -20,7 +20,7 @@
                     />
                 @endif
             </x-slot:actions>
-        @endauth
+        @endif
     </x-header>
 
     @if(session('status'))
@@ -35,7 +35,7 @@
             <div class="text-center py-12">
                 <x-icon name="phosphor-image" class="w-16 h-16 mx-auto text-base-content/30" />
                 <p class="mt-4 text-base-content/70">No photos have been uploaded yet.</p>
-                @auth
+                @if($this->canUpload)
                     @if($this->activeEventConfiguration)
                         <x-button
                             label="Be the first to upload!"
@@ -51,7 +51,7 @@
                             class="btn-primary mt-4"
                         />
                     @endif
-                @endauth
+                @endif
             </div>
         </x-card>
     @else

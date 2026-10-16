@@ -13,6 +13,7 @@ use App\Models\Station;
 use App\Models\User;
 use App\Services\ExchangeParserService;
 use App\Services\LoggingWarningService;
+use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Computed;
@@ -172,6 +173,13 @@ class LoggingInterface extends Component
     public function endSession(): void
     {
         $this->operatingSession->update(['end_time' => appNow()]);
+
+        if (StationMode::isActive()) {
+            StationMode::endSession(request());
+            $this->redirectRoute('station-mode.landing');
+
+            return;
+        }
 
         $this->redirect(route('logging.station-select'), navigate: true);
     }

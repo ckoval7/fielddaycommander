@@ -1,4 +1,17 @@
 @auth
+@if(\App\Support\StationMode::isActive())
+<div class="flex items-center gap-2" data-station-mode-controls>
+    <x-theme-switch compact />
+    <form method="POST" action="{{ route('station-mode.end') }}" data-navigate-ignore>
+        @csrf
+        <button type="submit" class="btn btn-error btn-sm sm:btn-md" title="End your station-mode session">
+            <x-icon name="phosphor-sign-out" class="w-4 h-4" />
+            <span>End Session</span>
+            <span class="font-mono hidden sm:inline">({{ auth()->user()->call_sign }})</span>
+        </button>
+    </form>
+</div>
+@else
 <div class="dropdown dropdown-end">
     <button tabindex="0" class="btn btn-ghost btn-circle btn-md avatar">
         <div class="w-10 rounded-full">
@@ -31,29 +44,7 @@
         <div class="divider my-1"></div>
 
         <!-- Theme toggle -->
-        <li
-            x-data="{
-                darkMode: (localStorage.getItem('theme') || 'light') === 'dark',
-                toggle() {
-                    this.darkMode = !this.darkMode;
-                    const theme = this.darkMode ? 'dark' : 'light';
-                    localStorage.setItem('theme', theme);
-                    document.documentElement.setAttribute('data-theme', theme);
-                    window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
-                },
-                init() {
-                    window.addEventListener('theme-changed', (e) => {
-                        this.darkMode = e.detail.theme === 'dark';
-                    });
-                }
-            }"
-        >
-            <button type="button" @click="toggle()" :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
-                <x-icon name="phosphor-sun-duotone" class="w-4 h-4" x-show="darkMode" />
-                <x-icon name="phosphor-moon-duotone" class="w-4 h-4" x-show="!darkMode" />
-                <span x-text="darkMode ? 'Light Mode' : 'Dark Mode'">Theme</span>
-            </button>
-        </li>
+        <x-theme-switch as="li" />
 
         <!-- Menu items -->
         <li>
@@ -68,6 +59,15 @@
                 My Shifts
             </a>
         </li>
+
+        @if(\App\Support\StationMode::deviceFromCookie(request()) && auth()->user()->can('manage-stations'))
+            <li>
+                <a href="{{ route('station-mode.landing') }}">
+                    <x-icon name="phosphor-desktop-tower" class="w-4 h-4" />
+                    Station Mode Browser
+                </a>
+            </li>
+        @endif
 
         @can('manage-users')
             <div class="divider my-1"></div>
@@ -102,6 +102,7 @@
         </li>
     </ul>
 </div>
+@endif
 @else
 <a href="{{ route('login') }}" wire:navigate class="btn btn-primary">
     Login

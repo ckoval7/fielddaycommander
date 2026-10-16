@@ -40,6 +40,8 @@ class UserManagement extends Component
 
     public bool $showDeleteModal = false;
 
+    public bool $showActivateModal = false;
+
     // User being edited
     public ?int $editingUserId = null;
 
@@ -78,6 +80,17 @@ class UserManagement extends Component
     public string $newPassword = '';
 
     public string $newPassword_confirmation = '';
+
+    // Activate ghost modal
+    public ?int $activatingUserId = null;
+
+    public string $activateEmail = '';
+
+    public string $activateFirstName = '';
+
+    public string $activateLastName = '';
+
+    public string $activatePassword = '';
 
     // Delete confirmation
     public ?int $deletingUserId = null;
@@ -144,6 +157,7 @@ class UserManagement extends Component
                     'locked' => $query->whereNotNull('account_locked_at'),
                     '2fa_enabled' => $query->whereNotNull('two_factor_secret'),
                     'password_reset_required' => $query->where('requires_password_change', true),
+                    'ghost' => $query->where('is_ghost', true),
                     default => $query,
                 };
             })
@@ -408,6 +422,71 @@ class UserManagement extends Component
         $this->newPassword = Str::password(16);
         $this->newPassword_confirmation = '';
         $this->showResetModal = true;
+    }
+
+    public function openActivateModal(int $userId): void
+    {
+        $user = User::where('is_ghost', true)->findOrFail($userId);
+
+        $this->resetValidation();
+        $this->activatingUserId = $user->id;
+        $this->activateEmail = '';
+        $this->activateFirstName = $user->first_name === $user->call_sign ? '' : $user->first_name;
+        $this->activateLastName = $user->last_name === '(Imported)' ? '' : $user->last_name;
+        $this->activatePassword = Str::password(16);
+        $this->showActivateModal = true;
+    }
+
+    /**
+     * Turn a ghost account into a real login with an email and temporary password.
+     */
+    public function activateGhost(): void
+    {
+        Gate::authorize('manage-users');
+
+        $user = User::where('is_ghost', true)->findOrFail($this->activatingUserId);
+
+        $this->activateEmail = strtolower(trim($this->activateEmail));
+
+        $this->validate([
+            'activateEmail' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class, 'email')->ignore($user->id)->withoutTrashed()],
+            'activateFirstName' => ['required', 'string', 'max:50'],
+            'activateLastName' => ['required', 'string', 'max:50'],
+            'activatePassword' => ['required', 'string', 'min:8'],
+        ], attributes: [
+            'activateEmail' => 'email',
+            'activateFirstName' => 'first name',
+            'activateLastName' => 'last name',
+            'activatePassword' => 'password',
+        ]);
+
+        $user->update([
+            'is_ghost' => false,
+            'email' => $this->activateEmail,
+            'email_verified_at' => now(),
+            'first_name' => $this->activateFirstName,
+            'last_name' => $this->activateLastName,
+            'password' => Hash::make($this->activatePassword),
+            'requires_password_change' => true,
+            'account_locked_at' => null,
+            'failed_login_attempts' => 0,
+            'user_role' => 'user',
+        ]);
+
+        if ($user->roles()->doesntExist()) {
+            $user->assignRole('Operator');
+        }
+
+        AuditLog::log('user.ghost_activated', auditable: $user, newValues: [
+            'call_sign' => $user->call_sign,
+            'email' => $user->email,
+        ], isCritical: true);
+
+        $this->showActivateModal = false;
+        $this->reset(['activatingUserId', 'activateEmail', 'activateFirstName', 'activateLastName', 'activatePassword']);
+        unset($this->users);
+
+        $this->dispatch('toast', title: 'Account Activated', description: "{$user->call_sign} can now sign in with the temporary password.", icon: 'phosphor-user-check', css: 'alert-success');
     }
 
     public function resetPassword(): void

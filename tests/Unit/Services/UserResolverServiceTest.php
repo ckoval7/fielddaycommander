@@ -59,3 +59,33 @@ test('is idempotent on repeated calls', function () {
     expect($second->id)->toBe($first->id)
         ->and(User::where('call_sign', 'W1AW')->count())->toBe(1);
 });
+
+test('stub is flagged as a ghost', function () {
+    expect($this->resolver->resolveOrCreate('W1AW')->is_ghost)->toBeTrue();
+});
+
+test('creates ghost with supplied name', function () {
+    $result = $this->resolver->resolveOrCreate('KD2ABC', 'Pat', 'Jones');
+
+    expect($result->first_name)->toBe('Pat')
+        ->and($result->last_name)->toBe('Jones')
+        ->and($result->is_ghost)->toBeTrue();
+});
+
+test('fills in name for a ghost that only has the placeholder', function () {
+    $ghost = $this->resolver->resolveOrCreate('W1AW');
+
+    $result = $this->resolver->resolveOrCreate('W1AW', 'Hiram', 'Maxim');
+
+    expect($result->id)->toBe($ghost->id)
+        ->and($result->fresh()->first_name)->toBe('Hiram')
+        ->and($result->fresh()->last_name)->toBe('Maxim');
+});
+
+test('does not rename a real account', function () {
+    $user = User::factory()->create(['call_sign' => 'K3CPK', 'first_name' => 'Corey']);
+
+    $this->resolver->resolveOrCreate('K3CPK', 'Someone', 'Else');
+
+    expect($user->fresh()->first_name)->toBe('Corey');
+});

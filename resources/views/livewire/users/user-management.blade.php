@@ -35,6 +35,7 @@
                     ['value' => 'locked', 'label' => 'Locked'],
                     ['value' => '2fa_enabled', 'label' => '2FA Enabled'],
                     ['value' => 'password_reset_required', 'label' => 'Password Reset Required'],
+                    ['value' => 'ghost', 'label' => 'Ghost (No Login)'],
                 ]"
                 option-value="value"
                 option-label="label"
@@ -81,6 +82,12 @@
                                 <td>{{ $user->license_class ?? '-' }}</td>
                                 <td>
                                     <div class="flex flex-col gap-1">
+                                        @if($user->is_ghost)
+                                            <span class="badge badge-ghost badge-sm" title="Created from a callsign without a login">
+                                                <x-icon name="phosphor-ghost" class="w-3 h-3 mr-1" />
+                                                Ghost
+                                            </span>
+                                        @endif
                                         @if($user->account_locked_at)
                                             <span class="badge badge-error badge-sm">
                                                 <x-icon name="phosphor-lock" class="w-3 h-3 mr-1" />
@@ -124,7 +131,11 @@
                                         @endif
 
                                         <x-menu-item title="Force Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
-                                        <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
+                                        @if($user->is_ghost)
+                                            <x-menu-item title="Activate Account" icon="phosphor-user-check" wire:click="openActivateModal({{ $user->id }})" />
+                                        @else
+                                            <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
+                                        @endif
                                         <x-menu-separator />
                                         <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
                                     </x-dropdown>
@@ -177,7 +188,11 @@
                                 @endif
 
                                 <x-menu-item title="Force Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
-                                <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
+                                @if($user->is_ghost)
+                                    <x-menu-item title="Activate Account" icon="phosphor-user-check" wire:click="openActivateModal({{ $user->id }})" />
+                                @else
+                                    <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
+                                @endif
                                 <x-menu-separator />
                                 <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
                             </x-dropdown>
@@ -190,6 +205,13 @@
 
                             @if($user->license_class)
                                 <span class="badge badge-outline badge-sm">{{ $user->license_class }}</span>
+                            @endif
+
+                            @if($user->is_ghost)
+                                <span class="badge badge-ghost badge-sm">
+                                    <x-icon name="phosphor-ghost" class="w-3 h-3 mr-1" />
+                                    Ghost
+                                </span>
                             @endif
 
                             @if($user->account_locked_at)
@@ -244,6 +266,9 @@
 
     {{-- Reset Password Modal --}}
     @include('livewire.users.partials.reset-password-modal')
+
+    {{-- Activate Ghost Account Modal --}}
+    @include('livewire.users.partials.activate-ghost-modal')
 
     {{-- Delete Confirmation Modal --}}
     @include('livewire.users.partials.delete-modal')
