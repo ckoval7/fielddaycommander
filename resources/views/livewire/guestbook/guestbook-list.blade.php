@@ -27,7 +27,7 @@
 
                             {{-- Presence Type --}}
                             <div class="flex items-center gap-2 mt-1 text-sm text-base-content/60">
-                                @if($entry->presence_type === \App\Models\GuestbookEntry::PRESENCE_TYPE_IN_PERSON)
+                                @if($entry->presence_type === \App\Enums\PresenceType::InPerson)
                                     <span title="In Person">🏠 In Person</span>
                                 @else
                                     <span title="Online">🌐 Online</span>
@@ -58,7 +58,7 @@
                             <div class="flex-shrink-0">
                                 <div
                                     class="w-8 h-8 rounded-full bg-warning flex items-center justify-center"
-                                    title="Bonus Eligible - {{ ucfirst(str_replace('_', ' ', $entry->visitor_category)) }}"
+                                    title="Bonus Eligible - {{ $entry->visitor_category->label() }}"
                                 >
                                     <span class="text-lg">⭐</span>
                                 </div>

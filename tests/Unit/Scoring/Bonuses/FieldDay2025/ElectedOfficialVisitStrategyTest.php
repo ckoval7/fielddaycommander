@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\VisitorCategory;
 use App\Models\BonusType;
 use App\Models\Event;
 use App\Models\EventBonus;
@@ -31,7 +32,7 @@ it('reports code and trigger type', function () {
 it('writes the row when a verified elected official entry exists', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
     ]);
 
@@ -47,7 +48,7 @@ it('writes the row when a verified elected official entry exists', function () {
 it('does not write the row when the entry is unverified', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => false,
     ]);
 
@@ -60,7 +61,7 @@ it('does not write the row when the entry is unverified', function () {
 it('does not write the row when the entry is a different category', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+        'visitor_category' => VisitorCategory::Media,
         'is_verified' => true,
     ]);
 
@@ -87,7 +88,7 @@ it('deletes the row when no qualifying entry exists', function () {
 it('is idempotent', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
     ]);
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\VisitorCategory;
 use App\Livewire\Events\EventDashboard;
 use App\Models\Band;
 use App\Models\BonusType;
@@ -194,17 +195,17 @@ test('event dashboard displays guestbook stats when guestbook is enabled', funct
     // Create some guestbook entries
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+        'visitor_category' => VisitorCategory::GeneralPublic,
         'is_verified' => false,
     ]);
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
         'is_verified' => true,
     ]);
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
+        'visitor_category' => VisitorCategory::Agency,
         'is_verified' => true,
     ]);
 
@@ -250,7 +251,7 @@ test('event dashboard calculates correct bonus points with max cap', function ()
     for ($i = 0; $i < 15; $i++) {
         GuestbookEntry::factory()->create([
             'event_configuration_id' => $config->id,
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+            'visitor_category' => VisitorCategory::ElectedOfficial,
             'is_verified' => true,
         ]);
     }

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\PresenceType;
+use App\Enums\VisitorCategory;
+use Database\Factories\GuestbookEntryFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,59 +13,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class GuestbookEntry extends Model
 {
-    /** @use HasFactory<\Database\Factories\GuestbookEntryFactory> */
+    /** @use HasFactory<GuestbookEntryFactory> */
     use HasFactory, SoftDeletes;
-
-    /**
-     * Presence type constants.
-     */
-    public const PRESENCE_TYPE_IN_PERSON = 'in_person';
-
-    public const PRESENCE_TYPE_ONLINE = 'online';
-
-    public const PRESENCE_TYPES = [
-        self::PRESENCE_TYPE_IN_PERSON,
-        self::PRESENCE_TYPE_ONLINE,
-    ];
-
-    /**
-     * Visitor category constants.
-     */
-    public const VISITOR_CATEGORY_ELECTED_OFFICIAL = 'elected_official';
-
-    public const VISITOR_CATEGORY_ARRL_OFFICIAL = 'arrl_official';
-
-    public const VISITOR_CATEGORY_AGENCY = 'agency';
-
-    public const VISITOR_CATEGORY_MEDIA = 'media';
-
-    public const VISITOR_CATEGORY_ARES_RACES = 'ares_races';
-
-    public const VISITOR_CATEGORY_HAM_CLUB = 'ham_club';
-
-    public const VISITOR_CATEGORY_YOUTH = 'youth';
-
-    public const VISITOR_CATEGORY_GENERAL_PUBLIC = 'general_public';
-
-    public const VISITOR_CATEGORIES = [
-        self::VISITOR_CATEGORY_ELECTED_OFFICIAL,
-        self::VISITOR_CATEGORY_ARRL_OFFICIAL,
-        self::VISITOR_CATEGORY_AGENCY,
-        self::VISITOR_CATEGORY_MEDIA,
-        self::VISITOR_CATEGORY_ARES_RACES,
-        self::VISITOR_CATEGORY_HAM_CLUB,
-        self::VISITOR_CATEGORY_YOUTH,
-        self::VISITOR_CATEGORY_GENERAL_PUBLIC,
-    ];
-
-    /**
-     * Bonus-eligible visitor categories.
-     */
-    public const BONUS_ELIGIBLE_CATEGORIES = [
-        self::VISITOR_CATEGORY_ELECTED_OFFICIAL,
-        self::VISITOR_CATEGORY_AGENCY,
-        self::VISITOR_CATEGORY_MEDIA,
-    ];
 
     /**
      * The attributes that are mass assignable.
@@ -93,8 +45,8 @@ class GuestbookEntry extends Model
     protected function casts(): array
     {
         return [
-            'presence_type' => 'string',
-            'visitor_category' => 'string',
+            'presence_type' => PresenceType::class,
+            'visitor_category' => VisitorCategory::class,
             'is_verified' => 'boolean',
             'verified_at' => 'datetime',
         ];
@@ -145,7 +97,7 @@ class GuestbookEntry extends Model
      */
     public function scopeInPerson(Builder $query): Builder
     {
-        return $query->where('presence_type', self::PRESENCE_TYPE_IN_PERSON);
+        return $query->where('presence_type', PresenceType::InPerson);
     }
 
     /**
@@ -153,7 +105,7 @@ class GuestbookEntry extends Model
      */
     public function scopeOnline(Builder $query): Builder
     {
-        return $query->where('presence_type', self::PRESENCE_TYPE_ONLINE);
+        return $query->where('presence_type', PresenceType::Online);
     }
 
     /**
@@ -161,7 +113,7 @@ class GuestbookEntry extends Model
      */
     public function scopeBonusEligible(Builder $query): Builder
     {
-        return $query->whereIn('visitor_category', self::BONUS_ELIGIBLE_CATEGORIES);
+        return $query->whereIn('visitor_category', VisitorCategory::bonusEligible());
     }
 
     /**
@@ -169,6 +121,6 @@ class GuestbookEntry extends Model
      */
     public function getIsBonusEligibleAttribute(): bool
     {
-        return in_array($this->visitor_category, self::BONUS_ELIGIBLE_CATEGORIES, true);
+        return $this->visitor_category?->isBonusEligible() ?? false;
     }
 }

@@ -207,22 +207,19 @@
                         @endscope
 
                         @scope('cell_visitor_category', $entry)
-                            @php
-                                $isBonusEligible = in_array($entry->visitor_category, \App\Models\GuestbookEntry::BONUS_ELIGIBLE_CATEGORIES);
-                            @endphp
                             <div class="flex items-center gap-1">
                                 <x-badge
-                                    :value="$this->getCategoryLabel($entry->visitor_category)"
-                                    :class="$isBonusEligible ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
+                                    :value="$entry->visitor_category->label()"
+                                    :class="$entry->is_bonus_eligible ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
                                 />
-                                @if($isBonusEligible && $entry->is_verified)
+                                @if($entry->is_bonus_eligible && $entry->is_verified)
                                     <span title="Bonus Eligible">+</span>
                                 @endif
                             </div>
                         @endscope
 
                         @scope('cell_presence_type', $entry)
-                            @if($entry->presence_type === \App\Models\GuestbookEntry::PRESENCE_TYPE_IN_PERSON)
+                            @if($entry->presence_type === \App\Enums\PresenceType::InPerson)
                                 <x-badge value="In Person" class="badge-info badge-sm" />
                             @else
                                 <x-badge value="Online" class="badge-ghost badge-sm" />
@@ -319,7 +316,7 @@
                         </div>
                         <div>
                             <div class="text-xs text-base-content/60">Presence</div>
-                            <div>{{ $this->editingEntry->presence_type === \App\Models\GuestbookEntry::PRESENCE_TYPE_IN_PERSON ? 'In Person' : 'Online' }}</div>
+                            <div>{{ $this->editingEntry->presence_type->label() }}</div>
                         </div>
                         <div class="col-span-2">
                             <div class="text-xs text-base-content/60">Signed</div>
@@ -338,16 +335,12 @@
                 <x-select
                     label="Visitor Category"
                     wire:model="editCategory"
-                    :options="collect($this->categoryOptions)->filter(fn($o) => $o['value'] !== '')->toArray()"
+                    :options="\App\Enums\VisitorCategory::options()"
                     option-value="value"
                     option-label="label"
                 />
 
-                @php
-                    $selectedCategoryIsBonusEligible = in_array($editCategory, \App\Models\GuestbookEntry::BONUS_ELIGIBLE_CATEGORIES);
-                @endphp
-
-                @if($selectedCategoryIsBonusEligible)
+                @if(\App\Enums\VisitorCategory::tryFrom((string) $editCategory)?->isBonusEligible())
                     <x-alert icon="phosphor-star" class="alert-warning">
                         This category is <strong>bonus eligible</strong>. Verified entries in this category contribute to Field Day bonus points.
                     </x-alert>
@@ -389,7 +382,7 @@
 
             @if($deletingEntryId)
                 @php
-                    $deletingEntry = \App\Models\GuestbookEntry::find($deletingEntryId);
+                    $deletingEntry = \App\Models\GuestbookEntry::where('event_configuration_id', $eventConfig?->id)->find($deletingEntryId);
                 @endphp
                 @if($deletingEntry)
                     <div class="bg-base-200 p-4 rounded-lg">

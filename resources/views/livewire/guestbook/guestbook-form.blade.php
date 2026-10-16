@@ -170,8 +170,8 @@
                         label="I am visiting as"
                         wire:model="visitor_category"
                         :options="$this->visitorCategories"
-                        option-value="id"
-                        option-label="name"
+                        option-value="value"
+                        option-label="label"
                         icon="phosphor-users-three"
                         required
                     />
@@ -182,8 +182,8 @@
                             label="How are you visiting?"
                             wire:model="presence_type"
                             :options="$this->presenceTypes"
-                            option-value="id"
-                            option-label="name"
+                            option-value="value"
+                            option-label="label"
                         />
 
                         {{-- Location detection hint --}}

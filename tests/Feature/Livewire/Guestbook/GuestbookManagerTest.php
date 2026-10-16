@@ -1,12 +1,16 @@
 <?php
 
+use App\Enums\PresenceType;
+use App\Enums\VisitorCategory;
 use App\Livewire\Guestbook\GuestbookManager;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use App\Models\User;
+use App\Scoring\DomainEvents\GuestbookEntryChanged;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event as EventFacade;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -171,7 +175,7 @@ describe('search and filters', function () {
         ]);
 
         Livewire::test(GuestbookManager::class, ['event' => $this->event])
-            ->set('filterPresence', GuestbookEntry::PRESENCE_TYPE_IN_PERSON)
+            ->set('filterPresence', PresenceType::InPerson->value)
             ->assertSee('In Person')
             ->assertDontSee('Online User');
     });
@@ -189,11 +193,11 @@ describe('search and filters', function () {
             'event_configuration_id' => $this->eventConfig->id,
             'first_name' => 'Regular',
             'last_name' => 'Visitor',
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'visitor_category' => VisitorCategory::GeneralPublic,
         ]);
 
         Livewire::test(GuestbookManager::class, ['event' => $this->event])
-            ->set('filterCategory', GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL)
+            ->set('filterCategory', VisitorCategory::ElectedOfficial->value)
             ->assertSee('Mayor Smith')
             ->assertDontSee('Regular Visitor');
     });
@@ -231,7 +235,7 @@ describe('entry verification', function () {
 
         $entry = GuestbookEntry::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'visitor_category' => VisitorCategory::GeneralPublic,
             'is_verified' => false,
         ]);
 
@@ -239,7 +243,7 @@ describe('entry verification', function () {
             ->call('openVerifyModal', $entry->id)
             ->assertSet('showVerifyModal', true)
             ->assertSet('editingEntryId', $entry->id)
-            ->assertSet('editCategory', GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC)
+            ->assertSet('editCategory', VisitorCategory::GeneralPublic->value)
             ->assertSet('editVerified', false);
     });
 
@@ -248,13 +252,13 @@ describe('entry verification', function () {
 
         $entry = GuestbookEntry::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'visitor_category' => VisitorCategory::GeneralPublic,
             'is_verified' => false,
         ]);
 
         Livewire::test(GuestbookManager::class, ['event' => $this->event])
             ->set('editingEntryId', $entry->id)
-            ->set('editCategory', GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL)
+            ->set('editCategory', VisitorCategory::ElectedOfficial->value)
             ->set('editVerified', true)
             ->call('saveVerification')
             ->assertSet('showVerifyModal', false)
@@ -262,7 +266,7 @@ describe('entry verification', function () {
 
         $entry->refresh();
         expect($entry->is_verified)->toBeTrue();
-        expect($entry->visitor_category)->toBe(GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL);
+        expect($entry->visitor_category)->toBe(VisitorCategory::ElectedOfficial);
         expect($entry->verified_by)->toBe($this->admin->id);
         expect($entry->verified_at)->not->toBeNull();
     });
@@ -356,6 +360,72 @@ describe('entry deletion', function () {
         // And should have a deleted_at timestamp
         expect(GuestbookEntry::withTrashed()->find($entry->id)->deleted_at)->not->toBeNull();
     });
+
+    test('removes deleted entry from the bulk selection', function () {
+        $this->actingAs($this->admin);
+
+        $entries = GuestbookEntry::factory()->count(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', $entries->pluck('id')->all())
+            ->call('openDeleteModal', $entries[0]->id)
+            ->call('deleteEntry')
+            ->assertSet('selectedIds', [$entries[1]->id]);
+    });
+
+    test('cannot delete an entry from another event', function () {
+        $this->actingAs($this->admin);
+
+        $otherEntry = GuestbookEntry::factory()->create();
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('deletingEntryId', $otherEntry->id)
+            ->call('deleteEntry')
+            ->assertNotFound();
+
+        expect(GuestbookEntry::find($otherEntry->id))->not->toBeNull();
+    });
+});
+
+describe('bulk action scoping and scoring', function () {
+    test('bulk actions ignore entries from other events', function (string $action) {
+        $this->actingAs($this->admin);
+
+        $ownEntry = GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_verified' => $action === 'bulkUnverify',
+        ]);
+        $otherEntry = GuestbookEntry::factory()->create([
+            'is_verified' => $action === 'bulkUnverify',
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', [$ownEntry->id, $otherEntry->id])
+            ->call($action);
+
+        $otherEntry->refresh();
+        expect($otherEntry->trashed())->toBeFalse();
+        expect($otherEntry->is_verified)->toBe($action === 'bulkUnverify');
+    })->with(['bulkVerify', 'bulkUnverify', 'bulkDelete']);
+
+    test('bulk actions trigger bonus scoring reconciliation', function (string $action) {
+        $this->actingAs($this->admin);
+
+        $entries = GuestbookEntry::factory()->electedOfficial()->count(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'is_verified' => $action !== 'bulkVerify',
+        ]);
+
+        EventFacade::fake([GuestbookEntryChanged::class]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', $entries->pluck('id')->all())
+            ->call($action);
+
+        EventFacade::assertDispatchedTimes(GuestbookEntryChanged::class, 2);
+    })->with(['bulkVerify', 'bulkUnverify', 'bulkDelete']);
 });
 
 // =============================================================================
@@ -368,8 +438,8 @@ describe('additional features', function () {
 
         Livewire::test(GuestbookManager::class, ['event' => $this->event])
             ->set('search', 'test')
-            ->set('filterPresence', GuestbookEntry::PRESENCE_TYPE_IN_PERSON)
-            ->set('filterCategory', GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL)
+            ->set('filterPresence', PresenceType::InPerson->value)
+            ->set('filterCategory', VisitorCategory::ElectedOfficial->value)
             ->set('filterVerified', 'verified')
             ->call('clearFilters')
             ->assertSet('search', '')
@@ -477,8 +547,8 @@ describe('csv export', function () {
             'last_name' => 'Doe',
             'callsign' => 'W1ABC',
             'email' => 'john@example.com',
-            'presence_type' => GuestbookEntry::PRESENCE_TYPE_IN_PERSON,
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL,
+            'presence_type' => PresenceType::InPerson,
+            'visitor_category' => VisitorCategory::ElectedOfficial,
             'is_verified' => true,
             'verified_by' => $verifier->id,
         ]);
@@ -489,8 +559,8 @@ describe('csv export', function () {
             'last_name' => 'Smith',
             'callsign' => 'KC1XYZ',
             'email' => 'jane@example.com',
-            'presence_type' => GuestbookEntry::PRESENCE_TYPE_ONLINE,
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'presence_type' => PresenceType::Online,
+            'visitor_category' => VisitorCategory::GeneralPublic,
             'is_verified' => false,
         ]);
 
@@ -576,19 +646,19 @@ describe('csv export', function () {
             'event_configuration_id' => $this->eventConfig->id,
             'first_name' => 'In',
             'last_name' => 'Person',
-            'presence_type' => GuestbookEntry::PRESENCE_TYPE_IN_PERSON,
+            'presence_type' => PresenceType::InPerson,
         ]);
 
         GuestbookEntry::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'first_name' => 'Online',
             'last_name' => 'User',
-            'presence_type' => GuestbookEntry::PRESENCE_TYPE_ONLINE,
+            'presence_type' => PresenceType::Online,
         ]);
 
         $component = new GuestbookManager;
         $component->mount($this->event);
-        $component->filterPresence = GuestbookEntry::PRESENCE_TYPE_IN_PERSON;
+        $component->filterPresence = PresenceType::InPerson->value;
 
         $response = $component->exportCsv();
 
@@ -670,13 +740,13 @@ describe('audit logging', function () {
 
         $entry = GuestbookEntry::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'visitor_category' => VisitorCategory::GeneralPublic,
             'is_verified' => false,
         ]);
 
         Livewire::test(GuestbookManager::class, ['event' => $this->event])
             ->call('openVerifyModal', $entry->id)
-            ->set('editCategory', GuestbookEntry::VISITOR_CATEGORY_MEDIA)
+            ->set('editCategory', VisitorCategory::Media->value)
             ->set('editVerified', true)
             ->call('saveVerification');
 
@@ -687,13 +757,13 @@ describe('audit logging', function () {
         expect($auditLog->auditable_type)->toBe(GuestbookEntry::class);
         expect($auditLog->auditable_id)->toBe($entry->id);
         expect($auditLog->old_values)->toMatchArray([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC,
+            'visitor_category' => VisitorCategory::GeneralPublic->value,
             'is_verified' => false,
             'verified_by' => null,
             'verified_at' => null,
         ]);
         expect($auditLog->new_values)->toMatchArray([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'visitor_category' => VisitorCategory::Media->value,
             'is_verified' => true,
             'verified_by' => $this->admin->id,
         ]);
@@ -704,7 +774,7 @@ describe('audit logging', function () {
 
         $entry = GuestbookEntry::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'visitor_category' => VisitorCategory::Media,
             'is_verified' => true,
             'verified_by' => $this->admin->id,
             'verified_at' => now(),
@@ -719,12 +789,12 @@ describe('audit logging', function () {
 
         expect($auditLog)->not->toBeNull();
         expect($auditLog->old_values)->toMatchArray([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'visitor_category' => VisitorCategory::Media->value,
             'is_verified' => true,
             'verified_by' => $this->admin->id,
         ]);
         expect($auditLog->new_values)->toMatchArray([
-            'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_MEDIA,
+            'visitor_category' => VisitorCategory::Media->value,
             'is_verified' => false,
             'verified_by' => null,
             'verified_at' => null,

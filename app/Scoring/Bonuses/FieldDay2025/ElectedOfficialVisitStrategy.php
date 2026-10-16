@@ -2,8 +2,8 @@
 
 namespace App\Scoring\Bonuses\FieldDay2025;
 
+use App\Enums\VisitorCategory;
 use App\Models\EventConfiguration;
-use App\Models\GuestbookEntry;
 use App\Scoring\Bonuses\AbstractBonusStrategy;
 use App\Scoring\DomainEvents\GuestbookEntryChanged;
 
@@ -33,7 +33,7 @@ class ElectedOfficialVisitStrategy extends AbstractBonusStrategy
         }
 
         $qualifies = $config->guestbookEntries()
-            ->where('visitor_category', GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL)
+            ->where('visitor_category', VisitorCategory::ElectedOfficial)
             ->where('is_verified', true)
             ->exists();
 

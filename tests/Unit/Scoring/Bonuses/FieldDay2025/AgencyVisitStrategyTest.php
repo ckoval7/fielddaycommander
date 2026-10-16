@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\VisitorCategory;
 use App\Models\BonusType;
 use App\Models\Event;
 use App\Models\EventBonus;
@@ -31,7 +32,7 @@ it('reports code and trigger type', function () {
 it('writes the row when a verified agency entry exists', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
+        'visitor_category' => VisitorCategory::Agency,
         'is_verified' => true,
     ]);
 
@@ -60,7 +61,7 @@ it('deletes the row when no qualifying entry exists', function () {
 it('is idempotent', function () {
     GuestbookEntry::factory()->create([
         'event_configuration_id' => $this->config->id,
-        'visitor_category' => GuestbookEntry::VISITOR_CATEGORY_AGENCY,
+        'visitor_category' => VisitorCategory::Agency,
         'is_verified' => true,
     ]);
 

@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Guestbook;
 
+use App\Enums\PresenceType;
+use App\Enums\VisitorCategory;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
@@ -9,6 +11,7 @@ use App\Models\GuestbookEntry;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -38,12 +41,12 @@ class GuestbookForm extends Component
     /**
      * Presence type: 'in_person' or 'online'.
      */
-    public string $presence_type = 'online';
+    public string $presence_type = PresenceType::Online->value;
 
     /**
      * Visitor category for classification.
      */
-    public string $visitor_category = 'general_public';
+    public string $visitor_category = VisitorCategory::GeneralPublic->value;
 
     /**
      * Honeypot field for bot detection (must remain empty).
@@ -105,37 +108,21 @@ class GuestbookForm extends Component
     }
 
     /**
-     * Get available visitor categories with labels.
-     *
-     * @return array<int, array{id: string, name: string}>
+     * @return list<array{value: string, label: string}>
      */
     #[Computed]
     public function visitorCategories(): array
     {
-        return [
-            ['id' => GuestbookEntry::VISITOR_CATEGORY_GENERAL_PUBLIC, 'name' => 'General Public'],
-            ['id' => GuestbookEntry::VISITOR_CATEGORY_HAM_CLUB, 'name' => 'Ham Radio Club Member'],
-            ['id' => GuestbookEntry::VISITOR_CATEGORY_YOUTH, 'name' => 'Youth Visitor'],
-            ['id' => GuestbookEntry::VISITOR_CATEGORY_ARES_RACES, 'name' => 'ARES/RACES Member'],
-            ['id' => GuestbookEntry::VISITOR_CATEGORY_MEDIA, 'name' => 'Media Representative'],
-            ['id' => GuestbookEntry::VISITOR_CATEGORY_AGENCY, 'name' => 'Agency Representative'],
-            ['id' => GuestbookEntry::VISITOR_CATEGORY_ARRL_OFFICIAL, 'name' => 'ARRL Official'],
-            ['id' => GuestbookEntry::VISITOR_CATEGORY_ELECTED_OFFICIAL, 'name' => 'Elected Official'],
-        ];
+        return VisitorCategory::options();
     }
 
     /**
-     * Get presence type options.
-     *
-     * @return array<int, array{id: string, name: string}>
+     * @return list<array{value: string, label: string}>
      */
     #[Computed]
     public function presenceTypes(): array
     {
-        return [
-            ['id' => GuestbookEntry::PRESENCE_TYPE_IN_PERSON, 'name' => 'In Person'],
-            ['id' => GuestbookEntry::PRESENCE_TYPE_ONLINE, 'name' => 'Online'],
-        ];
+        return PresenceType::options();
     }
 
     /**
@@ -143,7 +130,7 @@ class GuestbookForm extends Component
      */
     public function setPresenceType(string $type): void
     {
-        if (in_array($type, GuestbookEntry::PRESENCE_TYPES, true)) {
+        if (PresenceType::tryFrom($type)) {
             $this->presence_type = $type;
         }
     }
@@ -237,7 +224,7 @@ class GuestbookForm extends Component
         }
 
         $this->comments = '';
-        $this->visitor_category = 'general_public';
+        $this->visitor_category = VisitorCategory::GeneralPublic->value;
         $this->honeypot = '';
     }
 
@@ -267,7 +254,7 @@ class GuestbookForm extends Component
     /**
      * Get the validation rules.
      *
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, mixed>>
      */
     protected function rules(): array
     {
@@ -276,8 +263,8 @@ class GuestbookForm extends Component
             'callsign' => ['nullable', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:255'],
             'comments' => ['nullable', 'string', 'max:500'],
-            'presence_type' => ['required', 'in:'.implode(',', GuestbookEntry::PRESENCE_TYPES)],
-            'visitor_category' => ['required', 'in:'.implode(',', GuestbookEntry::VISITOR_CATEGORIES)],
+            'presence_type' => ['required', Rule::enum(PresenceType::class)],
+            'visitor_category' => ['required', Rule::enum(VisitorCategory::class)],
             'honeypot' => ['max:0'],
         ];
     }
@@ -291,14 +278,8 @@ class GuestbookForm extends Component
     {
         return [
             'name.required' => 'Please enter your name.',
-            'name.max' => 'Name must be 100 characters or less.',
-            'callsign.max' => 'Callsign must be 20 characters or less.',
-            'email.email' => 'Please enter a valid email address.',
-            'comments.max' => 'Comments must be 500 characters or less.',
             'presence_type.required' => 'Please select how you are visiting.',
-            'presence_type.in' => 'Invalid presence type selected.',
             'visitor_category.required' => 'Please select a visitor category.',
-            'visitor_category.in' => 'Invalid visitor category selected.',
             'honeypot.max' => 'Form submission failed.',
         ];
     }
