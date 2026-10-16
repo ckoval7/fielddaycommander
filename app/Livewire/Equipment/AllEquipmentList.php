@@ -2,10 +2,14 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Models\AuditLog;
 use App\Models\Equipment;
+use App\Models\EquipmentEvent;
 use App\Models\User;
+use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -13,7 +17,7 @@ use Livewire\WithPagination;
 
 class AllEquipmentList extends Component
 {
-    use AuthorizesRequests, WithPagination;
+    use AuthorizesRequests, ManagesEquipmentCommitments, WithPagination;
 
     public string $search = '';
 
@@ -134,6 +138,68 @@ class AllEquipmentList extends Component
         $this->photoPath = $photoPath;
         $this->photoDescription = $description;
         $this->showPhotoModal = true;
+    }
+
+    /**
+     * Gate on edit-any-equipment permission for equipment actions.
+     */
+    protected function authorizeCommitAction(): void
+    {
+        $this->authorize('edit-any-equipment');
+    }
+
+    /**
+     * Any commitment can be managed by users with edit-any-equipment.
+     */
+    protected function canManageCommitment(EquipmentEvent $commitment): bool
+    {
+        return auth()->user()->can('edit-any-equipment');
+    }
+
+    /**
+     * Validation rule ensuring the equipment exists.
+     */
+    protected function commitEquipmentValidationRule(): Closure
+    {
+        return function ($attribute, $value, $fail) {
+            if (! Equipment::whereKey($value)->exists()) {
+                $fail('The selected equipment does not exist.');
+            }
+        };
+    }
+
+    /**
+     * Scope selected equipment to any existing equipment.
+     */
+    protected function scopeSelectedEquipment(array $ids): EloquentCollection
+    {
+        return Equipment::query()->whereIn('id', $ids)->get();
+    }
+
+    /**
+     * Delete any user's equipment after authorization check.
+     */
+    public function deleteEquipment(int $equipmentId): void
+    {
+        $equipment = Equipment::findOrFail($equipmentId);
+
+        $this->authorize('delete', $equipment);
+
+        AuditLog::log(
+            action: 'equipment.deleted',
+            auditable: $equipment,
+            oldValues: [
+                'make' => $equipment->make,
+                'model' => $equipment->model,
+                'type' => $equipment->type,
+            ]
+        );
+
+        $equipment->delete();
+
+        $this->dispatch('notify', title: 'Success', description: 'Equipment deleted successfully.', type: 'success');
+
+        unset($this->equipment);
     }
 
     /**

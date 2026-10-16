@@ -270,3 +270,140 @@ test('add equipment for user button is hidden from users without edit-any-equipm
     Livewire::test(AllEquipmentList::class)
         ->assertDontSee('Add Equipment for User');
 });
+
+// --- Management actions ---
+
+function makeAllEquipmentManager(): User
+{
+    $manager = User::factory()->create();
+    $managerRole = Role::firstOrCreate(['name' => 'Manager', 'guard_name' => 'web']);
+    $managerRole->givePermissionTo(['manage-own-equipment', 'view-all-equipment', 'edit-any-equipment']);
+    $manager->assignRole($managerRole);
+
+    return $manager;
+}
+
+test('equipment manager sees action menu with edit link for any user equipment', function () {
+    $this->actingAs(makeAllEquipmentManager());
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertSee('Actions for '.$equipment->make)
+        ->assertSee(route('equipment.edit', $equipment), false)
+        ->assertSee('Commit to Event');
+});
+
+test('viewer without edit-any-equipment does not see action menu', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertDontSee('Actions for '.$equipment->make)
+        ->assertDontSee(route('equipment.edit', $equipment), false);
+});
+
+test('equipment manager can delete another users equipment', function () {
+    $this->actingAs(makeAllEquipmentManager());
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->call('deleteEquipment', $equipment->id)
+        ->assertDispatched('notify');
+
+    expect(Equipment::find($equipment->id))->toBeNull();
+});
+
+test('viewer cannot delete another users equipment', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->call('deleteEquipment', $equipment->id)
+        ->assertForbidden();
+
+    expect(Equipment::find($equipment->id))->not->toBeNull();
+});
+
+test('equipment manager can change commitment status for any user equipment', function () {
+    $this->actingAs(makeAllEquipmentManager());
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(22),
+    ]);
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => $event->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertSee('View Commitment')
+        ->call('changeStatus', $commitment->id, 'delivered')
+        ->assertDispatched('notify');
+
+    expect($commitment->fresh()->status)->toBe('delivered');
+});
+
+test('viewer cannot change commitment status', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(22),
+    ]);
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => $event->id,
+        'status' => 'committed',
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->call('changeStatus', $commitment->id, 'delivered')
+        ->assertForbidden();
+
+    expect($commitment->fresh()->status)->toBe('committed');
+});
+
+test('equipment manager can commit another users equipment to an event', function () {
+    $this->actingAs(makeAllEquipmentManager());
+
+    $equipment = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+    ]);
+    $event = Event::factory()->create([
+        'start_time' => now()->addDays(5),
+        'end_time' => now()->addDays(6),
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->call('openCommitModal', $equipment->id)
+        ->assertSet('showCommitModal', true)
+        ->set('commitEventId', $event->id)
+        ->call('commitEquipment')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('equipment_event', [
+        'equipment_id' => $equipment->id,
+        'event_id' => $event->id,
+        'status' => 'committed',
+    ]);
+});

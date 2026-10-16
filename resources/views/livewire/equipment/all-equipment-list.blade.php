@@ -34,8 +34,15 @@
                     <div class="flex items-start gap-3">
                         <x-equipment.photo-thumbnail :item="$item" size="lg" />
                         <div class="flex-1 min-w-0">
-                            <div class="font-semibold">{{ $item->make }}</div>
-                            <div class="text-sm opacity-60">{{ $item->model }}</div>
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <div class="font-semibold">{{ $item->make }}</div>
+                                    <div class="text-sm opacity-60">{{ $item->model }}</div>
+                                </div>
+                                @can('edit-any-equipment')
+                                    @include('livewire.equipment.partials.all-equipment-actions', ['item' => $item])
+                                @endcan
+                            </div>
                             <div class="mt-1">
                                 @if($item->is_club_equipment)
                                     <span class="badge badge-club badge-xs">
@@ -92,6 +99,9 @@
                             <th>Serial Number</th>
                             <th>Status</th>
                             <th>Tags</th>
+                            @can('edit-any-equipment')
+                                <th class="text-right">Actions</th>
+                            @endcan
                         </tr>
                     </thead>
                     <tbody>
@@ -143,9 +153,14 @@
                                 <td>
                                     <x-equipment.tags :tags="$item->tags" />
                                 </td>
+                                @can('edit-any-equipment')
+                                    <td class="text-right">
+                                        @include('livewire.equipment.partials.all-equipment-actions', ['item' => $item])
+                                    </td>
+                                @endcan
                             </tr>
                         @empty
-                            <x-equipment.empty-state colspan="8" />
+                            <x-equipment.empty-state colspan="{{ auth()->user()?->can('edit-any-equipment') ? 9 : 8 }}" />
                         @endforelse
                     </tbody>
                 </table>
@@ -161,4 +176,10 @@
     </div>
 
     <x-equipment.photo-modal :photoPath="$photoPath" :photoDescription="$photoDescription" />
+
+    @can('edit-any-equipment')
+        @include('livewire.equipment.partials.commit-modal')
+        @include('livewire.equipment.partials.commitment-details-modal')
+        @include('livewire.equipment.partials.update-notes-modal')
+    @endcan
 </div>
