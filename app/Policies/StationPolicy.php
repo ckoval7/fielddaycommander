@@ -62,6 +62,18 @@ class StationPolicy
     }
 
     /**
+     * Determine whether the user can change the station's readiness.
+     *
+     * Station Captains (and anyone else with 'manage-stations') can mark a
+     * station unavailable when it cannot be operated (equipment failure,
+     * antenna problems, maintenance, etc.) and return it to service afterwards.
+     */
+    public function updateReadiness(User $user, Station $station): bool
+    {
+        return $user->can('manage-stations');
+    }
+
+    /**
      * Determine whether the user can delete the station.
      *
      * Users can delete stations if they have the 'manage-stations' permission

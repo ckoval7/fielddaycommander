@@ -232,7 +232,7 @@ class StationSelect extends Component
             $this->takeoverStationId = $stationId;
             $this->showTakeoverModal = true;
         }
-        // occupied stations are not selectable
+        // occupied and unavailable stations are not selectable
     }
 
     private function defaultPowerWattsFor(Station $station): int
@@ -256,6 +256,12 @@ class StationSelect extends Component
         ]);
 
         $station = Station::find($this->selectedStationId);
+
+        if ($station?->isUnavailable()) {
+            $this->addError('selectedStationId', "{$station->name} has been marked unavailable by a station captain.");
+
+            return;
+        }
 
         // Per FD Rule 6.9: no two transmitters on the same band-mode at the same time.
         // Exception: GOTA stations may operate on any band-mode (Rule 4.1).
@@ -295,6 +301,12 @@ class StationSelect extends Component
         $this->validate([
             'takeoverStationId' => 'required|exists:stations,id',
         ]);
+
+        if (Station::find($this->takeoverStationId)?->isUnavailable()) {
+            $this->cancelTakeover();
+
+            return;
+        }
 
         // End the existing session
         OperatingSession::query()

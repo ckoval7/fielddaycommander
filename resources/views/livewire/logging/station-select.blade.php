@@ -19,6 +19,7 @@
                         'available' => 'border-success/50',
                         'idle' => 'border-warning/50',
                         'occupied' => 'border-base-300',
+                        'unavailable' => 'border-base-300',
                         default => '',
                     };
                 @endphp
@@ -31,15 +32,17 @@
                                 <x-badge value="GOTA" class="badge-xs badge-info mt-1" />
                             @endif
                         </div>
-                        <x-badge
-                            :value="ucfirst($status)"
-                            @class([
-                                'badge-sm',
-                                'badge-success' => $status === 'available',
-                                'badge-warning' => $status === 'idle',
-                                'badge-ghost' => $status === 'occupied',
-                            ])
-                        />
+                        @unless($status === 'unavailable')
+                            <x-badge
+                                :value="ucfirst($status)"
+                                @class([
+                                    'badge-sm',
+                                    'badge-success' => $status === 'available',
+                                    'badge-warning' => $status === 'idle',
+                                    'badge-ghost' => $status === 'occupied',
+                                ])
+                            />
+                        @endunless
                     </div>
 
                     @if($session)
@@ -81,6 +84,22 @@
                                 icon="phosphor-arrow-clockwise"
                                 spinner="selectStation({{ $station->id }})"
                             />
+                        @elseif($status === 'unavailable')
+                            <x-button
+                                label="Select Station"
+                                class="btn-sm w-full"
+                                icon="phosphor-play"
+                                disabled
+                            />
+                            <div class="mt-2 text-xs sm:text-sm text-base-content/70" data-station-unavailable>
+                                <div class="flex items-center gap-2 font-medium">
+                                    <x-icon :name="$station->unavailable_reason->icon()" class="w-4 h-4 flex-shrink-0" />
+                                    Down: {{ $station->unavailable_reason->label() }}
+                                </div>
+                                @if($station->unavailable_note)
+                                    <p class="mt-1 break-words">{{ $station->unavailable_note }}</p>
+                                @endif
+                            </div>
                         @else
                             <div class="flex items-center justify-center gap-2 h-8 text-sm font-medium text-base-content/70" data-station-in-use>
                                 <x-icon name="phosphor-lock" class="w-4 h-4" />
@@ -106,6 +125,10 @@
     {{-- Session Setup Modal --}}
     <x-modal wire:model="showSetupModal" title="Start Logging Session" persistent>
         <div class="space-y-4">
+            @error('selectedStationId')
+                <x-alert icon="phosphor-prohibit" class="alert-error text-sm">{{ $message }}</x-alert>
+            @enderror
+
             @php $supportedBands = $this->stationSupportedBands; @endphp
             @if($supportedBands === null)
                 @php $stationForBands = $this->stations?->firstWhere('id', $selectedStationId); @endphp

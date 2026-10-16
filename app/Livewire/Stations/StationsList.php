@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Stations;
 
+use App\Enums\StationUnavailableReason;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\Station;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -16,6 +19,14 @@ class StationsList extends Component
     use AuthorizesRequests, WithPagination;
 
     public ?int $eventFilter = null;
+
+    public bool $showUnavailableModal = false;
+
+    public ?int $readinessStationId = null;
+
+    public ?string $unavailableReason = null;
+
+    public string $unavailableNote = '';
 
     public function mount(): void
     {
@@ -80,7 +91,7 @@ class StationsList extends Component
     #[Computed]
     public function stats()
     {
-        $empty = ['total' => 0, 'active' => 0, 'idle' => 0, 'equipment_count' => 0];
+        $empty = ['total' => 0, 'active' => 0, 'idle' => 0, 'unavailable' => 0, 'equipment_count' => 0];
 
         if (! $this->eventFilter) {
             return $empty;
@@ -104,6 +115,7 @@ class StationsList extends Component
 
         $idle = 0;
         $active = 0;
+        $unavailable = 0;
 
         foreach ($stations as $station) {
             $status = $station->operatingStatus();
@@ -111,6 +123,8 @@ class StationsList extends Component
                 $idle++;
             } elseif ($status === 'occupied') {
                 $active++;
+            } elseif ($status === 'unavailable') {
+                $unavailable++;
             }
         }
 
@@ -118,6 +132,7 @@ class StationsList extends Component
             'total' => $stations->count(),
             'active' => $active,
             'idle' => $idle,
+            'unavailable' => $unavailable,
             'equipment_count' => $stations->sum('additional_equipment_count'),
         ];
     }
@@ -145,6 +160,7 @@ class StationsList extends Component
             ->with([
                 'primaryRadio',
                 'additionalEquipment',
+                'unavailableBy',
                 'operatingSessions' => function ($query) {
                     $query->whereNull('end_time')->latest();
                 },
@@ -174,6 +190,133 @@ class StationsList extends Component
         $this->dispatch('toast', [
             'title' => 'Sessions Ended',
             'description' => "Closed {$closed} active session(s) for {$station->name}.",
+            'icon' => 'phosphor-check-circle',
+            'css' => 'alert-success',
+        ]);
+    }
+
+    /**
+     * Get the unavailable reason options for the readiness modal.
+     *
+     * @return list<array{value: string, label: string}>
+     */
+    #[Computed]
+    public function unavailableReasonOptions(): array
+    {
+        return StationUnavailableReason::options();
+    }
+
+    /**
+     * Get the station currently targeted by the readiness modal.
+     */
+    #[Computed]
+    public function readinessStation(): ?Station
+    {
+        return $this->readinessStationId ? Station::find($this->readinessStationId) : null;
+    }
+
+    /**
+     * Open the modal to mark a station unavailable.
+     */
+    public function openUnavailableModal(int $stationId): void
+    {
+        $station = Station::findOrFail($stationId);
+
+        $this->authorize('updateReadiness', $station);
+
+        $this->resetValidation();
+        $this->readinessStationId = $station->id;
+        $this->unavailableReason = null;
+        $this->unavailableNote = '';
+        unset($this->readinessStation);
+        $this->showUnavailableModal = true;
+    }
+
+    /**
+     * Close the readiness modal without saving.
+     */
+    public function cancelUnavailable(): void
+    {
+        $this->showUnavailableModal = false;
+        $this->readinessStationId = null;
+        $this->unavailableReason = null;
+        $this->unavailableNote = '';
+        $this->resetValidation();
+    }
+
+    /**
+     * Mark the selected station unavailable, ending any active sessions.
+     */
+    public function markUnavailable(): void
+    {
+        $station = Station::findOrFail($this->readinessStationId);
+
+        $this->authorize('updateReadiness', $station);
+
+        $validated = $this->validate([
+            'unavailableReason' => ['required', Rule::enum(StationUnavailableReason::class)],
+            'unavailableNote' => ['nullable', 'string', 'max:500'],
+        ], attributes: [
+            'unavailableReason' => 'reason',
+            'unavailableNote' => 'note',
+        ]);
+
+        $reason = StationUnavailableReason::from($validated['unavailableReason']);
+        $endedSessions = $station->markUnavailable($reason, $validated['unavailableNote'], auth()->user());
+
+        AuditLog::log(
+            action: 'station.marked_unavailable',
+            auditable: $station,
+            newValues: [
+                'reason' => $reason->value,
+                'note' => $station->unavailable_note,
+                'sessions_ended' => $endedSessions,
+            ],
+        );
+
+        $this->cancelUnavailable();
+        unset($this->stations, $this->stats);
+
+        $description = "{$station->name} is now marked unavailable ({$reason->label()}).";
+        if ($endedSessions > 0) {
+            $description .= " Ended {$endedSessions} active session(s).";
+        }
+
+        $this->dispatch('toast', [
+            'title' => 'Station Unavailable',
+            'description' => $description,
+            'icon' => 'phosphor-prohibit',
+            'css' => 'alert-warning',
+        ]);
+    }
+
+    /**
+     * Return a station to service.
+     */
+    public function markAvailable(int $stationId): void
+    {
+        $station = Station::findOrFail($stationId);
+
+        $this->authorize('updateReadiness', $station);
+
+        if (! $station->isUnavailable()) {
+            return;
+        }
+
+        $previousReason = $station->unavailable_reason;
+        $station->markAvailable();
+
+        AuditLog::log(
+            action: 'station.marked_available',
+            auditable: $station,
+            oldValues: ['reason' => $previousReason->value],
+        );
+
+        unset($this->stations, $this->stats);
+
+        $this->dispatch('toast', [
+            'title' => 'Station Ready',
+            'description' => "{$station->name} is back in service.",
             'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ]);
