@@ -112,11 +112,11 @@ Slots:
                             wire:click="selectSuggestion('{{ $suggestion['exchange'] }}')"
                             :class="{ 'bg-primary text-primary-content': si === {{ $index }} }"
                             @mouseenter="si = {{ $index }}"
-                            class="w-full px-3 py-2 text-left hover:bg-base-200 flex items-center justify-between font-mono"
+                            class="w-full px-3 py-2 text-left flex items-center justify-between font-mono"
                             type="button"
                         >
                             <span class="font-bold">{{ $suggestion['exchange'] }}</span>
-                            <span class="text-xs opacity-60" :class="{ 'text-primary-content/60': si === {{ $index }} }">{{ $suggestion['worked_on'] }}</span>
+                            <span class="text-xs opacity-70">{{ $suggestion['worked_on'] }}</span>
                         </button>
                     @endforeach
                 </div>

@@ -71,7 +71,8 @@ it('renders now button when now-button prop is set', function () {
 
     expect($html)
         ->toContain('Now')
-        ->toContain('x-on:click="setNow()"');
+        ->toContain('x-on:click="setNow()"')
+        ->toContain('btn-soft btn-primary');
 });
 
 it('passes nowUtc true by default in x-data when now-button is set', function () {

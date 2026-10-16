@@ -27,7 +27,7 @@
  * dark text in both themes, the familiar caution look.
  * tests/Unit/ThemeContrastTest.php enforces these ratios. */
 @plugin "daisyui" {
-    themes: light --default, dark --prefersdark;
+    themes: false;
 }
 
 @plugin "daisyui/theme" {

@@ -126,6 +126,12 @@ test('colors.css leaves daisyUI semantic tokens to the theme', function () {
     expect($css)->not->toMatch('/--color-(primary|secondary|accent|neutral|info|success|warning|error)(-content|-strong)?:/');
 });
 
+test('daisyUI built-in themes are disabled so they cannot outrank the custom themes', function () {
+    $css = file_get_contents(resource_path('css/app.css'));
+
+    expect($css)->toMatch('/@plugin "daisyui" \{\s*themes: false;\s*\}/');
+});
+
 test('app stylesheet beats daisyUI without !important declarations', function () {
     $css = file_get_contents(resource_path('css/app.css'));
 

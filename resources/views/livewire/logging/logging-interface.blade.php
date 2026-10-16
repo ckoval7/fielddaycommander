@@ -27,6 +27,24 @@
                 <span class="font-semibold">{{ $operatingSession->mode->name ?? '?' }}</span>
                 <span class="text-base-content/30">|</span>
                 <span class="text-base-content/70">{{ $operatingSession->power_watts }}W</span>
+                <span class="text-base-content/30">|</span>
+                {{-- Optional sub-mode (e.g. FT8, SSTV); stays set between contacts. Mirrored in the mobile row. --}}
+                <input
+                    id="log-submode"
+                    data-submode-input
+                    type="text"
+                    list="log-submodes"
+                    maxlength="20"
+                    x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
+                    class="input input-xs w-28 uppercase font-mono"
+                    placeholder="Sub-mode"
+                    aria-label="Sub-mode (optional)"
+                />
+                <datalist id="log-submodes">
+                    @foreach(\App\Services\ModeResolverService::submodeSuggestions($operatingSession->mode?->category) as $suggestion)
+                        <option value="{{ $suggestion }}"></option>
+                    @endforeach
+                </datalist>
             </div>
 
             {{-- Right: QSO counter + Sync status + End button --}}
@@ -94,6 +112,17 @@
             <span>{{ $operatingSession->mode->name ?? '?' }}</span>
             <span class="text-base-content/20">&middot;</span>
             <span>{{ $operatingSession->power_watts }}W</span>
+            <span class="text-base-content/20">&middot;</span>
+            <input
+                data-submode-input
+                type="text"
+                list="log-submodes"
+                maxlength="20"
+                x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
+                class="input input-xs w-28 uppercase font-mono"
+                placeholder="Sub-mode"
+                aria-label="Sub-mode (optional)"
+            />
         </div>
     </div>
 
@@ -111,25 +140,6 @@
             <span class="text-base-content/70 text-sm uppercase tracking-wider">Your Exchange</span>
             <div class="text-2xl font-bold font-mono">{{ $this->clubExchange }}</div>
             <div class="text-sm text-base-content/60 italic">{{ $this->phoneticExchange }}</div>
-        </div>
-
-        {{-- Optional sub-mode (e.g. FT8, SSTV); stays set between contacts --}}
-        <div class="flex items-center justify-center gap-2 max-sm:px-4">
-            <label for="log-submode" class="text-xs uppercase tracking-wider text-base-content/60">Sub-mode</label>
-            <input
-                id="log-submode"
-                data-submode-input
-                type="text"
-                list="log-submodes"
-                maxlength="20"
-                class="input input-xs w-32 uppercase font-mono"
-                placeholder="Optional"
-            />
-            <datalist id="log-submodes">
-                @foreach(\App\Services\ModeResolverService::submodeSuggestions($operatingSession->mode?->category) as $suggestion)
-                    <option value="{{ $suggestion }}"></option>
-                @endforeach
-            </datalist>
         </div>
 
         {{-- GOTA Operator Fields --}}

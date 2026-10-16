@@ -1027,6 +1027,18 @@ test('logging interface emits mobile-friendly responsive classes', function () {
         ->assertSeeHtml('hidden sm:flex flex-wrap');
 });
 
+test('sub-mode input sits in the sticky bar beside power on desktop and mobile', function () {
+    $this->actingAs($this->user);
+
+    $html = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])->html();
+
+    $stickyBar = Str::between($html, 'data-log-sticky-bar', 'Your Exchange');
+
+    expect(substr_count($stickyBar, 'list="log-submodes"'))->toBe(2)
+        ->and(substr_count($html, 'list="log-submodes"'))->toBe(2)
+        ->and($stickyBar)->toContain('id="log-submodes"');
+});
+
 test('logging interface wraps action buttons so they share mobile row', function () {
     $this->actingAs($this->user);
 
