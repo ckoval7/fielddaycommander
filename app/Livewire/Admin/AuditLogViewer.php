@@ -252,6 +252,10 @@ class AuditLogViewer extends Component
                 'safety.item.deleted' => 'Safety item deleted',
                 'safety.item.toggled' => 'Safety item toggled',
             ],
+            'Stations' => [
+                'station.marked_unavailable' => 'Station marked unavailable',
+                'station.marked_available' => 'Station returned to service',
+            ],
             'Shifts' => [
                 'shift.signup' => 'Shift signup',
                 'shift.signup.cancelled' => 'Shift signup cancelled',

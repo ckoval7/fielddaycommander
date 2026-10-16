@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\StationUnavailableReason;
 use App\Livewire\Logging\StationSelect;
 use App\Models\Band;
 use App\Models\Equipment;
@@ -1158,4 +1159,51 @@ test('can start session during setup window before event starts', function () {
         'station_id' => $station->id,
         'operator_user_id' => $this->user->id,
     ]);
+});
+
+test('unavailable stations show their reason and cannot be selected', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()
+        ->unavailable(StationUnavailableReason::EquipmentFailure, 'Radio is dead')
+        ->create([
+            'event_configuration_id' => $config->id,
+            'name' => 'Down Station',
+        ]);
+
+    Livewire::test(StationSelect::class)
+        ->assertSee('Down Station')
+        ->assertSee('Equipment Failure')
+        ->assertSee('Radio is dead')
+        ->assertSeeHtml('data-station-unavailable')
+        ->assertDontSeeHtml('wire:click="selectStation('.$station->id.')"')
+        ->call('selectStation', $station->id)
+        ->assertSet('showSetupModal', false)
+        ->assertSet('showTakeoverModal', false);
+});
+
+test('cannot start a session on an unavailable station', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->unavailable()->create(['event_configuration_id' => $config->id]);
+
+    Livewire::test(StationSelect::class)
+        ->set('selectedStationId', $station->id)
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('powerWatts', 100)
+        ->call('startSession')
+        ->assertHasErrors(['selectedStationId']);
+
+    expect(OperatingSession::where('station_id', $station->id)->exists())->toBeFalse();
 });

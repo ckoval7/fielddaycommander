@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\PowerSource;
+use App\Enums\StationUnavailableReason;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -72,6 +73,18 @@ class StationFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'is_satellite' => true,
             'name' => 'Satellite '.fake()->word(),
+        ]);
+    }
+
+    /**
+     * Indicate the station has been marked unavailable.
+     */
+    public function unavailable(StationUnavailableReason $reason = StationUnavailableReason::EquipmentFailure, ?string $note = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'unavailable_reason' => $reason,
+            'unavailable_note' => $note,
+            'unavailable_since' => now(),
         ]);
     }
 }

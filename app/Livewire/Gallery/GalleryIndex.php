@@ -3,6 +3,8 @@
 namespace App\Livewire\Gallery;
 
 use App\Models\EventConfiguration;
+use App\Services\EventContextService;
+use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -28,7 +30,7 @@ class GalleryIndex extends Component
     #[Computed]
     public function activeEventConfiguration(): ?EventConfiguration
     {
-        $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
+        $activeEvent = app(EventContextService::class)->getContextEvent();
 
         return $activeEvent?->eventConfiguration;
     }
@@ -43,9 +45,18 @@ class GalleryIndex extends Component
             ->sortByDesc(fn ($ec) => $ec->event->start_time);
     }
 
+    /**
+     * Whether the current user may upload photos. Station-mode operators may not.
+     */
+    #[Computed]
+    public function canUpload(): bool
+    {
+        return auth()->check() && ! StationMode::isActive();
+    }
+
     public function uploadToEvent(): void
     {
-        if ($this->selectedEventId) {
+        if ($this->selectedEventId && $this->canUpload) {
             $this->redirect(route('gallery.upload', $this->selectedEventId));
         }
     }

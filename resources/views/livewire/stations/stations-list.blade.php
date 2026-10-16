@@ -57,6 +57,12 @@
                             <div class="stat-value text-lg sm:text-2xl text-warning">{{ $stats['idle'] }}</div>
                         </div>
                     @endif
+                    @if($stats['unavailable'] > 0)
+                        <div class="stat py-3 px-4">
+                            <div class="stat-title text-xs">Unavailable</div>
+                            <div class="stat-value text-lg sm:text-2xl text-error">{{ $stats['unavailable'] }}</div>
+                        </div>
+                    @endif
                     <div class="stat py-3 px-4">
                         <div class="stat-title text-xs">Equipment Items</div>
                         <div class="stat-value text-lg sm:text-2xl">{{ $stats['equipment_count'] }}</div>
@@ -109,13 +115,33 @@
                                 <x-badge value="Satellite" class="badge-accent badge-sm sm:badge-md" icon="phosphor-globe" />
                             @endif
 
-                            @if($station->operatingStatus() === 'occupied')
+                            @php $operatingStatus = $station->operatingStatus(); @endphp
+                            @if($operatingStatus === 'occupied')
                                 <x-badge value="Active" class="badge-success badge-sm sm:badge-md" icon="phosphor-lightning" />
-                            @elseif($station->operatingStatus() === 'idle')
+                            @elseif($operatingStatus === 'idle')
                                 <x-badge value="Idle" class="badge-warning badge-sm sm:badge-md" icon="phosphor-clock" />
                             @endif
                         </div>
                     </div>
+
+                    {{-- Readiness --}}
+                    @if($station->isUnavailable())
+                        <div class="mb-3 p-3 rounded-lg bg-error/10 border border-error/30" data-station-unavailable>
+                            <div class="flex items-center gap-2 font-semibold text-sm text-error">
+                                <x-icon :name="$station->unavailable_reason->icon()" class="w-4 h-4 flex-shrink-0" />
+                                {{ $station->unavailable_reason->label() }}
+                            </div>
+                            @if($station->unavailable_note)
+                                <p class="text-xs sm:text-sm mt-1 break-words">{{ $station->unavailable_note }}</p>
+                            @endif
+                            <p class="text-xs text-base-content/60 mt-1">
+                                Since {{ $station->unavailable_since?->format('M j, H:i') }}
+                                @if($station->unavailableBy)
+                                    by {{ $station->unavailableBy->call_sign }}
+                                @endif
+                            </p>
+                        </div>
+                    @endif
 
                     {{-- Primary Radio --}}
                     @if($station->primaryRadio)
@@ -159,8 +185,61 @@
                         </div>
                     @endif
 
+                    {{-- Station-mode browsers --}}
+                    @can('updateReadiness', $station)
+                        <div class="mb-4" data-station-devices>
+                            <div class="text-xs text-base-content/60 mb-1">Station-Mode Browsers</div>
+                            @forelse($station->devices as $device)
+                                <div class="flex items-center justify-between gap-2 text-xs sm:text-sm py-1" wire:key="station-device-{{ $device->id }}">
+                                    <span class="truncate" title="{{ $device->name }}">
+                                        Enrolled {{ $device->created_at->diffForHumans() }}
+                                        @if($device->last_seen_at)
+                                            <span class="text-base-content/60">· seen {{ $device->last_seen_at->diffForHumans() }}</span>
+                                        @endif
+                                    </span>
+                                    <x-button
+                                        label="Revoke"
+                                        class="btn-xs btn-ghost text-error"
+                                        wire:click="revokeDevice({{ $device->id }})"
+                                        wire:confirm="Revoke this browser? It will no longer be able to start station-mode sessions."
+                                        spinner="revokeDevice({{ $device->id }})"
+                                    />
+                                </div>
+                            @empty
+                                <p class="text-xs text-base-content/60">None enrolled.</p>
+                            @endforelse
+                            <x-button
+                                label="Use This Browser for Station Mode"
+                                icon="phosphor-desktop-tower"
+                                class="btn-xs btn-outline mt-2"
+                                wire:click="enrollThisBrowser({{ $station->id }})"
+                                wire:confirm="Turn this browser into the station-mode terminal for '{{ $station->name }}'? You will be signed out, and operators will be able to log here by callsign."
+                                spinner="enrollThisBrowser({{ $station->id }})"
+                            />
+                        </div>
+                    @endcan
+
                     {{-- Actions --}}
                     <div class="flex flex-col sm:flex-row gap-2 pt-3 border-t border-base-300">
+                        @can('updateReadiness', $station)
+                            @if($station->isUnavailable())
+                                <x-button
+                                    label="Mark Ready"
+                                    icon="phosphor-check-circle"
+                                    class="btn-sm btn-success flex-1 min-h-[2.75rem] sm:min-h-[1.75rem]"
+                                    wire:click="markAvailable({{ $station->id }})"
+                                    spinner="markAvailable({{ $station->id }})"
+                                />
+                            @else
+                                <x-button
+                                    label="Mark Unavailable"
+                                    icon="phosphor-prohibit"
+                                    class="btn-sm btn-outline btn-error flex-1 min-h-[2.75rem] sm:min-h-[1.75rem]"
+                                    wire:click="openUnavailableModal({{ $station->id }})"
+                                    spinner="openUnavailableModal({{ $station->id }})"
+                                />
+                            @endif
+                        @endcan
                         @can('update', $station)
                             @if($station->is_active)
                                 <x-button
@@ -202,4 +281,55 @@
             </div>
         @endif
     @endif
+
+    {{-- Mark Unavailable Modal --}}
+    @can('manage-stations')
+    <x-modal wire:model="showUnavailableModal" title="Mark Station Unavailable" persistent>
+        @php $readinessStation = $this->readinessStation; @endphp
+        <div class="space-y-4">
+            @if($readinessStation)
+                <p class="text-sm">
+                    Operators will not be able to start a session on <span class="font-semibold">{{ $readinessStation->name }}</span> until it is marked ready again.
+                </p>
+                @if($readinessStation->is_active)
+                    <x-alert icon="phosphor-warning" class="alert-warning text-sm">
+                        This station has an active operating session. It will be ended.
+                    </x-alert>
+                @endif
+            @endif
+
+            <x-select
+                label="Reason"
+                wire:model="unavailableReason"
+                :options="$this->unavailableReasonOptions"
+                option-value="value"
+                option-label="label"
+                placeholder="Select a reason..."
+            />
+
+            <x-textarea
+                label="Note (optional)"
+                wire:model="unavailableNote"
+                placeholder="e.g., Finals blown on the amp, swapping radios"
+                rows="3"
+                maxlength="500"
+            />
+        </div>
+
+        <x-slot:actions>
+            <x-button
+                label="Cancel"
+                wire:click="cancelUnavailable"
+                class="w-full sm:w-auto"
+            />
+            <x-button
+                label="Mark Unavailable"
+                wire:click="markUnavailable"
+                class="btn-error w-full sm:w-auto"
+                icon="phosphor-prohibit"
+                spinner="markUnavailable"
+            />
+        </x-slot:actions>
+    </x-modal>
+    @endcan
 </div>

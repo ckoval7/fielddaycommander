@@ -4,6 +4,7 @@ namespace App\Livewire\Gallery;
 
 use App\Models\EventConfiguration;
 use App\Models\Image;
+use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Collection;
@@ -31,6 +32,15 @@ class GalleryShow extends Component
             ->with('uploader')
             ->latest()
             ->get();
+    }
+
+    /**
+     * Whether the current user may upload photos. Station-mode operators may not.
+     */
+    #[Computed]
+    public function canUpload(): bool
+    {
+        return auth()->check() && ! StationMode::isActive();
     }
 
     public function openLightbox(int $imageId): void

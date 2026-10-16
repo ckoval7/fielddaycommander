@@ -3,13 +3,13 @@
 namespace App\Livewire\Schedule;
 
 use App\Livewire\Schedule\Concerns\WithScheduleFilters;
+use App\Livewire\Schedule\Concerns\WithShiftAssignment;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
-use App\Models\User;
 use App\Services\EventContextService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
@@ -26,6 +26,7 @@ use Livewire\Component;
 class ManageSchedule extends Component
 {
     use WithScheduleFilters;
+    use WithShiftAssignment;
 
     private const DATETIME_LOCAL_FORMAT = 'Y-m-d\TH:i';
 
@@ -87,13 +88,6 @@ class ManageSchedule extends Component
     public int $bulkCapacity = 1;
 
     public bool $bulkIsOpen = true;
-
-    // Assignment modal
-    public bool $showAssignModal = false;
-
-    public ?int $assignShiftId = null;
-
-    public ?int $assignUserId = null;
 
     public function mount(): void
     {
@@ -172,27 +166,6 @@ class ManageSchedule extends Component
             })
             ->with(['shift.shiftRole', 'user'])
             ->get();
-    }
-
-    /**
-     * @return Collection<int, User>
-     */
-    #[Computed]
-    public function users(): Collection
-    {
-        if (! $this->showAssignModal) {
-            return collect();
-        }
-
-        return User::query()
-            ->excludeSystem()
-            ->orderBy('first_name')
-            ->get()
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => trim($user->first_name.' '.$user->last_name)
-                    .($user->call_sign ? " ({$user->call_sign})" : ''),
-            ]);
     }
 
     // --- Role CRUD ---
@@ -566,69 +539,9 @@ class ManageSchedule extends Component
 
     // --- Assignments ---
 
-    public function openAssignModal(int $shiftId): void
+    protected function shiftAssigned(): void
     {
-        $this->assignShiftId = $shiftId;
-        $this->assignUserId = null;
-        $this->showAssignModal = true;
-    }
-
-    public function assignUser(): void
-    {
-        Gate::authorize('manage-shifts');
-
-        $this->validate([
-            'assignShiftId' => ['required', 'exists:shifts,id'],
-            'assignUserId' => ['required', 'exists:users,id'],
-        ]);
-
-        $shift = Shift::findOrFail($this->assignShiftId);
-
-        // Check capacity
-        if (! $shift->has_capacity) {
-            $this->showAssignModal = false;
-            $this->dispatch('toast', title: 'Error', description: 'This shift is already at capacity.', icon: 'phosphor-x-circle', css: 'alert-error');
-
-            return;
-        }
-
-        // Check for duplicate
-        $alreadyAssigned = ShiftAssignment::where('shift_id', $this->assignShiftId)
-            ->where('user_id', $this->assignUserId)
-            ->exists();
-
-        if ($alreadyAssigned) {
-            $this->showAssignModal = false;
-            $this->dispatch('toast', title: 'Error', description: 'User is already assigned to this shift.', icon: 'phosphor-x-circle', css: 'alert-error');
-
-            return;
-        }
-
-        $assignment = ShiftAssignment::create([
-            'shift_id' => $this->assignShiftId,
-            'user_id' => $this->assignUserId,
-            'status' => ShiftAssignment::STATUS_SCHEDULED,
-            'signup_type' => ShiftAssignment::SIGNUP_TYPE_ASSIGNED,
-        ]);
-
-        $user = User::find($this->assignUserId);
-        AuditLog::log(
-            action: 'shift.assigned',
-            auditable: $assignment,
-            newValues: [
-                'assigned_user' => $user->call_sign,
-                'role' => $shift->shiftRole->name,
-                'start_time' => $shift->start_time->toIso8601String(),
-                'end_time' => $shift->end_time->toIso8601String(),
-            ]
-        );
-
-        $this->showAssignModal = false;
-        $this->assignShiftId = null;
-        $this->assignUserId = null;
         unset($this->shifts);
-
-        $this->dispatch('toast', title: 'Success', description: 'User assigned to shift', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function removeAssignment(int $assignmentId): void

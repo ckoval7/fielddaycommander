@@ -151,12 +151,7 @@ class ScheduleTimeline extends Component
             return;
         }
 
-        $assignment = ShiftAssignment::create([
-            'shift_id' => $shiftId,
-            'user_id' => auth()->id(),
-            'status' => ShiftAssignment::STATUS_SCHEDULED,
-            'signup_type' => ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP,
-        ]);
+        $assignment = ShiftAssignment::createOrRestore($shiftId, auth()->id(), ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP);
 
         AuditLog::log(
             action: 'shift.signup',

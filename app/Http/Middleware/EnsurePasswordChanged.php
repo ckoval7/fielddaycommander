@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\StationMode;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +21,7 @@ class EnsurePasswordChanged
         if (
             $request->user()
             && $request->user()->requires_password_change
+            && ! StationMode::isActive()
             && ! $request->routeIs('profile')
             && ! $request->routeIs('logout')
             && ! $request->routeIs('logout.get')

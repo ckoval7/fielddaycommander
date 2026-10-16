@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PowerSource;
+use App\Enums\StationUnavailableReason;
 use Carbon\Carbon;
 use Database\Factories\StationFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,6 +32,10 @@ class Station extends Model
         'is_vhf_only',
         'is_satellite',
         'max_power_watts',
+        'unavailable_reason',
+        'unavailable_note',
+        'unavailable_since',
+        'unavailable_by_user_id',
     ];
 
     protected function casts(): array
@@ -40,6 +45,8 @@ class Station extends Model
             'is_gota' => 'boolean',
             'is_vhf_only' => 'boolean',
             'is_satellite' => 'boolean',
+            'unavailable_reason' => StationUnavailableReason::class,
+            'unavailable_since' => 'datetime',
         ];
     }
 
@@ -82,6 +89,22 @@ class Station extends Model
                 'status_changed_by_user_id',
             ])
             ->withTimestamps();
+    }
+
+    /**
+     * Get the user who marked this station unavailable.
+     */
+    public function unavailableBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'unavailable_by_user_id');
+    }
+
+    /**
+     * Get the browsers enrolled to run station mode for this station.
+     */
+    public function devices(): HasMany
+    {
+        return $this->hasMany(StationDevice::class);
     }
 
     /**
@@ -141,16 +164,63 @@ class Station extends Model
         );
     }
 
+    // Readiness
+
+    /**
+     * Determine whether a station captain has marked this station unavailable.
+     */
+    public function isUnavailable(): bool
+    {
+        return $this->unavailable_reason !== null;
+    }
+
+    /**
+     * Mark this station unavailable and end any active operating sessions.
+     *
+     * @return int The number of operating sessions that were ended
+     */
+    public function markUnavailable(StationUnavailableReason $reason, ?string $note, User $markedBy): int
+    {
+        $this->update([
+            'unavailable_reason' => $reason,
+            'unavailable_note' => filled($note) ? $note : null,
+            'unavailable_since' => appNow(),
+            'unavailable_by_user_id' => $markedBy->id,
+        ]);
+
+        return $this->operatingSessions()
+            ->whereNull('end_time')
+            ->update(['end_time' => appNow()]);
+    }
+
+    /**
+     * Return this station to service.
+     */
+    public function markAvailable(): void
+    {
+        $this->update([
+            'unavailable_reason' => null,
+            'unavailable_note' => null,
+            'unavailable_since' => null,
+            'unavailable_by_user_id' => null,
+        ]);
+    }
+
     /**
      * Compute the operating status of this station.
      *
-     * Returns 'available' (no active session), 'idle' (active session but
-     * no QSO in the last 30 minutes), or 'occupied' (active and working).
+     * Returns 'unavailable' (marked out of service by a station captain),
+     * 'available' (no active session), 'idle' (active session but no QSO in
+     * the last 30 minutes), or 'occupied' (active and working).
      *
      * Expects active operatingSessions to be eager-loaded for efficiency.
      */
     public function operatingStatus(): string
     {
+        if ($this->isUnavailable()) {
+            return 'unavailable';
+        }
+
         $activeSession = $this->operatingSessions
             ->whereNull('end_time')
             ->first();
@@ -179,6 +249,22 @@ class Station extends Model
     public function scopeForEvent(Builder $query, int $eventId): Builder
     {
         return $query->where('event_configuration_id', $eventId);
+    }
+
+    /**
+     * Scope a query to only include stations ready for operation.
+     */
+    public function scopeReady(Builder $query): Builder
+    {
+        return $query->whereNull('unavailable_reason');
+    }
+
+    /**
+     * Scope a query to only include stations marked unavailable.
+     */
+    public function scopeUnavailable(Builder $query): Builder
+    {
+        return $query->whereNotNull('unavailable_reason');
     }
 
     /**

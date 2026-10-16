@@ -119,6 +119,38 @@ class ShiftAssignment extends Model
     // Methods
 
     /**
+     * Create a fresh scheduled assignment, reviving a removed one if it exists.
+     *
+     * Removing an assignment soft-deletes it, but the row still holds the
+     * shift/user unique key, so a plain insert would fail.
+     */
+    public static function createOrRestore(int $shiftId, int $userId, string $signupType): self
+    {
+        $attributes = [
+            'status' => self::STATUS_SCHEDULED,
+            'signup_type' => $signupType,
+            'checked_in_at' => null,
+            'checked_out_at' => null,
+            'confirmed_by_user_id' => null,
+            'confirmed_at' => null,
+        ];
+
+        $removed = self::onlyTrashed()
+            ->where('shift_id', $shiftId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($removed) {
+            $removed->restore();
+            $removed->update($attributes);
+
+            return $removed;
+        }
+
+        return self::create(['shift_id' => $shiftId, 'user_id' => $userId, ...$attributes]);
+    }
+
+    /**
      * Check in the user for this shift.
      */
     public function checkIn(): void

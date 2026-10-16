@@ -115,6 +115,29 @@ describe('sign up', function () {
         expect(ShiftAssignment::where('shift_id', $shift->id)->where('user_id', $this->user->id)->exists())->toBeTrue();
     });
 
+    test('user can sign up again after cancelling', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        $shift = Shift::factory()->open()->withCapacity(3)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+        ]);
+
+        $this->actingAs($this->user);
+
+        $component = Livewire::test(ScheduleTimeline::class)->call('signUp', $shift->id);
+        $assignment = ShiftAssignment::where('shift_id', $shift->id)->where('user_id', $this->user->id)->sole();
+
+        $component->call('cancelSignUp', $assignment->id)
+            ->call('signUp', $shift->id)
+            ->assertDispatched('toast', title: 'Success');
+
+        expect(ShiftAssignment::where('shift_id', $shift->id)->where('user_id', $this->user->id)->sole()->id)
+            ->toBe($assignment->id);
+    });
+
     test('user cannot sign up for a closed shift', function () {
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,

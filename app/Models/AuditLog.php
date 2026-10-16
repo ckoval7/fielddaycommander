@@ -36,6 +36,7 @@ class AuditLog extends Model
         'user.2fa.disabled' => '2FA disabled',
         'user.2fa.recovery_code_used' => 'Recovery code used',
         'user.2fa.reset_by_admin' => '2FA reset by admin',
+        'user.ghost_activated' => 'Ghost account activated',
 
         // Roles & Permissions
         'role.created' => 'Role created',
@@ -86,6 +87,15 @@ class AuditLog extends Model
         'safety.item.updated' => 'Safety item updated',
         'safety.item.deleted' => 'Safety item deleted',
         'safety.item.toggled' => 'Safety item toggled',
+
+        // Stations
+        'station.marked_unavailable' => 'Station marked unavailable',
+        'station.marked_available' => 'Station returned to service',
+        'station.device_enrolled' => 'Browser enrolled in station mode',
+        'station.device_revoked' => 'Station-mode browser revoked',
+        'station.device_exited' => 'Browser exited station mode',
+        'station_mode.session_started' => 'Station-mode session started',
+        'station_mode.session_ended' => 'Station-mode session ended',
 
         // Shifts
         'shift.signup' => 'Shift signup',

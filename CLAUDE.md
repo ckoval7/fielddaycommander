@@ -257,3 +257,15 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 2. Use `detect_changes` for code review.
 3. Use `get_affected_flows` to understand impact.
 4. Use `query_graph` pattern="tests_for" to check coverage.
+
+## Branches, Worktrees & Local Containers
+
+- **Non-demo work:** in this checkout, on a feature branch off `main`. Never commit directly to `main`.
+- **Demo work:** in the `../fielddaycommander-demo` worktree, committed directly on `feature/demo-mode`. Demo-only code never goes to `main`.
+- **Sail:** runs only from the demo worktree.
+
+Activate the `branch-workflow` skill (`.claude/skills/branch-workflow/`) before you start, commit or merge work, touch the container, or run PHP tooling. It has the merge steps, test and Pint commands for each checkout, and the worktree setup.
+
+## Releases
+
+Activate the `release` skill (`.claude/skills/release/`) for any version bump, release, or tag. A release runs a full Sonar scan until it is clean, a Trivy scan, and package updates before the version bump and tag.
