@@ -331,3 +331,20 @@ test('2026 events render inherited bonuses without explicit 2026 seed rows being
         ->and($eligible->pluck('rules_version')->unique()->all())->toEqual(['2026'])
         ->and($eligible->pluck('code')->all())->toContain('social_media', 'public_location');
 });
+
+test('claim checkbox prevents native toggling and re-keys on state change', function () {
+    $bonusType = BonusType::where('code', 'social_media')
+        ->where('event_type_id', $this->eventType->id)
+        ->first();
+
+    $component = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->assertSeeHtml("bonus-checkbox-{$bonusType->id}-unclaimed")
+        ->assertSeeHtml("x-on:click.prevent=\"\$wire.claim({$bonusType->id}")
+        ->assertDontSeeHtml('wire:confirm');
+
+    $component->call('claim', $bonusType->id)
+        ->assertSeeHtml("bonus-checkbox-{$bonusType->id}-claimed")
+        ->assertSeeHtml("\$wire.unclaim({$bonusType->id})")
+        ->assertSeeHtml('confirm(');
+});

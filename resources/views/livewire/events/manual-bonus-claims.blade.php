@@ -15,11 +15,13 @@
                                     type="checkbox"
                                     class="checkbox checkbox-sm checkbox-success"
                                     aria-label="Claim {{ strtolower($this->terms->awardSingular) }}: {{ $bonusType->name }}"
+                                    wire:key="bonus-checkbox-{{ $bonusType->id }}-{{ $claimed ? 'claimed' : 'unclaimed' }}"
                                     @checked($claimed)
-                                    wire:click="{{ $claimed
-                                        ? "unclaim({$bonusType->id})"
-                                        : "claim({$bonusType->id}, \$wire.notes[{$bonusType->id}])" }}"
-                                    @if($claimed) wire:confirm="Remove this {{ strtolower($this->terms->awardSingular) }} claim?" @endif
+                                    @if($claimed)
+                                        x-on:click.prevent="if (confirm({{ Js::from('Remove this '.strtolower($this->terms->awardSingular).' claim?') }})) { $wire.unclaim({{ $bonusType->id }}) }"
+                                    @else
+                                        x-on:click.prevent="$wire.claim({{ $bonusType->id }}, $wire.notes[{{ $bonusType->id }}])"
+                                    @endif
                                 />
                                 <div class="min-w-0 flex-1">
                                     <x-bonus-rule-help :rulebook="$this->terms->rulebookName" :rule="$this->bonusRule($bonusType->code)">
