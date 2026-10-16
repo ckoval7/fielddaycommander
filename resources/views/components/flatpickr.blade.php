@@ -57,7 +57,7 @@
             @if($nowButton)
                     <button
                         type="button"
-                        class="btn btn-sm btn-soft btn-secondary"
+                        class="btn btn-sm btn-soft btn-primary"
                         x-on:click="setNow()"
                         title="Set to current {{ $nowUtc ? 'UTC' : 'local' }} time"
                     >
