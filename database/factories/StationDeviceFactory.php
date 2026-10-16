@@ -34,7 +34,7 @@ class StationDeviceFactory extends Factory
      */
     public function withToken(string $token): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state([
             'token_hash' => StationDevice::hashToken($token),
         ]);
     }
@@ -44,7 +44,7 @@ class StationDeviceFactory extends Factory
      */
     public function revoked(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn () => [
             'revoked_at' => now(),
         ]);
     }

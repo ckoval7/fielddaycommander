@@ -23,6 +23,7 @@
         },
         startWarning() {
             this.warning = true;
+            this.$refs.dialog.showModal();
             this.remaining = this.countdownSeconds;
             clearInterval(this.countdownTimer);
             this.countdownTimer = setInterval(() => {
@@ -32,11 +33,12 @@
                     this.$refs.endSessionForm.submit();
                 }
             }, 1000);
-            this.$nextTick(() => this.$refs.stillHere?.focus());
+            this.$nextTick(() => this.$refs.stillHere.focus());
         },
         dismiss() {
             clearInterval(this.countdownTimer);
             this.warning = false;
+            this.$refs.dialog.close();
             this.resetIdleTimer();
         },
         destroy() {
@@ -50,13 +52,11 @@
         @csrf
     </form>
 
-    <div
-        x-show="warning"
-        x-cloak
-        class="modal modal-open"
-        role="alertdialog"
-        aria-modal="true"
+    <dialog
+        x-ref="dialog"
+        class="modal"
         aria-labelledby="station-mode-idle-title"
+        @cancel.prevent
     >
         <div class="modal-box text-center">
             <x-icon name="phosphor-timer" class="w-12 h-12 mx-auto text-warning" />
@@ -72,5 +72,5 @@
                 <button type="button" class="btn btn-primary" x-ref="stillHere" @click="dismiss()">I'm Still Here</button>
             </div>
         </div>
-    </div>
+    </dialog>
 </div>
