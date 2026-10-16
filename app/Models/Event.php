@@ -136,6 +136,22 @@ class Event extends Model
         return app(RuleSetFactory::class)->forEvent($this)->nomenclature();
     }
 
+    /**
+     * Whether this event's rulebook awards points for message traffic.
+     *
+     * ARRL Field Day scores the SM/SEC message and NTS traffic; Winter Field
+     * Day does not, so message handling is tracked there without points.
+     * Assumes Field Day for an event with no type yet.
+     */
+    public function scoresMessageBonuses(): bool
+    {
+        if (! $this->loadMissing('eventType')->eventType) {
+            return true;
+        }
+
+        return app(RuleSetFactory::class)->forEvent($this)->bonusRuleReference('sm_sec_message') !== null;
+    }
+
     public function getStatusAttribute(): string
     {
         $now = appNow();
