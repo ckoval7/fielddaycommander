@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Day Safety Officer Checklist - FD Commander Field Day Software</title>
+<meta name="description" content="Work through the ARRL Field Day Safety Officer or Site Responsibilities checklist in FD Commander, earn the safety bonus, and prepare the signed copy for your entry.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/safety-officer-checklist.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Field Day Safety Officer Checklist - FD Commander Field Day Software">
+<meta property="og:description" content="Work through the ARRL Field Day Safety Officer or Site Responsibilities checklist in FD Commander, earn the safety bonus, and prepare the signed copy for your entry.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/safety-officer-checklist.html">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Field Day Safety Officer Checklist - FD Commander Field Day Software">
+<meta name="twitter:description" content="Work through the ARRL Field Day Safety Officer or Site Responsibilities checklist in FD Commander, earn the safety bonus, and prepare the signed copy for your entry.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Work Through the <span class="gradient">Safety Checklist</span></h1>
+    <p>Walk the site with the ARRL Field Day Safety Officer or Site Responsibilities checklist, record it in FD Commander, and earn the safety bonus.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; Safety Checklist
+      </div>
+
+      <p>The ARRL rewards Field Day groups for taking site safety seriously, and FD Commander has the checklist built in. Your safety person can check items off on a phone or tablet as they walk the site, and the bonus is earned once the list is done. This guide covers who does it, how to set it up, and the signed copy the ARRL wants with your entry.</p>
+
+      <h2>Which Checklist You Get</h2>
+
+      <p>It depends on your operating class:</p>
+
+      <ul>
+        <li><strong>Class A</strong> gets the <strong>Safety Officer</strong> checklist, worth 100 points. All 15 items are required.</li>
+        <li><strong>Classes B through F</strong> get the <strong>Site Responsibilities</strong> checklist, worth 50 points. It has 13 items written for smaller setups, and 8 of them are required, since a home station may have no generator or tent.</li>
+      </ul>
+
+      <p>Winter Field Day doesn't have a safety bonus, so WFD events don't get a checklist.</p>
+
+      <p>Naming a safety officer isn't enough on its own. The ARRL calls it an active bonus: someone has to verify each item on site.</p>
+
+      <h2>Step 1: Put Your Safety Person on the Schedule</h2>
+
+      <p>Only someone signed up for a <strong>Safety Officer</strong> or <strong>Site Responsibilities</strong> shift can check items off. This is on purpose, so the record shows that the person responsible for safety did the walk-through. Admins and event managers are no exception. Without a shift, they can see the checklist but can't change it.</p>
+
+      <p>In <strong>Administration &gt; Manage Schedule</strong>, add a shift for the right role and assign your safety person to it (see <a href="../fd-commander-docs.html#scheduling">Volunteer Scheduling</a>). Make it cover the whole event. The Safety Officer checklist starts with "Safety Officer/s or qualified designated assistant/s was on site for the duration of the event," and a two-hour shift doesn't make that case.</p>
+
+      <p>Scheduled, checked in, or checked out all count, so the safety officer can start during setup before their shift begins. A shift marked as a no-show doesn't.</p>
+
+      <h2>Step 2: Adjust the List if You Need To</h2>
+
+      <p>The default items match the ARRL checklists. If your club has its own rules, like keeping generators a set distance from the tents, add them in <strong>Administration &gt; Manage Safety Checklist</strong>. Click <strong>Add Item</strong>, write the <strong>Label</strong>, add <strong>Help Text</strong> if the item needs explaining, pick the <strong>Checklist Type</strong>, and decide whether it's <strong>Required</strong>.</p>
+
+      <p>Changes apply to the current event only. Keep in mind that the Safety Officer bonus needs every item checked, including any you add. Removing an ARRL item to make the list easier doesn't change what the ARRL asks for on the paper checklist.</p>
+
+      <h2>Step 3: Walk the Site</h2>
+
+      <p>Open <strong>Event Management &gt; Site Safety</strong> on a phone or tablet and take it with you. Each item has a checkbox, and the ones with help text have a <strong>?</strong> icon you can tap for an explanation. Badges at the top count how many items are done and how many required items are done.</p>
+
+      <figure class="screenshot">
+        <a href="../screenshots/site-safety-checklist-dark.png"><img src="../screenshots/site-safety-checklist-dark.png" alt="FD Commander Site Safety Checklist page with completion badges and a list of safety items, some checked with the name and time of who completed them" loading="lazy" width="1920" height="1080"></a>
+        <figcaption>The Site Safety page. Each checked item shows who completed it and when.</figcaption>
+      </figure>
+
+      <p>As you check each item, FD Commander records who did it and when, and saves it right away. Use the notes box under an item to write down what you saw: "Two extinguishers, one by each generator" or "Coax crossings taped down at the food tent." The notes are what make the record useful later, both for the signed checklist and for next year's planning.</p>
+
+      <p>For the CPR and AED item, the page lists everyone whose profile is marked <strong>CPR / AED trained</strong>, so you can see at a glance who's covering it. Ask trained members to check that box on their profile ahead of time.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Walk it more than once</div>
+        <p>Do the first pass during setup, when tent stakes and antenna guys go in. Then walk it again Saturday evening and Sunday morning. Conditions change as the weekend goes on. Cables get moved, the water runs low, and a storm can roll in. If something stops being true, uncheck the item until it's fixed.</p>
+      </div>
+
+      <h2>When the Bonus Is Earned</h2>
+
+      <p>The bonus shows up on the Scoring page once the checklist reaches this point:</p>
+
+      <ul>
+        <li><strong>Safety Officer</strong>: when every item is checked</li>
+        <li><strong>Site Responsibilities</strong>: when every required item is checked and more than half of the whole list is done</li>
+      </ul>
+
+      <p>Unchecking an item that drops you below that line takes the bonus back, so the score always matches the checklist.</p>
+
+      <h2>The Signed Copy</h2>
+
+      <p>To claim either bonus, the ARRL wants a signed copy of the checklist with your entry. FD Commander doesn't print one, so download the Safety Officer or Site Responsibilities checklist from the ARRL's Field Day packet. Fill it in from the Site Safety page, using its notes and who-did-it record, then have your safety person sign it. Scan or photograph it and keep it with the rest of your proof. <a href="submit-field-day-entry.html">Submit Your Field Day Entry</a> covers sending it in.</p>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="submit-field-day-entry.html">Submit Your Entry &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+<script src="../toc.js"></script>
+<script src="../lightbox.js"></script>
+
+</body>
+</html>

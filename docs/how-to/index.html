@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>How-To Guides - FD Commander</title>
-<meta name="description" content="Step-by-step guides for FD Commander: Raspberry Pi setup, SSH basics, first event configuration, multi-station logging, station mode, LAN networking, external loggers, email, and DNS/TLS for internet access.">
+<meta name="description" content="Step-by-step Field Day guides for FD Commander: server and LAN setup, your first event, multi-station logging, station mode, GOTA, bonuses, the safety checklist, submitting your ARRL entry, and backups.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="How-To Guides - FD Commander">
-<meta property="og:description" content="Step-by-step guides for FD Commander: Raspberry Pi setup, SSH basics, LAN configuration, and DNS/TLS for internet access.">
+<meta property="og:description" content="Step-by-step Field Day guides for FD Commander: server and LAN setup, your first event, multi-station logging, station mode, GOTA, bonuses, the safety checklist, submitting your ARRL entry, and backups.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/">
 <meta property="og:image" content="https://fielddaycommander.org/og-image.png">
 <meta property="og:image:type" content="image/png">
@@ -17,15 +17,30 @@
 <meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="How-To Guides - FD Commander">
-<meta name="twitter:description" content="Step-by-step guides for Raspberry Pi setup, SSH, LAN configuration, and DNS/TLS.">
+<meta name="twitter:description" content="Step-by-step Field Day guides for FD Commander: server and LAN setup, your first event, multi-station logging, station mode, GOTA, bonuses, the safety checklist, submitting your ARRL entry, and backups.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
 <meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
+  .guide-group {
+    max-width: 1000px;
+    margin: 0 auto 3.5rem;
+  }
+  .guide-group h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+  }
+  .guide-group-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+  }
   .guides-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
     max-width: 1000px;
     margin: 0 auto;
@@ -107,86 +122,97 @@
 <section class="page-hero">
   <div class="container">
     <h1>How-To <span class="gradient">Guides</span></h1>
-    <p>Step-by-step walkthroughs for common tasks. Pick a guide and follow along.</p>
+    <p>Step-by-step walkthroughs, grouped roughly in the order you'll need them. New to FD Commander? Start at the top.</p>
   </div>
 </section>
 
 <section style="padding-top:1rem;">
   <div class="container">
-    <div class="guides-grid">
-
-      <div class="guide-card">
-        <div class="guide-card-category">Hardware</div>
-        <h3><a href="pi-setup.html">Prepare a Raspberry Pi</a></h3>
-        <p>Use Raspberry Pi Imager to flash an SD card, set a hostname, configure Wi-Fi or Ethernet, and get your Pi online and ready for FD Commander.</p>
+    <div class="guide-group">
+      <h2>Get the Server Running</h2>
+      <p class="guide-group-desc">Set up the computer FD Commander runs on and the network your stations connect to.</p>
+      <div class="guides-grid">
+        <div class="guide-card">
+          <h3><a href="pi-setup.html">Prepare a Raspberry Pi</a></h3>
+          <p>Use Raspberry Pi Imager to flash an SD card, set a hostname, configure Wi-Fi or Ethernet, and get your Pi online and ready for FD Commander.</p>
+        </div>
+        <div class="guide-card">
+          <h3><a href="ssh-basics.html">SSH &amp; Command-Line Basics</a></h3>
+          <p>Connect to your Raspberry Pi over SSH, learn essential Linux commands, check on FD Commander, copy files with scp, and keep sessions alive with tmux.</p>
+        </div>
+        <div class="guide-card">
+          <h3><a href="lan-setup.html">Set Up a LAN for Field Operations</a></h3>
+          <p>Build a reliable local network for your Field Day site with an off-the-shelf router. Covers giving the server a fixed IP, how clients find it, and keeping Wi-Fi alive next to the HF stations.</p>
+        </div>
       </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Getting Started</div>
-        <h3><a href="ssh-basics.html">SSH &amp; Command-Line Basics</a></h3>
-        <p>Connect to your Raspberry Pi over SSH, learn essential Linux commands, check on FD Commander, copy files with scp, and keep sessions alive with tmux.</p>
+    </div>
+    <div class="guide-group">
+      <h2>Plan Your Event</h2>
+      <p class="guide-group-desc">Create the event, then line up the bonuses and safety work before the weekend.</p>
+      <div class="guides-grid">
+        <div class="guide-card">
+          <h3><a href="first-event.html">First Event Setup</a></h3>
+          <p>Go from a fresh install to a fully configured Field Day event. Create the event, add equipment, configure stations, build the schedule, and invite operators.</p>
+        </div>
+        <div class="guide-card">
+          <h3><a href="bonuses-objectives.html">Plan Your Bonuses and Objectives</a></h3>
+          <p>Line up every Field Day bonus and Winter Field Day objective your club can earn, track them as they come in, and gather the proof before you submit.</p>
+        </div>
+        <div class="guide-card">
+          <h3><a href="safety-officer-checklist.html">Work Through the Safety Checklist</a></h3>
+          <p>Walk the site with the Safety Officer or Site Responsibilities checklist, record who checked what, and earn the safety bonus.</p>
+        </div>
       </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Getting Started</div>
-        <h3><a href="first-event.html">First Event Setup</a></h3>
-        <p>Go from a fresh install to a fully configured Field Day event. Create the event, add equipment, configure stations, build the schedule, and invite operators.</p>
+    </div>
+    <div class="guide-group">
+      <h2>Log Contacts</h2>
+      <p class="guide-group-desc">Get every station logging into the same log, from the browser or the logger your operators already use.</p>
+      <div class="guides-grid">
+        <div class="guide-card">
+          <h3><a href="multi-station-logging.html">Set Up Multi-Station Logging</a></h3>
+          <p>Run every Field Day station into a shared log on your LAN, from club computers, members' own laptops, or a mix, dupe checking across all stations, and a live score.</p>
+        </div>
+        <div class="guide-card">
+          <h3><a href="station-mode.html">Set Up Station Mode</a></h3>
+          <p>Bind a shared computer to its station, so operators can take turns by typing their callsign. No passwords needed.</p>
+        </div>
+        <div class="guide-card">
+          <h3><a href="gota-station.html">Run the GOTA Station</a></h3>
+          <p>Set up the Field Day GOTA station, sign in the coach, enter each new operator, and see how the GOTA and coach bonuses are scored.</p>
+        </div>
+        <div class="guide-card">
+          <h3><a href="external-loggers.html">Connect External Loggers</a></h3>
+          <p>Send contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi straight into FD Commander over UDP. Covers firewall ports, station matching, operator credit, and testing.</p>
+        </div>
       </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Networking</div>
-        <h3><a href="lan-setup.html">Set Up a LAN for Field Operations</a></h3>
-        <p>Build a reliable local network for your Field Day site with an off-the-shelf router. Covers giving the server a fixed IP, how clients find it, and keeping Wi-Fi alive next to the HF stations.</p>
+    </div>
+    <div class="guide-group">
+      <h2>After Field Day</h2>
+      <p class="guide-group-desc">Send in your entry and keep a copy of everything.</p>
+      <div class="guides-grid">
+        <div class="guide-card">
+          <h3><a href="submit-field-day-entry.html">Submit Your Field Day Entry</a></h3>
+          <p>Review the score, download the Cabrillo log and submission sheet, gather the bonus proof, and send your entry to the ARRL.</p>
+        </div>
+        <div class="guide-card">
+          <h3><a href="backup-restore.html">Back Up and Restore</a></h3>
+          <p>Schedule automatic backups of your log, photos, and settings, copy them off the server, and restore everything onto the same server or a new one.</p>
+        </div>
       </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Logging</div>
-        <h3><a href="multi-station-logging.html">Set Up Multi-Station Logging</a></h3>
-        <p>Run every Field Day station into a shared log on your LAN, from club computers, members' own laptops, or a mix, dupe checking across all stations, and a live score.</p>
+    </div>
+    <div class="guide-group">
+      <h2>Optional Extras</h2>
+      <p class="guide-group-desc">Only needed if you want email from the app or remote access over the internet.</p>
+      <div class="guides-grid">
+        <div class="guide-card">
+          <h3><a href="email-setup.html">Email Setup</a></h3>
+          <p>Enable password resets, invitation emails, shift reminders, and notifications by adding SMTP credentials to your .env file.</p>
+        </div>
+        <div class="guide-card">
+          <h3><a href="dns-tls.html">DNS &amp; TLS Setup</a></h3>
+          <p>Point a domain name at your server and add HTTPS with Let's Encrypt. Only needed if you want to put FD Commander on the internet for remote access.</p>
+        </div>
       </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Logging</div>
-        <h3><a href="station-mode.html">Set Up Station Mode</a></h3>
-        <p>Bind a shared computer to its station, so operators can take turns by typing their callsign. No passwords needed.</p>
-      </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Logging</div>
-        <h3><a href="gota-station.html">Run the GOTA Station</a></h3>
-        <p>Set up the Field Day GOTA station, sign in the coach, enter each new operator, and see how the GOTA and coach bonuses are scored.</p>
-      </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Scoring</div>
-        <h3><a href="bonuses-objectives.html">Plan Your Bonuses and Objectives</a></h3>
-        <p>Line up every Field Day bonus and Winter Field Day objective your club can earn, track them as they come in, and gather the proof before you submit.</p>
-      </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Logging</div>
-        <h3><a href="external-loggers.html">Connect External Loggers</a></h3>
-        <p>Send contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi straight into FD Commander over UDP. Covers firewall ports, station matching, operator credit, and testing.</p>
-      </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Maintenance</div>
-        <h3><a href="backup-restore.html">Back Up and Restore</a></h3>
-        <p>Schedule automatic backups of your log, photos, and settings, copy them off the server, and restore everything onto the same server or a new one.</p>
-      </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Advanced &middot; Optional</div>
-        <h3><a href="email-setup.html">Email Setup</a></h3>
-        <p>Enable password resets, invitation emails, shift reminders, and notifications by adding SMTP credentials to your .env file.</p>
-      </div>
-
-      <div class="guide-card">
-        <div class="guide-card-category">Advanced &middot; Optional</div>
-        <h3><a href="dns-tls.html">DNS &amp; TLS Setup</a></h3>
-        <p>Point a domain name at your server and add HTTPS with Let's Encrypt. Only needed if you want to put FD Commander on the internet for remote access.</p>
-      </div>
-
     </div>
   </div>
 </section>

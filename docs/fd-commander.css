@@ -122,15 +122,20 @@ a.logo:hover { color: var(--text-primary); }
   border-radius: 10px;
   padding: 0.5rem 0;
   min-width: 220px;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   z-index: 200;
 }
-.nav-dropdown-menu::before {
-  content: '';
-  position: absolute;
-  top: -12px;
-  left: 0; right: 0;
-  height: 12px;
+/* Bridges the gap so the pointer can reach the menu (on the parent, since the menu scrolls) */
+@media (min-width: 769px) {
+  .nav-dropdown::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: -1rem; right: -1rem;
+    height: 14px;
+  }
 }
 .nav-dropdown-menu a {
   display: block;
@@ -350,7 +355,7 @@ footer {
     min-width: 0;
     box-shadow: none;
   }
-  .nav-dropdown-menu::before { display: none; }
+  .nav-dropdown-menu { max-height: none; overflow: visible; }
   .nav-dropdown-menu a {
     padding: 0.6rem 0;
     border-bottom: 1px solid var(--border);
