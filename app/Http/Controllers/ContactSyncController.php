@@ -32,22 +32,9 @@ class ContactSyncController extends Controller
             abort(403, 'This browser can only log for its assigned station.');
         }
 
-        // Contacts queued offline can arrive after their session was ended
-        // (take-over, idle timeout, End Session). Judge them by when they were
-        // made, not when they synced.
-        $qsoTime = Carbon::parse($request->qso_time);
-
-        if ($session->end_time !== null && ! $qsoTime->between($session->start_time, $session->end_time)) {
-            return response()->json(['message' => 'This operating session has ended.'], 422);
-        }
-
-        $event = $session->station->eventConfiguration?->event;
-        if (! $event || Carbon::parse($event->end_time)->lt($qsoTime)) {
-            return response()->json(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.'], 422);
-        }
-
-        if (Carbon::parse($event->start_time)->gt(appNow())) {
-            return response()->json(['message' => 'This event has not started yet. Contacts can only be logged once the event begins.'], 422);
+        $timingError = $this->timingError($session, Carbon::parse($request->qso_time));
+        if ($timingError) {
+            return $timingError;
         }
 
         $isGotaContact = $session->station->is_gota;
@@ -107,6 +94,31 @@ class ContactSyncController extends Controller
             'points' => $contact->points,
             'is_duplicate' => $contact->is_duplicate,
         ], 201);
+    }
+
+    /**
+     * Reject contacts made outside the session or event window.
+     *
+     * Contacts queued offline can arrive after their session was ended
+     * (take-over, idle timeout, End Session), so they are judged by when
+     * they were made, not when they synced.
+     */
+    private function timingError(OperatingSession $session, Carbon $qsoTime): ?JsonResponse
+    {
+        if ($session->end_time !== null && ! $qsoTime->between($session->start_time, $session->end_time)) {
+            return response()->json(['message' => 'This operating session has ended.'], 422);
+        }
+
+        $event = $session->station->eventConfiguration?->event;
+        if (! $event || Carbon::parse($event->end_time)->lt($qsoTime)) {
+            return response()->json(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.'], 422);
+        }
+
+        if (Carbon::parse($event->start_time)->gt(appNow())) {
+            return response()->json(['message' => 'This event has not started yet. Contacts can only be logged once the event begins.'], 422);
+        }
+
+        return null;
     }
 
     private function idempotentResponse(Contact $contact): JsonResponse

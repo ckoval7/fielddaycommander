@@ -206,7 +206,7 @@ class StationMode
     /**
      * Sign the operator in for this device.
      */
-    public static function startSession(Request $request, StationDevice $device, int $userId): void
+    public static function startSession(StationDevice $device, int $userId): void
     {
         session()->forget(self::DEV_OVERRIDE_SESSION_KEYS);
         Auth::loginUsingId($userId);

@@ -115,7 +115,7 @@ class ShiftCoverage
     public function roleCoverage(): array
     {
         return $this->rolesWithShifts()
-            ->map(function (ShiftRole $role, int|string $roleId) {
+            ->map(function (ShiftRole $role) {
                 $roleShifts = $this->shiftsForRole($role);
                 $totalSlots = (int) $roleShifts->sum('capacity');
                 $filledSlots = (int) $roleShifts->sum(fn (Shift $shift) => self::filledSlots($shift));
