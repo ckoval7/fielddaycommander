@@ -14,7 +14,7 @@ Broadcast::channel(BroadcastChannels::event('{eventId}'), function ($user) {
  * User-specific channel - only the matching user can listen.
  */
 Broadcast::channel(BroadcastChannels::user('{id}'), function ($user, int $id) {
-    return $user->id === $id;
+    return $user->id === $id && ! $user->isInStationMode();
 });
 
 /**

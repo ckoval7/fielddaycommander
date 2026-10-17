@@ -67,6 +67,15 @@ class StationMode
     ];
 
     /**
+     * Paths of unnamed framework routes a station-mode page relies on.
+     *
+     * @var list<string>
+     */
+    public const ALLOWED_UNNAMED_PATHS = [
+        'broadcasting/auth',
+    ];
+
+    /**
      * Route names that stay reachable on an enrolled browser with nobody signed in.
      *
      * @var list<string>
@@ -156,6 +165,25 @@ class StationMode
         }
 
         return $request->attributes->get('station_mode.session_device');
+    }
+
+    /**
+     * Whether the current request may operate the given station. Outside
+     * station mode every station is allowed; inside it only the bound one.
+     */
+    public static function allowsStation(?int $stationId): bool
+    {
+        return ! self::isActive() || ($stationId !== null && $stationId === self::boundStationId());
+    }
+
+    /**
+     * Whether a station-mode session may use this ability. Allowed permissions
+     * and read-only policy abilities defer to the normal checks; everything
+     * else, including owner-based policy writes, is denied.
+     */
+    public static function permitsAbility(string $ability): bool
+    {
+        return in_array($ability, self::ALLOWED_PERMISSIONS, true) || str_starts_with($ability, 'view');
     }
 
     /**

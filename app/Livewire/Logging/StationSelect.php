@@ -48,7 +48,7 @@ class StationSelect extends Component
             ->with('station')
             ->first();
 
-        if ($activeSession) {
+        if ($activeSession && StationMode::allowsStation($activeSession->station_id)) {
             $this->redirect(route('logging.session', $activeSession), navigate: true);
 
             return;
@@ -276,6 +276,15 @@ class StationSelect extends Component
             $this->addError('selectedStationId', "{$station->name} has been marked unavailable by a station captain.");
 
             return;
+        }
+
+        // A walk-up operator has left any other station they were running.
+        if (StationMode::isActive()) {
+            OperatingSession::query()
+                ->active()
+                ->forUser(auth()->id())
+                ->whereNull('external_source')
+                ->update(['end_time' => appNow()]);
         }
 
         // Per FD Rule 6.9: no two transmitters on the same band-mode at the same time.

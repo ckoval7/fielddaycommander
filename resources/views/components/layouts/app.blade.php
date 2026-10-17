@@ -142,7 +142,9 @@
             <livewire:components.weather-icon />
 
             @auth
-                <livewire:components.notification-bell />
+                @unless(\App\Support\StationMode::isActive())
+                    <livewire:components.notification-bell />
+                @endunless
             @endauth
 
             <div x-show="!(scrolled && hasCallsign)">
@@ -197,7 +199,9 @@
             <div class="flex items-center gap-3">
                 <livewire:components.weather-icon />
                 @auth
-                    <livewire:components.notification-bell />
+                    @unless(\App\Support\StationMode::isActive())
+                        <livewire:components.notification-bell />
+                    @endunless
                 @endauth
                 <x-user-menu />
             </div>
@@ -208,7 +212,9 @@
     @if(config('developer.enabled'))
         <livewire:components.developer-banner />
         @auth
-            <livewire:components.dev-role-switcher />
+            @unless(\App\Support\StationMode::isActive())
+                <livewire:components.dev-role-switcher />
+            @endunless
         @endauth
     @endif
 
