@@ -4,17 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>How-To Guides - FD Commander</title>
-<meta name="description" content="Step-by-step guides for FD Commander: Raspberry Pi setup, SSH basics, first event configuration, LAN networking, email, and DNS/TLS for internet access.">
+<meta name="description" content="Step-by-step guides for FD Commander: Raspberry Pi setup, SSH basics, first event configuration, multi-station logging, station mode, LAN networking, external loggers, email, and DNS/TLS for internet access.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="How-To Guides - FD Commander">
 <meta property="og:description" content="Step-by-step guides for FD Commander: Raspberry Pi setup, SSH basics, LAN configuration, and DNS/TLS for internet access.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/">
-<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="How-To Guides - FD Commander">
 <meta name="twitter:description" content="Step-by-step guides for Raspberry Pi setup, SSH, LAN configuration, and DNS/TLS.">
-<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -131,7 +136,25 @@
       <div class="guide-card">
         <div class="guide-card-category">Networking</div>
         <h3><a href="lan-setup.html">Set Up a LAN for Field Operations</a></h3>
-        <p>Build a reliable local network for your Field Day site using a router, switch, or a Raspberry Pi. Covers wired and wireless setups, IP addressing, and DNS.</p>
+        <p>Build a reliable local network for your Field Day site with an off-the-shelf router. Covers giving the server a fixed IP, how clients find it, and keeping Wi-Fi alive next to the HF stations.</p>
+      </div>
+
+      <div class="guide-card">
+        <div class="guide-card-category">Logging</div>
+        <h3><a href="multi-station-logging.html">Set Up Multi-Station Logging</a></h3>
+        <p>Run every Field Day station into a shared log on your LAN, from club computers, members' own laptops, or a mix, dupe checking across all stations, and a live score.</p>
+      </div>
+
+      <div class="guide-card">
+        <div class="guide-card-category">Logging</div>
+        <h3><a href="station-mode.html">Set Up Station Mode</a></h3>
+        <p>Bind a shared computer to its station, so operators can take turns by typing their callsign. No passwords needed.</p>
+      </div>
+
+      <div class="guide-card">
+        <div class="guide-card-category">Logging</div>
+        <h3><a href="gota-station.html">Run the GOTA Station</a></h3>
+        <p>Set up the Field Day GOTA station, sign in the coach, enter each new operator, and see how the GOTA and coach bonuses are scored.</p>
       </div>
 
       <div class="guide-card">
