@@ -6,12 +6,15 @@
  * sets data-theme on first load only; without a livewire:navigated listener,
  * the attribute is wiped on subsequent SPA navigations and dark mode breaks
  * for any element using DaisyUI semantic colors or Tailwind dark: variants.
+ * livewire:navigated fires after the swapped page paints, so the theme is also
+ * re-applied in onSwap; otherwise light mode flashes the prefersdark theme.
  */
 test('app layout re-applies theme attribute after wire:navigate', function () {
     $html = view('components.layouts.app', ['slot' => ''])->render();
 
     expect($html)
         ->toContain("document.documentElement.setAttribute('data-theme', theme)")
+        ->toContain("document.addEventListener('livewire:navigating', (event) => event.detail.onSwap(applyTheme))")
         ->toContain("document.addEventListener('livewire:navigated', applyTheme)");
 });
 
@@ -20,6 +23,7 @@ test('guest layout re-applies theme attribute after wire:navigate', function () 
 
     expect($html)
         ->toContain("document.documentElement.setAttribute('data-theme', theme)")
+        ->toContain("document.addEventListener('livewire:navigating', (event) => event.detail.onSwap(applyTheme))")
         ->toContain("document.addEventListener('livewire:navigated', applyTheme)");
 });
 
