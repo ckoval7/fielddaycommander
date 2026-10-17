@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnforceStationMode;
 use App\Livewire\Hooks\ReportValidationFailures;
 use App\Models\Contact;
 use App\Models\EquipmentEvent;
@@ -12,6 +13,7 @@ use App\Models\Message;
 use App\Models\OperatingSession;
 use App\Models\ShiftAssignment;
 use App\Models\Station;
+use App\Models\User;
 use App\Models\W1awBulletin;
 use App\Observers\ContactObserver;
 use App\Observers\EquipmentEventObserver;
@@ -30,6 +32,7 @@ use App\Policies\W1awBulletinPolicy;
 use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
+use App\Support\StationMode;
 use App\View\Components\ChoicesOffline;
 use App\View\Components\Icon;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -86,6 +89,8 @@ class AppServiceProvider extends ServiceProvider
             Blade::component(config('mary.prefix').'choices-offline', ChoicesOffline::class);
         });
 
+        $this->configureStationMode();
+
         // Register policies
         Gate::policy(Image::class, ImagePolicy::class);
         Gate::policy(GuestbookEntry::class, GuestbookEntryPolicy::class);
@@ -103,6 +108,27 @@ class AppServiceProvider extends ServiceProvider
         ShiftAssignment::observe(ShiftAssignmentObserver::class);
         Station::observe(StationObserver::class);
         W1awBulletin::observe(W1awBulletinObserver::class);
+    }
+
+    /**
+     * Lock station-mode sessions down beyond the route allowlist.
+     */
+    protected function configureStationMode(): void
+    {
+        // Re-check station mode against the page a component came from on every
+        // Livewire update, so a snapshot from a page station mode blocks can't be
+        // replayed through the update endpoint.
+        Livewire::addPersistentMiddleware([EnforceStationMode::class]);
+
+        // Deny owner-based policy writes (deleting your own photo, editing your
+        // own message) that never reach the permission cap on User.
+        Gate::before(function (User $user, string $ability): ?bool {
+            if (! $user->isInStationMode() || StationMode::permitsAbility($ability)) {
+                return null;
+            }
+
+            return false;
+        });
     }
 
     /**

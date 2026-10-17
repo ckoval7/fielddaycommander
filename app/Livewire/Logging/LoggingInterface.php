@@ -44,6 +44,10 @@ class LoggingInterface extends Component
             abort(403);
         }
 
+        if (! StationMode::allowsStation($operatingSession->station_id)) {
+            abort(403, 'This browser can only log for its assigned station.');
+        }
+
         if ($operatingSession->end_time !== null) {
             $this->redirect(route('logging.station-select'), navigate: true);
 

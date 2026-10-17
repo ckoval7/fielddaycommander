@@ -49,7 +49,7 @@ class EnforceStationMode
             $device->forceFill(['last_seen_at' => now()])->saveQuietly();
         }
 
-        if (! $request->routeIs(...StationMode::ALLOWED_ROUTES)) {
+        if (! $request->routeIs(...StationMode::ALLOWED_ROUTES) && ! $request->is(...StationMode::ALLOWED_UNNAMED_PATHS)) {
             abort(403, 'This page is not available in station mode.');
         }
 

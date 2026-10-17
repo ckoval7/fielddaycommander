@@ -7,6 +7,7 @@ use App\Http\Requests\StoreContactSyncRequest;
 use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Services\DuplicateCheckService;
+use App\Support\StationMode;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
@@ -25,6 +26,10 @@ class ContactSyncController extends Controller
 
         if ($session->operator_user_id !== $request->user()->id) {
             abort(403, 'You are not the operator of this session.');
+        }
+
+        if (! StationMode::allowsStation($session->station_id)) {
+            abort(403, 'This browser can only log for its assigned station.');
         }
 
         if ($session->end_time !== null) {
