@@ -12,7 +12,7 @@
                 @if($event->eventConfiguration)
                     <div class="flex items-center justify-center gap-4 mt-3 text-sm text-base-content/60">
                         @if($event->eventConfiguration->operatingClass)
-                            <span>Class {{ $event->eventConfiguration->operatingClass->name }}</span>
+                            <span>Class {{ $event->eventConfiguration->operatingClass->code }}</span>
                         @endif
                         @if($event->eventConfiguration->section)
                             <span>Section {{ $event->eventConfiguration->section->name }}</span>
