@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Day Bonuses and WFD Objectives - FD Commander Field Day Software</title>
+<meta name="description" content="Plan for every ARRL Field Day bonus and Winter Field Day objective, then track and claim them in FD Commander so none get missed on the submission.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/bonuses-objectives.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Field Day Bonuses and WFD Objectives - FD Commander Field Day Software">
+<meta property="og:description" content="Plan for every ARRL Field Day bonus and Winter Field Day objective, then track and claim them in FD Commander so none get missed on the submission.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/bonuses-objectives.html">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Field Day Bonuses and WFD Objectives - FD Commander Field Day Software">
+<meta name="twitter:description" content="Plan for every ARRL Field Day bonus and Winter Field Day objective, then track and claim them in FD Commander so none get missed on the submission.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Plan Your <span class="gradient">Bonuses and Objectives</span></h1>
+    <p>Line up the Field Day bonuses and Winter Field Day objectives your club can earn, then track and claim them in FD Commander.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; Bonuses and Objectives
+      </div>
+
+      <p>Bonuses can make up a big share of a Field Day score. A 2A club running on emergency power can earn up to 1,650 bonus points before counting GOTA. At a 2x power multiplier, that's as much as 825 phone contacts. Winter Field Day goes further: your QSO points are multiplied by the objectives you complete, plus one, so each objective you add multiplies the whole log.</p>
+
+      <p>Most bonuses depend on work done in the weeks before the event, like sending the invitations and writing the press release. This guide starts there, then covers how FD Commander tracks what you earn and what to gather before you submit.</p>
+
+      <h2>Pick Your Bonuses Early</h2>
+
+      <p>Start with your class, because it decides which bonuses you can earn. Public location, the information table, and the satellite contact are for Classes A, B, and F only. The educational activity is for Classes A and F, and for clubs in D or E with three or more participants. Each bonus on the Scoring page has a <strong>?</strong> icon that shows the full ARRL rule, and FD Commander only lists the bonuses your class can earn.</p>
+
+      <p>Then give each bonus to a person. A bonus that "the club" is handling usually doesn't get done. The shift schedule already has roles for several of them: <strong>Public Information Table</strong>, <strong>Public Greeter</strong>, <strong>Safety Officer</strong>, <strong>Site Responsibilities</strong>, <strong>GOTA Coach</strong>, and <strong>Message Handler</strong>. Putting names on those shifts in <strong>Administration &gt; Manage Schedule</strong> is a good way to make sure someone owns each job (see <a href="../fd-commander-docs.html#scheduling">Volunteer Scheduling</a>).</p>
+
+      <h2>Bonuses That Need a Head Start</h2>
+
+      <p>These can't be done on Saturday morning. Get them moving a month or more ahead.</p>
+
+      <ul>
+        <li><strong>Elected official and agency visits (100 each).</strong> The visit has to come from an invitation your group sent, so send it early and follow up the week before. For the agency visit, think Red Cross, Salvation Army, emergency management, or law enforcement. ARRL officials like your SM or EC don't count for this one.</li>
+        <li><strong>Media publicity (100).</strong> Send a press release to local papers, radio, and TV a few weeks out. You'll need a copy of the coverage you actually got, and a post about your Field Day on a news outlet's website or social media page counts.</li>
+        <li><strong>Social media (100).</strong> Post about your Field Day on the club's social media page, aimed at the public. Club websites don't count, and neither do posts by individual members.</li>
+        <li><strong>Public location (100).</strong> Set up somewhere the public can find you, like a park, school, or shopping center, and have greeters wearing name badges ready to talk to visitors.</li>
+        <li><strong>Public information table (100).</strong> A table with handouts for visitors. Gather the handouts ahead of time.</li>
+        <li><strong>Educational activity (100).</strong> A formal, radio-related activity, like a talk on antennas or a demonstration of digital modes. Put it on the schedule and tell people when it starts, so it's clearly a planned activity and not a chat at the table.</li>
+        <li><strong>Youth participation (20 each, up to 100).</strong> Each participant 18 or younger who completes a contact counts. Licensed young hams can operate any station, and the GOTA station is a good place for kids who aren't licensed yet. Invite scouts, school radio clubs, and members' kids.</li>
+      </ul>
+
+      <h2>Bonuses You Earn on the Air</h2>
+
+      <ul>
+        <li><strong>W1AW bulletin (100).</strong> Copy the Field Day bulletin from W1AW or K6KPH. It's only sent over the air, so put a CW or digital operator on the schedule for one of the bulletin times. Save the copy on the <strong>W1AW Bulletin</strong> page in FD Commander.</li>
+        <li><strong>Message to your Section Manager or SEC (100).</strong> Send a formal message from your site with your club name, number of participants, location, and number of ARES operators. It has to leave the site by radio.</li>
+        <li><strong>Message handling (10 each, up to 100).</strong> Ten formal messages, originated, relayed, or received and delivered, in NTS or ICS-213 format. The SM/SEC message doesn't count toward the ten. Find a local net or a traffic handler who'll take your messages before the weekend.</li>
+        <li><strong>Satellite contact (100).</strong> One contact through an amateur satellite earns it. Check pass times ahead of time, and remember that FM satellites are limited to one completed contact per channel.</li>
+        <li><strong>Alternate power (100).</strong> Make at least five contacts on solar, wind, water, or batteries charged that way. The natural power transmitter counts as an extra transmitter, so take another one off the air while it runs if you don't want to change your class. The ARRL wants a separate list of those contacts with your entry. If you set up the natural power rig as its own station in FD Commander, you can find them later by choosing that station in the <strong>Station</strong> filter on <strong>View Log</strong>.</li>
+        <li><strong>GOTA (5 per contact, plus 100 for a coach).</strong> Classes A and F. <a href="gota-station.html">Run the GOTA Station</a> covers it.</li>
+      </ul>
+
+      <h2>Bonuses That Come From Your Setup</h2>
+
+      <ul>
+        <li><strong>Emergency power (100 per transmitter, up to 20).</strong> Every transmitter has to run off power that's independent of the commercial mains, like a generator, batteries, or solar. GOTA and the free VHF station don't count toward the total.</li>
+        <li><strong>Safety Officer (100, Class A) or Site Responsibilities (50, Classes B to F).</strong> Someone works through the checklist and signs it. The safety officer can start during setup.</li>
+        <li><strong>Web submission (50).</strong> Submit your entry through the ARRL's Field Day web app instead of by mail.</li>
+      </ul>
+
+      <h2>How FD Commander Tracks Them</h2>
+
+      <p>You don't claim most bonuses by hand. FD Commander earns them as you use the pages you'd be using anyway:</p>
+
+      <ul>
+        <li><strong>Emergency power</strong> comes from the event form. It counts your <strong>Number of Transmitters</strong>, as long as <strong>Commercial Power (Grid)</strong> isn't checked and no station's <strong>Power Source</strong> is <strong>Commercial Mains</strong>.</li>
+        <li><strong>Visits</strong> come from the guestbook. A visitor who signs in as an Elected Official or Agency earns the bonus once you verify their entry in <strong>Administration &gt; Manage Guestbook</strong>.</li>
+        <li><strong>Messages</strong> come from the <strong>Message Traffic</strong> page. A radiogram you originate or relay counts once you click <strong>Mark Sent</strong>. One you receive and deliver counts as soon as you log it. The <strong>SM/SEC Message</strong> button covers the Section Manager message.</li>
+        <li><strong>The W1AW bulletin</strong> is earned when you save the copy on the <strong>W1AW Bulletin</strong> page.</li>
+        <li><strong>GOTA</strong> comes from the log.</li>
+        <li><strong>Safety Officer and Site Responsibilities</strong> come from the checklist under <strong>Event Management &gt; Site Safety</strong>.</li>
+        <li><strong>Youth</strong> counts every member whose profile is marked <strong>Youth (age 18 or younger)</strong> and who has logged a contact, at any station or as a GOTA operator.</li>
+      </ul>
+
+      <p>The rest you claim yourself, as described below. One exception: confirming a check-in on a <strong>Public Information Table</strong> shift also claims the information table bonus.</p>
+
+      <h2>Claim the Manual Bonuses</h2>
+
+      <p>You'll need to be an admin or event manager for this. Operators won't see the claims card.</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Go to <strong>Administration &gt; Events</strong>. In your event's row, click the <strong>&#8942;</strong> menu under <strong>Actions</strong> and choose <strong>View Details</strong>.</p>
+      </div>
+
+      <figure class="screenshot">
+        <a href="../screenshots/events-list-view-details-dark.png"><img src="../screenshots/events-list-view-details-dark.png" alt="FD Commander Events page with the Actions menu open on Field Day 2026, showing View Details, Edit, Clone Event, and Delete" loading="lazy" width="1920" height="1080"></a>
+        <figcaption>The Actions menu on the Events page. View Details opens the event page with the claims card.</figcaption>
+      </figure>
+
+      <div class="step-box">
+        <p><span class="step-number">2</span> Find the <strong>Manual Bonus Claims</strong> card. It lists the bonuses you claim by hand that your class can earn.</p>
+      </div>
+
+      <div class="step-box">
+        <p><span class="step-number">3</span> Type a note in the box under the bonus first, then check its box. The note is saved with the claim and can't be edited afterward, so use it to say where the proof is: "Press release and Gazette article in the club Drive," or the link to your social media post.</p>
+      </div>
+
+      <p>The claim counts toward your score right away. To take one back, click its checked box and confirm. That's also how you fix a note: remove the claim, then claim it again with the new note.</p>
+
+      <p>Below the claims card, the <strong>Youth Participation</strong> card shows how many registered youth have logged a contact. Kids who don't have accounts can still count. Enter them in <strong>Additional non-account youth</strong>, and the total (up to five) updates when you leave the field.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">Claim as you go</div>
+        <p>Claim each bonus when it happens, not on Sunday afternoon. The person who did the work is still on site to tell you where the proof is, and everyone can watch the score climb on the Scoring page.</p>
+      </div>
+
+      <h2>Watch Your Progress</h2>
+
+      <p>Open <strong>Event Management &gt; Scoring</strong> during the event. The <strong>Bonus Points</strong> column lists every bonus your class can earn with a <strong>Verified</strong>, <strong>Claimed</strong>, or <strong>Unclaimed</strong> badge, and totals at the top. Unclaimed is your to-do list. If it's mid-afternoon Saturday and the bulletin or the SM message is still unclaimed, now's the time to chase it.</p>
+
+      <figure class="screenshot">
+        <a href="../screenshots/scoring-dark.png"><img src="../screenshots/scoring-dark.png" alt="FD Commander Scoring page with QSO points, power multiplier, and a Bonus Points column listing each bonus with its status" loading="lazy" width="1920" height="1080"></a>
+        <figcaption>The Bonus Points column on the Scoring page. Anything still marked Unclaimed is worth a look.</figcaption>
+      </figure>
+
+      <p>Keep an eye on <strong>Corrections &amp; Notices</strong> at the bottom of the page too. It flags things like GOTA contacts logged without a GOTA station configured.</p>
+
+      <h2>Winter Field Day Objectives</h2>
+
+      <p>Winter Field Day uses objectives instead of bonus points. Each one has a multiplier (OM), and your score is your QSO points times the sum of your objectives plus one. FD Commander uses the right list for your event's year. The list below is for 2027, which has 13 objectives worth up to OM 34. The 2026 list is a little different, and the <strong>?</strong> icon on each objective shows the WFDA's wording.</p>
+
+      <p>Because objectives multiply everything, a single objective can be worth more than hours of operating. Start with the big ones:</p>
+
+      <ul>
+        <li><strong>Three contacts on six bands (x6)</strong> and <strong>three contacts on twelve bands (x6)</strong>. Six bands is within reach for most groups if you plan VHF and UHF stations alongside HF. The WFDA suggests 220 MHz. Twelve usually means bringing microwave gear. Satellite contacts don't count toward either in 2027.</li>
+        <li><strong>Operate the event QRP (x4).</strong> Every station stays at 10 W or less on phone and 5 W or less on CW and digital. Weigh it against the contacts you'll lose at low power.</li>
+        <li><strong>Operate away from home (x3).</strong> Set up more than half a mile from home.</li>
+        <li><strong>Cross-band repeater (x3).</strong> Set one up during setup or the event, and make three contacts through it with stations off your site. Don't log those contacts for WFD.</li>
+        <li><strong>Alternative power.</strong> Running 100% on alternative power (x2) also earns the station equipment objective (x1), so you get both.</li>
+        <li><strong>Multiple modes (x2)</strong>, the <strong>SSTV image (x2)</strong>, <strong>six continuous hours (x2)</strong>, <strong>multiple antennas (x1)</strong>, <strong>Winlink email (x1)</strong>, and the <strong>WFD bulletin (x1)</strong> round out the list. For the antennas, put up at least two new ones during setup or the event, and make a contact on each. A multi-band antenna only counts once.</li>
+      </ul>
+
+      <p>FD Commander earns the band, mode, QRP, and bulletin objectives from your log and the <strong>WFD Bulletin</strong> page. You claim the rest in the <strong>Manual Objective Claims</strong> card on the event page, the same way as the Field Day claims above. On the Scoring page, the <strong>Objectives</strong> column shows each one's status and an <strong>Objectives Completed</strong> progress bar.</p>
+
+      <h2>Before You Submit</h2>
+
+      <p>Most bonuses need proof in your submission, and it's much easier to collect while people are still on site. Before you pack up, make sure you have:</p>
+
+      <ul>
+        <li>Copies of the SM/SEC message and every radiogram you're claiming</li>
+        <li>The bulletin copy (the Submission Sheet on the Reports page includes it if you saved it in FD Commander)</li>
+        <li>A copy of the media coverage</li>
+        <li>The signed Safety Officer or Site Responsibilities checklist</li>
+        <li>A list of the natural power contacts</li>
+      </ul>
+
+      <p>Then generate the <strong>Submission Sheet</strong> (or the <strong>WFD Event Summary</strong> for Winter Field Day) from the Reports page and check the bonuses against your notes. For Field Day, submitting through the ARRL web app earns the web submission bonus, so claim it once you've sent your entry. See <a href="../fd-commander-docs.html#reports">Reports</a> for everything that page can export.</p>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="gota-station.html">GOTA Station &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+<script src="../toc.js"></script>
+<script src="../lightbox.js"></script>
+
+</body>
+</html>
