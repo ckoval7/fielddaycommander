@@ -16,7 +16,10 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <x-badge :value="$summary['completed'] . ' of ' . $summary['total'] . ' complete'" class="badge-info" />
                     <x-badge :value="$summary['required_completed'] . ' of ' . $summary['required_total'] . ' required'" class="badge-warning" />
+                    {{-- wire:ignore keeps Livewire from morphing the Alpine scope away after each save (#20). --}}
                     <span
+                        wire:key="autosave-indicator"
+                        wire:ignore
                         x-data="{ show: false }"
                         x-on:autosaved.window="show = true; setTimeout(() => show = false, 1500)"
                         x-show="show"

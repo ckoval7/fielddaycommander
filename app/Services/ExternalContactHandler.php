@@ -78,7 +78,7 @@ class ExternalContactHandler
         $this->sessionResolver->touchActivity($session);
 
         $dupeCheck = ($bandId !== null && $modeId !== null)
-            ? $this->dupeChecker->check($dto->callsign, $bandId, $modeId, $config->id)
+            ? $this->dupeChecker->check($dto->callsign, $bandId, $modeId, $config->id, (bool) $station->is_gota)
             : ['is_duplicate' => false, 'duplicate_of_contact_id' => null];
 
         $mode = $modeId !== null ? Mode::find($modeId) : null;
@@ -104,6 +104,7 @@ class ExternalContactHandler
             'points' => $points,
             'is_duplicate' => $dupeCheck['is_duplicate'],
             'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
+            'is_gota_contact' => (bool) $station->is_gota,
             'external_id' => $dto->externalId,
             'external_source' => $dto->source,
         ]);
@@ -220,7 +221,7 @@ class ExternalContactHandler
         ]);
 
         if ($bandId !== null && $modeId !== null) {
-            $dupeCheck = $this->dupeChecker->check($dto->callsign, $bandId, $modeId, $config->id, excludeContactId: $contact->id);
+            $dupeCheck = $this->dupeChecker->check($dto->callsign, $bandId, $modeId, $config->id, $contact->is_gota_contact, $contact->id);
             $contact->update([
                 'is_duplicate' => $dupeCheck['is_duplicate'],
                 'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],

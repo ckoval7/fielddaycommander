@@ -62,6 +62,17 @@ class StoreContactSyncRequest extends FormRequest
                 }
 
                 $session = OperatingSession::find($this->operating_session_id);
+
+                // GOTA contacts are credited to the GOTA operator, so one must be named.
+                if ($session?->station->is_gota && ! $this->hasGotaOperator()) {
+                    $validator->errors()->add(
+                        'gota_operator_first_name',
+                        'Enter the GOTA operator in the GOTA Operator panel before logging.',
+                    );
+
+                    return;
+                }
+
                 $eventTypeId = $session?->station->eventConfiguration?->event?->event_type_id;
 
                 if ($eventTypeId === null) {
@@ -84,6 +95,15 @@ class StoreContactSyncRequest extends FormRequest
                 }
             },
         ];
+    }
+
+    /**
+     * Whether the contact names a GOTA operator: a linked user, or a first and last name.
+     */
+    private function hasGotaOperator(): bool
+    {
+        return $this->filled('gota_operator_user_id')
+            || ($this->filled('gota_operator_first_name') && $this->filled('gota_operator_last_name'));
     }
 
     /**

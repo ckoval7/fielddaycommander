@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Logging\StationSelect;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
@@ -10,10 +11,12 @@ use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Database\Seeders\EventTypeSeeder;
 use Database\Seeders\OperatingClassSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -371,22 +374,85 @@ test('syncing a duplicate gota contact assigns 0 points', function () {
     expect($response->json('is_duplicate'))->toBeTrue();
 });
 
-test('cannot sync contacts to an ended session', function () {
-    $this->session->update(['end_time' => now()]);
+/**
+ * Sync payload for a contact on the shared session, made at the given time.
+ *
+ * @return array<string, mixed>
+ */
+function syncPayload(object $test, CarbonInterface $qsoTime): array
+{
+    return [
+        'uuid' => fake()->uuid(),
+        'operating_session_id' => $test->session->id,
+        'band_id' => $test->band->id,
+        'mode_id' => $test->mode->id,
+        'callsign' => 'W1AW',
+        'section_id' => $test->section->id,
+        'exchange_class' => '3A',
+        'power_watts' => 100,
+        'qso_time' => $qsoTime->toISOString(),
+    ];
+}
+
+test('cannot sync contacts timed after their session ended', function () {
+    $this->session->update(['start_time' => now()->subHours(2), 'end_time' => now()->subMinutes(10)]);
 
     $this->actingAs($this->user)
-        ->postJson('/logging/contacts', [
-            'uuid' => fake()->uuid(),
-            'operating_session_id' => $this->session->id,
-            'band_id' => $this->band->id,
-            'mode_id' => $this->mode->id,
-            'callsign' => 'W1AW',
-            'section_id' => $this->section->id,
-            'exchange_class' => '3A',
-            'power_watts' => 100,
-            'qso_time' => now()->toISOString(),
-        ])
-        ->assertUnprocessable();
+        ->postJson('/logging/contacts', syncPayload($this, now()->subMinutes(5)))
+        ->assertUnprocessable()
+        ->assertJson(['message' => 'This operating session has ended.']);
+
+    expect(Contact::count())->toBe(0);
+});
+
+test('cannot sync contacts timed before their ended session started', function () {
+    $this->session->update(['start_time' => now()->subHours(2), 'end_time' => now()->subMinutes(10)]);
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', syncPayload($this, now()->subHours(3)))
+        ->assertUnprocessable()
+        ->assertJson(['message' => 'This operating session has ended.']);
+});
+
+test('queued contacts made during a session sync after the station is taken over', function () {
+    $this->session->update(['start_time' => now()->subHours(2)]);
+
+    // A second operator takes over the station while the first laptop is offline.
+    $otherOperator = User::factory()->create();
+    $otherOperator->assignRole('Operator');
+    $this->actingAs($otherOperator);
+    Livewire::test(StationSelect::class)
+        ->set('takeoverStationId', $this->station->id)
+        ->call('confirmTakeover');
+
+    expect($this->session->fresh()->end_time)->not->toBeNull();
+
+    $payload = syncPayload($this, now()->subHour());
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', $payload)
+        ->assertCreated()
+        ->assertJson(['is_duplicate' => false]);
+
+    $contact = Contact::where('uuid', $payload['uuid'])->firstOrFail();
+    expect($contact->operating_session_id)->toBe($this->session->id)
+        ->and($contact->points)->toBeGreaterThan(0)
+        ->and($this->session->fresh()->qso_count)->toBe(1);
+
+    // A second queued contact with the same callsign still gets the dupe check.
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', syncPayload($this, now()->subMinutes(50)))
+        ->assertCreated()
+        ->assertJson(['is_duplicate' => true, 'points' => 0]);
+});
+
+test('contacts made before the event ended sync after it ends', function () {
+    $this->session->update(['start_time' => now()->subHours(2)]);
+    $this->event->update(['end_time' => now()->subMinutes(2)]);
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', syncPayload($this, now()->subMinutes(4)))
+        ->assertCreated();
 });
 
 test('syncing rejects a class the events rulebook does not define', function (string $exchangeClass) {
@@ -504,4 +570,72 @@ test('syncing a contact rejects an overlong submode', function () {
         ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('submode');
+});
+
+test('syncing a gota contact without a gota operator is rejected', function (array $operator) {
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'is_gota' => true,
+    ]);
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'power_watts' => 100,
+    ]);
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $gotaSession->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'exchange_class' => '3A',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+            ...$operator,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['gota_operator_first_name' => 'Enter the GOTA operator']);
+
+    expect(Contact::count())->toBe(0);
+})->with([
+    'no operator' => [[]],
+    'first name only' => [['gota_operator_first_name' => 'Jane']],
+    'callsign only' => [['gota_operator_callsign' => 'KD2ABC']],
+]);
+
+test('syncing a gota contact with a linked gota operator is accepted', function () {
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'is_gota' => true,
+    ]);
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'power_watts' => 100,
+    ]);
+    $gotaOperator = User::factory()->create();
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $gotaSession->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'exchange_class' => '3A',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+            'gota_operator_user_id' => $gotaOperator->id,
+        ])
+        ->assertCreated();
+
+    expect(Contact::firstOrFail()->gota_operator_user_id)->toBe($gotaOperator->id);
 });
