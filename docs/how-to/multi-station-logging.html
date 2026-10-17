@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Station Logging for Field Day - FD Commander Field Day Software</title>
+<meta name="description" content="Set up networked multi-station logging for Field Day or Winter Field Day. Every station logs to a shared FD Commander server on your LAN, with dupe checks across stations and a live score.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/multi-station-logging.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Multi-Station Logging for Field Day - FD Commander Field Day Software">
+<meta property="og:description" content="Multi-station logging for Field Day: every station logs to a shared server on your LAN, with dupe checking across stations, band and mode conflict warnings, and a live score.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/multi-station-logging.html">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Multi-Station Logging for Field Day - FD Commander Field Day Software">
+<meta name="twitter:description" content="Multi-station logging for Field Day: every station logs to a shared server on your LAN, with dupe checks across stations and a live score.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Set Up <span class="gradient">Multi-Station Logging</span></h1>
+    <p>Log every Field Day station into a shared FD Commander server on your LAN, with dupe checking and scoring across the whole club.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; Multi-Station Logging
+      </div>
+
+      <p>With multi-station logging, every station at your site logs to the same FD Commander server over your local network. Stations can log from club computers, members' own laptops, or a mix. Dupe checking, the score, and the section map cover every station's contacts. This guide covers adding stations, setting up the computers, logging, and testing before the weekend. It works the same way for Winter Field Day.</p>
+
+      <p>There's nothing to install on the station computers. FD Commander runs in the browser.</p>
+
+      <h2>What You Need</h2>
+
+      <ul>
+        <li><strong>An FD Commander server on your field network</strong> that every station can reach. <a href="lan-setup.html">Set Up a LAN for Field Operations</a> covers the network.</li>
+        <li><strong>A computer or tablet at each station, club-owned or an operator's own,</strong> with a current web browser.</li>
+        <li><strong>An event</strong> with your callsign, class, and section filled in. If you haven't made one yet, start with <a href="first-event.html">First Event Setup</a>.</li>
+        <li><strong>Someone with the Manage Stations permission</strong> to set up shared station computers. Operators only need their callsign.</li>
+      </ul>
+
+      <p>Logging opens when the event starts. Operators can set up a session up to 15 minutes early, but the server won't accept contacts until the start time.</p>
+
+      <h2>Step 1: Set Up the Stations</h2>
+
+      <p>Each operating position is a station in FD Commander: the CW position, the phone position, the VHF/UHF table, and the GOTA station. Add them under <strong>Event Management &gt; Stations</strong> with <strong>Add Station</strong>. <a href="first-event.html">First Event Setup</a> explains every field. These are the ones that matter here:</p>
+
+      <ul>
+        <li><strong>Station Name</strong>: operators will see this at the top of the logging screen, so pick names like "HF CW 1" or "VHF/UHF". Each name has to be unique within the event.</li>
+        <li><strong>GOTA Station (Get On The Air)</strong>: check this on the GOTA station only. GOTA contacts get their own dupe checking, and the GOTA station skips the band and mode conflict check.</li>
+        <li><strong>Primary Radio</strong> and antennas on the <strong>Equipment</strong> tab: with both set, the session setup dialog will show which bands the station supports and warn about a band it can't cover.</li>
+        <li><strong>Hostname (NetBIOS Name)</strong>: only needed for a station that runs N1MM Logger+ or another external logger. See <a href="external-loggers.html">Connect External Loggers</a>.</li>
+      </ul>
+
+      <h2>Step 2: Put Shared Computers in Station Mode</h2>
+
+      <p>If a computer stays at a station and operators take turns on it, bind it to that station with station mode. Do this at each shared computer on event day:</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Sign in with your own account and open <strong>Event Management &gt; Stations</strong>.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> On the card for this laptop's station, click <strong>Use This Browser for Station Mode</strong>, then <strong>OK</strong>.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> You'll be signed out, and the computer will show the station's name and a <strong>Your callsign</strong> box. That means it worked.</p>
+      </div>
+
+      <p>Use a normal browser window, not a private one, or the binding will be lost when the window closes. <a href="station-mode.html">Set Up Station Mode</a> covers the details, including how to take a laptop out of station mode.</p>
+
+      <h2>Step 3: Start a Logging Session</h2>
+
+      <p>A session is one operator on one station, on one band and mode. Here's what each operator does at a shared station computer:</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Type your callsign in <strong>Your callsign</strong> and click <strong>Start Logging</strong>. The first time FD Commander sees a callsign, it will ask for a <strong>First name</strong> and <strong>Last name</strong>. Fill them in and click <strong>Start Logging</strong> again.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> In the <strong>Start Logging Session</strong> dialog, choose the <strong>Band</strong> and <strong>Mode</strong> (CW, Phone, or Digital). Set <strong>Power (watts)</strong> to what you're actually running, since it's saved with every contact.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> Click <strong>Start Session</strong>. The logging screen will open with the station name, band, mode, and power across the top.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">4</span> When your turn is over, click the red <strong>End Session</strong> button in the top-right corner. The callsign screen comes back up for the next operator.</p>
+      </div>
+
+      <p>The band and mode stay fixed for the session. To QSY, end the session, type your callsign again, and pick the new band or mode.</p>
+
+      <p>If an operator walks away without ending their session, the idle timeout will end it for them. <a href="station-mode.html">Set Up Station Mode</a> explains how it works.</p>
+
+      <h3>Logging from your own device</h3>
+
+      <p>Members with an account can also log from their own laptop. Sign in and open <strong>Logging &gt; Log Contact</strong>. Each station has a card with a badge: <strong>Available</strong>, <strong>Occupied</strong>, or <strong>Idle</strong>. Click <strong>Select Station</strong> on an available station to open the same <strong>Start Logging Session</strong> dialog. When you're done, click <strong>End Session</strong> on the logging screen.</p>
+
+      <p>A station someone is using shows <strong>In Use</strong> and can't be selected. After 30 minutes with no new contact, a station turns <strong>Idle</strong> and shows a <strong>Take Over</strong> button. Taking over ends the previous operator's session and opens the setup dialog for you. You can only have one session open at a time, so if you still have one on another station, <strong>Log Contact</strong> will take you back to it. End it before you move.</p>
+
+      <h2>Step 4: Log Contacts</h2>
+
+      <p>Type the whole exchange into the entry field, separated by spaces, like <code>W1AW 3A CT</code>, and press Enter or click <strong>Log</strong>. The exchange is checked before it's logged, so a bad section or a class from the wrong event will show an error instead of going into the log.</p>
+
+      <figure class="screenshot">
+        <a href="../screenshots/log-contact-dark.png"><img src="../screenshots/log-contact-dark.png" alt="The FD Commander logging screen for the VHF/UHF station on 2m Phone at 100 W, showing 20 QSOs, the club's exchange W1FDC 4A CT with phonetics, a numbered Recent QSOs list of contacts 13 through 20, the exchange entry field with Log and Clear buttons, and keyboard hints for Enter, Esc, the arrow keys, Del, and Tab" loading="lazy" width="1920" height="1080"></a>
+        <figcaption>A session on the VHF/UHF station. The entry field takes the whole exchange at once, and the hints underneath list the keyboard shortcuts.</figcaption>
+      </figure>
+
+      <p>A few things on this screen make a long run easier:</p>
+
+      <ul>
+        <li><strong>Your Exchange</strong> at the top shows what to send, spelled out phonetically for phone.</li>
+        <li><strong>Sub-mode</strong>, next to the power, is optional. Type what you're running, such as USB, FM, or FT8, and it stays set between contacts.</li>
+        <li><strong>Suggestions</strong> appear after two characters, listing callsigns your club has already worked on other bands or modes, with their exchange. Arrow down to one and press Tab to fill it in.</li>
+        <li><strong>Recent QSOs</strong>, on a wider screen, lists this session's contacts. To fix one, press the up arrow in an empty entry field (or click the row), then save, delete, or cancel.</li>
+      </ul>
+
+      <h2>How Dupe Checking Works Across Stations</h2>
+
+      <p>Dupe checking covers the whole event log, not only your station. A contact is a dupe when any station has already worked that callsign on the same band and mode. If the phone station worked K5XSR on 20m, an operator at another station who types K5XSR on 20m phone will see "Duplicate: K5XSR already worked on 20m Phone." K5XSR on 40m, or on 20m CW, is a new contact.</p>
+
+      <p>The warning doesn't block the contact. If you log it anyway, it's marked as a dupe and scores zero points. That costs nothing, and it's often quicker than explaining on the air.</p>
+
+      <p>GOTA contacts are only checked against other GOTA contacts. You'll also get a warning if the callsign belongs to one of your own participants, such as the event callsign or an operator signed up for a shift, since those contacts don't count.</p>
+
+      <h2>Two Stations on the Same Band and Mode</h2>
+
+      <p>Field Day and Winter Field Day both allow only one transmitter per band and mode at a time. If another station is already on the band and mode an operator picks, the setup dialog will name that station, and <strong>Start Session</strong> will refuse with "This band/mode combination is already in use at" followed by the station name. Pick a different band or mode, or sort it out with the other station.</p>
+
+      <p>During a session, the logging screen checks again every 30 seconds and shows a warning bar if another station turns up on your band and mode. That can happen when a station running an external logger changes bands. The bar won't stop you from logging, but somebody should move.</p>
+
+      <p>The GOTA station is exempt from this check.</p>
+
+      <h2>A Live Score and Section Map for Everyone</h2>
+
+      <p>Each contact shows up in every signed-in browser as soon as it's logged. The <a href="../fd-commander-docs.html#scoring">Scoring</a> page, the <a href="../fd-commander-docs.html#section-map">Section Map</a>, and the dashboard widgets update without a reload. A dashboard shown without signing in, like one on a TV, refreshes on a timer instead.</p>
+
+      <h2>Networked Logging with N1MM Logger+, WSJT-X, and fldigi</h2>
+
+      <p>Stations don't all have to log in the browser. N1MM Logger+, WSJT-X, JTDX, and fldigi can send each contact to FD Commander over UDP, and those contacts get the same log, dupe check, and score. FD Commander opens a session for that station automatically, so it shows as <strong>Occupied</strong> while contacts are coming in.</p>
+
+      <p>You can mix the two: the CW station on N1MM Logger+, the digital station on WSJT-X, and everyone else in the browser. <a href="external-loggers.html">Connect External Loggers</a> walks through the setup.</p>
+
+      <h2>The GOTA Station</h2>
+
+      <p>On a shared GOTA station computer, the screen asks for a <strong>Control operator callsign</strong>. The control operator (usually your GOTA coach) starts the session, and each GOTA operator gets entered in the <strong>GOTA Operator</strong> section of the logging screen. Turn on <strong>Supervised Session (GOTA Coach present)</strong> when the coach is supervising. <a href="station-mode.html">Set Up Station Mode</a> covers the rest.</p>
+
+      <h2>When a Station Loses Wi-Fi</h2>
+
+      <p>Every contact is saved in the browser first, so operators can keep logging through a Wi-Fi dropout. While the laptop is offline, the dot next to the QSO count turns red and the header reads "Offline" with the number of contacts waiting. Waiting contacts show a <strong>SYNC</strong> tag in Recent QSOs. When the connection comes back, they'll be sent on their own and the dot will turn green. Each contact keeps the time it was logged.</p>
+
+      <p>Waiting contacts will survive a page reload or a restart. Don't clear the browser's data until they've synced, or they'll be lost.</p>
+
+      <p>The dupe warning can't appear while the laptop is offline, but each contact is still checked when it reaches the server.</p>
+
+      <p>If the server turns a contact down, it moves to a red failed list in the header. Click it to see the reason, then retry or discard each contact. Two reasons come up most:</p>
+
+      <ul>
+        <li><strong>Session expired.</strong> Refresh the page, then retry. The contacts are still stored in the browser.</li>
+        <li><strong>"This operating session has ended."</strong> An offline laptop sends no contacts, so after 30 minutes its station shows as <strong>Idle</strong> to everyone else. If someone takes it over, the old session ends and its waiting contacts can't be saved. Write them down before you discard them, and enter them later with <strong>Logging &gt; Transcribe Paper Log</strong>.</li>
+      </ul>
+
+      <h2>Marking a Station Unavailable</h2>
+
+      <p>When a station goes down, mark it unavailable so nobody starts a session on it. On <strong>Event Management &gt; Stations</strong>, click <strong>Mark Unavailable</strong> on the station's card, pick a <strong>Reason</strong>, and add a <strong>Note (optional)</strong> if you like. Any session on that station ends, and its <strong>Select Station</strong> button on the Log Contact page is disabled and shows "Down" with the reason. Click <strong>Mark Ready</strong> when it's fixed.</p>
+
+      <h2>Test Your Multi-Station Setup Before Field Day</h2>
+
+      <p>Logging only works while an event is running, so create a short practice event that covers your test time and add two or three stations. Then, with the real laptops on the real network:</p>
+
+      <ol>
+        <li>Put each shared computer in station mode for its station in the practice event.</li>
+        <li>Start sessions on two stations on different bands and log a contact on each. Both should show up on the Scoring page on a third device.</li>
+        <li>Try to start a third station on a band and mode that's already in use. You should see the warning, and <strong>Start Session</strong> should refuse.</li>
+        <li>End both sessions. On the second station, start a session on the first station's band and mode and type the callsign it logged. You should see the <strong>Duplicate</strong> warning.</li>
+        <li>Have a few people take turns at one laptop: type a callsign, log a contact, and click <strong>End Session</strong>.</li>
+        <li>Turn off Wi-Fi on one laptop, log two contacts, and turn it back on. The header should show "Offline" with two waiting, then the dot should go green.</li>
+        <li>If a station uses N1MM Logger+, WSJT-X, JTDX, or fldigi, send a test contact from it (see <a href="external-loggers.html">Connect External Loggers</a>).</li>
+        <li>On Field Day, bind the shared computers again to the real event's stations. They're still bound to the practice stations.</li>
+      </ol>
+
+      <div class="callout tip">
+        <div class="callout-title">Brief your operators</div>
+        <p>Most mix-ups at a shared laptop come from operators who walk away without clicking <strong>End Session</strong>. The next person then logs under the wrong callsign. Mention it at the operator briefing.</p>
+      </div>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="station-mode.html">Station Mode &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+<script src="../toc.js"></script>
+
+</body>
+</html>
