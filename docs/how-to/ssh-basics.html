@@ -10,11 +10,16 @@
 <meta property="og:title" content="SSH &amp; Command Line Basics - FD Commander">
 <meta property="og:description" content="Connect to your Pi over SSH, learn essential Linux commands, check FD Commander status, and copy files with scp.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/ssh-basics.html">
-<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="SSH &amp; Command Line Basics - FD Commander">
 <meta name="twitter:description" content="Connect to your Pi over SSH, learn essential commands, and check on FD Commander.">
-<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -336,6 +341,16 @@ drwxr-xr-x 15 pi pi 4096 Jun 25 09:02 fielddaycommander</span></div>
 
       <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo systemctl restart fdcommander</span></div>
 
+      <p>The web server is one of four services the deploy script sets up. The other three are <code>fdcommander-queue</code> (background jobs like notifications), <code>fdcommander-scheduler</code> (timed tasks, including keeping external logger listeners running), and <code>fdcommander-reverb</code> (live updates in the browser). To check all four at once:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">systemctl is-active fdcommander fdcommander-queue fdcommander-scheduler fdcommander-reverb</span>
+<span class="output">active
+active
+active
+active</span></div>
+
+      <p>Each line should say <code>active</code>. If dashboards stop updating on their own, look at <code>fdcommander-reverb</code> first. Any of them can be restarted with <code>sudo systemctl restart</code> and the service name.</p>
+
       <h3>Check disk space</h3>
 
       <div class="code-block"><span class="prompt">$</span> <span class="cmd">df -h /</span>
@@ -353,9 +368,11 @@ Swap:           99Mi         0B        99Mi</span></div>
 
       <h3>View recent logs</h3>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo journalctl -u fd-commander --since "1 hour ago" --no-pager</span></div>
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo journalctl -u fdcommander --since "1 hour ago" --no-pager</span></div>
 
-      <p>This shows the last hour of FD Commander logs. Useful if something isn't working and you want to see error messages.</p>
+      <p>This shows the last hour of web server logs. Swap in another service name, like <code>fdcommander-queue</code>, to see that one instead. Application errors go to FD Commander's own log file:</p>
+
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo tail -50 /var/www/fd-commander/storage/logs/laravel.log</span></div>
 
       <h2>Copying Files To and From the Pi</h2>
 
@@ -367,6 +384,8 @@ Swap:           99Mi         0B        99Mi</span></div>
 <span class="prompt">$</span> <span class="cmd">scp your-username@fd-commander.local:/path/to/file.log .</span></div>
 
       <p>The <code>.</code> at the end means "put it in my current directory."</p>
+
+      <p>This only works for files your user can read. FD Commander's backups in <code>/var/backups/fd-commander</code> are readable by root only, so a plain <code>scp</code> of them will fail with "permission denied." The <a href="backup-restore.html">Back Up and Restore</a> guide shows how to copy them off.</p>
 
       <h3>Upload a file to the Pi</h3>
 
@@ -418,6 +437,7 @@ Swap:           99Mi         0B        99Mi</span></div>
 
 <footer></footer>
 <script src="../footer.js"></script>
+<script src="../toc.js"></script>
 
 </body>
 </html>

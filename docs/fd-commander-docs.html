@@ -4,17 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Documentation - FD Commander Field Day Logger</title>
-<meta name="description" content="Full documentation for FD Commander, an open-source Field Day logger. Installation, deploy script flags, station setup, contact logging, scoring, NTS messages, Cabrillo export, and Docker deployment.">
+<meta name="description" content="Full documentation for FD Commander, an open-source Field Day logger. Installation, deploy script flags, station setup, station mode, contact logging, Field Day and Winter Field Day scoring, NTS messages, Cabrillo and ADIF export, and Docker deployment.">
 <link rel="canonical" href="https://fielddaycommander.org/fd-commander-docs.html">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Documentation - FD Commander Field Day Logger">
-<meta property="og:description" content="Full documentation for FD Commander. Installation, station setup, logging, scoring, NTS messages, W1AW bulletins, and Cabrillo export.">
+<meta property="og:description" content="Full documentation for FD Commander. Installation, station setup, logging, Field Day and Winter Field Day scoring, NTS messages, bulletins, and Cabrillo and ADIF export.">
 <meta property="og:url" content="https://fielddaycommander.org/fd-commander-docs.html">
-<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Documentation - FD Commander Field Day Logger">
-<meta name="twitter:description" content="Full documentation for FD Commander. Installation, station setup, logging, scoring, and Cabrillo export.">
-<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:description" content="Full documentation for FD Commander. Installation, station setup, logging, scoring, and Cabrillo and ADIF export.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fd-commander.css">
 <style>
@@ -353,11 +358,13 @@
       <a class="sidebar-link" href="#installation">Installation</a>
       <a class="sidebar-link" href="#deploy-flags">Deploy Script Flags</a>
       <a class="sidebar-link" href="#first-event">First Event Setup</a>
+      <a class="sidebar-link" href="#dashboard">Dashboard</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Configuration</div>
       <a class="sidebar-link" href="#user-roles">User Roles</a>
       <a class="sidebar-link" href="#stations">Stations</a>
+      <a class="sidebar-link" href="#station-mode">Station Mode</a>
       <a class="sidebar-link" href="#scheduling">Volunteer Scheduling</a>
       <a class="sidebar-link" href="#equipment">Equipment Tracking</a>
       <a class="sidebar-link" href="#safety">Safety Checklists</a>
@@ -367,11 +374,12 @@
       <a class="sidebar-link" href="#logging">Contact Logging</a>
       <a class="sidebar-link" href="#external-loggers">External Logger Integration</a>
       <a class="sidebar-link" href="#scoring">Scoring</a>
+      <a class="sidebar-link" href="#winter-field-day">Winter Field Day</a>
       <a class="sidebar-link" href="#section-map">Section Map</a>
       <a class="sidebar-link" href="#guestbook">Visitor Guestbook</a>
       <a class="sidebar-link" href="#weather">Weather</a>
       <a class="sidebar-link" href="#messages">NTS Messages</a>
-      <a class="sidebar-link" href="#w1aw">W1AW Bulletin</a>
+      <a class="sidebar-link" href="#w1aw">W1AW / WFD Bulletin</a>
       <a class="sidebar-link" href="#photos">Photos</a>
       <a class="sidebar-link" href="#reports">Reports</a>
       <a class="sidebar-link" href="#audit-logs">Audit Logs</a>
@@ -383,6 +391,7 @@
       <a class="sidebar-link" href="#network">Network Setup</a>
       <a class="sidebar-link" href="#email">Email</a>
       <a class="sidebar-link" href="#docker">Docker</a>
+      <a class="sidebar-link" href="#backups">Backups</a>
       <a class="sidebar-link" href="#updating">Updating</a>
     </div>
   </aside>
@@ -406,7 +415,7 @@
       <table class="req-table">
         <thead><tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr></thead>
         <tbody>
-          <tr><td>Operating System</td><td>Ubuntu 22.04 / Debian 12</td><td>Ubuntu 24.04 LTS or Raspberry Pi OS</td></tr>
+          <tr><td>Operating System</td><td>Ubuntu 22.04 / Debian 12 (64-bit)</td><td>Ubuntu 24.04 LTS or Raspberry Pi OS (64-bit)</td></tr>
           <tr><td>RAM</td><td>2 GB</td><td>4 GB+</td></tr>
           <tr><td>Storage</td><td>16 GB</td><td>32 GB+</td></tr>
           <tr><td>Network</td><td>LAN access</td><td>Gigabit Ethernet</td></tr>
@@ -414,7 +423,7 @@
       </table>
     </div>
 
-    <p>You do not need to install PHP, MariaDB, Node.js, or any other dependencies yourself. The deploy script handles all of it. It installs PHP 8.4, MariaDB, Node.js 20, Composer, and FrankenPHP automatically.</p>
+    <p>You do not need to install PHP, MariaDB, Node.js, or any other dependencies yourself. The deploy script handles all of it. It installs PHP 8.4, MariaDB, Redis, Node.js 22, Composer, and FrankenPHP automatically. It supports Ubuntu, Debian, and Raspberry Pi OS, plus RHEL, AlmaLinux, and Rocky Linux. The OS has to be 64-bit (x86_64 or ARM64), so on a Pi use the 64-bit Raspberry Pi OS image.</p>
 
     <div class="callout info">
       <div class="callout-title">No Internet Required at Runtime</div>
@@ -435,14 +444,14 @@
         <div class="step-num">2</div>
         <div>
           <h4>Run the Deploy Script</h4>
-          <p>One command. The script installs PHP 8.4, MariaDB, Node.js, Composer, and FrankenPHP. It compiles front-end assets, runs database migrations, seeds reference data (bands, modes, ARRL sections, bonus types), and creates systemd services for the web server, queue worker, scheduler, and WebSocket server.</p>
+          <p>One command. The script installs PHP 8.4, MariaDB, Redis, Node.js, Composer, and FrankenPHP. It compiles front-end assets, runs database migrations, seeds reference data (bands, modes, ARRL sections, bonus types), and creates systemd services for the web server, queue worker, scheduler, and WebSocket server.</p>
         </div>
       </div>
       <div class="step-item">
         <div class="step-num">3</div>
         <div>
           <h4>Open It in a Browser</h4>
-          <p>Navigate to your server's address from any device on the network. Register the first account (it becomes the System Administrator), create your event, and start configuring.</p>
+          <p>Navigate to your server's address from any device on the network. The setup wizard has you set a password for the built-in <code>SYSTEM</code> admin account. Then create your event and start configuring.</p>
         </div>
       </div>
     </div>
@@ -473,15 +482,15 @@
     </ul>
     <p>You can change this later by re-running the deploy script with a different <code>--domain</code> value.</p>
 
-    <p>The script runs through 9 phases: detecting your OS, installing system packages, cloning and building the application, creating the database, configuring FrankenPHP, setting up SSL (if requested), creating systemd services, opening firewall ports, and caching the configuration. It logs everything to <code>/var/log/fd-commander-deploy.log</code>.</p>
+    <p>The script runs through its phases in order: detecting your OS, installing system packages, copying and building the application, creating the database, installing Redis, configuring FrankenPHP, setting up SSL (if requested), creating systemd services, opening firewall ports, and caching the configuration. It logs everything to <code>/var/log/fd-commander-deploy.log</code>. The summary at the end suggests scheduling backups with <code>backup.sh --install-schedule</code>. See <a href="#backups">Backups</a>.</p>
 
     <div class="callout warning">
       <div class="callout-title">Raspberry Pi Users</div>
-      On a Raspberry Pi 4, the install may take longer due to Composer dependency resolution and npm asset compilation. This is normal. Make sure you have at least a 16 GB SD card, though a USB SSD is recommended for better database performance.
+      On a Raspberry Pi 4, the Composer install and npm asset build take longer. This is normal. Make sure you have at least a 16 GB SD card, though a USB SSD is recommended for better database performance.
     </div>
 
     <h3>3. Open It Up</h3>
-    <p>Once the script finishes, open a browser on any device connected to your LAN and navigate to the domain or IP you specified. By default the server runs on port 80 (HTTP). The first account you register automatically gets the System Administrator role.</p>
+    <p>Once the script finishes, open a browser on any device connected to your LAN and navigate to the domain or IP you specified. By default the server runs on port 80 (HTTP). The setup wizard appears on your first visit and has you set the password for the pre-created <code>SYSTEM</code> account, as described in <a href="#first-event">First Event Setup</a>.</p>
 
     <div class="callout success">
       <div class="callout-title">You're Live</div>
@@ -509,9 +518,9 @@
           <tr><td>--db-user</td><td>fd_commander</td><td>MariaDB username</td></tr>
           <tr><td>--db-password</td><td>(generated)</td><td>MariaDB password. Auto-generated if omitted</td></tr>
           <tr><td>--app-path</td><td>/var/www/fd-commander</td><td>Installation directory on the server</td></tr>
-          <tr><td>--reverb-port</td><td>8080</td><td>Port for the WebSocket server (Laravel Reverb)</td></tr>
+          <tr><td>--reverb-port</td><td>8080</td><td>Local port for the WebSocket server (Laravel Reverb). It listens on 127.0.0.1 and browsers reach it through the web port, so you don't need to open it in the firewall</td></tr>
           <tr><td>--branch</td><td>main</td><td>Git branch to deploy</td></tr>
-          <tr><td>--repo-url</td><td>(GitHub)</td><td>Custom Git repository URL</td></tr>
+          <tr><td>--repo-url</td><td>(copy current directory)</td><td>Clone from this Git URL instead of copying the directory you ran the script from. The install will then be a Git checkout</td></tr>
           <tr><td>--no-seeders</td><td>off</td><td>Skip database seeders (bands, modes, sections, etc.)</td></tr>
           <tr><td>--dry-run</td><td>off</td><td>Print what would be done without making changes</td></tr>
         </tbody>
@@ -546,7 +555,13 @@
     <p>Sign in with <code>admin@localhost</code> and the password you set. The app will display a prominent warning that the SYSTEM account is for initial configuration only. Your first action should be to create a personal account tied to your own callsign. Go to <strong>Administration &gt; Users</strong>, click <strong>Add User</strong>, fill in your callsign, email, name, and password, and set the role to <strong>System Administrator</strong>. Then log out via the account menu in the top-right corner and sign back in with your personal account. From that point on the SYSTEM account can be left alone. See the <a href="how-to/first-event.html">First Event Setup how-to</a> for a detailed walkthrough.</p>
 
     <h3>Create an Event</h3>
-    <p>Click <strong>+ Create Event</strong> on the dashboard. The form has four sections. Under <strong>Event Information</strong>, give the event a name and pick the event type. When you select Field Day or Winter Field Day, the start and end times auto-populate from the official ARRL schedule in UTC, and the scoring rules default to the correct year. You can adjust these manually if needed. Under <strong>Event Location</strong>, the fields are technically optional, but latitude and longitude are required for the weather widget and NWS severe weather alerts to function. Fill them in if your site has internet access and you want weather data. City and state appear in auto-filled Section Manager messages, grid square is shown as reference for operators, and talk-in frequency lets visitors know what frequency to tune to for directions to your site. Under <strong>Station Configuration</strong>, fill in your station callsign, club name, ARRL/RAC section, operating class, and number of transmitters. Under <strong>Power Configuration</strong>, enter your maximum wattage and select your power sources (Commercial Power, Generator, Battery, or Alternate Power). The form shows the applicable power multiplier as you go. You can also enable a GOTA (Get On The Air) station, which lets novice operators make contacts under supervision, and a visitor guestbook for public sign-ins at your site.</p>
+    <p>Click <strong>Create Event</strong> on the dashboard. The form is split into cards. Under <strong>Event Information</strong>, give the event a name and pick the event type. For Field Day, the start and end times fill in from the ARRL schedule (fourth full weekend of June, 1800 UTC Saturday to 2059 UTC Sunday). For Winter Field Day, they come from the WFDA schedule (fourth full weekend of January, 1600 UTC Saturday to 2159 UTC Sunday). The form also shows when the setup window opens. For Winter Field Day that's 24 hours before the start, Friday at 1600 UTC. The <strong>Scoring Rules</strong> dropdown lets you pick which rule year to score by. It defaults to the event's year and locks once the event starts.</p>
+
+    <p>Under <strong>Event Location</strong>, the fields are technically optional, but latitude and longitude are required for the weather widget and NWS severe weather alerts to function. Fill them in if your site has internet access and you want weather data. City and state appear in auto-filled Section Manager messages, grid square is shown as a reference for operators, and talk-in frequency lets visitors know what frequency to tune to for directions to your site.</p>
+
+    <p>Under <strong>Station Configuration</strong>, fill in your station callsign, club name, section, operating class, and number of transmitters. Field Day uses classes A through F. Winter Field Day uses H (Home), I (Indoor), O (Outdoor), and M (Mobile), and a collapsible <strong>WFD rules: class, category and location</strong> panel explains how to pick one. Under <strong>Power Configuration</strong>, enter your maximum wattage and select your power sources (Commercial Power, Generator, Battery, or Alternate Power). On Field Day events the form shows the applicable power multiplier as you go. Winter Field Day has no power multiplier, so that part is hidden.</p>
+
+    <p>The <strong>GOTA Station (Get On The Air)</strong> card lets novice operators make contacts under supervision. It only appears for classes that allow a GOTA station, so you won't see it on a Winter Field Day event. Turn on <strong>Open to the public</strong> under <strong>Public Visitors</strong> if you want people to come see the operation. The directions, visiting times, contact details, website, and "What visitors will see" text you enter there show up in a <strong>Visit Us</strong> section on the public page. Last, <strong>Guestbook Settings</strong> turns on the visitor guestbook (see <a href="#guestbook">Visitor Guestbook</a>).</p>
 
     <h3>Setup Checklist</h3>
     <p>The dashboard tracks five setup milestones:</p>
@@ -582,14 +597,38 @@
       <div class="step-item">
         <div class="step-num">5</div>
         <div>
-          <h4>W1AW bulletin schedule set up</h4>
-          <p>The W1AW bulletin reception schedule has been configured for the event.</p>
+          <h4>W1AW Bulletin schedule set up</h4>
+          <p>The bulletin transmission schedule has been entered for the event. On Winter Field Day events this item reads <strong>WFD Bulletin schedule set up</strong>.</p>
         </div>
       </div>
     </div>
 
     <h3>Invite Operators</h3>
-    <p>The dashboard shows a registration link that you can share with your club. By default this is a local network address (e.g., <code>http://fd.local/register</code>) — operators need to be on the same LAN or Wi-Fi network as the server to reach it. If you've set up DNS and TLS, operators can register remotely using your public hostname. Operators visit the link, register with their callsign, and they're in the system. By default, new registrations get the Operator role. You can change registration mode and default roles in Settings.</p>
+    <p>The dashboard shows a registration link that you can share with your club. By default this is a local network address (e.g., <code>http://fd.local/register</code>), so operators need to be on the same LAN or Wi-Fi network as the server to reach it. If you've set up DNS and TLS, operators can register remotely using your public hostname. Operators visit the link, register with their callsign, and they're in the system. By default, new registrations get the Operator role. To change how registration works (open, approval required, email verification required, or disabled), set <code>REGISTRATION_MODE</code> in the server's <code>.env</code> file.</p>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  DASHBOARD                                 -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="dashboard">Dashboard</h2>
+    <p>The dashboard is the first thing operators see after signing in. It's a grid of widgets showing the score, QSO rate, recent contacts, a countdown to the start or end of the event, and whatever else you put there. Each user has their own layouts, so the operator watching the rate chart and the event manager watching equipment status don't have to share one screen. If you have more than one dashboard, a <strong>Switch Dashboard</strong> dropdown lets you pick between them. <strong>Manage</strong> opens a dialog where you can create a new dashboard (blank or copied from an existing one), duplicate or delete one, and <strong>Set as Default</strong>.</p>
+
+    <h3>Editing the Layout</h3>
+    <p>Click <strong>Edit Layout</strong> to rearrange things. The toolbar has <strong>Add Widget</strong>, <strong>Undo</strong>, <strong>Save</strong>, and <strong>Cancel</strong>. Drag a widget to move it, with a mouse or a finger. The other widgets slide out of the way as you drag, so you can see where everything will land before you let go. To move one from the keyboard, focus the widget, press Enter or Space to pick it up, use the arrow keys to move it, and press Enter to drop it or Escape to cancel. Each widget also has buttons to resize, configure, and remove it.</p>
+
+    <p><strong>Undo</strong> (or Ctrl+Z, Cmd+Z on a Mac) steps back through up to 30 changes made since you entered edit mode. Nothing is saved until you click <strong>Save</strong>, and the browser warns you if you try to leave with unsaved changes. Edit Layout and Manage are hidden on station-mode browsers (see <a href="#station-mode">Station Mode</a>).</p>
+
+    <h3>Widget Options</h3>
+    <p>Click the configure button on a widget, or pick one from <strong>Add Widget</strong>, to set its options:</p>
+    <ul>
+      <li><strong>Stat Card.</strong> A single number. <strong>Metric</strong> chooses which one it shows (Total Score, QSO Count, Sections Worked, Points Per Hour, Hours Remaining, Guestbook Entries, and more), with optional trend and comparison indicators.</li>
+      <li><strong>Chart.</strong> <strong>Chart Type</strong> (bar, line, pie, or doughnut), <strong>Data Source</strong> (QSOs per hour, band, or mode), and <strong>Time Range</strong> (last hour up to the entire event).</li>
+      <li><strong>Progress Bar.</strong> <strong>Progress Metric</strong> tracks the next 50-QSO milestone, a score goal, the operating class QSO target, or bonus point progress.</li>
+      <li><strong>List.</strong> <strong>List Type</strong> (Recent Contacts, Active Stations, or Equipment Status) and <strong>Number of Items</strong>.</li>
+      <li><strong>Info Card.</strong> <strong>Information Type</strong> can show event details, location and grid square, or operating class and power.</li>
+      <li><strong>Activity Feed.</strong> <strong>Show</strong> can filter the feed to all activity, contact milestones and new sections, QSO milestones only, or equipment events.</li>
+      <li><strong>Timer</strong> and <strong>Sections Worked.</strong> No options. The timer counts down to the start or end of the event.</li>
+    </ul>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  USER ROLES                                -->
@@ -604,7 +643,7 @@
         <tbody>
           <tr><td>System Administrator</td><td>26 permissions. Full access to everything: contact logging, all event management, all station and equipment functions, user administration, scheduling, content management, reporting, security logs, contact import, and weather management. Marked as <em>System Protected</em>, so this role always exists and can't be deleted.</td></tr>
           <tr><td>Event Manager</td><td>23 permissions. Manages the full operational side of Field Day: logging and importing contacts, managing events, stations, equipment, schedules, bonuses, guestbook, photos, security logs, and weather. Cannot administer users, roles, or system settings.</td></tr>
-          <tr><td>Station Captain</td><td>10 permissions. Logs and edits contacts, manages stations and equipment inventory, handles equipment assignments, manages the W1AW bulletin schedule, views all equipment, and signs up for shifts. Runs an operating position and keeps operators on task.</td></tr>
+          <tr><td>Station Captain</td><td>10 permissions. Logs and edits contacts, manages stations and equipment inventory, marks stations unavailable or ready, sets up station-mode browsers, handles equipment assignments, manages the W1AW bulletin schedule, views all equipment, and signs up for shifts. Runs an operating position and keeps operators on task.</td></tr>
           <tr><td>Operator</td><td>4 permissions. Logs contacts, views stations, manages personal equipment, and signs up for shifts. The default role for new registrations. Intentionally minimal so new hams can get on the air without seeing admin clutter.</td></tr>
           <tr><td>Config Only</td><td>8 permissions. A restricted bootstrap role: can manage users, roles, and settings, and has read-only access to events, stations, equipment, reports, and security logs. Cannot log contacts, manage events operationally, or participate in operations. Assigned exclusively to the built-in SYSTEM account. Marked as <em>System Protected</em>.</td></tr>
         </tbody>
@@ -859,51 +898,89 @@
     <h3>Creating Custom Roles</h3>
     <p>The five default roles cover most clubs, but you can create your own. Go to <strong>Settings &gt; Role Management</strong> and click <strong>+ Create New Role</strong>. Give the role a name, then check the permissions you want it to have. Permissions are grouped by category with a <em>Select All</em> toggle at the top of each group, so you can quickly grant an entire category at once or pick individual permissions one by one. Click <strong>Save Permissions</strong> when you're done.</p>
 
-    <p>A few ideas for custom roles: a <em>Logger</em> role with log-contacts and edit-contacts for experienced operators who need to fix mistakes, a <em>Safety Officer</em> with just manage-guestbook and view-reports for the person running the public information table, or a <em>Tech Lead</em> with manage-stations and manage-equipment but no event management access.</p>
+    <p>A few ideas for custom roles: a <em>Logger</em> role with log-contacts and edit-contacts for experienced operators who need to fix mistakes, a <em>Public Info</em> role with just manage-guestbook and view-reports for the person running the public information table, or a <em>Tech Lead</em> with manage-stations and manage-equipment but no event management access.</p>
 
     <h3>Assigning Roles to Users</h3>
-    <p>Go to <strong>Administration &gt; Users</strong> to see everyone registered in the system. The table shows each user's callsign, name, email, current role (shown as a colored badge), license class, and account status. Click <strong>Edit</strong> on any user to open their profile, where you can change their role from the <em>Role</em> dropdown. You can also update their callsign, email, name, and license class from this same form.</p>
+    <p>Go to <strong>Administration &gt; Users</strong> to see everyone registered in the system. The table shows each user's callsign, name, email, current role (shown as a colored badge), license class, and account status. Open the actions menu on any user row and choose <strong>Edit</strong> to open their profile, where you can change their role from the <em>Role</em> dropdown. You can also update their callsign, email, name, and license class from this same form.</p>
 
-    <p>New registrations default to the Operator role. You can change the default registration role in <strong>Settings &gt; System Preferences</strong>.</p>
+    <p>New registrations default to the Operator role.</p>
 
     <h3>User Management Actions</h3>
-    <p>The Users page also gives administrators a few account management tools. From the Actions column on any user row, you can <strong>Lock Account</strong> to temporarily disable a user's access, <strong>Force Password Reset</strong> to require them to change their password on next login, <strong>Reset Password</strong> to generate a new one, or <strong>Delete</strong> to remove the account entirely. These actions are only available to users with the manage-users permission.</p>
+    <p>The Users page also gives administrators a few account management tools. From the actions menu on any user row, you can <strong>Lock Account</strong> to temporarily disable a user's access (and <strong>Unlock Account</strong> to restore it), <strong>Force Password Change</strong> to require them to change their password on next login, <strong>Reset Password</strong> to generate a new one, or <strong>Delete</strong> to remove the account entirely. These actions are only available to users with the manage-users permission.</p>
+
+    <h3>Ghost Accounts</h3>
+    <p>A ghost account is a callsign with no login. FD Commander creates one when it sees a new callsign at a <a href="#station-mode">station-mode</a> browser, from an external logger, or in an ADIF import. The account lets contacts be credited to that callsign. Nobody can sign in with it.</p>
+
+    <p>Ghost accounts show a <strong>Ghost</strong> badge on the Users page. To list them, set the <strong>Status</strong> filter to <strong>Ghost (No Login)</strong>.</p>
+
+    <p>To turn a ghost into a real login, choose <strong>Activate Account</strong> from its actions menu. Enter an email, confirm the name, and copy the <strong>Temporary Password</strong> to give the operator. Click <strong>Activate</strong>. The account gets the Operator role if it has none, and they'll have to change the password the first time they sign in.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  STATIONS                                  -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="stations">Stations</h2>
-    <p>Stations represent individual operating positions. Each one is a radio, an antenna, and someone in a chair. Go to <strong>Event Management &gt; Stations</strong> to see your station list for the current event. The page shows a summary bar with total stations, how many are active right now, and total equipment items assigned.</p>
+    <p>Stations represent individual operating positions. Each one is a radio, an antenna, and someone in a chair. Go to <strong>Event Management &gt; Stations</strong> to see your station list for the current event. The page shows a summary bar with total stations, how many are active right now, and total equipment items assigned. <strong>Idle</strong> and <strong>Unavailable</strong> counts appear there too when any station is in those states. A station is idle when it has an open session but no contact in the last 30 minutes.</p>
 
     <h3>Creating a Station</h3>
-    <p>Click <strong>+ Add Station</strong> to open the station form. The Configuration tab has four sections:</p>
+    <p>Click <strong>Add Station</strong> to open the station form. It has three tabs: <strong>Configuration</strong>, <strong>Equipment</strong>, and <strong>Activity</strong>. The Configuration tab has four sections:</p>
 
-    <p><strong>Basic Information:</strong> Give the station a name (must be unique within the event), an optional hostname, and confirm which event it belongs to. The hostname matches contacts from external software to this station. N1MM Logger+ matches on the computer (NetBIOS) name of the PC running it, while WSJT-X, JTDX, and other ADIF senders match on the station callsign.</p>
+    <p><strong>Basic Information:</strong> Give the station a name (must be unique within the event), an optional hostname, and confirm which event it belongs to. The hostname lets FD Commander match contacts from external software to this station. N1MM Logger+ matches on the computer (NetBIOS) name of the PC running it, while WSJT-X, JTDX, and other ADIF senders match on the station callsign.</p>
 
-    <p><strong>Station Type:</strong> Check any special designations that apply. GOTA (Get On The Air) marks it as the special station for new operators; only one GOTA station is allowed per event. VHF/UHF Only restricts the station to those bands. Satellite marks it for satellite communications.</p>
+    <p><strong>Station Type:</strong> Check any special designations that apply. GOTA (Get On The Air) marks it as the special station for new operators; only one GOTA station is allowed per event. VHF/UHF Only marks it as a station that operates only on VHF/UHF bands. Satellite marks it for satellite communications.</p>
 
-    <p><strong>Primary Radio:</strong> Select the main transceiver from equipment that's been committed to the event. The dropdown pulls from all user equipment catalogs, showing the radio name, wattage, and owner. Once selected, FD Commander displays the radio's power capability so you can verify it fits your power class.</p>
+    <p><strong>Primary Radio:</strong> Select the main transceiver. The dropdown pulls from all user equipment catalogs, showing the radio name, wattage, and owner. Once selected, FD Commander displays the radio's power capability so you can verify it fits your power class.</p>
 
-    <p><strong>Power Configuration:</strong> Set the max power output in watts. FD Commander validates this against the event's power limit and shows a confirmation when it's within range. Describe the power source below (e.g., "Solar + Battery" for the 5x QRP multiplier, "Generator" for backup power, or "Commercial" if you're on grid power). This feeds directly into the scoring engine's power multiplier calculation.</p>
+    <p><strong>Power Configuration:</strong> Set the max power output in watts. FD Commander validates this against the event's power limit and shows a confirmation when it's within range. Pick a <strong>Power Source</strong> (Generator, Commercial Mains, Battery, Solar, or Other) and add optional <strong>Power Source Notes</strong>. Both the power and the power source feed the power multiplier: the highest station power sets it for the whole entry, and a station on generator or commercial power rules out the 5x QRP multiplier.</p>
 
     <h3>Assigning Equipment</h3>
     <p>Switch to the <strong>Equipment</strong> tab to assign additional gear beyond the primary radio. The left panel shows what's already assigned to the station. The right panel lists available equipment, filterable by type, owner, and whether it's committed to this event or from the general catalog. Drag items from right to left to assign them, or use keyboard navigation with Space/Arrows/Escape.</p>
 
+    <h3>Station Activity</h3>
+    <p>The <strong>Activity</strong> tab on a station's edit page shows what the station has done so far: <strong>Total QSOs</strong>, <strong>Total Sessions</strong>, and an <strong>Operating Sessions</strong> table listing each operator's band, mode, start and end times, duration, and QSO count.</p>
+
+    <h3>Marking a Station Unavailable</h3>
+    <p>To keep operators off a station that's broken or being worked on, mark it unavailable. Station captains, event managers, and admins (anyone with manage-stations) see a <strong>Mark Unavailable</strong> button on each station card. Pick a <strong>Reason</strong> (Equipment Failure, Antenna Problem, Maintenance / Setup, or Other) and add an optional <strong>Note</strong>. Any session running on the station is ended.</p>
+
+    <p>The card then shows the reason, note, and who marked it down and when. On the Log Contact station list, the station shows "Down" with the reason, and nobody can start a session on it or take it over. When it's fixed, click <strong>Mark Ready</strong> to put it back in service.</p>
+
     <h3>Cloning from a Previous Event</h3>
     <p>If you're running the same station setup as last time, click <strong>Clone from Event</strong> on the main Stations page. This copies all station definitions (names, types, power configurations) from a previous event into the current one, so you don't have to rebuild everything from scratch.</p>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  STATION MODE                              -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="station-mode">Station Mode</h2>
+    <p>Station mode is for a computer that stays at a station while operators take turns on it, whether it's club equipment or a member's laptop. Once a laptop is bound to its station, anyone can sit down, type their callsign, and log on that station without a password, including the GOTA station, visitors who want to make a contact, and members who never got around to registering. In exchange for skipping the password, the session is locked down to logging and read-only pages.</p>
+
+    <h3>Setting Up a Browser</h3>
+    <p>Station captains, event managers, and admins can enroll a browser. On the laptop that will stay at the station, sign in and go to <strong>Event Management &gt; Stations</strong>. Each station card has a <strong>Station-Mode Browsers</strong> block. Click <strong>Use This Browser for Station Mode</strong> and confirm. You're signed out right away, and the browser now shows the station-mode screen for that station. The enrollment lasts a year, and a station can have more than one enrolled browser.</p>
+
+    <h3>What Operators See</h3>
+    <p>The station-mode screen shows the station name, a <strong>Your callsign</strong> field, and a <strong>Start Logging</strong> button. If FD Commander doesn't know the callsign yet, it asks for a first and last name and creates a <a href="#user-roles">ghost account</a> for it. An existing member's callsign works too, without their password, but they only get station-mode powers. On a GOTA station the field is labeled <strong>Control operator callsign</strong>. The GOTA coach signs in and stays put, and each GOTA operator is entered on the logging screen as usual.</p>
+
+    <p>After signing in, the operator goes straight to Log Contact with the station already chosen. They pick band, mode, and power and start logging. The session can only log for that station. Admin pages, Transcribe Paper Log, Message Traffic, the bulletin page, photo uploads, and dashboard editing are all off limits, and the safety checklist is read-only. An admin who types their own callsign at the terminal still gets only logging powers. Operators can view the dashboard, the log, the section map, scoring, the shift schedule, and similar read-only pages.</p>
+
+    <h3>Ending a Session</h3>
+    <p>The header has a red <strong>End Session</strong> button in place of the user menu. Clicking it (or <strong>End Session</strong> on the logging screen) ends the operating session, signs the operator out, and returns the browser to the callsign screen for the next person. If nobody touches the keyboard, mouse, or screen for 15 minutes, an <strong>Are you still operating?</strong> dialog counts down 60 seconds. Click <strong>I'm Still Here</strong> to keep going. Otherwise the session ends on its own, so a forgotten session doesn't stay open for the next person who walks up.</p>
+
+    <h3>Revoking and Exiting</h3>
+    <p>To take a browser out of station mode from anywhere, click <strong>Revoke</strong> next to it on the Stations page. Any operator session on it ends at the next click, and the browser can't start new sessions. At the laptop itself, click <strong>Station captain: exit station mode</strong> at the bottom of the callsign screen and enter the email and password of a captain or admin. A captain who signs in normally on an enrolled browser also gets a <strong>Station Mode Browser</strong> link in the user menu, with <strong>Sign Out</strong> and <strong>Exit Station Mode</strong> buttons.</p>
+
+    <p>If a station is <a href="#stations">marked unavailable</a>, the station-mode screen shows a warning. Operators can still sign in to view the log, but they can't start a session until the station is marked ready.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  SCHEDULING                                -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="scheduling">Volunteer Scheduling</h2>
-    <p>The scheduling system lets you define shift blocks and roles, then lets volunteers self-sign-up for open slots. There are two views: <strong>Event Management &gt; Shift Schedule</strong> is the operator-facing board where people browse and claim shifts, and <strong>Administration &gt; Manage Schedule</strong> is where the event manager builds the schedule.</p>
+    <p>The scheduling system lets you define shift blocks and roles, then lets volunteers self-sign-up for open slots. <strong>Event Management &gt; Shift Schedule</strong> is the operator-facing board where people browse and claim shifts. Its <strong>Dashboard</strong> button opens the Shift Dashboard, which shows coverage at a glance. <strong>Administration &gt; Manage Schedule</strong> is where the event manager builds the schedule.</p>
 
     <h3>Setting Up Roles</h3>
-    <p>Before creating shifts, define the roles you need. Go to <strong>Administration &gt; Manage Schedule</strong> and click the <strong>Roles</strong> tab. FD Commander ships with sample roles that cover common Field Day positions: Safety Officer, Public Information Table, Public Greeter, GOTA Coach, Message Handler, Event Manager, Station Captain, and Operator. Each role has a description, an optional bonus point value, and two key settings:</p>
+    <p>Before creating shifts, define the roles you need. Go to <strong>Administration &gt; Manage Schedule</strong> and click the <strong>Roles</strong> tab. FD Commander ships with sample roles that cover common Field Day positions: Safety Officer, Site Responsibilities, Public Information Table, Public Greeter, GOTA Coach, Message Handler, Event Manager, Station Captain, and Operator. Each role has a description, an optional bonus point value, and two key settings:</p>
 
-    <p><strong>Eligibility only</strong> vs. <strong>Auto-awarded on confirmation</strong> controls whether the associated bonus points are granted automatically when the shift is confirmed, or just tracked for eligibility. <strong>Requires Confirmation</strong> means the event manager must approve the sign-up before it counts.</p>
+    <p><strong>Eligibility only</strong> vs. <strong>Auto-awarded on confirmation</strong> controls whether the associated bonus points are granted automatically when the shift is confirmed, or just tracked for eligibility. <strong>Requires Confirmation</strong> means a manager must confirm a volunteer's check-in before it counts. Giving a role bonus points turns this on automatically, and confirming the check-in awards the points.</p>
 
     <p>Click <strong>Add Custom Role</strong> to create roles specific to your club, like "Antenna Setup Crew" or "Food Coordinator." You can delete or edit the sample roles if they don't fit.</p>
 
@@ -913,10 +990,18 @@
     <p>For events with lots of shifts, use the <strong>Bulk Create</strong> button to generate multiple shift blocks at once instead of creating them one at a time.</p>
 
     <h3>Managing Shifts</h3>
-    <p>Each shift card on the admin Shifts tab has an edit button to modify the shift details and a delete button to remove it. Unfilled slots have an <strong>Assign</strong> button so the event manager can manually place someone without waiting for self-sign-up. For each person already assigned to a shift, the manager can <strong>Check In</strong>, <strong>Check Out</strong>, <strong>Mark No-Show</strong>, or <strong>Remove</strong> the assignment directly from the card.</p>
+    <p>Each shift card on the admin Shifts tab has buttons to edit or delete the shift. Unfilled slots have an <strong>Assign</strong> button so the event manager can manually place someone without waiting for self-sign-up. For each person already assigned to a shift, the manager can <strong>Check In</strong>, <strong>Check Out</strong>, <strong>Mark No-Show</strong>, or <strong>Remove Assignment</strong> directly from the card. A no-show frees the slot, so you can assign someone else to it.</p>
+
+    <p>To credit volunteers who forgot to check out at the end of a shift, mark them worked. Once a shift has ended, each assignment gets a <strong>Mark Worked</strong> button that credits the person for the full shift, and a shift with several loose ends gets a <strong>Mark N worked</strong> button for all of them. If any ended shifts still have unresolved assignments, a banner at the top of the Shifts tab says how many, with <strong>Show past shifts</strong> to review them and <strong>Mark all worked</strong> to clear them in one go. No-shows and existing check-outs aren't changed. <strong>Undo Mark Worked</strong> reverses a single one.</p>
+
+    <h3>Confirmations</h3>
+    <p>The <strong>Confirmations</strong> tab on Manage Schedule lists check-ins to roles that require confirmation, with <strong>Confirm</strong> and <strong>Reject</strong> buttons on each entry. Everyone who can manage shifts gets an in-app notification when one comes in. If you'd rather not, turn off <strong>Shift Confirmations</strong> under <strong>In-App Notification Categories</strong> on your profile.</p>
+
+    <h3>Shift Dashboard</h3>
+    <p>To see who's covering the overnight hours, open <strong>Event Management &gt; Shift Schedule</strong> and click <strong>Dashboard</strong>. Any signed-in user can view it, and it refreshes itself every minute. The <strong>Timeline</strong> card draws each role's shifts across the event, shaded full, partial, or empty, with a marker for the current time. The <strong>Coverage</strong> card gives an overall percentage plus filled slots, open slots, fully staffed shifts, and who's on duty now. <strong>Coverage Gaps</strong> lists upcoming shifts that are unstaffed or under half staffed. Managers can click an open shift on the timeline, or a gap in the list, to assign someone on the spot.</p>
 
     <h3>The Operator View</h3>
-    <p>Operators go to <strong>Event Management &gt; Shift Schedule</strong> to see available shifts filtered by role. They can sign up for open slots and click <strong>My Shifts</strong> to see only their own assignments. The <strong>Confirmations</strong> tab on the admin side shows all sign-ups awaiting approval, with <strong>Confirm</strong> and <strong>Reject</strong> buttons on each entry.</p>
+    <p>Operators go to <strong>Event Management &gt; Shift Schedule</strong> to see available shifts filtered by role. They can sign up for open slots and click <strong>My Shifts</strong> to see only their own assignments. <strong>My Shifts</strong> is also in the user menu in the top-right corner.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  EQUIPMENT                                 -->
@@ -928,24 +1013,24 @@
     <h3>My Catalog</h3>
     <p>Go to <strong>Equipment &gt; My Catalog</strong> and click <strong>Add Equipment</strong>. The form captures everything you'd want to know about a piece of gear:</p>
 
-    <p><strong>Equipment Details:</strong> Make and model (required), type (Radio, Antenna, Amplifier, Computer, Power Supply, Accessory, Tool, Furniture, or Other), serial number, and a free-text description. Admins also see an <strong>Owner</strong> dropdown to assign equipment to any registered user; operators creating their own gear won't see this field — their equipment is automatically assigned to them.</p>
+    <p><strong>Equipment Details:</strong> Make and model (required), type (Radio, Antenna, Amplifier, Computer, Power Supply, Accessory, Tool, Furniture, or Other), serial number, and a free-text description. Admins also see an <strong>Owner</strong> dropdown to assign equipment to any registered user. Operators creating their own gear won't see this field. Their equipment is assigned to them automatically.</p>
 
     <p><strong>Technical Specifications:</strong> Power output in watts (used when the radio is selected as a station's primary transceiver) and estimated value in USD.</p>
 
-    <p><strong>Operational Information:</strong> Emergency contact phone, comma-separated tags for easy filtering (e.g., "HF, Portable, Contest"), and notes.</p>
+    <p><strong>Operational Information:</strong> Emergency contact phone, comma-separated tags (e.g., "HF, Portable, Contest"), and notes.</p>
 
-    <p><strong>Supported Bands:</strong> Check every band the equipment can operate on: 160m through 23cm, plus Satellite. This is used when assigning radios to stations.</p>
+    <p><strong>Supported Bands:</strong> Check every band the equipment can operate on, from 2200m through 1mm, plus Satellite. This is used when assigning radios to stations.</p>
 
     <p><strong>Equipment Photo:</strong> Upload a PNG or JPEG (up to 5 MB) so people can visually identify the gear on-site.</p>
 
     <h3>Club Equipment</h3>
-    <p>Admins and event managers can click <strong>Add Club Equipment</strong> (visible on both the My Catalog page and under <strong>Equipment &gt; Club Equipment</strong>) for gear that belongs to the club rather than any individual member. Operators won't see this button. The form is the same as personal equipment except there's no owner field — instead there's an optional <strong>Managed By</strong> field to assign a specific person to be responsible for it. Club equipment has its own dedicated listing page where you can filter by type and status.</p>
+    <p>Admins and event managers can click <strong>Add Club Equipment</strong> (visible on both the My Catalog page and under <strong>Equipment &gt; Club Equipment</strong>) for gear that belongs to the club rather than any individual member. Operators won't see this button. The form is the same as personal equipment except there's no owner field. Instead there's an optional <strong>Managed By</strong> field to assign a specific person to be responsible for it. Club equipment has its own dedicated listing page where you can filter by type and status.</p>
 
     <h3>All User Catalogs</h3>
-    <p>Admins and event managers can go to <strong>Equipment &gt; All User Catalogs</strong> to see every piece of equipment in the system across all members, filterable by owner, type, and status. This page also has an <strong>Add Equipment for User</strong> button so an admin can add gear directly to any member's catalog without logging in as that user.</p>
+    <p>Station captains, event managers, and admins can go to <strong>Equipment &gt; All User Catalogs</strong> to see every piece of equipment in the system across all members, filterable by owner, type, and status. Event managers and admins (anyone with edit-any-equipment) also get an <strong>Add Equipment for User</strong> button, so they can add gear directly to a member's catalog without logging in as that user, and a menu on each item to <strong>Edit</strong> it, <strong>Commit to Event</strong>, update a commitment's status or notes, or <strong>Delete</strong> it.</p>
 
     <h3>Committing to an Event</h3>
-    <p>Equipment needs to be committed to an event before it can be assigned to stations. There are two commitment paths:</p>
+    <p>Committing equipment pledges it for an event. Gear you assign from the general catalog on a station's Equipment tab is committed for you. There are two commitment paths:</p>
     <p><strong>Operators commit their own gear</strong> directly from <strong>Equipment &gt; My Catalog</strong>. Click the actions menu on any item and choose <strong>Commit to Event</strong>. A dialog asks which event to commit to, an expected delivery date, and optional delivery notes.</p>
     <p><strong>Admins commit club equipment</strong> from the Equipment Dashboard at <strong>Administration &gt; Event Equipment</strong>. Click <strong>Commit Club Equipment</strong> to assign club gear to the event. Committed gear can then be assigned to specific stations on the station's Equipment tab.</p>
 
@@ -959,37 +1044,41 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="safety">Safety Checklists</h2>
-    <p>Completing the safety checklist earns the Safety Officer bonus (100 points). Go to <strong>Event Management &gt; Site Safety</strong> to work through it. The page shows a progress counter ("0 of 15 complete") and lists every item with a checkbox.</p>
+    <p>Field Day awards a bonus for documenting site safety, and which one depends on your class. Class A gets the Safety Officer checklist and its 100-point bonus. Classes B through E get the Site Responsibilities checklist and its 50-point bonus. Class F gets both. Winter Field Day has no safety bonus, so its classes don't get a checklist. Go to <strong>Event Management &gt; Site Safety</strong> to work through it. The page shows a progress counter and lists every item with a checkbox.</p>
 
-    <h3>The Default Checklist</h3>
-    <p>FD Commander ships with the 15-item ARRL Field Day safety checklist. Items cover the essentials you'd expect at a field site: safety officer on-site for the duration, fuel properly stored, fire extinguisher located, first aid kit on hand, CPR/AED-trained person present, NWS weather monitoring, tent stakes marked, antenna structures secured, tripping hazards cleared, site arranged to reduce hazards, stations and equipment grounded, access to police/fire/rescue, designated safety point of contact, and minimizing risk to the public. Each item is marked Required.</p>
+    <h3>The Default Checklists</h3>
+    <p>The Safety Officer checklist has the 15 items from the ARRL rules, all required. Items cover the essentials you'd expect at a field site: safety officer on-site for the duration, fuel properly stored, fire extinguisher located, first aid kit on hand, CPR/AED-trained person present, NWS weather monitoring, tent stakes marked, antenna structures secured, tripping hazards cleared, site arranged to reduce hazards, stations and equipment grounded, access to police/fire/rescue, designated safety point of contact, minimizing risk to the public, and keeping everyone hydrated. The Site Responsibilities checklist has 13 similar items, 8 of them required, written for smaller setups where some items (a generator, a tent) may not apply.</p>
 
     <h3>Working Through the Checklist</h3>
-    <p>You must be signed on to an active Safety Officer shift before you can check off items. Once you are, walk the site during setup and check off each item as you verify it. FD Commander records who completed each item and when. The progress counter updates in real time, and once all required items are checked, the scoring page automatically awards the 100-point Safety Officer bonus.</p>
+    <p>To check off items, you must be assigned to a Safety Officer or Site Responsibilities shift for the event (scheduled, checked in, or checked out, but not marked as a no-show). The shift doesn't have to be running right now, so the safety officer can walk the site during setup. FD Commander records who completed each item and when, and the progress counter updates in real time. The bonus is awarded automatically: Safety Officer when every item is checked, Site Responsibilities when every required item is checked and more than half the list is done. Unchecking an item takes the bonus back. On a station-mode browser the checklist is read-only.</p>
 
     <h3>Customizing the Checklist</h3>
-    <p>Go to <strong>Administration &gt; Manage Safety Checklist</strong> to add, edit, or remove items. Click <strong>Add Item</strong> to create new entries. Each item has a role assignment that controls who can check it off, so you can gate specific items to specific shift roles. If your club has additional safety requirements beyond the ARRL defaults (like generator exhaust ventilation or lightning grounding), add them here.</p>
+    <p>Go to <strong>Administration &gt; Manage Safety Checklist</strong> to add, edit, or remove items. Click <strong>Add Item</strong> to create new entries. Each item has a <strong>Checklist Type</strong> (Safety Officer or Site Responsibilities) that sets which checklist it belongs to. If your club has additional safety requirements beyond the ARRL defaults (like generator exhaust ventilation or lightning grounding), add them here.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  CONTACT LOGGING                           -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="logging">Contact Logging</h2>
-    <p>Operators log contacts under <strong>Logging &gt; Log Contact</strong>. The station selection screen shows every station with its current status (Available, Occupied, or In Use), the current operator's callsign, active band and mode, and running QSO count. Click a station to claim it.</p>
+    <p>Operators log contacts under <strong>Logging &gt; Log Contact</strong>. The station selection screen shows every station with its current status, the current operator's callsign, active band and mode, and running QSO count. An available station has a <strong>Select Station</strong> button. A station with an open session but no recent contacts shows as idle with a <strong>Take Over</strong> button, and a busy one shows <strong>In Use</strong>. A station that's been <a href="#stations">marked unavailable</a> shows "Down" with the reason, and its button is disabled. To set up several stations logging into the shared log over your LAN, see the <a href="how-to/multi-station-logging.html">Multi-Station Logging how-to</a>.</p>
 
     <h3>Starting a Session</h3>
-    <p>After selecting a station, you choose the band, mode, and power in watts before the logging interface opens. Band and mode are locked for the duration of the session. To change them you must end the session and start a new one. For GOTA stations, there's an additional option to mark the session as supervised (GOTA Coach present), which enables the 100-point coach bonus if 10 or more contacts are supervised.</p>
+    <p>After selecting a station, you choose the band, mode, and power in watts before the logging interface opens. Band and mode are locked for the duration of the session. To change them you must end the session and start a new one. The rules allow only one transmitter per band and mode at a time, so if another station already has an active session on the same band and mode, <strong>Start Session</strong> won't start a new one and names the station that's using it. GOTA stations are the exception. Once a session is running, the logging header rechecks every 30 seconds and shows a warning if another station has since landed on the same band and mode. For GOTA stations, there's an additional option to mark the session as supervised (GOTA Coach present), which enables the 100-point coach bonus if 10 or more contacts are supervised. On a <a href="#station-mode">station-mode</a> browser, the list is skipped and setup opens for that browser's station.</p>
 
     <h3>Making Contacts</h3>
-    <p>The logging interface shows a sticky bar at the top with the station name, band, mode, power, and a live QSO counter. The entry field accepts the full exchange in one shot (callsign, class, section) with autocomplete suggestions as you type. Hit Enter to log. Dupe checks run in real time against every contact logged by every station on every band, so you'll see an immediate warning if the callsign has already been worked on that band. If a contact fails to sync, it appears in a failed contacts dropdown in the header with a retry button.</p>
+    <p>The logging interface shows a sticky bar at the top with the station name, band, mode, power, and a live QSO counter. Next to the mode is an optional <strong>Sub-mode</strong> field for the specific flavor you're running (USB, FT8, RTTY, SSTV, and so on). It stays set between contacts. The entry field accepts the full exchange in one shot (callsign, class, section) with autocomplete suggestions as you type. Hit Enter to log.</p>
 
-    <p>All contacts go into a shared database via WebSocket (Laravel Reverb), so every connected browser sees updates as they happen. The scoring dashboard, logbook, and band activity all reflect new contacts instantly.</p>
+    <p>Dupe checks run in real time against every contact logged by every station, so you'll see an immediate warning if the callsign has already been worked on the same band and mode. You'll also get a warning if the callsign belongs to one of your own participants (the event callsign, the GOTA callsign, or anyone operating or signed up for a shift), since contacts with your own people don't count. Neither warning blocks the contact. A class from the wrong rulebook does: Field Day events accept classes A through F and Winter Field Day events accept H, I, O, and M, and anything else is rejected with "Class X is not valid for this event." If a contact fails to sync, it appears in a failed contacts dropdown in the header with a retry button.</p>
+
+    <p>On a desktop screen, a <strong>Recent QSOs</strong> list appears above the entry field. It shows this session's contacts, oldest at the top, numbered from 1, and scrolls to the newest as you log. Click a row (or arrow to it) to pull that contact back up for editing.</p>
+
+    <p>All contacts go into a shared database, and Laravel Reverb pushes each new one over WebSocket to every connected browser. The scoring page, section map, and dashboard widgets all reflect new contacts instantly.</p>
 
     <h3>GOTA Operator Tracking</h3>
-    <p>On a GOTA station, the logging interface shows additional fields to identify the operator making the contact: search for a registered user by name or callsign, or manually enter a first name, last name, and callsign for unregistered visitors. This attaches the GOTA operator to each contact for reporting purposes.</p>
+    <p>On a GOTA station, the logging interface shows additional fields to identify the operator making the contact: search for a registered user by name or callsign, or manually enter a first name, last name, and callsign for unregistered visitors. This attaches the GOTA operator to each contact for reporting purposes. For setting up and scoring the GOTA station, see the <a href="how-to/gota-station.html">GOTA Station how-to</a>.</p>
 
     <h3>Browsing the Logbook</h3>
-    <p>Go to <strong>Logging &gt; View Log</strong> to open the Logbook Browser. Stats at the top show running totals: total QSOs, total points, unique sections worked, QSOs by mode, and QSOs by band. Below that, a full set of filters lets you slice the log by band, mode, station, operator, ARRL section, callsign, time range, duplicate status (all, exclude dupes, dupes only), and whether the contact was transcribed from paper. The contact table shows QSO time (UTC), callsign, band, mode, class, section, points, station, and the logger who entered it. Use the <strong>Export CSV</strong> button to download the filtered log.</p>
+    <p>Go to <strong>Logging &gt; View Log</strong> to open the Logbook Browser. Stats at the top show running totals: total QSOs, total points, unique sections worked, QSOs by mode, and QSOs by band. Below that, a full set of filters lets you slice the log by band, mode, station, operator, ARRL section, callsign, time range, duplicate status (all, exclude dupes, dupes only), and whether the contact was transcribed from paper. The contact table shows QSO time (UTC), callsign, band, mode (with the sub-mode, like "Digital · FT8"), class, section, points, station, and the logger who entered it. On Winter Field Day 2027 events, contacts that earn nothing get a red <strong>no credit</strong> badge, and hovering it says why (see <a href="#winter-field-day">Winter Field Day</a>). Users who can edit contacts can select rows and use <strong>Change Logger</strong> or <strong>Delete</strong> on all of them at once. Use the <strong>Export CSV</strong> button to download the filtered log.</p>
 
     <h3>Post-Event Editing</h3>
     <p>After the event, operators with the right permissions can edit contacts to fix exchange errors or delete accidental entries. There's a configurable grace period (default: 30 days) during which late contacts can still be added. This is useful for transcribing paper logs (see <a href="#paper-transcription">Paper Log Transcription</a>).</p>
@@ -1026,10 +1115,15 @@
       <li>Set the UDP server address to the FD Commander server's IP and port (default: 2237).</li>
       <li>Use the server's regular IP address, not a multicast address.</li>
       <li>Set <strong>Settings &gt; Reporting &gt; Op Call</strong> to the operator's callsign so contacts are credited to them.</li>
-      <li>Turn on <strong>Settings &gt; Advanced &gt; Special operating activity &gt; ARRL Field Day</strong> so the class and section are logged.</li>
+      <li>For Field Day events, turn on <strong>Settings &gt; Advanced &gt; Special operating activity &gt; ARRL Field Day</strong> so the class and section are logged.</li>
       <li>Contacts are matched to a station by the station callsign (<strong>My Call</strong>), so give the receiving station's name or hostname that callsign on the Stations page.</li>
       <li>Ensure the server's firewall allows inbound UDP on the configured port. For example: <code>sudo ufw allow 2237/udp</code></li>
     </ul>
+
+    <div class="callout warning">
+      <div class="callout-title">Winter Field Day 2027</div>
+      WFD 2027 doesn't allow WSJT modes. FT8, FT4, JT65, and the rest are still logged when they arrive from WSJT-X, but they earn no QSO points and count toward no objective. JTTY is the exception and scores as Digital. The WSJT-X card on the External Loggers page shows a "No credit" notice when the active event has this rule.
+    </div>
 
     <h3>Generic UDP ADIF (fldigi, etc.)</h3>
     <p>For any application that can send plain ADIF text over UDP, FD Commander provides a generic ADIF listener (default port: 2238). This works with fldigi and any other program that supports ADIF UDP output. To set it up:</p>
@@ -1052,22 +1146,24 @@
     </ul>
     <p>The import is non-destructive. You review everything before any contacts are written to the database, and invalid records must be resolved (skipped or fixed) before the import can proceed.</p>
 
+    <p>Every listener and the import record the ADIF sub-mode (FT8, USB, and so on) along with the mode, and they apply the event's rulebook the same way live logging does. On a Winter Field Day 2027 event that means WSJT-mode and satellite contacts come in with no credit.</p>
+
     <!-- ═══════════════════════════════════════════ -->
     <!--  SCORING                                   -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="scoring">Scoring</h2>
-    <p>The scoring page (<strong>Event Management &gt; Scoring</strong>) shows your live score using the ARRL Field Day formula:</p>
+    <p>The scoring page (<strong>Event Management &gt; Scoring</strong>) shows your live score using the formula for your event's rulebook. Field Day events use the ARRL Field Day formula below. Winter Field Day scores differently, with objectives instead of bonus points (see <a href="#winter-field-day">Winter Field Day</a>).</p>
 
     <div class="callout info">
       <div class="callout-title">Scoring Formula</div>
       (QSO Base Points x Power Multiplier) + Bonus Points + GOTA Bonus = Final Score
     </div>
 
-    <p><strong>QSO points</strong> are weighted by mode: CW and digital contacts are worth 2 points each, phone contacts are worth 1. <strong>Power multiplier</strong> is determined automatically from your configured power sources (5x for &le;5W natural power, 2x for &le;5W or 6-100W with commercial/generator, 1x for over 100W). <strong>Bonus points</strong> come from 17 ARRL categories defined in the official rules. <strong>GOTA bonus</strong> is calculated separately: 5 points per GOTA contact, plus a 100-point coach bonus if 10 or more contacts are supervised.</p>
+    <p><strong>QSO points</strong> are weighted by mode: CW and digital contacts are worth 2 points each, phone contacts are worth 1. <strong>Power multiplier</strong> is determined automatically from your configured power sources (5x for &le;5W natural power, 2x for &le;5W or 6-100W with commercial/generator, 1x for over 100W). <strong>Bonus points</strong> come from the 18 bonus categories in the ARRL rules (7.3.1 through 7.3.18). The <strong>GOTA bonus</strong> is one of them, but it's added after the power multiplier: 5 points per GOTA contact, plus a 100-point coach bonus if 10 or more contacts are supervised.</p>
 
     <h3>Bonus Categories</h3>
-    <p>The scoring page lists all 17 categories with their status: verified, claimed, or unclaimed. Some bonuses are tracked automatically (like the safety checklist completion or visitor guestbook count). Others are claimed manually by the event manager (like media publicity or satellite QSO). Availability depends on your entry class.</p>
+    <p>The scoring page lists all 18 categories with their status: verified, claimed, or unclaimed. Some bonuses are tracked automatically (like the safety checklist or the visitor guestbook). Others are claimed manually by the event manager (like media publicity or the educational activity). Availability depends on your entry class.</p>
 
     <div class="req-table-wrapper">
       <table class="req-table">
@@ -1079,27 +1175,81 @@
           <tr><td>Information Booth</td><td>100</td><td>Manual claim</td></tr>
           <tr><td>Section Manager Message</td><td>100</td><td>Automatic (NTS message tracking)</td></tr>
           <tr><td>NTS Messages Handled</td><td>10 each (max 100)</td><td>Automatic (per radiogram logged)</td></tr>
-          <tr><td>Satellite QSO</td><td>100</td><td>Manual claim</td></tr>
+          <tr><td>Satellite QSO</td><td>100</td><td>Automatic from a logged satellite contact (Classes A, B, F)</td></tr>
           <tr><td>Natural Power QSOs</td><td>100</td><td>Manual claim</td></tr>
           <tr><td>W1AW Field Day Bulletin</td><td>100</td><td>Automatic (W1AW Bulletin page)</td></tr>
           <tr><td>Educational Activity</td><td>100</td><td>Manual claim</td></tr>
           <tr><td>Elected Official Visit</td><td>100</td><td>Automatic (guestbook visitor category)</td></tr>
           <tr><td>Served Agency Visit</td><td>100</td><td>Automatic (guestbook visitor category)</td></tr>
+          <tr><td>GOTA Bonus</td><td>5 per GOTA QSO, plus 100 for a coach</td><td>Automatic (GOTA contacts and supervised sessions)</td></tr>
           <tr><td>Web Submission</td><td>50</td><td>Manual claim</td></tr>
           <tr><td>Youth Participation</td><td>20 each (max 100)</td><td>Automatic (youth accounts) + manual entry</td></tr>
           <tr><td>Social Media</td><td>100</td><td>Manual claim</td></tr>
-          <tr><td>Safety Officer</td><td>100</td><td>Automatic (safety checklist completion)</td></tr>
-          <tr><td>Site Responsibilities</td><td>50</td><td>Manual claim (Classes B, C, D, E, F only)</td></tr>
+          <tr><td>Safety Officer</td><td>100</td><td>Automatic from the Safety Officer checklist (Classes A, F)</td></tr>
+          <tr><td>Site Responsibilities</td><td>50</td><td>Automatic from the Site Responsibilities checklist (Classes B, C, D, E, F)</td></tr>
         </tbody>
       </table>
     </div>
+
+    <h3>Manual Claims</h3>
+    <p>Bonuses that FD Commander can't track automatically are claimed on the event's detail page (<strong>Administration &gt; Events</strong>, then open the event) in the <strong>Manual Bonus Claims</strong> card. Event managers and admins (anyone with verify-bonuses) can use it. Checking a box claims and verifies the bonus in one step, and bonuses that can be earned more than once have a <strong>Count</strong> field.</p>
+
+    <h3>Rules Versions</h3>
+    <p>Each event is scored by a specific rule year, set with <strong>Scoring Rules</strong> on the event form. FD Commander ships ARRL Field Day 2025 and 2026 (identical rules) and Winter Field Day 2026 and 2027. The footer of the scoring page says which version the event is using. A <strong>Corrections &amp; Notices</strong> box at the bottom flags things worth a look before you submit, like a high dupe rate or claims that haven't been verified.</p>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  WINTER FIELD DAY                          -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="winter-field-day">Winter Field Day</h2>
+    <p>Winter Field Day events get their own rulebook, picked automatically from the event type. The WFD 2026 rules follow the WFDA's 2026 SOP, and WFD 2027 follows the 2027 rules (Version 3). Most of the app works the same as for Field Day. The differences are in the exchange, the scoring, and what you submit.</p>
+
+    <div class="callout info">
+      <div class="callout-title">WFD Scoring Formula</div>
+      QSO Points x (OM + 1) = Final Score
+    </div>
+
+    <p>QSO points are the same as Field Day: 1 for phone, 2 for CW and digital. OM is the objective multiplier, the sum of the multipliers for every objective you've earned. The +1 means a station that earns no objectives still scores its QSO points. There's no power multiplier, no GOTA station, and no bonus points, and every station is capped at 100 W PEP. The scoring page shows two columns instead of three and an <strong>Objectives Completed</strong> progress bar, since the WFDA tracks completion from year to year.</p>
+
+    <h3>Classes and Exchange</h3>
+    <p>The class is the number of transmitters you can run at once (and have operators for) plus a category letter: <strong>H</strong> (Home), <strong>I</strong> (Indoor), <strong>O</strong> (Outdoor), or <strong>M</strong> (Mobile). The exchange looks like "2O EPA". US and Canadian stations send their ARRL/RAC section, stations in Mexico send <strong>MX</strong>, and everyone else sends DX. On WFD events, MX and YT (Yukon) count as sections of their own. The event form's <strong>WFD rules: class, category and location</strong> panel covers the rest: class, category, and location stay fixed for the whole event, everything has to fit in a 300 m circle, and remote operation isn't allowed. Setup opens 24 hours before the start.</p>
+
+    <h3>Objectives</h3>
+    <p>WFD 2027 has 13 objectives worth up to 34 in total. FD Commander earns five of them for you from the log and the bulletin page. The rest you claim on the event's detail page, in the <strong>Manual Objective Claims</strong> card.</p>
+    <div class="req-table-wrapper">
+      <table class="req-table">
+        <thead><tr><th>Objective</th><th>OM</th><th>Tracking</th></tr></thead>
+        <tbody>
+          <tr><td>Station Equipment on Alternative Power</td><td>x1</td><td>Manual claim (earned too when you claim 100% alternative power)</td></tr>
+          <tr><td>Operate 100% on Alternative Power</td><td>x2</td><td>Manual claim</td></tr>
+          <tr><td>Operate Away From Home</td><td>x3</td><td>Manual claim</td></tr>
+          <tr><td>Deploy Multiple Antennas</td><td>x1</td><td>Manual claim</td></tr>
+          <tr><td>Send and Receive the WFD SSTV Image</td><td>x2</td><td>Manual claim</td></tr>
+          <tr><td>Cross-Band Repeater Contacts</td><td>x3</td><td>Manual claim</td></tr>
+          <tr><td>Send and Receive a Winlink Email</td><td>x1</td><td>Manual claim</td></tr>
+          <tr><td>Copy the WFD Bulletin</td><td>x1</td><td>Automatic (saved on the WFD Bulletin page)</td></tr>
+          <tr><td>Three Contacts on Six Bands</td><td>x6</td><td>Automatic (satellite doesn't count)</td></tr>
+          <tr><td>Three Contacts on Twelve Bands</td><td>x6</td><td>Automatic</td></tr>
+          <tr><td>Use Multiple Modes</td><td>x2</td><td>Automatic (two of CW, Phone, Digital)</td></tr>
+          <tr><td>Operate the Event QRP</td><td>x4</td><td>Automatic (every contact at 10 W or less on phone, 5 W or less on CW and digital)</td></tr>
+          <tr><td>Operate Six Continuous Hours</td><td>x2</td><td>Manual claim</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>WFD 2026 events use the 2026 list instead: 12 objectives worth up to 32, including the two satellite objectives that were dropped for 2027. Each objective has a <strong>?</strong> icon on the scoring page that expands the WFDA rule text.</p>
+
+    <h3>No-Credit Contacts</h3>
+    <p>WFD 2027 doesn't allow WSJT modes (FT8, FT4, JT65, Q65, and the rest of the family), and satellite contacts earn nothing. FD Commander decides this from the contact's sub-mode, so log the sub-mode when you can. JTTY is allowed and counts as digital. These contacts are still accepted from every source and kept in the log, but they score 0 points, count toward no objective, and are left out of the Cabrillo and ADIF exports. The logbook marks them with a <strong>no credit</strong> badge, and the scoring page shows a <strong>No Credit</strong> count.</p>
+
+    <h3>What Else Changes</h3>
+    <p>The bulletin page becomes the <strong>WFD Bulletin</strong> (<strong>WFD Special Bulletin</strong> for 2026), and saving a copy earns its objective. Message traffic isn't scored, so the message page tracks radiograms for your records only. At the end, the Reports page gives you a WFDA-format Cabrillo log and a <strong>WFD Event Summary (PDF)</strong> in place of the ARRL submission sheet (see <a href="#reports">Reports</a>).</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  SECTION MAP                               -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="section-map">Section Map</h2>
-    <p>The Section Map is an interactive visualization of the 85 ARRL and RAC sections across the United States and Canada (71 US sections including territories, plus 14 Canadian RAC sections). DX contacts are scored normally but do not appear on the map. As contacts are logged, sections light up on the map in real time. It's accessible from the main sidebar under <strong>Section Map</strong>.</p>
+    <p>The Section Map is an interactive visualization of the ARRL and RAC sections across the United States and Canada: 71 US sections including territories, plus the Canadian RAC sections. On Field Day events that's 85 sections, with Yukon counted as part of TER. Winter Field Day treats YT as its own section, so the map draws Yukon separately and shows 86. DX contacts (and MX, which counts as DX for Field Day and as its own section for Winter Field Day) are scored normally but do not appear on the map. As contacts are logged, sections light up on the map in real time. It's accessible from the main sidebar under <strong>Section Map</strong>.</p>
 
     <h3>Region Filters</h3>
     <p>Across the top of the map, a row of filter buttons lets you focus on a specific region: <strong>All</strong>, <strong>US</strong>, <strong>Canada</strong>, or individual call areas (<strong>W1</strong> through <strong>W0</strong>). Selecting a call area zooms the view and dims sections outside that area so you can quickly see which sections within a region you've worked and which you still need.</p>
@@ -1108,7 +1258,7 @@
     <p>Three color modes control how sections are shaded:</p>
     <ul>
       <li><strong>Band.</strong> Each section is colored by the band on which it was most recently worked (20m, 40m, 80m, etc.), using the band color from the legend. Color intensity indicates depth: pastel means 1 band, vivid means 2 bands, and deep means 3 or more bands have been worked in that section.</li>
-      <li><strong>QSO Count.</strong> A green heat map where darker sections have more contacts. Useful for spotting which areas are producing the most activity and where you might find new multipliers.</li>
+      <li><strong>QSO Count.</strong> A green heat map where darker sections have more contacts. Useful for spotting which areas are producing the most activity.</li>
       <li><strong>Recency.</strong> A red-yellow-green scale based on how recently each section was last worked. Green means the contact is fresh, yellow means it's aging, and red means it's been a while. This helps operators see where activity is happening right now versus earlier in the event.</li>
     </ul>
 
@@ -1123,7 +1273,7 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="guestbook">Visitor Guestbook</h2>
-    <p>Field Day is a public event, and the ARRL awards bonus points for public outreach. The guestbook (<strong>Guestbook</strong> in the sidebar) makes it easy to track who stopped by. It supports location-based check-in so you can verify that visitors are actually at your site, and it categorizes guests for cleaner reporting after the event.</p>
+    <p>Field Day is a public event, and the ARRL awards bonus points for public outreach. The guestbook (<strong>Guestbook</strong> in the sidebar) makes it easy to track who stopped by. It can check a visitor's location to mark them as in-person, and it categorizes guests for cleaner reporting after the event.</p>
 
     <h3>How It Works</h3>
     <p>The guestbook page is designed to be handed to a visitor on a tablet. It shows a friendly welcome message and a simple form. No account, no password, no friction. During an active event, visitors fill it out and tap submit. When the event isn't running, the page shows a "No Active Event" notice so nobody signs a stale book.</p>
@@ -1131,43 +1281,41 @@
     <p>The form collects the following information:</p>
     <ul>
       <li><strong>Name</strong> (required). The only mandatory field.</li>
-      <li><strong>Callsign</strong> (optional). If provided, the visitor is counted as a licensed ham rather than general public.</li>
+      <li><strong>Callsign</strong> (optional).</li>
       <li><strong>Email</strong> (optional). Useful for follow-up or club outreach after the event.</li>
-      <li><strong>Visitor Category.</strong> A dropdown with eight options: General Public, Ham Radio Club Member, Youth Visitor, ARES/RACES Member, Media Representative, Agency Representative, ARRL Official, and Elected Official. This helps with reporting and with the Agency/Official Visit bonus point claim.</li>
+      <li><strong>I am visiting as.</strong> A dropdown with eight options: General Public, Ham Club Member, Youth, ARES/RACES, Media, Agency (FEMA, etc.), ARRL Official, and Elected Official. This helps with reporting, and Elected Official and Agency visits count toward their bonuses automatically once you verify them.</li>
       <li><strong>Comments</strong> (optional). A free-text area for anything the visitor wants to say.</li>
     </ul>
 
-    <p>The form also includes a <strong>Presence Type</strong> selector where the visitor chooses "in-person" or "online." The system pre-selects this based on the location check (see below), but the visitor can change it. This distinction shows up in the guestbook management table so you can see at a glance who was physically present.</p>
-
-    <p>Licensed hams and general public are tracked separately. Guest counts feed into the Public Information bonus point tracking on the scoring page.</p>
+    <p>The form also asks <strong>How are you visiting?</strong>, where the visitor chooses <strong>In Person</strong> or <strong>Online</strong>. The system pre-selects this based on the location check (see below), but the visitor can change it. This distinction shows up in the guestbook management table so you can see at a glance who was physically present.</p>
 
     <h3>Setting Up the Guestbook</h3>
     <p>Guestbook settings live inside the event configuration. Go to <strong>Event Management &gt; Edit Event</strong>. The coordinates used for proximity detection are set in the <strong>Event Location</strong> section (latitude and longitude are required for this feature to work). Scroll further down to the <strong>Guestbook Settings</strong> section, which has three settings:</p>
 
-    <p><strong>1. Enable the guestbook.</strong> Toggle the "Enable Guestbook" switch to on. The description reads "Allow visitors to sign in when physically at your event location." When this is off, the guestbook page is hidden entirely.</p>
+    <p><strong>1. Enable the guestbook.</strong> Toggle the "Enable Guestbook" switch to on. The description reads "Allow visitors to sign in when physically at your event location." When this is off, the guestbook page shows a "No Active Event" notice.</p>
 
     <p><strong>2. Set the detection radius.</strong> A slider lets you choose how far from your coordinates a visitor can be and still count as "in-person." The range is 100 to 2,000 meters. The current value displays in both metric and imperial (for example, "500m (1,640 feet)"). If your Field Day site covers a large park or fairground, increase the radius. For a smaller backyard setup, bring it down.</p>
 
-    <p><strong>3. Add local subnets (optional).</strong> If you have a known network at your site, you can enter one or more subnets in CIDR notation, one per line. For example, <code>192.168.1.0/24</code> or <code>10.0.0.0/8</code>. Visitors whose IP address falls within any of these subnets are automatically considered "in-person," even if GPS is unavailable. This is the fallback mechanism described below.</p>
+    <p><strong>3. Add local subnets (optional).</strong> If you have a known network at your site, you can enter one or more subnets in CIDR notation, one per line. For example, <code>192.168.1.0/24</code> or <code>10.0.0.0/8</code>. The location check doesn't currently use them, so they won't mark anyone as in-person.</p>
 
     <h3>Location-Based Check-In</h3>
-    <p>When a visitor opens the guestbook page, the system tries to determine whether they are physically at your event site. It does this in two steps:</p>
+    <p>When a visitor opens the guestbook page, the system tries to determine whether they are physically at your event site. It does this with browser geolocation.</p>
 
-    <p><strong>Step 1: Browser geolocation.</strong> The page asks the visitor's browser for their GPS coordinates using the standard Geolocation API. If the visitor allows the location prompt and their device has GPS (most phones do), the system compares the visitor's coordinates against the event coordinates you configured. It calculates the distance using the Haversine formula (great-circle distance on the Earth's surface). If the visitor is within the detection radius, they pass the check and are marked "in-person."</p>
+    <p>The page asks the visitor's browser for their GPS coordinates using the standard Geolocation API. If the visitor allows the location prompt and their device has GPS (most phones do), the system compares the visitor's coordinates against the event coordinates you configured. It calculates the distance using the Haversine formula (great-circle distance on the Earth's surface). If the visitor is within the detection radius, they pass the check and are marked "in-person."</p>
 
-    <p><strong>Step 2: Subnet fallback.</strong> If GPS is not available (the visitor denied the prompt, the device has no GPS hardware, or the browser doesn't support geolocation), the system falls back to checking the visitor's IP address against the local subnets you configured. If their IP matches any of the subnets, they are marked "in-person." This is useful for tablets connected to your site's Wi-Fi router, where you know the IP range but the device may not have GPS.</p>
-
-    <p>If both checks fail, the visitor can still sign the guestbook. They are simply recorded as "online" rather than "in-person."</p>
+    <p>If the check fails or the location isn't available, the visitor can still sign the guestbook. They're recorded as "online" rather than "in-person."</p>
 
     <h3>HTTPS and the Location Feature</h3>
-    <p>There is an important caveat with browser geolocation: <strong>modern browsers require HTTPS to use the Geolocation API.</strong> On a plain HTTP connection, the browser will silently block the location request without even showing a permission prompt. The visitor's form will still work, but the GPS check will never fire, and everyone will fall back to subnet matching or be marked "online."</p>
+    <p>There is an important caveat with browser geolocation: <strong>modern browsers require HTTPS to use the Geolocation API.</strong> On a plain HTTP connection, the browser will silently block the location request without even showing a permission prompt. The visitor's form will still work, but the GPS check will never fire, and everyone will be marked "online."</p>
 
-    <p>This matters because FD Commander is a LAN-hosted application and many Field Day setups run it over plain HTTP on a local IP address (like <code>http://192.168.1.50</code>). In that scenario, the GPS-based location check will not function at all. Visitors signing the guestbook on their own phones will never get a location prompt, and the system will fall back to subnet matching or mark them as "online."</p>
+    <p>This matters because FD Commander is a LAN-hosted application and many Field Day setups run it over plain HTTP on a local IP address (like <code>http://192.168.1.50</code>). In that scenario, the GPS-based location check will not function at all. Visitors signing the guestbook on their own phones will never get a location prompt, and the system will mark them as "online."</p>
 
-    <p>If you want GPS-based location detection to work, serve FD Commander over HTTPS with a certificate the browser trusts. For a standard LAN deployment over plain HTTP, use the <strong>subnet fallback</strong> instead. Configure the local subnets field with your network's CIDR range, and any device on that network will be detected as "in-person" without needing GPS or HTTPS.</p>
+    <p>If you want GPS-based location detection to work, serve FD Commander over HTTPS with a certificate the browser trusts. Over plain HTTP, visitors at your site can switch <strong>How are you visiting?</strong> to <strong>In Person</strong> themselves.</p>
 
     <h3>Managing Entries</h3>
-    <p>The event manager can view and manage all entries under <strong>Administration &gt; Manage Guestbook</strong>. Each entry shows the visitor's name, callsign (if provided), category, presence type (in-person or online), and timestamp. This is useful for cleaning up duplicates, reviewing visitor categories for bonus claims, or exporting totals after the event wraps up.</p>
+    <p>Event managers and admins can view and manage all entries under <strong>Administration &gt; Manage Guestbook</strong>. Cards at the top count total, verified, in-person, online, and bonus-eligible visitors. Each entry shows the visitor's name, callsign (if provided), category, presence type, and timestamp, and you can filter by presence, category, and verification status. Select rows to <strong>Verify</strong>, <strong>Unverify</strong>, or <strong>Delete</strong> them in bulk, or edit an entry to fix its category and <strong>Mark as Verified</strong>. Only Elected Official and Agency visits are bonus eligible. A media visit doesn't earn the Media Publicity bonus on its own, so claim that one by hand.</p>
+
+    <p><strong>Export CSV</strong> downloads the entries that match your current filters, with name, callsign, email, category, presence, verification, and sign-in time. Handy for the club's follow-up emails after the event.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  WEATHER                                   -->
@@ -1177,18 +1325,18 @@
     <p>The weather page (<strong>Weather</strong> in the sidebar) shows live conditions and forecasts for your Field Day site. It requires latitude and longitude to be set in your event configuration. Data comes from two sources: <strong>Open-Meteo</strong> for forecasts and current conditions, and <strong>NWS</strong> (National Weather Service) for official weather alerts. Both are fetched automatically with no API key required.</p>
 
     <h3>Weather Dashboard</h3>
-    <p>The page shows current conditions (temperature, wind speed and direction, gusts), an hourly table for the next 12 hours, and a multi-day daily forecast. Active NWS alerts appear as banners at the top of the page. If an admin has entered a manual override, a notice indicates who entered it and when. The data source and last-updated time are shown at the bottom.</p>
+    <p>The page shows current conditions (temperature, wind speed and direction, gusts), an hourly table for the next 12 hours, and a multi-day daily forecast. Active alerts, both NWS and any local alert an admin has posted, appear in a banner that stays pinned below the header on every page. If an admin has entered a manual override, a notice indicates who entered it and when. The data source and last-updated time are shown at the bottom.</p>
 
     <h3>Managing Weather</h3>
     <p>Users with the <code>manage-weather</code> permission can access <strong>Administration &gt; Manage Weather</strong>, which has four sections:</p>
 
     <p><strong>Unit System.</strong> Switch between metric and imperial. This affects all temperature and wind displays site-wide.</p>
 
-    <p><strong>API Status.</strong> Shows the connection status for Open-Meteo and NWS. NWS alert polling can be toggled on or off independently. When enabled, you can filter which NWS event types are shown (e.g. hide watch-level alerts and only show warnings). Disabling NWS clears stored NWS alerts but preserves any manual alerts you've entered.</p>
+    <p><strong>API Status.</strong> Shows the connection status for Open-Meteo and NWS. Open-Meteo forecast polling and NWS alert polling each have their own on/off toggle. When enabled, you can filter which NWS event types are shown (e.g. hide watch-level alerts and only show warnings). Disabling NWS clears stored NWS alerts but preserves any manual alerts you've entered.</p>
 
     <p><strong>Manual Forecast Override.</strong> If your site has no internet access, you can enter conditions manually: temperature, wind speed, wind direction, rain chance, and optional notes. The dashboard shows the override data with a notice that it was manually entered. Clear the override at any time to return to live data.</p>
 
-    <p><strong>Storm / Lightning Alert.</strong> Post a custom alert message that broadcasts immediately to all connected users as a prominent banner. Useful for calling operators inside during lightning. NWS alerts will display alongside or override this when available. Active alerts can be cleared from the same panel.</p>
+    <p><strong>Storm / Lightning Alert.</strong> Post a local alert that broadcasts immediately to all connected users as a prominent banner. The NWS won't tell you how far away the lightning is, so this is how the safety officer calls everyone in. Two quick buttons, <strong>Lightning &lt; 15 mi</strong> and <strong>Lightning &lt; 10 mi</strong>, send ready-made warnings. Pressing one replaces the current local alert, so you can escalate or step down. For anything else, type a <strong>Custom Alert Message</strong> and click <strong>Trigger Alert</strong>. Local alerts and NWS alerts show side by side, and neither replaces the other. <strong>Clear Local Alert</strong> lifts yours and leaves any NWS alerts in place. The panel also has a <strong>How to monitor for lightning</strong> guide with apps, detectors, and the flash-to-bang count.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  NTS MESSAGES                              -->
@@ -1197,11 +1345,13 @@
     <h2 id="messages">NTS Messages / Message Traffic</h2>
     <p>The National Traffic System (NTS) bonus awards 10 points for every radiogram your station handles during the event, up to a maximum of 100 points. FD Commander tracks three types: originated, relayed, and received &amp; delivered. Each one you log adds to your score automatically. Find this page under <strong>Message Traffic</strong> in the Event Management section of the sidebar.</p>
 
+    <p>Winter Field Day awards nothing for message traffic. On WFD events the page says so, the point tallies are gone, and messages are tracked for your records only.</p>
+
     <h3>Logging Messages</h3>
-    <p>Click <strong>New Message</strong> to record each radiogram with its type and details. The running count and point total show at the top of the page alongside the SM/SEC and W1AW tallies.</p>
+    <p>Click <strong>New Message</strong> to record each radiogram with its type and details. On Field Day events, the running count and point total show at the top of the page alongside the SM/SEC and W1AW tallies.</p>
 
     <h3>Section Manager Message</h3>
-    <p>The Section Manager/SEC message bonus (100 points) has its own button on the page: <strong>SM/SEC Message</strong>. Send a formal message to your ARRL Section Manager or Section Emergency Coordinator from your site to claim it. This is tracked separately from the per-radiogram bonus.</p>
+    <p>On Field Day events, the Section Manager/SEC message bonus (100 points) has its own button on the page: <strong>SM/SEC Message</strong>. Send a formal message to your ARRL Section Manager or Section Emergency Coordinator from your site to claim it. This is tracked separately from the per-radiogram bonus.</p>
 
     <h3>ICS-213 Support</h3>
     <p>If your group practices ARES/RACES emergency communications, FD Commander also supports the ICS-213 General Message format. Enable it under <strong>Settings &gt; System Preferences &gt; Enable ICS-213 Message Format</strong> to get the standardized form alongside the traditional radiogram format.</p>
@@ -1210,14 +1360,14 @@
     <!--  W1AW BULLETIN                             -->
     <!-- ═══════════════════════════════════════════ -->
 
-    <h2 id="w1aw">W1AW Bulletin</h2>
-    <p>The W1AW Field Day bulletin bonus (100 points) has its own page in the sidebar under <strong>W1AW Bulletin</strong>. During the event, W1AW (and K6KPH on the West Coast) transmit a special Field Day bulletin on the regular W1AW frequencies. Copy the bulletin via amateur radio and record it here to claim the bonus.</p>
+    <h2 id="w1aw">W1AW and WFD Bulletins</h2>
+    <p>Both Field Day and Winter Field Day reward copying a special bulletin off the air, and each has its own page in the sidebar while an event is active. The menu item is named for your event's rulebook: <strong>W1AW Bulletin</strong> for Field Day, <strong>WFD Bulletin</strong> for Winter Field Day 2027, and <strong>WFD Special Bulletin</strong> for 2026. For Field Day, W1AW (and K6KPH on the West Coast) transmit the bulletin on the regular W1AW frequencies, and copying it earns 100 bonus points. For Winter Field Day, copying the bulletin earns its objective (OM x1). Either way, the credit comes automatically when you save the copy.</p>
 
     <h3>Transmission Schedule</h3>
-    <p>The top of the page shows a transmission schedule so your team knows exactly when to listen. Each entry lists the time (UTC), mode, frequency, and source station. Use the <strong>Add Transmission</strong> form to build out the schedule from the times published in the ARRL Field Day packet. FD Commander sends reminders 15 minutes before each scheduled transmission so nobody misses a window.</p>
+    <p>The top of the page shows a transmission schedule so your team knows exactly when to listen, with a countdown to the next one. Each entry lists the <strong>Time (UTC)</strong>, <strong>Mode</strong>, <strong>Frequencies (MHz)</strong>, and <strong>Source</strong>. Station captains, event managers, and admins use the <strong>Add Transmission</strong> form to build out the schedule from the published times. For Field Day the source is W1AW or K6KPH. For Winter Field Day you type in the sending callsign. Everyone gets a reminder 15 minutes before each transmission, and each user can change the timing (up to five reminders) under <strong>Bulletin transmission reminders</strong> on their profile.</p>
 
     <h3>Bulletin Details</h3>
-    <p>When someone copies the bulletin, fill in the <strong>Frequency</strong> you received it on, the <strong>Mode</strong>, and the <strong>Received At</strong> timestamp. Paste the full text of the bulletin into the <strong>Bulletin Text</strong> field. The bulletin must be copied over the air. It won't appear on Internet bulletins or BBS sites. An accurate copy of the message is required and will be included in your Field Day submission as proof.</p>
+    <p>When someone copies the bulletin, fill in the <strong>Frequency (MHz)</strong> you received it on, the <strong>Mode</strong>, and the <strong>Received At (UTC)</strong> timestamp. Paste the full text of the bulletin into the <strong>Bulletin Text</strong> field and click <strong>Save Bulletin</strong>. Any operator who can log contacts can save it. The bulletin must be copied over the air. It won't appear on Internet bulletins or BBS sites. An accurate copy is required as proof, so FD Commander prints it on its own page in the ARRL Submission Sheet or the WFD Event Summary.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  PHOTOS                                    -->
@@ -1227,33 +1377,42 @@
     <p>The photo gallery (<strong>Event Management &gt; Gallery</strong>) gives your group a shared place to collect pictures during the event. Photos are organized into event albums automatically. Each event gets its own album with a cover thumbnail, date, and photo count.</p>
 
     <h3>Uploading</h3>
-    <p>Any logged-in user can click <strong>Upload Photo</strong> from the gallery page or snap a picture directly from a phone browser. Everything is stored on the local server with no cloud dependency, so uploads work even at sites with no internet. Each photo is tagged with who uploaded it and when.</p>
+    <p>Any logged-in user can click <strong>Upload Photo</strong> from the gallery page or snap a picture directly from a phone browser (except on a station-mode browser). Everything is stored on the local server with no cloud dependency, so uploads work even at sites with no internet. Each photo is tagged with who uploaded it and when. Uploaders can delete their own photos, and event managers and admins can delete any.</p>
 
     <h3>After the Event</h3>
-    <p>The gallery persists after the event ends, so you can browse and download photos later for your club newsletter, social media, or the ARRL Field Day submission page. Photos from previous events stay in their own albums and don't clutter the current one.</p>
+    <p>The gallery persists after the event ends, so you can browse photos later and grab a whole album as a download (<strong>Download</strong> on the album card, or <strong>Download Album</strong> inside it) for your club newsletter, social media, or the ARRL Field Day submission page. Photos from previous events stay in their own albums and don't clutter the current one.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  REPORTS / CABRILLO                        -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="reports">Reports</h2>
-    <p>When the event wraps up, go to <strong>Reports</strong> in the Administration section of the sidebar. Three exports are available:</p>
+    <p>When the event wraps up, go to <strong>Reports</strong> in the Administration section of the sidebar. Event managers and admins (anyone with view-reports) can open it. The <strong>Export &amp; Download</strong> cards depend on the event type: every event gets Cabrillo Log, ADIF Log, and Logbook CSV, plus Submission Sheet for Field Day or WFD Event Summary (PDF) for Winter Field Day. Duplicates and no-credit contacts are left out of the Cabrillo and ADIF files, and contacts you transcribed from paper are included.</p>
 
-    <h3>Cabrillo Export</h3>
-    <p>FD Commander pulls together every QSO across all stations and formats the output to the Cabrillo specification for ARRL Field Day, including your callsign, class, section, and all contact records with correct timestamps, bands, and modes. The exported file is ready to upload directly to the <a href="https://field-day.arrl.org/" target="_blank">ARRL Field Day submission page</a>. If you transcribed paper logs after the event, those contacts are included too.</p>
+    <h3>Cabrillo Log</h3>
+    <p>FD Commander pulls together every QSO across all stations and writes a Cabrillo file in the format your event needs. For Field Day, that's the ARRL format with your callsign, class, section, category lines, claimed score, and every contact, saved as <code>CALLSIGN-YEAR-field-day.log</code> and ready to upload to the <a href="https://field-day.arrl.org/" target="_blank">ARRL Field Day submission page</a>. For Winter Field Day, it's the WFDA format (contest WFD, your location, power category, operators, and exchange), saved as <code>CALLSIGN.log</code> as the WFDA asks, for upload at <a href="https://winterfieldday.org/" target="_blank">winterfieldday.org</a>. Bands above 1.2 GHz use the Cabrillo GHz designators (2.3G, 10G, and so on).</p>
+
+    <h3>ADIF Log</h3>
+    <p>Downloads an ADIF 3.1.4 file (<code>CALLSIGN.adi</code>) of every credited, non-duplicate contact, with band, mode, sub-mode, class, section, station callsign, and operator. Use it to import the log into other logging software.</p>
 
     <h3>ARRL Submission Sheet</h3>
-    <p>Downloads a PDF formatted to the official ARRL Field Day submission sheet. This includes your event details, score summary, and bonus claims in the layout ARRL expects for paper submissions. Useful as a backup record even if you submit electronically.</p>
+    <p>Field Day events only. Downloads a PDF formatted to the official ARRL Field Day submission sheet. This includes your event details, score summary, bonus claims, and a dupe sheet in the layout ARRL expects for paper submissions. If you saved a W1AW bulletin copy, it gets its own page. Useful as a backup record even if you submit electronically.</p>
 
-    <h3>Logbook Export</h3>
-    <p>Downloads a CSV of all contacts in the logbook. Useful for post-event analysis, sharing with club members, or importing into other logging software.</p>
+    <h3>WFD Event Summary</h3>
+    <p>Winter Field Day events only. Downloads a PDF that mirrors the WFDA summary form: your station details, the objectives checklist with each OM, your QSO point totals, and the final score worked out as QSO points x (OM + 1). A second page has the bulletin copy if you saved one.</p>
+
+    <h3>Logbook CSV</h3>
+    <p>Downloads a spreadsheet of all contacts in the logbook, with time, callsign, band, mode, section, class, points, dupe status, logger, and station. Useful for post-event analysis or sharing with club members.</p>
+
+    <h3>On-Page Reports</h3>
+    <p>Below the downloads, the page shows <strong>QSO Rate by Hour</strong> broken out by mode, an <strong>Operator Summary</strong> with each operator's valid QSOs and dupes, the <strong>Sections Worked</strong> grid, and <strong>Volunteer Hours</strong>. Volunteer Hours opens with totals for hours worked, hours scheduled, and number of volunteers. A setting under <strong>Settings &gt; System Preferences</strong> decides whether overlapping shifts count once (wall-clock hours) or once per role.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  AUDIT LOGS                                -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="audit-logs">Audit Logs</h2>
-    <p>The Audit Logs page (<strong>Administration &gt; Audit Logs</strong>) is a complete tamper-evident record of every significant action taken in the system. It's accessible to System Administrators only.</p>
+    <p>The Audit Logs page (<strong>Administration &gt; Audit Logs</strong>) is a record of every significant action taken in the system. Anyone with the view-security-logs permission can open it, which by default means event managers and admins.</p>
 
     <p>Each log entry shows the timestamp, the user who performed the action, the action type, and the IP address. Clicking an entry opens a detail modal with the full context, including any changes made. Critical security events are flagged with a warning indicator.</p>
 
@@ -1264,7 +1423,7 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="offline">Offline Resilience</h2>
-    <p>FD Commander has two layers of resilience. First, the entire platform runs on your LAN with zero internet dependency, fully air-gapped. Second, if a browser temporarily loses its connection to the server (someone trips over the ethernet cable, Wi-Fi drops out), contacts queue locally on the device. When the connection comes back, they sync automatically. A status indicator shows how many contacts are queued and when they've been synced.</p>
+    <p>FD Commander has two layers of resilience. First, the entire platform runs on your LAN and doesn't need the internet. Weather is the only feature that uses it, and only if you turn it on. Second, if a browser temporarily loses its connection to the server (someone trips over the ethernet cable, Wi-Fi drops out), contacts will queue locally on the device. When the connection comes back, they'll sync automatically. A status indicator shows how many contacts are queued and when they've been synced.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  PAPER LOG TRANSCRIPTION                   -->
@@ -1272,6 +1431,8 @@
 
     <h2 id="paper-transcription">Paper Log Transcription</h2>
     <p>If the server goes down and you fall back to paper for a while, FD Commander has a transcription feature that lets you enter those contacts after the fact with the correct timestamps. This way nothing is lost and your Cabrillo export stays complete. There is a configurable post-event grace period (default: 30 days) during which operators can still enter late contacts.</p>
+
+    <p>Go to <strong>Logging &gt; Transcribe Paper Log</strong>, pick the station, and set the date (in UTC or local time). Then type each line the way it's written on the sheet, time first: "1423 W1AW 3A CT". There's an optional <strong>Sub-mode</strong> field, and the same dupe, own-participant, and class checks as live logging apply. A <strong>Recently Transcribed</strong> list shows what you've entered for that station so you can spot a skipped line.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  NETWORK SETUP                             -->
@@ -1285,7 +1446,7 @@
         <div class="step-num">1</div>
         <div>
           <h4>Server</h4>
-          <p>A Raspberry Pi, laptop, or any Linux box connected to your field network via ethernet. Runs FrankenPHP on port 80 and Laravel Reverb (WebSocket) on port 8080.</p>
+          <p>A Raspberry Pi, laptop, or any Linux box connected to your field network via ethernet. Runs FrankenPHP on port 80 (or 443 with SSL). Laravel Reverb (WebSocket) runs on the same box and is reached through the web port, so browsers only ever talk to port 80 or 443.</p>
         </div>
       </div>
       <div class="step-item">
@@ -1306,7 +1467,7 @@
 
     <div class="callout info">
       <div class="callout-title">Firewall Ports</div>
-      The deploy script opens ports automatically via UFW (Debian/Ubuntu) or firewalld (RHEL). If you're managing your firewall manually, open port 80 (or 443 for HTTPS) for the web interface and port 8080 for WebSocket connections.
+      The deploy script opens ports automatically via UFW (Debian/Ubuntu) or firewalld (RHEL). If you're managing your firewall manually, open port 80 (or 443 for HTTPS) for the web interface. WebSocket traffic rides on the same port, so you don't need to open 8080. If you use external loggers, also open their UDP ports (12060, 2237, and 2238 by default).
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -1358,13 +1519,13 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="docker">Docker</h2>
-    <p>FD Commander includes a Docker Compose setup for containerized deployment. The stack runs two services: an application container (web server, WebSockets, queue worker, scheduler) and a MySQL database container.</p>
+    <p>FD Commander includes a Docker Compose setup for containerized deployment. The stack runs three services: an application container (web server, WebSockets, queue worker, scheduler), a MySQL 8.4 database container, and a Redis container for cache, sessions, and the job queue.</p>
 
     <h3>Quick Start</h3>
     <div class="code-block">
       <div class="code-header">bash <span class="code-copy">Copy</span></div>
       <div class="code-body">
-        <div><span class="prompt">#</span> <span class="cmd">Generate .env with secure defaults (DB password, Reverb keys, etc.)</span></div>
+        <div><span class="prompt">#</span> <span class="cmd">Generate .env with secure defaults (APP_KEY, DB password, Reverb keys, etc.)</span></div>
         <div><span class="prompt">$</span> <span class="cmd">bash docker/setup.sh</span></div>
         <div>&nbsp;</div>
         <div><span class="prompt">#</span> <span class="cmd">Build and start</span></div>
@@ -1375,7 +1536,7 @@
       </div>
     </div>
 
-    <p>The setup script creates <code>.env</code> from <code>.env.example</code> and auto-generates all secrets (<code>DB_PASSWORD</code>, <code>REVERB_APP_KEY</code>, etc.). Run it again on an existing <code>.env</code> to fill in any missing secrets without overwriting existing values. The app will be available at <code>http://localhost</code> (or whichever port you set with <code>APP_PORT</code>).</p>
+    <p>The setup script creates <code>.env</code> from <code>.env.example</code> and generates all secrets, including <code>APP_KEY</code>, <code>DB_PASSWORD</code>, and <code>REVERB_APP_KEY</code>. Run it again on an existing <code>.env</code> to fill in any missing secrets without overwriting existing values. The app will be available at <code>http://localhost</code> (or whichever port you set with <code>APP_PORT</code>). Log in as described in <a href="#first-event">First Event Setup</a>.</p>
 
     <h3>Configuration</h3>
     <p>These environment variables in <code>.env</code> are used by <code>docker-compose.yml</code>:</p>
@@ -1383,11 +1544,14 @@
       <table class="flag-table">
         <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
         <tbody>
-          <tr><td>APP_PORT</td><td>80</td><td>Host port mapped to the container</td></tr>
+          <tr><td>APP_KEY</td><td>(required)</td><td>Encryption key, generated by setup.sh. Two-factor secrets are encrypted with it, so keep a copy with your backups</td></tr>
+          <tr><td>APP_PORT</td><td>80</td><td>Host port mapped to the container's port 8000</td></tr>
           <tr><td>DB_DATABASE</td><td>fd_commander</td><td>MySQL database name</td></tr>
           <tr><td>DB_USERNAME</td><td>fd_commander</td><td>MySQL user</td></tr>
           <tr><td>DB_PASSWORD</td><td>(required)</td><td>MySQL password (auto-generated by setup.sh)</td></tr>
           <tr><td>DB_ROOT_PASSWORD</td><td>rootsecret</td><td>MySQL root password</td></tr>
+          <tr><td>N1MM_PORT, WSJTX_PORT, UDP_ADIF_PORT</td><td>12060, 2237, 2238</td><td>UDP ports for the external logger listeners</td></tr>
+          <tr><td>REDIS_MAXMEMORY</td><td>256mb</td><td>Memory cap for Redis (setup.sh sizes it for your machine)</td></tr>
         </tbody>
       </table>
     </div>
@@ -1401,38 +1565,39 @@
     </div>
 
     <h3>Architecture</h3>
-    <p>The app container runs four processes via supervisord:</p>
+    <p>The app container runs as the unprivileged <code>www-data</code> user (uid 33), not root. It runs four processes via supervisord:</p>
     <div class="req-table-wrapper">
       <table class="flag-table">
         <thead><tr><th>Process</th><th>Purpose</th></tr></thead>
         <tbody>
-          <tr><td>Octane (FrankenPHP)</td><td>HTTP server on port 80</td></tr>
+          <tr><td>Octane (FrankenPHP)</td><td>HTTP server on port 8000 inside the container</td></tr>
           <tr><td>Reverb</td><td>WebSocket server (port 8080, internal)</td></tr>
           <tr><td>Queue Worker</td><td>Background job processing</td></tr>
           <tr><td>Scheduler</td><td>Scheduled tasks (runs every 60s)</td></tr>
         </tbody>
       </table>
     </div>
-    <p>WebSocket connections reach Reverb through Caddy's reverse proxy at the <code>/app</code> path, so only port 80 is exposed to the network.</p>
+    <p>WebSocket connections reach Reverb through Caddy's reverse proxy at the <code>/app</code> path, so the only TCP port exposed to the network is <code>APP_PORT</code>. The external logger UDP ports are published too.</p>
 
     <h3>First Run</h3>
-    <p>On first startup, the entrypoint script automatically waits for the database, runs all migrations, runs production seeders (event types, bands, modes, sections, roles, permissions, etc.), generates an <code>APP_KEY</code> if not set, generates Reverb WebSocket credentials if not set, and caches configuration, routes, views, and events. Seeders only run once. A marker file in the persistent storage volume prevents re-seeding on subsequent starts.</p>
+    <p>On startup, the entrypoint checks that <code>DB_PASSWORD</code> and <code>APP_KEY</code> are set and refuses to start without them. If you see "ERROR: APP_KEY is not set.", run <code>bash docker/setup.sh</code> and then <code>docker compose up -d</code> again. It then waits for the database, runs all migrations, runs production seeders (event types, bands, modes, sections, roles, permissions, etc.), generates Reverb WebSocket credentials if not set, and caches configuration, routes, views, and events. Seeders only run once. A marker file in the persistent storage volume prevents re-seeding on subsequent starts.</p>
 
     <h3>Data Persistence</h3>
-    <p>Two named volumes store persistent data:</p>
+    <p>Three named volumes store persistent data:</p>
     <div class="req-table-wrapper">
       <table class="flag-table">
         <thead><tr><th>Volume</th><th>Contents</th></tr></thead>
         <tbody>
           <tr><td>app-storage</td><td>Uploaded files, logs, framework cache</td></tr>
           <tr><td>mysql-data</td><td>Database files</td></tr>
+          <tr><td>redis-data</td><td>Redis data</td></tr>
         </tbody>
       </table>
     </div>
-    <p>These survive <code>docker compose down</code>. Use <code>docker compose down -v</code> to remove them (this destroys all data).</p>
+    <p>These survive <code>docker compose down</code>. Use <code>docker compose down -v</code> to remove them (this destroys all data). To back them up, see <a href="#backups">Backups</a>.</p>
 
     <h3>HTTPS with a Reverse Proxy</h3>
-    <p>The container serves plain HTTP on port 80. For HTTPS, place a reverse proxy (like Nginx) in front of it. The app includes <code>trustProxies(at: '*')</code> so <code>X-Forwarded-Proto</code> and <code>X-Forwarded-For</code> headers are respected automatically. When behind a TLS proxy, update your <code>.env</code>:</p>
+    <p>The container serves plain HTTP (port 8000 inside, <code>APP_PORT</code> on the host). For HTTPS, place a reverse proxy (like Nginx) in front of it. The app includes <code>trustProxies(at: '*')</code> so <code>X-Forwarded-Proto</code> and <code>X-Forwarded-For</code> headers are respected automatically. When behind a TLS proxy, update your <code>.env</code>:</p>
     <div class="code-block">
       <div class="code-header">env <span class="code-copy">Copy</span></div>
       <div class="code-body">
@@ -1440,6 +1605,7 @@
         <div><span class="cmd">REVERB_HOST=your-domain.com</span></div>
         <div><span class="cmd">REVERB_PORT=443</span></div>
         <div><span class="cmd">REVERB_SCHEME=https</span></div>
+        <div><span class="cmd">SESSION_SECURE_COOKIE=true</span></div>
       </div>
     </div>
 
@@ -1452,6 +1618,12 @@
         <div>&nbsp;</div>
         <div><span class="prompt">#</span> <span class="cmd">Restart a specific process</span></div>
         <div><span class="prompt">$</span> <span class="cmd">docker compose exec app supervisorctl restart queue-worker</span></div>
+        <div>&nbsp;</div>
+        <div><span class="prompt">#</span> <span class="cmd">Run an artisan command</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">docker compose exec app php artisan about</span></div>
+        <div>&nbsp;</div>
+        <div><span class="prompt">#</span> <span class="cmd">Open a root shell for debugging</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">docker compose exec -u root app bash</span></div>
         <div>&nbsp;</div>
         <div><span class="prompt">#</span> <span class="cmd">View logs</span></div>
         <div><span class="prompt">$</span> <span class="cmd">docker compose logs -f app</span></div>
@@ -1471,21 +1643,69 @@
     </div>
     <p>The entrypoint runs <code>php artisan migrate --force</code> on every start, so new migrations are applied automatically.</p>
 
+    <div class="callout warning">
+      <div class="callout-title">Upgrading from a Root Container</div>
+      Older images ran as root and listened on port 80 inside the container. If you have a compose override file that maps <code>"&lt;host&gt;:80"</code>, change it to <code>"&lt;host&gt;:8000"</code>. If the app stops with "is not writable by www-data (uid 33)", fix the storage volume's ownership with <code>docker compose run --rm --no-deps -u root --entrypoint chown app -R www-data:www-data /app/storage</code>, then <code>docker compose up -d</code>.
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  BACKUPS                                   -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="backups">Backups</h2>
+    <p>To protect your log, photos, and settings, run the backup script. FD Commander ships <code>backup.sh</code> and <code>restore.sh</code> in the install directory. Each backup writes three files with the same timestamp: the database, your uploaded files (photos, logo, equipment pictures), and a copy of <code>.env</code>. Keep the <code>.env</code> copy with the rest. It holds the <code>APP_KEY</code> that two-factor secrets are encrypted with, and without it anyone using 2FA is locked out after a restore.</p>
+
+    <div class="code-block">
+      <div class="code-header">bash <span class="code-copy">Copy</span></div>
+      <div class="code-body">
+        <div><span class="prompt">#</span> <span class="cmd">One-off full backup to /var/backups/fd-commander</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/backup.sh</span></div>
+        <div>&nbsp;</div>
+        <div><span class="prompt">#</span> <span class="cmd">Hourly database backups plus a nightly full backup</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/backup.sh <span class="flag">--install-schedule</span></span></div>
+        <div>&nbsp;</div>
+        <div><span class="prompt">#</span> <span class="cmd">Docker: run from the directory with docker-compose.yml</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">sudo ./backup.sh <span class="flag">--docker</span></span></div>
+      </div>
+    </div>
+
+    <p>Backups on the same SD card won't survive the card dying, so copy them somewhere else. <code>restore.sh</code> will take a fresh backup of the current data before it replaces anything, and with <code>--new-server</code> it can carry your <code>APP_KEY</code> over to a different machine. See <a href="how-to/backup-restore.html">Back Up and Restore</a> for scheduling, copying backups off the server, and restoring onto the same server or a new one.</p>
+
     <!-- ═══════════════════════════════════════════ -->
     <!--  UPDATING                                  -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="updating">Updating</h2>
-    <p>FD Commander includes an <code>update.sh</code> script that pulls the latest code, updates dependencies, runs new database migrations, and restarts services.</p>
+    <p>FD Commander includes an <code>update.sh</code> script that will pull the latest code, update dependencies, run new database migrations, and restart services. Run it as root from the directory you cloned and deployed from. It doesn't take a backup, so run <code>backup.sh</code> first.</p>
 
     <div class="code-block">
       <div class="code-header">bash <span class="code-copy">Copy</span></div>
       <div class="code-body">
+        <div><span class="prompt">$</span> <span class="cmd">cd fielddaycommander</span></div>
         <div><span class="prompt">$</span> <span class="cmd">sudo ./update.sh</span></div>
       </div>
     </div>
 
-    <p>Run this at home when preparing for the next event, not during the event itself.</p>
+    <p>If you're already current, it says so and stops. It also takes care of one-time housekeeping from older installs, like upgrading Node.js and FrankenPHP to the pinned versions. If Redis isn't installed yet, it offers to install it and switch the cache, sessions, and queue over (everyone has to sign in again once afterward).</p>
+
+    <div class="req-table-wrapper">
+      <table class="flag-table">
+        <thead><tr><th>Flag</th><th>Default</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>--tag</td><td>(none)</td><td>Deploy a specific release, like <code>v26.10.6</code>, instead of the latest code on the branch</td></tr>
+          <tr><td>--branch</td><td>main</td><td>Git branch to update from</td></tr>
+          <tr><td>--app-path</td><td>/var/www/fd-commander</td><td>Installation directory</td></tr>
+          <tr><td>--force</td><td>off</td><td>Run the full update even if nothing has changed</td></tr>
+          <tr><td>--with-redis</td><td>off</td><td>Install Redis and switch drivers without asking</td></tr>
+          <tr><td>--no-redis</td><td>off</td><td>Skip the Redis step and keep your current drivers</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Release Versions</h3>
+    <p>Releases are numbered by year and month, <code>YY.MM.N</code>, where N counts releases within the month. For example, 26.10.6 is an October 2026 release, tagged <code>v26.10.6</code>. The running version is shown in the app's footer and at the end of every update. To see the available tags, run <code>git tag --list 'v*'</code> in your clone.</p>
+
+    <p>Run updates at home when preparing for the next event, not during the event itself.</p>
 
   </main>
 </div>

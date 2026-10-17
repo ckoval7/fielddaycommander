@@ -4,17 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Set Up a LAN for Field Operations - FD Commander</title>
-<meta name="description" content="Build a reliable local network for your Field Day site. Covers routers, switches, wired and wireless setups, IP addressing, and DNS for FD Commander.">
+<meta name="description" content="Build a reliable local network for your Field Day site. Covers the router, a fixed IP for the server, how clients connect, and Wi-Fi tips for FD Commander.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/lan-setup.html">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Set Up a LAN for Field Operations - FD Commander">
 <meta property="og:description" content="Build a reliable local network for Field Day. Covers routers, switches, wired and wireless setups, and IP addressing.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/lan-setup.html">
-<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Set Up a LAN for Field Operations - FD Commander">
 <meta name="twitter:description" content="Build a reliable local network for Field Day with routers, switches, and proper IP configuration.">
-<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -200,7 +205,7 @@
       <!-- WHAT YOU NEED -->
       <h2>What You Need</h2>
 
-      <p>FD Commander runs on your local network. Every device that needs to log contacts, view scores, or sign the guestbook connects to the same LAN. No internet required.</p>
+      <p>FD Commander runs on your local network. Every device that needs to log contacts, view scores, or sign the guestbook connects to the same LAN. You don't need an internet connection.</p>
 
       <ul>
         <li>A <strong>Wi-Fi router.</strong> A cheap home router works fine.</li>
@@ -221,11 +226,6 @@
 
       <p>That's the whole setup. The router handles DHCP (assigning IP addresses) and Wi-Fi. The server runs FD Commander. Clients open a browser and connect.</p>
 
-      <div class="callout tip">
-        <div class="callout-title">Tip</div>
-        <p>If your router has an "AP mode" or "bridge mode," use it. Some routers get confused when their WAN port has no link and will periodically stall trying to reach an upstream gateway.</p>
-      </div>
-
       <!-- GIVE THE SERVER A STATIC IP -->
       <h2>Give the Server a Static IP</h2>
 
@@ -233,7 +233,7 @@
 
       <p>The easiest way is a <strong>DHCP reservation</strong>. Log into your router's admin page and assign a fixed IP to the server's MAC address. The server still gets its address from the router, but the router always gives it the same one. Most routers support this under a "DHCP reservation" or "address reservation" setting.</p>
 
-      <p>If your router doesn't support reservations, you can set a static IP on the server itself. On a Raspberry Pi or Ubuntu system:</p>
+      <p>If your router doesn't support reservations, you can set a static IP on the server itself. On Raspberry Pi OS, or any other system that uses NetworkManager:</p>
 
       <div class="code-block">
 <span class="comment"># Find your interface name (usually eth0)</span>
@@ -254,9 +254,11 @@
       <!-- ACCESSING FD COMMANDER -->
       <h2>Accessing FD Commander</h2>
 
-      <p>Once the server has a static IP, clients just type it into a browser: <code>http://192.168.1.50</code> (or whatever address you chose). That's it.</p>
+      <p>Clients reach FD Commander at the address you gave the deploy script with <code>--domain</code>. If you deployed with the IP, that's <code>http://192.168.1.50</code> (or whatever address you chose). The server only answers to that name, so a browser pointed at a different hostname or IP for the same machine will get a blank page. If you change the address later, re-run the deploy script with the new <code>--domain</code>.</p>
 
-      <p>If you're running FD Commander on a Raspberry Pi, mDNS may already be working, which means devices can reach it at <code>http://raspberrypi.local</code> without knowing the IP. If you want a custom name, change the Pi's hostname.</p>
+      <p>Browsers only need the web port. Live updates on the dashboards travel over the same connection, so there's no second port to open or remember.</p>
+
+      <p>If you're running FD Commander on a Raspberry Pi, mDNS may already be working, which means devices can reach it by hostname without knowing the IP. If you followed <a href="pi-setup.html">Prepare a Raspberry Pi</a> and named it <code>fd-commander</code>, deploying with <code>--domain fd-commander.local</code> lets everyone use <code>http://fd-commander.local</code>. Some Android devices and older Windows machines don't resolve <code>.local</code> names, so an IP address is the safer choice when you're not sure what your operators will bring.</p>
 
       <div class="callout tip">
         <div class="callout-title">Tip</div>
@@ -269,7 +271,7 @@
       <p>Wi-Fi at a Field Day site is fighting against HF transmitters, generators, and whatever else is producing RF. A few things help:</p>
 
       <ul>
-        <li><strong>Use 5 GHz if you can.</strong> Less congested and less susceptible to interference than 2.4 GHz.</li>
+        <li><strong>Use 5 GHz if you can.</strong> It's less congested and less susceptible to interference than 2.4 GHz.</li>
         <li><strong>Keep the router central and elevated.</strong> Don't bury it behind a generator or under a table.</li>
         <li><strong>Use a simple SSID and password.</strong> You'll be telling people what they are all day. Something like <code>FieldDay</code> with a short password works.</li>
         <li><strong>Bring a spare ethernet cable.</strong> If Wi-Fi gets flaky, plugging a laptop directly into the router keeps that station running.</li>
@@ -315,6 +317,7 @@
 
 <footer></footer>
 <script src="../footer.js"></script>
+<script src="../toc.js"></script>
 
 </body>
 </html>

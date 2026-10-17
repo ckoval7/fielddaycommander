@@ -10,11 +10,16 @@
 <meta property="og:title" content="Prepare a Raspberry Pi - FD Commander">
 <meta property="og:description" content="Flash an SD card with Raspberry Pi Imager, set a hostname, configure Wi-Fi or Ethernet, and enable SSH for FD Commander.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/pi-setup.html">
-<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Prepare a Raspberry Pi - FD Commander">
 <meta name="twitter:description" content="Flash an SD card, set a hostname, configure networking, and enable SSH for FD Commander.">
-<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -232,7 +237,7 @@
       </div>
 
       <div class="step-box">
-        <p><span class="step-number">4</span> <strong>Choose OS.</strong> Select <strong>Raspberry Pi OS (64-bit)</strong> under "Raspberry Pi OS (other)." Pick the <strong>Lite</strong> version. It has no desktop environment, which is exactly what you want for a headless server. FD Commander doesn't need a GUI.</p>
+        <p><span class="step-number">4</span> <strong>Choose OS.</strong> Select <strong>Raspberry Pi OS (64-bit)</strong> under "Raspberry Pi OS (other)." Pick the <strong>Lite</strong> version. It has no desktop environment, which is exactly what you want for a headless server. FD Commander doesn't need a GUI. Stick with the 64-bit image: the deploy script only supports 64-bit systems and will stop on a 32-bit one.</p>
       </div>
 
       <div class="step-box">
@@ -341,6 +346,7 @@
 
 <footer></footer>
 <script src="../footer.js"></script>
+<script src="../toc.js"></script>
 
 </body>
 </html>

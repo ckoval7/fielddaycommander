@@ -10,11 +10,16 @@
 <meta property="og:title" content="External Loggers - FD Commander">
 <meta property="og:description" content="Send contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi straight into FD Commander over UDP.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/external-loggers.html">
-<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="External Loggers - FD Commander">
 <meta name="twitter:description" content="Connect N1MM Logger+, WSJT-X, JTDX, and fldigi to FD Commander.">
-<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -291,9 +296,11 @@
 
       <p>When a contact arrives, FD Commander works out which station it came from, who was operating, and which band and mode were in use. It then opens an operating session for that station automatically, so the station shows up as <strong>Occupied</strong> on the Log Contact page just as if someone had signed in through the browser. A session closes on its own after about 30 minutes without a new contact.</p>
 
+      <p>The mode the program reports, such as FT8, RTTY, or USB, is saved as the contact's <strong>Sub-mode</strong>, so the logbook shows entries like "Digital &middot; FT8." Scoring still goes by the CW, Phone, or Digital group, with one exception covered in the Winter Field Day note below.</p>
+
       <div class="callout info">
         <div class="callout-title">One path per contact</div>
-        <p>Some stations chain programs together, such as WSJT-X or fldigi feeding N1MM Logger+. In that case, let N1MM Logger+ send the contacts and leave the other program pointed at N1MM. If both programs send the same contact to FD Commander, it arrives twice and the second copy is marked as a dupe.</p>
+        <p>Some stations chain programs together, such as WSJT-X or fldigi feeding N1MM Logger+. In that case, let N1MM Logger+ send the contacts and leave the other program pointed at N1MM. If both programs send the same contact to FD Commander, it will arrive twice and the second copy will be marked as a dupe.</p>
       </div>
 
       <h2>Step 1: Open the Firewall on the Server</h2>
@@ -357,7 +364,7 @@
 
       <h3>Operator credit</h3>
 
-      <p>Contacts are credited to the operator whose callsign the sending program reports. If that callsign belongs to an FD Commander user, the contact goes to them. If it doesn't, FD Commander creates a locked placeholder account for that callsign, labeled <strong>(Imported)</strong>, so the contact still has an operator. Inviting your operators before the event, with their callsigns filled in, avoids a pile of placeholders.</p>
+      <p>Contacts are credited to the operator whose callsign the sending program reports. If that callsign belongs to an FD Commander user, the contact goes to them. If it doesn't, FD Commander creates a ghost account for that callsign, with <strong>(Imported)</strong> as its last name, so the contact still has an operator. A ghost account can't sign in. It shows a <strong>Ghost</strong> badge under <strong>Administration &gt; Users</strong>, and an admin can turn it into a real login later with <strong>Activate Account</strong>, which keeps the operator's contacts with them. Inviting your operators before the event, with their callsigns filled in, avoids a pile of ghosts.</p>
 
       <p>If the sending program doesn't report an operator at all, the contact may end up with no operator, or with a placeholder for whatever callsign the program fills in by default. Each program section below shows where the operator's callsign goes, and it's worth making that part of every operator change.</p>
 
@@ -380,7 +387,7 @@
         <p><span class="step-number">4</span> Click <strong>OK</strong>. N1MM Logger+ sends a radio status packet at least every 10 seconds, so the packet counter on the External Loggers page should start climbing almost right away.</p>
       </div>
       <div class="step-box">
-        <p><span class="step-number">5</span> Make sure the PC is logging in an <strong>ARRL Field Day</strong> contest log, so the received class and section are sent in their own fields.</p>
+        <p><span class="step-number">5</span> Make sure the PC is logging in an <strong>ARRL Field Day</strong> contest log (or the Winter Field Day log for a WFD event), so the received class and section are sent in their own fields.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">6</span> When an operator sits down, have them press <strong>Ctrl+O</strong> (or type <code>OPON</code> in the callsign box) and enter their own callsign. That's the callsign FD Commander uses for operator credit.</p>
@@ -411,6 +418,11 @@
       <div class="callout info">
         <div class="callout-title">WSJT-X sends to one place</div>
         <p>The UDP Server setting holds a single address. If this PC also runs JTAlert, GridTracker, or N1MM Logger+'s WSJT-X integration, those programs expect WSJT-X's traffic as well. Either point WSJT-X at FD Commander and do without the companion program, or leave WSJT-X pointed at the companion program and have it pass contacts along. With N1MM Logger+, that means letting its broadcast carry the contacts, as described above. Some companion programs, such as GridTracker, can rebroadcast WSJT-X traffic to another port; check that program's documentation for details.</p>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-title">Winter Field Day 2027: no credit for WSJT modes</div>
+        <p>The WFD 2027 rules don't allow WSJT modes (FT8, FT4, JT65, Q65, MSK144, and the rest) or satellite contacts. When your event is scored by those rules, the WSJT-X card on the External Loggers page shows a yellow <strong>No credit</strong> notice. Those contacts still arrive and stay in the log, marked <strong>no credit</strong>, but they earn no QSO points and count toward no objective. JTTY is the exception and scores as a normal digital contact. The <strong>ARRL Field Day</strong> activity in WSJT-X is for June Field Day only.</p>
       </div>
 
       <h3>JTDX</h3>
@@ -487,9 +499,9 @@
 
       <p>The identifier didn't match any station's name or hostname, so FD Commander created one. Add the identifier to the <strong>Hostname (NetBIOS Name)</strong> field of the station it belongs to (Step 3). New contacts will go to the right place from then on. Contacts that already arrived stay on the station that was created for them.</p>
 
-      <h3>Contacts are credited to a callsign marked "(Imported)"</h3>
+      <h3>Contacts are credited to a ghost account marked "(Imported)"</h3>
 
-      <p>The operator's callsign in the sending program didn't match any FD Commander user. Check for typos in N1MM Logger+'s operator login, WSJT-X's Op Call, or fldigi's Operator Callsign, and make sure the operator's FD Commander account has their callsign filled in.</p>
+      <p>The operator's callsign in the sending program didn't match any FD Commander user. Check for typos in N1MM Logger+'s operator login, WSJT-X's Op Call, or fldigi's Operator Callsign, and make sure the operator's FD Commander account has their callsign filled in. If the ghost belongs to a real person who should have a login, find it with the <strong>Ghost (No Login)</strong> status filter on <strong>Administration &gt; Users</strong> and use <strong>Activate Account</strong>.</p>
 
       <h3>WSJT-X contacts don't show up on the section map</h3>
 
@@ -518,6 +530,7 @@
 
 <footer></footer>
 <script src="../footer.js"></script>
+<script src="../toc.js"></script>
 
 </body>
 </html>

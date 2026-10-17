@@ -4,17 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Email Setup - FD Commander</title>
-<meta name="description" content="Enable email notifications in FD Commander: password resets, invitation emails, shift reminders, and security alerts. Just add SMTP credentials to your .env file.">
+<meta name="description" content="Enable email notifications in FD Commander: password resets, invitation emails, shift reminders, and security alerts. Add SMTP credentials to your .env file to turn them on.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/email-setup.html">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Email Setup - FD Commander">
 <meta property="og:description" content="Enable email features in FD Commander: password resets, invitations, shift reminders, and security alerts via SMTP.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/email-setup.html">
-<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Email Setup - FD Commander">
 <meta name="twitter:description" content="Enable email notifications in FD Commander with SMTP credentials.">
-<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -235,7 +240,7 @@
 
       <p>FD Commander works fine without email. By default, all email features are hidden from the UI so nobody sees broken "forgot password" links or grayed-out notification checkboxes. The admin creates accounts and sets passwords manually, and operators manage their own shifts through the web interface.</p>
 
-      <p>If your club wants password resets, invitation emails, shift reminders, or security alerts, you just need to point FD Commander at an SMTP server. Once configured, the hidden features appear automatically.</p>
+      <p>If your club wants password resets, invitation emails, shift reminders, or security alerts, point FD Commander at an SMTP server. Once it's configured, the hidden features will appear automatically.</p>
 
       <h2>What Gets Unlocked</h2>
 
@@ -243,17 +248,17 @@
 
       <ol>
         <li><strong>Forgot password link</strong> on the login page. Without email, the link doesn't exist because there's no way to deliver a reset token. With email, operators can reset their own passwords without bothering the admin.</li>
-        <li><strong>Send password reset email</strong> option in the admin panel. When an admin resets a user's password, they can choose to email a reset link instead of setting a password manually.</li>
-        <li><strong>Send invitation email</strong> checkbox when creating a new user. The admin can have FD Commander email the new user with a link to set their password, instead of handing them a temporary password in person.</li>
-        <li><strong>Email notifications</strong> section on each user's profile page. This includes toggles for security alerts, event notifications, and system announcements.</li>
-        <li><strong>Email shift reminders</strong> checkbox on the profile page. When enabled, operators get an email before their scheduled shifts.</li>
+        <li><strong>Send password reset email</strong> option in the admin's <strong>Reset Password</strong> dialog. When an admin resets a user's password, they can choose to email a reset link instead of setting a password manually.</li>
+        <li><strong>Send invitation email (user sets own password)</strong> checkbox when creating a new user. The admin can have FD Commander email the new user with a link to set their password, instead of handing them a temporary password in person.</li>
+        <li><strong>Email Notifications</strong> section on each user's profile page. Security alerts are always on, and there are toggles for <strong>Event Notifications</strong>, <strong>System Announcements</strong>, and <strong>Email weather alerts</strong>.</li>
+        <li><strong>Email shift reminders</strong> checkbox in the profile's shift reminder settings. When it's checked, operators get an email before their scheduled shifts in addition to the in-app notification.</li>
       </ol>
 
       <p>If email is never configured, none of these elements appear in the UI. Operators never see features they can't use.</p>
 
       <div class="callout info">
         <div class="callout-title">How detection works</div>
-        <p>FD Commander checks the <code>MAIL_MAILER</code> value in your <code>.env</code> file. If it's set to <code>log</code> or <code>array</code> (the defaults when email isn't configured), all email features are disabled. Any real transport like <code>smtp</code>, <code>ses</code>, or <code>mailgun</code> enables them.</p>
+        <p>FD Commander checks the <code>MAIL_MAILER</code> value in your <code>.env</code> file. If it's set to <code>log</code> or <code>array</code> (the defaults when email isn't configured), all email features are disabled. Setting it to <code>smtp</code> enables them.</p>
       </div>
 
       <h2>Configuring SMTP</h2>
@@ -270,15 +275,22 @@ MAIL_HOST=smtp.example.com
 MAIL_PORT=587
 MAIL_USERNAME=your-smtp-username
 MAIL_PASSWORD=your-smtp-password
-MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=fieldday@yourcallsign.com
 MAIL_FROM_NAME="FD Commander"</div>
 
-      <p>After saving the file, clear the config cache so the changes take effect:</p>
+      <p>You don't need an encryption setting. FD Commander picks it from the port: port 587 upgrades the connection with STARTTLS, and port 465 uses TLS from the start.</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">cd /var/www/fd-commander && sudo php artisan config:cache</span></div>
+      <p>After saving the file, rebuild the cached configuration as the <code>fdcommander</code> user, then restart the web server and the queue worker so they load the new settings:</p>
 
-      <p>That's it. The email features will appear in the UI on the next page load.</p>
+      <div class="code-block"><span class="prompt">$</span> <span class="cmd">cd /var/www/fd-commander &amp;&amp; sudo -u fdcommander php artisan optimize</span>
+<span class="prompt">$</span> <span class="cmd">sudo systemctl restart fdcommander fdcommander-queue fdcommander-scheduler</span></div>
+
+      <p>The email features will appear in the UI on the next page load.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Running in Docker?</div>
+        <p>Put the same <code>MAIL_*</code> lines in the <code>.env</code> file next to <code>docker-compose.yml</code>, then run <code>docker compose up -d</code>. The container picks up the new settings when it's recreated.</p>
+      </div>
 
       <h2>Common SMTP Providers</h2>
 
@@ -287,16 +299,13 @@ MAIL_FROM_NAME="FD Commander"</div>
       <h3>Gmail (Google Workspace or personal)</h3>
 
       <div class="code-block">MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_ENCRYPTION=tls</div>
+MAIL_PORT=587</div>
 
       <p>You'll need to generate an <strong>App Password</strong> in your Google account settings. Regular passwords won't work if 2FA is enabled (and it should be).</p>
 
       <h3>Amazon SES</h3>
 
-      <div class="code-block">MAIL_MAILER=ses</div>
-
-      <p>If you're already running on AWS, SES is the simplest option. Set your AWS credentials in the <code>.env</code> file and change <code>MAIL_MAILER</code> to <code>ses</code> instead of <code>smtp</code>.</p>
+      <p>Use SES through its SMTP interface. Create SMTP credentials in the SES console, set <code>MAIL_HOST</code> to your region's SMTP endpoint (for example, <code>email-smtp.us-east-1.amazonaws.com</code>), and keep <code>MAIL_MAILER=smtp</code>. FD Commander doesn't include the AWS SDK, so <code>MAIL_MAILER=ses</code> won't work.</p>
 
       <h3>Mailgun / Postmark / SendGrid</h3>
 
@@ -315,16 +324,16 @@ MAIL_ENCRYPTION=tls</div>
 
       <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo tail -50 /var/www/fd-commander/storage/logs/laravel.log</span></div>
 
-      <p>Common problems: wrong SMTP port (try 465 with <code>MAIL_ENCRYPTION=ssl</code> if 587 doesn't work), incorrect App Password, or the "from" address not being verified with your email provider.</p>
+      <p>Common problems: wrong SMTP port (try 465 if 587 doesn't work), incorrect App Password, or the "from" address not being verified with your email provider.</p>
 
       <div class="callout warning">
         <div class="callout-title">Backend guard</div>
-        <p>Even if a notification preference is somehow set in the database while email is unconfigured, FD Commander won't try to send it. The <code>ReminderService</code> checks whether email is configured before every send and short-circuits if it's not. This prevents queued jobs from failing silently or throwing errors.</p>
+        <p>Even if a notification preference is somehow set in the database while email is unconfigured, FD Commander won't try to send it. The <code>ReminderService</code> checks whether email is configured before every send and short-circuits if it's not.</p>
       </div>
 
       <h2>Disabling Email Again</h2>
 
-      <p>If you want to turn email features back off, set <code>MAIL_MAILER=log</code> in your <code>.env</code> file and clear the config cache. The UI elements will disappear and no emails will be sent.</p>
+      <p>If you want to turn email features back off, set <code>MAIL_MAILER=log</code> in your <code>.env</code> file, then run the same <code>optimize</code> and restart commands. The UI elements will disappear and no emails will be sent.</p>
 
       <div class="guide-nav">
         <a href="index.html">&larr; All Guides</a>
@@ -337,6 +346,7 @@ MAIL_ENCRYPTION=tls</div>
 
 <footer></footer>
 <script src="../footer.js"></script>
+<script src="../toc.js"></script>
 
 </body>
 </html>
