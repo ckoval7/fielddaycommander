@@ -29,13 +29,7 @@ class DemoMiddleware
         }
 
         // Allow demo infrastructure routes through without demo DB switching.
-        // These operate on the main database (landing, provisioning, analytics).
-        // Use path matching instead of routeIs() because DemoMiddleware runs before
-        // SubstituteBindings in the priority list, so route names are not yet available.
-        if ($request->is(
-            'demo', 'demo/provision', 'demo/reset', 'demo/join/*', 'demo/analytics/beacon',
-            'demo/analytics', 'demo/analytics/api', 'demo/analytics/sessions/*/events',
-        )) {
+        if (self::isInfrastructureRequest($request)) {
             return $next($request);
         }
 
@@ -77,6 +71,22 @@ class DemoMiddleware
         }
 
         return $next($request);
+    }
+
+    /**
+     * Whether the request is for a demo infrastructure route. These operate on
+     * the main database (landing, provisioning, analytics), so the visitor's
+     * database is not switched in and their users cannot be resolved.
+     *
+     * Uses path matching instead of routeIs() because DemoMiddleware runs before
+     * SubstituteBindings in the priority list, so route names are not yet available.
+     */
+    public static function isInfrastructureRequest(Request $request): bool
+    {
+        return config('demo.enabled') && $request->is(
+            'demo', 'demo/provision', 'demo/reset', 'demo/join/*', 'demo/analytics/beacon',
+            'demo/analytics', 'demo/analytics/api', 'demo/analytics/sessions/*/events',
+        );
     }
 
     /**

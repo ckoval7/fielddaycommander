@@ -10,6 +10,7 @@ use App\Models\StationDevice;
 use App\Models\User;
 use App\Support\DemoCookie;
 use App\Support\StationMode;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -115,3 +116,18 @@ test('a browser revoked elsewhere is signed back in as the visitor', function ()
 
     $this->assertAuthenticatedAs($this->visitor);
 });
+
+test('demo infrastructure requests do not end a station-mode session', function (string $method, string $uri) {
+    // These requests skip the visitor's database, so the signed-in operator cannot be resolved.
+    $this->withSession([
+        Auth::guard('web')->getName() => 999999,
+        StationMode::SESSION_KEY => $this->device->id,
+    ])
+        ->withCookies([DemoCookie::NAME => $this->demoCookie, StationMode::COOKIE => 'device-token'])
+        ->call($method, $uri);
+
+    expect(session(StationMode::SESSION_KEY))->toBe($this->device->id);
+})->with([
+    'analytics beacon' => ['POST', '/demo/analytics/beacon'],
+    'demo landing' => ['GET', '/demo'],
+]);

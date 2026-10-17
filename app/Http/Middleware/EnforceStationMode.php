@@ -15,6 +15,12 @@ class EnforceStationMode
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Demo infrastructure requests run without the visitor's database, so the
+        // operator cannot be resolved there; don't mistake that for a sign-out.
+        if (DemoMiddleware::isInfrastructureRequest($request)) {
+            return $next($request);
+        }
+
         if ($request->hasSession() && $request->session()->has(StationMode::SESSION_KEY)) {
             return $this->handleOperatorSession($request, $next);
         }
