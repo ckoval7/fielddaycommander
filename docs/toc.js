@@ -108,8 +108,18 @@
   // Highlight the section currently in view
   var links = aside.querySelectorAll('a');
   var ticking = false;
+  // Keep the panel from running past the end of the content into the footer
+  function pin() {
+    if (getComputedStyle(aside).display === 'none') { return; }
+    var naturalTop = parseFloat(getComputedStyle(document.documentElement).fontSize) * 6;
+    var contentBottom = content.getBoundingClientRect().bottom;
+    var height = aside.offsetHeight;
+    aside.style.top = Math.min(naturalTop, contentBottom - height) + 'px';
+  }
+
   function update() {
     ticking = false;
+    pin();
     var line = window.innerHeight * 0.3;
     var current = null;
     for (var i = 0; i < targets.length; i++) {
