@@ -193,12 +193,11 @@
                         <div
                             class="radial-progress shrink-0 mx-auto sm:mx-0 {{ $summary['coverage_percent'] >= 80 ? 'text-success' : ($summary['coverage_percent'] >= 50 ? 'text-warning' : 'text-error') }}"
                             style="--value: {{ $summary['coverage_percent'] }}; --size: 7rem; --thickness: 0.6rem;"
-                            role="progressbar"
-                            aria-valuenow="{{ $summary['coverage_percent'] }}"
-                            aria-label="Overall shift coverage"
+                            aria-hidden="true"
                         >
                             <span class="text-2xl font-bold text-base-content">{{ $summary['coverage_percent'] }}%</span>
                         </div>
+                        <progress class="sr-only" value="{{ $summary['coverage_percent'] }}" max="100" aria-label="Overall shift coverage">{{ $summary['coverage_percent'] }}%</progress>
 
                         <div class="grid grid-cols-2 gap-3 flex-1">
                             <div class="rounded-lg bg-base-200/50 p-3">

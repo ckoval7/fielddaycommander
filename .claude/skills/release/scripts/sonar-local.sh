@@ -27,7 +27,7 @@ api() { curl -fsS -u "admin:${SONAR_ADMIN_PASSWORD}" "$@"; }
 wait_for_up() {
     printf 'Waiting for SonarQube'
     for _ in $(seq 1 120); do
-        if [ "$(curl -fsS "${URL}/api/system/status" 2>/dev/null | jq -r .status 2>/dev/null)" = "UP" ]; then
+        if [[ "$(curl -fsS "${URL}/api/system/status" 2>/dev/null | jq -r .status 2>/dev/null)" = "UP" ]]; then
             echo ' up'
             return 0
         fi
@@ -42,7 +42,7 @@ cloud_token() {
     local repo token
     repo="$(git rev-parse --show-toplevel)"
     token="$(grep -E '^SONAR_TOKEN=' "${repo}/.env" | cut -d= -f2- | tr -d '"')"
-    [ -n "${token}" ] || { echo "SONAR_TOKEN missing from ${repo}/.env" >&2; exit 1; }
+    [[ -n "${token}" ]] || { echo "SONAR_TOKEN missing from ${repo}/.env" >&2; exit 1; }
     echo "${token}"
 }
 
@@ -72,7 +72,7 @@ import_cloud_profiles() {
 
 cmd_up() {
     mkdir -p "${STATE_DIR}"
-    if [ -f "${STATE_FILE}" ] && docker ps --format '{{.Names}}' | grep -qx "${NAME}"; then
+    if [[ -f "${STATE_FILE}" ]] && docker ps --format '{{.Names}}' | grep -qx "${NAME}"; then
         echo "Already running at ${URL}"
         return 0
     fi
@@ -103,7 +103,7 @@ copy_source() {
     git -C "${repo}" archive HEAD | tar -x -C "${SRC_DIR}"
     # Overlay uncommitted and untracked (non-ignored) files so the scan sees them.
     while IFS= read -r -d '' file; do
-        if [ -f "${repo}/${file}" ]; then
+        if [[ -f "${repo}/${file}" ]]; then
             mkdir -p "${SRC_DIR}/$(dirname "${file}")"
             cp "${repo}/${file}" "${SRC_DIR}/${file}"
         else
@@ -114,7 +114,7 @@ copy_source() {
 
 report() {
     local page=1 total=1 issues='[]' batch
-    while [ $(( (page - 1) * 500 )) -lt "${total}" ]; do
+    while [[ $(( (page - 1) * 500 )) -lt "${total}" ]]; do
         batch="$(api "${URL}/api/issues/search?componentKeys=${PROJECT}&issueStatuses=OPEN,CONFIRMED&ps=500&p=${page}")"
         total="$(jq .total <<<"${batch}")"
         issues="$(jq -s '.[0] + .[1].issues' <(echo "${issues}") <(echo "${batch}"))"
@@ -148,7 +148,7 @@ sonarcloud_gap_checks() {
 }
 
 cmd_scan() {
-    [ -f "${STATE_FILE}" ] || { echo "Run '$0 up' first" >&2; exit 1; }
+    [[ -f "${STATE_FILE}" ]] || { echo "Run '$0 up' first" >&2; exit 1; }
     # shellcheck disable=SC1090
     source "${STATE_FILE}"
     copy_source

@@ -130,7 +130,7 @@ class Landing extends Component
             ? $existing
             : $resolver->resolveOrCreate($this->callSign, $this->firstName, $this->lastName);
 
-        StationMode::startSession(request(), $device, $user->id);
+        StationMode::startSession($device, $user->id);
 
         $this->redirectRoute('logging.station-select');
     }
