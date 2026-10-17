@@ -58,6 +58,7 @@ Props from controller:
                     />
                 @endif
 
+                @unless(\App\Support\StationMode::isActive())
                 {{-- Edit Layout Button --}}
                 <x-button
                     label="Edit Layout"
@@ -73,6 +74,7 @@ Props from controller:
                     class="btn-ghost btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                     @click="Livewire.dispatch('open-modal', { modalId: 'dashboard-manager' })"
                 />
+                @endunless
             </div>
         </div>
 
@@ -80,7 +82,9 @@ Props from controller:
         <livewire:dashboard.dashboard-editor :dashboard="$dashboard" />
 
         {{-- Dashboard Manager Modal --}}
-        <livewire:dashboard.dashboard-manager :current-dashboard-id="$dashboard->id" />
+        @unless(\App\Support\StationMode::isActive())
+            <livewire:dashboard.dashboard-manager :current-dashboard-id="$dashboard->id" />
+        @endunless
     </div>
 
     @push('styles')

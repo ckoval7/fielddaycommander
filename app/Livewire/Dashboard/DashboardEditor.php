@@ -4,6 +4,7 @@ namespace App\Livewire\Dashboard;
 
 use App\Models\Dashboard;
 use App\Services\DashboardService;
+use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -107,6 +108,8 @@ class DashboardEditor extends Component
      */
     public function enterEditMode(): void
     {
+        $this->ensureLayoutCanBeEdited();
+
         $this->originalWidgets = $this->widgets->map(fn ($w) => $w)->values();
         $this->originalTitle = $this->title;
         $this->originalDescription = $this->description;
@@ -136,6 +139,8 @@ class DashboardEditor extends Component
      */
     public function saveLayout(DashboardService $service): void
     {
+        $this->ensureLayoutCanBeEdited();
+
         // Validate title
         $this->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -599,6 +604,14 @@ class DashboardEditor extends Component
     public function getWidgetTypeIcon(string $type): string
     {
         return config("dashboard.widget_types.{$type}.icon", 'phosphor-cube');
+    }
+
+    /**
+     * Station-mode operators can view the dashboard but not change its layout.
+     */
+    private function ensureLayoutCanBeEdited(): void
+    {
+        abort_if(StationMode::isActive(), 403, 'The dashboard layout cannot be edited in station mode.');
     }
 
     public function render(): View
