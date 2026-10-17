@@ -8,8 +8,10 @@
     <title>{{ isset($title) ? $title.' - '.(\App\Models\Setting::get('site_name') ?: config('app.name')) : (\App\Models\Setting::get('site_name') ?: config('app.name')) }}</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
-    {{-- Set theme before page renders to prevent flash. Re-apply after
-         wire:navigate, which strips unknown attributes from <html>. --}}
+    {{-- Set theme before page renders to prevent flash. wire:navigate strips
+         unknown attributes from <html>, so re-apply in onSwap (synchronously,
+         before paint) to avoid a flash of the prefersdark theme, and again on
+         livewire:navigated as a fallback. --}}
     <script>
         (function() {
             function applyTheme() {
@@ -21,6 +23,7 @@
                 document.documentElement.setAttribute('data-theme', theme);
             }
             applyTheme();
+            document.addEventListener('livewire:navigating', (event) => event.detail.onSwap(applyTheme));
             document.addEventListener('livewire:navigated', applyTheme);
         })();
     </script>
