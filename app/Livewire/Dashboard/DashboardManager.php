@@ -5,6 +5,7 @@ namespace App\Livewire\Dashboard;
 use App\Exceptions\DashboardAuthorizationException;
 use App\Models\Dashboard;
 use App\Services\DashboardService;
+use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -37,6 +38,14 @@ class DashboardManager extends Component
      * viewer somewhere that still exists.
      */
     public ?int $currentDashboardId = null;
+
+    /**
+     * Station-mode operators can't create, change or delete dashboards.
+     */
+    public function boot(): void
+    {
+        abort_if(StationMode::isActive(), 403, 'Dashboards cannot be managed in station mode.');
+    }
 
     public function mount(?int $currentDashboardId = null): void
     {

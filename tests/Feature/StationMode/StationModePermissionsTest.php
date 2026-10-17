@@ -1,6 +1,9 @@
 <?php
 
+use App\Livewire\Dashboard\DashboardEditor;
+use App\Livewire\Dashboard\DashboardManager;
 use App\Models\Contact;
+use App\Models\Dashboard;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Setting;
@@ -9,6 +12,7 @@ use App\Models\StationDevice;
 use App\Models\User;
 use App\Support\StationMode;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -133,4 +137,44 @@ test('normal sessions do not include the idle session warning', function () {
         ->get(route('logbook.index'))
         ->assertOk()
         ->assertDontSee('data-station-mode-idle-warning', false);
+});
+
+test('station-mode dashboard hides the edit and manage controls', function () {
+    $this->actingAs($this->admin)
+        ->withSession([StationMode::SESSION_KEY => $this->device->id])
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertDontSee('Edit Layout')
+        ->assertDontSee('dashboard-manager');
+});
+
+test('normal dashboard shows the edit and manage controls', function () {
+    $this->actingAs($this->admin)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Edit Layout')
+        ->assertSee('dashboard-manager');
+});
+
+test('station-mode session cannot edit the dashboard layout', function (string $method) {
+    $dashboard = Dashboard::factory()->create(['user_id' => $this->admin->id]);
+    $this->actingAs($this->admin);
+
+    $component = Livewire::test(DashboardEditor::class, ['dashboard' => $dashboard]);
+    session([StationMode::SESSION_KEY => $this->device->id]);
+
+    $component->call($method)->assertForbidden();
+})->with(['enterEditMode', 'saveLayout']);
+
+test('station-mode session cannot manage dashboards', function () {
+    $dashboard = Dashboard::factory()->create(['user_id' => $this->admin->id]);
+    $this->actingAs($this->admin);
+
+    $component = Livewire::test(DashboardManager::class, ['currentDashboardId' => $dashboard->id])
+        ->set('newTitle', 'Sneaky');
+    session([StationMode::SESSION_KEY => $this->device->id]);
+
+    $component->call('createDashboard')->assertForbidden();
+
+    expect(Dashboard::where('title', 'Sneaky')->exists())->toBeFalse();
 });
