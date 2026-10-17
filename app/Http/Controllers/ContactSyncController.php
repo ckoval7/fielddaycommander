@@ -32,12 +32,17 @@ class ContactSyncController extends Controller
             abort(403, 'This browser can only log for its assigned station.');
         }
 
-        if ($session->end_time !== null) {
+        // Contacts queued offline can arrive after their session was ended
+        // (take-over, idle timeout, End Session). Judge them by when they were
+        // made, not when they synced.
+        $qsoTime = Carbon::parse($request->qso_time);
+
+        if ($session->end_time !== null && ! $qsoTime->between($session->start_time, $session->end_time)) {
             return response()->json(['message' => 'This operating session has ended.'], 422);
         }
 
         $event = $session->station->eventConfiguration?->event;
-        if (! $event || Carbon::parse($event->end_time)->lt(appNow())) {
+        if (! $event || Carbon::parse($event->end_time)->lt($qsoTime)) {
             return response()->json(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.'], 422);
         }
 
