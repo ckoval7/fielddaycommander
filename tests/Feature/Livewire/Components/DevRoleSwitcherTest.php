@@ -179,3 +179,18 @@ it('ignores a role override in the session for effective roles in production', f
 
     expect($user->fresh()->roles->pluck('name')->all())->not->toContain('System Administrator');
 });
+
+it('renders and stores overrides in production demo mode with developer mode off', function () {
+    config(['developer.enabled' => false, 'demo.enabled' => true]);
+    $this->app['env'] = 'production';
+    Role::create(['name' => 'Operator', 'guard_name' => 'web']);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(DevRoleSwitcher::class)
+        ->assertSee('Role Switcher')
+        ->set('role', 'Operator');
+
+    expect(session('dev_role_override'))->toBe('Operator');
+});

@@ -78,3 +78,15 @@ test('allows developer mode in production only with the explicit override', func
 
     $this->registrar->shouldHaveReceived('forgetCachedPermissions')->once();
 });
+
+test('keeps the role override in production demo mode with developer mode off', function () {
+    config(['developer.enabled' => false, 'demo.enabled' => true]);
+    $this->app['env'] = 'production';
+    $this->actingAs(User::factory()->create());
+    session(['dev_role_override' => 'Operator']);
+
+    expect(runDevRoleOverride())->toBe('passed through');
+
+    $this->registrar->shouldHaveReceived('forgetCachedPermissions')->once();
+    expect(session('dev_role_override'))->toBe('Operator');
+});

@@ -691,7 +691,6 @@ configure_env() {
     # Demo mode
     if $DEMO_MODE; then
         set_env "DEMO_MODE" "true"
-        set_env "DEVELOPER_MODE" "true"
         set_env "DB_CONNECTION" "demo"
         set_env "DEMO_DB_DATABASE" "$DEMO_DB_NAME"
         set_env "DEMO_DB_USERNAME" "$DEMO_DB_USER"

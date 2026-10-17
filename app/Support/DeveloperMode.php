@@ -30,10 +30,12 @@ class DeveloperMode
      * role switcher that sets them) are available for this request.
      *
      * Kept separate from isEnabled() so a deployment can allow role
-     * switching without exposing the rest of the developer tools.
+     * switching without exposing the rest of the developer tools. The public
+     * demo runs with APP_ENV=production and developer mode off, and relies on
+     * the override to apply each visitor's chosen role.
      */
     public static function allowsRoleOverride(): bool
     {
-        return self::isEnabled();
+        return self::isEnabled() || (bool) config('demo.enabled');
     }
 }

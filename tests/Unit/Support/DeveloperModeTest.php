@@ -27,3 +27,11 @@ test('production can opt in to developer mode and role overrides', function () {
     expect(DeveloperMode::isEnabled())->toBeTrue()
         ->and(DeveloperMode::allowsRoleOverride())->toBeTrue();
 });
+
+test('demo mode allows role overrides in production without the rest of developer mode', function () {
+    config(['developer.enabled' => false, 'demo.enabled' => true]);
+    $this->app['env'] = 'production';
+
+    expect(DeveloperMode::isEnabled())->toBeFalse()
+        ->and(DeveloperMode::allowsRoleOverride())->toBeTrue();
+});
