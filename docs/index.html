@@ -4,17 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring</title>
-<meta name="description" content="Free, open-source Field Day planning, logging, and scoring for ARRL Field Day and Winter Field Day. Volunteer scheduling, equipment tracking, and safety checklists, plus a built-in multi-station logger with live dupe checking and Cabrillo export. No internet required.">
+<meta name="description" content="Free, open-source Field Day planning, logging, and scoring for ARRL Field Day and Winter Field Day. Volunteer scheduling, equipment tracking, and safety checklists, plus a built-in multi-station logger with live dupe checking, station mode for shared station computers, and Cabrillo and ADIF export. No internet required.">
 <link rel="canonical" href="https://fielddaycommander.org/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring">
-<meta property="og:description" content="Free Field Day planning, logging, and scoring: volunteer scheduling, a built-in multi-station logger, live scoring with all 18 ARRL bonus categories, and Cabrillo export. Runs on a Raspberry Pi.">
+<meta property="og:description" content="Free Field Day planning, logging, and scoring for ARRL Field Day and Winter Field Day: volunteer scheduling, a built-in multi-station logger, live scoring with all 18 ARRL bonus categories or WFD objectives, and Cabrillo and ADIF export. Runs on a Raspberry Pi.">
 <meta property="og:url" content="https://fielddaycommander.org/">
-<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring">
-<meta name="twitter:description" content="Free Field Day planning, logging, and scoring: volunteer scheduling, a built-in multi-station logger, live scoring, and all 18 ARRL bonus categories.">
-<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:description" content="Free Field Day planning, logging, and scoring for ARRL Field Day and Winter Field Day: volunteer scheduling, a built-in multi-station logger, and live scoring.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fd-commander.css">
 <style>
@@ -103,6 +108,10 @@
   /* ── FEATURES GRID ── */
   .features { background: var(--bg-secondary); }
   .features-header { text-align: center; margin-bottom: 4rem; }
+  .app-preview { padding-top: 2rem; padding-bottom: 3rem; }
+  .app-preview .features-header { margin-bottom: 2.5rem; }
+  .app-preview-shot img { box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45); }
+  .app-preview-shot figcaption { text-align: center; }
   .features-header .section-desc { margin: 0.5rem auto 0; }
   .features-grid {
     display: grid;
@@ -255,7 +264,31 @@
   "name": "Field Day Commander",
   "alternateName": "FD Commander",
   "url": "https://fielddaycommander.org/",
-  "description": "Free, open-source Field Day logging software and event management platform for ARRL Field Day and Winter Field Day. Includes a built-in multi-station logger with real-time dupe checking, live scoring, and Cabrillo export, so no other logging software is required. Also handles volunteer scheduling, equipment tracking, and safety checklists. Runs on a local network with no internet connection, including on a Raspberry Pi.",
+  "image": "https://fielddaycommander.org/og-image.png",
+  "screenshot": [
+    {
+      "@type": "ImageObject",
+      "url": "https://fielddaycommander.org/screenshots/dashboard-dark.png",
+      "caption": "FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "@type": "ImageObject",
+      "url": "https://fielddaycommander.org/screenshots/log-contact-dark.png",
+      "caption": "FD Commander logging screen: single-field exchange entry with the numbered Recent QSOs list",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "@type": "ImageObject",
+      "url": "https://fielddaycommander.org/screenshots/scoring-dark.png",
+      "caption": "FD Commander scoring page: QSO points, power multiplier, bonus points, and final score",
+      "width": 1920,
+      "height": 1080
+    }
+  ],
+  "description": "Free, open-source Field Day logging software and event management platform for ARRL Field Day and Winter Field Day. Includes a built-in multi-station logger with real-time dupe checking, live scoring, and Cabrillo and ADIF export, so no other logging software is required. Also handles volunteer scheduling, equipment tracking, and safety checklists. Runs on a local network with no internet connection, including on a Raspberry Pi.",
   "applicationCategory": "UtilitiesApplication",
   "applicationSubCategory": "Amateur radio Field Day logger",
   "operatingSystem": "Linux (server); any modern web browser (operators)",
@@ -266,22 +299,26 @@
     "price": "0",
     "priceCurrency": "USD"
   },
-  "keywords": "Field Day logger, Field Day logging software, ARRL Field Day, Winter Field Day, ham radio logging, amateur radio, multi-station logging, Cabrillo",
+  "keywords": "Field Day logger, Field Day logging software, ARRL Field Day, Winter Field Day, WFD, ham radio logging, amateur radio, multi-station logging, Cabrillo, ADIF",
   "featureList": [
     "Built-in browser-based Field Day logger; no other logging software required",
     "Multi-station, multi-operator logging with real-time dupe checking across all stations and bands",
-    "Cabrillo export for ARRL Field Day and Winter Field Day submission",
-    "Live scoring with power multiplier and all 18 ARRL Field Day bonus categories",
+    "Cabrillo export for ARRL Field Day and Winter Field Day submission, plus ADIF export and a Winter Field Day Event Summary PDF",
+    "Live ARRL Field Day scoring with power multiplier and all 18 ARRL bonus categories",
+    "Winter Field Day scoring with objectives and the objective multiplier",
+    "Works on club computers, members' own devices, or a mix, with station mode for shared station computers where operators sign in with a callsign and no password",
+    "Station readiness: mark a station unavailable and block new sessions until it is fixed",
     "Runs offline on a local network, including on a Raspberry Pi",
     "Contacts queue on the device and sync automatically if a browser loses its server connection",
-    "Volunteer and operator shift scheduling",
+    "Volunteer and operator shift scheduling with a coverage dashboard and gap list",
     "Station and equipment management",
     "15-item ARRL safety checklist",
     "Visitor guestbook",
-    "NTS radiogram and W1AW bulletin tracking",
+    "NTS radiogram tracking and W1AW or WFD bulletin capture",
     "Live ARRL/RAC section map",
     "Optional contact intake over UDP from N1MM Logger+ and digital-mode software such as WSJT-X, JTDX, and fldigi",
-    "ADIF file import"
+    "ADIF file import",
+    "Backup and restore scripts with scheduled hourly and nightly backups"
   ],
   "sameAs": [
     "https://github.com/ckoval7/fielddaycommander"
@@ -296,7 +333,7 @@
 <script src="nav.js"></script>
 
 <section class="hero">
-  <div class="hero-photo"><img src="homepagebg-dark.webp" alt="FD Commander Field Day logging software dashboard showing live scoring and multi-station contacts"></div>
+  <div class="hero-photo"><img src="homepagebg-dark.webp" alt=""></div>
   <div class="container">
     <h1>
       The complete<br><span class="gradient">Field Day operations platform.</span>
@@ -333,6 +370,20 @@
   </div>
 </section>
 
+<section class="app-preview">
+  <div class="container">
+    <div class="features-header">
+      <div class="section-label">See It Running</div>
+      <h2 class="section-title">The dashboard during Field Day</h2>
+      <p class="section-desc">Every station's contacts feed one live dashboard: your score, QSO rate, sections worked, and contacts by band.</p>
+    </div>
+    <figure class="screenshot app-preview-shot">
+      <img src="screenshots/dashboard-dark.png" alt="FD Commander dashboard during Field Day: total score 898, 52.5 QSOs per hour, 40 of 86 sections worked, a time-remaining countdown, and a chart of QSOs per band" width="1920" height="1080">
+      <figcaption>Want to click around? <a href="https://demo.fielddaycommander.org/" target="_blank" rel="noopener">Try the live demo</a>.</figcaption>
+    </figure>
+  </div>
+</section>
+
 <div class="signal-divider">
   <div class="signal-bar" style="height:6px"></div>
   <div class="signal-bar" style="height:12px"></div>
@@ -358,7 +409,7 @@
       <div class="feature-card">
         <div class="feature-icon orange">&#128197;</div>
         <h3>Volunteer Scheduling</h3>
-        <p>Build the full 24-hour schedule before the event. Operators sign themselves up for open slots, managers spot coverage gaps, and everyone knows when they're on.</p>
+        <p>Build the full 24-hour schedule before the event. Operators can sign themselves up for open slots, the shift dashboard shows managers every coverage gap, and everyone knows when they're on.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon emerald">&#9881;</div>
@@ -368,37 +419,52 @@
       <div class="feature-card">
         <div class="feature-icon green">&#9745;</div>
         <h3>Safety Checklists</h3>
-        <p>The full 15-item ARRL safety checklist, built in. Check off items as you go, track required-vs-complete progress, and earn the 100-point Safety Officer bonus when everything's verified.</p>
+        <p>The safety checklist that matches your event, built in. Check off items as you go, see what's still required, and the safety bonus is credited automatically once everything's verified.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon amber">&#9889;</div>
         <h3>Built-In Multi-Station Logging</h3>
-        <p>Operators log from any browser with a fast single-field entry flow, with no other logging software needed. Prefer N1MM Logger+, or running FT8 in WSJT-X? Those contacts arrive over UDP, and ADIF files import through a guided wizard. Either way, dupes are caught instantly across all stations and everything feeds the same live score.</p>
+        <p>Operators log from any browser with a fast single-field entry flow, with no other logging software needed. Prefer N1MM Logger+, or running FT8 in WSJT-X? Those contacts arrive over UDP, and ADIF files can be imported through a guided wizard. Either way, dupes are caught instantly across all stations and everything feeds the same live score.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon green">&#9776;</div>
-        <h3>Live Scoring &amp; Cabrillo Export</h3>
-        <p>Your score updates in real time as contacts come in: QSO points, power multiplier, bonus points, the whole formula. When the event ends, export a clean Cabrillo file for ARRL submission.</p>
+        <h3>Live Scoring &amp; Log Export</h3>
+        <p>Your score updates in real time as contacts come in, with every bonus or objective tracked against your event's rules. When the event ends, export a clean Cabrillo file for submission, plus an ADIF file so operators can load the contacts into their own logs.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon orange">&#128221;</div>
         <h3>Visitor Guestbook</h3>
-        <p>Let visitors sign in when they stop by your site. Distinguish between general public and licensed hams, record in-person and remote entries, and track attendance for bonus points.</p>
+        <p>Let visitors sign in when they stop by your site. Record who they are (general public, club members, youth, media, and more) and whether they came in person or online. Elected official and agency visits are flagged for their bonus points.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon teal">&#9993;</div>
         <h3>NTS Message Traffic</h3>
-        <p>Log radiograms and track NTS message handling: originated, relayed, and received. Capture the Section Manager message and W1AW bulletin for bonus points, and print formal radiogram copies.</p>
+        <p>Log radiograms and track NTS message handling: originated, relayed, and received. Capture the Section Manager message and the bulletin for bonus credit, and print formal radiogram copies.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon amber">&#127758;</div>
         <h3>Live Section Map</h3>
-        <p>An interactive map of all 86 ARRL/RAC sections that lights up as contacts come in. Filter by call area, color by band, QSO count, or recency. Put it on a big screen so the whole club can see which sections you still need.</p>
+        <p>An interactive map of every ARRL and RAC section that lights up as contacts come in. You can filter it by call area and color it by band, QSO count, or recency. Put it on a big screen so the whole club can see which sections you still need.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon teal">&#128268;</div>
         <h3>Runs on Your LAN, No Internet</h3>
-        <p>The entire platform runs air-gapped on your local network. Set up a server in the field (even on a Raspberry Pi) with zero external dependencies.</p>
+        <p>The whole platform runs on your local network, with no internet needed. Set up a server in the field, even on a Raspberry Pi.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon amber">&#128214;</div>
+        <h3>The Right Rules for Your Event</h3>
+        <p>FD Commander has the rule sets for both ARRL Field Day and Winter Field Day, and it uses the right one for your event. The exchange, bonuses or objectives, and Cabrillo format all follow along, so you don't have to set any of it up by hand.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon emerald">&#128187;</div>
+        <h3>Club Computers or Your Own</h3>
+        <p>Log from club computers, members' own laptops, or a mix. Bind a shared computer to its station, and operators can take turns by typing their callsign, with no passwords to juggle. If someone walks away mid-session, it will end itself.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon orange">&#128190;</div>
+        <h3>Backups on a Schedule</h3>
+        <p>One command sets up hourly database backups and a nightly full backup of your log, photos, and settings. Copy the files somewhere safe, and if the SD card dies, the restore script can put everything back on a new one.</p>
       </div>
     </div>
   </div>
@@ -430,7 +496,7 @@
       <div class="step-card">
         <div class="step-number">04</div>
         <h3>Submit</h3>
-        <p>Export a clean Cabrillo file and submit to ARRL. Your score, contacts, and bonus points are all accounted for.</p>
+        <p>Export a clean Cabrillo file and submit it to the ARRL or the WFDA. Your score, contacts, and bonuses or objectives are all accounted for.</p>
       </div>
     </div>
   </div>
@@ -457,7 +523,7 @@
       <div class="role-card">
         <span class="role-tag captain">Station Captain</span>
         <h3>Runs a Station</h3>
-        <p>Manages a single operating position. Tracks equipment, coordinates band and mode usage, and keeps operators on schedule.</p>
+        <p>Manages an operating position. Tracks equipment, coordinates band and mode usage, marks the station down when the amp blows a final, and sets up the station laptop in station mode.</p>
       </div>
       <div class="role-card">
         <span class="role-tag operator">Operator</span>

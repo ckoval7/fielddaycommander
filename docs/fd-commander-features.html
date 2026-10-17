@@ -4,17 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Features - FD Commander Field Day Software</title>
-<meta name="description" content="What makes FD Commander different from other Field Day logging software: multi-station contact logging, integration with N1MM Logger+, WSJT-X, and fldigi, ADIF import, live scoreboard, all 18 ARRL bonus categories, volunteer scheduling, NTS messages, and offline-first operation.">
+<meta name="description" content="What makes FD Commander different from other Field Day logging software: multi-station contact logging, station mode for shared station computers, integration with N1MM Logger+, WSJT-X, and fldigi, ADIF import and export, live scoreboard, all 18 ARRL bonus categories, Winter Field Day objectives, volunteer scheduling, NTS messages, and offline-first operation.">
 <link rel="canonical" href="https://fielddaycommander.org/fd-commander-features.html">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Features - FD Commander Field Day Software">
-<meta property="og:description" content="What makes FD Commander different from other Field Day loggers: multi-station logging, live scoring, all 18 bonus categories, and offline-first operation.">
+<meta property="og:description" content="What makes FD Commander different from other Field Day loggers: multi-station logging, live scoring for ARRL Field Day and Winter Field Day, station mode for shared station computers, and offline-first operation.">
 <meta property="og:url" content="https://fielddaycommander.org/fd-commander-features.html">
-<meta property="og:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Features - FD Commander Field Day Software">
-<meta name="twitter:description" content="Multi-station Field Day logging, live scoreboard, all 18 bonus categories, GOTA tracking, NTS messages, and offline-first operation.">
-<meta name="twitter:image" content="https://fielddaycommander.org/homepagebg-dark.webp">
+<meta name="twitter:description" content="Multi-station Field Day logging, live scoreboard, all 18 bonus categories, Winter Field Day objectives, GOTA tracking, and offline-first operation.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fd-commander.css">
 <style>
@@ -57,6 +62,13 @@
     display: flex; align-items: flex-start; gap: 0.65rem;
     color: var(--text-secondary); font-size: 0.9rem;
     margin-bottom: 0.75rem; line-height: 1.5;
+  }
+  .feature-bullets li .bullet-link {
+    margin-left: auto; flex-shrink: 0; white-space: nowrap; padding-left: 1rem;
+  }
+  @media (max-width: 600px) {
+    .feature-bullets li:has(.bullet-link) { flex-wrap: wrap; }
+    .feature-bullets li .bullet-link { margin-left: 1.45rem; padding-left: 0; }
   }
   .feature-bullets li .check {
     color: var(--accent-green); font-weight: 700; flex-shrink: 0;
@@ -226,6 +238,7 @@
         <ul class="feature-bullets">
           <li><span class="check">&#10003;</span> Station definitions with band and mode configuration</li>
           <li><span class="check">&#10003;</span> Volunteer scheduling with shift blocks and gap detection</li>
+          <li><span class="check">&#10003;</span> Station readiness, so a station with a dead antenna can be marked down until it's fixed</li>
           <li><span class="check">&#10003;</span> 15-item ARRL safety checklist with required/complete tracking</li>
           <li><span class="check">&#10003;</span> Event readiness dashboard to see what's done and what's left at a glance</li>
         </ul>
@@ -268,9 +281,10 @@
         <h2>Real-time logging across every station</h2>
         <p>Multiple operators on multiple devices entering contacts at the same time. FD Commander merges everything into a single, unified log in real time. No conflicts, no manual deduplication after the event.</p>
         <ul class="feature-bullets">
-          <li><span class="check">&#10003;</span> Dupes flagged instantly across all stations and bands</li>
+          <li><span class="check">&#10003;</span> Dupes (same call, band, and mode) flagged instantly across every station</li>
           <li><span class="check">&#10003;</span> Section and exchange validation catches typos before they're saved</li>
-          <li><span class="check">&#10003;</span> Cabrillo export ready for ARRL submission</li>
+          <li><span class="check">&#10003;</span> One station per band and mode, enforced when a session starts, plus a warning if someone works one of your own operators</li>
+          <li><span class="check">&#10003;</span> Cabrillo export for ARRL Field Day or Winter Field Day, plus ADIF export for personal logs</li>
           <li><span class="check">&#10003;</span> Single-field entry flow designed for speed: type the exchange, hit Enter, done</li>
         </ul>
       </div>
@@ -279,32 +293,40 @@
           <span class="mock-dot" style="background:var(--accent-rose)"></span>
           <span class="mock-dot" style="background:var(--accent-orange)"></span>
           <span class="mock-dot" style="background:var(--accent-green)"></span>
-          <span style="font-weight:600;">Station 1</span>
-          <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">20m &nbsp;|&nbsp; Phone &nbsp;|&nbsp; 100W</span>
-          <span style="margin-left:0.5rem;font-size:0.7rem;color:var(--accent-green);">&#9679; QSOs: 5</span>
+          <span style="font-weight:600;">HF Phone</span>
+          <span style="margin-left:auto;font-size:0.75rem;color:var(--text-secondary);font-weight:600;">20m &nbsp;|&nbsp; Phone &nbsp;|&nbsp; <span style="font-family:'JetBrains Mono',monospace;color:var(--text-muted);font-weight:400;">100W</span></span>
+          <span style="margin-left:0.5rem;font-size:0.6rem;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;padding:0.1rem 0.4rem;">USB</span>
+          <span style="margin-left:0.75rem;font-size:0.7rem;color:var(--text-muted);">QSOS <span style="font-family:'JetBrains Mono',monospace;color:var(--text-primary);font-weight:700;font-size:0.85rem;">18</span> <span style="color:var(--accent-green);">&#9679;</span></span>
+          <span style="margin-left:0.5rem;font-size:0.65rem;color:var(--accent-rose);border:1px solid var(--accent-rose);border-radius:4px;padding:0.15rem 0.45rem;">End Session</span>
         </div>
         <div class="mock-body">
-          <div style="text-align:center;padding:0.3rem 0 0.5rem;">
-            <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Your Exchange</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;letter-spacing:2px;">W1ABC 3A GA</div>
+          <div style="text-align:center;padding:0.2rem 0 0.6rem;">
+            <div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Your Exchange</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:700;letter-spacing:2px;">W1FDC 3A CT</div>
+            <div style="font-size:0.68rem;color:var(--text-muted);font-style:italic;">Whiskey One Foxtrot Delta Charlie, Three Alpha, Charlie Tango</div>
           </div>
-          <div style="display:flex;align-items:center;gap:0.5rem;margin:0.4rem 0;padding:0.5rem;background:var(--bg-primary);border:1px solid var(--accent-sky);border-radius:6px;">
-            <span style="font-family:'JetBrains Mono',monospace;color:var(--text-primary);font-size:0.95rem;">K1TTT 2A CT</span>
-            <span style="margin-left:auto;background:var(--accent-green);color:#15191e;font-size:0.7rem;font-weight:700;padding:0.25rem 0.7rem;border-radius:4px;">&#10003; Log</span>
-          </div>
-          <div style="font-size:0.65rem;color:var(--text-muted);text-align:center;margin-bottom:0.5rem;">Enter &middot; Log contact &nbsp;&nbsp; Esc &middot; Clear &nbsp;&nbsp; Tab &middot; Accept suggestion</div>
-          <div style="border-top:1px solid var(--border);margin-top:0.3rem;padding-top:0.4rem;">
-            <div style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.3rem;">Recent QSOs</div>
-            <table class="mock-table">
-              <thead><tr><th>UTC</th><th>Callsign</th><th>Section</th><th></th></tr></thead>
+          <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+            <div style="display:flex;align-items:center;padding:0.45rem 0.75rem;border-bottom:1px solid var(--border);">
+              <span style="font-size:0.78rem;font-weight:600;color:var(--text-primary);">Recent QSOs</span>
+              <span style="margin-left:auto;font-size:0.62rem;color:var(--text-muted);">This session only</span>
+            </div>
+            <table class="mock-table" style="margin:0;">
+              <thead><tr><th>#</th><th>Time</th><th>Callsign</th><th>Exchange</th><th>Section</th></tr></thead>
               <tbody>
-                <tr><td>18:48</td><td class="callsign">VE3DZ</td><td>ON</td><td></td></tr>
-                <tr><td>18:45</td><td class="callsign">N3FJP</td><td>MDC</td><td></td></tr>
-                <tr><td>18:44</td><td class="callsign">K5ZD</td><td>EMA</td><td></td></tr>
-                <tr><td>18:42</td><td class="callsign">W1AW</td><td>CT</td><td></td></tr>
+                <tr><td style="color:var(--text-muted);">14</td><td>18:41</td><td class="callsign">W1AW</td><td>2A</td><td>CT</td></tr>
+                <tr><td style="color:var(--text-muted);">15</td><td>18:42</td><td class="callsign">K5ZD</td><td>1D</td><td>EMA</td></tr>
+                <tr><td style="color:var(--text-muted);">16</td><td>18:44</td><td class="callsign">VE3DZ</td><td>3A</td><td>ON</td></tr>
+                <tr><td style="color:var(--text-muted);">17</td><td>18:45</td><td class="callsign">KD2ABC</td><td>1E</td><td>ENY</td></tr>
+                <tr><td style="color:var(--text-muted);">18</td><td>18:47</td><td class="callsign">N0XYZ</td><td>5A</td><td>MN</td></tr>
               </tbody>
             </table>
+            <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.6rem;border-top:1px solid var(--border);">
+              <span style="flex:1;font-family:'JetBrains Mono',monospace;color:var(--text-primary);font-size:0.9rem;padding:0.4rem 0.6rem;background:var(--bg-primary);border:1px solid var(--accent-sky);border-radius:6px;">K1TTT 2A CT<span style="color:var(--accent-sky);">|</span></span>
+              <span style="background:var(--accent-sky);color:#fff;font-size:0.72rem;font-weight:700;padding:0.4rem 0.8rem;border-radius:6px;">&#10003; Log</span>
+              <span style="color:var(--text-secondary);font-size:0.72rem;font-weight:600;padding:0.4rem 0.3rem;">&#10005; Clear</span>
+            </div>
           </div>
+          <div style="font-size:0.62rem;color:var(--text-muted);text-align:center;margin-top:0.5rem;">Enter &middot; Log contact &nbsp;&nbsp; Esc &middot; Clear input &nbsp;&nbsp; &uarr;&darr; &middot; Recall QSOs &nbsp;&nbsp; Tab &middot; Accept suggestion</div>
         </div>
       </div>
     </div>
@@ -321,6 +343,7 @@
           <li><span class="check">&#10003;</span> ADIF file import wizard: upload, parse, map fields to stations, review, and import</li>
           <li><span class="check">&#10003;</span> Validation catches records outside the event window, flags dupes, and lets you skip or fix before importing</li>
           <li><span class="check">&#10003;</span> Configurable UDP ports with firewall instructions for each listener</li>
+          <li><span class="check">&#10003;</span> Sub-modes like FT8 or SSTV recorded on every contact, whichever way it came in</li>
         </ul>
       </div>
       <div class="feature-visual">
@@ -370,13 +393,14 @@
       <div class="feature-deep-text">
         <span class="feature-tag emerald">Reliability</span>
         <h2>Built for real field conditions</h2>
-        <p>Two layers of resilience. First: the entire platform runs on your LAN with no internet dependency at all, fully air-gapped. Second: if a browser temporarily loses its connection to the server, contacts queue locally and sync when it reconnects. Need remote access? The app is secure enough to put on the internet too.</p>
+        <p>Two layers of resilience. First: the entire platform runs on your LAN and doesn't need the internet. Second: if a browser temporarily loses its connection to the server, contacts will queue locally and sync when it reconnects. Need remote access? The app is secure enough to put on the internet too.</p>
         <ul class="feature-bullets">
-          <li><span class="check">&#10003;</span> Air-gapped operation with no cloud and no external services</li>
+          <li><span class="check">&#10003;</span> Runs on your LAN with no cloud services</li>
           <li><span class="check">&#10003;</span> If a device loses connection, operators keep logging without interruption</li>
           <li><span class="check">&#10003;</span> Queued contacts shown with a clear status indicator</li>
           <li><span class="check">&#10003;</span> Queued contacts sync automatically when the connection comes back</li>
           <li><span class="check">&#10003;</span> Paper log transcription with correct timestamps if you need to go fully manual</li>
+          <li><span class="check">&#10003;</span> <span>Backup and restore scripts with hourly and nightly schedules</span> <a class="bullet-link" href="how-to/backup-restore.html">How to set them up</a></li>
         </ul>
       </div>
       <div class="feature-visual">
@@ -414,11 +438,11 @@
       <div class="feature-deep-text">
         <span class="feature-tag green">Scoring</span>
         <h2>Know your score without doing math</h2>
-        <p>Power multipliers, bonus points, and band breakdowns are all calculated as contacts come in. Put the dashboard on a big screen so the whole club can see where things stand.</p>
+        <p>Power multipliers, bonus points, and band breakdowns are all calculated as contacts come in. For Winter Field Day, the same page tracks objectives and their multipliers instead. Put the dashboard on a big screen so the whole club can see where things stand.</p>
         <ul class="feature-bullets">
           <li><span class="check">&#10003;</span> Power multiplier auto-calculated from your configured power sources</li>
           <li><span class="check">&#10003;</span> All 18 ARRL bonus categories tracked (claimed, verified, or unclaimed)</li>
-          <li><span class="check">&#10003;</span> W1AW bulletin page with transmission schedule and 15-minute reminders</li>
+          <li><span class="check">&#10003;</span> Bulletin page (W1AW or WFD) with the transmission schedule and reminders you set in your profile</li>
           <li><span class="check">&#10003;</span> QSO points weighted by mode: CW/Digital = 2 pts, Phone = 1 pt</li>
           <li><span class="check">&#10003;</span> Everyone sees the same live score, on every screen</li>
         </ul>
@@ -475,11 +499,117 @@
 
     <div class="feature-deep reverse">
       <div class="feature-deep-text">
+        <span class="feature-tag teal">Winter Field Day</span>
+        <h2>Winter Field Day, scored the WFDA way</h2>
+        <p>Pick Winter Field Day as the event type and the app switches rulebooks. The power multiplier and GOTA go away, bonuses become objectives, and the score becomes QSO points &times; (OM + 1). Band, mode, and QRP objectives fill in from your log on their own, and the bulletin objective is earned when you save your copy. The rest you claim from the event page once you've done them.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Picks the right Winter Field Day scoring rules for the event</li>
+          <li><span class="check">&#10003;</span> Every objective and its multiplier tracked, with completion shown as a percentage</li>
+          <li><span class="check">&#10003;</span> H, I, O, and M categories, plus MX and DX sections in the exchange</li>
+          <li><span class="check">&#10003;</span> 2027 no-credit rules for WSJT modes and satellites (contacts are still logged, just marked)</li>
+          <li><span class="check">&#10003;</span> Cabrillo log, ADIF file, and an Event Summary PDF laid out like the WFDA form</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Winter Field Day 2027 Objectives
+        </div>
+        <div class="mock-body">
+          <div style="display:flex;align-items:center;justify-content:center;gap:0.3rem;padding:0.3rem 0 0.6rem;font-family:'JetBrains Mono',monospace;">
+            <div style="text-align:center;">
+              <div style="font-size:1.4rem;font-weight:700;color:var(--accent-gold);">412</div>
+              <div style="font-size:0.55rem;color:var(--text-muted);letter-spacing:1px;">QSO POINTS</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:1.1rem;">&times; (</span>
+            <div style="text-align:center;">
+              <div style="font-size:1.4rem;font-weight:700;color:var(--accent-gold);">13</div>
+              <div style="font-size:0.55rem;color:var(--text-muted);letter-spacing:1px;">OM</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:1.1rem;">+ 1) =</span>
+            <div style="text-align:center;">
+              <div style="font-size:1.6rem;font-weight:800;color:var(--accent-gold);">5,768</div>
+              <div style="font-size:0.55rem;color:var(--text-muted);letter-spacing:1px;">FINAL SCORE</div>
+            </div>
+          </div>
+          <div style="font-size:0.75rem;color:var(--text-secondary);border-top:1px solid var(--border);padding-top:0.5rem;margin-bottom:0.2rem;">Objectives Completed &nbsp;<span style="color:var(--text-primary);font-weight:600;">5/13 (38%)</span></div>
+          <div class="mock-schedule-row">
+            <span class="mock-operator">Operate Away From Home</span>
+            <span class="mock-time" style="min-width:40px;color:var(--accent-gold);">OM &times;3</span>
+            <span style="border:1px solid var(--accent-green);color:var(--accent-green);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Verified</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-operator">Three Contacts on Six Bands</span>
+            <span class="mock-time" style="min-width:40px;color:var(--accent-gold);">OM &times;6</span>
+            <span style="border:1px solid var(--accent-green);color:var(--accent-green);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Verified</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-operator">Use Multiple Modes</span>
+            <span class="mock-time" style="min-width:40px;color:var(--accent-gold);">OM &times;2</span>
+            <span style="border:1px solid var(--accent-green);color:var(--accent-green);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Verified</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-operator">Copy the WFD Bulletin</span>
+            <span class="mock-time" style="min-width:40px;color:var(--accent-gold);">OM &times;1</span>
+            <span style="border:1px solid var(--accent-green);color:var(--accent-green);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Verified</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-operator">Send and Receive a Winlink Email</span>
+            <span class="mock-time" style="min-width:40px;color:var(--accent-gold);">OM &times;1</span>
+            <span style="border:1px solid var(--accent-green);color:var(--accent-green);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Verified</span>
+          </div>
+          <div class="mock-schedule-row">
+            <span class="mock-operator">Three Contacts on Twelve Bands</span>
+            <span class="mock-time" style="min-width:40px;color:var(--accent-gold);">OM &times;6</span>
+            <span style="border:1px solid var(--text-muted);color:var(--text-muted);font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;">Unclaimed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep">
+      <div class="feature-deep-text">
+        <span class="feature-tag rose">Station Mode</span>
+        <h2>Club computers or your own, your choice</h2>
+        <p>Stations can run on club computers, members' own laptops, or a mix. When a computer stays at a station and operators take turns on it, use station mode. A station captain binds the computer to its station once, and after that operators sit down, type their callsign, and start logging. Nobody needs a password.</p>
+        <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> Sign in with a callsign only, no password</li>
+          <li><span class="check">&#10003;</span> The browser is bound to one station, and permissions are capped at logging and viewing, even for an admin's callsign</li>
+          <li><span class="check">&#10003;</span> New callsigns get a placeholder account an admin can turn into a real login later</li>
+          <li><span class="check">&#10003;</span> After 15 idle minutes, the station asks if anyone is still there, then ends the session</li>
+          <li><span class="check">&#10003;</span> At a GOTA station, the coach signs in and enters each GOTA operator on the logging screen</li>
+          <li><span class="check">&#10003;</span> Captains can mark any station unavailable (antenna down, finals blown), which ends its session and blocks new ones until it's ready</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="mock-header">
+          <span class="mock-dot" style="background:var(--accent-rose)"></span>
+          <span class="mock-dot" style="background:var(--accent-orange)"></span>
+          <span class="mock-dot" style="background:var(--accent-green)"></span>
+          Station Mode
+        </div>
+        <div class="mock-body">
+          <div style="text-align:center;padding:0.5rem 0 0.75rem;">
+            <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Station Mode</div>
+            <div style="font-size:1.3rem;font-weight:700;color:var(--text-primary);margin-top:0.2rem;">Station 3</div>
+          </div>
+          <div style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.3rem;">Your callsign</div>
+          <div style="padding:0.5rem;background:var(--bg-primary);border:1px solid var(--accent-sky);border-radius:6px;font-family:'JetBrains Mono',monospace;color:var(--text-primary);font-size:0.95rem;">KD2XYZ</div>
+          <div style="margin-top:0.75rem;background:var(--accent-green);color:#15191e;font-size:0.8rem;font-weight:700;padding:0.5rem;border-radius:6px;text-align:center;">&#9654; Start Logging</div>
+          <div style="text-align:center;margin-top:0.9rem;font-size:0.7rem;color:var(--text-muted);">Station captain: exit station mode</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-deep reverse">
+      <div class="feature-deep-text">
         <span class="feature-tag amber">Situational Awareness</span>
         <h2>See where your contacts are coming from</h2>
         <p>The Section Map gives your whole club a live, visual picture of how the event is going. Every ARRL and RAC section lights up as contacts come in. Filter by call area or switch between color modes to see band distribution, QSO density, or how recently each section was worked. Put it on a big screen at the site and let everyone see which sections you still need.</p>
         <ul class="feature-bullets">
-          <li><span class="check">&#10003;</span> Interactive map of all 86 ARRL/RAC sections across the US and Canada</li>
+          <li><span class="check">&#10003;</span> Interactive map of every ARRL/RAC section across the US and Canada (Yukon gets its own shape for Winter Field Day)</li>
           <li><span class="check">&#10003;</span> Filter by region: All, US, Canada, or individual call areas (W1 through W0)</li>
           <li><span class="check">&#10003;</span> Three color modes: Band (which band worked each section), QSO Count (heat map), and Recency (how fresh the contact is)</li>
           <li><span class="check">&#10003;</span> Color intensity shows depth: pastel for 1 band, vivid for 2, deep for 3+</li>
@@ -496,12 +626,14 @@
       <div class="feature-deep-text">
         <span class="feature-tag orange">Scheduling</span>
         <h2>No more clipboard sign-up sheets</h2>
-        <p>Build the full 24-hour schedule before the event starts. Operators sign themselves up for open slots, and managers can see coverage gaps at a glance.</p>
+        <p>Build the full 24-hour schedule before the event starts. Operators can sign themselves up for open slots, and the shift dashboard shows managers a timeline of every role, overall coverage, and the upcoming shifts nobody has filled yet.</p>
         <ul class="feature-bullets">
           <li><span class="check">&#10003;</span> Operators self-sign-up for open time slots</li>
           <li><span class="check">&#10003;</span> Fill-status indicators show gaps before they become problems</li>
           <li><span class="check">&#10003;</span> Schedule any role: operators, safety officers, public information table</li>
           <li><span class="check">&#10003;</span> "My Shifts" view so every volunteer knows when they're up</li>
+          <li><span class="check">&#10003;</span> Shift dashboard with coverage by role and a list of empty or under-half-staffed shifts</li>
+          <li><span class="check">&#10003;</span> Mark everyone on an ended shift as worked in one click, for accurate volunteer hours</li>
         </ul>
       </div>
       <div class="feature-visual">
@@ -586,10 +718,10 @@
       <div class="feature-deep-text">
         <span class="feature-tag amber">Guestbook</span>
         <h2>A guestbook for everyone who stops by</h2>
-        <p>Field Day is a public event. When visitors come to check out your operation, they can sign the digital guestbook right from any device on the network. Track guest count for ARRL bonus points and build a record of community engagement.</p>
+        <p>Field Day is a public event. When visitors come to check out your operation, they can sign the digital guestbook right from any device on the network. Elected official and agency visits count toward ARRL bonus points, and the rest builds a record of community engagement.</p>
         <ul class="feature-bullets">
           <li><span class="check">&#10003;</span> Visitors sign in with name and optional callsign</li>
-          <li><span class="check">&#10003;</span> Guest count tracked for public information bonus points</li>
+          <li><span class="check">&#10003;</span> Elected official and agency visits tracked for their bonus points</li>
           <li><span class="check">&#10003;</span> Visitors can sign themselves in, no account or password needed</li>
           <li><span class="check">&#10003;</span> Exportable log of all visitors for club records</li>
         </ul>
@@ -611,7 +743,7 @@
           <div class="mock-schedule-row">
             <span class="mock-time" style="min-width:60px;">14:45</span>
             <span class="mock-operator">Maria (KD2XYZ)</span>
-            <span style="background:var(--bg-primary);color:var(--accent-sky);font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:3px;border:1px solid var(--accent-sky);">Licensed Ham</span>
+            <span style="background:var(--bg-primary);color:var(--accent-sky);font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:3px;border:1px solid var(--accent-sky);">Ham Club Member</span>
             <span style="color:var(--accent-green);font-size:0.7rem;">&#9679; In Person</span>
           </div>
           <div class="mock-schedule-row">
