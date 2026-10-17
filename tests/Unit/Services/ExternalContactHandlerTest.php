@@ -355,3 +355,44 @@ test('auto-creates station for unknown identifier', function () {
     expect($station)->not->toBeNull()
         ->and($station->hostname)->toBe('BRAND-NEW-PC');
 });
+
+test('flags contacts from the GOTA station as GOTA contacts and dupe-checks them separately', function () {
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'name' => 'GOTA-PC',
+        'is_gota' => true,
+    ]);
+    $mainSession = OperatingSession::factory()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->modeCw->id,
+    ]);
+    Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $mainSession->id,
+        'callsign' => 'W1AW',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->modeCw->id,
+        'is_duplicate' => false,
+        'is_gota_contact' => false,
+        'logger_user_id' => $this->user->id,
+    ]);
+
+    $dto = new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        modeName: 'CW',
+        operatorCallsign: 'K3CPK',
+        stationIdentifier: 'GOTA-PC',
+        frequencyHz: 3525190,
+        externalId: 'gota123',
+    );
+
+    $contact = $this->handler->handleContact($dto, $this->config);
+
+    expect($contact->is_gota_contact)->toBeTrue()
+        ->and($contact->is_duplicate)->toBeFalse()
+        ->and($contact->points)->toBe(5);
+});

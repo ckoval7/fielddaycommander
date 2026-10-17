@@ -188,6 +188,12 @@ class TranscribeInterface extends Component
             'submode' => 'nullable|string|max:20',
         ]);
 
+        if ($this->station->is_gota && ! $this->hasGotaOperator()) {
+            $this->parseError = 'Enter the GOTA operator in the GOTA Operator panel before logging.';
+
+            return;
+        }
+
         $exchange = $this->getExchangeWithoutTime();
         if (trim($exchange) === '') {
             $this->parseError = 'Exchange is empty';
@@ -321,6 +327,15 @@ class TranscribeInterface extends Component
             $this->gotaOperatorCallsign = $user->call_sign ?? '';
             $this->gotaUserSearch = '';
         }
+    }
+
+    /**
+     * Whether a GOTA operator is named: a linked user, or a first and last name.
+     */
+    private function hasGotaOperator(): bool
+    {
+        return $this->gotaOperatorUserId !== null
+            || (trim($this->gotaOperatorFirstName) !== '' && trim($this->gotaOperatorLastName) !== '');
     }
 
     public function clearGotaUser(): void

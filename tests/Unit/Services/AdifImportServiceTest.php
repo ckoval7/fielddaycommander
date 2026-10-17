@@ -345,3 +345,49 @@ test('sets logger_user_id to the ADIF operator, not the importing user', functio
     expect($contact->logger_user_id)->toBe($operator->id)
         ->and($contact->logger_user_id)->not->toBe($this->user->id);
 });
+
+test('flags contacts imported for the GOTA station as GOTA contacts', function () {
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'is_gota' => true,
+    ]);
+    $mainSession = OperatingSession::factory()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+    ]);
+    Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $mainSession->id,
+        'callsign' => 'W1AW',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_duplicate' => false,
+        'is_gota_contact' => false,
+    ]);
+
+    $import = AdifImport::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'user_id' => $this->user->id,
+    ]);
+    AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'qso_time' => Carbon::parse('2026-04-10 12:00:00'),
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'section_id' => $this->section->id,
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'exchange_class' => '3A',
+        'status' => AdifRecordStatus::Ready,
+    ]);
+
+    $this->service->import($import);
+
+    $contact = Contact::where('callsign', 'W1AW')->where('is_imported', true)->firstOrFail();
+    expect($contact->is_gota_contact)->toBeTrue()
+        ->and($contact->is_duplicate)->toBeFalse()
+        ->and($contact->points)->toBe(5);
+});
