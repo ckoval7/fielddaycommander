@@ -217,6 +217,26 @@ describe('editing', function () {
         expect($entry->fresh()->notes)->toBe('Extra fire extinguisher added');
     });
 
+    test('autosave dispatches the saved event and keeps the indicator out of the morph', function () {
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Test autosave item',
+        ]);
+        SafetyChecklistEntry::factory()->create([
+            'safety_checklist_item_id' => $item->id,
+        ]);
+
+        $this->actingAs($this->safetyOfficer);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->call('toggleItem', $item->id)
+            ->assertDispatched('autosaved')
+            ->call('updateNotes', $item->id, 'Checked twice')
+            ->assertDispatched('autosaved')
+            ->assertSeeHtml('wire:key="autosave-indicator"')
+            ->assertSeeHtml('wire:ignore');
+    });
+
     test('regular user cannot toggle items', function () {
         $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
             'event_configuration_id' => $this->eventConfig->id,
