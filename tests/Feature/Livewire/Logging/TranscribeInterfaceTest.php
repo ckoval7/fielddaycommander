@@ -1079,3 +1079,47 @@ test('transcribed contact without a submode stores null', function () {
 
     expect(Contact::where('callsign', 'W5XYZ')->value('submode'))->toBeNull();
 });
+
+test('transcribing a GOTA contact requires a GOTA operator', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->event->eventConfiguration->id,
+        'is_gota' => true,
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $gotaStation])
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('gotaOperatorFirstName', 'Jane')
+        ->set('exchangeInput', 'W5XYZ 1B CT')
+        ->call('logContact')
+        ->assertSet('parseError', 'Enter the GOTA operator in the GOTA Operator panel before logging.');
+
+    expect(Contact::count())->toBe(0);
+});
+
+test('transcribing a GOTA contact credits the named GOTA operator', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->event->eventConfiguration->id,
+        'is_gota' => true,
+    ]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $gotaStation])
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('gotaOperatorFirstName', 'Jane')
+        ->set('gotaOperatorLastName', 'Doe')
+        ->set('exchangeInput', 'W5XYZ 1B CT')
+        ->call('logContact')
+        ->assertSet('parseError', '');
+
+    $this->assertDatabaseHas('contacts', [
+        'callsign' => 'W5XYZ',
+        'is_gota_contact' => true,
+        'gota_operator_first_name' => 'Jane',
+        'gota_operator_last_name' => 'Doe',
+    ]);
+});

@@ -69,6 +69,8 @@ class AdifImportService
         }
 
         $session = $this->findOrCreateSession($record);
+        $station = Station::find($record->station_id);
+        $isGotaContact = (bool) $station?->is_gota;
 
         $dupeService = app(DuplicateCheckService::class);
         $dupeCheck = $dupeService->check(
@@ -76,6 +78,7 @@ class AdifImportService
             $record->band_id,
             $record->mode_id,
             $import->event_configuration_id,
+            $isGotaContact,
         );
 
         $mode = $record->mode;
@@ -84,7 +87,6 @@ class AdifImportService
             $points = 0;
         } else {
             $eventConfiguration = EventConfiguration::find($import->event_configuration_id);
-            $station = Station::find($record->station_id);
 
             $points = $eventConfiguration && $station && $mode
                 ? $eventConfiguration->pointsForContact($mode, $station)
@@ -107,6 +109,7 @@ class AdifImportService
             'points' => $points,
             'is_duplicate' => $dupeCheck['is_duplicate'],
             'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
+            'is_gota_contact' => $isGotaContact,
             'is_imported' => true,
         ]);
 

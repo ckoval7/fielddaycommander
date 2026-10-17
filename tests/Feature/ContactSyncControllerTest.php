@@ -571,3 +571,71 @@ test('syncing a contact rejects an overlong submode', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors('submode');
 });
+
+test('syncing a gota contact without a gota operator is rejected', function (array $operator) {
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'is_gota' => true,
+    ]);
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'power_watts' => 100,
+    ]);
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $gotaSession->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'exchange_class' => '3A',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+            ...$operator,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['gota_operator_first_name' => 'Enter the GOTA operator']);
+
+    expect(Contact::count())->toBe(0);
+})->with([
+    'no operator' => [[]],
+    'first name only' => [['gota_operator_first_name' => 'Jane']],
+    'callsign only' => [['gota_operator_callsign' => 'KD2ABC']],
+]);
+
+test('syncing a gota contact with a linked gota operator is accepted', function () {
+    $gotaStation = Station::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'is_gota' => true,
+    ]);
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'power_watts' => 100,
+    ]);
+    $gotaOperator = User::factory()->create();
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => fake()->uuid(),
+            'operating_session_id' => $gotaSession->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $this->section->id,
+            'exchange_class' => '3A',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+            'gota_operator_user_id' => $gotaOperator->id,
+        ])
+        ->assertCreated();
+
+    expect(Contact::firstOrFail()->gota_operator_user_id)->toBe($gotaOperator->id);
+});

@@ -186,6 +186,11 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 return;
             }
 
+            if (sessionContext.is_gota && !this.hasGotaOperator()) {
+                this.parseError = 'Enter the GOTA operator in the GOTA Operator panel before logging.';
+                return;
+            }
+
             const parsed = this.parseExchange(rawInput);
             if (!parsed) return; // parseError already set
 
@@ -222,6 +227,15 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         parseError: '',
+
+        /**
+         * GOTA contacts are credited to the GOTA operator: a linked user, or a first and last name.
+         */
+        hasGotaOperator() {
+            const firstName = (sessionContext.gota_operator_first_name || '').trim();
+            const lastName = (sessionContext.gota_operator_last_name || '').trim();
+            return Boolean(sessionContext.gota_operator_user_id) || (firstName !== '' && lastName !== '');
+        },
 
         /**
          * Client-side exchange parser.
