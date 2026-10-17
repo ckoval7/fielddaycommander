@@ -2,6 +2,9 @@
 
 use App\Models\Dashboard;
 use App\Models\Event;
+use App\Models\EventConfiguration;
+use App\Models\EventType;
+use App\Models\OperatingClass;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -157,6 +160,48 @@ test('shows get-ready view when upcoming event exists', function () {
 
     $response->assertStatus(200);
     $response->assertViewIs('dashboard.get-ready');
+});
+
+test('get-ready header shows the operating class once', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertViewIs('dashboard.get-ready');
+    $response->assertSee('Class A');
+    $response->assertDontSee('Class Class A');
+});
+
+test('get-ready header shows a winter field day class by its code', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+    $winterFieldDay = EventType::firstOrCreate(
+        ['code' => 'WFD'],
+        ['name' => 'Winter Field Day', 'description' => 'Winter Field Day'],
+    );
+    $homeClass = OperatingClass::create([
+        'event_type_id' => $winterFieldDay->id,
+        'code' => 'H',
+        'name' => 'Home',
+        'description' => 'Home station',
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'operating_class_id' => $homeClass->id,
+    ]);
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertSee('Class H');
+    $response->assertDontSee('Class Home');
 });
 
 test('get-ready checklist hides routes for unprivileged users', function () {
