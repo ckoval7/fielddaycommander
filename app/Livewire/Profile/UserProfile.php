@@ -374,11 +374,38 @@ class UserProfile extends Component
 
     public function logoutOtherSessions(): void
     {
+        $this->validate([
+            'current_password' => ['required', 'string', 'current_password:web'],
+        ]);
+
         auth()->logoutOtherDevices($this->current_password);
+
+        \DB::table('sessions')
+            ->where('user_id', auth()->id())
+            ->where('id', '!=', session()->getId())
+            ->delete();
 
         $this->current_password = '';
 
         $this->success('Logged out of all other devices.');
+    }
+
+    /**
+     * End one of the user's other login sessions. The current session and
+     * other users' sessions are never touched.
+     */
+    public function revokeSession(string $sessionId): void
+    {
+        if ($sessionId === session()->getId()) {
+            return;
+        }
+
+        \DB::table('sessions')
+            ->where('id', $sessionId)
+            ->where('user_id', auth()->id())
+            ->delete();
+
+        $this->success('Session revoked.');
     }
 
     public function enableTwoFactor(): void
