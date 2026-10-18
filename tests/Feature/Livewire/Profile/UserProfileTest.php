@@ -309,6 +309,73 @@ test('can logout from other sessions', function () {
         ->call('logoutOtherSessions')
         ->assertHasNoErrors()
         ->assertSet('current_password', '');
+
+    expect(DB::table('sessions')->where('user_id', $this->user->id)->count())->toBe(0);
+});
+
+test('logout from other sessions keeps the current session and other users sessions', function () {
+    $otherUser = User::factory()->create();
+
+    DB::table('sessions')->insert([
+        ['id' => session()->getId(), 'user_id' => $this->user->id, 'ip_address' => '192.168.1.1', 'user_agent' => 'Firefox', 'payload' => 'test-payload', 'last_activity' => now()->timestamp],
+        ['id' => 'session-other-device', 'user_id' => $this->user->id, 'ip_address' => '192.168.1.2', 'user_agent' => 'Chrome', 'payload' => 'test-payload', 'last_activity' => now()->timestamp],
+        ['id' => 'session-other-user', 'user_id' => $otherUser->id, 'ip_address' => '192.168.1.3', 'user_agent' => 'Safari', 'payload' => 'test-payload', 'last_activity' => now()->timestamp],
+    ]);
+
+    Livewire::test(UserProfile::class)
+        ->set('current_password', 'password123')
+        ->call('logoutOtherSessions')
+        ->assertHasNoErrors();
+
+    expect(DB::table('sessions')->pluck('id')->sort()->values()->all())
+        ->toBe(collect([session()->getId(), 'session-other-user'])->sort()->values()->all());
+});
+
+test('logout from other sessions rejects a wrong password with a field error', function () {
+    DB::table('sessions')->insert([
+        'id' => 'session-other-device',
+        'user_id' => $this->user->id,
+        'ip_address' => '192.168.1.2',
+        'user_agent' => 'Chrome',
+        'payload' => 'test-payload',
+        'last_activity' => now()->timestamp,
+    ]);
+
+    Livewire::test(UserProfile::class)
+        ->set('current_password', 'not-my-password')
+        ->call('logoutOtherSessions')
+        ->assertHasErrors(['current_password']);
+
+    expect(DB::table('sessions')->where('id', 'session-other-device')->exists())->toBeTrue();
+});
+
+test('can revoke one of my other sessions', function () {
+    DB::table('sessions')->insert([
+        ['id' => 'session-keep', 'user_id' => $this->user->id, 'ip_address' => '192.168.1.1', 'user_agent' => 'Firefox', 'payload' => 'test-payload', 'last_activity' => now()->timestamp],
+        ['id' => 'session-revoke', 'user_id' => $this->user->id, 'ip_address' => '192.168.1.2', 'user_agent' => 'Chrome', 'payload' => 'test-payload', 'last_activity' => now()->timestamp],
+    ]);
+
+    Livewire::test(UserProfile::class)
+        ->call('revokeSession', 'session-revoke');
+
+    expect(DB::table('sessions')->where('id', 'session-revoke')->exists())->toBeFalse()
+        ->and(DB::table('sessions')->where('id', 'session-keep')->exists())->toBeTrue();
+});
+
+test('cannot revoke another users session', function () {
+    DB::table('sessions')->insert([
+        'id' => 'session-someone-else',
+        'user_id' => User::factory()->create()->id,
+        'ip_address' => '192.168.1.3',
+        'user_agent' => 'Safari',
+        'payload' => 'test-payload',
+        'last_activity' => now()->timestamp,
+    ]);
+
+    Livewire::test(UserProfile::class)
+        ->call('revokeSession', 'session-someone-else');
+
+    expect(DB::table('sessions')->where('id', 'session-someone-else')->exists())->toBeTrue();
 });
 
 // =============================================================================
