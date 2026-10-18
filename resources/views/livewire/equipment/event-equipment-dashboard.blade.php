@@ -6,7 +6,7 @@
     {{-- Page Header --}}
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div class="flex-1">
-            <div class="flex items-center gap-3 mb-2">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
                 <h1 class="text-3xl font-bold">Equipment Dashboard</h1>
                 <x-badge value="{{ $event->name }}" class="badge-outline" />
             </div>

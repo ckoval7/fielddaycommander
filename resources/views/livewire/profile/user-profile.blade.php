@@ -2,7 +2,7 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-<div class="container mx-auto px-4 py-6">
+<div class="container mx-auto px-4 py-6 max-sm:px-0">
     {{-- Page Header --}}
     <div class="mb-6">
         <h1 class="text-3xl font-bold">Profile Settings</h1>

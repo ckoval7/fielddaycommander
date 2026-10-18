@@ -32,6 +32,7 @@
                     label="Set Admin Password"
                     type="password"
                     name="admin_password"
+                    autocomplete="new-password"
                     required
                     icon="phosphor-lock"
                     errorField="admin_password"
@@ -42,6 +43,7 @@
                     label="Confirm Password"
                     type="password"
                     name="admin_password_confirmation"
+                    autocomplete="new-password"
                     required
                     icon="phosphor-lock"
                     errorField="admin_password_confirmation"

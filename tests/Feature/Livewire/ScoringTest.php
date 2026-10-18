@@ -871,3 +871,10 @@ it('does not show corrections box when no notices', function () {
     Livewire::test(Scoring::class)
         ->assertDontSee('Corrections');
 });
+
+it('uses a narrow side gutter on phones', function () {
+    makeActiveEvent();
+
+    Livewire::test(Scoring::class)
+        ->assertSeeHtml('px-3 sm:px-6');
+});

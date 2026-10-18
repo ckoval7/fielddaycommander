@@ -72,6 +72,7 @@
                         label="Enter your password to confirm"
                         type="password"
                         wire:model="current_password"
+                        autocomplete="current-password"
                         placeholder="Password"
                     />
                 </div>

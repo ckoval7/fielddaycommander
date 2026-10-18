@@ -520,3 +520,15 @@ test('reports volunteerHours merges overlapping shifts in wall_clock mode', func
     expect($rows[0]['hours_worked'])->toBe(4.0);
     expect($rows[0]['hours_signed_up'])->toBe(4.0);
 });
+
+test('sections use a narrow side gutter on phones', function () {
+    makeReportsIndexEvent();
+    Permission::firstOrCreate(['name' => 'view-reports']);
+    $user = User::factory()->create();
+    $user->givePermissionTo('view-reports');
+
+    Livewire::actingAs($user)
+        ->test(ReportsIndex::class)
+        ->assertSeeHtml('px-3 sm:px-6')
+        ->assertSeeHtml('rounded-lg p-4 sm:p-5');
+});

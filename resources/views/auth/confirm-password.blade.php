@@ -13,7 +13,7 @@
         @csrf
 
         <div class="space-y-4">
-            <x-input label="Password" type="password" name="password" required icon="phosphor-lock" errorField="password" />
+            <x-input label="Password" type="password" name="password" required autocomplete="current-password" icon="phosphor-lock" errorField="password" />
 
             <div class="pt-2">
                 <x-button label="Confirm" type="submit" class="btn-primary w-full" icon="phosphor-check" />

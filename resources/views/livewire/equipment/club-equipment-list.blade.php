@@ -57,7 +57,7 @@
         @endcan
 
         {{-- Mobile Card View --}}
-        <div class="md:hidden space-y-3">
+        <div class="xl:hidden space-y-3">
             @forelse($equipment as $item)
                 <x-card wire:key="equipment-card-{{ $item->id }}" shadow class="!p-4">
                     <div class="flex items-start gap-3">
@@ -131,7 +131,7 @@
         </div>
 
         {{-- Desktop Table View --}}
-        <x-card shadow class="hidden md:block">
+        <x-card shadow class="hidden xl:block">
                 <table class="table table-zebra">
                     <thead>
                         <tr>

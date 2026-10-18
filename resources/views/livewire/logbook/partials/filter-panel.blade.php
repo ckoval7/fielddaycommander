@@ -107,6 +107,10 @@
                 <x-input
                     label="Callsign"
                     wire:model.live.debounce.500ms="callsignSearch"
+                    autocomplete="off"
+                    autocapitalize="characters"
+                    autocorrect="off"
+                    spellcheck="false"
                     placeholder="Search callsign..."
                     icon="phosphor-magnifying-glass"
                     clearable

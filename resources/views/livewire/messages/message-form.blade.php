@@ -144,6 +144,10 @@
                     <x-input
                         label="Station of Origin"
                         wire:model="stationOfOrigin"
+                        autocomplete="off"
+                        autocapitalize="characters"
+                        autocorrect="off"
+                        spellcheck="false"
                         icon="phosphor-cell-signal-high"
                         placeholder="e.g., W1TEST"
                         maxlength="20"
@@ -187,6 +191,8 @@
                     <x-input
                         label="Phone"
                         wire:model="addresseePhone"
+                        type="tel"
+                        autocomplete="off"
                         icon="phosphor-phone"
                         placeholder="Optional"
                         maxlength="30"
@@ -195,6 +201,7 @@
                     <x-input
                         label="Street Address"
                         wire:model="addresseeAddress"
+                        autocomplete="off"
                         icon="phosphor-house"
                         placeholder="Optional"
                     />
@@ -202,6 +209,7 @@
                     <x-input
                         label="City"
                         wire:model="addresseeCity"
+                        autocomplete="off"
                         icon="phosphor-buildings"
                         placeholder="Optional"
                     />
@@ -209,6 +217,8 @@
                     <x-input
                         label="State"
                         wire:model="addresseeState"
+                        autocomplete="off"
+                        autocapitalize="characters"
                         icon="phosphor-map-trifold"
                         placeholder="e.g., CT"
                         maxlength="10"
@@ -217,6 +227,7 @@
                     <x-input
                         label="ZIP Code"
                         wire:model="addresseeZip"
+                        autocomplete="off"
                         icon="phosphor-envelope"
                         placeholder="Optional"
                         maxlength="20"
@@ -393,6 +404,10 @@
                     <x-input
                         label="Sent To"
                         wire:model="sentTo"
+                        autocomplete="off"
+                        autocapitalize="characters"
+                        autocorrect="off"
+                        spellcheck="false"
                         icon="phosphor-paper-plane-tilt"
                         placeholder="Callsign (optional)"
                         maxlength="20"
@@ -402,6 +417,10 @@
                     <x-input
                         label="Received From"
                         wire:model="receivedFrom"
+                        autocomplete="off"
+                        autocapitalize="characters"
+                        autocorrect="off"
+                        spellcheck="false"
                         icon="phosphor-tray"
                         placeholder="Callsign (optional)"
                         maxlength="20"
@@ -420,6 +439,7 @@
                     <x-input
                         label="Frequency"
                         wire:model="frequency"
+                        inputmode="decimal"
                         icon="phosphor-cell-signal-high"
                         placeholder="e.g., 7.228"
                         maxlength="15"

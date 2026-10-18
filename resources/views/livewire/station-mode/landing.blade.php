@@ -42,6 +42,9 @@
                 <x-input
                     :label="$device->station?->is_gota ? 'Control operator callsign' : 'Your callsign'"
                     wire:model.live.debounce.400ms="callSign"
+                    autocapitalize="characters"
+                    autocorrect="off"
+                    spellcheck="false"
                     icon="phosphor-identification-card"
                     class="uppercase"
                     autocomplete="off"
@@ -73,8 +76,8 @@
             <x-modal wire:model="showExitModal" title="Exit Station Mode" persistent>
                 <div class="space-y-4">
                     <p class="text-sm">A station captain or administrator must sign in to take this browser out of station mode.</p>
-                    <x-input label="Email" type="email" wire:model="exitEmail" icon="phosphor-envelope" />
-                    <x-input label="Password" type="password" wire:model="exitPassword" icon="phosphor-lock" />
+                    <x-input label="Email" type="email" wire:model="exitEmail" autocomplete="off" icon="phosphor-envelope" />
+                    <x-input label="Password" type="password" wire:model="exitPassword" autocomplete="off" icon="phosphor-lock" />
                 </div>
 
                 <x-slot:actions>

@@ -91,7 +91,7 @@
                         <span class="text-xs text-base-content/40 uppercase tracking-wide font-medium">
                             {{ $station->is_gota ? 'GOTA Station' : 'Operating Station' }}
                         </span>
-                        <span class="flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="flex items-center gap-1 text-xs font-semibold text-primary opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                             Select
                             <x-icon name="phosphor-arrow-right" class="w-3.5 h-3.5" />
                         </span>

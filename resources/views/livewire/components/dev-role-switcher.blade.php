@@ -39,6 +39,10 @@
                             id="dev-callsign"
                             type="text"
                             wire:model.live.debounce.500ms="callSign"
+                            autocomplete="off"
+                            autocapitalize="characters"
+                            autocorrect="off"
+                            spellcheck="false"
                             class="input input-xs bg-base-100 text-base-content w-28 uppercase"
                             placeholder="e.g. W1AW"
                         />

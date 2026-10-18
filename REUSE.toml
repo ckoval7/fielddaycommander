@@ -11,6 +11,8 @@ SPDX-PackageDownloadLocation = "https://github.com/ckoval7/fielddaycommander"
 path = [
     "public/favicon.ico",
     "public/favicon.png",
+    "public/apple-touch-icon.png",
+    "public/icons/**",
     "public/images/**",
     "README.md",
     "DOCKER.md",
@@ -25,6 +27,7 @@ SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
 [[annotations]]
 path = [
     "VERSION",
+    "public/manifest.webmanifest",
     "composer.lock",
     "package-lock.json",
     "charts/fd-commander/.helmignore",

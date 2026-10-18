@@ -16,12 +16,12 @@
         @endif
 
         <div class="space-y-4">
-            <x-input label="Call Sign" type="text" name="call_sign" :value="old('call_sign')" required autofocus icon="phosphor-megaphone" errorField="call_sign" />
-            <x-input label="First Name" type="text" name="first_name" :value="old('first_name')" required icon="phosphor-user" errorField="first_name" />
-            <x-input label="Last Name" type="text" name="last_name" :value="old('last_name')" required icon="phosphor-user" errorField="last_name" />
-            <x-input label="Email" type="email" name="email" :value="old('email')" required icon="phosphor-envelope" errorField="email" />
-            <x-input label="Password" type="password" name="password" required icon="phosphor-lock" errorField="password" />
-            <x-input label="Confirm Password" type="password" name="password_confirmation" required icon="phosphor-lock" errorField="password_confirmation" />
+            <x-input label="Call Sign" type="text" name="call_sign" :value="old('call_sign')" required autofocus autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" icon="phosphor-megaphone" errorField="call_sign" />
+            <x-input label="First Name" type="text" name="first_name" :value="old('first_name')" required autocomplete="given-name" icon="phosphor-user" errorField="first_name" />
+            <x-input label="Last Name" type="text" name="last_name" :value="old('last_name')" required autocomplete="family-name" icon="phosphor-user" errorField="last_name" />
+            <x-input label="Email" type="email" name="email" :value="old('email')" required autocomplete="email" icon="phosphor-envelope" errorField="email" />
+            <x-input label="Password" type="password" name="password" required autocomplete="new-password" icon="phosphor-lock" errorField="password" />
+            <x-input label="Confirm Password" type="password" name="password_confirmation" required autocomplete="new-password" icon="phosphor-lock" errorField="password_confirmation" />
 
             <div class="flex flex-wrap gap-x-6 gap-y-1">
                 <label class="flex items-center gap-3 cursor-pointer py-2">

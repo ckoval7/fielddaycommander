@@ -20,7 +20,7 @@
                     <p class="text-red-800 dark:text-red-200"><strong>Security Notice:</strong> UDP logging should only be enabled on private, firewalled networks. Do not enable UDP logging on internet-hosted servers, as UDP is unauthenticated and anyone who can reach the port can send arbitrary data.</p>
                 </div>
                 {{-- N1MM Logger+ Section --}}
-                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6" wire:poll.5s="pollStatus">
+                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">N1MM Logger+</h3>
@@ -155,7 +155,7 @@
                 </div>
 
                 {{-- WSJTX / JTDX Section --}}
-                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6" wire:poll.5s="pollStatus">
+                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">WSJTX / JTDX</h3>
@@ -297,7 +297,7 @@
                     </div>
                 </div>
                 {{-- UDP ADIF (fldigi, etc.) Section --}}
-                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6" wire:poll.5s="pollStatus">
+                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">UDP ADIF (fldigi, etc.)</h3>

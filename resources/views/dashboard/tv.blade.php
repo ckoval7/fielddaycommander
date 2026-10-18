@@ -271,6 +271,7 @@ Props from controller:
         /* TV Dashboard Styles */
         .tv-dashboard {
             min-height: 100vh;
+            min-height: 100dvh;
             background: var(--color-base-100);
             font-size: 1.125rem; /* 18px base */
         }
@@ -283,6 +284,7 @@ Props from controller:
 
         .tv-dashboard-content {
             height: 100vh;
+            height: 100dvh;
             padding: 1rem;
         }
 

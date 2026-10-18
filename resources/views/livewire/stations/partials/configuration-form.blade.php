@@ -22,6 +22,9 @@
         <x-input
             label="Hostname (NetBIOS Name)"
             wire:model.blur="hostname"
+            autocapitalize="characters"
+            autocorrect="off"
+            spellcheck="false"
             icon="phosphor-desktop"
             placeholder="e.g., CONTEST-PC"
             autocomplete="off"

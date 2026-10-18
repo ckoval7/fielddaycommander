@@ -154,3 +154,13 @@ test('icon renders day variant when is_day is 1', function () {
 
     expect($component->instance()->iconName())->toBe('phosphor-cloud-sun-duotone');
 });
+
+test('icon button is at least 44px wide for touch', function () {
+    Permission::firstOrCreate(['name' => 'manage-weather']);
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    Livewire::actingAs($user)
+        ->test(WeatherIcon::class)
+        ->assertSeeHtml('min-w-11');
+});

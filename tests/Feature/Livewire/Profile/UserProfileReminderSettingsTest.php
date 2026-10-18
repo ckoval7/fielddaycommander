@@ -175,3 +175,12 @@ describe('shift category toggle and email', function () {
             ->assertSet('notify_shift_checkin_reminder', true);
     });
 });
+
+test('reminder remove buttons are labelled tap targets', function () {
+    $this->user->setBulletinReminderMinutes([5]);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->assertSeeHtml('aria-label="Remove 5 minute reminder"')
+        ->assertDontSeeHtml('btn btn-ghost btn-xs p-0 min-h-0 h-auto');
+});

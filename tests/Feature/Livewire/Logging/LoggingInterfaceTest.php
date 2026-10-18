@@ -1280,3 +1280,19 @@ test('the contact queue is given the server clock to stamp qso times on', functi
         ->test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->assertSeeHtml('server_time_ms: '.now()->getTimestampMs().',');
 });
+
+test('failed contact retry and discard buttons are labelled for touch and screen readers', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtml(":aria-label=\"'Retry ' + contact.callsign\"")
+        ->assertSeeHtml(":aria-label=\"'Discard ' + contact.callsign\"");
+});
+
+test('full-bleed logging layout matches the 12px phone gutter', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtml('class="max-sm:-mx-3"')
+        ->assertDontSeeHtml('max-sm:-mx-5');
+});

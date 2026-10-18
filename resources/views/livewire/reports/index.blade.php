@@ -71,7 +71,7 @@
     }
 </style>
 
-<div class="min-h-screen" style="background-color: var(--reports-bg); color: var(--reports-text);">
+<div class="min-h-dvh" style="background-color: var(--reports-bg); color: var(--reports-text);">
 
     {{-- ============================================================
          EMPTY STATE — no active event
@@ -90,7 +90,7 @@
          EVENT CONTEXT BAR
          One-line condensed identifier strip
          ============================================================ --}}
-    <div class="px-6 py-3 flex flex-wrap items-center gap-x-4 gap-y-1"
+    <div class="px-3 sm:px-6 py-3 flex flex-wrap items-center gap-x-4 gap-y-1"
          style="border-bottom: 2px solid var(--reports-border); background-color: var(--reports-surface);">
 
         <span class="font-black font-mono tracking-wider uppercase text-lg"
@@ -130,7 +130,7 @@
          SECTION 1: DOWNLOADS — primary action zone
          F-pattern top row — immediately visible, clearly actionable
          ============================================================ --}}
-    <div class="px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
+    <div class="px-3 sm:px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
         <div class="text-xs font-bold uppercase tracking-widest mb-5"
              style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 3px; height: 1em; background-color: var(--reports-section-bar); border-radius: 2px;"></span>
@@ -155,7 +155,7 @@
 
             {{-- CABRILLO LOG — amber, prominent CTA --}}
             <a href="{{ route('reports.cabrillo') }}"
-               class="group no-underline block rounded-lg p-5 transition-shadow hover:shadow-md"
+               class="group no-underline block rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md"
                style="background-color: var(--reports-cabrillo-bg); border: 2px solid var(--reports-cabrillo-border);">
                 <div class="flex items-start gap-4">
                     <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
@@ -179,7 +179,7 @@
 
             {{-- ADIF LOG — neutral --}}
             <a href="{{ route('reports.adif') }}"
-               class="group no-underline block rounded-lg p-5 transition-shadow hover:shadow-md"
+               class="group no-underline block rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md"
                style="background-color: var(--reports-csv-bg); border: 2px solid var(--reports-csv-border);">
                 <div class="flex items-start gap-4">
                     <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
@@ -204,7 +204,7 @@
             {{-- WFD EVENT SUMMARY — blue. Stands in for the ARRL sheet on other rulebooks. --}}
             @if ($this->showsWfdEventSummary)
             <a href="{{ route('reports.wfd-event-summary') }}"
-               class="group no-underline block rounded-lg p-5 transition-shadow hover:shadow-md"
+               class="group no-underline block rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md"
                style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
                 <div class="flex items-start gap-4">
                     <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
@@ -231,7 +231,7 @@
                  upload their log on winterfieldday.org instead. --}}
             @if ($this->showsArrlSubmissionSheet)
             <a href="{{ route('reports.submission-sheet') }}"
-               class="group no-underline block rounded-lg p-5 transition-shadow hover:shadow-md"
+               class="group no-underline block rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md"
                style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
                 <div class="flex items-start gap-4">
                     <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
@@ -256,7 +256,7 @@
 
             {{-- CSV LOGBOOK — neutral --}}
             <a href="{{ route('logbook.export') }}"
-               class="group no-underline block rounded-lg p-5 transition-shadow hover:shadow-md"
+               class="group no-underline block rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md"
                style="background-color: var(--reports-csv-bg); border: 2px solid var(--reports-csv-border);">
                 <div class="flex items-start gap-4">
                     <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
@@ -284,7 +284,7 @@
     {{-- ============================================================
          SECTION 2: QSO RATE BY HOUR
          ============================================================ --}}
-    <div class="px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
+    <div class="px-3 sm:px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
         <div class="text-xs font-bold uppercase tracking-widest mb-5"
              style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 3px; height: 1em; background-color: var(--reports-section-bar); border-radius: 2px;"></span>
@@ -303,15 +303,15 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--reports-border);">
-                                <th class="text-left px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Hour (UTC)</th>
-                                <th class="text-right px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Total</th>
-                                <th class="text-right px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">CW</th>
-                                <th class="text-right px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Phone</th>
-                                <th class="text-right px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Digital</th>
                             </tr>
                         </thead>
@@ -319,23 +319,23 @@
                             @foreach ($this->qsoRateByHour as $row)
                                 <tr style="border-bottom: 1px solid var(--reports-divider);
                                            @if ($row['total'] > 0) background-color: var(--reports-row-active); @endif">
-                                    <td class="px-4 py-2.5 font-mono text-xs"
+                                    <td class="px-2 sm:px-4 py-2.5 font-mono text-xs"
                                         style="color: var(--reports-text);">
                                         {{ $row['hour'] }}
                                     </td>
-                                    <td class="px-4 py-2.5 text-right font-mono font-bold tabular-nums"
+                                    <td class="px-2 sm:px-4 py-2.5 text-right font-mono font-bold tabular-nums"
                                         style="color: {{ $row['total'] > 0 ? 'var(--reports-text)' : 'var(--reports-text-muted)' }};">
                                         {{ $row['total'] ?: '—' }}
                                     </td>
-                                    <td class="px-4 py-2.5 text-right font-mono tabular-nums"
+                                    <td class="px-2 sm:px-4 py-2.5 text-right font-mono tabular-nums"
                                         style="color: {{ $row['cw'] > 0 ? 'var(--reports-text)' : 'var(--reports-text-muted)' }};">
                                         {{ $row['cw'] ?: '—' }}
                                     </td>
-                                    <td class="px-4 py-2.5 text-right font-mono tabular-nums"
+                                    <td class="px-2 sm:px-4 py-2.5 text-right font-mono tabular-nums"
                                         style="color: {{ $row['phone'] > 0 ? 'var(--reports-text)' : 'var(--reports-text-muted)' }};">
                                         {{ $row['phone'] ?: '—' }}
                                     </td>
-                                    <td class="px-4 py-2.5 text-right font-mono tabular-nums"
+                                    <td class="px-2 sm:px-4 py-2.5 text-right font-mono tabular-nums"
                                         style="color: {{ $row['digital'] > 0 ? 'var(--reports-text)' : 'var(--reports-text-muted)' }};">
                                         {{ $row['digital'] ?: '—' }}
                                     </td>
@@ -351,7 +351,7 @@
     {{-- ============================================================
          SECTION 3: OPERATOR SUMMARY
          ============================================================ --}}
-    <div class="px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
+    <div class="px-3 sm:px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
         <div class="text-xs font-bold uppercase tracking-widest mb-5"
              style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 3px; height: 1em; background-color: var(--reports-section-bar); border-radius: 2px;"></span>
@@ -370,22 +370,22 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--reports-border);">
-                                <th class="text-left px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Call Sign</th>
-                                <th class="text-left px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Name</th>
-                                <th class="text-right px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Valid QSOs</th>
-                                <th class="text-right px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Total Logged</th>
-                                <th class="text-right px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Dupes</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($this->operatorSummary as $row)
                                 <tr style="border-bottom: 1px solid var(--reports-divider);">
-                                    <td class="px-4 py-2.5 font-mono font-semibold"
+                                    <td class="px-2 sm:px-4 py-2.5 font-mono font-semibold"
                                         style="color: var(--reports-text);">
                                         {{ $row['call_sign'] }}
                                     </td>
@@ -393,15 +393,15 @@
                                         style="color: var(--reports-text);">
                                         {{ $row['name'] ?: '—' }}
                                     </td>
-                                    <td class="px-4 py-2.5 text-right font-mono font-bold tabular-nums"
+                                    <td class="px-2 sm:px-4 py-2.5 text-right font-mono font-bold tabular-nums"
                                         style="color: var(--reports-text);">
                                         {{ number_format($row['valid_qsos']) }}
                                     </td>
-                                    <td class="px-4 py-2.5 text-right font-mono tabular-nums"
+                                    <td class="px-2 sm:px-4 py-2.5 text-right font-mono tabular-nums"
                                         style="color: var(--reports-text-muted);">
                                         {{ number_format($row['total_logged']) }}
                                     </td>
-                                    <td class="px-4 py-2.5 text-right font-mono tabular-nums"
+                                    <td class="px-2 sm:px-4 py-2.5 text-right font-mono tabular-nums"
                                         style="color: {{ $row['duplicates'] > 0 ? 'var(--reports-warning)' : 'var(--reports-text-muted)' }};">
                                         {{ $row['duplicates'] ?: '—' }}
                                     </td>
@@ -417,7 +417,7 @@
     {{-- ============================================================
          SECTION 4: SECTIONS WORKED
          ============================================================ --}}
-    <div class="px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
+    <div class="px-3 sm:px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
         <div class="text-xs font-bold uppercase tracking-widest mb-5"
              style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 3px; height: 1em; background-color: var(--reports-section-bar); border-radius: 2px;"></span>
@@ -460,7 +460,7 @@
     {{-- ============================================================
          SECTION 5: VOLUNTEER HOURS
          ============================================================ --}}
-    <div class="px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
+    <div class="px-3 sm:px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
         <div class="text-xs font-bold uppercase tracking-widest mb-5"
              style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 3px; height: 1em; background-color: var(--reports-section-bar); border-radius: 2px;"></span>

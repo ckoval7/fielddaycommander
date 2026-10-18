@@ -753,3 +753,12 @@ test('Open-Meteo disabled state shows polling-disabled helper inside panel', fun
         ->test(ManageWeather::class)
         ->assertSee('Polling is disabled');
 });
+
+test('page wrapper adds no side padding on phones', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-weather');
+
+    $this->actingAs($user)
+        ->get(route('weather.manage'))
+        ->assertSee('p-4 md:p-6 max-sm:px-0', false);
+});

@@ -8,7 +8,7 @@
     popover="manual"
     role="alert"
     aria-live="assertive"
-    class="fixed inset-auto bottom-4 inset-x-4 m-0 p-0 border-0 bg-transparent overflow-visible sm:left-auto sm:right-4 sm:w-96"
+    class="fixed inset-auto bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-4 m-0 p-0 border-0 bg-transparent overflow-visible sm:left-auto sm:right-4 sm:w-96"
 >
     <div class="alert alert-error shadow-lg items-start">
         <x-icon name="phosphor-warning" class="w-5 h-5 shrink-0 mt-0.5" />

@@ -108,7 +108,52 @@
 
         {{-- Data Table --}}
         <x-card>
-            <div class="overflow-x-auto">
+            {{-- Mobile Card View --}}
+            <div class="md:hidden space-y-3">
+                @foreach($logs as $log)
+                    <button
+                        type="button"
+                        wire:key="audit-log-card-{{ $log->id }}"
+                        wire:click="showDetails({{ $log->id }})"
+                        wire:loading.attr="disabled"
+                        wire:target="showDetails({{ $log->id }})"
+                        class="w-full text-left rounded-lg border border-base-300 bg-base-100 p-3 min-h-11 active:bg-base-200 touch-manipulation"
+                        aria-label="View details for {{ $log->action_label }} at {{ $log->created_at->format('M j, g:i A') }}"
+                    >
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex flex-wrap items-center gap-2 min-w-0">
+                                <span class="font-medium">{{ $log->action_label }}</span>
+                                @if($log->is_critical)
+                                    <x-badge value="Critical" class="badge-error badge-sm" />
+                                @endif
+                            </div>
+                            <x-icon name="phosphor-caret-right" class="w-4 h-4 mt-1 shrink-0 text-base-content/50" />
+                        </div>
+                        <div class="mt-1 text-sm text-base-content/70">
+                            @if($log->user)
+                                <span class="font-medium">{{ $log->user->call_sign }}</span>
+                                <span>{{ $log->user->first_name }} {{ $log->user->last_name }}</span>
+                            @else
+                                <span>System</span>
+                            @endif
+                        </div>
+                        <div class="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-base-content/60">
+                            <span>{{ $log->created_at->format('M j, g:i A') }}</span>
+                            @if($log->ip_address)
+                                <code class="break-all">{{ $log->ip_address }}</code>
+                            @endif
+                        </div>
+                    </button>
+                @endforeach
+
+                @if($logs->hasPages())
+                    <div class="pt-2">
+                        {{ $logs->links() }}
+                    </div>
+                @endif
+            </div>
+
+            <div class="hidden md:block overflow-x-auto">
                 @php
                     $headers = [
                         ['key' => 'created_at', 'label' => 'Time', 'class' => 'w-48'],
@@ -159,6 +204,7 @@
                             wire:click="showDetails({{ $log->id }})"
                             class="btn-sm btn-ghost"
                             spinner="showDetails"
+                            aria-label="View details"
                         />
                     @endscope
                 </x-table>
@@ -166,7 +212,7 @@
 
             {{-- Pagination Info --}}
             <div class="p-4 border-t border-base-300">
-                <div class="flex justify-between items-center text-sm text-base-content/60">
+                <div class="flex flex-wrap justify-between items-center gap-2 text-sm text-base-content/60">
                     <div>
                         Showing {{ $logs->firstItem() ?? 0 }} to {{ $logs->lastItem() ?? 0 }} of {{ $logs->total() }} entries
                     </div>

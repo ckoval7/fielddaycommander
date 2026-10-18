@@ -784,3 +784,26 @@ test('export neutralizes spreadsheet formulas', function () {
 
     expect($csv)->toContain('"\'=cmd|"" /C calc""!A0"');
 });
+
+test('renders audit logs as tappable cards below md', function () {
+    $this->actingAs($this->adminUser);
+
+    $log = AuditLog::create([
+        'user_id' => $this->adminUser->id,
+        'action' => 'user.login.success',
+        'ip_address' => '203.0.113.9',
+        'user_agent' => 'Mozilla/5.0',
+        'is_critical' => false,
+        'created_at' => now(),
+    ]);
+
+    Livewire::test(AuditLogViewer::class)
+        ->assertSeeHtmlInOrder([
+            'md:hidden space-y-3',
+            'wire:key="audit-log-card-'.$log->id.'"',
+            'wire:click="showDetails('.$log->id.')"',
+            'W1AW',
+            '203.0.113.9',
+            'hidden md:block overflow-x-auto',
+        ]);
+});

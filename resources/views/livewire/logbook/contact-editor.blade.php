@@ -9,6 +9,10 @@
                 <x-input
                     label="Callsign"
                     wire:model="callsign"
+                    autocomplete="off"
+                    autocapitalize="characters"
+                    autocorrect="off"
+                    spellcheck="false"
                     placeholder="e.g. W1AW"
                     icon="phosphor-identification-card"
                     required
@@ -17,6 +21,10 @@
                 <x-input
                     label="Class"
                     wire:model="exchangeClass"
+                    autocomplete="off"
+                    autocapitalize="characters"
+                    autocorrect="off"
+                    spellcheck="false"
                     placeholder="e.g. 3A"
                     icon="phosphor-file-text"
                     hint="Transmitter count + class letter"
@@ -61,6 +69,9 @@
                 <x-input
                     label="Sub-mode (optional)"
                     wire:model="submode"
+                    autocapitalize="characters"
+                    autocorrect="off"
+                    spellcheck="false"
                     list="contact-editor-submodes"
                     maxlength="20"
                     placeholder="e.g. FT8, SSTV, USB"

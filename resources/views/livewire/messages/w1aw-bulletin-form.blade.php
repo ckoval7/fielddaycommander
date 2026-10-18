@@ -155,6 +155,10 @@
                             label="Source"
                             wire:model="scheduleSource"
                             placeholder="Sending callsign"
+                            autocomplete="off"
+                            autocapitalize="characters"
+                            autocorrect="off"
+                            spellcheck="false"
                             maxlength="10"
                         />
                     @endif
@@ -206,6 +210,7 @@
                     <x-input
                         label="Frequency (MHz)"
                         wire:model="frequency"
+                        inputmode="decimal"
                         icon="phosphor-cell-signal-high"
                         placeholder="e.g., 14.0475"
                         maxlength="20"

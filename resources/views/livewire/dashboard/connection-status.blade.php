@@ -128,7 +128,7 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 -translate-y-2"
-        class="fixed top-0 left-0 right-0 z-50 bg-warning text-warning-content shadow-lg"
+        class="fixed top-0 left-0 right-0 z-50 bg-warning text-warning-content shadow-lg pt-[env(safe-area-inset-top)]"
         role="alert"
         aria-live="assertive"
     >
@@ -156,7 +156,7 @@
     {{-- Connection Status Badge (Bottom Right) --}}
     @if($showBadge)
         <output
-            class="fixed bottom-4 right-4 z-40 block"
+            class="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-40 block"
             aria-live="polite"
         >
             <div

@@ -380,3 +380,8 @@ test('does not warn about WSJT-X credit for rulesets that allow it', function ()
     Livewire::test(ExternalLoggerManagement::class)
         ->assertDontSee('Contacts in those modes (FT8, FT4 and the like) are still logged');
 });
+
+test('logger panels trim their padding on phones', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSeeHtml('sm:rounded-lg p-3 sm:p-6');
+});

@@ -421,6 +421,7 @@
                     <x-input
                         label="Frequency"
                         wire:model="sentFrequency"
+                        inputmode="decimal"
                         icon="phosphor-cell-signal-high"
                         placeholder="e.g., 7.228"
                         maxlength="15"
