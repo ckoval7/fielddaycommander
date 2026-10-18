@@ -444,9 +444,11 @@
         --tab-height: 2.75rem;
     }
 
-    /* Sidebar and other menu rows. */
+    /* Sidebar and other menu rows. daisyUI top-aligns the row grid, so
+       center it or the extra height all lands under the label. */
     .menu :where(li:not(.menu-title) > :is(a, button, summary)) {
         min-height: 2.75rem;
+        align-content: center;
     }
 
     /* Small checkboxes and radios meet the 24px WCAG minimum. */
