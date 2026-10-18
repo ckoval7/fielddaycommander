@@ -56,6 +56,20 @@ globalThis.addEventListener('error', (event) => {
 document.addEventListener('livewire:init', () => {
     registerFormErrorSummary(globalThis.Alpine, globalThis.Livewire);
 
+    // Drop responses for components that are no longer on the page. A
+    // wire:poll request can still be in flight when wire:navigate swaps the
+    // page; Livewire 4 doesn't cancel it on teardown, so the late response
+    // morphs the detached element and Alpine throws "x is not defined" for
+    // every directive in it. Livewire re-checks isCancelled() right after
+    // onSuccess, so cancelling here skips the merge, effects and morph.
+    Livewire.interceptMessage(({ message, onSuccess }) => {
+        onSuccess(() => {
+            if (!message.component.el.isConnected) {
+                message.cancel();
+            }
+        });
+    });
+
     Livewire.interceptRequest(({ onError, onFailure }) => {
         onError(({ response, body, preventDefault }) => {
             const status = response?.status;
