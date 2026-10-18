@@ -440,7 +440,11 @@ class WeatherService
 
         if ($fingerprint !== $previousFingerprint) {
             $this->cacheStore()->put('weather:demo:alert_fingerprint', $fingerprint, $ttl);
-            WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false, shared: true);
+            try {
+                WeatherAlertChanged::dispatch($alerts, count($alerts) > 0, false, shared: true);
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
     }
 
@@ -459,7 +463,11 @@ class WeatherService
 
         Setting::set('weather.alerts', $alerts);
         Setting::set('weather.alert_fingerprint', $fingerprint);
-        WeatherAlertChanged::dispatch($alerts, $alerts !== [], $manual);
+        try {
+            WeatherAlertChanged::dispatch($alerts, $alerts !== [], $manual);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**

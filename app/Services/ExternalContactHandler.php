@@ -171,7 +171,7 @@ class ExternalContactHandler
             $session->increment('qso_count');
         });
 
-        ExternalContactReceived::dispatch($contact, $config->id, $dto->source, $config->event_id);
+        $this->broadcastSafely(fn () => ExternalContactReceived::dispatch($contact, $config->id, $dto->source, $config->event_id));
 
         return $contact;
     }
@@ -225,7 +225,7 @@ class ExternalContactHandler
             $contact->operatingSession?->decrement('qso_count');
         });
 
-        ExternalContactDeleted::dispatch($contactId, $callsign, $config->id, $dto->source, $stationName, $config->event_id);
+        $this->broadcastSafely(fn () => ExternalContactDeleted::dispatch($contactId, $callsign, $config->id, $dto->source, $stationName, $config->event_id));
     }
 
     /**
@@ -331,7 +331,20 @@ class ExternalContactHandler
         // repricing it for its (possibly new) mode.
         $this->dupes->save($contact, $previousKey);
 
-        ExternalContactUpdated::dispatch($contact, $config->id, $dto->source, $config->event_id);
+        $this->broadcastSafely(fn () => ExternalContactUpdated::dispatch($contact, $config->id, $dto->source, $config->event_id));
+    }
+
+    /**
+     * Run a broadcast dispatch, reporting rather than throwing on failure, so
+     * a Reverb outage never fails a contact that has already been saved.
+     */
+    private function broadcastSafely(Closure $dispatch): void
+    {
+        try {
+            $dispatch();
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     /**

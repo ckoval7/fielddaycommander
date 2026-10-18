@@ -32,6 +32,10 @@ class ContactChanged implements ShouldBroadcast
     /**
      * Broadcast one change per event the given contacts belong to.
      *
+     * A broadcaster failure is reported but never thrown: with the sync queue
+     * (as on the demo) the broadcast runs inline, and a Reverb outage must not
+     * fail the edit or delete that already saved.
+     *
      * @param  iterable<int, Contact>  $contacts
      */
     public static function notify(string $name, iterable $contacts): void
@@ -40,8 +44,14 @@ class ContactChanged implements ShouldBroadcast
             ->loadMissing('eventConfiguration:id,event_id')
             ->groupBy(fn (Contact $contact): ?int => $contact->eventConfiguration?->event_id)
             ->each(function ($group, $eventId) use ($name) {
-                if ($eventId !== '') {
+                if ($eventId === '') {
+                    return;
+                }
+
+                try {
                     static::dispatch((int) $eventId, $name, $group->pluck('id')->all());
+                } catch (\Throwable $e) {
+                    report($e);
                 }
             });
     }

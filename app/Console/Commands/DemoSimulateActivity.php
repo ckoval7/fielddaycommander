@@ -160,7 +160,11 @@ class DemoSimulateActivity extends Command
                 'notes' => null,
             ]);
 
-            event(new ContactLogged($contact, $event));
+            try {
+                event(new ContactLogged($contact, $event));
+            } catch (\Throwable $e) {
+                report($e);
+            }
             $logged++;
         }
 

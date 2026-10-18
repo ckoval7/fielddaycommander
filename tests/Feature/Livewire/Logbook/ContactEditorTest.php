@@ -12,7 +12,11 @@ use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use Illuminate\Broadcasting\Broadcasters\Broadcaster;
+use Illuminate\Broadcasting\BroadcastException;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event as EventFacade;
+use Illuminate\Support\Facades\Exceptions;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
@@ -197,6 +201,39 @@ describe('deleteContact', function () {
         Livewire::test(ContactEditor::class)
             ->call('deleteContact', $this->contact->id)
             ->assertForbidden();
+    });
+
+    test('still deletes when the broadcaster fails, as with the sync queue on the demo', function () {
+        Broadcast::extend('failing', fn () => new class extends Broadcaster
+        {
+            public function auth($request): mixed
+            {
+                return null;
+            }
+
+            public function validAuthenticationResponse($request, $result): mixed
+            {
+                return null;
+            }
+
+            public function broadcast(array $channels, $event, array $payload = []): void
+            {
+                throw new BroadcastException('Reverb is unreachable');
+            }
+        });
+        config([
+            'broadcasting.connections.failing' => ['driver' => 'failing'],
+            'broadcasting.default' => 'failing',
+            'queue.default' => 'sync',
+        ]);
+        Exceptions::fake();
+
+        Livewire::test(ContactEditor::class)
+            ->call('deleteContact', $this->contact->id)
+            ->assertDispatched('contact-deleted');
+
+        expect($this->contact->fresh()->trashed())->toBeTrue();
+        Exceptions::assertReported(BroadcastException::class);
     });
 });
 
