@@ -6,6 +6,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Http\Responses\ApprovalPendingRegisterResponse;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -15,10 +16,21 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
+    /**
+     * Shown only after a correct password, to accounts locked by an administrator.
+     */
+    public const LOCKED_ACCOUNT_MESSAGE = 'This account has been locked. Please contact an administrator.';
+
+    /**
+     * Shown only after a correct password, to registrations still awaiting administrator approval.
+     */
+    public const PENDING_APPROVAL_MESSAGE = 'Your account has been created and is pending administrator approval. You will be able to log in once an administrator has activated it.';
+
     /** @var list<string> */
     private const VALID_REGISTRATION_MODES = ['open', 'approval_required', 'email_verification_required', 'disabled'];
 
@@ -49,10 +61,10 @@ class FortifyServiceProvider extends ServiceProvider
         }
 
         $this->app->bind(
-            \Laravel\Fortify\Contracts\RegisterResponse::class,
+            RegisterResponse::class,
             function () {
                 if (config('auth-security.registration_mode') === 'approval_required') {
-                    return new \App\Http\Responses\ApprovalPendingRegisterResponse;
+                    return new ApprovalPendingRegisterResponse;
                 }
 
                 return new \Laravel\Fortify\Http\Responses\RegisterResponse;
@@ -77,15 +89,17 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::authenticateUsing(function (Request $request) {
             $user = User::where('email', $request->email)->first();
 
-            if ($user && Hash::check($request->password, $user->password)) {
-                if ($user->isLocked()) {
-                    throw ValidationException::withMessages([
-                        'email' => ['This account has been locked. Please contact an administrator.'],
-                    ]);
-                }
-
-                return $user;
+            if (! $user || ! Hash::check($request->password, $user->password)) {
+                return null;
             }
+
+            if ($user->isLocked()) {
+                throw ValidationException::withMessages([
+                    'email' => [$user->isPendingApproval() ? self::PENDING_APPROVAL_MESSAGE : self::LOCKED_ACCOUNT_MESSAGE],
+                ]);
+            }
+
+            return $user;
         });
 
         RateLimiter::for('login', function (Request $request) {

@@ -8,7 +8,11 @@ use App\Http\Middleware\DevRoleOverride;
 use App\Http\Middleware\EnforceRegistrationMode;
 use App\Http\Middleware\EnforceStationMode;
 use App\Http\Middleware\Ensure2FAEnabled;
+use App\Http\Middleware\EnsureAccountNotLocked;
 use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\SecurityHeaders;
+use App\Support\LocalNetworkPusherServer;
+use App\Support\TrustedHosts;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
@@ -16,6 +20,9 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Laravel\Reverb\Protocols\Pusher\Server as PusherServer;
+use Symfony\Component\HttpFoundation\Exception\SuspiciousOperationException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -34,10 +41,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'verified' => EnsureEmailIsVerified::class,
         ]);
-        $middleware->trustProxies(at: '*');
+        // Trusted proxies come from config('trustedproxy.proxies'), which TrustProxies reads per request.
+        $middleware->trustHosts(at: fn (): array => TrustedHosts::patterns(), subdomains: false);
+        $middleware->append(SecurityHeaders::class);
         $middleware->web(append: [
             DemoMiddleware::class,
             DemoAnalyticsMiddleware::class,
+            EnsureAccountNotLocked::class,
             DevRoleOverride::class,
             CheckSystemSetupComplete::class,
             EnforceRegistrationMode::class,
@@ -54,7 +64,32 @@ return Application::configure(basePath: dirname(__DIR__))
             prepend: DemoMiddleware::class,
         );
     })
+    ->withBindings([
+        // Accept WebSocket origins on the local network (LAN IPs, Tailscale, *.local).
+        PusherServer::class => LocalNetworkPusherServer::class,
+    ])
     ->withExceptions(function (Exceptions $exceptions): void {
+        // A Host outside TRUSTED_HOSTS surfaces as a bare 400. Explain how to fix it,
+        // without url() helpers, which would read the rejected Host again.
+        $exceptions->render(function (BadRequestHttpException $e, Request $request) {
+            $previous = $e->getPrevious();
+
+            if (! $previous instanceof SuspiciousOperationException || ! str_starts_with($previous->getMessage(), 'Untrusted Host')) {
+                return null;
+            }
+
+            $message = "This address isn't in the server's trusted hosts. Ask your administrator to add it to TRUSTED_HOSTS.";
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 400);
+            }
+
+            return response()->view('errors.untrusted-host', [
+                'host' => (string) $request->server('HTTP_HOST', ''),
+                'appUrl' => (string) config('app.url', ''),
+            ], 400);
+        });
+
         $exceptions->render(function (HttpException $e, Request $request) {
             if ($e->getStatusCode() !== 419) {
                 return null;

@@ -226,4 +226,23 @@ class ContactExporterTest extends TestCase
         // Mode name should be in the output
         expect($dataRow[3])->not->toBeEmpty();
     }
+
+    public function test_csv_neutralizes_spreadsheet_formulas(): void
+    {
+        $contact = Contact::factory()->create([
+            'callsign' => 'W1AW',
+            'exchange_class' => '=1+1',
+        ]);
+
+        $response = $this->exporter->exportCsv(Collection::make([$contact]));
+
+        ob_start();
+        $response->sendContent();
+        $csvContent = ob_get_clean();
+
+        $dataRow = str_getcsv(explode("\n", trim($csvContent))[1], escape: '\\');
+
+        expect($dataRow[1])->toBe('W1AW');
+        expect($dataRow[5])->toBe("'=1+1");
+    }
 }

@@ -132,3 +132,50 @@ it('shows active badge when overrides are set', function () {
         ->set('role', 'Operator')
         ->assertSee('active');
 });
+
+it('does not render in production even when developer mode is configured on', function () {
+    config(['developer.enabled' => true]);
+    $this->app['env'] = 'production';
+    Role::create(['name' => 'Operator', 'guard_name' => 'web']);
+
+    Livewire::actingAs(User::factory()->create())
+        ->test(DevRoleSwitcher::class)
+        ->assertDontSee('Role Switcher');
+});
+
+it('refuses role overrides in production', function () {
+    config(['developer.enabled' => true]);
+    $this->app['env'] = 'production';
+    Role::create(['name' => 'System Administrator', 'guard_name' => 'web']);
+
+    Livewire::actingAs(User::factory()->create())
+        ->test(DevRoleSwitcher::class)
+        ->set('role', 'System Administrator')
+        ->assertNotFound();
+
+    expect(session()->has('dev_role_override'))->toBeFalse();
+});
+
+it('refuses role overrides when developer mode is disabled', function () {
+    config(['developer.enabled' => false]);
+    Role::create(['name' => 'System Administrator', 'guard_name' => 'web']);
+
+    Livewire::actingAs(User::factory()->create())
+        ->test(DevRoleSwitcher::class)
+        ->set('role', 'System Administrator')
+        ->assertNotFound();
+
+    expect(session()->has('dev_role_override'))->toBeFalse();
+});
+
+it('ignores a role override in the session for effective roles in production', function () {
+    config(['developer.enabled' => true]);
+    $this->app['env'] = 'production';
+    Role::create(['name' => 'System Administrator', 'guard_name' => 'web']);
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+    session(['dev_role_override' => 'System Administrator']);
+
+    expect($user->fresh()->roles->pluck('name')->all())->not->toContain('System Administrator');
+});

@@ -27,4 +27,10 @@ return [
     // Password Requirements
     'password_min_length' => env('PASSWORD_MIN_LENGTH', 8),
     'password_admin_min_length' => env('PASSWORD_ADMIN_MIN_LENGTH', 12),
+
+    // HTTP Strict Transport Security max-age in seconds, sent only over HTTPS.
+    // 0 (default) leaves HSTS off: browsers that see it refuse plain HTTP and
+    // self-signed certificates for that host until it expires, which can lock
+    // field sites out. Set it (e.g. 31536000) only behind a trusted certificate.
+    'hsts_max_age' => (int) env('SECURITY_HSTS_MAX_AGE', 0),
 ];

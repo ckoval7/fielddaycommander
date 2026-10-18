@@ -4,6 +4,7 @@ use App\Models\AuditLog;
 use App\Models\EventConfiguration;
 use App\Models\ExternalLoggerSetting;
 use App\Services\ExternalLoggerManager;
+use App\Services\ListenerProcessRunner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -142,4 +143,23 @@ test('command handles multiple crashed listeners', function () {
     $this->artisan('external-logger:monitor')
         ->assertExitCode(0)
         ->expectsOutputToContain('Restarted 2 crashed listener(s)');
+});
+
+test('command does not respawn a listener that keeps failing at startup', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => null,
+    ]);
+
+    $runner = Mockery::mock(ListenerProcessRunner::class);
+    $runner->shouldNotReceive('spawnDetached');
+    $manager = new ExternalLoggerManager($runner);
+    $manager->recordStartupFailure($this->config->id, 'n1mm', 'The PHP sockets extension is not installed.');
+    $this->app->instance(ExternalLoggerManager::class, $manager);
+
+    $this->artisan('external-logger:monitor')->assertExitCode(0);
+    $this->artisan('external-logger:monitor')->assertExitCode(0);
 });

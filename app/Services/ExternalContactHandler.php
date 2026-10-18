@@ -7,30 +7,99 @@ use App\DTOs\ExternalRadioInfoDto;
 use App\Events\ExternalContactDeleted;
 use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
+use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
-use App\Models\Mode;
 use App\Models\Section;
+use Closure;
+use Illuminate\Database\DetectsConcurrencyErrors;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class ExternalContactHandler
 {
+    use DetectsConcurrencyErrors;
+
     public function __construct(
         private StationResolverService $stationResolver,
         private BandResolverService $bandResolver,
         private ModeResolverService $modeResolver,
         private SessionResolverService $sessionResolver,
-        private DuplicateCheckService $dupeChecker,
+        private DuplicateCheckService $dupes,
         private UserResolverService $userResolver,
     ) {}
 
+    /**
+     * Callsigns accepted from external loggers; the same shape the web sync
+     * endpoint (StoreContactSyncRequest) accepts.
+     */
+    private const CALLSIGN_PATTERN = '/^[A-Z0-9\/]+$/';
+
+    /**
+     * Width of contacts.external_id. Longer ids are stored as a hash so the
+     * contact is kept and later replace/delete packets still find it.
+     */
+    private const EXTERNAL_ID_MAX_LENGTH = 100;
+
+    /**
+     * Width of contacts.submode.
+     */
+    private const SUBMODE_MAX_LENGTH = 20;
+
     public function handleContact(ExternalContactDto $dto, EventConfiguration $config): Contact
     {
+        return $this->retryingOnLockContention(fn () => $this->storeContact($dto, $config));
+    }
+
+    public function handleReplace(ExternalContactDto $dto, EventConfiguration $config): void
+    {
+        $this->retryingOnLockContention(fn () => $this->replaceContact($dto, $config));
+    }
+
+    public function handleDelete(ExternalContactDto $dto, EventConfiguration $config): void
+    {
+        $this->retryingOnLockContention(fn () => $this->deleteContact($dto, $config));
+    }
+
+    /**
+     * Run $operation, retrying it once from the start when it lost a lock
+     * wait or a deadlock (e.g. while an ADIF import batch held the event
+     * lock). UDP has no resend, so giving up would drop the contact.
+     *
+     * Each write step runs in its own locked transaction that rolls back on
+     * failure, and every step is safe to repeat, so the retry cannot store a
+     * contact twice.
+     *
+     * @template TReturn
+     *
+     * @param  Closure(): TReturn  $operation
+     * @return TReturn
+     */
+    private function retryingOnLockContention(Closure $operation): mixed
+    {
+        try {
+            return $operation();
+        } catch (Throwable $exception) {
+            if (! $this->causedByConcurrencyError($exception)) {
+                throw $exception;
+            }
+
+            Log::info('Retrying external contact after lock contention', ['error' => $exception->getMessage()]);
+
+            return $operation();
+        }
+    }
+
+    private function storeContact(ExternalContactDto $dto, EventConfiguration $config): Contact
+    {
+        $this->assertValidCallsign($dto);
+
         // Idempotency: if we already have this external ID, treat as replace
         if ($dto->externalId !== null) {
-            $existing = Contact::withTrashed()->where('external_id', $dto->externalId)->first();
+            $existing = $this->findByExternalId($dto->externalId, $config);
             if ($existing !== null) {
                 $this->restoreIfTrashed($existing);
                 $this->updateContact($existing, $dto, $config);
@@ -77,54 +146,47 @@ class ExternalContactHandler
 
         $this->sessionResolver->touchActivity($session);
 
-        $dupeCheck = ($bandId !== null && $modeId !== null)
-            ? $this->dupeChecker->check($dto->callsign, $bandId, $modeId, $config->id, (bool) $station->is_gota)
-            : ['is_duplicate' => false, 'duplicate_of_contact_id' => null];
-
-        $mode = $modeId !== null ? Mode::find($modeId) : null;
-        $points = match (true) {
-            $dupeCheck['is_duplicate'] => 0,
-            $mode !== null => $config->pointsForContact($mode, $station),
-            default => 1,
-        };
-
-        $contact = Contact::create([
+        $contact = new Contact([
             'uuid' => Str::uuid()->toString(),
             'event_configuration_id' => $config->id,
             'operating_session_id' => $session->id,
             'logger_user_id' => $operatorUserId,
             'band_id' => $bandId,
             'mode_id' => $modeId,
-            'submode' => $modeName,
+            'submode' => $this->storableSubmode($modeName, $dto),
             'qso_time' => $dto->timestamp,
             'callsign' => $dto->callsign,
             'section_id' => $sectionId,
             'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange),
             'power_watts' => $session->power_watts,
-            'points' => $points,
-            'is_duplicate' => $dupeCheck['is_duplicate'],
-            'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
             'is_gota_contact' => (bool) $station->is_gota,
-            'external_id' => $dto->externalId,
+            'external_id' => $dto->externalId !== null ? $this->storableExternalId($dto->externalId, $config->id, $dto->source) : null,
             'external_source' => $dto->source,
         ]);
 
-        $session->increment('qso_count');
+        // Without a band and mode the contact can be neither dupe-checked nor
+        // priced, so it is stored at 0 points until a replace completes it.
+        $this->dupes->locked($config->id, function () use ($contact, $session) {
+            $this->dupes->save($contact);
+            $session->increment('qso_count');
+        });
 
         ExternalContactReceived::dispatch($contact, $config->id, $dto->source, $config->event_id);
 
         return $contact;
     }
 
-    public function handleReplace(ExternalContactDto $dto, EventConfiguration $config): void
+    private function replaceContact(ExternalContactDto $dto, EventConfiguration $config): void
     {
         if ($dto->externalId === null) {
             return;
         }
 
+        $this->assertValidCallsign($dto);
+
         // N1MM+ sends contactdelete then contactreplace with the same ID when an
         // operator edits a QSO, so the contact may already be soft-deleted.
-        $contact = Contact::withTrashed()->where('external_id', $dto->externalId)->first();
+        $contact = $this->findByExternalId($dto->externalId, $config);
         if ($contact === null) {
             return;
         }
@@ -139,13 +201,16 @@ class ExternalContactHandler
         $this->updateContact($contact, $dto, $config);
     }
 
-    public function handleDelete(ExternalContactDto $dto, EventConfiguration $config): void
+    private function deleteContact(ExternalContactDto $dto, EventConfiguration $config): void
     {
         if ($dto->externalId === null) {
             return;
         }
 
-        $contact = Contact::where('external_id', $dto->externalId)->first();
+        $contact = Contact::query()
+            ->where('event_configuration_id', $config->id)
+            ->where('external_id', $this->storableExternalId($dto->externalId, $config->id))
+            ->first();
         if ($contact === null) {
             return;
         }
@@ -154,10 +219,13 @@ class ExternalContactHandler
         $contactId = $contact->id;
         $callsign = $contact->callsign;
 
-        $contact->delete();
-        $contact->operatingSession?->decrement('qso_count');
+        $this->dupes->locked($config->id, function () use ($contact) {
+            $contact->delete();
+            $this->dupes->reevaluate($contact);
+            $contact->operatingSession?->decrement('qso_count');
+        });
 
-        ExternalContactDeleted::dispatch($contactId, $callsign, $config->id, $dto->source, $stationName);
+        ExternalContactDeleted::dispatch($contactId, $callsign, $config->id, $dto->source, $stationName, $config->event_id);
     }
 
     /**
@@ -198,8 +266,45 @@ class ExternalContactHandler
             return;
         }
 
-        $contact->restore();
-        $contact->operatingSession?->increment('qso_count');
+        $this->dupes->locked($contact->event_configuration_id, function () use ($contact) {
+            $contact->restore();
+            $this->dupes->reevaluate($contact);
+            $contact->operatingSession?->increment('qso_count');
+        });
+    }
+
+    /**
+     * The contact this event configuration already holds for an external
+     * logger's QSO id, including soft-deleted ones. Scoped to the event so
+     * one event's packets can never touch another event's contacts.
+     */
+    private function findByExternalId(string $externalId, EventConfiguration $config): ?Contact
+    {
+        return Contact::withTrashed()
+            ->where('event_configuration_id', $config->id)
+            ->where('external_id', $this->storableExternalId($externalId, $config->id))
+            ->first();
+    }
+
+    /**
+     * Drop packets whose callsign is not a plausible callsign. UDP input is
+     * unauthenticated, and callsigns end up in the logbook and the UI.
+     *
+     * @throws InvalidExternalContactException
+     */
+    private function assertValidCallsign(ExternalContactDto $dto): void
+    {
+        if (preg_match(self::CALLSIGN_PATTERN, strtoupper(trim($dto->callsign))) === 1 && strlen($dto->callsign) <= 20) {
+            return;
+        }
+
+        Log::warning('Dropped external contact with an invalid callsign', [
+            'source' => $dto->source,
+            'external_id' => $dto->externalId,
+            'callsign' => mb_substr($dto->callsign, 0, 40),
+        ]);
+
+        throw new InvalidExternalContactException('Invalid callsign');
     }
 
     private function updateContact(Contact $contact, ExternalContactDto $dto, EventConfiguration $config): void
@@ -210,26 +315,68 @@ class ExternalContactHandler
         $modeId = $this->modeResolver->resolve($dto->modeName) ?? $contact->mode_id;
         $sectionId = $this->resolveSection($dto->sectionCode) ?? $contact->section_id;
 
-        $contact->update([
+        $previousKey = $this->dupes->keyFor($contact);
+
+        $contact->fill([
             'callsign' => $dto->callsign,
             'qso_time' => $dto->timestamp,
             'band_id' => $bandId,
             'mode_id' => $modeId,
-            'submode' => $dto->modeName ?? $contact->submode,
+            'submode' => $dto->modeName !== null ? $this->storableSubmode($dto->modeName, $dto) : $contact->submode,
             'section_id' => $sectionId,
             'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange) ?? $contact->exchange_class,
         ]);
 
-        if ($bandId !== null && $modeId !== null) {
-            $dupeCheck = $this->dupeChecker->check($dto->callsign, $bandId, $modeId, $config->id, $contact->is_gota_contact, $contact->id);
-            $contact->update([
-                'is_duplicate' => $dupeCheck['is_duplicate'],
-                'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
-                'points' => $dupeCheck['is_duplicate'] ? 0 : $contact->points,
+        // Re-settles both the group the contact left and the one it joined,
+        // repricing it for its (possibly new) mode.
+        $this->dupes->save($contact, $previousKey);
+
+        ExternalContactUpdated::dispatch($contact, $config->id, $dto->source, $config->event_id);
+    }
+
+    /**
+     * The external id as stored: ids longer than the column are replaced by
+     * a stable hash (and logged, at most once a minute per source) instead of
+     * failing the insert and dropping the contact.
+     */
+    private function storableExternalId(string $externalId, int $eventConfigurationId, ?string $source = null): string
+    {
+        if (strlen($externalId) <= self::EXTERNAL_ID_MAX_LENGTH) {
+            return $externalId;
+        }
+
+        if ($source !== null && Cache::add("external-logger:{$source}:long-external-id-warned", true, 60)) {
+            Log::warning('External logger sent an over-long QSO id; storing a hash of it', [
+                'source' => $source,
+                'event_configuration_id' => $eventConfigurationId,
+                'length' => strlen($externalId),
+                'external_id' => mb_substr($externalId, 0, 120),
             ]);
         }
 
-        ExternalContactUpdated::dispatch($contact, $config->id, $dto->source);
+        return 'sha256:'.hash('sha256', $externalId);
+    }
+
+    /**
+     * The mode name as stored in contacts.submode, cut to the column width
+     * (logged, at most once a minute per source) rather than truncated
+     * silently by the database.
+     */
+    private function storableSubmode(?string $modeName, ExternalContactDto $dto): ?string
+    {
+        if ($modeName === null || mb_strlen($modeName) <= self::SUBMODE_MAX_LENGTH) {
+            return $modeName;
+        }
+
+        if (Cache::add("external-logger:{$dto->source}:long-mode-warned", true, 60)) {
+            Log::warning('External logger sent an over-long mode name; storing it truncated', [
+                'source' => $dto->source,
+                'callsign' => mb_substr($dto->callsign, 0, 40),
+                'mode' => mb_substr($modeName, 0, 120),
+            ]);
+        }
+
+        return mb_substr($modeName, 0, self::SUBMODE_MAX_LENGTH);
     }
 
     private function extractClassFromExchange(?string $exchange): ?string

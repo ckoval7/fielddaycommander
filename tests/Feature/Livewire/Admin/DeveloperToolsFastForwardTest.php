@@ -11,6 +11,8 @@ use Spatie\Permission\Models\Permission;
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
+    config(['developer.enabled' => true]);
+
     // Create permission first
     Permission::create(['name' => 'manage-settings']);
 

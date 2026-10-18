@@ -4,6 +4,8 @@ namespace App\Livewire\Admin;
 
 use App\Enums\AdifImportStatus;
 use App\Enums\AdifRecordStatus;
+use App\Jobs\ImportAdifContacts;
+use App\Jobs\ValidateAdifImport;
 use App\Models\AdifImport as AdifImportModel;
 use App\Models\AdifImportRecord;
 use App\Models\AuditLog;
@@ -12,26 +14,50 @@ use App\Models\Mode;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
-use App\Services\AdifDuplicateMatcherService;
 use App\Services\AdifFieldMapperService;
-use App\Services\AdifImportService;
 use App\Services\AdifParserService;
-use App\Services\AdifValidationService;
 use App\Services\EventContextService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class AdifImport extends Component
 {
     use WithFileUploads;
+    use WithPagination;
+
+    /**
+     * Staged records written per INSERT on upload.
+     */
+    private const INSERT_CHUNK_SIZE = 500;
+
+    /**
+     * Rows shown per page of the review table.
+     */
+    public const RECORDS_PER_PAGE = 50;
+
+    /**
+     * Review table filters and the record statuses each one shows.
+     *
+     * @var array<string, array<int, AdifRecordStatus>>
+     */
+    private const RECORD_FILTERS = [
+        'invalid' => [AdifRecordStatus::Invalid],
+        'new' => [AdifRecordStatus::Ready],
+        'duplicate' => [AdifRecordStatus::DuplicateMatch],
+        'skipped' => [AdifRecordStatus::Skipped],
+    ];
 
     public int $step = 1;
 
+    #[Locked]
     public ?int $importId = null;
 
     /** @var TemporaryUploadedFile|null */
@@ -71,6 +97,9 @@ class AdifImport extends Component
     public array $resolutions = [];
 
     public string $importStatus = '';
+
+    /** Which records the review table shows: all, invalid, new, duplicate or skipped. */
+    public string $recordFilter = 'all';
 
     public function mount(): void
     {
@@ -114,22 +143,36 @@ class AdifImport extends Component
 
         $this->importId = $import->id;
 
+        $now = now();
+        $rows = [];
+
         foreach ($result['records'] as $record) {
             $qsoTime = $this->parseQsoTime($record['QSO_DATE'] ?? null, $record['TIME_ON'] ?? null);
 
-            AdifImportRecord::create([
+            $rows[] = [
                 'adif_import_id' => $import->id,
-                'raw_data' => $record,
+                'raw_data' => json_encode($record),
                 'callsign' => isset($record['CALL']) ? strtoupper(trim($record['CALL'])) : null,
-                'qso_time' => $qsoTime,
+                'qso_time' => $qsoTime?->format('Y-m-d H:i:s'),
                 'band_name' => $record['BAND'] ?? null,
                 'mode_name' => $record['MODE'] ?? null,
                 'section_code' => $record['ARRL_SECT'] ?? null,
                 'exchange_class' => $record['APP_N1MM_EXCHANGE1'] ?? $record['CLASS'] ?? null,
                 'station_identifier' => $record['APP_N1MM_NETBIOSNAME'] ?? $record['STATION_CALLSIGN'] ?? null,
                 'operator_callsign' => $record['OPERATOR'] ?? null,
-                'status' => AdifRecordStatus::Pending,
-            ]);
+                'status' => AdifRecordStatus::Pending->value,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+
+            if (count($rows) === self::INSERT_CHUNK_SIZE) {
+                AdifImportRecord::query()->insert($rows);
+                $rows = [];
+            }
+        }
+
+        if ($rows !== []) {
+            AdifImportRecord::query()->insert($rows);
         }
 
         $mapper = app(AdifFieldMapperService::class);
@@ -148,8 +191,20 @@ class AdifImport extends Component
 
     public function applyMappingsAndContinue(): void
     {
-        $import = AdifImportModel::findOrFail($this->importId);
+        $import = $this->findOwnedImport();
         $mapper = app(AdifFieldMapperService::class);
+
+        $this->bandMappings = $this->withoutBlankSelections($this->bandMappings);
+        $this->modeMappings = $this->withoutBlankSelections($this->modeMappings);
+        $this->sectionMappings = $this->withoutBlankSelections($this->sectionMappings);
+        $this->stationMappings = $this->withoutBlankSelections($this->stationMappings);
+        $this->operatorMappings = $this->withoutBlankSelections($this->operatorMappings);
+
+        if (! $this->mappingsReferenceValidRecords($import)) {
+            $this->addError('mapping', 'One or more selected mappings are not valid for this event. Please review your selections.');
+
+            return;
+        }
 
         $fieldMappings = [];
         if (! empty($this->bandMappings)) {
@@ -201,50 +256,109 @@ class AdifImport extends Component
             return;
         }
 
-        $matcher = new AdifDuplicateMatcherService;
-        $this->matchSummary = $matcher->match($import);
-
-        $validator = new AdifValidationService;
-        $this->validationResult = $validator->validate($import);
-        $this->matchSummary['invalid'] = $this->validationResult['invalid_count'] ?? 0;
+        // Matching and validation run on the queue; the wizard polls
+        // refreshProgress() until the summary is ready.
+        $import->update(['status' => AdifImportStatus::Validating, 'progress_processed' => 0, 'progress_total' => 0]);
+        ValidateAdifImport::dispatch($import->id);
 
         $this->step = 3;
+        $this->syncProgress($import->refresh());
     }
 
     public function executeImport(): void
     {
-        $import = AdifImportModel::findOrFail($this->importId);
-        $service = app(AdifImportService::class);
+        $import = $this->findOwnedImport();
 
-        try {
-            $service->import($import);
-            $import->refresh();
-            $this->importStatus = 'completed';
-
-            AuditLog::log('adif.import.completed', auditable: $import, newValues: [
-                'imported_records' => $import->imported_records,
-                'merged_records' => $import->merged_records,
-                'skipped_records' => $import->skipped_records,
-            ]);
-        } catch (\Throwable) {
-            $import->refresh();
-            $this->importStatus = 'failed';
-
-            AuditLog::log('adif.import.failed', auditable: $import);
+        if ($import->status !== AdifImportStatus::PendingReview || $this->hasInvalidRecords) {
+            return;
         }
+
+        $import->update([
+            'status' => AdifImportStatus::Importing,
+            'progress_processed' => 0,
+            'progress_total' => $import->records()
+                ->whereIn('status', [AdifRecordStatus::Ready, AdifRecordStatus::DuplicateMatch])
+                ->count(),
+        ]);
+
+        $this->recordFilter = 'all';
+        $this->resetPage();
+
+        // The import runs on the queue in time-boxed runs; the wizard polls
+        // refreshProgress() for progress and the final result.
+        ImportAdifContacts::dispatch($import->id);
+
+        $this->syncProgress($import->refresh());
+    }
+
+    /**
+     * Polled while validation or the import runs on the queue.
+     */
+    public function refreshProgress(): void
+    {
+        if (! $this->importId) {
+            return;
+        }
+
+        $this->syncProgress($this->findOwnedImport());
+    }
+
+    /**
+     * Reflect the import's stored status in the wizard.
+     */
+    private function syncProgress(AdifImportModel $import): void
+    {
+        unset($this->currentImport, $this->importRecords, $this->hasInvalidRecords);
+
+        $this->importStatus = match ($import->status) {
+            AdifImportStatus::Validating => 'validating',
+            AdifImportStatus::Importing => 'importing',
+            AdifImportStatus::Completed => 'completed',
+            AdifImportStatus::Failed => 'failed',
+            default => '',
+        };
+
+        if ($import->status === AdifImportStatus::PendingReview) {
+            $this->matchSummary = $this->summarizeRecords($import);
+        }
+    }
+
+    /**
+     * @return array{new: int, merge: int, skip: int, invalid: int}
+     */
+    private function summarizeRecords(AdifImportModel $import): array
+    {
+        $counts = $import->records()
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        return [
+            'new' => (int) ($counts[AdifRecordStatus::Ready->value] ?? 0),
+            'merge' => (int) ($counts[AdifRecordStatus::DuplicateMatch->value] ?? 0),
+            'skip' => (int) ($counts[AdifRecordStatus::Skipped->value] ?? 0),
+            'invalid' => (int) ($counts[AdifRecordStatus::Invalid->value] ?? 0),
+        ];
     }
 
     public function toggleSkip(int $recordId): void
     {
+        $import = $this->findOwnedImport();
+
+        if ($import->status !== AdifImportStatus::PendingReview) {
+            return;
+        }
+
         $record = AdifImportRecord::findOrFail($recordId);
 
-        if ($record->adif_import_id !== $this->importId) {
+        if ($record->adif_import_id !== $import->id) {
             return;
         }
 
         if ($record->status === AdifRecordStatus::Skipped) {
-            // Can't unskip invalid records
-            if ($record->notes && str_contains($record->notes, 'outside event window') || str_contains($record->notes ?? '', 'not valid')) {
+            // A skipped record that failed validation keeps its errors in
+            // notes and can't be included again.
+            if ($record->notes !== null && $record->notes !== '') {
                 return;
             }
             $record->update(['status' => AdifRecordStatus::Ready]);
@@ -252,14 +366,42 @@ class AdifImport extends Component
             $record->update(['status' => AdifRecordStatus::Skipped]);
         }
 
-        // Recount summary
-        $import = AdifImportModel::findOrFail($this->importId);
-        $this->matchSummary = [
-            'new' => $import->records()->where('status', AdifRecordStatus::Ready)->count(),
-            'merge' => $import->records()->where('status', AdifRecordStatus::DuplicateMatch)->count(),
-            'skip' => $import->records()->where('status', AdifRecordStatus::Skipped)->count(),
-            'invalid' => $import->records()->where('status', AdifRecordStatus::Invalid)->count(),
-        ];
+        $this->matchSummary = $this->summarizeRecords($import);
+    }
+
+    /**
+     * Skip every record that failed validation, in one query, so the import
+     * can go ahead. Their errors stay in notes, so they can't be included again.
+     */
+    public function skipAllInvalid(): void
+    {
+        $import = $this->findOwnedImport();
+
+        if ($import->status !== AdifImportStatus::PendingReview) {
+            return;
+        }
+
+        $import->records()
+            ->where('status', AdifRecordStatus::Invalid)
+            ->update(['status' => AdifRecordStatus::Skipped, 'updated_at' => now()]);
+
+        unset($this->importRecords, $this->hasInvalidRecords);
+        $this->matchSummary = $this->summarizeRecords($import);
+
+        if ($this->recordFilter === 'invalid') {
+            $this->recordFilter = 'all';
+        }
+
+        $this->resetPage();
+    }
+
+    public function updatedRecordFilter(): void
+    {
+        if ($this->recordFilter !== 'all' && ! array_key_exists($this->recordFilter, self::RECORD_FILTERS)) {
+            $this->recordFilter = 'all';
+        }
+
+        $this->resetPage();
     }
 
     #[Computed]
@@ -269,21 +411,29 @@ class AdifImport extends Component
             return false;
         }
 
-        return AdifImportRecord::where('adif_import_id', $this->importId)
+        return AdifImportRecord::where('adif_import_id', $this->findOwnedImport()->id)
             ->where('status', AdifRecordStatus::Invalid)
             ->exists();
     }
 
+    /**
+     * One page of the review table, narrowed by the record filter.
+     */
     #[Computed]
-    public function importRecords()
+    public function importRecords(): ?LengthAwarePaginator
     {
         if (! $this->importId) {
-            return collect();
+            return null;
         }
 
-        return AdifImportRecord::where('adif_import_id', $this->importId)
+        $statuses = self::RECORD_FILTERS[$this->recordFilter] ?? null;
+
+        return AdifImportRecord::query()
+            ->where('adif_import_id', $this->findOwnedImport()->id)
+            ->when($statuses !== null, fn ($query) => $query->whereIn('status', $statuses))
             ->orderBy('qso_time')
-            ->get();
+            ->orderBy('id')
+            ->paginate(self::RECORDS_PER_PAGE);
     }
 
     #[Computed]
@@ -323,13 +473,72 @@ class AdifImport extends Component
     #[Computed]
     public function currentImport()
     {
-        return $this->importId ? AdifImportModel::find($this->importId) : null;
+        return $this->importId ? $this->findOwnedImport() : null;
     }
 
     public function render(): View
     {
         return view('livewire.admin.adif-import')
             ->layout('components.layouts.app');
+    }
+
+    /**
+     * Load the wizard's import, ensuring it belongs to the current user and event.
+     */
+    private function findOwnedImport(): AdifImportModel
+    {
+        $event = app(EventContextService::class)->getContextEvent();
+
+        return AdifImportModel::query()
+            ->whereKey($this->importId)
+            ->where('user_id', auth()->id())
+            ->where('event_configuration_id', $event?->eventConfiguration?->id)
+            ->firstOrFail();
+    }
+
+    /**
+     * Drop mapping entries the user left unselected.
+     *
+     * @param  array<string, mixed>  $mappings
+     * @return array<string, mixed>
+     */
+    private function withoutBlankSelections(array $mappings): array
+    {
+        return array_filter($mappings, fn (mixed $id): bool => $id !== null && $id !== '');
+    }
+
+    /**
+     * Confirm every selected mapping points at a real record, and stations at this import's event.
+     */
+    private function mappingsReferenceValidRecords(AdifImportModel $import): bool
+    {
+        $checks = [
+            [$this->bandMappings, Band::query()],
+            [$this->modeMappings, Mode::query()],
+            [$this->sectionMappings, Section::query()],
+            [$this->stationMappings, Station::query()->where('event_configuration_id', $import->event_configuration_id)],
+            [$this->operatorMappings, User::query()],
+        ];
+
+        foreach ($checks as [$mappings, $query]) {
+            if ($mappings === []) {
+                continue;
+            }
+
+            foreach ($mappings as $id) {
+                if (filter_var($id, FILTER_VALIDATE_INT) === false) {
+                    return false;
+                }
+            }
+
+            $ids = array_unique(array_map('intval', array_values($mappings)));
+
+            if ($query->whereKey($ids)->count() !== count($ids)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function parseQsoTime(?string $date, ?string $time): ?Carbon
@@ -354,7 +563,7 @@ class AdifImport extends Component
      */
     private function buildUploadSummary(AdifImportModel $import, array $parseResult): array
     {
-        $records = $import->records;
+        $records = $import->records()->get(['qso_time', 'band_name', 'mode_name', 'station_identifier']);
 
         $times = $records->pluck('qso_time')->filter();
         $dateRange = $times->isEmpty()

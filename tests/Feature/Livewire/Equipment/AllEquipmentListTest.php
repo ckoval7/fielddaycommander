@@ -407,3 +407,22 @@ test('equipment manager can commit another users equipment to an event', functio
         'status' => 'committed',
     ]);
 });
+
+test('AllEquipmentList ignores sort columns outside the allowlist', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(AllEquipmentList::class)
+        ->set('sortBy', 'nonexistent_column')
+        ->set('sortDirection', 'sideways')
+        ->assertOk();
+});
+
+test('the photo viewer title is escaped exactly once', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(AllEquipmentList::class)
+        ->call('viewPhoto', 'equipment/a.jpg', "O'Brien <b>Radio</b>")
+        ->assertSeeHtml('O&#039;Brien &lt;b&gt;Radio&lt;/b&gt;')
+        ->assertDontSeeHtml('&amp;#039;')
+        ->assertDontSeeHtml('&amp;lt;');
+});

@@ -136,6 +136,15 @@ class GuestbookForm extends Component
     }
 
     /**
+     * Clear the default presence so the visitor must choose one when the
+     * browser can't detect location (e.g. the site is served over plain HTTP).
+     */
+    public function clearPresenceType(): void
+    {
+        $this->presence_type = '';
+    }
+
+    /**
      * Save the guestbook entry.
      */
     public function save(): void

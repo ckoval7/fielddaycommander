@@ -1,5 +1,31 @@
 <?php
 
+/*
+ * Hosts allowed to open WebSocket connections, compared against the host of
+ * the browser's Origin header (wildcards allowed, e.g. "*.example.org").
+ * The APP_URL host and its subdomains, REVERB_HOST, TRUSTED_HOSTS and
+ * REVERB_ALLOWED_ORIGINS are listed here. Local-network origins (private and
+ * Tailscale IPs, IPv6 ULA/link-local, *.local) are accepted on top of this
+ * list by App\Support\LocalNetworkPusherServer, using the same rules as
+ * App\Support\LocalNetworkHosts. An unconfigured APP_URL (localhost) allows
+ * any origin.
+ */
+$reverbAppUrlHost = strtolower((string) parse_url((string) env('APP_URL', ''), PHP_URL_HOST));
+$reverbListedHosts = static fn (mixed $value): array => array_filter(array_map(
+    'trim',
+    explode(',', strtolower((string) $value)),
+));
+$reverbAllowedOrigins = in_array($reverbAppUrlHost, ['', 'localhost', '127.0.0.1'], true)
+    || in_array('*', $reverbListedHosts(env('TRUSTED_HOSTS')), true)
+    ? ['*']
+    : array_values(array_unique([
+        $reverbAppUrlHost,
+        '*.'.$reverbAppUrlHost,
+        ...$reverbListedHosts(env('REVERB_HOST')),
+        ...$reverbListedHosts(env('TRUSTED_HOSTS')),
+        ...$reverbListedHosts(env('REVERB_ALLOWED_ORIGINS')),
+    ]));
+
 return [
 
     /*
@@ -67,6 +93,25 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Browser Connection
+    |--------------------------------------------------------------------------
+    |
+    | Where browsers open the WebSocket. Every deploy path proxies Reverb's
+    | /app path on the same address as the site, so by default the browser
+    | connects to whatever address the page was loaded from. That keeps live
+    | updates working by LAN IP, .local name or any other trusted host. Set
+    | these only when Reverb is served from a different public address.
+    |
+    */
+
+    'client' => [
+        'host' => env('REVERB_CLIENT_HOST'),
+        'port' => env('REVERB_CLIENT_PORT'),
+        'scheme' => env('REVERB_CLIENT_SCHEME'),
+    ],
+
     'apps' => [
 
         'provider' => 'config',
@@ -82,7 +127,7 @@ return [
                     'scheme' => env('REVERB_SCHEME', 'https'),
                     'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
                 ],
-                'allowed_origins' => ['*'],
+                'allowed_origins' => $reverbAllowedOrigins,
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),

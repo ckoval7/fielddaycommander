@@ -18,7 +18,10 @@
                 Sign out to let operators use this station, or take this browser out of station mode.
             </p>
             <div class="flex flex-col sm:flex-row gap-2">
-                <x-button label="Sign Out" link="{{ route('logout.get') }}" class="btn-outline flex-1" icon="phosphor-sign-out" no-wire-navigate />
+                <form method="POST" action="{{ route('logout') }}" class="flex-1 flex" data-navigate-ignore>
+                    @csrf
+                    <x-button label="Sign Out" type="submit" class="btn-outline flex-1" icon="phosphor-sign-out" />
+                </form>
                 <x-button label="Exit Station Mode" wire:click="exitStationMode" wire:confirm="Take this browser out of station mode?" class="btn-error flex-1" icon="phosphor-power" spinner="exitStationMode" />
             </div>
         @else

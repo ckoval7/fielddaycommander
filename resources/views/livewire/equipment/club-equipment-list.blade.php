@@ -22,10 +22,7 @@
                             $allAvailable = \App\Models\Equipment::whereIn('id', $selectedIds)
                                 ->whereDoesntHave('commitments', function ($q) {
                                     $q->whereIn('status', ['committed', 'delivered'])
-                                        ->whereHas('event', function ($eq) {
-                                            $eq->where('start_time', '<=', now()->addDays(30))
-                                                ->where('end_time', '>=', now());
-                                        });
+                                        ->whereHas('event', fn ($eq) => $eq->notEnded());
                                 })
                                 ->count() === count($selectedIds);
                         @endphp

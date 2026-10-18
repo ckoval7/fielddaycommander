@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
 use App\Models\EventConfiguration;
 use App\Services\AdifContactMapper;
@@ -75,7 +76,9 @@ class WsjtxListenCommand extends BaseUdpListenerCommand
             $this->handler->handleContact($dto, $config);
             $this->writeLastLogEntry($lastLogKey, $dto, true);
         } catch (OutOfPeriodContactException) {
-            $this->writeLastLogEntry($lastLogKey, $dto, false, 'outside event window');
+            $this->rejectOutOfPeriod($lastLogKey, $dto);
+        } catch (InvalidExternalContactException) {
+            $this->writeLastLogEntry($lastLogKey, $dto, false, 'invalid callsign');
         }
 
         return 1;

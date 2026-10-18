@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AlbumExportController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\ContactSyncController;
 use App\Http\Controllers\DashboardController;
@@ -67,12 +66,15 @@ Route::prefix('setup')->group(function () {
 Route::get('/register/invite/{token}', [InvitationController::class, 'show'])->name('invitation.show');
 Route::post('/register/invite/{token}', [InvitationController::class, 'accept'])->name('invitation.accept');
 
-// Allow GET /logout in addition to Fortify's POST /logout (some browsers / link clicks send GET)
-Route::get('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout.get');
-
 // Station Mode (walk-up logging on an enrolled browser)
 Route::get('/station-mode', StationModeLanding::class)->name('station-mode.landing');
 Route::post('/station-mode/end', [StationModeController::class, 'end'])->name('station-mode.end');
+
+// GET /logout (bookmarks, typed URLs) only shows a Sign Out button. Signing
+// out stays on Fortify's POST /logout so a cross-site link can't end a session.
+Route::get('/logout', function () {
+    return auth()->check() ? view('auth.logout') : redirect()->route('login');
+})->name('logout.get');
 
 // Registration Pending (approval required mode)
 Route::view('/registration-pending', 'auth.registration-pending')
@@ -201,8 +203,10 @@ Route::middleware(['auth', 'verified', 'can:manage-guestbook'])->group(function 
 });
 
 // Message Traffic — batch print route MUST come before {message} wildcard to avoid capture
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
     Route::get('/events/{event}/messages/print-all', function (Event $event) {
+        abort_if($event->eventConfiguration === null, 404);
+
         $messages = Message::where('event_configuration_id', $event->eventConfiguration->id)
             ->orderBy('message_number')->get();
 
@@ -210,6 +214,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('events.messages.print-all');
 
     Route::get('/events/{event}/messages/{message}/print', function (Event $event, Message $message) {
+        abort_unless(
+            $event->eventConfiguration !== null
+                && $message->event_configuration_id === $event->eventConfiguration->id,
+            404
+        );
+
         return view('messages.print', ['event' => $event, 'messages' => collect([$message])]);
     })->name('events.messages.print');
 });

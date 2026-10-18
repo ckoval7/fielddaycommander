@@ -688,6 +688,33 @@ test('can unlock locked account', function () {
     expect($user->isLocked())->toBeFalse();
 });
 
+test('unlocking a pending registration approves it', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['account_locked_at' => now(), 'approval_requested_at' => now()]);
+
+    Livewire::test(UserManagement::class)->call('unlockAccount', $user->id);
+
+    $user->refresh();
+    expect($user->isLocked())->toBeFalse()
+        ->and($user->approval_requested_at)->toBeNull()
+        ->and($user->isPendingApproval())->toBeFalse();
+});
+
+test('locking an account does not mark it pending approval', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['approval_requested_at' => null]);
+
+    Livewire::test(UserManagement::class)
+        ->call('openLockModal', $user->id)
+        ->call('lockAccount');
+
+    $user->refresh();
+    expect($user->isLocked())->toBeTrue()
+        ->and($user->isPendingApproval())->toBeFalse();
+});
+
 test('locked users show lock badge in table', function () {
     $this->actingAs($this->admin);
 

@@ -260,3 +260,14 @@ test('all report routes are registered', function () {
         expect(route($routeName, ['event' => $this->event]))->toBeString();
     }
 });
+
+test('commitment summary csv neutralizes spreadsheet formulas', function () {
+    $this->equipment->update(['make' => '+cmd|" /C calc"!A0']);
+
+    $content = $this->actingAs($this->admin)
+        ->get(route('events.equipment.reports.commitment-summary', ['event' => $this->event]))
+        ->streamedContent();
+
+    expect($content)->toContain('"\'+cmd|"" /C calc""!A0"')
+        ->not->toContain(',"+cmd');
+});

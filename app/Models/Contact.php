@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\ContactFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -127,6 +128,64 @@ class Contact extends Model
     public function scopeTranscribed($query)
     {
         return $query->where('is_transcribed', true);
+    }
+
+    /**
+     * Live contacts that earn no points until someone fixes them: missing a
+     * band or mode (typically from an external logger), or logged outside
+     * their event's start/end window. Cabrillo export skips both kinds.
+     *
+     * A contact with no QSO time, or whose event has no window set, counts as
+     * in the window, matching DuplicateCheckService.
+     *
+     * @param  Builder<Contact>  $query
+     * @return Builder<Contact>
+     */
+    public function scopeNeedsAttention(Builder $query): Builder
+    {
+        return $query->withoutTrashed()->where(fn (Builder $problem) => $problem
+            ->whereNull('band_id')
+            ->orWhereNull('mode_id')
+            ->orWhere(fn (Builder $outOfWindow) => $outOfWindow
+                ->whereNotNull('qso_time')
+                ->whereHas('eventConfiguration.event', fn (Builder $event) => $event
+                    ->whereNotNull('events.start_time')
+                    ->whereNotNull('events.end_time')
+                    ->where(fn (Builder $outside) => $outside
+                        ->whereColumn('events.start_time', '>', 'contacts.qso_time')
+                        ->orWhereColumn('events.end_time', '<', 'contacts.qso_time')))));
+    }
+
+    /**
+     * Why this contact needs attention, empty when it doesn't. Pass the
+     * contact's event when it is already loaded to avoid a lookup per contact.
+     *
+     * @return list<string>
+     */
+    public function attentionReasons(?Event $event = null): array
+    {
+        if ($this->trashed()) {
+            return [];
+        }
+
+        $reasons = [];
+
+        if ($this->band_id === null) {
+            $reasons[] = 'Missing band';
+        }
+
+        if ($this->mode_id === null) {
+            $reasons[] = 'Missing mode';
+        }
+
+        $event ??= $this->eventConfiguration?->event;
+
+        if ($this->qso_time !== null && $event?->start_time !== null && $event->end_time !== null
+            && ! $this->qso_time->between($event->start_time, $event->end_time)) {
+            $reasons[] = 'Outside event window';
+        }
+
+        return $reasons;
     }
 
     /**

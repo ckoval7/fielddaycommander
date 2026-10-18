@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Logging;
 
+use App\Events\ContactChanged;
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
 use App\Livewire\Logging\Concerns\HasParticipantWarning;
@@ -9,10 +10,11 @@ use App\Livewire\Logging\Concerns\HasRecentContactNumbers;
 use App\Models\AuditLog;
 use App\Models\Contact;
 use App\Models\OperatingSession;
-use App\Models\Station;
 use App\Models\User;
+use App\Services\DuplicateCheckService;
 use App\Services\ExchangeParserService;
 use App\Services\LoggingWarningService;
+use App\Support\BroadcastChannels;
 use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
@@ -215,8 +217,13 @@ class LoggingInterface extends Component
             ],
         );
 
-        $contact->delete();
-        $this->operatingSession->decrement('qso_count');
+        $dupes = app(DuplicateCheckService::class);
+        $dupes->locked($contact->event_configuration_id, function () use ($dupes, $contact) {
+            $contact->delete();
+            $dupes->reevaluate($contact);
+            $this->operatingSession->decrement('qso_count');
+        });
+        ContactChanged::notify(BroadcastChannels::CONTACT_DELETED, [$contact]);
 
         $this->operatingSession->refresh();
         unset($this->recentContacts);
@@ -239,8 +246,13 @@ class LoggingInterface extends Component
             abort(403);
         }
 
-        $contact->restore();
-        $this->operatingSession->increment('qso_count');
+        $dupes = app(DuplicateCheckService::class);
+        $dupes->locked($contact->event_configuration_id, function () use ($dupes, $contact) {
+            $contact->restore();
+            $dupes->reevaluate($contact);
+            $this->operatingSession->increment('qso_count');
+        });
+        ContactChanged::notify(BroadcastChannels::CONTACT_UPDATED, [$contact]);
 
         AuditLog::log(
             'contact.restored',
@@ -287,31 +299,17 @@ class LoggingInterface extends Component
             'section_id' => $contact->section_id,
         ];
 
-        $contact->update([
+        $dupes = app(DuplicateCheckService::class);
+        $previousKey = $dupes->keyFor($contact);
+
+        $contact->fill([
             'callsign' => $parsed['callsign'],
             'exchange_class' => $parsed['transmitter_count'].$parsed['class_code'],
             'section_id' => $parsed['section_id'],
         ]);
 
-        // Re-run duplicate detection, excluding this contact itself
-        $isDuplicate = Contact::query()
-            ->where('event_configuration_id', $contact->event_configuration_id)
-            ->where('band_id', $contact->band_id)
-            ->where('mode_id', $contact->mode_id)
-            ->where('callsign', $parsed['callsign'])
-            ->where('is_gota_contact', $contact->is_gota_contact)
-            ->where('id', '!=', $contact->id)
-            ->where('is_duplicate', false)
-            ->exists();
-
-        $stationShim = Station::make(['is_gota' => $contact->is_gota_contact]);
-        $contactPoints = $contact->eventConfiguration?->pointsForContact($contact->mode, $stationShim)
-            ?? ($contact->is_gota_contact ? 5 : ($contact->mode->points_fd ?? 1));
-
-        $contact->update([
-            'is_duplicate' => $isDuplicate,
-            'points' => $isDuplicate ? 0 : $contactPoints,
-        ]);
+        $dupes->save($contact, $previousKey);
+        ContactChanged::notify(BroadcastChannels::CONTACT_UPDATED, [$contact]);
 
         AuditLog::log(
             'contact.updated',

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\NotificationCategory;
+use App\Support\DeveloperMode;
 use App\Support\StationMode;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -46,6 +47,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'user_role',
         'is_ghost',
         'account_locked_at',
+        'approval_requested_at',
         'failed_login_attempts',
         'last_login_at',
         'last_login_ip',
@@ -81,6 +83,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'account_locked_at' => 'datetime',
+            'approval_requested_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password_changed_at' => 'datetime',
             'requires_password_change' => 'boolean',
@@ -97,7 +100,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getRolesAttribute()
     {
         // In dev mode with role override, return the overridden role for the logged-in user only
-        if (config('developer.enabled') && session()->has('dev_role_override') && auth()->check() && $this->id === auth()->id()) {
+        if (DeveloperMode::allowsRoleOverride() && session()->has('dev_role_override') && auth()->check() && $this->id === auth()->id()) {
             try {
                 $role = Role::findByName(session('dev_role_override'), 'web');
 
@@ -174,6 +177,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isLocked(): bool
     {
         return $this->account_locked_at !== null;
+    }
+
+    /**
+     * Check if the account is a registration still waiting for an administrator to approve it.
+     */
+    public function isPendingApproval(): bool
+    {
+        return $this->isLocked() && $this->approval_requested_at !== null;
     }
 
     /**
@@ -292,7 +303,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function effectiveCallSign(): string
     {
-        if (config('developer.enabled') && session()->has('dev_callsign_override')) {
+        if (DeveloperMode::allowsRoleOverride() && session()->has('dev_callsign_override')) {
             return session('dev_callsign_override');
         }
 

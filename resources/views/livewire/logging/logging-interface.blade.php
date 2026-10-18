@@ -3,6 +3,7 @@
         band_id: {{ $operatingSession->band_id }},
         mode_id: {{ $operatingSession->mode_id }},
         power_watts: {{ $operatingSession->power_watts }},
+        server_time_ms: {{ appNow()->getTimestampMs() }},
         get submode() { return document.querySelector('[data-submode-input]')?.value?.trim() || null },
         is_gota: {{ $operatingSession->station->is_gota ? 'true' : 'false' }},
         get gota_operator_first_name() { return document.querySelector('[wire\\:model=gotaOperatorFirstName]')?.value || null },

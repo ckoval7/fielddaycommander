@@ -236,3 +236,28 @@ test('returns correct summary counts', function () {
     expect($summary['new'])->toBe(1)
         ->and($summary['merge'])->toBe(1);
 });
+
+test('matching uses a bounded number of queries however many new records there are', function () {
+    $import = AdifImport::factory()->create(['event_configuration_id' => $this->config->id]);
+
+    foreach (range(1, 60) as $i) {
+        AdifImportRecord::factory()->mapped()->create([
+            'adif_import_id' => $import->id,
+            'callsign' => "K{$i}ABC",
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'qso_time' => Carbon::parse('2026-04-10 12:00:00'),
+        ]);
+    }
+
+    $queries = 0;
+    DB::listen(function () use (&$queries) {
+        $queries++;
+    });
+
+    $summary = $this->matcher->match($import);
+
+    expect($summary['new'])->toBe(60)
+        ->and($queries)->toBeLessThan(10)
+        ->and(AdifImportRecord::where('status', AdifRecordStatus::Ready)->count())->toBe(60);
+});

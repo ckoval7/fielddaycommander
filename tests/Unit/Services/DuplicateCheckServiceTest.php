@@ -6,8 +6,11 @@ use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Station;
+use App\Observers\ContactObserver;
+use App\Scoring\DomainEvents\QsoLogged;
 use App\Services\DuplicateCheckService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
 
@@ -247,4 +250,30 @@ test('excludes the given contact when re-checking an existing contact', function
     $result = $this->service->check('W1AW', $this->band->id, $this->mode->id, $this->eventConfig->id, excludeContactId: $contact->id);
 
     expect($result['is_duplicate'])->toBeFalse();
+});
+
+test('quiet settling skips model events but still applies the no-credit zeroing', function () {
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $this->session->id,
+        'callsign' => 'W1AW',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_gota_contact' => false,
+        'points' => 0,
+    ]);
+    Event::fake([QsoLogged::class]);
+
+    $this->mock(ContactObserver::class, function ($mock) {
+        $mock->shouldReceive('saving')->once()->andReturnUsing(function (Contact $contact): void {
+            $contact->points = 0;
+        });
+    });
+
+    $contact->forceFill(['points' => 5])->saveQuietly();
+    $this->service->settleGroups([$this->service->keyFor($contact)], quietly: true);
+
+    expect($contact->fresh()->points)->toBe(0)
+        ->and($contact->fresh()->is_duplicate)->toBeFalse();
+    Event::assertNotDispatched(QsoLogged::class);
 });

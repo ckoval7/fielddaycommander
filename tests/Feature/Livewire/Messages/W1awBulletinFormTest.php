@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\W1awBulletin;
 use Database\Seeders\BonusTypeSeeder;
 use Database\Seeders\EventTypeSeeder;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
@@ -271,4 +272,91 @@ describe('per-event naming', function () {
 
         expect(BulletinScheduleEntry::where('event_id', $this->event->id)->value('source'))->toBe('K4WFD');
     });
+});
+
+describe('bulletin ownership', function () {
+    test('operator can edit another operators bulletin and the author is kept', function () {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('log-contacts');
+
+        $bulletin = W1awBulletin::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $owner->id,
+            'bulletin_text' => 'ORIGINAL TEXT',
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->assertSet('bulletinId', $bulletin->id)
+            ->set('bulletinText', 'CORRECTED TEXT')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $bulletin->refresh();
+        expect($bulletin->bulletin_text)->toBe('CORRECTED TEXT')
+            ->and($bulletin->user_id)->toBe($owner->id);
+    });
+
+    test('user without log-contacts cannot edit the bulletin', function () {
+        $user = User::factory()->create();
+
+        $bulletin = W1awBulletin::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'bulletin_text' => 'ORIGINAL TEXT',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(W1awBulletinForm::class)
+            ->assertSet('bulletinId', $bulletin->id)
+            ->set('bulletinText', 'CHANGED TEXT')
+            ->call('save')
+            ->assertForbidden();
+
+        expect($bulletin->refresh()->bulletin_text)->toBe('ORIGINAL TEXT');
+    });
+
+    test('a bulletin from another event is not loaded or edited', function () {
+        $otherEvent = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+        $otherConfig = EventConfiguration::factory()->create(['event_id' => $otherEvent->id]);
+
+        $otherBulletin = W1awBulletin::factory()->create([
+            'event_configuration_id' => $otherConfig->id,
+            'user_id' => $this->operator->id,
+            'bulletin_text' => 'OTHER EVENT TEXT',
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->assertSet('bulletinId', null);
+
+        expect($otherBulletin->refresh()->bulletin_text)->toBe('OTHER EVENT TEXT');
+    });
+
+    test('manager editing a bulletin keeps the original author', function () {
+        Permission::firstOrCreate(['name' => 'verify-bonuses']);
+        $manager = User::factory()->create();
+        $manager->givePermissionTo(['log-contacts', 'verify-bonuses']);
+
+        $bulletin = W1awBulletin::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($manager)
+            ->test(W1awBulletinForm::class)
+            ->set('bulletinText', 'CORRECTED TEXT')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $bulletin->refresh();
+        expect($bulletin->bulletin_text)->toBe('CORRECTED TEXT')
+            ->and($bulletin->user_id)->toBe($this->operator->id);
+    });
+
+    test('bulletin id cannot be changed from the client', function () {
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->set('bulletinId', 12345);
+    })->throws(CannotUpdateLockedPropertyException::class);
 });

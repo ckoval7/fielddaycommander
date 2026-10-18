@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ContactChanged;
 use App\Livewire\Logbook\ContactEditor;
 use App\Models\AuditLog;
 use App\Models\Band;
@@ -11,6 +12,7 @@ use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use Illuminate\Support\Facades\Event as EventFacade;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
@@ -259,5 +261,48 @@ describe('submode', function () {
             ->call('save');
 
         expect($this->contact->fresh()->submode)->toBeNull();
+    });
+});
+
+describe('live broadcasts', function () {
+    test('an edit broadcasts ContactUpdated on the event channel', function () {
+        EventFacade::fake([ContactChanged::class]);
+
+        Livewire::test(ContactEditor::class)
+            ->call('openEdit', $this->contact->id)
+            ->set('callsign', 'K1ABC')
+            ->call('save');
+
+        EventFacade::assertDispatched(ContactChanged::class, fn (ContactChanged $event) => $event->eventId === $this->event->id
+            && $event->broadcastAs() === 'ContactUpdated'
+            && $event->contactIds === [$this->contact->id]
+            && $event->broadcastOn()[0]->name === "private-event.{$this->event->id}");
+    });
+
+    test('a delete broadcasts ContactDeleted and a restore broadcasts ContactUpdated', function () {
+        EventFacade::fake([ContactChanged::class]);
+
+        $component = Livewire::test(ContactEditor::class)->call('deleteContact', $this->contact->id);
+
+        EventFacade::assertDispatched(ContactChanged::class, fn (ContactChanged $event) => $event->broadcastAs() === 'ContactDeleted');
+
+        $component->call('restoreContact', $this->contact->id);
+
+        EventFacade::assertDispatched(ContactChanged::class, fn (ContactChanged $event) => $event->broadcastAs() === 'ContactUpdated');
+    });
+
+    test('a bulk delete sends one broadcast listing every deleted contact', function () {
+        EventFacade::fake([ContactChanged::class]);
+        $second = Contact::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'operating_session_id' => $this->session->id,
+        ]);
+
+        Livewire::test(ContactEditor::class)
+            ->call('bulkDeleteContacts', [$this->contact->id, $second->id]);
+
+        EventFacade::assertDispatchedTimes(ContactChanged::class, 1);
+        EventFacade::assertDispatched(ContactChanged::class, fn (ContactChanged $event) => $event->broadcastAs() === 'ContactDeleted'
+            && collect($event->contactIds)->sort()->values()->all() === collect([$this->contact->id, $second->id])->sort()->values()->all());
     });
 });

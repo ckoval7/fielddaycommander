@@ -85,13 +85,14 @@
             @php
                 $canEdit = auth()->check() && auth()->user()->can('edit-contacts');
                 $noCreditReasons = $this->noCreditReasons;
+                $attentionReasons = $this->attentionReasons;
             @endphp
             <x-table :headers="$headers" :rows="$this->contacts" class="table-sm" :selectable="$canEdit" wire:model.live="selectedIds">
                 @scope('cell_qso_time', $contact)
                     <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') . ' UTC' : 'N/A' }}</span>
                 @endscope
 
-                @scope('cell_callsign', $contact, $noCreditReasons)
+                @scope('cell_callsign', $contact, $noCreditReasons, $attentionReasons)
                     <div class="flex items-center gap-2">
                         <span class="font-mono font-semibold {{ $contact->trashed() ? 'line-through text-base-content/40' : '' }}">{{ $contact->callsign }}</span>
                         @if($contact->trashed())
@@ -106,6 +107,9 @@
                         @isset($noCreditReasons[$contact->id])
                             <span class="badge badge-outline badge-xs badge-error whitespace-nowrap cursor-help" title="{{ $noCreditReasons[$contact->id] }}">no credit</span>
                         @endisset
+                        @foreach($attentionReasons[$contact->id] ?? [] as $reason)
+                            <x-badge :value="$reason" class="badge-xs badge-warning whitespace-nowrap" />
+                        @endforeach
                     </div>
                 @endscope
 
@@ -194,7 +198,10 @@
 
         {{-- Mobile Card View --}}
         <div class="lg:hidden grid grid-cols-1 gap-4">
-            @php $noCreditReasons = $this->noCreditReasons; @endphp
+            @php
+                $noCreditReasons = $this->noCreditReasons;
+                $attentionReasons = $this->attentionReasons;
+            @endphp
             @foreach($this->contacts as $contact)
                 <x-card class="shadow-sm {{ $contact->is_duplicate ? 'border-l-4 border-l-warning bg-warning/5' : '' }} {{ $contact->trashed() ? 'opacity-60' : '' }}">
                     <div class="flex flex-col gap-3">
@@ -222,6 +229,9 @@
                                 @isset($noCreditReasons[$contact->id])
                                     <span class="badge badge-outline badge-xs badge-error whitespace-nowrap cursor-help" title="{{ $noCreditReasons[$contact->id] }}">no credit</span>
                                 @endisset
+                                @foreach($attentionReasons[$contact->id] ?? [] as $reason)
+                                    <x-badge :value="$reason" class="badge-xs badge-warning whitespace-nowrap" />
+                                @endforeach
                                 @if($contact->operatingSession?->station?->is_gota ?? false)
                                     <x-badge value="GOTA" class="badge-xs badge-info" />
                                 @endif

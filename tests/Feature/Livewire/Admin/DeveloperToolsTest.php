@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\DatabaseSnapshotException;
 use App\Livewire\Admin\DeveloperTools;
 use App\Models\AuditLog;
 use App\Models\Contact;
@@ -21,6 +22,8 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    config(['developer.enabled' => true]);
+
     // Create permissions
     Permission::create(['name' => 'manage-settings']);
 
@@ -72,6 +75,55 @@ test('component 404s in demo mode so shared DB cannot be reset', function () {
 
     Livewire::test(DeveloperTools::class)
         ->assertStatus(404);
+});
+
+test('component returns 404 when developer mode is disabled', function () {
+    config(['developer.enabled' => false]);
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->assertNotFound();
+});
+
+test('component returns 404 in production even when developer mode is configured on', function () {
+    $this->app['env'] = 'production';
+    $this->actingAs($this->adminUser);
+
+    Livewire::test(DeveloperTools::class)
+        ->assertNotFound();
+});
+
+test('actions return 404 once developer mode is disabled', function () {
+    $this->actingAs($this->adminUser);
+
+    $snapshotService = $this->mock(DatabaseSnapshotService::class);
+    $snapshotService->shouldReceive('listSnapshots')->andReturn(collect());
+    $snapshotService->shouldNotReceive('deleteSnapshot');
+
+    $component = Livewire::test(DeveloperTools::class);
+
+    config(['developer.enabled' => false]);
+
+    $component->call('deleteSnapshot', 'test-2026-01-01_120000.sql')
+        ->assertNotFound();
+});
+
+test('snapshot failures show a generic message instead of the exception text', function () {
+    $this->actingAs($this->adminUser);
+
+    $snapshotService = $this->mock(DatabaseSnapshotService::class);
+    $snapshotService->shouldReceive('listSnapshots')->andReturn(collect());
+    $snapshotService->shouldReceive('restoreSnapshot')
+        ->andThrow(new DatabaseSnapshotException('ERROR 1064: DB_PASSWORD=secret'));
+
+    $component = Livewire::test(DeveloperTools::class)
+        ->call('confirmRestore', 'test-2026-01-01_120000.sql')
+        ->call('restoreSnapshot');
+
+    $evaluatedJs = collect($component->effects['xjs'] ?? [])->pluck('expression')->implode("\n");
+
+    expect($evaluatedJs)->toContain('Snapshot restore failed')
+        ->and($evaluatedJs)->not->toContain('DB_PASSWORD');
 });
 
 // =============================================================================

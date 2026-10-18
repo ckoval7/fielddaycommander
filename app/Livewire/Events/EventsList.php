@@ -16,6 +16,13 @@ class EventsList extends Component
 
     public bool $showArchived = false;
 
+    /**
+     * Columns the events table may sort by.
+     *
+     * @var list<string>
+     */
+    private const SORTABLE_COLUMNS = ['name', 'start_time', 'end_time', 'year', 'created_at'];
+
     public string $sortField = 'created_at';
 
     public string $sortDirection = 'desc';
@@ -43,12 +50,19 @@ class EventsList extends Component
                 'eventConfiguration.section',
                 'eventConfiguration.operatingClass',
             ])
-            ->orderBy($this->sortField, $this->sortDirection)
+            ->orderBy(
+                in_array($this->sortField, self::SORTABLE_COLUMNS, true) ? $this->sortField : 'created_at',
+                $this->sortDirection === 'asc' ? 'asc' : 'desc',
+            )
             ->paginate(25);
     }
 
     public function sortBy(string $field): void
     {
+        if (! in_array($field, self::SORTABLE_COLUMNS, true)) {
+            $field = 'created_at';
+        }
+
         if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {

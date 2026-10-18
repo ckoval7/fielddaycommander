@@ -38,6 +38,17 @@
                     hint="Changing your email will require verification"
                 />
 
+                {{-- Current password, only needed when the email changes --}}
+                <div x-show="($wire.email ?? '').toLowerCase() !== ($wire.savedEmail ?? '').toLowerCase()" x-cloak>
+                    <x-input
+                        label="Current Password"
+                        type="password"
+                        wire:model="emailChangePassword"
+                        autocomplete="current-password"
+                        hint="Enter your current password to change your email"
+                    />
+                </div>
+
                 {{-- License Class --}}
                 <x-select
                     label="License Class"

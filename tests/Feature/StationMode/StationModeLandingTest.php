@@ -192,6 +192,19 @@ test('captain can sign in on an enrolled browser and exit station mode', functio
     expect($this->device->fresh()->isRevoked())->toBeTrue();
 });
 
+test('signed-in user signs out of the station with a POST form', function () {
+    $captain = User::factory()->create(['email' => 'captain@example.com']);
+    $captain->assignRole('Station Captain');
+
+    $this->withCookie(StationMode::COOKIE, 'device-token')
+        ->post(route('login.store'), ['email' => 'captain@example.com', 'password' => 'password']);
+
+    landing()
+        ->assertSee('Sign Out')
+        ->assertSeeHtml('method="POST" action="'.route('logout').'"')
+        ->assertDontSeeHtml('href="'.url('/logout').'"');
+});
+
 test('gota station asks the control operator to start the session', function () {
     $this->station->update(['is_gota' => true]);
 

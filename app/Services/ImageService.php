@@ -19,6 +19,14 @@ class ImageService
 
     protected const THUMBNAIL_WIDTH = 600;
 
+    protected const MAX_THUMBNAIL_HEIGHT = 1200;
+
+    /** Largest decoded image, in pixels, that will be loaded into memory for thumbnailing. */
+    public const MAX_PIXELS = 50_000_000;
+
+    /** Widest allowed ratio between an image's long and short sides. */
+    public const MAX_ASPECT_RATIO = 20;
+
     public function calculateHash(UploadedFile $file): string
     {
         return hash_file('sha256', $file->path());
@@ -68,14 +76,17 @@ class ImageService
 
         [$width, $height, $type] = $imageInfo;
 
+        if (! $this->dimensionsAreAcceptable($width, $height)) {
+            return null;
+        }
+
         $source = $this->createImageResource($originalFullPath, $type);
 
         if ($source === null) {
             return null;
         }
 
-        $newWidth = self::THUMBNAIL_WIDTH;
-        $newHeight = (int) ($height * ($newWidth / $width));
+        [$newWidth, $newHeight] = $this->thumbnailDimensions($width, $height);
 
         $thumb = imagecreatetruecolor($newWidth, $newHeight);
 
@@ -99,6 +110,51 @@ class ImageService
         imagedestroy($thumb);
 
         return $thumbnailPath;
+    }
+
+    /**
+     * Whether the image's pixel dimensions are safe to decode for thumbnailing.
+     */
+    public function hasAcceptableDimensions(UploadedFile $file): bool
+    {
+        $imageInfo = @getimagesize($file->path());
+
+        if ($imageInfo === false) {
+            return false;
+        }
+
+        return $this->dimensionsAreAcceptable($imageInfo[0], $imageInfo[1]);
+    }
+
+    protected function dimensionsAreAcceptable(int $width, int $height): bool
+    {
+        if ($width < 1 || $height < 1) {
+            return false;
+        }
+
+        if ($width * $height > self::MAX_PIXELS) {
+            return false;
+        }
+
+        return max($width, $height) / min($width, $height) <= self::MAX_ASPECT_RATIO;
+    }
+
+    /**
+     * Scale to the thumbnail width, shrinking further when the result would be too tall.
+     *
+     * @return array{0: int, 1: int}
+     */
+    protected function thumbnailDimensions(int $width, int $height): array
+    {
+        $newWidth = self::THUMBNAIL_WIDTH;
+        $newHeight = (int) round($height * ($newWidth / $width));
+
+        if ($newHeight > self::MAX_THUMBNAIL_HEIGHT) {
+            $newHeight = self::MAX_THUMBNAIL_HEIGHT;
+            $newWidth = (int) round($width * ($newHeight / $height));
+        }
+
+        return [max(1, $newWidth), max(1, $newHeight)];
     }
 
     /**

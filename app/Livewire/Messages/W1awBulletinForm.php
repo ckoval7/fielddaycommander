@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class W1awBulletinForm extends Component
@@ -21,6 +22,7 @@ class W1awBulletinForm extends Component
 
     public Event $event;
 
+    #[Locked]
     public ?int $bulletinId = null;
 
     public string $frequency = '';
@@ -67,7 +69,13 @@ class W1awBulletinForm extends Component
 
     public function save(): void
     {
-        $this->authorize('create', W1awBulletin::class);
+        $existingBulletin = $this->bulletinId ? $this->findEventBulletin($this->bulletinId) : null;
+
+        if ($existingBulletin) {
+            $this->authorize('update', $existingBulletin);
+        } else {
+            $this->authorize('create', W1awBulletin::class);
+        }
 
         $this->validate([
             'frequency' => 'required|string|max:20',
@@ -77,16 +85,14 @@ class W1awBulletinForm extends Component
         ]);
 
         $data = [
-            'event_configuration_id' => $this->event->eventConfiguration->id,
-            'user_id' => auth()->id(),
             'frequency' => $this->frequency,
             'mode' => $this->mode,
             'received_at' => $this->receivedAt,
             'bulletin_text' => $this->bulletinText,
         ];
 
-        if ($this->bulletinId) {
-            $bulletin = W1awBulletin::findOrFail($this->bulletinId);
+        if ($existingBulletin) {
+            $bulletin = $existingBulletin;
 
             $oldValues = [
                 'frequency' => $bulletin->frequency,
@@ -115,6 +121,9 @@ class W1awBulletinForm extends Component
                 );
             }
         } else {
+            $data['event_configuration_id'] = $this->event->eventConfiguration->id;
+            $data['user_id'] = auth()->id();
+
             // Check for a soft-deleted bulletin for this event and restore it
             $trashed = W1awBulletin::onlyTrashed()
                 ->where('event_configuration_id', $this->event->eventConfiguration->id)
@@ -148,7 +157,7 @@ class W1awBulletinForm extends Component
     public function deleteBulletin(): void
     {
         if ($this->bulletinId) {
-            $bulletin = W1awBulletin::findOrFail($this->bulletinId);
+            $bulletin = $this->findEventBulletin($this->bulletinId);
             $this->authorize('delete', $bulletin);
 
             AuditLog::log(
@@ -166,6 +175,15 @@ class W1awBulletinForm extends Component
             $this->reset(['frequency', 'mode', 'receivedAt', 'bulletinText']);
             $this->dispatch('toast', title: 'Bulletin removed', type: 'success');
         }
+    }
+
+    /**
+     * Find a bulletin that belongs to this component's event, or 404.
+     */
+    protected function findEventBulletin(int $bulletinId): W1awBulletin
+    {
+        return W1awBulletin::where('event_configuration_id', $this->event->eventConfiguration->id)
+            ->findOrFail($bulletinId);
     }
 
     public function getScheduleEntriesProperty(): Collection

@@ -81,8 +81,8 @@ class EquipmentList extends Component
             ->when($this->search, fn (Builder $query) => $query->search($this->search))
             ->when($this->typeFilter, fn (Builder $query) => $query->ofType($this->typeFilter))
             ->when($this->statusFilter, fn (Builder $query) => $query->withCommitmentStatus($this->statusFilter))
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->orderBy('id', $this->sortDirection)
+            ->sortedBy($this->sortBy, $this->sortDirection)
+            ->orderBy('id', $this->sortDirection === 'asc' ? 'asc' : 'desc')
             ->paginate(25);
     }
 

@@ -23,8 +23,7 @@ class EnsurePasswordChanged
             && $request->user()->requires_password_change
             && ! StationMode::isActive()
             && ! $request->routeIs('profile')
-            && ! $request->routeIs('logout')
-            && ! $request->routeIs('logout.get')
+            && ! $request->routeIs('logout', 'logout.get')
             && ! $request->ajax()
             && ! $request->wantsJson()
             && $request->isMethod('GET')

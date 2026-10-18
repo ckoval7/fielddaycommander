@@ -1205,3 +1205,102 @@ test('deselect all clears selection', function () {
         ->call('deselectAll')
         ->assertSet('selectedIds', []);
 });
+
+/**
+ * Pull every viewPhoto wire:click handler out of rendered HTML, decoded the
+ * way a browser would before handing it to the JS evaluator.
+ *
+ * @return list<string>
+ */
+function viewPhotoHandlers(string $html): array
+{
+    preg_match_all('/wire:click="(viewPhoto\([^"]*\))"/', $html, $matches);
+
+    return array_map(fn (string $handler) => html_entity_decode($handler, ENT_QUOTES | ENT_HTML5), $matches[1]);
+}
+
+test('equipment make cannot break out of the photo thumbnail click handler', function () {
+    $this->actingAs($this->user);
+
+    Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'make' => "');alert(1);('",
+        'model' => 'FT-991A',
+        'photo_path' => "equipment/x');alert(2);('.jpg",
+    ]);
+
+    $handlers = viewPhotoHandlers(Livewire::test(EquipmentList::class)->html());
+    $apos = trim(json_encode("'", JSON_HEX_APOS), '"');
+
+    expect($handlers)->not->toBeEmpty();
+
+    foreach ($handlers as $handler) {
+        expect($handler)
+            ->not->toContain("');alert(")
+            ->toContain($apos.');alert(1);('.$apos)
+            ->toContain($apos.');alert(2);('.$apos);
+    }
+});
+
+test('photo thumbnail component encodes user data as JS values', function () {
+    $item = Equipment::factory()->make([
+        'make' => "');alert(1);('",
+        'model' => 'X',
+        'photo_path' => 'equipment/a.jpg',
+    ]);
+
+    $html = (string) $this->blade('<x-equipment.photo-thumbnail :item="$item" />', ['item' => $item]);
+
+    $apos = trim(json_encode("'", JSON_HEX_APOS), '"');
+
+    expect(viewPhotoHandlers($html))->toBe([
+        "viewPhoto('equipment\\/a.jpg', '".$apos.');alert(1);('.$apos." X')",
+    ]);
+});
+
+test('EquipmentList ignores sort columns outside the allowlist', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EquipmentList::class)
+        ->set('sortBy', 'nonexistent_column')
+        ->set('sortDirection', 'sideways')
+        ->assertOk();
+});
+
+test('equipment can be committed to an event months away and shows as committed', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+    $winterFieldDay = Event::factory()->create([
+        'name' => 'Winter Field Day Far Off',
+        'start_time' => now()->addDays(98),
+        'end_time' => now()->addDays(99),
+    ]);
+    Event::factory()->create(['start_time' => now()->subDays(3), 'end_time' => now()->subDays(2)]);
+
+    $component = Livewire::test(EquipmentList::class)->call('openCommitModal', $equipment->id);
+
+    expect($component->instance()->upcomingEvents->pluck('id')->all())->toBe([$winterFieldDay->id]);
+
+    $component->assertSet('commitEventId', $winterFieldDay->id)
+        ->call('commitEquipment')
+        ->assertHasNoErrors();
+
+    $equipment = Equipment::find($equipment->id);
+    expect($equipment->current_commitment?->event_id)->toBe($winterFieldDay->id)
+        ->and(Equipment::withCommitmentStatus('committed')->pluck('id')->all())->toBe([$equipment->id]);
+});
+
+test('current commitment is the soonest of several future events', function () {
+    $this->actingAs($this->user);
+
+    $equipment = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+    $later = Event::factory()->create(['start_time' => now()->addDays(90), 'end_time' => now()->addDays(91)]);
+    $sooner = Event::factory()->create(['start_time' => now()->addDays(40), 'end_time' => now()->addDays(41)]);
+    EquipmentEvent::factory()->create(['equipment_id' => $equipment->id, 'event_id' => $later->id, 'status' => 'committed']);
+    EquipmentEvent::factory()->create(['equipment_id' => $equipment->id, 'event_id' => $sooner->id, 'status' => 'committed']);
+
+    $equipment = Equipment::find($equipment->id);
+    expect($equipment->current_commitment->event_id)->toBe($sooner->id)
+        ->and($equipment->activeCommitments->pluck('event_id')->all())->toBe([$sooner->id, $later->id]);
+});

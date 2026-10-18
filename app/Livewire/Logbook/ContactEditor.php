@@ -2,17 +2,20 @@
 
 namespace App\Livewire\Logbook;
 
+use App\Events\ContactChanged;
 use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
-use App\Models\Station;
 use App\Models\User;
+use App\Services\DuplicateCheckService;
 use App\Services\ExchangeParserService;
+use App\Support\BroadcastChannels;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -71,8 +74,10 @@ class ContactEditor extends Component
         $contact = Contact::findOrFail($this->contactId);
         $this->authorize('update', $contact);
 
+        $this->callsign = mb_strtoupper(trim($this->callsign));
+
         $validated = $this->validate([
-            'callsign' => 'required|string|max:20',
+            'callsign' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9\/]+$/'],
             'exchangeClass' => ['required', 'string', 'max:5', 'regex:'.ExchangeParserService::EXCHANGE_CLASS_PATTERN],
             'sectionId' => 'required|exists:sections,id',
             'bandId' => 'required|exists:bands,id',
@@ -97,6 +102,12 @@ class ContactEditor extends Component
             return;
         }
 
+        if (! $this->qsoTimeWithinEventPeriod($contact, $validated['qsoTime'])) {
+            $this->addError('qsoTime', 'The QSO time must be within the event period.');
+
+            return;
+        }
+
         $oldValues = collect([
             'callsign' => $contact->callsign,
             'exchange_class' => $contact->exchange_class,
@@ -108,35 +119,26 @@ class ContactEditor extends Component
             'notes' => $contact->notes,
         ]);
 
-        // Re-run duplicate detection against the new values
-        $isDuplicate = Contact::query()
-            ->where('event_configuration_id', $contact->event_configuration_id)
-            ->where('band_id', $validated['bandId'])
-            ->where('mode_id', $validated['modeId'])
-            ->where('callsign', mb_strtoupper($validated['callsign']))
-            ->where('is_gota_contact', $contact->is_gota_contact)
-            ->where('id', '!=', $contact->id)
-            ->where('is_duplicate', false)
-            ->exists();
+        $dupes = app(DuplicateCheckService::class);
+        $previousKey = $dupes->keyFor($contact);
 
-        $mode = Mode::find($validated['modeId']);
-
-        $stationShim = Station::make(['is_gota' => $contact->is_gota_contact]);
-        $contactPoints = $contact->eventConfiguration?->pointsForContact($mode, $stationShim)
-            ?? ($contact->is_gota_contact ? 5 : ($mode->points_fd ?? 1));
-
-        $contact->update([
+        $contact->fill([
             'callsign' => $validated['callsign'],
             'exchange_class' => $validated['exchangeClass'],
             'band_id' => $validated['bandId'],
             'mode_id' => $validated['modeId'],
             'submode' => $validated['submode'] ?? null,
-            'qso_time' => $validated['qsoTime'],
             'section_id' => $validated['sectionId'],
             'notes' => $validated['notes'] ?: null,
-            'is_duplicate' => $isDuplicate,
-            'points' => $isDuplicate ? 0 : $contactPoints,
         ]);
+
+        // The form shows minutes only; keep the stored seconds unless the
+        // time was actually changed, so a re-save cannot reorder a dupe group.
+        if (! $this->qsoTimeUnchanged($contact, $validated['qsoTime'])) {
+            $contact->qso_time = $validated['qsoTime'];
+        }
+
+        $dupes->save($contact, $previousKey);
 
         $newValues = collect([
             'callsign' => $contact->callsign,
@@ -160,6 +162,8 @@ class ContactEditor extends Component
             );
         }
 
+        ContactChanged::notify(BroadcastChannels::CONTACT_UPDATED, [$contact]);
+
         $this->showModal = false;
         $this->dispatch('contact-updated');
     }
@@ -180,8 +184,8 @@ class ContactEditor extends Component
             ],
         );
 
-        $contact->delete();
-        $contact->operatingSession->decrement('qso_count');
+        $this->deleteAndReevaluate($contact);
+        ContactChanged::notify(BroadcastChannels::CONTACT_DELETED, [$contact]);
 
         $this->dispatch('contact-deleted');
     }
@@ -192,8 +196,12 @@ class ContactEditor extends Component
         $contact = Contact::onlyTrashed()->findOrFail($contactId);
         $this->authorize('restore', $contact);
 
-        $contact->restore();
-        $contact->operatingSession->increment('qso_count');
+        $dupes = app(DuplicateCheckService::class);
+        $dupes->locked($contact->event_configuration_id, function () use ($dupes, $contact) {
+            $contact->restore();
+            $dupes->reevaluate($contact);
+            $contact->operatingSession?->increment('qso_count');
+        });
 
         AuditLog::log(
             'contact.restored',
@@ -204,6 +212,8 @@ class ContactEditor extends Component
                 'session_id' => $contact->operating_session_id,
             ],
         );
+
+        ContactChanged::notify(BroadcastChannels::CONTACT_UPDATED, [$contact]);
 
         $this->dispatch('contact-restored');
     }
@@ -216,6 +226,7 @@ class ContactEditor extends Component
         }
 
         $contacts = Contact::whereIn('id', $contactIds)->get();
+        $deleted = [];
         $count = 0;
 
         foreach ($contacts as $contact) {
@@ -233,15 +244,61 @@ class ContactEditor extends Component
                 ],
             );
 
-            $contact->delete();
-            $contact->operatingSession->decrement('qso_count');
+            $this->deleteAndReevaluate($contact);
+            $deleted[] = $contact;
             $count++;
         }
 
         if ($count > 0) {
+            ContactChanged::notify(BroadcastChannels::CONTACT_DELETED, $deleted);
             $this->dispatch('contact-deleted');
             $this->dispatch('notify', title: 'Success', description: "{$count} contact(s) deleted.", type: 'success');
         }
+    }
+
+    /**
+     * Soft-delete a contact and settle its dupe group, promoting the next
+     * dupe to original when the deleted contact held that place.
+     */
+    private function deleteAndReevaluate(Contact $contact): void
+    {
+        $dupes = app(DuplicateCheckService::class);
+        $dupes->locked($contact->event_configuration_id, function () use ($dupes, $contact) {
+            $contact->delete();
+            $dupes->reevaluate($contact);
+            $contact->operatingSession?->decrement('qso_count');
+        });
+    }
+
+    /**
+     * Whether a QSO time falls inside the contact's event period. An unchanged
+     * time is always accepted so a contact entered within transcription's
+     * clock-drift allowance can still have other fields corrected.
+     */
+    private function qsoTimeWithinEventPeriod(Contact $contact, string $qsoTime): bool
+    {
+        if ($this->qsoTimeUnchanged($contact, $qsoTime)) {
+            return true;
+        }
+
+        $time = Carbon::parse($qsoTime);
+
+        $event = $contact->eventConfiguration?->event;
+
+        if ($event?->start_time === null || $event->end_time === null) {
+            return true;
+        }
+
+        return $time->between($event->start_time, $event->end_time);
+    }
+
+    /**
+     * Whether the edited QSO time matches the stored one to the minute.
+     */
+    private function qsoTimeUnchanged(Contact $contact, string $qsoTime): bool
+    {
+        return $contact->qso_time !== null
+            && Carbon::parse($qsoTime)->format('Y-m-d H:i') === $contact->qso_time->format('Y-m-d H:i');
     }
 
     #[On('open-bulk-change-logger')]

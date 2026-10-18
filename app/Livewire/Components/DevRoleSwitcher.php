@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Components;
 
+use App\Support\DeveloperMode;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
@@ -16,7 +17,7 @@ class DevRoleSwitcher extends Component
 
     public function mount(): void
     {
-        if (! config('developer.enabled') || ! auth()->check()) {
+        if (! DeveloperMode::allowsRoleOverride() || ! auth()->check()) {
             return;
         }
 
@@ -27,6 +28,8 @@ class DevRoleSwitcher extends Component
 
     public function updatedRole(string $value): void
     {
+        $this->ensureDeveloperModeEnabled();
+
         if ($value === '') {
             session()->forget('dev_role_override');
         } else {
@@ -39,6 +42,8 @@ class DevRoleSwitcher extends Component
 
     public function updatedCallSign(string $value): void
     {
+        $this->ensureDeveloperModeEnabled();
+
         if ($value === '') {
             session()->forget('dev_callsign_override');
         } else {
@@ -50,11 +55,21 @@ class DevRoleSwitcher extends Component
 
     public function resetOverrides(): void
     {
+        $this->ensureDeveloperModeEnabled();
+
         session()->forget(['dev_role_override', 'dev_callsign_override']);
         $this->role = '';
         $this->callSign = '';
         $this->isActive = false;
         $this->js('window.location.reload()');
+    }
+
+    /**
+     * Refuse override changes unless developer mode is enabled and a user is signed in.
+     */
+    protected function ensureDeveloperModeEnabled(): void
+    {
+        abort_unless(DeveloperMode::allowsRoleOverride() && auth()->check(), 404);
     }
 
     protected function updateActiveState(): void
@@ -77,7 +92,7 @@ class DevRoleSwitcher extends Component
 
     public function render(): View
     {
-        $roles = config('developer.enabled') ? $this->getAvailableRoles() : [];
+        $roles = DeveloperMode::allowsRoleOverride() ? $this->getAvailableRoles() : [];
 
         return view('livewire.components.dev-role-switcher', compact('roles'));
     }

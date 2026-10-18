@@ -200,6 +200,20 @@ class LogbookQueryBuilder
     }
 
     /**
+     * Filter to contacts that need attention before the log is submitted.
+     *
+     * @param  string|null  $attentionFilter  'only' = needs attention only, null = show all
+     */
+    public function forAttentionStatus(Builder $query, ?string $attentionFilter): Builder
+    {
+        if ($attentionFilter === 'only') {
+            return $query->needsAttention();
+        }
+
+        return $query;
+    }
+
+    /**
      * Apply chronological ordering (most recent first).
      */
     public function chronological(Builder $query): Builder
@@ -223,7 +237,8 @@ class LogbookQueryBuilder
      *     duplicate_filter?: ?string,
      *     transcribed_filter?: ?string,
      *     gota_filter?: ?string,
-     *     deleted_filter?: ?string
+     *     deleted_filter?: ?string,
+     *     attention_filter?: ?string
      * }  $filters
      */
     public function applyFilters(array $filters): Builder
@@ -242,6 +257,7 @@ class LogbookQueryBuilder
         $query = $this->forTranscribed($query, $filters['transcribed_filter'] ?? null);
         $query = $this->forGotaStatus($query, $filters['gota_filter'] ?? null);
         $query = $this->forDeletedStatus($query, $filters['deleted_filter'] ?? null);
+        $query = $this->forAttentionStatus($query, $filters['attention_filter'] ?? null);
         $query = $this->chronological($query);
 
         return $query;

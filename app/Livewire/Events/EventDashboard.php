@@ -406,10 +406,10 @@ class EventDashboard extends Component
 
         if ($hasContacts) {
             $event->delete();
-            $this->dispatch('notify', title: 'Event Archived', description: "Event '{$event->name}' has been archived (soft deleted) because it has contacts.");
+            session()->flash('toast', ['title' => 'Event Archived', 'description' => "Event '{$event->name}' has been archived because it has contacts.", 'type' => 'info']);
         } else {
             $event->forceDelete();
-            $this->dispatch('notify', title: 'Event Deleted', description: "Event '{$event->name}' has been permanently deleted.");
+            session()->flash('toast', ['title' => 'Event Deleted', 'description' => "Event '{$event->name}' has been permanently deleted.", 'type' => 'success']);
         }
 
         $this->redirect(route('events.index'), navigate: true);

@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Events\EventsList;
+use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\User;
@@ -106,7 +107,7 @@ test('delete action soft deletes event with contacts', function () {
     $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
 
     // Create a contact for this event configuration
-    \App\Models\Contact::factory()->create(['event_configuration_id' => $config->id]);
+    Contact::factory()->create(['event_configuration_id' => $config->id]);
 
     expect($event->fresh()->deleted_at)->toBeNull();
 
@@ -181,11 +182,11 @@ test('events list eager loads relationships to avoid N+1 queries', function () {
     Event::factory()->count(5)->create();
 
     // Enable query logging
-    \DB::enableQueryLog();
+    DB::enableQueryLog();
 
     Livewire::test(EventsList::class);
 
-    $queries = \DB::getQueryLog();
+    $queries = DB::getQueryLog();
 
     // Should have minimal queries due to eager loading
     // With 5 events, we expect queries for:
@@ -196,4 +197,19 @@ test('events list eager loads relationships to avoid N+1 queries', function () {
     // - Additional feature queries (reminders, scoring, etc.)
     // Total should be significantly less than 5*N (where N is relationships per event)
     expect(count($queries))->toBeLessThan(50);
+});
+
+test('events list ignores sort columns outside the allowlist', function () {
+    $this->actingAs($this->user);
+
+    Event::factory()->create(['name' => 'Alpha Event']);
+
+    Livewire::test(EventsList::class)
+        ->call('sortBy', 'nonexistent_column')
+        ->assertSet('sortField', 'created_at')
+        ->assertOk()
+        ->set('sortField', 'nonexistent_column')
+        ->set('sortDirection', 'sideways')
+        ->assertOk()
+        ->assertSee('Alpha Event');
 });

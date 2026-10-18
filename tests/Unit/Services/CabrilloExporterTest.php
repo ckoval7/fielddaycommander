@@ -84,7 +84,7 @@ test('maps power to QRP for 5 watts or less', function () {
 });
 
 test('formats a CW qso line correctly', function () {
-    $config = makeCabrilloExporterConfig();
+    $config = makeCabrilloExporterConfig([], ['start_time' => '2025-06-28 12:00:00', 'end_time' => '2025-06-29 18:00:00']);
     $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.0]);
     $mode = Mode::factory()->create(['name' => 'CW', 'category' => 'CW']);
     $meSection = Section::factory()->create(['code' => 'ME']);
@@ -106,7 +106,7 @@ test('formats a CW qso line correctly', function () {
 });
 
 test('maps phone mode to PH', function () {
-    $config = makeCabrilloExporterConfig();
+    $config = makeCabrilloExporterConfig([], ['start_time' => '2025-06-28 12:00:00', 'end_time' => '2025-06-29 18:00:00']);
     $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.0]);
     $mode = Mode::factory()->create(['name' => 'Phone', 'category' => 'Phone']);
     $meSection = Section::factory()->create(['code' => 'ME']);
@@ -127,7 +127,7 @@ test('maps phone mode to PH', function () {
 });
 
 test('maps digital mode to DG', function () {
-    $config = makeCabrilloExporterConfig();
+    $config = makeCabrilloExporterConfig([], ['start_time' => '2025-06-28 12:00:00', 'end_time' => '2025-06-29 18:00:00']);
     $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.0]);
     $mode = Mode::factory()->create(['name' => 'Digital', 'category' => 'Digital']);
     $nnySection = Section::factory()->create(['code' => 'NNY']);
@@ -381,6 +381,33 @@ test('wfd power falls back to configured max when a contact has no power', funct
     makeWfdCabrilloContact($config, 'Phone', ['power_watts' => null]);
 
     expect(app(CabrilloExporter::class)->export($config))->toContain('CATEGORY-POWER: LOW');
+});
+
+test('wfd power category comes from one aggregate query without loading contacts', function () {
+    $winterPowerCategory = fn (EventConfiguration $config): string => (fn () => $this->winterPowerCategory($config))
+        ->call(app(CabrilloExporter::class));
+
+    $qrp = makeWfdCabrilloConfig(['max_power_watts' => 5]);
+    makeWfdCabrilloContact($qrp, 'Phone', ['power_watts' => 10]);
+    makeWfdCabrilloContact($qrp, 'CW', ['power_watts' => 5]);
+    makeWfdCabrilloContact($qrp, 'CW', ['power_watts' => null]);
+    makeWfdCabrilloContact($qrp, 'CW', ['power_watts' => 100, 'is_duplicate' => true]);
+
+    $low = makeWfdCabrilloConfig(['callsign' => 'K4LO', 'max_power_watts' => 5]);
+    makeWfdCabrilloContact($low, 'Phone', ['power_watts' => 10]);
+    makeWfdCabrilloContact($low, 'Digital', ['power_watts' => 6]);
+
+    $empty = makeWfdCabrilloConfig(['callsign' => 'K4MT', 'max_power_watts' => 100]);
+
+    $hydrated = 0;
+    app('events')->listen('eloquent.retrieved: '.Contact::class, function () use (&$hydrated) {
+        $hydrated++;
+    });
+
+    expect($winterPowerCategory($qrp))->toBe('QRP')
+        ->and($winterPowerCategory($low))->toBe('LOW')
+        ->and($winterPowerCategory($empty))->toBe('LOW')
+        ->and($hydrated)->toBe(0);
 });
 
 test('wfd lists distinct operators and omits operators and name when unknown', function () {

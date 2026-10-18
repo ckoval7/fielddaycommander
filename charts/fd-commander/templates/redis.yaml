@@ -1,0 +1,253 @@
+{{- if .Values.redis.enabled }}
+{{- $fullName := include "fd-commander.redis.fullname" . }}
+{{- $labels := include "fd-commander.backingLabels" (dict "component" "redis" "context" $) }}
+{{- $selectorLabels := include "fd-commander.backingSelectorLabels" (dict "component" "redis" "context" $) }}
+{{- $master := .Values.redis.master | default dict }}
+{{- $persistence := $master.persistence | default dict }}
+{{- $persistenceEnabled := dig "enabled" true $persistence }}
+{{- $authEnabled := dig "auth" "enabled" true .Values.redis }}
+{{- /*
+Chart 0.x values (helm upgrade --reuse-values, or an old values file) still
+hold the Bitnami subchart's image and its uid 1001 security contexts, marked
+by an "enabled" key Kubernetes does not have. Fall back to this chart's own
+defaults for anything recognisably Bitnami.
+*/}}
+{{- $image := .Values.redis.image | default dict }}
+{{- $imageRepository := $image.repository | default "redis" }}
+{{- $imageTag := $image.tag | default "7.4.11-alpine" | toString }}
+{{- if contains "bitnami" $imageRepository }}
+{{- $imageRepository = "redis" }}
+{{- $imageTag = "7.4.11-alpine" }}
+{{- end }}
+{{- $imagePullPolicy := $image.pullPolicy | default "IfNotPresent" }}
+{{- $defaultPodSecurityContext := dict "runAsNonRoot" true "runAsUser" 999 "runAsGroup" 1000 "fsGroup" 1000 "fsGroupChangePolicy" "OnRootMismatch" "seccompProfile" (dict "type" "RuntimeDefault") }}
+{{- $podSecurityContext := $master.podSecurityContext | default $defaultPodSecurityContext }}
+{{- if hasKey $podSecurityContext "enabled" }}
+{{- $podSecurityContext = $defaultPodSecurityContext }}
+{{- end }}
+{{- $defaultContainerSecurityContext := dict "allowPrivilegeEscalation" false "readOnlyRootFilesystem" true "capabilities" (dict "drop" (list "ALL")) }}
+{{- $containerSecurityContext := $master.containerSecurityContext | default $defaultContainerSecurityContext }}
+{{- if hasKey $containerSecurityContext "enabled" }}
+{{- $containerSecurityContext = $defaultContainerSecurityContext }}
+{{- end }}
+{{- /* Everything in the ConfigMap, so the checksum below rolls the pod on any change. */}}
+{{- $redisConf := list "dir /data" }}
+{{- if not $authEnabled }}
+{{- $redisConf = append $redisConf "# No password: accept connections from other pods anyway.\nprotected-mode no" }}
+{{- end }}
+{{- with $master.configuration }}
+{{- $redisConf = append $redisConf . }}
+{{- end }}
+{{- /*
+Without maxmemory, volatile-lru never evicts and Redis grows until the memory
+limit kills it. A configuration carried over from chart 0.x by --reuse-values
+lacks it, so add the default when it is missing.
+*/}}
+{{- if not (regexMatch "(?m)^\\s*maxmemory\\s" (join "\n" $redisConf)) }}
+{{- $redisConf = append $redisConf "maxmemory 256mb" }}
+{{- end }}
+{{- $redisConf = join "\n" $redisConf }}
+{{- include "fd-commander.credentials" . }}
+{{- /* Empty resources (e.g. Bitnami's resourcesPreset carried over by --reuse-values) get these limits. */}}
+{{- $defaultResources := dict "limits" (dict "cpu" "500m" "memory" "512Mi" "ephemeral-storage" "512Mi") "requests" (dict "cpu" "100m" "memory" "128Mi" "ephemeral-storage" "64Mi") }}
+{{- $resources := $master.resources | default $defaultResources }}
+{{- /*
+redis-server reads requirepass only at start, so a changed password must roll
+the pod. With existingSecret, hash that secret instead.
+*/}}
+{{- $passwordChecksum := "" }}
+{{- if $authEnabled }}
+{{- if .Values.existingSecret }}
+{{- $passwordChecksum = include "fd-commander.existingSecretData" . | sha256sum }}
+{{- else }}
+{{- $passwordChecksum = .Values._fdcCredentials.redisPassword | sha256sum }}
+{{- end }}
+{{- end }}
+{{- if and $authEnabled (not .Values.existingSecret) }}
+{{- /*
+The password comes from fd-commander.credentials, which reuses the stored one
+(this chart's, a secret kept from an uninstall, or the chart 0.x Bitnami
+subchart's, which used the same secret name and key) so it stays stable.
+*/}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- $labels | nindent 4 }}
+  annotations:
+    # Kept on uninstall like the MySQL secret. See the chart README.
+    helm.sh/resource-policy: keep
+type: Opaque
+stringData:
+  redis-password: {{ .Values._fdcCredentials.redisPassword | quote }}
+---
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- $labels | nindent 4 }}
+data:
+  redis.conf: |-
+    {{- $redisConf | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
+  selector:
+    {{- $selectorLabels | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-headless
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
+  selector:
+    {{- $selectorLabels | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ $fullName }}-headless
+  selector:
+    matchLabels:
+      {{- $selectorLabels | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ $redisConf | sha256sum }}
+        {{- with $passwordChecksum }}
+        checksum/secret: {{ . }}
+        {{- end }}
+      labels:
+        {{- $labels | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      automountServiceAccountToken: false
+      {{- with $podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: redis
+          image: {{ printf "%s:%s" $imageRepository $imageTag }}
+          imagePullPolicy: {{ $imagePullPolicy }}
+          {{- with $containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          args:
+            - redis-server
+            - /usr/local/etc/redis/redis.conf
+            {{- if $authEnabled }}
+            # Same as docker-compose.yml: requirepass from the generated secret.
+            - --requirepass
+            - $(REDIS_PASSWORD)
+            {{- end }}
+          {{- if $authEnabled }}
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fd-commander.redisSecretName" . }}
+                  key: {{ include "fd-commander.redisSecretKey" . }}
+            # Lets the probes' redis-cli authenticate.
+            - name: REDISCLI_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fd-commander.redisSecretName" . }}
+                  key: {{ include "fd-commander.redisSecretKey" . }}
+          {{- end }}
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "redis-cli -h 127.0.0.1 ping | grep -q PONG"]
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "redis-cli -h 127.0.0.1 ping | grep -q PONG"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml $resources | nindent 12 }}
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+            - name: config
+              mountPath: /usr/local/etc/redis
+              readOnly: true
+            # The root filesystem is read-only.
+            - name: tmp
+              mountPath: /tmp
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $fullName }}
+        - name: tmp
+          emptyDir: {}
+        {{- if not $persistenceEnabled }}
+        - name: redis-data
+          emptyDir: {}
+        {{- end }}
+  {{- if $persistenceEnabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+        labels:
+          {{- $selectorLabels | nindent 10 }}
+      spec:
+        accessModes:
+          - {{ $persistence.accessMode | default "ReadWriteOnce" }}
+        resources:
+          requests:
+            storage: {{ $persistence.size | default "2Gi" }}
+        {{- if $persistence.storageClass }}
+        storageClassName: {{ $persistence.storageClass | quote }}
+        {{- end }}
+  {{- end }}
+{{- end }}

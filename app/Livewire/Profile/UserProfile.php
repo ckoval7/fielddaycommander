@@ -13,6 +13,7 @@ use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
 use Laravel\Fortify\Contracts\UpdatesUserPasswords;
 use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Mary\Traits\Toast;
 
@@ -30,6 +31,18 @@ class UserProfile extends Component
     public string $last_name = '';
 
     public string $email = '';
+
+    /**
+     * Current password, required only when the email address changes.
+     */
+    public string $emailChangePassword = '';
+
+    /**
+     * The email address as last saved. The view compares the email field with
+     * it to decide whether to ask for the current password.
+     */
+    #[Locked]
+    public string $savedEmail = '';
 
     public ?string $license_class = null;
 
@@ -84,12 +97,33 @@ class UserProfile extends Component
 
     public string $password_confirmation = '';
 
-    // 2FA properties
+    // 2FA properties. Locked so only server actions that verified the
+    // password can reveal the TOTP secret or the recovery codes.
+    #[Locked]
     public bool $showingQrCode = false;
 
+    #[Locked]
     public bool $showingRecoveryCodes = false;
 
     public string $twoFactorCode = '';
+
+    /**
+     * Each 2FA action has its own password field so typing in one box never fills another.
+     */
+    public string $enableTwoFactorPassword = '';
+
+    public string $recoveryCodesPassword = '';
+
+    public string $disableTwoFactorPassword = '';
+
+    /**
+     * The 2FA action waiting for a password: 'view-codes', 'regenerate-codes', 'disable', or null.
+     */
+    #[Locked]
+    public ?string $confirmingTwoFactorAction = null;
+
+    /** @var list<string> */
+    private const TWO_FACTOR_ACTIONS = ['view-codes', 'regenerate-codes', 'disable'];
 
     public function mount(): void
     {
@@ -104,6 +138,7 @@ class UserProfile extends Component
         $this->first_name = $user->first_name;
         $this->last_name = $user->last_name;
         $this->email = $user->email;
+        $this->savedEmail = $user->email;
         $this->license_class = $user->license_class;
         $this->preferred_timezone = $user->preferred_timezone ?? Setting::get('timezone', config('app.timezone'));
         $this->is_youth = (bool) $user->is_youth;
@@ -144,6 +179,14 @@ class UserProfile extends Component
 
         $user = auth()->user();
 
+        if (strcasecmp($this->email, $user->email) !== 0) {
+            $this->validate([
+                'emailChangePassword' => ['required', 'string', 'current_password:web'],
+            ]);
+        }
+
+        $this->emailChangePassword = '';
+
         // Use Fortify's update action
         app(UpdatesUserProfileInformation::class)->update(
             $user,
@@ -177,6 +220,9 @@ class UserProfile extends Component
                 ],
             ]
         );
+
+        $this->savedEmail = $user->fresh()->email;
+        $this->email = $this->savedEmail;
 
         $this->success('Profile updated successfully.');
     }
@@ -339,7 +385,7 @@ class UserProfile extends Component
         }
 
         $this->validate([
-            'current_password' => ['required', 'string', 'current_password:web'],
+            'enableTwoFactorPassword' => ['required', 'string', 'current_password:web'],
         ]);
 
         app(EnableTwoFactorAuthentication::class)(auth()->user());
@@ -348,16 +394,30 @@ class UserProfile extends Component
 
         $this->showingQrCode = true;
         $this->showingRecoveryCodes = false;
-        $this->current_password = '';
+        $this->enableTwoFactorPassword = '';
     }
 
+    /**
+     * Abandon a setup that was started but never confirmed. Disabling a
+     * confirmed 2FA setup goes through disableTwoFactor(), which needs the
+     * current password.
+     */
     public function cancelTwoFactorSetup(): void
     {
         if (config('auth-security.2fa_mode') === 'required') {
             return;
         }
 
-        app(DisableTwoFactorAuthentication::class)(auth()->user());
+        $user = auth()->user();
+
+        if (! $user->two_factor_secret || $user->two_factor_confirmed_at) {
+            $this->showingQrCode = false;
+            $this->twoFactorCode = '';
+
+            return;
+        }
+
+        app(DisableTwoFactorAuthentication::class)($user);
 
         auth()->user()->refresh();
 
@@ -391,7 +451,7 @@ class UserProfile extends Component
         }
 
         $this->validate([
-            'current_password' => ['required', 'string', 'current_password:web'],
+            'disableTwoFactorPassword' => ['required', 'string', 'current_password:web'],
         ]);
 
         app(DisableTwoFactorAuthentication::class)(auth()->user());
@@ -400,28 +460,68 @@ class UserProfile extends Component
 
         $this->showingQrCode = false;
         $this->showingRecoveryCodes = false;
-        $this->current_password = '';
+        $this->disableTwoFactorPassword = '';
+        $this->confirmingTwoFactorAction = null;
 
         $this->success('Two-factor authentication disabled.');
+    }
+
+    /**
+     * Show the password box for a 2FA action. Only one box is shown at a time.
+     */
+    public function startTwoFactorAction(string $action): void
+    {
+        if (! in_array($action, self::TWO_FACTOR_ACTIONS, true)) {
+            return;
+        }
+
+        $this->resetTwoFactorConfirmation();
+        $this->confirmingTwoFactorAction = $action;
+    }
+
+    public function cancelTwoFactorAction(): void
+    {
+        $this->resetTwoFactorConfirmation();
+    }
+
+    private function resetTwoFactorConfirmation(): void
+    {
+        $this->confirmingTwoFactorAction = null;
+        $this->recoveryCodesPassword = '';
+        $this->disableTwoFactorPassword = '';
+        $this->resetValidation(['recoveryCodesPassword', 'disableTwoFactorPassword']);
     }
 
     public function showRecoveryCodes(): void
     {
         $this->validate([
-            'current_password' => ['required', 'string', 'current_password:web'],
+            'recoveryCodesPassword' => ['required', 'string', 'current_password:web'],
         ]);
 
         $this->showingRecoveryCodes = true;
-        $this->current_password = '';
+        $this->recoveryCodesPassword = '';
+        $this->confirmingTwoFactorAction = null;
+    }
+
+    public function hideRecoveryCodes(): void
+    {
+        $this->showingRecoveryCodes = false;
+        $this->resetTwoFactorConfirmation();
     }
 
     public function regenerateRecoveryCodes(): void
     {
+        $this->validate([
+            'recoveryCodesPassword' => ['required', 'string', 'current_password:web'],
+        ]);
+
         app(GenerateNewRecoveryCodes::class)(auth()->user());
 
         auth()->user()->refresh();
 
         $this->showingRecoveryCodes = true;
+        $this->recoveryCodesPassword = '';
+        $this->confirmingTwoFactorAction = null;
 
         $this->success('Recovery codes regenerated.');
     }
@@ -475,6 +575,10 @@ class UserProfile extends Component
             'shiftReminderMinute' => 'reminder minutes',
             'bulletinReminderMinute' => 'reminder minutes',
             'twoFactorCode' => 'authentication code',
+            'emailChangePassword' => 'current password',
+            'enableTwoFactorPassword' => 'current password',
+            'recoveryCodesPassword' => 'current password',
+            'disableTwoFactorPassword' => 'current password',
         ];
     }
 }

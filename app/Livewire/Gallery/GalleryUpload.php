@@ -41,43 +41,43 @@ class GalleryUpload extends Component
             return;
         }
 
+        if (! $imageService->hasAcceptableDimensions($this->photo)) {
+            $this->addError('photo', 'This image is too large or too narrow. Please upload a photo under 50 megapixels.');
+
+            return;
+        }
+
         $hash = $imageService->calculateHash($this->photo);
 
-        // Check for existing image (including soft-deleted)
-        $existingImage = Image::withTrashed()->where('file_hash', $hash)->first();
+        // A deleted copy doesn't block the upload: it comes back as a new photo
+        $alreadyInGallery = Image::query()
+            ->where('event_configuration_id', $this->eventConfiguration->id)
+            ->where('file_hash', $hash)
+            ->exists();
 
-        if ($existingImage) {
-            if ($existingImage->trashed()) {
-                // Restore the soft-deleted image, update caption, and regenerate thumbnail
-                $existingImage->restore();
-                $existingImage->update(['caption' => $this->caption]);
-                $imageService->regenerateThumbnail($existingImage->storage_path);
+        if ($alreadyInGallery) {
+            $this->addError('photo', 'This photo has already been uploaded.');
 
-                $this->dispatch('notify', title: 'Success', description: 'Photo restored successfully!', type: 'success');
-            } else {
-                $this->addError('photo', 'This photo has already been uploaded.');
-
-                return;
-            }
-        } else {
-            $result = $imageService->store(
-                $this->photo,
-                'gallery/'.$this->eventConfiguration->id
-            );
-
-            Image::create([
-                'event_configuration_id' => $this->eventConfiguration->id,
-                'uploaded_by_user_id' => auth()->id(),
-                'filename' => $this->photo->getClientOriginalName(),
-                'storage_path' => $result->path,
-                'mime_type' => $result->mimeType,
-                'file_size_bytes' => $result->size,
-                'file_hash' => $result->hash,
-                'caption' => $this->caption,
-            ]);
-
-            $this->dispatch('notify', title: 'Success', description: 'Photo uploaded successfully!', type: 'success');
+            return;
         }
+
+        $result = $imageService->store(
+            $this->photo,
+            'gallery/'.$this->eventConfiguration->id
+        );
+
+        Image::create([
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'uploaded_by_user_id' => auth()->id(),
+            'filename' => $this->photo->getClientOriginalName(),
+            'storage_path' => $result->path,
+            'mime_type' => $result->mimeType,
+            'file_size_bytes' => $result->size,
+            'file_hash' => $result->hash,
+            'caption' => $this->caption,
+        ]);
+
+        session()->flash('toast', ['title' => 'Success', 'description' => 'Photo uploaded successfully!', 'type' => 'success']);
 
         $this->redirectRoute('gallery.show', $this->eventConfiguration);
     }

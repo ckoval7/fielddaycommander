@@ -5,6 +5,7 @@ namespace App\Scoring\Bonuses\WinterFieldDay2026;
 use App\Models\EventConfiguration;
 use App\Scoring\Bonuses\AbstractBonusStrategy;
 use App\Scoring\DomainEvents\QsoLogged;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * WFD 2026 objective "qrp". OM x4.
@@ -57,37 +58,31 @@ class QrpStrategy extends AbstractBonusStrategy
      * Whether every non-duplicate contact respected its own mode's ceiling.
      *
      * A single contact over its ceiling disqualifies the operation, so this
-     * stops at the first exceedance rather than tallying them.
+     * stops at the first exceedance rather than tallying them. A contact with
+     * no mode, or a mode with no category, is held to the stricter ceiling so
+     * an unclassified mode cannot buy the objective.
      */
     private function everyContactWithinItsCeiling(EventConfiguration $config): bool
     {
         $fallbackWatts = $config->effectiveMaxPowerWatts();
+        $watts = 'COALESCE(power_watts, ?)';
 
         $exceeded = $config->contacts()
             ->where('is_duplicate', false)
-            ->with('mode:id,category')
-            ->get(['id', 'mode_id', 'power_watts'])
-            ->contains(function ($contact) use ($fallbackWatts) {
-                $watts = $contact->power_watts ?? $fallbackWatts;
-
-                return $watts > $this->ceilingForCategory($contact->mode?->category);
-            });
+            ->where(function (Builder $query) use ($watts, $fallbackWatts) {
+                // Over the Phone ceiling exceeds every mode's ceiling.
+                $query->whereRaw("{$watts} > ?", [$fallbackWatts, self::PHONE_WATT_CEILING])
+                    ->orWhere(function (Builder $query) use ($watts, $fallbackWatts) {
+                        $query->whereRaw("{$watts} > ?", [$fallbackWatts, self::CW_DIGITAL_WATT_CEILING])
+                            ->where(fn (Builder $query) => $query
+                                ->whereNull('mode_id')
+                                ->orWhereHas('mode', fn (Builder $mode) => $mode
+                                    ->whereNull('category')
+                                    ->orWhereIn('category', self::STRICT_CEILING_CATEGORIES)));
+                    });
+            })
+            ->exists();
 
         return ! $exceeded;
-    }
-
-    /**
-     * Ceiling for a mode category, defaulting to the stricter one when the
-     * category is unknown so an unclassified mode cannot buy the objective.
-     */
-    private function ceilingForCategory(?string $category): int
-    {
-        if ($category === null) {
-            return self::CW_DIGITAL_WATT_CEILING;
-        }
-
-        return in_array($category, self::STRICT_CEILING_CATEGORIES, true)
-            ? self::CW_DIGITAL_WATT_CEILING
-            : self::PHONE_WATT_CEILING;
     }
 }

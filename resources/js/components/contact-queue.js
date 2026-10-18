@@ -22,6 +22,12 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         syncedFallbackMs: 10000,
         now: Date.now(),
         unhookMorphed: null,
+        // Server clock minus this device's clock, in ms. QSO times are stamped
+        // on the server's clock (which follows Developer Tools' fake clock),
+        // so a device whose clock is wrong still logs the right time.
+        clockOffsetMs: Number.isFinite(sessionContext?.server_time_ms)
+            ? sessionContext.server_time_ms - Date.now()
+            : 0,
 
         init() {
             this.loadQueue();
@@ -163,7 +169,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 gota_operator_last_name: contactData.gota_operator_last_name || null,
                 gota_operator_callsign: contactData.gota_operator_callsign || null,
                 gota_operator_user_id: contactData.gota_operator_user_id || null,
-                qso_time: new Date().toISOString(),
+                qso_time: new Date(this.serverNow()).toISOString(),
+                clock_offset_ms: this.clockOffsetMs,
                 status: 'pending',
                 attempts: 0,
                 last_error: null,
@@ -291,6 +298,42 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             return { callsign, section_id: sectionId, section_code: sectionCode, transmitter_count, class_code };
         },
 
+        /**
+         * Current time on the server's clock, in epoch ms.
+         */
+        serverNow() {
+            return Date.now() + this.clockOffsetMs;
+        },
+
+        /**
+         * Update the clock offset from a sync response's X-Server-Time header,
+         * allowing half the round trip for the response to arrive.
+         */
+        measureClockOffset(response, sentAt) {
+            const serverTime = Number(response.headers?.get?.('X-Server-Time'));
+            if (!Number.isFinite(serverTime) || serverTime <= 0) {
+                return;
+            }
+            const receivedAt = Date.now();
+            this.clockOffsetMs = Math.round(serverTime + (receivedAt - sentAt) / 2 - receivedAt);
+        },
+
+        /**
+         * Shift a queued contact's time by how much the clock offset has
+         * changed since it was stamped, so a contact stamped with a wrong (or
+         * no) offset is re-dated on the server's clock.
+         */
+        restamp(entry) {
+            const delta = this.clockOffsetMs - (entry.clock_offset_ms ?? 0);
+            entry.qso_time = new Date(Date.parse(entry.qso_time) + delta).toISOString();
+            entry.clock_offset_ms = this.clockOffsetMs;
+        },
+
+        isFutureTimeError(entry) {
+            return entry.last_error_code === 'qso_time_in_future'
+                || (entry.last_error ?? '').includes('dated in the future');
+        },
+
         async syncNext() {
             if (!this.isOnline) {
                 return;
@@ -314,6 +357,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             candidate.status = 'syncing';
             this.saveQueue();
+
+            const sentAt = Date.now();
 
             try {
                 const response = await fetch('/logging/contacts', {
@@ -342,6 +387,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     }),
                 });
 
+                this.measureClockOffset(response, sentAt);
+
                 if (response.ok) {
                     await response.json();
 
@@ -364,10 +411,24 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     globalThis.Livewire?.dispatch('contact-synced');
                 } else if (response.status === 422) {
                     const errorData = await response.json();
+                    if (errorData.code === 'qso_time_in_future' && !candidate.restamped) {
+                        // Stamped with a wrong clock offset (or before offsets
+                        // were measured): re-date it on the server clock once
+                        // and send it again.
+                        if (Number.isFinite(errorData.server_time)) {
+                            this.clockOffsetMs = errorData.server_time - Date.now();
+                        }
+                        this.restamp(candidate);
+                        candidate.restamped = true;
+                        candidate.status = 'pending';
+                        this.saveQueue();
+                        return;
+                    }
                     candidate.status = 'failed';
                     candidate.attempts++;
                     candidate.lastAttemptTime = Date.now();
                     candidate.last_error = errorData.message || 'Validation failed';
+                    candidate.last_error_code = errorData.code ?? null;
                     this.saveQueue();
                 } else if (response.status === 401 || response.status === 419) {
                     // Session or CSRF expired - stop retrying, user must refresh
@@ -395,9 +456,14 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         retryFailed(uuid) {
             const contact = this.queue.find(c => c.uuid === uuid);
             if (contact) {
+                if (this.isFutureTimeError(contact)) {
+                    this.restamp(contact);
+                }
                 contact.status = 'pending';
                 contact.attempts = 0;
+                contact.restamped = false;
                 contact.last_error = null;
+                contact.last_error_code = null;
                 this.saveQueue();
                 void this.syncNext();
             }

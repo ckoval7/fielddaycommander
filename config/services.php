@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    /*
+     * UDP listeners for external loggers (N1MM+, WSJT-X, UDP ADIF). Bind to a
+     * specific interface address to keep them off other networks.
+     */
+    'external_loggers' => [
+        'bind_address' => env('EXTERNAL_LOGGER_BIND_ADDRESS', '0.0.0.0'),
+    ],
+
 ];

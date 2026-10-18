@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\CabrilloExportException;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
+use Illuminate\Support\Facades\Log;
 
 class CabrilloExporter
 {
@@ -24,11 +25,27 @@ class CabrilloExporter
             : $this->fieldDayHeader($config);
 
         $contacts = $config->creditableContacts()
+            ->when($config->event?->start_time && $config->event?->end_time, fn ($query) => $query
+                ->whereBetween('qso_time', [$config->event->start_time, $config->event->end_time]))
             ->with(['band', 'mode', 'section'])
             ->orderBy('qso_time')
             ->get();
 
-        foreach ($contacts as $contact) {
+        // A QSO line needs a frequency and mode. External-logger contacts can
+        // arrive without either; they score nothing until completed, so they
+        // are left out rather than failing the whole export.
+        [$complete, $incomplete] = $contacts->partition(
+            fn (Contact $contact): bool => $contact->band !== null && $contact->mode !== null
+        );
+
+        if ($incomplete->isNotEmpty()) {
+            Log::warning('Cabrillo export skipped contacts missing a band or mode', [
+                'event_configuration_id' => $config->id,
+                'contact_ids' => $incomplete->pluck('id')->all(),
+            ]);
+        }
+
+        foreach ($complete as $contact) {
             $lines[] = $this->formatQso($config, $contact);
         }
 
@@ -51,7 +68,7 @@ class CabrilloExporter
             'CATEGORY-OPERATOR: MULTI-OP',
             'CATEGORY-BAND: ALL',
             'CATEGORY-MODE: MIXED',
-            'CATEGORY-POWER: '.$this->powerCategory($config->max_power_watts),
+            'CATEGORY-POWER: '.$this->powerCategory($config->effectiveMaxPowerWatts()),
             'CATEGORY-STATION: '.$this->stationCategory($config->operatingClass->code),
             'CLAIMED-SCORE: '.$config->calculateFinalScore(),
         ];
@@ -159,13 +176,12 @@ class CabrilloExporter
 
         $exceeded = $config->contacts()
             ->notDuplicate()
-            ->with('mode:id,category')
-            ->get(['id', 'mode_id', 'power_watts'])
-            ->contains(function (Contact $contact) use ($fallbackWatts) {
-                $ceiling = $contact->mode?->category === 'Phone' ? 10 : 5;
-
-                return ($contact->power_watts ?? $fallbackWatts) > $ceiling;
-            });
+            ->leftJoin('modes', 'modes.id', '=', 'contacts.mode_id')
+            ->whereRaw(
+                "COALESCE(contacts.power_watts, ?) > CASE WHEN modes.category = 'Phone' THEN 10 ELSE 5 END",
+                [$fallbackWatts],
+            )
+            ->exists();
 
         if ($exceeded) {
             return 'LOW';

@@ -15,9 +15,16 @@ use Socket;
 
 abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerListener
 {
+    private const WARNING_WINDOW_SECONDS = 60;
+
+    private const WARNINGS_PER_WINDOW = 10;
+
     private bool $running = false;
 
     private ?Socket $socket = null;
+
+    /** @var array<string, array{started_at: int, logged: int, suppressed: int}> Throttle state per warning key */
+    private array $warningWindows = [];
 
     /**
      * Human-readable label for log messages (e.g. "N1MM", "WSJTX", "UDP ADIF").
@@ -56,11 +63,21 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
         $this->info("Starting {$this->listenerLabel()} UDP listener on port {$port} for event: {$config->callsign}");
         $setting->update(['pid' => getmypid()]);
 
-        if (! $this->createAndBindSocket($port)) {
+        try {
+            $failure = $this->createAndBindSocket($port);
+        } catch (\Throwable $exception) {
+            $failure = "Failed to open UDP socket: {$exception->getMessage()}";
+        }
+
+        if ($failure !== null) {
+            $this->error($failure);
             $setting->update(['pid' => null]);
+            $manager->recordStartupFailure($config->id, $this->getType(), $failure);
 
             return self::FAILURE;
         }
+
+        $manager->clearStartupFailure($config->id, $this->getType());
 
         $this->registerSignalHandlers();
 
@@ -122,28 +139,98 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
         return EventConfiguration::where('is_active', true)->first();
     }
 
-    private function createAndBindSocket(int $port): bool
+    /**
+     * Open and bind the UDP socket.
+     *
+     * @return string|null Why the socket could not be opened, or null on success
+     */
+    private function createAndBindSocket(int $port): ?string
     {
-        $this->socket = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
-        if ($this->socket === false) {
-            $this->error('Failed to create UDP socket: '.socket_strerror(socket_last_error()));
-
-            return false;
+        if (! $this->socketsAvailable()) {
+            return 'The PHP sockets extension is not installed, so UDP listeners cannot run.';
         }
+
+        $socket = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+        if ($socket === false) {
+            return 'Failed to create UDP socket: '.socket_strerror(socket_last_error());
+        }
+
+        $this->socket = $socket;
 
         socket_set_option($this->socket, SOL_SOCKET, SO_BROADCAST, 1);
         socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1);
 
-        if (@socket_bind($this->socket, '0.0.0.0', $port) === false) {
-            $this->error("Failed to bind to port {$port}: ".socket_strerror(socket_last_error($this->socket)));
-            socket_close($this->socket);
+        $bindAddress = (string) config('services.external_loggers.bind_address', '0.0.0.0');
 
-            return false;
+        if (@socket_bind($this->socket, $bindAddress, $port) === false) {
+            $reason = "Failed to bind to port {$port}: ".socket_strerror(socket_last_error($this->socket));
+            socket_close($this->socket);
+            $this->socket = null;
+
+            return $reason;
         }
 
         socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, ['sec' => 2, 'usec' => 0]);
 
-        return true;
+        return null;
+    }
+
+    /**
+     * Whether the sockets extension is loaded. Overridable so tests can
+     * simulate an image built without it.
+     */
+    protected function socketsAvailable(): bool
+    {
+        return function_exists('socket_create');
+    }
+
+    /**
+     * Log a warning, but at most WARNINGS_PER_WINDOW times per minute per
+     * key, so a noisy or hostile sender cannot flood the log. The first
+     * warning of the next window reports how many were suppressed.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    protected function throttledWarning(string $key, string $message, array $context = []): void
+    {
+        $now = time();
+        $window = $this->warningWindows[$key] ?? ['started_at' => $now, 'logged' => 0, 'suppressed' => 0];
+
+        if ($now - $window['started_at'] >= self::WARNING_WINDOW_SECONDS) {
+            if ($window['suppressed'] > 0) {
+                $context['suppressed_in_previous_minute'] = $window['suppressed'];
+            }
+
+            $window = ['started_at' => $now, 'logged' => 0, 'suppressed' => 0];
+        }
+
+        if ($window['logged'] >= self::WARNINGS_PER_WINDOW) {
+            $window['suppressed']++;
+            $this->warningWindows[$key] = $window;
+
+            return;
+        }
+
+        Log::warning($message, $context);
+
+        $window['logged']++;
+        $this->warningWindows[$key] = $window;
+    }
+
+    /**
+     * Record a contact rejected for falling outside the event window: shown
+     * as the listener's last log entry and logged (throttled) with its call
+     * and timestamp.
+     */
+    protected function rejectOutOfPeriod(string $lastLogKey, ExternalContactDto $dto): void
+    {
+        $this->writeLastLogEntry($lastLogKey, $dto, false, 'outside event window');
+
+        $this->throttledWarning('out-of-window', "{$this->listenerLabel()} contact rejected: QSO time is outside the event window", [
+            'callsign' => mb_substr($dto->callsign, 0, 40),
+            'qso_time' => $dto->timestamp->toIso8601String(),
+            'external_id' => $dto->externalId,
+        ]);
     }
 
     private function registerSignalHandlers(): void

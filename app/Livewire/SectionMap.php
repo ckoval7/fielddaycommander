@@ -2,13 +2,16 @@
 
 namespace App\Livewire;
 
+use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\Mode;
 use App\Models\Section;
 use App\Services\EventContextService;
 use App\Support\BroadcastChannels;
 use App\Support\EventSections;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Livewire\Component;
 
 class SectionMap extends Component
@@ -48,9 +51,7 @@ class SectionMap extends Component
             return [];
         }
 
-        return [
-            BroadcastChannels::privateListener(BroadcastChannels::event($this->event->id), '.ContactLogged') => 'handleContactLogged',
-        ];
+        return BroadcastChannels::contactChangeListeners($this->event->id, 'handleContactLogged');
     }
 
     /**
@@ -95,37 +96,59 @@ class SectionMap extends Component
         }
 
         if ($eventConfigId) {
-            $contacts = Contact::query()
-                ->forEvent($eventConfigId)
-                ->notDuplicate()
-                ->whereNotNull('section_id')
-                ->with(['band', 'mode', 'section'])
-                ->get();
-
-            $grouped = $contacts->groupBy(fn ($c) => EventSections::countedCode($c->section->code, $this->event));
-
-            foreach ($grouped as $code => $sectionContacts) {
-                $count = $sectionContacts->count();
-                $bands = $sectionContacts->pluck('band.name')->filter()->unique()->sort()->values()->all();
-                $modes = $sectionContacts->pluck('mode.name')->filter()->unique()->sort()->values()->all();
-                $latestContact = $sectionContacts->sortByDesc('qso_time')->first();
-                $latestBand = $latestContact?->band?->name;
-                $latestQsoTime = $latestContact?->qso_time?->timestamp;
-
+            foreach ($this->sectionTallies($eventConfigId) as $code => $tally) {
                 $this->sectionData[$code] = [
                     'name' => $this->sectionData[$code]['name'] ?? $code,
-                    'count' => $count,
-                    'bands' => $bands,
-                    'modes' => $modes,
-                    'latestBand' => $latestBand,
-                    'latestQsoTime' => $latestQsoTime,
+                    'count' => $tally['count'],
+                    'bands' => $tally['bands'],
+                    'modes' => $tally['modes'],
+                    'latestBand' => $tally['latestBand'],
+                    'latestQsoTime' => $tally['latestQsoTime'],
                 ];
 
-                $this->totalQsos += $count;
+                $this->totalQsos += $tally['count'];
                 $this->sectionsWorked++;
             }
         }
 
         $this->maxCount = max(array_column($this->sectionData, 'count') ?: [0]);
+    }
+
+    /**
+     * Per-section QSO tallies from one GROUP BY over (section, band, mode),
+     * so each poll reads a few rows per section instead of every contact.
+     *
+     * @return array<string, array{count: int, bands: list<string>, modes: list<string>, latestBand: ?string, latestQsoTime: ?int}>
+     */
+    private function sectionTallies(int $eventConfigId): array
+    {
+        $rows = Contact::query()
+            ->forEvent($eventConfigId)
+            ->notDuplicate()
+            ->whereNotNull('section_id')
+            ->groupBy('section_id', 'band_id', 'mode_id')
+            ->selectRaw('section_id, band_id, mode_id, COUNT(*) as qso_count, MAX(qso_time) as latest_qso_time')
+            ->toBase()
+            ->get();
+
+        $sectionCodes = Section::whereIn('id', $rows->pluck('section_id')->unique())->pluck('code', 'id');
+        $bandNames = Band::whereIn('id', $rows->pluck('band_id')->filter()->unique())->pluck('name', 'id');
+        $modeNames = Mode::whereIn('id', $rows->pluck('mode_id')->filter()->unique())->pluck('name', 'id');
+
+        $tallies = [];
+
+        foreach ($rows->groupBy(fn ($row) => EventSections::countedCode($sectionCodes[$row->section_id] ?? '', $this->event)) as $code => $sectionRows) {
+            $latest = $sectionRows->sortByDesc('latest_qso_time')->first();
+
+            $tallies[$code] = [
+                'count' => (int) $sectionRows->sum('qso_count'),
+                'bands' => $sectionRows->map(fn ($row) => $bandNames[$row->band_id] ?? null)->filter()->unique()->sort()->values()->all(),
+                'modes' => $sectionRows->map(fn ($row) => $modeNames[$row->mode_id] ?? null)->filter()->unique()->sort()->values()->all(),
+                'latestBand' => $bandNames[$latest->band_id] ?? null,
+                'latestQsoTime' => $latest->latest_qso_time !== null ? Carbon::parse($latest->latest_qso_time)->timestamp : null,
+            ];
+        }
+
+        return $tallies;
     }
 }

@@ -1,0 +1,261 @@
+{{- if .Values.mysql.enabled }}
+{{- $fullName := include "fd-commander.mysql.fullname" . }}
+{{- $labels := include "fd-commander.backingLabels" (dict "component" "mysql" "context" $) }}
+{{- $selectorLabels := include "fd-commander.backingSelectorLabels" (dict "component" "mysql" "context" $) }}
+{{- $primary := .Values.mysql.primary | default dict }}
+{{- $persistence := $primary.persistence | default dict }}
+{{- $persistenceEnabled := dig "enabled" true $persistence }}
+{{- /*
+Values carried over from chart 0.x (helm upgrade --reuse-values, or an old
+values file) still hold the Bitnami subchart's settings. Its image, uid 1001 and
+read-only root filesystem cannot run the official mysql image, so anything
+recognisably Bitnami falls back to this chart's own defaults. Bitnami security
+contexts are marked by their "enabled" key, which Kubernetes does not have.
+*/}}
+{{- $image := .Values.mysql.image | default dict }}
+{{- $imageRepository := $image.repository | default "mysql" }}
+{{- $imageTag := $image.tag | default "8.4.11" | toString }}
+{{- if contains "bitnami" $imageRepository }}
+{{- $imageRepository = "mysql" }}
+{{- $imageTag = "8.4.11" }}
+{{- end }}
+{{- $imagePullPolicy := $image.pullPolicy | default "IfNotPresent" }}
+{{- $defaultPodSecurityContext := dict "runAsNonRoot" true "runAsUser" 999 "runAsGroup" 999 "fsGroup" 999 "fsGroupChangePolicy" "OnRootMismatch" "seccompProfile" (dict "type" "RuntimeDefault") }}
+{{- $podSecurityContext := $primary.podSecurityContext | default $defaultPodSecurityContext }}
+{{- if hasKey $podSecurityContext "enabled" }}
+{{- $podSecurityContext = $defaultPodSecurityContext }}
+{{- end }}
+{{- $defaultContainerSecurityContext := dict "allowPrivilegeEscalation" false "readOnlyRootFilesystem" true "capabilities" (dict "drop" (list "ALL")) }}
+{{- $containerSecurityContext := $primary.containerSecurityContext | default $defaultContainerSecurityContext }}
+{{- if hasKey $containerSecurityContext "enabled" }}
+{{- $containerSecurityContext = $defaultContainerSecurityContext }}
+{{- end }}
+{{- $runAsUser := dig "runAsUser" 999 $podSecurityContext }}
+{{- $runAsGroup := dig "runAsGroup" $runAsUser $podSecurityContext }}
+{{- $volumePermissions := dig "volumePermissions" "enabled" false .Values.mysql }}
+{{- /*
+Passwords come from fd-commander.credentials, which reuses the ones already
+stored in this secret (by this chart, a kept secret from an uninstall, or the
+chart 0.x Bitnami subchart, which used the same name and keys), so an upgrade
+or reinstall never re-randomises a credential the data directory already holds.
+*/}}
+{{- include "fd-commander.credentials" . }}
+{{- $credentials := .Values._fdcCredentials }}
+{{- /* Empty resources (e.g. Bitnami's resourcesPreset carried over by --reuse-values) get these limits. */}}
+{{- $defaultResources := dict "limits" (dict "cpu" "1000m" "memory" "1Gi" "ephemeral-storage" "1Gi") "requests" (dict "cpu" "250m" "memory" "512Mi" "ephemeral-storage" "128Mi") }}
+{{- $resources := $primary.resources | default $defaultResources }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- $labels | nindent 4 }}
+  annotations:
+    # Kept on uninstall along with the data volume, whose database still
+    # expects these passwords. See the chart README.
+    helm.sh/resource-policy: keep
+type: Opaque
+stringData:
+  mysql-password: {{ $credentials.mysqlPassword | quote }}
+  mysql-root-password: {{ $credentials.mysqlRootPassword | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+      protocol: TCP
+  selector:
+    {{- $selectorLabels | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-headless
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+      protocol: TCP
+  selector:
+    {{- $selectorLabels | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ $fullName }}-headless
+  selector:
+    matchLabels:
+      {{- $selectorLabels | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- $labels | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      automountServiceAccountToken: false
+      {{- with $podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $volumePermissions }}
+      initContainers:
+        # Hands a volume written by another uid (e.g. Bitnami's 1001) to the
+        # mysql user. Only touches files not already owned by it.
+        - name: volume-permissions
+          image: {{ printf "%s:%s" $imageRepository $imageTag }}
+          imagePullPolicy: {{ $imagePullPolicy }}
+          command:
+            - sh
+            - -c
+            - find /var/lib/mysql \( ! -user {{ $runAsUser }} -o ! -group {{ $runAsGroup }} \) -exec chown -h {{ $runAsUser }}:{{ $runAsGroup }} {} +
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - DAC_READ_SEARCH
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+              ephemeral-storage: 64Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
+              ephemeral-storage: 16Mi
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+              {{- with $persistence.subPath }}
+              subPath: {{ . }}
+              {{- end }}
+      {{- end }}
+      containers:
+        - name: mysql
+          image: {{ printf "%s:%s" $imageRepository $imageTag }}
+          imagePullPolicy: {{ $imagePullPolicy }}
+          {{- with $containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: MYSQL_DATABASE
+              value: {{ .Values.mysql.auth.database | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.mysql.auth.username | quote }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fd-commander.databaseSecretName" . }}
+                  key: {{ include "fd-commander.databaseSecretKey" . }}
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fullName }}
+                  key: mysql-root-password
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          # The entrypoint initialises a new data directory on a socket-only
+          # temporary server, so TCP probes only pass once mysqld is serving.
+          startupProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 --silent"]
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 --silent"]
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "MYSQL_PWD=\"$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u \"$MYSQL_USER\" -e 'SELECT 1' >/dev/null"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml $resources | nindent 12 }}
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+              {{- with $persistence.subPath }}
+              subPath: {{ . }}
+              {{- end }}
+            # The root filesystem is read-only; mysqld writes its socket and
+            # pid file and the entrypoint its temporary files here.
+            - name: mysqld-run
+              mountPath: /var/run/mysqld
+            - name: tmp
+              mountPath: /tmp
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: mysqld-run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+      {{- if or (not $persistenceEnabled) $persistence.existingClaim }}
+        - name: mysql-data
+        {{- if $persistenceEnabled }}
+          persistentVolumeClaim:
+            claimName: {{ tpl $persistence.existingClaim . }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+      {{- end }}
+  {{- if and $persistenceEnabled (not $persistence.existingClaim) }}
+  # Named mysql-data, not Bitnami's "data", so a fresh install never picks up
+  # a leftover chart 0.x claim with its incompatible layout by accident.
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+        labels:
+          {{- $selectorLabels | nindent 10 }}
+      spec:
+        accessModes:
+          - {{ $persistence.accessMode | default "ReadWriteOnce" }}
+        resources:
+          requests:
+            storage: {{ $persistence.size | default "8Gi" }}
+        {{- if $persistence.storageClass }}
+        storageClassName: {{ $persistence.storageClass | quote }}
+        {{- end }}
+  {{- end }}
+{{- end }}

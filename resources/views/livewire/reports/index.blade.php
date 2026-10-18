@@ -133,6 +133,20 @@
             Export &amp; Download
         </div>
 
+        @if($this->contactsNeedingAttentionCount > 0)
+            <x-alert icon="phosphor-warning" class="alert-warning mb-5" data-testid="needs-attention-alert">
+                <div>
+                    <span class="font-semibold">
+                        {{ $this->contactsNeedingAttentionCount }} {{ Str::plural('contact', $this->contactsNeedingAttentionCount) }} {{ $this->contactsNeedingAttentionCount === 1 ? 'needs' : 'need' }} attention.
+                    </span>
+                    They're missing a band or mode, or were logged outside the event window. They earn no points and won't be in the Cabrillo log until you fix them.
+                </div>
+                <x-slot:actions>
+                    <a href="{{ route('logbook.index', ['needsAttention' => 'only', 'event' => $event?->id]) }}" class="btn btn-sm">Review in logbook</a>
+                </x-slot:actions>
+            </x-alert>
+        @endif
+
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
             {{-- CABRILLO LOG — amber, prominent CTA --}}

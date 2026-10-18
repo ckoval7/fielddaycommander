@@ -175,7 +175,31 @@
         @endif
 
         {{-- Step 3: Review & Import --}}
-        @if ($step === 3)
+        @if ($step === 3 && in_array($importStatus, ['validating', 'importing'], true))
+            {{-- Validation and the import run on the queue; poll their progress.
+                 keep-alive stops Livewire throttling the poll in a background tab,
+                 and returning to the tab checks at once. --}}
+            <div wire:poll.1s.keep-alive="refreshProgress" x-data x-on:visibilitychange.document="if (! document.hidden) { $wire.refreshProgress() }">
+                <x-card :title="$importStatus === 'validating' ? 'Checking Records' : 'Importing Contacts'">
+                    <p class="text-sm text-base-content/70 mb-4">
+                        @if ($importStatus === 'validating')
+                            Matching records against the log and checking them against the event. This page updates on its own.
+                        @else
+                            Writing contacts to the log. You can leave this page; the import keeps running.
+                        @endif
+                    </p>
+                    @php($percent = $this->currentImport?->progressPercent() ?? 0)
+                    <progress class="progress progress-primary w-full" value="{{ $percent }}" max="100" aria-label="Progress"></progress>
+                    <p class="text-sm text-base-content/70 mt-2">
+                        @if ($importStatus === 'importing')
+                            {{ $this->currentImport?->progress_processed ?? 0 }} of {{ $this->currentImport?->progress_total ?? 0 }} records
+                        @else
+                            {{ $percent }}%
+                        @endif
+                    </p>
+                </x-card>
+            </div>
+        @elseif ($step === 3)
             <div class="space-y-6">
                 {{-- Match summary --}}
                 <x-card title="Import Summary">
@@ -200,7 +224,24 @@
                 </x-card>
 
                 {{-- Records table --}}
+                @php($records = $this->importRecords)
                 <x-card title="Records">
+                    <x-slot:menu>
+                        <x-select
+                            wire:model.live="recordFilter"
+                            aria-label="Show records"
+                            :options="[
+                                ['value' => 'all', 'label' => 'All records'],
+                                ['value' => 'invalid', 'label' => 'Invalid ('.($matchSummary['invalid'] ?? 0).')'],
+                                ['value' => 'new', 'label' => 'New ('.($matchSummary['new'] ?? 0).')'],
+                                ['value' => 'duplicate', 'label' => 'Merge candidates ('.($matchSummary['merge'] ?? 0).')'],
+                                ['value' => 'skipped', 'label' => 'Skipped ('.($matchSummary['skip'] ?? 0).')'],
+                            ]"
+                            option-value="value"
+                            option-label="label"
+                            class="select-sm"
+                        />
+                    </x-slot:menu>
                     <div class="overflow-x-auto">
                         <table class="table table-sm">
                             <thead>
@@ -217,7 +258,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($this->importRecords as $record)
+                                @forelse ($records ?? [] as $record)
                                     <tr wire:key="record-{{ $record->id }}" @class(['bg-error/5' => $record->status === \App\Enums\AdifRecordStatus::Invalid])>
                                         <td>
                                             @switch($record->status->value)
@@ -229,6 +270,9 @@
                                                     @break
                                                 @case('skipped')
                                                     <span class="badge badge-warning badge-sm">Skip</span>
+                                                    @break
+                                                @case('imported')
+                                                    <span @class(['badge badge-sm', 'badge-success' => ! $record->notes, 'badge-warning' => $record->notes]) title="{{ $record->notes }}">{{ $record->notes ? 'Imported (0 pts)' : 'Imported' }}</span>
                                                     @break
                                                 @case('invalid')
                                                     <span class="badge badge-error badge-sm" title="{{ $record->notes }}">Invalid</span>
@@ -247,7 +291,7 @@
                                         <td>
                                             @if ($record->status === \App\Enums\AdifRecordStatus::Invalid)
                                                 <x-button wire:click="toggleSkip({{ $record->id }})" label="Skip" icon="phosphor-x" class="btn-error btn-xs" spinner />
-                                            @elseif ($record->status === \App\Enums\AdifRecordStatus::Skipped)
+                                            @elseif ($record->status === \App\Enums\AdifRecordStatus::Skipped && blank($record->notes))
                                                 <x-button wire:click="toggleSkip({{ $record->id }})" label="Include" icon="phosphor-arrow-u-up-left" class="btn-ghost btn-xs" spinner />
                                             @elseif ($record->status === \App\Enums\AdifRecordStatus::Ready || $record->status === \App\Enums\AdifRecordStatus::DuplicateMatch)
                                                 <x-button wire:click="toggleSkip({{ $record->id }})" label="Skip" icon="phosphor-x" class="btn-ghost btn-xs" spinner />
@@ -258,11 +302,24 @@
                                         <tr wire:key="record-notes-{{ $record->id }}" class="bg-error/5">
                                             <td colspan="9" class="text-error text-sm pt-0">{{ $record->notes }}</td>
                                         </tr>
+                                    @elseif ($record->status === \App\Enums\AdifRecordStatus::Imported && $record->notes)
+                                        <tr wire:key="record-notes-{{ $record->id }}" class="bg-warning/5">
+                                            <td colspan="9" class="text-warning text-sm pt-0">{{ $record->notes }}</td>
+                                        </tr>
                                     @endif
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="9" class="text-center text-base-content/60 py-6">No records match this filter.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
+                    @if ($records?->hasPages())
+                        <div class="mt-4">
+                            {{ $records->links() }}
+                        </div>
+                    @endif
                 </x-card>
 
                 @if ($importStatus === 'completed')
@@ -279,7 +336,19 @@
                 @else
                     @if ($this->hasInvalidRecords)
                         <x-alert icon="phosphor-warning" class="alert-warning mb-4">
-                            {{ $matchSummary['invalid'] ?? 0 }} record(s) have validation errors. Skip or resolve them before importing.
+                            <div class="flex flex-wrap items-center justify-between gap-3 w-full">
+                                <span>
+                                    <strong>{{ $matchSummary['invalid'] ?? 0 }} invalid record(s)</strong> have validation errors and must be skipped before importing.
+                                    Filter the table to <em>Invalid</em> to review them.
+                                </span>
+                                <x-button
+                                    wire:click="skipAllInvalid"
+                                    :label="'Skip all '.($matchSummary['invalid'] ?? 0).' invalid'"
+                                    icon="phosphor-x"
+                                    class="btn-warning btn-sm"
+                                    spinner="skipAllInvalid"
+                                />
+                            </div>
                         </x-alert>
                     @endif
                     <x-button wire:click="executeImport" label="Import Contacts" icon="phosphor-download-simple" class="btn-primary" spinner="executeImport" :disabled="$this->hasInvalidRecords" />

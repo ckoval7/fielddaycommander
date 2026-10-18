@@ -35,12 +35,26 @@ use Livewire\Component;
 class ListWidget extends Component
 {
     use HighlightsNewItems;
-    use IsWidget;
+    use IsWidget {
+        cacheKey as baseCacheKey;
+    }
 
     /**
      * Most rows any list renders, whatever the stored settings say.
      */
     protected const MAX_ITEMS = 50;
+
+    /**
+     * List types any viewer, including guests on the public TV dashboard, may see.
+     */
+    protected const PUBLIC_LIST_TYPES = ['recent_contacts', 'active_stations'];
+
+    /**
+     * List types shown only to signed-in users.
+     */
+    protected const MEMBER_LIST_TYPES = ['equipment_status'];
+
+    protected const DEFAULT_LIST_TYPE = 'recent_contacts';
 
     /**
      * Fetch the list data for this widget.
@@ -59,15 +73,15 @@ class ListWidget extends Component
     /**
      * Define Livewire event listeners for this widget.
      *
-     * Recent contacts also refresh immediately on ContactLogged when the
-     * viewer may subscribe to the event channel; every list type polls.
+     * Recent contacts also refresh immediately when a contact is logged,
+     * edited or deleted and the viewer may subscribe to the event channel; every list type polls.
      */
     public function getWidgetListeners(): array
     {
-        $listType = $this->config['list_type'] ?? 'recent_contacts';
+        $listType = $this->listType();
 
         return match ($listType) {
-            'recent_contacts' => $this->contactLoggedListener(),
+            'recent_contacts' => $this->contactChangeListeners(),
             default => [],
         };
     }
@@ -77,7 +91,7 @@ class ListWidget extends Component
      */
     protected function fetchListData(): array
     {
-        $listType = $this->config['list_type'] ?? 'recent_contacts';
+        $listType = $this->listType();
         $service = app(EventContextService::class);
         $event = $service->getContextEvent();
 
@@ -207,6 +221,29 @@ class ListWidget extends Component
     }
 
     /**
+     * Include the resolved list type so guests never read a member-only list from cache.
+     */
+    public function cacheKey(): string
+    {
+        return $this->baseCacheKey().':'.$this->listType();
+    }
+
+    /**
+     * Resolve the configured list type, falling back to recent contacts for
+     * unknown types and for member-only types requested by a guest.
+     */
+    protected function listType(): string
+    {
+        $configured = $this->config['list_type'] ?? self::DEFAULT_LIST_TYPE;
+
+        $allowed = auth()->check()
+            ? [...self::PUBLIC_LIST_TYPES, ...self::MEMBER_LIST_TYPES]
+            : self::PUBLIC_LIST_TYPES;
+
+        return in_array($configured, $allowed, true) ? $configured : self::DEFAULT_LIST_TYPE;
+    }
+
+    /**
      * Resolve the number of rows to render from widget config.
      *
      * Falls back to a size-aware default when no explicit count is configured.
@@ -260,7 +297,7 @@ class ListWidget extends Component
 
     public function render()
     {
-        $listType = $this->config['list_type'] ?? 'recent_contacts';
+        $listType = $this->listType();
         $data = $this->getData();
         $items = $data['items'] ?? [];
 

@@ -21,6 +21,11 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Fixtures log contacts at fixed clock times (e.g. 14:23) on the event's
+    // start date. Pin the clock so those times always fall inside the
+    // now ± 12h event window, whatever time of day the suite runs.
+    $this->travelTo(now()->setTime(20, 0));
+
     $this->user = User::factory()->create();
     Permission::firstOrCreate(['name' => 'log-contacts']);
     $role = Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
@@ -682,14 +687,18 @@ test('updateContact without inline time preserves original qso_time', function (
 test('updateContact with inline time stores exchange without time prefix', function () {
     $this->actingAs($this->user);
 
-    $contact = createTranscriptionContact($this);
+    // Pick an inline time inside the event window on the contact's own date,
+    // so the test doesn't depend on the time of day it runs.
+    $newTime = $this->event->start_time->copy()->addHour()->setMinute(23);
+    $contact = createTranscriptionContact($this, ['qso_time' => $newTime->copy()->setMinute(0)]);
 
     Livewire::test(TranscribeInterface::class, ['station' => $this->station])
-        ->call('updateContact', $contact->id, '1423 K1ABC 1B ME');
+        ->call('updateContact', $contact->id, $newTime->format('Hi').' K1ABC 1B ME');
 
     $contact->refresh();
     expect($contact->exchange_class)->toBe('1B')
-        ->and($contact->callsign)->toBe('K1ABC');
+        ->and($contact->callsign)->toBe('K1ABC')
+        ->and($contact->qso_time->format('H:i'))->toBe($newTime->format('H:i'));
 });
 
 test('updateContact re-runs duplicate detection', function () {

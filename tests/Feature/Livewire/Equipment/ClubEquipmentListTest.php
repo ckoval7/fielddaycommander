@@ -623,3 +623,12 @@ test('select all and deselect all work for club equipment', function () {
         ->call('deselectAll')
         ->assertSet('selectedIds', []);
 });
+
+test('ClubEquipmentList ignores sort columns outside the allowlist', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(ClubEquipmentList::class)
+        ->set('sortBy', 'nonexistent_column')
+        ->set('sortDirection', 'sideways')
+        ->assertOk();
+});

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="reverb-config" content="{{ json_encode(['key' => config('reverb.apps.apps.0.key'), 'host' => config('reverb.apps.apps.0.options.host'), 'port' => config('reverb.apps.apps.0.options.port'), 'scheme' => config('reverb.apps.apps.0.options.scheme')]) }}">
+    <x-reverb-config-meta />
     <meta name="route-name" content="{{ Route::currentRouteName() ?? '' }}">
     <title>{{ isset($title) ? $title.' - '.(\App\Models\Setting::get('site_name') ?: config('app.name')) : (\App\Models\Setting::get('site_name') ?: config('app.name')) }}</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
@@ -213,11 +213,13 @@
     </div>
 
     {{-- Developer Mode Banner --}}
-    @if(config('developer.enabled'))
+    @if(\App\Support\DeveloperMode::isEnabled())
         {{-- Time-travel banner is a dev-only tool; hide it in demo mode where all visitors share it. --}}
         @unless(config('demo.enabled'))
             <livewire:components.developer-banner />
         @endunless
+    @endif
+    @if(\App\Support\DeveloperMode::allowsRoleOverride())
         @auth
             @unless(\App\Support\StationMode::isActive())
                 <livewire:components.dev-role-switcher />
@@ -443,7 +445,7 @@
                                 <x-menu-item title="Audit Logs" icon="phosphor-scroll" link="{{ route('admin.audit-logs') }}" exact :active="request()->routeIs('admin.audit-logs')" />
                             @endcan
 
-                            @if(config('developer.enabled') && ! config('demo.enabled'))
+                            @if(\App\Support\DeveloperMode::isEnabled() && ! config('demo.enabled'))
                                 @can('manage-settings')
                                     <x-menu-item title="Developer Tools" icon="phosphor-code" link="{{ route('admin.developer') }}" exact :active="request()->routeIs('admin.developer')" />
                                 @endcan
@@ -535,11 +537,19 @@
     @endif
     <x-form-error-summary />
 
-    {{-- Toast notification listener: bridges Livewire "toast" events to MaryUI's window.toast() --}}
+    {{-- Toast notification listener: bridges Livewire "toast" and "notify" events to MaryUI's window.toast() --}}
     <script>
         document.addEventListener('livewire:initialized', () => {
-            Livewire.on('toast', (event) => {
-                const data = Array.isArray(event) ? event[0] : event;
+            {{-- MaryUI renders title and description as HTML, so escape them: they can contain user data --}}
+            const escapeHtml = (value) => {
+                const element = document.createElement('div');
+                element.textContent = value == null ? '' : String(value);
+
+                return element.innerHTML;
+            };
+
+            const showToast = (event) => {
+                const data = (Array.isArray(event) ? event[0] : event) || {};
 
                 const iconMap = {
                     'phosphor-check-circle': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>',
@@ -575,22 +585,33 @@
 
                 window.toast({
                     toast: {
-                        title: data.title || data.message || '',
-                        description: data.description || '',
+                        title: escapeHtml(data.title || data.message || ''),
+                        description: escapeHtml(data.description || ''),
                         icon: icon,
                         css: css,
                         timeout: data.timeout || 3000,
                     }
                 });
-            });
+            };
+
+            Livewire.on('toast', showToast);
+            Livewire.on('notify', showToast);
+            window.fdcToastBridgeReady = true;
         });
 
-        {{-- Show flash-based toasts that survived a redirect --}}
+        {{-- Show flash-based toasts that survived a redirect. After a wire:navigate
+             redirect Livewire is already initialized, so dispatch right away. --}}
         @if(session('toast'))
-            document.addEventListener('livewire:initialized', () => {
+            (() => {
                 const data = @json(session('toast'));
-                Livewire.dispatch('toast', [data]);
-            });
+                const showFlashedToast = () => Livewire.dispatch('toast', [data]);
+
+                if (window.fdcToastBridgeReady) {
+                    showFlashedToast();
+                } else {
+                    document.addEventListener('livewire:initialized', showFlashedToast, { once: true });
+                }
+            })();
         @endif
     </script>
     <script>

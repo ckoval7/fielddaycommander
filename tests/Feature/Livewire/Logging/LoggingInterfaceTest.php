@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ContactChanged;
 use App\Livewire\Logging\LoggingInterface;
 use App\Models\AuditLog;
 use App\Models\Band;
@@ -12,7 +13,9 @@ use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event as EventFacade;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -671,6 +674,30 @@ test('deleteContact soft-deletes contact and decrements qso_count', function () 
         ->and($this->session->fresh()->qso_count)->toBe(0);
 });
 
+test('deleteContact and restoreContact broadcast to open event pages', function () {
+    $this->actingAs($this->user);
+    EventFacade::fake([ContactChanged::class]);
+
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'callsign' => 'W1DEL',
+        'qso_time' => now(),
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->call('deleteContact', $contact->id)
+        ->call('restoreContact', $contact->id);
+
+    EventFacade::assertDispatched(ContactChanged::class, fn (ContactChanged $event) => $event->broadcastAs() === 'ContactDeleted'
+        && $event->eventId === $this->config->event_id
+        && $event->contactIds === [$contact->id]);
+    EventFacade::assertDispatched(ContactChanged::class, fn (ContactChanged $event) => $event->broadcastAs() === 'ContactUpdated');
+});
+
 test('deleteContact logs audit entry', function () {
     $this->actingAs($this->user);
     $this->session->update(['qso_count' => 1]);
@@ -1241,4 +1268,12 @@ test('recent QSO numbers continue from contacts older than the recent list', fun
     expect($numbers)->toHaveCount(50)
         ->and(min($numbers))->toBe(6)
         ->and(max($numbers))->toBe(55);
+});
+
+test('the contact queue is given the server clock to stamp qso times on', function () {
+    Date::setTestNow(now()->startOfSecond());
+
+    Livewire::actingAs($this->user)
+        ->test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtml('server_time_ms: '.now()->getTimestampMs().',');
 });

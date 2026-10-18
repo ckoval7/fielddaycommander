@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Logbook;
 
+use App\Livewire\Dashboard\Widgets\Concerns\ListensForBroadcasts;
 use App\Models\Band;
 use App\Models\Event;
 use App\Models\EventConfiguration;
@@ -11,6 +12,7 @@ use App\Models\Station;
 use App\Models\User;
 use App\Services\EventContextService;
 use App\Services\LogbookQueryBuilder;
+use App\Support\BroadcastChannels;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
@@ -21,6 +23,7 @@ use Livewire\WithPagination;
 
 class LogbookBrowser extends Component
 {
+    use ListensForBroadcasts;
     use WithPagination;
 
     private const FILTER_PROPERTIES = [
@@ -36,6 +39,7 @@ class LogbookBrowser extends Component
         'showTranscribed',
         'showGota',
         'showDeleted',
+        'needsAttention',
     ];
 
     #[Url]
@@ -74,6 +78,16 @@ class LogbookBrowser extends Component
     #[Url]
     public ?string $showDeleted = null;
 
+    #[Url]
+    public ?string $needsAttention = null;
+
+    /**
+     * Event to browse, when a link names one (e.g. the reports page's Needs
+     * Attention link); otherwise the current event context is used.
+     */
+    #[Url(as: 'event')]
+    public ?int $eventId = null;
+
     public ?int $eventConfigurationId = null;
 
     public int $perPage = 50;
@@ -84,7 +98,10 @@ class LogbookBrowser extends Component
     public function mount(): void
     {
         $service = app(EventContextService::class);
-        $activeEvent = $service->getContextEvent();
+        $activeEvent = $this->eventId !== null
+            ? Event::query()->with('eventConfiguration')->find($this->eventId)
+            : null;
+        $activeEvent ??= $service->getContextEvent();
 
         // No active event — fall back to most recently ended event (handles grace period)
         if (! $activeEvent) {
@@ -119,6 +136,7 @@ class LogbookBrowser extends Component
             'showTranscribed',
             'showGota',
             'showDeleted',
+            'needsAttention',
             'selectedIds',
         ]);
         $this->resetPage();
@@ -137,6 +155,35 @@ class LogbookBrowser extends Component
         }
     }
 
+    /**
+     * Refresh when contacts are logged, edited or deleted anywhere in the event.
+     *
+     * @return array<string, string>
+     */
+    public function getListeners(): array
+    {
+        $eventId = $this->eventConfigurationId !== null
+            ? EventConfiguration::query()->whereKey($this->eventConfigurationId)->value('event_id')
+            : null;
+
+        if ($eventId === null || ! $this->canListenForBroadcasts()) {
+            return [];
+        }
+
+        return BroadcastChannels::contactChangeListeners($eventId, 'refreshFromBroadcast');
+    }
+
+    /**
+     * Re-read the page for a change made elsewhere, keeping the operator's
+     * row selection.
+     */
+    public function refreshFromBroadcast(): void
+    {
+        unset($this->contacts);
+        unset($this->stats);
+        unset($this->attentionReasons);
+    }
+
     #[On('contact-updated')]
     #[On('contact-deleted')]
     #[On('contact-restored')]
@@ -145,6 +192,7 @@ class LogbookBrowser extends Component
         $this->selectedIds = [];
         unset($this->contacts);
         unset($this->stats);
+        unset($this->attentionReasons);
     }
 
     #[Computed]
@@ -192,6 +240,7 @@ class LogbookBrowser extends Component
             'showTranscribed' => ['prefix' => 'Transcribed', 'values' => ['only' => 'Only']],
             'showGota' => ['prefix' => 'GOTA', 'values' => ['only' => 'Only', 'exclude' => 'Exclude']],
             'showDeleted' => ['prefix' => 'Deleted', 'values' => ['include' => 'Include', 'only' => 'Only']],
+            'needsAttention' => ['prefix' => 'Needs attention', 'values' => ['only' => 'Only']],
         ];
 
         foreach ($radioLabels as $property => $config) {
@@ -219,6 +268,7 @@ class LogbookBrowser extends Component
             'showTranscribed' => $this->showTranscribed = null,
             'showGota' => $this->showGota = null,
             'showDeleted' => $this->showDeleted = null,
+            'needsAttention' => $this->needsAttention = null,
             default => null,
         };
 
@@ -249,6 +299,7 @@ class LogbookBrowser extends Component
             'transcribed_filter' => $this->showTranscribed,
             'gota_filter' => $this->showGota,
             'deleted_filter' => $this->showDeleted,
+            'attention_filter' => $this->needsAttention,
         ];
 
         $query = $queryBuilder->applyFilters($filters);
@@ -285,6 +336,32 @@ class LogbookBrowser extends Component
 
             if ($reason !== null) {
                 $reasons[$contact->id] = $reason;
+            }
+        }
+
+        return $reasons;
+    }
+
+    /**
+     * Why each contact on this page needs attention (missing band or mode,
+     * or logged outside the event window), keyed by contact id.
+     *
+     * @return array<int, list<string>>
+     */
+    #[Computed]
+    public function attentionReasons(): array
+    {
+        // Without a selected event each contact is judged by its own event.
+        $event = $this->eventConfigurationId
+            ? EventConfiguration::query()->with('event')->find($this->eventConfigurationId)?->event
+            : null;
+        $reasons = [];
+
+        foreach ($this->contacts as $contact) {
+            $contactReasons = $contact->attentionReasons($event);
+
+            if ($contactReasons !== []) {
+                $reasons[$contact->id] = $contactReasons;
             }
         }
 
@@ -368,6 +445,7 @@ class LogbookBrowser extends Component
             'transcribed_filter' => $this->showTranscribed,
             'gota_filter' => $this->showGota,
             'deleted_filter' => $this->showDeleted,
+            'attention_filter' => $this->needsAttention,
         ];
 
         $query = $queryBuilder->applyFilters($filters)->reorder();

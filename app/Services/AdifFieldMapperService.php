@@ -7,6 +7,7 @@ use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
 use App\Models\Section;
 use App\Models\Station;
+use Illuminate\Support\Collection;
 
 class AdifFieldMapperService
 {
@@ -37,17 +38,38 @@ class AdifFieldMapperService
             ])->filter(fn ($id, $key) => $key !== ''))
             ->toArray();
 
-        $records = $import->records()->where('status', AdifRecordStatus::Pending)->get();
+        $records = $import->records()
+            ->where('status', AdifRecordStatus::Pending)
+            ->get(['id', 'band_name', 'mode_name', 'section_code', 'station_identifier', 'operator_callsign']);
+
+        // Resolve each distinct value once, then write each distinct mapping
+        // with one UPDATE, instead of several queries per record.
+        $bandIds = $this->resolveDistinct($records->pluck('band_name'), fn (string $name) => app(BandResolverService::class)->resolveByName($name));
+        $modeIds = $this->resolveDistinct($records->pluck('mode_name'), fn (string $name) => app(ModeResolverService::class)->resolve($name));
+        $operatorIds = $this->resolveDistinct($records->pluck('operator_callsign'), fn (string $callsign) => $this->userResolver->resolveOrCreate($callsign)->id);
+
+        /** @var array<string, array{values: array<string, int|string|null>, ids: array<int, int>}> $updates */
+        $updates = [];
 
         foreach ($records as $record) {
-            $this->mapBand($record, $report);
-            $this->mapMode($record, $report);
-            $this->mapSection($record, $sections, $report);
-            $this->mapStation($record, $stations, $report);
-            $this->mapOperator($record);
+            $values = [
+                'band_id' => $this->lookup($record->band_name, $bandIds, 'unmapped_bands', $report),
+                'mode_id' => $this->lookup($record->mode_name, $modeIds, 'unmapped_modes', $report),
+                'section_id' => $this->lookup($record->section_code, $sections, 'unmapped_sections', $report, upper: true),
+                'station_id' => $this->lookup($record->station_identifier, $stations, 'unmapped_stations', $report, upper: true),
+                'operator_user_id' => $record->operator_callsign !== null ? ($operatorIds[$record->operator_callsign] ?? null) : null,
+                'status' => AdifRecordStatus::Mapped->value,
+            ];
 
-            $record->status = AdifRecordStatus::Mapped;
-            $record->save();
+            $signature = implode('|', array_map(fn ($value) => (string) $value, $values));
+            $updates[$signature]['values'] = $values;
+            $updates[$signature]['ids'][] = $record->id;
+        }
+
+        foreach ($updates as $update) {
+            foreach (array_chunk($update['ids'], 1000) as $ids) {
+                AdifImportRecord::query()->whereKey($ids)->update($update['values']);
+            }
         }
 
         $report['unmapped_bands'] = array_unique($report['unmapped_bands']);
@@ -170,82 +192,42 @@ class AdifFieldMapperService
     }
 
     /**
-     * @param  array{unmapped_bands: array<string>}  $report
+     * Resolve each distinct non-null value once.
+     *
+     * @param  Collection<int, string|null>  $values
+     * @param  callable(string): ?int  $resolver
+     * @return array<string, int|null>
      */
-    private function mapBand(AdifImportRecord $record, array &$report): void
+    private function resolveDistinct(Collection $values, callable $resolver): array
     {
-        if ($record->band_name === null) {
-            return;
+        $resolved = [];
+
+        foreach ($values->filter(fn ($value) => filled($value))->unique() as $value) {
+            $resolved[$value] = $resolver($value);
         }
 
-        $bandId = app(BandResolverService::class)->resolveByName($record->band_name);
-        if ($bandId !== null) {
-            $record->band_id = $bandId;
-        } else {
-            $report['unmapped_bands'][] = $record->band_name;
-        }
+        return $resolved;
     }
 
     /**
-     * @param  array{unmapped_modes: array<string>}  $report
+     * Look up a record's value in a resolved map, noting it as unmapped when
+     * it has no match.
+     *
+     * @param  array<string, int|null>  $map
+     * @param  array<string, array<string>>  $report
      */
-    private function mapMode(AdifImportRecord $record, array &$report): void
+    private function lookup(?string $value, array $map, string $reportKey, array &$report, bool $upper = false): ?int
     {
-        if ($record->mode_name === null) {
-            return;
+        if ($value === null) {
+            return null;
         }
 
-        $modeId = app(ModeResolverService::class)->resolve($record->mode_name);
-        if ($modeId !== null) {
-            $record->mode_id = $modeId;
-        } else {
-            $report['unmapped_modes'][] = $record->mode_name;
-        }
-    }
+        $id = $map[$upper ? strtoupper($value) : $value] ?? null;
 
-    /**
-     * @param  array<string, int>  $sections
-     * @param  array{unmapped_sections: array<string>}  $report
-     */
-    private function mapSection(AdifImportRecord $record, array $sections, array &$report): void
-    {
-        if ($record->section_code === null) {
-            return;
+        if ($id === null) {
+            $report[$reportKey][] = $value;
         }
 
-        $sectionId = $sections[strtoupper($record->section_code)] ?? null;
-        if ($sectionId !== null) {
-            $record->section_id = $sectionId;
-        } else {
-            $report['unmapped_sections'][] = $record->section_code;
-        }
-    }
-
-    /**
-     * @param  array<string, int>  $stations
-     * @param  array{unmapped_stations: array<string>}  $report
-     */
-    private function mapStation(AdifImportRecord $record, array $stations, array &$report): void
-    {
-        if ($record->station_identifier === null) {
-            return;
-        }
-
-        $stationId = $stations[strtoupper($record->station_identifier)] ?? null;
-        if ($stationId !== null) {
-            $record->station_id = $stationId;
-        } else {
-            $report['unmapped_stations'][] = $record->station_identifier;
-        }
-    }
-
-    private function mapOperator(AdifImportRecord $record): void
-    {
-        if ($record->operator_callsign === null) {
-            return;
-        }
-
-        $user = $this->userResolver->resolveOrCreate($record->operator_callsign);
-        $record->operator_user_id = $user->id;
+        return $id;
     }
 }

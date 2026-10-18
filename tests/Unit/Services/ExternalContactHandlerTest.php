@@ -13,7 +13,9 @@ use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use App\Services\DuplicateCheckService;
 use App\Services\ExternalContactHandler;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +108,7 @@ test('runs duplicate check on new contacts', function () {
         'callsign' => 'W1AW',
         'band_id' => $this->band->id,
         'mode_id' => $this->modeCw->id,
+        'qso_time' => $this->testTimestamp,
         'is_duplicate' => false,
         'logger_user_id' => $this->user->id,
     ]);
@@ -164,6 +167,14 @@ test('handles contact replace by external_id', function () {
     expect($contact->callsign)->toBe('W1AW');
 
     Event::assertDispatched(ExternalContactUpdated::class);
+    Event::assertDispatched(ExternalContactUpdated::class, function (ExternalContactUpdated $event) use ($contact): bool {
+        $channels = array_map(fn ($channel) => $channel->name, $event->broadcastOn());
+
+        return $event->contact->is($contact)
+            && $event->broadcastAs() === 'ContactUpdated'
+            && in_array("private-event.{$this->config->event_id}", $channels, true)
+            && in_array("private-event.{$this->config->id}.external-logger", $channels, true);
+    });
 });
 
 test('handles contact delete by external_id', function () {
@@ -197,7 +208,14 @@ test('handles contact delete by external_id', function () {
     expect(Contact::where('external_id', 'delete123')->first())->toBeNull()
         ->and(Contact::withTrashed()->where('external_id', 'delete123')->first())->not->toBeNull();
 
-    Event::assertDispatched(ExternalContactDeleted::class);
+    Event::assertDispatched(ExternalContactDeleted::class, function (ExternalContactDeleted $event): bool {
+        $channels = array_map(fn ($channel) => $channel->name, $event->broadcastOn());
+
+        return $event->callsign === 'W1AW'
+            && $event->broadcastAs() === 'ContactDeleted'
+            && in_array("private-event.{$this->config->event_id}", $channels, true)
+            && in_array("private-event.{$this->config->id}.external-logger", $channels, true);
+    });
 });
 
 test('ignores delete for unknown external_id', function () {
@@ -395,4 +413,71 @@ test('flags contacts from the GOTA station as GOTA contacts and dupe-checks them
     expect($contact->is_gota_contact)->toBeTrue()
         ->and($contact->is_duplicate)->toBeFalse()
         ->and($contact->points)->toBe(5);
+});
+
+test('retries a contact once when the event lock wait times out instead of dropping it', function () {
+    $flakyDupes = new class extends DuplicateCheckService
+    {
+        public int $failuresLeft = 1;
+
+        public function locked(?int $eventConfigurationId, Closure $callback): mixed
+        {
+            if ($this->failuresLeft-- > 0) {
+                throw new QueryException('mysql', 'select 1', [], new PDOException(
+                    'SQLSTATE[HY000]: General error: 1205 Lock wait timeout exceeded; try restarting transaction'
+                ));
+            }
+
+            return parent::locked($eventConfigurationId, $callback);
+        }
+    };
+    app()->instance(DuplicateCheckService::class, $flakyDupes);
+
+    $dto = new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        modeName: 'CW',
+        stationIdentifier: 'CONTEST-PC',
+        frequencyHz: 3525190,
+        sectionCode: 'CT',
+        externalId: 'retry-me',
+    );
+
+    $contact = app(ExternalContactHandler::class)->handleContact($dto, $this->config);
+
+    expect($contact->exists)->toBeTrue()
+        ->and(Contact::where('external_id', 'retry-me')->count())->toBe(1)
+        // One failed attempt, then the retry's lock and save()'s nested lock.
+        ->and($flakyDupes->failuresLeft)->toBe(-2);
+});
+
+test('does not retry errors other than lock contention', function () {
+    $failingDupes = new class extends DuplicateCheckService
+    {
+        public int $calls = 0;
+
+        public function locked(?int $eventConfigurationId, Closure $callback): mixed
+        {
+            $this->calls++;
+
+            throw new RuntimeException('boom');
+        }
+    };
+    app()->instance(DuplicateCheckService::class, $failingDupes);
+
+    $dto = new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        modeName: 'CW',
+        stationIdentifier: 'CONTEST-PC',
+        frequencyHz: 3525190,
+        sectionCode: 'CT',
+        externalId: 'no-retry',
+    );
+
+    expect(fn () => app(ExternalContactHandler::class)->handleContact($dto, $this->config))
+        ->toThrow(RuntimeException::class, 'boom')
+        ->and($failingDupes->calls)->toBe(1);
 });

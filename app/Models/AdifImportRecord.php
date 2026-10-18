@@ -30,6 +30,7 @@ class AdifImportRecord extends Model
         'station_id',
         'operator_user_id',
         'matched_contact_id',
+        'contact_id',
         'status',
         'notes',
     ];

@@ -25,9 +25,12 @@ class W1awBulletinPolicy
         return $user->can('log-contacts');
     }
 
+    /**
+     * The event's bulletin is shared, so any operator who can log contacts may correct it.
+     */
     public function update(User $user, W1awBulletin $bulletin): bool
     {
-        return $this->canManageOrOwns($user, $bulletin);
+        return $user->can('log-contacts');
     }
 
     public function delete(User $user, W1awBulletin $bulletin): bool

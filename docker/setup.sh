@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Files created here (.env) hold secrets, so create them owner-only.
+umask 077
+
 # Generates a .env file with secure defaults for Docker deployment.
 # Run this once before 'docker compose up'.
 
@@ -21,20 +24,47 @@ else
     CREATED=true
 fi
 
-# Helper: set a key in the .env file if it's missing or empty
+# Whether docker compose already has a MySQL volume for this project. Best
+# effort: without docker (or permission to use it) this reports no volume.
+mysql_volume_exists() {
+    command -v docker >/dev/null 2>&1 || return 1
+    local project="${COMPOSE_PROJECT_NAME:-}"
+    if [[ -z "$project" ]]; then
+        project=$(basename "$PWD" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9_-')
+    fi
+    docker volume inspect "${project}_mysql-data" >/dev/null 2>&1
+}
+
+# A new .env gets new random database passwords, but MySQL only reads them
+# when its volume is first created. With the old volume still there, the app
+# and backups could not log in.
+if $CREATED && mysql_volume_exists; then
+    echo ""
+    echo "  WARNING: a MySQL volume from an earlier install still exists, and it only"
+    echo "  accepts the database passwords it was created with. The new random"
+    echo "  DB_PASSWORD and DB_ROOT_PASSWORD written to $ENV_FILE will not match it,"
+    echo "  and the new APP_KEY will break two-factor sign-in for existing users."
+    echo "  To keep your data, copy APP_KEY, DB_PASSWORD, DB_ROOT_PASSWORD and"
+    echo "  REDIS_PASSWORD from your old .env (or a backup's env file) into $ENV_FILE."
+    echo "  To start over with an empty database instead: docker compose down -v"
+    echo ""
+fi
+
+# Helper: set a key in the .env file if it's missing or empty.
+# An optional third argument replaces the "Generated <key>" message.
 set_env() {
-    local key="$1" value="$2"
+    local key="$1" value="$2" message="${3:-  Generated $1}"
     if grep -q "^${key}=" "$ENV_FILE"; then
         # Key exists — only replace if value is empty
         local current
         current=$(grep "^${key}=" "$ENV_FILE" | head -1 | cut -d'=' -f2-)
-        if [[ -z "$current" || "$current" = '""' || "$current" = "''" ]]; then
+        if [[ -z "$current" || "$current" = '""' || "$current" = "''" || "$current" = "null" ]]; then
             sed -i "s|^${key}=.*|${key}=${value}|" "$ENV_FILE"
-            echo "  Generated $key"
+            echo "$message"
         fi
     else
         echo "${key}=${value}" >> "$ENV_FILE"
-        echo "  Generated $key"
+        echo "$message"
     fi
 }
 
@@ -75,6 +105,23 @@ set_env "APP_KEY" "base64:$(head -c 32 /dev/urandom | base64)"
 # Database password
 set_env "DB_PASSWORD" "$(random_string 32)"
 
+# MySQL root password. backup.sh and restore.sh use it inside the mysql
+# container. MySQL only reads it when the volume is first created, so an
+# existing install keeps the old built-in default rather than a new value
+# that would not match the database.
+if ! $CREATED && ! grep -qE '^DB_ROOT_PASSWORD=.+' "$ENV_FILE"; then
+    set_env "DB_ROOT_PASSWORD" "rootsecret" "  Set DB_ROOT_PASSWORD to the existing database's password"
+    echo "  WARNING: DB_ROOT_PASSWORD kept at the old default 'rootsecret' because"
+    echo "  the MySQL volume was created with it. To change it, run:"
+    echo "    docker compose exec mysql mysql -uroot -prootsecret -e \"ALTER USER 'root'@'%' IDENTIFIED BY '<new>'; ALTER USER 'root'@'localhost' IDENTIFIED BY '<new>';\""
+    echo "  then set DB_ROOT_PASSWORD=<new> in $ENV_FILE."
+else
+    set_env "DB_ROOT_PASSWORD" "$(random_string 32)"
+fi
+
+# Redis password (requirepass in docker-compose.yml)
+set_env "REDIS_PASSWORD" "$(random_string 32)"
+
 # Reverb WebSocket credentials
 set_env "REVERB_APP_KEY" "$(random_string 20)"
 set_env "REVERB_APP_SECRET" "$(random_string 20)"
@@ -107,6 +154,20 @@ if $CREATED; then
     # Sized to host RAM so Pi-class machines don't starve the app.
     set_env "REDIS_MAXMEMORY" "$(compute_redis_maxmemory)"
 fi
+
+# Rotate logs daily (kept LOG_DAILY_DAYS days) instead of one ever-growing
+# file. Existing installs still on the old "single" default are switched once;
+# LOG_DAILY_DAYS marks that this has been done.
+if ! grep -qE '^LOG_DAILY_DAYS=' "$ENV_FILE"; then
+    if grep -qE '^LOG_STACK=("?single"?)?$' "$ENV_FILE"; then
+        sed -i 's|^LOG_STACK=.*|LOG_STACK=daily|' "$ENV_FILE"
+        echo "  Switched LOG_STACK to daily"
+    fi
+    set_env "LOG_DAILY_DAYS" "14"
+fi
+
+# The file holds APP_KEY and every password, so keep it owner-only.
+chmod 600 "$ENV_FILE"
 
 echo ""
 echo "Done! Review $ENV_FILE then run: docker compose up -d"

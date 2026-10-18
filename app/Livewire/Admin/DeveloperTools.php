@@ -10,6 +10,7 @@ use App\Models\Station;
 use App\Models\User;
 use App\Services\DatabaseSnapshotService;
 use App\Services\DeveloperClockService;
+use App\Support\DeveloperMode;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -72,6 +73,15 @@ class DeveloperTools extends Component
         'audit' => ['audit_logs'],
         'images' => ['images'],
     ];
+
+    /**
+     * Runs on every request (initial render and each action), so developer
+     * tools stay unreachable whenever developer mode is off.
+     */
+    public function boot(): void
+    {
+        abort_unless(DeveloperMode::isEnabled(), 404);
+    }
 
     public function mount(): void
     {
@@ -257,7 +267,7 @@ class DeveloperTools extends Component
                 $this->timeFrozen ? 'Time is frozen' : 'Time is flowing'
             );
         } catch (\Exception $e) {
-            $this->error('Failed to set time', $e->getMessage());
+            $this->reportFailure('Failed to set time', $e);
         }
     }
 
@@ -281,7 +291,7 @@ class DeveloperTools extends Component
 
             $this->success('Time override cleared', 'Using real system time');
         } catch (\Exception $e) {
-            $this->error('Failed to clear time', $e->getMessage());
+            $this->reportFailure('Failed to clear time', $e);
         }
     }
 
@@ -319,7 +329,7 @@ class DeveloperTools extends Component
             // Redirect to home since user session may be invalid
             $this->success('Database reset complete', redirectTo: '/');
         } catch (\Exception $e) {
-            $this->error('Database reset failed', $e->getMessage());
+            $this->reportFailure('Database reset failed', $e);
         }
     }
 
@@ -390,7 +400,7 @@ class DeveloperTools extends Component
             );
         } catch (\Exception $e) {
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
-            $this->error('Selective reset failed', $e->getMessage());
+            $this->reportFailure('Selective reset failed', $e);
         }
     }
 
@@ -431,7 +441,7 @@ class DeveloperTools extends Component
 
             $this->success('Snapshot created', $filename);
         } catch (RuntimeException $e) {
-            $this->error('Snapshot creation failed', $e->getMessage());
+            $this->reportFailure('Snapshot creation failed', $e);
         }
     }
 
@@ -471,7 +481,7 @@ class DeveloperTools extends Component
 
             $this->success('Snapshot restored', redirectTo: '/');
         } catch (RuntimeException $e) {
-            $this->error('Snapshot restore failed', $e->getMessage());
+            $this->reportFailure('Snapshot restore failed', $e);
         }
     }
 
@@ -495,7 +505,7 @@ class DeveloperTools extends Component
 
             $this->success('Snapshot deleted', $filename);
         } catch (\Exception $e) {
-            $this->error('Failed to delete snapshot', $e->getMessage());
+            $this->reportFailure('Failed to delete snapshot', $e);
         }
     }
 
@@ -585,7 +595,7 @@ class DeveloperTools extends Component
                 "{$usersCreated} test users initialized"
             );
         } catch (\Exception $e) {
-            $this->error('Failed to initialize test users', $e->getMessage());
+            $this->reportFailure('Failed to initialize test users', $e);
         }
     }
 
@@ -627,7 +637,7 @@ class DeveloperTools extends Component
                 "{$count} test users deleted"
             );
         } catch (\Exception $e) {
-            $this->error('Failed to clear test users', $e->getMessage());
+            $this->reportFailure('Failed to clear test users', $e);
         }
     }
 
@@ -736,7 +746,7 @@ class DeveloperTools extends Component
 
             $this->success('Test contacts created', "50 contacts added by {$userCount} users to the active event");
         } catch (\Exception $e) {
-            $this->error('Failed to seed contacts', $e->getMessage());
+            $this->reportFailure('Failed to seed contacts', $e);
         }
     }
 
@@ -786,7 +796,7 @@ class DeveloperTools extends Component
                 "Time set to {$nextEvent->name} start: {$eventStartTime->format('M j, Y g:i A')}"
             );
         } catch (\Exception $e) {
-            $this->error('Fast-forward failed', $e->getMessage());
+            $this->reportFailure('Fast-forward failed', $e);
         }
     }
 
@@ -806,7 +816,18 @@ class DeveloperTools extends Component
 
             $this->success('Caches cleared', trim($output) ?: 'All caches have been cleared');
         } catch (\Exception $e) {
-            $this->error('Failed to clear caches', $e->getMessage());
+            $this->reportFailure('Failed to clear caches', $e);
         }
+    }
+
+    /**
+     * Log a failure with full detail and show the user a generic message, so
+     * process output and exception text never reach the browser.
+     */
+    protected function reportFailure(string $title, \Throwable $exception): void
+    {
+        report($exception);
+
+        $this->error($title, 'Check the application log for details.');
     }
 }

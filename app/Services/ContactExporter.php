@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\CsvSafe;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -32,11 +33,11 @@ class ContactExporter
                 'Logger',
                 'Station',
             ];
-            fputcsv($output, $headers);
+            CsvSafe::put($output, $headers);
 
             // Write data rows
             foreach ($contacts as $contact) {
-                fputcsv($output, [
+                CsvSafe::put($output, [
                     $contact->qso_time?->format('Y-m-d H:i:s') ?? '',
                     $contact->callsign ?? '',
                     $contact->band?->name ?? '',

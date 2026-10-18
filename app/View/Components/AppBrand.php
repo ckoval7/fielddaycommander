@@ -4,6 +4,7 @@ namespace App\View\Components;
 
 use App\Models\EventConfiguration;
 use App\Models\Setting;
+use App\Services\EventContextService;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
@@ -29,7 +30,8 @@ class AppBrand extends Component
         $siteTagline = Setting::get('site_tagline');
         $siteLogoPath = Setting::get('site_logo_path');
 
-        $this->activeEvent = EventConfiguration::where('is_active', true)->first();
+        $this->activeEvent = app(EventContextService::class)->getContextEvent()?->eventConfiguration
+            ?? EventConfiguration::where('is_active', true)->latest('id')->first();
 
         $this->logoPath = $this->resolveLogoPath($siteLogoPath);
         $this->callsign = $this->resolveCallsign($siteName);

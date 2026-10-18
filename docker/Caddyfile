@@ -7,6 +7,15 @@
 		max_size 35MB
 	}
 
+	# Baseline security headers. "?" only sets a header the app has not set
+	# itself, so app middleware stays in charge (framing is left to the app).
+	# No HSTS: the container serves plain HTTP; add it at the TLS proxy.
+	header {
+		?X-Content-Type-Options nosniff
+		?Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
 	route /app/* {
 		reverse_proxy 127.0.0.1:8080 {
 			header_up Host {host}

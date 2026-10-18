@@ -55,6 +55,20 @@ class ReportsIndex extends Component
     }
 
     /**
+     * Contacts that earn no points and are left out of the Cabrillo log until
+     * someone fixes them (missing band or mode, or outside the event window).
+     */
+    #[Computed]
+    public function contactsNeedingAttentionCount(): int
+    {
+        if (! $this->config()) {
+            return 0;
+        }
+
+        return $this->config()->contacts()->needsAttention()->count();
+    }
+
+    /**
      * @return array<int, array{hour: string, total: int, cw: int, phone: int, digital: int}>
      */
     #[Computed]

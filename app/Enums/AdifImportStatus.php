@@ -5,6 +5,7 @@ namespace App\Enums;
 enum AdifImportStatus: string
 {
     case PendingMapping = 'pending_mapping';
+    case Validating = 'validating';
     case PendingReview = 'pending_review';
     case Importing = 'importing';
     case Completed = 'completed';

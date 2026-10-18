@@ -50,7 +50,7 @@ class SectionsWorked extends Component
 
     public function getWidgetListeners(): array
     {
-        return $this->contactLoggedListener();
+        return $this->contactChangeListeners();
     }
 
     protected function buildSectionData(Event $event): array

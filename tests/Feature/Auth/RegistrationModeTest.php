@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\User;
+use App\Providers\FortifyServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Laravel\Fortify\Features;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -108,10 +110,12 @@ describe('approval_required mode', function () {
         $user = User::where('email', 'test@example.com')->first();
         expect($user)->not->toBeNull()
             ->and($user->account_locked_at)->not->toBeNull()
+            ->and($user->approval_requested_at)->not->toBeNull()
+            ->and($user->isPendingApproval())->toBeTrue()
             ->and($user->hasRole('Operator'))->toBeTrue();
     });
 
-    test('locked user from approval mode cannot login', function () {
+    test('user from approval mode is told the account is pending approval', function () {
         $this->post('/register', [
             'call_sign' => 'W1AW',
             'first_name' => 'John',
@@ -125,6 +129,25 @@ describe('approval_required mode', function () {
             'email' => 'test@example.com',
             'password' => 'password123',
         ]);
+
+        $response->assertSessionHasErrors(['email' => FortifyServiceProvider::PENDING_APPROVAL_MESSAGE]);
+        $this->assertGuest();
+    });
+
+    test('pending approval user with a wrong password gets the generic error', function () {
+        $this->post('/register', [
+            'call_sign' => 'W1AW',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email' => 'test@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $this->post('/login', [
+            'email' => 'test@example.com',
+            'password' => 'not-the-password',
+        ])->assertSessionHasErrors(['email' => trans('auth.failed')]);
 
         $this->assertGuest();
     });
@@ -140,11 +163,11 @@ describe('email_verification_required mode', function () {
     beforeEach(function () {
         config(['auth-security.registration_mode' => 'email_verification_required']);
         config(['fortify.features' => array_values(array_filter([
-            \Laravel\Fortify\Features::registration(),
-            \Laravel\Fortify\Features::emailVerification(),
-            \Laravel\Fortify\Features::updateProfileInformation(),
-            \Laravel\Fortify\Features::updatePasswords(),
-            \Laravel\Fortify\Features::twoFactorAuthentication(['confirm' => true, 'confirmPassword' => true]),
+            Features::registration(),
+            Features::emailVerification(),
+            Features::updateProfileInformation(),
+            Features::updatePasswords(),
+            Features::twoFactorAuthentication(['confirm' => true, 'confirmPassword' => true]),
         ]))]);
     });
 

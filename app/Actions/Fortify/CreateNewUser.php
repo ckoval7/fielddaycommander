@@ -46,6 +46,8 @@ class CreateNewUser implements CreatesNewUsers
             'is_cpr_aed_trained' => ['sometimes', 'boolean'],
         ])->validate();
 
+        $requiresApproval = config('auth-security.registration_mode') === 'approval_required';
+
         $user = User::create([
             'call_sign' => $input['call_sign'],
             'first_name' => $input['first_name'],
@@ -54,7 +56,8 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
             'is_youth' => ! empty($input['is_youth']),
             'is_cpr_aed_trained' => ! empty($input['is_cpr_aed_trained']),
-            'account_locked_at' => config('auth-security.registration_mode') === 'approval_required' ? now() : null,
+            'account_locked_at' => $requiresApproval ? now() : null,
+            'approval_requested_at' => $requiresApproval ? now() : null,
         ]);
 
         // Assign default "Operator" role to new users

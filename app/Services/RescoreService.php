@@ -7,19 +7,22 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
-use App\Scoring\Contracts\DeterminesContactCredit;
-use App\Scoring\Contracts\RuleSet;
 use App\Scoring\EventBonusReconciler;
 use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Scoring\RuleSetFactory;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class RescoreService
 {
+    /**
+     * Callsigns re-settled per locked transaction during a rescore.
+     */
+    public int $callsignsPerChunk = 200;
+
     public function __construct(
         private readonly RuleSetFactory $factory,
         private readonly EventBonusReconciler $reconciler,
+        private readonly DuplicateCheckService $dupes = new DuplicateCheckService,
     ) {}
 
     /**
@@ -58,33 +61,21 @@ class RescoreService
             throw UnknownRuleSet::for($typeCode ?? '(null)', (string) $event->rules_version);
         }
 
-        $ruleSet = $this->factory->forEvent($event);
-
-        $rescored = 0;
-        $unchanged = 0;
+        $config->forgetResolvedRuleSet();
         $bonuses = ['repointed' => 0, 'recomputed' => 0, 'invalidated' => 0, 'restored' => 0];
 
-        DB::transaction(function () use ($event, $config, $ruleSet, &$rescored, &$unchanged, &$bonuses) {
-            Contact::query()
-                ->where('event_configuration_id', $config->id)
-                ->with(['mode', 'band', 'operatingSession.station'])
-                ->chunkById(500, function ($contacts) use ($ruleSet, &$rescored, &$unchanged) {
-                    foreach ($contacts as $contact) {
-                        $newPoints = $this->pointsFor($contact, $ruleSet);
-                        $oldPoints = (int) $contact->points;
+        $total = Contact::query()->where('event_configuration_id', $config->id)->count();
 
-                        if ($newPoints === $oldPoints) {
-                            $unchanged++;
+        // Every dupe group is re-settled through DuplicateCheckService, the
+        // same pricing, event-window and dupe logic live logging uses. It
+        // takes the event lock per chunk of callsigns, so live logging is not
+        // held off for the whole event.
+        $rescored = $this->dupes->settleEvent($config->id, $this->callsignsPerChunk);
+        $unchanged = max(0, $total - $rescored);
 
-                            continue;
-                        }
-
-                        $contact->points = $newPoints;
-                        $contact->saveQuietly();
-                        $rescored++;
-                    }
-                });
-
+        // Same event lock as live logging, taken first, so the bonus pass and
+        // a contact write serialize instead of deadlocking on each other's rows.
+        $this->dupes->locked($config->id, function () use ($event, $config, &$bonuses) {
             $bonuses = $this->migrateEventBonuses($config, $event->rules_version);
 
             $this->reconciler->reconcileAll($config);
@@ -221,25 +212,5 @@ class RescoreService
         if ($recomputedThis) {
             $counts['recomputed']++;
         }
-    }
-
-    private function pointsFor(Contact $contact, RuleSet $ruleSet): int
-    {
-        if ($contact->is_duplicate) {
-            return 0;
-        }
-
-        if ($ruleSet instanceof DeterminesContactCredit && $ruleSet->noCreditReason($contact) !== null) {
-            return 0;
-        }
-
-        $mode = $contact->mode;
-        $station = $contact->operatingSession?->station;
-
-        if ($mode === null || $station === null) {
-            return (int) $contact->points;
-        }
-
-        return $ruleSet->pointsForContact($mode, $station);
     }
 }

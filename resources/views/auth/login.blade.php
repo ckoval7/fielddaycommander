@@ -2,7 +2,9 @@
     <x-slot:title>Log In</x-slot:title>
 
     @if (session('status'))
-        <x-alert title="{{ session('status') }}" class="mb-4" />
+        <x-alert :title="session('status')" class="mb-4" />
+    @elseif ($accountMessage = \App\Http\Middleware\EnsureAccountNotLocked::messageFor(request()->query(\App\Http\Middleware\EnsureAccountNotLocked::REASON_PARAMETER)))
+        <x-alert :title="$accountMessage" class="mb-4 alert-warning" icon="phosphor-lock" />
     @endif
 
     <form method="POST" action="{{ route('login') }}">

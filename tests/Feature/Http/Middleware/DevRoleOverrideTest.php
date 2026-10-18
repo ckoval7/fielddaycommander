@@ -54,3 +54,27 @@ test('does not clear the permission cache without an override in the session', f
 
     $this->registrar->shouldNotHaveReceived('forgetCachedPermissions');
 });
+
+test('forces developer mode off in production and drops stale overrides', function () {
+    config(['developer.enabled' => true]);
+    $this->app['env'] = 'production';
+    $this->actingAs(User::factory()->create());
+    session(['dev_role_override' => 'System Administrator', 'dev_callsign_override' => 'W1AW']);
+
+    expect(runDevRoleOverride())->toBe('passed through');
+
+    $this->registrar->shouldNotHaveReceived('forgetCachedPermissions');
+    expect(session()->has('dev_role_override'))->toBeFalse()
+        ->and(session()->has('dev_callsign_override'))->toBeFalse();
+});
+
+test('allows developer mode in production only with the explicit override', function () {
+    config(['developer.enabled' => true, 'developer.allow_in_production' => true]);
+    $this->app['env'] = 'production';
+    $this->actingAs(User::factory()->create());
+    session(['dev_role_override' => 'Operator']);
+
+    expect(runDevRoleOverride())->toBe('passed through');
+
+    $this->registrar->shouldHaveReceived('forgetCachedPermissions')->once();
+});

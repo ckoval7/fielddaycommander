@@ -416,15 +416,42 @@ test('stat card handles unknown metric gracefully', function () {
         ->and($data['icon'])->toBe('phosphor-question');
 });
 
-test('stat card returns empty listeners array', function () {
+test('stat card refreshes live on contact broadcasts for signed-in viewers only', function () {
+    config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $this->actingAs(User::factory()->create());
+
     $component = Livewire::test(StatCard::class, [
         'config' => ['metric' => 'qso_count'],
         'size' => 'normal',
     ]);
 
-    $listeners = $component->instance()->getWidgetListeners();
+    expect($component->instance()->getWidgetListeners())->toBe([
+        "echo-private:event.{$event->id},.ContactLogged" => 'handleUpdate',
+        "echo-private:event.{$event->id},.ContactUpdated" => 'handleUpdate',
+        "echo-private:event.{$event->id},.ContactDeleted" => 'handleUpdate',
+    ]);
 
-    expect($listeners)->toBeArray()->toBeEmpty();
+    // Guests (the public TV dashboard) cannot join the private event channel and rely on polling.
+    auth()->logout();
+
+    expect($component->instance()->getWidgetListeners())->toBe([]);
+});
+
+test('stat card registers no listeners without an active event', function () {
+    config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+    $this->actingAs(User::factory()->create());
+
+    $component = Livewire::test(StatCard::class, [
+        'config' => ['metric' => 'qso_count'],
+        'size' => 'normal',
+    ]);
+
+    expect($component->instance()->getWidgetListeners())->toBe([]);
 });
 
 /**

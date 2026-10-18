@@ -20,14 +20,29 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# Files this script creates are not world-writable; secrets (.env, the log)
+# get their own stricter modes.
+umask 022
+
 # --- Logging ---
 log_info()    { echo -e "${GREEN}[INFO]${NC} $1" | tee -a "$LOG_FILE"; }
 log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1" | tee -a "$LOG_FILE"; }
 log_error()   { echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"; }
 log_phase()   { echo -e "\n${CYAN}${BOLD}=== $1 ===${NC}" | tee -a "$LOG_FILE"; }
 
-# Redirect all stdout/stderr to log file as well
-exec > >(tee -a "$LOG_FILE") 2>&1
+# The log can hold secrets and hostnames, so keep it readable by root only.
+(umask 077 && touch "$LOG_FILE")
+chmod 600 "$LOG_FILE"
+
+# Redirect all stdout/stderr to log file as well. A re-exec of the updated
+# script (see reexec_if_script_changed) already writes through this tee.
+if [[ -z "${FDC_UPDATE_REEXEC:-}" ]]; then
+    exec > >(tee -a "$LOG_FILE") 2>&1
+fi
+
+# Kept for re-running the updated copy of this script after the pull.
+ORIG_ARGS=("$@")
+SELF_SHA=$(sha256sum < "${BASH_SOURCE[0]}" | cut -d' ' -f1)
 
 # --- Defaults ---
 APP_PATH="/var/www/fd-commander"
@@ -36,6 +51,7 @@ TAG=""
 FORCE=0
 NO_REDIS=0
 WITH_REDIS=0
+SKIP_BACKUP=0
 
 usage() {
     cat <<'USAGE'
@@ -53,6 +69,8 @@ Options:
                         (keep existing cache/session/queue drivers)
   --with-redis          Install Redis and migrate drivers without prompting
                         (use in non-interactive automation)
+  --skip-backup         Don't take a backup before updating (one is taken by
+                        default, since migrations change the database)
   -h, --help            Show this help message
 USAGE
     exit "${1:-0}"
@@ -66,6 +84,7 @@ while [[ $# -gt 0 ]]; do
         --force)     FORCE=1; shift ;;
         --no-redis)  NO_REDIS=1; shift ;;
         --with-redis) WITH_REDIS=1; shift ;;
+        --skip-backup) SKIP_BACKUP=1; shift ;;
         -h|--help)   usage 0 ;;
         *)           log_error "Unknown option: $1"; usage 1 ;;
     esac
@@ -83,8 +102,12 @@ if [[ ! -f "$APP_PATH/artisan" ]]; then
     exit 1
 fi
 
-# Detect web group from existing ownership
-WEB_GROUP=$(stat -c '%G' "$APP_PATH")
+# The web group is the app user's own group, the one deploy.sh created it
+# with. (The install directory is root-owned, so its group says nothing.)
+if ! WEB_GROUP=$(id -gn fdcommander 2>/dev/null); then
+    log_error "User fdcommander not found. Has FD Commander been deployed with deploy.sh?"
+    exit 1
+fi
 
 # Detect distro family for package installs (redis bootstrap on old installs).
 DISTRO_FAMILY=""
@@ -124,6 +147,73 @@ else
     fi
 fi
 
+# --- Ownership (same as deploy.sh) ---
+# The code (including deploy.sh, update.sh, backup.sh and restore.sh, which
+# run as root) stays root-owned, so the fdcommander user cannot change what
+# root later runs. fdcommander may write only the runtime directories and the
+# build output that composer and npm, run as fdcommander, produce. Nothing
+# run as root loads code from those build directories.
+APP_RUNTIME_DIRS=(storage bootstrap/cache)
+APP_BUILD_DIRS=(vendor node_modules public/build .composer .npm)
+
+apply_app_permissions() {
+    local dir
+    # Secrets first, and kept out of the recursive pass below, so .env is never
+    # world-readable (or unreadable by the app) even for a moment. Other .env.*
+    # copies (old backups and the like) are root-only.
+    if [[ -f "$APP_PATH/.env" ]]; then
+        chown "root:${WEB_GROUP}" "$APP_PATH/.env"
+        chmod 640 "$APP_PATH/.env"
+    fi
+    find "$APP_PATH" -maxdepth 1 -type f -name '.env.*' ! -name '.env.example' \
+        -exec chown root:root {} + -exec chmod 600 {} +
+    # Code: root-owned and read-only to everyone else. storage/ is skipped so
+    # logs and sessions are not made world-readable; it is handled below.
+    # -h and ! -type l leave symlink targets (public/storage) alone.
+    find "$APP_PATH" \( -path "$APP_PATH/storage" -o -path "$APP_PATH/.env" -o \( -path "$APP_PATH/.env.*" ! -path "$APP_PATH/.env.example" \) \) -prune \
+        -o -exec chown -h root:root {} +
+    find "$APP_PATH" \( -path "$APP_PATH/storage" -o -path "$APP_PATH/.env" -o \( -path "$APP_PATH/.env.*" ! -path "$APP_PATH/.env.example" \) \) -prune \
+        -o ! -type l -exec chmod u+rwX,go+rX,go-w {} +
+    for dir in "${APP_BUILD_DIRS[@]}" "${APP_RUNTIME_DIRS[@]}"; do
+        mkdir -p "$APP_PATH/$dir"
+        chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH/$dir"
+    done
+    # Directories group-writable; files read-write but never executable (an
+    # older deploy's chmod -R 775 marked tracked files like .gitignore
+    # executable, which git then reports as changed).
+    for dir in "${APP_RUNTIME_DIRS[@]}"; do
+        find "$APP_PATH/$dir" -type d -exec chmod ug+rwx,o-w {} +
+        find "$APP_PATH/$dir" -type f -exec chmod ug+rw,a-x,o-w {} +
+    done
+    return 0
+}
+
+# An earlier update.sh or restore.sh of this version could leave .env
+# root:root, so the app could not read it. Put it back before anything else
+# and run the full update so caches built without it are rebuilt.
+repair_env_access() {
+    local env_file="$APP_PATH/.env"
+    [[ -f "$env_file" ]] || return 0
+    if [[ "$(stat -c '%G' "$env_file")" != "$WEB_GROUP" ]] || ! sudo -u fdcommander test -r "$env_file"; then
+        chown "root:${WEB_GROUP}" "$env_file"
+        chmod 640 "$env_file"
+        log_warn "Fixed ${env_file}: the app could not read it. Running the full update to rebuild caches."
+        FORCE=1
+    fi
+    return 0
+}
+
+# Git as root against the root-owned checkout. A checkout an older deploy
+# left owned by fdcommander is used as that user until pull_updates takes it
+# over, so root never runs hooks or config the app user could have written.
+app_git() {
+    if [[ "$(stat -c '%U' "$APP_PATH/.git")" == "root" ]]; then
+        git -C "$APP_PATH" "$@"
+    else
+        sudo -u fdcommander git -C "$APP_PATH" "$@"
+    fi
+}
+
 # --- Fetch and check for updates ---
 DEPLOYED_REV_FILE="$APP_PATH/.deployed-revision"
 NPM_LOCK_HASH_FILE="$APP_PATH/.npm-lock-hash"
@@ -141,18 +231,18 @@ fetch_updates() {
         cd "$APP_PATH"
 
         if [[ -n "$TAG" ]]; then
-            sudo -u fdcommander git fetch origin --tags --prune --prune-tags
-            REMOTE=$(sudo -u fdcommander git rev-list -n 1 "$TAG" 2>/dev/null || true)
+            app_git fetch origin --tags --prune --prune-tags
+            REMOTE=$(app_git rev-list -n 1 "$TAG" 2>/dev/null || true)
             if [[ -z "$REMOTE" ]]; then
                 log_error "Tag $TAG not found after fetch from origin"
                 exit 1
             fi
         else
-            sudo -u fdcommander git fetch origin "$BRANCH"
-            REMOTE=$(sudo -u fdcommander git rev-parse "origin/$BRANCH")
+            app_git fetch origin "$BRANCH"
+            REMOTE=$(app_git rev-parse "origin/$BRANCH")
         fi
 
-        LOCAL=$(sudo -u fdcommander git rev-parse HEAD)
+        LOCAL=$(app_git rev-parse HEAD)
 
         if [[ "$LOCAL" == "$REMOTE" ]]; then
             if [[ $FORCE -eq 1 ]]; then
@@ -216,13 +306,24 @@ pull_updates() {
     if [[ "$DEPLOY_METHOD" == "git" ]]; then
         cd "$APP_PATH"
         if [[ -n "$TAG" ]]; then
-            sudo -u fdcommander git checkout --detach "$TAG"
+            app_git checkout --detach "$TAG"
         else
             # If a prior deploy left us detached on a tag, reattach to the branch first.
-            sudo -u fdcommander git checkout "$BRANCH"
-            sudo -u fdcommander git pull --ff-only origin "$BRANCH"
+            app_git checkout "$BRANCH"
+            app_git pull --ff-only origin "$BRANCH"
         fi
-        chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH"
+        apply_app_permissions
+
+        # The root-run scripts must match the commit: discard any local edits
+        # (e.g. made while an older deploy let fdcommander write them).
+        local script
+        for script in deploy.sh update.sh backup.sh restore.sh; do
+            if app_git ls-files --error-unmatch "$script" &>/dev/null \
+                && ! app_git diff --quiet HEAD -- "$script"; then
+                log_warn "Discarding local changes to $script"
+                app_git checkout HEAD -- "$script"
+            fi
+        done
     else
         cd "$SCRIPT_DIR"
         if [[ -n "$TAG" ]]; then
@@ -249,29 +350,68 @@ pull_updates() {
         cd "$SCRIPT_DIR"
         git rev-parse HEAD > "$DEPLOYED_REV_FILE"
 
-        chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH"
+        apply_app_permissions
     fi
 
     # Operator scripts run as root; older tags may not ship them.
-    for script in backup.sh restore.sh; do
-        [[ -f "$APP_PATH/$script" ]] && chmod 755 "$APP_PATH/$script"
+    for script in deploy.sh update.sh backup.sh restore.sh; do
+        if [[ -f "$APP_PATH/$script" ]]; then
+            chmod 755 "$APP_PATH/$script"
+        fi
     done
 
     # Refresh the root-owned copy the backup timers run, if they are installed.
     # (update.sh never installs the schedule itself — see backup.sh --install-schedule.)
-    if [[ -f /usr/local/sbin/fdcommander-backup && -f "$APP_PATH/backup.sh" ]]; then
-        install -m 755 -o root -g root "$APP_PATH/backup.sh" /usr/local/sbin/fdcommander-backup
+    # The source is the root-owned checkout (git) or the operator's source
+    # tree (rsync), never a file the app user can write.
+    local backup_source="$APP_PATH/backup.sh"
+    [[ "$DEPLOY_METHOD" == "rsync" ]] && backup_source="$SCRIPT_DIR/backup.sh"
+    if [[ -f /usr/local/sbin/fdcommander-backup && -f "$backup_source" ]]; then
+        install -m 755 -o root -g root "$backup_source" /usr/local/sbin/fdcommander-backup
         log_info "Refreshed /usr/local/sbin/fdcommander-backup"
     fi
 
-    # Ensure storage symlink exists
+    # Ensure storage symlink exists (what storage:link creates; public/ is root-owned)
     if [[ ! -L "$APP_PATH/public/storage" ]]; then
-        cd "$APP_PATH"
-        sudo -u fdcommander php artisan storage:link
+        ln -s "$APP_PATH/storage/app/public" "$APP_PATH/public/storage"
         log_info "Recreated storage symlink"
     fi
 
     log_info "Code updated"
+}
+
+# Re-run the freshly pulled update.sh when it differs from the one running, so
+# a single run applies the new version's steps (permissions, unit hardening,
+# settings) instead of the next one. FDC_UPDATE_REEXEC stops a loop. --force
+# makes the new copy carry on although the code is now up to date. Nothing has
+# been stopped yet, so no maintenance mode or trap carries over.
+reexec_if_script_changed() {
+    [[ -z "${FDC_UPDATE_REEXEC:-}" ]] || return 0
+    local new_script="$APP_PATH/update.sh"
+    [[ "$DEPLOY_METHOD" == "rsync" ]] && new_script="$SCRIPT_DIR/update.sh"
+    [[ -f "$new_script" ]] || return 0
+
+    local new_sha
+    new_sha=$(sha256sum < "$new_script" | cut -d' ' -f1)
+    [[ "$new_sha" != "$SELF_SHA" ]] || return 0
+
+    # A copy without this re-exec support is an older release (e.g. --tag to
+    # an earlier version). It cannot run against a root-owned checkout, so
+    # keep going with the running script.
+    if ! grep -q 'FDC_UPDATE_REEXEC' "$new_script"; then
+        log_warn "The update.sh in this version is older than the one running; continuing with the running one"
+        return 0
+    fi
+
+    local args=("${ORIG_ARGS[@]}") arg has_force=0
+    for arg in "${args[@]}"; do
+        [[ "$arg" == "--force" ]] && has_force=1
+    done
+    [[ $has_force -eq 1 ]] || args+=(--force)
+
+    log_info "update.sh changed in this update; continuing with the new version"
+    export FDC_UPDATE_REEXEC=1
+    exec bash "$new_script" "${args[@]}"
 }
 
 # Pick an Octane worker count sized to the host.
@@ -355,10 +495,14 @@ SCHEDEOF
     return 0
 }
 
-# Install the FrankenPHP version deploy.sh pins if this server runs a different
-# one, so a version bump only needs changing in deploy.sh. A failed download
-# keeps the current binary rather than aborting the update.
-sync_frankenphp_version() {
+# Download and verify the FrankenPHP version deploy.sh pins if this server
+# runs a different one, so a version bump only needs changing in deploy.sh.
+# Runs before maintenance mode; install_staged_frankenphp swaps it in during
+# the restart. A failed download or check keeps the current binary rather than
+# aborting the update.
+FRANKENPHP_STAGED=""
+
+stage_frankenphp_update() {
     local binary="/usr/local/bin/frankenphp"
     local desired current
     desired=$(grep -m1 -E '^FRANKENPHP_VERSION=' "$APP_PATH/deploy.sh" 2>/dev/null | cut -d'"' -f2 || true)
@@ -377,33 +521,54 @@ sync_frankenphp_version() {
         return 0
     fi
 
-    local arch
+    local arch sha_var
     case "$(uname -m)" in
-        x86_64)  arch="linux-x86_64" ;;
-        aarch64) arch="linux-aarch64" ;;
+        x86_64)  arch="linux-x86_64";  sha_var="FRANKENPHP_SHA256_X86_64" ;;
+        aarch64) arch="linux-aarch64"; sha_var="FRANKENPHP_SHA256_AARCH64" ;;
         *)       log_warn "Unsupported architecture $(uname -m) — keeping FrankenPHP ${current}"
                  return 0 ;;
     esac
 
+    # deploy.sh pins the binary's SHA-256 next to the version.
+    local expected_sha
+    expected_sha=$(grep -m1 -E "^${sha_var}=" "$APP_PATH/deploy.sh" 2>/dev/null | cut -d'"' -f2 || true)
+    if [[ ! "$expected_sha" =~ ^[0-9a-f]{64}$ ]]; then
+        log_warn "No ${sha_var} pinned in $APP_PATH/deploy.sh — keeping FrankenPHP ${current}"
+        return 0
+    fi
+
     local url="https://github.com/php/frankenphp/releases/download/v${desired}/frankenphp-${arch}"
     local tmp="${binary}.new"
-    log_info "Upgrading FrankenPHP ${current:-unknown} → ${desired}..."
+    log_info "Downloading FrankenPHP ${desired} (installed: ${current:-unknown})..."
     if ! curl -fSL --proto '=https' --tlsv1.2 -o "$tmp" "$url"; then
         rm -f "$tmp"
         log_warn "Download failed — keeping FrankenPHP ${current}"
         return 0
     fi
-    chmod +x "$tmp"
+    if ! echo "${expected_sha}  ${tmp}" | sha256sum --check --quiet --status; then
+        rm -f "$tmp"
+        log_warn "Downloaded FrankenPHP does not match the pinned SHA-256 — keeping FrankenPHP ${current}"
+        return 0
+    fi
+    chmod 755 "$tmp"
     if ! "$tmp" version &>/dev/null; then
         rm -f "$tmp"
         log_warn "Downloaded FrankenPHP binary did not run — keeping FrankenPHP ${current}"
         return 0
     fi
     setcap cap_net_bind_service=+ep "$tmp" || log_warn "setcap failed — FrankenPHP relies on the unit's capabilities to bind ports below 1024"
+    FRANKENPHP_STAGED="$tmp"
+    log_info "FrankenPHP ${desired} downloaded and verified; it is installed during the restart"
+    return 0
+}
 
-    # Rename over the old binary so the running server is never left with a
-    # half-written file.
-    mv -f "$tmp" "$binary"
+# Swap in the binary stage_frankenphp_update verified. A rename over the old
+# binary, so the running server is never left with a half-written file.
+install_staged_frankenphp() {
+    [[ -n "$FRANKENPHP_STAGED" && -f "$FRANKENPHP_STAGED" ]] || return 0
+    local binary="/usr/local/bin/frankenphp"
+    mv -f "$FRANKENPHP_STAGED" "$binary"
+    FRANKENPHP_STAGED=""
     if command -v restorecon &>/dev/null; then
         restorecon "$binary" 2>/dev/null || true
     fi
@@ -423,6 +588,22 @@ migrate_octane_unit() {
 
     log_info "Switching the Octane unit to start through the PHP CLI"
     sed -i -E 's|^ExecStart=[^ ]*frankenphp php-cli artisan octane:frankenphp|ExecStart=/usr/bin/php artisan octane:frankenphp|' "$unit_file"
+    systemctl daemon-reload
+    return 0
+}
+
+# Poll an idle queue every second instead of every three (older installs).
+# Live-update broadcasts go out through the queue worker, so the sleep is the
+# worst-case delay before open pages see a new contact. Idempotent: no-ops once
+# converted.
+migrate_queue_unit() {
+    local unit_file="/etc/systemd/system/fdcommander-queue.service"
+    if [[ ! -f "$unit_file" ]] || ! grep -q 'queue:work --sleep=3 ' "$unit_file"; then
+        return 0
+    fi
+
+    log_info "Lowering the queue worker's idle sleep to 1 second"
+    sed -i -E 's|queue:work --sleep=3 |queue:work --sleep=1 |' "$unit_file"
     systemctl daemon-reload
     return 0
 }
@@ -594,9 +775,41 @@ migrate_env_to_redis() {
     grep -qE '^REDIS_PORT='   "$env_file"   || { set_env "REDIS_PORT" "6379";       changed=true; }
 
     if $changed; then
-        chown "fdcommander:${WEB_GROUP}" "$env_file"
+        chown "root:${WEB_GROUP}" "$env_file"
+        chmod 640 "$env_file"
         log_info ".env migrated to Redis drivers"
     fi
+}
+
+# --- NodeSource repos (same as deploy.sh) ---
+# NodeSource's documented manual setup (signed repo + keyring) rather than
+# piping its setup script into a root shell; apt/dnf verify every package.
+add_nodesource_repo_debian() {
+    log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
+    install -d -m 0755 /etc/apt/keyrings
+    curl -fsSL --proto '=https' --tlsv1.2 https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
+    chmod 644 /etc/apt/keyrings/nodesource.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
+        > /etc/apt/sources.list.d/nodesource.list
+    apt-get update -y
+    return 0
+}
+
+add_nodesource_repo_rhel() {
+    log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
+    dnf module disable -y nodejs &>/dev/null || true
+    cat > /etc/yum.repos.d/nodesource-nodejs.repo <<NODEREPOEOF
+[nodesource-nodejs]
+name=Node.js Packages for $(uname -m)
+baseurl=https://rpm.nodesource.com/pub_${NODE_MAJOR}.x/nodistro/nodejs/$(uname -m)
+priority=9
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.nodesource.com/gpgkey/ns-operations-public.key
+module_hotfixes=1
+NODEREPOEOF
+    return 0
 }
 
 # --- Upgrade Node.js on installs older than NODE_MAJOR ---
@@ -620,11 +833,10 @@ ensure_node_version() {
     fi
 
     if [[ "$PKG_MANAGER" == "apt" ]]; then
-        curl -fsSL --proto '=https' --tlsv1.2 "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        add_nodesource_repo_debian
         apt-get install -y nodejs
     else
-        dnf module disable -y nodejs &>/dev/null || true
-        curl -fsSL --proto '=https' --tlsv1.2 "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        add_nodesource_repo_rhel
         dnf install -y nodejs
     fi
 
@@ -647,7 +859,7 @@ install_dependencies() {
     install_node_dependencies
 
     log_info "Building assets..."
-    sudo -u fdcommander HOME="$APP_PATH" npm run build
+    sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm run build
 }
 
 # Run `npm ci` only when the dependency set actually changed.
@@ -664,7 +876,7 @@ install_node_dependencies() {
 
     if [[ ! -f "$lock_file" ]]; then
         log_warn "No package-lock.json found — running npm install"
-        sudo -u fdcommander HOME="$APP_PATH" npm install --ignore-scripts --cache "$APP_PATH/.npm"
+        sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm install --ignore-scripts --cache "$APP_PATH/.npm"
         return 0
     fi
 
@@ -673,8 +885,9 @@ install_node_dependencies() {
     [[ -f "$NPM_LOCK_HASH_FILE" ]] && previous_hash=$(cat "$NPM_LOCK_HASH_FILE")
 
     # node_modules is excluded from rsync and can be absent on a first update
-    # or after a manual clean, so verify it exists before trusting the hash.
-    if [[ "$current_hash" == "$previous_hash" && -d "$APP_PATH/node_modules" ]]; then
+    # or after a manual clean (apply_app_permissions recreates it empty), so
+    # verify npm's own install marker before trusting the hash.
+    if [[ "$current_hash" == "$previous_hash" && -f "$APP_PATH/node_modules/.package-lock.json" ]]; then
         log_info "Node dependencies unchanged — skipping npm ci"
         return 0
     fi
@@ -685,10 +898,12 @@ install_node_dependencies() {
         log_info "Installing Node dependencies..."
     fi
 
-    sudo -u fdcommander HOME="$APP_PATH" npm ci --ignore-scripts --cache "$APP_PATH/.npm"
+    sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm ci --ignore-scripts --cache "$APP_PATH/.npm"
 
+    # Root-owned like the rest of the checkout, so the app user cannot mark
+    # a tampered node_modules as current.
     echo "$current_hash" > "$NPM_LOCK_HASH_FILE"
-    chown "fdcommander:${WEB_GROUP}" "$NPM_LOCK_HASH_FILE"
+    chown root:root "$NPM_LOCK_HASH_FILE"
 }
 
 # --- Run migrations ---
@@ -720,29 +935,402 @@ rebuild_caches() {
     log_info "Caches rebuilt"
 }
 
+# --- Settings added since older deploys (same values deploy.sh writes) ---
+migrate_env_settings() {
+    local env_file="$APP_PATH/.env"
+    [[ -f "$env_file" ]] || return 0
+    local changed=false app_url site_address
+
+    # Secure session cookie when the site is served over HTTPS.
+    app_url=$(grep -E '^APP_URL=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' || true)
+    if [[ "$app_url" == https://* ]] && ! grep -qE '^SESSION_SECURE_COOKIE=' "$env_file"; then
+        set_env "SESSION_SECURE_COOKIE" "true"
+        log_info "Enabled SESSION_SECURE_COOKIE (APP_URL is HTTPS)"
+        changed=true
+    fi
+
+    # Daily log rotation. LOG_DAILY_DAYS marks the one-time switch, so an
+    # explicit LOG_STACK choice made afterwards is kept.
+    if ! grep -qE '^LOG_DAILY_DAYS=' "$env_file"; then
+        if ! grep -qE '^LOG_STACK=' "$env_file" || grep -qE '^LOG_STACK="?single"?$' "$env_file"; then
+            set_env "LOG_STACK" "daily"
+            log_info "Switched logging to daily files (LOG_STACK=daily)"
+        fi
+        set_env "LOG_DAILY_DAYS" "14"
+        changed=true
+    fi
+
+    if $changed; then
+        chown "root:${WEB_GROUP}" "$env_file"
+        chmod 640 "$env_file"
+    fi
+
+    # TLS settings for HTTPS sites deployed before deploy.sh wrote them.
+    # Older deploys recorded --ssl-cert/--ssl-key as SSL_CERT/SSL_KEY in .env
+    # without Caddy using them; the ACME email was not recorded. Caddy has been
+    # using automatic HTTPS on those sites, so that stays the fallback.
+    site_address=$(grep -E '^CADDY_SITE_ADDRESS=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' || true)
+    if [[ "$site_address" == https://* && ! -f "${CADDY_SNIPPET_DIR}/tls.caddy" ]]; then
+        local cert key
+        cert=$(grep -E '^SSL_CERT=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' || true)
+        key=$(grep -E '^SSL_KEY=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' || true)
+        if [[ -z "$cert" || -z "$key" ]] || ! tls_files_usable "$cert" "$key"; then
+            cert=""
+            key=""
+        fi
+        write_caddy_tls_snippet "$cert" "$key" ""
+        log_info "Wrote Caddy TLS settings to ${CADDY_SNIPPET_DIR}/tls.caddy"
+    fi
+
+    migrate_hsts_from_caddy
+    note_trusted_hosts
+    note_trusted_proxies
+    return 0
+}
+
+# path_in_private_tmp <path>: same as deploy.sh. Whether the path (after
+# resolving symlinks) is under /tmp or /var/tmp, which the services, running
+# with PrivateTmp=true, cannot see.
+path_in_private_tmp() {
+    local resolved
+    resolved=$(realpath -m -- "$1" 2>/dev/null || echo "$1")
+    [[ "$resolved" == /tmp/* || "$resolved" == /var/tmp/* ]]
+}
+
+# tls_files_usable <cert> <key>: whether Caddy (running as fdcommander) can
+# read both files and the certificate has not expired. Warns and returns 1
+# otherwise, so the caller keeps automatic HTTPS instead of breaking the site.
+tls_files_usable() {
+    local cert="$1" key="$2" file
+    if [[ "${cert}${key}" == *\"* ]]; then
+        log_warn "SSL_CERT/SSL_KEY in .env contain a double quote; keeping automatic HTTPS"
+        return 1
+    fi
+    for file in "$cert" "$key"; do
+        if path_in_private_tmp "$file"; then
+            log_warn "${file} (SSL_CERT/SSL_KEY in .env) is under /tmp or /var/tmp, which the"
+            log_warn "FD Commander services cannot see (PrivateTmp), so Caddy keeps using automatic"
+            log_warn "HTTPS. Move the certificate and key somewhere permanent (e.g. /etc/ssl/fd-commander/),"
+            log_warn "update SSL_CERT/SSL_KEY, delete ${CADDY_SNIPPET_DIR}/tls.caddy and run update.sh --force."
+            return 1
+        fi
+        if ! sudo -u fdcommander test -r "$file"; then
+            log_warn "fdcommander cannot read ${file} (SSL_CERT/SSL_KEY in .env), so Caddy keeps"
+            log_warn "using automatic HTTPS. To use that certificate, make both files readable by"
+            log_warn "group ${WEB_GROUP} (chgrp ${WEB_GROUP} <file> && chmod 640 <file>), delete"
+            log_warn "${CADDY_SNIPPET_DIR}/tls.caddy and run update.sh --force."
+            return 1
+        fi
+    done
+    if command -v openssl &>/dev/null && ! openssl x509 -checkend 0 -noout -in "$cert" &>/dev/null; then
+        log_warn "Certificate ${cert} (SSL_CERT in .env) has expired or is not a PEM certificate,"
+        log_warn "so Caddy keeps using automatic HTTPS. To use a renewed certificate, delete"
+        log_warn "${CADDY_SNIPPET_DIR}/tls.caddy and run update.sh --force."
+        return 1
+    fi
+    return 0
+}
+
+# HSTS moved from the Caddy snippet to the app (SECURITY_HSTS_MAX_AGE). A
+# snippet an earlier update.sh/deploy.sh wrote with the header loses it; sites
+# on automatic Let's Encrypt certificates (an ACME email in the snippet) keep
+# HSTS through the app setting. Custom certificates may be self-signed, so
+# those are left off.
+migrate_hsts_from_caddy() {
+    local snippet="${CADDY_SNIPPET_DIR}/tls.caddy"
+    local env_file="$APP_PATH/.env"
+    [[ -f "$snippet" ]] && grep -q 'Strict-Transport-Security' "$snippet" || return 0
+
+    sed -i '/Strict-Transport-Security/d' "$snippet"
+    if grep -qE '^tls [^"]+@' "$snippet" && ! grep -qE '^SECURITY_HSTS_MAX_AGE=' "$env_file"; then
+        set_env "SECURITY_HSTS_MAX_AGE" "31536000"
+        chown "root:${WEB_GROUP}" "$env_file"
+        chmod 640 "$env_file"
+        log_info "HSTS now comes from the app (SECURITY_HSTS_MAX_AGE=31536000)"
+    else
+        log_info "Removed HSTS from ${snippet}; set SECURITY_HSTS_MAX_AGE in .env to send it"
+    fi
+    return 0
+}
+
+# The app now only answers requests for the APP_URL host, its subdomains and
+# local-network addresses. Tell the admin once, and record an empty
+# TRUSTED_HOSTS (the same as unset) so the note isn't repeated.
+note_trusted_hosts() {
+    local env_file="$APP_PATH/.env" app_host
+    grep -qE '^TRUSTED_HOSTS=' "$env_file" && return 0
+
+    app_host=$(grep -E '^APP_URL=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' \
+        | sed -E 's#^[a-z]+://##; s#[:/].*$##' || true)
+    set_env "TRUSTED_HOSTS" ""
+    chown "root:${WEB_GROUP}" "$env_file"
+    chmod 640 "$env_file"
+    # Not enforced while APP_URL is localhost.
+    [[ -n "$app_host" && "$app_host" != "localhost" ]] || return 0
+    log_warn "FD Commander now only answers for ${app_host}, private IP addresses"
+    log_warn "and .local names. If people reach it by another name or a public IP, add it to"
+    log_warn "TRUSTED_HOSTS in ${env_file} (comma-separated), then run: sudo -u fdcommander php artisan optimize"
+    return 0
+}
+
+# Forwarded headers (X-Forwarded-For) are now believed only from this machine,
+# since FrankenPHP faces browsers directly. A TRUSTED_PROXIES the admin set is
+# kept. Otherwise tell them once, and record a comment so the note isn't
+# repeated (a commented line also means "not set", like .env.example's).
+note_trusted_proxies() {
+    local env_file="$APP_PATH/.env"
+    grep -qE '^#? *TRUSTED_PROXIES=' "$env_file" && return 0
+
+    printf '%s\n' "# TRUSTED_PROXIES=127.0.0.1,::1 (the default; list your reverse proxy's IP if one sits in front)" >> "$env_file"
+    log_warn "FD Commander now believes X-Forwarded-For only from this machine (127.0.0.1, ::1)."
+    log_warn "If a reverse proxy or load balancer sits in front of it, set TRUSTED_PROXIES in"
+    log_warn "${env_file} to its IP or CIDR (comma-separated), then run: sudo -u fdcommander php artisan optimize"
+    return 0
+}
+
+# Root-owned Caddyfile snippets imported into the site block (see Caddyfile).
+CADDY_SNIPPET_DIR="/etc/frankenphp/caddy.d"
+
+# write_caddy_tls_snippet <cert> <key> <email>: same as deploy.sh (HSTS comes
+# from the app, see SECURITY_HSTS_MAX_AGE).
+write_caddy_tls_snippet() {
+    local cert="$1" key="$2" email="$3"
+    local snippet="${CADDY_SNIPPET_DIR}/tls.caddy"
+    install -d -m 0755 "$CADDY_SNIPPET_DIR"
+    {
+        echo "# Written by deploy.sh/update.sh. Imported into the FD Commander site block."
+        if [[ -n "$cert" ]]; then
+            echo "tls \"${cert}\" \"${key}\""
+        elif [[ -n "$email" ]]; then
+            echo "tls ${email}"
+        fi
+    } > "$snippet"
+    chmod 644 "$snippet"
+    return 0
+}
+
+# write_unit_hardening: same as deploy.sh. Sandboxes every FD Commander unit
+# with a drop-in; the services may write only storage/ and bootstrap/cache
+# (plus Caddy's certificate store for the web server).
+write_unit_hardening() {
+    local protect_home="true" unit dir extra_paths
+    # An install or certificate under /home or /root must stay readable.
+    if [[ "$APP_PATH" == /home/* || "$APP_PATH" == /root/* ]] \
+        || grep -sqE '"/(home|root)/' "${CADDY_SNIPPET_DIR}"/*.caddy; then
+        protect_home="read-only"
+    fi
+    for unit in fdcommander fdcommander-queue fdcommander-scheduler fdcommander-reverb; do
+        [[ -f "/etc/systemd/system/${unit}.service" ]] || continue
+        dir="/etc/systemd/system/${unit}.service.d"
+        extra_paths=""
+        [[ "$unit" == "fdcommander" ]] && extra_paths=" /var/lib/caddy"
+        mkdir -p "$dir"
+        cat > "${dir}/hardening.conf" <<HARDENEOF
+# Written by deploy.sh/update.sh.
+[Service]
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=${protect_home}
+ProtectSystem=strict
+ReadWritePaths=${APP_PATH}/storage ${APP_PATH}/bootstrap/cache${extra_paths}
+HARDENEOF
+    done
+    systemctl daemon-reload
+    return 0
+}
+
+# --- Backup and maintenance mode ---
+# Migrations change the database, so back it up first, after entering
+# maintenance mode so nothing is logged between the backup and the update.
+# Both happen only once the code and assets are built, so the site stays up
+# through the slow steps (composer, npm) and is down only for the backup,
+# migrations and restart. Uploaded files are not touched by an update, so the
+# database is enough.
+# The script run is
+# the root-owned installed copy if there is one, else the backup.sh next to
+# this update.sh (the same trust as update.sh itself).
+take_pre_update_backup() {
+    if [[ $SKIP_BACKUP -eq 1 ]]; then
+        log_warn "Skipping the pre-update backup (--skip-backup)"
+        return 0
+    fi
+
+    local backup_script="/usr/local/sbin/fdcommander-backup"
+    [[ -x "$backup_script" ]] || backup_script="$SCRIPT_DIR/backup.sh"
+    if [[ ! -f "$backup_script" ]]; then
+        log_warn "backup.sh not found — continuing without a pre-update backup"
+        return 0
+    fi
+
+    log_phase "Backing up before update"
+    # --keep-days 0: leave pruning to the scheduled backups' own retention.
+    bash "$backup_script" --app-path "$APP_PATH" --db-only --keep-days 0
+    return 0
+}
+
+MAINTENANCE_ON=0
+
+leave_maintenance() {
+    [[ $MAINTENANCE_ON -eq 1 ]] || return 0
+    (cd "$APP_PATH" && sudo -u fdcommander php artisan up) \
+        || log_warn "Could not leave maintenance mode — run: sudo -u fdcommander php artisan up"
+    MAINTENANCE_ON=0
+    return 0
+}
+
+# On any exit: leave maintenance mode and drop a FrankenPHP download that was
+# never installed.
+on_exit() {
+    leave_maintenance
+    if [[ -n "$FRANKENPHP_STAGED" ]]; then
+        rm -f "$FRANKENPHP_STAGED"
+    fi
+    return 0
+}
+
+enter_maintenance() {
+    log_info "Putting the app into maintenance mode for the update"
+    (cd "$APP_PATH" && sudo -u fdcommander php artisan down --retry=60)
+    MAINTENANCE_ON=1
+    return 0
+}
+
 # --- Restart services ---
 restart_services() {
     log_phase "Restarting services"
 
-    sync_frankenphp_version
+    install_staged_frankenphp
     migrate_octane_unit
     sync_octane_workers
     migrate_scheduler_unit
+    migrate_queue_unit
+    write_unit_hardening
 
-    systemctl restart fdcommander.service
-    systemctl restart fdcommander-queue.service
-    systemctl restart fdcommander-reverb.service
-    systemctl restart fdcommander-scheduler.service
+    local unit
+    for unit in "${APP_UNITS[@]}"; do
+        systemctl restart "${unit}.service"
+    done
 
     log_info "Services restarted"
+}
+
+# --- Check the result ---
+APP_UNITS=(fdcommander fdcommander-queue fdcommander-reverb fdcommander-scheduler)
+
+# unit_restarts <unit>: how many times systemd has restarted the unit.
+unit_restarts() {
+    systemctl show -p NRestarts --value "${1}.service" 2>/dev/null || echo 0
+    return 0
+}
+
+# Wait until every unit has stayed active, without a restart, for a few
+# seconds. A unit that crashes on start (bad config, unreadable certificate)
+# shows as active between restarts, so a single is-active is not enough.
+check_units_stay_up() {
+    local stable_for=5 timeout=60 elapsed=0 i all_stable now
+    local -a restarts=() stable=()
+    for i in "${!APP_UNITS[@]}"; do
+        restarts[i]=$(unit_restarts "${APP_UNITS[i]}")
+        stable[i]=0
+    done
+    while (( elapsed < timeout )); do
+        all_stable=1
+        for i in "${!APP_UNITS[@]}"; do
+            now=$(unit_restarts "${APP_UNITS[i]}")
+            if [[ "$(systemctl is-active "${APP_UNITS[i]}.service" 2>/dev/null)" == "active" && "$now" == "${restarts[i]}" ]]; then
+                stable[i]=$(( stable[i] + 1 ))
+            else
+                stable[i]=0
+                restarts[i]=$now
+            fi
+            (( stable[i] >= stable_for )) || all_stable=0
+        done
+        (( all_stable )) && return 0
+        sleep 1
+        elapsed=$(( elapsed + 1 ))
+    done
+
+    log_error "These services did not stay running after the restart:"
+    for i in "${!APP_UNITS[@]}"; do
+        if (( stable[i] < stable_for )); then
+            log_error "  ${APP_UNITS[i]} ($(systemctl is-active "${APP_UNITS[i]}.service" 2>/dev/null || true)): journalctl -u ${APP_UNITS[i]}.service -n 50 --no-pager"
+        fi
+    done
+    return 1
+}
+
+# Ask the app's health route (/up) through Caddy, on this machine, using the
+# site address from .env.
+check_app_answers() {
+    local env_file="$APP_PATH/.env" address scheme hostport host port url code="000" tries
+    address=$(grep -E '^CADDY_SITE_ADDRESS=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' || true)
+    [[ -n "$address" ]] || address=$(grep -E '^APP_URL=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' || true)
+    scheme="http"
+    [[ "$address" == https://* ]] && scheme="https"
+    hostport="${address#*://}"
+    hostport="${hostport%%/*}"
+    host="${hostport%:*}"
+    port=""
+    [[ "$hostport" == *:* ]] && port="${hostport##*:}"
+    if [[ -z "$port" ]]; then
+        port=80
+        [[ "$scheme" == "https" ]] && port=443
+    fi
+    url="${scheme}://${host}:${port}/up"
+    # A name is sent to this machine; an IP address is used as is, since
+    # Caddy picks the certificate for a bare IP by the address connected to.
+    local -a resolve=(--resolve "${host}:${port}:127.0.0.1")
+    local -a resolve_http=(--resolve "${host}:80:127.0.0.1")
+    if [[ "$host" =~ ^[0-9.]+$ || "$host" == \[* ]]; then
+        resolve=()
+        resolve_http=()
+    fi
+
+    for (( tries = 0; tries < 30; tries++ )); do
+        code=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 5 \
+            ${resolve[@]+"${resolve[@]}"} "$url" 2>/dev/null || true)
+        [[ "$code" == "200" ]] && return 0
+        sleep 1
+    done
+
+    # HTTPS that never completes a handshake may just be a certificate Caddy
+    # has not obtained yet (Let's Encrypt). The services are running, so only
+    # warn when plain HTTP still reaches Caddy.
+    if [[ "$scheme" == "https" && "$code" == "000" ]]; then
+        local http_code
+        http_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
+            ${resolve_http[@]+"${resolve_http[@]}"} "http://${host}/up" 2>/dev/null || true)
+        if [[ "$http_code" =~ ^[23] ]]; then
+            log_warn "Could not check ${url} over HTTPS (the certificate may not be issued yet)."
+            log_warn "The services are running; open the site in a browser to confirm."
+            return 0
+        fi
+    fi
+
+    log_error "The app did not answer at ${url} (last status: ${code})."
+    log_error "  Check: journalctl -u fdcommander.service -n 50 --no-pager"
+    log_error "  and the app log in ${APP_PATH}/storage/logs/"
+    return 1
+}
+
+verify_services() {
+    log_phase "Checking services"
+    check_units_stay_up || return 1
+    check_app_answers || return 1
+    log_info "All services are running and the app answers"
+    return 0
 }
 
 # --- Main ---
 main() {
     log_phase "FD Commander Update — $(date '+%Y-%m-%d %H:%M:%S')"
 
+    trap on_exit EXIT
+    repair_env_access
     fetch_updates
     pull_updates
+    reexec_if_script_changed
+    migrate_env_settings
     if prompt_redis_migration; then
         bootstrap_redis
         migrate_env_to_redis
@@ -751,9 +1339,18 @@ main() {
     fi
     ensure_node_version
     install_dependencies
+    stage_frankenphp_update
+    enter_maintenance
+    take_pre_update_backup
     run_migrations
     rebuild_caches
     restart_services
+    leave_maintenance
+    if ! verify_services; then
+        log_error "The update was installed, but FD Commander is not running correctly (see above)."
+        log_error "Update log: ${LOG_FILE}"
+        exit 1
+    fi
 
     echo ""
     echo -e "${BOLD}============================================${NC}"
@@ -765,7 +1362,7 @@ main() {
         app_version=$(tr -d '[:space:]' < "$APP_PATH/VERSION")
     fi
     local git_sha
-    git_sha=$(cd "$APP_PATH" && sudo -u fdcommander git rev-parse --short HEAD 2>/dev/null || echo 'unknown')
+    git_sha=$(app_git rev-parse --short HEAD 2>/dev/null || echo 'unknown')
 
     echo -e "  Version:  ${app_version} (${git_sha})"
     echo -e "  App URL:  $(grep '^APP_URL=' "$APP_PATH/.env" | cut -d= -f2-)"

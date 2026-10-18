@@ -6,6 +6,7 @@ use App\Models\Equipment;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -282,4 +283,83 @@ describe('audit logging', function () {
             'model' => 'IC-7300',
         ]);
     });
+});
+
+test('equipment id is locked so an operator cannot retarget another users equipment', function () {
+    $this->actingAs($this->user);
+
+    $own = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+    $other = Equipment::factory()->create(['owner_user_id' => User::factory()->create()->id, 'make' => 'Original']);
+
+    expect(fn () => Livewire::test(EquipmentForm::class, ['equipment' => $own])
+        ->set('equipmentId', $other->id))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+
+    expect($other->fresh()->make)->toBe('Original');
+});
+
+test('club equipment flag is locked', function () {
+    $this->actingAs($this->user);
+
+    expect(fn () => Livewire::test(EquipmentForm::class, ['equipment' => null])
+        ->set('isClubEquipment', true))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+});
+
+test('save re-authorizes the edit when ownership changes after mount', function () {
+    $this->actingAs($this->user);
+
+    $own = Equipment::factory()->create(['owner_user_id' => $this->user->id, 'make' => 'Original']);
+
+    $component = Livewire::test(EquipmentForm::class, ['equipment' => $own]);
+
+    $own->update(['owner_user_id' => User::factory()->create()->id]);
+
+    $component->set('make', 'Hijacked')->call('save')->assertForbidden();
+
+    expect($own->fresh()->make)->toBe('Original');
+});
+
+test('existing photo path cannot be set by the client', function () {
+    $this->actingAs($this->user);
+
+    Storage::disk('public')->put('victim.txt', 'keep me');
+
+    $own = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+
+    expect(fn () => Livewire::test(EquipmentForm::class, ['equipment' => $own])
+        ->set('existingPhotoPath', 'victim.txt'))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+
+    Storage::disk('public')->assertExists('victim.txt');
+});
+
+test('replacing a photo deletes the old photo recorded in the database', function () {
+    $this->actingAs($this->user);
+
+    Storage::disk('public')->put('equipment-photos/old.jpg', 'old');
+    $own = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'photo_path' => 'equipment-photos/old.jpg',
+    ]);
+
+    Livewire::test(EquipmentForm::class, ['equipment' => $own])
+        ->set('photo', UploadedFile::fake()->image('new.jpg'))
+        ->call('save')
+        ->assertHasNoErrors();
+
+    Storage::disk('public')->assertMissing('equipment-photos/old.jpg');
+    expect($own->fresh()->photo_path)->not->toBe('equipment-photos/old.jpg');
+});
+
+test('description and notes have maximum lengths', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EquipmentForm::class, ['equipment' => null])
+        ->set('make', 'Yaesu')
+        ->set('model', 'FT-891')
+        ->set('description', str_repeat('a', 5001))
+        ->set('notes', str_repeat('a', 5001))
+        ->call('save')
+        ->assertHasErrors(['description' => 'max', 'notes' => 'max']);
 });

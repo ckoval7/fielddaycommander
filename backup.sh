@@ -28,6 +28,10 @@ log_warn()    { local message="$1"; echo -e "${YELLOW}[WARN]${NC} ${message}" | 
 log_error()   { local message="$1"; echo -e "${RED}[ERROR]${NC} ${message}" | tee -a "$LOG_FILE" >&2; }
 log_phase()   { local title="$1"; echo -e "\n${CYAN}${BOLD}=== ${title} ===${NC}" | tee -a "$LOG_FILE"; }
 
+# The log can hold secrets and hostnames, so keep it readable by root only.
+(umask 077 && touch "$LOG_FILE")
+chmod 600 "$LOG_FILE"
+
 # Redirect all stdout/stderr to log file as well
 exec > >(tee -a "$LOG_FILE") 2>&1
 
@@ -49,8 +53,9 @@ Backs up the FD Commander database, uploaded files (storage/app) and .env.
 .env holds APP_KEY, which two-factor secrets are encrypted with, so keep it
 with the database backup.
 
-Writes fdc-db-STAMP.sql.gz, fdc-files-STAMP.tar.gz and fdc-env-STAMP to the
-destination directory. STAMP is YYYYMMDD-HHMMSS.
+Writes fdc-db-STAMP.sql.gz, fdc-files-STAMP.tar.gz and fdc-env-STAMP, each
+with a .sha256 checksum file, to the destination directory. STAMP is
+YYYYMMDD-HHMMSS. Backups are not encrypted: keep them somewhere private.
 
 Mode:
   --app-path <path>     Native install path (default: /var/www/fd-commander)
@@ -209,10 +214,12 @@ remove_schedule() {
 
 # --- Backup ---
 
-# finish_file: move a completed .part file into place and report its size.
+# finish_file: move a completed .part file into place, record its SHA-256
+# next to it (PATH.sha256, checked by restore.sh) and report its size.
 finish_file() {
     local path="$1"
     mv "${path}.part" "$path"
+    (cd "$(dirname "$path")" && sha256sum "$(basename "$path")" > "$(basename "$path").sha256")
     log_info "Wrote $path ($(du -h "$path" | cut -f1))"
     return 0
 }

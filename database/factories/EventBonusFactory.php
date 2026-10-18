@@ -8,6 +8,7 @@ use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<EventBonus>
@@ -55,5 +56,36 @@ class EventBonusFactory extends Factory
             'verified_by_user_id' => null,
             'verified_at' => null,
         ];
+    }
+
+    /**
+     * Configure the model factory.
+     *
+     * An event configuration holds one row per bonus type (unique index), so
+     * when the default bonus type is already claimed for the configuration a
+     * fresh bonus type is used instead.
+     */
+    public function configure(): static
+    {
+        return $this->afterMaking(function (EventBonus $bonus): void {
+            $taken = EventBonus::query()
+                ->where('event_configuration_id', $bonus->event_configuration_id)
+                ->where('bonus_type_id', $bonus->bonus_type_id)
+                ->exists();
+
+            if (! $taken) {
+                return;
+            }
+
+            $template = BonusType::find($bonus->bonus_type_id);
+
+            $bonus->bonus_type_id = BonusType::create([
+                'event_type_id' => $template->event_type_id,
+                'code' => 'TEST_BONUS_'.strtoupper(Str::random(8)),
+                'name' => 'Test Bonus',
+                'description' => 'A test bonus type',
+                'base_points' => $template->base_points ?? 100,
+            ])->id;
+        });
     }
 }

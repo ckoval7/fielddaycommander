@@ -312,6 +312,7 @@ test('calculateQsoScore excludes GOTA contacts', function () {
 
 test('calculateGotaBonus returns 5 points per non-duplicate GOTA contact', function () {
     $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
+    $config->event->update(['start_time' => now()->subHour(), 'end_time' => now()->addDay()]);
     Contact::factory()->gota()->count(3)->create([
         'event_configuration_id' => $config->id,
         'is_duplicate' => false,
@@ -325,6 +326,7 @@ test('calculateGotaBonus returns 5 points per non-duplicate GOTA contact', funct
 
 test('calculateGotaCoachBonus returns 100 when 10+ supervised contacts exist', function () {
     $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
+    $config->event->update(['start_time' => now()->subHour(), 'end_time' => now()->addDay()]);
     $station = Station::factory()->gota()->create(['event_configuration_id' => $config->id]);
     $session = OperatingSession::factory()->supervised()->create(['station_id' => $station->id]);
     Contact::factory()->gota()->count(10)->create([
@@ -337,6 +339,7 @@ test('calculateGotaCoachBonus returns 100 when 10+ supervised contacts exist', f
 
 test('calculateGotaCoachBonus returns 0 when fewer than 10 supervised contacts', function () {
     $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
+    $config->event->update(['start_time' => now()->subHour(), 'end_time' => now()->addDay()]);
     $station = Station::factory()->gota()->create(['event_configuration_id' => $config->id]);
     $session = OperatingSession::factory()->supervised()->create(['station_id' => $station->id]);
     Contact::factory()->gota()->count(9)->create([
@@ -345,6 +348,35 @@ test('calculateGotaCoachBonus returns 0 when fewer than 10 supervised contacts',
         'is_duplicate' => false,
     ]);
     expect($config->calculateGotaCoachBonus())->toBe(0);
+});
+
+test('GOTA bonuses only count contacts logged within the event window', function () {
+    $config = EventConfiguration::factory()->create(['has_gota_station' => true]);
+    $config->event->update(['start_time' => '2026-06-27 18:00:00', 'end_time' => '2026-06-28 20:59:00']);
+    $station = Station::factory()->gota()->create(['event_configuration_id' => $config->id]);
+    $session = OperatingSession::factory()->supervised()->create(['station_id' => $station->id]);
+
+    Contact::factory()->gota()->count(9)->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $session->id,
+        'qso_time' => '2026-06-28 12:00:00',
+        'is_duplicate' => false,
+    ]);
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $session->id,
+        'qso_time' => '2026-06-27 17:59:00',
+        'is_duplicate' => false,
+    ]);
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $session->id,
+        'qso_time' => '2026-06-28 21:00:00',
+        'is_duplicate' => false,
+    ]);
+
+    expect($config->calculateGotaBonus())->toBe(45)
+        ->and($config->calculateGotaCoachBonus())->toBe(0);
 });
 
 test('emergency power bonus disqualified when any station uses commercial mains', function () {

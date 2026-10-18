@@ -176,17 +176,15 @@ class Equipment extends Model
     }
 
     /**
-     * Get active commitments (committed/delivered for current or upcoming events).
+     * Get active commitments (committed/delivered for events that haven't
+     * ended), soonest event first.
      */
     public function activeCommitments(): HasMany
     {
         return $this->hasMany(EquipmentEvent::class)
             ->whereIn('status', ['committed', 'delivered'])
-            ->whereHas('event', function (Builder $query) {
-                $now = appNow();
-                $query->where('start_time', '<=', $now->copy()->addDays(30))
-                    ->where('end_time', '>=', $now);
-            });
+            ->whereHas('event', fn (Builder $query) => $query->notEnded())
+            ->orderBy(Event::select('start_time')->whereColumn('events.id', 'equipment_event.event_id'));
     }
 
     /**
@@ -228,6 +226,25 @@ class Equipment extends Model
     }
 
     /**
+     * Columns the equipment lists may sort by.
+     *
+     * @var list<string>
+     */
+    public const SORTABLE_COLUMNS = ['created_at', 'updated_at', 'make', 'model', 'type', 'value_usd', 'power_output_watts'];
+
+    /**
+     * Order by a client-supplied column and direction, falling back to newest
+     * first when either is not on the allowlist.
+     */
+    public function scopeSortedBy(Builder $query, string $column, string $direction): Builder
+    {
+        $column = in_array($column, self::SORTABLE_COLUMNS, true) ? $column : 'created_at';
+        $direction = in_array(strtolower($direction), ['asc', 'desc'], true) ? strtolower($direction) : 'desc';
+
+        return $query->orderBy($column, $direction);
+    }
+
+    /**
      * Scope a query to only include equipment of a specific type.
      */
     public function scopeOfType(Builder $query, string $type): Builder
@@ -257,10 +274,7 @@ class Equipment extends Model
     {
         $commitmentConstraint = function (Builder $q) {
             $q->whereIn('status', ['committed', 'delivered'])
-                ->whereHas('event', function (Builder $eventQuery) {
-                    $eventQuery->where('start_time', '<=', now()->addDays(30))
-                        ->where('end_time', '>=', now());
-                });
+                ->whereHas('event', fn (Builder $eventQuery) => $eventQuery->notEnded());
         };
 
         return match ($status) {
@@ -354,18 +368,12 @@ class Equipment extends Model
     protected function currentCommitment(): Attribute
     {
         return Attribute::make(
-            get: function (): ?EquipmentEvent {
-                $now = appNow();
-
-                return $this->commitments()
-                    ->whereIn('status', ['committed', 'delivered'])
-                    ->whereHas('event', function (Builder $query) use ($now) {
-                        $query->where('start_time', '<=', $now->copy()->addDays(30))
-                            ->where('end_time', '>=', $now);
-                    })
-                    ->with('event')
-                    ->first();
-            }
+            get: fn (): ?EquipmentEvent => $this->commitments()
+                ->whereIn('status', ['committed', 'delivered'])
+                ->whereHas('event', fn (Builder $query) => $query->notEnded())
+                ->orderBy(Event::select('start_time')->whereColumn('events.id', 'equipment_event.event_id'))
+                ->with('event')
+                ->first()
         );
     }
 }

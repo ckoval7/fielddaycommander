@@ -36,7 +36,7 @@ class StoreContactSyncRequest extends FormRequest
             'callsign' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9\/]+$/'],
             'section_id' => ['required', 'integer', 'exists:sections,id'],
             'exchange_class' => ['required', 'string', 'max:5', 'regex:'.ExchangeParserService::EXCHANGE_CLASS_PATTERN],
-            'power_watts' => ['required', 'integer', 'min:1'],
+            'power_watts' => ['required', 'integer', 'min:1', 'max:1500'],
             'qso_time' => ['required', 'date'],
             'is_gota_contact' => ['sometimes', 'boolean'],
             'gota_operator_first_name' => ['nullable', 'string', 'max:50'],
@@ -69,6 +69,19 @@ class StoreContactSyncRequest extends FormRequest
                         'gota_operator_first_name',
                         'Enter the GOTA operator in the GOTA Operator panel before logging.',
                     );
+
+                    return;
+                }
+
+                // A session operates on one band and mode; contacts must match it.
+                if ($session?->band_id !== null && (int) $this->band_id !== (int) $session->band_id) {
+                    $validator->errors()->add('band_id', 'The band does not match this operating session.');
+
+                    return;
+                }
+
+                if ($session?->mode_id !== null && (int) $this->mode_id !== (int) $session->mode_id) {
+                    $validator->errors()->add('mode_id', 'The mode does not match this operating session.');
 
                     return;
                 }

@@ -12,11 +12,15 @@ return [
     | NEVER be enabled in production environments.
     |
     | Safety: If APP_ENV=production, developer mode is disabled regardless
-    | of this setting.
+    | of this setting unless DEVELOPER_MODE_ALLOW_PRODUCTION is also true.
+    | Runtime checks go through App\Support\DeveloperMode::isEnabled().
     |
     */
 
-    'enabled' => env('DEVELOPER_MODE', false),
+    'enabled' => (bool) env('DEVELOPER_MODE', false)
+        && (env('APP_ENV', 'production') !== 'production' || (bool) env('DEVELOPER_MODE_ALLOW_PRODUCTION', false)),
+
+    'allow_in_production' => (bool) env('DEVELOPER_MODE_ALLOW_PRODUCTION', false),
 
     /*
     |--------------------------------------------------------------------------
