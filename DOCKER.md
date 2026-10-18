@@ -30,7 +30,6 @@ Images are published for `amd64` and `arm64`, so the same commands work on a Ras
 |-----|------------|
 | `latest` | The newest release |
 | `26.10.8`, `26.10` | A specific release, or the newest release in that month |
-| `edge` | The newest commit on `main`. Expect rough edges. |
 
 ## Quick Start (build from source)
 

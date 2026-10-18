@@ -5,7 +5,6 @@
 # runners and publishes one multi-arch image to GHCR.
 #
 #   release tag vYY.MM.N -> :YY.MM.N, :YY.MM, :latest
-#   push to main         -> :edge, :sha-<commit>
 #   pull request         -> built, not pushed
 #
 # Actions are pinned to commit SHAs; the comment names the release.
@@ -13,7 +12,6 @@ name: Docker image
 
 on:
   push:
-    branches: [main]
     tags: ['v*']
   pull_request:
     paths:
@@ -57,8 +55,6 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=edge,branch=main
-            type=sha,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=pr
           labels: |
             org.opencontainers.image.title=FD Commander
