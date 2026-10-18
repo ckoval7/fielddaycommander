@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 @auth
 @if(\App\Support\StationMode::isActive())
 <div class="flex items-center gap-2" data-station-mode-controls>

@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 set -e
 
 # Files created here (.env) hold secrets, so create them owner-only.

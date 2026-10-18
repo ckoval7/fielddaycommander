@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import './bootstrap';
 import dashboardSortable from './components/dashboard-sortable';
 import contactQueue from './components/contact-queue';

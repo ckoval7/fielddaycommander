@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div>
     @if($isViewingPast && $contextEvent)
         <div class="alert {{ $gracePeriodStatus === 'grace' ? 'alert-warning' : 'alert-info' }} mb-4">

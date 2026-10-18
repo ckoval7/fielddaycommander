@@ -1,5 +1,9 @@
 <?php
 
+// SPDX-FileCopyrightText: Taylor Otwell
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later AND MIT
+
 use App\Http\Middleware\AuditLogger;
 use App\Http\Middleware\CheckSystemSetupComplete;
 use App\Http\Middleware\DevRoleOverride;

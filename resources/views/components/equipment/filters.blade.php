@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 @props(['filterCols' => 3])
 
 <div class="grid grid-cols-1 md:grid-cols-{{ $filterCols }} gap-4 mb-6">

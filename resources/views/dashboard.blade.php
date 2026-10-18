@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <x-layouts.app>
     <x-slot:title>Dashboard</x-slot:title>
     <div class="p-6 max-sm:px-0">

@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 @props(['message' => 'No equipment found', 'actionLabel' => null, 'actionRoute' => null, 'colspan' => null])
 
 @if($colspan)

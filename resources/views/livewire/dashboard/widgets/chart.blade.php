@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- The Chart.js instance lives in a closure, not on the reactive x-data
      object: Alpine's reactive Proxy around it recurses endlessly through
      Chart.js's own option-resolver proxies, which throws on destroy() and

@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- The leave-page warning lives on this always-present root, not on the edit
      toolbar: the toolbar disappears on Cancel before any "editing ended" event
      reaches it, which left the warning armed after editing was over. It checks

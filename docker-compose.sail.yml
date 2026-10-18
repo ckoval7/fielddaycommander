@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Laravel Sail — local development & testing environment.
 #
 # Kept separate from docker-compose.yml (the production/deployment stack) so the

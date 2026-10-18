@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div class="space-y-6">
     <!-- Header Section -->
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">

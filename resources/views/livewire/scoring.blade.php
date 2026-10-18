@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div class="min-h-screen" style="background-color: var(--score-bg); color: var(--score-text);">
 
     {{-- EMPTY STATE --}}

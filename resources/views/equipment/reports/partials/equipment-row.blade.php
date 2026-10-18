@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- @var $row array{type: string, description: string, bands: ?string, power_watts: ?int, owner_name: string, owner_callsign: ?string, owner_contact: string, status: string} --}}
 {{-- @var $alt bool --}}
 <tr class="{{ $alt ? 'alt' : '' }}">

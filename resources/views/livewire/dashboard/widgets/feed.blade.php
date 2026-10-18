@@ -1,4 +1,8 @@
 {{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
+{{--
 Feed Widget View
 
 Displays a scrollable list of recent activity notifications with animations.

@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 @php
     // Branding — same priority logic as guest layout
     $siteName = \App\Models\Setting::get('site_name');

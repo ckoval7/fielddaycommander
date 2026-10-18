@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Stats Summary Component --}}
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
     {{-- Total QSOs --}}

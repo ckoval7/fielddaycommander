@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 uses()->group('unit', 'docker');
 
 /**
@@ -11,7 +14,7 @@ const CONTAINER_HTTP_PORT = 8000;
 test('every deploy path agrees on the unprivileged container http port', function () {
     $port = CONTAINER_HTTP_PORT;
 
-    expect(file_get_contents(base_path('docker/Caddyfile')))->toStartWith(":{$port} {")
+    expect(file_get_contents(base_path('docker/Caddyfile')))->toMatch("/^:{$port} \{$/m")
         ->and(file_get_contents(base_path('docker/supervisord.conf')))->toContain("octane:frankenphp --host=0.0.0.0 --port={$port} ")
         ->and(file_get_contents(base_path('Dockerfile')))
         ->toContain("EXPOSE {$port}\n")

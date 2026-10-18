@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div>
     @if($isSystemUser)
         <div class="alert bg-red-100 border-l-4 border-red-500 text-red-900 shadow-md rounded-none" role="alert">

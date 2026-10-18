@@ -1,4 +1,8 @@
 {{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
+{{--
     Renders a long table as page-sized chunks so DomPDF never has to break a
     table across pages. Each chunk is its own table element with its own thead;
     chunks are separated with a forced page-break.

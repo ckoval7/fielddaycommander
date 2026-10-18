@@ -1,4 +1,8 @@
 {{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
+{{--
     Station-mode idle warning: after a stretch with no keyboard, pointer or touch
     activity, count down and then end the operator's session unless dismissed.
 --}}

@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Per-item actions menu for the All User Catalogs list --}}
 @php($commitment = $item->activeCommitments->first())
 <x-dropdown>

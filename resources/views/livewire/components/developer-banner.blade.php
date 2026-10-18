@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div @if($isVisible && !$isFrozen) wire:poll.10s="refreshTime" @endif>
     @if($isVisible)
         <div class="alert bg-amber-100 border-l-4 border-amber-500 text-amber-900 shadow-md rounded-none" role="alert">

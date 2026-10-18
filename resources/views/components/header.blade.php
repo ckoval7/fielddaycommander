@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Desktop header - hidden on mobile --}}
 <header class="hidden lg:flex items-center justify-between px-6 py-4 bg-base-100 border-b border-base-300">
     {{-- Left: App Brand --}}

@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Assignment Modal --}}
 <x-modal wire:model="showAssignModal" title="Assign User to Shift" class="!overflow-visible" box-class="!overflow-visible">
     <div>

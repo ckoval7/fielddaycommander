@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 /**
  * Browsers must open the live-update WebSocket on the address the page came
  * from, so LAN IPs, .local names and plain-HTTP installs keep working. The

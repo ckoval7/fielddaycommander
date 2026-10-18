@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div class="space-y-6">
     {{-- Header --}}
     <x-header title="Stations" subtitle="Manage field day stations and equipment assignments" separator progress-indicator>

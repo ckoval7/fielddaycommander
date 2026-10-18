@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 @props(['compact' => false, 'as' => 'div'])
 
 {{-- Light/dark toggle backed by localStorage "theme"; instances stay in sync via the theme-changed event. --}}

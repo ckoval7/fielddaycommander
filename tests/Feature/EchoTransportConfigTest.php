@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 /**
  * Regression: pusher-js 8 builds wss:// connections from the transport named
  * 'ws' when forceTLS is set, so enabling only 'wss' on HTTPS left Echo with

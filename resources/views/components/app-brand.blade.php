@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <a href="/" wire:navigate class="block min-w-0">
     <!-- Full brand - shown when sidebar expanded -->
     <div {{ $attributes->class(["hidden-when-collapsed min-w-0"]) }}>

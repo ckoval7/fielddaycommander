@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Support\TrustedHosts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;

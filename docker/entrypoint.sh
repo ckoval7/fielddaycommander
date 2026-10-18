@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 set -euo pipefail
 
 echo "=== FD Commander Docker Entrypoint ==="

@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Shown when a request's Host isn't trusted. Must not use url(), route() or asset(): they read the rejected Host and throw again. --}}
 <!DOCTYPE html>
 <html lang="en">
