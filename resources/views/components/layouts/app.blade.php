@@ -46,6 +46,10 @@
         $mobileEventCountdown->updateComponent();
         $mobileBrand = new \App\View\Components\AppBrand;
         $mobileHasCallsign = $mobileBrand->callsign !== $mobileBrand->eventName;
+        // The collapsed header shows the station callsign, never the site name, so it
+        // only collapses when the event has one.
+        $mobileEventCallsign = $mobileBrand->activeEvent?->callsign;
+        $mobileCanCollapse = filled($mobileEventCallsign);
     @endphp
 
     {{-- NAVBAR mobile only --}}
@@ -53,7 +57,7 @@
         class="lg:hidden sticky top-0 z-20 bg-base-100 border-b border-base-300"
         x-data="{
             scrolled: false,
-            hasCallsign: @json($mobileHasCallsign),
+            canCollapse: @json($mobileCanCollapse),
             onScroll() {
                 // Hysteresis + room guard avoid a feedback loop: collapsing Row 2
                 // shrinks the page and can clamp scrollY back below the threshold.
@@ -75,7 +79,7 @@
                 href="/"
                 wire:navigate
                 class="flex items-center gap-2.5 flex-1 min-w-0"
-                x-show="!(scrolled && hasCallsign)"
+                x-show="!(scrolled && canCollapse)"
             >
                 @if($mobileBrand->hasCustomLogo)
                     <img src="{{ asset($mobileBrand->logoPath) }}" alt="Logo" class="shrink-0 w-[40px] h-[40px] rounded-lg object-contain" />
@@ -92,25 +96,16 @@
                 </span>
             </a>
 
-            {{-- Collapsed brand (callsign tile + pulsing event dot + short name + countdown) --}}
+            {{-- Collapsed brand (callsign + event name + countdown) --}}
             <div
-                x-show="scrolled && hasCallsign"
+                x-show="scrolled && canCollapse"
                 x-cloak
                 class="flex items-center gap-2 flex-1 min-w-0"
             >
-                <a href="/" wire:navigate class="shrink-0 w-[30px] h-[30px] rounded-[7px] bg-primary/10 text-primary font-mono font-extrabold text-[11px] -tracking-[0.3px] flex items-center justify-center">
-                    {{ Str::limit($mobileBrand->callsign, 6, '') }}
+                <a href="/" wire:navigate class="shrink-0 text-primary font-mono font-extrabold text-[13px]">
+                    {{ $mobileEventCallsign }}
                 </a>
                 @if($mobileEventCountdown->event)
-                    <span @class([
-                        'shrink-0 w-1.5 h-1.5 rounded-full',
-                        'bg-warning' => $mobileEventCountdown->state === 'setup',
-                        'bg-info' => $mobileEventCountdown->state === 'upcoming',
-                        'bg-success' => $mobileEventCountdown->state === 'active',
-                        'bg-base-content/40' => $mobileEventCountdown->state === 'ended',
-                    ])
-                    @if($mobileEventCountdown->state === 'active') style="animation: fdpulse 1.6s ease-in-out infinite" @endif
-                    ></span>
                     <span class="text-[13px] font-semibold text-base-content truncate min-w-0">
                         {{ $mobileEventCountdown->event->name }}
                     </span>
@@ -155,7 +150,7 @@
                 @endunless
             @endauth
 
-            <div x-show="!(scrolled && hasCallsign)">
+            <div x-show="!(scrolled && canCollapse)">
                 <x-user-menu />
             </div>
 
