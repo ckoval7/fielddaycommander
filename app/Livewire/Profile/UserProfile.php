@@ -123,6 +123,8 @@ class UserProfile extends Component
     public ?string $confirmingTwoFactorAction = null;
 
     /** @var list<string> */
+    private const CURRENT_PASSWORD = 'current password';
+
     private const TWO_FACTOR_ACTIONS = ['view-codes', 'regenerate-codes', 'disable'];
 
     public function mount(): void
@@ -575,10 +577,10 @@ class UserProfile extends Component
             'shiftReminderMinute' => 'reminder minutes',
             'bulletinReminderMinute' => 'reminder minutes',
             'twoFactorCode' => 'authentication code',
-            'emailChangePassword' => 'current password',
-            'enableTwoFactorPassword' => 'current password',
-            'recoveryCodesPassword' => 'current password',
-            'disableTwoFactorPassword' => 'current password',
+            'emailChangePassword' => self::CURRENT_PASSWORD,
+            'enableTwoFactorPassword' => self::CURRENT_PASSWORD,
+            'recoveryCodesPassword' => self::CURRENT_PASSWORD,
+            'disableTwoFactorPassword' => self::CURRENT_PASSWORD,
         ];
     }
 }

@@ -62,52 +62,72 @@ class StoreContactSyncRequest extends FormRequest
                 }
 
                 $session = OperatingSession::find($this->operating_session_id);
+                $sessionError = $this->sessionMismatch($session);
 
-                // GOTA contacts are credited to the GOTA operator, so one must be named.
-                if ($session?->station->is_gota && ! $this->hasGotaOperator()) {
-                    $validator->errors()->add(
-                        'gota_operator_first_name',
-                        'Enter the GOTA operator in the GOTA Operator panel before logging.',
-                    );
+                if ($sessionError !== null) {
+                    $validator->errors()->add(...$sessionError);
 
                     return;
                 }
 
-                // A session operates on one band and mode; contacts must match it.
-                if ($session?->band_id !== null && (int) $this->band_id !== (int) $session->band_id) {
-                    $validator->errors()->add('band_id', 'The band does not match this operating session.');
-
-                    return;
-                }
-
-                if ($session?->mode_id !== null && (int) $this->mode_id !== (int) $session->mode_id) {
-                    $validator->errors()->add('mode_id', 'The mode does not match this operating session.');
-
-                    return;
-                }
-
-                $eventTypeId = $session?->station->eventConfiguration?->event?->event_type_id;
-
-                if ($eventTypeId === null) {
-                    return;
-                }
-
-                $classCode = strtoupper(substr((string) $this->exchange_class, -1));
-
-                $definedClasses = OperatingClass::query()
-                    ->where('event_type_id', $eventTypeId)
-                    ->pluck('code')
-                    ->map(fn (string $code): string => strtoupper($code))
-                    ->all();
-
-                if ($definedClasses !== [] && ! in_array($classCode, $definedClasses, true)) {
-                    $validator->errors()->add(
-                        'exchange_class',
-                        "Class {$classCode} is not valid for this event.",
-                    );
-                }
+                $this->validateClassForEvent($validator, $session);
             },
         ];
+    }
+
+    /**
+     * The first way this contact conflicts with its operating session, as a
+     * field and message, or null when it fits.
+     *
+     * GOTA contacts are credited to the GOTA operator, so one must be named,
+     * and a session operates on one band and mode, so contacts must match it.
+     *
+     * @return array{0: string, 1: string}|null
+     */
+    private function sessionMismatch(?OperatingSession $session): ?array
+    {
+        return match (true) {
+            $session?->station->is_gota && ! $this->hasGotaOperator() => [
+                'gota_operator_first_name',
+                'Enter the GOTA operator in the GOTA Operator panel before logging.',
+            ],
+            $session?->band_id !== null && (int) $this->band_id !== (int) $session->band_id => [
+                'band_id',
+                'The band does not match this operating session.',
+            ],
+            $session?->mode_id !== null && (int) $this->mode_id !== (int) $session->mode_id => [
+                'mode_id',
+                'The mode does not match this operating session.',
+            ],
+            default => null,
+        };
+    }
+
+    /**
+     * Reject a class letter the event's rulebook does not define.
+     */
+    private function validateClassForEvent(Validator $validator, ?OperatingSession $session): void
+    {
+        $eventTypeId = $session?->station->eventConfiguration?->event?->event_type_id;
+
+        if ($eventTypeId === null) {
+            return;
+        }
+
+        $classCode = strtoupper(substr((string) $this->exchange_class, -1));
+
+        $definedClasses = OperatingClass::query()
+            ->where('event_type_id', $eventTypeId)
+            ->pluck('code')
+            ->map(fn (string $code): string => strtoupper($code))
+            ->all();
+
+        if ($definedClasses !== [] && ! in_array($classCode, $definedClasses, true)) {
+            $validator->errors()->add(
+                'exchange_class',
+                "Class {$classCode} is not valid for this event.",
+            );
+        }
     }
 
     /**

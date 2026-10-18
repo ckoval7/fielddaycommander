@@ -15,7 +15,6 @@ use App\Models\User;
 use App\Scoring\DomainEvents\QsoLogged;
 use App\Services\AdifImportService;
 use App\Services\DuplicateCheckService;
-use App\Services\SessionResolverService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +28,7 @@ beforeEach(function () {
         ['key' => 'setup_completed', 'value' => 'true'],
     );
 
-    $this->service = new AdifImportService(new SessionResolverService);
+    $this->service = new AdifImportService;
 
     $this->band = Band::create(['name' => '20m', 'meters' => 20, 'frequency_mhz' => 14.0, 'sort_order' => 4]);
     $this->mode = Mode::create(['name' => 'Phone', 'category' => 'Phone', 'points_fd' => 1, 'points_wfd' => 1]);
@@ -632,7 +631,7 @@ test('an import that fails part way leaves no open sessions behind', function ()
     $dupes->shouldReceive('settleGroups')->once()->passthru();
     $dupes->shouldReceive('settleGroups')->andThrow(new RuntimeException('database went away'));
 
-    (new AdifImportService(new SessionResolverService, $dupes))->import($import);
+    (new AdifImportService($dupes))->import($import);
 
     expect($import->fresh()->status)->toBe(AdifImportStatus::Failed)
         ->and($import->fresh()->imported_records)->toBe(100)
@@ -652,8 +651,8 @@ test('an import with a spent time budget stops after a batch and resumes without
         ->and($import->fresh()->progress_processed)->toBe(100)
         ->and($import->fresh()->progress_total)->toBe(150);
 
-    expect((new AdifImportService(new SessionResolverService))->import($import->fresh(), 0))->toBeFalse();
-    expect((new AdifImportService(new SessionResolverService))->import($import->fresh(), 0))->toBeTrue();
+    expect((new AdifImportService)->import($import->fresh(), 0))->toBeFalse();
+    expect((new AdifImportService)->import($import->fresh(), 0))->toBeTrue();
 
     expect(Contact::count())->toBe(150)
         ->and($import->fresh()->status)->toBe(AdifImportStatus::Completed)

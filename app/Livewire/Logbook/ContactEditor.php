@@ -24,6 +24,9 @@ class ContactEditor extends Component
 {
     use AuthorizesRequests;
 
+    /** Minute-precision QSO time, as the editor's datetime-local input uses it. */
+    private const QSO_TIME_FORMAT = 'Y-m-d H:i';
+
     public bool $showModal = false;
 
     public ?int $contactId = null;
@@ -63,7 +66,7 @@ class ContactEditor extends Component
         $this->bandId = $contact->band_id;
         $this->modeId = $contact->mode_id;
         $this->submode = $contact->submode ?? '';
-        $this->qsoTime = $contact->qso_time?->format('Y-m-d H:i') ?? '';
+        $this->qsoTime = $contact->qso_time?->format(self::QSO_TIME_FORMAT) ?? '';
         $this->notes = $contact->notes ?? '';
         $this->resetValidation();
         $this->showModal = true;
@@ -298,7 +301,7 @@ class ContactEditor extends Component
     private function qsoTimeUnchanged(Contact $contact, string $qsoTime): bool
     {
         return $contact->qso_time !== null
-            && Carbon::parse($qsoTime)->format('Y-m-d H:i') === $contact->qso_time->format('Y-m-d H:i');
+            && Carbon::parse($qsoTime)->format(self::QSO_TIME_FORMAT) === $contact->qso_time->format(self::QSO_TIME_FORMAT);
     }
 
     #[On('open-bulk-change-logger')]

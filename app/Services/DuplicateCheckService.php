@@ -442,20 +442,24 @@ class DuplicateCheckService
 
         $priceKey = $mode->id.'|'.(int) $contact->is_gota_contact;
 
-        if ($this->bulkPrices !== null && isset($this->bulkPrices[$priceKey])) {
-            return $this->bulkPrices[$priceKey];
-        }
+        return $this->bulkPrices[$priceKey] ?? $this->priceContact($contact, $config, $mode, $priceKey);
+    }
 
+    /**
+     * Price a contact under the rulebook, remembering the price during a bulk run.
+     */
+    private function priceContact(Contact $contact, EventConfiguration $config, Mode $mode, string $priceKey): int
+    {
         try {
             $points = $config->pointsForContact($mode, Station::make(['is_gota' => (bool) $contact->is_gota_contact]));
-
-            if ($this->bulkPrices !== null) {
-                $this->bulkPrices[$priceKey] = $points;
-            }
-
-            return $points;
         } catch (UnknownRuleSet) {
             return (int) $contact->points;
         }
+
+        if ($this->bulkPrices !== null) {
+            $this->bulkPrices[$priceKey] = $points;
+        }
+
+        return $points;
     }
 }

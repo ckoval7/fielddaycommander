@@ -630,6 +630,12 @@ set_env() {
     return 0
 }
 
+# Print the last value set for a key in the app's .env, without quotes.
+get_env() {
+    local key="$1"
+    grep -E "^${key}=" "$APP_PATH/.env" | tail -1 | cut -d= -f2- | tr -d '"' || true
+}
+
 # Ask the user whether to migrate to Redis on first run. Returns 0 = migrate,
 # 1 = skip. Non-interactive runs skip with a warning (use --with-redis or
 # --no-redis to silence).
@@ -883,7 +889,7 @@ migrate_env_settings() {
     local changed=false app_url site_address
 
     # Secure session cookie when the site is served over HTTPS.
-    app_url=$(grep -E '^APP_URL=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' || true)
+    app_url=$(get_env APP_URL)
     if [[ "$app_url" == https://* ]] && ! grep -qE '^SESSION_SECURE_COOKIE=' "$env_file"; then
         set_env "SESSION_SECURE_COOKIE" "true"
         log_info "Enabled SESSION_SECURE_COOKIE (APP_URL is HTTPS)"
@@ -1001,8 +1007,7 @@ note_trusted_hosts() {
     local env_file="$APP_PATH/.env" app_host
     grep -qE '^TRUSTED_HOSTS=' "$env_file" && return 0
 
-    app_host=$(grep -E '^APP_URL=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' \
-        | sed -E 's#^[a-z]+://##; s#[:/].*$##' || true)
+    app_host=$(get_env APP_URL | sed -E 's#^[a-z]+://##; s#[:/].*$##' || true)
     set_env "TRUSTED_HOSTS" ""
     chown "root:${WEB_GROUP}" "$env_file"
     chmod 640 "$env_file"
@@ -1204,8 +1209,8 @@ check_units_stay_up() {
 # site address from .env.
 check_app_answers() {
     local env_file="$APP_PATH/.env" address scheme hostport host port url code="000" tries
-    address=$(grep -E '^CADDY_SITE_ADDRESS=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' || true)
-    [[ -n "$address" ]] || address=$(grep -E '^APP_URL=' "$env_file" | tail -1 | cut -d= -f2- | tr -d '"' || true)
+    address=$(get_env CADDY_SITE_ADDRESS)
+    [[ -n "$address" ]] || address=$(get_env APP_URL)
     scheme="http"
     [[ "$address" == https://* ]] && scheme="https"
     hostport="${address#*://}"
@@ -1306,7 +1311,7 @@ main() {
     git_sha=$(app_git rev-parse --short HEAD 2>/dev/null || echo 'unknown')
 
     echo -e "  Version:  ${app_version} (${git_sha})"
-    echo -e "  App URL:  $(grep '^APP_URL=' "$APP_PATH/.env" | cut -d= -f2-)"
+    echo -e "  App URL:  $(get_env APP_URL)"
     echo ""
     echo -e "${BOLD}Service Status${NC}"
     echo "  FrankenPHP:   $(systemctl is-active fdcommander.service)"

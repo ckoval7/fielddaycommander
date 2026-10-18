@@ -32,6 +32,8 @@ class EventForm extends Component
      *
      * @var array<string, string>
      */
+    private const POWER_SOURCES = 'power sources';
+
     private const LOCKED_FIELDS = [
         'event_type_id' => 'event type',
         'start_time' => 'start date',
@@ -39,15 +41,15 @@ class EventForm extends Component
         'operating_class_id' => 'operating class',
         'transmitter_count' => 'transmitter count',
         'max_power_watts' => 'maximum power',
-        'uses_commercial_power' => 'power sources',
-        'uses_generator' => 'power sources',
-        'uses_battery' => 'power sources',
-        'uses_solar' => 'power sources',
-        'uses_wind' => 'power sources',
-        'uses_water' => 'power sources',
-        'uses_methane' => 'power sources',
-        'uses_alternate_power' => 'power sources',
-        'uses_other_power' => 'power sources',
+        'uses_commercial_power' => self::POWER_SOURCES,
+        'uses_generator' => self::POWER_SOURCES,
+        'uses_battery' => self::POWER_SOURCES,
+        'uses_solar' => self::POWER_SOURCES,
+        'uses_wind' => self::POWER_SOURCES,
+        'uses_water' => self::POWER_SOURCES,
+        'uses_methane' => self::POWER_SOURCES,
+        'uses_alternate_power' => self::POWER_SOURCES,
+        'uses_other_power' => self::POWER_SOURCES,
         'has_gota_station' => 'GOTA station',
         'gota_callsign' => 'GOTA callsign',
     ];
