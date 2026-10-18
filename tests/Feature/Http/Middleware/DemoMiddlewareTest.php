@@ -126,3 +126,42 @@ test('ignores a demo_session cookie that was not encrypted by the app', function
 
     $this->assertGuest();
 });
+
+test('sends a visitor whose account another participant locked to the landing page instead of looping', function () {
+    assumeDemoDatabasesExist();
+    $visitor = User::factory()->create(['account_locked_at' => now()]);
+    $visitor->assignRole(Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']));
+    $cookie = ['demo_session' => Str::uuid().'|'.$visitor->id];
+
+    // A new worker (or any non-Octane request) re-signs the visitor in from the cookie.
+    foreach (['/', '/login?account=locked'] as $path) {
+        Config::set('database.connections.demo.database', 'demo_base');
+
+        $this->withCookies($cookie)->get($path)
+            ->assertRedirect(route('demo.landing', ['account' => 'locked']));
+
+        $this->assertGuest();
+    }
+
+    // A worker already on the visitor's database finds them in the session.
+    $this->actingAs($visitor);
+    $this->withCookies($cookie)->get('/')
+        ->assertRedirect(route('demo.landing', ['account' => 'locked']));
+    $this->assertGuest();
+
+    $this->get(route('demo.landing', ['account' => 'locked']))
+        ->assertOk()
+        ->assertSee(DemoMiddleware::LOCKED_MESSAGE);
+});
+
+test('tells Livewire requests from a locked visitor to go to the landing page', function () {
+    assumeDemoDatabasesExist();
+    $visitor = User::factory()->create(['account_locked_at' => now()]);
+
+    $this->withCredentials()
+        ->withCookies(['demo_session' => Str::uuid().'|'.$visitor->id])
+        ->withHeader('X-Livewire', '1')
+        ->getJson('/')
+        ->assertStatus(419)
+        ->assertJson(['redirect' => route('demo.landing', ['account' => 'locked'])]);
+});

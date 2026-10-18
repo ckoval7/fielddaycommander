@@ -27,6 +27,8 @@
 
     @if(session('error'))
         <div class="alert alert-error mb-6">{{ session('error') }}</div>
+    @elseif(request()->query(\App\Http\Middleware\DemoMiddleware::LOCKED_REASON_PARAMETER) === 'locked')
+        <div class="alert alert-error mb-6">{{ \App\Http\Middleware\DemoMiddleware::LOCKED_MESSAGE }}</div>
     @endif
 
     {{-- Every provisioning slot was busy: the script below resubmits the

@@ -14,6 +14,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DemoMiddleware
 {
+    public const string LOCKED_MESSAGE = 'Another participant in this sandbox locked your account. Ask them to unlock it, or start a new demo.';
+
+    /**
+     * Query parameter the landing page reads to explain why the visitor was sent there.
+     */
+    public const string LOCKED_REASON_PARAMETER = 'account';
+
     /**
      * Handle an incoming request.
      *
@@ -53,6 +60,10 @@ class DemoMiddleware
                 $this->signInVisitor($visitor->userId);
             }
 
+            if ($this->isVisitorLocked($request, $visitor->userId)) {
+                return $this->lockedOut($request);
+            }
+
             return $next($request);
         }
 
@@ -70,7 +81,58 @@ class DemoMiddleware
             $this->signInVisitor($visitor->userId);
         }
 
+        if ($this->isVisitorLocked($request, $visitor->userId)) {
+            return $this->lockedOut($request);
+        }
+
         return $next($request);
+    }
+
+    /**
+     * Whether another participant in the sandbox locked the visitor's account.
+     *
+     * Station-mode browsers are left to station mode: they sign in whoever is
+     * at the station, not the account in the cookie.
+     */
+    protected function isVisitorLocked(Request $request, int $userId): bool
+    {
+        if ($this->isStationModeBrowser($request)) {
+            return false;
+        }
+
+        $user = Auth::id() === $userId ? Auth::user() : User::find($userId);
+
+        return $user?->isLocked() ?? false;
+    }
+
+    /**
+     * Send a locked-out visitor to the demo landing page.
+     *
+     * Their cookie re-signs them in on every request, so sending them to the
+     * login page the way EnsureAccountNotLocked does would loop forever. The
+     * cookie is kept so they get their sandbox back if they are unlocked. The
+     * reason travels in the URL, since a flashed message can be used up by
+     * another request (such as the analytics beacon) before the landing page
+     * loads.
+     */
+    protected function lockedOut(Request $request): Response
+    {
+        if (Auth::check()) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        $landingUrl = route('demo.landing', [self::LOCKED_REASON_PARAMETER => 'locked']);
+
+        if ($request->expectsJson() || $request->isJson() || $request->hasHeader('X-Livewire')) {
+            return response()->json([
+                'message' => self::LOCKED_MESSAGE,
+                'redirect' => $landingUrl,
+            ], 419);
+        }
+
+        return redirect()->to($landingUrl);
     }
 
     /**
@@ -116,7 +178,7 @@ class DemoMiddleware
     {
         $user = User::find($userId);
 
-        if ($user) {
+        if ($user && ! $user->isLocked()) {
             Auth::setUser($user);
             session(['dev_role_override' => $user->roles->first()?->name ?? '']);
         }
