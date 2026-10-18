@@ -1270,7 +1270,7 @@ check_units_stay_up() {
 # Ask the app's health route (/up) through Caddy, on this machine, using the
 # site address from .env.
 check_app_answers() {
-    local env_file="$APP_PATH/.env" address scheme hostport host port url code="000" tries
+    local address scheme hostport host port url code="000" tries
     address=$(get_env CADDY_SITE_ADDRESS)
     [[ -n "$address" ]] || address=$(get_env APP_URL)
     scheme="http"
