@@ -100,14 +100,20 @@
                         class="space-y-2"
                     >
                         <div x-ref="viewport" class="max-h-[70dvh] overflow-auto overscroll-contain rounded-lg bg-base-200">
-                            <img
+                            <button
+                                type="button"
                                 x-ref="photo"
-                                src="{{ route('gallery.image', $currentImage) }}"
-                                alt="{{ $currentImage->caption ?? 'Gallery entry' }}"
                                 class="block w-full"
                                 :class="zoomed ? 'max-w-none !w-[250%] cursor-zoom-out' : 'cursor-zoom-in'"
+                                :aria-label="zoomed ? 'Fit photo to screen' : 'Zoom into photo'"
                                 @click="toggle($event)"
                             >
+                                <img
+                                    src="{{ route('gallery.image', $currentImage) }}"
+                                    alt="{{ $currentImage->caption ?? 'Gallery entry' }}"
+                                    class="block w-full"
+                                >
+                            </button>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <button
