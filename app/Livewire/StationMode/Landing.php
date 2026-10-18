@@ -24,6 +24,8 @@ class Landing extends Component
 
     public bool $needsName = false;
 
+    public bool $isYouth = false;
+
     public bool $showExitModal = false;
 
     public string $exitEmail = '';
@@ -70,6 +72,7 @@ class Landing extends Component
     public function updatedCallSign(): void
     {
         $this->needsName = false;
+        $this->isYouth = false;
         $this->resetValidation();
     }
 
@@ -129,6 +132,12 @@ class Landing extends Component
         $user = $existing && ! $resolver->hasPlaceholderName($existing)
             ? $existing
             : $resolver->resolveOrCreate($this->callSign, $this->firstName, $this->lastName);
+
+        // Only the name step for a new ghost asks the age question, so the flag
+        // is never set on (or cleared from) a member signing in.
+        if ($this->needsName && $this->isYouth && $user->is_ghost && ! $user->is_youth) {
+            $user->update(['is_youth' => true]);
+        }
 
         StationMode::startSession($device, $user->id);
 

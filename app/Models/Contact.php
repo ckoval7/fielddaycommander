@@ -59,6 +59,46 @@ class Contact extends Model
         ];
     }
 
+    /**
+     * Flag satellite contacts from their band and station on every logging path.
+     *
+     * A contact counts as a satellite QSO when it is on the Satellite band or
+     * logged in a session on a Satellite Station. Browser logging, transcription,
+     * ADIF import and external loggers all build a Contact and save it, so the
+     * flag is derived here rather than in each path. This overrides save()
+     * rather than listening for the saving event because ADIF import and the
+     * duplicate checker save quietly, which skips model events. An explicitly
+     * set flag is kept, and the flag is re-derived when the band or session
+     * changes.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    public function save(array $options = []): bool
+    {
+        if (! $this->exists || $this->isDirty(['band_id', 'operating_session_id'])) {
+            $explicitlyFlagged = $this->is_satellite && (! $this->exists || $this->isDirty('is_satellite'));
+
+            $this->is_satellite = $explicitlyFlagged || $this->isOnSatelliteBandOrStation();
+        }
+
+        return parent::save($options);
+    }
+
+    /**
+     * Determine whether the contact's band or its session's station is a satellite one.
+     */
+    public function isOnSatelliteBandOrStation(): bool
+    {
+        if ($this->band_id !== null && Band::whereKey($this->band_id)->where('is_satellite', true)->exists()) {
+            return true;
+        }
+
+        return $this->operating_session_id !== null
+            && OperatingSession::whereKey($this->operating_session_id)
+                ->whereHas('station', fn (Builder $query) => $query->withTrashed()->where('is_satellite', true))
+                ->exists();
+    }
+
     public function eventConfiguration(): BelongsTo
     {
         return $this->belongsTo(EventConfiguration::class);

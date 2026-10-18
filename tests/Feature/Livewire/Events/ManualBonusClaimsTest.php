@@ -348,3 +348,113 @@ test('claim checkbox prevents native toggling and re-keys on state change', func
         ->assertSeeHtml("\$wire.unclaim({$bonusType->id})")
         ->assertSeeHtml('confirm(');
 });
+
+test('lists only bonuses with no other way to be earned', function (string $rulesVersion) {
+    $this->event->update(['rules_version' => $rulesVersion]);
+
+    $codes = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event->fresh()])
+        ->instance()
+        ->eligibleBonusTypes
+        ->pluck('code')
+        ->sort()
+        ->values()
+        ->all();
+
+    expect($codes)->toBe([
+        'educational_activity',
+        'media_publicity',
+        'natural_power',
+        'public_info_booth',
+        'public_location',
+        'social_media',
+        'web_submission',
+    ]);
+})->with(['2025', '2026']);
+
+test('computed and checklist bonuses are not shown as manual claims', function () {
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->assertDontSee('Emergency Power')
+        ->assertDontSee('Satellite QSO')
+        ->assertDontSee('Safety Officer')
+        ->assertDontSee('Site Responsibilities');
+});
+
+test('youth card lists operators who logged this event with their youth flag', function () {
+    $ghost = User::factory()->create(['call_sign' => 'KD2KID', 'is_ghost' => true, 'is_youth' => false]);
+    $member = User::factory()->create(['call_sign' => 'W1YTH', 'is_youth' => true]);
+    $elsewhere = User::factory()->create(['call_sign' => 'N0PE']);
+
+    Contact::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'logger_user_id' => $ghost->id, 'is_duplicate' => false]);
+    Contact::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'logger_user_id' => $member->id, 'is_duplicate' => false]);
+    Contact::factory()->create(['logger_user_id' => $elsewhere->id, 'is_duplicate' => false]);
+
+    $component = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->assertSee('KD2KID')
+        ->assertSee('W1YTH')
+        ->assertDontSee('N0PE');
+
+    expect($component->instance()->youthStatus['auto_count'])->toBe(1);
+});
+
+test('event manager can flag a ghost operator as youth from the card', function () {
+    $ghost = User::factory()->create(['call_sign' => 'KD2KID', 'is_ghost' => true, 'is_youth' => false]);
+    Contact::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'logger_user_id' => $ghost->id, 'is_duplicate' => false]);
+
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->call('toggleOperatorYouth', $ghost->id)
+        ->assertDispatched('bonus-claimed');
+
+    expect($ghost->fresh()->is_youth)->toBeTrue()
+        ->and($this->eventConfig->fresh()->calculateYouthBonus())->toBe(20)
+        ->and(AuditLog::where('action', 'user.youth_flag_changed')->exists())->toBeTrue();
+});
+
+test('cannot toggle youth on a user who did not log this event', function () {
+    $outsider = User::factory()->create(['is_youth' => false]);
+
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->call('toggleOperatorYouth', $outsider->id);
+
+    expect($outsider->fresh()->is_youth)->toBeFalse();
+});
+
+test('users without verify-bonuses cannot toggle operator youth', function () {
+    $ghost = User::factory()->create(['is_ghost' => true, 'is_youth' => false]);
+    Contact::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'logger_user_id' => $ghost->id, 'is_duplicate' => false]);
+
+    Livewire::actingAs(User::factory()->create())
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->call('toggleOperatorYouth', $ghost->id);
+
+    expect($ghost->fresh()->is_youth)->toBeFalse();
+});
+
+test('youth with no account count toward the score', function () {
+    Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->set('additionalYouth', 2)
+        ->call('saveAdditionalYouth');
+
+    expect($this->eventConfig->fresh()->calculateYouthBonus())->toBe(40);
+});
+
+test('flagging an operator moves one youth off the no-account count so nobody is counted twice', function () {
+    $ghost = User::factory()->create(['call_sign' => 'KD2KID', 'is_ghost' => true, 'is_youth' => false]);
+    Contact::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'logger_user_id' => $ghost->id, 'is_duplicate' => false]);
+
+    $component = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event])
+        ->set('additionalYouth', 1)
+        ->call('saveAdditionalYouth')
+        ->call('toggleOperatorYouth', $ghost->id)
+        ->assertSet('additionalYouth', 0)
+        ->assertDispatched('toast', title: 'Youth count adjusted');
+
+    expect($component->instance()->youthStatus['total'])->toBe(1)
+        ->and($this->eventConfig->fresh()->calculateYouthBonus())->toBe(20);
+});

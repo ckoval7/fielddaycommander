@@ -271,6 +271,28 @@ test('calculateBonusScore returns sum of verified bonus points', function () {
     expect($config->calculateBonusScore())->toBe(150);
 });
 
+test('calculateBonusScore ignores a stored bonus the operating class is not eligible for', function () {
+    $config = EventConfiguration::factory()->create();
+    $classF = OperatingClass::where('event_type_id', $config->event->event_type_id)->where('code', 'F')->first();
+    $config->update(['operating_class_id' => $classF->id]);
+
+    EventBonus::factory()->create([
+        'event_configuration_id' => $config->id,
+        'bonus_type_id' => BonusType::factory()->create(['code' => 'safety_officer', 'eligible_classes' => ['A']])->id,
+        'calculated_points' => 100,
+        'is_verified' => true,
+    ]);
+
+    EventBonus::factory()->create([
+        'event_configuration_id' => $config->id,
+        'bonus_type_id' => BonusType::factory()->create(['code' => 'site_responsibilities', 'eligible_classes' => ['B', 'C', 'D', 'E', 'F']])->id,
+        'calculated_points' => 50,
+        'is_verified' => true,
+    ]);
+
+    expect($config->fresh()->calculateBonusScore())->toBe(50);
+});
+
 test('calculateFinalScore returns QSO score plus bonus score', function () {
     $config = EventConfiguration::factory()->create([
         'max_power_watts' => 100,

@@ -486,8 +486,8 @@ class EventConfiguration extends Model
     /**
      * Calculate youth participation bonus via the event's RuleSet.
      *
-     * Combines auto-counted registered youth with QSOs and any manual
-     * additional youth stored in the EventBonus notes field.
+     * Combines auto-counted registered youth with QSOs and the youth with no
+     * account entered on the event's Youth Participation card.
      */
     public function calculateYouthBonus(): int
     {
@@ -508,7 +508,7 @@ class EventConfiguration extends Model
             $bonus = $this->bonuses()
                 ->where('bonus_type_id', $bonusType->id)
                 ->first();
-            $additional = $bonus ? (int) ($bonus->notes ?? 0) : 0;
+            $additional = (int) ($bonus?->manual_quantity_adjustment ?? 0);
         }
 
         $total = min($autoCount + $additional, $maxOccurrences);
@@ -555,7 +555,7 @@ class EventConfiguration extends Model
      * The column is decoded defensively because older rows store the list as a
      * JSON string rather than an array.
      */
-    protected function isClassEligibleForBonus(BonusType $bonusType): bool
+    public function isClassEligibleForBonus(BonusType $bonusType): bool
     {
         $eligibleClasses = $bonusType->eligible_classes;
 
@@ -615,6 +615,9 @@ class EventConfiguration extends Model
         $storedBonuses = (int) $this->bonuses()
             ->where('is_verified', true)
             ->whereHas('bonusType', fn ($q) => $q->whereNotIn('code', ['youth_participation', 'emergency_power', 'satellite_qso']))
+            ->with('bonusType')
+            ->get()
+            ->filter(fn (EventBonus $bonus): bool => $this->isClassEligibleForBonus($bonus->bonusType))
             ->sum('calculated_points');
 
         return $storedBonuses + $this->calculateYouthBonus() + $this->calculateEmergencyPowerBonus() + $this->calculateSatelliteBonus();

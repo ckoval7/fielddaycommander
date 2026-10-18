@@ -91,6 +91,19 @@ describe('Seeding', function () {
             ->not->toContain('Site Responsibilities');
     });
 
+    test('seedDefaults gives Class F site responsibilities but not safety officer', function () {
+        $eventConfiguration = EventConfiguration::factory()->create();
+        $eventConfiguration->update([
+            'operating_class_id' => OperatingClass::where('event_type_id', $eventConfiguration->event->event_type_id)->where('code', 'F')->value('id'),
+        ]);
+
+        ShiftRole::seedDefaults($eventConfiguration->fresh());
+
+        expect(ShiftRole::forEvent($eventConfiguration->id)->pluck('name')->toArray())
+            ->toContain('Site Responsibilities')
+            ->not->toContain('Safety Officer');
+    });
+
     test('seedDefaults gives Winter Field Day classes the general roles', function (string $code) {
         $eventConfiguration = EventConfiguration::factory()->create([
             'operating_class_id' => OperatingClass::factory()->create(['code' => $code])->id,

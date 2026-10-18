@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\BonusType;
 use App\Models\Event;
 use App\Models\EventBonus;
+use App\Models\User;
 use App\Scoring\Dto\Nomenclature;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -26,6 +27,11 @@ class ManualBonusClaims extends Component
     public array $quantities = [];
 
     public int $additionalYouth = 0;
+
+    public function mount(): void
+    {
+        $this->additionalYouth = $this->youthStatus['additional'] ?? 0;
+    }
 
     /**
      * The award wording this event's rulebook uses ("Bonus" vs "Objective").
@@ -230,7 +236,6 @@ class ManualBonusClaims extends Component
             ->first();
 
         $additional = $bonus ? (int) ($bonus->manual_quantity_adjustment ?? 0) : 0;
-        $this->additionalYouth = $additional;
 
         $total = min($autoCount + $additional, $bonusType->max_occurrences ?? 5);
 
@@ -241,6 +246,81 @@ class ManualBonusClaims extends Component
             'points' => $total * $bonusType->base_points,
             'max_points' => $bonusType->max_points ?? 100,
         ];
+    }
+
+    /**
+     * Operators who logged a non-duplicate contact this event, with their youth flag.
+     *
+     * Covers members and ghost accounts created at station-mode sign-in, by
+     * external loggers or by ADIF import, so an event manager can flag youth
+     * without user-management access.
+     *
+     * @return Collection<int, User>
+     */
+    #[Computed]
+    public function eventOperators(): Collection
+    {
+        $config = $this->event->eventConfiguration;
+
+        if (! $config || ! $this->youthStatus) {
+            return collect();
+        }
+
+        $operatorIds = $config->contacts()->notDuplicate()->whereNotNull('logger_user_id')->distinct()->pluck('logger_user_id')
+            ->merge($config->contacts()->notDuplicate()->where('is_gota_contact', true)->whereNotNull('gota_operator_user_id')->distinct()->pluck('gota_operator_user_id'))
+            ->unique();
+
+        return User::query()
+            ->whereIn('id', $operatorIds)
+            ->excludeSystem()
+            ->orderBy('call_sign')
+            ->get(['id', 'call_sign', 'first_name', 'last_name', 'is_youth', 'is_ghost']);
+    }
+
+    /**
+     * Flag or unflag an operator who logged this event as youth (age 18 or younger).
+     *
+     * Flagging someone while the no-account count is above zero moves one
+     * youth off that count, since that person was most likely entered there
+     * before their account was flagged. The manager can raise it again.
+     */
+    public function toggleOperatorYouth(int $userId): void
+    {
+        if (! auth()->user()?->can('verify-bonuses')) {
+            return;
+        }
+
+        $operator = $this->eventOperators->firstWhere('id', $userId);
+
+        if (! $operator) {
+            return;
+        }
+
+        $isYouth = ! $operator->is_youth;
+        $operator->update(['is_youth' => $isYouth]);
+
+        AuditLog::log(
+            action: 'user.youth_flag_changed',
+            auditable: $operator,
+            oldValues: ['is_youth' => ! $isYouth],
+            newValues: ['is_youth' => $isYouth],
+        );
+
+        unset($this->youthStatus);
+        $status = $this->youthStatus;
+
+        if ($isYouth && $status && $status['additional'] > 0) {
+            $this->additionalYouth = $status['additional'] - 1;
+            $this->dispatch('toast',
+                title: 'Youth count adjusted',
+                description: "Moved one youth from the no-account count to {$operator->call_sign}.",
+                icon: 'phosphor-info',
+                css: 'alert-info'
+            );
+        }
+
+        unset($this->eventOperators);
+        $this->saveAdditionalYouth();
     }
 
     public function saveAdditionalYouth(): void

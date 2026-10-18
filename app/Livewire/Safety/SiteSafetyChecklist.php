@@ -46,15 +46,7 @@ class SiteSafetyChecklist extends Component
             return [];
         }
 
-        $operatingClass = $this->eventConfig->operatingClass;
-        $classLetter = $operatingClass ? preg_replace('/\d+/', '', $operatingClass->code) : null;
-
-        return match ($classLetter) {
-            'A' => [ChecklistType::SafetyOfficer],
-            'B', 'C', 'D', 'E' => [ChecklistType::SiteResponsibilities],
-            'F' => [ChecklistType::SafetyOfficer, ChecklistType::SiteResponsibilities],
-            default => [],
-        };
+        return SafetyChecklistItem::checklistTypesFor($this->eventConfig);
     }
 
     /**
@@ -231,7 +223,7 @@ class SiteSafetyChecklist extends Component
         $event = $this->eventConfig?->event;
         $bonusType = $event ? BonusType::resolveFor($event, $bonusTypeCode) : null;
 
-        if (! $bonusType) {
+        if (! $bonusType || ! $this->eventConfig->isClassEligibleForBonus($bonusType)) {
             return;
         }
 
