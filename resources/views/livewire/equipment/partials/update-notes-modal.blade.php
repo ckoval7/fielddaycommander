@@ -20,7 +20,6 @@
                 type="submit"
                 class="btn-primary"
                 spinner="updateNotes"
-                wire:click="updateNotes({{ $updateNoteId }}, $wire.tempNotes)"
             />
         </x-slot:actions>
     </x-form>

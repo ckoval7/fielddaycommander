@@ -363,6 +363,47 @@ test('equipment manager can change commitment status for any user equipment', fu
     expect($commitment->fresh()->status)->toBe('delivered');
 });
 
+test('equipment manager can update notes from the notes modal', function () {
+    $this->actingAs(makeAllEquipmentManager());
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => Equipment::factory()->create(['owner_user_id' => User::factory()->create()->id])->id,
+        'event_id' => Event::factory()->create()->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Original notes',
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->call('openNotesModal', $commitment->id)
+        ->assertSet('tempNotes', 'Original notes')
+        ->set('tempNotes', 'Arriving Friday evening')
+        ->call('updateNotes')
+        ->assertHasNoErrors()
+        ->assertSet('showNotesModal', false)
+        ->assertDispatched('notify');
+
+    expect($commitment->fresh()->delivery_notes)->toBe('Arriving Friday evening');
+});
+
+test('notes modal rejects notes over 500 characters', function () {
+    $this->actingAs(makeAllEquipmentManager());
+
+    $commitment = EquipmentEvent::factory()->create([
+        'equipment_id' => Equipment::factory()->create(['owner_user_id' => User::factory()->create()->id])->id,
+        'event_id' => Event::factory()->create()->id,
+        'status' => 'committed',
+        'delivery_notes' => 'Original notes',
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->call('openNotesModal', $commitment->id)
+        ->set('tempNotes', str_repeat('a', 501))
+        ->call('updateNotes')
+        ->assertHasErrors(['tempNotes' => 'max']);
+
+    expect($commitment->fresh()->delivery_notes)->toBe('Original notes');
+});
+
 test('viewer cannot change commitment status', function () {
     $this->actingAs($this->user);
 
