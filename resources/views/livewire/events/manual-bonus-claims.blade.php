@@ -94,8 +94,41 @@
                         <x-badge :value="$youth['auto_count']" class="{{ $youth['auto_count'] > 0 ? 'badge-success' : 'badge-ghost' }} badge-sm" />
                     </div>
 
+                    @if($this->eventOperators->isNotEmpty())
+                        <details class="collapse collapse-arrow bg-base-200/50 rounded-box">
+                            <summary class="collapse-title text-sm min-h-0 py-2">Operators this event ({{ $this->eventOperators->count() }})</summary>
+                            <div class="collapse-content">
+                                <ul class="divide-y divide-base-300">
+                                    @foreach($this->eventOperators as $operator)
+                                        <li wire:key="youth-operator-{{ $operator->id }}">
+                                            <label class="flex items-center justify-between gap-3 py-1.5 cursor-pointer">
+                                                <span class="text-sm">
+                                                    <span class="font-mono">{{ $operator->call_sign }}</span>
+                                                    <span class="text-base-content/60">{{ trim($operator->first_name.' '.$operator->last_name) }}</span>
+                                                </span>
+                                                <span class="flex items-center gap-2 text-xs text-base-content/60">
+                                                    Youth
+                                                    <input
+                                                        type="checkbox"
+                                                        class="toggle toggle-sm toggle-success"
+                                                        @checked($operator->is_youth)
+                                                        wire:click="toggleOperatorYouth({{ $operator->id }})"
+                                                        aria-label="Youth (age 18 or younger): {{ $operator->call_sign }}"
+                                                    />
+                                                </span>
+                                            </label>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </details>
+                    @endif
+
                     <div class="flex items-center justify-between gap-3">
-                        <label for="additional-youth" class="text-sm">Additional non-account youth</label>
+                        <label for="additional-youth" class="text-sm">
+                            Youth with no account
+                            <span class="block text-xs text-base-content/50">Not in the log under their own callsign</span>
+                        </label>
                         <div class="flex items-center gap-2">
                             <input
                                 id="additional-youth"

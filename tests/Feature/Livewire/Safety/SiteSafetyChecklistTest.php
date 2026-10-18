@@ -7,6 +7,7 @@ use App\Models\BonusType;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
+use App\Models\OperatingClass;
 use App\Models\SafetyChecklistEntry;
 use App\Models\SafetyChecklistItem;
 use App\Models\Setting;
@@ -471,5 +472,65 @@ describe('audit logging', function () {
         expect($auditLog->user_id)->toBe($this->safetyOfficer->id);
         expect($auditLog->new_values['is_completed'])->toBeTrue();
         expect($auditLog->new_values['label'])->toBe('Fire Extinguisher Check');
+    });
+});
+
+// =============================================================================
+// Checklist types by operating class
+// =============================================================================
+
+describe('checklist types by operating class', function () {
+    test('each operating class gets the checklist its bonus allows', function (string $classCode, array $expectedTypes) {
+        $operatingClass = OperatingClass::where('event_type_id', $this->event->event_type_id)->where('code', $classCode)->first()
+            ?? OperatingClass::create(['event_type_id' => $this->event->event_type_id, 'code' => $classCode, 'name' => 'Class '.$classCode]);
+        $this->eventConfig->update(['operating_class_id' => $operatingClass->id]);
+
+        $this->actingAs($this->regularUser);
+
+        expect(Livewire::test(SiteSafetyChecklist::class)->instance()->checklistTypes)->toBe($expectedTypes);
+    })->with([
+        'Class A' => ['A', [ChecklistType::SafetyOfficer]],
+        'Class B' => ['B', [ChecklistType::SiteResponsibilities]],
+        'Class C' => ['C', [ChecklistType::SiteResponsibilities]],
+        'Class D' => ['D', [ChecklistType::SiteResponsibilities]],
+        'Class E' => ['E', [ChecklistType::SiteResponsibilities]],
+        'Class F' => ['F', [ChecklistType::SiteResponsibilities]],
+        'Class H' => ['H', []],
+    ]);
+
+    test('class F seeds only site responsibilities items', function () {
+        $classF = OperatingClass::where('event_type_id', $this->event->event_type_id)->where('code', 'F')->first();
+        $this->eventConfig->update(['operating_class_id' => $classF->id]);
+
+        SafetyChecklistItem::seedDefaults($this->eventConfig->fresh());
+
+        expect(SafetyChecklistItem::forEvent($this->eventConfig->id)->pluck('checklist_type')->unique()->values()->all())
+            ->toBe([ChecklistType::SiteResponsibilities]);
+    });
+
+    test('a completed safety officer checklist awards nothing to a class F event', function () {
+        $classF = OperatingClass::where('event_type_id', $this->event->event_type_id)->where('code', 'F')->first();
+        $this->eventConfig->update(['operating_class_id' => $classF->id]);
+
+        BonusType::factory()->create([
+            'event_type_id' => $this->event->event_type_id,
+            'rules_version' => '2025',
+            'code' => 'safety_officer',
+            'base_points' => 100,
+            'eligible_classes' => ['A'],
+        ]);
+
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+        SafetyChecklistEntry::factory()->create(['safety_checklist_item_id' => $item->id]);
+
+        $this->actingAs($this->safetyOfficer);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->call('toggleItem', $item->id)
+            ->assertNotDispatched('bonus-claimed');
+
+        expect(EventBonus::where('event_configuration_id', $this->eventConfig->id)->count())->toBe(0);
     });
 });

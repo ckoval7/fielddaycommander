@@ -16,6 +16,10 @@ class BonusTypeSeeder extends Seeder
         'elected_official_visit' => 'derived',
         'agency_visit' => 'derived',
         'youth_participation' => 'hybrid',
+        'emergency_power' => 'derived',
+        'satellite_qso' => 'derived',
+        'safety_officer' => 'derived',
+        'site_responsibilities' => 'derived',
     ];
 
     /**

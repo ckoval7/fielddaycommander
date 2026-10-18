@@ -26,7 +26,7 @@ class ShiftRole extends Model
             'description' => 'Verifies all safety concerns on the Safety Officer checklist',
             'bonus_points' => 100,
             'requires_confirmation' => true,
-            'eligible_classes' => ['A', 'F'],
+            'eligible_classes' => ['A'],
             'icon' => 'phosphor-shield-check',
             'color' => '#dc2626',
         ],

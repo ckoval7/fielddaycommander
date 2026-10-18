@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ChecklistType;
+use Database\Factories\SafetyChecklistItemFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SafetyChecklistItem extends Model
 {
-    /** @use HasFactory<\Database\Factories\SafetyChecklistItemFactory> */
+    /** @use HasFactory<SafetyChecklistItemFactory> */
     use HasFactory, SoftDeletes;
 
     /**
@@ -241,26 +242,35 @@ class SafetyChecklistItem extends Model
     // Methods
 
     /**
-     * Seed default checklist items for an event configuration.
+     * Checklist types that apply to an event's operating class.
      *
-     * Class A → safety_officer items
-     * Class B/C/D/E → site_responsibilities items
-     * Class F → both safety_officer and site_responsibilities items
-     * Classes H/I/O/M → no checklist seeded
+     * ARRL 7.3.17 limits the Safety Officer bonus to Class A; 7.3.18 Site
+     * Responsibilities covers Classes B through F.
+     *
+     * @return list<ChecklistType>
      */
-    public static function seedDefaults(EventConfiguration $eventConfiguration): void
+    public static function checklistTypesFor(EventConfiguration $eventConfiguration): array
     {
         $operatingClass = $eventConfiguration->operatingClass;
         $classLetter = $operatingClass ? preg_replace('/\d+/', '', $operatingClass->code) : null;
 
-        $typesToSeed = match ($classLetter) {
+        return match ($classLetter) {
             'A' => [ChecklistType::SafetyOfficer],
-            'B', 'C', 'D', 'E' => [ChecklistType::SiteResponsibilities],
-            'F' => [ChecklistType::SafetyOfficer, ChecklistType::SiteResponsibilities],
+            'B', 'C', 'D', 'E', 'F' => [ChecklistType::SiteResponsibilities],
             default => [],
         };
+    }
 
-        foreach ($typesToSeed as $type) {
+    /**
+     * Seed default checklist items for an event configuration.
+     *
+     * Class A → safety_officer items
+     * Class B/C/D/E/F → site_responsibilities items
+     * Classes H/I/O/M → no checklist seeded
+     */
+    public static function seedDefaults(EventConfiguration $eventConfiguration): void
+    {
+        foreach (self::checklistTypesFor($eventConfiguration) as $type) {
             $defaults = self::DEFAULTS[$type->value] ?? [];
             $sortOrder = 0;
 

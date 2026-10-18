@@ -51,6 +51,10 @@
                         <x-input label="First name" wire:model="firstName" autocomplete="off" maxlength="50" />
                         <x-input label="Last name" wire:model="lastName" autocomplete="off" maxlength="50" />
                     </div>
+                    <label class="flex items-center gap-3 cursor-pointer py-2">
+                        <input type="checkbox" class="checkbox checkbox-sm" wire:model="isYouth" />
+                        <span class="text-sm">Youth (age 18 or younger)</span>
+                    </label>
                 @endif
 
                 <x-button label="Start Logging" type="submit" class="btn-primary w-full" icon="phosphor-play" spinner="start" />

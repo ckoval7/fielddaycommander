@@ -83,6 +83,47 @@ test('new callsign asks for a name then creates a ghost account', function () {
         ->and(AuditLog::where('action', 'station_mode.session_started')->exists())->toBeTrue();
 });
 
+test('new ghost account can be flagged as youth at sign-in', function () {
+    landing()
+        ->set('callSign', 'kd2kid')
+        ->call('start')
+        ->assertSet('needsName', true)
+        ->assertSee('Youth (age 18 or younger)')
+        ->set('firstName', 'Sam')
+        ->set('lastName', 'Young')
+        ->set('isYouth', true)
+        ->call('start')
+        ->assertRedirect(route('logging.station-select'));
+
+    expect(User::where('call_sign', 'KD2KID')->sole()->is_youth)->toBeTrue();
+});
+
+test('new ghost account is not youth unless the box is checked', function () {
+    landing()
+        ->set('callSign', 'kd2adt')
+        ->call('start')
+        ->set('firstName', 'Alex')
+        ->set('lastName', 'Adult')
+        ->call('start');
+
+    expect(User::where('call_sign', 'KD2ADT')->sole()->is_youth)->toBeFalse();
+});
+
+test('existing member is not asked about age and keeps their youth flag', function () {
+    $member = User::factory()->create(['call_sign' => 'W1MEM', 'is_youth' => false]);
+    $member->assignRole('Operator');
+
+    landing()
+        ->set('callSign', 'w1mem')
+        ->set('isYouth', true)
+        ->call('start')
+        ->assertSet('needsName', false)
+        ->assertDontSee('Youth (age 18 or younger)')
+        ->assertRedirect(route('logging.station-select'));
+
+    expect($member->fresh()->is_youth)->toBeFalse();
+});
+
 test('new callsign requires a name', function () {
     landing()
         ->set('callSign', 'KD2ABC')
