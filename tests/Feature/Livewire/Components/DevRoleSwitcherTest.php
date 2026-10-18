@@ -197,3 +197,19 @@ it('renders and stores overrides in production demo mode with developer mode off
 
     expect(session('dev_role_override'))->toBe('Operator');
 });
+
+it('collapses to a one-line summary that names the active override', function () {
+    config(['developer.enabled' => true]);
+    Role::create(['name' => 'Operator', 'guard_name' => 'web']);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(DevRoleSwitcher::class)
+        ->assertSeeHtml('<details')
+        ->assertDontSeeHtml('<details open')
+        ->assertSee('Your own role')
+        ->set('role', 'Operator')
+        ->set('callSign', 'K1ABC')
+        ->assertSeeText('Operator · K1ABC');
+});
