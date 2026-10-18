@@ -1,0 +1,106 @@
+version = 1
+SPDX-PackageName = "FD Commander website"
+SPDX-PackageSupplier = "Corey Koval <ckoval7@gmail.com>"
+SPDX-PackageDownloadLocation = "https://github.com/ckoval7/fielddaycommander"
+
+# The site's JavaScript and CSS carry their own SPDX headers. This file covers
+# everything else. When several annotations match a file, the last one wins.
+
+# Default: the app snapshot this branch still carries from main, and tooling.
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2026 Corey Koval <ckoval7@gmail.com>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Creative works: the website, images, and documentation.
+[[annotations]]
+path = [
+    "docs/**",
+    "public/favicon.ico",
+    "public/favicon.png",
+    "README.md",
+    "DOCKER.md",
+]
+SPDX-FileCopyrightText = "2026 Corey Koval <ckoval7@gmail.com>"
+SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
+
+# Files that started from the MIT-licensed Laravel application skeleton and
+# first-party Laravel packages, and CLAUDE.md, which embeds the MIT-licensed
+# Laravel Boost guidelines.
+[[annotations]]
+path = [
+    "CLAUDE.md",
+    "composer.json",
+    "package.json",
+    "phpunit.xml",
+    ".env.example",
+    ".editorconfig",
+    ".gitattributes",
+    ".gitignore",
+    "**/.gitignore",
+    "public/robots.txt",
+    "app/Actions/Fortify/CreateNewUser.php",
+    "app/Actions/Fortify/PasswordValidationRules.php",
+    "app/Actions/Fortify/ResetUserPassword.php",
+    "app/Actions/Fortify/UpdateUserPassword.php",
+    "app/Actions/Fortify/UpdateUserProfileInformation.php",
+    "app/Http/Controllers/Controller.php",
+    "app/Models/User.php",
+    "app/Providers/AppServiceProvider.php",
+    "app/Providers/EventServiceProvider.php",
+    "app/Providers/FortifyServiceProvider.php",
+    "artisan",
+    "bootstrap/app.php",
+    "bootstrap/providers.php",
+    "config/app.php",
+    "config/auth.php",
+    "config/cache.php",
+    "config/cors.php",
+    "config/database.php",
+    "config/filesystems.php",
+    "config/fortify.php",
+    "config/logging.php",
+    "config/mail.php",
+    "config/octane.php",
+    "config/queue.php",
+    "config/reverb.php",
+    "config/services.php",
+    "config/session.php",
+    "database/factories/UserFactory.php",
+    "database/migrations/0001_01_01_000000_create_users_table.php",
+    "database/migrations/0001_01_01_000001_create_cache_table.php",
+    "database/migrations/0001_01_01_000002_create_jobs_table.php",
+    "database/seeders/DatabaseSeeder.php",
+    "public/index.php",
+    "resources/css/app.css",
+    "resources/js/bootstrap.js",
+    "tests/TestCase.php",
+    "vite.config.js",
+]
+SPDX-FileCopyrightText = ["Taylor Otwell", "2026 Corey Koval <ckoval7@gmail.com>"]
+SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
+
+# Started from the laravel-dompdf config stub.
+[[annotations]]
+path = [
+    "config/dompdf.php",
+]
+SPDX-FileCopyrightText = ["2021 barryvdh", "2026 Corey Koval <ckoval7@gmail.com>"]
+SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
+
+# Started from laravel-permission stubs.
+[[annotations]]
+path = [
+    "config/permission.php",
+    "database/migrations/2026_01_31_180535_create_permission_tables.php",
+]
+SPDX-FileCopyrightText = ["Spatie bvba <info@spatie.be>", "2026 Corey Koval <ckoval7@gmail.com>"]
+SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
+
+# Started from the Pest stub.
+[[annotations]]
+path = [
+    "tests/Pest.php",
+]
+SPDX-FileCopyrightText = ["Nuno Maduro", "2026 Corey Koval <ckoval7@gmail.com>"]
+SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"

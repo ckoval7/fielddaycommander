@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 (function () {
   var links = document.querySelectorAll('.screenshot > a[href$=".png"], .screenshot > a[href$=".jpg"], .screenshot > a[href$=".webp"]');
   if (!links.length || typeof HTMLDialogElement !== 'function') return;
