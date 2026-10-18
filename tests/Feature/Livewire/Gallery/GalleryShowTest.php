@@ -185,7 +185,7 @@ test('lightbox lets people zoom into the photo and open it full size', function 
     Livewire::test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
         ->call('openLightbox', $image->id)
         ->assertSeeHtml('x-ref="viewport"')
-        ->assertSeeHtml('@click="toggle($event)"')
+        ->assertSeeHtml(':aria-label="zoomed ? \'Fit photo to screen\' : \'Zoom into photo\'"')
         ->assertSee('Zoom in')
         ->assertSeeHtml('href="'.route('gallery.image', $image).'" target="_blank"')
         ->assertSeeHtml('max-sm:w-full max-sm:max-w-none');
