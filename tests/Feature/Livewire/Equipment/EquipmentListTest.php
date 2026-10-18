@@ -1052,7 +1052,9 @@ test('user can update delivery notes from catalog', function () {
     ]);
 
     Livewire::test(EquipmentList::class)
-        ->call('updateNotes', $commitment->id, 'Updated notes')
+        ->set('updateNoteId', $commitment->id)
+        ->set('tempNotes', 'Updated notes')
+        ->call('updateNotes')
         ->assertDispatched('notify');
 
     $this->assertDatabaseHas('equipment_event', [
@@ -1076,7 +1078,9 @@ test('cannot update notes for commitment not owned by user', function () {
     ]);
 
     Livewire::test(EquipmentList::class)
-        ->call('updateNotes', $commitment->id, 'Hacked notes')
+        ->set('updateNoteId', $commitment->id)
+        ->set('tempNotes', 'Hacked notes')
+        ->call('updateNotes')
         ->assertDispatched('notify');
 
     $this->assertDatabaseHas('equipment_event', [

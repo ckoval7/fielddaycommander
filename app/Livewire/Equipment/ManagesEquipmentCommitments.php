@@ -270,13 +270,18 @@ trait ManagesEquipmentCommitments
     }
 
     /**
-     * Update delivery notes for a commitment.
+     * Save the notes modal's delivery notes to the commitment it was opened for.
      */
-    public function updateNotes(int $commitmentId, ?string $notes): void
+    public function updateNotes(): void
     {
         $this->authorizeCommitAction();
 
-        $commitment = EquipmentEvent::with('equipment')->findOrFail($commitmentId);
+        $this->validate([
+            'updateNoteId' => ['required', 'integer'],
+            'tempNotes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $commitment = EquipmentEvent::with('equipment')->findOrFail($this->updateNoteId);
 
         if (! $this->canManageCommitment($commitment)) {
             $this->dispatch('notify', title: 'Error', description: self::PERMISSION_ERROR, type: 'error');
@@ -285,7 +290,7 @@ trait ManagesEquipmentCommitments
         }
 
         $commitment->update([
-            'delivery_notes' => $notes,
+            'delivery_notes' => $this->tempNotes,
         ]);
 
         $this->dispatch('notify', title: 'Success', description: 'Notes updated successfully.', type: 'success');
