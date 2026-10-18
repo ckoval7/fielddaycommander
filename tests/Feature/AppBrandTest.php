@@ -37,21 +37,12 @@ test('app brand shows icon placeholder when no logo uploaded', function () {
         ->assertDontSee('branding/', escape: false);
 });
 
-test('collapsed mobile header shows the event callsign, not the site name', function () {
-    Setting::set('site_name', 'Field Day Commander Demo');
+test('mobile header top row stays the same when scrolled', function () {
     $event = Event::factory()->create(['start_time' => now()->subHour(), 'end_time' => now()->addDay()]);
     EventConfiguration::factory()->create(['event_id' => $event->id, 'is_active' => true, 'callsign' => 'W1FDC']);
 
     $this->get('/')
         ->assertOk()
-        ->assertSee('canCollapse: true', escape: false)
-        ->assertSeeInOrder(['x-show="scrolled && canCollapse"', 'W1FDC'], escape: false);
-});
-
-test('mobile header does not collapse without an event callsign', function () {
-    Setting::set('site_name', 'Field Day Commander Demo');
-
-    $this->get('/')
-        ->assertOk()
-        ->assertSee('canCollapse: false', escape: false);
+        ->assertSee('x-show="!scrolled"', escape: false)
+        ->assertDontSee('canCollapse', escape: false);
 });
