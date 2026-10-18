@@ -33,11 +33,8 @@ boost.json
 frankenphp
 deploy.sh
 update.sh
-backup.sh
-restore.sh
 backups
 playwright.config.ts
-docker-compose.yml
 README.md
 LICENSE
 .editorconfig

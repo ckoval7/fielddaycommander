@@ -4,6 +4,13 @@
 
 set -euo pipefail
 
+# `docker run ... IMAGE setup` writes a compose install with fresh secrets
+# into the directory mounted at /work instead of starting the app.
+if [[ "${1:-}" = "setup" ]]; then
+    shift
+    exec bash /app/docker/install.sh "$@"
+fi
+
 echo "=== FD Commander Docker Entrypoint ==="
 
 # 0. Validate required environment
