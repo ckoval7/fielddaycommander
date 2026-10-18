@@ -31,7 +31,9 @@ test('setup.sh says it kept the existing root password instead of generating one
         ->and($result->output())->toContain("Set DB_ROOT_PASSWORD to the existing database's password")
         ->and($env)->toContain('DB_ROOT_PASSWORD=rootsecret')
         ->and($env)->toContain('DB_PASSWORD=existing')
-        ->and($env)->toMatch('/^REDIS_PASSWORD=[A-Za-z0-9]{32}$/m');
+        ->and($env)->toMatch('/^REDIS_PASSWORD=[A-Za-z0-9]{32}$/m')
+        ->and($result->output())->toContain('docker compose exec mysql mysql -uroot -p -e')
+        ->and($result->output())->not->toContain('-prootsecret');
 
     exec('rm -rf '.escapeshellarg($directory));
 });

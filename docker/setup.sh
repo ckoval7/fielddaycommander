@@ -112,8 +112,9 @@ set_env "DB_PASSWORD" "$(random_string 32)"
 if ! $CREATED && ! grep -qE '^DB_ROOT_PASSWORD=.+' "$ENV_FILE"; then
     set_env "DB_ROOT_PASSWORD" "rootsecret" "  Set DB_ROOT_PASSWORD to the existing database's password"
     echo "  WARNING: DB_ROOT_PASSWORD kept at the old default 'rootsecret' because"
-    echo "  the MySQL volume was created with it. To change it, run:"
-    echo "    docker compose exec mysql mysql -uroot -prootsecret -e \"ALTER USER 'root'@'%' IDENTIFIED BY '<new>'; ALTER USER 'root'@'localhost' IDENTIFIED BY '<new>';\""
+    echo "  the MySQL volume was created with it. To change it, run this and enter"
+    echo "  the old password when asked:"
+    echo "    docker compose exec mysql mysql -uroot -p -e \"ALTER USER 'root'@'%' IDENTIFIED BY '<new>'; ALTER USER 'root'@'localhost' IDENTIFIED BY '<new>';\""
     echo "  then set DB_ROOT_PASSWORD=<new> in $ENV_FILE."
 else
     set_env "DB_ROOT_PASSWORD" "$(random_string 32)"

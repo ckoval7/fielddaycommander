@@ -27,7 +27,6 @@ class AdifImportService
     private const MERGEABLE_FIELDS = ['power_watts', 'notes', 'exchange_class'];
 
     public function __construct(
-        private readonly SessionResolverService $sessionResolver,
         private readonly DuplicateCheckService $dupes = new DuplicateCheckService,
     ) {}
 

@@ -28,7 +28,7 @@ class W1awBulletinPolicy
     /**
      * The event's bulletin is shared, so any operator who can log contacts may correct it.
      */
-    public function update(User $user, W1awBulletin $bulletin): bool
+    public function update(User $user): bool
     {
         return $user->can('log-contacts');
     }

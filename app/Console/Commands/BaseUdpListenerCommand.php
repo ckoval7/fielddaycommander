@@ -157,6 +157,16 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
 
         $this->socket = $socket;
 
+        return $this->bindSocket($port);
+    }
+
+    /**
+     * Bind the created socket to the configured address and port.
+     *
+     * @return string|null Why the socket could not be bound, or null on success
+     */
+    private function bindSocket(int $port): ?string
+    {
         socket_set_option($this->socket, SOL_SOCKET, SO_BROADCAST, 1);
         socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1);
 

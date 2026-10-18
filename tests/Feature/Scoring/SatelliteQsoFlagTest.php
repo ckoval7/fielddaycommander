@@ -18,7 +18,6 @@ use App\Models\Station;
 use App\Models\User;
 use App\Services\AdifImportService;
 use App\Services\ExternalContactHandler;
-use App\Services\SessionResolverService;
 use Database\Seeders\BonusTypeSeeder;
 use Database\Seeders\EventTypeSeeder;
 use Database\Seeders\OperatingClassSeeder;
@@ -160,7 +159,7 @@ test('ADIF import flags a satellite contact', function (string $stationKey, stri
         'status' => AdifRecordStatus::Ready,
     ]);
 
-    (new AdifImportService(new SessionResolverService))->import($import);
+    (new AdifImportService)->import($import);
 
     expectSatelliteQso($this->config);
 })->with([

@@ -30,18 +30,18 @@ class ContactSyncController extends Controller
 
     public function store(StoreContactSyncRequest $request, DuplicateCheckService $dupeService): JsonResponse
     {
-        return $this->storeContact($request, $dupeService)
-            ->header(self::SERVER_TIME_HEADER, (string) appNow()->getTimestampMs());
+        // Idempotency: if this UUID already exists, return the existing contact
+        $existing = Contact::where('uuid', $request->uuid)->first();
+
+        $response = $existing
+            ? $this->idempotentResponse($existing)
+            : $this->storeContact($request, $dupeService);
+
+        return $response->header(self::SERVER_TIME_HEADER, (string) appNow()->getTimestampMs());
     }
 
     private function storeContact(StoreContactSyncRequest $request, DuplicateCheckService $dupeService): JsonResponse
     {
-        // Idempotency: if this UUID already exists, return the existing contact
-        $existing = Contact::where('uuid', $request->uuid)->first();
-        if ($existing) {
-            return $this->idempotentResponse($existing);
-        }
-
         $session = OperatingSession::findOrFail($request->operating_session_id);
 
         if ($session->operator_user_id !== $request->user()->id) {

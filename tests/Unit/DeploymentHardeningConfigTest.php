@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\LocalNetworkPusherServer;
+use Illuminate\Support\Facades\Process;
 use Laravel\Reverb\Application as ReverbApplication;
 use Laravel\Reverb\Contracts\Connection as ReverbConnection;
 use Laravel\Reverb\Contracts\WebSocketConnection;
@@ -549,4 +550,19 @@ test('every deploy path polls an idle queue every second so broadcasts go out pr
         ->and($deploy)->toContain('queue:work --sleep=1 ')->not->toContain('--sleep=3 ')
         ->and($update)->toContain('migrate_queue_unit')
         ->toContain("sed -i -E 's|queue:work --sleep=3 |queue:work --sleep=1 |'");
+});
+
+test('update.sh reads the last value set for a key from the app env without quotes', function () {
+    $directory = sys_get_temp_dir().'/fdc-update-env-'.uniqid();
+    mkdir($directory);
+    file_put_contents($directory.'/.env', "APP_URL=http://old.example\nAPP_URL=\"https://fd.example.org\"\nAPP_URL_SUFFIX=nope\n");
+
+    $script = shellFunction('update.sh', 'get_env')."\nget_env APP_URL\nget_env MISSING_KEY\necho done";
+
+    $result = Process::env(['APP_PATH' => $directory, 'PATH' => '/usr/bin:/bin'])->run(['bash', '-c', 'APP_PATH="$APP_PATH"; '.$script]);
+
+    expect($result->successful())->toBeTrue()
+        ->and($result->output())->toBe("https://fd.example.org\ndone\n");
+
+    exec('rm -rf '.escapeshellarg($directory));
 });
