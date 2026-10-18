@@ -435,7 +435,9 @@ test('equipment manager can update delivery notes for club equipment commitment'
     ]);
 
     Livewire::test(ClubEquipmentList::class)
-        ->call('updateNotes', $commitment->id, 'Updated notes')
+        ->set('updateNoteId', $commitment->id)
+        ->set('tempNotes', 'Updated notes')
+        ->call('updateNotes')
         ->assertDispatched('notify');
 
     $this->assertDatabaseHas('equipment_event', [
@@ -460,7 +462,9 @@ test('regular user cannot update notes for club equipment commitment', function 
     ]);
 
     Livewire::test(ClubEquipmentList::class)
-        ->call('updateNotes', $commitment->id, 'Hacked notes')
+        ->set('updateNoteId', $commitment->id)
+        ->set('tempNotes', 'Hacked notes')
+        ->call('updateNotes')
         ->assertForbidden();
 });
 
