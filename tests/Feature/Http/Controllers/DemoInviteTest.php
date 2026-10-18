@@ -321,3 +321,11 @@ test('a guest still signed in from another sandbox is given the role they chose'
 
     expect($guest->roles()->pluck('name')->all())->toBe(['Operator']);
 });
+
+test('join page can be installed to the home screen', function () {
+    $demoSession = invitedDemoSession();
+
+    $this->get(route('demo.join', $demoSession->invite_token))
+        ->assertOk()
+        ->assertSee('<link rel="manifest" href="'.asset('manifest.webmanifest').'">', false);
+});

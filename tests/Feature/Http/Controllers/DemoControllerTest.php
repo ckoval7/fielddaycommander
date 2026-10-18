@@ -298,3 +298,10 @@ test('provision signs out whoever the browser was last signed in as', function (
 
     $this->assertGuest();
 });
+
+test('landing page can be installed to the home screen', function () {
+    $this->get(route('demo.landing'))
+        ->assertOk()
+        ->assertSee('<link rel="manifest" href="'.asset('manifest.webmanifest').'">', false)
+        ->assertSee('<meta name="apple-mobile-web-app-title" content="FD Commander">', false);
+});

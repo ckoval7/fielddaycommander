@@ -7,6 +7,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('demo.partials.install-meta')
     <title>Try Field Day Commander</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
