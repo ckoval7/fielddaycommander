@@ -7,6 +7,7 @@ use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\User;
 use App\Notifications\InAppNotification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
 test('new section contact fires new_section notification', function () {
@@ -230,4 +231,45 @@ test('duplicate qsos do not count toward milestone', function () {
     Notification::assertNotSentTo($user, InAppNotification::class, function ($notification) {
         return $notification->category === NotificationCategory::QsoMilestone;
     });
+});
+
+test('new section notification waits for the transaction and is not sent when it rolls back', function () {
+    $user = User::factory()->create();
+    $eventConfig = EventConfiguration::factory()->create();
+    $section = Section::where('code', 'CT')->first()
+        ?? Section::create(['code' => 'CT', 'name' => 'Connecticut', 'region' => 'W1']);
+    $session = OperatingSession::factory()->create([
+        'station_id' => $eventConfig->stations()->create([
+            'name' => 'Station 1',
+            'event_configuration_id' => $eventConfig->id,
+        ])->id,
+        'operator_user_id' => $user->id,
+    ]);
+    $attributes = [
+        'event_configuration_id' => $eventConfig->id,
+        'operating_session_id' => $session->id,
+        'logger_user_id' => $user->id,
+        'section_id' => $section->id,
+    ];
+
+    Notification::fake();
+
+    try {
+        DB::transaction(function () use ($attributes) {
+            Contact::factory()->create($attributes);
+
+            throw new RuntimeException('rolled back');
+        });
+    } catch (RuntimeException) {
+    }
+
+    Notification::assertNothingSent();
+
+    DB::transaction(function () use ($attributes) {
+        Contact::factory()->create($attributes);
+
+        Notification::assertNothingSent();
+    });
+
+    Notification::assertSentTo($user, InAppNotification::class);
 });

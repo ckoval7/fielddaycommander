@@ -83,7 +83,7 @@ function wfdRegressionFixture(string $version): array
     $cw = Mode::where('name', 'CW')->first();
     $digital = Mode::where('name', 'Digital')->first();
 
-    $log = function (Mode $mode, string $bandName, int $count, array $overrides = []) use ($config, $session) {
+    $log = function (Mode $mode, string $bandName, int $count, array $overrides = []) use ($config, $session, $event) {
         $band = Band::where('name', $bandName)->first()
             ?? Band::factory()->create(['name' => $bandName, 'meters' => (int) $bandName ?: 1, 'is_satellite' => $bandName === 'Satellite']);
 
@@ -97,6 +97,7 @@ function wfdRegressionFixture(string $version): array
                 'is_duplicate' => false,
                 'is_satellite' => false,
                 'points' => (int) $mode->points_wfd,
+                'qso_time' => $event->start_time->copy()->addHour(),
                 ...$overrides,
             ]);
         }
@@ -110,7 +111,16 @@ function wfdRegressionFixture(string $version): array
     $log($digital, '2m', 3, ['submode' => 'PSK31']);
     $log($digital, '6m', 1, ['submode' => 'FT8']);
     $log($phone, 'Satellite', 1, ['is_satellite' => true]);
-    $log($phone, '20m', 1, ['is_duplicate' => true, 'points' => 0]);
+    // A real dupe of the first 20m Phone contact, so a rescore that re-settles
+    // dupe groups keeps it a dupe.
+    $firstPhone20m = Contact::where('event_configuration_id', $config->id)->orderBy('id')->first();
+    $log($phone, '20m', 1, [
+        'is_duplicate' => true,
+        'duplicate_of_contact_id' => $firstPhone20m->id,
+        'callsign' => $firstPhone20m->callsign,
+        'qso_time' => $event->start_time->copy()->addHours(2),
+        'points' => 0,
+    ]);
 
     return ['config' => $config, 'station' => $station];
 }

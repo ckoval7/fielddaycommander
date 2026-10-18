@@ -71,9 +71,18 @@ class ProgressBar extends Component
         );
     }
 
+    /**
+     * Define Livewire event listeners for this widget.
+     *
+     * Refreshes immediately when a contact is logged, edited or deleted and
+     * the viewer may subscribe to the event channel; the widget also polls,
+     * which is all guests on the TV dashboard get.
+     *
+     * @return array<string, string>
+     */
     public function getWidgetListeners(): array
     {
-        return [];
+        return $this->contactChangeListeners();
     }
 
     /**

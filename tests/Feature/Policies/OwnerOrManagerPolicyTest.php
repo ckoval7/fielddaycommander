@@ -38,7 +38,19 @@ test('another operator cannot modify someone else\'s record', function (string $
     $otherOperator->assignRole('Operator');
 
     expect($otherOperator->can($ability, $record))->toBeFalse();
-})->with('owned models')->with('owner actions');
+})->with([
+    'message update' => [Message::class, 'update'],
+    'message delete' => [Message::class, 'delete'],
+    'w1aw bulletin delete' => [W1awBulletin::class, 'delete'],
+]);
+
+test('any operator can update the event\'s shared w1aw bulletin', function () {
+    $bulletin = W1awBulletin::factory()->create(['user_id' => $this->owner->id]);
+    $otherOperator = User::factory()->create();
+    $otherOperator->assignRole('Operator');
+
+    expect($otherOperator->can('update', $bulletin))->toBeTrue();
+});
 
 test('owner without log-contacts cannot modify their own record', function (string $modelClass, string $ability) {
     $userWithoutPermissions = User::factory()->create();

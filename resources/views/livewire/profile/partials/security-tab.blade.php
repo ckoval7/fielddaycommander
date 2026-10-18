@@ -57,7 +57,7 @@
                 </x-alert>
             @endif
 
-            @if($showingQrCode)
+            @if($showingQrCode && $user->two_factor_secret && ! $user->two_factor_confirmed_at)
                 <x-alert icon="phosphor-device-mobile" class="alert-info">
                     Scan the QR code below with your authenticator app
                 </x-alert>
@@ -115,47 +115,69 @@
                     </div>
                 @endif
 
-                <div class="card-actions justify-end mt-4">
-                    @if(! $showingRecoveryCodes)
-                        <div class="flex items-end gap-2 w-full">
-                            <div class="flex-1">
-                                <x-input
-                                    label="Current Password"
-                                    type="password"
-                                    wire:model="current_password"
-                                    placeholder="Confirm password to view codes"
-                                />
-                            </div>
-                            <x-button wire:click="showRecoveryCodes" spinner="showRecoveryCodes" class="btn-outline">
+                @if($confirmingTwoFactorAction === 'view-codes' || $confirmingTwoFactorAction === 'regenerate-codes')
+                    <div class="flex items-end gap-2 mt-4" wire:key="recovery-codes-confirmation">
+                        <div class="flex-1">
+                            <x-input
+                                label="Current Password"
+                                type="password"
+                                wire:model="recoveryCodesPassword"
+                                autocomplete="current-password"
+                                :placeholder="$confirmingTwoFactorAction === 'view-codes' ? 'Confirm password to view codes' : 'Confirm password to regenerate codes'"
+                            />
+                        </div>
+                        @if($confirmingTwoFactorAction === 'view-codes')
+                            <x-button wire:click="showRecoveryCodes" spinner="showRecoveryCodes" class="btn-primary">
                                 View Recovery Codes
                             </x-button>
-                        </div>
-                    @else
-                        <x-button wire:click="regenerateRecoveryCodes" spinner="regenerateRecoveryCodes" class="btn-outline">
-                            Regenerate Codes
+                        @else
+                            <x-button wire:click="regenerateRecoveryCodes" spinner="regenerateRecoveryCodes" class="btn-primary">
+                                Regenerate Codes
+                            </x-button>
+                        @endif
+                        <x-button wire:click="cancelTwoFactorAction" class="btn-ghost">
+                            Cancel
                         </x-button>
-                        <x-button wire:click="$set('showingRecoveryCodes', false)" class="btn-ghost">
-                            Hide Codes
-                        </x-button>
-                    @endif
-                </div>
-
-                @if(config('auth-security.2fa_mode') !== 'required')
-                <div class="divider"></div>
-
-                <div class="flex items-end gap-2">
-                    <div class="flex-1">
-                        <x-input
-                            label="Current Password"
-                            type="password"
-                            wire:model="current_password"
-                            placeholder="Confirm password to disable"
-                        />
                     </div>
-                    <x-button wire:click="disableTwoFactor" spinner="disableTwoFactor" class="btn-error btn-outline">
-                        Disable 2FA
-                    </x-button>
-                </div>
+                @elseif($confirmingTwoFactorAction === 'disable' && config('auth-security.2fa_mode') !== 'required')
+                    <div class="flex items-end gap-2 mt-4" wire:key="disable-two-factor-confirmation">
+                        <div class="flex-1">
+                            <x-input
+                                label="Current Password"
+                                type="password"
+                                wire:model="disableTwoFactorPassword"
+                                autocomplete="current-password"
+                                placeholder="Confirm password to disable"
+                            />
+                        </div>
+                        <x-button wire:click="disableTwoFactor" spinner="disableTwoFactor" class="btn-error">
+                            Disable 2FA
+                        </x-button>
+                        <x-button wire:click="cancelTwoFactorAction" class="btn-ghost">
+                            Cancel
+                        </x-button>
+                    </div>
+                @else
+                    <div class="card-actions justify-end mt-4">
+                        @if(! $showingRecoveryCodes)
+                            <x-button wire:click="startTwoFactorAction('view-codes')" class="btn-outline">
+                                View Recovery Codes
+                            </x-button>
+                        @else
+                            <x-button wire:click="startTwoFactorAction('regenerate-codes')" class="btn-outline">
+                                Regenerate Codes
+                            </x-button>
+                            <x-button wire:click="hideRecoveryCodes" class="btn-ghost">
+                                Hide Codes
+                            </x-button>
+                        @endif
+
+                        @if(config('auth-security.2fa_mode') !== 'required')
+                            <x-button wire:click="startTwoFactorAction('disable')" class="btn-error btn-outline">
+                                Disable 2FA
+                            </x-button>
+                        @endif
+                    </div>
                 @endif
             @else
                 @if(config('auth-security.2fa_mode') !== 'required')
@@ -173,7 +195,8 @@
                         <x-input
                             label="Current Password"
                             type="password"
-                            wire:model="current_password"
+                            wire:model="enableTwoFactorPassword"
+                            autocomplete="current-password"
                             placeholder="Confirm password to enable"
                         />
                     </div>

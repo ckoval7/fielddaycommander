@@ -16,7 +16,7 @@
         src="{{ asset('storage/' . $item->photo_path) }}"
         alt="{{ $item->make }} {{ $item->model }}"
         class="{{ $sizeClasses }} object-cover rounded cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
-        wire:click="viewPhoto('{{ $item->photo_path }}', '{{ $item->make }} {{ $item->model }}')"
+        wire:click="viewPhoto({{ Js::from($item->photo_path) }}, {{ Js::from($item->make.' '.$item->model) }})"
     />
 @else
     <div class="{{ $sizeClasses }} bg-base-300 rounded flex items-center justify-center flex-shrink-0">

@@ -15,7 +15,9 @@ use App\Models\Station;
 use App\Models\User;
 use App\Scoring\Exceptions\RulesVersionLocked;
 use App\Scoring\Exceptions\UnknownRuleSet;
+use App\Services\DuplicateCheckService;
 use App\Services\RescoreService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -55,6 +57,7 @@ function makeScoredEvent(EventType $fd, Mode $mode, int $pointsStored): array
         'event_configuration_id' => $config->id,
         'operating_session_id' => $session->id,
         'mode_id' => $mode->id,
+        'qso_time' => $event->start_time->copy()->addHour(),
         'points' => $pointsStored,
         'is_duplicate' => false,
     ]);
@@ -99,12 +102,122 @@ test('rescore service rejects an event pinned to an unregistered rules_version',
 test('rescore service zeros out duplicate contacts', function () {
     $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
 
-    [$event, $config, $contact] = makeScoredEvent($this->fd, $mode, pointsStored: 5);
-    $contact->update(['is_duplicate' => true]);
+    [$event, $config, $original] = makeScoredEvent($this->fd, $mode, pointsStored: 2);
+    $dupe = Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $original->operating_session_id,
+        'callsign' => $original->callsign,
+        'band_id' => $original->band_id,
+        'mode_id' => $mode->id,
+        'qso_time' => $original->qso_time->copy()->addMinutes(5),
+        'points' => 5,
+        'is_duplicate' => true,
+        'duplicate_of_contact_id' => $original->id,
+    ]);
+
+    app(RescoreService::class)->rescoreEvent($event);
+
+    expect($dupe->fresh()->points)->toBe(0)
+        ->and($original->fresh()->points)->toBe(2);
+});
+
+test('rescore flags and zeros an unflagged duplicate pair', function () {
+    $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
+
+    [$event, $config, $original] = makeScoredEvent($this->fd, $mode, pointsStored: 4);
+    $dupe = Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $original->operating_session_id,
+        'callsign' => $original->callsign,
+        'band_id' => $original->band_id,
+        'mode_id' => $mode->id,
+        'qso_time' => $original->qso_time->copy()->addMinutes(5),
+        'points' => 4,
+        'is_duplicate' => false,
+    ]);
+
+    app(RescoreService::class)->rescoreEvent($event);
+
+    $dupe->refresh();
+    expect($dupe->is_duplicate)->toBeTrue()
+        ->and($dupe->duplicate_of_contact_id)->toBe($original->id)
+        ->and($dupe->points)->toBe(0)
+        ->and($original->fresh()->points)->toBe(2);
+});
+
+test('rescore gives no points to contacts outside the event window', function () {
+    $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
+
+    [$event, $config, $contact] = makeScoredEvent($this->fd, $mode, pointsStored: 4);
+    $contact->update(['qso_time' => $event->start_time->copy()->subHour(), 'is_gota_contact' => true]);
 
     app(RescoreService::class)->rescoreEvent($event);
 
     expect($contact->fresh()->points)->toBe(0);
+});
+
+test('rescore releases the event lock between chunks of callsigns', function () {
+    $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
+    [$event, $config, $first] = makeScoredEvent($this->fd, $mode, pointsStored: 4);
+
+    foreach (['W1AAA', 'W1BBB'] as $callsign) {
+        Contact::factory()->create([
+            'event_configuration_id' => $config->id,
+            'operating_session_id' => $first->operating_session_id,
+            'callsign' => $callsign,
+            'mode_id' => $mode->id,
+            'qso_time' => $first->qso_time,
+            'points' => 4,
+        ]);
+    }
+
+    $dupes = $this->partialMock(DuplicateCheckService::class);
+    // One lock per callsign chunk (3), then one for the bonus pass.
+    $dupes->shouldReceive('locked')
+        ->times(4)
+        ->withArgs(fn (?int $id, Closure $callback): bool => $id === $config->id)
+        ->passthru();
+
+    $rescorer = app(RescoreService::class);
+    $rescorer->callsignsPerChunk = 1;
+    $rescorer->rescoreEvent($event);
+});
+
+test('rescore query count does not grow with the number of contacts', function () {
+    $mode = Mode::factory()->create(['name' => 'CW', 'points_fd' => 2]);
+    [$event, $config, $first] = makeScoredEvent($this->fd, $mode, pointsStored: 2);
+
+    $counting = false;
+    $queries = 0;
+    DB::listen(function () use (&$counting, &$queries) {
+        if ($counting) {
+            $queries++;
+        }
+    });
+
+    $countQueries = function () use ($event, &$counting, &$queries): int {
+        $queries = 0;
+        $counting = true;
+        app(RescoreService::class)->rescoreEvent($event->fresh());
+        $counting = false;
+
+        return $queries;
+    };
+
+    $baseline = $countQueries();
+
+    Contact::factory()->count(60)->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $first->operating_session_id,
+        'mode_id' => $mode->id,
+        'qso_time' => $first->qso_time,
+        'points' => 2,
+    ]);
+
+    $extraQueries = $countQueries() - $baseline;
+
+    // Already-correct contacts are settled from bulk loads: no per-contact queries.
+    expect($extraQueries)->toBeLessThan(15);
 });
 
 test('non-admin cannot open rescore modal', function () {

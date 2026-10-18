@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Equipment;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Services\EquipmentReportService;
+use App\Support\CsvSafe;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Response;
@@ -64,23 +65,23 @@ class EquipmentReportController extends Controller
 
         return $this->exportCsv($filename, function ($handle) use ($data) {
             // Header
-            fputcsv($handle, ['Equipment Commitment Summary']);
-            fputcsv($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
-            fputcsv($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
-            fputcsv($handle, []);
+            CsvSafe::put($handle, ['Equipment Commitment Summary']);
+            CsvSafe::put($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
+            CsvSafe::put($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
+            CsvSafe::put($handle, []);
 
             // Summary Statistics
-            fputcsv($handle, ['Summary Statistics']);
-            fputcsv($handle, ['Total Items', $data['summary']['total_items']]);
-            fputcsv($handle, ['Total Value (USD)', '$'.$data['summary']['total_value']]);
-            fputcsv($handle, []);
+            CsvSafe::put($handle, ['Summary Statistics']);
+            CsvSafe::put($handle, ['Total Items', $data['summary']['total_items']]);
+            CsvSafe::put($handle, ['Total Value (USD)', '$'.$data['summary']['total_value']]);
+            CsvSafe::put($handle, []);
 
             // Equipment by Type
-            fputcsv($handle, ['Equipment by Type']);
-            fputcsv($handle, ['Type', 'Make', 'Model', 'Owner', 'Callsign', 'Status', 'Expected Delivery', 'Bands', self::COLUMN_POWER_WATTS, self::COLUMN_VALUE_USD]);
+            CsvSafe::put($handle, ['Equipment by Type']);
+            CsvSafe::put($handle, ['Type', 'Make', 'Model', 'Owner', 'Callsign', 'Status', 'Expected Delivery', 'Bands', self::COLUMN_POWER_WATTS, self::COLUMN_VALUE_USD]);
             foreach ($data['equipment_by_type'] as $typeGroup) {
                 foreach ($typeGroup['items'] as $item) {
-                    fputcsv($handle, [
+                    CsvSafe::put($handle, [
                         ucfirst(str_replace('_', ' ', $typeGroup['type'])),
                         $item['make'],
                         $item['model'],
@@ -94,13 +95,13 @@ class EquipmentReportController extends Controller
                     ]);
                 }
             }
-            fputcsv($handle, []);
+            CsvSafe::put($handle, []);
 
             // Contacts
-            fputcsv($handle, ['Owner Contacts']);
-            fputcsv($handle, ['Owner Name', 'Callsign', 'Email', 'Phone', 'Equipment Count']);
+            CsvSafe::put($handle, ['Owner Contacts']);
+            CsvSafe::put($handle, ['Owner Name', 'Callsign', 'Email', 'Phone', 'Equipment Count']);
             foreach ($data['contacts'] as $contact) {
-                fputcsv($handle, [
+                CsvSafe::put($handle, [
                     $contact['owner_name'],
                     $contact['callsign'],
                     $contact['email'],
@@ -154,21 +155,21 @@ class EquipmentReportController extends Controller
 
         return $this->exportCsv($filename, function ($handle) use ($data) {
             // Header
-            fputcsv($handle, ['Station Equipment Inventory']);
-            fputcsv($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
-            fputcsv($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
-            fputcsv($handle, []);
+            CsvSafe::put($handle, ['Station Equipment Inventory']);
+            CsvSafe::put($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
+            CsvSafe::put($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
+            CsvSafe::put($handle, []);
 
             // Stations
             foreach ($data['stations'] as $station) {
-                fputcsv($handle, ['Station: '.$station['station_name'].' ('.$station['equipment_count'].' items)']);
+                CsvSafe::put($handle, ['Station: '.$station['station_name'].' ('.$station['equipment_count'].' items)']);
                 $this->writeEquipmentCsvRows($handle, $station['equipment']);
-                fputcsv($handle, []);
+                CsvSafe::put($handle, []);
             }
 
             // Unassigned Equipment
             if ($data['unassigned_equipment']->count() > 0) {
-                fputcsv($handle, ['Unassigned Equipment']);
+                CsvSafe::put($handle, ['Unassigned Equipment']);
                 $this->writeEquipmentCsvRows($handle, $data['unassigned_equipment']);
             }
         });
@@ -203,15 +204,15 @@ class EquipmentReportController extends Controller
 
         return $this->exportCsv($filename, function ($handle) use ($data) {
             // Header
-            fputcsv($handle, ['Equipment Owner Contact List']);
-            fputcsv($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
-            fputcsv($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
-            fputcsv($handle, []);
+            CsvSafe::put($handle, ['Equipment Owner Contact List']);
+            CsvSafe::put($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
+            CsvSafe::put($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
+            CsvSafe::put($handle, []);
 
             // Contacts
-            fputcsv($handle, ['Owner Name', 'Callsign', 'Email', 'Phone', 'Emergency Contacts', 'Equipment Count']);
+            CsvSafe::put($handle, ['Owner Name', 'Callsign', 'Email', 'Phone', 'Emergency Contacts', 'Equipment Count']);
             foreach ($data['contacts'] as $contact) {
-                fputcsv($handle, [
+                CsvSafe::put($handle, [
                     $contact['owner_name'],
                     $contact['callsign'],
                     $contact['email'],
@@ -266,22 +267,22 @@ class EquipmentReportController extends Controller
 
         return $this->exportCsv($filename, function ($handle) use ($data) {
             // Header
-            fputcsv($handle, ['Equipment Incident Report']);
-            fputcsv($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
-            fputcsv($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
-            fputcsv($handle, []);
+            CsvSafe::put($handle, ['Equipment Incident Report']);
+            CsvSafe::put($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
+            CsvSafe::put($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
+            CsvSafe::put($handle, []);
 
             // Summary
-            fputcsv($handle, ['Summary']);
-            fputcsv($handle, ['Total Incidents', $data['summary']['total_incidents']]);
-            fputcsv($handle, ['Total Value at Risk (USD)', '$'.$data['summary']['total_value_at_risk']]);
-            fputcsv($handle, []);
+            CsvSafe::put($handle, ['Summary']);
+            CsvSafe::put($handle, ['Total Incidents', $data['summary']['total_incidents']]);
+            CsvSafe::put($handle, ['Total Value at Risk (USD)', '$'.$data['summary']['total_value_at_risk']]);
+            CsvSafe::put($handle, []);
 
             // Incidents
-            fputcsv($handle, ['Incident Details']);
-            fputcsv($handle, ['Equipment', 'Type', 'Serial Number', 'Status', 'Owner', 'Callsign', 'Contact', self::COLUMN_VALUE_USD, 'Station', 'Changed At', 'Changed By', 'Circumstances']);
+            CsvSafe::put($handle, ['Incident Details']);
+            CsvSafe::put($handle, ['Equipment', 'Type', 'Serial Number', 'Status', 'Owner', 'Callsign', 'Contact', self::COLUMN_VALUE_USD, 'Station', 'Changed At', 'Changed By', 'Circumstances']);
             foreach ($data['incidents'] as $incident) {
-                fputcsv($handle, [
+                CsvSafe::put($handle, [
                     $incident['equipment_description'],
                     ucfirst(str_replace('_', ' ', $incident['type'])),
                     $incident['serial_number'] ?? 'N/A',
@@ -314,23 +315,23 @@ class EquipmentReportController extends Controller
 
         return $this->exportCsv($filename, function ($handle) use ($data) {
             // Header
-            fputcsv($handle, ['Equipment Historical Record']);
-            fputcsv($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
-            fputcsv($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
-            fputcsv($handle, []);
+            CsvSafe::put($handle, ['Equipment Historical Record']);
+            CsvSafe::put($handle, [self::HEADER_EVENT_PREFIX.$data['event']->name]);
+            CsvSafe::put($handle, [self::HEADER_GENERATED_PREFIX.now()->format(self::DATETIME_FORMAT)]);
+            CsvSafe::put($handle, []);
 
             // Summary
-            fputcsv($handle, ['Summary']);
-            fputcsv($handle, ['Total Equipment', $data['summary']['total_equipment']]);
-            fputcsv($handle, ['Total Value (USD)', '$'.$data['summary']['total_value']]);
-            fputcsv($handle, ['Success Rate', $data['summary']['success_rate']]);
-            fputcsv($handle, []);
+            CsvSafe::put($handle, ['Summary']);
+            CsvSafe::put($handle, ['Total Equipment', $data['summary']['total_equipment']]);
+            CsvSafe::put($handle, ['Total Value (USD)', '$'.$data['summary']['total_value']]);
+            CsvSafe::put($handle, ['Success Rate', $data['summary']['success_rate']]);
+            CsvSafe::put($handle, []);
 
             // Equipment Records
-            fputcsv($handle, ['Equipment Records']);
-            fputcsv($handle, ['Type', 'Make', 'Model', 'Owner', 'Callsign', 'Station', 'Bands', self::COLUMN_POWER_WATTS, 'Committed At', 'Expected Delivery', 'Final Status', 'Status Changed At', 'Changed By', self::COLUMN_VALUE_USD, 'Notes']);
+            CsvSafe::put($handle, ['Equipment Records']);
+            CsvSafe::put($handle, ['Type', 'Make', 'Model', 'Owner', 'Callsign', 'Station', 'Bands', self::COLUMN_POWER_WATTS, 'Committed At', 'Expected Delivery', 'Final Status', 'Status Changed At', 'Changed By', self::COLUMN_VALUE_USD, 'Notes']);
             foreach ($data['equipment_records'] as $record) {
-                fputcsv($handle, [
+                CsvSafe::put($handle, [
                     ucfirst(str_replace('_', ' ', $record['type'])),
                     $record['make'],
                     $record['model'],
@@ -363,9 +364,9 @@ class EquipmentReportController extends Controller
      */
     protected function writeEquipmentCsvRows($handle, iterable $equipmentList): void
     {
-        fputcsv($handle, ['Type', 'Description', 'Bands', self::COLUMN_POWER_WATTS, 'Owner', 'Callsign', 'Contact', 'Status']);
+        CsvSafe::put($handle, ['Type', 'Description', 'Bands', self::COLUMN_POWER_WATTS, 'Owner', 'Callsign', 'Contact', 'Status']);
         foreach ($equipmentList as $equipment) {
-            fputcsv($handle, [
+            CsvSafe::put($handle, [
                 ucfirst(str_replace('_', ' ', $equipment['type'])),
                 $equipment['description'],
                 $equipment['bands'] ?: 'N/A',

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ExternalLoggerSetting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 use function Illuminate\Support\php_binary;
 
@@ -14,6 +15,9 @@ class ExternalLoggerManager
 
     public function enable(int $eventConfigurationId, string $listenerType, int $port): ExternalLoggerSetting
     {
+        // A fresh enable (possibly on a new port) gets an immediate start.
+        $this->clearStartupFailure($eventConfigurationId, $listenerType);
+
         return ExternalLoggerSetting::updateOrCreate(
             [
                 'event_configuration_id' => $eventConfigurationId,
@@ -138,11 +142,75 @@ class ExternalLoggerManager
         return str_contains($cmdline, "external-logger:{$listenerType}");
     }
 
+    /**
+     * Longest wait between restarts of a listener that keeps failing to start.
+     */
+    private const MAX_STARTUP_BACKOFF_SECONDS = 3600;
+
+    /**
+     * Record that a listener exited during startup (e.g. the sockets
+     * extension is missing or its port is taken), so restarts back off
+     * instead of respawning it every minute. Logged once per distinct reason.
+     */
+    public function recordStartupFailure(int $eventConfigurationId, string $listenerType, string $reason): void
+    {
+        $key = $this->startupFailureKey($eventConfigurationId, $listenerType);
+        $previous = Cache::get($key);
+        $attempts = ($previous['attempts'] ?? 0) + 1;
+
+        if (($previous['reason'] ?? null) !== $reason) {
+            Log::error("External logger {$listenerType} listener failed to start: {$reason}", [
+                'event_configuration_id' => $eventConfigurationId,
+                'listener_type' => $listenerType,
+            ]);
+        }
+
+        Cache::put($key, [
+            'reason' => $reason,
+            'attempts' => $attempts,
+            'failed_at' => now()->getTimestamp(),
+        ], now()->addDay());
+    }
+
+    public function clearStartupFailure(int $eventConfigurationId, string $listenerType): void
+    {
+        Cache::forget($this->startupFailureKey($eventConfigurationId, $listenerType));
+    }
+
+    /** @return array{reason: string, attempts: int, failed_at: int}|null */
+    public function getStartupFailure(int $eventConfigurationId, string $listenerType): ?array
+    {
+        return Cache::get($this->startupFailureKey($eventConfigurationId, $listenerType));
+    }
+
+    /**
+     * Whether a listener that failed to start is still inside its backoff
+     * window: one minute after the first failure, doubling per failure up to
+     * an hour.
+     */
+    public function isBackingOff(int $eventConfigurationId, string $listenerType): bool
+    {
+        $failure = $this->getStartupFailure($eventConfigurationId, $listenerType);
+
+        if ($failure === null) {
+            return false;
+        }
+
+        $backoff = min(self::MAX_STARTUP_BACKOFF_SECONDS, 60 * (2 ** max(0, min(6, $failure['attempts'] - 1))));
+
+        return now()->getTimestamp() < $failure['failed_at'] + $backoff;
+    }
+
+    private function startupFailureKey(int $eventConfigurationId, string $listenerType): string
+    {
+        return "external-logger:{$listenerType}:{$eventConfigurationId}:startup-failure";
+    }
+
     public function attemptRestart(int $eventConfigurationId, string $listenerType): bool
     {
         $cooldownKey = "external-logger:{$listenerType}:{$eventConfigurationId}:restart-cooldown";
 
-        if (Cache::has($cooldownKey)) {
+        if (Cache::has($cooldownKey) || $this->isBackingOff($eventConfigurationId, $listenerType)) {
             return false;
         }
 

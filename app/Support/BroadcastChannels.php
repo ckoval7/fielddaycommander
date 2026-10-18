@@ -13,6 +13,21 @@ namespace App\Support;
 class BroadcastChannels
 {
     /**
+     * Broadcast name for a new contact on the event channel.
+     */
+    public const CONTACT_LOGGED = 'ContactLogged';
+
+    /**
+     * Broadcast name for an edited contact on the event channel.
+     */
+    public const CONTACT_UPDATED = 'ContactUpdated';
+
+    /**
+     * Broadcast name for a deleted contact on the event channel.
+     */
+    public const CONTACT_DELETED = 'ContactDeleted';
+
+    /**
      * Prevent instantiation — this class exposes only static helpers.
      */
     private function __construct() {}
@@ -65,5 +80,20 @@ class BroadcastChannels
     public static function publicListener(string $channel, string $event): string
     {
         return "echo:{$channel},{$event}";
+    }
+
+    /**
+     * Livewire listener map that calls one method whenever a contact is
+     * logged, edited or deleted for an event.
+     *
+     * @return array<string, string>
+     */
+    public static function contactChangeListeners(int|string $eventId, string $method): array
+    {
+        $channel = self::event($eventId);
+
+        return collect([self::CONTACT_LOGGED, self::CONTACT_UPDATED, self::CONTACT_DELETED])
+            ->mapWithKeys(fn (string $name): array => [self::privateListener($channel, ".{$name}") => $method])
+            ->all();
     }
 }

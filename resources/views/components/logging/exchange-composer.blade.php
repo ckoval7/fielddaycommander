@@ -109,7 +109,7 @@ Slots:
                 <div class="absolute z-50 w-full bottom-full mb-1 bg-base-100 border border-base-300 rounded-box shadow-lg max-h-48 overflow-y-auto">
                     @foreach($suggestions as $index => $suggestion)
                         <button
-                            wire:click="selectSuggestion('{{ $suggestion['exchange'] }}')"
+                            wire:click="selectSuggestion({{ Js::from($suggestion['exchange']) }})"
                             :class="{ 'bg-primary text-primary-content': si === {{ $index }} }"
                             @mouseenter="si = {{ $index }}"
                             class="w-full px-3 py-2 text-left flex items-center justify-between font-mono"

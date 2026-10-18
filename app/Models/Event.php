@@ -74,6 +74,15 @@ class Event extends Model
         return $query->where('start_time', '>', appNow());
     }
 
+    /**
+     * Events that are in progress or still to come: anything equipment can
+     * be committed to.
+     */
+    public function scopeNotEnded($query)
+    {
+        return $query->where('end_time', '>=', appNow());
+    }
+
     public function scopeCompleted($query)
     {
         return $query->where('end_time', '<', appNow());

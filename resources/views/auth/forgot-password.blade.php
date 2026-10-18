@@ -6,7 +6,7 @@
     </div>
 
     @if (session('status'))
-        <x-alert title="{{ session('status') }}" class="mb-4" success />
+        <x-alert :title="session('status')" class="mb-4" success />
     @endif
 
     <form method="POST" action="{{ route('password.email') }}">

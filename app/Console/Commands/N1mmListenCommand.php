@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\DTOs\ExternalContactDto;
 use App\DTOs\ExternalRadioInfoDto;
+use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
 use App\Models\EventConfiguration;
 use App\Services\ExternalContactHandler;
@@ -46,6 +47,14 @@ class N1mmListenCommand extends BaseUdpListenerCommand
         $dto = $this->parser->parse($buffer);
 
         if ($dto === null) {
+            if (! $this->isWellFormedXml($buffer)) {
+                $this->throttledWarning('malformed-xml', 'N1MM listener dropped a packet that is not well-formed XML', [
+                    'from' => $from,
+                    'bytes' => strlen($buffer),
+                    'preview' => mb_substr(preg_replace('/[^\x20-\x7E]/', '?', $buffer) ?? '', 0, 80),
+                ]);
+            }
+
             return 0;
         }
 
@@ -58,6 +67,22 @@ class N1mmListenCommand extends BaseUdpListenerCommand
         return 1;
     }
 
+    /**
+     * Packets the parser ignores on purpose (spectrum, app info, ...) are
+     * well-formed; anything else it returned nothing for is garbage.
+     */
+    private function isWellFormedXml(string $buffer): bool
+    {
+        $previous = libxml_use_internal_errors(true);
+
+        try {
+            return simplexml_load_string($buffer) !== false;
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
+    }
+
     private function handleContactPacket(ExternalContactDto $dto, EventConfiguration $config, string $lastLogKey): void
     {
         if ($dto->isDelete) {
@@ -67,7 +92,11 @@ class N1mmListenCommand extends BaseUdpListenerCommand
         }
 
         if ($dto->isReplace) {
-            $this->handler->handleReplace($dto, $config);
+            try {
+                $this->handler->handleReplace($dto, $config);
+            } catch (InvalidExternalContactException) {
+                $this->writeLastLogEntry($lastLogKey, $dto, false, 'invalid callsign');
+            }
 
             return;
         }
@@ -76,7 +105,9 @@ class N1mmListenCommand extends BaseUdpListenerCommand
             $this->handler->handleContact($dto, $config);
             $this->writeLastLogEntry($lastLogKey, $dto, true);
         } catch (OutOfPeriodContactException) {
-            $this->writeLastLogEntry($lastLogKey, $dto, false, 'outside event window');
+            $this->rejectOutOfPeriod($lastLogKey, $dto);
+        } catch (InvalidExternalContactException) {
+            $this->writeLastLogEntry($lastLogKey, $dto, false, 'invalid callsign');
         }
     }
 }

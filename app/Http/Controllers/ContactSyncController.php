@@ -14,7 +14,27 @@ use Illuminate\Support\Carbon;
 
 class ContactSyncController extends Controller
 {
+    /**
+     * How far ahead of the server clock a QSO time may be, to allow for a
+     * logging device whose clock runs slightly fast.
+     */
+    private const FUTURE_SKEW_MINUTES = 5;
+
+    /**
+     * Response header carrying the server's application clock (appNow(), so
+     * Developer Tools' fake clock included) in epoch milliseconds. The
+     * contact queue measures its offset from it and stamps qso_time in
+     * server time, so a device with a wrong clock still logs correct times.
+     */
+    public const SERVER_TIME_HEADER = 'X-Server-Time';
+
     public function store(StoreContactSyncRequest $request, DuplicateCheckService $dupeService): JsonResponse
+    {
+        return $this->storeContact($request, $dupeService)
+            ->header(self::SERVER_TIME_HEADER, (string) appNow()->getTimestampMs());
+    }
+
+    private function storeContact(StoreContactSyncRequest $request, DuplicateCheckService $dupeService): JsonResponse
     {
         // Idempotency: if this UUID already exists, return the existing contact
         $existing = Contact::where('uuid', $request->uuid)->first();
@@ -38,47 +58,42 @@ class ContactSyncController extends Controller
         }
 
         $isGotaContact = $session->station->is_gota;
+        $eventConfigurationId = $session->station->event_configuration_id;
 
-        $dupeCheck = $dupeService->check(
-            $request->callsign,
-            $request->band_id,
-            $request->mode_id,
-            $session->station->event_configuration_id,
-            $isGotaContact,
-        );
+        $contact = new Contact([
+            'uuid' => $request->uuid,
+            'event_configuration_id' => $eventConfigurationId,
+            'operating_session_id' => $session->id,
+            'logger_user_id' => $request->user()->id,
+            'band_id' => $request->band_id,
+            'mode_id' => $request->mode_id,
+            'submode' => $request->submode,
+            'qso_time' => $request->qso_time,
+            'callsign' => $request->callsign,
+            'section_id' => $request->section_id,
+            'exchange_class' => $request->exchange_class,
+            'power_watts' => $request->power_watts,
+            'is_gota_contact' => $isGotaContact,
+            'gota_operator_first_name' => $isGotaContact ? $request->gota_operator_first_name : null,
+            'gota_operator_last_name' => $isGotaContact ? $request->gota_operator_last_name : null,
+            'gota_operator_callsign' => $isGotaContact ? $request->gota_operator_callsign : null,
+            'gota_operator_user_id' => $isGotaContact ? $request->gota_operator_user_id : null,
+            'gota_coach_user_id' => ($isGotaContact && $session->is_supervised) ? $session->operator_user_id : null,
+        ]);
 
-        $mode = $session->mode;
-        $contactPoints = $session->station->eventConfiguration->pointsForContact($mode, $session->station);
-
+        // Dupe evaluation, insert and the session tally commit together under
+        // the event lock: two operators logging the same station at once
+        // cannot both get full points, and a failure anywhere leaves neither
+        // the contact nor the qso_count behind. Bonus reconciliation and
+        // notifications run after the commit, outside the lock.
         try {
-            $contact = Contact::create([
-                'uuid' => $request->uuid,
-                'event_configuration_id' => $session->station->event_configuration_id,
-                'operating_session_id' => $session->id,
-                'logger_user_id' => $request->user()->id,
-                'band_id' => $request->band_id,
-                'mode_id' => $request->mode_id,
-                'submode' => $request->submode,
-                'qso_time' => $request->qso_time,
-                'callsign' => $request->callsign,
-                'section_id' => $request->section_id,
-                'exchange_class' => $request->exchange_class,
-                'power_watts' => $request->power_watts,
-                'points' => $dupeCheck['is_duplicate'] ? 0 : $contactPoints,
-                'is_duplicate' => $dupeCheck['is_duplicate'],
-                'duplicate_of_contact_id' => $dupeCheck['duplicate_of_contact_id'],
-                'is_gota_contact' => $isGotaContact,
-                'gota_operator_first_name' => $isGotaContact ? $request->gota_operator_first_name : null,
-                'gota_operator_last_name' => $isGotaContact ? $request->gota_operator_last_name : null,
-                'gota_operator_callsign' => $isGotaContact ? $request->gota_operator_callsign : null,
-                'gota_operator_user_id' => $isGotaContact ? $request->gota_operator_user_id : null,
-                'gota_coach_user_id' => ($isGotaContact && $session->is_supervised) ? $session->operator_user_id : null,
-            ]);
+            $dupeService->locked($eventConfigurationId, function () use ($dupeService, $contact, $session) {
+                $dupeService->save($contact);
+                $session->increment('qso_count');
+            });
         } catch (UniqueConstraintViolationException) {
             return $this->idempotentResponse(Contact::where('uuid', $request->uuid)->firstOrFail());
         }
-
-        $session->increment('qso_count');
 
         $event = $session->station->eventConfiguration->event;
         ContactLogged::dispatch($contact->load(['band', 'mode', 'section']), $event);
@@ -97,9 +112,25 @@ class ContactSyncController extends Controller
      * Contacts queued offline can arrive after their session was ended
      * (take-over, idle timeout, End Session), so they are judged by when
      * they were made, not when they synced.
+     *
+     * Everything is judged on the application clock (appNow()): sessions
+     * start and end on it, and the contact queue stamps qso_time on it.
+     * A future time is checked first and answered with the server time and
+     * a code, so a queue whose offset was wrong can re-stamp and retry
+     * instead of being told the event has ended.
      */
     private function timingError(OperatingSession $session, Carbon $qsoTime): ?JsonResponse
     {
+        $serverNow = appNow();
+
+        if ($qsoTime->gt($serverNow->copy()->addMinutes(self::FUTURE_SKEW_MINUTES))) {
+            return response()->json([
+                'message' => 'This contact is dated in the future. Check the clock on this device.',
+                'code' => 'qso_time_in_future',
+                'server_time' => $serverNow->getTimestampMs(),
+            ], 422);
+        }
+
         if ($session->end_time !== null && ! $qsoTime->between($session->start_time, $session->end_time)) {
             return response()->json(['message' => 'This operating session has ended.'], 422);
         }
@@ -109,7 +140,7 @@ class ContactSyncController extends Controller
             return response()->json(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.'], 422);
         }
 
-        if (Carbon::parse($event->start_time)->gt(appNow())) {
+        if (Carbon::parse($event->start_time)->gt($qsoTime)) {
             return response()->json(['message' => 'This event has not started yet. Contacts can only be logged once the event begins.'], 422);
         }
 

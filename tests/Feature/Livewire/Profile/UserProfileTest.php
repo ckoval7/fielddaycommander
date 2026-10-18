@@ -1,10 +1,14 @@
 <?php
 
 use App\Livewire\Profile\UserProfile;
+use App\Models\AuditLog;
+use App\Models\OperatingSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -62,6 +66,7 @@ test('can update profile information', function () {
         ->set('first_name', 'Jane')
         ->set('last_name', 'Smith')
         ->set('email', 'jane@example.com')
+        ->set('emailChangePassword', 'password123')
         ->set('license_class', 'General')
         ->set('preferred_timezone', 'America/Los_Angeles')
         ->call('saveProfile')
@@ -73,6 +78,47 @@ test('can update profile information', function () {
         ->and($this->user->email)->toBe('jane@example.com')
         ->and($this->user->license_class)->toBe('General')
         ->and($this->user->preferred_timezone)->toBe('America/Los_Angeles');
+});
+
+test('the current password box hides again after the email change is saved', function () {
+    Livewire::test(UserProfile::class)
+        ->assertSet('savedEmail', 'john@example.com')
+        ->set('email', 'jane@example.com')
+        ->set('emailChangePassword', 'password123')
+        ->call('saveProfile')
+        ->assertHasNoErrors()
+        ->assertSet('savedEmail', 'jane@example.com')
+        ->assertSet('email', 'jane@example.com')
+        ->assertSet('emailChangePassword', '');
+});
+
+test('the saved email cannot be changed from the client', function () {
+    expect(fn () => Livewire::test(UserProfile::class)->set('savedEmail', 'x@example.com'))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+});
+
+test('changing email requires the current password', function () {
+    Livewire::test(UserProfile::class)
+        ->set('email', 'attacker@example.com')
+        ->call('saveProfile')
+        ->assertHasErrors(['emailChangePassword' => 'required']);
+
+    Livewire::test(UserProfile::class)
+        ->set('email', 'attacker@example.com')
+        ->set('emailChangePassword', 'wrong-password')
+        ->call('saveProfile')
+        ->assertHasErrors(['emailChangePassword']);
+
+    expect($this->user->fresh()->email)->toBe('john@example.com');
+});
+
+test('saving profile without changing email does not need a password', function () {
+    Livewire::test(UserProfile::class)
+        ->set('first_name', 'Jane')
+        ->call('saveProfile')
+        ->assertHasNoErrors();
+
+    expect($this->user->fresh()->first_name)->toBe('Jane');
 });
 
 test('can update notification preferences', function () {
@@ -270,7 +316,7 @@ test('displays operating sessions for user', function () {
     $component = Livewire::test(UserProfile::class);
     $operatingSessions = $component->viewData('operatingSessions');
 
-    expect($operatingSessions)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($operatingSessions)->toBeInstanceOf(Collection::class);
 });
 
 test('operating sessions are empty when no data', function () {
@@ -281,7 +327,7 @@ test('operating sessions are empty when no data', function () {
 });
 
 test('operating sessions returns real data for user', function () {
-    \App\Models\OperatingSession::factory()
+    OperatingSession::factory()
         ->ended()
         ->create([
             'operator_user_id' => $this->user->id,
@@ -296,12 +342,12 @@ test('operating sessions returns real data for user', function () {
 });
 
 test('operating sessions excludes other users', function () {
-    $otherUser = \App\Models\User::factory()->create();
+    $otherUser = User::factory()->create();
 
-    \App\Models\OperatingSession::factory()->ended()->create([
+    OperatingSession::factory()->ended()->create([
         'operator_user_id' => $this->user->id,
     ]);
-    \App\Models\OperatingSession::factory()->ended()->create([
+    OperatingSession::factory()->ended()->create([
         'operator_user_id' => $otherUser->id,
     ]);
 
@@ -319,7 +365,7 @@ test('displays activity log for user', function () {
     $component = Livewire::test(UserProfile::class);
     $activityLog = $component->viewData('activityLog');
 
-    expect($activityLog)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($activityLog)->toBeInstanceOf(Collection::class);
 });
 
 test('activity log is empty when no data', function () {
@@ -330,7 +376,7 @@ test('activity log is empty when no data', function () {
 });
 
 test('activity log returns real audit entries for user', function () {
-    \App\Models\AuditLog::create([
+    AuditLog::create([
         'user_id' => $this->user->id,
         'action' => 'user.login.success',
         'ip_address' => '127.0.0.1',
@@ -345,14 +391,14 @@ test('activity log returns real audit entries for user', function () {
 });
 
 test('activity log excludes other users', function () {
-    $otherUser = \App\Models\User::factory()->create();
+    $otherUser = User::factory()->create();
 
-    \App\Models\AuditLog::create([
+    AuditLog::create([
         'user_id' => $this->user->id,
         'action' => 'user.login.success',
         'ip_address' => '127.0.0.1',
     ]);
-    \App\Models\AuditLog::create([
+    AuditLog::create([
         'user_id' => $otherUser->id,
         'action' => 'user.login.success',
         'ip_address' => '127.0.0.1',
@@ -367,7 +413,7 @@ test('activity log excludes other users', function () {
 test('load more activity increases limit', function () {
     // Create 20 audit entries
     for ($i = 0; $i < 20; $i++) {
-        \App\Models\AuditLog::create([
+        AuditLog::create([
             'user_id' => $this->user->id,
             'action' => 'user.login.success',
             'ip_address' => '127.0.0.1',
@@ -387,7 +433,7 @@ test('load more activity increases limit', function () {
 test('load more button hidden when all entries are shown', function () {
     // Create fewer entries than the limit
     for ($i = 0; $i < 5; $i++) {
-        \App\Models\AuditLog::create([
+        AuditLog::create([
             'user_id' => $this->user->id,
             'action' => 'user.login.success',
             'ip_address' => '127.0.0.1',
@@ -402,7 +448,7 @@ test('load more button hidden when all entries are shown', function () {
 test('load more button shown when more entries may exist', function () {
     // Create exactly the limit number of entries
     for ($i = 0; $i < 15; $i++) {
-        \App\Models\AuditLog::create([
+        AuditLog::create([
             'user_id' => $this->user->id,
             'action' => 'user.login.success',
             'ip_address' => '127.0.0.1',

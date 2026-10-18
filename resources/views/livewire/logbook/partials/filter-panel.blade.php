@@ -166,6 +166,20 @@
                     </div>
                 </fieldset>
 
+                {{-- Needs Attention Filter --}}
+                <fieldset class="flex flex-col gap-2">
+                    <legend class="text-sm font-medium text-base-content/70">Needs Attention</legend>
+                    <div class="flex flex-col gap-2">
+                        <x-radio
+                            wire:model.live="needsAttention"
+                            :options="[
+                                ['id' => null, 'name' => 'All Contacts'],
+                                ['id' => 'only', 'name' => 'Needs Attention Only']
+                            ]"
+                        />
+                    </div>
+                </fieldset>
+
                 {{-- Deleted Status Filter (edit-contacts only) --}}
                 @can('edit-contacts')
                     <fieldset class="flex flex-col gap-2">

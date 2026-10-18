@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -104,7 +105,8 @@ class MessageTrafficIndex extends Component
 
     public function openSentByModal(int $messageId): void
     {
-        $message = Message::findOrFail($messageId);
+        $message = $this->findEventMessage($messageId);
+        $this->authorize('log-contacts');
         $this->editingSentMessageId = $messageId;
         $this->selectedSentByUserId = auth()->id();
         $this->isDeliveryModal = $message->role->value === 'received_delivered';
@@ -115,7 +117,8 @@ class MessageTrafficIndex extends Component
 
     public function editSentBy(int $messageId): void
     {
-        $message = Message::findOrFail($messageId);
+        $message = $this->findEventMessage($messageId);
+        $this->authorize('log-contacts');
         $this->editingSentMessageId = $messageId;
         $this->selectedSentByUserId = $message->sent_by_user_id;
         $this->isDeliveryModal = $message->role->value === 'received_delivered';
@@ -126,7 +129,12 @@ class MessageTrafficIndex extends Component
 
     public function saveSentBy(): void
     {
-        $message = Message::findOrFail($this->editingSentMessageId);
+        $message = $this->findEventMessage((int) $this->editingSentMessageId);
+        $this->authorize('log-contacts');
+
+        $this->validate([
+            'selectedSentByUserId' => ['nullable', 'integer', Rule::exists('users', 'id')],
+        ]);
 
         $message->update([
             'sent_at' => $message->sent_at ?? now(),
@@ -151,7 +159,8 @@ class MessageTrafficIndex extends Component
 
     public function markAsSent(int $messageId): void
     {
-        $message = Message::findOrFail($messageId);
+        $message = $this->findEventMessage($messageId);
+        $this->authorize('log-contacts');
         $label = $message->role->value === 'received_delivered' ? 'delivered' : 'sent';
 
         $message->update([
@@ -166,7 +175,8 @@ class MessageTrafficIndex extends Component
 
     public function unmarkAsSent(int $messageId): void
     {
-        $message = Message::findOrFail($messageId);
+        $message = $this->findEventMessage($messageId);
+        $this->authorize('log-contacts');
         $label = $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent';
 
         $message->update([
@@ -183,7 +193,7 @@ class MessageTrafficIndex extends Component
 
     public function deleteMessage(int $messageId): void
     {
-        $message = Message::findOrFail($messageId);
+        $message = $this->findEventMessage($messageId);
         $this->authorize('delete', $message);
         $message->delete();
 
@@ -191,6 +201,15 @@ class MessageTrafficIndex extends Component
         unset($this->bonusSummary);
 
         $this->dispatch('toast', title: 'Message deleted', type: 'success');
+    }
+
+    /**
+     * Find a message that belongs to this component's event, or 404.
+     */
+    protected function findEventMessage(int $messageId): Message
+    {
+        return Message::where('event_configuration_id', $this->event->eventConfiguration?->id)
+            ->findOrFail($messageId);
     }
 
     public function render(): View

@@ -12,6 +12,7 @@ use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
 use App\Scoring\Rules\WinterFieldDay2027;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
@@ -581,4 +582,29 @@ describe('no-credit badge', function () {
         expect($component->instance()->noCreditReasons)->toBe([]);
         $component->assertDontSee('no credit');
     });
+});
+
+test('listens for contact changes on the event channel when broadcasting is configured', function () {
+    config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+
+    $listeners = Livewire::test(LogbookBrowser::class)->instance()->getListeners();
+
+    expect($listeners)->toBe([
+        "echo-private:event.{$this->event->id},.ContactLogged" => 'refreshFromBroadcast',
+        "echo-private:event.{$this->event->id},.ContactUpdated" => 'refreshFromBroadcast',
+        "echo-private:event.{$this->event->id},.ContactDeleted" => 'refreshFromBroadcast',
+    ]);
+});
+
+test('registers no broadcast listeners without a broadcaster', function () {
+    config(['broadcasting.default' => 'log']);
+
+    expect(Livewire::test(LogbookBrowser::class)->instance()->getListeners())->toBe([]);
+});
+
+test('a broadcast refresh keeps the selected rows', function () {
+    Livewire::test(LogbookBrowser::class)
+        ->set('selectedIds', [1, 2])
+        ->call('refreshFromBroadcast')
+        ->assertSet('selectedIds', [1, 2]);
 });

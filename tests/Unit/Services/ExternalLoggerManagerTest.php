@@ -7,6 +7,7 @@ use App\Services\ListenerProcessRunner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 uses(RefreshDatabase::class);
 
@@ -408,4 +409,49 @@ test('attemptRestart returns false during cooldown', function () {
     expect($result)->toBeFalse()
         ->and($this->processRunner->spawnedCommands)->toBeEmpty()
         ->and($this->processRunner->terminatedPids)->toBeEmpty();
+});
+
+test('a listener that failed to start is not respawned until its backoff passes', function () {
+    $this->manager->enable($this->config->id, 'n1mm', 12060);
+    $this->manager->recordStartupFailure($this->config->id, 'n1mm', 'The PHP sockets extension is not installed.');
+
+    expect($this->manager->attemptRestart($this->config->id, 'n1mm'))->toBeFalse()
+        ->and($this->processRunner->spawnedCommands)->toBe([]);
+
+    $this->travel(61)->seconds();
+
+    expect($this->manager->attemptRestart($this->config->id, 'n1mm'))->toBeTrue()
+        ->and($this->processRunner->spawnedCommands)->toHaveCount(1);
+});
+
+test('the startup backoff doubles with each failure, up to an hour', function () {
+    $this->manager->enable($this->config->id, 'n1mm', 12060);
+
+    foreach (range(1, 10) as $failure) {
+        $this->manager->recordStartupFailure($this->config->id, 'n1mm', 'bind failed');
+    }
+
+    $this->travel(59)->minutes();
+    expect($this->manager->isBackingOff($this->config->id, 'n1mm'))->toBeTrue();
+
+    $this->travel(2)->minutes();
+    expect($this->manager->isBackingOff($this->config->id, 'n1mm'))->toBeFalse();
+});
+
+test('a repeated startup failure is logged once per reason', function () {
+    Log::spy();
+
+    foreach (range(1, 5) as $failure) {
+        $this->manager->recordStartupFailure($this->config->id, 'n1mm', 'The PHP sockets extension is not installed.');
+    }
+
+    Log::shouldHaveReceived('error')->once();
+});
+
+test('re-enabling a listener clears its startup backoff', function () {
+    $this->manager->recordStartupFailure($this->config->id, 'n1mm', 'bind failed');
+
+    $this->manager->enable($this->config->id, 'n1mm', 12061);
+
+    expect($this->manager->isBackingOff($this->config->id, 'n1mm'))->toBeFalse();
 });

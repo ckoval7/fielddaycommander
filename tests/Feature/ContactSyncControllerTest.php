@@ -11,10 +11,12 @@ use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
+use App\Services\DeveloperClockService;
 use Carbon\CarbonInterface;
 use Database\Seeders\EventTypeSeeder;
 use Database\Seeders\OperatingClassSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -638,4 +640,51 @@ test('syncing a gota contact with a linked gota operator is accepted', function 
         ->assertCreated();
 
     expect(Contact::firstOrFail()->gota_operator_user_id)->toBe($gotaOperator->id);
+});
+
+test('sync responses carry the server application clock for the queue to measure its offset', function () {
+    Date::setTestNow(now()->startOfSecond());
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', syncPayload($this, now()))
+        ->assertCreated()
+        ->assertHeader('X-Server-Time', (string) now()->getTimestampMs());
+});
+
+test('a future qso time is rejected with the server time so the queue can re-stamp it', function () {
+    Date::setTestNow(now()->startOfSecond());
+
+    // A device clock well ahead, near the end of the event: told it is in the
+    // future (correctable), not that the event has ended.
+    $this->event->update(['end_time' => now()->addMinutes(30)]);
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', syncPayload($this, now()->addHour()))
+        ->assertUnprocessable()
+        ->assertJson([
+            'code' => 'qso_time_in_future',
+            'server_time' => now()->getTimestampMs(),
+        ])
+        ->assertHeader('X-Server-Time', (string) now()->getTimestampMs());
+});
+
+test('with the developer fake clock set, contacts stamped on the server clock are accepted', function () {
+    config(['developer.enabled' => true]);
+    $fakeNow = now()->subDays(3)->startOfSecond();
+    app(DeveloperClockService::class)->setFakeTime($fakeNow);
+
+    $this->event->update(['start_time' => $fakeNow->copy()->subHours(2), 'end_time' => $fakeNow->copy()->addHours(20)]);
+    $this->session->update(['start_time' => $fakeNow->copy()->subHour()]);
+
+    // The queue stamps qso_time on the server clock it learned from X-Server-Time.
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', syncPayload($this, $fakeNow->copy()->addSeconds(30)))
+        ->assertCreated()
+        ->assertHeader('X-Server-Time', (string) $fakeNow->getTimestampMs());
+
+    // A raw device timestamp (real time, days after the fake clock) is a future time.
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', syncPayload($this, now()))
+        ->assertUnprocessable()
+        ->assertJson(['code' => 'qso_time_in_future', 'server_time' => $fakeNow->getTimestampMs()]);
 });

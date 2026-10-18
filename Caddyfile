@@ -7,6 +7,19 @@
 		max_size 35MB
 	}
 
+	# Baseline security headers. "?" only sets a header the app has not set
+	# itself, so app middleware stays in charge (framing is left to the app).
+	header {
+		?X-Content-Type-Options nosniff
+		?Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# Site settings written by deploy.sh/update.sh: TLS certificate or ACME
+	# email. Root-owned; an empty directory is fine. HSTS comes from the app
+	# (SECURITY_HSTS_MAX_AGE in .env).
+	import /etc/frankenphp/caddy.d/*.caddy
+
 	# Reverb WebSocket proxy — route block enforces top-to-bottom ordering
 	# so reverse_proxy runs before php_server intercepts /app/* requests.
 	route /app/* {

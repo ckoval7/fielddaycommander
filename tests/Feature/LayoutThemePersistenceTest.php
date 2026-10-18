@@ -27,6 +27,16 @@ test('guest layout re-applies theme attribute after wire:navigate', function () 
         ->toContain("document.addEventListener('livewire:navigated', applyTheme)");
 });
 
+test('guest layout uses the app theme switch, not MaryUI theme-toggle', function () {
+    $html = view('components.layouts.guest', ['slot' => ''])->render();
+
+    // MaryUI's toggle stores its theme under "mary-theme" and sets data-theme
+    // from it on every load, overriding the "theme" key and flashing the page.
+    expect($html)
+        ->not->toContain('mary-theme')
+        ->toContain("localStorage.setItem('theme', theme)");
+});
+
 test('app layout content keeps a narrow gutter on mobile', function () {
     $html = view('components.layouts.app', ['slot' => ''])->render();
 

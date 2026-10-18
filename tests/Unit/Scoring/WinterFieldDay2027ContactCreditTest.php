@@ -207,10 +207,12 @@ test('rescoring zeroes no-credit contacts under 2027 and restores them under 202
     $station = Station::factory()->create(['event_configuration_id' => $config->id, 'is_gota' => false]);
     $session = OperatingSession::factory()->create(['station_id' => $station->id, 'mode_id' => $this->digital->id]);
 
+    // Inside the event window: a rescore gives out-of-window contacts nothing.
     $ft8 = creditContact($config, $this->hfBand, $this->digital, [
         'submode' => 'FT8',
         'points' => 2,
         'operating_session_id' => $session->id,
+        'qso_time' => $event->start_time->copy()->addHour(),
     ]);
 
     expect($ft8->fresh()->points)->toBe(2);

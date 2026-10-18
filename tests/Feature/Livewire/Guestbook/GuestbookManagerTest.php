@@ -904,3 +904,38 @@ describe('audit logging', function () {
         expect($auditLog->new_values['entry_ids'])->toEqual($ids);
     });
 });
+
+describe('csv export safety', function () {
+    test('csv export neutralizes spreadsheet formulas in visitor input', function () {
+        $this->actingAs($this->admin);
+
+        GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'first_name' => '=HYPERLINK("http://evil.example","click")',
+            'last_name' => '',
+            'callsign' => '@SUM(1+1)',
+        ]);
+
+        $component = new GuestbookManager;
+        $component->mount($this->event);
+
+        ob_start();
+        $component->exportCsv()->sendContent();
+        $output = ob_get_clean();
+
+        $row = str_getcsv(explode("\n", trim($output))[1], escape: '\\');
+
+        expect($row[0])->toBe('\'=HYPERLINK("http://evil.example","click")')
+            ->and($row[1])->toBe("'@SUM(1+1)");
+    });
+
+    test('ignores unknown sort columns', function () {
+        $this->actingAs($this->admin);
+
+        GuestbookEntry::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('sortBy', ['column' => 'password', 'direction' => 'sideways'])
+            ->assertOk();
+    });
+});

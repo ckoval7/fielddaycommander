@@ -50,11 +50,34 @@ app:
   # Public URL of the installation, no trailing slash. Also used to build
   # asset and storage URLs, so it must match how users reach the app.
   url: "http://localhost"
-  # Leave blank to have the entrypoint generate a key on first boot. For
-  # multi-replica or upgrade-safe installs, set one (php artisan key:generate
-  # --show) or supply it via existingSecret.
+  # Extra hostnames users reach the site by, comma-separated (for example a
+  # public domain alongside a LAN name). The app.url host, its subdomains,
+  # ingress.host and local-network addresses (private IPs, *.local) are always
+  # accepted; other Host headers get an error page. These hosts can also open
+  # live updates.
+  # "*" accepts any host. Not enforced while app.url is localhost.
+  trustedHosts: ""
+  # Proxies whose X-Forwarded-For/-Proto/-Host headers the app believes,
+  # comma-separated IPs or CIDRs. The ingress controller forwards from a pod
+  # or node address, so the default trusts the private ranges clusters use.
+  # Narrow it to the ingress controller's pod CIDR if untrusted clients can
+  # reach the app's pods directly: anyone trusted here can fake their IP and
+  # get around login and station-mode rate limits.
+  trustedProxies: "127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7"
+  # Strict-Transport-Security max-age in seconds, sent only over HTTPS. 0 (off)
+  # is the default: browsers that see HSTS refuse plain HTTP and untrusted
+  # certificates for that host until it expires. Set it (e.g. 31536000) only
+  # when the site always has a certificate browsers trust.
+  hstsMaxAge: 0
+  # Leave blank to have the chart generate one into its Secret on install;
+  # later upgrades reuse the stored key. The container refuses to start
+  # without a key. To pin it (e.g. when restoring a backup, since two-factor
+  # secrets are encrypted with it), set one (php artisan key:generate --show)
+  # or supply it via existingSecret.
   key: ""
   logLevel: info
+  # Logs rotate daily under storage/logs; files older than this are deleted.
+  logDailyDays: 14
   timezone: UTC
   # Never enable in production — exposes time travel and DB reset tools.
   developerMode: false
@@ -73,8 +96,9 @@ app:
   auditRetentionDays: 365
   passwordMinLength: 8
   passwordAdminMinLength: 12
-  # Send the session cookie only over HTTPS. Turn on whenever TLS terminates
-  # in front of the app; leave off for plain-HTTP field/LAN deployments.
+  # Send the session cookie only over HTTPS. Enabled automatically when
+  # ingress.tls.enabled is set or app.url starts with https://; turn on by
+  # hand if TLS terminates elsewhere in front of the app.
   sessionSecureCookie: false
 
 # Existing secret supplying sensitive values instead of the generated one.
@@ -85,6 +109,7 @@ existingSecret: ""
 # ---------------------------------------------------------------------------
 # Octane (FrankenPHP) runtime
 # ---------------------------------------------------------------------------
+# Passed to octane:frankenphp as --workers / --max-requests via supervisord.
 octane:
   workers: auto
   maxRequests: 500
@@ -113,7 +138,10 @@ externalLoggers:
     annotations: {}
     loadBalancerIP: ""
     # Node ports used when type is NodePort. Must be inside the cluster's
-    # node port range (default 30000-32767).
+    # node port range (default 30000-32767). Fixed ports keep the address you
+    # type into N1MM/WSJT-X stable across reinstalls. Node ports are
+    # cluster-wide, so a second release must use different numbers, or leave
+    # one blank ("") to have Kubernetes pick a free port.
     nodePorts:
       n1mm: 31060
       wsjtx: 32237
@@ -131,18 +159,33 @@ reverb:
   # Public port browsers connect to (443 behind TLS, 80 behind plain HTTP).
   publicPort: ""
   scheme: ""
+  # Extra hosts allowed to open WebSocket connections, comma-separated and
+  # matched against the browser's Origin (wildcards like *.example.org work).
+  # The app.url host, reverb.host, app.trustedHosts and local-network
+  # addresses are already allowed, so this is usually left empty.
+  allowedOrigins: ""
 
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
-# When mysql.enabled is true the bundled Bitnami MySQL subchart is deployed
-# and used automatically. Set it to false and fill in externalDatabase to
-# point at an existing MySQL/MariaDB server.
+# When mysql.enabled is true the chart runs its own MySQL StatefulSet from
+# the official image (same version as docker-compose.yml) and points the app at
+# it. Set it to false and fill in externalDatabase to use an existing
+# MySQL/MariaDB server instead.
 mysql:
   enabled: true
+  image:
+    repository: mysql
+    tag: "8.4.11"
+    pullPolicy: IfNotPresent
   auth:
     database: fd_commander
     username: fd_commander
+    # Leave blank to generate on first install. Stored in the <release>-mysql
+    # secret (keys mysql-password / mysql-root-password) and reused on upgrade.
+    # MySQL only applies these when it creates an empty database, so changing
+    # them later does not change the database's passwords: run ALTER USER in
+    # MySQL first, then set the new value. See the chart README.
     password: ""
     rootPassword: ""
   primary:
@@ -150,6 +193,47 @@ mysql:
       enabled: true
       size: 8Gi
       storageClass: ""
+      accessMode: ReadWriteOnce
+      # Mount an existing claim instead of creating one. Accepts templates.
+      # Upgrading from chart 0.x (Bitnami subchart): set this to
+      # "data-{{ .Release.Name }}-mysql-0", subPath to "data" and
+      # volumePermissions.enabled to true. See the chart README.
+      existingClaim: ""
+      # Sub-directory of the volume to use as the MySQL data directory.
+      subPath: ""
+    # The official image runs mysqld as mysql (uid/gid 999).
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 999
+      runAsGroup: 999
+      fsGroup: 999
+      fsGroupChangePolicy: OnRootMismatch
+      seccompProfile:
+        type: RuntimeDefault
+    # mysqld/redis-server write only to their data volume and the emptyDirs
+    # the chart mounts for sockets and temporary files.
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+        ephemeral-storage: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+        ephemeral-storage: 128Mi
+  # Root init container that chowns the data directory to the uid/gid above
+  # before MySQL starts. Only needed when reusing a volume written by another
+  # uid, such as the Bitnami subchart's (uid 1001). It runs as root, so leave
+  # it off otherwise and on clusters enforcing the restricted Pod Security
+  # Standard.
+  volumePermissions:
+    enabled: false
 
 externalDatabase:
   host: ""
@@ -163,26 +247,67 @@ externalDatabase:
 # ---------------------------------------------------------------------------
 # Redis — cache, sessions and queue
 # ---------------------------------------------------------------------------
+# When redis.enabled is true the chart runs its own Redis StatefulSet from the
+# official image (same version as docker-compose.yml).
 redis:
   enabled: true
-  architecture: standalone
+  image:
+    repository: redis
+    tag: "7.4.11-alpine"
+    pullPolicy: IfNotPresent
   auth:
     enabled: true
+    # Leave blank to generate on first install. Stored in the <release>-redis
+    # secret (key redis-password) and reused on upgrade.
     password: ""
   master:
     persistence:
       enabled: true
       size: 2Gi
       storageClass: ""
-    # AOF with appendfsync=always so queued jobs survive a power cut, which
-    # matters for field deployments running off generators or batteries.
+      accessMode: ReadWriteOnce
+    # Matches the redis-server flags in docker-compose.yml: AOF with
+    # appendfsync=always so queued jobs survive a power cut (field deployments
+    # run off generators or batteries), and volatile-lru eviction so only
+    # TTL'd cache entries are evicted at maxmemory. requirepass is added from
+    # the secret, not here. Keep maxmemory below the memory limit.
     configuration: |-
       appendonly yes
       appendfsync always
+      no-appendfsync-on-rewrite no
+      aof-use-rdb-preamble yes
       save 900 1
       save 300 10
       save 60 10000
+      maxmemory 256mb
       maxmemory-policy volatile-lru
+      tcp-keepalive 60
+    # The official alpine image runs redis-server as redis (uid 999, gid 1000).
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 999
+      runAsGroup: 1000
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+      seccompProfile:
+        type: RuntimeDefault
+    # mysqld/redis-server write only to their data volume and the emptyDirs
+    # the chart mounts for sockets and temporary files.
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+        ephemeral-storage: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+        ephemeral-storage: 64Mi
 
 externalRedis:
   host: ""

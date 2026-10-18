@@ -20,14 +20,31 @@ class ExternalContactDeleted implements ShouldBroadcast
         public int $eventConfigurationId,
         public string $source,
         public ?string $stationName = null,
+        public ?int $eventId = null,
     ) {}
 
-    /** @return array<int, Channel> */
+    /**
+     * Broadcast on the external logger channel and, when the event is known,
+     * on the event channel so open dashboards and score pages refresh.
+     *
+     * @return array<int, Channel>
+     */
     public function broadcastOn(): array
     {
-        return [
+        $channels = [
             new PrivateChannel(BroadcastChannels::externalLogger($this->eventConfigurationId)),
         ];
+
+        if ($this->eventId !== null) {
+            $channels[] = new PrivateChannel(BroadcastChannels::event($this->eventId));
+        }
+
+        return $channels;
+    }
+
+    public function broadcastAs(): string
+    {
+        return BroadcastChannels::CONTACT_DELETED;
     }
 
     /** @return array<string, mixed> */

@@ -8,6 +8,7 @@ use App\Models\EventConfiguration;
 use App\Scoring\DomainEvents\QsoLogged;
 use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ContactObserver
@@ -43,20 +44,30 @@ class ContactObserver
 
     /**
      * Handle the Contact "created" event.
+     *
+     * Notifications go out once the surrounding transaction (the event lock
+     * held while a contact is dupe-checked and inserted) commits, so the lock
+     * is not held while they are sent and a rolled-back contact sends none.
      */
     public function created(Contact $contact): void
     {
-        try {
-            $this->checkNewSection($contact);
-            $this->checkQsoMilestone($contact);
-        } catch (\Exception $e) {
-            Log::error('Failed to process contact notifications', [
-                'contact_id' => $contact->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        DB::afterCommit(function () use ($contact): void {
+            try {
+                $this->checkNewSection($contact);
+                $this->checkQsoMilestone($contact);
+            } catch (\Exception $e) {
+                Log::error('Failed to process contact notifications', [
+                    'contact_id' => $contact->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        });
     }
 
+    /**
+     * QsoLogged dispatches after commit, so bonuses reconcile once the event
+     * lock is released.
+     */
     public function saved(Contact $contact): void
     {
         event(new QsoLogged($contact, $contact->event_configuration_id));

@@ -235,17 +235,12 @@ class SiteSafetyChecklist extends Component
             return;
         }
 
-        $exists = EventBonus::where('event_configuration_id', $this->eventConfig->id)
-            ->where('bonus_type_id', $bonusType->id)
-            ->exists();
-
-        if ($exists) {
-            return;
-        }
-
-        EventBonus::create([
+        // Already claimed (or claimed concurrently): the unique index makes
+        // createOrFirst return the existing row instead of adding another.
+        $bonus = EventBonus::createOrFirst([
             'event_configuration_id' => $this->eventConfig->id,
             'bonus_type_id' => $bonusType->id,
+        ], [
             'claimed_by_user_id' => Auth::id(),
             'quantity' => 1,
             'calculated_points' => $bonusType->base_points,
@@ -253,6 +248,10 @@ class SiteSafetyChecklist extends Component
             'verified_by_user_id' => Auth::id(),
             'verified_at' => now(),
         ]);
+
+        if (! $bonus->wasRecentlyCreated) {
+            return;
+        }
 
         $this->dispatch('bonus-claimed');
         $this->dispatch('toast',

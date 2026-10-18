@@ -15,6 +15,15 @@
         },
 
         detectLocation() {
+            {{-- Browsers only allow location on HTTPS, and field sites often serve plain HTTP.
+                 Leave the choice to the visitor rather than guessing they're remote. --}}
+            if (!window.isSecureContext) {
+                this.locationStatus = 'unsupported';
+                this.locationMessage = '📍 Choose below whether you are here in person or signing in from afar';
+                $wire.clearPresenceType();
+                return;
+            }
+
             if (!navigator.geolocation) {
                 this.locationStatus = 'unsupported';
                 this.locationMessage = '🌐 Geolocation is not supported by your browser - signing in remotely';

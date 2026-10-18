@@ -94,16 +94,13 @@ trait ManagesEquipmentCommitments
     abstract protected function scopeSelectedEquipment(array $ids): EloquentCollection;
 
     /**
-     * Get events within next 30 days or currently active.
+     * Get events that are in progress or still to come.
      */
     #[Computed]
     public function upcomingEvents(): Collection
     {
         return Event::query()
-            ->where(function (Builder $query) {
-                $query->where('start_time', '<=', now()->addDays(30))
-                    ->where('end_time', '>=', now());
-            })
+            ->notEnded()
             ->orderBy('start_time')
             ->get();
     }
@@ -118,7 +115,7 @@ trait ManagesEquipmentCommitments
     {
         $events = $this->upcomingEvents;
 
-        $active = $events->first(fn (Event $e) => $e->start_time <= now() && $e->end_time >= now());
+        $active = $events->first(fn (Event $e) => $e->start_time <= appNow() && $e->end_time >= appNow());
 
         return $active?->id ?? $events->first()?->id;
     }

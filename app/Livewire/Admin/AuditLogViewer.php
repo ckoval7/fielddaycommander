@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Support\CsvSafe;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
@@ -108,12 +109,12 @@ class AuditLogViewer extends Component
             $handle = fopen('php://output', 'w');
 
             // Write headers
-            fputcsv($handle, ['Time', 'User', 'Action', 'IP Address', 'User Agent']);
+            CsvSafe::put($handle, ['Time', 'User', 'Action', 'IP Address', 'User Agent']);
 
             // Stream logs
             $query->chunk(100, function ($logs) use ($handle) {
                 foreach ($logs as $log) {
-                    fputcsv($handle, [
+                    CsvSafe::put($handle, [
                         $log->created_at->format('Y-m-d H:i:s'),
                         $log->user?->name ?? 'N/A',
                         $log->action,

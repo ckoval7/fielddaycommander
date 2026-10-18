@@ -25,6 +25,8 @@ class AdifImport extends Model
         'imported_records',
         'skipped_records',
         'merged_records',
+        'progress_processed',
+        'progress_total',
         'field_mapping',
         'station_mapping',
         'operator_mapping',
@@ -55,5 +57,25 @@ class AdifImport extends Model
     public function records(): HasMany
     {
         return $this->hasMany(AdifImportRecord::class);
+    }
+
+    /**
+     * Whether a queued phase (validation or the import itself) is running.
+     */
+    public function isProcessing(): bool
+    {
+        return in_array($this->status, [AdifImportStatus::Validating, AdifImportStatus::Importing], true);
+    }
+
+    /**
+     * Percentage of the running phase done, for the wizard's progress bar.
+     */
+    public function progressPercent(): int
+    {
+        if ($this->progress_total <= 0) {
+            return 0;
+        }
+
+        return (int) min(100, floor($this->progress_processed * 100 / $this->progress_total));
     }
 }

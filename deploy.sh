@@ -4,6 +4,13 @@ set -euo pipefail
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
 FRANKENPHP_VERSION="1.13.0"
+# SHA-256 of the release binaries. FrankenPHP publishes no checksum file, so
+# these are GitHub's asset digests; update them with FRANKENPHP_VERSION:
+#   curl -fsS https://api.github.com/repos/php/frankenphp/releases/tags/v<ver> \
+#     | jq -r '.assets[] | select(.name|test("^frankenphp-linux-(x86_64|aarch64)$")) | "\(.name) \(.digest)"'
+# update.sh reads all three values from this file.
+FRANKENPHP_SHA256_X86_64="486673e20c014bfc4c9d27d5d3e78929f811c2834534f8117a56ab14de09e656"
+FRANKENPHP_SHA256_AARCH64="590762f2aea6b66cdc1d18b262a21ee1b0b938953a617598b8c970b453f2b1f1"
 NODE_MAJOR="22"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 readonly DISTRO_DEBIAN="debian"
@@ -23,6 +30,10 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# Files this script creates are not world-writable; secrets (.env, the log)
+# get their own stricter modes.
+umask 022
+
 # --- Logging ---
 log_info()    { echo -e "${GREEN}[INFO]${NC} $1" | tee -a "$LOG_FILE"; }
 log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1" | tee -a "$LOG_FILE"; }
@@ -36,6 +47,10 @@ node_needs_install() {
     installed_major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
     (( installed_major < NODE_MAJOR ))
 }
+
+# The log can hold secrets and hostnames, so keep it readable by root only.
+(umask 077 && touch "$LOG_FILE")
+chmod 600 "$LOG_FILE"
 
 # Redirect all stdout/stderr to log file as well
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -54,6 +69,8 @@ SSL_ENABLED=false
 SSL_EMAIL=""
 SSL_CERT=""
 SSL_KEY=""
+TRUSTED_HOSTS=""
+TRUSTED_PROXIES=""
 NO_SEEDERS=false
 DRY_RUN=false
 DB_SERVICE="mariadb"
@@ -82,6 +99,14 @@ Optional:
   --email <email>         Email for Let's Encrypt (required with --ssl)
   --ssl-cert <path>       Path to existing SSL certificate
   --ssl-key <path>        Path to existing SSL key
+  --trusted-hosts <list>  Other hostnames users reach the site by, comma-separated
+                          (e.g. a public domain alongside --domain). The --domain
+                          host, private IPs and .local names always work.
+  --trusted-proxies <list>
+                          Reverse proxies in front of FD Commander whose
+                          X-Forwarded-For headers to believe, as IPs or CIDRs,
+                          comma-separated (e.g. 192.168.1.10). Default: none
+                          besides this machine (127.0.0.1, ::1).
   --no-seeders            Skip database seeders
   --dry-run               Show plan without executing
   -h, --help              Show this help message
@@ -104,12 +129,24 @@ while [[ $# -gt 0 ]]; do
         --email)        SSL_EMAIL="$2"; shift 2 ;;
         --ssl-cert)     SSL_CERT="$2"; shift 2 ;;
         --ssl-key)      SSL_KEY="$2"; shift 2 ;;
+        --trusted-hosts) TRUSTED_HOSTS="$2"; shift 2 ;;
+        --trusted-proxies) TRUSTED_PROXIES="$2"; shift 2 ;;
         --no-seeders)   NO_SEEDERS=true; shift ;;
         --dry-run)      DRY_RUN=true; shift ;;
         -h|--help)      usage 0 ;;
         *)              log_error "Unknown option: $1"; usage 1 ;;
     esac
 done
+
+# path_in_private_tmp <path>: whether the path (after resolving symlinks) is
+# under /tmp or /var/tmp. The services run with PrivateTmp=true, so they see
+# their own empty /tmp and cannot read a certificate kept there.
+# update.sh carries the same function.
+path_in_private_tmp() {
+    local resolved
+    resolved=$(realpath -m -- "$1" 2>/dev/null || echo "$1")
+    [[ "$resolved" == /tmp/* || "$resolved" == /var/tmp/* ]]
+}
 
 # --- Validation ---
 validate_args() {
@@ -149,6 +186,74 @@ validate_args() {
     if [[ -n "$SSL_KEY" ]] && [[ ! -f "$SSL_KEY" ]]; then
         log_error "SSL key not found: $SSL_KEY"
         errors=$((errors + 1))
+    fi
+
+    # Interpolated into SQL identifiers and .env, so keep them plain.
+    if [[ ! "$DB_NAME" =~ ^[A-Za-z0-9_]+$ ]]; then
+        log_error "--db-name may only contain letters, digits and underscores"
+        errors=$((errors + 1))
+    fi
+
+    if [[ ! "$DB_USER" =~ ^[A-Za-z0-9_]+$ ]]; then
+        log_error "--db-user may only contain letters, digits and underscores"
+        errors=$((errors + 1))
+    fi
+
+    # The password goes into .env unquoted (also read by systemd), where
+    # whitespace, quotes, $, # and backslashes are mangled.
+    if [[ "$DB_PASSWORD" =~ [[:space:]\"\'\$\#\`\\] ]]; then
+        log_error "--db-password must not contain whitespace, quotes, \$, #, \` or backslashes"
+        errors=$((errors + 1))
+    fi
+
+    # Written into the Caddyfile as a bare word.
+    if [[ -n "$SSL_EMAIL" && ! "$SSL_EMAIL" =~ ^[^[:space:]\"{}#]+@[^[:space:]\"{}#]+$ ]]; then
+        log_error "--email must be a plain email address"
+        errors=$((errors + 1))
+    fi
+
+    # Written into the Caddyfile inside double quotes.
+    if [[ "$SSL_CERT$SSL_KEY" == *\"* ]]; then
+        log_error "--ssl-cert and --ssl-key paths must not contain double quotes"
+        errors=$((errors + 1))
+    fi
+
+    # The services cannot see /tmp or /var/tmp (PrivateTmp), so Caddy would
+    # fail to start with a certificate kept there.
+    local tls_file
+    for tls_file in "$SSL_CERT" "$SSL_KEY"; do
+        if [[ -n "$tls_file" ]] && path_in_private_tmp "$tls_file"; then
+            log_error "${tls_file} is under /tmp or /var/tmp, which the FD Commander services cannot see."
+            log_error "Move the certificate and key somewhere permanent (e.g. /etc/ssl/fd-commander/) and re-run."
+            errors=$((errors + 1))
+        fi
+    done
+
+    # A browser would not trust an expired certificate either.
+    if [[ -f "$SSL_CERT" ]] && command -v openssl &>/dev/null \
+        && ! openssl x509 -checkend 0 -noout -in "$SSL_CERT" &>/dev/null; then
+        log_error "SSL certificate ${SSL_CERT} has expired or is not a PEM certificate"
+        errors=$((errors + 1))
+    fi
+
+    # Written into .env unquoted: hostnames, IPs and "*" only.
+    if [[ -n "$TRUSTED_HOSTS" && ! "$TRUSTED_HOSTS" =~ ^[A-Za-z0-9.:*,_-]+$ ]]; then
+        log_error "--trusted-hosts must be a comma-separated list of hostnames or IPs, without spaces"
+        errors=$((errors + 1))
+    fi
+
+    # Written into .env unquoted: IPv4/IPv6 addresses or CIDRs, or "*".
+    if [[ -n "$TRUSTED_PROXIES" ]]; then
+        local proxy
+        local -a proxies=()
+        IFS=',' read -r -a proxies <<< "$TRUSTED_PROXIES"
+        for proxy in "${proxies[@]}"; do
+            if [[ ! "$proxy" =~ ^([0-9]{1,3}(\.[0-9]{1,3}){3}(/[0-9]{1,2})?|[0-9A-Fa-f]*:[0-9A-Fa-f:.]*(/[0-9]{1,3})?|\*)$ ]]; then
+                log_error "--trusted-proxies must be a comma-separated list of IP addresses or CIDRs (got '${proxy}')"
+                errors=$((errors + 1))
+                break
+            fi
+        done
     fi
 
     if [[ $errors -gt 0 ]]; then
@@ -264,11 +369,49 @@ print_dry_run() {
             echo "SSL Method:     Let's Encrypt (email: $SSL_EMAIL)"
         fi
     fi
+    if [[ -n "$TRUSTED_HOSTS" ]]; then
+        echo "Trusted Hosts:  $TRUSTED_HOSTS"
+    fi
+    if [[ -n "$TRUSTED_PROXIES" ]]; then
+        echo "Trusted Proxies: $TRUSTED_PROXIES"
+    fi
     echo "Source:         $( [[ -n "$REPO_URL" ]] && echo "$REPO_URL (branch: $BRANCH)" || echo "Copy current directory" )"
     echo "Seeders:        $( $NO_SEEDERS && echo "Skipped" || echo "Production seeders" )"
     echo ""
     echo "Cache/Queue/Session: Redis (AOF fsync=always, volatile-lru)"
-    echo "Phases: Packages → App Setup → Database → Redis → Caddy → SSL → Systemd → Firewall → Cache"
+    echo "Phases: Packages → App Setup → Redis → Database → Caddy → SSL → Systemd → Firewall → Cache"
+}
+
+# --- NodeSource repos ---
+# NodeSource's documented manual setup (signed repo + keyring) rather than
+# piping its setup script into a root shell; apt/dnf verify every package.
+# update.sh carries the same two functions.
+add_nodesource_repo_debian() {
+    log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
+    install -d -m 0755 /etc/apt/keyrings
+    curl -fsSL --proto '=https' --tlsv1.2 https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
+    chmod 644 /etc/apt/keyrings/nodesource.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
+        > /etc/apt/sources.list.d/nodesource.list
+    apt-get update -y
+    return 0
+}
+
+add_nodesource_repo_rhel() {
+    log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
+    dnf module disable -y nodejs &>/dev/null || true
+    cat > /etc/yum.repos.d/nodesource-nodejs.repo <<NODEREPOEOF
+[nodesource-nodejs]
+name=Node.js Packages for $(uname -m)
+baseurl=https://rpm.nodesource.com/pub_${NODE_MAJOR}.x/nodistro/nodejs/$(uname -m)
+priority=9
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.nodesource.com/gpgkey/ns-operations-public.key
+module_hotfixes=1
+NODEREPOEOF
+    return 0
 }
 
 # --- Package Installation ---
@@ -306,8 +449,7 @@ install_packages_debian() {
 
     # Add NodeSource repo
     if node_needs_install; then
-        log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
-        curl -fsSL --proto '=https' --tlsv1.2 "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        add_nodesource_repo_debian
     else
         log_warn "Node.js $(node --version) already installed, skipping NodeSource"
     fi
@@ -332,8 +474,7 @@ install_packages_rhel() {
     # NodeSource repo
     if node_needs_install; then
         log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
-        dnf module disable -y nodejs &>/dev/null || true
-        curl -fsSL --proto '=https' --tlsv1.2 "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        add_nodesource_repo_rhel
     else
         log_warn "Node.js $(node --version) already installed, skipping NodeSource"
     fi
@@ -394,19 +535,34 @@ create_system_user() {
     useradd --system --no-create-home --shell /usr/sbin/nologin -g "$WEB_GROUP" fdcommander
 }
 
+# The web group is the app user's own group. update.sh and restore.sh read it
+# the same way (id -gn fdcommander), so every script agrees even on a server
+# where the user was created with another group.
+use_app_user_group() {
+    WEB_GROUP=$(id -gn fdcommander)
+    return 0
+}
+
 install_frankenphp() {
     log_info "Installing FrankenPHP ${FRANKENPHP_VERSION}..."
-    local arch
+    local arch expected_sha
     case "$(uname -m)" in
-        x86_64)  arch="linux-x86_64" ;;
-        aarch64) arch="linux-aarch64" ;;
+        x86_64)  arch="linux-x86_64";  expected_sha="$FRANKENPHP_SHA256_X86_64" ;;
+        aarch64) arch="linux-aarch64"; expected_sha="$FRANKENPHP_SHA256_AARCH64" ;;
         *)       log_error "Unsupported architecture: $(uname -m)"; exit 1 ;;
     esac
     local url="https://github.com/php/frankenphp/releases/download/v${FRANKENPHP_VERSION}/frankenphp-${arch}"
     local dest="/usr/local/bin/frankenphp"
+    local tmp="${dest}.new"
     log_info "Downloading FrankenPHP from ${url}..."
-    curl -fSL --proto '=https' --tlsv1.2 -o "$dest" "$url"
-    chmod +x "$dest"
+    curl -fSL --proto '=https' --tlsv1.2 -o "$tmp" "$url"
+    if ! echo "${expected_sha}  ${tmp}" | sha256sum --check --quiet --status; then
+        rm -f "$tmp"
+        log_error "FrankenPHP download does not match the pinned SHA-256 (${expected_sha})"
+        exit 1
+    fi
+    chmod 755 "$tmp"
+    mv -f "$tmp" "$dest"
     setcap cap_net_bind_service=+ep "$dest"
     if ! "$dest" version &>/dev/null; then
         log_error "FrankenPHP binary verification failed"
@@ -438,6 +594,7 @@ install_packages() {
 
     install_composer
     create_system_user
+    use_app_user_group
     install_frankenphp
     configure_php_ini
 }
@@ -478,6 +635,8 @@ configure_env() {
     set_env "APP_URL" "${SCHEME}://${DOMAIN}${PORT_SUFFIX}"
 
     set_env "LOG_LEVEL" "warning"
+    set_env "LOG_STACK" "daily"
+    set_env "LOG_DAILY_DAYS" "14"
     set_env "DEVELOPER_MODE" "false"
 
     set_env "DB_CONNECTION" "mysql"
@@ -486,6 +645,11 @@ configure_env() {
     set_env "DB_DATABASE" "$DB_NAME"
     set_env "DB_USERNAME" "$DB_USER"
     set_env "DB_PASSWORD" "$DB_PASSWORD"
+
+    # Keep the session cookie off plain HTTP when serving HTTPS.
+    if $SSL_ENABLED; then
+        set_env "SESSION_SECURE_COOKIE" "true"
+    fi
 
     set_env "CACHE_STORE" "redis"
     set_env "SESSION_DRIVER" "redis"
@@ -521,10 +685,64 @@ configure_env() {
     set_env "CADDY_SITE_ADDRESS" "${SCHEME}://${DOMAIN}${PORT_SUFFIX}"
     set_env "APP_PATH" "$APP_PATH"
 
-    chown "fdcommander:${WEB_GROUP}" "$env_file"
+    # Root-owned and group-readable: the app reads it but cannot change it.
+    chown "root:${WEB_GROUP}" "$env_file"
     chmod 640 "$env_file"
 
     log_info ".env configured for production"
+}
+
+# --- Ownership ---
+# The code (including deploy.sh, update.sh, backup.sh and restore.sh, which
+# run as root) stays root-owned, so the fdcommander user cannot change what
+# root later runs. fdcommander may write only the runtime directories and the
+# build output that composer and npm, run as fdcommander, produce. Nothing
+# run as root loads code from those build directories. update.sh carries the
+# same function.
+APP_RUNTIME_DIRS=(storage bootstrap/cache)
+APP_BUILD_DIRS=(vendor node_modules public/build .composer .npm)
+
+apply_app_permissions() {
+    local dir
+    # Secrets first, and kept out of the recursive pass below, so .env is never
+    # world-readable (or unreadable by the app) even for a moment. Other .env.*
+    # copies (old backups and the like) are root-only.
+    if [[ -f "$APP_PATH/.env" ]]; then
+        chown "root:${WEB_GROUP}" "$APP_PATH/.env"
+        chmod 640 "$APP_PATH/.env"
+    fi
+    find "$APP_PATH" -maxdepth 1 -type f -name '.env.*' ! -name '.env.example' \
+        -exec chown root:root {} + -exec chmod 600 {} +
+    # Code: root-owned and read-only to everyone else. storage/ is skipped so
+    # logs and sessions are not made world-readable; it is handled below.
+    # -h and ! -type l leave symlink targets (public/storage) alone.
+    find "$APP_PATH" \( -path "$APP_PATH/storage" -o -path "$APP_PATH/.env" -o \( -path "$APP_PATH/.env.*" ! -path "$APP_PATH/.env.example" \) \) -prune \
+        -o -exec chown -h root:root {} +
+    find "$APP_PATH" \( -path "$APP_PATH/storage" -o -path "$APP_PATH/.env" -o \( -path "$APP_PATH/.env.*" ! -path "$APP_PATH/.env.example" \) \) -prune \
+        -o ! -type l -exec chmod u+rwX,go+rX,go-w {} +
+    for dir in "${APP_BUILD_DIRS[@]}" "${APP_RUNTIME_DIRS[@]}"; do
+        mkdir -p "$APP_PATH/$dir"
+        chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH/$dir"
+    done
+    # Directories group-writable; files read-write but never executable (an
+    # older deploy's chmod -R 775 marked tracked files like .gitignore
+    # executable, which git then reports as changed).
+    for dir in "${APP_RUNTIME_DIRS[@]}"; do
+        find "$APP_PATH/$dir" -type d -exec chmod ug+rwx,o-w {} +
+        find "$APP_PATH/$dir" -type f -exec chmod ug+rw,a-x,o-w {} +
+    done
+    return 0
+}
+
+# Git as root against the root-owned checkout. A checkout an older deploy
+# left owned by fdcommander is used as that user until it is taken over, so
+# root never runs hooks or config the app user could have written.
+app_git() {
+    if [[ "$(stat -c '%U' "$APP_PATH/.git")" == "root" ]]; then
+        git -C "$APP_PATH" "$@"
+    else
+        sudo -u fdcommander git -C "$APP_PATH" "$@"
+    fi
 }
 
 setup_app() {
@@ -534,10 +752,9 @@ setup_app() {
     if [[ -n "$REPO_URL" ]]; then
         if [[ -d "$APP_PATH/.git" ]]; then
             log_warn "App directory already contains a git repo, pulling latest..."
-            cd "$APP_PATH"
-            sudo -u fdcommander git fetch origin
-            sudo -u fdcommander git checkout "$BRANCH"
-            sudo -u fdcommander git pull origin "$BRANCH"
+            app_git fetch origin
+            app_git checkout "$BRANCH"
+            app_git pull origin "$BRANCH"
         else
             log_info "Cloning repository..."
             git clone --branch "$BRANCH" "$REPO_URL" "$APP_PATH"
@@ -554,53 +771,71 @@ setup_app() {
     fi
 
     # Step 2: Set ownership
-    chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH"
+    apply_app_permissions
 
     # Step 3: Generate .env
     configure_env
+
+    # Extra hostnames, also on a re-run that keeps the existing .env.
+    if [[ -n "$TRUSTED_HOSTS" ]]; then
+        set_env "TRUSTED_HOSTS" "$TRUSTED_HOSTS"
+        log_info "Trusted hosts: ${TRUSTED_HOSTS}"
+    fi
+
+    # Only when asked: the app's default trusts forwarded headers from this
+    # machine alone, since FrankenPHP faces browsers directly.
+    if [[ -n "$TRUSTED_PROXIES" ]]; then
+        set_env "TRUSTED_PROXIES" "$TRUSTED_PROXIES"
+        log_info "Trusted proxies: ${TRUSTED_PROXIES}"
+    fi
+
+    # Generate the app key here rather than with key:generate, which would
+    # have to run as root (the app user cannot write .env). Never replace an
+    # existing key: two-factor secrets are encrypted with it.
+    if ! grep -qE '^APP_KEY=.+' "$APP_PATH/.env"; then
+        log_info "Generating application key..."
+        set_env "APP_KEY" "base64:$(head -c 32 /dev/urandom | base64)"
+    fi
 
     # Step 4: Install dependencies
     log_info "Installing Composer dependencies..."
     cd "$APP_PATH"
     sudo -u fdcommander COMPOSER_HOME="$APP_PATH/.composer" /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction
 
-    # Step 5: Generate app key
-    log_info "Generating application key..."
-    php artisan key:generate --force
-
-    # Step 6: Install Node dependencies and build
+    # Step 5: Install Node dependencies and build
     log_info "Installing Node dependencies and building assets..."
     cd "$APP_PATH"
-    sudo -u fdcommander HOME="$APP_PATH" npm ci --ignore-scripts --cache "$APP_PATH/.npm"
-    sudo -u fdcommander HOME="$APP_PATH" npm run build
+    sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm ci --ignore-scripts --cache "$APP_PATH/.npm"
+    sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm run build
 
-    # Step 7: Storage link
+    # Step 6: Storage link (what storage:link creates; public/ is root-owned)
     if [[ ! -L "$APP_PATH/public/storage" ]]; then
-        php artisan storage:link
+        ln -s "$APP_PATH/storage/app/public" "$APP_PATH/public/storage"
     else
         log_warn "Storage link already exists, skipping"
     fi
 
-    # Step 8: Set permissions
-    chmod -R 775 "$APP_PATH/storage" "$APP_PATH/bootstrap/cache"
-    chown -R "fdcommander:${WEB_GROUP}" "$APP_PATH/storage" "$APP_PATH/bootstrap/cache"
-    # Operator scripts run as root; older tags may not ship them.
-    for script in backup.sh restore.sh; do
-        [[ -f "$APP_PATH/$script" ]] && chmod 755 "$APP_PATH/$script"
+    # Step 7: Operator scripts run as root; older tags may not ship them.
+    for script in deploy.sh update.sh backup.sh restore.sh; do
+        if [[ -f "$APP_PATH/$script" ]]; then
+            chmod 755 "$APP_PATH/$script"
+        fi
     done
 
     log_info "Application setup complete"
 }
 
 setup_database() {
-    log_phase "Phase 4: Setting up database"
+    log_phase "Phase 4b: Setting up database"
 
     # Start and enable database service
     systemctl enable "$DB_SERVICE"
     systemctl start "$DB_SERVICE"
 
-    # Create database and user (escape single quotes in password for SQL safety)
-    local safe_password="${DB_PASSWORD//\'/\'\'}"
+    # Create database and user. DB_NAME/DB_USER are validated as [A-Za-z0-9_];
+    # escape backslashes, then single quotes, in the password for SQL.
+    local safe_password="${DB_PASSWORD//\\/\\\\}"
+    safe_password="${safe_password//\'/\'\'}"
     log_info "Creating database and user..."
     mysql -u root <<SQLEOF
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -679,7 +914,7 @@ compute_redis_maxmemory() {
 }
 
 configure_redis() {
-    log_phase "Phase 4b: Configuring Redis"
+    log_phase "Phase 4a: Configuring Redis"
 
     local conf_file
     if [[ "$DISTRO_FAMILY" == "$DISTRO_DEBIAN" ]]; then
@@ -762,32 +997,103 @@ configure_caddy() {
 
     mkdir -p /var/lib/caddy/.config/caddy
     mkdir -p /var/lib/caddy/.local/share/caddy
-    chown -R fdcommander:${WEB_GROUP} /var/lib/caddy
+    chown -R "fdcommander:${WEB_GROUP}" /var/lib/caddy
 
     log_info "FrankenPHP/Caddy configured"
 }
 
+# Root-owned Caddyfile snippets imported into the site block (see Caddyfile).
+CADDY_SNIPPET_DIR="/etc/frankenphp/caddy.d"
+
+# write_caddy_tls_snippet <cert> <key> <email>: TLS settings for an HTTPS
+# site. With a cert and key Caddy serves them; otherwise the email is used for
+# the ACME (Let's Encrypt) account. HSTS is sent by the app (see
+# SECURITY_HSTS_MAX_AGE), not here. update.sh carries the same function.
+write_caddy_tls_snippet() {
+    local cert="$1" key="$2" email="$3"
+    local snippet="${CADDY_SNIPPET_DIR}/tls.caddy"
+    install -d -m 0755 "$CADDY_SNIPPET_DIR"
+    {
+        echo "# Written by deploy.sh/update.sh. Imported into the FD Commander site block."
+        if [[ -n "$cert" ]]; then
+            echo "tls \"${cert}\" \"${key}\""
+        elif [[ -n "$email" ]]; then
+            echo "tls ${email}"
+        fi
+    } > "$snippet"
+    chmod 644 "$snippet"
+    return 0
+}
+
 configure_ssl() {
     if ! $SSL_ENABLED; then
+        # A re-run without --ssl must not keep serving an old TLS snippet.
+        rm -f "${CADDY_SNIPPET_DIR}/tls.caddy"
         log_warn "SSL not enabled — Caddy will serve HTTP only"
-        log_warn "To enable automatic HTTPS, set DOMAIN to a real domain name"
+        log_warn "To enable HTTPS, re-run with --ssl --email <address> (or --ssl-cert/--ssl-key)"
         return
     fi
 
     log_phase "Phase 6: Configuring SSL"
 
     if [[ -n "$SSL_CERT" ]]; then
-        log_info "Custom SSL certificate configured via environment variables"
-        log_info "Certificate: ${SSL_CERT}"
-        log_info "Key: ${SSL_KEY}"
-        # SSL_CERT and SSL_KEY are passed to Caddy via the .env EnvironmentFile
-        set_env "SSL_CERT" "$SSL_CERT"
-        set_env "SSL_KEY" "$SSL_KEY"
+        # Caddy runs as fdcommander and must be able to read both files.
+        local file
+        for file in "$SSL_CERT" "$SSL_KEY"; do
+            if path_in_private_tmp "$file"; then
+                log_error "${file} is under /tmp or /var/tmp, which the FD Commander services cannot see."
+                log_error "Move it somewhere permanent (e.g. /etc/ssl/fd-commander/) and re-run."
+                exit 1
+            fi
+            if ! sudo -u fdcommander test -r "$file"; then
+                log_error "fdcommander cannot read ${file}. Make it readable by group ${WEB_GROUP}"
+                log_error "(e.g. chgrp ${WEB_GROUP} ${file} && chmod 640 ${file}) and re-run."
+                exit 1
+            fi
+        done
+        log_info "Using custom certificate ${SSL_CERT} (key ${SSL_KEY})"
+        log_info "Renewing the certificate is up to you; restart fdcommander.service after replacing it"
+        # HSTS stays as it is: with a self-signed certificate it would lock
+        # browsers out. Set SECURITY_HSTS_MAX_AGE in .env if browsers trust it.
     else
-        log_info "Caddy will automatically obtain and renew Let's Encrypt certificates"
+        log_info "Caddy will automatically obtain and renew Let's Encrypt certificates (account ${SSL_EMAIL})"
         log_info "Ensure DNS for ${DOMAIN} points to this server"
         log_info "Caddy handles ACME challenges automatically — no certbot needed"
+        # A certificate browsers trust, renewed automatically: safe for HSTS.
+        set_env "SECURITY_HSTS_MAX_AGE" "31536000"
+        log_info "HSTS enabled (SECURITY_HSTS_MAX_AGE=31536000)"
     fi
+    write_caddy_tls_snippet "$SSL_CERT" "$SSL_KEY" "$SSL_EMAIL"
+    log_info "Caddy TLS settings written to ${CADDY_SNIPPET_DIR}/tls.caddy"
+}
+
+# write_unit_hardening: sandbox every FD Commander unit with a drop-in, so
+# units written by older deploys get it too (update.sh carries the same
+# function). The services may write only storage/ and bootstrap/cache (plus
+# Caddy's certificate store for the web server).
+write_unit_hardening() {
+    local protect_home="true" unit dir extra_paths
+    # An install or certificate under /home or /root must stay readable.
+    if [[ "$APP_PATH" == /home/* || "$APP_PATH" == /root/* ]] \
+        || grep -sqE '"/(home|root)/' "${CADDY_SNIPPET_DIR}"/*.caddy; then
+        protect_home="read-only"
+    fi
+    for unit in fdcommander fdcommander-queue fdcommander-scheduler fdcommander-reverb; do
+        dir="/etc/systemd/system/${unit}.service.d"
+        extra_paths=""
+        [[ "$unit" == "fdcommander" ]] && extra_paths=" /var/lib/caddy"
+        mkdir -p "$dir"
+        cat > "${dir}/hardening.conf" <<HARDENEOF
+# Written by deploy.sh/update.sh.
+[Service]
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=${protect_home}
+ProtectSystem=strict
+ReadWritePaths=${APP_PATH}/storage ${APP_PATH}/bootstrap/cache${extra_paths}
+HARDENEOF
+    done
+    return 0
 }
 
 configure_systemd() {
@@ -840,7 +1146,7 @@ After=network.target ${DB_SERVICE}.service ${REDIS_SERVICE}.service
 User=fdcommander
 Group=${WEB_GROUP}
 WorkingDirectory=${APP_PATH}
-ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+ExecStart=/usr/bin/php artisan queue:work --sleep=1 --tries=3 --max-time=3600
 Restart=always
 RestartSec=5
 
@@ -894,6 +1200,8 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 REVERBEOF
+
+    write_unit_hardening
 
     # Reload and enable
     systemctl daemon-reload
@@ -958,8 +1266,8 @@ finalize() {
     echo "  Name:           ${DB_NAME}"
     echo "  User:           ${DB_USER}"
     if $DB_PASSWORD_GENERATED; then
-        echo "  Password:       ${DB_PASSWORD}"
-        echo -e "  ${YELLOW}(auto-generated — save this now, it won't be shown again)${NC}"
+        # Not printed: this output is also written to the deploy log.
+        echo "  Password:       auto-generated, stored as DB_PASSWORD in ${APP_PATH}/.env"
     fi
     echo ""
     echo -e "${BOLD}Services${NC}"
@@ -971,16 +1279,17 @@ finalize() {
     echo ""
     echo -e "${BOLD}Logs${NC}"
     echo "  Deploy log:     ${LOG_FILE}"
-    echo "  App log:        ${APP_PATH}/storage/logs/laravel.log"
+    echo "  App log:        ${APP_PATH}/storage/logs/laravel-YYYY-MM-DD.log (kept 14 days)"
     echo "  Caddy log:      journalctl -u fdcommander.service"
     echo ""
     echo -e "${BOLD}Next Steps${NC}"
-    echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} and complete initial setup"
-    echo "  2. The SystemAdminSeeder created the first admin user"
+    echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} now: the setup wizard sets the"
+    echo "     SYSTEM admin password (anyone who reaches it first can complete it)"
+    echo "  2. Then sign in with callsign SYSTEM and the password you chose"
     echo "  3. Review firewall settings if not configured"
     echo "  4. Schedule backups: sudo ${APP_PATH}/backup.sh --install-schedule"
     if ! $SSL_ENABLED; then
-        echo "  5. For HTTPS: set DOMAIN to a real domain and Caddy handles SSL automatically"
+        echo "  5. For HTTPS: re-run with --ssl --email <address> and a real domain name"
     fi
     echo ""
 }
@@ -999,8 +1308,10 @@ main() {
 
     install_packages
     setup_app
-    setup_database
+    # Redis first: migrations clear the cache, which is Redis. apt starts it
+    # on install, but dnf does not, so a RHEL-family install needs this order.
     configure_redis
+    setup_database
     configure_caddy
     configure_ssl
     configure_systemd

@@ -5,7 +5,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
+use PragmaRX\Google2FA\Google2FA;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -35,23 +37,23 @@ it('requires password to enable 2fa', function () {
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
         ->call('enableTwoFactor')
-        ->assertHasErrors('current_password');
+        ->assertHasErrors('enableTwoFactorPassword');
 });
 
 it('rejects wrong password when enabling 2fa', function () {
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->set('current_password', 'wrong-password')
+        ->set('enableTwoFactorPassword', 'wrong-password')
         ->call('enableTwoFactor')
-        ->assertHasErrors('current_password');
+        ->assertHasErrors('enableTwoFactorPassword');
 });
 
 it('shows qr code after enabling 2fa', function () {
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->set('current_password', 'password123')
+        ->set('enableTwoFactorPassword', 'password123')
         ->call('enableTwoFactor')
         ->assertSet('showingQrCode', true)
         ->assertSeeHtml('Scan the QR code');
@@ -61,7 +63,7 @@ it('cancelling 2fa setup cleans up the unconfirmed secret', function () {
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->set('current_password', 'password123')
+        ->set('enableTwoFactorPassword', 'password123')
         ->call('enableTwoFactor')
         ->assertSet('showingQrCode', true)
         ->call('cancelTwoFactorSetup')
@@ -77,13 +79,12 @@ it('can confirm two factor with valid code', function () {
     $this->user->refresh();
 
     // Get a valid TOTP code
-    $google2fa = app(\PragmaRX\Google2FA\Google2FA::class);
+    $google2fa = app(Google2FA::class);
     $secret = decrypt($this->user->two_factor_secret);
     $validCode = $google2fa->getCurrentOtp($secret);
 
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
-        ->set('showingQrCode', true)
         ->set('twoFactorCode', $validCode)
         ->call('confirmTwoFactor')
         ->assertSet('showingQrCode', false)
@@ -100,7 +101,7 @@ it('can disable two factor authentication', function () {
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->set('current_password', 'password123')
+        ->set('disableTwoFactorPassword', 'password123')
         ->call('disableTwoFactor')
         ->assertHasNoErrors();
 
@@ -117,7 +118,7 @@ it('requires password to disable 2fa', function () {
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
         ->call('disableTwoFactor')
-        ->assertHasErrors('current_password');
+        ->assertHasErrors('disableTwoFactorPassword');
 });
 
 it('requires password to view recovery codes', function () {
@@ -129,7 +130,7 @@ it('requires password to view recovery codes', function () {
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
         ->call('showRecoveryCodes')
-        ->assertHasErrors('current_password');
+        ->assertHasErrors('recoveryCodesPassword');
 });
 
 it('can view recovery codes with correct password', function () {
@@ -140,7 +141,7 @@ it('can view recovery codes with correct password', function () {
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->set('current_password', 'password123')
+        ->set('recoveryCodesPassword', 'password123')
         ->call('showRecoveryCodes')
         ->assertSet('showingRecoveryCodes', true);
 });
@@ -155,8 +156,10 @@ it('can regenerate recovery codes', function () {
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
+        ->set('recoveryCodesPassword', 'password123')
         ->call('regenerateRecoveryCodes')
         ->assertSet('showingRecoveryCodes', true)
+        ->assertSet('recoveryCodesPassword', '')
         ->assertHasNoErrors();
 
     $this->user->refresh();
@@ -169,7 +172,7 @@ it('prevents enabling 2fa when mode is disabled', function () {
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->set('current_password', 'password123')
+        ->set('enableTwoFactorPassword', 'password123')
         ->call('enableTwoFactor')
         ->assertHasNoErrors();
 
@@ -181,14 +184,14 @@ it('prevents disabling 2fa when mode is required', function () {
     config(['auth-security.2fa_mode' => 'required']);
 
     // Enable and confirm 2FA
-    app(\Laravel\Fortify\Actions\EnableTwoFactorAuthentication::class)($this->user);
+    app(EnableTwoFactorAuthentication::class)($this->user);
     $this->user->refresh();
     $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
 
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->set('current_password', 'password123')
+        ->set('disableTwoFactorPassword', 'password123')
         ->call('disableTwoFactor')
         ->assertHasNoErrors();
 
@@ -202,7 +205,7 @@ it('allows enabling 2fa when mode is required', function () {
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->set('current_password', 'password123')
+        ->set('enableTwoFactorPassword', 'password123')
         ->call('enableTwoFactor')
         ->assertSet('showingQrCode', true);
 });
@@ -213,7 +216,7 @@ it('allows enabling 2fa when mode is optional', function () {
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->set('current_password', 'password123')
+        ->set('enableTwoFactorPassword', 'password123')
         ->call('enableTwoFactor')
         ->assertSet('showingQrCode', true);
 });
@@ -239,7 +242,7 @@ it('shows 2fa required banner when mode is required and 2fa not set up', functio
 it('hides disable button when mode is required and 2fa is enabled', function () {
     config(['auth-security.2fa_mode' => 'required']);
 
-    app(\Laravel\Fortify\Actions\EnableTwoFactorAuthentication::class)($this->user);
+    app(EnableTwoFactorAuthentication::class)($this->user);
     $this->user->refresh();
     $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
 
@@ -271,14 +274,139 @@ it('prevents cancelling 2fa setup when mode is required', function () {
     config(['auth-security.2fa_mode' => 'required']);
 
     // Start 2FA setup
-    app(\Laravel\Fortify\Actions\EnableTwoFactorAuthentication::class)($this->user);
+    app(EnableTwoFactorAuthentication::class)($this->user);
     $this->user->refresh();
 
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
-        ->set('showingQrCode', true)
         ->call('cancelTwoFactorSetup');
 
     $this->user->refresh();
     expect($this->user->two_factor_secret)->not->toBeNull();
+});
+
+it('requires password to regenerate recovery codes', function () {
+    app(EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+    $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+    $originalCodes = $this->user->two_factor_recovery_codes;
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('recoveryCodesPassword', 'wrong-password')
+        ->call('regenerateRecoveryCodes')
+        ->assertHasErrors(['recoveryCodesPassword'])
+        ->assertSet('showingRecoveryCodes', false);
+
+    expect($this->user->fresh()->two_factor_recovery_codes)->toBe($originalCodes);
+});
+
+it('does not let the client reveal the qr code or recovery codes', function (string $property) {
+    app(EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+
+    expect(fn () => Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set($property, true))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+})->with(['showingQrCode', 'showingRecoveryCodes']);
+
+it('does not render the secret for a confirmed 2fa setup', function () {
+    app(EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+    $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->assertDontSee(decrypt($this->user->two_factor_secret))
+        ->assertDontSee($this->user->recoveryCodes()[0]);
+});
+
+it('cancelling setup does not disable a confirmed 2fa', function () {
+    app(EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+    $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->call('cancelTwoFactorSetup');
+
+    $this->user->refresh();
+    expect($this->user->two_factor_secret)->not->toBeNull()
+        ->and($this->user->two_factor_confirmed_at)->not->toBeNull();
+});
+
+it('can hide recovery codes', function () {
+    app(EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+    $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('recoveryCodesPassword', 'password123')
+        ->call('showRecoveryCodes')
+        ->assertSet('showingRecoveryCodes', true)
+        ->call('hideRecoveryCodes')
+        ->assertSet('showingRecoveryCodes', false);
+});
+
+it('gives each 2fa action its own password field', function () {
+    app(EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+    $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->assertDontSeeHtml('wire:model="recoveryCodesPassword"')
+        ->assertDontSeeHtml('wire:model="disableTwoFactorPassword"')
+        ->call('startTwoFactorAction', 'disable')
+        ->assertSet('confirmingTwoFactorAction', 'disable')
+        ->assertSeeHtml('wire:model="disableTwoFactorPassword"')
+        ->assertDontSeeHtml('wire:model="recoveryCodesPassword"')
+        ->set('disableTwoFactorPassword', 'password123')
+        ->call('startTwoFactorAction', 'regenerate-codes')
+        ->assertSet('disableTwoFactorPassword', '')
+        ->assertSeeHtml('wire:model="recoveryCodesPassword"')
+        ->assertDontSeeHtml('wire:model="disableTwoFactorPassword"')
+        ->set('recoveryCodesPassword', 'password123')
+        ->call('disableTwoFactor')
+        ->assertHasErrors('disableTwoFactorPassword');
+
+    expect($this->user->fresh()->two_factor_secret)->not->toBeNull();
+});
+
+it('cancelling a 2fa action hides its password field', function () {
+    app(EnableTwoFactorAuthentication::class)($this->user);
+    $this->user->refresh();
+    $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->call('startTwoFactorAction', 'view-codes')
+        ->set('recoveryCodesPassword', 'secret')
+        ->call('cancelTwoFactorAction')
+        ->assertSet('confirmingTwoFactorAction', null)
+        ->assertSet('recoveryCodesPassword', '')
+        ->assertDontSeeHtml('wire:model="recoveryCodesPassword"');
+});
+
+it('ignores unknown 2fa actions', function () {
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->call('startTwoFactorAction', 'bogus')
+        ->assertSet('confirmingTwoFactorAction', null);
+});
+
+it('typing the change password field does not fill the enable 2fa field', function () {
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('activeTab', 'security')
+        ->set('current_password', 'password123')
+        ->call('enableTwoFactor')
+        ->assertHasErrors('enableTwoFactorPassword')
+        ->assertSet('showingQrCode', false);
 });

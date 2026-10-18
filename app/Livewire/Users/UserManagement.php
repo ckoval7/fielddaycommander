@@ -376,6 +376,7 @@ class UserManagement extends Component
         $user = User::findOrFail($this->lockingUserId);
         $user->update([
             'account_locked_at' => now(),
+            'approval_requested_at' => null,
         ]);
 
         AuditLog::log('user.locked', auditable: $user, newValues: [
@@ -392,7 +393,7 @@ class UserManagement extends Component
         Gate::authorize('manage-users');
 
         $user = User::findOrFail($userId);
-        $user->update(['account_locked_at' => null]);
+        $user->update(['account_locked_at' => null, 'approval_requested_at' => null]);
 
         AuditLog::log('user.unlocked', auditable: $user, newValues: [
             'call_sign' => $user->call_sign,
@@ -469,6 +470,7 @@ class UserManagement extends Component
             'password' => Hash::make($this->activatePassword),
             'requires_password_change' => true,
             'account_locked_at' => null,
+            'approval_requested_at' => null,
             'failed_login_attempts' => 0,
             'user_role' => 'user',
         ]);
@@ -623,6 +625,7 @@ class UserManagement extends Component
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => $this->bulkLockExpiry ?? now(),
+            'approval_requested_at' => null,
         ]);
 
         $users = User::whereIn('id', $userIds)->get();
@@ -657,6 +660,7 @@ class UserManagement extends Component
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => null,
+            'approval_requested_at' => null,
         ]);
 
         $users = User::whereIn('id', $userIds)->get();

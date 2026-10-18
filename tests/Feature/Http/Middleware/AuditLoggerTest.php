@@ -53,16 +53,12 @@ test('logout logs user.logout', function () {
     expect($auditLog->user_id)->toBe($user->id);
 });
 
-test('GET /logout also logs user.logout and ends the session', function () {
+test('GET /logout does not end the session', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $response = $this->get('/logout');
+    $this->get('/logout');
 
-    $response->assertRedirect('/');
-    expect(auth()->check())->toBeFalse();
-
-    $auditLog = AuditLog::where('action', 'user.logout')->first();
-    expect($auditLog)->not->toBeNull();
-    expect($auditLog->user_id)->toBe($user->id);
+    expect(auth()->check())->toBeTrue()
+        ->and(AuditLog::where('action', 'user.logout')->exists())->toBeFalse();
 });

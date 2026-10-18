@@ -21,3 +21,11 @@ test('builds livewire echo listener keys', function () {
         ->and(BroadcastChannels::publicListener(BroadcastChannels::weather(), 'WeatherAlertChanged'))
         ->toBe('echo:weather,WeatherAlertChanged');
 });
+
+test('builds listeners for every contact change on an event channel', function () {
+    expect(BroadcastChannels::contactChangeListeners(7, 'refresh'))->toBe([
+        'echo-private:event.7,.ContactLogged' => 'refresh',
+        'echo-private:event.7,.ContactUpdated' => 'refresh',
+        'echo-private:event.7,.ContactDeleted' => 'refresh',
+    ]);
+});

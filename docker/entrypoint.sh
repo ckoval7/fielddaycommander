@@ -1,20 +1,29 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "=== FD Commander Docker Entrypoint ==="
 
 # 0. Validate required environment
-if [[ -z "$DB_PASSWORD" ]]; then
+if [[ -z "${DB_PASSWORD:-}" ]]; then
     echo "ERROR: DB_PASSWORD is not set." >&2
     echo "Run 'bash docker/setup.sh' to generate a .env file with secure defaults." >&2
     exit 1
 fi
 
-if [[ -z "$APP_KEY" || "$APP_KEY" = "base64:" ]]; then
+if [[ -z "${APP_KEY:-}" || "$APP_KEY" = "base64:" ]]; then
     echo "ERROR: APP_KEY is not set." >&2
     echo "A key generated inside the container is lost on every restart, which" >&2
     echo "invalidates sessions and two-factor secrets. Run 'bash docker/setup.sh'" >&2
     echo "to add one to .env, then 'docker compose up -d' again." >&2
+    exit 1
+fi
+
+# Old .env files carry REDIS_PASSWORD=null, which Laravel reads as "no
+# password" while the compose Redis container would require the literal
+# "null". (An empty value stays allowed: Helm can run Redis without auth.)
+if [[ "${REDIS_PASSWORD:-}" = "null" ]]; then
+    echo "ERROR: REDIS_PASSWORD is still the placeholder 'null'." >&2
+    echo "Run 'bash docker/setup.sh' on the host to generate it, then restart." >&2
     exit 1
 fi
 
@@ -35,26 +44,34 @@ fi
 echo "Setting up storage directories..."
 mkdir -p /app/storage/{app/public,framework/{cache/data,sessions,views,testing},logs}
 
-# 3. Build .env inside container from environment variables
-#    Docker Compose injects env vars from env_file + environment directives.
-#    Laravel commands like key:generate expect a .env file to exist.
-echo "Writing .env from container environment..."
+# 3. Laravel reads its settings straight from the container environment
+#    (compose env_file/environment, Helm configmap/secret), so .env is kept
+#    empty. Older images copied the whole environment into it; truncating it
+#    stops stale values from a previous boot lingering in the container.
 : > /app/.env
-env | grep -E '^[A-Z_]+=' | sort | while IFS='=' read -r key value; do
-    echo "${key}=\"${value}\"" >> /app/.env
-done
 
-# 4. Generate Reverb credentials if not set
-if [[ -z "$REVERB_APP_KEY" ]]; then
+# Octane settings consumed by supervisord's %(ENV_...)s expansion, which
+# fails on unset variables, so export validated defaults.
+OCTANE_WORKERS="${OCTANE_WORKERS:-auto}"
+OCTANE_MAX_REQUESTS="${OCTANE_MAX_REQUESTS:-500}"
+if [[ ! "$OCTANE_WORKERS" =~ ^(auto|[0-9]+)$ ]]; then
+    echo "ERROR: OCTANE_WORKERS must be 'auto' or a number (got '$OCTANE_WORKERS')." >&2
+    exit 1
+fi
+if [[ ! "$OCTANE_MAX_REQUESTS" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: OCTANE_MAX_REQUESTS must be a number (got '$OCTANE_MAX_REQUESTS')." >&2
+    exit 1
+fi
+export OCTANE_WORKERS OCTANE_MAX_REQUESTS
+
+# 4. Generate Reverb credentials if not set (docker/setup.sh normally
+#    provides them). Exported, so supervisord's programs inherit them.
+if [[ -z "${REVERB_APP_KEY:-}" ]]; then
     echo "Generating Reverb credentials..."
     REVERB_APP_KEY=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 20 || true)
     REVERB_APP_SECRET=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 20 || true)
     REVERB_APP_ID=$(tr -dc '0-9' < /dev/urandom | head -c 8 || true)
     export REVERB_APP_KEY REVERB_APP_SECRET REVERB_APP_ID
-    # Append to .env so artisan commands pick them up
-    echo "REVERB_APP_KEY=$REVERB_APP_KEY" >> /app/.env
-    echo "REVERB_APP_SECRET=$REVERB_APP_SECRET" >> /app/.env
-    echo "REVERB_APP_ID=$REVERB_APP_ID" >> /app/.env
 fi
 
 # 5. Wait for database
@@ -91,9 +108,6 @@ fi
 # 8. Cache configuration
 echo "Optimizing application (config/route/view/event caches)..."
 php artisan optimize
-
-# 9. Keep the generated .env (database and Reverb secrets) private.
-chmod 640 /app/.env
 
 echo "=== Starting services via supervisord ==="
 exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf

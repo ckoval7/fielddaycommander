@@ -409,12 +409,29 @@ class EventConfiguration extends Model
             return 0;
         }
 
-        $gotaContactCount = $this->contacts()
-            ->where('is_duplicate', false)
-            ->where('is_gota_contact', true)
-            ->count();
+        $gotaContactCount = $this->scoredGotaContacts()->count();
 
         return $gotaContactCount * $rules->gotaPointsPerContact();
+    }
+
+    /**
+     * Non-duplicate GOTA contacts logged within the event period: the same
+     * contacts DuplicateCheckService prices, since anything outside the
+     * window earns 0 points. With no event window set, every contact counts.
+     *
+     * @return HasMany<Contact, $this>
+     */
+    protected function scoredGotaContacts(): HasMany
+    {
+        $event = $this->event;
+
+        return $this->contacts()
+            ->where('is_duplicate', false)
+            ->where('is_gota_contact', true)
+            ->when($event?->start_time !== null && $event?->end_time !== null, fn ($query) => $query
+                ->where(fn ($inPeriod) => $inPeriod
+                    ->whereBetween('qso_time', [$event->start_time, $event->end_time])
+                    ->orWhereNull('qso_time')));
     }
 
     /**
@@ -432,9 +449,7 @@ class EventConfiguration extends Model
             return 0;
         }
 
-        $supervisedGotaCount = $this->contacts()
-            ->where('is_duplicate', false)
-            ->where('is_gota_contact', true)
+        $supervisedGotaCount = $this->scoredGotaContacts()
             ->whereHas('operatingSession', fn ($q) => $q->where('is_supervised', true))
             ->count();
 

@@ -34,6 +34,14 @@ class TranscribeInterface extends Component
      */
     private const WHITESPACE_PATTERN = '/\s+/';
 
+    /**
+     * Paper logs are often kept against a clock that is a few minutes off, so
+     * entry is allowed this far outside the event. Such contacts earn no points.
+     */
+    private const CLOCK_DRIFT_MINUTES = 5;
+
+    private const OUT_OF_WINDOW_ERROR = 'Contact time must be within the event window (±5 minutes).';
+
     public Station $station;
 
     public string $workingDate = '';
@@ -172,11 +180,8 @@ class TranscribeInterface extends Component
             return;
         }
 
-        $earliest = $this->event->start_time->copy()->subMinutes(5);
-        $latest = $this->event->end_time->copy()->addMinutes(5);
-
-        if ($resolvedTime->lt($earliest) || $resolvedTime->gt($latest)) {
-            $this->parseError = 'Contact time must be within the event window (±5 minutes).';
+        if (! $this->withinTranscriptionWindow($resolvedTime)) {
+            $this->parseError = self::OUT_OF_WINDOW_ERROR;
 
             return;
         }
@@ -208,21 +213,9 @@ class TranscribeInterface extends Component
             return;
         }
 
-        $mode = Mode::findOrFail($this->selectedModeId);
-
-        $dupeResult = app(DuplicateCheckService::class)->check(
-            $parsed['callsign'],
-            $this->selectedBandId,
-            $this->selectedModeId,
-            $this->station->event_configuration_id,
-            $this->station->is_gota,
-        );
-
         $session = $this->getOrCreateTranscriptionSession();
 
-        $contactPoints = $this->station->eventConfiguration->pointsForContact($mode, $this->station);
-
-        $contact = Contact::create([
+        $contact = new Contact([
             'event_configuration_id' => $this->station->event_configuration_id,
             'operating_session_id' => $session->id,
             'logger_user_id' => auth()->id(),
@@ -235,15 +228,21 @@ class TranscribeInterface extends Component
             'exchange_class' => $parsed['transmitter_count'].$parsed['class_code'],
             'power_watts' => $this->powerWatts,
             'is_gota_contact' => $this->station->is_gota,
-            'points' => $dupeResult['is_duplicate'] ? 0 : $contactPoints,
-            'is_duplicate' => $dupeResult['is_duplicate'],
-            'duplicate_of_contact_id' => $dupeResult['duplicate_of_contact_id'],
             'is_transcribed' => true,
             'gota_operator_first_name' => $this->station->is_gota ? $this->gotaOperatorFirstName : null,
             'gota_operator_last_name' => $this->station->is_gota ? $this->gotaOperatorLastName : null,
             'gota_operator_callsign' => $this->station->is_gota ? $this->gotaOperatorCallsign : null,
             'gota_operator_user_id' => $this->station->is_gota ? $this->gotaOperatorUserId : null,
         ]);
+
+        // A time inside the ±5 minute clock-drift allowance but outside the
+        // event itself is stored as entered but earns no points (see
+        // DuplicateCheckService::settleGroup) and is left out of Cabrillo.
+        $dupes = app(DuplicateCheckService::class);
+        $dupes->locked($contact->event_configuration_id, function () use ($dupes, $contact, $session) {
+            $dupes->save($contact);
+            $session->increment('qso_count');
+        });
 
         ContactLogged::dispatch($contact->load(['band', 'mode', 'section']), $this->event);
 
@@ -390,6 +389,8 @@ class TranscribeInterface extends Component
             abort(403);
         }
 
+        $this->authorizeContactChange($contact);
+
         AuditLog::log(
             'contact.deleted',
             auditable: $contact,
@@ -400,8 +401,12 @@ class TranscribeInterface extends Component
             ],
         );
 
-        $contact->delete();
-        $contact->operatingSession->decrement('qso_count');
+        $dupes = app(DuplicateCheckService::class);
+        $dupes->locked($contact->event_configuration_id, function () use ($dupes, $contact) {
+            $contact->delete();
+            $dupes->reevaluate($contact);
+            $contact->operatingSession?->decrement('qso_count');
+        });
 
         unset($this->recentContacts);
     }
@@ -423,8 +428,14 @@ class TranscribeInterface extends Component
             abort(403);
         }
 
-        $contact->restore();
-        $contact->operatingSession->increment('qso_count');
+        $this->authorizeContactChange($contact);
+
+        $dupes = app(DuplicateCheckService::class);
+        $dupes->locked($contact->event_configuration_id, function () use ($dupes, $contact) {
+            $contact->restore();
+            $dupes->reevaluate($contact);
+            $contact->operatingSession?->increment('qso_count');
+        });
 
         AuditLog::log(
             'contact.restored',
@@ -450,6 +461,8 @@ class TranscribeInterface extends Component
         if ($contact === null) {
             abort(403);
         }
+
+        $this->authorizeContactChange($contact);
 
         // Check for inline time prefix (e.g. "1423 W1AW 3A CT")
         $inlineTime = null;
@@ -490,29 +503,19 @@ class TranscribeInterface extends Component
             $tz = $this->timeIsLocal ? localTimezone() : 'UTC';
             $baseDate = $contact->qso_time->copy()->setTimezone($tz)->format('Y-m-d');
             $updateData['qso_time'] = Carbon::parse($baseDate.' '.$inlineTime, $tz)->utc();
+
+            if (! $this->withinTranscriptionWindow($updateData['qso_time'])) {
+                $this->parseError = self::OUT_OF_WINDOW_ERROR;
+
+                return;
+            }
         }
 
-        $contact->update($updateData);
+        $dupes = app(DuplicateCheckService::class);
+        $previousKey = $dupes->keyFor($contact);
 
-        // Re-run duplicate detection, excluding this contact itself
-        $isDuplicate = Contact::query()
-            ->where('event_configuration_id', $contact->event_configuration_id)
-            ->where('band_id', $contact->band_id)
-            ->where('mode_id', $contact->mode_id)
-            ->where('callsign', $parsed['callsign'])
-            ->where('is_gota_contact', $contact->is_gota_contact)
-            ->where('id', '!=', $contact->id)
-            ->where('is_duplicate', false)
-            ->exists();
-
-        $stationShim = Station::make(['is_gota' => $contact->is_gota_contact]);
-        $contactPoints = $contact->eventConfiguration?->pointsForContact($contact->mode, $stationShim)
-            ?? ($contact->is_gota_contact ? 5 : ($contact->mode->points_fd ?? 1));
-
-        $contact->update([
-            'is_duplicate' => $isDuplicate,
-            'points' => $isDuplicate ? 0 : $contactPoints,
-        ]);
+        $contact->fill($updateData);
+        $dupes->save($contact, $previousKey);
 
         AuditLog::log(
             'contact.updated',
@@ -531,6 +534,31 @@ class TranscribeInterface extends Component
         $this->clearDuplicateState();
         $this->participantWarning = '';
         unset($this->recentContacts);
+    }
+
+    /**
+     * Whether a contact time is inside the event, give or take the clock-drift allowance.
+     */
+    private function withinTranscriptionWindow(Carbon $time): bool
+    {
+        $earliest = $this->event->start_time->copy()->subMinutes(self::CLOCK_DRIFT_MINUTES);
+        $latest = $this->event->end_time->copy()->addMinutes(self::CLOCK_DRIFT_MINUTES);
+
+        return ! $time->lt($earliest) && ! $time->gt($latest);
+    }
+
+    /**
+     * Editing or removing a transcribed contact needs the edit-contacts
+     * permission, unless the user transcribed it themselves (mirroring the
+     * live logger, where operators manage only their own session's contacts).
+     */
+    private function authorizeContactChange(Contact $contact): void
+    {
+        if ($contact->logger_user_id === auth()->id()) {
+            return;
+        }
+
+        $this->authorize('update', $contact);
     }
 
     #[Computed]

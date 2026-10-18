@@ -28,6 +28,11 @@ beforeEach(function () {
 });
 
 describe('rendering', function () {
+    test('skips location detection on plain HTTP, where browsers block it', function () {
+        Livewire::test(GuestbookForm::class)
+            ->assertSeeHtml('if (!window.isSecureContext)');
+    });
+
     test('renders the guestbook form', function () {
         Livewire::test(GuestbookForm::class)
             ->assertStatus(200)
@@ -134,6 +139,15 @@ describe('validation', function () {
             ->set('visitor_category', VisitorCategory::GeneralPublic->value)
             ->call('save')
             ->assertHasErrors('comments');
+    });
+
+    test('requires a presence choice after the default is cleared', function () {
+        Livewire::test(GuestbookForm::class)
+            ->call('clearPresenceType')
+            ->assertSet('presence_type', '')
+            ->set('name', 'Jane Visitor')
+            ->call('save')
+            ->assertHasErrors(['presence_type' => 'required']);
     });
 
     test('validates required fields', function () {

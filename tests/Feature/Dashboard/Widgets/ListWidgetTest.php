@@ -13,6 +13,7 @@ use App\Models\Station;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -61,6 +62,8 @@ describe('ListWidget Component', function () {
 
         expect($component->instance()->getWidgetListeners())->toBe([
             "echo-private:event.{$this->event->id},.ContactLogged" => 'handleUpdate',
+            "echo-private:event.{$this->event->id},.ContactUpdated" => 'handleUpdate',
+            "echo-private:event.{$this->event->id},.ContactDeleted" => 'handleUpdate',
         ]);
 
         // Guests (the public TV) cannot join the private event channel and rely on polling.
@@ -800,4 +803,56 @@ describe('View Rendering', function () {
             ->assertSee('Recent Contacts') // Widget renders with normal size
             ->assertViewHas('size', 'normal');
     });
+});
+
+describe('ListWidget list type access', function () {
+    beforeEach(function () {
+        $equipment = Equipment::factory()->create(['make' => 'Secret', 'model' => 'Rig']);
+
+        EquipmentEvent::factory()->create([
+            'equipment_id' => $equipment->id,
+            'event_id' => $this->event->id,
+            'status' => 'delivered',
+        ]);
+    });
+
+    it('does not show the equipment list to guests', function () {
+        auth()->logout();
+
+        $component = Livewire::test(ListWidget::class, [
+            'config' => ['list_type' => 'equipment_status'],
+            'size' => 'tv',
+        ]);
+
+        $items = $component->instance()->getData()['items'];
+
+        expect(collect($items)->pluck('type')->all())->not->toContain('equipment')
+            ->and($component->viewData('listType'))->toBe('recent_contacts');
+    });
+
+    it('does not serve a cached equipment list to guests', function () {
+        Livewire::test(ListWidget::class, [
+            'config' => ['list_type' => 'equipment_status'],
+        ])->instance()->getData();
+
+        auth()->logout();
+
+        $items = Livewire::test(ListWidget::class, [
+            'config' => ['list_type' => 'equipment_status'],
+        ])->instance()->getData()['items'];
+
+        expect(collect($items)->pluck('type')->all())->not->toContain('equipment');
+    });
+
+    it('falls back to recent contacts for unknown list types', function () {
+        Livewire::test(ListWidget::class, [
+            'config' => ['list_type' => 'users_table'],
+        ])->assertViewHas('listType', 'recent_contacts');
+    });
+
+    it('does not let the browser change the widget config', function () {
+        Livewire::test(ListWidget::class, [
+            'config' => ['list_type' => 'recent_contacts'],
+        ])->set('config.list_type', 'equipment_status');
+    })->throws(CannotUpdateLockedPropertyException::class);
 });

@@ -392,15 +392,42 @@ test('progress bar calculates percentage correctly for edge cases', function () 
         ->and($data['percentage'])->toBe(2.0); // 1/50 = 2%
 });
 
-test('progress bar returns empty listeners array', function () {
+test('progress bar refreshes live on contact broadcasts for signed-in viewers only', function () {
+    config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $this->actingAs(User::factory()->create());
+
     $component = Livewire::test(ProgressBar::class, [
         'config' => ['metric' => 'next_milestone'],
         'size' => 'normal',
     ]);
 
-    $listeners = $component->instance()->getWidgetListeners();
+    expect($component->instance()->getWidgetListeners())->toBe([
+        "echo-private:event.{$event->id},.ContactLogged" => 'handleUpdate',
+        "echo-private:event.{$event->id},.ContactUpdated" => 'handleUpdate',
+        "echo-private:event.{$event->id},.ContactDeleted" => 'handleUpdate',
+    ]);
 
-    expect($listeners)->toBeArray()->toBeEmpty();
+    // Guests (the public TV dashboard) cannot join the private event channel and rely on polling.
+    auth()->logout();
+
+    expect($component->instance()->getWidgetListeners())->toBe([]);
+});
+
+test('progress bar registers no listeners without an active event', function () {
+    config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+    $this->actingAs(User::factory()->create());
+
+    $component = Livewire::test(ProgressBar::class, [
+        'config' => ['metric' => 'next_milestone'],
+        'size' => 'normal',
+    ]);
+
+    expect($component->instance()->getWidgetListeners())->toBe([]);
 });
 
 test('progress bar event_goal metric reports score-based progress', function () {

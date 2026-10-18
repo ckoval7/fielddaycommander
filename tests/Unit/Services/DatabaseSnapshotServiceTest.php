@@ -1,6 +1,8 @@
 <?php
 
+use App\Exceptions\DatabaseSnapshotException;
 use App\Services\DatabaseSnapshotService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -159,7 +161,7 @@ describe('listSnapshots', function () {
     it('returns empty collection when no snapshots exist', function () {
         $snapshots = $this->service->listSnapshots();
 
-        expect($snapshots)->toBeInstanceOf(\Illuminate\Support\Collection::class)
+        expect($snapshots)->toBeInstanceOf(Collection::class)
             ->and($snapshots)->toBeEmpty();
     });
 
@@ -217,6 +219,13 @@ describe('listSnapshots', function () {
             ->and($snapshot['size'])->toContain('KB');
     });
 
+    it('ignores files that do not match the snapshot naming format', function () {
+        File::put("{$this->testPath}/random.sql", 'fake sql content');
+        File::put("{$this->testPath}/notes.txt", 'not sql');
+
+        expect($this->service->listSnapshots())->toBeEmpty();
+    });
+
     it('handles SQL files without metadata gracefully', function () {
         $filename = 'test-snapshot-2026-01-01_120000.sql';
         $fullPath = "{$this->testPath}/{$filename}";
@@ -257,10 +266,26 @@ describe('deleteSnapshot', function () {
     });
 
     it('returns false if file not found', function () {
-        $result = $this->service->deleteSnapshot('nonexistent-file.sql');
+        $result = $this->service->deleteSnapshot('nonexistent-2026-01-01_120000.sql');
 
         expect($result)->toBeFalse();
     });
+
+    it('rejects path traversal filenames without deleting anything', function (string $filename) {
+        $victim = "{$this->testPath}/victim.txt";
+        File::put($victim, 'keep me');
+
+        expect(fn () => $this->service->deleteSnapshot($filename))
+            ->toThrow(DatabaseSnapshotException::class, 'Invalid snapshot filename');
+
+        expect(File::exists($victim))->toBeTrue();
+    })->with([
+        'parent traversal' => '../../../.env',
+        'sibling file' => 'victim.txt',
+        'nested traversal' => 'sub/../victim.txt',
+        'traversal with valid suffix' => '../x-2026-01-01_120000.sql',
+        'absolute path' => '/etc/passwd',
+    ]);
 
     it('returns true on success', function () {
         $filename = 'test-snapshot-2026-01-01_120000.sql';
@@ -353,8 +378,33 @@ describe('enforceLimit', function () {
 
 describe('restoreSnapshot', function () {
     it('throws exception if file not found', function () {
-        expect(fn () => $this->service->restoreSnapshot('nonexistent.sql'))
+        expect(fn () => $this->service->restoreSnapshot('nonexistent-2026-01-01_120000.sql'))
             ->toThrow(RuntimeException::class, 'Snapshot file not found');
+    });
+
+    it('rejects invalid filenames before running mysql', function () {
+        Process::fake();
+
+        expect(fn () => $this->service->restoreSnapshot('../../../.env'))
+            ->toThrow(DatabaseSnapshotException::class, 'Invalid snapshot filename');
+
+        Process::assertNothingRan();
+    });
+
+    it('does not include process error output in the exception message', function () {
+        $filename = 'test-snapshot-2026-01-01_120000.sql';
+        File::put("{$this->testPath}/{$filename}", 'fake sql content');
+
+        Process::fake([
+            '*mysql*' => Process::result(output: '', errorOutput: 'ERROR at line 1: SECRET_CONTENT', exitCode: 1),
+        ]);
+
+        try {
+            $this->service->restoreSnapshot($filename);
+            $this->fail('Expected exception was not thrown.');
+        } catch (DatabaseSnapshotException $e) {
+            expect($e->getMessage())->not->toContain('SECRET_CONTENT');
+        }
     });
 
     it('throws exception on mysql failure', function () {

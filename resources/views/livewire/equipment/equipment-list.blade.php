@@ -24,10 +24,7 @@
                         $allAvailable = \App\Models\Equipment::whereIn('id', $selectedIds)
                             ->whereDoesntHave('commitments', function ($q) {
                                 $q->whereIn('status', ['committed', 'delivered'])
-                                    ->whereHas('event', function ($eq) {
-                                        $eq->where('start_time', '<=', now()->addDays(30))
-                                            ->where('end_time', '>=', now());
-                                    });
+                                    ->whereHas('event', fn ($eq) => $eq->notEnded());
                             })
                             ->count() === count($selectedIds);
                     @endphp
@@ -375,7 +372,7 @@
                                 src="{{ asset('storage/' . $detailCommitment->equipment->photo_path) }}"
                                 alt="Equipment"
                                 class="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                wire:click="viewPhoto('{{ $detailCommitment->equipment->photo_path }}', '{{ $detailCommitment->equipment->make }} {{ $detailCommitment->equipment->model }}')"
+                                wire:click="viewPhoto({{ Js::from($detailCommitment->equipment->photo_path) }}, {{ Js::from($detailCommitment->equipment->make.' '.$detailCommitment->equipment->model) }})"
                             />
                         @else
                             <div class="w-20 h-20 bg-base-300 rounded flex items-center justify-center flex-shrink-0">

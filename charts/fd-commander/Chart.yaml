@@ -2,7 +2,7 @@ apiVersion: v2
 name: fd-commander
 description: Field Day Commander — Amateur Radio Field Day logging and scoring
 type: application
-version: 0.1.0
+version: 1.0.0
 appVersion: "26.10.7"
 home: https://github.com/ckoval7/fielddaycommander
 sources:
@@ -22,12 +22,3 @@ annotations:
   catalog.cattle.io/namespace: fd-commander
   catalog.cattle.io/type: cluster-tool
   catalog.cattle.io/kube-version: ">=1.24.0-0"
-dependencies:
-  - name: mysql
-    version: "12.x.x"
-    repository: https://charts.bitnami.com/bitnami
-    condition: mysql.enabled
-  - name: redis
-    version: "20.x.x"
-    repository: https://charts.bitnami.com/bitnami
-    condition: redis.enabled

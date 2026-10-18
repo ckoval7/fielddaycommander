@@ -3,6 +3,8 @@
 Separate service for the external logger UDP listeners. Kept apart from the
 web service so the UDP endpoints can use a different service type — a plain
 ClusterIP is not reachable from the radio logging software on the LAN.
+A blank node port lets Kubernetes pick a free one, so a second release in the
+same cluster does not collide with the first one's fixed ports.
 */}}
 apiVersion: v1
 kind: Service
@@ -26,7 +28,9 @@ spec:
       protocol: UDP
       name: n1mm
       {{- if eq .Values.externalLoggers.service.type "NodePort" }}
-      nodePort: {{ .Values.externalLoggers.service.nodePorts.n1mm }}
+      {{- with dig "nodePorts" "n1mm" "" .Values.externalLoggers.service }}
+      nodePort: {{ . }}
+      {{- end }}
       {{- end }}
     {{- end }}
     {{- if .Values.externalLoggers.wsjtx.enabled }}
@@ -35,7 +39,9 @@ spec:
       protocol: UDP
       name: wsjtx
       {{- if eq .Values.externalLoggers.service.type "NodePort" }}
-      nodePort: {{ .Values.externalLoggers.service.nodePorts.wsjtx }}
+      {{- with dig "nodePorts" "wsjtx" "" .Values.externalLoggers.service }}
+      nodePort: {{ . }}
+      {{- end }}
       {{- end }}
     {{- end }}
     {{- if .Values.externalLoggers.udpAdif.enabled }}
@@ -44,7 +50,9 @@ spec:
       protocol: UDP
       name: udp-adif
       {{- if eq .Values.externalLoggers.service.type "NodePort" }}
-      nodePort: {{ .Values.externalLoggers.service.nodePorts.udpAdif }}
+      {{- with dig "nodePorts" "udpAdif" "" .Values.externalLoggers.service }}
+      nodePort: {{ . }}
+      {{- end }}
       {{- end }}
     {{- end }}
   selector:

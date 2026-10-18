@@ -20,11 +20,19 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# Files this script creates are not world-writable; secrets get their own
+# stricter modes below.
+umask 022
+
 # --- Logging ---
 log_info()    { local message="$1"; echo -e "${GREEN}[INFO]${NC} ${message}" | tee -a "$LOG_FILE"; }
 log_warn()    { local message="$1"; echo -e "${YELLOW}[WARN]${NC} ${message}" | tee -a "$LOG_FILE"; }
 log_error()   { local message="$1"; echo -e "${RED}[ERROR]${NC} ${message}" | tee -a "$LOG_FILE" >&2; }
 log_phase()   { local title="$1"; echo -e "\n${CYAN}${BOLD}=== ${title} ===${NC}" | tee -a "$LOG_FILE"; }
+
+# The log can hold secrets and hostnames, so keep it readable by root only.
+(umask 077 && touch "$LOG_FILE")
+chmod 600 "$LOG_FILE"
 
 # Redirect all stdout/stderr to log file as well
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -217,14 +225,35 @@ target_database_name() {
     return 0
 }
 
+# verify_checksum: check a backup file against the PATH.sha256 that backup.sh
+# writes next to it. Backups from older versions have none and are skipped.
+verify_checksum() {
+    local path="$1"
+    if [[ ! -f "${path}.sha256" ]]; then
+        log_warn "No checksum for $(basename "$path") (made by an older backup.sh), skipping verification"
+        return 0
+    fi
+    if ! (cd "$(dirname "$path")" && sha256sum --check --quiet --status "$(basename "$path").sha256"); then
+        log_error "Checksum mismatch for ${path}: the file is corrupt or was changed after the backup"
+        exit 1
+    fi
+    log_info "Checksum OK: $(basename "$path")"
+    return 0
+}
+
 preflight() {
     log_phase "Checking backup"
 
+    verify_checksum "$DB_BACKUP"
     log_info "Testing ${DB_BACKUP}..."
     gzip -t "$DB_BACKUP"
     if [[ $DB_ONLY -eq 0 ]]; then
+        verify_checksum "$FILES_BACKUP"
         log_info "Testing ${FILES_BACKUP}..."
         tar -tzf "$FILES_BACKUP" > /dev/null
+    fi
+    if [[ -f "$ENV_BACKUP" ]]; then
+        verify_checksum "$ENV_BACKUP"
     fi
 
     DUMP_DB=$(dump_database_name)
@@ -313,7 +342,8 @@ restore_env_settings() {
         sed -i "/^${key}=/d" "$env_file"
         printf '%s\n' "$line" >> "$env_file"
     done < <(grep -E '^(APP_KEY|MAIL_[A-Z0-9_]+)=' "$ENV_BACKUP")
-    chown "fdcommander:${WEB_GROUP}" "$env_file"
+    # Root-owned and group-readable: the app reads it but cannot change it.
+    chown "root:${WEB_GROUP}" "$env_file"
     chmod 640 "$env_file"
     return 0
 }
@@ -321,7 +351,12 @@ restore_env_settings() {
 restore_native() {
     log_phase "Restoring"
 
-    WEB_GROUP=$(stat -c '%G' "$APP_PATH")
+    # The app user's own group, the same one deploy.sh created it with. (The
+    # install directory is root-owned, so its group says nothing.)
+    if ! WEB_GROUP=$(id -gn fdcommander 2>/dev/null); then
+        log_error "User fdcommander not found. Has FD Commander been deployed with deploy.sh?"
+        exit 1
+    fi
 
     RESTORE_STARTED=1
     SERVICES_STOPPED=1
@@ -344,6 +379,11 @@ restore_native() {
         begin_step "Copying APP_KEY and MAIL_* settings into .env"
         restore_env_settings
     fi
+
+    # The app must be able to read .env for the steps below (an older
+    # restore.sh or update.sh could leave it root:root).
+    chown "root:${WEB_GROUP}" "$CURRENT_ENV"
+    chmod 640 "$CURRENT_ENV"
 
     cd "$APP_PATH"
     begin_step "Running migrations"

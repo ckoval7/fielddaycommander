@@ -48,6 +48,11 @@ class InvitationController extends Controller
                 ->with('error', 'This invitation is invalid or has expired.');
         }
 
+        if ($invitation->user->isLocked()) {
+            return redirect()->route('login')
+                ->with('error', 'This account has been locked. Please contact an administrator.');
+        }
+
         $validated = $request->validate([
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);

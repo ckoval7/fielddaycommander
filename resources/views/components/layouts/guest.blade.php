@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="reverb-config" content="{{ json_encode(['key' => config('reverb.apps.apps.0.key'), 'host' => config('reverb.apps.apps.0.options.host'), 'port' => config('reverb.apps.apps.0.options.port'), 'scheme' => config('reverb.apps.apps.0.options.scheme')]) }}">
+    <x-reverb-config-meta />
     <title>{{ config('app.name') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
@@ -42,7 +42,9 @@
             $siteLogoPath = \App\Models\Setting::get('site_logo_path');
 
             // Priority 2: Get active event configuration
-            $activeEvent = \App\Models\EventConfiguration::where('is_active', true)->first();
+            // Same event the rest of the app is showing, not whichever config row is first
+            $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent()?->eventConfiguration
+                ?? \App\Models\EventConfiguration::where('is_active', true)->latest('id')->first();
 
             // Set branding data with priority hierarchy
             // Logo: System settings > Event config > Default
@@ -106,7 +108,7 @@
 
         {{-- Theme Toggle --}}
         <div class="mt-6">
-            <x-theme-toggle />
+            <x-theme-switch compact />
         </div>
     </div>
 

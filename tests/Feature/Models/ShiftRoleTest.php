@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\EventConfiguration;
+use App\Models\OperatingClass;
 use App\Models\Shift;
 use App\Models\ShiftRole;
 
@@ -89,6 +90,17 @@ describe('Seeding', function () {
             ->toContain('Station Captain')
             ->not->toContain('Site Responsibilities');
     });
+
+    test('seedDefaults gives Winter Field Day classes the general roles', function (string $code) {
+        $eventConfiguration = EventConfiguration::factory()->create([
+            'operating_class_id' => OperatingClass::factory()->create(['code' => $code])->id,
+        ]);
+
+        ShiftRole::seedDefaults($eventConfiguration);
+
+        expect(ShiftRole::forEvent($eventConfiguration->id)->pluck('name')->sort()->values()->all())
+            ->toBe(['Event Manager', 'Operator', 'Station Captain']);
+    })->with(['1H', '2I', '1O', '3M']);
 
     test('seedDefaults does not duplicate on re-run', function () {
         $eventConfiguration = EventConfiguration::factory()->create();

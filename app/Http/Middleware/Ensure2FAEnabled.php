@@ -36,8 +36,7 @@ class Ensure2FAEnabled
             && ! $request->user()->two_factor_confirmed_at
             && ! StationMode::isActive()
             && ! $request->routeIs('profile')
-            && ! $request->routeIs('logout')
-            && ! $request->routeIs('logout.get')
+            && ! $request->routeIs('logout', 'logout.get')
             && ! $request->routeIs('two-factor.*')
             && ! $request->routeIs('livewire.*')
             && $request->isMethod('GET')

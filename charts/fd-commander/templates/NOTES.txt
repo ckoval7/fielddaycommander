@@ -24,30 +24,32 @@ it can take a few minutes before the app answers. Watch it with:
   echo "http://127.0.0.1:8080"
 {{- end }}
 
-2. Sign in with the seeded system administrator account, then change the
-   password immediately through the setup wizard:
-
-     Callsign: SYSTEM
-     Password: ChangeMe123!
+2. Open the address above. Until setup is complete every page redirects to
+   the setup wizard (/setup/welcome), which sets the password for the SYSTEM
+   administrator account, then the site name and preferences. Afterwards sign
+   in with callsign SYSTEM and the password you chose. Finish the wizard right
+   away: anyone who reaches the site first can complete it.
 
 {{- if .Values.externalLoggers.enabled }}
 
 3. External logger UDP ports. These must match the ports set in the admin UI
    under Settings > External Loggers:
 {{- if .Values.externalLoggers.n1mm.enabled }}
-     N1MM Logger+   {{ .Values.externalLoggers.n1mm.port }}/udp{{ if eq .Values.externalLoggers.service.type "NodePort" }} (node port {{ .Values.externalLoggers.service.nodePorts.n1mm }}){{ end }}
+     N1MM Logger+   {{ .Values.externalLoggers.n1mm.port }}/udp{{ if eq .Values.externalLoggers.service.type "NodePort" }} (node port {{ dig "nodePorts" "n1mm" "" .Values.externalLoggers.service | default "assigned by Kubernetes" }}){{ end }}
 {{- end }}
 {{- if .Values.externalLoggers.wsjtx.enabled }}
-     WSJT-X / JTDX  {{ .Values.externalLoggers.wsjtx.port }}/udp{{ if eq .Values.externalLoggers.service.type "NodePort" }} (node port {{ .Values.externalLoggers.service.nodePorts.wsjtx }}){{ end }}
+     WSJT-X / JTDX  {{ .Values.externalLoggers.wsjtx.port }}/udp{{ if eq .Values.externalLoggers.service.type "NodePort" }} (node port {{ dig "nodePorts" "wsjtx" "" .Values.externalLoggers.service | default "assigned by Kubernetes" }}){{ end }}
 {{- end }}
 {{- if .Values.externalLoggers.udpAdif.enabled }}
-     UDP ADIF       {{ .Values.externalLoggers.udpAdif.port }}/udp{{ if eq .Values.externalLoggers.service.type "NodePort" }} (node port {{ .Values.externalLoggers.service.nodePorts.udpAdif }}){{ end }}
+     UDP ADIF       {{ .Values.externalLoggers.udpAdif.port }}/udp{{ if eq .Values.externalLoggers.service.type "NodePort" }} (node port {{ dig "nodePorts" "udpAdif" "" .Values.externalLoggers.service | default "assigned by Kubernetes" }}){{ end }}
 {{- end }}
 {{- if eq .Values.externalLoggers.service.type "NodePort" }}
 
    Note: with NodePort the logging software must send to the node port, which
    differs from the in-container port. Use a LoadBalancer service if you need
-   the standard port numbers on the LAN.
+   the standard port numbers on the LAN. Node ports "assigned by Kubernetes"
+   are listed by:
+     kubectl -n {{ .Release.Namespace }} get svc {{ include "fd-commander.fullname" . }}-udp
 {{- end }}
 {{- end }}
 
@@ -66,4 +68,24 @@ traces and configuration details to visitors. Set app.debug=false.
 
 WARNING: developer mode is enabled. It exposes database reset and time travel
 tools. Never leave this on for a real event.
+{{- end }}
+{{- $legacyMysqlClaim := printf "data-%s-mysql-0" .Release.Name }}
+{{- if and .Values.mysql.enabled (not .Values.mysql.primary.persistence.existingClaim) (lookup "v1" "PersistentVolumeClaim" .Release.Namespace $legacyMysqlClaim) }}
+
+NOTE: chart 1.0 replaced the Bitnami MySQL and Redis subcharts with its own
+StatefulSets. This release still has chart 0.x MySQL data on the claim
+{{ $legacyMysqlClaim }}, and it is NOT mounted now.
+To reuse it, delete the old StatefulSets and upgrade with
+--reset-then-reuse-values (not --reuse-values) plus:
+  --set-string 'mysql.primary.persistence.existingClaim=data-{{ "{{" }} .Release.Name {{ "}}" }}-mysql-0'
+  --set mysql.primary.persistence.subPath=data
+  --set mysql.volumePermissions.enabled=true
+See "Upgrading from chart 0.x" in the chart README. Redis starts empty (cache,
+sessions and queue only); delete redis-data-{{ .Release.Name }}-redis-master-0
+when no longer needed.
+{{- end }}
+{{- if and .Values.mysql.enabled .Values.mysql.volumePermissions.enabled }}
+
+NOTE: mysql.volumePermissions runs a root init container to fix data ownership.
+Once MySQL has started cleanly you can set it back to false.
 {{- end }}

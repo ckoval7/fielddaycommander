@@ -48,25 +48,29 @@ abstract class AbstractBonusStrategy implements BonusStrategy
             return;
         }
 
-        $existing = $query->first();
+        // createOrFirst leans on the unique (event_configuration_id,
+        // bonus_type_id) index, so racing reconciles converge on one row.
+        $bonus = EventBonus::createOrFirst(
+            [
+                'event_configuration_id' => $config->id,
+                'bonus_type_id' => $bonusType->id,
+            ],
+            [
+                'quantity' => $quantity,
+                'calculated_points' => (int) $points,
+                'is_verified' => true,
+                'verified_at' => now(),
+            ],
+        );
 
-        if ($existing) {
-            $existing->quantity = $quantity;
-            $existing->calculated_points = (int) $points;
-            $existing->is_verified = true;
-            $existing->invalidated_by_rescore = false;
-            $existing->save();
-
+        if ($bonus->wasRecentlyCreated) {
             return;
         }
 
-        EventBonus::create([
-            'event_configuration_id' => $config->id,
-            'bonus_type_id' => $bonusType->id,
-            'quantity' => $quantity,
-            'calculated_points' => (int) $points,
-            'is_verified' => true,
-            'verified_at' => now(),
-        ]);
+        $bonus->quantity = $quantity;
+        $bonus->calculated_points = (int) $points;
+        $bonus->is_verified = true;
+        $bonus->invalidated_by_rescore = false;
+        $bonus->save();
     }
 }

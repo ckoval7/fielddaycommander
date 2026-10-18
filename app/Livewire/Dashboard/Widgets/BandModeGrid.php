@@ -42,9 +42,7 @@ class BandModeGrid extends Component
             return [];
         }
 
-        return [
-            BroadcastChannels::privateListener(BroadcastChannels::event($this->event->id), '.ContactLogged') => 'handleContactLogged',
-        ];
+        return BroadcastChannels::contactChangeListeners($this->event->id, 'handleContactLogged');
     }
 
     /**

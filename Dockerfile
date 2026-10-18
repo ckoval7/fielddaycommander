@@ -6,7 +6,9 @@
 # ---------------------------------------------------------------------------
 # Stage 1: Install PHP dependencies
 # ---------------------------------------------------------------------------
-FROM composer:2 AS composer
+# Build images are pinned to exact releases so a rebuild is reproducible.
+# Bump them deliberately (and with the release package updates).
+FROM composer:2.10.3 AS composer
 
 WORKDIR /app
 COPY composer.json composer.lock ./
@@ -18,7 +20,7 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts
 # ---------------------------------------------------------------------------
 # Stage 2: Build frontend assets (Vite + Tailwind)
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS node
+FROM node:22.23.3-alpine AS node
 
 WORKDIR /app
 
@@ -56,6 +58,7 @@ RUN install-php-extensions \
     intl \
     redis \
     pcntl \
+    sockets \
     && apt-get update \
     && apt-get install -y --no-install-recommends supervisor \
     && rm -rf /var/lib/apt/lists/* \
@@ -83,7 +86,8 @@ COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Set entrypoint permissions and create storage structure. The entrypoint
-# rewrites .env from the container environment, so it must be www-data owned;
+# truncates .env on boot (settings come from the environment), so it must be
+# www-data owned;
 # the public/storage symlink is created here because /app/public is not.
 RUN chmod +x /usr/local/bin/entrypoint.sh \
     && mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions \

@@ -764,3 +764,20 @@ test('logs are ordered by created_at descending', function () {
     expect($logs->first()->id)->toBe($newLog->id)
         ->and($logs->last()->id)->toBe($oldLog->id);
 });
+
+test('export neutralizes spreadsheet formulas', function () {
+    $this->actingAs($this->adminUser);
+
+    AuditLog::create([
+        'user_id' => $this->adminUser->id,
+        'action' => 'user.login.success',
+        'ip_address' => '192.168.1.1',
+        'user_agent' => '=cmd|" /C calc"!A0',
+        'created_at' => now(),
+    ]);
+
+    $response = Livewire::test(AuditLogViewer::class)->call('exportCsv');
+    $csv = base64_decode($response->effects['download']['content']);
+
+    expect($csv)->toContain('"\'=cmd|"" /C calc""!A0"');
+});

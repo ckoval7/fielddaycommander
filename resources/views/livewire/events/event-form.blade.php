@@ -568,7 +568,7 @@
                         wire:model="guestbook_local_subnets"
                         rows="4"
                         icon="phosphor-globe"
-                        placeholder="192.168.1.0/24&#10;10.0.0.0/8"
+                        :placeholder="'192.168.1.0/24'.PHP_EOL.'10.0.0.0/8'"
                         hint="One CIDR notation per line (e.g., 192.168.1.0/24). Visitors on these networks can sign in."
                     />
                 @endif

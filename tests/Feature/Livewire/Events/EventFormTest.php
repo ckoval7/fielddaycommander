@@ -11,6 +11,7 @@ use App\Models\Organization;
 use App\Models\Section;
 use App\Models\Setting;
 use App\Models\User;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -138,7 +139,9 @@ test('event form can create new event with configuration', function () {
         ->set('uses_generator', false)
         ->call('save')
         ->assertHasNoErrors()
-        ->assertDispatched('notify');
+        ->assertRedirect(route('events.index'));
+
+    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved successfully.']);
 
     // Verify Event was created
     $event = Event::where('name', 'Field Day 2025')->first();
@@ -257,7 +260,9 @@ test('event form can edit existing event', function () {
         ->set('callsign', 'W1NEW')
         ->call('save')
         ->assertHasNoErrors()
-        ->assertDispatched('notify');
+        ->assertRedirect(route('events.index'));
+
+    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved successfully.']);
 
     $event->refresh();
     expect($event->name)->toBe('Updated Name');
@@ -1487,4 +1492,125 @@ it('rejects invalid public contact email, phone and website', function () {
         ->set('public_website_url', 'javascript:alert(1)')
         ->call('save')
         ->assertHasErrors(['public_contact_email', 'public_contact_phone', 'public_website_url']);
+});
+
+test('event form identity and lock state cannot be changed by the client', function (string $property, mixed $value) {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    expect(fn () => Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])
+        ->set($property, $value))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+})->with([
+    'mode' => ['mode', 'create'],
+    'eventId' => ['eventId', 999],
+    'isLocked' => ['isLocked', false],
+    'rulesVersionLocked' => ['rulesVersionLocked', false],
+]);
+
+test('event form save re-authorizes the current user', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'name' => 'Original Name',
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(11),
+    ]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+    ]);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
+
+    $this->actingAs(User::factory()->create());
+
+    $component->set('name', 'Hijacked')->call('save')->assertForbidden();
+
+    expect($event->fresh()->name)->toBe('Original Name');
+});
+
+test('event form save recomputes the lock from the database', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(11),
+    ]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+        'max_power_watts' => 100,
+    ]);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
+    expect($component->get('isLocked'))->toBeFalse();
+
+    // Contacts arrive after the form was opened
+    Contact::factory()->create(['event_configuration_id' => $config->id]);
+
+    $component
+        ->set('callsign', 'K1ABC')
+        ->set('max_power_watts', 5)
+        ->set('club_name', 'Updated Club')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast', fn (string $name, array $params) => $params['type'] === 'warning'
+            && str_contains($params['description'], 'callsign')
+            && str_contains($params['description'], 'maximum power'))
+        ->assertNoRedirect()
+        ->assertSet('isLocked', true)
+        ->assertSet('callsign', 'W1AW')
+        ->assertSet('max_power_watts', 100);
+
+    expect($config->fresh())
+        ->callsign->toBe('W1AW')
+        ->max_power_watts->toBe(100)
+        ->club_name->toBe('Updated Club');
+});
+
+test('event form save that becomes locked without touching locked fields saves normally', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(11),
+    ]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'section_id' => $this->section->id,
+        'operating_class_id' => $this->operatingClassA->id,
+        'max_power_watts' => 100,
+    ]);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
+
+    Contact::factory()->create(['event_configuration_id' => $config->id]);
+
+    $component
+        ->set('club_name', 'Updated Club')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertNotDispatched('toast')
+        ->assertRedirect(route('events.index'));
+
+    expect($config->fresh()->club_name)->toBe('Updated Club');
+});
+
+test('local subnets placeholder shows one example per line, not an escaped entity', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('guestbook_enabled', true)
+        ->assertSeeHtml("placeholder=\"192.168.1.0/24\n10.0.0.0/8\"")
+        ->assertDontSeeHtml('&amp;#10;');
 });

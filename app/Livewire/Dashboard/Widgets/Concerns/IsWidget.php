@@ -5,6 +5,7 @@ namespace App\Livewire\Dashboard\Widgets\Concerns;
 use App\Services\EventContextService;
 use App\Support\BroadcastChannels;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Locked;
 
 /**
  * Foundation trait for all dashboard widgets.
@@ -36,10 +37,12 @@ trait IsWidget
      * Widget configuration from the dashboard config.
      *
      * Contains widget-specific settings such as metric type, refresh interval,
-     * display options, etc. Structure varies by widget type.
+     * display options, etc. Structure varies by widget type. Assigned by the
+     * server at mount, so the browser may not change it.
      *
      * @var array<string, mixed>
      */
+    #[Locked]
     public array $config = [];
 
     /**
@@ -181,26 +184,26 @@ trait IsWidget
     }
 
     /**
-     * Listener map for real-time ContactLogged broadcasts on the event channel.
+     * Listener map for real-time contact broadcasts on the event channel.
      *
-     * ContactLogged is broadcast only on the private event.{id} channel, and
-     * that channel authorizes signed-in users only. Guests (e.g. the public TV
-     * dashboard) get no listener and rely on the widget's polling instead of a
-     * subscription that would be refused.
+     * Contacts logged, edited or deleted are broadcast only on the private
+     * event.{id} channel, and that channel authorizes signed-in users only.
+     * Guests (e.g. the public TV dashboard) get no listener and rely on the
+     * widget's polling instead of a subscription that would be refused.
      *
      * @return array<string, string>
      */
-    protected function contactLoggedListener(string $method = 'handleUpdate'): array
+    protected function contactChangeListeners(string $method = 'handleUpdate'): array
     {
-        $eventId = app(EventContextService::class)->getContextEventId();
+        // getContextEventId() returns a 'no-event' placeholder for cache keys,
+        // so read the event itself to skip subscribing when there is none.
+        $eventId = app(EventContextService::class)->getContextEvent()?->id;
 
-        if (! $eventId || ! $this->canListenForBroadcasts()) {
+        if ($eventId === null || ! $this->canListenForBroadcasts()) {
             return [];
         }
 
-        return [
-            BroadcastChannels::privateListener(BroadcastChannels::event($eventId), '.ContactLogged') => $method,
-        ];
+        return BroadcastChannels::contactChangeListeners($eventId, $method);
     }
 
     /**

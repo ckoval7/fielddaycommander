@@ -12,6 +12,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -24,9 +25,11 @@ class EquipmentForm extends Component
     public bool $showModal = false;
 
     // Equipment being edited (null for create mode)
+    #[Locked]
     public ?int $equipmentId = null;
 
     // Is this club equipment?
+    #[Locked]
     public bool $isClubEquipment = false;
 
     // Manager for club equipment
@@ -63,6 +66,7 @@ class EquipmentForm extends Component
     // Photo handling
     public ?TemporaryUploadedFile $photo = null;
 
+    #[Locked]
     public ?string $existingPhotoPath = null;
 
     public function mount(?Equipment $equipment = null): void
@@ -163,10 +167,12 @@ class EquipmentForm extends Component
 
     public function save()
     {
+        $existingEquipment = $this->authorizeSave();
+
         $validated = $this->validate();
 
         $tags = $this->parseTags();
-        $photoPath = $this->resolvePhotoPath();
+        $photoPath = $this->resolvePhotoPath($existingEquipment);
 
         // Prepare equipment data
         $equipmentData = [
@@ -198,9 +204,9 @@ class EquipmentForm extends Component
             $equipmentData['managed_by_user_id'] = null;
         }
 
-        if ($this->equipmentId) {
+        if ($existingEquipment) {
             // Update existing equipment
-            $equipment = Equipment::findOrFail($this->equipmentId);
+            $equipment = $existingEquipment;
 
             $oldEquipValues = [
                 'make' => $equipment->make,
@@ -266,6 +272,28 @@ class EquipmentForm extends Component
     }
 
     /**
+     * Re-check the permissions mount() enforced, since every Livewire request
+     * is a fresh entry point. Returns the equipment being edited, if any.
+     */
+    private function authorizeSave(): ?Equipment
+    {
+        if ($this->equipmentId) {
+            $equipment = Equipment::findOrFail($this->equipmentId);
+            $this->authorize('update', $equipment);
+
+            return $equipment;
+        }
+
+        if ($this->isClubEquipment) {
+            $this->authorize('edit-any-equipment');
+        } else {
+            $this->authorize('create', Equipment::class);
+        }
+
+        return null;
+    }
+
+    /**
      * Split the comma-separated tags input into a trimmed, non-empty list.
      *
      * @return list<string>
@@ -284,15 +312,18 @@ class EquipmentForm extends Component
     /**
      * Store a newly uploaded photo, replacing any previous one, and return the
      * path to persist. Falls back to the existing path when no upload occurred.
+     * The previous path always comes from the database record, never the client.
      */
-    private function resolvePhotoPath(): ?string
+    private function resolvePhotoPath(?Equipment $existingEquipment): ?string
     {
+        $currentPhotoPath = $existingEquipment?->photo_path;
+
         if (! $this->photo) {
-            return $this->existingPhotoPath;
+            return $currentPhotoPath;
         }
 
-        if ($this->existingPhotoPath && Storage::disk('public')->exists($this->existingPhotoPath)) {
-            Storage::disk('public')->delete($this->existingPhotoPath);
+        if ($currentPhotoPath && Storage::disk('public')->exists($currentPhotoPath)) {
+            Storage::disk('public')->delete($currentPhotoPath);
         }
 
         return $this->photo->store('equipment-photos', 'public');
@@ -350,12 +381,12 @@ class EquipmentForm extends Component
             'make' => ['required', 'string', 'max:255'],
             'model' => ['required', 'string', 'max:255'],
             'type' => ['required', 'in:'.implode(',', Equipment::typeKeys())],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'serial_number' => ['nullable', 'string', 'max:100'],
             'value_usd' => ['nullable', 'numeric', 'min:0'],
             'emergency_contact_phone' => ['nullable', 'string'],
             'power_output_watts' => ['nullable', 'integer', 'min:1', 'max:10000'],
-            'notes' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string', 'max:5000'],
             'tagsInput' => ['nullable', 'string'],
             'selectedBands' => ['nullable', 'array'],
             'selectedBands.*' => ['exists:bands,id'],

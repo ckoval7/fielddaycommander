@@ -102,15 +102,6 @@ class ManualBonusClaims extends Component
             return;
         }
 
-        // Prevent duplicate claims
-        $exists = EventBonus::where('event_configuration_id', $config->id)
-            ->where('bonus_type_id', $bonusTypeId)
-            ->exists();
-
-        if ($exists) {
-            return;
-        }
-
         $quantity = 1;
         $points = $bonusType->base_points;
 
@@ -122,9 +113,12 @@ class ManualBonusClaims extends Component
             $points = $quantity * $bonusType->base_points;
         }
 
-        $bonus = EventBonus::create([
+        // One claim per bonus type: a concurrent or repeated claim finds the
+        // existing row (unique index) instead of adding a second one.
+        $bonus = EventBonus::createOrFirst([
             'event_configuration_id' => $config->id,
             'bonus_type_id' => $bonusTypeId,
+        ], [
             'claimed_by_user_id' => auth()->id(),
             'quantity' => $quantity,
             'calculated_points' => $points,
@@ -133,6 +127,10 @@ class ManualBonusClaims extends Component
             'verified_by_user_id' => auth()->id(),
             'verified_at' => now(),
         ]);
+
+        if (! $bonus->wasRecentlyCreated) {
+            return;
+        }
 
         AuditLog::log(
             action: 'bonus.claimed',

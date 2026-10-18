@@ -14,6 +14,8 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
+    config(['developer.enabled' => true]);
+
     // Create permissions
     Permission::create(['name' => 'manage-settings']);
 

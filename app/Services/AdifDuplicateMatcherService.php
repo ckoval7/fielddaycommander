@@ -6,6 +6,7 @@ use App\Enums\AdifRecordStatus;
 use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
 use App\Models\Contact;
+use Illuminate\Support\Collection;
 
 class AdifDuplicateMatcherService
 {
@@ -31,12 +32,16 @@ class AdifDuplicateMatcherService
             ->where('status', AdifRecordStatus::Mapped)
             ->get();
 
+        $candidates = $this->candidateContacts($records, $import->event_configuration_id);
+
+        /** @var array<int, int> $readyIds */
+        $readyIds = [];
+
         foreach ($records as $record) {
-            $matchedContact = $this->findTimeWindowMatch($record, $import->event_configuration_id);
+            $matchedContact = $this->findTimeWindowMatch($record, $candidates);
 
             if ($matchedContact === null) {
-                $record->status = AdifRecordStatus::Ready;
-                $record->save();
+                $readyIds[] = $record->id;
                 $summary['new']++;
 
                 continue;
@@ -55,25 +60,65 @@ class AdifDuplicateMatcherService
             $record->save();
         }
 
+        foreach (array_chunk($readyIds, 1000) as $ids) {
+            AdifImportRecord::query()->whereKey($ids)->update(['status' => AdifRecordStatus::Ready->value]);
+        }
+
         return $summary;
     }
 
-    private function findTimeWindowMatch(AdifImportRecord $record, int $eventConfigId): ?Contact
+    /**
+     * Existing contacts that could match any of the records, loaded once and
+     * grouped by callsign, band and mode (oldest first), instead of one
+     * query per record.
+     *
+     * @param  Collection<int, AdifImportRecord>  $records
+     * @return array<string, array<int, Contact>>
+     */
+    private function candidateContacts(Collection $records, int $eventConfigId): array
+    {
+        $callsigns = $records->pluck('callsign')->filter()->map(fn (string $callsign) => strtoupper($callsign))->unique()->values()->all();
+        $candidates = [];
+
+        foreach (array_chunk($callsigns, 500) as $chunk) {
+            $contacts = Contact::query()
+                ->where('event_configuration_id', $eventConfigId)
+                ->whereIn('callsign', $chunk)
+                ->orderBy('id')
+                ->get();
+
+            foreach ($contacts as $contact) {
+                $candidates[$this->candidateKey($contact->callsign, $contact->band_id, $contact->mode_id)][] = $contact;
+            }
+        }
+
+        return $candidates;
+    }
+
+    private function candidateKey(?string $callsign, ?int $bandId, ?int $modeId): string
+    {
+        return strtoupper((string) $callsign).'|'.$bandId.'|'.$modeId;
+    }
+
+    /**
+     * @param  array<string, array<int, Contact>>  $candidates
+     */
+    private function findTimeWindowMatch(AdifImportRecord $record, array $candidates): ?Contact
     {
         if ($record->qso_time === null || $record->callsign === null) {
             return null;
         }
 
-        return Contact::query()
-            ->where('event_configuration_id', $eventConfigId)
-            ->where('callsign', strtoupper($record->callsign))
-            ->where('band_id', $record->band_id)
-            ->where('mode_id', $record->mode_id)
-            ->whereBetween('qso_time', [
-                $record->qso_time->copy()->subMinutes(self::TIME_WINDOW_MINUTES),
-                $record->qso_time->copy()->addMinutes(self::TIME_WINDOW_MINUTES),
-            ])
-            ->first();
+        $from = $record->qso_time->copy()->subMinutes(self::TIME_WINDOW_MINUTES);
+        $to = $record->qso_time->copy()->addMinutes(self::TIME_WINDOW_MINUTES);
+
+        foreach ($candidates[$this->candidateKey($record->callsign, $record->band_id, $record->mode_id)] ?? [] as $contact) {
+            if ($contact->qso_time !== null && $contact->qso_time->between($from, $to)) {
+                return $contact;
+            }
+        }
+
+        return null;
     }
 
     /**

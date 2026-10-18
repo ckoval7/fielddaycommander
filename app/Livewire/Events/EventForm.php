@@ -18,6 +18,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class EventForm extends Component
@@ -26,9 +27,36 @@ class EventForm extends Component
 
     private const DATETIME_FORMAT = 'Y-m-d H:i:s';
 
+    /**
+     * Fields that can't change once the event is locked, with the label shown to the user.
+     *
+     * @var array<string, string>
+     */
+    private const LOCKED_FIELDS = [
+        'event_type_id' => 'event type',
+        'start_time' => 'start date',
+        'callsign' => 'callsign',
+        'operating_class_id' => 'operating class',
+        'transmitter_count' => 'transmitter count',
+        'max_power_watts' => 'maximum power',
+        'uses_commercial_power' => 'power sources',
+        'uses_generator' => 'power sources',
+        'uses_battery' => 'power sources',
+        'uses_solar' => 'power sources',
+        'uses_wind' => 'power sources',
+        'uses_water' => 'power sources',
+        'uses_methane' => 'power sources',
+        'uses_alternate_power' => 'power sources',
+        'uses_other_power' => 'power sources',
+        'has_gota_station' => 'GOTA station',
+        'gota_callsign' => 'GOTA callsign',
+    ];
+
     // Form mode: 'create', 'edit', or 'clone'
+    #[Locked]
     public string $mode = 'create';
 
+    #[Locked]
     public ?int $eventId = null;
 
     // Section 1: Event Information
@@ -117,9 +145,18 @@ class EventForm extends Component
     public ?string $guestbook_local_subnets = null;
 
     // State tracking
+    #[Locked]
     public bool $isLocked = false;
 
+    #[Locked]
     public bool $rulesVersionLocked = false;
+
+    /**
+     * Labels of locked fields whose edits were discarded during this save.
+     *
+     * @var list<string>
+     */
+    private array $discardedLockedFields = [];
 
     private ?Event $event = null;
 
@@ -550,25 +587,7 @@ class EventForm extends Component
     public function updating($property, $value): void
     {
         // Prevent updates to locked fields BEFORE the value changes
-        if ($this->isLocked && in_array($property, [
-            'event_type_id',
-            'start_time',
-            'callsign',
-            'operating_class_id',
-            'transmitter_count',
-            'max_power_watts',
-            'uses_commercial_power',
-            'uses_generator',
-            'uses_battery',
-            'uses_solar',
-            'uses_wind',
-            'uses_water',
-            'uses_methane',
-            'uses_alternate_power',
-            'uses_other_power',
-            'has_gota_station',
-            'gota_callsign',
-        ])) {
+        if ($this->isLocked && array_key_exists($property, self::LOCKED_FIELDS)) {
             $this->dispatch('notify', title: 'Field Locked', description: 'This field cannot be modified because the event has contacts.');
 
             // Cancel the update by not allowing it to proceed
@@ -625,6 +644,8 @@ class EventForm extends Component
 
     public function save(): void
     {
+        $this->authorizeMode();
+
         $validated = $this->validate();
 
         // STRICT VALIDATION: If editing currently active event, ensure end date doesn't exclude current time
@@ -649,7 +670,20 @@ class EventForm extends Component
             }
         });
 
-        $this->dispatch('notify', title: 'Success', description: 'Event saved successfully.');
+        if ($this->discardedLockedFields !== []) {
+            $this->dispatch('toast',
+                type: 'warning',
+                title: 'Some changes weren\'t saved',
+                description: 'Contacts were logged or the event started while you were editing, so these fields are now locked and weren\'t changed: '
+                    .implode(', ', $this->discardedLockedFields).'. Your other changes were saved.',
+                icon: 'phosphor-lock',
+                timeout: 10000,
+            );
+
+            return;
+        }
+
+        session()->flash('toast', ['title' => 'Success', 'description' => 'Event saved successfully.', 'type' => 'success']);
         $this->redirect(route('events.index'), navigate: true);
     }
 
@@ -731,6 +765,17 @@ class EventForm extends Component
         if (! $this->event || ! $this->configuration) {
             $this->event = Event::with('eventConfiguration')->findOrFail($this->eventId);
             $this->configuration = $this->event->eventConfiguration;
+        }
+
+        // Recompute lock state from the database; contacts may have been
+        // logged since the form was opened.
+        $wasLocked = $this->isLocked;
+        $this->isLocked = $this->configuration?->isLocked() ?? false;
+        $this->rulesVersionLocked = $this->event->start_time !== null
+            && $this->event->start_time <= appNow();
+
+        if ($this->isLocked && ! $wasLocked) {
+            $this->discardedLockedFields = $this->restoreLockedFields();
         }
 
         $oldValues = [
@@ -817,6 +862,49 @@ class EventForm extends Component
             'name' => $validated['name'],
             'callsign' => $validated['callsign'],
         ], auditable: $this->event);
+    }
+
+    /**
+     * Put the stored values back into the locked fields so the form shows what
+     * was actually saved (and the power multiplier is computed from it).
+     *
+     * @return list<string> labels of the fields whose edits were discarded
+     */
+    private function restoreLockedFields(): array
+    {
+        $stored = [
+            'event_type_id' => $this->event->event_type_id,
+            'start_time' => $this->event->start_time?->format(self::DATETIME_FORMAT),
+            'callsign' => $this->configuration->callsign,
+            'operating_class_id' => $this->configuration->operating_class_id,
+            'transmitter_count' => $this->configuration->transmitter_count,
+            'max_power_watts' => $this->configuration->max_power_watts,
+            'uses_commercial_power' => $this->configuration->uses_commercial_power,
+            'uses_generator' => $this->configuration->uses_generator,
+            'uses_battery' => $this->configuration->uses_battery,
+            'uses_solar' => $this->configuration->uses_solar,
+            'uses_wind' => $this->configuration->uses_wind,
+            'uses_water' => $this->configuration->uses_water,
+            'uses_methane' => $this->configuration->uses_methane,
+            'uses_other_power' => $this->configuration->uses_other_power,
+            'has_gota_station' => $this->configuration->has_gota_station,
+            'gota_callsign' => $this->configuration->gota_callsign,
+        ];
+
+        $discarded = [];
+
+        foreach ($stored as $property => $value) {
+            // Loose comparison on purpose: form values arrive as strings, stored ones are cast.
+            if ($this->{$property} != $value) {
+                $discarded[] = self::LOCKED_FIELDS[$property];
+            }
+
+            $this->{$property} = $value;
+        }
+
+        $this->uses_alternate_power = $this->uses_solar || $this->uses_wind || $this->uses_water || $this->uses_methane;
+
+        return array_values(array_unique($discarded));
     }
 
     protected function rules(): array

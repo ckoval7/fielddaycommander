@@ -351,3 +351,130 @@ describe('message bonus scoring by rulebook', function () {
             ->assertDontSee(' pts');
     });
 });
+
+describe('sent tracking authorization', function () {
+    test('operator can mark another operators message as sent', function () {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('log-contacts');
+
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $owner->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('markAsSent', $message->id)
+            ->assertHasNoErrors();
+
+        $message->refresh();
+        expect($message->sent_at)->not->toBeNull()
+            ->and($message->sent_by_user_id)->toBe($this->operator->id);
+    });
+
+    test('operator can clear sent status on another operators message', function () {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('log-contacts');
+
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $owner->id,
+            'sent_at' => now(),
+            'sent_by_user_id' => $owner->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('unmarkAsSent', $message->id)
+            ->assertHasNoErrors();
+
+        expect($message->refresh()->sent_at)->toBeNull();
+    });
+
+    test('operator can set who sent another operators message', function () {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('log-contacts');
+
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $owner->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('openSentByModal', $message->id)
+            ->set('selectedSentByUserId', $owner->id)
+            ->call('saveSentBy')
+            ->assertHasNoErrors();
+
+        expect($message->refresh()->sent_by_user_id)->toBe($owner->id);
+    });
+
+    test('user without log-contacts cannot change sent status', function () {
+        $user = User::factory()->create();
+
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('markAsSent', $message->id)
+            ->assertForbidden();
+
+        expect($message->refresh()->sent_at)->toBeNull();
+    });
+
+    test('cannot change sent status of a message from another event', function () {
+        $otherEvent = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+        $otherConfig = EventConfiguration::factory()->create(['event_id' => $otherEvent->id]);
+
+        $message = Message::factory()->create([
+            'event_configuration_id' => $otherConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('markAsSent', $message->id)
+            ->assertNotFound();
+
+        expect($message->refresh()->sent_at)->toBeNull();
+    });
+
+    test('saveSentBy cannot target a message from another event', function () {
+        $otherEvent = Event::factory()->create(['event_type_id' => $this->eventType->id]);
+        $otherConfig = EventConfiguration::factory()->create(['event_id' => $otherEvent->id]);
+
+        $message = Message::factory()->create([
+            'event_configuration_id' => $otherConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->set('editingSentMessageId', $message->id)
+            ->set('selectedSentByUserId', $this->operator->id)
+            ->call('saveSentBy')
+            ->assertNotFound();
+
+        expect($message->refresh()->sent_at)->toBeNull();
+    });
+
+    test('saveSentBy rejects a nonexistent user', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->call('openSentByModal', $message->id)
+            ->set('selectedSentByUserId', 999999)
+            ->call('saveSentBy')
+            ->assertHasErrors(['selectedSentByUserId']);
+
+        expect($message->refresh()->sent_at)->toBeNull();
+    });
+});

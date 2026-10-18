@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 beforeEach(function () {
+    config(['developer.enabled' => true]);
     $this->seed(PermissionSeeder::class);
 
     DB::table('system_config')->updateOrInsert(
@@ -71,6 +72,8 @@ $gatedPages = [
     'events.messages.index' => ['events.messages.index', 'log-contacts', fn () => ['event' => $this->event]],
     'events.messages.create' => ['events.messages.create', 'log-contacts', fn () => ['event' => $this->event]],
     'events.messages.edit' => ['events.messages.edit', 'log-contacts', fn () => ['event' => $this->event, 'message' => $this->message]],
+    'events.messages.print-all' => ['events.messages.print-all', 'log-contacts', fn () => ['event' => $this->event]],
+    'events.messages.print' => ['events.messages.print', 'log-contacts', fn () => ['event' => $this->event, 'message' => $this->message]],
     'schedule.manage' => ['schedule.manage', 'manage-shifts', fn () => []],
     'site-safety.manage' => ['site-safety.manage', 'manage-shifts', fn () => []],
     'events.equipment.reports.commitment-summary' => ['events.equipment.reports.commitment-summary', 'manage-event-equipment', fn () => ['event' => $this->event]],
@@ -147,6 +150,25 @@ test('users without the required permission are forbidden from gated endpoints',
         ->{$method}(route($routeName, $parameters))
         ->assertForbidden();
 })->with('permission gated endpoints');
+
+test('message print returns 404 when the message belongs to another event', function () {
+    $otherEvent = Event::factory()->create();
+    EventConfiguration::factory()->create(['event_id' => $otherEvent->id]);
+    $this->user->givePermissionTo('log-contacts');
+
+    $this->actingAs($this->user)
+        ->get(route('events.messages.print', ['event' => $otherEvent, 'message' => $this->message]))
+        ->assertNotFound();
+});
+
+test('developer tools return 404 for permitted users when developer mode is disabled', function () {
+    config(['developer.enabled' => false]);
+    $this->user->givePermissionTo('manage-settings');
+
+    $this->actingAs($this->user)
+        ->get(route('admin.developer'))
+        ->assertNotFound();
+});
 
 test('users with an unrelated permission are still forbidden', function () {
     $this->user->givePermissionTo('manage-roles');

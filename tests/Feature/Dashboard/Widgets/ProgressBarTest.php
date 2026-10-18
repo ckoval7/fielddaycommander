@@ -357,7 +357,7 @@ describe('rendering and display', function () {
 });
 
 describe('widget integration', function () {
-    it('returns empty listeners array', function () {
+    it('returns no listeners when there is no active event', function () {
         $widget = Livewire::test(ProgressBar::class)->instance();
         $listeners = $widget->getWidgetListeners();
 

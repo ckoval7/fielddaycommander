@@ -10,9 +10,19 @@ data:
   APP_DEBUG: {{ .Values.app.debug | quote }}
   APP_URL: {{ .Values.app.url | quote }}
   APP_TIMEZONE: {{ .Values.app.timezone | quote }}
+  {{- /* dig/default: values reused from an older release may lack these keys. */}}
+  {{- /* The ingress hostname is always trusted, even if app.url names another. */}}
+  {{- $trustedHosts := list }}
+  {{- with dig "trustedHosts" "" .Values.app }}{{ $trustedHosts = append $trustedHosts . }}{{ end }}
+  {{- if and .Values.ingress.enabled .Values.ingress.host }}{{ $trustedHosts = append $trustedHosts .Values.ingress.host }}{{ end }}
+  TRUSTED_HOSTS: {{ join "," $trustedHosts | quote }}
+  {{- /* The app defaults to loopback only; the ingress controller forwards from a cluster address. */}}
+  TRUSTED_PROXIES: {{ dig "trustedProxies" "127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7" .Values.app | quote }}
+  SECURITY_HSTS_MAX_AGE: {{ dig "hstsMaxAge" 0 .Values.app | quote }}
   DEVELOPER_MODE: {{ .Values.app.developerMode | quote }}
   LOG_CHANNEL: "stack"
-  LOG_STACK: "single"
+  LOG_STACK: "daily"
+  LOG_DAILY_DAYS: {{ .Values.app.logDailyDays | default 14 | quote }}
   LOG_LEVEL: {{ .Values.app.logLevel | quote }}
   LOG_DEPRECATIONS_CHANNEL: "null"
 
@@ -49,7 +59,8 @@ data:
   SESSION_ENCRYPT: "false"
   SESSION_PATH: "/"
   SESSION_DOMAIN: "null"
-  SESSION_SECURE_COOKIE: {{ .Values.app.sessionSecureCookie | quote }}
+  {{- /* Forced on whenever the chart knows TLS terminates in front of the app. */}}
+  SESSION_SECURE_COOKIE: {{ or .Values.app.sessionSecureCookie (include "fd-commander.publicHttps" . | eq "true") | quote }}
 
   {{- if .Values.reverb.enabled }}
   # --- Reverb (WebSockets) ---
@@ -59,6 +70,9 @@ data:
   REVERB_HOST: {{ include "fd-commander.reverbHost" . | quote }}
   REVERB_PORT: {{ include "fd-commander.reverbPublicPort" . | quote }}
   REVERB_SCHEME: {{ include "fd-commander.reverbScheme" . | quote }}
+  {{- with dig "allowedOrigins" "" .Values.reverb }}
+  REVERB_ALLOWED_ORIGINS: {{ . | quote }}
+  {{- end }}
   # The browser reads these through the reverb-config meta tag rendered by the
   # layouts, so no VITE_ build-time variables are needed at runtime.
   {{- else }}

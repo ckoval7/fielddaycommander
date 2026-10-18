@@ -93,9 +93,30 @@ questions:
 
 - variable: app.sessionSecureCookie
   label: Secure Session Cookie
-  description: "Send the session cookie only over HTTPS. Turn this on whenever the site is served over TLS, and leave it off for plain-HTTP field deployments."
+  description: "Send the session cookie only over HTTPS. Turned on automatically when ingress TLS is enabled or the app URL starts with https://. Turn it on by hand if TLS terminates somewhere else in front of the app."
   type: boolean
   default: false
+  group: "Networking"
+
+- variable: app.trustedHosts
+  label: Extra Hostnames
+  description: "Other hostnames people use to reach the site, comma-separated, such as a public domain alongside the application URL. The application URL's host, its subdomains and local-network addresses (private IPs and .local names) always work. Requests for any other hostname get an error page."
+  type: string
+  default: ""
+  group: "Networking"
+
+- variable: app.trustedProxies
+  label: Trusted Proxies
+  description: "Addresses (IPs or CIDRs, comma-separated) whose forwarded client IP and HTTPS headers the application believes. The default covers the private ranges an ingress controller forwards from. Narrow it to the ingress controller's pod range if untrusted devices can reach the application's pods directly, because anyone trusted here can fake their address and get around login rate limits."
+  type: string
+  default: "127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7"
+  group: "Networking"
+
+- variable: app.hstsMaxAge
+  label: HSTS Max Age (seconds)
+  description: "Tells browsers to use only HTTPS for this site for this many seconds. Leave at 0 (off) unless the site always has a certificate browsers trust, such as Let's Encrypt: browsers that have seen it will refuse plain HTTP and self-signed certificates until it expires. 31536000 is one year."
+  type: int
+  default: 0
   group: "Networking"
 
 # ---------------------------------------------------------------------------
@@ -183,6 +204,21 @@ questions:
       description: "Leave blank to use the cluster's default storage class."
       type: storageclass
       default: ""
+    - variable: mysql.primary.persistence.existingClaim
+      label: Existing Database Volume Claim
+      description: "Reuse an existing claim instead of creating one. Upgrading from chart 0.x: enter data-<release name>-mysql-0, set the sub-directory to data and turn on Fix Data Ownership. See the chart README first."
+      type: string
+      default: ""
+    - variable: mysql.primary.persistence.subPath
+      label: Database Volume Sub-directory
+      description: "Directory inside the claim that holds the MySQL data. data for a chart 0.x claim, otherwise blank."
+      type: string
+      default: ""
+    - variable: mysql.volumePermissions.enabled
+      label: Fix Data Ownership
+      description: "Runs a root init container that hands the data directory to the MySQL user (uid 999). Needed once when reusing a chart 0.x claim."
+      type: boolean
+      default: false
 
 - variable: externalDatabase.host
   label: External Database Host
@@ -302,6 +338,11 @@ questions:
     - variable: reverb.host
       label: WebSocket Hostname
       description: "Hostname browsers use for the WebSocket connection. Leave blank to derive it from the application URL or ingress hostname."
+      type: string
+      default: ""
+    - variable: reverb.allowedOrigins
+      label: Extra Allowed Origins
+      description: "Extra hosts allowed to open live-update connections, comma-separated. The application URL, WebSocket hostname, extra hostnames and local-network addresses already work, so leave this blank unless live updates fail from another site."
       type: string
       default: ""
 

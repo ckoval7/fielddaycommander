@@ -8,6 +8,7 @@ use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
+use App\Support\CsvSafe;
 use Closure;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,6 +42,11 @@ class GuestbookManager extends Component
 
     #[Url]
     public ?string $filterVerified = null;
+
+    /**
+     * Columns the entries table may be sorted by.
+     */
+    protected const SORTABLE_COLUMNS = ['callsign', 'visitor_category', 'presence_type', 'created_at'];
 
     // Sorting
     public array $sortBy = ['column' => 'created_at', 'direction' => 'desc'];
@@ -122,7 +128,23 @@ class GuestbookManager extends Component
             ->when($this->filterVerified !== null && $this->filterVerified !== '', function ($query) {
                 $query->where('is_verified', $this->filterVerified === 'verified');
             })
-            ->orderBy($this->sortBy['column'], $this->sortBy['direction']);
+            ->orderBy(...$this->safeSort());
+    }
+
+    /**
+     * The requested sort, falling back to newest first for unknown columns or directions.
+     *
+     * @return array{0: string, 1: string}
+     */
+    protected function safeSort(): array
+    {
+        $column = $this->sortBy['column'] ?? null;
+        $direction = strtolower((string) ($this->sortBy['direction'] ?? ''));
+
+        return [
+            in_array($column, self::SORTABLE_COLUMNS, true) ? $column : 'created_at',
+            in_array($direction, ['asc', 'desc'], true) ? $direction : 'desc',
+        ];
     }
 
     #[Computed]
@@ -419,7 +441,7 @@ class GuestbookManager extends Component
             $handle = fopen('php://output', 'w');
 
             // Write CSV header
-            fputcsv($handle, [
+            CsvSafe::put($handle, [
                 'Name',
                 'Callsign',
                 'Email',
@@ -432,7 +454,7 @@ class GuestbookManager extends Component
 
             // Write data rows
             foreach ($entries as $entry) {
-                fputcsv($handle, [
+                CsvSafe::put($handle, [
                     trim(($entry->first_name ?? '').' '.($entry->last_name ?? '')),
                     $entry->callsign ?? '',
                     $entry->email ?? '',

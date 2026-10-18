@@ -17,7 +17,8 @@ class SectionFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => strtoupper(fake()->unique()->lexify('??')),
+            // No real ARRL/RAC section starts with Z, so this can't collide with seeded sections
+            'code' => 'Z'.strtoupper(fake()->unique()->lexify('???')),
             'name' => fake()->unique()->state(),
             'region' => fake()->randomElement(['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W0', 'KL7', 'VE', 'DX']),
             'country' => fake()->randomElement(['US', 'CA', 'MX']),

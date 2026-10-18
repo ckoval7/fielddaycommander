@@ -7,7 +7,7 @@
 
     {{-- Right: Theme toggle and User menu --}}
     <div class="flex items-center gap-3">
-        <x-theme-toggle />
+        <x-theme-switch compact />
         <x-user-menu />
     </div>
 </header>

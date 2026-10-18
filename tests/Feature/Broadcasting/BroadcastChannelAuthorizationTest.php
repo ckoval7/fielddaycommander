@@ -42,8 +42,8 @@ test('every private channel an event broadcasts on has an authorization callback
 })->with([
     'ContactLogged' => fn () => new ContactLogged(new Contact, (new Event)->forceFill(['id' => 7])),
     'ExternalContactReceived' => fn () => new ExternalContactReceived(new Contact, 12, 'n1mm', 7),
-    'ExternalContactUpdated' => fn () => new ExternalContactUpdated(new Contact, 12, 'n1mm'),
-    'ExternalContactDeleted' => fn () => new ExternalContactDeleted(1, 'W1AW', 12, 'n1mm'),
+    'ExternalContactUpdated' => fn () => new ExternalContactUpdated(new Contact, 12, 'n1mm', 7),
+    'ExternalContactDeleted' => fn () => new ExternalContactDeleted(1, 'W1AW', 12, 'n1mm', eventId: 7),
     'ExternalLoggerStatusChanged' => fn () => new ExternalLoggerStatusChanged('n1mm', 'running', 12),
     'NewNotification' => fn () => new NewNotification(3),
 ]);
