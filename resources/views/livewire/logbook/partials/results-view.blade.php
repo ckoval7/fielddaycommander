@@ -275,20 +275,18 @@
                         </div>
 
                         {{-- Points, Station, Logger --}}
-                        <div class="flex items-center justify-between pt-2 border-t border-base-300 text-sm">
-                            <div class="flex items-center gap-4">
-                                <div>
-                                    <span class="text-xs text-base-content/60">Points:</span>
-                                    <span class="ml-1 font-semibold {{ $contact->is_duplicate ? 'text-warning line-through' : 'text-success' }}">
-                                        {{ $contact->points }}
-                                    </span>
-                                </div>
-                                <div class="truncate max-w-[120px]">
-                                    <span class="text-xs text-base-content/60">Station:</span>
-                                    <span class="ml-1">{{ $contact->operatingSession?->station?->name ?? 'N/A' }}</span>
-                                </div>
+                        <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-2 border-t border-base-300 text-sm">
+                            <div>
+                                <span class="text-xs text-base-content/60">Points:</span>
+                                <span class="ml-1 font-semibold {{ $contact->is_duplicate ? 'text-warning line-through' : 'text-success' }}">
+                                    {{ $contact->points }}
+                                </span>
                             </div>
-                            <div class="text-xs text-base-content/60 truncate max-w-[100px]">
+                            <div class="min-w-0 flex-1 break-words">
+                                <span class="text-xs text-base-content/60">Station:</span>
+                                <span class="ml-1">{{ $contact->operatingSession?->station?->name ?? 'N/A' }}</span>
+                            </div>
+                            <div class="text-xs text-base-content/60 break-words">
                                 {{ $contact->logger ? $contact->logger->first_name : 'N/A' }}
                             </div>
                         </div>

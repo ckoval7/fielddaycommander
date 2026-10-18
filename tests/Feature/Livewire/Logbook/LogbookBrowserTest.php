@@ -611,3 +611,22 @@ test('a broadcast refresh keeps the selected rows', function () {
         ->call('refreshFromBroadcast')
         ->assertSet('selectedIds', [1, 2]);
 });
+
+test('contact cards show the full station name instead of a fixed-width truncation', function () {
+    $station = Station::factory()->create([
+        'event_configuration_id' => $this->eventConfiguration->id,
+        'name' => 'Station Delta Long Name',
+    ]);
+    Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfiguration->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'section_id' => $this->section->id,
+        'operating_session_id' => OperatingSession::factory()->create(['station_id' => $station->id])->id,
+    ]);
+
+    Livewire::test(LogbookBrowser::class)
+        ->assertSee('Station Delta Long Name')
+        ->assertSeeHtml('min-w-0 flex-1 break-words')
+        ->assertDontSeeHtml('truncate max-w-[120px]');
+});
