@@ -47,10 +47,6 @@
         $mobileEventCountdown->updateComponent();
         $mobileBrand = new \App\View\Components\AppBrand;
         $mobileHasCallsign = $mobileBrand->callsign !== $mobileBrand->eventName;
-        // The collapsed header shows the station callsign, never the site name, so it
-        // only collapses when the event has one.
-        $mobileEventCallsign = $mobileBrand->activeEvent?->callsign;
-        $mobileCanCollapse = filled($mobileEventCallsign);
     @endphp
 
     {{-- NAVBAR mobile only --}}
@@ -58,7 +54,6 @@
         class="lg:hidden sticky top-0 z-20 bg-base-100 border-b border-base-300 pt-[env(safe-area-inset-top)]"
         x-data="{
             scrolled: false,
-            canCollapse: @json($mobileCanCollapse),
             onScroll() {
                 // Hysteresis + room guard avoid a feedback loop: collapsing Row 2
                 // shrinks the page and can clamp scrollY back below the threshold.
@@ -75,12 +70,11 @@
     >
         {{-- Row 1: brand + right cluster --}}
         <div class="flex items-center gap-1.5 min-h-14 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.375rem,env(safe-area-inset-right))] py-2">
-            {{-- Expanded brand (LogoMark + callsign stack) --}}
+            {{-- Brand (LogoMark + callsign stack) --}}
             <a
                 href="/"
                 wire:navigate
                 class="flex items-center gap-2.5 flex-1 min-w-0"
-                x-show="!(scrolled && canCollapse)"
             >
                 @if($mobileBrand->hasCustomLogo)
                     <img src="{{ asset($mobileBrand->logoPath) }}" alt="Logo" class="shrink-0 w-[40px] h-[40px] rounded-lg object-contain" />
@@ -97,52 +91,7 @@
                 </span>
             </a>
 
-            {{-- Collapsed brand (callsign + event name + countdown) --}}
-            <div
-                x-show="scrolled && canCollapse"
-                x-cloak
-                class="flex items-center gap-2 flex-1 min-w-0"
-            >
-                <a href="/" wire:navigate class="shrink-0 text-primary font-mono font-extrabold text-[13px]">
-                    {{ $mobileEventCallsign }}
-                </a>
-                @if($mobileEventCountdown->event)
-                    <span class="text-[13px] font-semibold text-base-content truncate min-w-0">
-                        {{ $mobileEventCountdown->event->name }}
-                    </span>
-                    <span
-                        class="text-[13px] font-mono font-bold shrink-0 {{ $mobileEventCountdown->textClass }}"
-                        x-data="{
-                            countdown: @js($mobileEventCountdown->getFormattedCountdownProperty()),
-                            targetTs: {{ (int) $mobileEventCountdown->targetTimestamp }},
-                            serverTs: {{ (int) $mobileEventCountdown->serverTimestamp }},
-                            initRealTs: Math.floor(Date.now() / 1000),
-                            state: @js($mobileEventCountdown->state),
-                            _interval: null,
-                            init() { this.tick(); this._interval = setInterval(() => this.tick(), 1000); },
-                            destroy() { if (this._interval) clearInterval(this._interval); },
-                            effectiveNow() { return this.serverTs + (Math.floor(Date.now() / 1000) - this.initRealTs); },
-                            tick() {
-                                if (!this.targetTs) return;
-                                const diff = this.state === 'ended' ? this.effectiveNow() - this.targetTs : this.targetTs - this.effectiveNow();
-                                if (diff <= 0) return;
-                                const days = Math.floor(diff / 86400);
-                                const hours = Math.floor((diff % 86400) / 3600);
-                                const minutes = Math.floor((diff % 3600) / 60);
-                                const seconds = diff % 60;
-                                let f;
-                                if (days > 0) f = days + 'd ' + hours + 'h ' + minutes + 'm';
-                                else if (hours > 0) f = hours + 'h ' + minutes + 'm';
-                                else f = minutes + 'm ' + seconds + 's';
-                                this.countdown = this.state === 'ended' ? f + ' ago' : f;
-                            },
-                        }"
-                        x-text="countdown"
-                    >{{ $mobileEventCountdown->getFormattedCountdownProperty() }}</span>
-                @endif
-            </div>
-
-            {{-- Right cluster (stays mounted across default/collapsed transitions) --}}
+            {{-- Right cluster --}}
             <livewire:components.weather-icon />
 
             @auth
@@ -151,9 +100,7 @@
                 @endunless
             @endauth
 
-            <div x-show="!(scrolled && canCollapse)">
-                <x-user-menu />
-            </div>
+            <x-user-menu />
 
             <button
                 type="button"
