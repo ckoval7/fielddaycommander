@@ -2,11 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\SafetyChecklistEntry;
 use App\Models\SafetyChecklistItem;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\SafetyChecklistEntry>
+ * @extends Factory<SafetyChecklistEntry>
  */
 class SafetyChecklistEntryFactory extends Factory
 {
@@ -30,7 +32,7 @@ class SafetyChecklistEntryFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_completed' => true,
-            'completed_by_user_id' => \App\Models\User::factory(),
+            'completed_by_user_id' => User::factory(),
             'completed_at' => now(),
         ]);
     }

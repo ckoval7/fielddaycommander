@@ -9,10 +9,12 @@ use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Models\User;
 use App\Services\Reminders\ShiftReminderSource;
+use Database\Seeders\BonusTypeSeeder;
+use Database\Seeders\EventTypeSeeder;
 
 beforeEach(function () {
     $this->travelTo(now());
-    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
 
     $this->user = User::factory()->create();
     $this->eventType = EventType::where('code', 'FD')->first();

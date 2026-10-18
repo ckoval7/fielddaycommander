@@ -4,6 +4,7 @@ use App\Models\Equipment;
 use App\Models\Station;
 use App\Models\User;
 use App\Notifications\Equipment\EquipmentReassigned;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
@@ -49,7 +50,7 @@ test('EquipmentReassigned implements ShouldQueue', function () {
         $this->reassignedBy,
     );
 
-    expect($notification)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
+    expect($notification)->toBeInstanceOf(ShouldQueue::class);
 });
 
 test('EquipmentReassigned mail subject contains equipment name', function () {

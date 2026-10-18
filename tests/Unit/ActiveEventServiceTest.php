@@ -42,7 +42,7 @@ test('getActiveEvent caches result across multiple calls', function () {
 
     // Track queries
     $queryCount = 0;
-    \DB::listen(function () use (&$queryCount) {
+    DB::listen(function () use (&$queryCount) {
         $queryCount++;
     });
 
@@ -136,7 +136,7 @@ test('clearCache resets cached event', function () {
 
     // Should query again after clearing
     $queryCount = 0;
-    \DB::listen(function () use (&$queryCount) {
+    DB::listen(function () use (&$queryCount) {
         $queryCount++;
     });
 
@@ -163,7 +163,7 @@ test('caching works across different service methods', function () {
 
     // Track queries
     $queryCount = 0;
-    \DB::listen(function () use (&$queryCount) {
+    DB::listen(function () use (&$queryCount) {
         $queryCount++;
     });
 

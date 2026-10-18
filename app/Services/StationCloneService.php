@@ -129,7 +129,7 @@ class StationCloneService
     /**
      * Execute the station cloning within a database transaction.
      *
-     * @param  array{sourceEventId: int, targetEventId: int, stationIds: array, copyEquipment: bool, nameSuffix: ?string, skipConflicts: bool, user: \App\Models\User}  $context
+     * @param  array{sourceEventId: int, targetEventId: int, stationIds: array, copyEquipment: bool, nameSuffix: ?string, skipConflicts: bool, user: User}  $context
      * @param  array<string, mixed>  $result  Result array (passed by reference)
      */
     protected function executeCloneTransaction(array $context, array &$result): void

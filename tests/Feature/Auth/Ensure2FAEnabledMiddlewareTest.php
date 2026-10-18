@@ -103,7 +103,7 @@ it('does not redirect json requests when 2fa is required', function () {
 it('blocks raw fortify disable endpoint when mode is required', function () {
     config(['auth-security.2fa_mode' => 'required']);
 
-    app(\Laravel\Fortify\Actions\EnableTwoFactorAuthentication::class)($this->user);
+    app(EnableTwoFactorAuthentication::class)($this->user);
     $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
 
     $this->actingAs($this->user)

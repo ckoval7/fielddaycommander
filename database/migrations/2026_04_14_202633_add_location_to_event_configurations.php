@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -17,7 +18,7 @@ return new class extends Migration
         });
 
         // Copy existing guestbook lat/lon into the new shared location columns
-        \Illuminate\Support\Facades\DB::statement('
+        DB::statement('
             UPDATE event_configurations
             SET latitude = guestbook_latitude,
                 longitude = guestbook_longitude
@@ -37,7 +38,7 @@ return new class extends Migration
             $table->decimal('guestbook_longitude', 10, 7)->nullable();
         });
 
-        \Illuminate\Support\Facades\DB::statement('
+        DB::statement('
             UPDATE event_configurations
             SET guestbook_latitude = latitude,
                 guestbook_longitude = longitude

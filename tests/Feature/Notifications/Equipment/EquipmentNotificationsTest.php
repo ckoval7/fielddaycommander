@@ -3,10 +3,12 @@
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
+use App\Models\Station;
 use App\Models\User;
 use App\Notifications\Equipment\EquipmentCommitted;
 use App\Notifications\Equipment\EquipmentDelivered;
 use App\Notifications\Equipment\EquipmentStatusChanged;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
@@ -171,7 +173,7 @@ test('EquipmentStatusChanged sends notification with status change details', fun
 test('EquipmentStatusChanged includes station assignment when station is assigned', function () {
     Notification::fake();
 
-    $station = \App\Models\Station::factory()->create([
+    $station = Station::factory()->create([
         'name' => 'Station 1A',
     ]);
 
@@ -229,9 +231,9 @@ test('all notifications implement ShouldQueue for async delivery', function () {
     $deliveredNotification = new EquipmentDelivered($this->equipmentEvent, 'operator');
     $statusChangedNotification = new EquipmentStatusChanged($this->equipmentEvent, 'committed');
 
-    expect($committedNotification)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class)
-        ->and($deliveredNotification)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class)
-        ->and($statusChangedNotification)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
+    expect($committedNotification)->toBeInstanceOf(ShouldQueue::class)
+        ->and($deliveredNotification)->toBeInstanceOf(ShouldQueue::class)
+        ->and($statusChangedNotification)->toBeInstanceOf(ShouldQueue::class);
 });
 
 test('all notifications use mail channel', function () {

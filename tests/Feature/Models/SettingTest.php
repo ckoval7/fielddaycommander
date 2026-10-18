@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Setting;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 beforeEach(function () {
@@ -76,7 +77,7 @@ test('can get all settings', function () {
 
     $all = Setting::getAllSettings();
 
-    expect($all)->toBeInstanceOf(\Illuminate\Support\Collection::class)
+    expect($all)->toBeInstanceOf(Collection::class)
         ->and($all->count())->toBe(3)
         ->and($all->get('key1'))->toBe('value1')
         ->and($all->get('key2'))->toBe('value2')

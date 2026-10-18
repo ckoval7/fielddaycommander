@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
@@ -8,7 +9,7 @@ beforeEach(function () {
     Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
 
     // Mark setup as complete so middleware allows registration
-    \Illuminate\Support\Facades\DB::table('system_config')->updateOrInsert(
+    DB::table('system_config')->updateOrInsert(
         ['key' => 'setup_completed'],
         ['value' => 'true', 'updated_at' => now()]
     );

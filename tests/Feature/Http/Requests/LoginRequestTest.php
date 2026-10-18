@@ -1,10 +1,12 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
-    \Illuminate\Support\Facades\DB::table('system_config')->updateOrInsert(
+    DB::table('system_config')->updateOrInsert(
         ['key' => 'setup_completed'],
         ['value' => 'true', 'updated_at' => now()]
     );
@@ -142,8 +144,8 @@ describe('LoginRequest rate limiting', function () {
     test('clears rate limiter after successful login', function () {
         $user = User::factory()->create();
 
-        $throttleKey = \Illuminate\Support\Str::transliterate(
-            \Illuminate\Support\Str::lower($user->email).'|127.0.0.1'
+        $throttleKey = Str::transliterate(
+            Str::lower($user->email).'|127.0.0.1'
         );
 
         // Use up 4 failed attempts

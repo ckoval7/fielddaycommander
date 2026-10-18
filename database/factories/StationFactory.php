@@ -4,10 +4,13 @@ namespace Database\Factories;
 
 use App\Enums\PowerSource;
 use App\Enums\StationUnavailableReason;
+use App\Models\Equipment;
+use App\Models\EventConfiguration;
+use App\Models\Station;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Station>
+ * @extends Factory<Station>
  */
 class StationFactory extends Factory
 {
@@ -29,8 +32,8 @@ class StationFactory extends Factory
         ];
 
         return [
-            'event_configuration_id' => \App\Models\EventConfiguration::factory(),
-            'radio_equipment_id' => \App\Models\Equipment::factory()->state(function () {
+            'event_configuration_id' => EventConfiguration::factory(),
+            'radio_equipment_id' => Equipment::factory()->state(function () {
                 return ['type' => 'radio'];
             }),
             'name' => fake()->randomElement($stationNames),

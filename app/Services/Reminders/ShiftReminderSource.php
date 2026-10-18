@@ -9,6 +9,7 @@ use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\User;
 use App\Notifications\ShiftCheckinReminderMail;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
@@ -71,7 +72,7 @@ class ShiftReminderSource implements ReminderSource
             ->get();
     }
 
-    public function getScheduledTime(Model $item): \Carbon\Carbon
+    public function getScheduledTime(Model $item): Carbon
     {
         /** @var Shift $item */
         return $item->start_time;

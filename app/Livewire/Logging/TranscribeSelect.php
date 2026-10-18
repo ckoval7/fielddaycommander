@@ -3,6 +3,7 @@
 namespace App\Livewire\Logging;
 
 use App\Models\Event;
+use App\Models\Station;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -55,7 +56,7 @@ class TranscribeSelect extends Component
             return collect();
         }
 
-        return \App\Models\Station::where('event_configuration_id', $event->eventConfiguration->id)
+        return Station::where('event_configuration_id', $event->eventConfiguration->id)
             ->with('primaryRadio')
             ->orderBy('name')
             ->get();

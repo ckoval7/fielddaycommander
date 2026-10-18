@@ -3,12 +3,13 @@
 namespace Database\Factories;
 
 use App\Models\Equipment;
+use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\Station;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\EquipmentEvent>
+ * @extends Factory<EquipmentEvent>
  */
 class EquipmentEventFactory extends Factory
 {

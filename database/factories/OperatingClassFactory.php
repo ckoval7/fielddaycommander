@@ -3,10 +3,11 @@
 namespace Database\Factories;
 
 use App\Models\EventType;
+use App\Models\OperatingClass;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\OperatingClass>
+ * @extends Factory<OperatingClass>
  */
 class OperatingClassFactory extends Factory
 {

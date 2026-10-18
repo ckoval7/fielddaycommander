@@ -2,8 +2,10 @@
 
 use App\Models\Equipment;
 use App\Models\Event;
+use App\Models\EventConfiguration;
 use App\Models\Station;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
 
 test('equipment_event table exists', function () {
@@ -37,7 +39,7 @@ test('can create equipment_event record with all required relationships', functi
     $user = User::factory()->create();
     $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
-    $eventConfig = \App\Models\EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $eventConfig = EventConfiguration::factory()->create(['event_id' => $event->id]);
     $station = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
 
     $pivotData = [
@@ -51,7 +53,7 @@ test('can create equipment_event record with all required relationships', functi
         'status_changed_by_user_id' => $user->id,
     ];
 
-    $result = \DB::table('equipment_event')->insert($pivotData);
+    $result = DB::table('equipment_event')->insert($pivotData);
 
     expect($result)->toBeTrue();
 
@@ -73,11 +75,11 @@ test('unique constraint prevents duplicate equipment commitments per event', fun
         'status' => 'committed',
     ];
 
-    \DB::table('equipment_event')->insert($pivotData);
+    DB::table('equipment_event')->insert($pivotData);
 
     // Attempt to insert duplicate should throw exception
-    expect(fn () => \DB::table('equipment_event')->insert($pivotData))
-        ->toThrow(\Illuminate\Database\QueryException::class);
+    expect(fn () => DB::table('equipment_event')->insert($pivotData))
+        ->toThrow(QueryException::class);
 });
 
 test('cascades delete when equipment is deleted', function () {
@@ -85,7 +87,7 @@ test('cascades delete when equipment is deleted', function () {
     $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
 
-    \DB::table('equipment_event')->insert([
+    DB::table('equipment_event')->insert([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
         'status' => 'committed',
@@ -104,7 +106,7 @@ test('cascades delete when event is deleted', function () {
     $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
 
-    \DB::table('equipment_event')->insert([
+    DB::table('equipment_event')->insert([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
         'status' => 'committed',
@@ -122,10 +124,10 @@ test('nulls station_id when station is deleted', function () {
     $user = User::factory()->create();
     $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
-    $eventConfig = \App\Models\EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $eventConfig = EventConfiguration::factory()->create(['event_id' => $event->id]);
     $station = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
 
-    \DB::table('equipment_event')->insert([
+    DB::table('equipment_event')->insert([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
         'station_id' => $station->id,
@@ -147,7 +149,7 @@ test('nulls assigned_by_user_id when user is force deleted', function () {
     $equipment = Equipment::factory()->create(['owner_user_id' => $owner->id]);
     $event = Event::factory()->create();
 
-    \DB::table('equipment_event')->insert([
+    DB::table('equipment_event')->insert([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
         'assigned_by_user_id' => $assignedBy->id,
@@ -178,7 +180,7 @@ test('status enum accepts all valid values', function () {
     ];
 
     foreach ($validStatuses as $status) {
-        \DB::table('equipment_event')->insert([
+        DB::table('equipment_event')->insert([
             'equipment_id' => $equipment->id,
             'event_id' => Event::factory()->create()->id,
             'status' => $status,
@@ -196,7 +198,7 @@ test('default status is committed', function () {
     $equipment = Equipment::factory()->create(['owner_user_id' => $user->id]);
     $event = Event::factory()->create();
 
-    \DB::table('equipment_event')->insert([
+    DB::table('equipment_event')->insert([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
     ]);

@@ -3,6 +3,7 @@
 use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use App\Models\Event;
 use App\Models\EventType;
+use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\Livewire;
 
@@ -26,7 +27,7 @@ class TestWidget extends Component
         return ['contact-logged' => 'refresh'];
     }
 
-    public function render(): \Illuminate\Contracts\View\View
+    public function render(): View
     {
         return view('livewire.test-widget');
     }

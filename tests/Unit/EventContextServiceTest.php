@@ -281,9 +281,9 @@ test('service is registered as scoped binding', function () {
 });
 
 it('is registered as a scoped binding, not singleton', function () {
-    $service1 = app(\App\Services\EventContextService::class);
+    $service1 = app(EventContextService::class);
     app()->forgetScopedInstances();
-    $service2 = app(\App\Services\EventContextService::class);
+    $service2 = app(EventContextService::class);
     expect($service1)->not->toBe($service2);
 });
 

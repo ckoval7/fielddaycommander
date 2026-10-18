@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Band;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,7 +39,7 @@ describe('scopeForEvent', function () {
 
     test('works with other query constraints', function () {
         $event = EventConfiguration::factory()->create();
-        $band = \App\Models\Band::first() ?? \App\Models\Band::create([
+        $band = Band::first() ?? Band::create([
             'name' => '20m',
             'meters' => 20,
             'frequency_mhz' => 14.175,

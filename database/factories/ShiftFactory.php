@@ -3,10 +3,12 @@
 namespace Database\Factories;
 
 use App\Models\EventConfiguration;
+use App\Models\Shift;
+use App\Models\ShiftRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Shift>
+ * @extends Factory<Shift>
  */
 class ShiftFactory extends Factory
 {
@@ -23,7 +25,7 @@ class ShiftFactory extends Factory
 
         return [
             'event_configuration_id' => $eventConfiguration->id,
-            'shift_role_id' => \App\Models\ShiftRole::factory()->state([
+            'shift_role_id' => ShiftRole::factory()->state([
                 'event_configuration_id' => $eventConfiguration->id,
             ]),
             'start_time' => $startTime,
@@ -61,7 +63,7 @@ class ShiftFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'event_configuration_id' => $eventConfiguration->id,
-            'shift_role_id' => \App\Models\ShiftRole::factory()->state([
+            'shift_role_id' => ShiftRole::factory()->state([
                 'event_configuration_id' => $eventConfiguration->id,
             ]),
         ]);

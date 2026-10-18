@@ -3,12 +3,13 @@
 use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\User;
+use Database\Seeders\EventTypeSeeder;
 
 uses()->group('unit', 'models');
 
 beforeEach(function () {
     $this->travelTo(now());
-    $this->seed([\Database\Seeders\EventTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class]);
     $this->event = Event::factory()->create();
     $this->user = User::factory()->create();
 });

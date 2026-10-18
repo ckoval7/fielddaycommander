@@ -5,6 +5,7 @@ use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\User;
 use App\Notifications\Equipment\EquipmentCancelled;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
@@ -54,7 +55,7 @@ test('EquipmentCancelled uses mail channel', function () {
 test('EquipmentCancelled implements ShouldQueue', function () {
     $notification = new EquipmentCancelled($this->equipmentEvent);
 
-    expect($notification)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
+    expect($notification)->toBeInstanceOf(ShouldQueue::class);
 });
 
 test('EquipmentCancelled mail subject contains equipment name and operator call sign', function () {

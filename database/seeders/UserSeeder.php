@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -43,7 +44,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $user) {
-            \App\Models\User::create($user);
+            User::create($user);
         }
     }
 }

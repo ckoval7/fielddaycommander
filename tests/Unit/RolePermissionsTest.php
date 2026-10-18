@@ -1,10 +1,12 @@
 <?php
 
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RoleSeeder;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\PermissionSeeder::class);
-    $this->seed(\Database\Seeders\RoleSeeder::class);
+    $this->seed(PermissionSeeder::class);
+    $this->seed(RoleSeeder::class);
 });
 
 test('event manager role has contact logging permissions', function () {

@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Event;
+use App\Models\EventType;
 use Illuminate\Database\Seeder;
 
 class FieldDay2025Seeder extends Seeder
@@ -11,9 +13,9 @@ class FieldDay2025Seeder extends Seeder
      */
     public function run(): void
     {
-        $fdEventType = \App\Models\EventType::where('code', 'FD')->first();
+        $fdEventType = EventType::where('code', 'FD')->first();
 
-        \App\Models\Event::create([
+        Event::create([
             'event_type_id' => $fdEventType->id,
             'name' => 'Field Day 2025',
             'year' => 2025,

@@ -2,12 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ShiftAssignment>
+ * @extends Factory<ShiftAssignment>
  */
 class ShiftAssignmentFactory extends Factory
 {
@@ -19,7 +20,7 @@ class ShiftAssignmentFactory extends Factory
     public function definition(): array
     {
         return [
-            'shift_id' => \App\Models\Shift::factory(),
+            'shift_id' => Shift::factory(),
             'user_id' => User::factory(),
             'status' => ShiftAssignment::STATUS_SCHEDULED,
             'checked_in_at' => null,

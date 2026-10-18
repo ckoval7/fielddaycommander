@@ -6,12 +6,13 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     // Seed all permissions
-    $this->seed([\Database\Seeders\PermissionSeeder::class]);
+    $this->seed([PermissionSeeder::class]);
 
     $this->configOnlyRole = Role::firstOrCreate(
         ['name' => 'Config Only', 'guard_name' => 'web']

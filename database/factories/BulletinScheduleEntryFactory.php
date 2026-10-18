@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/** @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\BulletinScheduleEntry> */
+/** @extends Factory<BulletinScheduleEntry> */
 class BulletinScheduleEntryFactory extends Factory
 {
     public function definition(): array

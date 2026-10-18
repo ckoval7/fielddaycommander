@@ -7,11 +7,13 @@ use App\Models\Shift;
 use App\Models\ShiftRole;
 use App\Models\User;
 use App\Notifications\ShiftCheckinReminderMail;
+use Database\Seeders\BonusTypeSeeder;
+use Database\Seeders\EventTypeSeeder;
 use Illuminate\Notifications\Messages\MailMessage;
 
 beforeEach(function () {
     $this->travelTo(now());
-    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
 
     $this->user = User::factory()->create(['first_name' => 'John']);
     $this->eventType = EventType::where('code', 'FD')->first();

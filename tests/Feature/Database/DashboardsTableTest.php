@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
 
 test('dashboards table exists', function () {
@@ -28,7 +29,7 @@ test('dashboards table has all required columns', function () {
 test('can insert a dashboard record', function () {
     $user = User::factory()->create();
 
-    \DB::table('dashboards')->insert([
+    DB::table('dashboards')->insert([
         'user_id' => $user->id,
         'title' => 'Test Dashboard',
         'config' => json_encode([]),
@@ -49,7 +50,7 @@ test('can insert a dashboard record', function () {
 test('is_default defaults to false', function () {
     $user = User::factory()->create();
 
-    \DB::table('dashboards')->insert([
+    DB::table('dashboards')->insert([
         'user_id' => $user->id,
         'title' => 'Default Test',
         'config' => json_encode([]),
@@ -67,7 +68,7 @@ test('is_default defaults to false', function () {
 test('layout_type defaults to grid', function () {
     $user = User::factory()->create();
 
-    \DB::table('dashboards')->insert([
+    DB::table('dashboards')->insert([
         'user_id' => $user->id,
         'title' => 'Layout Test',
         'config' => json_encode([]),
@@ -85,7 +86,7 @@ test('layout_type defaults to grid', function () {
 test('description is nullable', function () {
     $user = User::factory()->create();
 
-    \DB::table('dashboards')->insert([
+    DB::table('dashboards')->insert([
         'user_id' => $user->id,
         'title' => 'No Description',
         'config' => json_encode([]),
@@ -107,7 +108,7 @@ test('config column stores json data', function () {
         ['type' => 'chart', 'position' => ['x' => 1, 'y' => 0]],
     ];
 
-    \DB::table('dashboards')->insert([
+    DB::table('dashboards')->insert([
         'user_id' => $user->id,
         'title' => 'JSON Test',
         'config' => json_encode($widgetConfig),
@@ -115,7 +116,7 @@ test('config column stores json data', function () {
         'updated_at' => now(),
     ]);
 
-    $record = \DB::table('dashboards')
+    $record = DB::table('dashboards')
         ->where('user_id', $user->id)
         ->where('title', 'JSON Test')
         ->first();
@@ -126,7 +127,7 @@ test('config column stores json data', function () {
 test('cascades delete when user is deleted', function () {
     $user = User::factory()->create();
 
-    \DB::table('dashboards')->insert([
+    DB::table('dashboards')->insert([
         'user_id' => $user->id,
         'title' => 'Cascade Test',
         'config' => json_encode([]),
@@ -147,13 +148,13 @@ test('cascades delete when user is deleted', function () {
 });
 
 test('foreign key prevents inserting with non-existent user_id', function () {
-    expect(fn () => \DB::table('dashboards')->insert([
+    expect(fn () => DB::table('dashboards')->insert([
         'user_id' => 999999,
         'title' => 'Bad FK',
         'config' => json_encode([]),
         'created_at' => now(),
         'updated_at' => now(),
-    ]))->toThrow(\Illuminate\Database\QueryException::class);
+    ]))->toThrow(QueryException::class);
 });
 
 test('composite index exists on user_id and is_default', function () {

@@ -3,6 +3,7 @@
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
+use Carbon\Carbon;
 
 beforeEach(function () {
     // Ensure required data is seeded
@@ -121,21 +122,21 @@ test('inSetupWindow scope excludes events without setup_allowed_from', function 
 
 test('calculateSetupAllowedFrom subtracts offset hours from start time', function () {
     // 24 hours before Saturday June 28 2025 at 1800Z = Friday June 27 2025 at 1800Z
-    $startTime = \Carbon\Carbon::parse('2025-06-28 18:00:00');
+    $startTime = Carbon::parse('2025-06-28 18:00:00');
     $setupFrom = Event::calculateSetupAllowedFrom($startTime, 24);
 
     expect($setupFrom->toDateTimeString())->toBe('2025-06-27 18:00:00');
 });
 
 test('calculateSetupAllowedFrom with 48 hour offset', function () {
-    $startTime = \Carbon\Carbon::parse('2025-06-28 18:00:00');
+    $startTime = Carbon::parse('2025-06-28 18:00:00');
     $setupFrom = Event::calculateSetupAllowedFrom($startTime, 48);
 
     expect($setupFrom->toDateTimeString())->toBe('2025-06-26 18:00:00');
 });
 
 test('calculateSetupAllowedFrom with 6 hour offset for club meeting', function () {
-    $startTime = \Carbon\Carbon::parse('2025-07-08 23:00:00'); // Tuesday 11pm UTC
+    $startTime = Carbon::parse('2025-07-08 23:00:00'); // Tuesday 11pm UTC
     $setupFrom = Event::calculateSetupAllowedFrom($startTime, 6);
 
     expect($setupFrom->toDateTimeString())->toBe('2025-07-08 17:00:00');
