@@ -196,7 +196,7 @@ class EventDashboard extends Component
         $query = Band::allowedForFieldDay()->ordered();
 
         if ($this->config()) {
-            $query->withExtremeBandsOnlyWhenWorked($this->config()->id);
+            $query->withUncommonBandsOnlyWhenWorked($this->config()->id);
         }
 
         return $query->get();

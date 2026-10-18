@@ -408,4 +408,75 @@
     .card.p-4, .card.p-5, .card.p-6, .card.p-8 { padding: 0.75rem; }
     .card-body { padding-inline: 0.75rem; }
     .card-body:not([class*="py-"]) { padding-block: 1rem; }
+
+    /* maryUI tab panels add px-3 around content that usually sits in a card. */
+    .tab-content.px-3 { padding-inline: 0; }
+}
+
+/* ==========================================================================
+   Touch devices
+   Unlayered so these beat daisyUI's component sizes. See the mobile-ui skill.
+   ========================================================================== */
+@media (pointer: coarse) {
+    /* 44px tap targets. Default and small buttons and fields keep their font
+       size but grow to the minimum touch size; square and circle buttons grow
+       in both directions. Large sizes are already big enough. */
+    .btn:not(.btn-lg, .btn-xl),
+    .input:not(.input-lg, .input-xl),
+    .select:not(.select-lg, .select-xl) {
+        --size: 2.75rem;
+    }
+
+    /* iOS Safari zooms the page when an input under 16px gains focus.
+       daisyUI sizes fields with max(--font-size, --font-size-min). */
+    .input,
+    .select,
+    .textarea {
+        --font-size-min: 1rem;
+    }
+
+    /* maryUI's pagination select sets sm:text-sm directly. */
+    .select.sm\:text-sm {
+        font-size: 1rem;
+    }
+
+    .tabs:not(.tabs-lg, .tabs-xl) {
+        --tab-height: 2.75rem;
+    }
+
+    /* Sidebar and other menu rows. */
+    .menu :where(li:not(.menu-title) > :is(a, button, summary)) {
+        min-height: 2.75rem;
+    }
+
+    /* Small checkboxes and radios meet the 24px WCAG minimum. */
+    .checkbox-xs,
+    .checkbox-sm,
+    .radio-xs,
+    .radio-sm {
+        --size: calc(var(--size-selector, 0.25rem) * 6);
+    }
+}
+
+/* Keep modals inside the visible viewport (100vh runs under mobile browser
+   toolbars) and keep toasts clear of the notch and home indicator. */
+.modal-box {
+    max-height: calc(100dvh - 2rem);
+}
+
+.modal-bottom .modal-box {
+    max-height: calc(100dvh - 5em);
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.toast.toast-top {
+    top: max(1rem, env(safe-area-inset-top));
+}
+
+.toast:not(.toast-top, .toast-middle) {
+    bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.toast:not(.toast-start, .toast-center) {
+    inset-inline-end: max(1rem, env(safe-area-inset-right));
 }

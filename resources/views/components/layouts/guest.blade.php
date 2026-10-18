@@ -11,6 +11,7 @@
     <x-reverb-config-meta />
     <title>{{ config('app.name') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <x-pwa-meta />
 
     {{-- Set theme before page renders to prevent flash. wire:navigate strips
          unknown attributes from <html>, so re-apply in onSwap (synchronously,
@@ -25,6 +26,7 @@
                     localStorage.setItem('theme', theme);
                 }
                 document.documentElement.setAttribute('data-theme', theme);
+                document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1d232a' : '#ffffff');
             }
             applyTheme();
             document.addEventListener('livewire:navigating', (event) => event.detail.onSwap(applyTheme));
@@ -36,8 +38,8 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen font-sans antialiased bg-base-200">
-    <div class="flex min-h-screen flex-col items-center justify-center px-4 py-12">
+<body class="min-h-dvh font-sans antialiased bg-base-200">
+    <div class="flex min-h-dvh flex-col items-center justify-center px-4 py-12">
         {{-- Logo/Brand --}}
         @php
             // Priority 1: System settings (from Settings page)

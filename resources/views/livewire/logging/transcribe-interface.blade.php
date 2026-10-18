@@ -2,7 +2,7 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-<div class="max-sm:-mx-5">
+<div class="max-sm:-mx-3">
     @if(! $this->event)
         {{-- Archived / No Event State --}}
         <div class="max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
@@ -136,6 +136,9 @@
                     <label for="transcribe-submode" class="block py-1 text-xs font-semibold uppercase tracking-wider mb-1">Sub-mode</label>
                     <input
                         id="transcribe-submode"
+                        autocapitalize="characters"
+                        autocorrect="off"
+                        spellcheck="false"
                         type="text"
                         wire:model="submode"
                         list="transcribe-submodes"
@@ -169,6 +172,7 @@
                         <x-input
                             label="Search registered user (optional)"
                             wire:model.live.debounce.300ms="gotaUserSearch"
+                            autocomplete="off"
                             placeholder="Search by name or callsign..."
                             class="input-sm"
                         />
@@ -198,18 +202,24 @@
                             <x-input
                                 label="First Name"
                                 wire:model="gotaOperatorFirstName"
+                                autocomplete="off"
                                 placeholder="First name"
                                 class="input-sm"
                             />
                             <x-input
                                 label="Last Name"
                                 wire:model="gotaOperatorLastName"
+                                autocomplete="off"
                                 placeholder="Last name"
                                 class="input-sm"
                             />
                             <x-input
                                 label="Callsign (optional)"
                                 wire:model="gotaOperatorCallsign"
+                                autocomplete="off"
+                                autocapitalize="characters"
+                                autocorrect="off"
+                                spellcheck="false"
                                 placeholder="e.g. W1AW"
                                 class="input-sm uppercase"
                             />

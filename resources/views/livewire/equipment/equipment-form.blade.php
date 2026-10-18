@@ -66,6 +66,10 @@
                 <x-input
                     label="Serial Number"
                     wire:model="serial_number"
+                    autocomplete="off"
+                    autocapitalize="characters"
+                    autocorrect="off"
+                    spellcheck="false"
                     icon="phosphor-hash"
                     placeholder="Optional"
                 />

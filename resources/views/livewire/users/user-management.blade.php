@@ -52,7 +52,7 @@
         @endif
 
         {{-- Users Table (Desktop) --}}
-        <div class="hidden md:block card bg-base-100 shadow-xl overflow-visible">
+        <div class="hidden xl:block card bg-base-100 shadow-xl overflow-visible">
             <div class="overflow-visible">
                 <table class="table table-zebra">
                     <thead>
@@ -164,7 +164,7 @@
         </div>
 
         {{-- Users Cards (Mobile) --}}
-        <div class="md:hidden space-y-3">
+        <div class="xl:hidden space-y-3">
             @forelse($this->users as $user)
                 <div wire:key="user-mobile-{{ $user->id }}" class="card bg-base-100 shadow">
                     <div class="card-body p-4">

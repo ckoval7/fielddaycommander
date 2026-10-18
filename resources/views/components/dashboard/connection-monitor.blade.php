@@ -174,7 +174,7 @@ Props:
     x-transition:leave="transition ease-in duration-200"
     x-transition:leave-start="opacity-100 transform translate-y-0"
     x-transition:leave-end="opacity-0 transform -translate-y-full"
-    class="fixed top-0 left-0 right-0 z-50"
+    class="fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)]"
     role="alert"
     style="display: none;"
 >

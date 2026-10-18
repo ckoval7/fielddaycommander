@@ -43,5 +43,5 @@ test('guest layout uses the app theme switch, not MaryUI theme-toggle', function
 test('app layout content keeps a narrow gutter on mobile', function () {
     $html = view('components.layouts.app', ['slot' => ''])->render();
 
-    expect($html)->toMatch('/class="drawer-content[^"]*max-sm:px-3/');
+    expect($html)->toMatch('/class="drawer-content[^"]*max-sm:pl-\[max\(0\.75rem,env\(safe-area-inset-left\)\)\]/');
 });

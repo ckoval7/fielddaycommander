@@ -2,7 +2,7 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-<div class="min-h-screen" style="background-color: var(--score-bg); color: var(--score-text);">
+<div class="min-h-dvh" style="background-color: var(--score-bg); color: var(--score-text);">
 
     {{-- EMPTY STATE --}}
     @if (! $this->event)
@@ -14,7 +14,7 @@
     @else
 
     {{-- ZONE 1: MASTHEAD --}}
-    <div class="px-6 pt-8 pb-4" style="border-bottom: 2px solid var(--score-divider);">
+    <div class="px-3 sm:px-6 pt-8 pb-4" style="border-bottom: 2px solid var(--score-divider);">
         <div class="text-center font-black tracking-[0.25em] uppercase text-base-content"
              style="font-size: clamp(2rem, 6vw, 4rem);">
             {{ $this->event->eventConfiguration->callsign }}
@@ -38,7 +38,7 @@
     </div>
 
     {{-- ZONE 2: HEADLINE EQUATION --}}
-    <div class="px-6 py-10" style="border-bottom: 2px solid var(--score-divider);">
+    <div class="px-3 sm:px-6 py-10" style="border-bottom: 2px solid var(--score-divider);">
         <div class="flex flex-wrap items-center justify-center gap-2 md:gap-4">
 
             {{-- Equation shape comes from the event's ruleset, so Field Day renders
@@ -79,7 +79,7 @@
     <div class="grid grid-cols-1 {{ $this->usesPowerMultiplier ? 'md:grid-cols-3' : 'md:grid-cols-2' }}" style="border-bottom: 1px solid var(--score-divider);">
 
         {{-- Column 1: QSO Points --}}
-        <div id="col-qso" class="p-6 md:border-r" style="border-color: var(--score-border);">
+        <div id="col-qso" class="p-3 sm:p-6 md:border-r" style="border-color: var(--score-border);">
             <div class="text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--score-text-muted);">
                 QSO Points
             </div>
@@ -212,7 +212,7 @@
         {{-- Column 2: Power Multiplier (Field Day only — WFD caps every station
              at 100 W PEP and has no multiplier) --}}
         @if ($this->usesPowerMultiplier)
-        <div id="col-power" class="p-6 md:border-r" style="border-color: var(--score-border);">
+        <div id="col-power" class="p-3 sm:p-6 md:border-r" style="border-color: var(--score-border);">
             <div class="text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--score-text-muted);">
                 Power Multiplier
             </div>
@@ -281,7 +281,7 @@
 
         {{-- Column 3: the rulebook's awards — "Bonus Points" for Field Day,
              "Objectives" for Winter Field Day --}}
-        <div id="col-bonus" class="p-6">
+        <div id="col-bonus" class="p-3 sm:p-6">
             <div class="text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--score-text-muted);">
                 {{ $this->terms->awardSectionTitle }}
             </div>

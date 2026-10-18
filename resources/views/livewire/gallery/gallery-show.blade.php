@@ -4,7 +4,7 @@
 --}}
 <div>
     <x-header :title="$eventConfiguration->event->name" subtitle="Photo Gallery">
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="Back to Gallery" icon="phosphor-arrow-left" link="{{ route('gallery.index') }}" />
             @auth
                 @can('manage-images')
@@ -49,7 +49,7 @@
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         loading="lazy"
                     >
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                         <div class="absolute bottom-0 left-0 right-0 p-3 text-white">
                             <p class="text-sm font-medium truncate">{{ $image->uploader->first_name }} {{ $image->uploader->last_name }}</p>
                             @if($image->caption)
@@ -61,7 +61,9 @@
                         <button
                             wire:click.stop="deleteImage({{ $image->id }})"
                             wire:confirm="Are you sure you want to delete this photo?"
-                            class="absolute top-2 right-2 p-1.5 bg-red-700/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-800"
+                            type="button"
+                            aria-label="Delete photo"
+                            class="absolute top-2 right-2 flex items-center justify-center p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 bg-red-700/80 text-white rounded-full opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-red-800 active:bg-red-900 touch-manipulation"
                         >
                             <x-icon name="phosphor-trash" class="w-4 h-4" />
                         </button>
@@ -72,17 +74,59 @@
     @endif
 
     {{-- Lightbox Modal --}}
-    <x-modal wire:model="lightboxImageId" box-class="max-w-5xl">
+    <x-modal wire:model="lightboxImageId" box-class="max-w-5xl max-sm:w-full max-sm:max-w-none max-sm:px-3 max-sm:pb-3 pt-14">
         @if($lightboxImageId)
             @php $currentImage = $this->images->firstWhere('id', $lightboxImageId); @endphp
             @if($currentImage)
                 <div class="space-y-4">
-                    <img
-                        src="{{ route('gallery.image', $currentImage) }}"
-                        alt="{{ $currentImage->caption ?? 'Gallery entry' }}"
-                        class="w-full rounded-lg"
+                    {{-- Tap to zoom around the tapped point; scroll to pan while zoomed. --}}
+                    <div
+                        wire:key="lightbox-{{ $currentImage->id }}"
+                        x-data="{
+                            zoomed: false,
+                            toggle(event) {
+                                const img = this.$refs.photo;
+                                const rect = img.getBoundingClientRect();
+                                const x = event ? (event.clientX - rect.left) / rect.width : 0.5;
+                                const y = event ? (event.clientY - rect.top) / rect.height : 0.5;
+                                this.zoomed = ! this.zoomed;
+                                this.$nextTick(() => {
+                                    const box = this.$refs.viewport;
+                                    box.scrollLeft = this.zoomed ? x * img.offsetWidth - box.clientWidth / 2 : 0;
+                                    box.scrollTop = this.zoomed ? y * img.offsetHeight - box.clientHeight / 2 : 0;
+                                });
+                            },
+                        }"
+                        class="space-y-2"
                     >
-                    <div class="flex justify-between items-start">
+                        <div x-ref="viewport" class="max-h-[70dvh] overflow-auto overscroll-contain rounded-lg bg-base-200">
+                            <img
+                                x-ref="photo"
+                                src="{{ route('gallery.image', $currentImage) }}"
+                                alt="{{ $currentImage->caption ?? 'Gallery entry' }}"
+                                class="block w-full"
+                                :class="zoomed ? 'max-w-none !w-[250%] cursor-zoom-out' : 'cursor-zoom-in'"
+                                @click="toggle($event)"
+                            >
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-ghost"
+                                @click="toggle()"
+                                :aria-pressed="zoomed.toString()"
+                            >
+                                <x-icon name="phosphor-magnifying-glass-plus" class="w-4 h-4" x-show="! zoomed" />
+                                <x-icon name="phosphor-magnifying-glass-minus" class="w-4 h-4" x-show="zoomed" x-cloak />
+                                <span x-text="zoomed ? 'Fit to screen' : 'Zoom in'">Zoom in</span>
+                            </button>
+                            <a href="{{ route('gallery.image', $currentImage) }}" target="_blank" rel="noopener" class="btn btn-sm btn-ghost">
+                                <x-icon name="phosphor-arrows-out" class="w-4 h-4" />
+                                Full size
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-start gap-3">
                         <div>
                             <p class="font-medium">{{ $currentImage->uploader->first_name }} {{ $currentImage->uploader->last_name }}</p>
                             <p class="text-sm text-base-content/70">{{ $currentImage->created_at->format('F j, Y g:i A') }}</p>

@@ -537,3 +537,23 @@ describe('checklist types by operating class', function () {
         expect(EventBonus::where('event_configuration_id', $this->eventConfig->id)->count())->toBe(0);
     });
 });
+
+describe('touch targets', function () {
+    test('editable checkboxes sit in a 44px label hit area', function () {
+        $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'label' => 'Fire extinguisher on hand',
+        ]);
+        SafetyChecklistEntry::factory()->create([
+            'safety_checklist_item_id' => $item->id,
+        ]);
+
+        $this->actingAs($this->safetyOfficer);
+
+        Livewire::test(SiteSafetyChecklist::class)
+            ->assertSeeHtmlInOrder([
+                '<label class="-m-2.5 p-2.5 cursor-pointer shrink-0">',
+                'aria-label="Mark complete: Fire extinguisher on hand"',
+            ]);
+    });
+});

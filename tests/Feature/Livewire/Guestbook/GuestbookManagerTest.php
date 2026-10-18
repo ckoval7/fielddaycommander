@@ -942,3 +942,27 @@ describe('csv export safety', function () {
             ->assertOk();
     });
 });
+
+describe('mobile card list', function () {
+    test('renders entries as cards with selection and row actions below md', function () {
+        $this->actingAs($this->admin);
+
+        $entry = GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'first_name' => 'Mobile',
+            'last_name' => 'Visitor',
+            'callsign' => 'KD9MOB',
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->assertSeeHtmlInOrder([
+                'md:hidden space-y-3',
+                'wire:key="guestbook-card-'.$entry->id.'"',
+                'value="'.$entry->id.'" wire:model.live="selectedIds"',
+                'KD9MOB',
+                'openVerifyModal('.$entry->id.')',
+                'openDeleteModal('.$entry->id.')',
+                'hidden md:block overflow-x-auto',
+            ]);
+    });
+});

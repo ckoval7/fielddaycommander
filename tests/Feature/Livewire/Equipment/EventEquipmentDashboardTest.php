@@ -624,3 +624,10 @@ test('export menu links opt out of wire:navigate so the browser downloads the fi
         expect($matches[0])->not->toContain('wire:navigate', "{$name} must not be wire:navigated — it intercepts the file download");
     }
 });
+
+test('dashboard title row wraps so a long event name badge stays on screen', function () {
+    $this->actingAs($this->manager);
+
+    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
+        ->assertSeeHtml('flex flex-wrap items-center gap-x-3 gap-y-1 mb-2');
+});

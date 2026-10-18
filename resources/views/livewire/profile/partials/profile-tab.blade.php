@@ -13,6 +13,10 @@
                 <x-input
                     label="Call Sign"
                     wire:model="call_sign"
+                    autocomplete="off"
+                    autocapitalize="characters"
+                    autocorrect="off"
+                    spellcheck="false"
                     disabled
                     hint="Contact an administrator to change your call sign"
                 />
@@ -22,6 +26,7 @@
                     <x-input
                         label="First Name"
                         wire:model="first_name"
+                        autocomplete="given-name"
                         required
                     />
 
@@ -29,6 +34,7 @@
                     <x-input
                         label="Last Name"
                         wire:model="last_name"
+                        autocomplete="family-name"
                         required
                     />
                 </div>
@@ -38,6 +44,7 @@
                     label="Email"
                     type="email"
                     wire:model="email"
+                    autocomplete="email"
                     required
                     hint="Changing your email will require verification"
                 />
@@ -320,9 +327,10 @@
                                         <span class="badge badge-primary gap-1">
                                             {{ $minutes }} min
                                             <button
+                                                type="button"
                                                 wire:click="removeShiftReminderMinute({{ $minutes }})"
-                                                class="btn btn-ghost btn-xs p-0 min-h-0 h-auto"
-                                                title="Remove"
+                                                class="btn btn-ghost btn-xs btn-square -mr-1.5"
+                                                aria-label="Remove {{ $minutes }} minute reminder"
                                             >
                                                 <x-icon name="phosphor-x" class="w-3 h-3" />
                                             </button>
@@ -377,9 +385,10 @@
                                         <span class="badge badge-primary gap-1">
                                             {{ $minutes }} min
                                             <button
+                                                type="button"
                                                 wire:click="removeBulletinReminderMinute({{ $minutes }})"
-                                                class="btn btn-ghost btn-xs p-0 min-h-0 h-auto"
-                                                title="Remove"
+                                                class="btn btn-ghost btn-xs btn-square -mr-1.5"
+                                                aria-label="Remove {{ $minutes }} minute reminder"
                                             >
                                                 <x-icon name="phosphor-x" class="w-3 h-3" />
                                             </button>

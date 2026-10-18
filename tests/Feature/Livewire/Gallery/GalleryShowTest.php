@@ -154,3 +154,39 @@ test('gallery show hides the upload button in station mode', function () {
         ->assertDontSee('Upload the first photo!')
         ->assertDontSee('Upload Photo');
 });
+
+test('gallery delete button is visible on touch devices and has an accessible tap target', function () {
+    $user = User::factory()->create();
+    $eventConfig = EventConfiguration::factory()->create();
+    Image::factory()->create([
+        'event_configuration_id' => $eventConfig->id,
+        'uploaded_by_user_id' => $user->id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
+        ->assertSeeHtml('aria-label="Delete photo"')
+        ->assertSeeHtml('pointer-coarse:min-h-11 pointer-coarse:min-w-11')
+        ->assertSeeHtml('opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 group-focus-within:opacity-100')
+        ->assertDontSeeHtml('rounded-full opacity-0 group-hover:opacity-100');
+});
+
+test('gallery show header actions wrap so they never push past a phone screen', function () {
+    $eventConfig = EventConfiguration::factory()->create();
+
+    Livewire::test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
+        ->assertSeeHtml('flex-wrap max-sm:w-full');
+});
+
+test('lightbox lets people zoom into the photo and open it full size', function () {
+    $eventConfig = EventConfiguration::factory()->create();
+    $image = Image::factory()->create(['event_configuration_id' => $eventConfig->id]);
+
+    Livewire::test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
+        ->call('openLightbox', $image->id)
+        ->assertSeeHtml('x-ref="viewport"')
+        ->assertSeeHtml('@click="toggle($event)"')
+        ->assertSee('Zoom in')
+        ->assertSeeHtml('href="'.route('gallery.image', $image).'" target="_blank"')
+        ->assertSeeHtml('max-sm:w-full max-sm:max-w-none');
+});

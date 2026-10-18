@@ -4,9 +4,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Livewire\Dashboard\Widgets\BandModeGrid;
+use App\Models\Band;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
+use App\Models\Mode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -67,4 +69,13 @@ test('error fallback hides error message in production', function () {
 
     expect($view)->not->toContain('Database connection failed');
     expect($view)->toContain('Failed to load widget');
+});
+
+test('BandModeGrid pads band columns and pins the mode column for narrow screens', function () {
+    Mode::factory()->create(['name' => 'CW']);
+    Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14, 'allowed_fd' => true]);
+
+    Livewire::test(BandModeGrid::class)
+        ->assertSeeHtml('px-1.5 whitespace-nowrap')
+        ->assertSeeHtml('sticky left-0 z-10 bg-base-100');
 });

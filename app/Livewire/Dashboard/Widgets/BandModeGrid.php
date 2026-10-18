@@ -68,7 +68,7 @@ class BandModeGrid extends Component
         $query = Band::allowedForFieldDay()->ordered();
 
         if ($this->event?->eventConfiguration) {
-            $query->withExtremeBandsOnlyWhenWorked($this->event->eventConfiguration->id);
+            $query->withUncommonBandsOnlyWhenWorked($this->event->eventConfiguration->id);
         }
 
         return $query->get();

@@ -99,3 +99,22 @@ test('shows GOTA badge on gota stations', function () {
     Livewire::test(TranscribeSelect::class)
         ->assertSee('GOTA');
 });
+
+test('station select hint is not hover-only on touch devices', function () {
+    $this->actingAs($this->user);
+
+    Event::factory()->has(
+        EventConfiguration::factory()->has(
+            Station::factory()->state(['name' => 'Alpha']),
+            'stations'
+        ),
+        'eventConfiguration'
+    )->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+
+    Livewire::test(TranscribeSelect::class)
+        ->assertSeeHtml('opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100')
+        ->assertDontSeeHtml('opacity-0 group-hover:opacity-100');
+});

@@ -488,3 +488,8 @@ test('user can disable cpr_aed_trained flag on profile', function () {
 
     expect($user->fresh()->is_cpr_aed_trained)->toBeFalse();
 });
+
+test('page wrapper adds no side padding on phones', function () {
+    Livewire::test(UserProfile::class)
+        ->assertSeeHtml('container mx-auto px-4 py-6 max-sm:px-0');
+});

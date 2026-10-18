@@ -239,3 +239,14 @@ describe('SectionsWorked Widget', function () {
             ->and($data['total_sections'])->toBe(Section::where('is_active', true)->count() - 2);
     });
 });
+
+test('region rows grow to a 44px tap target on touch devices', function () {
+    $event = Event::factory()->create([
+        'start_time' => appNow()->subHours(12),
+        'end_time' => appNow()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    Livewire::test(SectionsWorked::class, ['config' => [], 'size' => 'normal'])
+        ->assertSeeHtml('pointer-coarse:min-h-11');
+});

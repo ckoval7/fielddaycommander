@@ -172,3 +172,17 @@ test('fixing band and mode in the contact editor removes it from the pool and pr
         ->and($contact->points)->toBe(4)
         ->and($contact->is_duplicate)->toBeFalse();
 });
+
+test('logbook mobile card list keeps row selection with a 44px tap target', function () {
+    $contact = ($this->makeContact)(['callsign' => 'K1MOB']);
+
+    Livewire::test(LogbookBrowser::class)
+        ->set('eventConfigurationId', $this->config->id)
+        ->assertSeeHtmlInOrder([
+            'lg:hidden grid grid-cols-1',
+            'min-h-11 min-w-11',
+            'value="'.$contact->id.'" wire:model.live="selectedIds"',
+            'K1MOB',
+            'open-edit-contact',
+        ]);
+});

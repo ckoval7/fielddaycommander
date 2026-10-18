@@ -1135,3 +1135,11 @@ test('transcribing a GOTA contact credits the named GOTA operator', function () 
         'gota_operator_last_name' => 'Doe',
     ]);
 });
+
+test('full-bleed transcribe layout matches the 12px phone gutter', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->assertSeeHtml('class="max-sm:-mx-3"')
+        ->assertDontSeeHtml('max-sm:-mx-5');
+});

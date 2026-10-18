@@ -88,13 +88,15 @@
                                         <div class="flex items-start gap-3">
                                             {{-- Checkbox --}}
                                             @if($canEdit)
-                                                <input
-                                                    type="checkbox"
-                                                    class="checkbox checkbox-sm mt-0.5"
-                                                    aria-label="Mark complete: {{ $item->label }}"
-                                                    @checked($item->entry?->is_completed)
-                                                    wire:click="toggleItem({{ $item->id }})"
-                                                />
+                                                <label class="-m-2.5 p-2.5 cursor-pointer shrink-0">
+                                                    <input
+                                                        type="checkbox"
+                                                        class="checkbox checkbox-sm mt-0.5 block"
+                                                        aria-label="Mark complete: {{ $item->label }}"
+                                                        @checked($item->entry?->is_completed)
+                                                        wire:click="toggleItem({{ $item->id }})"
+                                                    />
+                                                </label>
                                             @else
                                                 <input
                                                     type="checkbox"

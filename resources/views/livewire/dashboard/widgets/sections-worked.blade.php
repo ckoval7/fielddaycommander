@@ -70,7 +70,7 @@
                         <button
                             type="button"
                             @click="openArea = openArea === {{ $index }} ? null : {{ $index }}"
-                            class="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors
+                            class="w-full flex items-center gap-3 px-3 py-2 pointer-coarse:min-h-11 text-left transition-colors
                                 {{ $group['worked_count'] === $group['total_count'] && $group['total_count'] > 0
                                     ? 'bg-success/10 hover:bg-success/15'
                                     : 'hover:bg-base-200' }}"

@@ -216,3 +216,11 @@ test('events list ignores sort columns outside the allowlist', function () {
         ->assertOk()
         ->assertSee('Alpha Event');
 });
+
+test('events list shows cards below xl so the wide table never scrolls the page on tablets', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventsList::class)
+        ->assertSeeHtml('<div class="xl:hidden space-y-3">')
+        ->assertSeeHtml('hidden xl:block');
+});

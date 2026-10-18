@@ -3,7 +3,7 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
-<div class="max-sm:-mx-5" x-data="contactQueue({{ $operatingSession->id }}, '{{ csrf_token() }}', {
+<div class="max-sm:-mx-3" x-data="contactQueue({{ $operatingSession->id }}, '{{ csrf_token() }}', {
         band_id: {{ $operatingSession->band_id }},
         mode_id: {{ $operatingSession->mode_id }},
         power_watts: {{ $operatingSession->power_watts }},
@@ -36,12 +36,15 @@
                 {{-- Optional sub-mode (e.g. FT8, SSTV); stays set between contacts. Mirrored in the mobile row. --}}
                 <input
                     id="log-submode"
+                    autocapitalize="characters"
+                    autocorrect="off"
+                    spellcheck="false"
                     data-submode-input
                     type="text"
                     list="log-submodes"
                     maxlength="20"
                     x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
-                    class="input input-xs w-28 uppercase font-mono"
+                    class="input input-xs w-28 pointer-coarse:w-36 uppercase font-mono"
                     placeholder="Sub-mode"
                     aria-label="Sub-mode (optional)"
                 />
@@ -82,13 +85,13 @@
                                         <span class="font-mono font-bold text-sm" x-text="contact.callsign"></span>
                                         <span class="text-xs text-error block" x-text="contact.last_error"></span>
                                     </div>
-                                    <div class="flex gap-1">
-                                        <button @click="retryFailed(contact.uuid)" class="btn btn-ghost btn-xs" title="Retry">
+                                    <div class="flex gap-2">
+                                        <button type="button" @click="retryFailed(contact.uuid)" class="btn btn-ghost btn-xs btn-square" title="Retry" :aria-label="'Retry ' + contact.callsign">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                                             </svg>
                                         </button>
-                                        <button @click="discardFailed(contact.uuid)" class="btn btn-ghost btn-xs text-error" title="Discard">
+                                        <button type="button" @click="discardFailed(contact.uuid)" class="btn btn-ghost btn-xs btn-square text-error" title="Discard" :aria-label="'Discard ' + contact.callsign">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                                             </svg>
@@ -124,9 +127,12 @@
                 list="log-submodes"
                 maxlength="20"
                 x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
-                class="input input-xs w-28 uppercase font-mono"
+                class="input input-xs w-28 pointer-coarse:w-36 uppercase font-mono"
                 placeholder="Sub-mode"
                 aria-label="Sub-mode (optional)"
+                autocapitalize="characters"
+                autocorrect="off"
+                spellcheck="false"
             />
         </div>
     </div>
@@ -163,6 +169,7 @@
                     <x-input
                         label="Search registered user (optional)"
                         wire:model.live.debounce.300ms="gotaUserSearch"
+                        autocomplete="off"
                         placeholder="Search by name or callsign..."
                         class="input-sm"
                     />
@@ -192,18 +199,24 @@
                         <x-input
                             label="First Name"
                             wire:model="gotaOperatorFirstName"
+                            autocomplete="off"
                             placeholder="First name"
                             class="input-sm"
                         />
                         <x-input
                             label="Last Name"
                             wire:model="gotaOperatorLastName"
+                            autocomplete="off"
                             placeholder="Last name"
                             class="input-sm"
                         />
                         <x-input
                             label="Callsign (optional)"
                             wire:model="gotaOperatorCallsign"
+                            autocomplete="off"
+                            autocapitalize="characters"
+                            autocorrect="off"
+                            spellcheck="false"
                             placeholder="e.g. W1AW"
                             class="input-sm uppercase"
                         />

@@ -56,7 +56,7 @@ test('data migration adds new bands and re-sorts an existing install', function 
         ->and(Band::where('name', '3cm')->first()->allowed_wfd)->toBeTrue();
 });
 
-test('grid scope hides unworked LF and microwave bands but keeps standard bands', function () {
+test('grid scope hides unworked uncommon bands but keeps common bands', function () {
     $this->seed(BandSeeder::class);
     $config = EventConfiguration::factory()->create();
     $worked = Band::where('name', '3cm')->first();
@@ -66,9 +66,7 @@ test('grid scope hides unworked LF and microwave bands but keeps standard bands'
         'is_duplicate' => false,
     ]);
 
-    $names = Band::allowedForFieldDay()->ordered()->withExtremeBandsOnlyWhenWorked($config->id)->pluck('name')->all();
+    $names = Band::allowedForFieldDay()->ordered()->withUncommonBandsOnlyWhenWorked($config->id)->pluck('name')->all();
 
-    expect($names)->toHaveCount(14)
-        ->and($names)->toContain('160m', '23cm', 'Satellite', '3cm')
-        ->and($names)->not->toContain('2200m', '630m', '13cm', '1mm');
+    expect($names)->toBe(['160m', '80m', '40m', '20m', '15m', '10m', '6m', '2m', '70cm', '3cm']);
 });

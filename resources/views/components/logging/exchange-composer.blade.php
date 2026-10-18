@@ -106,6 +106,11 @@ Slots:
                 class="input input-lg w-full text-2xl font-mono uppercase tracking-wider"
                 placeholder="{{ $placeholder }}"
                 aria-label="Exchange input"
+                autocomplete="off"
+                autocapitalize="characters"
+                autocorrect="off"
+                spellcheck="false"
+                enterkeyhint="send"
             />
 
             {{-- Autocomplete Suggestions --}}

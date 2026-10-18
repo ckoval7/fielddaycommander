@@ -9,11 +9,11 @@
                 This account was created from a callsign and has no login. Give it a real email and a temporary password so the operator can sign in.
             </p>
 
-            <x-input label="Email" type="email" wire:model="activateEmail" icon="phosphor-envelope" required />
+            <x-input label="Email" type="email" wire:model="activateEmail" autocomplete="off" icon="phosphor-envelope" required />
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <x-input label="First name" wire:model="activateFirstName" required />
-                <x-input label="Last name" wire:model="activateLastName" required />
+                <x-input label="First name" wire:model="activateFirstName" autocomplete="off" required />
+                <x-input label="Last name" wire:model="activateLastName" autocomplete="off" required />
             </div>
 
             <div>

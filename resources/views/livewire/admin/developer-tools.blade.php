@@ -68,7 +68,7 @@
 
                 {{-- Status Preview --}}
                 @if($this->fieldDayStatusPreview)
-                    <div class="bg-base-200 rounded-lg p-4">
+                    <div class="bg-base-200 rounded-lg p-4 max-sm:p-3">
                         <div class="flex items-center gap-3">
                             <x-icon name="phosphor-cell-signal-high" class="w-5 h-5 text-base-content/60" />
                             <span class="font-medium">Field Day Status Preview:</span>
@@ -145,7 +145,7 @@
                 <x-tab name="snapshots" label="Snapshots" icon="phosphor-camera">
                     <div class="py-4 space-y-6">
                         {{-- Create Snapshot Form --}}
-                        <div class="bg-base-200 rounded-lg p-4 space-y-4">
+                        <div class="bg-base-200 rounded-lg p-4 max-sm:p-3 space-y-4">
                             <h4 class="font-semibold">Create New Snapshot</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <x-input
@@ -238,7 +238,7 @@
         <x-card title="Quick Actions" subtitle="Common development tasks" icon="phosphor-lightning">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {{-- Seed Test Contacts --}}
-                <div class="bg-base-200 rounded-lg p-4 space-y-3">
+                <div class="bg-base-200 rounded-lg p-4 max-sm:p-3 space-y-3">
                     <div class="flex items-center gap-2">
                         <x-icon name="phosphor-user-plus" class="w-5 h-5 text-primary" />
                         <h4 class="font-semibold">Seed Test Contacts</h4>
@@ -256,7 +256,7 @@
                 </div>
 
                 {{-- Fast Forward to Next Event --}}
-                <div class="bg-base-200 rounded-lg p-4 space-y-3">
+                <div class="bg-base-200 rounded-lg p-4 max-sm:p-3 space-y-3">
                     <div class="flex items-center gap-2">
                         <x-icon name="phosphor-fast-forward" class="w-5 h-5 text-success" />
                         <h4 class="font-semibold">Fast Forward Event</h4>
@@ -274,7 +274,7 @@
                 </div>
 
                 {{-- Clear Caches --}}
-                <div class="bg-base-200 rounded-lg p-4 space-y-3">
+                <div class="bg-base-200 rounded-lg p-4 max-sm:p-3 space-y-3">
                     <div class="flex items-center gap-2">
                         <x-icon name="phosphor-arrow-clockwise" class="w-5 h-5 text-warning" />
                         <h4 class="font-semibold">Clear Caches</h4>

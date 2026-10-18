@@ -22,6 +22,10 @@
             <x-input
                 label="Organization Callsign"
                 wire:model="organization_callsign"
+                autocomplete="off"
+                autocapitalize="characters"
+                autocorrect="off"
+                spellcheck="false"
                 icon="phosphor-cell-signal-high"
                 placeholder="e.g., W1ABC"
                 hint="Club station callsign (3-10 uppercase letters/numbers)"

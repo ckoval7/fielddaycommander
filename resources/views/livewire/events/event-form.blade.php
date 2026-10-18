@@ -130,6 +130,10 @@
                     <x-input
                         label="Grid Square"
                         wire:model="gridSquare"
+                        autocomplete="off"
+                        autocapitalize="characters"
+                        autocorrect="off"
+                        spellcheck="false"
                         icon="phosphor-map-trifold"
                         placeholder="DM79"
                         hint="Maidenhead locator (e.g. DM79 or DM79ab). Reference info for operators; not used by any automated feature yet."
@@ -173,6 +177,7 @@
                     <x-input
                         label="State / Province"
                         wire:model="state"
+                        autocapitalize="characters"
                         icon="phosphor-flag"
                         placeholder="CO"
                         hint="2-letter abbreviation. Shown in auto-filled Section Manager messages."
@@ -198,6 +203,10 @@
                 <x-input
                     label="Station Callsign"
                     wire:model="callsign"
+                    autocomplete="off"
+                    autocapitalize="characters"
+                    autocorrect="off"
+                    spellcheck="false"
                     required
                     icon="phosphor-radio"
                     placeholder="W1AW"
@@ -429,6 +438,10 @@
                         <x-input
                             label="GOTA Callsign"
                             wire:model="gota_callsign"
+                            autocomplete="off"
+                            autocapitalize="characters"
+                            autocorrect="off"
+                            spellcheck="false"
                             required
                             icon="phosphor-graduation-cap"
                             placeholder="W1GOTA"

@@ -153,6 +153,7 @@
                         <x-input
                             label="Name"
                             wire:model="name"
+                            autocomplete="name"
                             icon="phosphor-user"
                             placeholder="Your full name"
                             required
@@ -162,6 +163,10 @@
                         <x-input
                             label="Callsign"
                             wire:model="callsign"
+                            autocomplete="off"
+                            autocapitalize="characters"
+                            autocorrect="off"
+                            spellcheck="false"
                             icon="phosphor-cell-signal-high"
                             placeholder="Optional - e.g., W1AW"
                             hint="Your amateur radio callsign (if applicable)"
@@ -172,6 +177,7 @@
                     <x-input
                         label="Email"
                         wire:model="email"
+                        autocomplete="email"
                         type="email"
                         icon="phosphor-envelope"
                         placeholder="Optional - your@email.com"

@@ -9,6 +9,10 @@
             <x-input
                 label="Call Sign"
                 wire:model="call_sign"
+                autocomplete="off"
+                autocapitalize="characters"
+                autocorrect="off"
+                spellcheck="false"
                 icon="phosphor-megaphone"
                 required
             />
@@ -18,6 +22,7 @@
                 label="Email"
                 type="email"
                 wire:model="email"
+                autocomplete="off"
                 icon="phosphor-envelope"
                 required
             />
@@ -26,6 +31,7 @@
             <x-input
                 label="First Name"
                 wire:model="first_name"
+                autocomplete="off"
                 icon="phosphor-user"
                 required
             />
@@ -34,6 +40,7 @@
             <x-input
                 label="Last Name"
                 wire:model="last_name"
+                autocomplete="off"
                 icon="phosphor-user"
                 required
             />
@@ -91,6 +98,7 @@
                         label="Password"
                         type="password"
                         wire:model="password"
+                        autocomplete="new-password"
                         icon="phosphor-lock"
                         required
                     />
@@ -99,6 +107,7 @@
                         label="Confirm Password"
                         type="password"
                         wire:model="password_confirmation"
+                        autocomplete="new-password"
                         icon="phosphor-lock"
                         required
                     />

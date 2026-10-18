@@ -12,6 +12,7 @@
     <meta name="route-name" content="{{ Route::currentRouteName() ?? '' }}">
     <title>{{ isset($title) ? $title.' - '.(\App\Models\Setting::get('site_name') ?: config('app.name')) : (\App\Models\Setting::get('site_name') ?: config('app.name')) }}</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <x-pwa-meta />
 
     {{-- Set theme before page renders to prevent flash. wire:navigate strips
          unknown attributes from <html>, so re-apply in onSwap (synchronously,
@@ -26,6 +27,7 @@
                     localStorage.setItem('theme', theme);
                 }
                 document.documentElement.setAttribute('data-theme', theme);
+                document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1d232a' : '#ffffff');
             }
             applyTheme();
             document.addEventListener('livewire:navigating', (event) => event.detail.onSwap(applyTheme));
@@ -37,7 +39,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen font-sans antialiased bg-base-200">
+<body class="min-h-dvh font-sans antialiased bg-base-200">
 
     @php
         // Shared event state snapshot for the mobile header's live-rail + collapse logic.
@@ -54,7 +56,7 @@
 
     {{-- NAVBAR mobile only --}}
     <header
-        class="lg:hidden sticky top-0 z-20 bg-base-100 border-b border-base-300"
+        class="lg:hidden sticky top-0 z-20 bg-base-100 border-b border-base-300 pt-[env(safe-area-inset-top)]"
         x-data="{
             scrolled: false,
             canCollapse: @json($mobileCanCollapse),
@@ -73,7 +75,7 @@
         x-init="onScroll(); window.addEventListener('scroll', () => onScroll(), { passive: true }); window.addEventListener('resize', () => onScroll(), { passive: true }); new ResizeObserver(() => document.documentElement.style.setProperty('--mobile-header-height', $el.offsetHeight + 'px')).observe($el)"
     >
         {{-- Row 1: brand + right cluster --}}
-        <div class="flex items-center gap-1.5 min-h-14 pl-3 pr-1.5 py-2">
+        <div class="flex items-center gap-1.5 min-h-14 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.375rem,env(safe-area-inset-right))] py-2">
             {{-- Expanded brand (LogoMark + callsign stack) --}}
             <a
                 href="/"
@@ -169,7 +171,7 @@
             <div
                 x-show="!scrolled"
                 x-collapse
-                class="border-t border-base-300 px-3.5 py-2.5"
+                class="border-t border-base-300 pl-[max(0.875rem,env(safe-area-inset-left))] pr-[max(0.875rem,env(safe-area-inset-right))] py-2.5"
             >
                 <div
                     class="transition-opacity duration-200 ease-out"
@@ -252,7 +254,7 @@
     {{-- MAIN --}}
     <x-main full-width with-nav>
         {{-- SIDEBAR --}}
-        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-base-200">
+        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-base-200 max-lg:pt-[env(safe-area-inset-top)] max-lg:pb-[env(safe-area-inset-bottom)] max-lg:pl-[env(safe-area-inset-left)]">
             <div
                 x-data="{
                     canScrollUp: false,
@@ -478,7 +480,7 @@
         </x-slot:sidebar>
 
         {{-- The `$slot` goes here --}}
-        <x-slot:content class="max-sm:px-3">
+        <x-slot:content class="pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] max-sm:pl-[max(0.75rem,env(safe-area-inset-left))] max-sm:pr-[max(0.75rem,env(safe-area-inset-right))]">
             @auth
                 <livewire:components.event-context-banner />
             @endauth
@@ -487,7 +489,7 @@
     </x-main>
 
     {{-- FOOTER --}}
-    <footer class="border-t border-base-300 bg-base-100 py-4 px-6 text-sm text-base-content/60">
+    <footer class="border-t border-base-300 bg-base-100 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] px-6 text-sm text-base-content/60">
         @php $footerText = \App\Models\Setting::get('site_footer_text'); @endphp
         @if($footerText)
             <p class="text-center mb-2">{{ $footerText }}</p>

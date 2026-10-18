@@ -15,6 +15,13 @@ class Band extends Model
     /** @use HasFactory<BandFactory> */
     use HasFactory;
 
+    /**
+     * Bands most stations work, which grids always list. Every other band is listed only once it has contacts.
+     *
+     * @var list<string>
+     */
+    public const COMMON_BAND_NAMES = ['160m', '80m', '40m', '20m', '15m', '10m', '6m', '2m', '70cm'];
+
     protected $fillable = [
         'name',
         'meters',
@@ -47,13 +54,12 @@ class Band extends Model
     }
 
     /**
-     * Keep the standard 160m-23cm bands and Satellite, plus LF/microwave bands that have contacts in the event.
+     * Keep the common bands, plus uncommon ones (LF, 1.25m, 33cm and up, Satellite) that have contacts in the event.
      */
-    public function scopeWithExtremeBandsOnlyWhenWorked(Builder $query, int $eventConfigurationId): Builder
+    public function scopeWithUncommonBandsOnlyWhenWorked(Builder $query, int $eventConfigurationId): Builder
     {
         return $query->where(function (Builder $inner) use ($eventConfigurationId): void {
-            $inner->whereNull('frequency_mhz')
-                ->orWhereBetween('frequency_mhz', [1.8, 1300])
+            $inner->whereIn('name', self::COMMON_BAND_NAMES)
                 ->orWhereIn('id', Contact::query()
                     ->where('event_configuration_id', $eventConfigurationId)
                     ->notDuplicate()

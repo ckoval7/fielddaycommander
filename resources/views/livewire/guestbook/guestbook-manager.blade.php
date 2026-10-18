@@ -184,7 +184,75 @@
                     ];
                 @endphp
 
-                <div class="overflow-x-auto">
+                {{-- Mobile Card View --}}
+                <div class="md:hidden space-y-3">
+                    @foreach($this->entries as $entry)
+                        <div wire:key="guestbook-card-{{ $entry->id }}" class="rounded-lg border border-base-300 bg-base-100 p-3">
+                            <div class="flex items-start gap-2">
+                                @can('manage-guestbook')
+                                    <label class="flex items-center justify-center min-h-11 min-w-11 -m-2 shrink-0 cursor-pointer">
+                                        <span class="sr-only">Select {{ $entry->first_name }} {{ $entry->last_name }}</span>
+                                        <input type="checkbox" class="checkbox checkbox-sm" value="{{ $entry->id }}" wire:model.live="selectedIds" />
+                                    </label>
+                                @endcan
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-medium truncate">{{ $entry->first_name }} {{ $entry->last_name }}</div>
+                                    @if($entry->callsign)
+                                        <code class="text-sm font-mono">{{ $entry->callsign }}</code>
+                                    @endif
+                                    @if($entry->email)
+                                        <div class="text-sm text-base-content/60 break-all">{{ $entry->email }}</div>
+                                    @endif
+                                </div>
+                                @if($entry->is_verified)
+                                    <div class="flex items-center gap-1 text-success shrink-0">
+                                        <x-icon name="phosphor-check-circle" class="w-4 h-4" />
+                                        <span class="text-sm">Verified</span>
+                                    </div>
+                                @else
+                                    <div class="flex items-center gap-1 text-base-content/60 shrink-0">
+                                        <x-icon name="phosphor-clock" class="w-4 h-4" />
+                                        <span class="text-sm">Pending</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                                <x-badge
+                                    :value="$entry->visitor_category->label() . ($entry->is_bonus_eligible && $entry->is_verified ? ' (bonus)' : '')"
+                                    :class="$entry->is_bonus_eligible ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
+                                />
+                                @if($entry->presence_type === \App\Enums\PresenceType::InPerson)
+                                    <x-badge value="In Person" class="badge-info badge-sm" />
+                                @else
+                                    <x-badge value="Online" class="badge-ghost badge-sm" />
+                                @endif
+                                <span class="text-sm text-base-content/60 ml-auto">{{ $entry->created_at->format('M j, Y g:i A') }}</span>
+                            </div>
+
+                            @can('manage-guestbook')
+                                <div class="flex items-center gap-2 mt-3 pt-3 border-t border-base-200">
+                                    <x-button
+                                        label="Edit"
+                                        icon="phosphor-pencil-simple"
+                                        class="btn-ghost btn-sm min-h-11 flex-1"
+                                        wire:click="openVerifyModal({{ $entry->id }})"
+                                        spinner="openVerifyModal"
+                                    />
+                                    <x-button
+                                        label="Delete"
+                                        icon="phosphor-trash"
+                                        class="btn-ghost btn-sm min-h-11 flex-1 text-error"
+                                        wire:click="openDeleteModal({{ $entry->id }})"
+                                        spinner="openDeleteModal"
+                                    />
+                                </div>
+                            @endcan
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="hidden md:block overflow-x-auto">
                     <x-table
                         :headers="$headers"
                         :rows="$this->entries"

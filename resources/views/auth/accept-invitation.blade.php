@@ -24,6 +24,7 @@
                 label="Password"
                 type="password"
                 name="password"
+                autocomplete="new-password"
                 required
                 icon="phosphor-lock"
                 hint="Choose a strong password for your account"
@@ -34,6 +35,7 @@
                 label="Confirm Password"
                 type="password"
                 name="password_confirmation"
+                autocomplete="new-password"
                 required
                 icon="phosphor-lock"
                 errorField="password_confirmation"

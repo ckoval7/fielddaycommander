@@ -20,6 +20,7 @@
                     label="Current Password"
                     type="password"
                     wire:model="current_password"
+                    autocomplete="current-password"
                     required
                 />
 
@@ -28,6 +29,7 @@
                     label="New Password"
                     type="password"
                     wire:model="password"
+                    autocomplete="new-password"
                     required
                     hint="Minimum 8 characters"
                 />
@@ -37,6 +39,7 @@
                     label="Confirm New Password"
                     type="password"
                     wire:model="password_confirmation"
+                    autocomplete="new-password"
                     required
                 />
 
@@ -80,6 +83,8 @@
                     <x-input
                         label="Verification Code"
                         wire:model="twoFactorCode"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
                         placeholder="Enter the 6-digit code from your app"
                         required
                     />

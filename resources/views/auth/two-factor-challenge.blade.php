@@ -24,7 +24,7 @@
                 </div>
 
                 <div x-show="recovery" x-cloak>
-                    <x-input label="Recovery Code" name="recovery_code" autocomplete="one-time-code" errorField="recovery_code" />
+                    <x-input label="Recovery Code" name="recovery_code" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" errorField="recovery_code" />
                 </div>
 
                 <div class="flex items-center justify-between pt-2">

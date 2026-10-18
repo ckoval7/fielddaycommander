@@ -212,7 +212,7 @@
                         {{-- Selection and Callsign --}}
                         <div class="flex items-start justify-between gap-2">
                             @can('edit-contacts')
-                                <label class="flex items-center pt-1 flex-shrink-0">
+                                <label class="flex items-center justify-center min-h-11 min-w-11 -m-2 flex-shrink-0 cursor-pointer">
                                     <span class="sr-only">Select {{ $contact->callsign }}</span>
                                     <input type="checkbox" class="checkbox checkbox-sm" value="{{ $contact->id }}" wire:model.live="selectedIds" />
                                 </label>
