@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <x-form wire:submit="saveProfile">
     <div class="space-y-6">
         {{-- Basic Information Section --}}

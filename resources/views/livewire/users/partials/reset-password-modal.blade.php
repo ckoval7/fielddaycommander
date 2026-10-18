@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <x-modal wire:model="showResetModal" title="Reset Password">
     <form wire:submit="resetPassword">
         @if(config('mail.email_configured'))

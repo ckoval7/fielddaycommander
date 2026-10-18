@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div>
     <x-modal wire:model="showModal" title="Edit Contact" class="modal-lg">
         <form wire:submit.prevent>

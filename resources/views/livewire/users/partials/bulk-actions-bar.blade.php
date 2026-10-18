@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <x-alert icon="phosphor-check-circle" class="alert-info mb-4">
     <div class="flex items-center justify-between w-full gap-4">
         <span class="font-semibold">{{ count($selectedUsers) }} user(s) selected</span>

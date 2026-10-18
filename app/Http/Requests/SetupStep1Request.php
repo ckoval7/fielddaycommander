@@ -1,7 +1,11 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -18,7 +22,7 @@ class SetupStep1Request extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

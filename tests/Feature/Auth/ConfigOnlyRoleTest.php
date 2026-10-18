@@ -1,17 +1,21 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Livewire\Logging\StationSelect;
 use App\Livewire\Logging\TranscribeSelect;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     // Seed all permissions
-    $this->seed([\Database\Seeders\PermissionSeeder::class]);
+    $this->seed([PermissionSeeder::class]);
 
     $this->configOnlyRole = Role::firstOrCreate(
         ['name' => 'Config Only', 'guard_name' => 'web']

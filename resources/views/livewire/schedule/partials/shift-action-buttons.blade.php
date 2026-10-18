@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Variables: $shift, $myAssignment, $isMyShift, $isFull --}}
 <div class="flex-shrink-0 flex gap-1">
     @if($isMyShift && $myAssignment)

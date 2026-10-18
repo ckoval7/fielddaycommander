@@ -1,7 +1,11 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -11,7 +15,7 @@ beforeEach(function () {
     Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
 
     // Mark setup as complete so middleware allows registration
-    \Illuminate\Support\Facades\DB::table('system_config')->updateOrInsert(
+    DB::table('system_config')->updateOrInsert(
         ['key' => 'setup_completed'],
         ['value' => 'true', 'updated_at' => now()]
     );

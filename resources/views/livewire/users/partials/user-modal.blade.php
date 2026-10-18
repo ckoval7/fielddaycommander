@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <x-modal wire:model="showModal" title="{{ $editingUserId ? 'Edit User' : 'Create User' }}" class="modal-lg">
     <form wire:submit="saveUser">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

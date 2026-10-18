@@ -1,20 +1,27 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Contracts\ReminderSource;
 use App\Enums\NotificationCategory;
+use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\User;
 use App\Notifications\InAppNotification;
 use App\Services\ReminderService;
+use Carbon\Carbon;
+use Database\Seeders\BonusTypeSeeder;
+use Database\Seeders\EventTypeSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 
 beforeEach(function () {
     $this->travelTo(now());
-    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
     $this->user = User::factory()->create();
 });
 
@@ -67,7 +74,7 @@ function createMockSource(
             return $this->users;
         }
 
-        public function getScheduledTime(Model $item): \Carbon\Carbon
+        public function getScheduledTime(Model $item): Carbon
         {
             return $item->scheduled_at ?? $item->start_time;
         }
@@ -92,7 +99,7 @@ function createMockSource(
 }
 
 test('sends notification when reminder time matches window', function () {
-    \Illuminate\Support\Facades\Notification::fake();
+    Illuminate\Support\Facades\Notification::fake();
 
     $this->user->update([
         'notification_preferences' => ['test_reminder_minutes' => [10]],
@@ -108,7 +115,7 @@ test('sends notification when reminder time matches window', function () {
         'event_id' => $event->id,
         'created_by_user_id' => $this->user->id,
     ]);
-    $item = \App\Models\BulletinScheduleEntry::factory()->create([
+    $item = BulletinScheduleEntry::factory()->create([
         'event_id' => $event->id,
         'scheduled_at' => now()->addMinutes(10),
         'created_by' => $this->user->id,
@@ -124,11 +131,11 @@ test('sends notification when reminder time matches window', function () {
 
     expect($count)->toBe(1);
 
-    \Illuminate\Support\Facades\Notification::assertSentTo($this->user, InAppNotification::class);
+    Illuminate\Support\Facades\Notification::assertSentTo($this->user, InAppNotification::class);
 });
 
 test('skips notification when reminder time is outside window', function () {
-    \Illuminate\Support\Facades\Notification::fake();
+    Illuminate\Support\Facades\Notification::fake();
 
     $this->user->update([
         'notification_preferences' => ['test_reminder_minutes' => [30]],
@@ -144,7 +151,7 @@ test('skips notification when reminder time is outside window', function () {
         'event_id' => $event->id,
         'created_by_user_id' => $this->user->id,
     ]);
-    $item = \App\Models\BulletinScheduleEntry::factory()->create([
+    $item = BulletinScheduleEntry::factory()->create([
         'event_id' => $event->id,
         'scheduled_at' => now()->addMinutes(10),
         'created_by' => $this->user->id,
@@ -160,7 +167,7 @@ test('skips notification when reminder time is outside window', function () {
 
     expect($count)->toBe(0);
 
-    \Illuminate\Support\Facades\Notification::assertNothingSent();
+    Illuminate\Support\Facades\Notification::assertNothingSent();
 });
 
 test('does not duplicate already-sent reminders', function () {
@@ -178,7 +185,7 @@ test('does not duplicate already-sent reminders', function () {
         'event_id' => $event->id,
         'created_by_user_id' => $this->user->id,
     ]);
-    $item = \App\Models\BulletinScheduleEntry::factory()->create([
+    $item = BulletinScheduleEntry::factory()->create([
         'event_id' => $event->id,
         'scheduled_at' => now()->addMinutes(10),
         'created_by' => $this->user->id,
@@ -196,11 +203,11 @@ test('does not duplicate already-sent reminders', function () {
     expect($count1)->toBe(1);
 
     // Second run deduplicates
-    \Illuminate\Support\Facades\Notification::fake();
+    Illuminate\Support\Facades\Notification::fake();
     $count2 = $service->processSource($source);
     expect($count2)->toBe(0);
 
-    \Illuminate\Support\Facades\Notification::assertNothingSent();
+    Illuminate\Support\Facades\Notification::assertNothingSent();
 });
 
 test('returns zero for empty remindables', function () {

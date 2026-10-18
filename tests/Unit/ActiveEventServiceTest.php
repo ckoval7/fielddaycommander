@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Services\ActiveEventService;
@@ -42,7 +45,7 @@ test('getActiveEvent caches result across multiple calls', function () {
 
     // Track queries
     $queryCount = 0;
-    \DB::listen(function () use (&$queryCount) {
+    DB::listen(function () use (&$queryCount) {
         $queryCount++;
     });
 
@@ -136,7 +139,7 @@ test('clearCache resets cached event', function () {
 
     // Should query again after clearing
     $queryCount = 0;
-    \DB::listen(function () use (&$queryCount) {
+    DB::listen(function () use (&$queryCount) {
         $queryCount++;
     });
 
@@ -163,7 +166,7 @@ test('caching works across different service methods', function () {
 
     // Track queries
     $queryCount = 0;
-    \DB::listen(function () use (&$queryCount) {
+    DB::listen(function () use (&$queryCount) {
         $queryCount++;
     });
 

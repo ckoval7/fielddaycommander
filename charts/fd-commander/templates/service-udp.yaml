@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 {{- if .Values.externalLoggers.enabled }}
 {{- /*
 Separate service for the external logger UDP listeners. Kept apart from the

@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Update Notes Modal --}}
 <x-modal wire:model="showNotesModal" title="Update Delivery Notes" class="backdrop-blur">
     <x-form wire:submit="updateNotes" class="space-y-4">

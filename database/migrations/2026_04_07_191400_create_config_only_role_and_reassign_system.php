@@ -1,15 +1,19 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create sign-up-shifts permission and grant to existing operator roles
         $signUpShifts = Permission::firstOrCreate(['name' => 'sign-up-shifts', 'guard_name' => 'web']);
@@ -53,7 +57,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Reassign SYSTEM user back to System Administrator
         $systemUser = User::where('call_sign', User::SYSTEM_CALL_SIGN)->first();

@@ -1,11 +1,15 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace Database\Factories;
 
+use App\Models\Band;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Band>
+ * @extends Factory<Band>
  */
 class BandFactory extends Factory
 {

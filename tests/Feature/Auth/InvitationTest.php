@@ -1,8 +1,12 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -270,7 +274,7 @@ test('admin can send invitation email when creating user in invite mode', functi
     // Verify invitation was created
     $invitation = UserInvitation::where('user_id', $user->id)->first();
     expect($invitation)->not->toBeNull()
-        ->and($invitation->expires_at)->toBeInstanceOf(\Carbon\Carbon::class)
+        ->and($invitation->expires_at)->toBeInstanceOf(Carbon::class)
         ->and($invitation->expires_at->greaterThan(now()->addHours(71)))->toBeTrue()
         ->and($invitation->accepted_at)->toBeNull();
 

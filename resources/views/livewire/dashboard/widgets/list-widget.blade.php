@@ -1,4 +1,8 @@
 {{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
+{{--
 ListWidget View
 
 Displays scrollable lists of data in three formats; items new since the

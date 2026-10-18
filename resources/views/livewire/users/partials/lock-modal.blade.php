@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <x-modal wire:model="showLockModal" title="Lock User Account">
     <p class="mb-4">Lock this user account? The user will not be able to log in.</p>
 

@@ -1,4 +1,8 @@
 {{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
+{{--
     Delivery checklist row. Dispatches between two row types via $row['_type']:
     - 'group': owner sub-header that spans all columns
     - 'item':  the actual checklist line (default if _type is missing)

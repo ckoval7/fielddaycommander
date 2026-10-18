@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Full local SonarQube scan of the current checkout (HEAD + uncommitted changes).
 #
 #   sonar-local.sh up     start a throwaway sonarqube:community server (idempotent)

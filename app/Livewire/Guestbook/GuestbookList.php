@@ -1,8 +1,12 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace App\Livewire\Guestbook;
 
 use App\Models\GuestbookEntry;
+use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
@@ -27,7 +31,7 @@ class GuestbookList extends Component
 
     public function loadEntries(): void
     {
-        $activeEvent = app(\App\Services\EventContextService::class)->getContextEvent();
+        $activeEvent = app(EventContextService::class)->getContextEvent();
 
         if (! $activeEvent || ! $activeEvent->eventConfiguration) {
             $this->entries = collect();

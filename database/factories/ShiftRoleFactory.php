@@ -1,11 +1,16 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace Database\Factories;
 
+use App\Models\EventConfiguration;
+use App\Models\ShiftRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ShiftRole>
+ * @extends Factory<ShiftRole>
  */
 class ShiftRoleFactory extends Factory
 {
@@ -17,7 +22,7 @@ class ShiftRoleFactory extends Factory
     public function definition(): array
     {
         return [
-            'event_configuration_id' => \App\Models\EventConfiguration::factory(),
+            'event_configuration_id' => EventConfiguration::factory(),
             'name' => fake()->randomElement([
                 'Station Operator',
                 'GOTA Coach',

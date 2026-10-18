@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 /**
  * Updated Ago - Alpine.js component for dashboard "Updated …" footers.
  *

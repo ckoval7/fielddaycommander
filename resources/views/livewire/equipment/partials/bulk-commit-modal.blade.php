@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Bulk Commit Modal --}}
 <x-modal wire:model="showBulkCommitModal" title="Commit {{ count($selectedIds) }} Item(s) to Event" class="backdrop-blur">
     <x-form wire:submit="bulkCommitEquipment" class="space-y-4">

@@ -1,12 +1,16 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace Database\Factories;
 
 use App\Models\EventConfiguration;
 use App\Models\User;
+use App\Models\W1awBulletin;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/** @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\W1awBulletin> */
+/** @extends Factory<W1awBulletin> */
 class W1awBulletinFactory extends Factory
 {
     public function definition(): array

@@ -1,0 +1,55 @@
+version = 1
+SPDX-PackageName = "FD Commander"
+SPDX-PackageSupplier = "Corey Koval <ckoval7@gmail.com>"
+SPDX-PackageDownloadLocation = "https://github.com/ckoval7/fielddaycommander"
+
+# Source files carry their own SPDX headers. This file covers files that
+# cannot hold a comment (images, JSON, lock files) and the documentation.
+
+# Creative works: images and documentation.
+[[annotations]]
+path = [
+    "public/favicon.ico",
+    "public/favicon.png",
+    "public/images/**",
+    "README.md",
+    "DOCKER.md",
+    "SECURITY.md",
+    "docs/**",
+    "charts/fd-commander/README.md",
+]
+SPDX-FileCopyrightText = "2026 Corey Koval <ckoval7@gmail.com>"
+SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
+
+# Project metadata and tooling notes.
+[[annotations]]
+path = [
+    "VERSION",
+    "composer.lock",
+    "package-lock.json",
+    "charts/fd-commander/.helmignore",
+    "charts/fd-commander/templates/NOTES.txt",
+    "tests/fixtures/test-image.jpg",
+    ".dockerignore",
+    ".claude/**",
+]
+SPDX-FileCopyrightText = "2026 Corey Koval <ckoval7@gmail.com>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Files that started from the MIT-licensed Laravel application skeleton, and
+# CLAUDE.md, which embeds the MIT-licensed Laravel Boost guidelines.
+[[annotations]]
+path = [
+    "CLAUDE.md",
+    "composer.json",
+    "package.json",
+    "phpunit.xml",
+    ".env.example",
+    ".editorconfig",
+    ".gitattributes",
+    ".gitignore",
+    "**/.gitignore",
+    "public/robots.txt",
+]
+SPDX-FileCopyrightText = ["Taylor Otwell", "2026 Corey Koval <ckoval7@gmail.com>"]
+SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"

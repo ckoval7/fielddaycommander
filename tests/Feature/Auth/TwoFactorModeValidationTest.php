@@ -1,5 +1,9 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+use App\Providers\FortifyServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 
@@ -23,5 +27,5 @@ it('throws exception for invalid 2fa mode', function () {
     config(['auth-security.2fa_mode' => 'bogus']);
 
     // Re-boot the provider to trigger validation
-    app(\App\Providers\FortifyServiceProvider::class, ['app' => app()])->boot();
-})->throws(\RuntimeException::class, "Invalid 2FA_MODE: 'bogus'");
+    app(FortifyServiceProvider::class, ['app' => app()])->boot();
+})->throws(RuntimeException::class, "Invalid 2FA_MODE: 'bogus'");

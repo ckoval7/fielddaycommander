@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Results View Component --}}
 <x-card class="shadow-md">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">

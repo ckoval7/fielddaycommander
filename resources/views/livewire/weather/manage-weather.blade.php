@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div class="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
 
     <div class="flex items-center justify-between">

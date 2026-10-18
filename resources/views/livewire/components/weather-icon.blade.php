@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div wire:poll.900s="loadWeatherData">
     @php
         $shouldShow = $hasData || $canManageWeather;

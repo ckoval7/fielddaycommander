@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Livewire\Components\DeveloperBanner;
 use App\Models\Setting;
 use App\Models\User;
@@ -7,6 +10,7 @@ use App\Services\DeveloperClockService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     // Clear any existing time overrides
@@ -88,7 +92,7 @@ describe('Permission Tests', function () {
         $clockService->setFakeTime(Carbon::parse('2025-06-28 18:00:00'), frozen: true);
 
         $adminUser = User::factory()->create();
-        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'manage-settings']);
+        Permission::firstOrCreate(['name' => 'manage-settings']);
         $adminUser->givePermissionTo('manage-settings');
         $this->actingAs($adminUser);
 

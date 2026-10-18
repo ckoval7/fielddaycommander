@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Commitment Details Modal --}}
 @if($detailCommitment)
     <x-modal wire:model="showDetailsModal" title="Commitment Details" class="backdrop-blur" box-class="max-w-2xl">

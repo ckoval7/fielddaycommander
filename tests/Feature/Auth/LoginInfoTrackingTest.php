@@ -1,9 +1,13 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
-    \Illuminate\Support\Facades\DB::table('system_config')->updateOrInsert(
+    DB::table('system_config')->updateOrInsert(
         ['key' => 'setup_completed'],
         ['value' => 'true', 'updated_at' => now()]
     );

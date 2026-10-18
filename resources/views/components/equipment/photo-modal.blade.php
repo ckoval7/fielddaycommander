@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 @props(['photoPath' => null, 'photoDescription' => null])
 
 <x-modal wire:model="showPhotoModal" :title="$photoDescription ?? 'Equipment Detail'" class="backdrop-blur" box-class="max-w-4xl">

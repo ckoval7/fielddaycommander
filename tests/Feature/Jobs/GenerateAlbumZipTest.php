@@ -1,9 +1,13 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Jobs\GenerateAlbumZip;
 use App\Models\EventConfiguration;
 use App\Models\Image;
 use App\Models\User;
+use App\Notifications\InAppNotification;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
@@ -78,7 +82,7 @@ test('job sends notification on success', function () {
     $job = new GenerateAlbumZip($eventConfig->id, $user->id);
     $job->handle();
 
-    Notification::assertSentTo($user, \App\Notifications\InAppNotification::class);
+    Notification::assertSentTo($user, InAppNotification::class);
 });
 
 test('job notifies user when no images exist', function () {
@@ -88,7 +92,7 @@ test('job notifies user when no images exist', function () {
     $job = new GenerateAlbumZip($eventConfig->id, $user->id);
     $job->handle();
 
-    Notification::assertSentTo($user, \App\Notifications\InAppNotification::class, function ($notification) {
+    Notification::assertSentTo($user, InAppNotification::class, function ($notification) {
         return str_contains($notification->message, 'No photos');
     });
 
@@ -139,9 +143,9 @@ test('failed method sends error notification and cleans up partial zip', functio
     Storage::disk('local')->put("{$exportDir}/album-partial.zip", 'partial-content');
 
     $job = new GenerateAlbumZip($eventConfig->id, $user->id);
-    $job->failed(new \RuntimeException('Something went wrong'));
+    $job->failed(new RuntimeException('Something went wrong'));
 
-    Notification::assertSentTo($user, \App\Notifications\InAppNotification::class, function ($notification) {
+    Notification::assertSentTo($user, InAppNotification::class, function ($notification) {
         return str_contains($notification->message, 'Failed to create');
     });
 

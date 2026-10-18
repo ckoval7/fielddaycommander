@@ -1,8 +1,13 @@
 <?php
 
-use Illuminate\Support\Str;
+// SPDX-FileCopyrightText: Taylor Otwell
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later AND MIT
 
-$mysqlSslCaAttr = PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA;
+use Illuminate\Support\Str;
+use Pdo\Mysql;
+
+$mysqlSslCaAttr = PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA;
 
 return [
 

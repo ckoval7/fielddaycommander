@@ -1,15 +1,19 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace Database\Factories;
 
 use App\Enums\MessageFormat;
 use App\Enums\MessagePrecedence;
 use App\Enums\MessageRole;
 use App\Models\EventConfiguration;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/** @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Message> */
+/** @extends Factory<Message> */
 class MessageFactory extends Factory
 {
     private const CALLSIGN_PATTERN = '??#???';

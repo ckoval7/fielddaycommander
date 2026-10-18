@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div>
     {{-- Clone Modal --}}
     <x-modal wire:model="showModal" title="Clone Stations from Previous Event" subtitle="Copy station configurations from a past event to a new event" class="backdrop-blur" persistent>

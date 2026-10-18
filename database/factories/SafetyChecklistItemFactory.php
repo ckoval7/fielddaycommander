@@ -1,13 +1,17 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace Database\Factories;
 
 use App\Enums\ChecklistType;
 use App\Models\EventConfiguration;
+use App\Models\SafetyChecklistItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\SafetyChecklistItem>
+ * @extends Factory<SafetyChecklistItem>
  */
 class SafetyChecklistItemFactory extends Factory
 {

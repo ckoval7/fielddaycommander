@@ -1,10 +1,14 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace App\Services;
 
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Setting;
+use Carbon\Carbon;
 
 /**
  * Session-aware event context service.
@@ -183,7 +187,7 @@ class EventContextService extends ActiveEventService
     /**
      * Determine whether a completed event is in grace period or archived.
      */
-    protected function resolvePostEventStatus(Event $event, \Carbon\Carbon $now): string
+    protected function resolvePostEventStatus(Event $event, Carbon $now): string
     {
         $graceDays = (int) Setting::get('post_event_grace_period_days', 30);
 

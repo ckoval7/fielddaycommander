@@ -1,7 +1,11 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Enums\ChecklistType;
 use App\Models\EventConfiguration;
+use App\Models\OperatingClass;
 use App\Models\SafetyChecklistEntry;
 use App\Models\SafetyChecklistItem;
 
@@ -100,7 +104,7 @@ describe('Scopes', function () {
 
 describe('Seeding', function () {
     test('seedDefaults creates safety officer items for Class A', function () {
-        $operatingClass = \App\Models\OperatingClass::factory()->create(['code' => 'A']);
+        $operatingClass = OperatingClass::factory()->create(['code' => 'A']);
         $eventConfig = EventConfiguration::factory()->create([
             'operating_class_id' => $operatingClass->id,
         ]);

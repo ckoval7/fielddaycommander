@@ -1,5 +1,9 @@
 <?php
 
+// SPDX-FileCopyrightText: Taylor Otwell
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later AND MIT
+
 /*
  * Hosts allowed to open WebSocket connections, compared against the host of
  * the browser's Origin header (wildcards allowed, e.g. "*.example.org").

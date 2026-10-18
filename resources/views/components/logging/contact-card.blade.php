@@ -1,4 +1,8 @@
 {{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
+{{--
 Contact Card Component
 
 Mobile card for a server-confirmed contact in the QSO log. Tapping a live

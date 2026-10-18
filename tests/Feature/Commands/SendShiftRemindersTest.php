@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
@@ -9,11 +12,13 @@ use App\Models\ShiftRole;
 use App\Models\User;
 use App\Notifications\InAppNotification;
 use App\Notifications\ShiftCheckinReminderMail;
+use Database\Seeders\BonusTypeSeeder;
+use Database\Seeders\EventTypeSeeder;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
     $this->travelTo(now());
-    $this->seed([\Database\Seeders\EventTypeSeeder::class, \Database\Seeders\BonusTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
 
     $this->eventType = EventType::where('code', 'FD')->first();
     $this->user = User::factory()->create();

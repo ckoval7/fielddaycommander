@@ -1,11 +1,16 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace App\Models;
 
+use Database\Factories\OrganizationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * Organization model representing a club or organization.
@@ -18,13 +23,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $address
  * @property string|null $logo_path
  * @property bool $is_active
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  */
 class Organization extends Model
 {
-    /** @use HasFactory<\Database\Factories\OrganizationFactory> */
+    /** @use HasFactory<OrganizationFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = [

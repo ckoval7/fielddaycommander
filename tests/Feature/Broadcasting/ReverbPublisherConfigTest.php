@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 /**
  * Regression: broadcasts were published to the public REVERB_HOST, where the
  * proxy only forwards the WebSocket path (/app) and the API path (/apps)

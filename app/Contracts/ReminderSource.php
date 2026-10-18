@@ -1,9 +1,13 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace App\Contracts;
 
 use App\Enums\NotificationCategory;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
@@ -45,7 +49,7 @@ interface ReminderSource
     /**
      * Get the scheduled time for a remindable item.
      */
-    public function getScheduledTime(Model $item): \Carbon\Carbon;
+    public function getScheduledTime(Model $item): Carbon;
 
     /**
      * Get the reminder minutes for a user from their preferences.

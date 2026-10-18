@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div wire:poll.900s="loadData">
     @php $headerText = $locationLabel !== null ? 'Weather for '.$locationLabel : 'Weather'; @endphp
     <x-slot:title>{{ $headerText }}</x-slot:title>

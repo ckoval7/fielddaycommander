@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Livewire\Stations\EquipmentAssignment;
 use App\Models\AuditLog;
 use App\Models\Band;
@@ -9,6 +12,7 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\OperatingClass;
+use App\Models\OperatingSession;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
@@ -1030,56 +1034,56 @@ test('validation integration shows conflict modal for equipment assigned to anot
 });
 
 it('shows warning banner when station has active session with committed equipment', function () {
-    $user = \App\Models\User::factory()->create();
+    $user = User::factory()->create();
     $user->givePermissionTo(['manage-stations', 'view-all-equipment']);
 
-    $event = \App\Models\Event::factory()->create(['is_active' => true]);
-    $eventConfig = \App\Models\EventConfiguration::factory()->for($event)->create();
-    $station = \App\Models\Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
+    $event = Event::factory()->create(['is_active' => true]);
+    $eventConfig = EventConfiguration::factory()->for($event)->create();
+    $station = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
 
-    $equipment = \App\Models\Equipment::factory()->create(['type' => 'antenna']);
-    \App\Models\EquipmentEvent::factory()->create([
+    $equipment = Equipment::factory()->create(['type' => 'antenna']);
+    EquipmentEvent::factory()->create([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
         'station_id' => $station->id,
         'status' => 'committed',
     ]);
 
-    \App\Models\OperatingSession::factory()->create([
+    OperatingSession::factory()->create([
         'station_id' => $station->id,
         'operator_user_id' => $user->id,
         'end_time' => null,
     ]);
 
-    \Livewire\Livewire::actingAs($user)
-        ->test(\App\Livewire\Stations\EquipmentAssignment::class, ['stationId' => $station->id])
+    Livewire::actingAs($user)
+        ->test(EquipmentAssignment::class, ['stationId' => $station->id])
         ->assertSee("This station is operating but some equipment hasn't been marked as delivered");
 });
 
 it('shows unassign confirmation when station has active session', function () {
-    $user = \App\Models\User::factory()->create();
+    $user = User::factory()->create();
     $user->givePermissionTo(['manage-stations', 'view-all-equipment']);
 
-    $event = \App\Models\Event::factory()->create(['is_active' => true]);
-    $eventConfig = \App\Models\EventConfiguration::factory()->for($event)->create();
-    $station = \App\Models\Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
+    $event = Event::factory()->create(['is_active' => true]);
+    $eventConfig = EventConfiguration::factory()->for($event)->create();
+    $station = Station::factory()->create(['event_configuration_id' => $eventConfig->id]);
 
-    $equipment = \App\Models\Equipment::factory()->create(['type' => 'antenna']);
-    \App\Models\EquipmentEvent::factory()->create([
+    $equipment = Equipment::factory()->create(['type' => 'antenna']);
+    EquipmentEvent::factory()->create([
         'equipment_id' => $equipment->id,
         'event_id' => $event->id,
         'station_id' => $station->id,
         'status' => 'delivered',
     ]);
 
-    \App\Models\OperatingSession::factory()->create([
+    OperatingSession::factory()->create([
         'station_id' => $station->id,
         'operator_user_id' => $user->id,
         'end_time' => null,
     ]);
 
-    \Livewire\Livewire::actingAs($user)
-        ->test(\App\Livewire\Stations\EquipmentAssignment::class, ['stationId' => $station->id])
+    Livewire::actingAs($user)
+        ->test(EquipmentAssignment::class, ['stationId' => $station->id])
         ->call('requestUnassign', $equipment->id)
         ->assertSet('showUnassignConfirmModal', true);
 });

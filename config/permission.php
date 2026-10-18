@@ -1,5 +1,9 @@
 <?php
 
+// SPDX-FileCopyrightText: Spatie bvba <info@spatie.be>
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later AND MIT
+
 use Spatie\Permission\DefaultTeamResolver;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;

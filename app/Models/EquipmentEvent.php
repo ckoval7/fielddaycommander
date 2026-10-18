@@ -1,11 +1,16 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 namespace App\Models;
 
+use Database\Factories\EquipmentEventFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * EquipmentEvent model representing equipment commitments for events.
@@ -16,18 +21,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $station_id
  * @property int|null $assigned_by_user_id
  * @property string $status
- * @property \Illuminate\Support\Carbon $committed_at
- * @property \Illuminate\Support\Carbon|null $expected_delivery_at
+ * @property Carbon $committed_at
+ * @property Carbon|null $expected_delivery_at
  * @property string|null $delivery_notes
  * @property string|null $manager_notes
- * @property \Illuminate\Support\Carbon $status_changed_at
+ * @property Carbon $status_changed_at
  * @property int|null $status_changed_by_user_id
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class EquipmentEvent extends Model
 {
-    /** @use HasFactory<\Database\Factories\EquipmentEventFactory> */
+    /** @use HasFactory<EquipmentEventFactory> */
     use HasFactory;
 
     protected $table = 'equipment_event';

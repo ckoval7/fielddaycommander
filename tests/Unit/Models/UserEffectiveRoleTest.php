@@ -1,7 +1,11 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -34,8 +38,8 @@ it('ignores callsign override when dev mode is off', function () {
 it('role override only applies to the authenticated user', function () {
     config(['developer.enabled' => true]);
 
-    $operatorRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
-    $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'System Administrator', 'guard_name' => 'web']);
+    $operatorRole = Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    $adminRole = Role::firstOrCreate(['name' => 'System Administrator', 'guard_name' => 'web']);
 
     $loggedInUser = User::factory()->create();
     $loggedInUser->assignRole('Operator');

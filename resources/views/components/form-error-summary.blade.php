@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- App-wide floating validation summary, driven by resources/js/components/form-error-summary.js. Rendered once per layout. --}}
 <div
     x-data="formErrorSummaryPanel"

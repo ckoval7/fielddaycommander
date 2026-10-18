@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
     {{-- Left: Roles Table --}}
     <div class="lg:col-span-2">

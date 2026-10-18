@@ -88,7 +88,13 @@ Contributions are welcome! Fork the repo, create a feature branch, and submit a 
 
 ## License
 
-GPL v3. See [LICENSE](LICENSE) for details.
+The code is licensed under the GNU General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE).
+
+Images and documentation, including this README and everything in `docs/`, are licensed under [Creative Commons Attribution-NonCommercial-ShareAlike 4.0](LICENSES/CC-BY-NC-SA-4.0.txt).
+
+Some files started from MIT-licensed upstream code (the Laravel skeleton, and config and stubs published by Fortify, Octane, Reverb, laravel-dompdf, laravel-permission and Pest). Those files keep the upstream copyright notice in their headers, and the MIT text is in [LICENSES/MIT.txt](LICENSES/MIT.txt).
+
+Every file declares its license with an SPDX tag, either in a header comment or in [REUSE.toml](REUSE.toml). The project follows the [REUSE](https://reuse.software) specification.
 
 ## Field Day Rules
 

@@ -1,5 +1,11 @@
 <?php
 
+// SPDX-FileCopyrightText: Taylor Otwell
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later AND MIT
+
+use App\Models\User;
+
 return [
 
     /*
@@ -62,7 +68,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => env('AUTH_MODEL', User::class),
         ],
 
         // 'users' => [

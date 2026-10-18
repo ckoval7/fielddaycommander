@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- Suppress unhandled-promise-rejection noise from Livewire 4.
 
     Livewire rejects every pending action promise on a request error with a

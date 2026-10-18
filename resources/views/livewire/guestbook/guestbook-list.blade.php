@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div wire:poll.30s>
     <x-header title="Recent Visitors" subtitle="Who's been here" class="mb-6" />
 

@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 {{-- @var $row array{owner_name: string, callsign: string, email: string, emergency_contacts: \Illuminate\Support\Collection, equipment_count: int} --}}
 {{-- @var $alt bool --}}
 <tr class="{{ $alt ? 'alt' : '' }}">

@@ -1,14 +1,18 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\User;
+use Database\Seeders\EventTypeSeeder;
 
 uses()->group('unit', 'models');
 
 beforeEach(function () {
     $this->travelTo(now());
-    $this->seed([\Database\Seeders\EventTypeSeeder::class]);
+    $this->seed([EventTypeSeeder::class]);
     $this->event = Event::factory()->create();
     $this->user = User::factory()->create();
 });

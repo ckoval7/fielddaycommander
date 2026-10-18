@@ -1,14 +1,19 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Livewire\Settings\RoleManager;
 use App\Livewire\Users\UserManagement;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RoleSeeder;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    $this->seed([\Database\Seeders\PermissionSeeder::class]);
-    $this->seed([\Database\Seeders\RoleSeeder::class]);
+    $this->seed([PermissionSeeder::class]);
+    $this->seed([RoleSeeder::class]);
 
     $this->admin = User::factory()->create();
     $configOnly = Role::where('name', 'Config Only')->first();
