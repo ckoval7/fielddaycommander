@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div class="grid grid-cols-2 gap-3" data-demo-identity>
     <label class="form-control">
         <span class="label-text text-sm mb-1">First name</span>

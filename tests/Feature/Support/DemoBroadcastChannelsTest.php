@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Events\WeatherAlertChanged;
 use App\Livewire\Components\WeatherAlertBanner;
 use App\Support\BroadcastChannels;

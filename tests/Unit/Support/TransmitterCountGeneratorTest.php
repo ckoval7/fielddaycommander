@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use App\Support\TransmitterCountGenerator;
 
 test('class A counts stay within 1-20 and favor 4 and 5', function () {

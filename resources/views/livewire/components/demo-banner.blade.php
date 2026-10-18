@@ -1,3 +1,7 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
 <div>
     @if($isVisible)
         <div class="bg-info/10 border-b border-info/30 px-4 py-2 text-sm flex flex-wrap items-center justify-between gap-2">
