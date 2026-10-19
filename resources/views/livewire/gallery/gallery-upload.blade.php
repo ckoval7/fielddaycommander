@@ -62,6 +62,7 @@
 
             <x-input
                 wire:model="caption"
+                autocapitalize="sentences"
                 label="Caption (optional)"
                 placeholder="Add a caption to your photo..."
                 hint="Describe what's happening in the photo"

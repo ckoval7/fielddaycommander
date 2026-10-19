@@ -16,6 +16,7 @@
                         <x-input
                             label="Dashboard Title"
                             wire:model="newTitle"
+                            autocapitalize="words"
                             placeholder="e.g., My Custom Dashboard"
                             icon="phosphor-stack"
                             required

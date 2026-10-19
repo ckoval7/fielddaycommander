@@ -199,6 +199,7 @@
                         <x-input
                             label="First Name"
                             wire:model="gotaOperatorFirstName"
+                            autocapitalize="words"
                             autocomplete="off"
                             placeholder="First name"
                             class="input-sm"
@@ -206,6 +207,7 @@
                         <x-input
                             label="Last Name"
                             wire:model="gotaOperatorLastName"
+                            autocapitalize="words"
                             autocomplete="off"
                             placeholder="Last name"
                             class="input-sm"
