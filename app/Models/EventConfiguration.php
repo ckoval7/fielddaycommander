@@ -109,6 +109,14 @@ class EventConfiguration extends Model
     }
 
     /**
+     * Whether this configuration's event is scored as a contest.
+     */
+    public function isScored(): bool
+    {
+        return ($this->event ?? $this->event()->first())?->isScored() ?? true;
+    }
+
+    /**
      * Drop the memoized RuleSet so the next resolution re-reads the event's
      * current rules_version. Call after persisting a rules_version change.
      */

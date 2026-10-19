@@ -149,6 +149,17 @@ class Event extends Model
     }
 
     /**
+     * Whether this event is scored as a contest.
+     *
+     * Assumes a scored event when no type is set yet, matching the Field Day
+     * fallbacks above.
+     */
+    public function isScored(): bool
+    {
+        return $this->loadMissing('eventType')->eventType?->isScored() ?? true;
+    }
+
+    /**
      * Whether this event's rulebook awards points for message traffic.
      *
      * ARRL Field Day scores the SM/SEC message and NTS traffic; Winter Field

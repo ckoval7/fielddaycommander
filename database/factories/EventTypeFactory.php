@@ -21,9 +21,23 @@ class EventTypeFactory extends Factory
     public function definition(): array
     {
         return [
+            'code' => strtoupper(fake()->unique()->lexify('???')),
             'name' => fake()->randomElement(['Field Day', 'Winter Field Day', 'ARRL Field Day']),
             'description' => fake()->sentence(),
             'is_active' => true,
         ];
+    }
+
+    /**
+     * The unscored Public Service / Other event type.
+     */
+    public function publicService(): static
+    {
+        return $this->state(fn () => [
+            'code' => 'PS',
+            'name' => 'Public Service / Other',
+            'is_scored' => false,
+            'setup_offset_hours' => 0,
+        ]);
     }
 }

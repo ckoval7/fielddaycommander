@@ -30,6 +30,14 @@ class EventTypeSeeder extends Seeder
                 'is_active' => true,
                 'setup_offset_hours' => 24,
             ],
+            [
+                'code' => 'PS',
+                'name' => 'Public Service / Other',
+                'description' => 'Public service, EmComm drills, nets and other events that are not scored as a contest',
+                'is_active' => true,
+                'is_scored' => false,
+                'setup_offset_hours' => 0,
+            ],
         ];
 
         foreach ($eventTypes as $eventType) {
