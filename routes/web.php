@@ -105,8 +105,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', UserProfile::class)->name('profile');
 });
 
-// Contact Logging
-Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
+// Contact Logging (contest events only; unscored events log traffic in the net log)
+Route::middleware(['auth', 'verified', 'can:log-contacts', 'scored-event'])->group(function () {
     Route::get('/logging', StationSelect::class)->name('logging.station-select');
     Route::get('/logging/session/{operatingSession}', LoggingInterface::class)->name('logging.session');
     Route::get('/logging/transcribe', TranscribeSelect::class)->name('logging.transcribe.select');
@@ -114,13 +114,15 @@ Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
 });
 
 // Contact sync endpoint (controller also checks session ownership)
-Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
+Route::middleware(['auth', 'verified', 'can:log-contacts', 'scored-event'])->group(function () {
     Route::post('/logging/contacts', [ContactSyncController::class, 'store'])->name('logging.contacts.store');
 });
 
 // Logbook Browser (public)
-Route::get('/logbook', [LogbookController::class, 'index'])->name('logbook.index');
-Route::get('/logbook/export', [LogbookController::class, 'export'])->name('logbook.export');
+Route::middleware('scored-event')->group(function () {
+    Route::get('/logbook', [LogbookController::class, 'index'])->name('logbook.index');
+    Route::get('/logbook/export', [LogbookController::class, 'export'])->name('logbook.export');
+});
 
 // Section Map (public)
 Route::get('/section-map', function () {
@@ -287,12 +289,12 @@ Route::middleware(['auth', 'verified', 'can:manage-settings'])->group(function (
 
 Route::middleware(['auth', 'verified', 'can:view-reports'])->group(function () {
     Route::get('/reports', ReportsIndex::class)->name('reports.index');
-    Route::get('/reports/adif', [ReportController::class, 'adif'])->name('reports.adif');
     Route::get('/reports/ics-205', [IcsFormController::class, 'ics205'])->name('reports.ics-205');
     Route::get('/reports/ics-211', [IcsFormController::class, 'ics211'])->name('reports.ics-211');
     Route::get('/reports/ics-309', [IcsFormController::class, 'ics309'])->name('reports.ics-309');
 
     Route::middleware('scored-event')->group(function () {
+        Route::get('/reports/adif', [ReportController::class, 'adif'])->name('reports.adif');
         Route::get('/reports/cabrillo', [ReportController::class, 'cabrillo'])->name('reports.cabrillo');
         Route::get('/reports/wfd-event-summary', [ReportController::class, 'wfdEventSummary'])->name('reports.wfd-event-summary');
         Route::get('/reports/submission-sheet', [ReportController::class, 'submissionSheet'])->name('reports.submission-sheet');
@@ -304,7 +306,7 @@ Route::middleware(['auth', 'verified', 'can:view-security-logs'])->prefix('admin
     Route::get('/audit-logs', AuditLogViewer::class)->name('admin.audit-logs');
 });
 
-Route::middleware(['auth', 'verified', 'can:import-contacts'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'verified', 'can:import-contacts', 'scored-event'])->prefix('admin')->group(function () {
     Route::get('/import/adif', AdifImport::class)->name('admin.import-adif');
     Route::get('/external-loggers', ExternalLoggerManagement::class)->name('admin.external-loggers');
 });

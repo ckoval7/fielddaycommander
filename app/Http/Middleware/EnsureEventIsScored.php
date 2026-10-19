@@ -15,8 +15,9 @@ class EnsureEventIsScored
     public function __construct(protected EventContextService $eventContextService) {}
 
     /**
-     * Hide contest-only pages (scoring, section map, contest reports) when
-     * the event in context is not scored. Pages with no event in context
+     * Hide contest-only pages (contact logging, the logbook, scoring, the
+     * section map and contest reports) when the event in context is not
+     * scored. Unscored events log their traffic in the net log instead. Pages with no event in context
      * pass through and show their own empty state.
      */
     public function handle(Request $request, Closure $next): Response

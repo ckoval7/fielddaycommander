@@ -133,6 +133,7 @@
         </span>
     </div>
 
+    @if ($this->isScored)
     {{-- ============================================================
          SECTION 1: DOWNLOADS — primary action zone
          F-pattern top row — immediately visible, clearly actionable
@@ -291,6 +292,8 @@
         </div>
     </div>
 
+    @endif
+
     {{-- ============================================================
          ICS FORMS — FEMA's fillable PDFs, filled in the browser
          ============================================================ --}}
@@ -385,6 +388,8 @@
         </div>
     </div>
 
+    {{-- Contact-based sections: unscored events log traffic in the net log instead --}}
+    @if ($this->isScored)
     {{-- ============================================================
          SECTION 2: QSO RATE BY HOUR
          ============================================================ --}}
@@ -517,6 +522,8 @@
             @endif
         </div>
     </div>
+
+    @endif
 
     {{-- ============================================================
          SECTION 4: SECTIONS WORKED

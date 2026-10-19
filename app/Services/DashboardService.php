@@ -368,8 +368,17 @@ class DashboardService
     {
         $scoredOnly = config('dashboard.scored_only', []);
 
-        return in_array($widget['type'] ?? null, $scoredOnly['widget_types'] ?? [], true)
-            || in_array($widget['config']['metric'] ?? null, $scoredOnly['metrics'] ?? [], true);
+        if (in_array($widget['type'] ?? null, $scoredOnly['widget_types'] ?? [], true)) {
+            return true;
+        }
+
+        foreach ($scoredOnly['settings'] ?? [] as $setting => $values) {
+            if (in_array($widget['config'][$setting] ?? null, $values, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

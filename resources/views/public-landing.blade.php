@@ -155,8 +155,8 @@
             </div>
         @endif
 
-        {{-- Live Stats Section --}}
-        @if($activeEvent && $eventConfig)
+        {{-- Live Stats Section (contest events only: unscored events don't keep a contact log) --}}
+        @if($activeEvent && $eventConfig && $activeEvent->isScored())
             <div class="border-t border-base-300 pt-8">
                 <h2 class="text-2xl font-bold text-center mb-6">Live Stats</h2>
 
@@ -190,7 +190,7 @@
                     />
                 </div>
             </div>
-        @else
+        @elseif(! $activeEvent || ! $eventConfig)
             <div class="border-t border-base-300 pt-8">
                 <div class="text-center py-12">
                     <x-icon name="phosphor-calendar" class="w-16 h-16 text-base-content/30 mx-auto mb-4" />
