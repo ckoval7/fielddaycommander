@@ -2,9 +2,10 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
+@php $terms = app(\App\Services\EventContextService::class)->getContextEvent()?->nomenclature() ?? new \App\Scoring\Dto\Nomenclature; @endphp
 <div class="space-y-6">
     {{-- Header --}}
-    <x-header title="Stations" subtitle="Manage field day stations and equipment assignments" separator progress-indicator>
+    <x-header :title="$terms->stationPlural" subtitle="Manage {{ strtolower($terms->stationPlural) }} and equipment assignments" separator progress-indicator>
         <x-slot:actions>
             @can('log-contacts')
                 <x-button label="Log Contact" icon="phosphor-pencil-line" class="btn-outline" link="{{ route('logging.station-select') }}" wire:navigate responsive />
@@ -17,7 +18,7 @@
                     wire:click="$dispatch('open-clone-modal')"
                     responsive
                 />
-                <x-button label="Add Station" icon="phosphor-plus" class="btn-primary" link="{{ route('stations.create') }}" wire:navigate responsive />
+                <x-button label="Add {{ $terms->stationSingular }}" icon="phosphor-plus" class="btn-primary" link="{{ route('stations.create') }}" wire:navigate responsive />
             @endcan
         </x-slot:actions>
     </x-header>
@@ -90,10 +91,10 @@
         <x-card shadow>
             <div class="text-center py-12 text-base-content/60">
                 <x-icon name="phosphor-radio" class="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p class="text-lg font-semibold mb-2">No stations configured for this event</p>
-                <p class="text-sm mb-4">Get started by adding your first station.</p>
+                <p class="text-lg font-semibold mb-2">No {{ strtolower($terms->stationPlural) }} configured for this event</p>
+                <p class="text-sm mb-4">Get started by adding your first {{ strtolower($terms->stationSingular) }}.</p>
                 @can('create', \App\Models\Station::class)
-                    <x-button label="Add Station" icon="phosphor-plus" class="btn-primary" link="{{ route('stations.create') }}" wire:navigate />
+                    <x-button label="Add {{ $terms->stationSingular }}" icon="phosphor-plus" class="btn-primary" link="{{ route('stations.create') }}" wire:navigate />
                 @endcan
             </div>
         </x-card>

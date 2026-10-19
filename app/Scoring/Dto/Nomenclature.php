@@ -49,5 +49,12 @@ final class Nomenclature
          * Badge shown once the bulletin copy is saved and its award earned.
          */
         public readonly string $bulletinCapturedLabel = 'Bonus Earned: 100 pts',
+        /**
+         * What the event calls an operating position. Contests have
+         * stations; public service events staff positions such as an aid
+         * station or net control.
+         */
+        public readonly string $stationSingular = 'Station',
+        public readonly string $stationPlural = 'Stations',
     ) {}
 }

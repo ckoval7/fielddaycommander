@@ -310,7 +310,7 @@
                         @endif
 
                         @can('view-stations')
-                            <x-menu-item title="Stations" icon="phosphor-hard-drives" link="{{ route('stations.index') }}" route="stations.index" />
+                            <x-menu-item :title="$activeEvent?->nomenclature()->stationPlural ?? 'Stations'" icon="phosphor-hard-drives" link="{{ route('stations.index') }}" route="stations.index" />
                         @endcan
 
                         <x-menu-item title="Shift Schedule" icon="phosphor-calendar-dots" link="{{ route('schedule.index') }}" exact :active="request()->routeIs('schedule.index', 'schedule.my-shifts', 'schedule.dashboard')" />

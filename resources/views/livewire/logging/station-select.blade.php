@@ -2,8 +2,9 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
+@php $terms = $this->activeEvent?->nomenclature() ?? new \App\Scoring\Dto\Nomenclature; @endphp
 <div>
-    <x-header title="Station Select" subtitle="Choose a station to begin logging" separator />
+    <x-header title="{{ $terms->stationSingular }} Select" subtitle="Choose a {{ strtolower($terms->stationSingular) }} to begin logging" separator />
 
     @if(! $this->activeEvent)
         <x-card>

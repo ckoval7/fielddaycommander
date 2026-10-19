@@ -59,6 +59,8 @@ class PublicService implements RuleSet
             bulletinName: 'Bulletin',
             bulletinSources: [],
             bulletinCapturedLabel: 'Bulletin Copied',
+            stationSingular: 'Position',
+            stationPlural: 'Positions',
         );
     }
 
