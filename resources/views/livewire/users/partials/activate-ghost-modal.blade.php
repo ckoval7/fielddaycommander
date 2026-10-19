@@ -12,8 +12,8 @@
             <x-input label="Email" type="email" wire:model="activateEmail" autocomplete="off" icon="phosphor-envelope" required />
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <x-input label="First name" wire:model="activateFirstName" autocomplete="off" required />
-                <x-input label="Last name" wire:model="activateLastName" autocomplete="off" required />
+                <x-input label="First name" wire:model="activateFirstName" autocomplete="off" required autocapitalize="words" />
+                <x-input label="Last name" wire:model="activateLastName" autocomplete="off" required autocapitalize="words" />
             </div>
 
             <div>

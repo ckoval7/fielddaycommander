@@ -439,6 +439,7 @@
                 <x-input
                     label="Role Name"
                     wire:model="roleName"
+                    autocapitalize="words"
                     placeholder="e.g., Band Captain"
                     required
                 />

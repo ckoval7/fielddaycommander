@@ -21,6 +21,7 @@
             @csrf
 
             <x-input
+                autocapitalize="words"
                 label="Site Name"
                 name="site_name"
                 value="{{ old('site_name', 'Field Day Commander') }}"
@@ -31,6 +32,7 @@
             />
 
             <x-input
+                autocapitalize="sentences"
                 label="Site Tagline"
                 name="site_tagline"
                 value="{{ old('site_tagline', 'ARRL Field Day Logging System') }}"

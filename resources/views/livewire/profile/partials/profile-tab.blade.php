@@ -26,6 +26,7 @@
                     <x-input
                         label="First Name"
                         wire:model="first_name"
+                        autocapitalize="words"
                         autocomplete="given-name"
                         required
                     />
@@ -34,6 +35,7 @@
                     <x-input
                         label="Last Name"
                         wire:model="last_name"
+                        autocapitalize="words"
                         autocomplete="family-name"
                         required
                     />

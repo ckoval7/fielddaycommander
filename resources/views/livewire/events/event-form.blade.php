@@ -38,6 +38,7 @@
                     <x-input
                         label="Event Name"
                         wire:model.live="name"
+                        autocapitalize="words"
                         required
                         icon="phosphor-calendar"
                         hint="e.g., Field Day 2025"
@@ -169,6 +170,7 @@
                     <x-input
                         label="City / Town"
                         wire:model="city"
+                        autocapitalize="words"
                         icon="phosphor-buildings"
                         placeholder="Denver"
                         hint="Shown in auto-filled Section Manager messages as your place of origin."
@@ -217,6 +219,7 @@
                 <x-input
                     label="Club Name"
                     wire:model="club_name"
+                    autocapitalize="words"
                     icon="phosphor-buildings"
                     placeholder="Amateur Radio Club"
                     hint="Optional club or organization name"
@@ -392,6 +395,7 @@
                 <x-input
                     label="Other Power Source"
                     wire:model="uses_other_power"
+                    autocapitalize="sentences"
                     icon="phosphor-lightbulb"
                     placeholder="Describe any other power source"
                     hint="Optional: Specify other renewable/alternative power"

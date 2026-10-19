@@ -151,12 +151,14 @@
                                 <x-input
                                     label="Snapshot Name"
                                     wire:model="snapshotName"
+                                    autocapitalize="words"
                                     placeholder="e.g., before-testing-feature"
                                     icon="phosphor-tag"
                                 />
                                 <x-input
                                     label="Description (optional)"
                                     wire:model="snapshotDescription"
+                                    autocapitalize="sentences"
                                     placeholder="Brief description of the snapshot"
                                     icon="phosphor-file-text"
                                 />

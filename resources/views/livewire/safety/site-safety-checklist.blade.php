@@ -161,6 +161,7 @@
                                                 {{-- Notes --}}
                                                 @if($canEdit)
                                                     <input
+                                                        autocapitalize="sentences"
                                                         type="text"
                                                         class="input input-xs w-full mt-2"
                                                         placeholder="Add notes..."

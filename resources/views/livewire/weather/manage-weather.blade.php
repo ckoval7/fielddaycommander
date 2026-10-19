@@ -391,7 +391,7 @@
             @if(! $manualAlertActive)
                 <div class="space-y-2">
                     <label for="weather-alert-message" class="block py-1 text-sm text-xs">Custom Alert Message</label>
-                    <input id="weather-alert-message" wire:model="alertMessage" type="text" class="input w-full"
+                    <input id="weather-alert-message" wire:model="alertMessage" type="text" class="input w-full" autocapitalize="sentences"
                         placeholder="Lightning within 10 miles — seek shelter immediately" />
                     @error('alertMessage') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                 </div>

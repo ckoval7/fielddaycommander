@@ -166,6 +166,7 @@
                 <x-input
                     label="Notes (optional)"
                     wire:model="scheduleNotes"
+                    autocapitalize="sentences"
                     placeholder="e.g., Listen on USB, signal may be weak"
                     maxlength="500"
                     class="mt-3"

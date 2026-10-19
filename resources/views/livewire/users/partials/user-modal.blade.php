@@ -31,6 +31,7 @@
             <x-input
                 label="First Name"
                 wire:model="first_name"
+                autocapitalize="words"
                 autocomplete="off"
                 icon="phosphor-user"
                 required
@@ -40,6 +41,7 @@
             <x-input
                 label="Last Name"
                 wire:model="last_name"
+                autocapitalize="words"
                 autocomplete="off"
                 icon="phosphor-user"
                 required
