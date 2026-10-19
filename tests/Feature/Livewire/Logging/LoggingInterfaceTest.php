@@ -1099,10 +1099,10 @@ test('logging interface renders mobile card list for recent QSOs', function () {
 
     $html = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])->html();
 
-    expect($html)->toContain('sm:hidden space-y-1.5')
+    expect($html)->toContain('max-sm:group-has-[tbody_tr]/log:block space-y-1.5')
         ->toContain('recallByContactId(')
         ->toContain('recallByUuid(contact.uuid)')
-        ->toContain('class="hidden sm:block"');
+        ->toContain('class="hidden sm:group-has-[tbody_tr]/log:block"');
 });
 
 test('logging interface renders button-morph templates for recall mode', function () {
@@ -1221,6 +1221,17 @@ test('recent QSO rows expose the contact uuid so queued copies can be pruned', f
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->assertSeeHtml('data-contact-uuid="'.$contact->uuid.'"')
         ->assertSeeHtml('parseInt('.$this->session->fresh()->qso_count.') + queue.length');
+});
+
+test('empty log hides its containers with CSS, not x-cloak that a morph would re-add', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSee('No contacts logged yet.')
+        ->assertSeeHtml('group-has-[tbody_tr]/log:hidden')
+        ->assertSeeHtml('class="hidden max-sm:group-has-[tbody_tr]/log:block space-y-1.5 p-3"')
+        ->assertSeeHtml('class="hidden sm:group-has-[tbody_tr]/log:block"')
+        ->assertDontSeeHtml('x-show="queue.length > 0"');
 });
 
 test('recent QSOs are numbered by session order, skipping deleted contacts', function () {
