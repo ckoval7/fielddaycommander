@@ -92,7 +92,8 @@
             </div>
         </x-card>
     </div>
-    @else
+    @elseif($event->isScored())
+    {{-- Unscored events score nothing, so there's nothing to explain --}}
     <x-alert icon="phosphor-info" class="alert-info">
         This event's rulebook awards no points for message traffic. Messages are tracked here for record-keeping only.
     </x-alert>
