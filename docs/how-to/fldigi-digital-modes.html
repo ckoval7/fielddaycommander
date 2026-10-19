@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Modes with fldigi - FD Commander</title>
+<meta name="description" content="Work RTTY and PSK at Field Day with fldigi: where to find signals, the exchange, a ready-to-use macro set, logging in fldigi, and sending each contact to FD Commander.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/fldigi-digital-modes.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Digital Modes with fldigi - FD Commander">
+<meta property="og:description" content="Frequencies, the exchange, Field Day macros, and logging in fldigi, with every contact sent to FD Commander.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/fldigi-digital-modes.html">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Digital Modes with fldigi - FD Commander">
+<meta name="twitter:description" content="Work RTTY and PSK at Field Day with fldigi and send every contact to FD Commander.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .cmd { color: var(--text-primary); }
+  .code-block .output { color: var(--accent-sky); }
+  .code-block .prompt { color: var(--text-muted); }
+
+  .feature-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  .feature-list li {
+    padding-left: 1.5rem;
+    position: relative;
+  }
+  .feature-list li::before {
+    content: "~";
+    position: absolute;
+    left: 0;
+    color: var(--accent-emerald);
+    font-weight: 700;
+  }
+  .feature-list li.hidden::before {
+    content: "~";
+    color: var(--text-muted);
+  }
+
+  .badge-advanced {
+    display: inline-block;
+    background: rgba(251, 146, 60, 0.15);
+    color: var(--accent-orange);
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+
+  .port-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+  .port-table th, .port-table td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  .port-table th {
+    color: var(--text-primary);
+    font-weight: 600;
+    background: var(--bg-card);
+  }
+  .table-wrap {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+  }
+  .table-wrap .port-table { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Digital Modes with <span class="gradient">fldigi</span></h1>
+    <p>Work RTTY and PSK at Field Day, log as you go, and send every contact to FD Commander.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; Digital Modes with fldigi
+      </div>
+
+      <div class="badge-advanced">Logging &middot; Digital</div>
+
+      <p>The digital station is a great seat at Field Day. Contacts count two points each, same as CW, and you don't need to know Morse to make them. Once fldigi is set up, most contacts take a few clicks and a couple of button presses, and you can read the whole QSO on the screen as it happens. That makes it a comfortable chair for newer operators, and a nice change of pace for everyone else.</p>
+
+      <p>Before you start, make sure fldigi already decodes signals off your radio. Get that working at home. Field Day morning is a rough time to go hunting for the right audio setting.</p>
+
+      <h2>Where to Find Digital Signals</h2>
+
+      <p>Here's where to look. RTTY spreads out over a stretch of each band, and PSK31 huddles in a narrow spot nearby.</p>
+
+      <div class="table-wrap">
+      <table class="port-table">
+        <thead><tr><th>Band</th><th>RTTY</th><th>PSK31</th><th>Leave clear (FT8)</th></tr></thead>
+        <tbody>
+          <tr><td>80m</td><td>3.580–3.600</td><td>3.580</td><td>3.573</td></tr>
+          <tr><td>40m</td><td>7.080–7.100</td><td>7.070</td><td>7.074</td></tr>
+          <tr><td>20m</td><td>14.080–14.100</td><td>14.070</td><td>14.074</td></tr>
+          <tr><td>15m</td><td>21.080–21.100</td><td>21.070</td><td>21.074</td></tr>
+          <tr><td>10m</td><td>28.080–28.100</td><td>28.120</td><td>28.074</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>When things get busy, RTTY spills past those edges, and on 40m you'll hear it down around 7.025–7.050 too. On 20m, steer clear of 14.100, where the international beacons are. And stay off the FT8 frequencies. Those folks are packed in tight already.</p>
+
+      <p>Tuning around on digital is a lot like tuning around on SSB, except you do most of it with the mouse. Park the radio near the bottom of the RTTY range and watch the waterfall. A RTTY signal looks like a pair of thin lines side by side, and PSK31 is a single skinny trace. Click on one and its text starts printing. If they're calling CQ, give them a call. fldigi transmits right where you clicked, so you'll be on the same frequency they're listening on.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Use USB, even for RTTY</div>
+        <p>If you've done RTTY with other software, you may have learned to run LSB. fldigi wants USB for every mode. If a signal looks clean on the waterfall but prints gibberish, click the <strong>Rv</strong> button next to the waterfall to flip it.</p>
+      </div>
+
+      <h2>What a Digital Contact Looks Like</h2>
+
+      <p>A digital Field Day contact is the same as a CW one, only on a screen. You send your class and section, they send theirs, and you're done. A club running three transmitters on generator power in Eastern Pennsylvania sends "3A EPA." DX stations send "DX" in place of a section.</p>
+
+      <p>Here's a whole contact, with you calling CQ as W3XYZ and K1ABC answering:</p>
+
+      <div class="code-block"><span class="cmd">CQ FD CQ FD DE W3XYZ W3XYZ K</span>           <span class="comment"># you</span>
+<span class="output">K1ABC K1ABC K</span>                          <span class="comment"># them</span>
+<span class="cmd">K1ABC 3A EPA 3A EPA K</span>                  <span class="comment"># you</span>
+<span class="output">TU 2A CT 2A CT K</span>                       <span class="comment"># them</span>
+<span class="cmd">K1ABC TU DE W3XYZ FD</span>                   <span class="comment"># you, and it's logged</span></div>
+
+      <p>That's the whole thing. No names, no rig, no weather report. The other operator wants to get to the next station as much as you do, so the friendliest thing you can do is keep it short.</p>
+
+      <p>One thing catches people out: Field Day counts every digital mode as the same mode. If your club worked K1ABC on 20m FT8 this morning, they're a dupe on 20m RTTY this afternoon. Work them on 40m instead, or on 20m CW or phone.</p>
+
+      <p>That also means your club can only have one digital signal on a band at a time. If the FT8 station is on 20m, you'll need another band until they move. Settle who gets which band before anyone sits down.</p>
+
+      <h2>Set Up fldigi for Field Day</h2>
+
+      <p>Do this at home, or at least before the generator starts. Everything here is under <strong>Configure &gt; Config Dialog</strong>, which has a list of pages down the left side.</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> On <strong>Operator-Station</strong>, put your event callsign in <strong>Station Callsign</strong> and your own call in <strong>Operator Callsign</strong>. That second one changes every time someone new sits down, and we'll come back to it.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> On <strong>Contests/General</strong>, set <strong>Contest</strong> to <strong>ARRL Field Day</strong> (for Winter Field Day in January, fldigi lists it as <strong>ARRL Winter FD</strong>, even though the Winter Field Day Association runs it). <strong>Class</strong> and <strong>Section</strong> boxes show up next to the callsign in the logging area at the top of the main window. That's how you know it took. Leave the duplicate check turned on.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> On <strong>Contests/Field Day</strong>, fill in <strong>My Class</strong> and <strong>My Section</strong>, like 3A and EPA. Your macros pull your exchange from here, so you'll never have to type it.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">4</span> On <strong>Logging/QSO logging</strong>, check <strong>Clear on save</strong>. It's off out of the box. Without it, the last station's call and exchange sit in the log boxes after you save, waiting for you to clear them by hand.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">5</span> If you can, connect fldigi to the radio through flrig or CAT under <strong>Rig Control</strong>. Then fldigi always knows what frequency you're on, and the log gets the right band. Without it, fldigi logs whatever is typed in the frequency box at the top left, and sooner or later somebody changes bands at 3 AM and forgets to update it.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">6</span> Click <strong>Save</strong>, then <strong>Close</strong>.</p>
+      </div>
+
+      <p>Last, set your transmit audio. This one matters most for how you sound on the air. Press <strong>TUNE</strong> and bring the audio up until the ALC meter starts to move, then back it down until the ALC sits at zero. Too much audio makes a wide, smeared signal that's hard to copy and splatters across everyone else on the waterfall. Too little only costs you a bit of power, and nobody will notice.</p>
+
+      <p>Keep in mind that digital is key-down the whole time you're sending. If the radio is running warm after a long stretch of CQs, turn the power down some.</p>
+
+      <h2>Macros</h2>
+
+      <p>Macros are what make digital Field Day relaxing instead of frantic. Nobody types an exchange 200 times. You press a button, fldigi fills in the callsign and your class and section, and the text goes out while you watch the waterfall for the reply.</p>
+
+      <p>fldigi doesn't come with a Field Day set, so here's one to start from. Right-click a macro button to edit it. Put <code>&lt;TX&gt;</code> and <code>&lt;RX&gt;</code> on their own lines like this, and end each over with K, so any noise that prints after you stop doesn't run into your last word.</p>
+
+      <h3>When you're calling CQ</h3>
+
+      <div class="table-wrap">
+      <table class="port-table">
+        <thead><tr><th>Button</th><th>Macro text</th></tr></thead>
+        <tbody>
+          <tr><td>CQ</td><td><code>&lt;TX&gt;</code><br><code>CQ FD CQ FD DE &lt;MYCALL&gt; &lt;MYCALL&gt; K</code><br><code>&lt;RX&gt;</code></td></tr>
+          <tr><td>Exch</td><td><code>&lt;TX&gt;</code><br><code>&lt;CALL&gt; &lt;MYCLASS&gt; &lt;MYSECTION&gt; &lt;MYCLASS&gt; &lt;MYSECTION&gt; K</code><br><code>&lt;RX&gt;</code></td></tr>
+          <tr><td>TU</td><td><code>&lt;TX&gt;</code><br><code>&lt;CALL&gt; TU DE &lt;MYCALL&gt; FD</code><br><code>&lt;RX&gt;&lt;LOG&gt;</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h3>When you're answering someone else's CQ</h3>
+
+      <div class="table-wrap">
+      <table class="port-table">
+        <thead><tr><th>Button</th><th>Macro text</th></tr></thead>
+        <tbody>
+          <tr><td>Call</td><td><code>&lt;TX&gt;</code><br><code>&lt;MYCALL&gt; &lt;MYCALL&gt; K</code><br><code>&lt;RX&gt;</code></td></tr>
+          <tr><td>Exch</td><td><code>&lt;TX&gt;</code><br><code>TU &lt;MYCLASS&gt; &lt;MYSECTION&gt; &lt;MYCLASS&gt; &lt;MYSECTION&gt; K</code><br><code>&lt;RX&gt;&lt;LOG&gt;</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h3>For when it gets messy</h3>
+
+      <div class="table-wrap">
+      <table class="port-table">
+        <thead><tr><th>Button</th><th>Macro text</th></tr></thead>
+        <tbody>
+          <tr><td>AGN</td><td><code>&lt;TX&gt;</code><br><code>AGN AGN K</code><br><code>&lt;RX&gt;</code></td></tr>
+          <tr><td>QRZ</td><td><code>&lt;TX&gt;</code><br><code>QRZ? DE &lt;MYCALL&gt; K</code><br><code>&lt;RX&gt;</code></td></tr>
+          <tr><td>B4</td><td><code>&lt;TX&gt;</code><br><code>&lt;CALL&gt; WKD B4 TU DE &lt;MYCALL&gt; QRZ?</code><br><code>&lt;RX&gt;</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Two tags trip people up. <code>&lt;MYCLASS&gt;</code> and <code>&lt;MYSECTION&gt;</code> send your own class and section, using what you entered on the Contests/Field Day page. <code>&lt;CLASS&gt;</code> and <code>&lt;SECTION&gt;</code> (and their twins <code>&lt;FDCLASS&gt;</code> and <code>&lt;FDSECT&gt;</code>) send whatever is in the other station's log fields. If you see your macro sending someone their own exchange back, that's the mix-up.</p>
+
+      <p>Sending the exchange twice helps when signals are weak or QRM is heavy. When the band is busy and copy is solid, cut it to once and you'll make more contacts in an hour. AGN is the button you'll use the most, so put it somewhere easy to reach.</p>
+
+      <p><code>&lt;LOG&gt;</code> saves the contact the moment you press the button. With FD Commander's listener turned on, the contact shows up in the club log a second later, and <strong>Clear on save</strong> empties the boxes for the next station.</p>
+
+      <p>Once you're happy with the set, save it with <strong>File &gt; Macros &gt; Save ...</strong> as something like <code>fieldday.mdf</code>. Copy it to every digital PC and load it with <strong>File &gt; Macros &gt; Open ...</strong>. That way every operator finds the same buttons in the same places, even at 2 AM.</p>
+
+      <h2>Logging a Contact in fldigi</h2>
+
+      <p>Here's the nice part: you barely have to type. Click a word in the receive pane and fldigi drops it into the log. In Field Day mode it can tell a callsign from a class from a section, so each one lands in the right box.</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> Someone answers your CQ. Click their callsign in the receive pane. It pops into the <strong>Call</strong> box, and fldigi checks it against the log. If the box changes color, you've already worked them on this band. Don't leave them hanging. Press B4 to let them know they're a dupe and thank them for the call, so they can move on too. Then get back to calling CQ.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> Press Exch to send your exchange.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> When their exchange comes back, click their class and then their section. If fldigi puts a word in the wrong box, right-click it and pick <strong>Class</strong> or <strong>Section</strong>.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">4</span> Look over the three boxes, then press TU. The contact is logged and the boxes clear for the next one.</p>
+      </div>
+
+      <p>Answering someone's CQ goes the same way in a different order. Click their call off their CQ, press Call, click their class and section when they come back to you, then press Exch, which logs it.</p>
+
+      <p>A word of warning about RTTY: when there's nothing but noise, it prints random letters, and every so often those letters look like a callsign or a section. Only click on text from the station you're working. If you'd rather save by hand, the <strong>Save</strong> button (the disk icon) next to the log boxes does the same thing as <code>&lt;LOG&gt;</code>, and the broom icon next to it clears them.</p>
+
+      <p>If you log something wrong, don't log it again with the fix. The second copy reaches FD Commander as a dupe. Grab someone who can edit contacts and have them fix it in FD Commander's logbook.</p>
+
+      <h2>Sending Contacts to FD Commander</h2>
+
+      <p>Once fldigi is logging, it can send each contact to FD Commander as soon as you save it. That's what puts your digital contacts in the club's score, on the section map, and in the dupe check with every other station. The server side, including firewall ports and how stations are matched, is covered in <a href="external-loggers.html">Connect External Loggers</a>. The fldigi side is four steps:</p>
+
+      <div class="step-box">
+        <p><span class="step-number">1</span> In FD Commander, open <strong>Logging &gt; External Loggers</strong> and turn on <strong>UDP ADIF (fldigi, etc.)</strong>. It listens on port 2238.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">2</span> In fldigi, open <strong>Configure &gt; Config Dialog &gt; Logging/Cloud-UDP</strong>. In the <strong>Broadcast UDP ADIF record</strong> group, set <strong>Address</strong> to your FD Commander server's IP address and <strong>Port</strong> to <code>2238</code>.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">3</span> Check <strong>Enable</strong>, then click <strong>TEST</strong>. The packet counter on the External Loggers page should go up by one.</p>
+      </div>
+      <div class="step-box">
+        <p><span class="step-number">4</span> In FD Commander, edit your digital station and put your event callsign in its <strong>Hostname (NetBIOS Name)</strong> field. fldigi identifies itself by the station callsign, and this is how FD Commander knows which station the contacts belong to.</p>
+      </div>
+
+      <p>From then on, each contact shows up in FD Commander as "Digital &middot; RTTY" or "Digital &middot; PSK31," credited to whoever is in fldigi's <strong>Operator Callsign</strong> box. fldigi has no idea when operators swap, so that box stays on the last person until somebody changes it. Make it part of the routine when someone new sits down (it's on the <strong>Operator-Station</strong> page). Otherwise the new operator's contacts all go to the person who just left for the food tent.</p>
+
+      <div class="callout tip">
+        <div class="callout-title">FD Commander catches what fldigi can't</div>
+        <p>fldigi only knows its own log, and it thinks RTTY and PSK are different modes. FD Commander checks the whole club's log and treats all digital as one mode. So if K1ABC was worked on 20m FT8 earlier in the day, FD Commander will mark your 20m RTTY contact with them as a dupe, even though fldigi didn't flag it. It stays in the log but doesn't earn points.</p>
+      </div>
+
+      <h2>When Things Go Sideways</h2>
+
+      <h3>RTTY prints garbage on a strong, clean signal</h3>
+
+      <p>The signal is upside down. Make sure the radio is in USB, then click <strong>Rv</strong>. If most stations print fine and one doesn't, that one is probably the station that's reversed. Click Rv while you work them, and click it again when you're done.</p>
+
+      <h3>Random letters fill the screen between contacts</h3>
+
+      <p>That's RTTY printing the noise. Turn on <strong>SQL</strong> and slide the squelch up until the junk stops but real signals still print.</p>
+
+      <h3>Stations say your signal is wide or hard to copy</h3>
+
+      <p>Too much audio. Turn it down until the ALC stays at zero while you're sending, and check it again any time you change the power.</p>
+
+      <h3>You're transmitting somewhere other than where you clicked</h3>
+
+      <p>Look at the <strong>Lk</strong> button next to the waterfall. When it's lit, your transmit frequency is locked, and fldigi sends there no matter where you click. Click it off.</p>
+
+      <h3>Contacts aren't showing up in FD Commander</h3>
+
+      <p>Make sure <strong>Enable</strong> is still checked on the Logging/Cloud-UDP page, then go through the <a href="external-loggers.html#troubleshooting">External Loggers troubleshooting</a> steps. If the External Loggers page shows <strong>outside event window</strong>, the contact got there fine. It was logged before the event started, so it doesn't count. That's what a test the week before should look like.</p>
+
+      <h2>Quick Reference</h2>
+
+      <p>Fill this in before Field Day and tape it next to the digital station's keyboard:</p>
+
+      <div class="step-box">
+        <p><strong>Event callsign:</strong> _______________</p>
+        <p><strong>My Class / My Section:</strong> _______ / _______</p>
+        <p><strong>FD Commander server IP:</strong> _______________ <strong>Port:</strong> 2238</p>
+        <p><strong>Operator change:</strong> Configure &gt; Config Dialog &gt; Operator-Station &gt; Operator Callsign</p>
+        <p><strong>Radio mode:</strong> USB. Garbage on a clean signal? Click Rv.</p>
+      </div>
+
+      <div class="guide-nav">
+        <a href="index.html">&larr; All Guides</a>
+        <a href="external-loggers.html">Connect External Loggers &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+<script src="../toc.js"></script>
+
+</body>
+</html>
