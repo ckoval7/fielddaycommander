@@ -63,6 +63,18 @@ class NetLogEntry extends Model
     }
 
     /**
+     * The entry as a net log line, "[from] [to] [message]", with its
+     * priority word when it isn't routine. Recalling an entry puts this in
+     * the input for editing.
+     */
+    public function exchangeLine(): string
+    {
+        $priority = $this->priority === NetPriority::Routine ? '' : strtoupper($this->priority->value);
+
+        return trim(implode(' ', array_filter([$this->from_station, $this->to_station, $priority, $this->message], fn ($part) => $part !== null && $part !== '')));
+    }
+
+    /**
      * A station as the log shows it: the tactical name, with the licensed
      * operator's callsign when it differs, e.g. "Aid 7 (W1ABC)".
      */

@@ -9,53 +9,49 @@ use App\Enums\NetPriority;
 use App\Events\NetLogChanged;
 use App\Models\Event;
 use App\Models\NetLogEntry;
+use App\Services\NetLogExchangeParser;
 use App\Services\TacticalCallsignResolver;
 use App\Support\BroadcastChannels;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Carbon;
-use Illuminate\Validation\Rule;
+use Illuminate\Database\Eloquent\Collection;
+use InvalidArgumentException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 /**
- * Net control's log for a directed net: time, from, to, message and priority.
+ * Net control's log for a directed net, in the same chat-style window as
+ * the contact log. Each line is "[calling station] [your call] [message]".
  *
  * Every net control screen at the event sees new entries live over Reverb.
  */
 class NetLog extends Component
 {
-    use AuthorizesRequests, WithPagination;
+    /**
+     * Entries shown in the log window. The full log is on the ICS-309.
+     */
+    private const VISIBLE_ENTRIES = 100;
 
-    private const DATETIME_LOCAL_FORMAT = 'Y-m-d\TH:i';
-
-    private const PER_PAGE = 50;
+    private const MAX_SUGGESTIONS = 5;
 
     public Event $event;
 
-    public string $fromStation = '';
+    public string $exchangeInput = '';
 
-    public string $toStation = '';
-
-    public string $message = '';
+    /**
+     * Tactical name suggestions for the station being typed.
+     *
+     * @var list<array{exchange: string, worked_on: string}>
+     */
+    public array $suggestions = [];
 
     public string $priority = 'routine';
 
-    public bool $showEditModal = false;
-
-    public ?int $editingEntryId = null;
-
-    public ?string $editLoggedAt = null;
-
-    public string $editFromStation = '';
-
-    public string $editToStation = '';
-
-    public string $editMessage = '';
-
-    public string $editPriority = 'routine';
+    /**
+     * Why the last line couldn't be logged. Kept out of the validation error
+     * bag, like the contact log's parse error, so the app-wide error summary
+     * doesn't repeat it.
+     */
+    public ?string $parseError = null;
 
     public function mount(Event $event): void
     {
@@ -78,20 +74,28 @@ class NetLog extends Component
     }
 
     /**
-     * @return LengthAwarePaginator<int, NetLogEntry>
+     * The newest entries, oldest first, so the newest sits right above the
+     * input. Recently deleted entries stay visible with an Undo.
+     *
+     * @return Collection<int, NetLogEntry>
      */
     #[Computed]
-    public function entries(): LengthAwarePaginator
+    public function entries(): Collection
     {
-        return NetLogEntry::forEvent($this->event->eventConfiguration->id)
+        return NetLogEntry::withTrashed()
+            ->forEvent($this->event->eventConfiguration->id)
+            ->where(fn ($query) => $query->whereNull('deleted_at')->orWhere('deleted_at', '>=', now()->subMinutes(10)))
             ->with('user')
             ->orderByDesc('logged_at')
             ->orderByDesc('id')
-            ->paginate(self::PER_PAGE);
+            ->limit(self::VISIBLE_ENTRIES)
+            ->get()
+            ->reverse()
+            ->values();
     }
 
     /**
-     * Tactical names offered as suggestions for From and To.
+     * Tactical names in use at the event, for parsing and suggestions.
      *
      * @return list<string>
      */
@@ -117,109 +121,202 @@ class NetLog extends Component
         unset($this->entries);
     }
 
-    public function logEntry(): void
+    public function updatedExchangeInput(): void
     {
-        $this->authorize('create', NetLogEntry::class);
+        $this->parseError = null;
+        $this->suggestions = $this->buildSuggestions($this->exchangeInput);
+    }
 
-        $validated = $this->validate([
-            'fromStation' => ['required', 'string', 'max:50'],
-            'toStation' => ['nullable', 'string', 'max:50'],
-            'message' => ['required', 'string', 'max:2000'],
-            'priority' => ['required', Rule::enum(NetPriority::class)],
-        ]);
+    public function selectSuggestion(string $exchange): void
+    {
+        $this->exchangeInput = $exchange;
+        $this->suggestions = [];
+        $this->dispatch('suggestion-selected');
+    }
 
-        $fromStation = trim($validated['fromStation']);
-        $toStation = trim((string) $validated['toStation']) ?: null;
+    public function clearInput(): void
+    {
+        $this->reset('exchangeInput', 'suggestions', 'parseError');
+    }
+
+    public function setPriority(string $priority): void
+    {
+        $this->priority = NetPriority::tryFrom($priority)?->value ?? NetPriority::Routine->value;
+    }
+
+    public function logEntry(?string $line = null): void
+    {
+        abort_unless(auth()->user()?->can('create', NetLogEntry::class), 403);
+
+        $parsed = $this->parseLine($line ?? $this->exchangeInput);
+
+        if ($parsed === null) {
+            return;
+        }
 
         $entry = NetLogEntry::create([
             'event_configuration_id' => $this->event->eventConfiguration->id,
             'user_id' => auth()->id(),
             'logged_at' => appNow(),
-            'from_station' => $fromStation,
-            'to_station' => $toStation,
-            'from_callsign' => $this->resolveCallsign($fromStation),
-            'to_callsign' => $this->resolveCallsign($toStation),
-            'message' => $validated['message'],
-            'priority' => $validated['priority'],
+            'from_station' => $parsed['from'],
+            'to_station' => $parsed['to'],
+            'from_callsign' => $this->resolveCallsign($parsed['from']),
+            'to_callsign' => $this->resolveCallsign($parsed['to']),
+            'message' => $parsed['message'],
+            'priority' => $parsed['priority'] ?? NetPriority::from($this->priority),
         ]);
 
         $this->broadcastChange($entry);
-
-        $this->reset('fromStation', 'toStation', 'message', 'priority');
-        $this->resetPage();
+        $this->reset('exchangeInput', 'suggestions', 'priority');
         unset($this->entries);
 
-        $this->dispatch('net-log-entry-saved');
-        $this->dispatch('toast', title: 'Entry logged', type: 'success');
+        $this->dispatch('net-log-entry-logged');
     }
 
-    public function editEntry(int $entryId): void
+    /**
+     * Save a recalled entry from its edited line.
+     */
+    public function updateEntry(int $entryId, string $line): void
     {
         $entry = $this->findEventEntry($entryId);
-        $this->authorize('update', $entry);
 
-        $this->editingEntryId = $entry->id;
-        $this->editLoggedAt = $entry->logged_at->format(self::DATETIME_LOCAL_FORMAT);
-        $this->editFromStation = $entry->from_station;
-        $this->editToStation = (string) $entry->to_station;
-        $this->editMessage = $entry->message;
-        $this->editPriority = $entry->priority->value;
-        $this->resetValidation();
-        $this->showEditModal = true;
-    }
+        if (! auth()->user()?->can('update', $entry)) {
+            $this->dispatch('toast', title: 'You can only edit your own entries', type: 'error');
 
-    public function updateEntry(): void
-    {
-        $entry = $this->findEventEntry((int) $this->editingEntryId);
-        $this->authorize('update', $entry);
+            return;
+        }
 
-        $validated = $this->validate([
-            'editLoggedAt' => ['required', 'date'],
-            'editFromStation' => ['required', 'string', 'max:50'],
-            'editToStation' => ['nullable', 'string', 'max:50'],
-            'editMessage' => ['required', 'string', 'max:2000'],
-            'editPriority' => ['required', Rule::enum(NetPriority::class)],
-        ]);
+        $parsed = $this->parseLine($line);
 
-        $fromStation = trim($validated['editFromStation']);
-        $toStation = trim((string) $validated['editToStation']) ?: null;
+        if ($parsed === null) {
+            return;
+        }
 
         $entry->update([
-            'logged_at' => Carbon::parse($validated['editLoggedAt']),
-            'from_station' => $fromStation,
-            'to_station' => $toStation,
+            'from_station' => $parsed['from'],
+            'to_station' => $parsed['to'],
             // Keep the operator snapshot unless the station itself changed.
-            'from_callsign' => $fromStation === $entry->from_station ? $entry->from_callsign : $this->resolveCallsign($fromStation),
-            'to_callsign' => $toStation === $entry->to_station ? $entry->to_callsign : $this->resolveCallsign($toStation),
-            'message' => $validated['editMessage'],
-            'priority' => $validated['editPriority'],
+            'from_callsign' => $parsed['from'] === $entry->from_station ? $entry->from_callsign : $this->resolveCallsign($parsed['from']),
+            'to_callsign' => $parsed['to'] === $entry->to_station ? $entry->to_callsign : $this->resolveCallsign($parsed['to']),
+            'message' => $parsed['message'],
+            // A recalled line carries its priority word, so none means routine.
+            'priority' => $parsed['priority'] ?? NetPriority::Routine,
         ]);
 
         $this->broadcastChange($entry);
-        $this->closeEditModal();
+        $this->reset('exchangeInput', 'suggestions');
         unset($this->entries);
 
         $this->dispatch('toast', title: 'Entry updated', type: 'success');
     }
 
-    public function closeEditModal(): void
-    {
-        $this->showEditModal = false;
-        $this->editingEntryId = null;
-        $this->reset('editLoggedAt', 'editFromStation', 'editToStation', 'editMessage', 'editPriority');
-        $this->resetValidation();
-    }
-
     public function deleteEntry(int $entryId): void
     {
         $entry = $this->findEventEntry($entryId);
-        $this->authorize('delete', $entry);
+
+        if (! auth()->user()?->can('delete', $entry)) {
+            $this->dispatch('toast', title: 'You can only delete your own entries', type: 'error');
+
+            return;
+        }
 
         $entry->delete();
         $this->broadcastChange($entry);
+        $this->reset('exchangeInput', 'suggestions');
         unset($this->entries);
+    }
 
-        $this->dispatch('toast', title: 'Entry deleted', type: 'success');
+    public function restoreEntry(int $entryId): void
+    {
+        $entry = NetLogEntry::onlyTrashed()->forEvent($this->event->eventConfiguration->id)->findOrFail($entryId);
+
+        if (! auth()->user()?->can('delete', $entry)) {
+            return;
+        }
+
+        $entry->restore();
+        $this->broadcastChange($entry);
+        unset($this->entries);
+    }
+
+    /**
+     * @return array{from: string, to: string, message: string, priority: NetPriority|null}|null
+     */
+    protected function parseLine(string $line): ?array
+    {
+        $this->parseError = null;
+
+        try {
+            $parsed = app(NetLogExchangeParser::class)->parse($line, $this->tacticalNames);
+        } catch (InvalidArgumentException $exception) {
+            $this->parseError = $exception->getMessage();
+
+            return null;
+        }
+
+        $validator = validator(
+            ['from' => $parsed['from'], 'to' => $parsed['to'], 'message' => $parsed['message']],
+            ['from' => ['max:50'], 'to' => ['max:50'], 'message' => ['max:2000']],
+        );
+
+        if ($validator->fails()) {
+            $this->parseError = $validator->errors()->first();
+
+            return null;
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * Suggest tactical names for the station being typed: the calling
+     * station first, then your own.
+     *
+     * @return list<array{exchange: string, worked_on: string}>
+     */
+    protected function buildSuggestions(string $input): array
+    {
+        $input = ltrim((string) preg_replace('/\s+/', ' ', $input));
+
+        if ($input === '' || $this->tacticalNames === []) {
+            return [];
+        }
+
+        // Still typing the calling station?
+        $matches = $this->namesStartingWith($input);
+
+        if ($matches === []) {
+            // Then it's your own call, after the calling station.
+            [$from, $afterFrom] = app(NetLogExchangeParser::class)->takeStation($input, $this->tacticalNames);
+            $matches = $afterFrom === '' ? [] : $this->namesStartingWith($afterFrom);
+            $prefix = $from.' ';
+        } else {
+            $prefix = '';
+        }
+
+        return collect($matches)
+            ->take(self::MAX_SUGGESTIONS)
+            ->map(fn (string $name) => [
+                'exchange' => $prefix.$name.' ',
+                'worked_on' => $this->resolveCallsign($name) ?? 'Nobody on duty',
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Tactical names that start with, but don't already equal, what's typed.
+     *
+     * @return list<string>
+     */
+    protected function namesStartingWith(string $partial): array
+    {
+        $partial = mb_strtolower($partial);
+
+        return array_values(array_filter(
+            $this->tacticalNames,
+            fn (string $name) => str_starts_with(mb_strtolower($name), $partial) && mb_strtolower($name) !== rtrim($partial),
+        ));
     }
 
     /**
@@ -242,22 +339,6 @@ class NetLog extends Component
     protected function broadcastChange(NetLogEntry $entry): void
     {
         NetLogChanged::dispatch($this->event->id, $entry->id);
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    protected function validationAttributes(): array
-    {
-        return [
-            'fromStation' => 'from',
-            'toStation' => 'to',
-            'editLoggedAt' => 'time',
-            'editFromStation' => 'from',
-            'editToStation' => 'to',
-            'editMessage' => 'message',
-            'editPriority' => 'priority',
-        ];
     }
 
     public function render(): View
