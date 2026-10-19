@@ -6,6 +6,14 @@ This changelog starts after 26.10.9. For earlier releases, see the commit histor
 
 ## Unreleased
 
+### Added
+
+- A **Public Service / Other** event type for marathons, parades, SKYWARN nets, ARES drills and other events that aren't scored. These events don't ask for a section, operating class, power or GOTA station. Scoring, bonuses, the section map, the bulletin page and the Cabrillo and submission reports are hidden, and stations are called positions.
+- Unscored events get a volunteer briefing checklist in place of the ARRL safety items. You can edit or delete every item, and anyone with a shift at the event can check items off.
+- A **Net Log** for directed nets, on every event type, including Field Day talk-in nets. Net control logs the time, who called whom, the message and a priority. New entries show up on every open net log screen.
+- Stations and shift roles can have a tactical callsign, such as "Aid 7" or "Net Control". The net log suggests these names and records the licensed operator on duty under each one. Stations can also store their RX and TX frequencies, tone and mode.
+- An **ICS Forms** section in **Reports**. It fills FEMA's own ICS-205 radio plan and ICS-211 check-in list PDFs from your stations and shift check-ins, and prints an ICS-309 communications log from the net log. ICS-213 messages in **Message Traffic** can also be downloaded as FEMA's ICS-213 PDF. The blank forms ship with FD Commander, so this works without internet.
+
 ### Changed
 
 - Development now happens on the `dev` branch, and `main` only moves when there's a release. If you build from source, `main` is the latest release and `dev` has fixes that haven't been released yet.
