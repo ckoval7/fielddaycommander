@@ -46,7 +46,7 @@
                     />
                 </div>
 
-                <div class="md:col-span-2">
+                <div @class(['md:col-span-2' => $this->isScoredType, 'md:col-span-4' => ! $this->isScoredType])>
                     <x-select
                         label="Event Type"
                         wire:model.live="event_type_id"
@@ -56,11 +56,12 @@
                         required
                         icon="phosphor-tag"
                         placeholder="Select event type"
-                        hint="Field Day, Winter Field Day, etc."
+                        hint="Field Day, Winter Field Day, or Public Service / Other for events that aren't scored"
                         :disabled="$isLocked"
                     />
                 </div>
 
+                @if($this->isScoredType)
                 <div class="md:col-span-2">
                     <x-select
                         label="Scoring Rules"
@@ -74,6 +75,7 @@
                         :disabled="$rulesVersionLocked || empty($this->rulesVersionOptions)"
                     />
                 </div>
+                @endif
 
                 <div class="md:col-span-2">
                     <x-input
