@@ -27,6 +27,8 @@ Write like an experienced, approachable engineer helping another person get some
 - Never invent commands, configuration options, prerequisites, menu paths, labels, or behavior. Check them in the app source on `main` first.
 - Check the reasons you give, not just the steps. A step with a made-up justification is still wrong. For example, contacts are scoped to their event in the code, so "delete the practice event so test contacts don't mix with the real ones" gives a false reason.
 - If the source doesn't establish a fact, don't guess. Leave it out, or flag it to the user as unverified when you report back.
+- The same goes for ham radio facts. Don't claim which modes or bands are busiest, or what most clubs do, without a source. Check operating advice against the event rules too. All digital modes count as one mode at Field Day, so a club can only have one digital signal on a band at a time, and a guide can't suggest RTTY and FT8 sharing 20m.
+- Winter Field Day is run by the Winter Field Day Association, not the ARRL. Never write "ARRL Winter Field Day." When a third-party program uses that name, such as fldigi's "ARRL Winter FD" contest entry, quote the label and say who actually runs the event.
 
 ### Edit before you hand it back
 
@@ -104,6 +106,11 @@ How-to guides sound like an experienced club member sitting next to you at the b
 - Assume a ham who is comfortable with radios but maybe not with Linux. Define a term the first time you use it, then move on.
 - Use numbered steps for anything done in order, and keep each step to one action.
 - Still be direct. A mentor doesn't pad or cheerlead. No "Great job!" and no "Let's dive in."
+- Tie a new task to something the reader already does on the air. "Tuning around on digital is a lot like tuning around on SSB, except you do most of it with the mouse" lands better than a description of how the waterfall maps audio to RF.
+- Describe what they'll see or hear in the terms a ham would use. "A RTTY signal looks like a pair of thin lines side by side" is better than a frequency calculation.
+- Use small, real details from the table: the band change at 3 AM, the operator who left for the food tent without changing the operator callsign. A few of these make a guide sound lived-in. Don't stack them.
+- Include on-air courtesy where it applies. Tell a dupe they're a dupe instead of moving on, and keep exchanges short because the other operator wants their next contact too.
+- Research to get the facts right, then leave the research out. No rule citations, surveys of options, "the rules say X, but by convention Y," or caveats that only show the homework was done. For a research-heavy guide, draft one section and check the voice with the user before writing the rest. A guide with every fact right can still read like an AI-written paper, and the user will scrap it.
 
 ## Screenshots
 
