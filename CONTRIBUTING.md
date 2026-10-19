@@ -11,7 +11,7 @@ Thanks for helping out. This page covers how branches flow, what a pull request 
 | `feature/demo-mode` | The public demo site: `dev` plus the demo-only code. | `dev`, plus demo-only commits |
 | Feature branches | One fix or feature each, cut from `dev`. | Nothing |
 
-Both `main` and `dev` are protected. They can't be force-pushed or deleted, and changes reach them through pull requests. `main` is the default branch, so the repo page shows the latest release. A check called `source-branch` keeps PRs on the right path: a feature-branch PR opened against `main` is moved to `dev` automatically, and a PR that breaks the table above in any other way fails.
+Both `main` and `dev` are protected. They can't be force-pushed or deleted, and changes reach them through pull requests. `main` is the default branch, so the repo page shows the latest release. A check called `source-branch` keeps PRs on the right path: a feature-branch PR opened against `main` is moved to `dev` automatically, and a PR that breaks the table above in any other way fails. PRs also have to pass the SonarQube Cloud quality gate (the `SonarCloud Code Analysis` check), which runs on its own for every PR.
 
 The demo branch follows `dev` rather than `main`, so the demo site gets fixes as soon as they land instead of waiting for a release. Demo-only code (the demo seeder, controller, middleware, commands and config) stays on `feature/demo-mode` and never merges into `dev` or `main`.
 
