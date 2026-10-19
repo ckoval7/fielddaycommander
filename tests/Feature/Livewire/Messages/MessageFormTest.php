@@ -109,6 +109,18 @@ describe('SM/SEC template', function () {
             ->assertSet('precedence', 'routine');
     });
 
+    test('the SM template names the event, not Field Day, for an unscored event', function () {
+        $config = EventConfiguration::factory()->publicService()->create(['club_name' => 'Anytown ARES']);
+        $config->event->update(['name' => 'SET 2026']);
+
+        $component = Livewire::actingAs($this->operator)
+            ->withQueryParams(['template' => 'sm'])
+            ->test(MessageForm::class, ['event' => $config->event]);
+
+        expect($component->get('messageText'))->toStartWith('Anytown ARES SET 2026 X')
+            ->and($component->get('messageText'))->not->toContain('FIELD DAY');
+    });
+
     test('leaves place of origin empty when no city or state configured', function () {
         $this->eventConfig->update(['city' => null, 'state' => null]);
 

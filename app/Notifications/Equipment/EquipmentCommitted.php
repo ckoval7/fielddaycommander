@@ -88,7 +88,7 @@ class EquipmentCommitted extends Notification implements ShouldQueue
             ->lineIf($this->equipmentEvent->delivery_notes, "Delivery Notes: {$this->equipmentEvent->delivery_notes}")
             ->line('')
             ->action('Manage Your Commitments', $url)
-            ->line('Thank you for contributing to our Field Day event!');
+            ->line('Thank you for contributing to '.($this->equipmentEvent->event?->name ?? 'our event').'!');
     }
 
     /**
