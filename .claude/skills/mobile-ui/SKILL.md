@@ -185,7 +185,7 @@ docker exec fdc-pw python3 /work/gutter.py            # side insets
 docker exec -e OUT=after fdc-pw python3 /work/score.py # full audit
 ```
 
-For a before/after comparison, check out `main` in a second worktree, `npm run build` there, and run a second server (`fdc-before`) that mounts the main checkout's `vendor/` at `/var/www/html/vendor` (a symlinked `vendor` makes Composer load the branch's classes). Remove the containers, network and worktree when done.
+For a before/after comparison, check out `dev` in a second worktree, `npm run build` there, and run a second server (`fdc-before`) that mounts the main checkout's `vendor/` at `/var/www/html/vendor` (a symlinked `vendor` makes Composer load the branch's classes). Remove the containers, network and worktree when done.
 
 Gotchas this recipe already works around, so don't undo them:
 
