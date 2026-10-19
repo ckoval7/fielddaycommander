@@ -307,14 +307,18 @@ class StationCloneService
                 );
             }
 
+            // Station types only affect contest scoring, so an unscored
+            // target event gets plain positions.
+            $targetIsScored = EventConfiguration::find($targetEventId)?->isScored() ?? true;
+
             // Create the cloned station
             $clonedStation = Station::create([
                 'event_configuration_id' => $targetEventId,
                 'name' => $newName,
                 'radio_equipment_id' => $sourceStation->radio_equipment_id,
-                'is_gota' => $isGota,
-                'is_vhf_only' => $sourceStation->is_vhf_only,
-                'is_satellite' => $sourceStation->is_satellite,
+                'is_gota' => $targetIsScored && $isGota,
+                'is_vhf_only' => $targetIsScored && $sourceStation->is_vhf_only,
+                'is_satellite' => $targetIsScored && $sourceStation->is_satellite,
                 'max_power_watts' => $sourceStation->max_power_watts,
                 'power_source_description' => $sourceStation->power_source_description,
                 'tactical_callsign' => $sourceStation->tactical_callsign,

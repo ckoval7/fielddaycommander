@@ -5,14 +5,14 @@
 <div class="space-y-6">
     {{-- Header --}}
     <x-header
-        title="{{ $stationId ? 'Edit Station' : 'Create Station' }}"
-        subtitle="{{ $stationId ? 'Update station configuration and equipment' : 'Configure a new station for field day operations' }}"
+        title="{{ ($stationId ? 'Edit ' : 'Create ').$this->terms->stationSingular }}"
+        subtitle="{{ $stationId ? 'Update configuration and equipment' : 'Configure a new '.strtolower($this->terms->stationSingular).' for this event' }}"
         separator
         progress-indicator
     >
         <x-slot:actions>
             <x-button
-                label="{{ $stationId ? 'Back to Stations' : 'Cancel' }}"
+                label="{{ $stationId ? 'Back to '.$this->terms->stationPlural : 'Cancel' }}"
                 icon="{{ $stationId ? 'phosphor-arrow-left' : 'phosphor-x' }}"
                 class="btn-ghost"
                 link="{{ route('stations.index') }}"

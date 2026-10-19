@@ -137,6 +137,28 @@ class StationCloneServiceTest extends TestCase
             ->and($clonedStation->comms_mode)->toBe('FM');
     }
 
+    public function test_clone_into_unscored_event_drops_station_types(): void
+    {
+        $station = Station::factory()->create([
+            'event_configuration_id' => $this->sourceConfig->id,
+            'name' => 'GOTA',
+            'is_gota' => true,
+        ]);
+        $target = EventConfiguration::factory()->publicService()->create();
+
+        $result = $this->service->cloneStations(
+            $this->sourceConfig->id,
+            $target->id,
+            [$station->id],
+            ['copy_equipment' => false]
+        );
+
+        $clonedStation = Station::find($result['cloned_station_ids'][0]);
+        expect($clonedStation->is_gota)->toBeFalse()
+            ->and($clonedStation->is_vhf_only)->toBeFalse()
+            ->and($clonedStation->is_satellite)->toBeFalse();
+    }
+
     public function test_can_clone_station_with_equipment(): void
     {
         Notification::fake();

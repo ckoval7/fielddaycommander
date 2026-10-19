@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\OperatingSession;
 use App\Models\Station;
+use App\Scoring\Dto\Nomenclature;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -141,9 +142,35 @@ class StationForm extends Component
         return EventConfiguration::with('operatingClass')->find($this->event_configuration_id);
     }
 
+    /**
+     * Whether the selected event is a scored contest. Unscored events have no
+     * station types, power limits or power bonuses, so the form hides them.
+     */
+    #[Computed]
+    public function isScoredEvent(): bool
+    {
+        return $this->selectedEvent?->isScored() ?? true;
+    }
+
+    /**
+     * The words the selected event uses for a station ("Position" for
+     * public service events).
+     */
+    #[Computed]
+    public function terms(): Nomenclature
+    {
+        return $this->selectedEvent?->event?->nomenclature()
+            ?? app(EventContextService::class)->getContextEvent()?->nomenclature()
+            ?? new Nomenclature;
+    }
+
     #[Computed]
     public function maxPowerLimit(): ?int
     {
+        if (! $this->isScoredEvent) {
+            return null;
+        }
+
         return $this->selectedEvent?->operatingClass?->max_power_watts
             ?? $this->selectedEvent?->max_power_watts;
     }
@@ -293,6 +320,11 @@ class StationForm extends Component
             'power_source_description' => $validated['power_source_description'],
             'power_source' => $validated['power_source'],
         ];
+
+        // Station types only affect contest scoring.
+        if (! $this->isScoredEvent) {
+            $stationData = array_merge($stationData, ['is_gota' => false, 'is_vhf_only' => false, 'is_satellite' => false]);
+        }
 
         if ($this->stationId) {
             // Update existing station

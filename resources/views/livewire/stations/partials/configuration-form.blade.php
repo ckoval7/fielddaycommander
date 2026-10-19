@@ -44,7 +44,7 @@
             icon="phosphor-calendar"
             required
             :disabled="$stationId ? true : false"
-            :hint="$stationId ? 'Event cannot be changed when editing' : 'Select the field day event'"
+            :hint="$stationId ? 'Event cannot be changed when editing' : 'Select the event'"
         />
     </div>
 </x-card>
@@ -116,7 +116,8 @@
     </div>
 </x-card>
 
-{{-- Station Type Flags Card --}}
+{{-- Station Type Flags Card (contest scoring only) --}}
+@if($this->isScoredEvent)
 <x-card class="mb-6">
     <x-slot:title>Station Type</x-slot:title>
 
@@ -152,6 +153,7 @@
         />
     </div>
 </x-card>
+@endif
 
 {{-- Primary Radio Card --}}
 <x-card class="mb-6">
@@ -236,7 +238,7 @@
             hint="Primary power source for this station"
         />
 
-        @if($power_source)
+        @if($power_source && $this->isScoredEvent)
             @php
                 $ps = \App\Enums\PowerSource::tryFrom($power_source);
             @endphp
