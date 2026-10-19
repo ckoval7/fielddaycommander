@@ -49,6 +49,73 @@
     </div>
 </x-card>
 
+{{-- Communications Card --}}
+<x-card class="mb-6">
+    <x-slot:title>Communications</x-slot:title>
+
+    <p class="text-sm text-base-content/70 mb-4">Optional. Used on the net log and the ICS-205 radio plan.</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <x-input
+            label="Tactical Callsign"
+            wire:model.blur="tactical_callsign"
+            autocapitalize="words"
+            autocorrect="off"
+            spellcheck="false"
+            autocomplete="off"
+            icon="phosphor-identification-badge"
+            placeholder="e.g., Aid 7, Net Control"
+            maxlength="50"
+            hint="The name this position answers to on the net"
+        />
+
+        <x-input
+            label="Mode"
+            wire:model.blur="comms_mode"
+            autocapitalize="characters"
+            autocorrect="off"
+            spellcheck="false"
+            autocomplete="off"
+            icon="phosphor-wave-sine"
+            placeholder="e.g., FM, DMR, SSB"
+            maxlength="20"
+        />
+
+        <x-input
+            label="RX Frequency (MHz)"
+            wire:model.blur="rx_frequency"
+            inputmode="decimal"
+            autocomplete="off"
+            icon="phosphor-radio"
+            placeholder="146.520"
+            maxlength="20"
+        />
+
+        <x-input
+            label="TX Frequency (MHz)"
+            wire:model.blur="tx_frequency"
+            inputmode="decimal"
+            autocomplete="off"
+            icon="phosphor-radio"
+            placeholder="146.520"
+            maxlength="20"
+            hint="Leave blank for simplex"
+        />
+
+        <x-input
+            label="Tone"
+            wire:model.blur="tone"
+            autocorrect="off"
+            spellcheck="false"
+            autocomplete="off"
+            icon="phosphor-music-note"
+            placeholder="e.g., 100.0"
+            maxlength="20"
+            hint="CTCSS, DCS or NAC, if the channel uses one"
+        />
+    </div>
+</x-card>
+
 {{-- Station Type Flags Card --}}
 <x-card class="mb-6">
     <x-slot:title>Station Type</x-slot:title>

@@ -110,6 +110,33 @@ class StationCloneServiceTest extends TestCase
             ->and($clonedStation->is_gota)->toBe($station->is_gota);
     }
 
+    public function test_clone_keeps_tactical_callsign_and_channel(): void
+    {
+        $station = Station::factory()->create([
+            'event_configuration_id' => $this->sourceConfig->id,
+            'name' => 'Aid Station 7',
+            'tactical_callsign' => 'Aid 7',
+            'rx_frequency' => '146.940',
+            'tx_frequency' => '146.340',
+            'tone' => '100.0',
+            'comms_mode' => 'FM',
+        ]);
+
+        $result = $this->service->cloneStations(
+            $this->sourceConfig->id,
+            $this->targetConfig->id,
+            [$station->id],
+            ['copy_equipment' => false]
+        );
+
+        $clonedStation = Station::find($result['cloned_station_ids'][0]);
+        expect($clonedStation->tactical_callsign)->toBe('Aid 7')
+            ->and($clonedStation->rx_frequency)->toBe('146.940')
+            ->and($clonedStation->tx_frequency)->toBe('146.340')
+            ->and($clonedStation->tone)->toBe('100.0')
+            ->and($clonedStation->comms_mode)->toBe('FM');
+    }
+
     public function test_can_clone_station_with_equipment(): void
     {
         Notification::fake();

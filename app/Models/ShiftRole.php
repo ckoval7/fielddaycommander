@@ -131,6 +131,7 @@ class ShiftRole extends Model
     protected $fillable = [
         'event_configuration_id',
         'name',
+        'tactical_callsign',
         'description',
         'is_default',
         'bonus_points',

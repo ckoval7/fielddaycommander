@@ -95,6 +95,25 @@ describe('role management', function () {
         expect(ShiftRole::where('name', 'Band Captain')->exists())->toBeTrue();
     });
 
+    test('a role saves its tactical callsign', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openRoleModal')
+            ->set('roleName', 'Net Control Operator')
+            ->set('roleTacticalCallsign', 'Net Control')
+            ->call('saveRole')
+            ->assertHasNoErrors();
+
+        $role = ShiftRole::where('name', 'Net Control Operator')->first();
+
+        expect($role->tactical_callsign)->toBe('Net Control');
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openRoleModal', $role->id)
+            ->assertSet('roleTacticalCallsign', 'Net Control');
+    });
+
     test('creating role with bonus points forces requires_confirmation', function () {
         $this->actingAs($this->admin);
 

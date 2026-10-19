@@ -12,6 +12,12 @@
 <div class="space-y-6">
     <x-slot:title>Net Log</x-slot:title>
 
+    <datalist id="net-log-tactical-names">
+        @foreach($this->tacticalNames as $tacticalName)
+            <option value="{{ $tacticalName }}"></option>
+        @endforeach
+    </datalist>
+
     <x-header
         title="Net Log"
         subtitle="Log traffic on the net as it happens. Every net control screen sees new entries live."
@@ -29,6 +35,7 @@
                     label="From"
                     wire:model="fromStation"
                     x-ref="fromStation"
+                    list="net-log-tactical-names"
                     icon="phosphor-broadcast"
                     placeholder="Aid 7"
                     hint="Tactical name or callsign of the calling station"
@@ -45,6 +52,7 @@
                     icon="phosphor-radio"
                     placeholder="Net Control"
                     hint="Leave blank for a call to the whole net"
+                    list="net-log-tactical-names"
                     autocapitalize="characters"
                     autocorrect="off"
                     spellcheck="false"
@@ -221,6 +229,7 @@
                 <x-input
                     label="From"
                     wire:model="editFromStation"
+                    list="net-log-tactical-names"
                     icon="phosphor-broadcast"
                     autocapitalize="characters"
                     autocorrect="off"
@@ -232,6 +241,7 @@
                 <x-input
                     label="To"
                     wire:model="editToStation"
+                    list="net-log-tactical-names"
                     icon="phosphor-radio"
                     autocapitalize="characters"
                     autocorrect="off"

@@ -8,6 +8,8 @@ use App\Events\NetLogChanged;
 use App\Livewire\NetLog\NetLog;
 use App\Models\EventConfiguration;
 use App\Models\NetLogEntry;
+use App\Models\OperatingSession;
+use App\Models\Station;
 use App\Models\User;
 use App\Support\BroadcastChannels;
 use Illuminate\Support\Facades\DB;
@@ -164,4 +166,25 @@ test('a station shows its operator callsign when it has one', function () {
         ->and(NetLogEntry::displayStation('W1ABC', 'W1ABC'))->toBe('W1ABC')
         ->and(NetLogEntry::displayStation('Aid 7', null))->toBe('Aid 7')
         ->and(NetLogEntry::displayStation(null, null))->toBe('');
+});
+
+test('entries snapshot the operator behind each tactical callsign', function () {
+    $station = Station::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Aid 7']);
+    OperatingSession::factory()->create([
+        'station_id' => $station->id,
+        'operator_user_id' => User::factory()->create(['call_sign' => 'W1ABC'])->id,
+        'end_time' => null,
+        'is_transcription' => false,
+    ]);
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->assertSeeHtml('<option value="Aid 7">')
+        ->set('fromStation', 'Aid 7')
+        ->set('toStation', 'Net Control')
+        ->set('message', 'Water low')
+        ->call('logEntry')
+        ->assertSee('Aid 7 (W1ABC)');
+
+    expect(NetLogEntry::sole()->from_callsign)->toBe('W1ABC')
+        ->and(NetLogEntry::sole()->to_callsign)->toBeNull();
 });

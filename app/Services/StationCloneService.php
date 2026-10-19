@@ -317,6 +317,11 @@ class StationCloneService
                 'is_satellite' => $sourceStation->is_satellite,
                 'max_power_watts' => $sourceStation->max_power_watts,
                 'power_source_description' => $sourceStation->power_source_description,
+                'tactical_callsign' => $sourceStation->tactical_callsign,
+                'rx_frequency' => $sourceStation->rx_frequency,
+                'tx_frequency' => $sourceStation->tx_frequency,
+                'tone' => $sourceStation->tone,
+                'comms_mode' => $sourceStation->comms_mode,
             ]);
 
             Log::debug('Station cloned', [

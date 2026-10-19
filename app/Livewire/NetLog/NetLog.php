@@ -9,6 +9,7 @@ use App\Enums\NetPriority;
 use App\Events\NetLogChanged;
 use App\Models\Event;
 use App\Models\NetLogEntry;
+use App\Services\TacticalCallsignResolver;
 use App\Support\BroadcastChannels;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
@@ -90,6 +91,17 @@ class NetLog extends Component
     }
 
     /**
+     * Tactical names offered as suggestions for From and To.
+     *
+     * @return list<string>
+     */
+    #[Computed]
+    public function tacticalNames(): array
+    {
+        return app(TacticalCallsignResolver::class)->tacticalNames($this->event->eventConfiguration)->all();
+    }
+
+    /**
      * @return list<array{id: string, name: string}>
      */
     #[Computed]
@@ -116,12 +128,17 @@ class NetLog extends Component
             'priority' => ['required', Rule::enum(NetPriority::class)],
         ]);
 
+        $fromStation = trim($validated['fromStation']);
+        $toStation = trim((string) $validated['toStation']) ?: null;
+
         $entry = NetLogEntry::create([
             'event_configuration_id' => $this->event->eventConfiguration->id,
             'user_id' => auth()->id(),
             'logged_at' => appNow(),
-            'from_station' => trim($validated['fromStation']),
-            'to_station' => trim((string) $validated['toStation']) ?: null,
+            'from_station' => $fromStation,
+            'to_station' => $toStation,
+            'from_callsign' => $this->resolveCallsign($fromStation),
+            'to_callsign' => $this->resolveCallsign($toStation),
             'message' => $validated['message'],
             'priority' => $validated['priority'],
         ]);
@@ -164,10 +181,16 @@ class NetLog extends Component
             'editPriority' => ['required', Rule::enum(NetPriority::class)],
         ]);
 
+        $fromStation = trim($validated['editFromStation']);
+        $toStation = trim((string) $validated['editToStation']) ?: null;
+
         $entry->update([
             'logged_at' => Carbon::parse($validated['editLoggedAt']),
-            'from_station' => trim($validated['editFromStation']),
-            'to_station' => trim((string) $validated['editToStation']) ?: null,
+            'from_station' => $fromStation,
+            'to_station' => $toStation,
+            // Keep the operator snapshot unless the station itself changed.
+            'from_callsign' => $fromStation === $entry->from_station ? $entry->from_callsign : $this->resolveCallsign($fromStation),
+            'to_callsign' => $toStation === $entry->to_station ? $entry->to_callsign : $this->resolveCallsign($toStation),
             'message' => $validated['editMessage'],
             'priority' => $validated['editPriority'],
         ]);
@@ -205,6 +228,15 @@ class NetLog extends Component
     protected function findEventEntry(int $entryId): NetLogEntry
     {
         return NetLogEntry::forEvent($this->event->eventConfiguration->id)->findOrFail($entryId);
+    }
+
+    /**
+     * Callsign of the operator on duty under a tactical name, snapshotted on
+     * the entry so the log still shows who it was after the shift changes.
+     */
+    protected function resolveCallsign(?string $station): ?string
+    {
+        return app(TacticalCallsignResolver::class)->resolve($this->event->eventConfiguration, $station);
     }
 
     protected function broadcastChange(NetLogEntry $entry): void

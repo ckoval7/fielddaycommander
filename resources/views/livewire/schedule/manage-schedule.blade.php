@@ -450,6 +450,17 @@
                     rows="2"
                 />
                 <x-input
+                    label="Tactical Callsign"
+                    wire:model="roleTacticalCallsign"
+                    autocapitalize="words"
+                    autocorrect="off"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder="e.g., Net Control, Talk-in"
+                    maxlength="50"
+                    hint="Optional. The net log shows whoever is checked in to this role under this name."
+                />
+                <x-input
                     label="Bonus Points"
                     wire:model="roleBonusPoints"
                     type="number"
