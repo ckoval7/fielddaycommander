@@ -239,7 +239,6 @@
             <x-logging.qso-log
                 title="Recently Transcribed"
                 subtitle="This station only"
-                :is-empty="$this->recentContacts->isEmpty()"
                 example="1423 W1AW 3A CT"
                 :time-heading="'Time ('.$timeLabel.')'"
             >
