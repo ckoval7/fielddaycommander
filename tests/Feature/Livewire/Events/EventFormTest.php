@@ -1620,7 +1620,7 @@ test('local subnets placeholder shows one example per line, not an escaped entit
 
 test('an unscored event saves without a section, class or power source', function () {
     $this->actingAs($this->user);
-    $publicService = EventType::where('code', 'PS')->firstOrFail();
+    $publicService = EventType::firstOrCreate(['code' => 'PS'], ['name' => 'Public Service / Other', 'is_scored' => false]);
 
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('name', 'City Marathon 2026')
@@ -1644,7 +1644,7 @@ test('an unscored event saves without a section, class or power source', functio
 
 test('an unscored event clears contest fields picked before the type changed', function () {
     $this->actingAs($this->user);
-    $publicService = EventType::where('code', 'PS')->firstOrFail();
+    $publicService = EventType::firstOrCreate(['code' => 'PS'], ['name' => 'Public Service / Other', 'is_scored' => false]);
 
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('name', 'Bike Tour 2026')
@@ -1665,7 +1665,7 @@ test('an unscored event clears contest fields picked before the type changed', f
 
 test('the event form hides contest fields for unscored event types', function () {
     $this->actingAs($this->user);
-    $publicService = EventType::where('code', 'PS')->firstOrFail();
+    $publicService = EventType::firstOrCreate(['code' => 'PS'], ['name' => 'Public Service / Other', 'is_scored' => false]);
 
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('event_type_id', $this->eventType->id)

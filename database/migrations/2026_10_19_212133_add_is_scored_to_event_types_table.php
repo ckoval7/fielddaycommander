@@ -19,6 +19,12 @@ return new class extends Migration
             $table->boolean('is_scored')->default(true)->after('is_active');
         });
 
+        // Fresh installs get the type from EventTypeSeeder; only add it here
+        // to installs that have already been seeded.
+        if (! DB::table('event_types')->exists()) {
+            return;
+        }
+
         DB::table('event_types')->insertOrIgnore([
             'code' => 'PS',
             'name' => 'Public Service / Other',
