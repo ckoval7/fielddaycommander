@@ -35,6 +35,7 @@ path = [
     "charts/fd-commander/.helmignore",
     "charts/fd-commander/templates/NOTES.txt",
     "tests/fixtures/test-image.jpg",
+    "tests/fixtures/ics-form-fields.json",
     ".dockerignore",
     ".claude/**",
     ".github/rulesets/*.json",
@@ -59,3 +60,10 @@ path = [
 ]
 SPDX-FileCopyrightText = ["Taylor Otwell", "2026 Corey Koval <ckoval7@gmail.com>"]
 SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
+
+# Blank ICS forms published by FEMA (training.fema.gov/icsresource/icsforms.aspx).
+# Works of the US federal government are not subject to copyright (17 U.S.C. 105).
+[[annotations]]
+path = "public/forms/ics/*.pdf"
+SPDX-FileCopyrightText = "Federal Emergency Management Agency (FEMA), US Government work"
+SPDX-License-Identifier = "LicenseRef-PublicDomain-USGov"

@@ -292,6 +292,100 @@
     </div>
 
     {{-- ============================================================
+         ICS FORMS — FEMA's fillable PDFs, filled in the browser
+         ============================================================ --}}
+    <div class="px-3 sm:px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
+        <div class="text-xs font-bold uppercase tracking-widest mb-5"
+             style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 3px; height: 1em; background-color: var(--reports-section-bar); border-radius: 2px;"></span>
+            ICS Forms
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {{-- ICS-205 --}}
+            <button type="button"
+               x-data="icsPdf('{{ route('reports.ics-205') }}')"
+               x-on:click="download()"
+               x-bind:disabled="busy"
+               data-testid="ics-205"
+               class="group no-underline block w-full text-left rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md active:shadow-sm disabled:opacity-60"
+               style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
+                         style="background-color: var(--reports-pdf-border); color: white;">
+                        <x-mary-icon name="phosphor-cell-signal-high" class="w-5 h-5" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
+                            ICS-205 Radio Plan
+                        </div>
+                        <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
+                            Channels from stations and talk-in · FEMA PDF
+                        </div>
+                        <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
+                             style="color: var(--reports-pdf-icon);">
+                            <span x-show="!busy">Download &rarr;</span><span x-show="busy" x-cloak>Building&hellip;</span>
+                        </div>
+                    </div>
+                </div>
+            </button>
+
+            {{-- ICS-211 --}}
+            <button type="button"
+               x-data="icsPdf('{{ route('reports.ics-211') }}')"
+               x-on:click="download()"
+               x-bind:disabled="busy"
+               data-testid="ics-211"
+               class="group no-underline block w-full text-left rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md active:shadow-sm disabled:opacity-60"
+               style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
+                         style="background-color: var(--reports-pdf-border); color: white;">
+                        <x-mary-icon name="phosphor-users-three" class="w-5 h-5" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
+                            ICS-211 Check-In List
+                        </div>
+                        <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
+                            Volunteers from shift check-ins · FEMA PDF
+                        </div>
+                        <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
+                             style="color: var(--reports-pdf-icon);">
+                            <span x-show="!busy">Download &rarr;</span><span x-show="busy" x-cloak>Building&hellip;</span>
+                        </div>
+                    </div>
+                </div>
+            </button>
+
+            {{-- ICS-309 --}}
+            <a href="{{ route('reports.ics-309') }}" target="_blank" rel="noopener"
+               data-testid="ics-309"
+               class="group no-underline block w-full text-left rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md active:shadow-sm disabled:opacity-60"
+               style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
+                         style="background-color: var(--reports-pdf-border); color: white;">
+                        <x-mary-icon name="phosphor-list-checks" class="w-5 h-5" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
+                            ICS-309 Comms Log
+                        </div>
+                        <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
+                            Net log entries · print page
+                        </div>
+                        <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
+                             style="color: var(--reports-pdf-icon);">
+                            Open &rarr;
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {{-- ============================================================
          SECTION 2: QSO RATE BY HOUR
          ============================================================ --}}
     <div class="px-3 sm:px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">

@@ -1,0 +1,71 @@
+<?php
+
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+namespace App\Http\Controllers;
+
+use App\Enums\MessageFormat;
+use App\Models\Event;
+use App\Models\EventConfiguration;
+use App\Models\Message;
+use App\Models\NetLogEntry;
+use App\Services\EventContextService;
+use App\Services\IcsFormBuilder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+/**
+ * ICS forms for the event in context.
+ *
+ * The ICS-205, 211 and 213 endpoints return JSON that the browser uses to
+ * fill FEMA's own fillable PDFs. FEMA does not publish an ICS-309, so the
+ * communications log is a print page laid out like the standard form.
+ */
+class IcsFormController extends Controller
+{
+    public function __construct(
+        protected EventContextService $eventContextService,
+        protected IcsFormBuilder $builder,
+    ) {}
+
+    public function ics205(Request $request): JsonResponse
+    {
+        return response()->json($this->builder->ics205($this->configuration(), $request->user()));
+    }
+
+    public function ics211(Request $request): JsonResponse
+    {
+        return response()->json($this->builder->ics211($this->configuration(), $request->user()));
+    }
+
+    public function ics213(Event $event, Message $message): JsonResponse
+    {
+        abort_unless(
+            $event->eventConfiguration !== null
+                && $message->event_configuration_id === $event->eventConfiguration->id
+                && $message->format === MessageFormat::Ics213,
+            404
+        );
+
+        return response()->json($this->builder->ics213($message));
+    }
+
+    public function ics309(Request $request): View
+    {
+        $config = $this->configuration();
+
+        return view('ics.309', [
+            'config' => $config,
+            'event' => $config->event,
+            'entries' => NetLogEntry::forEvent($config->id)->orderBy('logged_at')->orderBy('id')->get(),
+            'preparedBy' => $request->user(),
+        ]);
+    }
+
+    protected function configuration(): EventConfiguration
+    {
+        return $this->eventContextService->getEventConfiguration() ?? abort(404);
+    }
+}

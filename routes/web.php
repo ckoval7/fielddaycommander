@@ -9,6 +9,7 @@ use App\Http\Controllers\ContactSyncController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Equipment\EquipmentReportController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\IcsFormController;
 use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SetupController;
@@ -217,6 +218,8 @@ Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
         return view('messages.print', ['event' => $event, 'messages' => $messages]);
     })->name('events.messages.print-all');
 
+    Route::get('/events/{event}/messages/{message}/ics-213', [IcsFormController::class, 'ics213'])->name('events.messages.ics-213');
+
     Route::get('/events/{event}/messages/{message}/print', function (Event $event, Message $message) {
         abort_unless(
             $event->eventConfiguration !== null
@@ -285,6 +288,9 @@ Route::middleware(['auth', 'verified', 'can:manage-settings'])->group(function (
 Route::middleware(['auth', 'verified', 'can:view-reports'])->group(function () {
     Route::get('/reports', ReportsIndex::class)->name('reports.index');
     Route::get('/reports/adif', [ReportController::class, 'adif'])->name('reports.adif');
+    Route::get('/reports/ics-205', [IcsFormController::class, 'ics205'])->name('reports.ics-205');
+    Route::get('/reports/ics-211', [IcsFormController::class, 'ics211'])->name('reports.ics-211');
+    Route::get('/reports/ics-309', [IcsFormController::class, 'ics309'])->name('reports.ics-309');
 
     Route::middleware('scored-event')->group(function () {
         Route::get('/reports/cabrillo', [ReportController::class, 'cabrillo'])->name('reports.cabrillo');

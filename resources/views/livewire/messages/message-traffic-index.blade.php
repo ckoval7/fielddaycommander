@@ -259,6 +259,17 @@
                                             link="{{ route('events.messages.print', [$event, $message]) }}"
                                             external
                                         />
+                                        @if($message->format === \App\Enums\MessageFormat::Ics213)
+                                            <x-button
+                                                icon="phosphor-file-pdf"
+                                                class="btn-ghost btn-xs"
+                                                tooltip="ICS-213 (FEMA PDF)"
+                                                aria-label="Download ICS-213 FEMA PDF"
+                                                x-data="icsPdf('{{ route('events.messages.ics-213', [$event, $message]) }}')"
+                                                x-on:click="download()"
+                                                x-bind:disabled="busy"
+                                            />
+                                        @endif
                                         @can('delete', $message)
                                             <x-button
                                                 icon="phosphor-trash"
@@ -386,6 +397,16 @@
                                         link="{{ route('events.messages.print', [$event, $message]) }}"
                                         external
                                     />
+                                    @if($message->format === \App\Enums\MessageFormat::Ics213)
+                                        <x-button
+                                            icon="phosphor-file-pdf"
+                                            class="btn-ghost btn-xs"
+                                            aria-label="Download ICS-213 FEMA PDF"
+                                            x-data="icsPdf('{{ route('events.messages.ics-213', [$event, $message]) }}')"
+                                            x-on:click="download()"
+                                            x-bind:disabled="busy"
+                                        />
+                                    @endif
                                     @can('delete', $message)
                                         <x-button
                                             icon="phosphor-trash"
