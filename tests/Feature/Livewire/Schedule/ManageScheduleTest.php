@@ -1597,3 +1597,43 @@ describe('timezone handling', function () {
             ->assertSet('bulkEndTime', $expectedEnd);
     });
 });
+
+describe('unscored events', function () {
+    beforeEach(function () {
+        $this->event->update(['start_time' => appNow()->subDays(3), 'end_time' => appNow()->subDays(2)]);
+        $event = Event::factory()->publicService()->create([
+            'start_time' => appNow()->subHours(2),
+            'end_time' => appNow()->addHours(6),
+        ]);
+        $this->psConfig = EventConfiguration::factory()->publicService()->create(['event_id' => $event->id]);
+        Setting::set('active_event_id', $event->id);
+    });
+
+    test('seed net roles with no bonus points', function () {
+        ShiftRole::seedDefaults($this->psConfig);
+
+        $roles = ShiftRole::where('event_configuration_id', $this->psConfig->id)->get();
+
+        expect($roles->pluck('name')->all())->toBe(array_keys(ShiftRole::UNSCORED_DEFAULTS))
+            ->and($roles->firstWhere('name', 'Net Control')->tactical_callsign)->toBe('Net Control')
+            ->and($roles->whereNotNull('bonus_points'))->toBeEmpty()
+            ->and($roles->where('requires_confirmation', true))->toBeEmpty();
+    });
+
+    test('hide bonus points on roles', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openRoleModal')
+            ->assertDontSee('Leave empty for no bonus')
+            ->set('roleName', 'Sweep')
+            ->set('roleBonusPoints', 100)
+            ->call('saveRole')
+            ->assertHasNoErrors();
+
+        $role = ShiftRole::where('event_configuration_id', $this->psConfig->id)->where('name', 'Sweep')->first();
+
+        expect($role->bonus_points)->toBeNull()
+            ->and($role->requires_confirmation)->toBeFalse();
+    });
+});

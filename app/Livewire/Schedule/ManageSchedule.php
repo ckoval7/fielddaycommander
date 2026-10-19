@@ -118,6 +118,16 @@ class ManageSchedule extends Component
     /**
      * @return Collection<int, ShiftRole>
      */
+    /**
+     * Whether roles at this event can earn bonus points. Unscored events
+     * have no bonuses, so the bonus fields and badges are hidden.
+     */
+    #[Computed]
+    public function scoresBonuses(): bool
+    {
+        return $this->eventConfig?->isScored() ?? true;
+    }
+
     #[Computed]
     public function roles(): Collection
     {
@@ -207,6 +217,10 @@ class ManageSchedule extends Component
             'roleIcon' => ['required', 'string', 'max:255'],
             'roleColor' => ['required', 'string', 'max:255'],
         ]);
+
+        if (! $this->scoresBonuses) {
+            $this->roleBonusPoints = null;
+        }
 
         // If bonus points are set, force requires_confirmation
         $requiresConfirmation = $this->roleRequiresConfirmation;
