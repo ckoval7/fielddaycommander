@@ -18,6 +18,7 @@ path = [
     "DOCKER.md",
     "SECURITY.md",
     "CONTRIBUTING.md",
+    "CHANGELOG.md",
     "docs/**",
     "charts/fd-commander/README.md",
 ]
