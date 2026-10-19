@@ -25,6 +25,38 @@ class SafetyChecklistItem extends Model
      * @var array<string, list<array{label: string, is_required: bool, help_text: string|null}>>
      */
     public const DEFAULTS = [
+        'briefing' => [
+            [
+                'label' => 'Briefing held: assignments, tactical callsigns and net frequencies reviewed',
+                'is_required' => true,
+                'help_text' => 'Walk every volunteer through where they will be, who they report to, their tactical callsign, and the primary and backup frequencies. Hand out or post the ICS-205 communications plan if you have one.',
+            ],
+            [
+                'label' => 'Radio check completed with net control',
+                'is_required' => true,
+                'help_text' => 'Each position checks in with net control from where it will operate, before the event starts. Fix any coverage gaps now, not when traffic picks up.',
+            ],
+            [
+                'label' => 'Emergency, medical and EMS procedures shared',
+                'is_required' => true,
+                'help_text' => 'Volunteers know how to report an emergency on the net, who relays it to EMS or the served agency, and what not to say on the air (names, medical details).',
+            ],
+            [
+                'label' => 'Weather checked and shelter plan shared',
+                'is_required' => true,
+                'help_text' => 'Check the forecast and any NWS alerts. Tell volunteers where to shelter and who calls a weather stand-down.',
+            ],
+            [
+                'label' => 'Hydration, sun and rest plan reviewed',
+                'is_required' => false,
+                'help_text' => 'Remind volunteers to bring water, sun protection and layers, and how to request a relief or break over the net.',
+            ],
+            [
+                'label' => 'Check-out procedure explained',
+                'is_required' => false,
+                'help_text' => 'Volunteers check out with net control before leaving their position, so nobody is left unaccounted for at the end of the event.',
+            ],
+        ],
         'safety_officer' => [
             [
                 'label' => 'Safety Officer/s or qualified designated assistant/s was on site for the duration of the event',
@@ -248,12 +280,17 @@ class SafetyChecklistItem extends Model
      * Checklist types that apply to an event's operating class.
      *
      * ARRL 7.3.17 limits the Safety Officer bonus to Class A; 7.3.18 Site
-     * Responsibilities covers Classes B through F.
+     * Responsibilities covers Classes B through F. Unscored events use a
+     * volunteer briefing checklist instead.
      *
      * @return list<ChecklistType>
      */
     public static function checklistTypesFor(EventConfiguration $eventConfiguration): array
     {
+        if (! $eventConfiguration->isScored()) {
+            return [ChecklistType::Briefing];
+        }
+
         $operatingClass = $eventConfiguration->operatingClass;
         $classLetter = $operatingClass ? preg_replace('/\d+/', '', $operatingClass->code) : null;
 
@@ -270,6 +307,7 @@ class SafetyChecklistItem extends Model
      * Class A → safety_officer items
      * Class B/C/D/E/F → site_responsibilities items
      * Classes H/I/O/M → no checklist seeded
+     * Unscored events → briefing items, which the event can edit or delete
      */
     public static function seedDefaults(EventConfiguration $eventConfiguration): void
     {
@@ -287,7 +325,7 @@ class SafetyChecklistItem extends Model
                     [
                         'help_text' => $itemData['help_text'] ?? null,
                         'is_required' => $itemData['is_required'],
-                        'is_default' => true,
+                        'is_default' => $type !== ChecklistType::Briefing,
                         'sort_order' => $sortOrder,
                     ]
                 );

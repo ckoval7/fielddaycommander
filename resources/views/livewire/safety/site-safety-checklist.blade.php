@@ -62,7 +62,11 @@
                     $requiredRoles = collect($checklistTypes)->map(fn($t) => $t->label())->join(' or ');
                 @endphp
                 <x-alert icon="phosphor-lock" class="alert-warning">
-                    You must be signed on to a <strong>{{ $requiredRoles }}</strong> shift to check off items.
+                    @if($eventConfig->isScored())
+                        You must be signed on to a <strong>{{ $requiredRoles }}</strong> shift to check off items.
+                    @else
+                        You must be signed up for a shift at this event to check off items.
+                    @endif
                 </x-alert>
             @endif
 
@@ -78,7 +82,9 @@
                                 <div class="flex items-center gap-2">
                                     <x-icon name="phosphor-shield-check" class="w-5 h-5" />
                                     <span>{{ $type->label() }}</span>
-                                    <x-badge :value="$type->bonusPoints() . ' bonus pts'" class="badge-warning badge-sm" />
+                                    @if($type->bonusPoints() > 0)
+                                        <x-badge :value="$type->bonusPoints() . ' bonus pts'" class="badge-warning badge-sm" />
+                                    @endif
                                 </div>
                             </x-slot:title>
 

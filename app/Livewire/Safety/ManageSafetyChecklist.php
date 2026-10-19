@@ -5,6 +5,7 @@
 
 namespace App\Livewire\Safety;
 
+use App\Enums\ChecklistType;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
@@ -14,6 +15,7 @@ use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -58,6 +60,21 @@ class ManageSafetyChecklist extends Component
     /**
      * @return Collection<int, SafetyChecklistItem>
      */
+    /**
+     * Checklist types items can be added to: the ones this event uses, or
+     * every contest type when the event uses none (e.g. a class with no
+     * safety bonus).
+     *
+     * @return list<ChecklistType>
+     */
+    #[Computed]
+    public function checklistTypeOptions(): array
+    {
+        $types = $this->eventConfig ? SafetyChecklistItem::checklistTypesFor($this->eventConfig) : [];
+
+        return $types !== [] ? $types : [ChecklistType::SafetyOfficer, ChecklistType::SiteResponsibilities];
+    }
+
     #[Computed]
     public function items(): Collection
     {
@@ -96,7 +113,9 @@ class ManageSafetyChecklist extends Component
             'itemLabel' => ['required', 'string', 'max:500'],
             'itemHelpText' => ['nullable', 'string', 'max:2000'],
             'itemIsRequired' => ['boolean'],
-            'itemChecklistType' => $this->editingItemId ? ['nullable'] : ['required', 'string'],
+            'itemChecklistType' => $this->editingItemId
+                ? ['nullable']
+                : ['required', 'string', Rule::in(array_map(fn (ChecklistType $type) => $type->value, $this->checklistTypeOptions))],
         ]);
 
         if ($this->editingItemId) {
