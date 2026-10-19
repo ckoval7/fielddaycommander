@@ -1,41 +1,73 @@
 ---
 name: branch-workflow
-description: Use this skill for any of these tasks in FD Commander: choosing which checkout (main or the demo worktree) and which branch work belongs on; starting, committing or merging work; merging main into feature/demo-mode; starting or fixing the local Sail container; running artisan, tests or Pint; or setting up the demo worktree from scratch.
+description: Use this skill for any of these tasks in FD Commander: choosing which checkout (main or the demo worktree) and which branch work belongs on; starting, committing or merging work; merging feature branches into dev or dev into feature/demo-mode; the GitHub branch protection rulesets; starting or fixing the local Sail container; running artisan, tests or Pint; or setting up the demo worktree from scratch.
 ---
 
 # Branch & Worktree Workflow
 
-Demo mode (`feature/demo-mode`) is a long-lived branch that is **not** merged into `main`. The repo is used from two checkouts that sit side by side:
+Work flows **feature branch → `dev` → `main`**. `CONTRIBUTING.md` is the public version of these rules.
+
+| Branch | Holds | Only merges in from |
+|--------|-------|---------------------|
+| `main` (protected) | The latest release; tags live here | `dev`, fast-forward only, at release time |
+| `dev` (protected) | Finished work for the next release | Feature branches |
+| `feature/demo-mode` | `dev` plus demo-only code; deployed as the demo site | `dev`, plus demo-only commits |
+
+The repo is used from two checkouts that sit side by side:
 
 | Checkout | Branch | Used for |
 |----------|--------|----------|
-| `fielddaycommander/` (main checkout) | `main` and feature branches off `main` | All non-demo work |
+| `fielddaycommander/` (main checkout) | `dev`, `main`, and feature branches off `dev` | All non-demo work |
 | `fielddaycommander-demo/` (git worktree, a sibling directory) | `feature/demo-mode` | All demo work, plus the running Sail stack |
 
 ## Choosing where work goes
 
 1. **Is the change demo-specific?** That means it touches DemoSeeder, DemoController, DemoMiddleware, demo commands or config, the demo branches inside services, or demo provisioning or teardown.
    - **Yes:** work in the demo worktree and commit directly on `feature/demo-mode`. Don't create sub-branches.
-   - **No:** work in the main checkout on a new feature branch off an up-to-date `main`. Never commit directly to `main`.
-2. **Demo code never moves to `main`.** Don't suggest it, even when a demo fix looks generic.
-3. **A bug found while click-testing demo that isn't demo-specific** is fixed on a branch off `main`. Bring it into demo by merging `main` into `feature/demo-mode`. Don't fix it on demo.
-4. **Never push and never offer to push.** Commits, merges and tags stay local, and the user pushes when they're ready.
-5. **Keep each checkout on its own branch.** Don't check out `feature/demo-mode` in the main checkout, or `main` in the worktree. Git refuses this anyway, because a branch can only be checked out in one worktree.
+   - **No:** work in the main checkout on a new feature branch off an up-to-date `dev`. Never commit directly to `dev` or `main`.
+2. **Demo code never moves to `dev` or `main`.** Don't suggest it, even when a demo fix looks generic.
+3. **A bug found while click-testing demo that isn't demo-specific** is fixed on a branch off `dev`. Bring it into demo by merging `dev` into `feature/demo-mode`. Don't fix it on demo.
+4. **Never merge anything but `dev` into `main`,** and only as part of a release (see the `release` skill). Never merge `main` or `feature/demo-mode` into `dev`.
+5. **Never push and never offer to push.** Commits, merges and tags stay local, and the user pushes when they're ready. The user's pushes to `main` and `dev` bypass the PR rule as repo admin, and the GitHub rulesets block force-pushes, so never rewrite either branch's history.
+6. **Keep each checkout on its own branch.** Don't check out `feature/demo-mode` in the main checkout, or `dev`/`main` in the worktree. Git refuses this anyway, because a branch can only be checked out in one worktree.
 
-## Bringing main into demo
+## Merging a feature branch into dev
 
-After a feature branch has merged into `main`:
+Count the branch's commits first. More than one: squash. Exactly one: a regular merge.
+
+```bash
+git switch dev
+git merge --squash fix/thing && git commit      # multi-commit branch; write one summary commit
+git merge --no-ff fix/thing                     # single-commit branch
+git branch -D fix/thing                         # -D is needed after a squash
+```
+
+Then bring `dev` into demo, below.
+
+## Bringing dev into demo
+
+After a feature branch has merged into `dev`:
 
 ```bash
 cd ../fielddaycommander-demo
-git fetch origin && git merge origin/main
+git merge dev
 docker exec -u sail fielddaycommander-laravel.test-1 npm run build
 docker exec -u sail fielddaycommander-laravel.test-1 php artisan optimize:clear
 # only if the merge brought new migrations:
 docker exec -u sail fielddaycommander-laravel.test-1 php artisan migrate --database=mysql --force
 ```
 
-Locally, `DB_CONNECTION=demo`, so `--database=mysql` is needed to migrate the central DB (it holds `demo_sessions` and other central tables).
+Use a regular merge, never a squash, or later merges from `dev` will conflict. Locally, `DB_CONNECTION=demo`, so `--database=mysql` is needed to migrate the central DB (it holds `demo_sessions` and other central tables).
+
+## GitHub protection
+
+`.github/rulesets/main.json` and `dev.json` define the rulesets: no deletion, no force-push, changes by PR, and the `source-branch` check from `.github/workflows/branch-policy.yml` must pass. Repo admins bypass them. To create or refresh them (the user runs this; it changes repo settings):
+
+```bash
+for b in main dev; do gh api -X POST repos/ckoval7/fielddaycommander/rulesets --input .github/rulesets/$b.json; done
+```
+
+To update an existing ruleset, look up its id with `gh api repos/ckoval7/fielddaycommander/rulesets` and `PUT` to `.../rulesets/<id>` instead.
 
 ## Sail container
 
@@ -86,4 +118,4 @@ cp -a storage/app/private/gallery ../fielddaycommander-demo/storage/app/private/
 cd ../fielddaycommander-demo && docker compose up -d
 ```
 
-Then run the build, cache-clear and migrate steps from "Bringing main into demo".
+Then run the build, cache-clear and migrate steps from "Bringing dev into demo".

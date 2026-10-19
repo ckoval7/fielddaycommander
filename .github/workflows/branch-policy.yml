@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Enforces the branch flow on pull requests (see CONTRIBUTING.md):
+#
+#   feature branch -> dev -> main
+#
+# A PR into main must come from this repo's dev branch. A PR into dev must
+# come from a feature branch, never from main or feature/demo-mode. The
+# rulesets in .github/rulesets require this job to pass on both branches.
+name: Branch policy
+
+on:
+  pull_request:
+    branches: [main, dev]
+    types: [opened, reopened, synchronize, edited]
+
+permissions: {}
+
+jobs:
+  source-branch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check the source branch
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ "$BASE" = main ]; then
+            if [ "$HEAD" != dev ] || [ "$HEAD_REPO" != "$REPO" ]; then
+              echo "::error::Only $REPO:dev may merge into main. Open this PR against dev instead."
+              exit 1
+            fi
+          elif [ "$BASE" = dev ]; then
+            if [ "$HEAD_REPO" = "$REPO" ] && { [ "$HEAD" = main ] || [ "$HEAD" = feature/demo-mode ]; }; then
+              echo "::error::Only feature branches may merge into dev, not $HEAD."
+              exit 1
+            fi
+          fi
+          echo "$HEAD_REPO:$HEAD -> $BASE is allowed."
