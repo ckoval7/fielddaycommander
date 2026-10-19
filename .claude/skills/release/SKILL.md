@@ -10,16 +10,16 @@ A release always runs these steps in this order. Don't skip or reorder them, and
 1. Full Sonar scan, repeated until it is clean
 2. Trivy vulnerability scan, repeated until it is clean
 3. Package updates
-4. Version bump, merge to `main`, and tag
+4. Version bump, merge to `dev` and `main`, and tag
 5. Bring the release into demo
 
-Do all release work in the **main checkout**, on a release branch off `main`. The `branch-workflow` skill explains the checkout layout and how to run PHP tooling in the main checkout. Keep test runs targeted, never the full suite.
+Do all release work in the **main checkout**, on a release branch off `dev`. The `branch-workflow` skill explains the checkout layout and how to run PHP tooling in the main checkout. Keep test runs targeted, never the full suite.
 
 ## 0. Prepare
 
 ```bash
 git status --short                 # must be clean
-git switch main && git pull --ff-only
+git switch dev && git pull --ff-only
 ```
 
 Work out the next version. The scheme is `vYY.MM.N`, where `N` counts releases within the month. If `VERSION` has the current year and month, increment `N`. Otherwise use `YY.MM.1` for the current month. Confirm the version with the user, then create the branch:
@@ -113,12 +113,13 @@ git commit -am "chore(release): vYY.MM.N"
 
 Then:
 
-**Never push and never offer to push.** The user pushes branches, `main` and tags themselves, when they're ready.
+**Never push and never offer to push.** The user pushes branches, `dev`, `main` and tags themselves, when they're ready.
 
-1. Fast-forward `main` locally: `git switch main && git merge --ff-only release/vYY.MM.N`. Then delete the release branch.
-2. Tell the user that `main` is ready for them to push, and stop there.
-3. Once the user says they've pushed, wait for SonarCloud's automatic analysis of the new `origin/main` HEAD. `$S cloud` prints the revision of the last analysis. It must match `origin/main` and show gate `OK` with 0 open issues. If it doesn't, return to step 1 of the release.
-4. Create the annotated tag on the release commit, locally only. The user pushes it.
+1. Fast-forward `dev` to the release branch: `git switch dev && git merge --ff-only release/vYY.MM.N`, then delete the release branch. Nothing else merges into `dev` during a release, so the scans cover exactly what ships. If the fast-forward fails, stop and tell the user.
+2. Fast-forward `main` to `dev`: `git switch main && git merge --ff-only dev`. `main` never has commits of its own, so this always fast-forwards. If it doesn't, stop and tell the user.
+3. Tell the user that `dev` and `main` are ready for them to push, and stop there.
+4. Once the user says they've pushed, wait for SonarCloud's automatic analysis of the new `origin/main` HEAD. `$S cloud` prints the revision of the last analysis. It must match `origin/main` and show gate `OK` with 0 open issues. If it doesn't, return to step 1 of the release.
+5. Create the annotated tag on `main`'s HEAD, locally only. The user pushes it.
 
    ```bash
    git tag -a vYY.MM.N -m vYY.MM.N
@@ -126,7 +127,7 @@ Then:
 
 ## 5. Bring the release into demo, then clean up
 
-Merge `main` into `feature/demo-mode` in the demo worktree, then rebuild, following the `branch-workflow` skill. Afterwards, remove the scan server:
+Merge `dev` into `feature/demo-mode` in the demo worktree, then rebuild, following the `branch-workflow` skill. Afterwards, remove the scan server:
 
 ```bash
 .claude/skills/release/scripts/sonar-local.sh down

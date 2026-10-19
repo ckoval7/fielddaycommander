@@ -84,7 +84,7 @@ Built with Laravel 12, Livewire, and Mary UI. Served by FrankenPHP (Caddy + Lara
 
 ## Contributing
 
-Contributions are welcome! Fork the repo, create a feature branch, and submit a pull request. Please run the test suite (`php artisan test`) and code formatter (`vendor/bin/pint`) before submitting.
+Contributions are welcome! Branch from `dev` and open your pull request against `dev`, not `main`. [CONTRIBUTING.md](CONTRIBUTING.md) covers the branch flow, tests and formatting.
 
 ## License
 

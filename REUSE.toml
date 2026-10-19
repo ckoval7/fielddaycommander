@@ -17,6 +17,7 @@ path = [
     "README.md",
     "DOCKER.md",
     "SECURITY.md",
+    "CONTRIBUTING.md",
     "docs/**",
     "charts/fd-commander/README.md",
 ]
@@ -35,6 +36,7 @@ path = [
     "tests/fixtures/test-image.jpg",
     ".dockerignore",
     ".claude/**",
+    ".github/rulesets/*.json",
 ]
 SPDX-FileCopyrightText = "2026 Corey Koval <ckoval7@gmail.com>"
 SPDX-License-Identifier = "GPL-3.0-or-later"

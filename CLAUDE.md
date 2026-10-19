@@ -260,8 +260,9 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 
 ## Branches, Worktrees & Local Containers
 
-- **Non-demo work:** in this checkout, on a feature branch off `main`. Never commit directly to `main`.
-- **Demo work:** in the `../fielddaycommander-demo` worktree, committed directly on `feature/demo-mode`. Demo-only code never goes to `main`.
+- **Flow:** feature branch → `dev` → `main`. `main` and `dev` are protected: never commit directly to either. Only feature branches merge into `dev`, and only `dev` merges into `main` (as a fast-forward, at release time).
+- **Non-demo work:** in this checkout, on a feature branch off `dev`.
+- **Demo work:** in the `../fielddaycommander-demo` worktree, committed directly on `feature/demo-mode`, which follows `dev`. Demo-only code never goes to `dev` or `main`.
 - **Sail:** runs only from the demo worktree.
 
 Activate the `branch-workflow` skill (`.claude/skills/branch-workflow/`) before you start, commit or merge work, touch the container, or run PHP tooling. It has the merge steps, test and Pint commands for each checkout, and the worktree setup.
