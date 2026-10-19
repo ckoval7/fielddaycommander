@@ -36,7 +36,7 @@ class EventTypeSeeder extends Seeder
                 'description' => 'Public service, EmComm drills, nets and other events that are not scored as a contest',
                 'is_active' => true,
                 'is_scored' => false,
-                'setup_offset_hours' => 0,
+                'setup_offset_hours' => null,
             ],
         ];
 

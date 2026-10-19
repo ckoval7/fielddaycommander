@@ -14,6 +14,7 @@ use App\Models\Organization;
 use App\Models\Section;
 use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\EventTypeSeeder;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -1678,4 +1679,22 @@ test('the event form hides contest fields for unscored event types', function ()
         ->assertDontSee('Operating Class')
         ->assertDontSee('Number of Transmitters')
         ->assertDontSee('GOTA Station');
+});
+
+test('an unscored event has no setup window', function () {
+    $this->actingAs($this->user);
+    $this->seed(EventTypeSeeder::class);
+    $publicService = EventType::where('code', 'PS')->firstOrFail();
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Parade 2026')
+        ->set('event_type_id', $publicService->id)
+        ->set('start_time', '2026-07-04 14:00:00')
+        ->set('end_time', '2026-07-04 18:00:00')
+        ->set('callsign', 'W1AW')
+        ->assertDontSee('Setup window opens')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Event::where('name', 'Parade 2026')->first()->setup_allowed_from)->toBeNull();
 });
