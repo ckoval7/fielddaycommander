@@ -333,6 +333,9 @@
                                 <x-menu-item title="Message Traffic" icon="phosphor-envelope"
                                     link="{{ route('events.messages.index', $activeEvent) }}"
                                     exact :active="request()->routeIs('events.messages.*')" />
+                                <x-menu-item title="Net Log" icon="phosphor-list-checks"
+                                    link="{{ route('events.net-log', $activeEvent) }}"
+                                    exact :active="request()->routeIs('events.net-log')" />
                             @endcan
                             @if($isScoredEvent)
                                 <x-menu-item :title="$activeEvent->nomenclature()->bulletinName" icon="phosphor-radio"

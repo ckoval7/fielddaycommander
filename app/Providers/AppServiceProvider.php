@@ -14,6 +14,7 @@ use App\Models\Event;
 use App\Models\GuestbookEntry;
 use App\Models\Image;
 use App\Models\Message;
+use App\Models\NetLogEntry;
 use App\Models\OperatingSession;
 use App\Models\ShiftAssignment;
 use App\Models\Station;
@@ -32,6 +33,7 @@ use App\Observers\W1awBulletinObserver;
 use App\Policies\GuestbookEntryPolicy;
 use App\Policies\ImagePolicy;
 use App\Policies\MessagePolicy;
+use App\Policies\NetLogEntryPolicy;
 use App\Policies\W1awBulletinPolicy;
 use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
@@ -99,6 +101,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Image::class, ImagePolicy::class);
         Gate::policy(GuestbookEntry::class, GuestbookEntryPolicy::class);
         Gate::policy(Message::class, MessagePolicy::class);
+        Gate::policy(NetLogEntry::class, NetLogEntryPolicy::class);
         Gate::policy(W1awBulletin::class, W1awBulletinPolicy::class);
 
         // Register model observers

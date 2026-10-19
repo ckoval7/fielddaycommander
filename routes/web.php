@@ -36,6 +36,7 @@ use App\Livewire\Logging\TranscribeSelect;
 use App\Livewire\Messages\MessageForm;
 use App\Livewire\Messages\MessageTrafficIndex;
 use App\Livewire\Messages\W1awBulletinForm;
+use App\Livewire\NetLog\NetLog;
 use App\Livewire\Profile\UserProfile;
 use App\Livewire\Reports\ReportsIndex;
 use App\Livewire\Safety\ManageSafetyChecklist;
@@ -231,6 +232,7 @@ Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
     Route::get('/events/{event}/messages', MessageTrafficIndex::class)->name('events.messages.index');
     Route::get('/events/{event}/messages/create', MessageForm::class)->name('events.messages.create');
     Route::get('/events/{event}/messages/{message}/edit', MessageForm::class)->name('events.messages.edit');
+    Route::get('/events/{event}/net-log', NetLog::class)->name('events.net-log');
 });
 
 // W1AW Bulletin — accessible to all authenticated users (schedule viewing pre-event)
