@@ -41,7 +41,9 @@ The demo branch follows `dev` rather than `main`, so the demo site gets fixes as
    git fetch origin && git merge origin/dev     # or: git rebase origin/dev
    ```
 
-   Open the pull request against `dev`. If you forget and open it against `main`, it gets moved to `dev` for you. The same goes for a branch you started from `main`: it merges into `dev` cleanly, since everything on `main` is already on `dev`, but merge in the latest `dev` before review. If `dev` moves on while your PR is open, update your branch again before it merges. Say what changed and why, and include screenshots for anything you can see in the UI, from a phone as well as a desktop.
+   Open the pull request against `dev`. If you forget and open it against `main`, it gets moved to `dev` for you. The same goes for a branch you started from `main`: it merges into `dev` cleanly, since everything on `main` is already on `dev`, but merge in the latest `dev` before review. If `dev` moves on while your PR is open, update your branch again before it merges.
+
+   In the PR, say what changed and why, and include screenshots for anything you can see in the UI, from a phone as well as a desktop.
 
 A PR with more than one commit is squash-merged into `dev`. A single-commit PR is merged as is.
 
