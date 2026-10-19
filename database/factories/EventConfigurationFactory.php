@@ -89,6 +89,9 @@ class EventConfigurationFactory extends Factory
     {
         return $this->state(fn () => [
             'event_id' => Event::factory()->publicService(),
+            'section_id' => null,
+            'operating_class_id' => null,
+            'power_multiplier' => '1',
         ]);
     }
 }

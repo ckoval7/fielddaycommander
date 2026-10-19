@@ -1617,3 +1617,63 @@ test('local subnets placeholder shows one example per line, not an escaped entit
         ->assertSeeHtml("placeholder=\"192.168.1.0/24\n10.0.0.0/8\"")
         ->assertDontSeeHtml('&amp;#10;');
 });
+
+test('an unscored event saves without a section, class or power source', function () {
+    $this->actingAs($this->user);
+    $publicService = EventType::where('code', 'PS')->firstOrFail();
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'City Marathon 2026')
+        ->set('event_type_id', $publicService->id)
+        ->set('start_time', '2026-04-19 11:00:00')
+        ->set('end_time', '2026-04-19 18:00:00')
+        ->set('callsign', 'W1AW')
+        ->set('uses_commercial_power', false)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('events.index'));
+
+    $config = Event::where('name', 'City Marathon 2026')->first()->eventConfiguration;
+
+    expect($config->section_id)->toBeNull()
+        ->and($config->operating_class_id)->toBeNull()
+        ->and($config->has_gota_station)->toBeFalse()
+        ->and($config->event->rules_version)->toBe('1')
+        ->and($config->isScored())->toBeFalse();
+});
+
+test('an unscored event clears contest fields picked before the type changed', function () {
+    $this->actingAs($this->user);
+    $publicService = EventType::where('code', 'PS')->firstOrFail();
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('name', 'Bike Tour 2026')
+        ->set('event_type_id', $publicService->id)
+        ->set('start_time', '2026-05-02 12:00:00')
+        ->set('end_time', '2026-05-02 20:00:00')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $this->operatingClassA->id)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $config = Event::where('name', 'Bike Tour 2026')->first()->eventConfiguration;
+
+    expect($config->section_id)->toBeNull()
+        ->and($config->operating_class_id)->toBeNull();
+});
+
+test('the event form hides contest fields for unscored event types', function () {
+    $this->actingAs($this->user);
+    $publicService = EventType::where('code', 'PS')->firstOrFail();
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->assertSee('ARRL/RAC Section')
+        ->assertSee('Number of Transmitters')
+        ->set('event_type_id', $publicService->id)
+        ->assertDontSee('ARRL/RAC Section')
+        ->assertDontSee('Operating Class')
+        ->assertDontSee('Number of Transmitters')
+        ->assertDontSee('GOTA Station');
+});

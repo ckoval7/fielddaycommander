@@ -225,6 +225,7 @@
                     hint="Optional club or organization name"
                 />
 
+                @if($this->isScoredType)
                 <x-select
                     label="ARRL/RAC Section"
                     wire:model="section_id"
@@ -261,6 +262,7 @@
                     hint="Simultaneous transmitters (e.g., 2A = 2)"
                     :disabled="$isLocked"
                 />
+                @endif
             </div>
 
             @if($this->isWinterFieldDay)
@@ -298,6 +300,7 @@
             @endif
         </x-card>
 
+        @if($this->isScoredType)
         <!-- Section 4: Power Configuration -->
         <x-card class="mb-6">
             <x-slot:title>
@@ -463,6 +466,7 @@
             <x-alert icon="phosphor-warning" class="alert-warning mb-6">
                 The selected operating class does not permit a GOTA station.
             </x-alert>
+        @endif
         @endif
 
         <!-- Public Visitors -->
