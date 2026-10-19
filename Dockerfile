@@ -109,4 +109,11 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=3 \
     CMD curl -fsS http://127.0.0.1:8000/up > /dev/null || exit 1
 
+# Where this build is published, so `setup` (docker/install.sh) writes a
+# compose file pointing back at it. Last, so a new tag only rebuilds this layer.
+ARG FDC_IMAGE_REPO=ghcr.io/ckoval7/fielddaycommander
+ARG FDC_IMAGE_TAG=""
+ENV FDC_IMAGE_REPO=${FDC_IMAGE_REPO} \
+    FDC_IMAGE_TAG=${FDC_IMAGE_TAG}
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

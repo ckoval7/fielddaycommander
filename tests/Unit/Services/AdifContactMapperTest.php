@@ -61,7 +61,8 @@ test('prefers SUBMODE over MODE for FT4/FST4/Q65', function () {
 
     $dto = $this->mapper->map($tags, $this->source);
 
-    expect($dto->modeName)->toBe('FT4');
+    expect($dto->modeName)->toBe('FT4')
+        ->and($dto->parentModeName)->toBe('MFSK');
 });
 
 test('uses MODE when SUBMODE is absent', function () {

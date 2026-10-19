@@ -68,6 +68,7 @@ class AdifContactMapper
             externalId: $externalId,
             isDelete: false,
             isReplace: false,
+            parentModeName: $tags['MODE'] ?? null,
         );
     }
 }

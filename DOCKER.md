@@ -2,7 +2,36 @@
 
 Run FD Commander with Docker Compose. The setup includes an application container (web server, WebSockets, queue worker, scheduler) and a MySQL database container.
 
-## Quick Start
+## Quick Start (prebuilt image)
+
+You don't need a copy of the source code to run the prebuilt image. Make a directory for the install and let the image set it up:
+
+```bash
+mkdir fd-commander && cd fd-commander
+
+# Writes docker-compose.yml, backup.sh, restore.sh and a .env with fresh secrets
+docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/work" ghcr.io/ckoval7/fielddaycommander:latest setup
+
+docker compose up -d
+docker compose logs -f app
+```
+
+The `-u` flag makes the files belong to you instead of the container's `www-data` user. The `.env` it writes holds `APP_KEY` and every password, so keep a copy with your backups. Running `setup` again won't replace any file or secret that's already there, so it's safe on an existing install.
+
+The compose file is pinned to the release you ran `setup` from. To move to another release, set `FDC_TAG` in `.env` (for example `FDC_TAG=26.11.1`), then run:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+Images are published for `amd64` and `arm64`, so the same commands work on a Raspberry Pi 4 or 5 running a 64-bit OS.
+
+| Tag | What it is |
+|-----|------------|
+| `latest` | The newest release |
+| `26.10.8`, `26.10` | A specific release, or the newest release in that month |
+
+## Quick Start (build from source)
 
 ```bash
 # 1. Generate .env with secure defaults (DB password, Reverb keys, etc.)

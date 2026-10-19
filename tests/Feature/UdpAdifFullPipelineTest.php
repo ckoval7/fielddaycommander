@@ -208,3 +208,16 @@ test('WSJTX binary packet is detectable by magic number', function () {
     $adifMagic = unpack('N', $adifFirstFour)[1];
     expect($adifMagic)->not->toBe(0xADBCCBDA);
 });
+
+test('full pipeline: fldigi sub-mode off the old list resolves to Digital and scores', function () {
+    $adifText = '<call:4>W1AW <mode:6>OLIVIA <submode:12>OLIVIA 8/250 <qso_date:8>20260628 <time_on:6>184300 '
+        .'<band:3>20m <freq:6>14.072 <station_callsign:5>K3CPK <operator:5>K3CPK '
+        .'<SRX_STRING:5>3A CT <arrl_sect:2>CT <EOR>';
+
+    $dto = $this->mapper->map($this->adifParser->parse($adifText)['records'][0], 'udp-adif');
+    $contact = $this->handler->handleContact($dto, $this->config);
+
+    expect($contact->mode->name)->toBe('Digital')
+        ->and($contact->submode)->toBe('OLIVIA 8/250')
+        ->and($contact->points)->toBeGreaterThan(0);
+});

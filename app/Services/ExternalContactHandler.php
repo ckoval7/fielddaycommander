@@ -135,7 +135,7 @@ class ExternalContactHandler
             : $this->bandResolver->resolveByName($dto->bandName);
 
         $modeName = $dto->modeName ?? $cachedRadioInfo?->modeName;
-        $modeId = $this->modeResolver->resolve($modeName);
+        $modeId = $this->modeResolver->resolve($modeName, $dto->parentModeName);
         $sectionId = $this->resolveSection($dto->sectionCode);
 
         $session = $this->sessionResolver->resolve(
@@ -315,7 +315,7 @@ class ExternalContactHandler
         $bandId = $dto->frequencyHz
             ? $this->bandResolver->resolveByFrequencyHz($dto->frequencyHz)
             : ($this->bandResolver->resolveByName($dto->bandName) ?? $contact->band_id);
-        $modeId = $this->modeResolver->resolve($dto->modeName) ?? $contact->mode_id;
+        $modeId = $this->modeResolver->resolve($dto->modeName, $dto->parentModeName) ?? $contact->mode_id;
         $sectionId = $this->resolveSection($dto->sectionCode) ?? $contact->section_id;
 
         $previousKey = $this->dupes->keyFor($contact);

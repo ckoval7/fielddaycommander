@@ -65,6 +65,9 @@ Read your draft as a human technical editor would. Cut sentences that don't earn
 - Say things plainly. Don't write clever-sounding phrases the reader has to decode, like "Most of this guide is for the days you need it." Write what you mean: "The rest of this guide covers restoring and moving servers, so you can come back to it when you need it."
 - Leave out internal details the reader doesn't need to act on. On the FAQ and marketing pages, "the app picks the right scoring rules for the event" beats listing rule versions and when they lock. Save that kind of detail for the reference docs, and only include it there if someone needs it to make a choice.
 - Don't tack a clause onto a sentence to rule out a problem the reader wasn't worried about ("…ready for the next operator, with no chance of logging under whoever sat there last"). End the sentence where the useful information ends. If a risk really matters, give it its own sentence or a callout.
+- Don't reassure the reader that the software is looking after them: "FD Commander picks the right one for you", "has everything ready for you", "takes care of it", "you'll be glad you did". State the fact plainly ("It depends on your operating class:") and move on.
+- Prefer the spoken form "doesn't have a" over the clipped "has no": "Winter Field Day doesn't have a safety bonus", not "Winter Field Day has no safety bonus".
+- Field Day is an operating event, not a contest. Don't frame it as something clubs win, lose, or beat each other at ("where scores are won", "won or lost in the weeks before"). Talk about earning points, a bigger score, or getting more out of the event.
 - Avoid personifying data or software with verbs like "lives", "sits", "breathes", or "speaks". Say where it's stored or what it does.
 
 ## Words to avoid
@@ -108,6 +111,7 @@ How-to guides sound like an experienced club member sitting next to you at the b
 - The site has a dark theme, so use the `-dark` version. Some screenshots exist only in dark (for example `station-card-dark.png`).
 - Small, cropped screenshots (a single card or dialog) get `class="screenshot compact"` so they show at their natural size instead of being stretched to full width. Set `width` and `height` to the image's real pixel size.
 - Markup: `<figure class="screenshot"><a href="..."><img src="..." alt="..." loading="lazy" width="1920" height="1080"></a><figcaption>...</figcaption></figure>`. Styles live in `fd-commander.css`.
+- Clicking a screenshot opens it full size in a modal, handled by `lightbox.js`. Any page with screenshots needs `<script src="../lightbox.js"></script>` (no `../` at the root) after `footer.js`/`toc.js`. The `<a>` must be a direct child of the figure, and the modal reuses the figcaption unless the caption has its own links.
 - The alt text describes what's on screen. The caption tells the reader what to notice, and makes no claims the image doesn't show.
 
 ## Marketing conventions (index.html, fd-commander-features.html)

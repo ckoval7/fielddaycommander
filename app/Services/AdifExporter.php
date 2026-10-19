@@ -60,6 +60,29 @@ class AdifExporter
         'PSK63' => ['PSK', 'PSK63'],
         'PSK125' => ['PSK', 'PSK125'],
         'FREEDV' => ['DIGITALVOICE', 'FREEDV'],
+        'DSTAR' => ['DIGITALVOICE', 'DSTAR'],
+        'DMR' => ['DIGITALVOICE', 'DMR'],
+        'C4FM' => ['DIGITALVOICE', 'C4FM'],
+        'M17' => ['DIGITALVOICE', 'M17'],
+    ];
+
+    /**
+     * Sub-mode patterns for ADIF mode families whose speed or bandwidth
+     * variants are too many to list (fldigi's PSK125, MFSK16, OLIVIA 8/250,
+     * THOR16 ...), as pattern => ADIF parent MODE. The sub-mode is kept.
+     *
+     * @var array<string, string>
+     */
+    protected const SUBMODE_FAMILIES = [
+        '/^(PSK|QPSK|8PSK)\d+[A-Z0-9]*$/' => 'PSK',
+        '/^MFSK\d+$/' => 'MFSK',
+        '/^OLIVIA \d+\/\d+$/' => 'OLIVIA',
+        '/^THOR(-M|\d+(X\d+)?)$/' => 'THOR',
+        '/^DOM(INOEX|INOF|-M|\d+)$/' => 'DOMINO',
+        '/^JT65[A-C]2?$/' => 'JT65',
+        '/^JT9(-\d+|[A-H](FAST)?)$/' => 'JT9',
+        '/^JT4[A-G]$/' => 'JT4',
+        '/^(FMHELL|FSKHELL|HELL80|HELLX5|HELLX9|HFSK|PSKHELL|SLOWHELL)$/' => 'HELL',
     ];
 
     /**
@@ -125,7 +148,7 @@ class AdifExporter
         $submode = $submode !== null ? strtoupper(trim($submode)) : '';
 
         if ($submode !== '') {
-            return self::MODE_MAP[$submode] ?? [$submode, null];
+            return self::MODE_MAP[$submode] ?? $this->familyMode($submode) ?? [$submode, null];
         }
 
         return match ($category) {
@@ -134,6 +157,27 @@ class AdifExporter
             'Digital' => ['RTTY', null],
             default => [null, null],
         };
+    }
+
+    /**
+     * ADIF [MODE, SUBMODE] for a sub-mode in a known family, or null. CW
+     * variants a rig reports over CAT (CW-R, CWR) are plain CW.
+     *
+     * @return array{0: string, 1: ?string}|null
+     */
+    protected function familyMode(string $submode): ?array
+    {
+        if (preg_match('/^CW-?[RUL]$/', $submode) === 1) {
+            return ['CW', null];
+        }
+
+        foreach (self::SUBMODE_FAMILIES as $pattern => $mode) {
+            if (preg_match($pattern, $submode) === 1) {
+                return [$mode, $submode];
+            }
+        }
+
+        return null;
     }
 
     protected function record(EventConfiguration $config, Contact $contact): string
