@@ -166,6 +166,7 @@
                     <x-input
                         label="Place of Origin"
                         wire:model="placeOfOrigin"
+                        autocapitalize="words"
                         icon="phosphor-map-pin"
                         placeholder="e.g., Hartford, CT"
                         required
@@ -183,6 +184,7 @@
                     <x-input
                         label="Addressee Name"
                         wire:model="addresseeName"
+                        autocapitalize="words"
                         icon="phosphor-user"
                         placeholder="Full name"
                         required
@@ -201,6 +203,7 @@
                     <x-input
                         label="Street Address"
                         wire:model="addresseeAddress"
+                        autocapitalize="words"
                         autocomplete="off"
                         icon="phosphor-house"
                         placeholder="Optional"
@@ -209,6 +212,7 @@
                     <x-input
                         label="City"
                         wire:model="addresseeCity"
+                        autocapitalize="words"
                         autocomplete="off"
                         icon="phosphor-buildings"
                         placeholder="Optional"
@@ -245,6 +249,7 @@
                     <x-input
                         label="Name"
                         wire:model="addresseeName"
+                        autocapitalize="words"
                         icon="phosphor-user"
                         placeholder="Recipient name"
                         required
@@ -253,6 +258,7 @@
                     <x-input
                         label="Position/Title"
                         wire:model="icsToPosition"
+                        autocapitalize="words"
                         icon="phosphor-briefcase"
                         placeholder="e.g., Operations Chief"
                     />
@@ -267,6 +273,7 @@
                     <x-input
                         label="Name"
                         wire:model="signature"
+                        autocapitalize="words"
                         icon="phosphor-user"
                         placeholder="Sender name"
                         required
@@ -275,6 +282,7 @@
                     <x-input
                         label="Position/Title"
                         wire:model="icsFromPosition"
+                        autocapitalize="words"
                         icon="phosphor-briefcase"
                         placeholder="e.g., Planning Section Chief"
                     />
@@ -288,6 +296,7 @@
                 <x-input
                     label="Subject"
                     wire:model="icsSubject"
+                    autocapitalize="sentences"
                     icon="phosphor-chat-circle"
                     placeholder="Message subject"
                     required
@@ -324,6 +333,7 @@
                     <x-input
                         label="Signature"
                         wire:model="signature"
+                        autocapitalize="words"
                         icon="phosphor-pencil-simple"
                         placeholder="Sender's name"
                         required
@@ -479,6 +489,7 @@
                         <x-input
                             label="Replier Name"
                             wire:model="icsReplyName"
+                            autocapitalize="words"
                             icon="phosphor-user"
                             placeholder="Name"
                         />
@@ -486,6 +497,7 @@
                         <x-input
                             label="Replier Position/Title"
                             wire:model="icsReplyPosition"
+                            autocapitalize="words"
                             icon="phosphor-briefcase"
                             placeholder="Position"
                         />

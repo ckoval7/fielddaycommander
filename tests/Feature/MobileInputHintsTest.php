@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use App\Livewire\Gallery\GalleryUpload;
 use App\Livewire\Guestbook\GuestbookForm;
 use App\Livewire\Messages\W1awBulletinForm;
 use App\Livewire\Profile\UserProfile;
@@ -34,7 +35,7 @@ test('login pairs the username and current password autocomplete tokens', functi
         ->assertSee('autocomplete="current-password"', false);
 });
 
-test('register gives the call sign a capitalized keyboard and names their autocomplete tokens', function () {
+test('register gives the call sign a capitalized keyboard, capitalizes names and names their autocomplete tokens', function () {
     config(['auth-security.registration_mode' => 'open']);
 
     $this->get('/register')
@@ -42,6 +43,7 @@ test('register gives the call sign a capitalized keyboard and names their autoco
         ->assertSee('autocapitalize="characters"', false)
         ->assertSee('autocorrect="off"', false)
         ->assertSee('spellcheck="false"', false)
+        ->assertSee('autocapitalize="words"', false)
         ->assertSee('autocomplete="given-name"', false)
         ->assertSee('autocomplete="family-name"', false)
         ->assertSee('autocomplete="email"', false)
@@ -77,7 +79,7 @@ test('the W1AW bulletin frequency field uses a decimal keyboard', function () {
         ->assertSeeHtml('inputmode="decimal"');
 });
 
-test('system preferences use a phone keyboard and an uppercase callsign keyboard', function () {
+test('system preferences use a phone keyboard, an uppercase callsign keyboard and a capitalized organization name', function () {
     $admin = User::factory()->create();
     $role = Role::create(['name' => 'Admin', 'guard_name' => 'web']);
     Permission::create(['name' => 'manage-settings']);
@@ -87,18 +89,20 @@ test('system preferences use a phone keyboard and an uppercase callsign keyboard
     Livewire::actingAs($admin)
         ->test(SystemPreferences::class)
         ->assertSeeHtml('type="tel"')
-        ->assertSeeHtml('autocapitalize="characters"');
+        ->assertSeeHtml('autocapitalize="characters"')
+        ->assertSeeHtml('autocapitalize="words"');
 });
 
-test('the profile form autofills the user\'s own name and email', function () {
+test('the profile form autofills and capitalizes the user\'s own name and email', function () {
     Livewire::actingAs(User::factory()->create())
         ->test(UserProfile::class)
+        ->assertSeeHtml('autocapitalize="words"')
         ->assertSeeHtml('autocomplete="given-name"')
         ->assertSeeHtml('autocomplete="family-name"')
         ->assertSeeHtml('autocomplete="email"');
 });
 
-test('the guestbook form autofills the visitor name and email and capitalizes the callsign', function () {
+test('the guestbook form autofills the visitor name and email and capitalizes the name and callsign', function () {
     $event = Event::factory()->create([
         'is_active' => true,
         'start_time' => now()->subHours(12),
@@ -112,5 +116,12 @@ test('the guestbook form autofills the visitor name and email and capitalizes th
     Livewire::test(GuestbookForm::class)
         ->assertSeeHtml('autocomplete="name"')
         ->assertSeeHtml('autocomplete="email"')
+        ->assertSeeHtml('autocapitalize="words"')
         ->assertSeeHtml('autocapitalize="characters"');
+});
+
+test('the photo caption starts sentences with a capital', function () {
+    Livewire::actingAs(User::factory()->create())
+        ->test(GalleryUpload::class, ['eventConfiguration' => EventConfiguration::factory()->create()])
+        ->assertSeeHtml('autocapitalize="sentences"');
 });

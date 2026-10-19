@@ -127,6 +127,7 @@
             <x-input
                 label="Role Name"
                 wire:model="roleName"
+                autocapitalize="words"
                 required
                 hint="Unique name for this role"
             />

@@ -55,8 +55,8 @@
                 @if($needsName)
                     <p class="text-sm text-base-content/70">We don't have a name for this callsign yet. Please enter yours.</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <x-input label="First name" wire:model="firstName" autocomplete="off" maxlength="50" />
-                        <x-input label="Last name" wire:model="lastName" autocomplete="off" maxlength="50" />
+                        <x-input label="First name" wire:model="firstName" autocomplete="off" maxlength="50" autocapitalize="words" />
+                        <x-input label="Last name" wire:model="lastName" autocomplete="off" maxlength="50" autocapitalize="words" />
                     </div>
                     <label class="flex items-center gap-3 cursor-pointer py-2">
                         <input type="checkbox" class="checkbox checkbox-sm" wire:model="isYouth" />

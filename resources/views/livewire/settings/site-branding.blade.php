@@ -10,6 +10,7 @@
             <x-input
                 label="Site Name"
                 wire:model="site_name"
+                autocapitalize="words"
                 required
                 icon="phosphor-buildings"
                 hint="Your organization or club name"
@@ -18,6 +19,7 @@
             <x-input
                 label="Site Tagline"
                 wire:model="site_tagline"
+                autocapitalize="sentences"
                 icon="phosphor-chat-centered-dots"
                 hint="Optional subtitle or motto"
             />

@@ -120,6 +120,7 @@
                 <x-input
                     label="Label"
                     wire:model="itemLabel"
+                    autocapitalize="sentences"
                     placeholder="e.g., Fire extinguisher on hand"
                     required
                 />

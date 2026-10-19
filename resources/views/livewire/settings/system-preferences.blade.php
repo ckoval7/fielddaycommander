@@ -14,6 +14,7 @@
             <x-input
                 label="Organization Name"
                 wire:model="organization_name"
+                autocapitalize="words"
                 icon="phosphor-buildings"
                 placeholder="e.g., Springfield Amateur Radio Club"
                 required

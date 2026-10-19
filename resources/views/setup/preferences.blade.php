@@ -39,6 +39,7 @@
                 <p class="text-sm text-gray-600 mb-4">Set up your club or organization details. This will be used for club-owned equipment.</p>
 
                 <x-input
+                    autocapitalize="words"
                     label="Organization Name"
                     name="organization_name"
                     icon="phosphor-buildings"

@@ -89,6 +89,7 @@
                 <div>
                     <x-input
                         wire:model="title"
+                        autocapitalize="words"
                         placeholder="Dashboard name"
                         icon="phosphor-pencil-simple"
                         class="input-sm"
@@ -101,6 +102,7 @@
                 <div>
                     <x-input
                         wire:model="description"
+                        autocapitalize="sentences"
                         placeholder="Description (optional)"
                         icon="phosphor-file-text"
                         class="input-sm"

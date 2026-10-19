@@ -153,6 +153,7 @@
                         <x-input
                             label="Name"
                             wire:model="name"
+                            autocapitalize="words"
                             autocomplete="name"
                             icon="phosphor-user"
                             placeholder="Your full name"

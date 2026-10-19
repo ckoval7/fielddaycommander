@@ -11,6 +11,7 @@
         <x-input
             label="Station Name"
             wire:model.blur="name"
+            autocapitalize="words"
             icon="phosphor-cell-signal-high"
             placeholder="e.g., Station 1, Digital Station, Phone Tent"
             autocomplete="off"
