@@ -7,27 +7,25 @@ namespace App\Services;
 
 use App\Models\Mode;
 
+/**
+ * Sorts a raw mode name into FD Commander's mode groups: CW, Phone or Digital.
+ *
+ * Neither ARRL Field Day nor Winter Field Day lists the modes it allows, so
+ * this classifies rather than gatekeeps: CW is CW, a mode whose far end is
+ * voice is Phone, and anything else is Digital. Event-specific exclusions
+ * (such as the WFD 2027 WSJT ban) belong in the rule set, not here.
+ */
 class ModeResolverService
 {
     /**
-     * ADIF mode names that map to FD Commander's "Phone" mode.
+     * Mode names that carry voice: analog phone, plus digital voice, which
+     * the rules score as Phone ("DIGITALVOICE" is the ADIF parent mode).
      *
-     * @var array<string>
+     * @var array<int, string>
      */
-    private const PHONE_MODES = ['SSB', 'USB', 'LSB', 'FM', 'AM', 'PM'];
-
-    /**
-     * ADIF mode names that map to FD Commander's "Digital" mode.
-     *
-     * @var array<string>
-     */
-    private const DIGITAL_MODES = [
-        'RTTY', 'PSK', 'PSK31', 'PSK63', 'FT8', 'FT4', 'JS8', 'JT65',
-        'JT9', 'MFSK', 'OLIVIA', 'CONTESTI', 'DOMINO', 'FSK', 'HELL',
-        'ROS', 'THROB', 'SSTV', 'FAX', 'PKT', 'DSTAR', 'DMR', 'C4FM',
-        'FREEDV', 'ARDOP', 'WINMOR', 'VARA',
-        'FT2', 'FST4', 'FST4W', 'JT4', 'Q65', 'MSK144', 'WSPR', 'ECHO',
-        'JTTY',
+    public const PHONE_MODES = [
+        'SSB', 'USB', 'LSB', 'FM', 'AM', 'PM', 'NFM', 'WFM',
+        'DIGITALVOICE', 'FREEDV', 'DSTAR', 'DMR', 'C4FM', 'M17',
     ];
 
     /**
@@ -39,31 +37,55 @@ class ModeResolverService
     {
         return match ($category) {
             'CW' => ['CW'],
-            'Phone' => ['USB', 'LSB', 'FM', 'AM'],
-            'Digital' => ['RTTY', 'PSK31', 'SSTV', 'JTTY', 'FT8', 'FT4', 'JS8', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'VARA', 'FREEDV'],
+            'Phone' => ['USB', 'LSB', 'FM', 'AM', 'FREEDV', 'DSTAR', 'DMR', 'C4FM', 'M17'],
+            'Digital' => ['RTTY', 'PSK31', 'SSTV', 'JTTY', 'FT8', 'FT4', 'JS8', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'VARA'],
             default => [],
         };
     }
 
     /**
      * Resolve a raw mode string to a FD Commander Mode ID.
+     *
+     * The sub-mode decides when it names CW or a voice mode; otherwise an
+     * ADIF parent mode that does (e.g. DIGITALVOICE) decides; anything else
+     * is Digital. A blank mode resolves to null: there is nothing to go on.
      */
-    public function resolve(?string $modeName): ?int
+    public function resolve(?string $modeName, ?string $parentModeName = null): ?int
     {
-        if ($modeName === null) {
+        $category = $this->category($modeName);
+
+        if ($category === null) {
             return null;
         }
 
-        $modes = Mode::query()->pluck('id', 'name')->toArray();
-        $upper = strtoupper($modeName);
+        if ($category === 'Digital') {
+            $category = $this->category($parentModeName) ?? 'Digital';
+        }
 
-        $category = match (true) {
-            $upper === 'CW' => 'CW',
+        return Mode::query()->where('name', $category)->value('id');
+    }
+
+    /**
+     * The mode group a single mode name falls in, or null when it is blank.
+     */
+    private function category(?string $modeName): ?string
+    {
+        $upper = strtoupper(trim($modeName ?? ''));
+
+        return match (true) {
+            $upper === '' => null,
+            $this->isCw($upper) => 'CW',
             in_array($upper, self::PHONE_MODES, true) => 'Phone',
-            in_array($upper, self::DIGITAL_MODES, true) => 'Digital',
-            default => null,
+            default => 'Digital',
         };
+    }
 
-        return $category !== null ? ($modes[$category] ?? null) : null;
+    /**
+     * CW, including the reverse and sideband variants rigs report over CAT
+     * (CW-R, CWR, CW-U, CW-L).
+     */
+    private function isCw(string $upper): bool
+    {
+        return preg_match('/^CW(-?[RUL])?$/', $upper) === 1;
     }
 }

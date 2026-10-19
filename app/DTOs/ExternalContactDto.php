@@ -29,5 +29,6 @@ readonly class ExternalContactDto
         public bool $isReplace = false,
         public ?string $oldCallsign = null,
         public ?Carbon $oldTimestamp = null,
+        public ?string $parentModeName = null,
     ) {}
 }
