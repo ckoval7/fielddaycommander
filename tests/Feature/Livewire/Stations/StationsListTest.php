@@ -276,6 +276,22 @@ test('equipment count badge shows correct count', function () {
     expect($stations->first()->additional_equipment_count)->toBe(3);
 });
 
+test('station cards size columns to the content width and wrap their actions', function () {
+    $this->actingAs($this->user);
+    $this->user->givePermissionTo('manage-stations');
+
+    $station = Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+    OperatingSession::factory()->active()->create(['station_id' => $station->id]);
+
+    Livewire::test(StationsList::class)
+        ->assertSeeHtml('<div class="@container">')
+        ->assertSeeHtml('grid grid-cols-1 @xl:grid-cols-2 @5xl:grid-cols-3')
+        ->assertSeeHtml('sm:flex-row sm:flex-wrap gap-2 pt-3 border-t border-base-300" data-station-actions')
+        ->assertSee('End Sessions')
+        ->assertSeeHtml('btn-warning flex-1 whitespace-nowrap')
+        ->assertSeeHtml('btn-xs btn-outline mt-2 h-auto min-h-6 py-1 pointer-coarse:min-h-11');
+});
+
 // Delete Action Tests
 
 test('can delete station without contacts (hard delete)', function () {
