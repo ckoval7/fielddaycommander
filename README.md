@@ -84,7 +84,7 @@ Built with Laravel 12, Livewire, and Mary UI. Served by FrankenPHP (Caddy + Lara
 
 ## Contributing
 
-Contributions are welcome! Branch from `dev` and open your pull request against `dev`, not `main`. [CONTRIBUTING.md](CONTRIBUTING.md) covers the branch flow, tests and formatting.
+Contributions are welcome! Branch from `dev` and open your pull request against `dev`. A PR opened against `main` is moved to `dev` automatically. [CONTRIBUTING.md](CONTRIBUTING.md) covers the branch flow, tests and formatting.
 
 ## License
 

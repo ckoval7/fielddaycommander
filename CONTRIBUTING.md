@@ -11,7 +11,7 @@ Thanks for helping out. This page covers how branches flow, what a pull request 
 | `feature/demo-mode` | The public demo site: `dev` plus the demo-only code. | `dev`, plus demo-only commits |
 | Feature branches | One fix or feature each, cut from `dev`. | Nothing |
 
-Both `main` and `dev` are protected. They can't be force-pushed or deleted, and changes reach them through pull requests. A check called `source-branch` fails any PR that breaks the table above, such as a feature branch aimed at `main`.
+Both `main` and `dev` are protected. They can't be force-pushed or deleted, and changes reach them through pull requests. `main` is the default branch, so the repo page shows the latest release. A check called `source-branch` keeps PRs on the right path: a feature-branch PR opened against `main` is moved to `dev` automatically, and a PR that breaks the table above in any other way fails.
 
 The demo branch follows `dev` rather than `main`, so the demo site gets fixes as soon as they land instead of waiting for a release. Demo-only code (the demo seeder, controller, middleware, commands and config) stays on `feature/demo-mode` and never merges into `dev` or `main`.
 
@@ -35,7 +35,7 @@ The demo branch follows `dev` rather than `main`, so the demo site gets fixes as
    vendor/bin/pint --dirty
    ```
 
-4. Open a pull request against `dev`. Say what changed and why, and include screenshots for anything you can see in the UI, from a phone as well as a desktop.
+4. Open a pull request against `dev`. If you forget and open it against `main`, it gets moved to `dev` for you. Say what changed and why, and include screenshots for anything you can see in the UI, from a phone as well as a desktop.
 
 A PR with more than one commit is squash-merged into `dev`. A single-commit PR is merged as is.
 
