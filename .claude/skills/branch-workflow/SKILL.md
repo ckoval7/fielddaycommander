@@ -61,7 +61,9 @@ Use a regular merge, never a squash, or later merges from `dev` will conflict. L
 
 ## GitHub protection
 
-`.github/rulesets/main.json` and `dev.json` define the rulesets: no deletion, no force-push, changes by PR, and the `source-branch` check from `.github/workflows/branch-policy.yml` must pass. Repo admins bypass them. To create or refresh them (the user runs this; it changes repo settings):
+`.github/rulesets/main.json` and `dev.json` define the rulesets: no deletion, no force-push, changes by PR, and the `source-branch` check from `.github/workflows/branch-policy.yml` must pass. Repo admins bypass them.
+
+`main` stays the default branch so visitors see the release. The `source-branch` job runs on `pull_request_target`, so it uses the base branch's copy of the workflow: it retargets feature-branch PRs from `main` to `dev`, and a change to it only takes effect for PRs into `main` once `main` has it. Never add a checkout of PR code to that workflow, since its token can edit PRs. To create or refresh them (the user runs this; it changes repo settings):
 
 ```bash
 for b in main dev; do gh api -X POST repos/ckoval7/fielddaycommander/rulesets --input .github/rulesets/$b.json; done
