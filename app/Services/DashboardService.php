@@ -360,6 +360,19 @@ class DashboardService
     }
 
     /**
+     * Whether a widget only means something for a scored contest.
+     *
+     * @param  array<string, mixed>  $widget
+     */
+    public function isScoredOnly(array $widget): bool
+    {
+        $scoredOnly = config('dashboard.scored_only', []);
+
+        return in_array($widget['type'] ?? null, $scoredOnly['widget_types'] ?? [], true)
+            || in_array($widget['config']['metric'] ?? null, $scoredOnly['metrics'] ?? [], true);
+    }
+
+    /**
      * Keep only the settings a widget type's schema defines, with valid values.
      *
      * Unknown keys are dropped; invalid values fall back to the schema default,

@@ -488,6 +488,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Scored-Event Widgets
+    |--------------------------------------------------------------------------
+    |
+    | Widgets that only mean something for a scored contest. They are hidden
+    | (not removed) while the event in context is unscored, so a saved
+    | dashboard still shows them again at the next Field Day.
+    |
+    */
+
+    'scored_only' => [
+        'widget_types' => ['sections_worked'],
+        'metrics' => ['total_score', 'sections_worked', 'points_per_hour', 'bonus_points_earned'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Dashboard Limits
     |--------------------------------------------------------------------------
     |

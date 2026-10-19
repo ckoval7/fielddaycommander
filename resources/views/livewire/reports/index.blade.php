@@ -81,7 +81,7 @@
             <x-mary-icon name="phosphor-chart-bar" class="w-16 h-16 opacity-25" />
             <div class="text-2xl font-semibold opacity-50">No active event</div>
             <p class="text-sm text-center max-w-sm" style="color: var(--reports-text-muted);">
-                Reports will be available once a Field Day event is active.
+                Reports will be available once an event is active.
             </p>
         </div>
     @else
@@ -100,6 +100,7 @@
 
         <span style="color: var(--reports-border);">|</span>
 
+        @if ($this->isScored)
         <span class="text-sm font-semibold uppercase tracking-wide"
               style="color: var(--reports-text-muted);">
             {{ $this->event->eventConfiguration->operatingClass?->name ?? 'Unknown Class' }}
@@ -111,6 +112,12 @@
               style="color: var(--reports-text-muted);">
             {{ $this->event->eventConfiguration->section?->name ?? 'Unknown Section' }}
         </span>
+        @else
+        <span class="text-sm font-semibold uppercase tracking-wide"
+              style="color: var(--reports-text-muted);">
+            {{ $this->event->eventType?->name }}
+        </span>
+        @endif
 
         @if ($this->event->eventConfiguration->club_name)
             <span style="color: var(--reports-border);">·</span>
@@ -137,7 +144,7 @@
             Export &amp; Download
         </div>
 
-        @if($this->contactsNeedingAttentionCount > 0)
+        @if($this->isScored && $this->contactsNeedingAttentionCount > 0)
             <x-alert icon="phosphor-warning" class="alert-warning mb-5" data-testid="needs-attention-alert">
                 <div>
                     <span class="font-semibold">
@@ -154,6 +161,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
             {{-- CABRILLO LOG — amber, prominent CTA --}}
+            @if ($this->isScored)
             <a href="{{ route('reports.cabrillo') }}"
                class="group no-underline block rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md"
                style="background-color: var(--reports-cabrillo-bg); border: 2px solid var(--reports-cabrillo-border);">
@@ -176,6 +184,8 @@
                     </div>
                 </div>
             </a>
+
+            @endif
 
             {{-- ADIF LOG — neutral --}}
             <a href="{{ route('reports.adif') }}"
@@ -417,6 +427,7 @@
     {{-- ============================================================
          SECTION 4: SECTIONS WORKED
          ============================================================ --}}
+    @if ($this->isScored)
     <div class="px-3 sm:px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
         <div class="text-xs font-bold uppercase tracking-widest mb-5"
              style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
@@ -456,6 +467,7 @@
             </div>
         @endif
     </div>
+    @endif
 
     {{-- ============================================================
          SECTION 5: VOLUNTEER HOURS

@@ -32,6 +32,16 @@ class ReportsIndex extends Component
     }
 
     /**
+     * Whether this event is scored as a contest. Unscored events get no
+     * Cabrillo log, submission sheet, event summary or sections worked.
+     */
+    #[Computed]
+    public function isScored(): bool
+    {
+        return $this->event?->isScored() ?? true;
+    }
+
+    /**
      * Whether to offer the ARRL Field Day submission sheet for this event.
      *
      * Winter Field Day has no equivalent form, so the card is hidden rather
@@ -54,7 +64,7 @@ class ReportsIndex extends Component
     {
         $config = app(EventContextService::class)->getEventConfiguration();
 
-        return $config !== null && ! $config->usesArrlSubmissionSheet();
+        return $config !== null && $config->isScored() && ! $config->usesArrlSubmissionSheet();
     }
 
     /**

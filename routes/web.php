@@ -123,10 +123,10 @@ Route::get('/logbook/export', [LogbookController::class, 'export'])->name('logbo
 // Section Map (public)
 Route::get('/section-map', function () {
     return view('section-map.index');
-})->name('section-map');
+})->middleware('scored-event')->name('section-map');
 
 // Event Management
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'scored-event'])->group(function () {
     Route::get('/scoring', function () {
         return view('scoring.index');
     })->name('scoring.index');
@@ -234,7 +234,7 @@ Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
 });
 
 // W1AW Bulletin — accessible to all authenticated users (schedule viewing pre-event)
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'scored-event'])->group(function () {
     Route::get('/w1aw-bulletin', W1awBulletinForm::class)->name('events.w1aw-bulletin');
 });
 
@@ -282,10 +282,13 @@ Route::middleware(['auth', 'verified', 'can:manage-settings'])->group(function (
 
 Route::middleware(['auth', 'verified', 'can:view-reports'])->group(function () {
     Route::get('/reports', ReportsIndex::class)->name('reports.index');
-    Route::get('/reports/cabrillo', [ReportController::class, 'cabrillo'])->name('reports.cabrillo');
     Route::get('/reports/adif', [ReportController::class, 'adif'])->name('reports.adif');
-    Route::get('/reports/wfd-event-summary', [ReportController::class, 'wfdEventSummary'])->name('reports.wfd-event-summary');
-    Route::get('/reports/submission-sheet', [ReportController::class, 'submissionSheet'])->name('reports.submission-sheet');
+
+    Route::middleware('scored-event')->group(function () {
+        Route::get('/reports/cabrillo', [ReportController::class, 'cabrillo'])->name('reports.cabrillo');
+        Route::get('/reports/wfd-event-summary', [ReportController::class, 'wfdEventSummary'])->name('reports.wfd-event-summary');
+        Route::get('/reports/submission-sheet', [ReportController::class, 'submissionSheet'])->name('reports.submission-sheet');
+    });
 });
 
 // Administration

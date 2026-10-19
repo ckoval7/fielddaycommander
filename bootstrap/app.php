@@ -11,6 +11,7 @@ use App\Http\Middleware\EnforceRegistrationMode;
 use App\Http\Middleware\EnforceStationMode;
 use App\Http\Middleware\Ensure2FAEnabled;
 use App\Http\Middleware\EnsureAccountNotLocked;
+use App\Http\Middleware\EnsureEventIsScored;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\SecurityHeaders;
 use App\Support\LocalNetworkPusherServer;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'verified' => EnsureEmailIsVerified::class,
+            'scored-event' => EnsureEventIsScored::class,
         ]);
         // Trusted proxies come from config('trustedproxy.proxies'), which TrustProxies reads per request.
         $middleware->trustHosts(at: fn (): array => TrustedHosts::patterns(), subdomains: false);

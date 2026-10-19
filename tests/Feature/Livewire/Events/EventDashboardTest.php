@@ -824,3 +824,15 @@ test('delete requires delete-events permission', function () {
         ->call('delete')
         ->assertForbidden();
 });
+
+test('event dashboard hides scoring for an unscored event', function () {
+    $this->actingAs($this->user);
+    $config = EventConfiguration::factory()->publicService()->create();
+
+    Livewire::test(EventDashboard::class, ['event' => $config->event])
+        ->assertOk()
+        ->assertSee('Public Service / Other')
+        ->assertDontSee('Scoring Summary')
+        ->assertDontSee('Operating Class')
+        ->assertDontSee('Power Multiplier');
+});
