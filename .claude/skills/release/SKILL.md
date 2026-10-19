@@ -102,10 +102,13 @@ Rules for this step:
 
 ## 4. Version bump, merge, and tag
 
-The bump commit changes exactly two files:
+The bump commit changes exactly three files:
 
 - `VERSION`: the new version, without the `v`
 - `charts/fd-commander/Chart.yaml`: set `appVersion: "YY.MM.N"`. Leave the chart's own `version: 0.1.0` unchanged.
+- `CHANGELOG.md`: rename `## Unreleased` to `## YY.MM.N - YYYY-MM-DD` and add a fresh, empty `## Unreleased` above it.
+
+Before the bump, check the Unreleased section against `git log --no-merges <last tag>..HEAD`. Every change a user or self-hoster would notice needs an entry, and the release branch's own fixes and package updates count too. Follow the rules in the Changelog section of `CONTRIBUTING.md`: fixes are written as the symptom and its conditions, and nothing goes in that nobody would notice. Show the user the finished section before committing. If it's empty, ask whether there's anything to release.
 
 ```bash
 git commit -am "chore(release): vYY.MM.N"
