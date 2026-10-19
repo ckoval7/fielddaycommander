@@ -442,3 +442,25 @@ test('info card renders in normal size variant', function () {
     $component->assertViewHas('size', 'normal');
     expect(infoRow($component->viewData('data'), 'Call Sign'))->toBe('W1AW');
 });
+
+test('event_details variant shows city and state, not class, for an unscored event', function () {
+    $event = Event::factory()->publicService()->create([
+        'name' => 'City Marathon',
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(6),
+    ]);
+    EventConfiguration::factory()->publicService()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'city' => 'Hartford',
+        'state' => 'CT',
+    ]);
+
+    $data = Livewire::test(InfoCard::class, ['config' => ['info_type' => 'event_details'], 'size' => 'normal'])
+        ->viewData('data');
+
+    expect(infoRow($data, 'Event'))->toBe('City Marathon')
+        ->and(infoRow($data, 'Location'))->toBe('Hartford, CT')
+        ->and(infoRow($data, 'Class'))->toBeNull()
+        ->and(infoRow($data, 'Call Sign'))->toBe('W1AW');
+});

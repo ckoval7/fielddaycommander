@@ -72,12 +72,23 @@ class InfoCard extends Component
     {
         $config = $event?->eventConfiguration;
 
-        return [
-            'title' => 'Event Info',
-            'rows' => [
+        // Unscored events have no ARRL section or operating class, so show
+        // where the event is instead.
+        $rows = $event?->isScored() ?? true
+            ? [
                 ['label' => 'Event', 'value' => $event?->name ?? 'N/A'],
                 ['label' => 'Location', 'value' => $config?->section?->name ?? 'N/A'],
                 ['label' => 'Class', 'value' => $this->entryClass($config) ?? 'N/A'],
+            ]
+            : [
+                ['label' => 'Event', 'value' => $event->name],
+                ['label' => 'Location', 'value' => collect([$config?->city, $config?->state])->filter()->implode(', ') ?: 'N/A'],
+            ];
+
+        return [
+            'title' => 'Event Info',
+            'rows' => [
+                ...$rows,
                 ['label' => 'Call Sign', 'value' => $config?->callsign ?? 'N/A', 'highlight' => true],
             ],
             'last_updated_at' => appNow(),

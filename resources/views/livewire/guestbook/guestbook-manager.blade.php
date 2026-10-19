@@ -47,7 +47,7 @@
             {{-- Main Content Layout --}}
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
                 {{-- Stats Cards (Left Side) --}}
-                <div class="lg:col-span-3 space-y-6">
+                <div @class(['space-y-6', 'lg:col-span-3' => $this->scoresBonuses, 'lg:col-span-4' => ! $this->scoresBonuses])>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div class="stat bg-base-100 rounded-lg shadow">
                             <div class="stat-title">Total</div>
@@ -69,17 +69,21 @@
                             <div class="stat-title">Online</div>
                             <div class="stat-value text-2xl">{{ $this->entryStats['online'] }}</div>
                         </div>
-                        <div class="stat bg-base-100 rounded-lg shadow">
-                            <div class="stat-title">Bonus Eligible</div>
-                            <div class="stat-value text-2xl text-info">{{ $this->entryStats['bonus_eligible'] }}</div>
-                        </div>
+                        @if($this->scoresBonuses)
+                            <div class="stat bg-base-100 rounded-lg shadow">
+                                <div class="stat-title">Bonus Eligible</div>
+                                <div class="stat-value text-2xl text-info">{{ $this->entryStats['bonus_eligible'] }}</div>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
                 {{-- Bonus Points Sidebar (Right Side) --}}
-                <div class="lg:col-span-1">
-                    <livewire:guestbook.bonus-points-sidebar :event-config-id="$eventConfig->id" />
-                </div>
+                @if($this->scoresBonuses)
+                    <div class="lg:col-span-1">
+                        <livewire:guestbook.bonus-points-sidebar :event-config-id="$eventConfig->id" />
+                    </div>
+                @endif
             </div>
 
             {{-- Filters --}}
@@ -219,8 +223,8 @@
 
                             <div class="flex flex-wrap items-center gap-1.5 mt-2">
                                 <x-badge
-                                    :value="$entry->visitor_category->label() . ($entry->is_bonus_eligible && $entry->is_verified ? ' (bonus)' : '')"
-                                    :class="$entry->is_bonus_eligible ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
+                                    :value="$entry->visitor_category->label() . ($this->scoresBonuses && $entry->is_bonus_eligible && $entry->is_verified ? ' (bonus)' : '')"
+                                    :class="$this->scoresBonuses && $entry->is_bonus_eligible ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
                                 />
                                 @if($entry->presence_type === \App\Enums\PresenceType::InPerson)
                                     <x-badge value="In Person" class="badge-info badge-sm" />
@@ -282,9 +286,9 @@
                             <div class="flex items-center gap-1">
                                 <x-badge
                                     :value="$entry->visitor_category->label()"
-                                    :class="$entry->is_bonus_eligible ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
+                                    :class="$this->scoresBonuses && $entry->is_bonus_eligible ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
                                 />
-                                @if($entry->is_bonus_eligible && $entry->is_verified)
+                                @if($this->scoresBonuses && $entry->is_bonus_eligible && $entry->is_verified)
                                     <span title="Bonus Eligible">+</span>
                                 @endif
                             </div>
@@ -412,7 +416,7 @@
                     option-label="label"
                 />
 
-                @if(\App\Enums\VisitorCategory::tryFrom((string) $editCategory)?->isBonusEligible())
+                @if($this->scoresBonuses && \App\Enums\VisitorCategory::tryFrom((string) $editCategory)?->isBonusEligible())
                     <x-alert icon="phosphor-star" class="alert-warning">
                         This category is <strong>bonus eligible</strong>. Verified entries in this category contribute to Field Day bonus points.
                     </x-alert>

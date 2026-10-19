@@ -966,3 +966,19 @@ describe('mobile card list', function () {
             ]);
     });
 });
+
+test('an unscored event shows no guestbook bonuses', function () {
+    $event = Event::factory()->publicService()->create();
+    $config = EventConfiguration::factory()->publicService()->create(['event_id' => $event->id, 'guestbook_enabled' => true]);
+    GuestbookEntry::factory()->create([
+        'event_configuration_id' => $config->id,
+        'visitor_category' => VisitorCategory::ElectedOfficial,
+        'is_verified' => true,
+    ]);
+
+    Livewire::actingAs($this->admin)->test(GuestbookManager::class, ['event' => $event])
+        ->assertOk()
+        ->assertDontSee('Bonus Eligible')
+        ->assertDontSee('(bonus)')
+        ->assertDontSee('Guestbook Bonuses');
+});

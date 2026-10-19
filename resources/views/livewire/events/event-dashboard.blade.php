@@ -298,6 +298,7 @@
                                 <div class="text-2xl font-bold">{{ number_format($this->guestbookStats['total']) }}</div>
                             </div>
 
+                            @if($event->isScored())
                             <!-- Guestbook Bonuses -->
                             <div class="space-y-1.5">
                                 <div class="flex items-center justify-between">
@@ -323,6 +324,7 @@
                                 <div class="text-sm text-base-content/60">Guestbook Bonus</div>
                                 <div class="text-2xl font-bold {{ $this->guestbookStats['bonus_points'] > 0 ? 'text-success' : '' }}">{{ number_format($this->guestbookStats['bonus_points']) }} pts</div>
                             </div>
+                            @endif
 
                             <!-- Link to Guestbook Manager -->
                             @can('manage-guestbook')
