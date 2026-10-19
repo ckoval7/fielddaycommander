@@ -957,9 +957,9 @@ test('transcribe interface renders mobile card list for recent contacts', functi
 
     $html = Livewire::test(TranscribeInterface::class, ['station' => $this->station])->html();
 
-    expect($html)->toContain('sm:hidden space-y-1.5')
+    expect($html)->toContain('max-sm:group-has-[tbody_tr]/log:block space-y-1.5')
         ->toContain('recallByContactId(')
-        ->toContain('class="hidden sm:block"');
+        ->toContain('class="hidden sm:group-has-[tbody_tr]/log:block"');
 });
 
 test('transcribe interface renders button-morph for recall mode', function () {

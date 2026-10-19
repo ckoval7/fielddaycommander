@@ -236,8 +236,6 @@
         <x-logging.qso-log
             title="Recent QSOs"
             subtitle="This session only"
-            :is-empty="$this->recentContacts->isEmpty()"
-            has-pending="queue.length > 0"
         >
             <x-slot:cards>
                 {{-- Server-confirmed --}}

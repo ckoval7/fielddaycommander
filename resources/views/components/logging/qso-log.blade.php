@@ -9,14 +9,17 @@ Chat-style log shared by live logging and paper-log transcription: the QSO
 history (oldest → newest) with the exchange composer docked underneath.
 
 The enclosing Alpine scope must provide recalledContactId and recalledUuid.
+
+Visibility of the empty state and the card/table containers is pure CSS
+(:has on the rendered rows), not x-show/x-cloak. Livewire's morph re-adds
+x-cloak to elements Alpine has hidden, which kept the first queued contact
+hidden until the server rendered it.
 The page's sticky status bar should carry data-log-sticky-bar so phones can
 size the log to the space left below it.
 
 Props:
 - $title: string - Card heading
 - $subtitle: string|null - Muted text beside the heading
-- $isEmpty: bool - Whether there are no server-confirmed contacts
-- $hasPending: string - JS expression that is true while client-side contacts are shown
 - $example: string - Example exchange shown in the empty state
 - $timeHeading: string - Heading for the desktop time column
 
@@ -30,8 +33,6 @@ Slots:
 @props([
     'title',
     'subtitle' => null,
-    'isEmpty' => false,
-    'hasPending' => 'false',
     'example' => 'W1AW 3A CT',
     'timeHeading' => 'Time',
 ])
@@ -78,7 +79,7 @@ Slots:
 
     {{-- History: stays pinned to the bottom so the newest QSO sits right above the input --}}
     <div
-        class="max-sm:flex-1 max-sm:min-h-0 sm:h-80 overflow-y-auto overflow-x-auto"
+        class="group/log max-sm:flex-1 max-sm:min-h-0 sm:h-80 overflow-y-auto overflow-x-auto"
         x-data="{
             pinned: true,
             scrollToBottom() {
@@ -112,23 +113,21 @@ Slots:
         @scroll="pinned = $el.scrollTop + $el.clientHeight >= $el.scrollHeight - 8"
         @contact-logged.window="$nextTick(() => scrollToBottom())"
     >
-        {{-- Empty state: no server contacts and nothing pending client-side --}}
-        @if($isEmpty)
-            <div x-show="!({{ $hasPending }})" class="h-full flex items-center justify-center">
-                <div class="text-center text-base-content/50 space-y-1">
-                    <p>No contacts logged yet.</p>
-                    <p class="text-xs">Type the other station's exchange, e.g. <span class="font-mono font-bold">{{ $example }}</span></p>
-                </div>
+        {{-- Empty state: shown until any row (server or queued) renders --}}
+        <div class="h-full flex items-center justify-center group-has-[tbody_tr]/log:hidden">
+            <div class="text-center text-base-content/50 space-y-1">
+                <p>No contacts logged yet.</p>
+                <p class="text-xs">Type the other station's exchange, e.g. <span class="font-mono font-bold">{{ $example }}</span></p>
             </div>
-        @endif
+        </div>
 
         {{-- Mobile: card list --}}
-        <div class="sm:hidden space-y-1.5 p-3" @if($isEmpty) x-show="{{ $hasPending }}" x-cloak @endif>
+        <div class="hidden max-sm:group-has-[tbody_tr]/log:block space-y-1.5 p-3">
             {{ $cards }}
         </div>
 
         {{-- Desktop: table --}}
-        <div class="hidden sm:block" @if($isEmpty) x-show="{{ $hasPending }}" x-cloak @endif>
+        <div class="hidden sm:group-has-[tbody_tr]/log:block">
             <table class="table table-sm table-pin-rows">
                 <thead>
                     <tr>
