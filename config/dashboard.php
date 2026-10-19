@@ -506,10 +506,11 @@ return [
             'metric' => [
                 'total_score', 'sections_worked', 'points_per_hour', 'bonus_points_earned',
                 'qso_count', 'qso_per_hour', 'avg_qso_rate_4h', 'contacts_last_hour',
+                'operators_count', 'stations_count',
                 'next_milestone', 'event_goal', 'class_target', 'bonus_progress',
             ],
             'info_type' => ['operating_class'],
-            'list_type' => ['recent_contacts'],
+            'list_type' => ['recent_contacts', 'active_stations'],
             'feed_type' => ['contacts_only', 'milestones_only'],
         ],
     ],

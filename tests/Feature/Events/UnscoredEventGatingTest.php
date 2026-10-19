@@ -138,8 +138,9 @@ test('scored-only dashboard widgets are recognised', function () {
         ->and($service->isScoredOnly(['type' => 'info_card', 'config' => ['info_type' => 'operating_class']]))->toBeTrue()
         ->and($service->isScoredOnly(['type' => 'list_widget', 'config' => ['list_type' => 'recent_contacts']]))->toBeTrue()
         ->and($service->isScoredOnly(['type' => 'chart', 'config' => []]))->toBeTrue()
-        ->and($service->isScoredOnly(['type' => 'stat_card', 'config' => ['metric' => 'operators_count']]))->toBeFalse()
-        ->and($service->isScoredOnly(['type' => 'list_widget', 'config' => ['list_type' => 'active_stations']]))->toBeFalse()
+        ->and($service->isScoredOnly(['type' => 'stat_card', 'config' => ['metric' => 'operators_count']]))->toBeTrue()
+        ->and($service->isScoredOnly(['type' => 'stat_card', 'config' => ['metric' => 'guestbook_count']]))->toBeFalse()
+        ->and($service->isScoredOnly(['type' => 'list_widget', 'config' => ['list_type' => 'equipment_status']]))->toBeFalse()
         ->and($service->isScoredOnly(['type' => 'info_card', 'config' => ['info_type' => 'location']]))->toBeFalse()
         ->and($service->isScoredOnly(['type' => 'timer', 'config' => []]))->toBeFalse();
 });

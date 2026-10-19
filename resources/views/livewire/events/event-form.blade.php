@@ -6,7 +6,7 @@
     <!-- Header -->
     <x-header
         title="{{ $mode === 'create' ? 'Create Event' : ($mode === 'clone' ? 'Clone Event' : 'Edit Event') }}"
-        subtitle="{{ $mode === 'create' ? 'Set up a new Field Day or contest event' : ($mode === 'clone' ? 'Create a copy of this event with updated details' : 'Update event details and configuration') }}"
+        subtitle="{{ $mode === 'create' ? 'Set up a new Field Day, contest or public service event' : ($mode === 'clone' ? 'Create a copy of this event with updated details' : 'Update event details and configuration') }}"
         separator
         progress-indicator
     >
@@ -24,7 +24,7 @@
     @if($isLocked)
         <x-alert icon="phosphor-lock" class="alert-warning">
             <strong>Some fields are locked</strong> because this event has contacts or has already started.
-            You can still update the event name, club name, section, end date, and guestbook settings.
+            You can still update the event name, club name, {{ $this->isScoredType ? 'section, ' : '' }}end date, and guestbook settings.
         </x-alert>
     @endif
 
@@ -41,12 +41,12 @@
                         autocapitalize="words"
                         required
                         icon="phosphor-calendar"
-                        hint="e.g., Field Day 2025"
-                        placeholder="Field Day 2025"
+                        hint="e.g., Field Day 2026 or City Marathon 2026"
+                        placeholder="Field Day 2026"
                     />
                 </div>
 
-                <div @class(['md:col-span-2' => $this->isScoredType, 'md:col-span-4' => ! $this->isScoredType])>
+                <div @class(['md:col-span-2' => $this->isScoredType, 'md:col-span-6' => ! $this->isScoredType])>
                     <x-select
                         label="Event Type"
                         wire:model.live="event_type_id"
@@ -77,6 +77,7 @@
                 </div>
                 @endif
 
+                @if($this->isScoredType)
                 <div class="md:col-span-2">
                     <x-input
                         label="Year"
@@ -89,6 +90,7 @@
                         hint="Auto-detected from event name"
                     />
                 </div>
+                @endif
 
                 <div class="md:col-span-3">
                     <x-flatpickr
@@ -175,7 +177,7 @@
                         autocapitalize="words"
                         icon="phosphor-buildings"
                         placeholder="Denver"
-                        hint="Shown in auto-filled Section Manager messages as your place of origin."
+                        hint="{{ $this->isScoredType ? 'Shown in auto-filled Section Manager messages as your place of origin.' : 'Where the event is held. Shown on the dashboard and the weather page.' }}"
                     />
 
                     <x-input
@@ -184,7 +186,7 @@
                         autocapitalize="characters"
                         icon="phosphor-flag"
                         placeholder="CO"
-                        hint="2-letter abbreviation. Shown in auto-filled Section Manager messages."
+                        hint="{{ $this->isScoredType ? '2-letter abbreviation. Shown in auto-filled Section Manager messages.' : '2-letter abbreviation.' }}"
                     />
 
                     <x-input
@@ -201,7 +203,7 @@
 
         <!-- Section 3: Station Configuration -->
         <x-card class="mb-6">
-            <x-slot:title>Station Configuration</x-slot:title>
+            <x-slot:title>{{ $this->isScoredType ? 'Station Configuration' : 'Club & Callsign' }}</x-slot:title>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <x-input

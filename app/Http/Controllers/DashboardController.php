@@ -97,7 +97,7 @@ class DashboardController extends Controller
                 'route' => route('equipment.index'),
             ],
             [
-                'label' => 'Stations set up',
+                'label' => "{$event->nomenclature()->stationPlural} set up",
                 'done' => $eventConfig?->stations()->exists() ?? false,
                 'route' => $user->can('view-stations') ? route('stations.index') : null,
             ],

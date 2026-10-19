@@ -332,3 +332,18 @@ test('index falls back to default when dashboard id does not exist', function ()
     $response->assertStatus(200);
     $response->assertViewHas('dashboard', $default);
 });
+
+test('get-ready checklist for an unscored event uses positions and skips the bulletin', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->publicService()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+    EventConfiguration::factory()->publicService()->create(['event_id' => $event->id]);
+
+    $labels = collect($this->actingAs($user)->get(route('dashboard'))->assertOk()->viewData('checklist'))->pluck('label');
+
+    expect($labels)->toContain('Positions set up')
+        ->and($labels)->not->toContain('Stations set up')
+        ->and($labels->filter(fn ($label) => str_contains($label, 'Bulletin')))->toBeEmpty();
+});
