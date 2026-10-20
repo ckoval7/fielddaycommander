@@ -58,7 +58,7 @@
                         </div>
 
                         {{-- Bonus Eligible Badge --}}
-                        @if($entry->is_verified && $entry->is_bonus_eligible)
+                        @if($entry->is_verified && in_array($entry->visitor_category, $this->bonusCategories, true))
                             <div class="flex-shrink-0">
                                 <div
                                     class="w-8 h-8 rounded-full bg-warning flex items-center justify-center"

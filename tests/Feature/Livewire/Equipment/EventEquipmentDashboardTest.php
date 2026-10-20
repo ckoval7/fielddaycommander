@@ -625,6 +625,28 @@ test('export menu links opt out of wire:navigate so the browser downloads the fi
     }
 });
 
+test('pdf export menu links open in a new tab', function () {
+    $this->actingAs($this->manager);
+
+    $pdfRoutes = [
+        'events.equipment.reports.delivery-checklist',
+        'events.equipment.reports.station-inventory-pdf',
+        'events.equipment.reports.owner-contacts-pdf',
+        'events.equipment.reports.return-checklist',
+        'events.equipment.reports.incident-report-pdf',
+    ];
+
+    $html = Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])->html();
+
+    foreach ($pdfRoutes as $name) {
+        $href = route($name, ['event' => $this->event->id]);
+        $pattern = '/<a\b[^>]*\bhref="'.preg_quote($href, '/').'"[^>]*>/';
+
+        expect(preg_match($pattern, $html, $matches))->toBe(1, "Missing anchor for {$name}");
+        expect($matches[0])->toContain('target="_blank"');
+    }
+});
+
 test('dashboard title row wraps so a long event name badge stays on screen', function () {
     $this->actingAs($this->manager);
 

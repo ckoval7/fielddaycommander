@@ -81,7 +81,7 @@ describe('widget settings are cleaned on the server', function () {
         $widget = $component->get('widgets')->firstWhere('id', 'list-1');
 
         expect($widget['config'])->toBe(['list_type' => 'recent_contacts', 'item_count' => '15'])
-            ->and($widget['col_span'])->toBe(4)
+            ->and($widget['col_span'])->toBe(3)
             ->and($widget['row_span'])->toBe(6);
     });
 

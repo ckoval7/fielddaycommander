@@ -126,31 +126,39 @@ class EventDashboard extends Component
             ->get();
     }
 
+    /**
+     * Guestbook visitor total and the guestbook bonuses this event's rulebook awards.
+     *
+     * Elected official and agency are null when the rulebook has no such bonus.
+     *
+     * @return array{total: int, elected_official: ?bool, agency: ?bool, bonus_points: int}
+     */
     #[Computed]
     public function guestbookStats(): array
     {
         if (! $this->config()?->guestbook_enabled) {
             return [
                 'total' => 0,
-                'elected_official' => false,
-                'agency' => false,
+                'elected_official' => null,
+                'agency' => null,
                 'bonus_points' => 0,
             ];
         }
 
         $configId = $this->config()->id;
+        $bonusCategories = $this->event->guestbookBonusCategories();
 
         $total = GuestbookEntry::where('event_configuration_id', $configId)->count();
 
-        $hasElected = GuestbookEntry::where('event_configuration_id', $configId)
-            ->where('visitor_category', VisitorCategory::ElectedOfficial)
-            ->where('is_verified', true)
-            ->exists();
+        $visited = fn (VisitorCategory $category): ?bool => in_array($category, $bonusCategories, true)
+            ? GuestbookEntry::where('event_configuration_id', $configId)
+                ->where('visitor_category', $category)
+                ->where('is_verified', true)
+                ->exists()
+            : null;
 
-        $hasAgency = GuestbookEntry::where('event_configuration_id', $configId)
-            ->where('visitor_category', VisitorCategory::Agency)
-            ->where('is_verified', true)
-            ->exists();
+        $hasElected = $visited(VisitorCategory::ElectedOfficial);
+        $hasAgency = $visited(VisitorCategory::Agency);
 
         $bonusPoints = ($hasElected ? 100 : 0) + ($hasAgency ? 100 : 0);
 

@@ -97,11 +97,11 @@ class ReportController extends Controller
 
         return Pdf::loadView('reports.wfd-event-summary-pdf', $data)
             ->setPaper('letter', 'portrait')
-            ->download($filename);
+            ->stream($filename);
     }
 
     /**
-     * Download the ARRL submission sheet PDF for the active event.
+     * Open the ARRL submission sheet PDF for the active event.
      */
     public function submissionSheet(): Response
     {
@@ -128,6 +128,17 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('reports.submission-sheet-pdf', $data)
             ->setPaper('letter', 'portrait');
 
-        return $pdf->download($filename);
+        // The footer's "of N" comes from the expected page count; a long
+        // bulletin copy can spill onto extra pages, so render again with
+        // the real count when they differ.
+        $pdf->render();
+        $pageCount = $pdf->getDomPDF()->getCanvas()->get_page_count();
+
+        if ($pageCount !== $data['total_pages']) {
+            $pdf = Pdf::loadView('reports.submission-sheet-pdf', ['total_pages' => $pageCount] + $data)
+                ->setPaper('letter', 'portrait');
+        }
+
+        return $pdf->stream($filename);
     }
 }

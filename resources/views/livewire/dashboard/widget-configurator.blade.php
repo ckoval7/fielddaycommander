@@ -114,9 +114,9 @@
                     <h3 class="text-lg font-semibold mb-3">Widget Size</h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <span class="block py-1 text-sm">Columns (1-4)</span>
+                            <span class="block py-1 text-sm">Columns (1-{{ \App\Services\DashboardService::MAX_COL_SPAN }})</span>
                             <div class="flex gap-1">
-                                @foreach(range(1, 4) as $c)
+                                @foreach(range(1, \App\Services\DashboardService::MAX_COL_SPAN) as $c)
                                     <button
                                         type="button"
                                         wire:click="$set('colSpan', {{ $c }})"
