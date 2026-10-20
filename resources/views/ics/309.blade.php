@@ -87,8 +87,8 @@
                     @forelse($entries as $entry)
                         <tr>
                             <td class="time">{{ toLocalTime($entry->logged_at)->format('H:i') }}</td>
-                            <td class="station">{{ \App\Models\NetLogEntry::displayStation($entry->from_station, $entry->from_callsign) }}</td>
-                            <td class="station">{{ \App\Models\NetLogEntry::displayStation($entry->to_station, $entry->to_callsign) ?: 'All stations' }}</td>
+                            <td class="station">{{ $entry->fromLabel() }}</td>
+                            <td class="station">{{ $entry->toLabel() ?: 'All stations' }}</td>
                             <td class="message">@if(! $net && $entry->net)<em>{{ $entry->net->name }}:</em> @endif @if($entry->priority !== \App\Enums\NetPriority::Routine)<strong>[{{ strtoupper($entry->priority->label()) }}]</strong> @endif{{ $entry->message }}</td>
                         </tr>
                     @empty

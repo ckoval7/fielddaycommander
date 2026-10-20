@@ -10,6 +10,7 @@ use App\Models\OperatingSession;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Models\Station;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
@@ -58,35 +59,31 @@ class TacticalCallsignResolver
             return null;
         }
 
-        $station = $this->matchStation($config, $name);
+        $station = $this->matchByName($config->stations(), $name);
 
         if ($station !== null) {
             return $this->stationOperatorCallsign($station);
         }
 
-        $role = $this->matchRole($config, $name);
+        $role = $this->matchByName($config->shiftRoles(), $name);
 
         return $role !== null ? $this->roleOperatorCallsign($config, $role) : null;
     }
 
-    protected function matchStation(EventConfiguration $config, string $name): ?Station
+    /**
+     * The station or role whose tactical callsign is the name, or, when it
+     * has none, whose own name is.
+     *
+     * @template TModel of Station|ShiftRole
+     *
+     * @param  HasMany<TModel, EventConfiguration>  $relation
+     * @return TModel|null
+     */
+    protected function matchByName(HasMany $relation, string $name): Station|ShiftRole|null
     {
         $needle = mb_strtolower($name);
 
-        return $config->stations()
-            ->where(fn ($query) => $query
-                ->whereRaw('LOWER(tactical_callsign) = ?', [$needle])
-                ->orWhere(fn ($query) => $query
-                    ->whereNull('tactical_callsign')
-                    ->whereRaw('LOWER(name) = ?', [$needle])))
-            ->first();
-    }
-
-    protected function matchRole(EventConfiguration $config, string $name): ?ShiftRole
-    {
-        $needle = mb_strtolower($name);
-
-        return $config->shiftRoles()
+        return $relation
             ->where(fn ($query) => $query
                 ->whereRaw('LOWER(tactical_callsign) = ?', [$needle])
                 ->orWhere(fn ($query) => $query

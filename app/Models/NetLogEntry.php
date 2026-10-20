@@ -80,6 +80,16 @@ class NetLogEntry extends Model
         return trim(implode(' ', array_filter([$this->to_station, $this->from_station, $priority, $this->message], fn ($part) => $part !== null && $part !== '')));
     }
 
+    public function fromLabel(): string
+    {
+        return self::displayStation($this->from_station, $this->from_callsign);
+    }
+
+    public function toLabel(): string
+    {
+        return self::displayStation($this->to_station, $this->to_callsign);
+    }
+
     /**
      * A station as the log shows it: the tactical name, with the licensed
      * operator's callsign when it differs, e.g. "Aid 7 (W1ABC)".

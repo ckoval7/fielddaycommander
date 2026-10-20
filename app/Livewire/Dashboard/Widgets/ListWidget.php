@@ -175,12 +175,11 @@ class ListWidget extends Component
                 'type' => 'net_entry',
                 'key' => "net-entry-{$entry->id}",
                 'time_ago' => $this->formatTimeAgo($entry->logged_at),
-                'from' => NetLogEntry::displayStation($entry->from_station, $entry->from_callsign),
-                'to' => NetLogEntry::displayStation($entry->to_station, $entry->to_callsign),
+                'from' => $entry->fromLabel(),
+                'to' => $entry->toLabel(),
                 'net' => $showsNetName ? $entry->net->name : null,
                 'message' => $entry->message,
                 'priority' => $entry->priority->value,
-                'priority_label' => $entry->priority->label(),
             ])
             ->all();
     }
@@ -193,13 +192,9 @@ class ListWidget extends Component
      */
     protected function netLogChangeListeners(): array
     {
-        $eventId = app(EventContextService::class)->getContextEvent()?->id;
+        $eventId = $this->broadcastEventId();
 
-        if ($eventId === null || ! $this->canListenForBroadcasts()) {
-            return [];
-        }
-
-        return [
+        return $eventId === null ? [] : [
             BroadcastChannels::privateListener(BroadcastChannels::event($eventId), '.'.BroadcastChannels::NET_LOG_CHANGED) => 'handleUpdate',
         ];
     }

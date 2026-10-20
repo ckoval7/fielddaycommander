@@ -71,7 +71,7 @@ test('a line of called station, calling station and message is logged and broadc
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
         ->call('logEntry', 'ncs aid7 water low at mile 14')
         ->assertHasNoErrors()
-        ->assertDispatched('net-log-entry-logged')
+        ->assertDispatched('contact-logged')
         ->assertSet('exchangeInput', '')
         ->assertSee('WATER LOW AT MILE 14')
         ->assertSeeHtmlInOrder(['<th>To</th>', '<th>From</th>']);

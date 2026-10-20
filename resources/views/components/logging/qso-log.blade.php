@@ -25,7 +25,6 @@ Props:
 - $timeHeading: string - Heading for the desktop time column
 - $emptyTitle: string - Empty state heading
 - $emptyHint: string|null - Empty state hint before the example
-- $loggedEvent: string - Browser event that scrolls the log to the newest row
 
 Slots:
 - $cards: Mobile card list items
@@ -42,7 +41,6 @@ Slots:
     'timeHeading' => 'Time',
     'emptyTitle' => 'No contacts logged yet.',
     'emptyHint' => "Type the other station's exchange, e.g.",
-    'loggedEvent' => 'contact-logged',
 ])
 
 <div
@@ -119,7 +117,7 @@ Slots:
         "
         x-effect="revealRecalled(recalledUuid, recalledContactId)"
         @scroll="pinned = $el.scrollTop + $el.clientHeight >= $el.scrollHeight - 8"
-        x-on:{{ $loggedEvent }}.window="$nextTick(() => scrollToBottom())"
+        @contact-logged.window="$nextTick(() => scrollToBottom())"
     >
         {{-- Empty state: shown until any row (server or queued) renders --}}
         <div class="h-full flex items-center justify-center group-has-[tbody_tr]/log:hidden">

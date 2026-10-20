@@ -7,8 +7,6 @@ namespace App\Livewire\NetLog;
 
 use App\Enums\NetPriority;
 use App\Events\NetLogChanged;
-use App\Livewire\NetLog\Concerns\EditsNetLogEntries;
-use App\Livewire\NetLog\Concerns\HasNetSuggestions;
 use App\Models\Event;
 use App\Models\Net;
 use App\Models\NetLogEntry;
@@ -33,12 +31,12 @@ use Livewire\Component;
  */
 class NetLog extends Component
 {
-    use EditsNetLogEntries, HasNetSuggestions;
-
     /**
      * Entries shown in the log window. The full log is on the ICS-309.
      */
     private const VISIBLE_ENTRIES = 100;
+
+    private const MAX_SUGGESTIONS = 5;
 
     public Event $event;
 
@@ -152,8 +150,7 @@ class NetLog extends Component
 
     public function refreshEntries(): void
     {
-        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
-        $this->netId = $this->resolveNetId($this->netId);
+        $this->reloadNets($this->netId);
     }
 
     /**
@@ -163,8 +160,7 @@ class NetLog extends Component
     #[On('net-changed')]
     public function netChanged(?int $netId = null): void
     {
-        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
-        $this->netId = $this->resolveNetId($netId);
+        $this->reloadNets($netId);
     }
 
     /**
@@ -216,11 +212,149 @@ class NetLog extends Component
             'priority' => $parsed['priority'] ?? NetPriority::from($this->priority),
         ]);
 
-        $this->broadcastChange($entry);
+        NetLogChanged::dispatch($this->event->id, $entry->id);
         $this->reset('exchangeInput', 'suggestions', 'priority');
         unset($this->entries);
 
-        $this->dispatch('net-log-entry-logged');
+        $this->dispatch('contact-logged');
+    }
+
+    /**
+     * Save a recalled entry from its edited line.
+     */
+    public function updateEntry(int $entryId, string $line): void
+    {
+        $entry = $this->findEventEntry($entryId);
+
+        if (! auth()->user()?->can('update', $entry)) {
+            $this->dispatch('toast', title: 'You can only edit your own entries', type: 'error');
+
+            return;
+        }
+
+        $parsed = $this->parseLine($line);
+
+        if ($parsed === null) {
+            return;
+        }
+
+        $entry->update([
+            'from_station' => $parsed['from'],
+            'to_station' => $parsed['to'],
+            // Keep the operator snapshot unless the station itself changed.
+            'from_callsign' => $parsed['from'] === $entry->from_station ? $entry->from_callsign : $this->resolveCallsign($parsed['from']),
+            'to_callsign' => $parsed['to'] === $entry->to_station ? $entry->to_callsign : $this->resolveCallsign($parsed['to']),
+            'message' => $parsed['message'],
+            // A recalled line carries its priority word, so none means routine.
+            'priority' => $parsed['priority'] ?? NetPriority::Routine,
+        ]);
+
+        NetLogChanged::dispatch($this->event->id, $entry->id);
+        $this->reset('exchangeInput', 'suggestions');
+        unset($this->entries);
+
+        $this->dispatch('toast', title: 'Entry updated', type: 'success');
+    }
+
+    public function deleteEntry(int $entryId): void
+    {
+        $entry = $this->findEventEntry($entryId);
+
+        if (! auth()->user()?->can('delete', $entry)) {
+            $this->dispatch('toast', title: 'You can only delete your own entries', type: 'error');
+
+            return;
+        }
+
+        $entry->delete();
+        NetLogChanged::dispatch($this->event->id, $entry->id);
+        $this->reset('exchangeInput', 'suggestions');
+        unset($this->entries);
+    }
+
+    public function restoreEntry(int $entryId): void
+    {
+        $entry = NetLogEntry::onlyTrashed()->forEvent($this->event->eventConfiguration->id)->findOrFail($entryId);
+
+        if (! auth()->user()?->can('delete', $entry)) {
+            return;
+        }
+
+        $entry->restore();
+        NetLogChanged::dispatch($this->event->id, $entry->id);
+        unset($this->entries);
+    }
+
+    /**
+     * Find an entry that belongs to this component's event, or 404.
+     */
+    protected function findEventEntry(int $entryId): NetLogEntry
+    {
+        return NetLogEntry::forEvent($this->event->eventConfiguration->id)->findOrFail($entryId);
+    }
+
+    public function updatedExchangeInput(): void
+    {
+        $this->parseError = null;
+        $this->suggestions = $this->buildSuggestions($this->exchangeInput);
+    }
+
+    public function selectSuggestion(string $exchange): void
+    {
+        $this->exchangeInput = $exchange;
+        $this->suggestions = [];
+        $this->dispatch('suggestion-selected');
+    }
+
+    /**
+     * Suggest tactical names for the station being typed: the called
+     * station first, then the calling station.
+     *
+     * @return list<array{exchange: string, worked_on: string}>
+     */
+    protected function buildSuggestions(string $input): array
+    {
+        $input = ltrim((string) preg_replace('/\s+/', ' ', $input));
+
+        if ($input === '' || $this->tacticalNames === []) {
+            return [];
+        }
+
+        // Still typing the called station?
+        $matches = $this->namesStartingWith($input);
+
+        if ($matches === []) {
+            // Then it's the calling station, after the called one.
+            [$to, $afterTo] = app(NetLogExchangeParser::class)->takeStation($input, $this->tacticalNames);
+            $matches = $afterTo === '' ? [] : $this->namesStartingWith($afterTo);
+            $prefix = $to.' ';
+        } else {
+            $prefix = '';
+        }
+
+        return collect($matches)
+            ->take(self::MAX_SUGGESTIONS)
+            ->map(fn (string $name) => [
+                'exchange' => $prefix.$name.' ',
+                'worked_on' => $this->resolveCallsign($name) ?? 'Nobody on duty',
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Tactical names that start with, but don't already equal, what's typed.
+     *
+     * @return list<string>
+     */
+    protected function namesStartingWith(string $partial): array
+    {
+        $partial = mb_strtolower($partial);
+
+        return array_values(array_filter(
+            $this->tacticalNames,
+            fn (string $name) => str_starts_with(mb_strtolower($name), $partial) && mb_strtolower($name) !== rtrim($partial),
+        ));
     }
 
     /**
@@ -253,6 +387,15 @@ class NetLog extends Component
     }
 
     /**
+     * Re-read the event's nets and show the given net, or the best one left.
+     */
+    private function reloadNets(?int $netId): void
+    {
+        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
+        $this->netId = $this->resolveNetId($netId);
+    }
+
+    /**
      * The net to show: the one asked for if it belongs to this event,
      * otherwise the net with the latest traffic, otherwise the newest net.
      */
@@ -277,11 +420,6 @@ class NetLog extends Component
     protected function resolveCallsign(?string $station): ?string
     {
         return app(TacticalCallsignResolver::class)->resolve($this->event->eventConfiguration, $station);
-    }
-
-    protected function broadcastChange(NetLogEntry $entry): void
-    {
-        NetLogChanged::dispatch($this->event->id, $entry->id);
     }
 
     public function render(): View

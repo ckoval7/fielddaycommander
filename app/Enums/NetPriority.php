@@ -23,12 +23,25 @@ enum NetPriority: string
         };
     }
 
-    public function abbreviation(): string
+    /**
+     * daisyUI colour for this priority's badge and button. Routine traffic
+     * has none and shows no badge.
+     */
+    public function tone(): ?string
     {
         return match ($this) {
-            self::Routine => 'R',
-            self::Priority => 'P',
-            self::Emergency => 'EMERGENCY',
+            self::Routine => null,
+            self::Priority => 'warning',
+            self::Emergency => 'error',
+        };
+    }
+
+    public function icon(): ?string
+    {
+        return match ($this) {
+            self::Routine => null,
+            self::Priority => 'phosphor-warning',
+            self::Emergency => 'phosphor-siren',
         };
     }
 }

@@ -83,7 +83,6 @@
                 example="NCS AID7 WATER LOW"
                 empty-title="No net traffic logged yet."
                 empty-hint="Type the station being called, then the calling station, then the message, e.g."
-                logged-event="net-log-entry-logged"
             >
                 <x-slot:headings>
                     <th>Time</th>
@@ -108,7 +107,6 @@
                 <x-logging.exchange-composer
                     placeholder="NCS AID7 WATER LOW"
                     label="Net log entry"
-                    logged-event="net-log-entry-logged"
                     :suggestions="$suggestions"
                 >
                     @if($parseError)
@@ -124,11 +122,7 @@
                         @foreach(\App\Enums\NetPriority::cases() as $option)
                             @php
                                 $active = $priority === $option->value;
-                                $tone = match ($option) {
-                                    \App\Enums\NetPriority::Emergency => 'btn-error',
-                                    \App\Enums\NetPriority::Priority => 'btn-warning',
-                                    default => 'btn-neutral',
-                                };
+                                $tone = 'btn-'.($option->tone() ?? 'neutral');
                             @endphp
                             <button
                                 type="button"

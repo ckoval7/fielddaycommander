@@ -100,13 +100,6 @@ Size variants:
 
                     @elseif($item['type'] === 'net_entry')
                         {{-- Net Log Entry Item --}}
-                        @php
-                            $priorityBadge = match ($item['priority']) {
-                                'emergency' => ['class' => 'badge-error', 'icon' => 'phosphor-siren'],
-                                'priority' => ['class' => 'badge-warning', 'icon' => 'phosphor-warning'],
-                                default => null,
-                            };
-                        @endphp
                         <div
                             wire:key="list-item-{{ $item['key'] }}"
                             class="@if($size === 'tv') p-4 @else p-3 @endif bg-base-100 border border-base-content/10 rounded-lg transition-all duration-200 {{ in_array($item['key'], $newItemKeys, true) ? 'dashboard-item-new' : '' }}"
@@ -124,11 +117,7 @@ Size variants:
                                     @if($item['net'])
                                         <span class="badge badge-ghost {{ $size === 'tv' ? 'badge-md' : 'badge-sm' }} mr-1 align-middle">{{ $item['net'] }}</span>
                                     @endif
-                                    @if($priorityBadge)
-                                        <span class="badge {{ $priorityBadge['class'] }} {{ $size === 'tv' ? 'badge-md' : 'badge-sm' }} gap-1 mr-1 align-middle">
-                                            <x-icon :name="$priorityBadge['icon']" class="w-3 h-3" />{{ $item['priority_label'] }}
-                                        </span>
-                                    @endif
+                                    <x-logging.net-priority-badge :priority="\App\Enums\NetPriority::from($item['priority'])" :size="$size === 'tv' ? 'badge-md' : 'badge-sm'" />
                                     <span class="whitespace-pre-line">{{ $item['message'] }}</span>
                                 </div>
                             </div>

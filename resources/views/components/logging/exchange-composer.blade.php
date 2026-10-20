@@ -20,7 +20,6 @@ Props:
 - $duplicateWarning: string|null - Duplicate warning to show, if any
 - $participantWarning: string|null - Own-participant contact warning to show, if any
 - $label: string - Accessible name for the input
-- $loggedEvent: string - Browser event that refocuses the input after logging
 
 Slots:
 - $slot: Page-specific alerts and hints, shown above the duplicate warning
@@ -32,7 +31,6 @@ Slots:
     'duplicateWarning' => null,
     'participantWarning' => null,
     'label' => 'Exchange input',
-    'loggedEvent' => 'contact-logged',
 ])
 
 <div class="border-t border-base-300 p-3 space-y-2" x-data="{ si: -1 }">
@@ -105,7 +103,7 @@ Slots:
                     if (isRecalling) { $event.preventDefault(); deleteRecalled($refs.exchangeInput); }
                 "
                 @keydown.tab.prevent="si >= 0 && $wire.suggestions?.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : null"
-                x-on:{{ $loggedEvent }}.window="$refs.exchangeInput.focus(); $refs.exchangeInput.select(); si = -1"
+                @contact-logged.window="$refs.exchangeInput.focus(); $refs.exchangeInput.select(); si = -1"
                 @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
                 class="input input-lg w-full text-2xl font-mono uppercase tracking-wider"
                 placeholder="{{ $placeholder }}"
