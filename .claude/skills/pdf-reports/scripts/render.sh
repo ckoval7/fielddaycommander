@@ -60,7 +60,7 @@ else
         --entrypoint sh sail-8.4/app -c "$inner"
 fi
 
-python3 - "$out_rel" <<'PY' || echo "(contact sheets skipped: needs python3 with Pillow)"
+python3 - "$out_rel" <<'PY' || echo "(contact sheets skipped: needs python3 with Pillow)" >&2
 import glob, os, sys
 from PIL import Image
 out = sys.argv[1]
@@ -80,8 +80,13 @@ for pdf in sorted(glob.glob(f"{out}/*.pdf")):
 PY
 
 echo
+shopt -s nullglob
 for pdf in "$out_rel"/*.pdf; do
-    b="${pdf%.pdf}"
-    n=$(ls "$b"-[0-9][0-9].png 2>/dev/null | wc -l)
-    printf '%-40s %2d pages  %s\n' "$(basename "$pdf")" "$n" "$( [ -e "$out_rel/sheet-$(basename "$b").png" ] && echo "$root/$out_rel/sheet-$(basename "$b").png")"
+    name="$(basename "${pdf%.pdf}")"
+    pages=("$out_rel/$name"-[0-9][0-9].png)
+    sheet=""
+    if [[ -e "$out_rel/sheet-$name.png" ]]; then
+        sheet="$root/$out_rel/sheet-$name.png"
+    fi
+    printf '%-40s %2d pages  %s\n' "$name.pdf" "${#pages[@]}" "$sheet"
 done

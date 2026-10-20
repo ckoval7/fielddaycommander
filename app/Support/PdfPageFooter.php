@@ -27,6 +27,9 @@ final class PdfPageFooter
     /** @var array{0: float, 1: float, 2: float} #1e3ea8 */
     private const RULE_COLOR = [0.118, 0.243, 0.659];
 
+    /**
+     * Prevent instantiation — this class exposes only static helpers.
+     */
     private function __construct() {}
 
     /**
