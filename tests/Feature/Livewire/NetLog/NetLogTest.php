@@ -6,7 +6,9 @@
 use App\Enums\NetPriority;
 use App\Events\NetLogChanged;
 use App\Livewire\NetLog\NetLog;
+use App\Models\Band;
 use App\Models\EventConfiguration;
+use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Models\OperatingSession;
 use App\Models\ShiftRole;
@@ -34,6 +36,12 @@ beforeEach(function () {
 
     $this->config = EventConfiguration::factory()->publicService()->create();
     $this->event = $this->config->event;
+    $this->net = Net::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'user_id' => $this->operator->id,
+        'name' => 'Local 2m Net',
+        'net_control_station' => 'NCS',
+    ]);
 });
 
 test('the net log requires the log-contacts permission', function () {
@@ -46,7 +54,8 @@ test('the net log uses the chat-style log window and composer', function () {
     $this->actingAs($this->operator)
         ->get(route('events.net-log', $this->event))
         ->assertOk()
-        ->assertSee('Net Traffic')
+        ->assertSee('Local 2m Net')
+        ->assertSee('NCS: NCS')
         ->assertSee('No net traffic logged yet.')
         ->assertSee('id="exchange-input"', false)
         ->assertSee('enterkeyhint="send"', false)
@@ -117,6 +126,7 @@ test('a line without the calling station is rejected', function () {
 test('a recalled entry is saved from its edited line', function () {
     $entry = NetLogEntry::factory()->create([
         'event_configuration_id' => $this->config->id,
+        'net_id' => $this->net->id,
         'user_id' => $this->operator->id,
         'from_station' => 'AID7',
         'to_station' => 'NCS',
@@ -137,7 +147,7 @@ test('a recalled entry is saved from its edited line', function () {
 });
 
 test('an operator cannot change someone else\'s entry', function () {
-    $entry = NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'message' => 'Original']);
+    $entry = NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $this->net->id, 'message' => 'Original']);
 
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
         ->call('updateEntry', $entry->id, 'NCS AID1 changed')
@@ -151,6 +161,7 @@ test('an operator cannot change someone else\'s entry', function () {
 test('a deleted entry stays in the window with an Undo', function () {
     $entry = NetLogEntry::factory()->create([
         'event_configuration_id' => $this->config->id,
+        'net_id' => $this->net->id,
         'user_id' => $this->operator->id,
         'message' => 'Logged by mistake',
     ]);
@@ -188,8 +199,8 @@ test('entries from another event cannot be touched', function () {
 });
 
 test('entries list oldest first so the newest sits above the input', function () {
-    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'message' => 'First call', 'logged_at' => now()->subMinutes(10)]);
-    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'message' => 'Latest call', 'logged_at' => now()]);
+    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $this->net->id, 'message' => 'First call', 'logged_at' => now()->subMinutes(10)]);
+    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $this->net->id, 'message' => 'Latest call', 'logged_at' => now()]);
 
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
         ->assertSeeInOrder(['First call', 'Latest call']);
@@ -232,6 +243,7 @@ test('entries snapshot the operator behind each tactical callsign', function () 
 
 test('the net log also works for a Field Day event', function () {
     $fieldDay = EventConfiguration::factory()->create();
+    Net::factory()->create(['event_configuration_id' => $fieldDay->id, 'name' => 'Talk-in']);
 
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $fieldDay->event])
         ->call('logEntry', 'TALKIN W1AW visitor at the gate')
@@ -252,4 +264,125 @@ test('a station shows its operator callsign when it has one', function () {
         ->and(NetLogEntry::displayStation('W1ABC', 'W1ABC'))->toBe('W1ABC')
         ->and(NetLogEntry::displayStation('Aid 7', null))->toBe('Aid 7')
         ->and(NetLogEntry::displayStation(null, null))->toBe('');
+});
+
+test('with no nets the page offers to start one and nothing can be logged', function () {
+    $this->net->delete();
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->assertSee('No nets yet.')
+        ->assertSee('Start net')
+        ->assertDontSeeHtml('id="exchange-input"')
+        ->call('logEntry', 'NCS AID7 check in')
+        ->assertSet('parseError', 'Start a net before logging traffic.');
+
+    expect(NetLogEntry::count())->toBe(0);
+});
+
+test('starting a net switches the screen to it and logs onto it', function () {
+    EventFacade::fake([NetLogChanged::class]);
+    $band = Band::factory()->create(['name' => '80m']);
+
+    $component = Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->call('openNetForm')
+        ->assertSet('showNetForm', true)
+        ->set('netName', 'Regional HF Net')
+        ->set('netFrequency', '3.940 MHz')
+        ->set('netBandId', $band->id)
+        ->set('netControlStation', 'W1HF')
+        ->call('saveNet')
+        ->assertHasNoErrors()
+        ->assertSet('showNetForm', false)
+        ->assertSee('3.940 MHz · 80m · NCS: W1HF');
+
+    $hfNet = Net::where('name', 'Regional HF Net')->sole();
+
+    expect($component->get('netId'))->toBe($hfNet->id)
+        ->and($hfNet->user_id)->toBe($this->operator->id);
+
+    $component->call('logEntry', 'W1HF K1ABC check in');
+
+    expect(NetLogEntry::sole()->net_id)->toBe($hfNet->id);
+    EventFacade::assertDispatched(NetLogChanged::class, fn ($event) => $event->entryId === null);
+});
+
+test('a net needs a name', function () {
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->call('openNetForm')
+        ->call('saveNet')
+        ->assertHasErrors(['netName' => 'required']);
+});
+
+test('each net shows only its own traffic and the URL picks the net', function () {
+    $hfNet = Net::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'Regional HF Net']);
+    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $this->net->id, 'message' => 'ON TWO METERS']);
+    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $hfNet->id, 'message' => 'ON EIGHTY METERS']);
+
+    Livewire::withQueryParams(['net' => $this->net->id])
+        ->actingAs($this->operator)
+        ->test(NetLog::class, ['event' => $this->event])
+        ->assertSee('ON TWO METERS')
+        ->assertDontSee('ON EIGHTY METERS')
+        ->set('netId', $hfNet->id)
+        ->assertSee('ON EIGHTY METERS')
+        ->assertDontSee('ON TWO METERS');
+});
+
+test('without a net in the URL the net with the latest traffic opens', function () {
+    $hfNet = Net::factory()->create(['event_configuration_id' => $this->config->id]);
+    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $hfNet->id, 'logged_at' => now()]);
+    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $this->net->id, 'logged_at' => now()->subHour()]);
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->assertSet('netId', $hfNet->id);
+
+    $otherEventNet = Net::factory()->create();
+
+    Livewire::withQueryParams(['net' => $otherEventNet->id])
+        ->actingAs($this->operator)
+        ->test(NetLog::class, ['event' => $this->event])
+        ->assertSet('netId', $hfNet->id);
+});
+
+test('a multi-word net control station is recognised in a line', function () {
+    $this->net->update(['net_control_station' => 'Net Control']);
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->call('logEntry', 'net control aid 7 check in');
+
+    expect(NetLogEntry::sole())
+        ->to_station->toBe('Net Control')
+        ->from_station->toBe('AID')
+        ->message->toBe('7 CHECK IN');
+});
+
+test('only the net\'s starter or a manager edits it, and only an empty net is deleted', function () {
+    $someoneElse = User::factory()->create();
+    $someoneElse->givePermissionTo('log-contacts');
+
+    Livewire::actingAs($someoneElse)->test(NetLog::class, ['event' => $this->event])
+        ->call('openNetForm', $this->net->id)
+        ->assertForbidden();
+
+    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $this->net->id]);
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->call('deleteNet', $this->net->id)
+        ->assertDispatched('toast', title: 'Only an empty net you started can be deleted');
+
+    $planned = Net::factory()->create(['event_configuration_id' => $this->config->id, 'user_id' => $this->operator->id]);
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->call('deleteNet', $planned->id);
+
+    expect(Net::find($planned->id))->toBeNull()
+        ->and(Net::find($this->net->id))->not->toBeNull();
+});
+
+test('nets from another event cannot be touched', function () {
+    $other = Net::factory()->create(['user_id' => $this->operator->id]);
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->call('openNetForm', $other->id)
+        ->assertNotFound();
 });

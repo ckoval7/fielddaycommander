@@ -63,7 +63,13 @@
             </div>
             <div class="cell">
                 <div class="label">3. Radio Net Name or Position/Tactical Call</div>
-                <div class="value">{{ $config->callsign }}</div>
+                <div class="value">
+                    @if($net)
+                        {{ collect([$net->name, $net->details(), $net->net_control_station])->filter()->implode(' · ') }}
+                    @else
+                        {{ $config->callsign }}
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -83,7 +89,7 @@
                             <td class="time">{{ toLocalTime($entry->logged_at)->format('H:i') }}</td>
                             <td class="station">{{ \App\Models\NetLogEntry::displayStation($entry->from_station, $entry->from_callsign) }}</td>
                             <td class="station">{{ \App\Models\NetLogEntry::displayStation($entry->to_station, $entry->to_callsign) ?: 'All stations' }}</td>
-                            <td class="message">@if($entry->priority !== \App\Enums\NetPriority::Routine)<strong>[{{ strtoupper($entry->priority->label()) }}]</strong> @endif{{ $entry->message }}</td>
+                            <td class="message">@if(! $net && $entry->net)<em>{{ $entry->net->name }}:</em> @endif @if($entry->priority !== \App\Enums\NetPriority::Routine)<strong>[{{ strtoupper($entry->priority->label()) }}]</strong> @endif{{ $entry->message }}</td>
                         </tr>
                     @empty
                         <tr>

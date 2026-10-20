@@ -10,7 +10,7 @@ previous render get the dashboard-item-new highlight (see HighlightsNewItems):
 - recent_contacts: Recent QSOs with time, callsign, band, mode
 - active_stations: Active stations with operator, band, status
 - equipment_status: Equipment with status and assignment
-- net_traffic: Newest net log entries with from, to, message and priority
+- net_traffic: Newest net log entries with from, to, net, message and priority
 
 Size variants:
 - normal: 15 items, standard text, max-h-96
@@ -121,6 +121,9 @@ Size variants:
                                     </div>
                                 </div>
                                 <div class="@if($size === 'tv') text-lg @else text-sm @endif text-base-content/80 break-words">
+                                    @if($item['net'])
+                                        <span class="badge badge-ghost {{ $size === 'tv' ? 'badge-md' : 'badge-sm' }} mr-1 align-middle">{{ $item['net'] }}</span>
+                                    @endif
                                     @if($priorityBadge)
                                         <span class="badge {{ $priorityBadge['class'] }} {{ $size === 'tv' ? 'badge-md' : 'badge-sm' }} gap-1 mr-1 align-middle">
                                             <x-icon :name="$priorityBadge['icon']" class="w-3 h-3" />{{ $item['priority_label'] }}

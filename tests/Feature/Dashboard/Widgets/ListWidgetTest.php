@@ -11,6 +11,7 @@ use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
+use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Models\OperatingSession;
 use App\Models\Station;
@@ -886,6 +887,20 @@ describe('net traffic list', function () {
             ->and($items[1]['from'])->toBe('Aid 7 (W1ABC)');
 
         $component->assertSee('Net Traffic')->assertSee('Emergency')->assertSee('Runner down at mile 14');
+    });
+
+    it('names the net only when the event runs more than one', function () {
+        $local = Net::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'name' => 'Local 2m Net']);
+        NetLogEntry::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'net_id' => $local->id]);
+
+        expect(Livewire::test(ListWidget::class, ['config' => ['list_type' => 'net_traffic']])->viewData('items')[0]['net'])->toBeNull();
+
+        $hf = Net::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'name' => 'Regional HF Net']);
+        NetLogEntry::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'net_id' => $hf->id, 'logged_at' => appNow()->addMinute()]);
+        Cache::flush();
+
+        Livewire::test(ListWidget::class, ['config' => ['list_type' => 'net_traffic']])
+            ->assertSeeInOrder(['Regional HF Net', 'Local 2m Net']);
     });
 
     it('shows an empty state when nothing is logged', function () {

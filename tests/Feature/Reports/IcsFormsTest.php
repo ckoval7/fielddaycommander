@@ -8,6 +8,7 @@ use App\Livewire\Reports\ReportsIndex;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Message;
+use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Models\Setting;
 use App\Models\Shift;
@@ -210,6 +211,26 @@ test('the ICS-309 prints the net log in time order', function () {
         ->assertSee('Aid 7 (W1ABC)')
         ->assertSee('[EMERGENCY]')
         ->assertSeeInOrder(['First call', 'Second call']);
+});
+
+test('the ICS-309 for one net lists only that net and names it', function () {
+    $local = Net::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'Local 2m Net', 'frequency' => '146.520 MHz', 'net_control_station' => 'NCS']);
+    $hf = Net::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'Regional HF Net']);
+    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $local->id, 'message' => 'ON TWO METERS']);
+    NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $hf->id, 'message' => 'ON EIGHTY METERS']);
+
+    $this->actingAs($this->user)->get(route('reports.ics-309', ['net' => $local->id]))
+        ->assertOk()
+        ->assertSee('Local 2m Net · 146.520 MHz · NCS')
+        ->assertSee('ON TWO METERS')
+        ->assertDontSee('ON EIGHTY METERS');
+
+    $this->actingAs($this->user)->get(route('reports.ics-309'))
+        ->assertSee('Regional HF Net:')
+        ->assertSee('ON EIGHTY METERS');
+
+    $this->actingAs($this->user)->get(route('reports.ics-309', ['net' => Net::factory()->create()->id]))
+        ->assertNotFound();
 });
 
 test('ICS forms need the view-reports permission', function (string $route) {

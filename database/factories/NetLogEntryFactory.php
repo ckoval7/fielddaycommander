@@ -7,6 +7,7 @@ namespace Database\Factories;
 
 use App\Enums\NetPriority;
 use App\Models\EventConfiguration;
+use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,6 +26,7 @@ class NetLogEntryFactory extends Factory
     {
         return [
             'event_configuration_id' => EventConfiguration::factory(),
+            'net_id' => fn (array $attributes) => Net::factory()->state(['event_configuration_id' => $attributes['event_configuration_id']]),
             'user_id' => User::factory(),
             'logged_at' => now(),
             'from_station' => 'Aid '.fake()->numberBetween(1, 12),

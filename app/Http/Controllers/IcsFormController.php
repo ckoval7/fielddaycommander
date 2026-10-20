@@ -9,6 +9,7 @@ use App\Enums\MessageFormat;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Message;
+use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Services\EventContextService;
 use App\Services\IcsFormBuilder;
@@ -52,14 +53,26 @@ class IcsFormController extends Controller
         return response()->json($this->builder->ics213($message));
     }
 
+    /**
+     * The ICS-309 for one net (?net=id), or for every net at the event.
+     */
     public function ics309(Request $request): View
     {
         $config = $this->configuration();
+        $net = $request->filled('net')
+            ? Net::forEvent($config->id)->with(['band', 'mode'])->findOrFail($request->integer('net'))
+            : null;
 
         return view('ics.309', [
             'config' => $config,
             'event' => $config->event,
-            'entries' => NetLogEntry::forEvent($config->id)->orderBy('logged_at')->orderBy('id')->get(),
+            'net' => $net,
+            'entries' => NetLogEntry::forEvent($config->id)
+                ->when($net, fn ($query) => $query->where('net_id', $net->id))
+                ->with('net')
+                ->orderBy('logged_at')
+                ->orderBy('id')
+                ->get(),
             'preparedBy' => $request->user(),
         ]);
     }

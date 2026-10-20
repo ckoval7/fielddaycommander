@@ -13,8 +13,9 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Tells open net log pages that an entry was added, edited or deleted, so
- * every net control screen shows the same log without polling.
+ * Tells open net log pages that an entry was added, edited or deleted, or a
+ * net was started or changed (no entry id), so every net control screen
+ * shows the same log without polling.
  */
 class NetLogChanged implements ShouldBroadcast
 {
@@ -22,7 +23,7 @@ class NetLogChanged implements ShouldBroadcast
 
     public function __construct(
         public int $eventId,
-        public int $entryId,
+        public ?int $entryId = null,
     ) {}
 
     /**

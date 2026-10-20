@@ -11,6 +11,7 @@ use App\Models\Contact;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
+use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Models\OperatingSession;
 use App\Models\Station;
@@ -157,12 +158,15 @@ class ListWidget extends Component
     /**
      * Get the newest net log entries.
      *
-     * Format: Time ago, from, to, message, priority
+     * Format: Time ago, from, to, net (when the event has several), message, priority
      */
     protected function getNetTraffic(Event $event): array
     {
+        $showsNetName = Net::forEvent($event->eventConfiguration->id)->count() > 1;
+
         return NetLogEntry::query()
             ->forEvent($event->eventConfiguration->id)
+            ->with('net')
             ->orderByDesc('logged_at')
             ->orderByDesc('id')
             ->limit($this->itemLimit())
@@ -173,6 +177,7 @@ class ListWidget extends Component
                 'time_ago' => $this->formatTimeAgo($entry->logged_at),
                 'from' => NetLogEntry::displayStation($entry->from_station, $entry->from_callsign),
                 'to' => NetLogEntry::displayStation($entry->to_station, $entry->to_callsign),
+                'net' => $showsNetName ? $entry->net?->name : null,
                 'message' => $entry->message,
                 'priority' => $entry->priority->value,
                 'priority_label' => $entry->priority->label(),

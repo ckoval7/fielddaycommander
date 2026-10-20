@@ -25,6 +25,7 @@ class NetLogEntry extends Model
 
     protected $fillable = [
         'event_configuration_id',
+        'net_id',
         'user_id',
         'logged_at',
         'from_station',
@@ -46,6 +47,11 @@ class NetLogEntry extends Model
     public function eventConfiguration(): BelongsTo
     {
         return $this->belongsTo(EventConfiguration::class);
+    }
+
+    public function net(): BelongsTo
+    {
+        return $this->belongsTo(Net::class);
     }
 
     public function user(): BelongsTo

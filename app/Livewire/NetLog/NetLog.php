@@ -7,7 +7,10 @@ namespace App\Livewire\NetLog;
 
 use App\Enums\NetPriority;
 use App\Events\NetLogChanged;
+use App\Models\Band;
 use App\Models\Event;
+use App\Models\Mode;
+use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Services\NetLogExchangeParser;
 use App\Services\TacticalCallsignResolver;
@@ -16,13 +19,16 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
  * Net control's log for a directed net, in the same chat-style window as
  * the contact log. Each line is "[called station] [calling station] [message]".
  *
- * Every net control screen at the event sees new entries live over Reverb.
+ * An event can run several nets at once. Each screen works one net, picked
+ * with the switcher and kept in the URL, so a station computer stays on its
+ * net. Every net control screen at the event sees changes live over Reverb.
  */
 class NetLog extends Component
 {
@@ -34,6 +40,12 @@ class NetLog extends Component
     private const MAX_SUGGESTIONS = 5;
 
     public Event $event;
+
+    /**
+     * The net this screen is logging.
+     */
+    #[Url(as: 'net')]
+    public ?int $netId = null;
 
     public string $exchangeInput = '';
 
@@ -53,11 +65,29 @@ class NetLog extends Component
      */
     public ?string $parseError = null;
 
+    public bool $showNetForm = false;
+
+    /**
+     * The net being edited in the net form, or null when starting one.
+     */
+    public ?int $editingNetId = null;
+
+    public string $netName = '';
+
+    public ?string $netFrequency = null;
+
+    public ?int $netBandId = null;
+
+    public ?int $netModeId = null;
+
+    public ?string $netControlStation = null;
+
     public function mount(Event $event): void
     {
         abort_if($event->eventConfiguration === null, 404);
 
         $this->event = $event;
+        $this->netId = $this->resolveNetId($this->netId);
     }
 
     /**
@@ -82,8 +112,12 @@ class NetLog extends Component
     #[Computed]
     public function entries(): Collection
     {
+        if ($this->currentNet === null) {
+            return new Collection;
+        }
+
         return NetLogEntry::withTrashed()
-            ->forEvent($this->event->eventConfiguration->id)
+            ->where('net_id', $this->currentNet->id)
             ->where(fn ($query) => $query->whereNull('deleted_at')->orWhere('deleted_at', '>=', now()->subMinutes(10)))
             ->with('user')
             ->orderByDesc('logged_at')
@@ -95,14 +129,59 @@ class NetLog extends Component
     }
 
     /**
-     * Tactical names in use at the event, for parsing and suggestions.
+     * The event's nets, for the switcher.
+     *
+     * @return Collection<int, Net>
+     */
+    #[Computed]
+    public function nets(): Collection
+    {
+        return Net::forEvent($this->event->eventConfiguration->id)
+            ->with(['band', 'mode'])
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get();
+    }
+
+    #[Computed]
+    public function currentNet(): ?Net
+    {
+        return $this->netId === null ? null : $this->nets->firstWhere('id', $this->netId);
+    }
+
+    /**
+     * Tactical names in use at the event, plus this net's net control
+     * station, for parsing and suggestions.
      *
      * @return list<string>
      */
     #[Computed]
     public function tacticalNames(): array
     {
-        return app(TacticalCallsignResolver::class)->tacticalNames($this->event->eventConfiguration)->all();
+        return app(TacticalCallsignResolver::class)->tacticalNames($this->event->eventConfiguration)
+            ->push($this->currentNet?->net_control_station)
+            ->filter(fn (?string $name) => $name !== null && $name !== '')
+            ->unique(fn (string $name) => mb_strtolower($name))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return Collection<int, Band>
+     */
+    #[Computed]
+    public function bands(): Collection
+    {
+        return Band::ordered()->get(['id', 'name']);
+    }
+
+    /**
+     * @return Collection<int, Mode>
+     */
+    #[Computed]
+    public function modes(): Collection
+    {
+        return Mode::orderBy('name')->get(['id', 'name']);
     }
 
     /**
@@ -118,7 +197,103 @@ class NetLog extends Component
 
     public function refreshEntries(): void
     {
-        unset($this->entries);
+        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
+        $this->netId = $this->resolveNetId($this->netId);
+    }
+
+    /**
+     * Switch this screen to another net.
+     */
+    public function updatedNetId(): void
+    {
+        unset($this->currentNet, $this->entries, $this->tacticalNames);
+        $this->netId = $this->resolveNetId($this->netId);
+        $this->reset('exchangeInput', 'suggestions', 'parseError', 'priority');
+    }
+
+    /**
+     * Open the net form to start a net, or to edit one.
+     */
+    public function openNetForm(?int $netId = null): void
+    {
+        $net = $netId === null ? null : $this->findEventNet($netId);
+
+        abort_unless($net === null ? auth()->user()?->can('create', Net::class) : auth()->user()?->can('update', $net), 403);
+
+        $this->resetValidation();
+        $this->editingNetId = $net?->id;
+        $this->netName = $net->name ?? '';
+        $this->netFrequency = $net?->frequency;
+        $this->netBandId = $net?->band_id;
+        $this->netModeId = $net?->mode_id;
+        $this->netControlStation = $net?->net_control_station;
+        $this->showNetForm = true;
+    }
+
+    public function saveNet(): void
+    {
+        $net = $this->editingNetId === null ? null : $this->findEventNet($this->editingNetId);
+
+        abort_unless($net === null ? auth()->user()?->can('create', Net::class) : auth()->user()?->can('update', $net), 403);
+
+        $validated = $this->validate([
+            'netName' => ['required', 'string', 'max:100'],
+            'netFrequency' => ['nullable', 'string', 'max:30'],
+            'netBandId' => ['nullable', 'integer', 'exists:bands,id'],
+            'netModeId' => ['nullable', 'integer', 'exists:modes,id'],
+            'netControlStation' => ['nullable', 'string', 'max:50'],
+        ], attributes: [
+            'netName' => 'net name',
+            'netFrequency' => 'frequency',
+            'netBandId' => 'band',
+            'netModeId' => 'mode',
+            'netControlStation' => 'net control station',
+        ]);
+
+        $attributes = [
+            'name' => trim($validated['netName']),
+            'frequency' => $this->blankToNull($validated['netFrequency']),
+            'band_id' => $validated['netBandId'],
+            'mode_id' => $validated['netModeId'],
+            'net_control_station' => $this->blankToNull($validated['netControlStation']),
+        ];
+
+        if ($net === null) {
+            $net = Net::create($attributes + [
+                'event_configuration_id' => $this->event->eventConfiguration->id,
+                'user_id' => auth()->id(),
+            ]);
+        } else {
+            $net->update($attributes);
+        }
+
+        $this->showNetForm = false;
+        $this->netId = $net->id;
+        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
+        NetLogChanged::dispatch($this->event->id);
+
+        $this->dispatch('toast', title: $this->editingNetId === null ? 'Net started' : 'Net updated', type: 'success');
+    }
+
+    /**
+     * Delete a net that has nothing logged on it, such as one planned but
+     * never run.
+     */
+    public function deleteNet(int $netId): void
+    {
+        $net = $this->findEventNet($netId);
+
+        if (! auth()->user()?->can('delete', $net)) {
+            $this->dispatch('toast', title: 'Only an empty net you started can be deleted', type: 'error');
+
+            return;
+        }
+
+        $net->delete();
+        $this->showNetForm = false;
+        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
+        $this->netId = $this->resolveNetId(null);
+        NetLogChanged::dispatch($this->event->id);
     }
 
     public function updatedExchangeInput(): void
@@ -148,6 +323,12 @@ class NetLog extends Component
     {
         abort_unless(auth()->user()?->can('create', NetLogEntry::class), 403);
 
+        if ($this->currentNet === null) {
+            $this->parseError = 'Start a net before logging traffic.';
+
+            return;
+        }
+
         $parsed = $this->parseLine($line ?? $this->exchangeInput);
 
         if ($parsed === null) {
@@ -156,6 +337,7 @@ class NetLog extends Component
 
         $entry = NetLogEntry::create([
             'event_configuration_id' => $this->event->eventConfiguration->id,
+            'net_id' => $this->currentNet->id,
             'user_id' => auth()->id(),
             'logged_at' => appNow(),
             'from_station' => $parsed['from'],
@@ -317,6 +499,40 @@ class NetLog extends Component
             $this->tacticalNames,
             fn (string $name) => str_starts_with(mb_strtolower($name), $partial) && mb_strtolower($name) !== rtrim($partial),
         ));
+    }
+
+    /**
+     * The net to show: the one asked for if it belongs to this event,
+     * otherwise the net with the latest traffic, otherwise the newest net.
+     */
+    protected function resolveNetId(?int $netId): ?int
+    {
+        if ($netId !== null && $this->nets->contains('id', $netId)) {
+            return $netId;
+        }
+
+        $latestTraffic = NetLogEntry::forEvent($this->event->eventConfiguration->id)
+            ->whereNotNull('net_id')
+            ->orderByDesc('logged_at')
+            ->orderByDesc('id')
+            ->value('net_id');
+
+        return $latestTraffic ?? $this->nets->sortByDesc('id')->first()?->id;
+    }
+
+    /**
+     * Find a net that belongs to this component's event, or 404.
+     */
+    protected function findEventNet(int $netId): Net
+    {
+        return Net::forEvent($this->event->eventConfiguration->id)->findOrFail($netId);
+    }
+
+    protected function blankToNull(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 
     /**

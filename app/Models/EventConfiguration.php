@@ -317,6 +317,11 @@ class EventConfiguration extends Model
         return $this->hasMany(SafetyChecklistItem::class);
     }
 
+    public function nets(): HasMany
+    {
+        return $this->hasMany(Net::class);
+    }
+
     public function netLogEntries(): HasMany
     {
         return $this->hasMany(NetLogEntry::class);
