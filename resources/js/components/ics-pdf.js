@@ -26,7 +26,7 @@ export function toWinAnsi(value) {
         .replaceAll(/[‘’]/g, "'")
         .replaceAll(/[“”]/g, '"')
         .replaceAll(/[–—]/g, '-')
-        .replaceAll(/…/g, '...')
+        .replaceAll('…', '...')
         .replaceAll(/[^\n\r\t\x20-\x7E\xA0-\xFF]/g, '?');
 }
 
