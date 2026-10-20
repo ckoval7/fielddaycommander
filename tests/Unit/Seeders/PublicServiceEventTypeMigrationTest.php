@@ -8,7 +8,7 @@ use Database\Seeders\EventTypeSeeder;
 
 function publicServiceMigration(): object
 {
-    return require database_path('migrations/2026_10_19_212133_add_is_scored_to_event_types_table.php');
+    return require database_path('migrations/2026_10_19_212133_add_public_service_event_type.php');
 }
 
 test('the migration adds the Public Service type to an already seeded install', function () {

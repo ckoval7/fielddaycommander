@@ -114,6 +114,17 @@ class RuleSetFactory
     }
 
     /**
+     * Whether events of the given type are scored as a contest. A type with
+     * no registered rules is assumed to be scored.
+     */
+    public function scoresType(?string $typeCode): bool
+    {
+        $class = $typeCode === null ? null : $this->latestRegisteredFor($typeCode);
+
+        return $class === null || app($class)->isScored();
+    }
+
+    /**
      * Registered rules versions for the given event type, oldest first.
      *
      * @return array<int, string>

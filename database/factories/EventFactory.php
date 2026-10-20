@@ -54,7 +54,7 @@ class EventFactory extends Factory
         return $this->state(function () {
             $eventType = EventType::firstOrCreate(
                 ['code' => 'PS'],
-                ['name' => 'Public Service / Other', 'is_scored' => false, 'setup_offset_hours' => null],
+                ['name' => 'Public Service / Other', 'setup_offset_hours' => null],
             );
 
             return [

@@ -208,6 +208,11 @@ class WinterFieldDay2026 implements RuleSet
         );
     }
 
+    public function isScored(): bool
+    {
+        return true;
+    }
+
     public function nomenclature(): Nomenclature
     {
         return new Nomenclature(

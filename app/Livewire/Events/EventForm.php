@@ -581,7 +581,7 @@ class EventForm extends Component
             return true;
         }
 
-        return (bool) (EventType::query()->whereKey($this->event_type_id)->value('is_scored') ?? true);
+        return app(RuleSetFactory::class)->scoresType(EventType::query()->whereKey($this->event_type_id)->value('code'));
     }
 
     #[Computed]

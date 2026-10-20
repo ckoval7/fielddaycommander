@@ -18,7 +18,7 @@ use App\Scoring\Dto\ScoreBreakdown;
  *
  * These events are not contests, so contacts earn no points and there are no
  * bonuses. The ruleset exists so code that asks an event for its rules keeps
- * working; the UI hides scoring surfaces through {@see EventConfiguration::isScored()}.
+ * working; the UI hides scoring surfaces through {@see self::isScored()}.
  */
 class PublicService implements RuleSet
 {
@@ -35,6 +35,11 @@ class PublicService implements RuleSet
     public function eventTypeCode(): string
     {
         return 'PS';
+    }
+
+    public function isScored(): bool
+    {
+        return false;
     }
 
     public function pointsForContact(Mode $mode, Station $station): int

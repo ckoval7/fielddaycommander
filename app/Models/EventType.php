@@ -5,6 +5,7 @@
 
 namespace App\Models;
 
+use App\Scoring\RuleSetFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,7 +18,6 @@ class EventType extends Model
         'name',
         'description',
         'is_active',
-        'is_scored',
         'setup_offset_hours',
     ];
 
@@ -25,18 +25,14 @@ class EventType extends Model
     {
         return [
             'is_active' => 'boolean',
-            'is_scored' => 'boolean',
         ];
     }
 
     /**
-     * Whether events of this type are scored as a contest.
-     *
-     * Unscored types (public service, nets, drills) hide scoring, bonuses,
-     * Cabrillo and the section map, and do not require contest fields.
+     * Whether events of this type are scored as a contest, as its rules say.
      */
     public function isScored(): bool
     {
-        return $this->is_scored ?? true;
+        return app(RuleSetFactory::class)->scoresType($this->code);
     }
 }
