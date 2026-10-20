@@ -577,3 +577,26 @@ test('stats calculate equipment count correctly', function () {
 
     expect($stats['equipment_count'])->toBe(5); // 2 + 3
 });
+
+test('stations are called positions for an unscored event', function () {
+    $this->actingAs($this->user);
+    $event = Event::factory()->publicService()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addHours(6),
+    ]);
+    EventConfiguration::factory()->publicService()->create(['event_id' => $event->id]);
+    Setting::set('active_event_id', $event->id);
+
+    Livewire::test(StationsList::class)
+        ->assertSee('Positions')
+        ->assertSee('No positions configured for this event')
+        ->assertDontSee('No stations configured for this event');
+});
+
+test('stations keep their name for a scored event', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(StationsList::class)
+        ->assertSee('No stations configured for this event')
+        ->assertDontSee('Positions');
+});

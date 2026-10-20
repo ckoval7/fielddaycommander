@@ -47,6 +47,25 @@ class EventFactory extends Factory
     }
 
     /**
+     * An unscored Public Service / Other event.
+     */
+    public function publicService(): static
+    {
+        return $this->state(function () {
+            $eventType = EventType::firstOrCreate(
+                ['code' => 'PS'],
+                ['name' => 'Public Service / Other', 'setup_offset_hours' => null],
+            );
+
+            return [
+                'name' => 'Marathon Support '.$this->faker->unique()->numberBetween(2000, 2099),
+                'event_type_id' => $eventType->id,
+                'rules_version' => '1',
+            ];
+        });
+    }
+
+    /**
      * Configure the model factory.
      *
      * Defaults rules_version to the event's year when not explicitly provided.

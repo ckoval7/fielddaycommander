@@ -355,6 +355,16 @@ describe('message bonus scoring by rulebook', function () {
     });
 });
 
+test('an unscored event shows no message scoring notice', function () {
+    $config = EventConfiguration::factory()->publicService()->create();
+
+    Livewire::actingAs($this->operator)
+        ->test(MessageTrafficIndex::class, ['event' => $config->event])
+        ->assertOk()
+        ->assertDontSee('awards no points for message traffic')
+        ->assertDontSee(' pts');
+});
+
 describe('sent tracking authorization', function () {
     test('operator can mark another operators message as sent', function () {
         $owner = User::factory()->create();

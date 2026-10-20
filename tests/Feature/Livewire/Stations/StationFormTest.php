@@ -623,3 +623,63 @@ test('rejects invalid power source value', function () {
         ->call('save')
         ->assertHasErrors(['power_source']);
 });
+
+test('a station saves its tactical callsign and channel', function () {
+    Livewire::test(StationForm::class)
+        ->set('name', 'Aid Station 7')
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->set('radio_equipment_id', $this->radio->id)
+        ->set('tactical_callsign', 'Aid 7')
+        ->set('rx_frequency', '146.940')
+        ->set('tx_frequency', '146.340')
+        ->set('tone', '100.0')
+        ->set('comms_mode', 'FM')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('stations', [
+        'name' => 'Aid Station 7',
+        'tactical_callsign' => 'Aid 7',
+        'rx_frequency' => '146.940',
+        'tx_frequency' => '146.340',
+        'tone' => '100.0',
+        'comms_mode' => 'FM',
+    ]);
+});
+
+test('station frequencies must be in MHz', function () {
+    Livewire::test(StationForm::class)
+        ->set('name', 'Aid Station 8')
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->set('radio_equipment_id', $this->radio->id)
+        ->set('rx_frequency', '2m simplex')
+        ->call('save')
+        ->assertHasErrors('rx_frequency');
+});
+
+test('the station form offers channel fields with a decimal keyboard', function () {
+    Livewire::test(StationForm::class)
+        ->assertSee('Tactical Callsign')
+        ->assertSeeHtml('inputmode="decimal"');
+});
+
+test('an unscored event gets a plain position with no station types or power bonuses', function () {
+    $config = EventConfiguration::factory()->publicService()->create();
+
+    Livewire::test(StationForm::class)
+        ->set('event_configuration_id', $config->id)
+        ->assertSee('Create Position')
+        ->assertDontSee('Station Type')
+        ->assertDontSee('GOTA Station (Get On The Air)')
+        ->set('power_source', PowerSource::cases()[0]->value)
+        ->assertDontSee('emergency power bonus')
+        ->set('name', 'Aid Station 3')
+        ->set('radio_equipment_id', $this->radio->id)
+        ->set('is_vhf_only', true)
+        ->set('max_power_watts', 1500)
+        ->assertDontSee('Scoring impact')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Station::where('name', 'Aid Station 3')->first()->is_vhf_only)->toBeFalse();
+});

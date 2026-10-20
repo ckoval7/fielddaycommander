@@ -386,7 +386,9 @@ class MessageForm extends Component
         }
 
         $locationPlaceholder = $location ?? '[CITY STATE]';
-        $this->messageText = "{$clubName} FIELD DAY {$year} X\n[NUMBER] PARTICIPANTS X\nLOCATION {$locationPlaceholder} X\n[NUMBER] ARES OPERATORS PARTICIPATING";
+        $label = $this->event->nomenclature()->messageEventLabel;
+        $eventLabel = $label !== null ? "{$label} {$year}" : strtoupper((string) $this->event->name);
+        $this->messageText = "{$clubName} {$eventLabel} X\n[NUMBER] PARTICIPANTS X\nLOCATION {$locationPlaceholder} X\n[NUMBER] ARES OPERATORS PARTICIPATING";
     }
 
     /**

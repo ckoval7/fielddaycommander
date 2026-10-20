@@ -567,6 +567,23 @@ class EventForm extends Component
         return EventType::query()->whereKey($this->event_type_id)->value('code') === 'WFD';
     }
 
+    /**
+     * Whether the selected event type is scored as a contest.
+     *
+     * Unscored events (public service, nets, drills) have no section,
+     * operating class, power multiplier or GOTA station. Assumes a scored
+     * type until one is selected.
+     */
+    #[Computed]
+    public function isScoredType(): bool
+    {
+        if (! $this->event_type_id) {
+            return true;
+        }
+
+        return app(RuleSetFactory::class)->scoresType(EventType::query()->whereKey($this->event_type_id)->value('code'));
+    }
+
     #[Computed]
     public function selectedOperatingClass(): ?OperatingClass
     {
@@ -667,6 +684,10 @@ class EventForm extends Component
             }
         }
 
+        if (! $this->isScoredType) {
+            $validated = $this->withoutContestFields($validated);
+        }
+
         DB::transaction(function () use ($validated) {
             if ($this->mode === 'edit' && $this->eventId) {
                 $this->updateEvent($validated);
@@ -690,6 +711,27 @@ class EventForm extends Component
 
         session()->flash('toast', ['title' => 'Success', 'description' => 'Event saved successfully.', 'type' => 'success']);
         $this->redirect(route('events.index'), navigate: true);
+    }
+
+    /**
+     * Clear the contest-only fields an unscored event does not use.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function withoutContestFields(array $validated): array
+    {
+        $this->has_gota_station = false;
+        $this->gota_callsign = null;
+
+        return array_merge($validated, [
+            'section_id' => null,
+            'operating_class_id' => null,
+            'transmitter_count' => $validated['transmitter_count'] ?? 1,
+            'has_gota_station' => false,
+            'gota_callsign' => null,
+            'max_power_watts' => $validated['max_power_watts'] ?? 100,
+        ]);
     }
 
     private function createEvent(array $validated): void
@@ -921,9 +963,9 @@ class EventForm extends Component
             'end_time' => ['required', 'date', 'after:start_time'],
             'callsign' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9\/]+$/i'],
             'club_name' => ['nullable', 'string', 'max:255'],
-            'section_id' => ['required', 'exists:sections,id'],
-            'operating_class_id' => ['required', 'exists:operating_classes,id'],
-            'transmitter_count' => ['required', 'integer', 'min:1', 'max:99'],
+            'section_id' => [$this->contestFieldRule(), 'exists:sections,id'],
+            'operating_class_id' => [$this->contestFieldRule(), 'exists:operating_classes,id'],
+            'transmitter_count' => [$this->contestFieldRule(), 'integer', 'min:1', 'max:99'],
             'rules_version' => ['nullable', 'string', 'max:16', 'regex:/^[A-Za-z0-9._-]+$/'],
             ...$this->powerRules(),
             ...$this->gotaRules(),
@@ -931,6 +973,14 @@ class EventForm extends Component
             ...$this->publicVisitorRules(),
             ...$this->guestbookRules(),
         ];
+    }
+
+    /**
+     * Contest fields are required for scored events and optional otherwise.
+     */
+    private function contestFieldRule(): string
+    {
+        return $this->isScoredType ? 'required' : 'nullable';
     }
 
     /**
@@ -942,7 +992,7 @@ class EventForm extends Component
     {
         return [
             'max_power_watts' => [
-                'required',
+                $this->contestFieldRule(),
                 'integer',
                 'min:1',
                 function ($attribute, $value, $fail) {
@@ -955,7 +1005,7 @@ class EventForm extends Component
             'uses_commercial_power' => [
                 'boolean',
                 function ($attribute, $value, $fail) {
-                    if (! $this->hasAnyPowerSourceSelected()) {
+                    if ($this->isScoredType && ! $this->hasAnyPowerSourceSelected()) {
                         $fail('At least one power source must be selected.');
                     }
                 },

@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\OperatingSession;
 use App\Models\Station;
+use App\Scoring\Dto\Nomenclature;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -39,6 +40,16 @@ class StationForm extends Component
     public string $name = '';
 
     public ?string $hostname = null;
+
+    public ?string $tactical_callsign = null;
+
+    public ?string $rx_frequency = null;
+
+    public ?string $tx_frequency = null;
+
+    public ?string $tone = null;
+
+    public ?string $comms_mode = null;
 
     public ?int $event_configuration_id = null;
 
@@ -92,6 +103,11 @@ class StationForm extends Component
 
         $this->name = $station->name;
         $this->hostname = $station->hostname;
+        $this->tactical_callsign = $station->tactical_callsign;
+        $this->rx_frequency = $station->rx_frequency;
+        $this->tx_frequency = $station->tx_frequency;
+        $this->tone = $station->tone;
+        $this->comms_mode = $station->comms_mode;
         $this->event_configuration_id = $station->event_configuration_id;
         $this->radio_equipment_id = $station->radio_equipment_id;
         $this->is_gota = $station->is_gota;
@@ -126,9 +142,35 @@ class StationForm extends Component
         return EventConfiguration::with('operatingClass')->find($this->event_configuration_id);
     }
 
+    /**
+     * Whether the selected event is a scored contest. Unscored events have no
+     * station types, power limits or power bonuses, so the form hides them.
+     */
+    #[Computed]
+    public function isScoredEvent(): bool
+    {
+        return $this->selectedEvent?->isScored() ?? true;
+    }
+
+    /**
+     * The words the selected event uses for a station ("Position" for
+     * public service events).
+     */
+    #[Computed]
+    public function terms(): Nomenclature
+    {
+        return $this->selectedEvent?->event?->nomenclature()
+            ?? app(EventContextService::class)->getContextEvent()?->nomenclature()
+            ?? new Nomenclature;
+    }
+
     #[Computed]
     public function maxPowerLimit(): ?int
     {
+        if (! $this->isScoredEvent) {
+            return null;
+        }
+
         return $this->selectedEvent?->operatingClass?->max_power_watts
             ?? $this->selectedEvent?->max_power_watts;
     }
@@ -262,6 +304,11 @@ class StationForm extends Component
         $stationData = [
             'name' => $validated['name'],
             'hostname' => $validated['hostname'],
+            'tactical_callsign' => $validated['tactical_callsign'] ?: null,
+            'rx_frequency' => $validated['rx_frequency'] ?: null,
+            'tx_frequency' => $validated['tx_frequency'] ?: null,
+            'tone' => $validated['tone'] ?: null,
+            'comms_mode' => $validated['comms_mode'] ?: null,
             'event_configuration_id' => $validated['event_configuration_id'],
             'radio_equipment_id' => $validated['radio_equipment_id'],
             'is_gota' => $validated['is_gota'],
@@ -273,6 +320,11 @@ class StationForm extends Component
             'power_source_description' => $validated['power_source_description'],
             'power_source' => $validated['power_source'],
         ];
+
+        // Station types only affect contest scoring.
+        if (! $this->isScoredEvent) {
+            $stationData = array_merge($stationData, ['is_gota' => false, 'is_vhf_only' => false, 'is_satellite' => false]);
+        }
 
         if ($this->stationId) {
             // Update existing station
@@ -334,6 +386,11 @@ class StationForm extends Component
             'stationId',
             'name',
             'hostname',
+            'tactical_callsign',
+            'rx_frequency',
+            'tx_frequency',
+            'tone',
+            'comms_mode',
             'event_configuration_id',
             'radio_equipment_id',
             'is_gota',
@@ -396,6 +453,11 @@ class StationForm extends Component
                     ->ignore($this->stationId),
             ],
             'hostname' => ['nullable', 'string', 'max:50'],
+            'tactical_callsign' => ['nullable', 'string', 'max:50'],
+            'rx_frequency' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+(\.[0-9]+)?$/'],
+            'tx_frequency' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+(\.[0-9]+)?$/'],
+            'tone' => ['nullable', 'string', 'max:20'],
+            'comms_mode' => ['nullable', 'string', 'max:20'],
             'event_configuration_id' => ['required', 'exists:event_configurations,id'],
             'radio_equipment_id' => [
                 'required',
@@ -429,6 +491,8 @@ class StationForm extends Component
             'radio_equipment_id.unique' => 'This radio is already assigned as the primary radio for another station in this event.',
             'max_power_watts.min' => 'Power output must be at least 1 watt.',
             'max_power_watts.max' => 'Power output cannot exceed 5000 watts.',
+            'rx_frequency.regex' => 'Enter the receive frequency in MHz, e.g. 146.520.',
+            'tx_frequency.regex' => 'Enter the transmit frequency in MHz, e.g. 146.520.',
         ];
     }
 

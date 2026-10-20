@@ -21,6 +21,7 @@ class EventTypeFactory extends Factory
     public function definition(): array
     {
         return [
+            'code' => strtoupper(fake()->unique()->lexify('X???')),
             'name' => fake()->randomElement(['Field Day', 'Winter Field Day', 'ARRL Field Day']),
             'description' => fake()->sentence(),
             'is_active' => true,

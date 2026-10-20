@@ -273,10 +273,16 @@
                 >
                     <x-menu activate-by-route>
                     @auth
-                        @php $isStationMode = \App\Support\StationMode::isActive(); @endphp
+                        @php
+                            $isStationMode = \App\Support\StationMode::isActive();
+                            $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent();
+                            $isScoredEvent = $activeEvent?->isScored() ?? true;
+                        @endphp
                         <x-menu-item title="Dashboard" icon="phosphor-house" link="/" />
                         <x-menu-item title="Public Page" icon="phosphor-globe" link="{{ route('public.landing') }}" />
-                        <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
+                        @if($isScoredEvent)
+                            <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
+                        @endif
                         <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" exact :active="request()->routeIs('guestbook.index')" />
                         @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
                             <x-menu-item title="Weather" icon="phosphor-sun-duotone" link="{{ route('weather.index') }}" exact :active="request()->routeIs('weather.index')" />
@@ -284,6 +290,16 @@
 
                         <x-menu-separator title="LOGGING" />
 
+                        @if(! $isScoredEvent)
+                            {{-- Unscored events log their traffic in the net log, not the contact log --}}
+                            @if($activeEvent && ! $isStationMode)
+                                @can('log-contacts')
+                                    <x-menu-item title="Net Log" icon="phosphor-list-checks"
+                                        link="{{ route('events.net-log', $activeEvent) }}"
+                                        exact :active="request()->routeIs('events.net-log')" />
+                                @endcan
+                            @endif
+                        @else
                         @can('log-contacts')
                             <x-menu-item title="Log Contact" icon="phosphor-pencil-line" link="{{ route('logging.station-select') }}" exact :active="request()->routeIs('logging.station-select', 'logging.session')" />
                             @unless($isStationMode)
@@ -296,13 +312,16 @@
                         @can('import-contacts')
                             <x-menu-item title="External Loggers" icon="phosphor-broadcast" link="{{ route('admin.external-loggers') }}" exact :active="request()->routeIs('admin.external-loggers') || request()->routeIs('admin.import-adif')" />
                         @endcan
+                        @endif
 
                         <x-menu-separator title="EVENT MANAGEMENT" />
 
-                        <x-menu-item title="Scoring" icon="phosphor-trophy" link="/scoring" />
+                        @if($isScoredEvent)
+                            <x-menu-item title="Scoring" icon="phosphor-trophy" link="/scoring" />
+                        @endif
 
                         @can('view-stations')
-                            <x-menu-item title="Stations" icon="phosphor-hard-drives" link="{{ route('stations.index') }}" route="stations.index" />
+                            <x-menu-item :title="$activeEvent?->nomenclature()->stationPlural ?? 'Stations'" icon="phosphor-hard-drives" link="{{ route('stations.index') }}" route="stations.index" />
                         @endcan
 
                         <x-menu-item title="Shift Schedule" icon="phosphor-calendar-dots" link="{{ route('schedule.index') }}" exact :active="request()->routeIs('schedule.index', 'schedule.my-shifts', 'schedule.dashboard')" />
@@ -320,16 +339,22 @@
 
                         <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
 
-                        @php $activeEvent = $activeEvent ?? app(\App\Services\EventContextService::class)->getContextEvent(); @endphp
                         @if($activeEvent && ! $isStationMode)
                             @can('log-contacts')
                                 <x-menu-item title="Message Traffic" icon="phosphor-envelope"
                                     link="{{ route('events.messages.index', $activeEvent) }}"
                                     exact :active="request()->routeIs('events.messages.*')" />
+                                @if($isScoredEvent)
+                                    <x-menu-item title="Net Log" icon="phosphor-list-checks"
+                                        link="{{ route('events.net-log', $activeEvent) }}"
+                                        exact :active="request()->routeIs('events.net-log')" />
+                                @endif
                             @endcan
-                            <x-menu-item :title="$activeEvent->nomenclature()->bulletinName" icon="phosphor-radio"
-                                link="{{ route('events.w1aw-bulletin') }}"
-                                exact :active="request()->routeIs('events.w1aw-bulletin')" />
+                            @if($isScoredEvent)
+                                <x-menu-item :title="$activeEvent->nomenclature()->bulletinName" icon="phosphor-radio"
+                                    link="{{ route('events.w1aw-bulletin') }}"
+                                    exact :active="request()->routeIs('events.w1aw-bulletin')" />
+                            @endif
                         @endif
 
                         @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment', 'manage-weather'])
@@ -389,12 +414,16 @@
                         @endcanany
                     @else
                         <x-menu-item title="Home" icon="phosphor-house" link="/" />
-                        <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
+                        @if(app(\App\Services\EventContextService::class)->isScored())
+                            <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
+                        @endif
                         <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" />
                         @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
                             <x-menu-item title="Weather" icon="phosphor-sun-duotone" link="{{ route('weather.index') }}" exact :active="request()->routeIs('weather.index')" />
                         @endif
-                        <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
+                        @if(app(\App\Services\EventContextService::class)->isScored())
+                            <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
+                        @endif
                         <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
                     @endauth
                     </x-menu>

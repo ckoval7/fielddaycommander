@@ -136,6 +136,8 @@
                 @foreach($widgets as $index => $widget)
                     @php
                         $isVisible = $widget['visible'] ?? true;
+                        $isHiddenForEvent = $this->isHiddenForEvent($widget);
+                        $isShown = $isVisible && ! $isHiddenForEvent;
                         $colSpan = $widget['col_span'] ?? 1;
                         $rowSpan = $widget['row_span'] ?? \App\Services\DashboardService::MIN_ROW_SPAN;
                         $componentKey = $this->widgetComponentKey($widget);
@@ -155,7 +157,7 @@
                         };
                     @endphp
                     <li
-                        class="widget-item relative animate-fade-in {{ $spanClasses }} {{ $rowSpanClasses }} {{ !$isVisible && $editMode ? 'opacity-40' : '' }} {{ !$isVisible && !$editMode ? 'hidden' : '' }} {{ $editMode ? 'ring-2 ring-base-300 rounded-lg' : '' }} list-none"
+                        class="widget-item relative animate-fade-in {{ $spanClasses }} {{ $rowSpanClasses }} {{ !$isShown && $editMode ? 'opacity-40' : '' }} {{ !$isShown && !$editMode ? 'hidden' : '' }} {{ $editMode ? 'ring-2 ring-base-300 rounded-lg' : '' }} list-none"
                         :tabindex="enabled ? '0' : '-1'"
                         :draggable="String(enabled)"
                         :aria-grabbed="keyboardGrabbedIndex === {{ $index }} ? 'true' : 'false'"
@@ -169,6 +171,7 @@
                         x-on:touchstart.passive="touchStart($event, {{ $index }})"
                         x-on:keydown="keyDown($event, {{ $index }})"
                         data-widget-id="{{ $widget['id'] }}"
+                        @if($isHiddenForEvent) title="{{ $this->isScoredEvent ? 'Shown only for unscored events' : 'Shown only for scored events' }}" @endif
                         wire:key="widget-{{ $widget['id'] }}"
                         x-data="{ updating: false, showSizePicker: false }"
                         x-on:widget-updating.window="if ($event.detail.widgetId === '{{ $widget['id'] }}') updating = true"
@@ -295,7 +298,7 @@
 
                             {{-- Render Live Widget Component. Hidden widgets are only mounted
                                  while editing, so they don't query and poll in the background. --}}
-                            @if($isVisible || $editMode)
+                            @if($isShown || $editMode)
                             @switch($widget['type'])
                                 @case('stat_card')
                                     <livewire:dashboard.widgets.stat-card

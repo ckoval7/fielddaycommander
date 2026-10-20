@@ -97,7 +97,7 @@ class DashboardController extends Controller
                 'route' => route('equipment.index'),
             ],
             [
-                'label' => 'Stations set up',
+                'label' => "{$event->nomenclature()->stationPlural} set up",
                 'done' => $eventConfig?->stations()->exists() ?? false,
                 'route' => $user->can('view-stations') ? route('stations.index') : null,
             ],
@@ -106,12 +106,15 @@ class DashboardController extends Controller
                 'done' => $eventConfig?->shifts()->exists() ?? false,
                 'route' => $user->can('manage-shifts') ? route('schedule.manage') : null,
             ],
-            [
+        ];
+
+        if ($event->isScored()) {
+            $checklist[] = [
                 'label' => "{$event->nomenclature()->bulletinName} schedule set up",
                 'done' => BulletinScheduleEntry::forEvent($event->id)->exists(),
                 'route' => route('events.w1aw-bulletin'),
-            ],
-        ];
+            ];
+        }
 
         return view('dashboard.get-ready', [
             'event' => $event,
@@ -139,8 +142,11 @@ class DashboardController extends Controller
         $tvConfig = config('dashboard.default_dashboards.tv');
         $columns = max(1, (int) ($tvConfig['columns'] ?? 5));
 
+        $isScored = app(EventContextService::class)->isScored();
+
         $widgets = collect($tvConfig['widgets'])
             ->filter(fn (array $widget): bool => $widget['visible'] ?? true)
+            ->reject(fn (array $widget): bool => app(DashboardService::class)->isHiddenForEvent($widget, $isScored))
             ->sortBy('order')
             ->map(fn (array $widget): array => [
                 ...$widget,

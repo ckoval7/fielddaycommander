@@ -113,7 +113,8 @@ test('EquipmentDelivered sends notification to operator with delivery details', 
             $mail = $notification->toMail($this->operator);
             expect($mail->subject)->toContain('Equipment Delivered')
                 ->and($mail->subject)->toContain('Icom IC-7300')
-                ->and($mail->subject)->toContain('Field Day 2025');
+                ->and($mail->subject)->toContain('Field Day 2025')
+                ->and(implode(' ', $mail->outroLines))->toContain('Thank you for your contribution to Field Day 2025!');
 
             return true;
         }

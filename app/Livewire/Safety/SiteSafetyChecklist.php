@@ -80,6 +80,10 @@ class SiteSafetyChecklist extends Component
             return false;
         }
 
+        if (! $this->eventConfig->isScored()) {
+            return $this->canEditBriefing();
+        }
+
         $safetyRoleNames = ['Safety Officer', 'Site Responsibilities'];
 
         return ShiftAssignment::query()
@@ -95,6 +99,27 @@ class SiteSafetyChecklist extends Component
                         $q->whereIn('name', $safetyRoleNames);
                     });
             })
+            ->exists();
+    }
+
+    /**
+     * Anyone who runs the schedule, or holds any shift at the event, can
+     * check off the volunteer briefing. There is no safety role to gate it.
+     */
+    protected function canEditBriefing(): bool
+    {
+        if (Auth::user()->can('manage-shifts')) {
+            return true;
+        }
+
+        return ShiftAssignment::query()
+            ->where('user_id', Auth::id())
+            ->whereIn('status', [
+                ShiftAssignment::STATUS_SCHEDULED,
+                ShiftAssignment::STATUS_CHECKED_IN,
+                ShiftAssignment::STATUS_CHECKED_OUT,
+            ])
+            ->whereHas('shift', fn ($q) => $q->where('event_configuration_id', $this->eventConfig->id))
             ->exists();
     }
 
@@ -218,13 +243,9 @@ class SiteSafetyChecklist extends Component
             return;
         }
 
-        $bonusTypeCode = match ($checklistType) {
-            ChecklistType::SafetyOfficer => 'safety_officer',
-            ChecklistType::SiteResponsibilities => 'site_responsibilities',
-        };
-
+        $bonusTypeCode = $checklistType->bonusCode();
         $event = $this->eventConfig?->event;
-        $bonusType = $event ? BonusType::resolveFor($event, $bonusTypeCode) : null;
+        $bonusType = $event && $bonusTypeCode ? BonusType::resolveFor($event, $bonusTypeCode) : null;
 
         if (! $bonusType || ! $this->eventConfig->isClassEligibleForBonus($bonusType)) {
             return;
@@ -262,13 +283,9 @@ class SiteSafetyChecklist extends Component
      */
     protected function revokeIfGateNotMet(ChecklistType $checklistType): void
     {
-        $bonusTypeCode = match ($checklistType) {
-            ChecklistType::SafetyOfficer => 'safety_officer',
-            ChecklistType::SiteResponsibilities => 'site_responsibilities',
-        };
-
+        $bonusTypeCode = $checklistType->bonusCode();
         $event = $this->eventConfig?->event;
-        if (! $event) {
+        if (! $event || ! $bonusTypeCode) {
             return;
         }
 

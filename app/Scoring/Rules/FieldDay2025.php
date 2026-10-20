@@ -183,6 +183,11 @@ class FieldDay2025 implements FieldDayRuleSet
         return $headline;
     }
 
+    public function isScored(): bool
+    {
+        return true;
+    }
+
     public function nomenclature(): Nomenclature
     {
         return new Nomenclature;

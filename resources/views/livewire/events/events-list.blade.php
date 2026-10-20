@@ -4,7 +4,7 @@
 --}}
 <div class="space-y-6">
     <!-- Header -->
-    <x-header title="Events" subtitle="Manage Field Day and other contest events" separator progress-indicator>
+    <x-header title="Events" subtitle="Manage Field Day, contest and public service events" separator progress-indicator>
         <x-slot:actions>
             @can('create-events')
                 <x-button label="Create Event" icon="phosphor-plus" class="btn-primary" link="{{ route('events.create') }}" wire:navigate responsive />
@@ -95,7 +95,11 @@
                         <span class="text-xs opacity-50">Participants</span>
                     </div>
                     <div class="flex flex-col items-center flex-1">
-                        <span class="font-bold text-primary">{{ number_format($event->final_score) }}</span>
+                        @if($event->isScored())
+                            <span class="font-bold text-primary">{{ number_format($event->final_score) }}</span>
+                        @else
+                            <span class="font-semibold opacity-50">—</span>
+                        @endif
                         <span class="text-xs opacity-50">Score</span>
                     </div>
                 </div>
@@ -182,7 +186,7 @@
                             <td>
                                 <span class="font-mono text-sm">{{ $event->eventConfiguration->callsign ?? 'Not configured' }}</span>
                             </td>
-                            <td>{{ $event->eventConfiguration?->operatingClass?->code ?? 'N/A' }}</td>
+                            <td>{{ $event->eventConfiguration?->operatingClass?->code ?? '—' }}</td>
                             <td class="text-center">
                                 <span class="font-semibold">{{ number_format($event->contacts_count) }}</span>
                             </td>
@@ -190,7 +194,11 @@
                                 <span class="font-semibold">{{ number_format($event->participants_count) }}</span>
                             </td>
                             <td class="text-center">
-                                <span class="font-bold text-primary">{{ number_format($event->final_score) }}</span>
+                                @if($event->isScored())
+                                    <span class="font-bold text-primary">{{ number_format($event->final_score) }}</span>
+                                @else
+                                    <span class="opacity-50" title="Not scored">—</span>
+                                @endif
                             </td>
                             <td class="text-right">
                                 <x-dropdown>

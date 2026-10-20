@@ -360,6 +360,43 @@ class DashboardService
     }
 
     /**
+     * Whether a widget is hidden (not removed) for the event in view.
+     *
+     * Contest widgets are hidden at unscored events. A default widget marked
+     * unscored_only, such as the net traffic list, is hidden at contests.
+     *
+     * @param  array<string, mixed>  $widget
+     */
+    public function isHiddenForEvent(array $widget, bool $eventIsScored): bool
+    {
+        return $eventIsScored
+            ? (bool) ($widget['unscored_only'] ?? false)
+            : $this->isScoredOnly($widget);
+    }
+
+    /**
+     * Whether a widget only means something for a scored contest.
+     *
+     * @param  array<string, mixed>  $widget
+     */
+    public function isScoredOnly(array $widget): bool
+    {
+        $scoredOnly = config('dashboard.scored_only', []);
+
+        if (in_array($widget['type'] ?? null, $scoredOnly['widget_types'] ?? [], true)) {
+            return true;
+        }
+
+        foreach ($scoredOnly['settings'] ?? [] as $setting => $values) {
+            if (in_array($widget['config'][$setting] ?? null, $values, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Keep only the settings a widget type's schema defines, with valid values.
      *
      * Unknown keys are dropped; invalid values fall back to the schema default,

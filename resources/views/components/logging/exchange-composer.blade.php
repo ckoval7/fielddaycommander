@@ -19,6 +19,7 @@ Props:
 - $suggestions: array - Autocomplete suggestions from the Livewire component
 - $duplicateWarning: string|null - Duplicate warning to show, if any
 - $participantWarning: string|null - Own-participant contact warning to show, if any
+- $label: string - Accessible name for the input
 
 Slots:
 - $slot: Page-specific alerts and hints, shown above the duplicate warning
@@ -29,6 +30,7 @@ Slots:
     'suggestions' => [],
     'duplicateWarning' => null,
     'participantWarning' => null,
+    'label' => 'Exchange input',
 ])
 
 <div class="border-t border-base-300 p-3 space-y-2" x-data="{ si: -1 }">
@@ -105,7 +107,7 @@ Slots:
                 @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
                 class="input input-lg w-full text-2xl font-mono uppercase tracking-wider"
                 placeholder="{{ $placeholder }}"
-                aria-label="Exchange input"
+                aria-label="{{ $label }}"
                 autocomplete="off"
                 autocapitalize="characters"
                 autocorrect="off"

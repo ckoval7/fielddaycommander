@@ -10,6 +10,7 @@ previous render get the dashboard-item-new highlight (see HighlightsNewItems):
 - recent_contacts: Recent QSOs with time, callsign, band, mode
 - active_stations: Active stations with operator, band, status
 - equipment_status: Equipment with status and assignment
+- net_traffic: Newest net log entries with from, to, net, message and priority
 
 Size variants:
 - normal: 15 items, standard text, max-h-96
@@ -21,6 +22,7 @@ Size variants:
         'recent_contacts' => 'Recent Contacts',
         'active_stations' => 'Active Stations',
         'equipment_status' => 'Equipment Status',
+        'net_traffic' => 'Net Traffic',
     ];
     $title = $titles[$listType] ?? 'List';
     $titleSize = $size === 'tv' ? 'text-2xl' : 'text-lg';
@@ -96,6 +98,31 @@ Size variants:
                             </div>
                         </div>
 
+                    @elseif($item['type'] === 'net_entry')
+                        {{-- Net Log Entry Item --}}
+                        <div
+                            wire:key="list-item-{{ $item['key'] }}"
+                            class="@if($size === 'tv') p-4 @else p-3 @endif bg-base-100 border border-base-content/10 rounded-lg transition-all duration-200 {{ in_array($item['key'], $newItemKeys, true) ? 'dashboard-item-new' : '' }}"
+                        >
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex items-baseline justify-between gap-3">
+                                    <div class="@if($size === 'tv') text-2xl @else text-lg @endif font-bold font-mono break-words min-w-0">
+                                        {{ $item['from'] }} <span class="font-normal text-base-content/50">&rarr;</span> {{ $item['to'] }}
+                                    </div>
+                                    <div class="@if($size === 'tv') text-base @else text-xs @endif text-base-content/70 flex-shrink-0">
+                                        {{ $item['time_ago'] }}
+                                    </div>
+                                </div>
+                                <div class="@if($size === 'tv') text-lg @else text-sm @endif text-base-content/80 break-words">
+                                    @if($item['net'])
+                                        <span class="badge badge-ghost {{ $size === 'tv' ? 'badge-md' : 'badge-sm' }} mr-1 align-middle">{{ $item['net'] }}</span>
+                                    @endif
+                                    <x-logging.net-priority-badge :priority="\App\Enums\NetPriority::from($item['priority'])" :size="$size === 'tv' ? 'badge-md' : 'badge-sm'" />
+                                    <span class="whitespace-pre-line">{{ $item['message'] }}</span>
+                                </div>
+                            </div>
+                        </div>
+
                     @elseif($item['type'] === 'equipment')
                         {{-- Equipment Status Item --}}
                         <div
@@ -149,6 +176,11 @@ Size variants:
                                 'icon' => 'phosphor-wrench',
                                 'title' => 'No equipment status',
                                 'message' => 'Equipment assignments will appear here',
+                            ],
+                            'net_traffic' => [
+                                'icon' => 'phosphor-list-checks',
+                                'title' => 'No net traffic yet',
+                                'message' => 'Entries logged in the Net Log will appear here',
                             ],
                         ];
                         $empty = $emptyMessages[$listType] ?? ['icon' => 'phosphor-tray', 'title' => 'No data available', 'message' => ''];

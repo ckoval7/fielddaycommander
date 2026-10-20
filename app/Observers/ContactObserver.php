@@ -86,7 +86,7 @@ class ContactObserver
      */
     protected function checkNewSection(Contact $contact): void
     {
-        if (! $contact->section_id) {
+        if (! $contact->section_id || ! ($contact->eventConfiguration?->isScored() ?? true)) {
             return;
         }
 

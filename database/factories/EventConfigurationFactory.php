@@ -81,4 +81,17 @@ class EventConfigurationFactory extends Factory
             'guestbook_enabled' => false,
         ];
     }
+
+    /**
+     * A configuration for an unscored Public Service / Other event.
+     */
+    public function publicService(): static
+    {
+        return $this->state(fn () => [
+            'event_id' => Event::factory()->publicService(),
+            'section_id' => null,
+            'operating_class_id' => null,
+            'power_multiplier' => '1',
+        ]);
+    }
 }

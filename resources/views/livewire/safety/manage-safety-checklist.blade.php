@@ -140,7 +140,7 @@
                     <x-select
                         label="Checklist Type"
                         wire:model="itemChecklistType"
-                        :options="collect(\App\Enums\ChecklistType::cases())->map(fn ($type) => ['id' => $type->value, 'name' => $type->label()])"
+                        :options="collect($this->checklistTypeOptions)->map(fn ($type) => ['id' => $type->value, 'name' => $type->label()])"
                         option-value="id"
                         option-label="name"
                         placeholder="Select a type"

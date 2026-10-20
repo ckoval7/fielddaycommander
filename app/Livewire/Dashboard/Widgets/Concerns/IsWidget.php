@@ -198,15 +198,22 @@ trait IsWidget
      */
     protected function contactChangeListeners(string $method = 'handleUpdate'): array
     {
+        $eventId = $this->broadcastEventId();
+
+        return $eventId === null ? [] : BroadcastChannels::contactChangeListeners($eventId, $method);
+    }
+
+    /**
+     * The context event's id when the viewer may subscribe to its channel,
+     * otherwise null.
+     */
+    protected function broadcastEventId(): ?int
+    {
         // getContextEventId() returns a 'no-event' placeholder for cache keys,
         // so read the event itself to skip subscribing when there is none.
         $eventId = app(EventContextService::class)->getContextEvent()?->id;
 
-        if ($eventId === null || ! $this->canListenForBroadcasts()) {
-            return [];
-        }
-
-        return BroadcastChannels::contactChangeListeners($eventId, $method);
+        return $eventId !== null && $this->canListenForBroadcasts() ? $eventId : null;
     }
 
     /**

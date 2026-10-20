@@ -11,6 +11,7 @@ use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Scoring\Rules\FieldDay2025;
 use App\Scoring\Rules\FieldDay2026;
 use App\Scoring\Rules\FieldDayTest;
+use App\Scoring\Rules\PublicService;
 use App\Scoring\Rules\WinterFieldDay2026;
 use App\Scoring\Rules\WinterFieldDay2027;
 use Illuminate\Support\Facades\Log;
@@ -48,6 +49,10 @@ class RuleSetFactory
             'WFD' => [
                 '2026' => WinterFieldDay2026::class,
                 '2027' => WinterFieldDay2027::class,
+            ],
+            // Unscored events have one ruleset that never changes.
+            'PS' => [
+                '1' => PublicService::class,
             ],
         ];
 
@@ -106,6 +111,17 @@ class RuleSetFactory
         $class = $this->registry[$typeCode][$version] ?? $this->latestRegisteredFor($typeCode);
 
         return $class ? app($class) : null;
+    }
+
+    /**
+     * Whether events of the given type are scored as a contest. A type with
+     * no registered rules is assumed to be scored.
+     */
+    public function scoresType(?string $typeCode): bool
+    {
+        $class = $typeCode === null ? null : $this->latestRegisteredFor($typeCode);
+
+        return $class === null || app($class)->isScored();
     }
 
     /**

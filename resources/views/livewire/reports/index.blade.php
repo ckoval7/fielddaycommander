@@ -81,7 +81,7 @@
             <x-mary-icon name="phosphor-chart-bar" class="w-16 h-16 opacity-25" />
             <div class="text-2xl font-semibold opacity-50">No active event</div>
             <p class="text-sm text-center max-w-sm" style="color: var(--reports-text-muted);">
-                Reports will be available once a Field Day event is active.
+                Reports will be available once an event is active.
             </p>
         </div>
     @else
@@ -100,6 +100,7 @@
 
         <span style="color: var(--reports-border);">|</span>
 
+        @if ($this->isScoredEvent)
         <span class="text-sm font-semibold uppercase tracking-wide"
               style="color: var(--reports-text-muted);">
             {{ $this->event->eventConfiguration->operatingClass?->name ?? 'Unknown Class' }}
@@ -111,6 +112,12 @@
               style="color: var(--reports-text-muted);">
             {{ $this->event->eventConfiguration->section?->name ?? 'Unknown Section' }}
         </span>
+        @else
+        <span class="text-sm font-semibold uppercase tracking-wide"
+              style="color: var(--reports-text-muted);">
+            {{ $this->event->eventType?->name }}
+        </span>
+        @endif
 
         @if ($this->event->eventConfiguration->club_name)
             <span style="color: var(--reports-border);">·</span>
@@ -126,6 +133,7 @@
         </span>
     </div>
 
+    @if ($this->isScoredEvent)
     {{-- ============================================================
          SECTION 1: DOWNLOADS — primary action zone
          F-pattern top row — immediately visible, clearly actionable
@@ -281,6 +289,67 @@
         </div>
     </div>
 
+    @endif
+
+    {{-- ============================================================
+         ICS FORMS — FEMA's fillable PDFs, filled in the browser
+         ============================================================ --}}
+    <div class="px-3 sm:px-6 py-8" style="border-bottom: 1px solid var(--reports-divider);">
+        <div class="text-xs font-bold uppercase tracking-widest mb-5"
+             style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 3px; height: 1em; background-color: var(--reports-section-bar); border-radius: 2px;"></span>
+            ICS Forms
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            @foreach ([
+                ['form' => 'ics-205', 'icon' => 'phosphor-cell-signal-high', 'title' => 'ICS-205 Radio Plan', 'subtitle' => 'Channels from stations and talk-in · FEMA PDF'],
+                ['form' => 'ics-211', 'icon' => 'phosphor-users-three', 'title' => 'ICS-211 Check-In List', 'subtitle' => 'Volunteers from shift check-ins · FEMA PDF'],
+                ['form' => 'ics-309', 'icon' => 'phosphor-list-checks', 'title' => 'ICS-309 Comms Log', 'subtitle' => 'Net log entries · print page'],
+            ] as $card)
+                {{-- FEMA PDFs are filled in the browser; the ICS-309 is a print page --}}
+                @php($isPdf = $card['form'] !== 'ics-309')
+                <{{ $isPdf ? 'button' : 'a' }}
+                   @if ($isPdf)
+                       type="button"
+                       x-data="icsPdf('{{ route('reports.'.$card['form']) }}')"
+                       x-on:click="download()"
+                       x-bind:disabled="busy"
+                   @else
+                       href="{{ route('reports.'.$card['form']) }}" target="_blank" rel="noopener"
+                   @endif
+                   data-testid="{{ $card['form'] }}"
+                   class="group no-underline block w-full text-left rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md active:shadow-sm disabled:opacity-60"
+                   style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
+                    <div class="flex items-start gap-4">
+                        <div class="shrink-0 mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center"
+                             style="background-color: var(--reports-pdf-border); color: white;">
+                            <x-mary-icon :name="$card['icon']" class="w-5 h-5" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
+                                {{ $card['title'] }}
+                            </div>
+                            <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
+                                {{ $card['subtitle'] }}
+                            </div>
+                            <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
+                                 style="color: var(--reports-pdf-icon);">
+                                @if ($isPdf)
+                                    <span x-show="!busy">Download &rarr;</span><span x-show="busy" x-cloak>Building&hellip;</span>
+                                @else
+                                    Open &rarr;
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </{{ $isPdf ? 'button' : 'a' }}>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- Contact-based sections: unscored events log traffic in the net log instead --}}
+    @if ($this->isScoredEvent)
     {{-- ============================================================
          SECTION 2: QSO RATE BY HOUR
          ============================================================ --}}
@@ -456,6 +525,7 @@
             </div>
         @endif
     </div>
+    @endif
 
     {{-- ============================================================
          SECTION 5: VOLUNTEER HOURS

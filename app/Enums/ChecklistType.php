@@ -9,6 +9,7 @@ enum ChecklistType: string
 {
     case SafetyOfficer = 'safety_officer';
     case SiteResponsibilities = 'site_responsibilities';
+    case Briefing = 'briefing';
 
     /**
      * Get the human-readable label for the checklist type.
@@ -18,6 +19,7 @@ enum ChecklistType: string
         return match ($this) {
             self::SafetyOfficer => 'Safety Officer',
             self::SiteResponsibilities => 'Site Responsibilities',
+            self::Briefing => 'Volunteer Briefing',
         };
     }
 
@@ -29,6 +31,15 @@ enum ChecklistType: string
         return match ($this) {
             self::SafetyOfficer => 100,
             self::SiteResponsibilities => 50,
+            self::Briefing => 0,
         };
+    }
+
+    /**
+     * The bonus this checklist earns when complete, or null when it earns none.
+     */
+    public function bonusCode(): ?string
+    {
+        return $this === self::Briefing ? null : $this->value;
     }
 }

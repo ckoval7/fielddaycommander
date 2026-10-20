@@ -5,8 +5,9 @@
 {{--
 QSO Log Component
 
-Chat-style log shared by live logging and paper-log transcription: the QSO
-history (oldest → newest) with the exchange composer docked underneath.
+Chat-style log shared by live logging, paper-log transcription and the net
+log: the history (oldest → newest) with the exchange composer docked
+underneath.
 
 The enclosing Alpine scope must provide recalledContactId and recalledUuid.
 
@@ -22,11 +23,14 @@ Props:
 - $subtitle: string|null - Muted text beside the heading
 - $example: string - Example exchange shown in the empty state
 - $timeHeading: string - Heading for the desktop time column
+- $emptyTitle: string - Empty state heading
+- $emptyHint: string|null - Empty state hint before the example
 
 Slots:
 - $cards: Mobile card list items
 - $rows: Desktop table rows
 - $extraColumns: Extra desktop column headings, after Section
+- $headings: Desktop column headings, replacing the contact columns
 - $slot: The docked composer
 --}}
 
@@ -35,6 +39,8 @@ Slots:
     'subtitle' => null,
     'example' => 'W1AW 3A CT',
     'timeHeading' => 'Time',
+    'emptyTitle' => 'No contacts logged yet.',
+    'emptyHint' => "Type the other station's exchange, e.g.",
 ])
 
 <div
@@ -116,8 +122,8 @@ Slots:
         {{-- Empty state: shown until any row (server or queued) renders --}}
         <div class="h-full flex items-center justify-center group-has-[tbody_tr]/log:hidden">
             <div class="text-center text-base-content/50 space-y-1">
-                <p>No contacts logged yet.</p>
-                <p class="text-xs">Type the other station's exchange, e.g. <span class="font-mono font-bold">{{ $example }}</span></p>
+                <p>{{ $emptyTitle }}</p>
+                <p class="text-xs">{{ $emptyHint }} <span class="font-mono font-bold">{{ $example }}</span></p>
             </div>
         </div>
 
@@ -131,12 +137,16 @@ Slots:
             <table class="table table-sm table-pin-rows">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>{{ $timeHeading }}</th>
-                        <th>Callsign</th>
-                        <th>Exchange</th>
-                        <th>Section</th>
-                        {{ $extraColumns ?? '' }}
+                        @isset($headings)
+                            {{ $headings }}
+                        @else
+                            <th>#</th>
+                            <th>{{ $timeHeading }}</th>
+                            <th>Callsign</th>
+                            <th>Exchange</th>
+                            <th>Section</th>
+                            {{ $extraColumns ?? '' }}
+                        @endisset
                     </tr>
                 </thead>
                 <tbody>

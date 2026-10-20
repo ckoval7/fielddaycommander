@@ -4,8 +4,9 @@
 import './bootstrap';
 import dashboardSortable from './components/dashboard-sortable';
 import contactQueue from './components/contact-queue';
-import transcribeRecall from './components/transcribe-recall';
+import { transcribeRecall, netLogRecall } from './components/server-recall';
 import updatedAgo from './components/updated-ago';
+import icsPdf from './components/ics-pdf';
 import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
@@ -28,6 +29,8 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('contactQueue', contactQueue);
     Alpine.data('transcribeRecall', transcribeRecall);
     Alpine.data('updatedAgo', updatedAgo);
+    Alpine.data('icsPdf', icsPdf);
+    Alpine.data('netLogRecall', netLogRecall);
     Alpine.data('formErrorSummaryPanel', formErrorSummaryPanel);
     Alpine.data('flatpickr', flatpickrComponent);
 });

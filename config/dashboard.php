@@ -147,6 +147,7 @@ return [
                         'recent_contacts' => 'Recent Contacts',
                         'active_stations' => 'Active Stations',
                         'equipment_status' => 'Equipment Status',
+                        'net_traffic' => 'Net Traffic',
                     ],
                     'default' => 'recent_contacts',
                     'required' => true,
@@ -354,6 +355,21 @@ return [
                     'order' => 8,
                     'visible' => true,
                 ],
+                [
+                    // Shown only at unscored events (see DashboardService::isHiddenForEvent),
+                    // where the net log takes the place of the contact log.
+                    'id' => 'net-traffic',
+                    'type' => 'list_widget',
+                    'config' => [
+                        'list_type' => 'net_traffic',
+                        'item_count' => '10',
+                    ],
+                    'col_span' => 2,
+                    'row_span' => 6,
+                    'order' => 9,
+                    'visible' => true,
+                    'unscored_only' => true,
+                ],
             ],
         ],
 
@@ -484,6 +500,35 @@ return [
             ],
         ],
 
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scored-Event Widgets
+    |--------------------------------------------------------------------------
+    |
+    | Widgets that only mean something for a scored contest with a contact
+    | log. They are hidden (not removed) while the event in context is
+    | unscored, so a saved dashboard shows them again at the next Field Day.
+    |
+    */
+
+    'scored_only' => [
+        'widget_types' => ['sections_worked', 'chart'],
+        // Settings values that need scoring or contact logging, keyed by the
+        // widget setting that holds them. Unscored events log traffic in the
+        // net log, not the contact log, so QSO-based widgets have no data.
+        'settings' => [
+            'metric' => [
+                'total_score', 'sections_worked', 'points_per_hour', 'bonus_points_earned',
+                'qso_count', 'qso_per_hour', 'avg_qso_rate_4h', 'contacts_last_hour',
+                'operators_count', 'stations_count',
+                'next_milestone', 'event_goal', 'class_target', 'bonus_progress',
+            ],
+            'info_type' => ['operating_class'],
+            'list_type' => ['recent_contacts', 'active_stations'],
+            'feed_type' => ['contacts_only', 'milestones_only'],
+        ],
     ],
 
     /*

@@ -7,10 +7,12 @@ namespace App\Livewire\Dashboard;
 
 use App\Models\Dashboard;
 use App\Services\DashboardService;
+use App\Services\EventContextService;
 use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -73,6 +75,23 @@ class DashboardEditor extends Component
         $this->description = $dashboard->description;
         $this->loadWidgets();
         $this->originalWidgets = collect();
+    }
+
+    /**
+     * Whether a widget is hidden for the event in context: contest widgets at
+     * unscored events, and unscored-only defaults at contests.
+     *
+     * @param  array<string, mixed>  $widget
+     */
+    public function isHiddenForEvent(array $widget): bool
+    {
+        return app(DashboardService::class)->isHiddenForEvent($widget, $this->isScoredEvent);
+    }
+
+    #[Computed]
+    public function isScoredEvent(): bool
+    {
+        return app(EventContextService::class)->isScored();
     }
 
     /**

@@ -85,6 +85,16 @@ class GuestbookManager extends Component
         }
     }
 
+    /**
+     * Whether guestbook entries earn bonus points at this event. Unscored
+     * events have no bonuses, so bonus labels and the sidebar are hidden.
+     */
+    #[Computed]
+    public function isScoredEvent(): bool
+    {
+        return $this->eventConfig?->isScored() ?? true;
+    }
+
     #[Computed]
     public function entries(): LengthAwarePaginator
     {

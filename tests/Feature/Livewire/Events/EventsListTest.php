@@ -224,3 +224,14 @@ test('events list shows cards below xl so the wide table never scrolls the page 
         ->assertSeeHtml('<div class="xl:hidden space-y-3">')
         ->assertSeeHtml('hidden xl:block');
 });
+
+test('unscored events show no score or class', function () {
+    $this->actingAs($this->user);
+    $config = EventConfiguration::factory()->publicService()->create();
+    $config->event->update(['name' => 'City Marathon 2026']);
+
+    Livewire::test(EventsList::class)
+        ->assertSee('City Marathon 2026')
+        ->assertDontSee('N/A')
+        ->assertSeeHtml('title="Not scored"');
+});

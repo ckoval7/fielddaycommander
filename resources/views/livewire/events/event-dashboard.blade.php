@@ -48,7 +48,7 @@
                 />
             @endcan
 
-            @if (auth()->user()?->isSystemAdmin())
+            @if (auth()->user()?->isSystemAdmin() && $event->isScored())
                 <x-button
                     label="Change Rules & Rescore"
                     icon="phosphor-scales"
@@ -138,6 +138,7 @@
                                 <div class="font-semibold">{{ $event->eventConfiguration->club_name ?? 'N/A' }}</div>
                             </div>
 
+                            @if($event->isScored())
                             <!-- Section -->
                             <div>
                                 <div class="text-sm text-base-content/60">Section</div>
@@ -210,6 +211,13 @@
                                     @endif
                                 </div>
                             </div>
+                            @else
+                            <!-- Event Type -->
+                            <div>
+                                <div class="text-sm text-base-content/60">Event Type</div>
+                                <div class="font-semibold">{{ $event->eventType->name }}</div>
+                            </div>
+                            @endif
                         </div>
                     @else
                         <div class="text-center py-8 text-base-content/60">
@@ -229,6 +237,7 @@
                     </x-card>
                 @endif
 
+                @if($event->isScored())
                 <!-- Scoring Summary Card -->
                 <x-card title="Scoring Summary" shadow>
                     <div class="grid grid-cols-2 gap-4">
@@ -257,6 +266,7 @@
 
                 <!-- Manual Bonus Claims -->
                 <livewire:events.manual-bonus-claims :event="$event" />
+                @endif
 
                 <!-- Participants Card -->
                 <x-card title="Participants" shadow>
@@ -288,6 +298,7 @@
                                 <div class="text-2xl font-bold">{{ number_format($this->guestbookStats['total']) }}</div>
                             </div>
 
+                            @if($event->isScored())
                             <!-- Guestbook Bonuses -->
                             <div class="space-y-1.5">
                                 <div class="flex items-center justify-between">
@@ -313,6 +324,7 @@
                                 <div class="text-sm text-base-content/60">Guestbook Bonus</div>
                                 <div class="text-2xl font-bold {{ $this->guestbookStats['bonus_points'] > 0 ? 'text-success' : '' }}">{{ number_format($this->guestbookStats['bonus_points']) }} pts</div>
                             </div>
+                            @endif
 
                             <!-- Link to Guestbook Manager -->
                             @can('manage-guestbook')
@@ -380,6 +392,7 @@
             </div>
         </x-tab>
 
+        @if($event->isScored())
         <!-- Tab 3 - Scoring (combines Band/Mode Grid + Bonuses) -->
         <x-tab name="scoring" label="Scoring" icon="phosphor-trophy">
             <div class="mt-6 space-y-6">
@@ -534,6 +547,7 @@
                 </div>
             </div>
         </x-tab>
+        @endif
 
         <!-- Tab 4 - Equipment -->
         @canany(['manage-event-equipment', 'view-all-equipment'])

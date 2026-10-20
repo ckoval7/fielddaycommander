@@ -109,6 +109,14 @@ class EventConfiguration extends Model
     }
 
     /**
+     * Whether this configuration's event is scored as a contest.
+     */
+    public function isScored(): bool
+    {
+        return $this->loadMissing('event')->event?->isScored() ?? true;
+    }
+
+    /**
      * Drop the memoized RuleSet so the next resolution re-reads the event's
      * current rules_version. Call after persisting a rules_version change.
      */
@@ -307,6 +315,16 @@ class EventConfiguration extends Model
     public function safetyChecklistItems(): HasMany
     {
         return $this->hasMany(SafetyChecklistItem::class);
+    }
+
+    public function nets(): HasMany
+    {
+        return $this->hasMany(Net::class);
+    }
+
+    public function netLogEntries(): HasMany
+    {
+        return $this->hasMany(NetLogEntry::class);
     }
 
     public function shifts(): HasMany

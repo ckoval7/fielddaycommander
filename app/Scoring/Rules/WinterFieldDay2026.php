@@ -208,6 +208,11 @@ class WinterFieldDay2026 implements RuleSet
         );
     }
 
+    public function isScored(): bool
+    {
+        return true;
+    }
+
     public function nomenclature(): Nomenclature
     {
         return new Nomenclature(
@@ -221,6 +226,7 @@ class WinterFieldDay2026 implements RuleSet
             bulletinName: 'WFD Special Bulletin',
             bulletinSources: [],
             bulletinCapturedLabel: 'Objective Earned: OM x1',
+            messageEventLabel: 'WINTER FIELD DAY',
         );
     }
 

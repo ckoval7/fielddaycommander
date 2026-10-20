@@ -318,7 +318,7 @@
                                                 @endif
                                                 <div class="flex flex-col gap-1 mt-1 text-sm text-base-content/50">
                                                     <div class="flex items-center gap-3">
-                                                        @if($role->bonus_points)
+                                                        @if($this->isScoredEvent && $role->bonus_points)
                                                             <span>Bonus: {{ $role->bonus_points }} pts</span>
                                                             @if($role->getBonusTypeCode())
                                                                 <x-badge value="Auto-awarded on confirmation" class="badge-success badge-sm badge-outline" />
@@ -386,7 +386,7 @@
                                                             <span>Checked in: {{ toLocalTime($confirmation->checked_in_at)->format('M j, ' . timeFormat() . ' T') }}</span>
                                                         @endif
                                                     </div>
-                                                    @if($confirmation->shift?->shiftRole?->getBonusTypeCode())
+                                                    @if($this->isScoredEvent && $confirmation->shift?->shiftRole?->getBonusTypeCode())
                                                         <span class="text-xs text-success">Confirming will auto-award {{ $confirmation->shift->shiftRole->bonus_points }} bonus points</span>
                                                     @endif
                                                 </div>
@@ -450,13 +450,26 @@
                     rows="2"
                 />
                 <x-input
-                    label="Bonus Points"
-                    wire:model="roleBonusPoints"
-                    type="number"
-                    min="0"
-                    placeholder="Leave empty for no bonus"
-                    hint="Setting bonus points will auto-enable confirmation requirement"
+                    label="Tactical Callsign"
+                    wire:model="roleTacticalCallsign"
+                    autocapitalize="words"
+                    autocorrect="off"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder="e.g., Net Control, Talk-in"
+                    maxlength="50"
+                    hint="Optional. The net log shows whoever is checked in to this role under this name."
                 />
+                @if($this->isScoredEvent)
+                    <x-input
+                        label="Bonus Points"
+                        wire:model="roleBonusPoints"
+                        type="number"
+                        min="0"
+                        placeholder="Leave empty for no bonus"
+                        hint="Setting bonus points will auto-enable confirmation requirement"
+                    />
+                @endif
                 <x-toggle
                     label="Requires Confirmation"
                     wire:model="roleRequiresConfirmation"

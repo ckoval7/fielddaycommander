@@ -442,3 +442,44 @@ test('info card renders in normal size variant', function () {
     $component->assertViewHas('size', 'normal');
     expect(infoRow($component->viewData('data'), 'Call Sign'))->toBe('W1AW');
 });
+
+test('event_details variant shows city and state, not class, for an unscored event', function () {
+    $event = Event::factory()->publicService()->create([
+        'name' => 'City Marathon',
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(6),
+    ]);
+    EventConfiguration::factory()->publicService()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'city' => 'Hartford',
+        'state' => 'CT',
+    ]);
+
+    $data = Livewire::test(InfoCard::class, ['config' => ['info_type' => 'event_details'], 'size' => 'normal'])
+        ->viewData('data');
+
+    expect(infoRow($data, 'Event'))->toBe('City Marathon')
+        ->and(infoRow($data, 'Location'))->toBe('Hartford, CT')
+        ->and(infoRow($data, 'Class'))->toBeNull()
+        ->and(infoRow($data, 'Call Sign'))->toBe('W1AW');
+});
+
+test('event_details variant shows where an unscored event is', function () {
+    $config = EventConfiguration::factory()->publicService()->create(['city' => 'Hartford', 'state' => 'CT']);
+    $config->event->update(['start_time' => now()->subHours(12), 'end_time' => now()->addHours(12)]);
+
+    $data = Livewire::test(InfoCard::class, ['config' => ['info_type' => 'event_details'], 'size' => 'normal'])->viewData('data');
+
+    expect(infoRow($data, 'Location'))->toBe('Hartford, CT')
+        ->and(infoRow($data, 'Class'))->toBeNull();
+});
+
+test('event_details variant shows N/A for an unscored event with no city or state', function () {
+    $config = EventConfiguration::factory()->publicService()->create(['city' => null, 'state' => null]);
+    $config->event->update(['start_time' => now()->subHours(12), 'end_time' => now()->addHours(12)]);
+
+    $data = Livewire::test(InfoCard::class, ['config' => ['info_type' => 'event_details'], 'size' => 'normal'])->viewData('data');
+
+    expect(infoRow($data, 'Location'))->toBe('N/A');
+});

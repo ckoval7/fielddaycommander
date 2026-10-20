@@ -397,6 +397,11 @@ class WinterFieldDay2027 implements DeterminesContactCredit, ImpliesObjectives, 
         );
     }
 
+    public function isScored(): bool
+    {
+        return true;
+    }
+
     public function nomenclature(): Nomenclature
     {
         return new Nomenclature(
@@ -410,6 +415,7 @@ class WinterFieldDay2027 implements DeterminesContactCredit, ImpliesObjectives, 
             bulletinName: 'WFD Bulletin',
             bulletinSources: [],
             bulletinCapturedLabel: 'Objective Earned: OM x1',
+            messageEventLabel: 'WINTER FIELD DAY',
         );
     }
 

@@ -162,6 +162,7 @@ class StationCloneService
 
         $targetEventConfig = EventConfiguration::findOrFail($targetEventId);
         $targetEvent = $targetEventConfig->event;
+        $targetIsScored = $targetEventConfig->isScored();
 
         foreach ($sourceStations as $sourceStation) {
             $clonedStation = $this->cloneStation(
@@ -169,6 +170,7 @@ class StationCloneService
                 $targetEventId,
                 $nameSuffix,
                 $targetHasGota,
+                $targetIsScored,
                 $result
             );
 
@@ -280,6 +282,7 @@ class StationCloneService
      * @param  int  $targetEventId  The target event configuration ID
      * @param  string|null  $nameSuffix  Optional suffix to append to station name
      * @param  bool  $targetHasGota  Whether target event already has a GOTA station
+     * @param  bool  $targetIsScored  Whether the target event is scored; unscored events get plain positions
      * @param  array  $result  Reference to result array for adding warnings
      * @return Station|null The cloned station or null on failure
      */
@@ -288,6 +291,7 @@ class StationCloneService
         int $targetEventId,
         ?string $nameSuffix,
         bool $targetHasGota,
+        bool $targetIsScored,
         array &$result
     ): ?Station {
         try {
@@ -312,11 +316,16 @@ class StationCloneService
                 'event_configuration_id' => $targetEventId,
                 'name' => $newName,
                 'radio_equipment_id' => $sourceStation->radio_equipment_id,
-                'is_gota' => $isGota,
-                'is_vhf_only' => $sourceStation->is_vhf_only,
-                'is_satellite' => $sourceStation->is_satellite,
+                'is_gota' => $targetIsScored && $isGota,
+                'is_vhf_only' => $targetIsScored && $sourceStation->is_vhf_only,
+                'is_satellite' => $targetIsScored && $sourceStation->is_satellite,
                 'max_power_watts' => $sourceStation->max_power_watts,
                 'power_source_description' => $sourceStation->power_source_description,
+                'tactical_callsign' => $sourceStation->tactical_callsign,
+                'rx_frequency' => $sourceStation->rx_frequency,
+                'tx_frequency' => $sourceStation->tx_frequency,
+                'tone' => $sourceStation->tone,
+                'comms_mode' => $sourceStation->comms_mode,
             ]);
 
             Log::debug('Station cloned', [

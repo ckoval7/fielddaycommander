@@ -27,6 +27,13 @@ interface RuleSet
     public function id(): string;
 
     /**
+     * Whether events under these rules are scored as a contest. Unscored
+     * events (public service, nets, drills) hide scoring, bonuses, Cabrillo
+     * and the section map, and do not require contest fields.
+     */
+    public function isScored(): bool;
+
+    /**
      * The rules_version string this implementation handles (e.g. "2025").
      */
     public function version(): string;

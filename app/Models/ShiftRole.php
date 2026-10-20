@@ -100,6 +100,39 @@ class ShiftRole extends Model
     ];
 
     /**
+     * Default roles for unscored events (public service, nets, drills).
+     * None of them earn bonus points.
+     *
+     * @var array<string, array{description: string, tactical_callsign: string|null, icon: string, color: string}>
+     */
+    public const UNSCORED_DEFAULTS = [
+        'Net Control' => [
+            'description' => 'Runs the net and keeps the net log',
+            'tactical_callsign' => 'Net Control',
+            'icon' => 'phosphor-broadcast',
+            'color' => '#dc2626',
+        ],
+        'Event Manager' => [
+            'description' => 'Overall event coordination and liaison with the served agency',
+            'tactical_callsign' => null,
+            'icon' => 'phosphor-users-three',
+            'color' => '#6366f1',
+        ],
+        'Message Handler' => [
+            'description' => 'Handles ICS-213 and radiogram traffic for the served agency',
+            'tactical_callsign' => null,
+            'icon' => 'phosphor-envelope',
+            'color' => '#ec4899',
+        ],
+        'Operator' => [
+            'description' => 'Licensed amateur radio operator staffing a position',
+            'tactical_callsign' => null,
+            'icon' => 'phosphor-cell-signal-high',
+            'color' => '#0ea5e9',
+        ],
+    ];
+
+    /**
      * Maps shift role names to BonusType codes for automatic bonus awarding.
      *
      * Only roles where confirmed presence IS the bonus requirement are mapped here.
@@ -131,6 +164,7 @@ class ShiftRole extends Model
     protected $fillable = [
         'event_configuration_id',
         'name',
+        'tactical_callsign',
         'description',
         'is_default',
         'bonus_points',
@@ -230,14 +264,16 @@ class ShiftRole extends Model
      * Seed default shift roles for an event configuration.
      *
      * Only seeds roles whose eligible_classes include the event's operating class letter.
+     * Unscored events get their own roles, with no bonus points.
      */
     public static function seedDefaults(EventConfiguration $eventConfiguration): void
     {
-        $operatingClass = $eventConfiguration->operatingClass;
+        $isScored = $eventConfiguration->isScored();
+        $operatingClass = $isScored ? $eventConfiguration->operatingClass : null;
         $classLetter = $operatingClass ? preg_replace('/\d+/', '', $operatingClass->code) : null;
 
         $sortOrder = 0;
-        foreach (self::DEFAULTS as $name => $config) {
+        foreach ($isScored ? self::DEFAULTS : self::UNSCORED_DEFAULTS as $name => $config) {
             if ($classLetter && ! in_array($classLetter, $config['eligible_classes'])) {
                 continue;
             }
@@ -249,9 +285,10 @@ class ShiftRole extends Model
                 ],
                 [
                     'description' => $config['description'],
+                    'tactical_callsign' => $config['tactical_callsign'] ?? null,
                     'is_default' => true,
-                    'bonus_points' => $config['bonus_points'],
-                    'requires_confirmation' => $config['requires_confirmation'],
+                    'bonus_points' => $config['bonus_points'] ?? null,
+                    'requires_confirmation' => $config['requires_confirmation'] ?? false,
                     'icon' => $config['icon'],
                     'color' => $config['color'],
                     'sort_order' => $sortOrder,

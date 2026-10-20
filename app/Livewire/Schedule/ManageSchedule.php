@@ -52,6 +52,8 @@ class ManageSchedule extends Component
 
     public string $roleDescription = '';
 
+    public string $roleTacticalCallsign = '';
+
     public ?int $roleBonusPoints = null;
 
     public bool $roleRequiresConfirmation = false;
@@ -111,6 +113,16 @@ class ManageSchedule extends Component
         if ($this->eventConfig && $this->eventConfig->shiftRoles()->count() === 0) {
             ShiftRole::seedDefaults($this->eventConfig);
         }
+    }
+
+    /**
+     * Whether roles at this event can earn bonus points. Unscored events
+     * have no bonuses, so the bonus fields and badges are hidden.
+     */
+    #[Computed]
+    public function isScoredEvent(): bool
+    {
+        return $this->eventConfig?->isScored() ?? true;
     }
 
     /**
@@ -182,6 +194,7 @@ class ManageSchedule extends Component
             $this->editingRoleId = $role->id;
             $this->roleName = $role->name;
             $this->roleDescription = $role->description ?? '';
+            $this->roleTacticalCallsign = $role->tactical_callsign ?? '';
             $this->roleBonusPoints = $role->bonus_points;
             $this->roleRequiresConfirmation = $role->requires_confirmation;
             $this->roleIcon = $role->icon ?? 'phosphor-users-three';
@@ -198,11 +211,16 @@ class ManageSchedule extends Component
         $this->validate([
             'roleName' => ['required', 'string', 'max:255'],
             'roleDescription' => ['nullable', 'string', 'max:1000'],
+            'roleTacticalCallsign' => ['nullable', 'string', 'max:50'],
             'roleBonusPoints' => ['nullable', 'integer', 'min:0'],
             'roleRequiresConfirmation' => ['boolean'],
             'roleIcon' => ['required', 'string', 'max:255'],
             'roleColor' => ['required', 'string', 'max:255'],
         ]);
+
+        if (! $this->isScoredEvent) {
+            $this->roleBonusPoints = null;
+        }
 
         // If bonus points are set, force requires_confirmation
         $requiresConfirmation = $this->roleRequiresConfirmation;
@@ -213,6 +231,7 @@ class ManageSchedule extends Component
         $data = [
             'name' => $this->roleName,
             'description' => $this->roleDescription ?: null,
+            'tactical_callsign' => trim($this->roleTacticalCallsign) ?: null,
             'bonus_points' => $this->roleBonusPoints,
             'requires_confirmation' => $requiresConfirmation,
             'icon' => $this->roleIcon,
@@ -852,6 +871,7 @@ class ManageSchedule extends Component
         $this->editingRoleId = null;
         $this->roleName = '';
         $this->roleDescription = '';
+        $this->roleTacticalCallsign = '';
         $this->roleBonusPoints = null;
         $this->roleRequiresConfirmation = false;
         $this->roleIcon = 'phosphor-users-three';
