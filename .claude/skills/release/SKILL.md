@@ -37,6 +37,7 @@ S=.claude/skills/release/scripts/sonar-local.sh
 $S up        # ~1 min the first time; reuses the server if it's already running
 $S scan      # scans HEAD plus uncommitted changes; prints issues, hotspots and extra checks
 $S cloud     # SonarCloud's gate and open issues for main, for comparison
+$S pr <n>    # waits for SonarCloud's analysis of a PR, then prints its gate and issues
 ```
 
 Repeat this loop until the scan reports **0 issues and 0 hotspots**, the "SonarCloud-only rule checks" section prints `none`, and `cloud` shows no open issues:
