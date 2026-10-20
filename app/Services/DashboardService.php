@@ -20,9 +20,10 @@ use Illuminate\Support\Facades\Log;
 class DashboardService
 {
     /**
-     * Widest a widget may be, in grid columns.
+     * Widest a widget may be, in grid columns. The dashboard grid is at most
+     * three columns wide (lg:grid-cols-3 in dashboard-editor.blade.php).
      */
-    public const MAX_COL_SPAN = 4;
+    public const MAX_COL_SPAN = 3;
 
     /**
      * Shortest widget height, in grid rows ("Short").

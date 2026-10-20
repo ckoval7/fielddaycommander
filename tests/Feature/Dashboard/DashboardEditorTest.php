@@ -572,7 +572,28 @@ test('resize widget clamps col_span to valid range', function () {
         ->call('resizeWidget', 'widget-1', 5, 1);
 
     $widget = $component->get('widgets')->firstWhere('id', 'widget-1');
-    expect($widget['col_span'])->toBe(4);
+    expect($widget['col_span'])->toBe(3);
+});
+
+test('a widget saved wider than the grid renders and edits at full width', function () {
+    $config = $this->dashboard->config;
+    $config[0]['col_span'] = 4;
+    $this->dashboard->update(['config' => $config]);
+
+    Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard->fresh()])
+        ->assertSeeHtml('lg:col-span-3')
+        ->assertDontSeeHtml('col-span-4')
+        ->call('enterEditMode')
+        ->call('configureWidget', 'widget-1')
+        ->assertDispatched('open-widget-configurator', colSpan: 3);
+});
+
+test('the widget grid keeps edit toolbars under the sticky header and labels the width buttons', function () {
+    Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->call('enterEditMode')
+        ->assertSeeHtml('widget-grid isolate')
+        ->assertSeeHtml('aria-label="3 columns"')
+        ->assertSee('Phones always show one column.');
 });
 
 test('resize widget keeps the Tall height the picker offers', function () {

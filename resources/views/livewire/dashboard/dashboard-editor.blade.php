@@ -130,13 +130,14 @@
 
             <ul
                 x-bind="sortableContainer"
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-[1800px]:grid-cols-4 grid-flow-row-dense gap-5 widget-grid"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grid-flow-row-dense gap-5 widget-grid isolate"
                 style="grid-auto-rows: 90px;"
             >
                 @foreach($widgets as $index => $widget)
                     @php
                         $isVisible = $widget['visible'] ?? true;
-                        $colSpan = $widget['col_span'] ?? 1;
+                        // Older dashboards may have saved spans wider than the grid allows.
+                        $colSpan = min($widget['col_span'] ?? 1, \App\Services\DashboardService::MAX_COL_SPAN);
                         $rowSpan = $widget['row_span'] ?? \App\Services\DashboardService::MIN_ROW_SPAN;
                         $componentKey = $this->widgetComponentKey($widget);
                         // Never span more columns than the grid has at the current width,
@@ -144,7 +145,6 @@
                         $spanClasses = match($colSpan) {
                             2 => 'sm:col-span-2',
                             3 => 'sm:col-span-2 lg:col-span-3',
-                            4 => 'sm:col-span-2 lg:col-span-3 min-[1800px]:col-span-4',
                             default => '',
                         };
                         $rowSpanClasses = match($rowSpan) {
@@ -216,17 +216,21 @@
                                             x-cloak
                                             class="absolute right-0 top-full mt-1 z-30 bg-base-100 border border-base-300 rounded-lg shadow-lg p-3 min-w-[180px]"
                                         >
-                                            <p class="text-xs font-medium text-base-content/60 mb-2">Width</p>
-                                            <div class="flex gap-1 mb-3">
-                                                @foreach([1, 2, 3, 4] as $c)
-                                                    <button
-                                                        wire:click="resizeWidget('{{ $widget['id'] }}', {{ $c }}, {{ $rowSpan }})"
-                                                        @click="showSizePicker = false"
-                                                        class="btn btn-xs flex-1 {{ $colSpan === $c ? 'btn-primary' : 'btn-ghost' }}"
-                                                    >
-                                                        {{ $c }} col{{ $c > 1 ? 's' : '' }}
-                                                    </button>
-                                                @endforeach
+                                            <div class="mb-3">
+                                                <p class="text-xs font-medium text-base-content/60 mb-2">Width (columns)</p>
+                                                <div class="flex gap-1">
+                                                    @foreach(range(1, \App\Services\DashboardService::MAX_COL_SPAN) as $c)
+                                                        <button
+                                                            wire:click="resizeWidget('{{ $widget['id'] }}', {{ $c }}, {{ $rowSpan }})"
+                                                            aria-label="{{ $c }} {{ Str::plural('column', $c) }}"
+                                                            @click="showSizePicker = false"
+                                                            class="btn btn-xs flex-1 {{ $colSpan === $c ? 'btn-primary' : 'btn-ghost' }}"
+                                                        >
+                                                            {{ $c }}
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                                <p class="sm:hidden text-xs text-base-content/60 mt-1">Phones always show one column.</p>
                                             </div>
                                             <p class="text-xs font-medium text-base-content/60 mb-2">Height</p>
                                             <div class="flex gap-1">
