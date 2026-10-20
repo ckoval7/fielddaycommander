@@ -313,7 +313,7 @@
                    @if ($isPdf)
                        type="button"
                        x-data="icsPdf('{{ route('reports.'.$card['form']) }}')"
-                       x-on:click="download()"
+                       x-on:click="openPdf()"
                        x-bind:disabled="busy"
                    @else
                        href="{{ route('reports.'.$card['form']) }}" target="_blank" rel="noopener"
@@ -336,7 +336,7 @@
                             <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
                                  style="color: var(--reports-pdf-icon);">
                                 @if ($isPdf)
-                                    <span x-show="!busy">Download &rarr;</span><span x-show="busy" x-cloak>Building&hellip;</span>
+                                    <span x-show="!busy">Open &rarr;</span><span x-show="busy" x-cloak>Building&hellip;</span>
                                 @else
                                     Open &rarr;
                                 @endif

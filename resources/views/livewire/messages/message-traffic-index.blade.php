@@ -265,9 +265,9 @@
                                                 icon="phosphor-file-pdf"
                                                 class="btn-ghost btn-xs"
                                                 tooltip="ICS-213 (FEMA PDF)"
-                                                aria-label="Download ICS-213 FEMA PDF"
+                                                aria-label="Open ICS-213 FEMA PDF"
                                                 x-data="icsPdf('{{ route('events.messages.ics-213', [$event, $message]) }}')"
-                                                x-on:click="download()"
+                                                x-on:click="openPdf()"
                                                 x-bind:disabled="busy"
                                             />
                                         @endif
@@ -402,9 +402,9 @@
                                         <x-button
                                             icon="phosphor-file-pdf"
                                             class="btn-ghost btn-xs"
-                                            aria-label="Download ICS-213 FEMA PDF"
+                                            aria-label="Open ICS-213 FEMA PDF"
                                             x-data="icsPdf('{{ route('events.messages.ics-213', [$event, $message]) }}')"
-                                            x-on:click="download()"
+                                            x-on:click="openPdf()"
                                             x-bind:disabled="busy"
                                         />
                                     @endif

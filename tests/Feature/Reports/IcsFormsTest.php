@@ -242,7 +242,8 @@ test('the reports page offers the ICS forms', function () {
         ->assertSeeHtml('data-testid="ics-205"')
         ->assertSeeHtml('data-testid="ics-211"')
         ->assertSee(route('reports.ics-309'))
-        ->assertSee("icsPdf('".route('reports.ics-205')."')", false);
+        ->assertSee("icsPdf('".route('reports.ics-205')."')", false)
+        ->assertSeeHtml('x-on:click="openPdf()"');
 });
 
 test('ICS-213 messages offer the FEMA PDF', function () {
@@ -252,5 +253,6 @@ test('ICS-213 messages offer the FEMA PDF', function () {
 
     Livewire::actingAs($this->user)->test(MessageTrafficIndex::class, ['event' => $this->event])
         ->assertSee(route('events.messages.ics-213', [$this->event, $message]), false)
+        ->assertSeeHtml('x-on:click="openPdf()"')
         ->assertDontSee(route('events.messages.ics-213', [$this->event, $radiogram]), false);
 });
