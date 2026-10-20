@@ -162,6 +162,7 @@ class StationCloneService
 
         $targetEventConfig = EventConfiguration::findOrFail($targetEventId);
         $targetEvent = $targetEventConfig->event;
+        $targetIsScored = $targetEventConfig->isScored();
 
         foreach ($sourceStations as $sourceStation) {
             $clonedStation = $this->cloneStation(
@@ -169,6 +170,7 @@ class StationCloneService
                 $targetEventId,
                 $nameSuffix,
                 $targetHasGota,
+                $targetIsScored,
                 $result
             );
 
@@ -280,6 +282,7 @@ class StationCloneService
      * @param  int  $targetEventId  The target event configuration ID
      * @param  string|null  $nameSuffix  Optional suffix to append to station name
      * @param  bool  $targetHasGota  Whether target event already has a GOTA station
+     * @param  bool  $targetIsScored  Whether the target event is scored; unscored events get plain positions
      * @param  array  $result  Reference to result array for adding warnings
      * @return Station|null The cloned station or null on failure
      */
@@ -288,6 +291,7 @@ class StationCloneService
         int $targetEventId,
         ?string $nameSuffix,
         bool $targetHasGota,
+        bool $targetIsScored,
         array &$result
     ): ?Station {
         try {
@@ -306,10 +310,6 @@ class StationCloneService
                     $sourceStation->name
                 );
             }
-
-            // Station types only affect contest scoring, so an unscored
-            // target event gets plain positions.
-            $targetIsScored = EventConfiguration::find($targetEventId)?->isScored() ?? true;
 
             // Create the cloned station
             $clonedStation = Station::create([

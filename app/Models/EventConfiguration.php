@@ -113,7 +113,7 @@ class EventConfiguration extends Model
      */
     public function isScored(): bool
     {
-        return ($this->event ?? $this->event()->first())?->isScored() ?? true;
+        return $this->loadMissing('event')->event?->isScored() ?? true;
     }
 
     /**

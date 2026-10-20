@@ -268,17 +268,12 @@ class ShiftRole extends Model
      */
     public static function seedDefaults(EventConfiguration $eventConfiguration): void
     {
-        if (! $eventConfiguration->isScored()) {
-            self::seedUnscoredDefaults($eventConfiguration);
-
-            return;
-        }
-
-        $operatingClass = $eventConfiguration->operatingClass;
+        $isScored = $eventConfiguration->isScored();
+        $operatingClass = $isScored ? $eventConfiguration->operatingClass : null;
         $classLetter = $operatingClass ? preg_replace('/\d+/', '', $operatingClass->code) : null;
 
         $sortOrder = 0;
-        foreach (self::DEFAULTS as $name => $config) {
+        foreach ($isScored ? self::DEFAULTS : self::UNSCORED_DEFAULTS as $name => $config) {
             if ($classLetter && ! in_array($classLetter, $config['eligible_classes'])) {
                 continue;
             }
@@ -290,37 +285,10 @@ class ShiftRole extends Model
                 ],
                 [
                     'description' => $config['description'],
+                    'tactical_callsign' => $config['tactical_callsign'] ?? null,
                     'is_default' => true,
-                    'bonus_points' => $config['bonus_points'],
-                    'requires_confirmation' => $config['requires_confirmation'],
-                    'icon' => $config['icon'],
-                    'color' => $config['color'],
-                    'sort_order' => $sortOrder,
-                ]
-            );
-
-            $sortOrder++;
-        }
-    }
-
-    /**
-     * Seed the default roles for an unscored event.
-     */
-    protected static function seedUnscoredDefaults(EventConfiguration $eventConfiguration): void
-    {
-        $sortOrder = 0;
-        foreach (self::UNSCORED_DEFAULTS as $name => $config) {
-            self::firstOrCreate(
-                [
-                    'event_configuration_id' => $eventConfiguration->id,
-                    'name' => $name,
-                ],
-                [
-                    'description' => $config['description'],
-                    'tactical_callsign' => $config['tactical_callsign'],
-                    'is_default' => true,
-                    'bonus_points' => null,
-                    'requires_confirmation' => false,
+                    'bonus_points' => $config['bonus_points'] ?? null,
+                    'requires_confirmation' => $config['requires_confirmation'] ?? false,
                     'icon' => $config['icon'],
                     'color' => $config['color'],
                     'sort_order' => $sortOrder,
