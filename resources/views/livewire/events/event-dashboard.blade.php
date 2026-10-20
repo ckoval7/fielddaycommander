@@ -288,31 +288,37 @@
                                 <div class="text-2xl font-bold">{{ number_format($this->guestbookStats['total']) }}</div>
                             </div>
 
-                            <!-- Guestbook Bonuses -->
-                            <div class="space-y-1.5">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-base-content/60">Elected Official</span>
-                                    @if($this->guestbookStats['elected_official'])
-                                        <span class="badge badge-success badge-sm">+100</span>
-                                    @else
-                                        <span class="badge badge-ghost badge-sm">--</span>
+                            @if($this->guestbookStats['elected_official'] !== null || $this->guestbookStats['agency'] !== null)
+                                <!-- Guestbook Bonuses -->
+                                <div class="space-y-1.5">
+                                    @if($this->guestbookStats['elected_official'] !== null)
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm text-base-content/60">Elected Official</span>
+                                            @if($this->guestbookStats['elected_official'])
+                                                <span class="badge badge-success badge-sm">+100</span>
+                                            @else
+                                                <span class="badge badge-ghost badge-sm">--</span>
+                                            @endif
+                                        </div>
+                                    @endif
+                                    @if($this->guestbookStats['agency'] !== null)
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm text-base-content/60">Served Agency</span>
+                                            @if($this->guestbookStats['agency'])
+                                                <span class="badge badge-success badge-sm">+100</span>
+                                            @else
+                                                <span class="badge badge-ghost badge-sm">--</span>
+                                            @endif
+                                        </div>
                                     @endif
                                 </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-base-content/60">Served Agency</span>
-                                    @if($this->guestbookStats['agency'])
-                                        <span class="badge badge-success badge-sm">+100</span>
-                                    @else
-                                        <span class="badge badge-ghost badge-sm">--</span>
-                                    @endif
-                                </div>
-                            </div>
 
-                            <!-- Bonus Points Total -->
-                            <div>
-                                <div class="text-sm text-base-content/60">Guestbook Bonus</div>
-                                <div class="text-2xl font-bold {{ $this->guestbookStats['bonus_points'] > 0 ? 'text-success' : '' }}">{{ number_format($this->guestbookStats['bonus_points']) }} pts</div>
-                            </div>
+                                <!-- Bonus Points Total -->
+                                <div>
+                                    <div class="text-sm text-base-content/60">Guestbook Bonus</div>
+                                    <div class="text-2xl font-bold {{ $this->guestbookStats['bonus_points'] > 0 ? 'text-success' : '' }}">{{ number_format($this->guestbookStats['bonus_points']) }} pts</div>
+                                </div>
+                            @endif
 
                             <!-- Link to Guestbook Manager -->
                             @can('manage-guestbook')

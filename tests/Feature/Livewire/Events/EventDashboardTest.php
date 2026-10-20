@@ -281,8 +281,36 @@ test('event dashboard guestbook stats returns zeros when guestbook is disabled',
 
     $stats = $component->get('guestbookStats');
     expect($stats['total'])->toBe(0);
-    expect($stats['elected_official'])->toBeFalse();
+    expect($stats['elected_official'])->toBeNull();
     expect($stats['bonus_points'])->toBe(0);
+});
+
+test('event dashboard leaves out guestbook visit bonuses under Winter Field Day rules', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'event_type_id' => EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'is_active' => true])->id,
+        'rules_version' => '2026',
+    ]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'guestbook_enabled' => true,
+    ]);
+    GuestbookEntry::factory()->verified()->electedOfficial()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event]);
+
+    $stats = $component->get('guestbookStats');
+    expect($stats['total'])->toBe(1);
+    expect($stats['elected_official'])->toBeNull();
+    expect($stats['agency'])->toBeNull();
+    expect($stats['bonus_points'])->toBe(0);
+    $component->assertSee('Total Visitors')
+        ->assertDontSee('Served Agency')
+        ->assertDontSee('Guestbook Bonus');
 });
 
 test('event dashboard shows manage guestbook button with permission', function () {
