@@ -415,6 +415,7 @@ class WinterFieldDay2027 implements DeterminesContactCredit, ImpliesObjectives, 
             bulletinName: 'WFD Bulletin',
             bulletinSources: [],
             bulletinCapturedLabel: 'Objective Earned: OM x1',
+            messageEventLabel: 'WINTER FIELD DAY',
         );
     }
 

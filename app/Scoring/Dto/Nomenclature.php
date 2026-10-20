@@ -56,5 +56,10 @@ final class Nomenclature
          */
         public readonly string $stationSingular = 'Station',
         public readonly string $stationPlural = 'Stations',
+        /**
+         * How the Section Manager message names the event, before the
+         * year. Null uses the event's own name.
+         */
+        public readonly ?string $messageEventLabel = 'FIELD DAY',
     ) {}
 }

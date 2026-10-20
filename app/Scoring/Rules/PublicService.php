@@ -66,6 +66,7 @@ class PublicService implements RuleSet
             bulletinCapturedLabel: 'Bulletin Copied',
             stationSingular: 'Position',
             stationPlural: 'Positions',
+            messageEventLabel: null,
         );
     }
 

@@ -22,3 +22,4 @@ This changelog starts after 26.10.9. For earlier releases, see the commit histor
 
 - On a log with no contacts yet, the first contact you logged could stay hidden until it synced with the server. It happened when suggestions or warnings had appeared on the logging screen before that first contact.
 - On screens between 1024 and 1280 pixels wide with the sidebar open, the buttons on station cards spilled into the next card and their labels were cut off.
+- The SM/SEC message template for a Winter Field Day event named the event "FIELD DAY" instead of "WINTER FIELD DAY".
