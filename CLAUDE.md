@@ -1,272 +1,51 @@
-<laravel-boost-guidelines>
-=== foundation rules ===
+# FD Commander
 
-# Laravel Boost Guidelines
+A self-hosted web app that ham radio clubs run during ARRL Field Day and Winter Field Day. It covers the whole event, not just logging: multi-operator contact logging with live dupe checks, real-time scoring with bonus tracking, station and equipment management, volunteer shifts, the guestbook, NTS message traffic and the net log, safety checklists, photos, and Cabrillo/ADIF export.
 
-The Laravel Boost guidelines are specifically curated by Laravel maintainers for this application. These guidelines should be followed closely to ensure the best experience when building Laravel applications.
+The Laravel, Livewire, Octane and testing conventions are in the `laravel-stack` skill. Activate it before writing any PHP, Blade or test code.
 
-## Foundational Context
+## Where it runs
 
-This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
+These constraints shape most design decisions:
 
-- php - 8.4
-- laravel/fortify (FORTIFY) - v1
-- laravel/framework (LARAVEL) - v12
-- laravel/octane (OCTANE) - v2
-- laravel/prompts (PROMPTS) - v0
-- laravel/reverb (REVERB) - v1
-- livewire/livewire (LIVEWIRE) - v4
-- laravel/boost (BOOST) - v2
-- laravel/mcp (MCP) - v0
-- laravel/pail (PAIL) - v1
-- laravel/pint (PINT) - v1
-- laravel/sail (SAIL) - v1
-- pestphp/pest (PEST) - v4
-- phpunit/phpunit (PHPUNIT) - v12
-- laravel-echo (ECHO) - v2
-- alpinejs (ALPINEJS) - v3
-- tailwindcss (TAILWINDCSS) - v4
+- **On the club's own LAN, often with no internet.** Nothing may need a CDN, external API or cloud service at runtime. Online-only features (weather) must fail quietly.
+- **On small hardware.** A Raspberry Pi 4 with 2 GB of RAM on a battery pack is a supported target. Watch query counts, memory and background work.
+- **From any device.** Operators log from phones, tablets and laptops, their own or the club's, at the same time. Never assume club-owned machines. Every screen has to work on a phone (activate the `mobile-ui` skill for view changes).
+- **Live updates are core.** Scores, the logbook, the section map and dashboards update over Reverb websockets, including when the app is reached by LAN IP, a `.local` name or another hostname. Hardening must not break that (see `App\Support\LocalNetworkHosts` and `TrustedHosts`).
+- **Flaky networks.** Contacts logged in the browser queue locally and sync when the connection returns.
 
-## Skills Activation
+## Domain map
 
-This project has domain-specific skills available in `**/skills/**`. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
+- **Events and rule sets.** An `Event` has an `EventType` (`FD`, `WFD`) and a rules version. `App\Scoring\RuleSetFactory` maps each type and version to a frozen rule set in `app/Scoring/Rules`, with bonus strategies in `app/Scoring/Bonuses/<RuleSet>`. Never edit or remove an old rule set: past events keep scoring under the rules of their year. Add a new version instead.
+- **Event context.** `EventContextService` (aliased as `ActiveEventService`) picks the active event by date, with a session override for browsing past events. Use it rather than querying for "the current event".
+- **Logging.** `Contact`s belong to an `OperatingSession` at a `Station`. Dupe checks, band and mode resolution and exchange parsing live in `app/Services`. Rescoring runs through `RescoreService`.
+- **External loggers.** N1MM Logger+, WSJT-X/JTDX, fldigi and generic ADIF-over-UDP send contacts to long-running listener commands (`app/Console/Commands/*ListenCommand.php`), which hand them to `ExternalContactHandler`. ADIF file import is a queued, multi-step wizard (`AdifImportService` and the `ImportAdifContacts`/`ValidateAdifImport` jobs).
+- **Station mode.** An enrolled shared browser lets walk-up operators start a logging session by callsign with capped permissions (`App\Support\StationMode`, `EnforceStationMode`).
+- **Roles.** System Admin, Event Manager, Station Captain and Operator, with editable permissions (spatie/laravel-permission). Gate features on permissions and policies, not role names.
+- **Developer mode.** Clock override, role and callsign overrides for testing (`App\Support\DeveloperMode`). It's off in production unless explicitly allowed, and must stay that way.
+- **Demo mode.** The public demo provisions a throwaway database per visitor. Its code lives only on `feature/demo-mode` (see Branches).
 
-## Conventions
+## Deployment paths
 
-- You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
-- Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
-- Check for existing components to reuse before writing a new one.
+Self-hosters install with `deploy.sh` (bare Ubuntu/Debian), Docker (`Dockerfile`, `docker/`, `DOCKER.md`) or the Helm chart in `charts/fd-commander`, and upgrade with `update.sh` or a new image. A change to setup, config, env vars, services or the runtime must be made across all of them together, not just one. `backup.sh` and `restore.sh` must keep working.
 
-## Verification Scripts
+## Branches, worktrees and tooling
 
-- Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.
-
-## Application Structure & Architecture
-
-- Stick to existing directory structure; don't create new base folders without approval.
-- Do not change the application's dependencies without approval.
-
-## Frontend Bundling
-
-- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
-
-## Documentation Files
-
-- You must only create documentation files if explicitly requested by the user.
-
-## Replies
-
-- Be concise in your explanations - focus on what's important rather than explaining obvious details.
-
-=== boost rules ===
-
-# Laravel Boost
-
-## Tools
-
-- Laravel Boost is an MCP server with tools designed specifically for this application. Prefer Boost tools over manual alternatives like shell commands or file reads.
-- Use `database-query` to run read-only queries against the database instead of writing raw SQL in tinker.
-- Use `database-schema` to inspect table structure before writing migrations or models.
-- Use `get-absolute-url` to resolve the correct scheme, domain, and port for project URLs. Always use this before sharing a URL with the user.
-- Use `browser-logs` to read browser logs, errors, and exceptions. Only recent logs are useful, ignore old entries.
-
-## Searching Documentation (IMPORTANT)
-
-- Always use `search-docs` before making code changes. Do not skip this step. It returns version-specific docs based on installed packages automatically.
-- Pass a `packages` array to scope results when you know which packages are relevant.
-- Use multiple broad, topic-based queries: `['rate limiting', 'routing rate limiting', 'routing']`. Expect the most relevant results first.
-- Do not add package names to queries because package info is already shared. Use `test resource table`, not `filament 4 test resource table`.
-
-### Search Syntax
-
-1. Use words for auto-stemmed AND logic: `rate limit` matches both "rate" AND "limit".
-2. Use `"quoted phrases"` for exact position matching: `"infinite scroll"` requires adjacent words in order.
-3. Combine words and phrases for mixed queries: `middleware "rate limit"`.
-4. Use multiple queries for OR logic: `queries=["authentication", "middleware"]`.
-
-## Artisan
-
-- Run Artisan commands directly via the command line (e.g., `php artisan route:list`). Use `php artisan list` to discover available commands and `php artisan [command] --help` to check parameters.
-- Inspect routes with `php artisan route:list`. Filter with: `--method=GET`, `--name=users`, `--path=api`, `--except-vendor`, `--only-vendor`.
-- Read configuration values using dot notation: `php artisan config:show app.name`, `php artisan config:show database.default`. Or read config files directly from the `config/` directory.
-
-## Tinker
-
-- Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
-- Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
-
-=== php rules ===
-
-# PHP
-
-- Always use curly braces for control structures, even for single-line bodies.
-- Use PHP 8 constructor property promotion: `public function __construct(public GitHub $github) { }`. Do not leave empty zero-parameter `__construct()` methods unless the constructor is private.
-- Use explicit return type declarations and type hints for all method parameters: `function isAccessible(User $user, ?string $path = null): bool`
-- Use TitleCase for Enum keys: `FavoritePerson`, `BestLake`, `Monthly`.
-- Prefer PHPDoc blocks over inline comments. Only add inline comments for exceptionally complex logic.
-- Use array shape type definitions in PHPDoc blocks.
-
-=== deployments rules ===
-
-# Deployment
-
-- Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
-
-=== tests rules ===
-
-# Test Enforcement
-
-- Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test --compact` with a specific filename or filter.
-
-=== laravel/core rules ===
-
-# Do Things the Laravel Way
-
-- Use `php artisan make:` commands to create new files (i.e. migrations, controllers, models, etc.). You can list available Artisan commands using `php artisan list` and check their parameters with `php artisan [command] --help`.
-- If you're creating a generic PHP class, use `php artisan make:class`.
-- Pass `--no-interaction` to all Artisan commands to ensure they work without user input. You should also pass the correct `--options` to ensure correct behavior.
-
-### Model Creation
-
-- When creating new models, create useful factories and seeders for them too. Ask the user if they need any other things, using `php artisan make:model --help` to check the available options.
-
-## APIs & Eloquent Resources
-
-- For APIs, default to using Eloquent API Resources and API versioning unless existing API routes do not, then you should follow existing application convention.
-
-## URL Generation
-
-- When generating links to other pages, prefer named routes and the `route()` function.
-
-## Testing
-
-- When creating models for tests, use the factories for the models. Check if the factory has custom states that can be used before manually setting up the model.
-- Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
-- When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
-
-## Vite Error
-
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
-
-=== laravel/v12 rules ===
-
-# Laravel 12
-
-- CRITICAL: ALWAYS use `search-docs` tool for version-specific Laravel documentation and updated code examples.
-- Since Laravel 11, Laravel has a new streamlined file structure which this project uses.
-
-## Laravel 12 Structure
-
-- In Laravel 12, middleware are no longer registered in `app/Http/Kernel.php`.
-- Middleware are configured declaratively in `bootstrap/app.php` using `Application::configure()->withMiddleware()`.
-- `bootstrap/app.php` is the file to register middleware, exceptions, and routing files.
-- `bootstrap/providers.php` contains application specific service providers.
-- The `app/Console/Kernel.php` file no longer exists; use `bootstrap/app.php` or `routes/console.php` for console configuration.
-- Console commands in `app/Console/Commands/` are automatically available and do not require manual registration.
-
-## Database
-
-- When modifying a column, the migration must include all of the attributes that were previously defined on the column. Otherwise, they will be dropped and lost.
-- Laravel 12 allows limiting eagerly loaded records natively, without external packages: `$query->latest()->limit(10);`.
-
-### Models
-
-- Casts can and likely should be set in a `casts()` method on a model rather than the `$casts` property. Follow existing conventions from other models.
-
-=== octane/core rules ===
-
-# Octane
-
-- Octane boots the application once and reuses it across requests, so singletons persist between requests.
-- The Laravel container's `scoped` method may be used as a safe alternative to `singleton`.
-- Never inject the container, request, or config repository into a singleton's constructor; use a resolver closure or `bind()` instead:
-
-```php
-// Bad
-$this->app->singleton(Service::class, fn (Application $app) => new Service($app['request']));
-
-// Good
-$this->app->singleton(Service::class, fn () => new Service(fn () => request()));
-```
-
-- Never append to static properties, as they accumulate in memory across requests.
-
-=== livewire/core rules ===
-
-# Livewire
-
-- Livewire allow to build dynamic, reactive interfaces in PHP without writing JavaScript.
-- You can use Alpine.js for client-side interactions instead of JavaScript frameworks.
-- Keep state server-side so the UI reflects it. Validate and authorize in actions as you would in HTTP requests.
-
-=== pint/core rules ===
-
-# Laravel Pint Code Formatter
-
-- If you have modified any PHP files, you must run `vendor/bin/pint --dirty --format agent` before finalizing changes to ensure your code matches the project's expected style.
-- Do not run `vendor/bin/pint --test --format agent`, simply run `vendor/bin/pint --format agent` to fix any formatting issues.
-
-=== pest/core rules ===
-
-## Pest
-
-- This project uses Pest for testing. Create tests: `php artisan make:test --pest {name}`.
-- The `{name}` argument should not include the test suite directory. Use `php artisan make:test --pest SomeFeatureTest` instead of `php artisan make:test --pest Feature/SomeFeatureTest`.
-- Run tests: `php artisan test --compact` or filter: `php artisan test --compact --filter=testName`.
-- Do NOT delete tests without approval.
-
-</laravel-boost-guidelines>
-
-<!-- code-review-graph MCP tools -->
-## MCP Tools: code-review-graph
-
-**IMPORTANT: This project has a knowledge graph. ALWAYS use the
-code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
-the codebase.** The graph is faster, cheaper (fewer tokens), and gives
-you structural context (callers, dependents, test coverage) that file
-scanning cannot.
-
-### When to use graph tools FIRST
-
-- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
-- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
-- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
-- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
-- **Architecture questions**: `get_architecture_overview` + `list_communities`
-
-Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
-
-### Key Tools
-
-| Tool | Use when |
-|------|----------|
-| `detect_changes` | Reviewing code changes — gives risk-scored analysis |
-| `get_review_context` | Need source snippets for review — token-efficient |
-| `get_impact_radius` | Understanding blast radius of a change |
-| `get_affected_flows` | Finding which execution paths are impacted |
-| `query_graph` | Tracing callers, callees, imports, tests, dependencies |
-| `semantic_search_nodes` | Finding functions/classes by name or keyword |
-| `get_architecture_overview` | Understanding high-level codebase structure |
-| `refactor_tool` | Planning renames, finding dead code |
-
-### Workflow
-
-1. The graph auto-updates on file changes (via hooks).
-2. Use `detect_changes` for code review.
-3. Use `get_affected_flows` to understand impact.
-4. Use `query_graph` pattern="tests_for" to check coverage.
-
-## Branches, Worktrees & Local Containers
-
-- **Flow:** feature branch → `dev` → `main`. `main` and `dev` are protected: never commit directly to either. Only feature branches merge into `dev`, and only `dev` merges into `main` (as a fast-forward, at release time).
+- **Flow:** feature branch → `dev` → `main`. `main` and `dev` are protected: never commit directly to either.
 - **Non-demo work:** in this checkout, on a feature branch off `dev`.
-- **Demo work:** in the `../fielddaycommander-demo` worktree, committed directly on `feature/demo-mode`, which follows `dev`. Demo-only code never goes to `dev` or `main`.
-- **Sail:** runs only from the demo worktree.
+- **Demo work:** in the `../fielddaycommander-demo` worktree, directly on `feature/demo-mode`, which follows `dev`. Demo-only code never goes to `dev` or `main`.
+- **Never push or offer to.** The user pushes.
+- **PHP tooling runs in a container** (host PHP is too old), and Sail runs only from the demo worktree.
 
-Activate the `branch-workflow` skill (`.claude/skills/branch-workflow/`) before you start, commit or merge work, touch the container, or run PHP tooling. It has the merge steps, test and Pint commands for each checkout, and the worktree setup.
+Activate the `branch-workflow` skill before you start, commit or merge work, touch the container, or run artisan, tests or Pint. It has the exact commands for each checkout.
+
+## Writing
+
+- **Commits:** Conventional Commits, describing the change in plain words (`fix(logging): show the first queued contact before it syncs`).
+- **Changelog:** anything a user or self-hoster could notice gets a `CHANGELOG.md` entry under **Unreleased** in the same branch. Describe fixes by what the person saw and when, not what changed in the code. Skip refactors, typos and CI. `CONTRIBUTING.md` has the full rules.
+- **User-facing prose** (UI copy, README, changelog, the website and docs in the `fielddaycommander-pages` worktree): activate the `docs-prose` skill.
+- Only create documentation files when asked.
 
 ## Releases
 
-Activate the `release` skill (`.claude/skills/release/`) for any version bump, release, or tag. A release runs a full Sonar scan until it is clean, a Trivy scan, and package updates before the version bump and tag.
+Activate the `release` skill for any version bump, release or tag. A release runs a full Sonar scan until it is clean, a Trivy scan, and package updates before the version bump and tag.
