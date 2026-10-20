@@ -40,10 +40,6 @@ enum ChecklistType: string
      */
     public function bonusCode(): ?string
     {
-        return match ($this) {
-            self::SafetyOfficer => 'safety_officer',
-            self::SiteResponsibilities => 'site_responsibilities',
-            self::Briefing => null,
-        };
+        return $this === self::Briefing ? null : $this->value;
     }
 }

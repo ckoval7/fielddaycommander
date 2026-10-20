@@ -58,9 +58,6 @@ class ManageSafetyChecklist extends Component
     }
 
     /**
-     * @return Collection<int, SafetyChecklistItem>
-     */
-    /**
      * Checklist types items can be added to: the ones this event uses, or
      * every contest type when the event uses none (e.g. a class with no
      * safety bonus).
@@ -75,6 +72,9 @@ class ManageSafetyChecklist extends Component
         return $types !== [] ? $types : [ChecklistType::SafetyOfficer, ChecklistType::SiteResponsibilities];
     }
 
+    /**
+     * @return Collection<int, SafetyChecklistItem>
+     */
     #[Computed]
     public function items(): Collection
     {

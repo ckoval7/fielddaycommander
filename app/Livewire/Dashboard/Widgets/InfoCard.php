@@ -7,6 +7,7 @@ namespace App\Livewire\Dashboard\Widgets;
 
 use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use App\Models\Event;
+use App\Models\EventConfiguration;
 use App\Services\EventContextService;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Cache;
@@ -75,7 +76,6 @@ class InfoCard extends Component
         // Unscored events have no ARRL section or operating class, so show
         // where the event is instead.
         $isScored = $event?->isScored() ?? true;
-        $placeName = collect([$config?->city, $config?->state])->filter()->implode(', ') ?: 'N/A';
         $rows = $isScored
             ? [
                 ['label' => 'Event', 'value' => $event?->name ?? 'N/A'],
@@ -84,7 +84,7 @@ class InfoCard extends Component
             ]
             : [
                 ['label' => 'Event', 'value' => $event->name],
-                ['label' => 'Location', 'value' => $placeName],
+                ['label' => 'Location', 'value' => $this->cityState($config)],
             ];
 
         return [
@@ -106,8 +106,6 @@ class InfoCard extends Component
     {
         $config = $event?->eventConfiguration;
 
-        $cityState = trim(implode(', ', array_filter([$config?->city, $config?->state]))) ?: 'N/A';
-
         $coordinates = ($config?->latitude !== null && $config?->longitude !== null)
             ? sprintf('%.4f, %.4f', $config->latitude, $config->longitude)
             : 'N/A';
@@ -119,7 +117,7 @@ class InfoCard extends Component
         return [
             'title' => 'Location',
             'rows' => [
-                ['label' => 'City / State', 'value' => $cityState],
+                ['label' => 'City / State', 'value' => $this->cityState($config)],
                 ['label' => 'Grid Square', 'value' => $config?->grid_square ?: 'N/A', 'highlight' => true],
                 ['label' => 'Coordinates', 'value' => $coordinates],
                 ['label' => 'Talk-in', 'value' => $talkIn],
@@ -226,5 +224,10 @@ class InfoCard extends Component
         return view('livewire.dashboard.widgets.info-card', [
             'data' => $this->getData(),
         ]);
+    }
+
+    protected function cityState(?EventConfiguration $config): string
+    {
+        return collect([$config?->city, $config?->state])->filter()->implode(', ') ?: 'N/A';
     }
 }

@@ -116,9 +116,6 @@ class ManageSchedule extends Component
     }
 
     /**
-     * @return Collection<int, ShiftRole>
-     */
-    /**
      * Whether roles at this event can earn bonus points. Unscored events
      * have no bonuses, so the bonus fields and badges are hidden.
      */
@@ -128,6 +125,9 @@ class ManageSchedule extends Component
         return $this->eventConfig?->isScored() ?? true;
     }
 
+    /**
+     * @return Collection<int, ShiftRole>
+     */
     #[Computed]
     public function roles(): Collection
     {
