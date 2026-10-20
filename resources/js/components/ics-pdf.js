@@ -21,7 +21,7 @@
  * characters for plain ones and drop anything else that would make pdf-lib
  * throw.
  */
-export function toWinAnsi(value) {
+function toWinAnsi(value) {
     return String(value ?? '')
         .replaceAll(/[‘’]/g, "'")
         .replaceAll(/[“”]/g, '"')
@@ -30,9 +30,9 @@ export function toWinAnsi(value) {
         .replaceAll(/[^\n\r\t\x20-\x7E\xA0-\xFF]/g, '?');
 }
 
-export async function buildIcsPdf(form, fetchBytes) {
+async function buildIcsPdf(form) {
     const { PDFDocument } = await import('pdf-lib');
-    const blank = await fetchBytes(form.template);
+    const blank = await (await fetchOk(form.template)).arrayBuffer();
     const output = await PDFDocument.create();
 
     const pages = await Promise.all(form.pages.map(async (fields) => {
@@ -62,14 +62,14 @@ export async function buildIcsPdf(form, fetchBytes) {
     return output.save();
 }
 
-async function fetchArrayBuffer(url) {
-    const response = await fetch(url, { credentials: 'same-origin' });
+async function fetchOk(url, headers = {}) {
+    const response = await fetch(url, { credentials: 'same-origin', headers });
 
     if (!response.ok) {
         throw new Error(`Request failed (${response.status})`);
     }
 
-    return response.arrayBuffer();
+    return response;
 }
 
 export default function icsPdf(dataUrl) {
@@ -84,17 +84,8 @@ export default function icsPdf(dataUrl) {
             this.busy = true;
 
             try {
-                const response = await fetch(dataUrl, {
-                    credentials: 'same-origin',
-                    headers: { Accept: 'application/json' },
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Request failed (${response.status})`);
-                }
-
-                const form = await response.json();
-                const bytes = await buildIcsPdf(form, fetchArrayBuffer);
+                const form = await (await fetchOk(dataUrl, { Accept: 'application/json' })).json();
+                const bytes = await buildIcsPdf(form);
                 const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
                 const link = document.createElement('a');
 

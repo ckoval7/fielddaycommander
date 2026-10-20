@@ -54,10 +54,10 @@ class IcsFormBuilder
         $header = [
             '1 Incident Name_8' => (string) $event->name,
             '2 Date/Time Prepared' => $this->now()->format(self::DATETIME_FORMAT),
-            'Date From' => $this->local($event->start_time)?->format(self::DATE_FORMAT) ?? '',
-            'Date To' => $this->local($event->end_time)?->format(self::DATE_FORMAT) ?? '',
-            'Time From' => $this->local($event->start_time)?->format(self::TIME_FORMAT) ?? '',
-            'Time To' => $this->local($event->end_time)?->format(self::TIME_FORMAT) ?? '',
+            'Date From' => $this->formatLocal($event->start_time, self::DATE_FORMAT),
+            'Date To' => $this->formatLocal($event->end_time, self::DATE_FORMAT),
+            'Time From' => $this->formatLocal($event->start_time, self::TIME_FORMAT),
+            'Time To' => $this->formatLocal($event->end_time, self::TIME_FORMAT),
             '5 Special Instructions' => "Club callsign: {$config->callsign}",
             '6 Prepared by Communications Unit Leader Name' => $this->personName($preparedBy),
             'DateTime_8' => $this->now()->format(self::DATETIME_FORMAT),
@@ -96,8 +96,8 @@ class IcsFormBuilder
 
         $header = [
             '1 Incident Name' => (string) $event->name,
-            'Start Date' => $this->local($event->start_time)?->format(self::DATE_FORMAT) ?? '',
-            'Start Time' => $this->local($event->start_time)?->format(self::TIME_FORMAT) ?? '',
+            'Start Date' => $this->formatLocal($event->start_time, self::DATE_FORMAT),
+            'Start Time' => $this->formatLocal($event->start_time, self::TIME_FORMAT),
             'Name' => $this->personName($preparedBy),
             'PositionTitle_12' => 'Communications',
             'Date/Time' => $this->now()->format(self::DATETIME_FORMAT),
@@ -122,7 +122,7 @@ class IcsFormBuilder
                     "R{$row} Total Personnel {$row}" => '1',
                     "R{$row} Agency {$row}" => (string) $config->club_name,
                     "R{$row} Incident Assignment {$row}" => (string) ($role?->tactical_callsign ?: $role?->name),
-                    "R{$row} Date/Time Check In {$row}" => $this->local($assignment->checked_in_at)?->format(self::DATETIME_FORMAT) ?? '',
+                    "R{$row} Date/Time Check In {$row}" => $this->formatLocal($assignment->checked_in_at, self::DATETIME_FORMAT),
                 ];
             }),
         ];
@@ -136,7 +136,6 @@ class IcsFormBuilder
     public function ics213(Message $message): array
     {
         $event = $message->eventConfiguration?->event;
-        $filedAt = $this->local($message->filed_at);
 
         return [
             'template' => asset('forms/ics/ics-213.pdf'),
@@ -146,13 +145,13 @@ class IcsFormBuilder
                 '2 To Name and Position' => $this->joinNameAndPosition($message->addressee_name, $message->ics_to_position),
                 '3 From Name and Position' => $this->joinNameAndPosition($message->signature, $message->ics_from_position),
                 '4 Subject' => (string) $message->ics_subject,
-                '5 Date' => $filedAt?->format(self::DATE_FORMAT) ?? '',
-                '6 Time' => $filedAt?->format(self::TIME_FORMAT) ?? '',
+                '5 Date' => $this->formatLocal($message->filed_at, self::DATE_FORMAT),
+                '6 Time' => $this->formatLocal($message->filed_at, self::TIME_FORMAT),
                 '7 Message' => (string) $message->message_text,
                 '9 Reply' => (string) $message->ics_reply_text,
                 '10 Replied by Name' => (string) $message->ics_reply_name,
                 'PositionTitle_14' => (string) $message->ics_reply_position,
-                'DateTime_14' => $this->local($message->ics_reply_date)?->format(self::DATETIME_FORMAT) ?? '',
+                'DateTime_14' => $this->formatLocal($message->ics_reply_date, self::DATETIME_FORMAT),
             ]],
         ];
     }
@@ -219,17 +218,9 @@ class IcsFormBuilder
 
         return $rows->values()
             ->chunk(self::ROWS_PER_PAGE)
-            ->map(function (Collection $chunk) use ($header, $rowFields): array {
-                $fields = $header;
-                $row = 1;
-
-                foreach ($chunk as $index => $item) {
-                    $fields = array_merge($fields, $rowFields($item, $row, $index + 1));
-                    $row++;
-                }
-
-                return $fields;
-            })
+            ->map(fn (Collection $chunk): array => array_merge($header, ...$chunk
+                ->map(fn (mixed $item, int $index): array => $rowFields($item, $index % self::ROWS_PER_PAGE + 1, $index + 1))
+                ->all()))
             ->values()
             ->all();
     }
@@ -262,7 +253,10 @@ class IcsFormBuilder
         return collect([$name, $position])->map(fn ($part) => trim((string) $part))->filter()->implode(', ');
     }
 
-    protected function personName(?User $user, bool $withCallsign = true): string
+    /**
+     * "First Last, CALLSIGN", or just the name without the callsign.
+     */
+    public function personName(?User $user, bool $withCallsign = true): string
     {
         if ($user === null) {
             return '';
@@ -277,9 +271,12 @@ class IcsFormBuilder
         return collect([$name, $user->call_sign])->filter()->implode(', ');
     }
 
-    protected function local(mixed $time): ?Carbon
+    /**
+     * A time in the event's local zone, or '' when there is none.
+     */
+    protected function formatLocal(mixed $time, string $format): string
     {
-        return $time ? toLocalTime($time) : null;
+        return $time ? toLocalTime($time)->format($format) : '';
     }
 
     protected function now(): Carbon

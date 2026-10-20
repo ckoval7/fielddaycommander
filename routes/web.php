@@ -223,11 +223,7 @@ Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
     Route::get('/events/{event}/messages/{message}/ics-213', [IcsFormController::class, 'ics213'])->name('events.messages.ics-213');
 
     Route::get('/events/{event}/messages/{message}/print', function (Event $event, Message $message) {
-        abort_unless(
-            $event->eventConfiguration !== null
-                && $message->event_configuration_id === $event->eventConfiguration->id,
-            404
-        );
+        abort_unless($message->belongsToEvent($event), 404);
 
         return view('messages.print', ['event' => $event, 'messages' => collect([$message])]);
     })->name('events.messages.print');

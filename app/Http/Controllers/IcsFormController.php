@@ -43,12 +43,7 @@ class IcsFormController extends Controller
 
     public function ics213(Event $event, Message $message): JsonResponse
     {
-        abort_unless(
-            $event->eventConfiguration !== null
-                && $message->event_configuration_id === $event->eventConfiguration->id
-                && $message->format === MessageFormat::Ics213,
-            404
-        );
+        abort_unless($message->belongsToEvent($event) && $message->format === MessageFormat::Ics213, 404);
 
         return response()->json($this->builder->ics213($message));
     }
@@ -73,7 +68,7 @@ class IcsFormController extends Controller
                 ->orderBy('logged_at')
                 ->orderBy('id')
                 ->get(),
-            'preparedBy' => $request->user(),
+            'preparedBy' => $this->builder->personName($request->user()),
         ]);
     }
 

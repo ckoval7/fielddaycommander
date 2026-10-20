@@ -70,6 +70,15 @@ class Message extends Model
         ];
     }
 
+    /**
+     * Whether this message was logged at the given event.
+     */
+    public function belongsToEvent(Event $event): bool
+    {
+        return $event->eventConfiguration !== null
+            && $this->event_configuration_id === $event->eventConfiguration->id;
+    }
+
     public function eventConfiguration(): BelongsTo
     {
         return $this->belongsTo(EventConfiguration::class);

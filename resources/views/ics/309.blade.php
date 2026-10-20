@@ -5,7 +5,6 @@
 @php
     $start = $event->start_time ? toLocalTime($event->start_time) : null;
     $end = $event->end_time ? toLocalTime($event->end_time) : null;
-    $preparedName = $preparedBy ? trim($preparedBy->first_name.' '.$preparedBy->last_name) : '';
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -103,7 +102,7 @@
         <div class="footer">
             <div class="cell">
                 <div class="label">5. Prepared By (Name, Call Sign)</div>
-                <div class="value">{{ collect([$preparedName, $preparedBy?->call_sign])->filter()->implode(', ') }}</div>
+                <div class="value">{{ $preparedBy }}</div>
             </div>
             <div class="cell">
                 <div class="label">Signature</div>
