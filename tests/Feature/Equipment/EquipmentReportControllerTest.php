@@ -10,6 +10,7 @@ use App\Models\EventConfiguration;
 use App\Models\Station;
 use App\Models\User;
 use App\Services\EquipmentReportService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
@@ -233,6 +234,22 @@ test('pdf header includes both club name and event name', function () {
     expect($html)
         ->toContain('Acme Repeater Society')
         ->toContain($this->event->name);
+});
+
+test('pdf reports keep their page margins so rows stay clear of the footer', function () {
+    $service = app(EquipmentReportService::class);
+    $data = $service->generateStationInventory($this->event->id);
+
+    $pdf = Pdf::loadView('equipment.reports.station-inventory', $data + ['generated_at' => now()])
+        ->setPaper('letter', 'portrait');
+    $pdf->render();
+
+    // dompdf takes page margins from the root element's style, which a
+    // universal margin reset in the layout would zero out.
+    $rootStyle = $pdf->getDomPDF()->getTree()->get_root()->get_style();
+
+    expect((float) $rootStyle->length_in_pt($rootStyle->margin_top))->toBeGreaterThan(0)
+        ->and((float) $rootStyle->length_in_pt($rootStyle->margin_bottom))->toBeGreaterThan(0);
 });
 
 test('export filenames contain event name and date', function () {

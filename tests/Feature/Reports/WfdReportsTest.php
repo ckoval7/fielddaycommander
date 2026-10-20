@@ -20,6 +20,7 @@ use App\Models\W1awBulletin;
 use App\Services\AdifExporter;
 use App\Services\AdifParserService;
 use App\Services\WfdEventSummaryService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Database\Seeders\BonusTypeSeeder;
 use Database\Seeders\EventTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -302,6 +303,18 @@ describe('WFD event summary', function () {
             ->and(collect($data['objectives'])->firstWhere('code', 'bulletin')['achieved'])->toBeTrue();
 
         $this->actingAs($this->user)->get(route('reports.wfd-event-summary'))->assertSuccessful();
+    });
+
+    test('keeps its page margins so text stays clear of the footer', function () {
+        $config = makeReportEvent('WFD', '2027');
+        $data = app(WfdEventSummaryService::class)->getData($config);
+
+        $pdf = Pdf::loadView('reports.wfd-event-summary-pdf', $data)->setPaper('letter', 'portrait');
+        $pdf->render();
+        $rootStyle = $pdf->getDomPDF()->getTree()->get_root()->get_style();
+
+        expect((float) $rootStyle->length_in_pt($rootStyle->margin_top))->toBeGreaterThan(0)
+            ->and((float) $rootStyle->length_in_pt($rootStyle->margin_bottom))->toBeGreaterThan(0);
     });
 
     test('route is not available for Field Day events', function () {

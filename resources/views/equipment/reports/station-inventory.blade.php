@@ -6,7 +6,7 @@
 
 @section('content')
     @forelse ($stations as $station)
-        <div class="section">
+        <div class="section keep-together">
             <div class="section-title">
                 {{ $station['station_name'] }}
                 <span class="section-note">{{ $station['equipment_count'] }} {{ Str::plural('item', $station['equipment_count']) }}</span>
@@ -21,7 +21,7 @@
     @endforelse
 
     @if ($unassigned_equipment->isNotEmpty())
-        <div class="section">
+        <div class="section keep-together">
             <div class="section-title">
                 Unassigned Equipment
                 <span class="section-note">{{ $unassigned_equipment->count() }} {{ Str::plural('item', $unassigned_equipment->count()) }}</span>

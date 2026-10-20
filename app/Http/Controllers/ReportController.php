@@ -128,6 +128,17 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('reports.submission-sheet-pdf', $data)
             ->setPaper('letter', 'portrait');
 
+        // The footer's "of N" comes from the expected page count; a long
+        // bulletin copy can spill onto extra pages, so render again with
+        // the real count when they differ.
+        $pdf->render();
+        $pageCount = $pdf->getDomPDF()->getCanvas()->get_page_count();
+
+        if ($pageCount !== $data['total_pages']) {
+            $pdf = Pdf::loadView('reports.submission-sheet-pdf', ['total_pages' => $pageCount] + $data)
+                ->setPaper('letter', 'portrait');
+        }
+
         return $pdf->stream($filename);
     }
 }

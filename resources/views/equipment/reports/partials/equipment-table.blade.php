@@ -18,7 +18,12 @@
         ['label' => 'Status', 'attrs' => 'class="c" style="width: 11%;"'],
     ],
     'rowPartial' => 'equipment.reports.partials.equipment-row',
-    'rowHeight' => fn ($r) => ! empty($r['bands']) || (! empty($r['owner_callsign']) && $r['owner_callsign'] !== 'N/A') ? 30 : 20,
+    // A bands line usually wraps to two lines in the narrow Equipment column.
+    'rowHeight' => fn ($r) => match (true) {
+        ! empty($r['bands']) => 40,
+        ! empty($r['owner_callsign']) && $r['owner_callsign'] !== 'N/A' => 30,
+        default => 20,
+    },
     // Station inventory stacks multiple per-station tables on the same page; assume
     // each station only owns a small slice of the first page it appears on.
     'firstChunkBudget' => 400,

@@ -19,7 +19,10 @@
     <meta charset="utf-8" />
     <title>{{ $event->name }} — {{ $report_title }}</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { padding: 0; box-sizing: border-box; }
+        /* dompdf seeds the root element's style from @page, so a margin reset
+           on * (which matches <html>) would wipe out the page margins. */
+        body, body * { margin: 0; }
 
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -88,6 +91,7 @@
         .summary-value { font-family: DejaVu Sans Mono, monospace; font-weight: bold; font-size: 14px; color: #1e3ea8; }
 
         .page-break { page-break-before: always; }
+        .keep-together { page-break-inside: avoid; }
     </style>
 </head>
 <body>
