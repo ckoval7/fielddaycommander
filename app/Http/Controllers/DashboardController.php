@@ -146,7 +146,7 @@ class DashboardController extends Controller
 
         $widgets = collect($tvConfig['widgets'])
             ->filter(fn (array $widget): bool => $widget['visible'] ?? true)
-            ->reject(fn (array $widget): bool => ! $isScored && app(DashboardService::class)->isScoredOnly($widget))
+            ->reject(fn (array $widget): bool => app(DashboardService::class)->isHiddenForEvent($widget, $isScored))
             ->sortBy('order')
             ->map(fn (array $widget): array => [
                 ...$widget,

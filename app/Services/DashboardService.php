@@ -360,6 +360,21 @@ class DashboardService
     }
 
     /**
+     * Whether a widget is hidden (not removed) for the event in view.
+     *
+     * Contest widgets are hidden at unscored events. A default widget marked
+     * unscored_only, such as the net traffic list, is hidden at contests.
+     *
+     * @param  array<string, mixed>  $widget
+     */
+    public function isHiddenForEvent(array $widget, bool $eventIsScored): bool
+    {
+        return $eventIsScored
+            ? (bool) ($widget['unscored_only'] ?? false)
+            : $this->isScoredOnly($widget);
+    }
+
+    /**
      * Whether a widget only means something for a scored contest.
      *
      * @param  array<string, mixed>  $widget

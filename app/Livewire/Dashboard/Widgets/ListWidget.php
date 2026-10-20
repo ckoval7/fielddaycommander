@@ -11,9 +11,11 @@ use App\Models\Contact;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
+use App\Models\NetLogEntry;
 use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Services\EventContextService;
+use App\Support\BroadcastChannels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -53,9 +55,10 @@ class ListWidget extends Component
     protected const PUBLIC_LIST_TYPES = ['recent_contacts', 'active_stations'];
 
     /**
-     * List types shown only to signed-in users.
+     * List types shown only to signed-in users. Net traffic can carry
+     * medical or personal details, so it never reaches the public TV.
      */
-    protected const MEMBER_LIST_TYPES = ['equipment_status'];
+    protected const MEMBER_LIST_TYPES = ['equipment_status', 'net_traffic'];
 
     protected const DEFAULT_LIST_TYPE = 'recent_contacts';
 
@@ -85,6 +88,7 @@ class ListWidget extends Component
 
         return match ($listType) {
             'recent_contacts' => $this->contactChangeListeners(),
+            'net_traffic' => $this->netLogChangeListeners(),
             default => [],
         };
     }
@@ -109,6 +113,7 @@ class ListWidget extends Component
             'recent_contacts' => $this->getRecentContacts($event),
             'active_stations' => $this->getActiveStations($event),
             'equipment_status' => $this->getEquipmentStatus($event),
+            'net_traffic' => $this->getNetTraffic($event),
             default => [],
         };
 
@@ -147,6 +152,51 @@ class ListWidget extends Component
                 ];
             })
             ->all();
+    }
+
+    /**
+     * Get the newest net log entries.
+     *
+     * Format: Time ago, from, to, message, priority
+     */
+    protected function getNetTraffic(Event $event): array
+    {
+        return NetLogEntry::query()
+            ->forEvent($event->eventConfiguration->id)
+            ->orderByDesc('logged_at')
+            ->orderByDesc('id')
+            ->limit($this->itemLimit())
+            ->get()
+            ->map(fn (NetLogEntry $entry) => [
+                'type' => 'net_entry',
+                'key' => "net-entry-{$entry->id}",
+                'time_ago' => $this->formatTimeAgo($entry->logged_at),
+                'from' => NetLogEntry::displayStation($entry->from_station, $entry->from_callsign),
+                'to' => NetLogEntry::displayStation($entry->to_station, $entry->to_callsign),
+                'message' => $entry->message,
+                'priority' => $entry->priority->value,
+                'priority_label' => $entry->priority->label(),
+            ])
+            ->all();
+    }
+
+    /**
+     * Refresh as soon as a net log entry changes, when the viewer may
+     * subscribe to the event channel.
+     *
+     * @return array<string, string>
+     */
+    protected function netLogChangeListeners(): array
+    {
+        $eventId = app(EventContextService::class)->getContextEvent()?->id;
+
+        if ($eventId === null || ! $this->canListenForBroadcasts()) {
+            return [];
+        }
+
+        return [
+            BroadcastChannels::privateListener(BroadcastChannels::event($eventId), '.'.BroadcastChannels::NET_LOG_CHANGED) => 'handleUpdate',
+        ];
     }
 
     /**

@@ -168,3 +168,15 @@ test('the public page shows live stats for a scored event', function () {
 
     $this->get(route('public.landing'))->assertOk()->assertSee('Live Stats');
 });
+
+test('the default net traffic widget shows only at unscored events', function () {
+    $service = app(DashboardService::class);
+    $netTraffic = collect(config('dashboard.default_dashboards.user.widgets'))->firstWhere('id', 'net-traffic');
+    $added = ['type' => 'list_widget', 'config' => ['list_type' => 'net_traffic']];
+
+    expect($netTraffic)->not->toBeNull()
+        ->and($service->isHiddenForEvent($netTraffic, eventIsScored: true))->toBeTrue()
+        ->and($service->isHiddenForEvent($netTraffic, eventIsScored: false))->toBeFalse()
+        ->and($service->isHiddenForEvent($added, eventIsScored: true))->toBeFalse()
+        ->and($service->isHiddenForEvent(['type' => 'sections_worked', 'config' => []], eventIsScored: false))->toBeTrue();
+});

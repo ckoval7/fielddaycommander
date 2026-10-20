@@ -11,6 +11,7 @@ use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
+use App\Models\NetLogEntry;
 use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Models\User;
@@ -858,4 +859,59 @@ describe('ListWidget list type access', function () {
             'config' => ['list_type' => 'recent_contacts'],
         ])->set('config.list_type', 'equipment_status');
     })->throws(CannotUpdateLockedPropertyException::class);
+});
+
+describe('net traffic list', function () {
+    it('shows the newest net log entries with priority', function () {
+        NetLogEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'from_station' => 'Aid 7',
+            'from_callsign' => 'W1ABC',
+            'to_station' => 'Net Control',
+            'message' => 'Older call',
+            'logged_at' => appNow()->subMinutes(20),
+        ]);
+        NetLogEntry::factory()->emergency()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'message' => 'Runner down at mile 14',
+            'logged_at' => appNow()->subMinute(),
+        ]);
+
+        $component = Livewire::test(ListWidget::class, ['config' => ['list_type' => 'net_traffic']]);
+        $items = $component->viewData('items');
+
+        expect($items)->toHaveCount(2)
+            ->and($items[0]['message'])->toBe('Runner down at mile 14')
+            ->and($items[0]['priority'])->toBe('emergency')
+            ->and($items[1]['from'])->toBe('Aid 7 (W1ABC)');
+
+        $component->assertSee('Net Traffic')->assertSee('Emergency')->assertSee('Runner down at mile 14');
+    });
+
+    it('shows an empty state when nothing is logged', function () {
+        Livewire::test(ListWidget::class, ['config' => ['list_type' => 'net_traffic']])
+            ->assertSee('No net traffic yet');
+    });
+
+    it('refreshes live when a net log entry changes', function () {
+        config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+
+        $component = Livewire::test(ListWidget::class, ['config' => ['list_type' => 'net_traffic']]);
+
+        expect($component->instance()->getWidgetListeners())->toBe([
+            "echo-private:event.{$this->event->id},.NetLogChanged" => 'handleUpdate',
+        ]);
+    });
+
+    it('never shows net traffic to guests on the public TV', function () {
+        NetLogEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'message' => 'Patient details',
+        ]);
+        auth()->logout();
+
+        Livewire::test(ListWidget::class, ['config' => ['list_type' => 'net_traffic']])
+            ->assertDontSee('Patient details')
+            ->assertDontSee('Net Traffic');
+    });
 });

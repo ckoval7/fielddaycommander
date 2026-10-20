@@ -171,7 +171,7 @@
                         x-on:touchstart.passive="touchStart($event, {{ $index }})"
                         x-on:keydown="keyDown($event, {{ $index }})"
                         data-widget-id="{{ $widget['id'] }}"
-                        @if($isHiddenForEvent) title="Shown only for scored events" @endif
+                        @if($isHiddenForEvent) title="{{ $this->eventIsScored ? 'Shown only for unscored events' : 'Shown only for scored events' }}" @endif
                         wire:key="widget-{{ $widget['id'] }}"
                         x-data="{ updating: false, showSizePicker: false }"
                         x-on:widget-updating.window="if ($event.detail.widgetId === '{{ $widget['id'] }}') updating = true"

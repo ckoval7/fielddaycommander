@@ -78,13 +78,14 @@ class DashboardEditor extends Component
     }
 
     /**
-     * Whether a widget is hidden because the event in context is unscored.
+     * Whether a widget is hidden for the event in context: contest widgets at
+     * unscored events, and unscored-only defaults at contests.
      *
      * @param  array<string, mixed>  $widget
      */
     public function isHiddenForEvent(array $widget): bool
     {
-        return ! $this->eventIsScored && app(DashboardService::class)->isScoredOnly($widget);
+        return app(DashboardService::class)->isHiddenForEvent($widget, $this->eventIsScored);
     }
 
     #[Computed]
