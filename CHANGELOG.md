@@ -6,11 +6,14 @@ This changelog starts after 26.10.9. For earlier releases, see the commit histor
 
 ## Unreleased
 
+## 26.10.10 - 2026-10-20
+
 ### Changed
 
 - Development now happens on the `dev` branch, and `main` only moves when there's a release. If you build from source, `main` is the latest release and `dev` has fixes that haven't been released yet.
 - PDF reports now open in a new tab instead of downloading. That covers the equipment reports, the ARRL submission sheet and the WFD event summary. Use the browser's PDF viewer to print or save one.
 - Callsigns in the logbook are larger and easier to read, in both the table and the phone card view.
+- When you install FD Commander as an app on a phone or computer, the install prompt now shows the full name, Field Day Commander. New installs from `deploy.sh` use the full name too.
 
 ### Fixed
 
