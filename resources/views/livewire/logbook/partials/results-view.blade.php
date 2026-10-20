@@ -98,7 +98,7 @@
 
                 @scope('cell_callsign', $contact, $noCreditReasons, $attentionReasons)
                     <div class="flex items-center gap-2">
-                        <span class="font-mono font-semibold {{ $contact->trashed() ? 'line-through text-base-content/40' : '' }}">{{ $contact->callsign }}</span>
+                        <span class="font-mono font-semibold text-lg {{ $contact->trashed() ? 'line-through text-base-content/40' : '' }}">{{ $contact->callsign }}</span>
                         @if($contact->trashed())
                             <x-badge value="DELETED" class="badge-xs badge-error" />
                         @endif
@@ -218,7 +218,7 @@
                                 </label>
                             @endcan
                             <div class="flex-1 min-w-0">
-                                <div class="font-mono font-bold text-lg truncate {{ $contact->trashed() ? 'line-through' : '' }}">{{ $contact->callsign }}</div>
+                                <div class="font-mono font-bold text-xl truncate {{ $contact->trashed() ? 'line-through' : '' }}">{{ $contact->callsign }}</div>
                                 <div class="text-xs text-base-content/60 mt-1">
                                     {{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('M d, Y H:i') . ' UTC' : 'N/A' }}
                                 </div>
