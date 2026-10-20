@@ -263,7 +263,6 @@ class NetLog extends Component
         }
 
         $latestTraffic = NetLogEntry::forEvent($this->event->eventConfiguration->id)
-            ->whereNotNull('net_id')
             ->orderByDesc('logged_at')
             ->orderByDesc('id')
             ->value('net_id');

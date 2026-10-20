@@ -17,6 +17,7 @@ return new class extends Migration
         Schema::create('net_log_entries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_configuration_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('net_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->dateTime('logged_at');
             $table->string('from_station', 50);

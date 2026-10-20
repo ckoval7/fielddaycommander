@@ -177,7 +177,7 @@ class ListWidget extends Component
                 'time_ago' => $this->formatTimeAgo($entry->logged_at),
                 'from' => NetLogEntry::displayStation($entry->from_station, $entry->from_callsign),
                 'to' => NetLogEntry::displayStation($entry->to_station, $entry->to_callsign),
-                'net' => $showsNetName ? $entry->net?->name : null,
+                'net' => $showsNetName ? $entry->net->name : null,
                 'message' => $entry->message,
                 'priority' => $entry->priority->value,
                 'priority_label' => $entry->priority->label(),
