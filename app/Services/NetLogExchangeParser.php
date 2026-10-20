@@ -9,12 +9,14 @@ use App\Enums\NetPriority;
 use InvalidArgumentException;
 
 /**
- * Parses a net log line: "[calling station] [called station] [message]".
+ * Parses a net log line: "[called station] [calling station] [message]",
+ * in the order it's said on the air: "NCS, AID7, water low".
  *
  * Stations are callsigns or tactical names. Tactical names can have spaces
  * ("Aid 7", "Net Control"), so known names are matched first, longest
  * first, and anything else is one word. A message starting with EMERGENCY
- * or PRIORITY sets the entry's priority.
+ * or PRIORITY sets the entry's priority. The message is kept in capitals,
+ * as the input shows it.
  */
 class NetLogExchangeParser
 {
@@ -28,11 +30,11 @@ class NetLogExchangeParser
     {
         $rest = trim((string) preg_replace('/\s+/', ' ', $line));
 
-        [$from, $rest] = $this->takeStation($rest, $knownNames);
         [$to, $rest] = $this->takeStation($rest, $knownNames);
+        [$from, $rest] = $this->takeStation($rest, $knownNames);
 
         if ($from === null || $to === null) {
-            throw new InvalidArgumentException('Type the calling station, then your call, then the message. For example: AID7 NCS WATER LOW');
+            throw new InvalidArgumentException('Type the station being called, then the calling station, then the message. For example: NCS AID7 WATER LOW');
         }
 
         [$priority, $message] = $this->takePriority($rest);
@@ -40,7 +42,7 @@ class NetLogExchangeParser
         return [
             'from' => $from,
             'to' => $to,
-            'message' => $message,
+            'message' => mb_strtoupper($message),
             'priority' => $priority,
         ];
     }

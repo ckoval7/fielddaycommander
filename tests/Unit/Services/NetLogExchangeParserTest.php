@@ -10,40 +10,40 @@ beforeEach(function () {
     $this->parser = new NetLogExchangeParser;
 });
 
-test('splits calling station, your call and message', function () {
-    expect($this->parser->parse('  aid7   ncs  water low  '))->toBe([
+test('splits called station, calling station and message, in capitals', function () {
+    expect($this->parser->parse('  ncs   aid7  water low  '))->toBe([
         'from' => 'AID7',
         'to' => 'NCS',
-        'message' => 'water low',
+        'message' => 'WATER LOW',
         'priority' => null,
     ]);
 });
 
 test('matches known tactical names first, longest first, keeping their spelling', function () {
-    $parsed = $this->parser->parse('aid 12 net control runner down', ['Aid 1', 'Aid 12', 'Net Control']);
+    $parsed = $this->parser->parse('net control aid 12 runner down', ['Aid 1', 'Aid 12', 'Net Control']);
 
     expect($parsed['from'])->toBe('Aid 12')
         ->and($parsed['to'])->toBe('Net Control')
-        ->and($parsed['message'])->toBe('runner down');
+        ->and($parsed['message'])->toBe('RUNNER DOWN');
 });
 
 test('a known name must end at a word boundary', function () {
     $parsed = $this->parser->parse('aid 70 ncs check in', ['Aid 7']);
 
-    expect($parsed['from'])->toBe('AID')
-        ->and($parsed['to'])->toBe('70');
+    expect($parsed['to'])->toBe('AID')
+        ->and($parsed['from'])->toBe('70');
 });
 
 test('the message is optional', function () {
-    expect($this->parser->parse('AID7 NCS')['message'])->toBe('');
+    expect($this->parser->parse('NCS AID7')['message'])->toBe('');
 });
 
 test('a leading EMERGENCY or PRIORITY sets the priority', function () {
-    expect($this->parser->parse('AID7 NCS Emergency runner down'))
+    expect($this->parser->parse('NCS AID7 Emergency runner down'))
         ->priority->toBe(NetPriority::Emergency)
-        ->message->toBe('runner down')
-        ->and($this->parser->parse('AID7 NCS priority need ice')['priority'])->toBe(NetPriority::Priority)
-        ->and($this->parser->parse('AID7 NCS priorityless')['priority'])->toBeNull();
+        ->message->toBe('RUNNER DOWN')
+        ->and($this->parser->parse('NCS AID7 priority need ice')['priority'])->toBe(NetPriority::Priority)
+        ->and($this->parser->parse('NCS AID7 priorityless')['priority'])->toBeNull();
 });
 
 test('a line needs both stations', function (string $line) {

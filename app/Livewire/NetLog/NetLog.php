@@ -20,7 +20,7 @@ use Livewire\Component;
 
 /**
  * Net control's log for a directed net, in the same chat-style window as
- * the contact log. Each line is "[calling station] [your call] [message]".
+ * the contact log. Each line is "[called station] [calling station] [message]".
  *
  * Every net control screen at the event sees new entries live over Reverb.
  */
@@ -269,8 +269,8 @@ class NetLog extends Component
     }
 
     /**
-     * Suggest tactical names for the station being typed: the calling
-     * station first, then your own.
+     * Suggest tactical names for the station being typed: the called
+     * station first, then the calling station.
      *
      * @return list<array{exchange: string, worked_on: string}>
      */
@@ -282,14 +282,14 @@ class NetLog extends Component
             return [];
         }
 
-        // Still typing the calling station?
+        // Still typing the called station?
         $matches = $this->namesStartingWith($input);
 
         if ($matches === []) {
-            // Then it's your own call, after the calling station.
-            [$from, $afterFrom] = app(NetLogExchangeParser::class)->takeStation($input, $this->tacticalNames);
-            $matches = $afterFrom === '' ? [] : $this->namesStartingWith($afterFrom);
-            $prefix = $from.' ';
+            // Then it's the calling station, after the called one.
+            [$to, $afterTo] = app(NetLogExchangeParser::class)->takeStation($input, $this->tacticalNames);
+            $matches = $afterTo === '' ? [] : $this->namesStartingWith($afterTo);
+            $prefix = $to.' ';
         } else {
             $prefix = '';
         }

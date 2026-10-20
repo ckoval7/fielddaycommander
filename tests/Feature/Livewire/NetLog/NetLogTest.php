@@ -55,21 +55,22 @@ test('the net log uses the chat-style log window and composer', function () {
         ->assertSee('href="'.route('events.net-log', $this->event).'"', false);
 });
 
-test('a line of calling station, your call and message is logged and broadcast', function () {
+test('a line of called station, calling station and message is logged and broadcast', function () {
     EventFacade::fake([NetLogChanged::class]);
 
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->call('logEntry', 'aid7 ncs water low at mile 14')
+        ->call('logEntry', 'ncs aid7 water low at mile 14')
         ->assertHasNoErrors()
         ->assertDispatched('net-log-entry-logged')
         ->assertSet('exchangeInput', '')
-        ->assertSee('water low at mile 14');
+        ->assertSee('WATER LOW AT MILE 14')
+        ->assertSeeHtmlInOrder(['<th>To</th>', '<th>From</th>']);
 
     $entry = NetLogEntry::sole();
 
     expect($entry->from_station)->toBe('AID7')
         ->and($entry->to_station)->toBe('NCS')
-        ->and($entry->message)->toBe('water low at mile 14')
+        ->and($entry->message)->toBe('WATER LOW AT MILE 14')
         ->and($entry->priority)->toBe(NetPriority::Routine)
         ->and($entry->user_id)->toBe($this->operator->id);
 
@@ -82,33 +83,33 @@ test('multi-word tactical names are recognised', function () {
     ShiftRole::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Net Control']);
 
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->call('logEntry', 'aid 7 net control runner down');
+        ->call('logEntry', 'net control aid 7 runner down');
 
     expect(NetLogEntry::sole())
         ->from_station->toBe('Aid 7')
         ->to_station->toBe('Net Control')
-        ->message->toBe('runner down');
+        ->message->toBe('RUNNER DOWN');
 });
 
 test('the priority buttons or a leading EMERGENCY set the priority', function () {
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
         ->call('setPriority', 'priority')
-        ->call('logEntry', 'AID3 NCS need relief')
+        ->call('logEntry', 'NCS AID3 need relief')
         ->assertSet('priority', 'routine')
-        ->call('logEntry', 'AID4 NCS emergency runner down');
+        ->call('logEntry', 'NCS AID4 emergency runner down');
 
     $entries = NetLogEntry::orderBy('id')->get();
 
     expect($entries[0]->priority)->toBe(NetPriority::Priority)
         ->and($entries[1]->priority)->toBe(NetPriority::Emergency)
-        ->and($entries[1]->message)->toBe('runner down');
+        ->and($entries[1]->message)->toBe('RUNNER DOWN');
 });
 
-test('a line without your call is rejected', function () {
+test('a line without the calling station is rejected', function () {
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
         ->call('logEntry', 'AID7')
-        ->assertSet('parseError', fn ($error) => str_starts_with((string) $error, 'Type the calling station'))
-        ->assertSee('Type the calling station, then your call');
+        ->assertSet('parseError', fn ($error) => str_starts_with((string) $error, 'Type the station being called'))
+        ->assertSee('Type the station being called, then the calling station');
 
     expect(NetLogEntry::count())->toBe(0);
 });
@@ -123,15 +124,15 @@ test('a recalled entry is saved from its edited line', function () {
         'priority' => NetPriority::Priority,
     ]);
 
-    expect($entry->exchangeLine())->toBe('AID7 NCS PRIORITY water lo');
+    expect($entry->exchangeLine())->toBe('NCS AID7 PRIORITY water lo');
 
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->assertSeeHtml('data-exchange="AID7 NCS PRIORITY water lo"')
-        ->call('updateEntry', $entry->id, 'AID7 NCS water low')
+        ->assertSeeHtml('data-exchange="NCS AID7 PRIORITY water lo"')
+        ->call('updateEntry', $entry->id, 'NCS AID7 water low')
         ->assertHasNoErrors();
 
     expect($entry->fresh())
-        ->message->toBe('water low')
+        ->message->toBe('WATER LOW')
         ->priority->toBe(NetPriority::Routine);
 });
 
@@ -139,7 +140,7 @@ test('an operator cannot change someone else\'s entry', function () {
     $entry = NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'message' => 'Original']);
 
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->call('updateEntry', $entry->id, 'AID1 NCS changed')
+        ->call('updateEntry', $entry->id, 'NCS AID1 changed')
         ->assertDispatched('toast', title: 'You can only edit your own entries')
         ->call('deleteEntry', $entry->id)
         ->assertDispatched('toast', title: 'You can only delete your own entries');
@@ -194,21 +195,21 @@ test('entries list oldest first so the newest sits above the input', function ()
         ->assertSeeInOrder(['First call', 'Latest call']);
 });
 
-test('typing suggests tactical names for the calling station, then your call', function () {
+test('typing suggests tactical names for the called station, then the calling station', function () {
     Station::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Aid 7']);
     ShiftRole::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Net Control']);
 
     $component = Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->set('exchangeInput', 'ai');
+        ->set('exchangeInput', 'ne');
 
-    expect($component->get('suggestions'))->toBe([['exchange' => 'Aid 7 ', 'worked_on' => 'Nobody on duty']]);
+    expect($component->get('suggestions'))->toBe([['exchange' => 'Net Control ', 'worked_on' => 'Nobody on duty']]);
 
-    $component->set('exchangeInput', 'Aid 7 ne');
+    $component->set('exchangeInput', 'Net Control ai');
 
-    expect($component->get('suggestions')[0]['exchange'])->toBe('Aid 7 Net Control ');
+    expect($component->get('suggestions')[0]['exchange'])->toBe('Net Control Aid 7 ');
 
-    $component->call('selectSuggestion', 'Aid 7 Net Control ')
-        ->assertSet('exchangeInput', 'Aid 7 Net Control ')
+    $component->call('selectSuggestion', 'Net Control Aid 7 ')
+        ->assertSet('exchangeInput', 'Net Control Aid 7 ')
         ->assertDispatched('suggestion-selected');
 });
 
@@ -222,7 +223,7 @@ test('entries snapshot the operator behind each tactical callsign', function () 
     ]);
 
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->call('logEntry', 'Aid 7 NCS water low')
+        ->call('logEntry', 'NCS Aid 7 water low')
         ->assertSee('Aid 7 (W1ABC)');
 
     expect(NetLogEntry::sole()->from_callsign)->toBe('W1ABC')

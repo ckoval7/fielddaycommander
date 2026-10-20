@@ -31,7 +31,7 @@ Props:
 @if($entry->trashed())
     <div wire:key="net-card-{{ $entry->id }}" class="{{ $classes }} opacity-40 line-through">
         <div class="min-w-0">
-            <div class="font-bold font-mono uppercase break-words">{{ $from }} <span class="font-normal text-base-content/50">&rarr;</span> {{ $to }}</div>
+            <div class="font-bold font-mono uppercase break-words">{{ $to }} <span class="font-normal text-base-content/50">&larr;</span> {{ $from }}</div>
             <div class="text-sm break-words">
                 <span class="whitespace-pre-line">{{ $entry->message }}</span>
                 <button wire:click="restoreEntry({{ $entry->id }})" class="btn btn-ghost btn-xs ml-1 no-underline">Undo</button>
@@ -49,7 +49,7 @@ Props:
         class="{{ $classes }}"
     >
         <div class="min-w-0">
-            <div class="font-bold font-mono uppercase break-words">{{ $from }} <span class="font-normal text-base-content/50">&rarr;</span> {{ $to }}</div>
+            <div class="font-bold font-mono uppercase break-words">{{ $to }} <span class="font-normal text-base-content/50">&larr;</span> {{ $from }}</div>
             <div class="text-sm break-words">
                 @if($badge)
                     <span class="badge {{ $badge['class'] }} badge-xs gap-1 mr-1 align-middle">

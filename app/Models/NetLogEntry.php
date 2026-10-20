@@ -63,7 +63,7 @@ class NetLogEntry extends Model
     }
 
     /**
-     * The entry as a net log line, "[from] [to] [message]", with its
+     * The entry as a net log line, "[to] [from] [message]", with its
      * priority word when it isn't routine. Recalling an entry puts this in
      * the input for editing.
      */
@@ -71,7 +71,7 @@ class NetLogEntry extends Model
     {
         $priority = $this->priority === NetPriority::Routine ? '' : strtoupper($this->priority->value);
 
-        return trim(implode(' ', array_filter([$this->from_station, $this->to_station, $priority, $this->message], fn ($part) => $part !== null && $part !== '')));
+        return trim(implode(' ', array_filter([$this->to_station, $this->from_station, $priority, $this->message], fn ($part) => $part !== null && $part !== '')));
     }
 
     /**

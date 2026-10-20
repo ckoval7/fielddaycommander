@@ -28,15 +28,15 @@
         <x-logging.qso-log
             title="Net Traffic"
             subtitle="Newest at the bottom"
-            example="AID7 NCS WATER LOW"
+            example="NCS AID7 WATER LOW"
             empty-title="No net traffic logged yet."
-            empty-hint="Type the calling station, your call, then the message, e.g."
+            empty-hint="Type the station being called, then the calling station, then the message, e.g."
             logged-event="net-log-entry-logged"
         >
             <x-slot:headings>
                 <th>Time</th>
-                <th>From</th>
                 <th>To</th>
+                <th>From</th>
                 <th>Message</th>
                 <th>By</th>
             </x-slot:headings>
@@ -54,7 +54,7 @@
             </x-slot:rows>
 
             <x-logging.exchange-composer
-                placeholder="AID7 NCS WATER LOW"
+                placeholder="NCS AID7 WATER LOW"
                 label="Net log entry"
                 logged-event="net-log-entry-logged"
                 :suggestions="$suggestions"

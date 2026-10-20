@@ -39,8 +39,8 @@ Props:
         'cursor-pointer hover:bg-base-200' => ! $entry->trashed(),
     ])>
     <td class="font-mono whitespace-nowrap">{{ toLocalTime($entry->logged_at)->format('H:i') }}</td>
-    <td class="font-bold font-mono uppercase whitespace-nowrap">{{ \App\Models\NetLogEntry::displayStation($entry->from_station, $entry->from_callsign) }}</td>
     <td class="font-mono uppercase whitespace-nowrap">{{ \App\Models\NetLogEntry::displayStation($entry->to_station, $entry->to_callsign) }}</td>
+    <td class="font-bold font-mono uppercase whitespace-nowrap">{{ \App\Models\NetLogEntry::displayStation($entry->from_station, $entry->from_callsign) }}</td>
     <td class="break-words min-w-48">
         @if($badge)
             <span class="badge {{ $badge['class'] }} badge-xs gap-1 mr-1 align-middle">
