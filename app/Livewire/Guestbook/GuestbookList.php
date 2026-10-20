@@ -5,10 +5,12 @@
 
 namespace App\Livewire\Guestbook;
 
+use App\Enums\VisitorCategory;
 use App\Models\GuestbookEntry;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -44,6 +46,17 @@ class GuestbookList extends Component
             ->latest()
             ->limit($this->limit)
             ->get();
+    }
+
+    /**
+     * Visitor categories that earn a bonus under the active event's rulebook.
+     *
+     * @return list<VisitorCategory>
+     */
+    #[Computed]
+    public function bonusCategories(): array
+    {
+        return app(EventContextService::class)->getContextEvent()?->guestbookBonusCategories() ?? [];
     }
 
     public function render(): View

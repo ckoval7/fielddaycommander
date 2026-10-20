@@ -49,6 +49,18 @@ enum VisitorCategory: string
     }
 
     /**
+     * The rulebook bonus code a verified visit in this category earns, if any.
+     */
+    public function bonusCode(): ?string
+    {
+        return match ($this) {
+            self::ElectedOfficial => 'elected_official_visit',
+            self::Agency => 'agency_visit',
+            default => null,
+        };
+    }
+
+    /**
      * @return list<array{value: string, label: string}>
      */
     public static function options(): array
