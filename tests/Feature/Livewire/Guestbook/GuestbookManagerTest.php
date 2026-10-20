@@ -510,6 +510,19 @@ describe('additional features', function () {
             ->assertSee('Elected Official');
     });
 
+    test('winter field day lays out the five stat tiles without an orphan on phones', function () {
+        $this->actingAs($this->admin);
+
+        $this->event->update([
+            'event_type_id' => EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'is_active' => true])->id,
+            'rules_version' => '2026',
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event->fresh()])
+            ->assertSeeHtml('grid grid-cols-2 md:grid-cols-5 gap-4')
+            ->assertSeeHtml('stat bg-base-100 rounded-lg shadow col-span-2 md:col-span-1');
+    });
+
     test('field day shows the guestbook visit bonuses', function () {
         $this->actingAs($this->admin);
 
