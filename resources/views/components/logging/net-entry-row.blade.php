@@ -7,7 +7,7 @@ Net Entry Row Component
 
 Desktop table row for a net log entry in the shared QSO log window.
 Clicking (or Enter on) a live row recalls it; a deleted row shows struck
-through with an Undo. The data attributes feed the net log composer's recall.
+through with an Undo. The wire:key and data-recall-value feed the net log's recall.
 
 Props:
 - $entry: NetLogEntry - The entry to show
@@ -16,9 +16,7 @@ Props:
 @props(['entry'])
 
 <tr wire:key="net-entry-{{ $entry->id }}"
-    data-net-entry-id="{{ $entry->id }}"
-    data-exchange="{{ $entry->exchangeLine() }}"
-    data-deleted="{{ $entry->trashed() ? 'true' : 'false' }}"
+    data-recall-value="{{ $entry->exchangeLine() }}"
     @if(! $entry->trashed())
         @click="recallByContactId({{ $entry->id }})"
         @keydown.enter="recallByContactId({{ $entry->id }})"

@@ -70,7 +70,7 @@
             </p>
         </div>
     @else
-        <div class="max-sm:-mx-3 space-y-2" x-data="netLogComposer()" wire:key="net-log-{{ $this->currentNet->id }}">
+        <div class="max-sm:-mx-3 space-y-2" x-data="netLogRecall" wire:key="net-log-{{ $this->currentNet->id }}">
             @php
                 $netDetails = collect([
                     $this->currentNet->details(),
@@ -110,7 +110,7 @@
                     :suggestions="$suggestions"
                 >
                     @if($parseError)
-                        <div class="alert alert-error" data-net-log-error>
+                        <div class="alert alert-error" data-recall-error>
                             <x-icon name="phosphor-warning" class="w-5 h-5" />
                             <span>{{ $parseError }}</span>
                         </div>

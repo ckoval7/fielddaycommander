@@ -61,7 +61,7 @@ test('the net log uses the chat-style log window and composer', function () {
         ->assertSee('id="exchange-input"', false)
         ->assertSee('enterkeyhint="send"', false)
         ->assertSee('aria-label="Net log entry"', false)
-        ->assertSee('x-data="netLogComposer()"', false)
+        ->assertSee('x-data="netLogRecall"', false)
         ->assertSee('href="'.route('events.net-log', $this->event).'"', false);
 });
 
@@ -138,7 +138,7 @@ test('a recalled entry is saved from its edited line', function () {
     expect($entry->exchangeLine())->toBe('NCS AID7 PRIORITY water lo');
 
     Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->assertSeeHtml('data-exchange="NCS AID7 PRIORITY water lo"')
+        ->assertSeeHtml('data-recall-value="NCS AID7 PRIORITY water lo"')
         ->call('updateEntry', $entry->id, 'NCS AID7 water low')
         ->assertHasNoErrors();
 
@@ -170,7 +170,7 @@ test('a deleted entry stays in the window with an Undo', function () {
     $component = Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
         ->call('deleteEntry', $entry->id)
         ->assertSee('Logged by mistake')
-        ->assertSeeHtml('data-deleted="true"')
+        ->assertSeeHtml('opacity-40 line-through')
         ->assertSee('Undo');
 
     expect(NetLogEntry::find($entry->id))->toBeNull();
