@@ -123,7 +123,7 @@ class ManageSchedule extends Component
      * have no bonuses, so the bonus fields and badges are hidden.
      */
     #[Computed]
-    public function scoresBonuses(): bool
+    public function isScoredEvent(): bool
     {
         return $this->eventConfig?->isScored() ?? true;
     }
@@ -218,7 +218,7 @@ class ManageSchedule extends Component
             'roleColor' => ['required', 'string', 'max:255'],
         ]);
 
-        if (! $this->scoresBonuses) {
+        if (! $this->isScoredEvent) {
             $this->roleBonusPoints = null;
         }
 

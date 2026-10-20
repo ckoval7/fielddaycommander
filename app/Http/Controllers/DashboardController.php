@@ -142,7 +142,7 @@ class DashboardController extends Controller
         $tvConfig = config('dashboard.default_dashboards.tv');
         $columns = max(1, (int) ($tvConfig['columns'] ?? 5));
 
-        $isScored = app(EventContextService::class)->getContextEvent()?->isScored() ?? true;
+        $isScored = app(EventContextService::class)->isScored();
 
         $widgets = collect($tvConfig['widgets'])
             ->filter(fn (array $widget): bool => $widget['visible'] ?? true)

@@ -85,13 +85,13 @@ class DashboardEditor extends Component
      */
     public function isHiddenForEvent(array $widget): bool
     {
-        return app(DashboardService::class)->isHiddenForEvent($widget, $this->eventIsScored);
+        return app(DashboardService::class)->isHiddenForEvent($widget, $this->isScoredEvent);
     }
 
     #[Computed]
-    public function eventIsScored(): bool
+    public function isScoredEvent(): bool
     {
-        return app(EventContextService::class)->getContextEvent()?->isScored() ?? true;
+        return app(EventContextService::class)->isScored();
     }
 
     /**

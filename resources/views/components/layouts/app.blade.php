@@ -414,14 +414,14 @@
                         @endcanany
                     @else
                         <x-menu-item title="Home" icon="phosphor-house" link="/" />
-                        @if(app(\App\Services\EventContextService::class)->getContextEvent()?->isScored() ?? true)
+                        @if(app(\App\Services\EventContextService::class)->isScored())
                             <x-menu-item title="Section Map" icon="phosphor-map-trifold" link="{{ route('section-map') }}" />
                         @endif
                         <x-menu-item title="Guestbook" icon="phosphor-book-open-text" link="/guestbook" />
                         @if(app(\App\Services\WeatherService::class)->isWeatherPageVisible())
                             <x-menu-item title="Weather" icon="phosphor-sun-duotone" link="{{ route('weather.index') }}" exact :active="request()->routeIs('weather.index')" />
                         @endif
-                        @if(app(\App\Services\EventContextService::class)->getContextEvent()?->isScored() ?? true)
+                        @if(app(\App\Services\EventContextService::class)->isScored())
                             <x-menu-item title="View Log" icon="phosphor-list-bullets" link="{{ route('logbook.index') }}" />
                         @endif
                         <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />

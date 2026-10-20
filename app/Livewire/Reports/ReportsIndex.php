@@ -36,7 +36,7 @@ class ReportsIndex extends Component
      * Cabrillo log, submission sheet, event summary or sections worked.
      */
     #[Computed]
-    public function isScored(): bool
+    public function isScoredEvent(): bool
     {
         return $this->event?->isScored() ?? true;
     }

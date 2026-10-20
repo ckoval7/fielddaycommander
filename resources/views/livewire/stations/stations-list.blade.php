@@ -7,7 +7,7 @@
     {{-- Header --}}
     <x-header :title="$terms->stationPlural" subtitle="Manage {{ strtolower($terms->stationPlural) }} and equipment assignments" separator progress-indicator>
         <x-slot:actions>
-            @if(app(\App\Services\EventContextService::class)->getContextEvent()?->isScored() ?? true)
+            @if(app(\App\Services\EventContextService::class)->isScored())
             @can('log-contacts')
                 <x-button label="Log Contact" icon="phosphor-pencil-line" class="btn-outline" link="{{ route('logging.station-select') }}" wire:navigate responsive />
             @endcan

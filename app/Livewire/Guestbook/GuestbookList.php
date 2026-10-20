@@ -21,7 +21,7 @@ class GuestbookList extends Component
     /**
      * Whether verified entries earn a guestbook bonus at this event.
      */
-    public bool $scoresBonuses = true;
+    public bool $isScoredEvent = true;
 
     public function mount(): void
     {
@@ -37,7 +37,7 @@ class GuestbookList extends Component
     public function loadEntries(): void
     {
         $activeEvent = app(EventContextService::class)->getContextEvent();
-        $this->scoresBonuses = $activeEvent?->isScored() ?? true;
+        $this->isScoredEvent = $activeEvent?->isScored() ?? true;
 
         if (! $activeEvent || ! $activeEvent->eventConfiguration) {
             $this->entries = collect();

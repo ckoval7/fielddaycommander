@@ -103,6 +103,15 @@ class EventContextService extends ActiveEventService
     }
 
     /**
+     * Whether the context event is scored as a contest. Assumes a contest
+     * when there is no event, matching the Field Day defaults.
+     */
+    public function isScored(): bool
+    {
+        return $this->getContextEvent()?->isScored() ?? true;
+    }
+
+    /**
      * Check if there is a context event available.
      */
     public function hasContextEvent(): bool

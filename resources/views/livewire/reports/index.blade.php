@@ -100,7 +100,7 @@
 
         <span style="color: var(--reports-border);">|</span>
 
-        @if ($this->isScored)
+        @if ($this->isScoredEvent)
         <span class="text-sm font-semibold uppercase tracking-wide"
               style="color: var(--reports-text-muted);">
             {{ $this->event->eventConfiguration->operatingClass?->name ?? 'Unknown Class' }}
@@ -133,7 +133,7 @@
         </span>
     </div>
 
-    @if ($this->isScored)
+    @if ($this->isScoredEvent)
     {{-- ============================================================
          SECTION 1: DOWNLOADS — primary action zone
          F-pattern top row — immediately visible, clearly actionable
@@ -349,7 +349,7 @@
     </div>
 
     {{-- Contact-based sections: unscored events log traffic in the net log instead --}}
-    @if ($this->isScored)
+    @if ($this->isScoredEvent)
     {{-- ============================================================
          SECTION 2: QSO RATE BY HOUR
          ============================================================ --}}

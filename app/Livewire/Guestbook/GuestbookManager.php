@@ -90,7 +90,7 @@ class GuestbookManager extends Component
      * events have no bonuses, so bonus labels and the sidebar are hidden.
      */
     #[Computed]
-    public function scoresBonuses(): bool
+    public function isScoredEvent(): bool
     {
         return $this->eventConfig?->isScored() ?? true;
     }
