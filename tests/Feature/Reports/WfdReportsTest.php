@@ -285,7 +285,7 @@ describe('WFD event summary', function () {
         $response = $this->actingAs($this->user)->get(route('reports.wfd-event-summary'));
 
         $response->assertSuccessful()->assertHeader('Content-Type', 'application/pdf');
-        expect($response->headers->get('Content-Disposition'))->toContain('k4sco_p-')->toContain('event-summary.pdf');
+        expect($response->headers->get('Content-Disposition'))->toStartWith('inline')->toContain('k4sco_p-')->toContain('event-summary.pdf');
     })->with(['2027', '2026']);
 
     test('includes the saved bulletin copy under its WFD name', function () {

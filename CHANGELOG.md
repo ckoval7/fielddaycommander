@@ -9,6 +9,7 @@ This changelog starts after 26.10.9. For earlier releases, see the commit histor
 ### Changed
 
 - Development now happens on the `dev` branch, and `main` only moves when there's a release. If you build from source, `main` is the latest release and `dev` has fixes that haven't been released yet.
+- PDF reports now open in a new tab instead of downloading. That covers the equipment reports, the ARRL submission sheet and the WFD event summary. Use the browser's PDF viewer to print or save one.
 
 ### Fixed
 

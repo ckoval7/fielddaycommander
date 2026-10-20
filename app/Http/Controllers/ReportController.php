@@ -97,11 +97,11 @@ class ReportController extends Controller
 
         return Pdf::loadView('reports.wfd-event-summary-pdf', $data)
             ->setPaper('letter', 'portrait')
-            ->download($filename);
+            ->stream($filename);
     }
 
     /**
-     * Download the ARRL submission sheet PDF for the active event.
+     * Open the ARRL submission sheet PDF for the active event.
      */
     public function submissionSheet(): Response
     {
@@ -128,6 +128,6 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('reports.submission-sheet-pdf', $data)
             ->setPaper('letter', 'portrait');
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 }

@@ -101,7 +101,7 @@ test('delivery checklist export returns pdf', function () {
 
     $response->assertOk();
     expect($response->headers->get('content-type'))->toStartWith('application/pdf');
-    expect($response->headers->get('content-disposition'))->toContain('.pdf');
+    expect($response->headers->get('content-disposition'))->toStartWith('inline')->toContain('.pdf');
     expect($response->getContent())->toStartWith('%PDF-');
 });
 

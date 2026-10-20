@@ -128,6 +128,7 @@ describe('submission-sheet endpoint', function () {
             ->headers->get('Content-Disposition');
 
         expect($disposition)
+            ->toStartWith('inline')
             ->toContain('w1aw')
             ->toContain('submission-sheet');
     });
