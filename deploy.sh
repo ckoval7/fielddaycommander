@@ -643,7 +643,7 @@ configure_env() {
     local reverb_app_id
     reverb_app_id=$(generate_secret 8)
 
-    set_env "APP_NAME" '"FD Commander"'
+    set_env "APP_NAME" '"Field Day Commander"'
     set_env "APP_ENV" "production"
     set_env "APP_DEBUG" "false"
     set_env "APP_URL" "${SCHEME}://${DOMAIN}${PORT_SUFFIX}"
