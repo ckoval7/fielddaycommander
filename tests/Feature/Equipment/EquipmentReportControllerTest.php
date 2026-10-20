@@ -252,6 +252,48 @@ test('pdf reports keep their page margins so rows stay clear of the footer', fun
         ->and((float) $rootStyle->length_in_pt($rootStyle->margin_bottom))->toBeGreaterThan(0);
 });
 
+test('owner contacts pdf fills each page before starting the next', function () {
+    // 60 one-line rows (18.2pt each) fit on two pages: 32 under the page 1
+    // banner and the rest on page 2. The old fixed 20pt estimate and budgets
+    // spread them over three pages, leaving each about three quarters full.
+    $contacts = collect(range(1, 60))->map(fn (int $i) => [
+        'owner_name' => "Owner {$i}",
+        'callsign' => 'W1AW',
+        'email' => "owner{$i}@example.com",
+        'emergency_contacts' => collect(['555-0100']),
+        'equipment_count' => 1,
+    ]);
+
+    $html = view('equipment.reports.owner-contacts', [
+        'event' => $this->event,
+        'contacts' => $contacts,
+        'generated_at' => now(),
+    ])->render();
+
+    expect(substr_count($html, 'style="page-break-before: always;"'))->toBe(1);
+});
+
+test('owner contacts pdf sizes rows by their wrapped emergency contacts', function () {
+    // Four phone numbers wrap to two lines, so fewer rows fit per page.
+    $contacts = collect(range(1, 56))->map(fn (int $i) => [
+        'owner_name' => "Owner {$i}",
+        'callsign' => 'W1AW',
+        'email' => "owner{$i}@example.com",
+        'emergency_contacts' => collect(['(480) 227-3882', '719-829-9328', '+1.952.500.7645', '959-513-1297']),
+        'equipment_count' => 4,
+    ]);
+
+    $html = view('equipment.reports.owner-contacts', [
+        'event' => $this->event,
+        'contacts' => $contacts,
+        'generated_at' => now(),
+    ])->render();
+
+    // 31.2pt rows: 18 on page 1 and 20 on each later page, so three pages.
+    // The old fixed estimate packed 26 of them onto page 1, which overflowed.
+    expect(substr_count($html, 'style="page-break-before: always;"'))->toBe(2);
+});
+
 test('export filenames contain event name and date', function () {
     $response = $this->actingAs($this->admin)->get(route('events.equipment.reports.commitment-summary', ['event' => $this->event]));
 
