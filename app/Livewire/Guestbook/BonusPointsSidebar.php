@@ -6,6 +6,7 @@
 namespace App\Livewire\Guestbook;
 
 use App\Enums\VisitorCategory;
+use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -67,13 +68,25 @@ class BonusPointsSidebar extends Component
     }
 
     /**
+     * Visitor categories that earn a bonus under the event's rulebook.
+     *
+     * @return list<VisitorCategory>
+     */
+    #[Computed]
+    public function bonusCategories(): array
+    {
+        return EventConfiguration::with('event')->find($this->eventConfigId)?->event?->guestbookBonusCategories() ?? [];
+    }
+
+    /**
      * @return array<string, array{label: string, icon: string, iconColor: string, count: int, earned: bool, points: int, rule: string}>
      */
     #[Computed]
     public function bonusItems(): array
     {
-        return [
+        $items = [
             'elected_official' => [
+                'category' => VisitorCategory::ElectedOfficial,
                 'label' => 'Elected Official Visit',
                 'icon' => 'phosphor-buildings',
                 'iconColor' => 'text-primary',
@@ -83,6 +96,7 @@ class BonusPointsSidebar extends Component
                 'rule' => '7.3.11',
             ],
             'agency' => [
+                'category' => VisitorCategory::Agency,
                 'label' => 'Served Agency Visit',
                 'icon' => 'phosphor-shield-check',
                 'iconColor' => 'text-info',
@@ -92,6 +106,11 @@ class BonusPointsSidebar extends Component
                 'rule' => '7.3.12',
             ],
         ];
+
+        return collect($items)
+            ->filter(fn (array $item) => in_array($item['category'], $this->bonusCategories, true))
+            ->map(fn (array $item) => collect($item)->except('category')->all())
+            ->all();
     }
 
     #[Computed]

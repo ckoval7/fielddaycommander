@@ -150,6 +150,22 @@ class GuestbookManager extends Component
         ];
     }
 
+    /**
+     * Visitor categories that earn a bonus under this event's rulebook.
+     *
+     * @return list<VisitorCategory>
+     */
+    #[Computed]
+    public function bonusCategories(): array
+    {
+        return $this->event->guestbookBonusCategories();
+    }
+
+    public function isBonusCategory(?VisitorCategory $category): bool
+    {
+        return in_array($category, $this->bonusCategories, true);
+    }
+
     #[Computed]
     public function entryStats(): array
     {
@@ -164,7 +180,8 @@ class GuestbookManager extends Component
             ];
         }
 
-        $bonusCategories = array_map(fn (VisitorCategory $category) => $category->value, VisitorCategory::bonusEligible());
+        // An empty IN () list is invalid SQL, so a rulebook with no guestbook bonuses matches nothing.
+        $bonusCategories = array_map(fn (VisitorCategory $category) => $category->value, $this->bonusCategories) ?: [''];
         $bonusPlaceholders = implode(', ', array_fill(0, count($bonusCategories), '?'));
 
         $row = $this->eventEntries()

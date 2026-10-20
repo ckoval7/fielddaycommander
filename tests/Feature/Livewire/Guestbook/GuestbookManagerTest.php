@@ -9,6 +9,7 @@ use App\Livewire\Guestbook\GuestbookManager;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\GuestbookEntry;
 use App\Models\User;
 use App\Scoring\DomainEvents\GuestbookEntryChanged;
@@ -485,6 +486,41 @@ describe('additional features', function () {
         expect($stats['in_person'])->toBe(2);
         expect($stats['online'])->toBe(3);
         expect($stats['bonus_eligible'])->toBe(2);
+    });
+
+    test('winter field day hides the guestbook visit bonuses', function () {
+        $this->actingAs($this->admin);
+
+        $this->event->update([
+            'event_type_id' => EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'is_active' => true])->id,
+            'rules_version' => '2026',
+        ]);
+
+        GuestbookEntry::factory()->verified()->electedOfficial()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        $component = Livewire::test(GuestbookManager::class, ['event' => $this->event->fresh()]);
+
+        expect($component->get('bonusCategories'))->toBe([]);
+        expect($component->get('entryStats')['bonus_eligible'])->toBe(0);
+        $component->assertDontSee('Guestbook Bonuses')
+            ->assertDontSee('Bonus Eligible')
+            ->assertDontSee('Elected Official (bonus)')
+            ->assertSee('Elected Official');
+    });
+
+    test('field day shows the guestbook visit bonuses', function () {
+        $this->actingAs($this->admin);
+
+        GuestbookEntry::factory()->verified()->electedOfficial()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->assertSee('Guestbook Bonuses')
+            ->assertSee('Bonus Eligible')
+            ->assertSee('Elected Official (bonus)');
     });
 
     test('search resets pagination', function () {

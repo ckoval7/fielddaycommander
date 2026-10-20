@@ -5,6 +5,7 @@
 
 namespace App\Models;
 
+use App\Enums\VisitorCategory;
 use App\Observers\EventObserver;
 use App\Scoring\Dto\Nomenclature;
 use App\Scoring\RuleSetFactory;
@@ -162,6 +163,29 @@ class Event extends Model
         }
 
         return app(RuleSetFactory::class)->forEvent($this)->bonusRuleReference('sm_sec_message') !== null;
+    }
+
+    /**
+     * Visitor categories whose verified visits earn a bonus under this event's rulebook.
+     *
+     * ARRL Field Day awards elected official and served agency visits; Winter
+     * Field Day does not, so the guestbook tracks those visitors without points.
+     * Assumes Field Day for an event with no type yet.
+     *
+     * @return list<VisitorCategory>
+     */
+    public function guestbookBonusCategories(): array
+    {
+        if (! $this->loadMissing('eventType')->eventType) {
+            return VisitorCategory::bonusEligible();
+        }
+
+        $rules = app(RuleSetFactory::class)->forEvent($this);
+
+        return array_values(array_filter(
+            VisitorCategory::bonusEligible(),
+            fn (VisitorCategory $category) => $rules->bonusRuleReference($category->bonusCode()) !== null,
+        ));
     }
 
     public function getStatusAttribute(): string
