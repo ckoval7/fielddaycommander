@@ -46,7 +46,7 @@ If it's Accepted there, add the `sonar-project.properties` entry so the local sc
 The scan covers all of dev, so findings can be old. Look at what dev changed since `main` with `git diff --stat origin/main..dev`. Hand-check that diff for rules the local analyzers miss:
 
 - `.github/workflows/*.yml`: permissions set per job, not at the top level (`githubactions:S8264`/`S8233`)
-- `.sh` files: unused `local` variables, repeated string literals, `curl -L` without `--proto '=https' --tlsv1.2`, `install -m 755`
+- `.sh` files: `$1` and other positional parameters used directly in a function instead of assigned to a `local` first (`shelldre:S7679`), unused `local` variables, repeated string literals, `curl -L` without `--proto '=https' --tlsv1.2`, `install -m 755`
 - PHP closures: unused parameters (`php:S1172`)
 - Views: `@click`, `x-on:click` or `wire:click` on `<div>`, `<tr>`, `<li>`, `<span>`, `<svg>` or `<img>`. Use a `<button>`.
 
@@ -92,7 +92,7 @@ Build the body from **Unreleased** in `CHANGELOG.md`: a short highlights list, t
 $S pr <number>     # waits for the SonarCloud check on the PR head, then prints gate, issues, hotspots
 ```
 
-Run it in the background. It exits 0 only when the gate is `OK` with 0 open issues and 0 hotspots. When something is reported, fix it on a branch off `dev` (step 3), push again (step 4), and run `$S pr` again. The push updates the PR. Repeat until it passes.
+Run it in the background, and don't pipe it through `tail` or `head`, which hides its exit code. It exits 0 only when the gate is `OK` with 0 open issues and 0 hotspots. When something is reported, fix it on a branch off `dev` (step 3), push again (step 4), and run `$S pr` again. The push updates the PR. Repeat until it passes.
 
 For a finding that is truly intentional, document it in `sonar-project.properties` and ask the user before marking it Won't fix. Don't mark it yourself.
 

@@ -76,8 +76,8 @@ import_cloud_profiles() {
 }
 
 # Print issue or hotspot arrays from the issues/hotspots search APIs as a table.
-print_issues() { jq -r '.[] | [(.impacts[0].severity // .severity), .type, .rule, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"$1" | sort | column -t -s $'\t' || true; }
-print_hotspots() { jq -r '.[] | [.vulnerabilityProbability, .ruleKey, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"$1" | column -t -s $'\t' || true; }
+print_issues() { local json="$1"; jq -r '.[] | [(.impacts[0].severity // .severity), .type, .rule, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"${json}" | sort | column -t -s $'\t' || true; }
+print_hotspots() { local json="$1"; jq -r '.[] | [.vulnerabilityProbability, .ruleKey, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"${json}" | column -t -s $'\t' || true; }
 
 cmd_up() {
     mkdir -p "${STATE_DIR}"
