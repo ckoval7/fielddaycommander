@@ -48,7 +48,9 @@
       /* Bottom fade into page */
       linear-gradient(to bottom, transparent 50%, var(--bg-primary) 100%),
       /* Top fade */
-      linear-gradient(to bottom, rgba(25,30,36,0.6) 0%, transparent 30%);
+      linear-gradient(to bottom, rgba(25,30,36,0.6) 0%, transparent 30%),
+      /* Darken the photo behind the headline and intro */
+      radial-gradient(ellipse 60% 45% at 50% 38%, rgba(15,18,22,0.7) 0%, rgba(15,18,22,0.35) 60%, transparent 100%);
   }
   .hero h1 {
     font-size: clamp(2.5rem, 6vw, 4.2rem);
@@ -59,15 +61,38 @@
     position: relative; z-index: 1;
   }
   .hero h1 .gradient {
-    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    background: linear-gradient(135deg, #6ea8ff, #6fd68a);
+    filter: drop-shadow(0 2px 10px rgba(0,0,0,0.55));
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  /* Rotating headline: every phrase shares one grid cell, so the h1 is
+     always as tall as the longest phrase and nothing below it jumps. */
+  .hero-phrases { display: grid; }
+  .hero-phrase {
+    grid-area: 1 / 1;
+    opacity: 0; visibility: hidden;
+    transform: translateY(0.4em);
+    transition: opacity 0.6s ease, transform 0.6s ease, visibility 0s linear 0.6s;
+  }
+  .hero-phrase.is-active {
+    opacity: 1; visibility: visible;
+    transform: none;
+    transition: opacity 0.6s ease, transform 0.6s ease, visibility 0s;
+  }
+  .hero-phrase.is-leaving { transform: translateY(-0.4em); }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-phrase, .hero-phrase.is-leaving { transform: none; }
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
   .hero p {
     max-width: 620px; margin: 0 auto 2.5rem;
-    font-size: 1.15rem; color: var(--accent-ice); line-height: 1.7;
+    font-size: 1.15rem; color: #c3d8f5; line-height: 1.7;
     position: relative; z-index: 1;
-    text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 1px 12px rgba(0,0,0,0.6);
   }
   .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
 
@@ -348,8 +373,17 @@
 <section class="hero">
   <div class="hero-photo"><img src="homepagebg-dark.webp" alt=""></div>
   <div class="container">
-    <h1>
-      The complete<br><span class="gradient">Field Day operations platform.</span>
+    <h1 class="hero-rotator">
+      <span class="sr-only">The complete Field Day operations platform.</span>
+      <span class="hero-phrases" aria-hidden="true">
+        <span class="hero-phrase is-active">Your club's<br><span class="gradient">Field Day command center.</span></span>
+        <span class="hero-phrase">Your central<br><span class="gradient">Field Day management platform.</span></span>
+        <span class="hero-phrase">The central hub for<br><span class="gradient">Field Day operations.</span></span>
+        <span class="hero-phrase">The complete<br><span class="gradient">Field Day operations platform.</span></span>
+        <span class="hero-phrase">The all-in-one<br><span class="gradient">Field Day toolkit.</span></span>
+        <span class="hero-phrase">Mission control<br><span class="gradient">for your Field Day.</span></span>
+        <span class="hero-phrase">The operations center<br><span class="gradient">for Field Day weekend.</span></span>
+      </span>
     </h1>
     <p>
       More than a Field Day logger. FD Commander handles the whole event:
@@ -587,6 +621,35 @@
 <footer></footer>
 <script src="footer.js"></script>
 <script src="lightbox.js"></script>
+<script>
+  (function () {
+    var rotator = document.querySelector('.hero-rotator');
+    if (!rotator) return;
+    var phrases = rotator.querySelectorAll('.hero-phrase');
+    var current = Math.floor(Math.random() * phrases.length);
+    var paused = false;
+
+    phrases.forEach(function (phrase) { phrase.style.transition = 'none'; });
+    phrases[0].classList.remove('is-active');
+    phrases[current].classList.add('is-active');
+    void rotator.offsetHeight;
+    phrases.forEach(function (phrase) { phrase.style.transition = ''; });
+
+    function advance() {
+      if (paused || document.hidden) return;
+      var leaving = phrases[current];
+      leaving.classList.remove('is-active');
+      leaving.classList.add('is-leaving');
+      setTimeout(function () { leaving.classList.remove('is-leaving'); }, 600);
+      current = (current + 1) % phrases.length;
+      phrases[current].classList.add('is-active');
+    }
+
+    rotator.addEventListener('mouseenter', function () { paused = true; });
+    rotator.addEventListener('mouseleave', function () { paused = false; });
+    setInterval(advance, 7000);
+  })();
+</script>
 
 </body>
 </html>
