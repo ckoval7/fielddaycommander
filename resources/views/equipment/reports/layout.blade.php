@@ -21,7 +21,7 @@
     <style>
         * { padding: 0; box-sizing: border-box; }
         /* dompdf seeds the root element's style from @page, so a margin reset
-           on * (which matches <html>) would wipe out the page margins. */
+           on * (which matches the html element) would wipe out the page margins. */
         body, body * { margin: 0; }
 
         body {
