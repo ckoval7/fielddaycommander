@@ -292,7 +292,7 @@ class DashboardEditor extends Component
      * Resize a widget's column and row span.
      *
      * @param  string  $widgetId  The widget to resize
-     * @param  int  $colSpan  Desired column span (clamped to 1-4)
+     * @param  int  $colSpan  Desired column span (clamped to 1-3)
      * @param  int  $rowSpan  Desired row span (clamped to Short-Tall, 2-6)
      */
     public function resizeWidget(string $widgetId, int $colSpan, int $rowSpan): void
@@ -456,7 +456,7 @@ class DashboardEditor extends Component
             mode: 'edit',
             widgetType: $widget['type'],
             config: $widget['config'] ?? [],
-            colSpan: $widget['col_span'] ?? 1,
+            colSpan: $this->dashboardService()->clampColSpan($widget['col_span'] ?? 1),
             rowSpan: $widget['row_span'] ?? DashboardService::MIN_ROW_SPAN
         );
     }

@@ -405,7 +405,7 @@
                     :class="canScrollDown ? 'opacity-100' : 'opacity-0 invisible'"
                     @click="$refs.scrollArea.scrollBy({ top: 120, behavior: 'smooth' })"
                     type="button"
-                    class="absolute inset-x-0 bottom-0 z-10 flex justify-center pt-3 pb-1 bg-linear-to-t from-base-100 lg:from-base-200 to-transparent text-base-content/60 hover:text-base-content transition-[opacity,visibility] duration-150"
+                    class="absolute inset-x-0 bottom-0 z-10 flex justify-center items-end pt-3 pb-1 pointer-coarse:min-h-11 bg-linear-to-t from-base-100 lg:from-base-200 to-transparent text-base-content/60 hover:text-base-content transition-[opacity,visibility] duration-150"
                     aria-label="Scroll down"
                 >
                     <x-icon name="phosphor-caret-down" class="size-4" />
