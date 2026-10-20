@@ -32,9 +32,8 @@
       Header bar + meta:          ~75 pt
       Section title + spacing:    ~28 pt
       Thead row:                  ~22 pt
-      Chunk top spacer (chunks 2+): 24 pt
       → first chunk default:      660 - 75 - 28 - 22      = 535 pt
-      → subsequent chunk default: 660 - 24 - 22           = 614 pt
+      → subsequent chunk default: 660 - 22 - 24 slack     = 614 pt
 
     Row height conventions (used by callers):
       - 1-line row:   ~20 pt
@@ -92,7 +91,7 @@
 @endphp
 
 @foreach ($chunks as $chunkIndex => $chunk)
-    <div @if ($chunkIndex > 0) style="page-break-before: always; padding-top: 24pt;" @endif>
+    <div @if ($chunkIndex > 0) style="page-break-before: always;" @endif>
         <table>
             <thead>
                 <tr>

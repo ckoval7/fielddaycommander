@@ -38,6 +38,9 @@
             background-color: #1e3ea8;
             color: #fff;
             padding: 12px 48px 8px;
+            /* Pull the bar up into the @page top margin so it meets the paper
+               edge on page 1; later pages keep the margin. */
+            margin-top: -60px;
             margin-bottom: 12px;
             text-align: center;
         }
