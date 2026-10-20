@@ -52,8 +52,9 @@
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
                 {{-- Stats Cards (Left Side) --}}
                 <div class="{{ $bonusCategories ? 'lg:col-span-3' : 'lg:col-span-4' }} space-y-6">
-                    <div class="grid grid-cols-2 md:grid-cols-3 {{ $bonusCategories ? '' : 'lg:grid-cols-5' }} gap-4">
-                        <div class="stat bg-base-100 rounded-lg shadow">
+                    {{-- Without the bonus tile there are five: Total takes a full row on phones so none sits alone --}}
+                    <div class="grid grid-cols-2 {{ $bonusCategories ? 'md:grid-cols-3' : 'md:grid-cols-5' }} gap-4">
+                        <div class="stat bg-base-100 rounded-lg shadow {{ $bonusCategories ? '' : 'col-span-2 md:col-span-1' }}">
                             <div class="stat-title">Total</div>
                             <div class="stat-value text-2xl">{{ $this->entryStats['total'] }}</div>
                         </div>
