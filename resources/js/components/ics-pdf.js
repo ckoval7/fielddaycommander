@@ -23,11 +23,11 @@
  */
 export function toWinAnsi(value) {
     return String(value ?? '')
-        .replace(/[‘’]/g, "'")
-        .replace(/[“”]/g, '"')
-        .replace(/[–—]/g, '-')
-        .replace(/…/g, '...')
-        .replace(/[^\n\r\t\x20-\x7E\xA0-\xFF]/g, '?');
+        .replaceAll(/[‘’]/g, "'")
+        .replaceAll(/[“”]/g, '"')
+        .replaceAll(/[–—]/g, '-')
+        .replaceAll(/…/g, '...')
+        .replaceAll(/[^\n\r\t\x20-\x7E\xA0-\xFF]/g, '?');
 }
 
 export async function buildIcsPdf(form, fetchBytes) {
@@ -35,7 +35,7 @@ export async function buildIcsPdf(form, fetchBytes) {
     const blank = await fetchBytes(form.template);
     const output = await PDFDocument.create();
 
-    for (const fields of form.pages) {
+    const pages = await Promise.all(form.pages.map(async (fields) => {
         const page = await PDFDocument.load(blank);
         const pdfForm = page.getForm();
 
@@ -48,16 +48,16 @@ export async function buildIcsPdf(form, fetchBytes) {
         }
 
         pdfForm.flatten();
-        const [filled] = await output.copyPages(page, [0]);
-        output.addPage(filled);
-    }
+
+        return page;
+    }));
+
+    const filledPages = await Promise.all(pages.map((page) => output.copyPages(page, [0])));
+    filledPages.forEach(([filled]) => output.addPage(filled));
 
     const instructions = await PDFDocument.load(blank);
-    const instructionPages = instructions.getPageIndices().slice(1);
-
-    for (const copied of await output.copyPages(instructions, instructionPages)) {
-        output.addPage(copied);
-    }
+    const instructionPages = await output.copyPages(instructions, instructions.getPageIndices().slice(1));
+    instructionPages.forEach((copied) => output.addPage(copied));
 
     return output.save();
 }

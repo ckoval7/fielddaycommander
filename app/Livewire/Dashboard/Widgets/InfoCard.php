@@ -74,7 +74,8 @@ class InfoCard extends Component
 
         // Unscored events have no ARRL section or operating class, so show
         // where the event is instead.
-        $rows = $event?->isScored() ?? true
+        $isScored = $event?->isScored() ?? true;
+        $rows = $isScored
             ? [
                 ['label' => 'Event', 'value' => $event?->name ?? 'N/A'],
                 ['label' => 'Location', 'value' => $config?->section?->name ?? 'N/A'],

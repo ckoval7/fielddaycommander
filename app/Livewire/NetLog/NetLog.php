@@ -7,9 +7,9 @@ namespace App\Livewire\NetLog;
 
 use App\Enums\NetPriority;
 use App\Events\NetLogChanged;
-use App\Models\Band;
+use App\Livewire\NetLog\Concerns\EditsNetLogEntries;
+use App\Livewire\NetLog\Concerns\HasNetSuggestions;
 use App\Models\Event;
-use App\Models\Mode;
 use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Services\NetLogExchangeParser;
@@ -19,6 +19,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -32,12 +33,12 @@ use Livewire\Component;
  */
 class NetLog extends Component
 {
+    use EditsNetLogEntries, HasNetSuggestions;
+
     /**
      * Entries shown in the log window. The full log is on the ICS-309.
      */
     private const VISIBLE_ENTRIES = 100;
-
-    private const MAX_SUGGESTIONS = 5;
 
     public Event $event;
 
@@ -64,23 +65,6 @@ class NetLog extends Component
      * doesn't repeat it.
      */
     public ?string $parseError = null;
-
-    public bool $showNetForm = false;
-
-    /**
-     * The net being edited in the net form, or null when starting one.
-     */
-    public ?int $editingNetId = null;
-
-    public string $netName = '';
-
-    public ?string $netFrequency = null;
-
-    public ?int $netBandId = null;
-
-    public ?int $netModeId = null;
-
-    public ?string $netControlStation = null;
 
     public function mount(Event $event): void
     {
@@ -166,39 +150,21 @@ class NetLog extends Component
             ->all();
     }
 
-    /**
-     * @return Collection<int, Band>
-     */
-    #[Computed]
-    public function bands(): Collection
-    {
-        return Band::ordered()->get(['id', 'name']);
-    }
-
-    /**
-     * @return Collection<int, Mode>
-     */
-    #[Computed]
-    public function modes(): Collection
-    {
-        return Mode::orderBy('name')->get(['id', 'name']);
-    }
-
-    /**
-     * @return list<array{id: string, name: string}>
-     */
-    #[Computed]
-    public function priorityOptions(): array
-    {
-        return collect(NetPriority::cases())
-            ->map(fn (NetPriority $priority) => ['id' => $priority->value, 'name' => $priority->label()])
-            ->all();
-    }
-
     public function refreshEntries(): void
     {
         unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
         $this->netId = $this->resolveNetId($this->netId);
+    }
+
+    /**
+     * The net form started, edited or deleted a net: show it, or after a
+     * delete, the next net.
+     */
+    #[On('net-changed')]
+    public function netChanged(?int $netId = null): void
+    {
+        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
+        $this->netId = $this->resolveNetId($netId);
     }
 
     /**
@@ -209,104 +175,6 @@ class NetLog extends Component
         unset($this->currentNet, $this->entries, $this->tacticalNames);
         $this->netId = $this->resolveNetId($this->netId);
         $this->reset('exchangeInput', 'suggestions', 'parseError', 'priority');
-    }
-
-    /**
-     * Open the net form to start a net, or to edit one.
-     */
-    public function openNetForm(?int $netId = null): void
-    {
-        $net = $netId === null ? null : $this->findEventNet($netId);
-
-        abort_unless($net === null ? auth()->user()?->can('create', Net::class) : auth()->user()?->can('update', $net), 403);
-
-        $this->resetValidation();
-        $this->editingNetId = $net?->id;
-        $this->netName = $net->name ?? '';
-        $this->netFrequency = $net?->frequency;
-        $this->netBandId = $net?->band_id;
-        $this->netModeId = $net?->mode_id;
-        $this->netControlStation = $net?->net_control_station;
-        $this->showNetForm = true;
-    }
-
-    public function saveNet(): void
-    {
-        $net = $this->editingNetId === null ? null : $this->findEventNet($this->editingNetId);
-
-        abort_unless($net === null ? auth()->user()?->can('create', Net::class) : auth()->user()?->can('update', $net), 403);
-
-        $validated = $this->validate([
-            'netName' => ['required', 'string', 'max:100'],
-            'netFrequency' => ['nullable', 'string', 'max:30'],
-            'netBandId' => ['nullable', 'integer', 'exists:bands,id'],
-            'netModeId' => ['nullable', 'integer', 'exists:modes,id'],
-            'netControlStation' => ['nullable', 'string', 'max:50'],
-        ], attributes: [
-            'netName' => 'net name',
-            'netFrequency' => 'frequency',
-            'netBandId' => 'band',
-            'netModeId' => 'mode',
-            'netControlStation' => 'net control station',
-        ]);
-
-        $attributes = [
-            'name' => trim($validated['netName']),
-            'frequency' => $this->blankToNull($validated['netFrequency']),
-            'band_id' => $validated['netBandId'],
-            'mode_id' => $validated['netModeId'],
-            'net_control_station' => $this->blankToNull($validated['netControlStation']),
-        ];
-
-        if ($net === null) {
-            $net = Net::create($attributes + [
-                'event_configuration_id' => $this->event->eventConfiguration->id,
-                'user_id' => auth()->id(),
-            ]);
-        } else {
-            $net->update($attributes);
-        }
-
-        $this->showNetForm = false;
-        $this->netId = $net->id;
-        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
-        NetLogChanged::dispatch($this->event->id);
-
-        $this->dispatch('toast', title: $this->editingNetId === null ? 'Net started' : 'Net updated', type: 'success');
-    }
-
-    /**
-     * Delete a net that has nothing logged on it, such as one planned but
-     * never run.
-     */
-    public function deleteNet(int $netId): void
-    {
-        $net = $this->findEventNet($netId);
-
-        if (! auth()->user()?->can('delete', $net)) {
-            $this->dispatch('toast', title: 'Only an empty net you started can be deleted', type: 'error');
-
-            return;
-        }
-
-        $net->delete();
-        $this->showNetForm = false;
-        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
-        $this->netId = $this->resolveNetId(null);
-        NetLogChanged::dispatch($this->event->id);
-    }
-
-    public function updatedExchangeInput(): void
-    {
-        $this->parseError = null;
-        $this->suggestions = $this->buildSuggestions($this->exchangeInput);
-    }
-
-    public function selectSuggestion(string $exchange): void
-    {
-        $this->exchangeInput = $exchange;
-        $this->suggestions = [];
-        $this->dispatch('suggestion-selected');
     }
 
     public function clearInput(): void
@@ -356,72 +224,6 @@ class NetLog extends Component
     }
 
     /**
-     * Save a recalled entry from its edited line.
-     */
-    public function updateEntry(int $entryId, string $line): void
-    {
-        $entry = $this->findEventEntry($entryId);
-
-        if (! auth()->user()?->can('update', $entry)) {
-            $this->dispatch('toast', title: 'You can only edit your own entries', type: 'error');
-
-            return;
-        }
-
-        $parsed = $this->parseLine($line);
-
-        if ($parsed === null) {
-            return;
-        }
-
-        $entry->update([
-            'from_station' => $parsed['from'],
-            'to_station' => $parsed['to'],
-            // Keep the operator snapshot unless the station itself changed.
-            'from_callsign' => $parsed['from'] === $entry->from_station ? $entry->from_callsign : $this->resolveCallsign($parsed['from']),
-            'to_callsign' => $parsed['to'] === $entry->to_station ? $entry->to_callsign : $this->resolveCallsign($parsed['to']),
-            'message' => $parsed['message'],
-            // A recalled line carries its priority word, so none means routine.
-            'priority' => $parsed['priority'] ?? NetPriority::Routine,
-        ]);
-
-        $this->broadcastChange($entry);
-        $this->reset('exchangeInput', 'suggestions');
-        unset($this->entries);
-
-        $this->dispatch('toast', title: 'Entry updated', type: 'success');
-    }
-
-    public function deleteEntry(int $entryId): void
-    {
-        $entry = $this->findEventEntry($entryId);
-
-        if (! auth()->user()?->can('delete', $entry)) {
-            $this->dispatch('toast', title: 'You can only delete your own entries', type: 'error');
-
-            return;
-        }
-
-        $entry->delete();
-        $this->broadcastChange($entry);
-        $this->reset('exchangeInput', 'suggestions');
-        unset($this->entries);
-    }
-
-    public function restoreEntry(int $entryId): void
-    {
-        $entry = NetLogEntry::onlyTrashed()->forEvent($this->event->eventConfiguration->id)->findOrFail($entryId);
-
-        if (! auth()->user()?->can('delete', $entry)) {
-            return;
-        }
-
-        $entry->restore();
-        $this->broadcastChange($entry);
-        unset($this->entries);
-    }
-
-    /**
      * @return array{from: string, to: string, message: string, priority: NetPriority|null}|null
      */
     protected function parseLine(string $line): ?array
@@ -451,57 +253,6 @@ class NetLog extends Component
     }
 
     /**
-     * Suggest tactical names for the station being typed: the called
-     * station first, then the calling station.
-     *
-     * @return list<array{exchange: string, worked_on: string}>
-     */
-    protected function buildSuggestions(string $input): array
-    {
-        $input = ltrim((string) preg_replace('/\s+/', ' ', $input));
-
-        if ($input === '' || $this->tacticalNames === []) {
-            return [];
-        }
-
-        // Still typing the called station?
-        $matches = $this->namesStartingWith($input);
-
-        if ($matches === []) {
-            // Then it's the calling station, after the called one.
-            [$to, $afterTo] = app(NetLogExchangeParser::class)->takeStation($input, $this->tacticalNames);
-            $matches = $afterTo === '' ? [] : $this->namesStartingWith($afterTo);
-            $prefix = $to.' ';
-        } else {
-            $prefix = '';
-        }
-
-        return collect($matches)
-            ->take(self::MAX_SUGGESTIONS)
-            ->map(fn (string $name) => [
-                'exchange' => $prefix.$name.' ',
-                'worked_on' => $this->resolveCallsign($name) ?? 'Nobody on duty',
-            ])
-            ->values()
-            ->all();
-    }
-
-    /**
-     * Tactical names that start with, but don't already equal, what's typed.
-     *
-     * @return list<string>
-     */
-    protected function namesStartingWith(string $partial): array
-    {
-        $partial = mb_strtolower($partial);
-
-        return array_values(array_filter(
-            $this->tacticalNames,
-            fn (string $name) => str_starts_with(mb_strtolower($name), $partial) && mb_strtolower($name) !== rtrim($partial),
-        ));
-    }
-
-    /**
      * The net to show: the one asked for if it belongs to this event,
      * otherwise the net with the latest traffic, otherwise the newest net.
      */
@@ -518,29 +269,6 @@ class NetLog extends Component
             ->value('net_id');
 
         return $latestTraffic ?? $this->nets->sortByDesc('id')->first()?->id;
-    }
-
-    /**
-     * Find a net that belongs to this component's event, or 404.
-     */
-    protected function findEventNet(int $netId): Net
-    {
-        return Net::forEvent($this->event->eventConfiguration->id)->findOrFail($netId);
-    }
-
-    protected function blankToNull(?string $value): ?string
-    {
-        $value = trim((string) $value);
-
-        return $value === '' ? null : $value;
-    }
-
-    /**
-     * Find an entry that belongs to this component's event, or 404.
-     */
-    protected function findEventEntry(int $entryId): NetLogEntry
-    {
-        return NetLogEntry::forEvent($this->event->eventConfiguration->id)->findOrFail($entryId);
     }
 
     /**

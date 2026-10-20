@@ -5,6 +5,7 @@
 
 use App\Enums\NetPriority;
 use App\Events\NetLogChanged;
+use App\Livewire\NetLog\NetForm;
 use App\Livewire\NetLog\NetLog;
 use App\Models\Band;
 use App\Models\EventConfiguration;
@@ -283,22 +284,26 @@ test('starting a net switches the screen to it and logs onto it', function () {
     EventFacade::fake([NetLogChanged::class]);
     $band = Band::factory()->create(['name' => '80m']);
 
-    $component = Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->call('openNetForm')
+    Livewire::actingAs($this->operator)->test(NetForm::class, ['event' => $this->event])
+        ->dispatch('open-net-form')
         ->assertSet('showNetForm', true)
         ->set('netName', 'Regional HF Net')
         ->set('netFrequency', '3.940 MHz')
         ->set('netBandId', $band->id)
         ->set('netControlStation', 'W1HF')
-        ->call('saveNet')
+        ->call('save')
         ->assertHasNoErrors()
         ->assertSet('showNetForm', false)
-        ->assertSee('3.940 MHz · 80m · NCS: W1HF');
+        ->assertDispatched('net-changed', netId: Net::where('name', 'Regional HF Net')->value('id'));
 
     $hfNet = Net::where('name', 'Regional HF Net')->sole();
 
-    expect($component->get('netId'))->toBe($hfNet->id)
-        ->and($hfNet->user_id)->toBe($this->operator->id);
+    expect($hfNet->user_id)->toBe($this->operator->id);
+
+    $component = Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->dispatch('net-changed', netId: $hfNet->id)
+        ->assertSet('netId', $hfNet->id)
+        ->assertSee('3.940 MHz · 80m · NCS: W1HF');
 
     $component->call('logEntry', 'W1HF K1ABC check in');
 
@@ -307,9 +312,9 @@ test('starting a net switches the screen to it and logs onto it', function () {
 });
 
 test('a net needs a name', function () {
-    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->call('openNetForm')
-        ->call('saveNet')
+    Livewire::actingAs($this->operator)->test(NetForm::class, ['event' => $this->event])
+        ->call('open')
+        ->call('save')
         ->assertHasErrors(['netName' => 'required']);
 });
 
@@ -360,29 +365,36 @@ test('only the net\'s starter or a manager edits it, and only an empty net is de
     $someoneElse = User::factory()->create();
     $someoneElse->givePermissionTo('log-contacts');
 
-    Livewire::actingAs($someoneElse)->test(NetLog::class, ['event' => $this->event])
-        ->call('openNetForm', $this->net->id)
+    Livewire::actingAs($someoneElse)->test(NetForm::class, ['event' => $this->event])
+        ->call('open', $this->net->id)
         ->assertForbidden();
 
     NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'net_id' => $this->net->id]);
 
-    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->call('deleteNet', $this->net->id)
+    Livewire::actingAs($this->operator)->test(NetForm::class, ['event' => $this->event])
+        ->call('open', $this->net->id)
+        ->call('delete')
         ->assertDispatched('toast', title: 'Only an empty net you started can be deleted');
 
     $planned = Net::factory()->create(['event_configuration_id' => $this->config->id, 'user_id' => $this->operator->id]);
 
-    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->call('deleteNet', $planned->id);
+    Livewire::actingAs($this->operator)->test(NetForm::class, ['event' => $this->event])
+        ->call('open', $planned->id)
+        ->call('delete')
+        ->assertDispatched('net-changed', netId: null);
 
     expect(Net::find($planned->id))->toBeNull()
         ->and(Net::find($this->net->id))->not->toBeNull();
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->dispatch('net-changed', netId: null)
+        ->assertSet('netId', $this->net->id);
 });
 
 test('nets from another event cannot be touched', function () {
     $other = Net::factory()->create(['user_id' => $this->operator->id]);
 
-    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
-        ->call('openNetForm', $other->id)
+    Livewire::actingAs($this->operator)->test(NetForm::class, ['event' => $this->event])
+        ->call('open', $other->id)
         ->assertNotFound();
 });
