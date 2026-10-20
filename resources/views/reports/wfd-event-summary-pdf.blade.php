@@ -8,7 +8,10 @@
     <meta charset="utf-8" />
     <title>{{ $callsign }} — Winter Field Day Event Summary</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { padding: 0; box-sizing: border-box; }
+        /* dompdf seeds the root element's style from @page, so a margin reset
+           on * (which matches <html>) would wipe out the page margins. */
+        body, body * { margin: 0; }
 
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -18,7 +21,9 @@
             line-height: 1.35;
         }
 
-        @page { margin: 48px 0; }
+        /* The bottom margin holds the fixed footer, which sits below the
+           content box via a negative offset so long pages can't run under it. */
+        @page { margin: 32px 0 88px; }
 
         .header-bar {
             background-color: #1e3ea8;
@@ -69,7 +74,7 @@
         .note { margin-top: 6px; font-size: 9px; color: #64748b; font-style: italic; }
 
         .page-footer {
-            position: fixed; bottom: 24px; left: 0; right: 0;
+            position: fixed; bottom: -60px; left: 0; right: 0;
             border-top: 2px solid #1e3ea8; background: #fff;
         }
         .page-footer-left, .page-footer-right { padding: 4px 48px; font-size: 9px; color: #475569; }

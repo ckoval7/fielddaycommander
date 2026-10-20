@@ -10,8 +10,11 @@ use App\Models\OperatingClass;
 use App\Models\Section;
 use App\Models\User;
 use App\Models\W1awBulletin;
+use App\Services\SubmissionReportService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use Spatie\Permission\Models\Permission;
 
 uses(RefreshDatabase::class);
@@ -120,6 +123,39 @@ describe('submission-sheet endpoint', function () {
             ->get(route('reports.submission-sheet'))
             ->assertSuccessful()
             ->assertHeader('Content-Type', 'application/pdf');
+    });
+
+    test('footer page total counts the pages a long bulletin copy spills onto', function () {
+        W1awBulletin::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'bulletin_text' => str_repeat("QST DE W1AW FIELD DAY BULLETIN TEXT AS COPIED\n", 150),
+        ]);
+
+        $totals = [];
+        View::composer('reports.submission-sheet-pdf', function ($view) use (&$totals) {
+            $totals[] = $view->getData()['total_pages'];
+        });
+
+        $this->actingAs($this->user)
+            ->get(route('reports.submission-sheet'))
+            ->assertSuccessful();
+
+        // First render uses the expected 3 pages; the bulletin overflows, so
+        // the sheet is rendered again with the real count.
+        expect($totals)->toHaveCount(2)
+            ->and($totals[0])->toBe(3)
+            ->and(end($totals))->toBeGreaterThan(3);
+    });
+
+    test('keeps its page margins so text stays clear of the footer', function () {
+        $data = app(SubmissionReportService::class)->getData($this->eventConfig);
+
+        $pdf = Pdf::loadView('reports.submission-sheet-pdf', $data)->setPaper('letter', 'portrait');
+        $pdf->render();
+        $rootStyle = $pdf->getDomPDF()->getTree()->get_root()->get_style();
+
+        expect((float) $rootStyle->length_in_pt($rootStyle->margin_top))->toBeGreaterThan(0)
+            ->and((float) $rootStyle->length_in_pt($rootStyle->margin_bottom))->toBeGreaterThan(0);
     });
 
     test('filename header contains callsign and submission-sheet', function () {
