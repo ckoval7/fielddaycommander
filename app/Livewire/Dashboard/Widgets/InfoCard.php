@@ -75,7 +75,7 @@ class InfoCard extends Component
         // Unscored events have no ARRL section or operating class, so show
         // where the event is instead.
         $isScored = $event?->isScored() ?? true;
-        $placeName = collect([$config?->city, $config?->state])->filter()->implode(', ');
+        $placeName = collect([$config?->city, $config?->state])->filter()->implode(', ') ?: 'N/A';
         $rows = $isScored
             ? [
                 ['label' => 'Event', 'value' => $event?->name ?? 'N/A'],
@@ -84,7 +84,7 @@ class InfoCard extends Component
             ]
             : [
                 ['label' => 'Event', 'value' => $event->name],
-                ['label' => 'Location', 'value' => $placeName !== '' ? $placeName : 'N/A'],
+                ['label' => 'Location', 'value' => $placeName],
             ];
 
         return [
