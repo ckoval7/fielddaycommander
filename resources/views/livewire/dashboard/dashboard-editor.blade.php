@@ -139,10 +139,12 @@
                         $colSpan = $widget['col_span'] ?? 1;
                         $rowSpan = $widget['row_span'] ?? \App\Services\DashboardService::MIN_ROW_SPAN;
                         $componentKey = $this->widgetComponentKey($widget);
+                        // Never span more columns than the grid has at the current width,
+                        // or the grid grows an implicit column and every widget reflows.
                         $spanClasses = match($colSpan) {
                             2 => 'sm:col-span-2',
-                            3 => 'sm:col-span-3',
-                            4 => 'sm:col-span-4',
+                            3 => 'sm:col-span-2 lg:col-span-3',
+                            4 => 'sm:col-span-2 lg:col-span-3 min-[1800px]:col-span-4',
                             default => '',
                         };
                         $rowSpanClasses = match($rowSpan) {
