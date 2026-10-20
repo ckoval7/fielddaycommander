@@ -29,6 +29,9 @@
             background-color: #1e3ea8;
             color: #fff;
             padding: 12px 48px 8px;
+            /* Pull the bar up into the @page top margin so it meets the paper
+               edge on page 1; later pages keep the margin. */
+            margin-top: -32px;
             margin-bottom: 14px;
             text-align: center;
         }
@@ -66,6 +69,8 @@
             font-style: italic; color: #94a3b8;
         }
         td.m { font-family: DejaVu Sans Mono, monospace; font-weight: bold; }
+        /* The break goes on the header bar itself: dompdf drops the top margin
+           of a block that follows an empty page-break div, which left a gap. */
         .page-break { page-break-before: always; }
         .bulletin-text {
             font-family: DejaVu Sans Mono, monospace; font-size: 10px; line-height: 1.5;
@@ -190,9 +195,7 @@
          BULLETIN COPY — own page; the rules require it with the entry
     ============================================================ --}}
     @if ($bulletin)
-        <div class="page-break"></div>
-
-        <div class="header-bar">
+        <div class="header-bar page-break">
             <div class="header-callsign">{{ $callsign }}</div>
             <div class="header-sub">Winter Field Day {{ $event_year }} — {{ $bulletin['name'] }}</div>
         </div>

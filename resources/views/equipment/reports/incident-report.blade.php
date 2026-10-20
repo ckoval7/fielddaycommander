@@ -42,7 +42,15 @@
                     ['label' => 'Circumstances'],
                 ],
                 'rowPartial' => 'equipment.reports.partials.incident-row',
-                'rowHeight' => fn ($r) => ! empty($r['serial_number']) || (! empty($r['owner_callsign']) && $r['owner_callsign'] !== 'N/A') ? 30 : 20,
+                // Equipment, Owner and Circumstances share the unsized width and wrap
+                // at roughly 17 characters, so a row is as tall as its longest cell.
+                'rowHeight' => function ($r) {
+                    $lines = fn (?string $text) => max(1, (int) ceil(mb_strlen((string) $text) / 17));
+                    $equipment = $lines($r['equipment_description']) * 11 + (empty($r['serial_number']) ? 0 : 10);
+                    $owner = $lines($r['owner_name'].' '.($r['owner_callsign'] ?? '')) * 11;
+
+                    return max($equipment, $owner, $lines($r['circumstances']) * 11) + 8;
+                },
                 // Page 1 also carries the Summary section (~70pt) above this table.
                 'firstChunkBudget' => 465,
             ])
