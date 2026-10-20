@@ -22,7 +22,9 @@ git status --short                 # must be clean
 git switch dev && git pull --ff-only
 ```
 
-Work out the next version. The scheme is `vYY.MM.N`, where `N` counts releases within the month. If `VERSION` has the current year and month, increment `N`. Otherwise use `YY.MM.1` for the current month. Confirm the version with the user, then create the branch:
+If `VERSION` on `dev` is already a number with no tag, the `promote-dev` skill has bumped it. Release that version: still run steps 1–3 on the release branch, but skip the bump commit in step 4 and go straight to the merges and tag.
+
+Otherwise, work out the next version. The scheme is `vYY.MM.N`, where `N` counts releases within the month. If `VERSION` has the current year and month, increment `N`. Otherwise use `YY.MM.1` for the current month. Confirm the version with the user, then create the branch:
 
 ```bash
 git switch -c release/vYY.MM.N
