@@ -409,7 +409,7 @@ class EquipmentReportController extends Controller
     }
 
     /**
-     * Render a report blade view as a downloadable PDF.
+     * Render a report blade view as a PDF the browser opens in place.
      *
      * @param  array<string, mixed>  $data  Data passed through to the view
      */
@@ -456,7 +456,7 @@ class EquipmentReportController extends Controller
 
         return response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            'Content-Disposition' => sprintf('inline; filename="%s"', $filename),
         ]);
     }
 }
