@@ -96,176 +96,305 @@
   }
   .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
 
-  /* ── HERO TERMINAL ── */
-  .hero-terminal {
-    max-width: 700px; margin: 4rem auto 0;
+  /* ── HERO SCREENSHOT ── */
+  .hero-shot {
+    max-width: 1000px; margin: 4rem auto 0;
+    position: relative; z-index: 1;
+  }
+  .hero-shot img { box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45); }
+
+  /* ── DEPLOY STEP RAIL ── */
+  :root {
+    --rail-teal: oklch(0.78 0.12 175);
+    --rail-teal-halo: oklch(0.78 0.12 175 / .18);
+  }
+  .deploy-rail {
+    max-width: 720px;
+    padding: 28px 28px 24px;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 12px;
-    overflow: hidden;
     text-align: left;
     box-shadow: 0 24px 64px rgba(0,0,0,0.4);
     position: relative; z-index: 1;
   }
-  .terminal-header {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.75rem 1rem;
+  .deploy-rail-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 0.75rem;
+    margin-bottom: 22px;
+  }
+  .deploy-rail-header h2 {
+    font-size: 1.375rem; font-weight: 800; line-height: 1.2;
+    letter-spacing: -0.01em; color: var(--text-primary);
+  }
+  .deploy-rail-copy {
+    padding: 6px 12px;
     background: var(--bg-card);
+    border: none; border-radius: 6px;
+    color: var(--text-secondary);
+    font: 600 0.75rem 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .deploy-rail-copy:hover { background: var(--bg-card-hover); }
+  .deploy-rail-copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .deploy-rail-steps { list-style: none; margin: 0; padding: 0; }
+  .deploy-rail-step {
+    display: grid; grid-template-columns: 20px 1fr; column-gap: 18px;
+  }
+  .deploy-rail-marker { display: flex; flex-direction: column; align-items: center; }
+  .deploy-rail-marker::before {
+    content: '';
+    width: 10px; height: 10px; margin-top: 4px;
+    border: 2px solid var(--text-muted); border-radius: 50%;
+    box-sizing: border-box;
+  }
+  .deploy-rail-marker::after {
+    content: '';
+    flex: 1; width: 2px;
+    background: var(--border);
+  }
+  .deploy-rail-body {
+    display: flex; flex-direction: column; gap: 8px;
+    min-width: 0; padding-bottom: 22px;
+  }
+  .deploy-rail-label { font-size: 0.875rem; font-weight: 600; line-height: 1.3; color: var(--text-primary); }
+  .deploy-rail-body code {
+    display: block;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem;
+    color: var(--text-primary);
+    word-break: break-all;
+  }
+  .deploy-rail-checks {
+    display: flex; flex-wrap: wrap; gap: 4px 14px;
+    list-style: none; margin: 0; padding: 0;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    color: var(--rail-teal);
+  }
+  .deploy-rail-step.is-live .deploy-rail-marker::before {
+    width: 14px; height: 14px; margin-top: 2px;
+    border: none;
+    background: var(--rail-teal);
+    box-shadow: 0 0 0 4px var(--rail-teal-halo);
+  }
+  .deploy-rail-step.is-live .deploy-rail-marker::after { content: none; }
+  .deploy-rail-step.is-live .deploy-rail-body {
+    flex-direction: row; flex-wrap: wrap; align-items: baseline;
+    justify-content: space-between; gap: 0.5rem 1rem;
+    padding-bottom: 0;
+  }
+  .deploy-rail-live code {
+    display: inline; padding: 0;
+    background: none; border: none;
+    font-size: 0.875rem; color: var(--rail-teal);
+  }
+  .deploy-rail-signoff {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  /* ── RAIL SECTIONS (shared) ── */
+  .rail-label { color: var(--rail-teal); }
+  .rail-title {
+    font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.01em; color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    text-wrap: balance;
+  }
+  .rail-subline { font-size: 1rem; color: var(--text-muted); line-height: 1.6; text-wrap: pretty; }
+  .rail-link {
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--rail-teal); text-decoration: none;
+    white-space: nowrap;
+  }
+  .rail-link:hover { text-decoration: underline; }
+
+  /* ── EVENT PHASES ── */
+  .phases-card {
+    --phase-gap: 32px;
+    max-width: 1200px; margin: 0 auto;
+    padding: 36px 36px 32px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .phases-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem 2rem;
+    margin-bottom: 36px;
+  }
+  .phases-rail {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    column-gap: var(--phase-gap); row-gap: 40px;
+    list-style: none; margin: 0; padding: 0;
+  }
+  .phase { position: relative; padding-top: 38px; min-width: 0; }
+  .phase::before {
+    content: '';
+    position: absolute; top: 4px; left: 5px;
+    width: 10px; height: 10px;
+    border: 2px solid var(--text-muted); border-radius: 50%;
+  }
+  .phase::after {
+    content: '';
+    position: absolute; top: 8px; left: 15px;
+    right: calc(-1 * var(--phase-gap) - 5px);
+    height: 2px;
+    background: var(--border);
+  }
+  .phase.is-destination::before {
+    top: 2px; left: 3px;
+    width: 14px; height: 14px;
+    border: none;
+    background: var(--rail-teal);
+    box-shadow: 0 0 0 4px var(--rail-teal-halo);
+  }
+  .phase.is-destination::after { content: none; }
+  .phase-header {
+    padding-bottom: 16px; margin-bottom: 18px;
     border-bottom: 1px solid var(--border);
   }
-  .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
-  .terminal-dot.red { background: #ef4444; }
-  .terminal-dot.yellow { background: #eab308; }
-  .terminal-dot.green { background: #22c55e; }
-  .terminal-title { font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem; font-family: 'JetBrains Mono', monospace; }
-  .terminal-body {
-    padding: 1.25rem 1.5rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    line-height: 1.8;
-    user-select: none;
-    -webkit-user-select: none;
+  .phase-title {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem;
+    margin-bottom: 0.4rem;
   }
-  .terminal-body .prompt { color: var(--accent-green); }
-  .terminal-body .cmd { color: var(--text-primary); user-select: text; -webkit-user-select: text; }
-  .terminal-body .comment { color: var(--text-muted); }
-  .terminal-body .output { color: var(--accent-sky); }
+  .phase-title h3 { font-size: 1.375rem; font-weight: 700; line-height: 1.2; color: var(--text-primary); }
+  .phase-when {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    color: var(--text-muted); white-space: nowrap;
+  }
+  .phase-summary { font-size: 0.875rem; line-height: 1.55; color: var(--text-muted); }
+  .phase-features {
+    display: flex; flex-direction: column; gap: 20px;
+    list-style: none; margin: 0; padding: 0;
+  }
+  .phase-features h4 { font-size: 1rem; font-weight: 600; line-height: 1.3; color: var(--text-primary); margin-bottom: 0.2rem; }
+  .phase-features p { font-size: 0.875rem; line-height: 1.5; color: var(--text-muted); }
 
-  /* ── FEATURES GRID ── */
-  .features { background: var(--bg-secondary); }
-  .features-header { text-align: center; margin-bottom: 4rem; }
-  .app-preview { padding-top: 2rem; padding-bottom: 3rem; }
-  .app-preview .features-header { margin-bottom: 2.5rem; }
-  .app-preview-shot img { box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45); }
-  .app-preview-shot figcaption { text-align: center; }
-  .features-header .section-desc { margin: 0.5rem auto 0; }
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
+  @media (max-width: 900px) {
+    .phases-rail { grid-template-columns: repeat(2, 1fr); }
+    .phase:nth-child(2)::after { content: none; }
   }
-  .feature-card {
-    background: var(--bg-card);
+  @media (max-width: 560px) {
+    .phases-card { padding: 24px 16px 20px; }
+    .phases-header { margin-bottom: 28px; }
+    .phases-rail { grid-template-columns: 1fr; row-gap: 0; }
+    .phase { padding-top: 0; padding-left: 32px; padding-bottom: 28px; }
+    .phase.is-destination { padding-bottom: 0; }
+    .phase:nth-child(2)::after { content: ''; }
+    .phase::after {
+      top: 14px; bottom: 0; left: 9px; right: auto;
+      width: 2px; height: auto;
+    }
+  }
+
+  /* ── BIG SCREEN ── */
+  .big-screen-grid {
+    display: grid; grid-template-columns: 1.55fr 1fr;
+    gap: 56px; align-items: center;
+  }
+  .big-screen-photo { margin: 0; }
+  .big-screen-frame {
+    aspect-ratio: 6 / 5;
+    overflow: hidden;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--bg-secondary);
+  }
+  .big-screen-frame img {
+    display: block; width: 100%; height: 100%;
+    object-fit: cover; object-position: 48% 42%;
+    transform: scale(1.3); transform-origin: 48% 42%;
+  }
+  .big-screen-photo figcaption {
+    margin-top: 0.75rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .big-screen-callouts {
+    list-style: none; margin: 24px 0 0; padding: 24px 0 0;
+    border-top: 1px solid var(--border);
+  }
+  .big-screen-callouts li { position: relative; padding: 0 0 22px 38px; }
+  .big-screen-callouts li:last-child { padding-bottom: 0; }
+  .big-screen-callouts li::before {
+    content: '';
+    position: absolute; top: 4px; left: 5px;
+    width: 10px; height: 10px;
+    border: 2px solid var(--text-muted); border-radius: 50%;
+  }
+  .big-screen-callouts li::after {
+    content: '';
+    position: absolute; top: 14px; bottom: 0; left: 9px;
+    width: 2px;
+    background: var(--border);
+  }
+  .big-screen-callouts li.is-destination::before {
+    top: 2px; left: 3px;
+    width: 14px; height: 14px;
+    border: none;
+    background: var(--rail-teal);
+    box-shadow: 0 0 0 4px var(--rail-teal-halo);
+  }
+  .big-screen-callouts li.is-destination::after { content: none; }
+  .big-screen-callouts h3 { font-size: 1rem; font-weight: 600; line-height: 1.3; color: var(--text-primary); margin-bottom: 0.2rem; }
+  .big-screen-callouts p { font-size: 0.875rem; line-height: 1.5; color: var(--text-muted); }
+
+  /* ── QUICK ANSWERS ── */
+  .quick-answers { border-top: 1px solid var(--border); }
+  .quick-answers-grid {
+    display: grid; grid-template-columns: 340px 1fr;
+    gap: 64px; align-items: start;
+  }
+  .quick-answers-intro .rail-title { margin-bottom: 1.25rem; }
+  .quick-answers-list { margin: 0; border-top: 1px solid var(--border); }
+  .quick-answer {
+    display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+    gap: 0.5rem 32px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .quick-answer dt { font-size: 1rem; font-weight: 600; line-height: 1.45; color: var(--text-primary); }
+  .quick-answer .nowrap { white-space: nowrap; }
+  .quick-answer dd { margin: 0; font-size: 0.925rem; line-height: 1.6; color: var(--text-muted); }
+
+  /* ── CLOSING CTA ── */
+  .closing { background: var(--bg-secondary); }
+  .closing-grid {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 56px; align-items: center;
+  }
+  .closing-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+  .btn-teal {
+    background: var(--rail-teal); color: #15191e;
+    font-weight: 700; font-size: 1rem;
+    padding: 0.85rem 2rem; border-radius: 10px;
+    text-decoration: none;
+    transition: filter 0.25s, transform 0.25s;
+  }
+  .btn-teal:hover { filter: brightness(1.08); transform: translateY(-2px); }
+  .btn-outline {
+    color: var(--text-primary);
+    font-weight: 600; font-size: 1rem;
+    padding: calc(0.85rem - 1px) 2rem; border-radius: 10px;
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 2rem;
-    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-    position: relative;
-    overflow: hidden;
+    text-decoration: none;
+    transition: border-color 0.25s, transform 0.25s;
   }
-  .feature-card:hover {
-    border-color: var(--accent-green);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-  }
-  .feature-card::after {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent-sky), var(--accent-green), transparent);
-    opacity: 0; transition: opacity 0.3s;
-  }
-  .feature-card:hover::after { opacity: 1; }
-  .feature-icon {
-    width: 44px; height: 44px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; margin-bottom: 1.25rem;
-  }
-  .feature-icon.amber  { background: rgba(60,131,246,0.12); color: var(--accent-sky); }
-  .feature-icon.green  { background: rgba(76,175,80,0.12); color: var(--accent-green); }
-  .feature-icon.emerald { background: rgba(52,211,153,0.12); color: var(--accent-emerald); }
-  .feature-icon.teal   { background: rgba(45,212,191,0.12); color: var(--accent-teal); }
-  .feature-icon.orange { background: rgba(251,146,60,0.12); color: var(--accent-orange); }
-  .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.6rem; }
-  .feature-card p { color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; }
+  .btn-outline:hover { border-color: var(--rail-teal); transform: translateY(-2px); }
+  .closing .deploy-rail { background: var(--bg-primary); margin: 0; }
 
-  /* ── HOW IT WORKS ── */
-  .how-it-works-header { text-align: center; margin-bottom: 3rem; }
-  .how-it-works-header .section-desc { margin: 0.5rem auto 0; }
-  .how-it-works-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 2rem;
+  @media (max-width: 900px) {
+    .big-screen-grid, .quick-answers-grid, .closing-grid { grid-template-columns: 1fr; }
+    .big-screen-grid { gap: 32px; }
+    .quick-answers-grid { gap: 32px; }
+    .closing-grid { gap: 40px; }
+    .closing .deploy-rail { max-width: none; }
   }
-  .step-card { position: relative; text-align: center; }
-  .step-number {
-    font-size: 3.5rem; font-weight: 800;
-    color: var(--accent-sky);
-    opacity: 0.6;
-    line-height: 1;
-    margin-bottom: 0.75rem;
-  }
-  .step-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
-  .step-card p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; }
-
-  /* ── ROLES SECTION ── */
-  .roles { background: var(--bg-secondary); }
-  .roles-header { text-align: center; margin-bottom: 3rem; }
-  .roles-header .section-desc { margin: 0.5rem auto 0; }
-  .roles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1.5rem;
-    margin-top: 3rem;
-  }
-  .role-card {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 2rem;
-    transition: transform 0.3s, border-color 0.3s;
-  }
-  .role-card:hover { border-color: var(--border); transform: translateY(-2px); }
-  .role-tag {
-    display: inline-block;
-    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 0.25rem 0.75rem; border-radius: 100px;
-    margin-bottom: 1rem;
-  }
-  .role-tag.admin { background: rgba(60,131,246,0.15); color: #6ba3f9; }
-  .role-tag.manager { background: rgba(52,211,153,0.15); color: var(--accent-emerald); }
-  .role-tag.captain { background: rgba(251,146,60,0.15); color: var(--accent-orange); }
-  .role-tag.operator { background: rgba(45,212,191,0.15); color: #64b5f6; }
-  .role-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
-  .role-card p { color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; }
-
-  /* ── TECH SECTION ── */
-  .tech-stack { padding-bottom: 3rem; }
-  .tech-header { text-align: center; margin-bottom: 2rem; }
-  .tech-header .section-desc { margin: 0.5rem auto 0; }
-  .tech-grid {
-    display: flex; flex-wrap: wrap; gap: 1rem;
-    margin-top: 2rem;
-    justify-content: center;
-  }
-  .tech-pill {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 100px; padding: 0.6rem 1.25rem;
-    font-size: 0.88rem; font-weight: 500; color: var(--text-primary);
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .tech-pill:hover { border-color: var(--accent-green); background: var(--bg-card-hover); }
-  .tech-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
-
-  /* ── CTA ── */
-  .cta {
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    padding-top: 3rem;
-  }
-  .cta::before {
-    content: '';
-    position: absolute; bottom: -200px; left: 50%; transform: translateX(-50%);
-    width: 700px; height: 700px;
-    background: radial-gradient(circle, rgba(60,131,246,0.06) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .cta .section-title { margin-bottom: 1rem; }
-  .cta .section-desc { margin: 0 auto 2.5rem; }
-  .cta-box {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 16px; padding: 3.5rem 2rem;
-    max-width: 700px; margin: 0 auto;
+  @media (max-width: 560px) {
+    .quick-answer { grid-template-columns: 1fr; }
   }
 
   /* ── SIGNAL STRENGTH DIVIDER ── */
@@ -281,6 +410,8 @@
 
   @media (max-width: 768px) {
     .hero { padding: 8rem 1.5rem 4rem; }
+    .deploy-rail { padding: 20px 16px 18px; }
+    .deploy-rail-step { column-gap: 12px; }
   }
 </style>
 <script type="application/ld+json">
@@ -396,37 +527,9 @@
       <a href="https://github.com/ckoval7/fielddaycommander" target="_blank" rel="noopener" class="btn-secondary">View on GitHub &rarr;</a>
     </div>
 
-    <div class="hero-terminal">
-      <div class="terminal-header">
-        <span class="terminal-dot red"></span>
-        <span class="terminal-dot yellow"></span>
-        <span class="terminal-dot green"></span>
-        <span class="terminal-title">fd-commander - deploy</span>
-      </div>
-      <div class="terminal-body">
-        <div><span class="comment"># Clone and deploy in minutes</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">git clone https://github.com/ckoval7/fielddaycommander.git</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">cd fielddaycommander</span></div>
-        <div><span class="prompt">$</span> <span class="cmd">sudo ./deploy.sh --domain fd.local</span></div>
-        <div><span class="output">&#10003; Dependencies installed</span></div>
-        <div><span class="output">&#10003; Database configured</span></div>
-        <div><span class="output">&#10003; FD Commander running at http://fd.local</span></div>
-        <div style="margin-top:0.5rem"><span class="comment"># Ready for Field Day. 73!</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="app-preview">
-  <div class="container">
-    <div class="features-header">
-      <div class="section-label">See It Running</div>
-      <h2 class="section-title">The dashboard during Field Day</h2>
-      <p class="section-desc">Every station's contacts feed one live dashboard: your score, QSO rate, sections worked, and contacts by band.</p>
-    </div>
-    <figure class="screenshot app-preview-shot">
+    <figure class="screenshot hero-shot">
       <a href="screenshots/dashboard-dark.png"><img src="screenshots/dashboard-dark.png" alt="FD Commander dashboard during Field Day: total score 898, 52.5 QSOs per hour, 40 of 86 sections worked, a time-remaining countdown, and a chart of QSOs per band" width="1920" height="1080"></a>
-      <figcaption>Want to click around? <a href="https://demo.fielddaycommander.org/" target="_blank" rel="noopener">Try the live demo</a>.</figcaption>
+      <figcaption>Every station's contacts feed one live dashboard: your score, QSO rate, sections worked, and contacts by band.</figcaption>
     </figure>
   </div>
 </section>
@@ -443,180 +546,239 @@
   <div class="signal-bar" style="height:6px"></div>
 </div>
 
-<section class="features">
+<section class="phases" id="how-it-works">
   <div class="container">
-    <div class="features-header">
-      <div class="section-label">More Than a Logger</div>
-      <h2 class="section-title">Plan the event, then run it</h2>
-      <p class="section-desc">
-        Most Field Day software starts and ends at contact logging. FD Commander covers the whole operation, from weeks-before planning to the final Cabrillo export.
-      </p>
+    <div class="phases-card">
+      <div class="phases-header">
+        <div>
+          <div class="section-label rail-label">How It Works</div>
+          <h2 class="rail-title">From setup to submission.</h2>
+          <p class="rail-subline">The features you'll use at each stage of a Field Day event.</p>
+        </div>
+        <a href="fd-commander-features.html" class="rail-link">All features &rarr;</a>
+      </div>
+      <ol class="phases-rail" role="list">
+        <li class="phase">
+          <div class="phase-header">
+            <div class="phase-title">
+              <h3>Deploy</h3>
+              <span class="phase-when">once</span>
+            </div>
+            <p class="phase-summary">Install it on a Linux machine on your LAN.</p>
+          </div>
+          <ul class="phase-features" role="list">
+            <li>
+              <h4>Runs on your LAN</h4>
+              <p>Any Linux box or Raspberry Pi, no internet.</p>
+            </li>
+            <li>
+              <h4>Deploy script or Docker</h4>
+              <p>One command, or Docker Compose.</p>
+            </li>
+            <li>
+              <h4>Backups on a schedule</h4>
+              <p>Hourly database, nightly full backup.</p>
+            </li>
+          </ul>
+        </li>
+        <li class="phase">
+          <div class="phase-header">
+            <div class="phase-title">
+              <h3>Plan</h3>
+              <span class="phase-when">weeks out</span>
+            </div>
+            <p class="phase-summary">Set up stations, people, and gear before the weekend.</p>
+          </div>
+          <ul class="phase-features" role="list">
+            <li>
+              <h4>Volunteer scheduling</h4>
+              <p>Operators sign up, and you see the gaps.</p>
+            </li>
+            <li>
+              <h4>Equipment management</h4>
+              <p>Track whose gear goes to which station.</p>
+            </li>
+            <li>
+              <h4>Rules and safety checklists</h4>
+              <p>ARRL Field Day and Winter Field Day, built in.</p>
+            </li>
+          </ul>
+        </li>
+        <li class="phase">
+          <div class="phase-header">
+            <div class="phase-title">
+              <h3>Operate</h3>
+              <span class="phase-when">24 hours</span>
+            </div>
+            <p class="phase-summary">Log from every station while the score updates live.</p>
+          </div>
+          <ul class="phase-features" role="list">
+            <li>
+              <h4>Multi-station logging</h4>
+              <p>Browser, N1MM Logger+, WSJT-X, or fldigi, dupe-checked.</p>
+            </li>
+            <li>
+              <h4>Station computers or your own</h4>
+              <p>Operators take turns by typing their callsign.</p>
+            </li>
+            <li>
+              <h4>Live score and section map</h4>
+              <p>Both update with every contact.</p>
+            </li>
+            <li>
+              <h4>Bonus tracking</h4>
+              <p>Log NTS traffic and sign in visitors.</p>
+            </li>
+          </ul>
+        </li>
+        <li class="phase is-destination">
+          <div class="phase-header">
+            <div class="phase-title">
+              <h3>Submit</h3>
+              <span class="phase-when">after</span>
+            </div>
+            <p class="phase-summary">Get your entry ready for the ARRL or the WFDA.</p>
+          </div>
+          <ul class="phase-features" role="list">
+            <li>
+              <h4>Cabrillo export</h4>
+              <p>A clean log file, ready to upload.</p>
+            </li>
+            <li>
+              <h4>Entry form summary</h4>
+              <p>Your score, bonuses, and objectives laid out.</p>
+            </li>
+            <li>
+              <h4>ADIF export</h4>
+              <p>Load the weekend into the club&#39;s logging software.</p>
+            </li>
+          </ul>
+        </li>
+      </ol>
     </div>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon orange">&#128197;</div>
-        <h3>Volunteer Scheduling</h3>
-        <p>Build the full 24-hour schedule before the event. Operators can sign themselves up for open slots, the shift dashboard shows managers every coverage gap, and everyone knows when they're on.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon emerald">&#9881;</div>
-        <h3>Equipment Management</h3>
-        <p>Catalog personal and club-owned radios, antennas, and accessories. Assign gear to stations, track availability, and search by type, owner, or status.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon green">&#9745;</div>
-        <h3>Safety Checklists</h3>
-        <p>The safety checklist that matches your event, built in. Check off items as you go, see what's still required, and the safety bonus is credited automatically once everything's verified.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon amber">&#9889;</div>
-        <h3>Built-In Multi-Station Logging</h3>
-        <p>Operators log from any browser with a fast single-field entry flow, with no other logging software needed. Prefer N1MM Logger+, or running FT8 in WSJT-X? Those contacts arrive over UDP, and ADIF files can be imported through a guided wizard. Either way, dupes are caught instantly across all stations and everything feeds the same live score.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon green">&#9776;</div>
-        <h3>Live Scoring &amp; Log Export</h3>
-        <p>Your score updates in real time as contacts come in, with every bonus or objective tracked against your event's rules. When the event ends, export a clean Cabrillo file for submission, plus an ADIF file so operators can load the contacts into their own logs.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon orange">&#128221;</div>
-        <h3>Visitor Guestbook</h3>
-        <p>Let visitors sign in when they stop by your site. Record who they are (general public, club members, youth, media, and more) and whether they came in person or online. Elected official and agency visits are flagged for their bonus points.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon teal">&#9993;</div>
-        <h3>NTS Message Traffic</h3>
-        <p>Log radiograms and track NTS message handling: originated, relayed, and received. Capture the Section Manager message and the bulletin for bonus credit, and print formal radiogram copies.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon amber">&#127758;</div>
-        <h3>Live Section Map</h3>
-        <p>An interactive map of every ARRL and RAC section that lights up as contacts come in. You can filter it by call area and color it by band, QSO count, or recency. Put it on a big screen so the whole club can see which sections you still need.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon teal">&#128268;</div>
-        <h3>Runs on Your LAN, No Internet</h3>
-        <p>The whole platform runs on your local network, with no internet needed. Set up a server in the field, even on a Raspberry Pi.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon amber">&#128214;</div>
-        <h3>The Right Rules for Your Event</h3>
-        <p>FD Commander has the rule sets for both ARRL Field Day and Winter Field Day, and it uses the right one for your event. The exchange, bonuses or objectives, and Cabrillo format all follow along, so you don't have to set any of it up by hand.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon emerald">&#128187;</div>
-        <h3>Club Computers or Your Own</h3>
-        <p>Log from club computers, members' own laptops, or a mix. Bind a shared computer to its station, and operators can take turns by typing their callsign, with no passwords to juggle. If someone walks away mid-session, it will end itself.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon orange">&#128190;</div>
-        <h3>Backups on a Schedule</h3>
-        <p>One command sets up hourly database backups and a nightly full backup of your log, photos, and settings. Copy the files somewhere safe, and if the SD card dies, the restore script can put everything back on a new one.</p>
+  </div>
+</section>
+
+<section class="big-screen">
+  <div class="container">
+    <div class="big-screen-grid">
+      <figure class="big-screen-photo">
+        <div class="big-screen-frame">
+          <img src="screenshots/tv_dashboard.jpg" alt="A wall-mounted TV showing the FD Commander dashboard: total score 872, 135 QSOs, 38 sections, 9 operators, and 21:26:44 remaining, with QSO rate and band charts, recent contacts, and a grid of sections worked" width="1080" height="813" loading="lazy">
+        </div>
+        <figcaption>Live dashboard, running on the wall</figcaption>
+      </figure>
+      <div>
+        <div class="section-label rail-label">On the Big Screen</div>
+        <h2 class="rail-title">Made for the big screen.</h2>
+        <p class="rail-subline">Put the dashboard on any TV. Score, rate, and sections update live for the whole club and every visitor who walks by.</p>
+        <ul class="big-screen-callouts" role="list">
+          <li>
+            <h3>Score and rate</h3>
+            <p>Total score, QSO count, and contacts per hour.</p>
+          </li>
+          <li>
+            <h3>Sections worked</h3>
+            <p>Every section by call area, highlighted once worked.</p>
+          </li>
+          <li class="is-destination">
+            <h3>Time remaining</h3>
+            <p>A countdown to the end of the event.</p>
+          </li>
+        </ul>
       </div>
     </div>
   </div>
 </section>
 
-<section class="how-it-works">
+<section class="quick-answers">
   <div class="container">
-    <div class="how-it-works-header">
-      <div class="section-label">How It Works</div>
-      <h2 class="section-title">From setup to submission</h2>
-      <p class="section-desc">FD Commander follows the natural arc of a Field Day event: deploy the server, plan your operation, run the contest, and submit your results.</p>
+    <div class="quick-answers-grid">
+      <div class="quick-answers-intro">
+        <div class="section-label rail-label">Quick Answers</div>
+        <h2 class="rail-title">The usual questions.</h2>
+        <a href="fd-commander-faq.html" class="rail-link">All questions &rarr;</a>
+      </div>
+      <dl class="quick-answers-list">
+        <div class="quick-answer">
+          <dt>Does it need internet?</dt>
+          <dd>Only to install it, and then it runs entirely on your LAN.</dd>
+        </div>
+        <div class="quick-answer">
+          <dt>Does it work with N1MM Logger+ or <span class="nowrap">WSJT-X</span>?</dt>
+          <dd>Yes, built-in UDP listeners bring in contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi.</dd>
+        </div>
+        <div class="quick-answer">
+          <dt>Does it handle Winter Field Day?</dt>
+          <dd>Yes, set the event type to Winter Field Day and the scoring, objectives, and Cabrillo log follow the WFDA rules.</dd>
+        </div>
+        <div class="quick-answer">
+          <dt>What does it cost?</dt>
+          <dd>Nothing. It's free and open source under the GPL v3, with no paid tiers.</dd>
+        </div>
+      </dl>
     </div>
-    <div class="how-it-works-grid">
-      <div class="step-card">
-        <div class="step-number">01</div>
-        <h3>Deploy</h3>
-        <p>Install FD Commander on any Linux machine and connect it to your LAN. Clone the repo, run the deploy script, and you're up.</p>
+  </div>
+</section>
+
+<section class="closing">
+  <div class="container">
+    <div class="closing-grid">
+      <div>
+        <div class="section-label rail-label">Free &amp; Open Source</div>
+        <h2 class="rail-title">Ready for this year's Field Day?</h2>
+        <p class="rail-subline">Three commands on any Linux box and your club is logging.</p>
+        <div class="closing-actions">
+          <a href="https://github.com/ckoval7/fielddaycommander" target="_blank" rel="noopener" class="btn-teal">View on GitHub</a>
+          <a href="fd-commander-docs.html" class="btn-outline">Read the docs</a>
+        </div>
       </div>
-      <div class="step-card">
-        <div class="step-number">02</div>
-        <h3>Plan</h3>
-        <p>Define stations, schedule operators, assign equipment, and run through safety checklists. Do this weeks before or the morning of.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-number">03</div>
-        <h3>Operate</h3>
-        <p>Operators open a browser and start logging. Scores, dupes, and band activity update live across every device.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-number">04</div>
-        <h3>Submit</h3>
-        <p>Export a clean Cabrillo file to upload to the ARRL or the WFDA, with your score and the bonuses or objectives you earned laid out for the entry form.</p>
+      <div class="deploy-rail">
+        <div class="deploy-rail-header">
+          <h2>On the air in minutes</h2>
+          <button type="button" class="deploy-rail-copy" aria-label="Copy all three deploy commands">Copy all</button>
+          <span class="sr-only" role="status" aria-live="polite"></span>
+        </div>
+        <ol class="deploy-rail-steps" role="list">
+          <li class="deploy-rail-step">
+            <span class="deploy-rail-marker" aria-hidden="true"></span>
+            <div class="deploy-rail-body">
+              <span class="deploy-rail-label">Clone</span>
+              <code>git clone https://github.com/ckoval7/fielddaycommander.git</code>
+            </div>
+          </li>
+          <li class="deploy-rail-step">
+            <span class="deploy-rail-marker" aria-hidden="true"></span>
+            <div class="deploy-rail-body">
+              <span class="deploy-rail-label">Enter</span>
+              <code>cd fielddaycommander</code>
+            </div>
+          </li>
+          <li class="deploy-rail-step">
+            <span class="deploy-rail-marker" aria-hidden="true"></span>
+            <div class="deploy-rail-body">
+              <span class="deploy-rail-label">Deploy</span>
+              <code>sudo ./deploy.sh --domain fd.local</code>
+              <ul class="deploy-rail-checks" role="list">
+                <li>&#10003; Dependencies</li>
+                <li>&#10003; Database</li>
+                <li>&#10003; Web server</li>
+              </ul>
+            </div>
+          </li>
+          <li class="deploy-rail-step is-live">
+            <span class="deploy-rail-marker" aria-hidden="true"></span>
+            <div class="deploy-rail-body">
+              <span class="deploy-rail-label deploy-rail-live">Live at <code>http://fd.local</code></span>
+              <span class="deploy-rail-signoff">Ready for Field Day &middot; 73</span>
+            </div>
+          </li>
+        </ol>
       </div>
     </div>
   </div>
 </section>
 
-<section class="roles">
-  <div class="container">
-    <div class="roles-header">
-      <div class="section-label">Who It's For</div>
-      <h2 class="section-title">One platform, every role at Field Day</h2>
-      <p class="section-desc">FD Commander ships with sensible default roles, and every permission is fully customizable to match how your club operates.</p>
-    </div>
-    <div class="roles-grid">
-      <div class="role-card">
-        <span class="role-tag admin">Admin</span>
-        <h3>Deploys and Configures</h3>
-        <p>Gets the server running, sets up the database, and creates accounts. Handles the infrastructure so everyone else can focus on the event.</p>
-      </div>
-      <div class="role-card">
-        <span class="role-tag manager">Event Manager</span>
-        <h3>Plans and Coordinates</h3>
-        <p>Builds the schedule, assigns stations, runs through safety checklists, watches the live score, and handles the Cabrillo export at the end.</p>
-      </div>
-      <div class="role-card">
-        <span class="role-tag captain">Station Captain</span>
-        <h3>Runs a Station</h3>
-        <p>Manages an operating position. Tracks equipment, coordinates band and mode usage, marks the station down when the amp blows a final, and sets up the station laptop in station mode.</p>
-      </div>
-      <div class="role-card">
-        <span class="role-tag operator">Operator</span>
-        <h3>Logs Contacts</h3>
-        <p>Opens a browser, sits down, and starts logging. A clean single-field entry flow with instant dupe checks and live band activity. No distractions.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="tech-stack">
-  <div class="container">
-    <div class="tech-header">
-      <div class="section-label">Under the Hood</div>
-      <h2 class="section-title">Modern stack, field-ready footprint</h2>
-      <p class="section-desc">Built on proven technologies. Light enough to run on a Raspberry Pi powered by a portable battery.</p>
-    </div>
-    <div class="tech-grid">
-      <div class="tech-pill"><span class="dot" style="background:var(--accent-rose)"></span> Laravel 13</div>
-      <div class="tech-pill"><span class="dot" style="background:var(--accent-emerald)"></span> Livewire</div>
-      <div class="tech-pill"><span class="dot" style="background:var(--accent-sky)"></span> Mary UI</div>
-      <div class="tech-pill"><span class="dot" style="background:var(--accent-green)"></span> FrankenPHP</div>
-      <div class="tech-pill"><span class="dot" style="background:var(--accent-orange)"></span> Laravel Octane</div>
-      <div class="tech-pill"><span class="dot" style="background:var(--accent-teal)"></span> Laravel Reverb</div>
-      <div class="tech-pill"><span class="dot" style="background:var(--accent-green)"></span> MySQL / MariaDB</div>
-      <div class="tech-pill"><span class="dot" style="background:var(--accent-sky)"></span> WebSockets</div>
-    </div>
-  </div>
-</section>
-
-<section class="cta">
-  <div class="container">
-    <div class="cta-box">
-      <div class="section-label">Ready?</div>
-      <h2 class="section-title">Stop juggling spreadsheets and clipboards</h2>
-      <p class="section-desc" style="margin-left:auto;margin-right:auto">
-        FD Commander replaces the patchwork of separate tools with one platform that handles planning, operations, and logging together. Free, open source, built by hams.
-      </p>
-      <div class="hero-actions">
-        <a href="https://demo.fielddaycommander.org/" target="_blank" rel="noopener" class="btn-primary">Try the Live Demo</a>
-        <a href="https://github.com/ckoval7/fielddaycommander" target="_blank" rel="noopener" class="btn-secondary">View on GitHub &rarr;</a>
-        <a href="fd-commander-docs.html" class="btn-secondary">Read the Docs &rarr;</a>
-      </div>
-    </div>
-  </div>
-</section>
 
 <footer></footer>
 <script src="footer.js"></script>
@@ -648,6 +810,30 @@
     rotator.addEventListener('mouseenter', function () { paused = true; });
     rotator.addEventListener('mouseleave', function () { paused = false; });
     setInterval(advance, 7000);
+  })();
+</script>
+<script>
+  (function () {
+    var button = document.querySelector('.deploy-rail-copy');
+    if (!button || !navigator.clipboard) return;
+    var status = button.nextElementSibling;
+    var commands = Array.prototype.map.call(
+      document.querySelectorAll('.deploy-rail-step:not(.is-live) .deploy-rail-body > code'),
+      function (code) { return code.textContent; }
+    ).join('\n');
+    var resetTimer;
+
+    button.addEventListener('click', function () {
+      navigator.clipboard.writeText(commands).then(function () {
+        button.textContent = 'Copied';
+        status.textContent = 'Commands copied to clipboard';
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(function () {
+          button.textContent = 'Copy all';
+          status.textContent = '';
+        }, 1600);
+      });
+    });
   })();
 </script>
 
