@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # =============================================================================
-# FD Commander Docker Image
+# Field Day Commander Docker Image
 # Multi-stage build: composer deps → npm/vite build → production runtime
 # =============================================================================
 
@@ -41,9 +41,9 @@ RUN npm run build
 # Stage 3: Production runtime
 # ---------------------------------------------------------------------------
 # Pinned so a FrankenPHP release can't change the runtime under a rebuild.
-FROM dunglas/frankenphp:1.13.0-php8.4 AS production
+FROM dunglas/frankenphp:1.13.2-php8.4 AS production
 
-LABEL maintainer="FD Commander"
+LABEL maintainer="Field Day Commander"
 LABEL description="Field Day Commander - Amateur Radio Field Day Logging"
 
 # Install PHP extensions and supervisor. The container runs as www-data on

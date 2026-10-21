@@ -108,7 +108,7 @@ describe('ADIF export', function () {
 
         expect($adif)
             ->toContain('<ADIF_VER:5>3.1.4')
-            ->toContain('<PROGRAMID:12>FD Commander')
+            ->toContain('<PROGRAMID:19>Field Day Commander')
             ->toContain('<PROGRAMVERSION:'.strlen(config('app.version')).'>'.config('app.version'))
             ->toContain('<EOH>')
             ->toContain('<CALL:5>W0MET <QSO_DATE:8>20270123 <TIME_ON:6>202120 <BAND:3>20M <MODE:3>SSB <SUBMODE:3>USB <CLASS:2>2M <ARRL_SECT:2>AL <STATION_CALLSIGN:7>K4SCO/P')
@@ -195,7 +195,7 @@ describe('ADIF export', function () {
 
         expect($parsed['errors'])->toBe([])
             ->and($parsed['version'])->toBe(3)
-            ->and($parsed['header']['PROGRAMID'])->toBe('FD Commander')
+            ->and($parsed['header']['PROGRAMID'])->toBe('Field Day Commander')
             ->and($parsed['records'])->toHaveCount(2)
             ->and($parsed['records'][0])->toMatchArray([
                 'CALL' => 'W0MET', 'QSO_DATE' => '20270123', 'TIME_ON' => '202120', 'BAND' => '20M',

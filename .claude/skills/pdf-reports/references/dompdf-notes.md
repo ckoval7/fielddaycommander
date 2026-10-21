@@ -33,7 +33,9 @@ Researched for dompdf **3.1.6** and barryvdh/laravel-dompdf **3.1.2** (the insta
 - `@page` supports `margin` and `size`, and the selectors `:first`, `:left`, `:right`, `:odd`, `:even` (merged in `FrameReflower/Page::apply_page_style`). Named pages are skipped. On the selector variants only margins apply. [src `Css/Stylesheet.php` ~1403-1450]
 - `border`, `padding` and `background-color` in `@page` don't work; style `body` instead. [src comment]
 - Default page margin is 1.2cm (`lib/res/html.css`). [src]
-- `Stylesheet::apply_styles` seeds the root `<html>` frame's style from the base `@page` style, then cascades the normal rules over it. The page reflower reads `margin_*` from that root style, so **`* { margin: 0 }` or `html { margin: 0 }` overrides the page margins**. [src `Stylesheet.php` ~1083-1235, `FrameReflower/Page.php` ~112-125] No doc or issue says this; it comes from the source and from FD Commander's own regression.
+
+- `Stylesheet::apply_styles` seeds the root `<html>` frame's style from the base `@page` style, then cascades the normal rules over it. The page reflower reads `margin_*` from that root style, so **`* { margin: 0 }` or `html { margin: 0 }` overrides the page margins**. [src `Stylesheet.php` ~1083-1235, `FrameReflower/Page.php` ~112-125] No doc or issue says this; it comes from the source and from Field Day Commander's own regression.
+
 - Fixed-position offsets are also measured from the root style's margins (`Positioner/Fixed.php`). [src]
 
 ## 3. Page breaks

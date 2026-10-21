@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Render every FD Commander PDF with page-filling data, then rasterize each page
+
+# Render every Field Day Commander PDF with page-filling data, then rasterize each page
+
 # and build one contact sheet per report so the layout can be checked by eye.
 #
 # Usage (from either checkout's root):

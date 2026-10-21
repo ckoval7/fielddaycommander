@@ -1,11 +1,11 @@
 ---
 name: mobile-ui
-description: Use this skill when building, changing, reviewing or screenshotting any FD Commander screen that people use on a phone or tablet, which is every screen. Triggers include Blade or Livewire views, layouts, Mary UI or daisyUI components, forms and inputs, tables and lists, modals and drawers, sticky or fixed bars, responsive Tailwind classes, the logging and station-mode screens, browser or device testing, and any report that something looks wrong, cramped or wastes space on mobile. It sets the standing watch for wasted side space, touch target, input, layout, safe-area and viewport rules, the Docker and Playwright browser audit, and the checks to run before calling a UI change done.
+description: Use this skill when building, changing, reviewing or screenshotting any Field Day Commander screen that people use on a phone or tablet, which is every screen. Triggers include Blade or Livewire views, layouts, Mary UI or daisyUI components, forms and inputs, tables and lists, modals and drawers, sticky or fixed bars, responsive Tailwind classes, the logging and station-mode screens, browser or device testing, and any report that something looks wrong, cramped or wastes space on mobile. It sets the standing watch for wasted side space, touch target, input, layout, safe-area and viewport rules, the Docker and Playwright browser audit, and the checks to run before calling a UI change done.
 ---
 
 # Mobile UI
 
-FD Commander runs in a field. Phones and tablets are first-class devices, not an afterthought, and the conditions are harder than an office:
+Field Day Commander runs in a field. Phones and tablets are first-class devices, not an afterthought, and the conditions are harder than an office:
 
 - Bright sun, so contrast matters more than usual.
 - One-handed use, cold or gloved fingers, a radio in the other hand.

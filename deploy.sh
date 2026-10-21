@@ -6,14 +6,17 @@ set -euo pipefail
 
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
-FRANKENPHP_VERSION="1.13.0"
+FRANKENPHP_VERSION="1.13.2"
+# The glibc (-gnu) builds, which need glibc 2.28+. The musl builds of 1.13.2
+# die with SIGILL in hash('sha256') on CPUs without SHA-NI, which is most VPS
+# hosts (php/frankenphp#2743).
 # SHA-256 of the release binaries. FrankenPHP publishes no checksum file, so
 # these are GitHub's asset digests; update them with FRANKENPHP_VERSION:
 #   curl -fsS https://api.github.com/repos/php/frankenphp/releases/tags/v<ver> \
-#     | jq -r '.assets[] | select(.name|test("^frankenphp-linux-(x86_64|aarch64)$")) | "\(.name) \(.digest)"'
+#     | jq -r '.assets[] | select(.name|test("^frankenphp-linux-(x86_64|aarch64)-gnu$")) | "\(.name) \(.digest)"'
 # update.sh reads all three values from this file.
-FRANKENPHP_SHA256_X86_64="486673e20c014bfc4c9d27d5d3e78929f811c2834534f8117a56ab14de09e656"
-FRANKENPHP_SHA256_AARCH64="590762f2aea6b66cdc1d18b262a21ee1b0b938953a617598b8c970b453f2b1f1"
+FRANKENPHP_SHA256_X86_64="5fdef42b73c19f8ff601edbde6f205836c0903bd3fb0ef807b8ae7fb088d9536"
+FRANKENPHP_SHA256_AARCH64="555a3c531b01da66cf77e04290d81d68c1a9c2c8ee98de4a9961293f6b087047"
 NODE_MAJOR="22"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 readonly DISTRO_DEBIAN="debian"
@@ -106,7 +109,7 @@ Optional:
                           (e.g. a public domain alongside --domain). The --domain
                           host, private IPs and .local names always work.
   --trusted-proxies <list>
-                          Reverse proxies in front of FD Commander whose
+                          Reverse proxies in front of Field Day Commander whose
                           X-Forwarded-For headers to believe, as IPs or CIDRs,
                           comma-separated (e.g. 192.168.1.10). Default: none
                           besides this machine (127.0.0.1, ::1).
@@ -226,7 +229,7 @@ validate_args() {
     local tls_file
     for tls_file in "$SSL_CERT" "$SSL_KEY"; do
         if [[ -n "$tls_file" ]] && path_in_private_tmp "$tls_file"; then
-            log_error "${tls_file} is under /tmp or /var/tmp, which the FD Commander services cannot see."
+            log_error "${tls_file} is under /tmp or /var/tmp, which the Field Day Commander services cannot see."
             log_error "Move the certificate and key somewhere permanent (e.g. /etc/ssl/fd-commander/) and re-run."
             errors=$((errors + 1))
         fi
@@ -355,7 +358,7 @@ fi
 
 # --- Dry Run ---
 print_dry_run() {
-    echo -e "\n${BOLD}FD Commander Deployment Plan${NC}"
+    echo -e "\n${BOLD}Field Day Commander Deployment Plan${NC}"
     echo "=============================="
     echo "Domain:         $DOMAIN"
     echo "App URL:        ${SCHEME}://${DOMAIN}${PORT_SUFFIX}"
@@ -550,8 +553,8 @@ install_frankenphp() {
     log_info "Installing FrankenPHP ${FRANKENPHP_VERSION}..."
     local arch expected_sha
     case "$(uname -m)" in
-        x86_64)  arch="linux-x86_64";  expected_sha="$FRANKENPHP_SHA256_X86_64" ;;
-        aarch64) arch="linux-aarch64"; expected_sha="$FRANKENPHP_SHA256_AARCH64" ;;
+        x86_64)  arch="linux-x86_64-gnu";  expected_sha="$FRANKENPHP_SHA256_X86_64" ;;
+        aarch64) arch="linux-aarch64-gnu"; expected_sha="$FRANKENPHP_SHA256_AARCH64" ;;
         *)       log_error "Unsupported architecture: $(uname -m)"; exit 1 ;;
     esac
     local url="https://github.com/php/frankenphp/releases/download/v${FRANKENPHP_VERSION}/frankenphp-${arch}"
@@ -571,6 +574,12 @@ install_frankenphp() {
         log_error "FrankenPHP binary verification failed"
         exit 1
     fi
+    # A plain version check passes even on a build that crashes on this CPU,
+    # and Laravel hashes with SHA-256 on nearly every request.
+    if ! "$dest" php-cli -r 'hash("sha256", "x");' &>/dev/null; then
+        log_error "FrankenPHP crashed running PHP on this CPU"
+        exit 1
+    fi
     log_info "FrankenPHP $("$dest" version) installed to ${dest}"
 }
 
@@ -580,11 +589,13 @@ configure_php_ini() {
     log_info "Configuring PHP settings for FrankenPHP..."
     mkdir -p "$ini_dir"
     cat > "$ini_file" <<'PHPEOF'
-; FD Commander PHP configuration for FrankenPHP
+; Field Day Commander PHP configuration for FrankenPHP
 upload_max_filesize = 30M
 post_max_size = 35M
 memory_limit = 256M
 max_execution_time = 60
+; Laravel never uses PHP's native sessions. update.sh adds this to older installs.
+session.upload_progress.enabled = Off
 PHPEOF
     log_info "PHP configuration written to ${ini_file}"
 }
@@ -936,7 +947,7 @@ configure_redis() {
     redis_maxmemory=$(compute_redis_maxmemory)
     log_info "Redis maxmemory sized for host: ${redis_maxmemory}"
 
-    # Drop-in overrides tuned for FD Commander:
+    # Drop-in overrides tuned for Field Day Commander:
     #  - AOF + appendfsync always  → every Redis write fsyncs to disk, so queue
     #    jobs survive a power cut. (Contacts themselves go straight to the DB,
     #    not through Redis — DB durability covers them.)
@@ -947,7 +958,7 @@ configure_redis() {
     log_info "Writing Redis overrides to ${override}..."
     mkdir -p "$(dirname "$override")"
     cat > "$override" <<REDISEOF
-# FD Commander Redis tuning — durable queue + heavy RAM cache.
+# Field Day Commander Redis tuning — durable queue + heavy RAM cache.
 appendonly yes
 appendfsync always
 no-appendfsync-on-rewrite no
@@ -971,7 +982,7 @@ REDISEOF
     # Include the override from the main redis.conf (idempotent).
     if ! grep -q "^include ${override}" "$conf_file"; then
         echo "" >> "$conf_file"
-        echo "# FD Commander overrides" >> "$conf_file"
+        echo "# Field Day Commander overrides" >> "$conf_file"
         echo "include ${override}" >> "$conf_file"
     fi
 
@@ -1017,7 +1028,7 @@ write_caddy_tls_snippet() {
     local snippet="${CADDY_SNIPPET_DIR}/tls.caddy"
     install -d -m 0755 "$CADDY_SNIPPET_DIR"
     {
-        echo "# Written by deploy.sh/update.sh. Imported into the FD Commander site block."
+        echo "# Written by deploy.sh/update.sh. Imported into the Field Day Commander site block."
         if [[ -n "$cert" ]]; then
             echo "tls \"${cert}\" \"${key}\""
         elif [[ -n "$email" ]]; then
@@ -1044,7 +1055,7 @@ configure_ssl() {
         local file
         for file in "$SSL_CERT" "$SSL_KEY"; do
             if path_in_private_tmp "$file"; then
-                log_error "${file} is under /tmp or /var/tmp, which the FD Commander services cannot see."
+                log_error "${file} is under /tmp or /var/tmp, which the Field Day Commander services cannot see."
                 log_error "Move it somewhere permanent (e.g. /etc/ssl/fd-commander/) and re-run."
                 exit 1
             fi
@@ -1070,7 +1081,7 @@ configure_ssl() {
     log_info "Caddy TLS settings written to ${CADDY_SNIPPET_DIR}/tls.caddy"
 }
 
-# write_unit_hardening: sandbox every FD Commander unit with a drop-in, so
+# write_unit_hardening: sandbox every Field Day Commander unit with a drop-in, so
 # units written by older deploys get it too (update.sh carries the same
 # function). The services may write only storage/ and bootstrap/cache (plus
 # Caddy's certificate store for the web server).
@@ -1118,7 +1129,7 @@ configure_systemd() {
     log_info "Creating FrankenPHP/Octane service with ${octane_workers} workers..."
     cat > /etc/systemd/system/fdcommander.service <<WEBEOF
 [Unit]
-Description=FD Commander Web Server (FrankenPHP/Octane)
+Description=Field Day Commander Web Server (FrankenPHP/Octane)
 After=network.target ${DB_SERVICE}.service ${REDIS_SERVICE}.service
 
 [Service]
@@ -1142,7 +1153,7 @@ WEBEOF
     log_info "Creating queue worker service..."
     cat > /etc/systemd/system/fdcommander-queue.service <<QUEUEEOF
 [Unit]
-Description=FD Commander Queue Worker
+Description=Field Day Commander Queue Worker
 After=network.target ${DB_SERVICE}.service ${REDIS_SERVICE}.service
 
 [Service]
@@ -1170,7 +1181,7 @@ QUEUEEOF
     fi
     cat > /etc/systemd/system/fdcommander-scheduler.service <<SCHEDEOF
 [Unit]
-Description=FD Commander Task Scheduler
+Description=Field Day Commander Task Scheduler
 After=network.target ${DB_SERVICE}.service ${REDIS_SERVICE}.service
 
 [Service]
@@ -1189,7 +1200,7 @@ SCHEDEOF
     log_info "Creating Reverb WebSocket service..."
     cat > /etc/systemd/system/fdcommander-reverb.service <<REVERBEOF
 [Unit]
-Description=FD Commander Reverb WebSocket Server
+Description=Field Day Commander Reverb WebSocket Server
 After=network.target
 
 [Service]
@@ -1256,7 +1267,7 @@ finalize() {
     # Print summary
     echo ""
     echo -e "${BOLD}============================================${NC}"
-    echo -e "${GREEN}${BOLD}  FD Commander Deployment Complete!${NC}"
+    echo -e "${GREEN}${BOLD}  Field Day Commander Deployment Complete!${NC}"
     echo -e "${BOLD}============================================${NC}"
     echo ""
     echo -e "${BOLD}Application${NC}"
@@ -1307,7 +1318,7 @@ main() {
         exit 0
     fi
 
-    log_phase "Starting FD Commander deployment to ${SCHEME}://${DOMAIN}"
+    log_phase "Starting Field Day Commander deployment to ${SCHEME}://${DOMAIN}"
 
     install_packages
     setup_app

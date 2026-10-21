@@ -1,6 +1,8 @@
 ---
 name: pdf-reports
-description: Use this skill for any work on a PDF that FD Commander produces, and before touching a PDF template, its controller or its tests. That covers the dompdf reports (ARRL submission sheet, Winter Field Day event summary, and the equipment delivery checklist, station inventory, owner contacts, return checklist and incident report), the FEMA ICS forms filled in the browser with pdf-lib, and print-styled pages like the ICS-309. Triggers include page margins, headers, footers, banners, page numbers or "Page X of Y", page breaks, long tables, rows under the footer, blank strips or blank pages, text off the page edge, fonts or missing characters, a report that "looks broken", adding a new PDF report, and any dompdf config or option change. It explains how dompdf actually lays out pages, the patterns that work here, and the render-and-look check to run before calling a PDF change done.
+
+description: Use this skill for any work on a PDF that Field Day Commander produces, and before touching a PDF template, its controller or its tests. That covers the dompdf reports (ARRL submission sheet, Winter Field Day event summary, and the equipment delivery checklist, station inventory, owner contacts, return checklist and incident report), the FEMA ICS forms filled in the browser with pdf-lib, and print-styled pages like the ICS-309. Triggers include page margins, headers, footers, banners, page numbers or "Page X of Y", page breaks, long tables, rows under the footer, blank strips or blank pages, text off the page edge, fonts or missing characters, a report that "looks broken", adding a new PDF report, and any dompdf config or option change. It explains how dompdf actually lays out pages, the patterns that work here, and the render-and-look check to run before calling a PDF change done.
+
 ---
 
 # PDF reports
