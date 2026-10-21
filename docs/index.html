@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring</title>
-<meta name="description" content="Free, open-source Field Day planning, logging, and scoring for ARRL Field Day and Winter Field Day. Volunteer scheduling, equipment tracking, and safety checklists, plus a built-in multi-station logger with live dupe checking, station mode for shared station computers, and Cabrillo and ADIF export. No internet required.">
+<meta name="description" content="Bring your club together for ARRL Field Day and Winter Field Day. Plan shifts and gear, share one log, and follow the live score. Free and open source.">
 <link rel="canonical" href="https://fielddaycommander.org/">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring">
-<meta property="og:description" content="Free Field Day planning, logging, and scoring for ARRL Field Day and Winter Field Day: volunteer scheduling, a built-in multi-station logger, live scoring with all 18 ARRL bonus categories or WFD objectives, and Cabrillo and ADIF export. Runs on a Raspberry Pi.">
+<meta property="og:description" content="Bring your club together for ARRL Field Day and Winter Field Day. Plan shifts and gear, share one log, and follow the live score. Free and open source.">
 <meta property="og:url" content="https://fielddaycommander.org/">
 <meta property="og:image" content="https://fielddaycommander.org/og-image.png">
 <meta property="og:image:type" content="image/png">
@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring">
-<meta name="twitter:description" content="Free Field Day planning, logging, and scoring for ARRL Field Day and Winter Field Day: volunteer scheduling, a built-in multi-station logger, and live scoring.">
+<meta name="twitter:description" content="Bring your club together for ARRL Field Day and Winter Field Day. Plan shifts and gear, share one log, and follow the live score. Free and open source.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
 <meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -95,6 +95,14 @@
     text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 1px 12px rgba(0,0,0,0.6);
   }
   .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+
+  .hero-reassurance {
+    display: flex; justify-content: center; flex-wrap: wrap;
+    gap: 0.6rem 1.75rem; list-style: none;
+    max-width: 900px; margin: 1.75rem auto 0;
+    color: var(--text-secondary); font-size: 0.875rem;
+    position: relative; z-index: 1;
+  }
 
   /* ── HERO SCREENSHOT ── */
   .hero-shot {
@@ -265,10 +273,6 @@
   .phase-title h3 { font-size: 1.375rem; font-weight: 700; line-height: 1.2; color: var(--text-primary); }
   .phase-title h3 a { color: inherit; }
   .phase-title h3 a:hover { color: var(--rail-accent); }
-  .phase-when {
-    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
-    color: var(--text-muted); white-space: nowrap;
-  }
   .phase-summary { font-size: 0.875rem; line-height: 1.55; color: var(--text-muted); }
   .phase-features {
     display: flex; flex-direction: column; gap: 20px;
@@ -422,17 +426,6 @@
     .role-head { flex-direction: column; align-items: flex-start; }
   }
 
-  /* ── SIGNAL STRENGTH DIVIDER ── */
-  .signal-divider {
-    display: flex; align-items: flex-end; justify-content: center;
-    gap: 4px; padding: 2rem 0; opacity: 0.15;
-    position: relative; z-index: 1;
-  }
-  .signal-bar {
-    width: 4px; border-radius: 2px;
-    background: var(--accent-gold);
-  }
-
   @media (max-width: 768px) {
     .hero { padding: 8rem 1.5rem 4rem; }
     .deploy-rail-step { column-gap: 12px; }
@@ -529,21 +522,25 @@
   <div class="hero-photo"><img src="homepagebg-dark.webp" alt=""></div>
   <div class="container">
     <h1 class="hero-rotator">
-      <span class="sr-only">The complete Field Day operations platform.</span>
+      <span class="sr-only">Bring your club together for Field Day.</span>
       <span class="hero-phrases" aria-hidden="true">
-        <span class="hero-phrase is-active">Your club's<br><span class="gradient">Field Day command center.</span></span>
-        <span class="hero-phrase">Your central<br><span class="gradient">Field Day management platform.</span></span>
-        <span class="hero-phrase">The central hub for<br><span class="gradient">Field Day operations.</span></span>
+        <span class="hero-phrase is-active">Your club&#39;s<br><span class="gradient">Field Day command center.</span></span>
+        <span class="hero-phrase">Bring the team.<br><span class="gradient">Have a plan.</span></span>
         <span class="hero-phrase">The complete<br><span class="gradient">Field Day operations platform.</span></span>
-        <span class="hero-phrase">The all-in-one<br><span class="gradient">Field Day toolkit.</span></span>
+        <span class="hero-phrase">Plan the weekend.<br><span class="gradient">Enjoy the bands.</span></span>
         <span class="hero-phrase">Mission control<br><span class="gradient">for your Field Day.</span></span>
-        <span class="hero-phrase">The operations center<br><span class="gradient">for Field Day weekend.</span></span>
+        <span class="hero-phrase">From the first shift<br><span class="gradient">to the final score.</span></span>
+        <span class="hero-phrase">Your central<br><span class="gradient">Field Day management platform.</span></span>
+        <span class="hero-phrase">Less to juggle.<br><span class="gradient">More time on the air.</span></span>
+        <span class="hero-phrase">The all-in-one<br><span class="gradient">Field Day toolkit.</span></span>
+        <span class="hero-phrase">Make this Field Day<br><span class="gradient">a team effort.</span></span>
+        <span class="hero-phrase">The central hub for<br><span class="gradient">Field Day operations.</span></span>
       </span>
     </h1>
     <p>
-      More than a Field Day logger. Field Day Commander handles the whole event:
-      schedule volunteers, assign stations and equipment, run safety checklists,
-      then log contacts from every station into one shared log with the built-in logger, or bring them in from N1MM Logger+ and WSJT-X. All from any device on your LAN, no internet required.
+      Plan the stations, people, and gear. Bring every station&#39;s contacts into one log,
+      track NTS traffic and bonuses, and have your score ready when the weekend ends.
+      Free, open-source software for ARRL Field Day and Winter Field Day.
     </p>
     <div class="hero-actions">
       <a href="https://demo.fielddaycommander.org/" target="_blank" rel="noopener" class="btn-primary">Try the Live Demo</a>
@@ -551,41 +548,34 @@
       <a href="https://github.com/ckoval7/fielddaycommander" target="_blank" rel="noopener" class="btn-secondary">View on GitHub &rarr;</a>
     </div>
 
+    <ul class="hero-reassurance" aria-label="At a glance">
+      <li>Runs on your LAN. No internet needed after installation.</li>
+      <li>Keep using N1MM Logger+, WSJT-X, or fldigi.</li>
+      <li>Free and open source. No paid tiers.</li>
+    </ul>
+
     <figure class="screenshot hero-shot">
       <a href="screenshots/dashboard-dark.png"><img src="screenshots/dashboard-dark.png" alt="Field Day Commander dashboard during Field Day: total score 898, 52.5 QSOs per hour, 40 of 86 sections worked, a time-remaining countdown, and a chart of QSOs per band" width="1920" height="1080"></a>
-      <figcaption>Every station's contacts feed one live dashboard: your score, QSO rate, sections worked, and contacts by band.</figcaption>
+      <figcaption>One shared view of your club&#39;s effort, updated as every station logs contacts.</figcaption>
     </figure>
   </div>
 </section>
-
-<div class="signal-divider">
-  <div class="signal-bar" style="height:6px"></div>
-  <div class="signal-bar" style="height:12px"></div>
-  <div class="signal-bar" style="height:20px"></div>
-  <div class="signal-bar" style="height:30px"></div>
-  <div class="signal-bar" style="height:42px"></div>
-  <div class="signal-bar" style="height:30px"></div>
-  <div class="signal-bar" style="height:20px"></div>
-  <div class="signal-bar" style="height:12px"></div>
-  <div class="signal-bar" style="height:6px"></div>
-</div>
 
 <section class="standouts">
   <div class="container">
     <div class="standouts-header">
       <div class="section-label rail-label">What Sets It Apart</div>
-      <h2 class="rail-title">The whole event in one place.</h2>
-      <p class="rail-subline">Most Field Day software is a logger. Field Day Commander also keeps track of the club&#39;s gear, the operating schedule, and the weather.</p>
+      <h2 class="rail-title">Arrive ready to get on the air.</h2>
+      <p class="rail-subline">Bring the gear list, volunteer schedule, and safety preparations together before setup day.</p>
     </div>
     <ol class="phases-rail" role="list">
       <li class="phase">
         <div class="phase-header">
           <div class="phase-title">
             <h3>Track every piece of gear</h3>
-            <span class="phase-when">setup to teardown</span>
           </div>
         </div>
-        <p class="standout-text">Members add their radios, antennas, and other gear to their own catalog, then commit what they&#39;re bringing to the event. You can assign each item to a station and mark it delivered when it shows up. Owners get an email when their gear is delivered and again when it&#39;s returned. On Sunday, the return checklist lists every item under its owner, so it all goes home with the right person.</p>
+        <p class="standout-text">Know whether each station has what it needs. Members commit gear, you assign it to stations, and delivery and return checklists help keep borrowed equipment accounted for.</p>
         <ul class="standout-checks" role="list">
           <li><span class="check" aria-hidden="true">&#10003;</span>Club gear and members&#39; gear in one inventory</li>
           <li><span class="check" aria-hidden="true">&#10003;</span>Gear assigned to each station</li>
@@ -595,11 +585,10 @@
       <li class="phase">
         <div class="phase-header">
           <div class="phase-title">
-            <h3>Fill every shift</h3>
-            <span class="phase-when">weeks out</span>
+            <h3>Find the gaps before it&#39;s 2 AM.</h3>
           </div>
         </div>
-        <p class="standout-text">Lay out the operating schedule and let operators sign up for open shifts. The shift dashboard shows which hours still need someone, so you can find a volunteer for the overnight before the weekend instead of during it. The safety checklist for your event is in the same place, ready to check off as the site comes together.</p>
+        <p class="standout-text">Let volunteers sign up for shifts and spot uncovered hours before the weekend. Share the work across operators, GOTA coaches, and safety officers.</p>
         <ul class="standout-checks" role="list">
           <li><span class="check" aria-hidden="true">&#10003;</span>Shift sign-up with coverage gaps shown</li>
           <li><span class="check" aria-hidden="true">&#10003;</span>Operator, GOTA coach, and safety officer roles</li>
@@ -609,130 +598,88 @@
       <li class="phase is-destination">
         <div class="phase-header">
           <div class="phase-title">
-            <h3>Warn the site about storms</h3>
-            <span class="phase-when">live</span>
+            <h3>Keep safety in view</h3>
           </div>
         </div>
-        <p class="standout-text">When the server has an internet connection, Field Day Commander checks the National Weather Service for storm warnings at your site. Any warning shows up in a banner at the top of every screen, including the logging screens. You can also post a lightning alert yourself, with instructions to stop operating or take shelter. Members who opt in get alerts by email too.</p>
+        <p class="standout-text">Work through the event&#39;s safety checklist, then keep operators informed as conditions change. Post local alerts on every screen; optional internet-fed NWS warnings appear alongside them.</p>
         <ul class="standout-checks" role="list">
-          <li><span class="check" aria-hidden="true">&#10003;</span>Storm warnings from the National Weather Service</li>
-          <li><span class="check" aria-hidden="true">&#10003;</span>Lightning alerts you post from the site</li>
-          <li><span class="check" aria-hidden="true">&#10003;</span>A banner on every screen</li>
+          <li><span class="check" aria-hidden="true">&#10003;</span>Event safety checklists</li>
+          <li><span class="check" aria-hidden="true">&#10003;</span>Local storm and lightning alerts</li>
+          <li><span class="check" aria-hidden="true">&#10003;</span>Optional NWS warnings with internet access</li>
         </ul>
       </li>
     </ol>
   </div>
 </section>
 
-<section class="phases" id="how-it-works">
+<section class="operator-experience" id="how-it-works">
   <div class="container">
-    <div class="phases-card">
-      <div class="phases-header">
-        <div>
-          <div class="section-label rail-label">How It Works</div>
-          <h2 class="rail-title">From setup to submission.</h2>
-          <p class="rail-subline">The features you&#39;ll use at each stage of the event.</p>
-        </div>
-        <a href="fd-commander-features.html" class="rail-link">All features &rarr;</a>
+    <div class="big-screen-grid">
+      <figure class="screenshot">
+        <a href="screenshots/log-contact-dark.png"><img src="screenshots/log-contact-dark.png" alt="Field Day Commander contact logging screen with exchange entry and recent contacts" width="1920" height="1080" loading="lazy"></a>
+        <figcaption>Log in the browser, with exchange validation and dupe checks across stations.</figcaption>
+      </figure>
+      <div>
+        <div class="section-label rail-label">For the Operator</div>
+        <h2 class="rail-title">Take your shift. Work the bands.</h2>
+        <p class="rail-subline">Open the built-in logger on a laptop, tablet, or phone. Every contact joins the club&#39;s shared log and updates the live score.</p>
+        <ul class="rail-list" role="list">
+          <li>
+            <h3>Catch the dupe before you log it.</h3>
+            <p>Live duplicate checks look across stations. Exchange validation helps catch mistakes while the contact is still in front of you.</p>
+          </li>
+          <li>
+            <h3>Make the next shift easy.</h3>
+            <p>On a shared computer set up in station mode, operators start their turn with their callsign.</p>
+          </li>
+          <li>
+            <h3>Keep the logger you know.</h3>
+            <p>Built-in UDP listeners receive contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi. No double entry. You can also import an ADIF file.</p>
+          </li>
+          <li class="is-destination">
+            <h3>Keep logging through a connection drop.</h3>
+            <p>If the browser loses contact with the server, built-in logging queues contacts locally and syncs them when the connection returns.</p>
+          </li>
+        </ul>
+        <a href="fd-commander-features.html#logging" class="rail-link">Explore the logging features &rarr;</a>
       </div>
-      <ol class="phases-rail" role="list">
-        <li class="phase">
-          <div class="phase-header">
-            <div class="phase-title">
-              <h3><a href="fd-commander-features.html#field-conditions">Deploy</a></h3>
-              <span class="phase-when">once</span>
-            </div>
-            <p class="phase-summary">Install it on a Linux machine on your LAN.</p>
-          </div>
-          <ul class="phase-features" role="list">
-            <li>
-              <h4>Runs on your LAN</h4>
-              <p>Any Linux box or Raspberry Pi, no internet.</p>
-            </li>
-            <li>
-              <h4>Deploy script or Docker</h4>
-              <p>One command, or Docker Compose.</p>
-            </li>
-            <li>
-              <h4>Backups on a schedule</h4>
-              <p>Hourly database, nightly full backup.</p>
-            </li>
-          </ul>
+    </div>
+  </div>
+</section>
+
+<section class="bonus-tracking" id="bonuses-and-traffic">
+  <div class="container">
+    <div class="big-screen-grid">
+      <div>
+        <div class="section-label rail-label">NTS Traffic &amp; Bonus Tracking</div>
+        <h2 class="rail-title">Track NTS traffic. Keep bonus points in view.</h2>
+        <p class="rail-subline">Keep the work beyond QSOs visible: radiograms, visitor sign-ins, GOTA activity, and bonus claims. See what&#39;s been earned and what still needs attention before the event ends.</p>
+        <figure class="screenshot">
+          <a href="screenshots/message-traffic-dark.png"><img src="screenshots/message-traffic-dark.png" alt="Field Day Commander Message Traffic screen for tracking NTS radiograms and message-related bonuses" width="1920" height="1080" loading="lazy"></a>
+          <figcaption>Keep message traffic and its contribution to your Field Day score together.</figcaption>
+        </figure>
+      </div>
+      <ul class="rail-list" role="list">
+        <li>
+          <h3>Record and follow your message traffic</h3>
+          <p>Record originated, relayed, and received radiograms, track sent status, and follow the running message count and Field Day points.</p>
+          <a href="fd-commander-docs.html#messages" class="rail-link">Explore message traffic &rarr;</a>
         </li>
-        <li class="phase">
-          <div class="phase-header">
-            <div class="phase-title">
-              <h3><a href="fd-commander-features.html#planning">Plan</a></h3>
-              <span class="phase-when">weeks out</span>
-            </div>
-            <p class="phase-summary">Set up stations, people, and gear before the weekend.</p>
-          </div>
-          <ul class="phase-features" role="list">
-            <li>
-              <h4>Volunteer scheduling</h4>
-              <p>Operators sign up, and you see the gaps.</p>
-            </li>
-            <li>
-              <h4>Equipment management</h4>
-              <p>Track whose gear goes to which station.</p>
-            </li>
-            <li>
-              <h4>Rules and safety checklists</h4>
-              <p>ARRL Field Day and Winter Field Day, built in.</p>
-            </li>
-          </ul>
+        <li>
+          <h3>Track the SM/SEC message and W1AW bulletin</h3>
+          <p>Track your Section Manager or Section Emergency Coordinator message separately. Save the over-the-air W1AW bulletin copy for your submission records.</p>
         </li>
-        <li class="phase">
-          <div class="phase-header">
-            <div class="phase-title">
-              <h3><a href="fd-commander-features.html#logging">Operate</a></h3>
-              <span class="phase-when">24 hours</span>
-            </div>
-            <p class="phase-summary">Every station logs to one shared log, and the score updates live.</p>
-          </div>
-          <ul class="phase-features" role="list">
-            <li>
-              <h4>Multi-station logging</h4>
-              <p>Browser, N1MM Logger+, WSJT-X, or fldigi, dupe-checked.</p>
-            </li>
-            <li>
-              <h4>Station computers or your own</h4>
-              <p>Operators take turns by typing their callsign.</p>
-            </li>
-            <li>
-              <h4>Live score and section map</h4>
-              <p>Both update with every contact.</p>
-            </li>
-            <li>
-              <h4>Bonus tracking</h4>
-              <p>Log NTS traffic and sign in visitors.</p>
-            </li>
-          </ul>
+        <li>
+          <h3>Automatic tracking and manual claims</h3>
+          <p>Eligible visitor sign-ins, GOTA activity, message traffic, and safety checklists feed the bonus tally. Add manual claims for activities such as publicity and education, then review the breakdown with your QSO score.</p>
+          <a href="fd-commander-docs.html#scoring" class="rail-link">See how bonus tracking works &rarr;</a>
         </li>
-        <li class="phase is-destination">
-          <div class="phase-header">
-            <div class="phase-title">
-              <h3><a href="fd-commander-features.html#scoring">Submit</a></h3>
-              <span class="phase-when">after</span>
-            </div>
-            <p class="phase-summary">Get your entry ready for the ARRL or the WFDA.</p>
-          </div>
-          <ul class="phase-features" role="list">
-            <li>
-              <h4>Cabrillo export</h4>
-              <p>A clean log file, ready to upload.</p>
-            </li>
-            <li>
-              <h4>Entry form summary</h4>
-              <p>Your score, bonuses, and objectives laid out.</p>
-            </li>
-            <li>
-              <h4>ADIF export</h4>
-              <p>Load the weekend into the club&#39;s logging software.</p>
-            </li>
-          </ul>
+        <li class="is-destination">
+          <h3>Plan your bonuses and keep the proof</h3>
+          <p>Choose activities and plan the evidence with the bonus guide. Winter Field Day uses its own objectives; message traffic stays available for your records without bonus points.</p>
+          <a href="how-to/bonuses-objectives.html" class="rail-link">Plan your bonuses and objectives &rarr;</a>
         </li>
-      </ol>
+      </ul>
     </div>
   </div>
 </section>
@@ -747,20 +694,20 @@
       </figure>
       <div>
         <div class="section-label rail-label">On the Big Screen</div>
-        <h2 class="rail-title">See how the weekend is going.</h2>
-        <p class="rail-subline">Put the dashboard on any TV. Contacts, rate, sections, and the clock update live, so the whole club and every visitor who walks by can see where the event stands.</p>
+        <h2 class="rail-title">Put the club&#39;s progress on the big screen.</h2>
+        <p class="rail-subline">Give operators between shifts and visitors at the site a live view of the weekend: score, QSO rate, sections worked, and time remaining.</p>
         <ul class="rail-list" role="list">
           <li>
             <h3>Score and rate</h3>
-            <p>Total score, QSO count, and contacts per hour.</p>
+            <p>Follow the score and see when the bands are producing.</p>
           </li>
           <li>
             <h3>Sections worked</h3>
-            <p>Every section by call area, highlighted once worked.</p>
+            <p>Watch the map fill in as the club reaches new sections.</p>
           </li>
           <li class="is-destination">
             <h3>Time remaining</h3>
-            <p>A countdown to the end of the event.</p>
+            <p>See how much operating time is left to make the next contact.</p>
           </li>
         </ul>
       </div>
@@ -772,38 +719,27 @@
   <div class="container">
     <div class="roles-grid">
       <div>
-        <div class="section-label rail-label">One Team</div>
-        <h2 class="rail-title">Operate as one team.</h2>
-        <p class="rail-subline">From the person who set up the server to the operator in the 2 AM chair, everyone works from the same event, the same schedule, and the same log. Field Day Commander ships with four default roles, and you can change every permission to fit how your club runs.</p>
+        <div class="section-label rail-label">For Club Leadership</div>
+        <h2 class="rail-title">From setup to submission.</h2>
+        <p class="rail-subline">Give the team a shared record of the weekend, so the chairman isn&#39;t left gathering separate logs and chasing bonus details after teardown.</p>
       </div>
       <ul class="rail-list" role="list">
         <li>
-          <div class="role-head">
-            <h3>Admin <span>&middot; deploys and configures</span></h3>
-            <span class="role-scope">whole server</span>
-          </div>
-          <p>Gets the server running, creates accounts, and handles the infrastructure so everyone else can focus on the event.</p>
+          <h3>Share the responsibility.</h3>
+          <p>Let event managers coordinate the event, station captains prepare their stations, and operators log contacts. Adjustable permissions let you fit access to the way your club works.</p>
         </li>
         <li>
-          <div class="role-head">
-            <h3>Event Manager <span>&middot; plans and coordinates</span></h3>
-            <span class="role-scope">the event</span>
-          </div>
-          <p>Builds the schedule, assigns stations, runs the safety checklist, and handles the Cabrillo export at the end.</p>
+          <h3>Review the score and claims together.</h3>
+          <p>Check the combined QSO score and Field Day bonuses, or Winter Field Day objectives, before preparing the entry.</p>
         </li>
         <li>
-          <div class="role-head">
-            <h3>Station Captain <span>&middot; runs a station</span></h3>
-            <span class="role-scope">one station</span>
-          </div>
-          <p>Tracks the station&#39;s gear, coordinates band and mode use, and sets up station mode on its computer.</p>
+          <h3>Export the entry from the shared log.</h3>
+          <p>Download the event&#39;s Cabrillo log and submission summary. Export ADIF for the club log or CSV for your own analysis.</p>
+          <a href="how-to/submit-field-day-entry.html" class="rail-link">See the Field Day submission walkthrough &rarr;</a>
         </li>
         <li class="is-destination">
-          <div class="role-head">
-            <h3>Operator <span>&middot; logs contacts</span></h3>
-            <span class="role-scope">the log</span>
-          </div>
-          <p>Opens a browser and starts logging, with instant dupe checks and live band activity.</p>
+          <h3>Keep the weekend&#39;s records.</h3>
+          <p>The log, event photos, and reports give your club material to review and share after the radios are packed away.</p>
         </li>
       </ul>
     </div>
@@ -815,17 +751,17 @@
     <div class="quick-answers-grid">
       <div class="quick-answers-intro">
         <div class="section-label rail-label">Quick Answers</div>
-        <h2 class="rail-title">The usual questions.</h2>
+        <h2 class="rail-title">Will it fit our club?</h2>
         <a href="fd-commander-faq.html" class="rail-link">All questions &rarr;</a>
       </div>
       <dl class="quick-answers-list">
         <div class="quick-answer">
           <dt>Does it need internet?</dt>
-          <dd>Only to install it, and then it runs entirely on your LAN.</dd>
+          <dd>No. Once installed, Field Day Commander runs on your local network without internet. Logging, scoring, scheduling, and bonus tracking all work offline. Internet is only needed for optional features like live weather updates and email.</dd>
         </div>
         <div class="quick-answer">
           <dt>Does it work with N1MM Logger+ or <span class="nowrap">WSJT-X</span>?</dt>
-          <dd>Yes, built-in UDP listeners bring in contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi.</dd>
+          <dd>Yes. Keep the software your operators know. UDP listeners bring contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi into the shared log.</dd>
         </div>
         <div class="quick-answer">
           <dt>Does it handle Winter Field Day?</dt>
@@ -845,16 +781,16 @@
     <div class="closing-grid">
       <div>
         <div class="section-label rail-label">Free &amp; Open Source</div>
-        <h2 class="rail-title">Ready for this year's Field Day?</h2>
-        <p class="rail-subline">Three commands on any Linux box and your club is logging.</p>
+        <h2 class="rail-title">Bring your next Field Day together.</h2>
+        <p class="rail-subline">Take a look around the live demo, then share it with your Field Day team. When you&#39;re ready, the install guide walks you through setting up your club&#39;s server.</p>
         <div class="closing-actions">
           <a href="https://demo.fielddaycommander.org/" target="_blank" rel="noopener" class="btn-accent">Try the Live Demo</a>
-          <a href="https://github.com/ckoval7/fielddaycommander" target="_blank" rel="noopener" class="btn-outline">View on GitHub</a>
+          <a href="fd-commander-docs.html" class="btn-outline">Read the Install Guide &rarr;</a>
         </div>
       </div>
       <div class="deploy-rail">
         <div class="deploy-rail-header">
-          <h2>On the air in minutes</h2>
+          <h2>Set up your club&#39;s server</h2>
           <button type="button" class="deploy-rail-copy" aria-label="Copy all three deploy commands">Copy all</button>
           <span class="sr-only" role="status" aria-live="polite"></span>
         </div>
@@ -907,14 +843,8 @@
     var rotator = document.querySelector('.hero-rotator');
     if (!rotator) return;
     var phrases = rotator.querySelectorAll('.hero-phrase');
-    var current = Math.floor(Math.random() * phrases.length);
+    var current = 0;
     var paused = false;
-
-    phrases.forEach(function (phrase) { phrase.style.transition = 'none'; });
-    phrases[0].classList.remove('is-active');
-    phrases[current].classList.add('is-active');
-    void rotator.offsetHeight;
-    phrases.forEach(function (phrase) { phrase.style.transition = ''; });
 
     function advance() {
       if (paused || document.hidden) return;

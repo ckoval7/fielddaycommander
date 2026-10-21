@@ -277,7 +277,15 @@ footer {
   display: flex; justify-content: space-between; align-items: center;
   flex-wrap: wrap; gap: 1rem;
 }
-.footer-links { display: flex; gap: 1.5rem; align-items: center; }
+.footer-brand {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+.footer-logo { font-size: 0.95rem; white-space: nowrap; }
+.footer-logo img { width: 24px; height: 24px; object-fit: contain; }
+.footer-license { max-width: 100%; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; }
+.footer-links a, .footer-call { white-space: nowrap; }
 .footer-links a { color: var(--text-muted); }
 .footer-links a:hover { color: var(--text-secondary); }
 .footer-call { font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-size: 0.8rem; }
