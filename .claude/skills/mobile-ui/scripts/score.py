@@ -1,4 +1,4 @@
-"""Usability scoring audit for FD Commander, run against one server (BASE) and saved under OUT."""
+"""Usability scoring audit for Field Day Commander, run against one server (BASE) and saved under OUT."""
 import json
 import os
 import sys

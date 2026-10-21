@@ -52,7 +52,7 @@ usage() {
     cat <<'USAGE'
 Usage: backup.sh [options]
 
-Backs up the FD Commander database, uploaded files (storage/app) and .env.
+Backs up the Field Day Commander database, uploaded files (storage/app) and .env.
 .env holds APP_KEY, which two-factor secrets are encrypted with, so keep it
 with the database backup.
 
@@ -111,7 +111,7 @@ if [[ $DOCKER -eq 1 ]]; then
     DEST="${DEST:-$COMPOSE_DIR/backups}"
 else
     if [[ ! -f "$APP_PATH/artisan" ]]; then
-        log_error "No FD Commander install found at $APP_PATH — pass --app-path"
+        log_error "No Field Day Commander install found at $APP_PATH — pass --app-path"
         exit 1
     fi
     APP_PATH="$(cd "$APP_PATH" && pwd)"
@@ -149,7 +149,7 @@ install_schedule() {
 
     cat > "$SYSTEMD_DIR/fdcommander-backup-db.service" <<UNITEOF
 [Unit]
-Description=FD Commander hourly database backup
+Description=Field Day Commander hourly database backup
 After=mariadb.service
 
 [Service]
@@ -159,7 +159,7 @@ UNITEOF
 
     cat > "$SYSTEMD_DIR/fdcommander-backup-db.timer" <<UNITEOF
 [Unit]
-Description=Run the FD Commander database backup every hour
+Description=Run the Field Day Commander database backup every hour
 
 [Timer]
 OnCalendar=hourly
@@ -171,7 +171,7 @@ UNITEOF
 
     cat > "$SYSTEMD_DIR/fdcommander-backup.service" <<UNITEOF
 [Unit]
-Description=FD Commander nightly full backup
+Description=Field Day Commander nightly full backup
 After=mariadb.service
 
 [Service]
@@ -182,7 +182,7 @@ UNITEOF
     # 02:30 rather than on the hour, so it never starts alongside the hourly run.
     cat > "$SYSTEMD_DIR/fdcommander-backup.timer" <<UNITEOF
 [Unit]
-Description=Run the FD Commander full backup every night
+Description=Run the Field Day Commander full backup every night
 
 [Timer]
 OnCalendar=*-*-* 02:30:00
@@ -299,7 +299,7 @@ prune_old_backups() {
 }
 
 run_backup() {
-    log_phase "FD Commander Backup — $(date '+%Y-%m-%d %H:%M:%S')"
+    log_phase "Field Day Commander Backup — $(date '+%Y-%m-%d %H:%M:%S')"
 
     umask 077
     mkdir -p "$DEST"

@@ -1,6 +1,6 @@
 # Docker Deployment
 
-Run FD Commander with Docker Compose. The setup includes an application container (web server, WebSockets, queue worker, scheduler) and a MySQL database container.
+Run Field Day Commander with Docker Compose. The setup includes an application container (web server, WebSockets, queue worker, scheduler) and a MySQL database container.
 
 ## Quick Start (prebuilt image)
 

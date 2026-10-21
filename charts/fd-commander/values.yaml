@@ -19,7 +19,7 @@ serviceAccount:
   create: true
   annotations: {}
   name: ""
-  # FD Commander never calls the Kubernetes API, so the pod does not need a
+  # Field Day Commander never calls the Kubernetes API, so the pod does not need a
   # projected API token. Set to true only if you add a sidecar that does.
   automountServiceAccountToken: false
 

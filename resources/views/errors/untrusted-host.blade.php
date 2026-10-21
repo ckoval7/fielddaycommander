@@ -35,7 +35,7 @@
             Ask your administrator to add it to <code>TRUSTED_HOSTS</code> in the server's settings.
         </p>
         @if ($appUrl !== '')
-            <p>Until then, you can open FD Commander at <a href="{{ $appUrl }}">{{ $appUrl }}</a>.</p>
+            <p>Until then, you can open Field Day Commander at <a href="{{ $appUrl }}">{{ $appUrl }}</a>.</p>
         @endif
     </main>
 </body>

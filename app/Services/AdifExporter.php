@@ -93,7 +93,7 @@ class AdifExporter
         $config->loadMissing('event');
 
         $header = $this->field('ADIF_VER', self::ADIF_VERSION)."\n"
-            .$this->field('PROGRAMID', 'FD Commander')."\n"
+            .$this->field('PROGRAMID', 'Field Day Commander')."\n"
             .$this->field('PROGRAMVERSION', (string) config('app.version'))."\n"
             ."<EOH>\n\n";
 
