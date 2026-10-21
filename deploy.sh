@@ -6,14 +6,14 @@ set -euo pipefail
 
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
-FRANKENPHP_VERSION="1.13.0"
+FRANKENPHP_VERSION="1.13.2"
 # SHA-256 of the release binaries. FrankenPHP publishes no checksum file, so
 # these are GitHub's asset digests; update them with FRANKENPHP_VERSION:
 #   curl -fsS https://api.github.com/repos/php/frankenphp/releases/tags/v<ver> \
 #     | jq -r '.assets[] | select(.name|test("^frankenphp-linux-(x86_64|aarch64)$")) | "\(.name) \(.digest)"'
 # update.sh reads all three values from this file.
-FRANKENPHP_SHA256_X86_64="486673e20c014bfc4c9d27d5d3e78929f811c2834534f8117a56ab14de09e656"
-FRANKENPHP_SHA256_AARCH64="590762f2aea6b66cdc1d18b262a21ee1b0b938953a617598b8c970b453f2b1f1"
+FRANKENPHP_SHA256_X86_64="f8a54e583a23fbdf048bd6e1c6842b96ad7689117cab4c8f404dcc6b6393929b"
+FRANKENPHP_SHA256_AARCH64="157a208732e5e8d12b83bdbf2be82e3ab2610316f69bce737ac29753ac4e8a0b"
 NODE_MAJOR="22"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 readonly DISTRO_DEBIAN="debian"
@@ -585,6 +585,8 @@ upload_max_filesize = 30M
 post_max_size = 35M
 memory_limit = 256M
 max_execution_time = 60
+; Laravel never uses PHP's native sessions. update.sh adds this to older installs.
+session.upload_progress.enabled = Off
 PHPEOF
     log_info "PHP configuration written to ${ini_file}"
 }
