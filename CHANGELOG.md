@@ -6,6 +6,10 @@ This changelog starts after 26.10.9. For earlier releases, see the commit histor
 
 ## Unreleased
 
+### Security
+
+- PHP2Shell (CVE-2026-109618 and CVE-2026-109619) let anyone who could reach the server run code on it without signing in. FD Commander now runs on FrankenPHP 1.13.2, which is built with patched PHP. Update with `update.sh` or pull the new Docker image as soon as you can. Installs also turn off PHP's session upload progress tracking, which FD Commander never used.
+
 ### Fixed
 
 - Since 26.10.10, the PDF reports had a white strip across the top of the first page, above the blue title banner. In the ARRL submission sheet and the Winter Field Day event summary, the same strip showed on every later page that starts with a banner. The banners reach the top edge of the page again.
