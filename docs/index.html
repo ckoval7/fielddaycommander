@@ -105,17 +105,12 @@
 
   /* ── DEPLOY STEP RAIL ── */
   :root {
-    --rail-teal: oklch(0.78 0.12 175);
-    --rail-teal-halo: oklch(0.78 0.12 175 / .18);
+    --rail-accent: var(--accent);
+    --rail-accent-halo: rgba(74, 141, 247, 0.18);
   }
   .deploy-rail {
     max-width: 720px;
-    padding: 28px 28px 24px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 12px;
     text-align: left;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
     position: relative; z-index: 1;
   }
   .deploy-rail-header {
@@ -172,13 +167,13 @@
     display: flex; flex-wrap: wrap; gap: 4px 14px;
     list-style: none; margin: 0; padding: 0;
     font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
-    color: var(--rail-teal);
+    color: var(--rail-accent);
   }
   .deploy-rail-step.is-live .deploy-rail-marker::before {
     width: 14px; height: 14px; margin-top: 2px;
     border: none;
-    background: var(--rail-teal);
-    box-shadow: 0 0 0 4px var(--rail-teal-halo);
+    background: var(--rail-accent);
+    box-shadow: 0 0 0 4px var(--rail-accent-halo);
   }
   .deploy-rail-step.is-live .deploy-rail-marker::after { content: none; }
   .deploy-rail-step.is-live .deploy-rail-body {
@@ -189,7 +184,7 @@
   .deploy-rail-live code {
     display: inline; padding: 0;
     background: none; border: none;
-    font-size: 0.875rem; color: var(--rail-teal);
+    font-size: 0.875rem; color: var(--rail-accent);
   }
   .deploy-rail-signoff {
     font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
@@ -197,7 +192,7 @@
   }
 
   /* ── RAIL SECTIONS (shared) ── */
-  .rail-label { color: var(--rail-teal); }
+  .rail-label { color: var(--rail-accent); }
   .rail-title {
     font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800; line-height: 1.15;
     letter-spacing: -0.01em; color: var(--text-primary);
@@ -207,20 +202,26 @@
   .rail-subline { font-size: 1rem; color: var(--text-muted); line-height: 1.6; text-wrap: pretty; }
   .rail-link {
     font-size: 0.9rem; font-weight: 600;
-    color: var(--rail-teal); text-decoration: none;
+    color: var(--rail-accent); text-decoration: none;
     white-space: nowrap;
   }
-  .rail-link:hover { text-decoration: underline; }
+  .rail-link:hover { color: var(--rail-accent); text-decoration: underline; }
+
+  /* ── STANDOUTS ── */
+  .standouts-header { max-width: 720px; margin-bottom: 36px; }
+  .standouts .phases-rail { grid-template-columns: repeat(3, 1fr); column-gap: 48px; --phase-gap: 48px; }
+  .standouts .phase-header { margin-bottom: 16px; }
+  .standout-text { font-size: 1rem; line-height: 1.7; color: var(--text-secondary); margin-bottom: 16px; }
+  .standout-checks {
+    display: flex; flex-direction: column; gap: 6px;
+    list-style: none; margin: 0; padding: 0;
+    font-size: 0.9rem; color: var(--text-primary);
+  }
+  .standout-checks .check { color: var(--rail-accent); margin-right: 0.4rem; }
 
   /* ── EVENT PHASES ── */
-  .phases-card {
-    --phase-gap: 32px;
-    max-width: 1200px; margin: 0 auto;
-    padding: 36px 36px 32px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-  }
+  .phases { border-top: 1px solid var(--border); }
+  .phases-card { --phase-gap: 32px; }
   .phases-header {
     display: flex; align-items: flex-end; justify-content: space-between;
     flex-wrap: wrap; gap: 1rem 2rem;
@@ -249,8 +250,8 @@
     top: 2px; left: 3px;
     width: 14px; height: 14px;
     border: none;
-    background: var(--rail-teal);
-    box-shadow: 0 0 0 4px var(--rail-teal-halo);
+    background: var(--rail-accent);
+    box-shadow: 0 0 0 4px var(--rail-accent-halo);
   }
   .phase.is-destination::after { content: none; }
   .phase-header {
@@ -262,6 +263,8 @@
     margin-bottom: 0.4rem;
   }
   .phase-title h3 { font-size: 1.375rem; font-weight: 700; line-height: 1.2; color: var(--text-primary); }
+  .phase-title h3 a { color: inherit; }
+  .phase-title h3 a:hover { color: var(--rail-accent); }
   .phase-when {
     font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
     color: var(--text-muted); white-space: nowrap;
@@ -279,12 +282,12 @@
     .phase:nth-child(2)::after { content: none; }
   }
   @media (max-width: 560px) {
-    .phases-card { padding: 24px 16px 20px; }
     .phases-header { margin-bottom: 28px; }
     .phases-rail { grid-template-columns: 1fr; row-gap: 0; }
     .phase { padding-top: 0; padding-left: 32px; padding-bottom: 28px; }
     .phase.is-destination { padding-bottom: 0; }
     .phase:nth-child(2)::after { content: ''; }
+    .phase.is-destination::after { content: none; }
     .phase::after {
       top: 14px; bottom: 0; left: 9px; right: auto;
       width: 2px; height: auto;
@@ -292,6 +295,7 @@
   }
 
   /* ── BIG SCREEN ── */
+  .big-screen { border-top: 1px solid var(--border); }
   .big-screen-grid {
     display: grid; grid-template-columns: 1.55fr 1fr;
     gap: 56px; align-items: center;
@@ -313,34 +317,52 @@
     font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
     color: var(--text-muted);
   }
-  .big-screen-callouts {
-    list-style: none; margin: 24px 0 0; padding: 24px 0 0;
-    border-top: 1px solid var(--border);
-  }
-  .big-screen-callouts li { position: relative; padding: 0 0 22px 38px; }
-  .big-screen-callouts li:last-child { padding-bottom: 0; }
-  .big-screen-callouts li::before {
+  .rail-list { list-style: none; margin: 0; padding: 0; }
+  .big-screen .rail-list { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .rail-list li { position: relative; padding: 0 0 22px 38px; }
+  .rail-list li:last-child { padding-bottom: 0; }
+  .rail-list li::before {
     content: '';
     position: absolute; top: 4px; left: 5px;
     width: 10px; height: 10px;
     border: 2px solid var(--text-muted); border-radius: 50%;
   }
-  .big-screen-callouts li::after {
+  .rail-list li::after {
     content: '';
     position: absolute; top: 14px; bottom: 0; left: 9px;
     width: 2px;
     background: var(--border);
   }
-  .big-screen-callouts li.is-destination::before {
+  .rail-list li.is-destination::before {
     top: 2px; left: 3px;
     width: 14px; height: 14px;
     border: none;
-    background: var(--rail-teal);
-    box-shadow: 0 0 0 4px var(--rail-teal-halo);
+    background: var(--rail-accent);
+    box-shadow: 0 0 0 4px var(--rail-accent-halo);
   }
-  .big-screen-callouts li.is-destination::after { content: none; }
-  .big-screen-callouts h3 { font-size: 1rem; font-weight: 600; line-height: 1.3; color: var(--text-primary); margin-bottom: 0.2rem; }
-  .big-screen-callouts p { font-size: 0.875rem; line-height: 1.5; color: var(--text-muted); }
+  .rail-list li.is-destination::after { content: none; }
+  .rail-list h3 { font-size: 1rem; font-weight: 600; line-height: 1.3; color: var(--text-primary); margin-bottom: 0.2rem; }
+  .rail-list p { font-size: 0.875rem; line-height: 1.5; color: var(--text-muted); }
+
+  /* ── WHO IT'S FOR ── */
+  .roles { border-top: 1px solid var(--border); }
+  .roles-grid {
+    display: grid; grid-template-columns: 340px 1fr;
+    gap: 64px; align-items: start;
+  }
+  .role-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: 0.25rem 1rem;
+    margin-bottom: 0.3rem;
+  }
+  .role-head h3 { font-size: 1rem; font-weight: 700; line-height: 1.3; color: var(--text-primary); }
+  .role-head h3 span { font-weight: 400; color: var(--text-muted); }
+  .role-scope {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    color: var(--text-muted); white-space: nowrap;
+  }
+  .roles .rail-list li { padding-bottom: 26px; }
+  .roles .rail-list li:last-child { padding-bottom: 0; }
 
   /* ── QUICK ANSWERS ── */
   .quick-answers { border-top: 1px solid var(--border); }
@@ -367,14 +389,14 @@
     gap: 56px; align-items: center;
   }
   .closing-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
-  .btn-teal {
-    background: var(--rail-teal); color: #15191e;
+  .btn-accent {
+    background: var(--rail-accent); color: #15191e;
     font-weight: 700; font-size: 1rem;
     padding: 0.85rem 2rem; border-radius: 10px;
     text-decoration: none;
     transition: filter 0.25s, transform 0.25s;
   }
-  .btn-teal:hover { filter: brightness(1.08); transform: translateY(-2px); }
+  .btn-accent:hover { color: #15191e; filter: brightness(1.08); transform: translateY(-2px); }
   .btn-outline {
     color: var(--text-primary);
     font-weight: 600; font-size: 1rem;
@@ -383,18 +405,26 @@
     text-decoration: none;
     transition: border-color 0.25s, transform 0.25s;
   }
-  .btn-outline:hover { border-color: var(--rail-teal); transform: translateY(-2px); }
-  .closing .deploy-rail { background: var(--bg-primary); margin: 0; }
+  .btn-outline:hover { color: var(--text-primary); border-color: var(--rail-accent); transform: translateY(-2px); }
+  .closing .deploy-rail { margin: 0; }
 
   @media (max-width: 900px) {
-    .big-screen-grid, .quick-answers-grid, .closing-grid { grid-template-columns: 1fr; }
+    .big-screen-grid, .roles-grid, .quick-answers-grid, .closing-grid { grid-template-columns: 1fr; }
+    .roles-grid { gap: 32px; }
     .big-screen-grid { gap: 32px; }
     .quick-answers-grid { gap: 32px; }
     .closing-grid { gap: 40px; }
     .closing .deploy-rail { max-width: none; }
+    .standouts .phases-rail { grid-template-columns: 1fr; row-gap: 0; max-width: 640px; }
+    .standouts .phase { padding-top: 0; padding-left: 32px; padding-bottom: 36px; }
+    .standouts .phase.is-destination { padding-bottom: 0; }
+    .standouts .phase:nth-child(2)::after { content: ''; }
+    .standouts .phase.is-destination::after { content: none; }
+    .standouts .phase::after { top: 14px; bottom: 0; left: 9px; right: auto; width: 2px; height: auto; }
   }
   @media (max-width: 560px) {
     .quick-answer { grid-template-columns: 1fr; }
+    .role-head { flex-direction: column; align-items: flex-start; }
   }
 
   /* ── SIGNAL STRENGTH DIVIDER ── */
@@ -410,7 +440,6 @@
 
   @media (max-width: 768px) {
     .hero { padding: 8rem 1.5rem 4rem; }
-    .deploy-rail { padding: 20px 16px 18px; }
     .deploy-rail-step { column-gap: 12px; }
   }
 </style>
@@ -546,6 +575,60 @@
   <div class="signal-bar" style="height:6px"></div>
 </div>
 
+<section class="standouts">
+  <div class="container">
+    <div class="standouts-header">
+      <div class="section-label rail-label">What Sets It Apart</div>
+      <h2 class="rail-title">The whole event in one place.</h2>
+      <p class="rail-subline">Most Field Day software is a logger. FD Commander also keeps track of the club&#39;s gear, the operating schedule, and the weather.</p>
+    </div>
+    <ol class="phases-rail" role="list">
+      <li class="phase">
+        <div class="phase-header">
+          <div class="phase-title">
+            <h3>Track every piece of gear</h3>
+            <span class="phase-when">setup to teardown</span>
+          </div>
+        </div>
+        <p class="standout-text">Members add their radios, antennas, and other gear to their own catalog, then commit what they&#39;re bringing to the event. You can assign each item to a station and mark it delivered when it shows up. Owners get an email when their gear is delivered and again when it&#39;s returned. On Sunday, the return checklist lists every item under its owner, so it all goes home with the right person.</p>
+        <ul class="standout-checks" role="list">
+          <li><span class="check" aria-hidden="true">&#10003;</span>Club gear and members&#39; gear in one inventory</li>
+          <li><span class="check" aria-hidden="true">&#10003;</span>Gear assigned to each station</li>
+          <li><span class="check" aria-hidden="true">&#10003;</span>Printable delivery and return checklists</li>
+        </ul>
+      </li>
+      <li class="phase">
+        <div class="phase-header">
+          <div class="phase-title">
+            <h3>Fill every shift</h3>
+            <span class="phase-when">weeks out</span>
+          </div>
+        </div>
+        <p class="standout-text">Lay out the operating schedule and let operators sign up for open shifts. The shift dashboard shows which hours still need someone, so you can find a volunteer for the overnight before the weekend instead of during it. The safety checklist for your event is in the same place, ready to check off as the site comes together.</p>
+        <ul class="standout-checks" role="list">
+          <li><span class="check" aria-hidden="true">&#10003;</span>Shift sign-up with coverage gaps shown</li>
+          <li><span class="check" aria-hidden="true">&#10003;</span>Operator, GOTA coach, and safety officer roles</li>
+          <li><span class="check" aria-hidden="true">&#10003;</span>The safety checklist for your event</li>
+        </ul>
+      </li>
+      <li class="phase is-destination">
+        <div class="phase-header">
+          <div class="phase-title">
+            <h3>Warn the site about storms</h3>
+            <span class="phase-when">live</span>
+          </div>
+        </div>
+        <p class="standout-text">When the server has an internet connection, FD Commander checks the National Weather Service for storm warnings at your site. Any warning shows up in a banner at the top of every screen, including the logging screens. You can also post a lightning alert yourself, with instructions to stop operating or take shelter. Members who opt in get alerts by email too.</p>
+        <ul class="standout-checks" role="list">
+          <li><span class="check" aria-hidden="true">&#10003;</span>Storm warnings from the National Weather Service</li>
+          <li><span class="check" aria-hidden="true">&#10003;</span>Lightning alerts you post from the site</li>
+          <li><span class="check" aria-hidden="true">&#10003;</span>A banner on every screen</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+</section>
+
 <section class="phases" id="how-it-works">
   <div class="container">
     <div class="phases-card">
@@ -553,7 +636,7 @@
         <div>
           <div class="section-label rail-label">How It Works</div>
           <h2 class="rail-title">From setup to submission.</h2>
-          <p class="rail-subline">The features you'll use at each stage of a Field Day event.</p>
+          <p class="rail-subline">The features you&#39;ll use at each stage of the event.</p>
         </div>
         <a href="fd-commander-features.html" class="rail-link">All features &rarr;</a>
       </div>
@@ -561,7 +644,7 @@
         <li class="phase">
           <div class="phase-header">
             <div class="phase-title">
-              <h3>Deploy</h3>
+              <h3><a href="fd-commander-features.html#field-conditions">Deploy</a></h3>
               <span class="phase-when">once</span>
             </div>
             <p class="phase-summary">Install it on a Linux machine on your LAN.</p>
@@ -584,7 +667,7 @@
         <li class="phase">
           <div class="phase-header">
             <div class="phase-title">
-              <h3>Plan</h3>
+              <h3><a href="fd-commander-features.html#planning">Plan</a></h3>
               <span class="phase-when">weeks out</span>
             </div>
             <p class="phase-summary">Set up stations, people, and gear before the weekend.</p>
@@ -607,7 +690,7 @@
         <li class="phase">
           <div class="phase-header">
             <div class="phase-title">
-              <h3>Operate</h3>
+              <h3><a href="fd-commander-features.html#logging">Operate</a></h3>
               <span class="phase-when">24 hours</span>
             </div>
             <p class="phase-summary">Log from every station while the score updates live.</p>
@@ -634,7 +717,7 @@
         <li class="phase is-destination">
           <div class="phase-header">
             <div class="phase-title">
-              <h3>Submit</h3>
+              <h3><a href="fd-commander-features.html#scoring">Submit</a></h3>
               <span class="phase-when">after</span>
             </div>
             <p class="phase-summary">Get your entry ready for the ARRL or the WFDA.</p>
@@ -672,7 +755,7 @@
         <div class="section-label rail-label">On the Big Screen</div>
         <h2 class="rail-title">Made for the big screen.</h2>
         <p class="rail-subline">Put the dashboard on any TV. Score, rate, and sections update live for the whole club and every visitor who walks by.</p>
-        <ul class="big-screen-callouts" role="list">
+        <ul class="rail-list" role="list">
           <li>
             <h3>Score and rate</h3>
             <p>Total score, QSO count, and contacts per hour.</p>
@@ -687,6 +770,48 @@
           </li>
         </ul>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="roles">
+  <div class="container">
+    <div class="roles-grid">
+      <div>
+        <div class="section-label rail-label">Who It&#39;s For</div>
+        <h2 class="rail-title">From the server rack to the operating chair.</h2>
+        <p class="rail-subline">FD Commander ships with four default roles, and you can customize every permission to fit how your club runs.</p>
+      </div>
+      <ul class="rail-list" role="list">
+        <li>
+          <div class="role-head">
+            <h3>Admin <span>&middot; deploys and configures</span></h3>
+            <span class="role-scope">whole server</span>
+          </div>
+          <p>Gets the server running, creates accounts, and handles the infrastructure so everyone else can focus on the event.</p>
+        </li>
+        <li>
+          <div class="role-head">
+            <h3>Event Manager <span>&middot; plans and coordinates</span></h3>
+            <span class="role-scope">the event</span>
+          </div>
+          <p>Builds the schedule, assigns stations, runs the safety checklist, and handles the Cabrillo export at the end.</p>
+        </li>
+        <li>
+          <div class="role-head">
+            <h3>Station Captain <span>&middot; runs a station</span></h3>
+            <span class="role-scope">one station</span>
+          </div>
+          <p>Tracks the station&#39;s gear, coordinates band and mode use, and sets up station mode on its computer.</p>
+        </li>
+        <li class="is-destination">
+          <div class="role-head">
+            <h3>Operator <span>&middot; logs contacts</span></h3>
+            <span class="role-scope">the log</span>
+          </div>
+          <p>Opens a browser and starts logging, with instant dupe checks and live band activity.</p>
+        </li>
+      </ul>
     </div>
   </div>
 </section>
@@ -729,8 +854,8 @@
         <h2 class="rail-title">Ready for this year's Field Day?</h2>
         <p class="rail-subline">Three commands on any Linux box and your club is logging.</p>
         <div class="closing-actions">
-          <a href="https://github.com/ckoval7/fielddaycommander" target="_blank" rel="noopener" class="btn-teal">View on GitHub</a>
-          <a href="fd-commander-docs.html" class="btn-outline">Read the docs</a>
+          <a href="https://demo.fielddaycommander.org/" target="_blank" rel="noopener" class="btn-accent">Try the Live Demo</a>
+          <a href="https://github.com/ckoval7/fielddaycommander" target="_blank" rel="noopener" class="btn-outline">View on GitHub</a>
         </div>
       </div>
       <div class="deploy-rail">
