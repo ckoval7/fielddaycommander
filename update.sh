@@ -582,6 +582,20 @@ stage_frankenphp_update() {
     return 0
 }
 
+# Older installs have a php.ini from before deploy.sh turned off PHP's native
+# session upload progress, which Laravel never uses and which was one of the
+# ways in for CVE-2026-109618. Add the setting unless the admin has set it.
+harden_php_ini() {
+    local ini_file="/etc/frankenphp/php.ini"
+    [[ -f "$ini_file" ]] || return 0
+    if grep -qE '^[[:space:]]*session\.upload_progress\.enabled[[:space:]]*=' "$ini_file"; then
+        return 0
+    fi
+    printf '\nsession.upload_progress.enabled = Off\n' >> "$ini_file"
+    log_info "Turned off session.upload_progress in ${ini_file}"
+    return 0
+}
+
 # Swap in the binary stage_frankenphp_update verified. A rename over the old
 # binary, so the running server is never left with a half-written file.
 install_staged_frankenphp() {
@@ -1309,6 +1323,7 @@ main() {
     ensure_node_version
     install_dependencies
     stage_frankenphp_update
+    harden_php_ini
     enter_maintenance
     take_pre_update_backup
     run_migrations
