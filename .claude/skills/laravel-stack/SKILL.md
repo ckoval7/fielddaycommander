@@ -1,6 +1,6 @@
 ---
 name: laravel-stack
-description: Use this skill when writing or changing any PHP, Blade, Livewire, migration, model, test, config or artisan work in FD Commander. It covers the stack versions (Laravel 13, Livewire 4, Mary UI, Pest 5, Octane, Reverb), PHP style, Laravel conventions, Livewire and Octane pitfalls, testing with Pest, and running Pint.
+description: Use this skill when writing or changing any PHP, Blade, Livewire, migration, model, test, config or artisan work in Field Day Commander. It covers the stack versions (Laravel 13, Livewire 4, Mary UI, Pest 5, Octane, Reverb), PHP style, Laravel conventions, Livewire and Octane pitfalls, testing with Pest, and running Pint.
 ---
 
 # Laravel Stack

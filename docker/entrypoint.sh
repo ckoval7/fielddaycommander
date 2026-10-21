@@ -11,7 +11,7 @@ if [[ "${1:-}" = "setup" ]]; then
     exec bash /app/docker/install.sh "$@"
 fi
 
-echo "=== FD Commander Docker Entrypoint ==="
+echo "=== Field Day Commander Docker Entrypoint ==="
 
 # 0. Validate required environment
 if [[ -z "${DB_PASSWORD:-}" ]]; then

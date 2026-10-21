@@ -1,9 +1,9 @@
 ---
 name: docs-prose
-description: Use this skill when writing or editing any user-facing prose for FD Commander, including the website and docs in the github.io branch (docs/ folder, fielddaycommander-pages worktree), how-to guides, the FAQ, feature copy, README text, release notes, and CHANGELOG.md entries. It sets the voice, punctuation rules (no em dashes), and HTML conventions so new text reads like the rest of the site and like a person wrote it.
+description: Use this skill when writing or editing any user-facing prose for Field Day Commander, including the website and docs in the github.io branch (docs/ folder, fielddaycommander-pages worktree), how-to guides, the FAQ, feature copy, README text, release notes, and CHANGELOG.md entries. It sets the voice, punctuation rules (no em dashes), and HTML conventions so new text reads like the rest of the site and like a person wrote it.
 ---
 
-# FD Commander docs prose
+# Field Day Commander docs prose
 
 The site is written by a ham for hams. It sounds like a club member who has run Field Day a few times and is showing you around the software. Plain, friendly, specific, a little dry humor now and then. Never salesy, never breathless.
 
@@ -20,7 +20,7 @@ Write like an experienced, approachable engineer helping another person get some
 - Avoid generic introductions, closing summaries, repetitive transitions, and marketing language.
 - Don't say the same thing in the introduction, the body, and the conclusion.
 - Don't add filler to make a page feel complete. Cover what the reader actually needs, and cover it well.
-- Assume the reader is intelligent but may be new to FD Commander.
+- Assume the reader is intelligent but may be new to Field Day Commander.
 
 ### Accuracy
 
@@ -39,6 +39,10 @@ Read your draft as a human technical editor would. Cut sentences that don't earn
 - Branch `github.io`, served by GitHub Pages from `/docs`. Check it out in a worktree at `../fielddaycommander-pages`.
 - `docs/fd-commander-docs.html` is the full reference. `docs/fd-commander-features.html` and `docs/index.html` are marketing pages. `docs/fd-commander-faq.html` answers skeptics. `docs/how-to/` has step-by-step guides, indexed in `docs/how-to/index.html`.
 - `docs/sitemap.xml` lists every page. Add new pages there and to `how-to/index.html`.
+
+## The product name
+
+The product is **Field Day Commander**. Use the full name in page titles, headings, meta tags, banners, export headers and the first mention on a page or in a section. After that, "FD Commander" is fine as a short name in the docs, how-to guides and FAQ, so a page doesn't repeat the full name in every paragraph. The homepage uses the full name throughout. Never write it as "FDC", and don't use the `fd-commander` slug in prose.
 
 ## Punctuation
 
@@ -67,7 +71,7 @@ Read your draft as a human technical editor would. Cut sentences that don't earn
 - Say things plainly. Don't write clever-sounding phrases the reader has to decode, like "Most of this guide is for the days you need it." Write what you mean: "The rest of this guide covers restoring and moving servers, so you can come back to it when you need it."
 - Leave out internal details the reader doesn't need to act on. On the FAQ and marketing pages, "the app picks the right scoring rules for the event" beats listing rule versions and when they lock. Save that kind of detail for the reference docs, and only include it there if someone needs it to make a choice.
 - Don't tack a clause onto a sentence to rule out a problem the reader wasn't worried about ("…ready for the next operator, with no chance of logging under whoever sat there last"). End the sentence where the useful information ends. If a risk really matters, give it its own sentence or a callout.
-- Don't reassure the reader that the software is looking after them: "FD Commander picks the right one for you", "has everything ready for you", "takes care of it", "you'll be glad you did". State the fact plainly ("It depends on your operating class:") and move on.
+- Don't reassure the reader that the software is looking after them: "Field Day Commander picks the right one for you", "has everything ready for you", "takes care of it", "you'll be glad you did". State the fact plainly ("It depends on your operating class:") and move on.
 - Prefer the spoken form "doesn't have a" over the clipped "has no": "Winter Field Day doesn't have a safety bonus", not "Winter Field Day has no safety bonus".
 - Field Day is an operating event, not a contest. Don't frame it as something clubs win, lose, or beat each other at ("where scores are won", "won or lost in the weeks before"). Talk about earning points, a bigger score, or getting more out of the event.
 - Avoid personifying data or software with verbs like "lives", "sits", "breathes", or "speaks". Say where it's stored or what it does.
@@ -81,7 +85,7 @@ seamless, seamlessly, robust, powerful, leverage, utilize, effortless, streamlin
 Also avoid:
 
 - Triplets used for rhythm ("fast, simple, and reliable") when one precise word would do.
-- Starting a paragraph with a question you answer yourself ("Need to export? FD Commander has you covered.").
+- Starting a paragraph with a question you answer yourself ("Need to export? Field Day Commander has you covered.").
 - Ending a section with a summary sentence that repeats it.
 - Bold or italics for emphasis inside a sentence. Bold is for UI labels only.
 
@@ -123,8 +127,8 @@ How-to guides sound like an experienced club member sitting next to you at the b
 
 ## Marketing conventions (index.html, fd-commander-features.html)
 
-- FD Commander has rule sets for both ARRL Field Day and Winter Field Day. On the homepage, don't single out either event: no card about one event, and no ARRL-only details like "the 100-point Safety Officer bonus" or W1AW. Describe features in terms that hold for both ("the bulletin", "your event's rules"). The reference docs and how-to guides can still be specific about each event.
-- FD Commander works with whatever computers a club has: club-owned equipment, members' own laptops and tablets (BYOD), or a mix. Never make club equipment sound required, and don't say "club laptop" when you mean "a computer". Station mode is for any computer that stays at a station while operators take turns on it ("bind a shared computer to its station"), whoever owns it. Signing in with a personal account on your own device is equally supported. GOTA and visitors are just more cases of shared computers.
+- Field Day Commander has rule sets for both ARRL Field Day and Winter Field Day. On the homepage, don't single out either event: no card about one event, and no ARRL-only details like "the 100-point Safety Officer bonus" or W1AW. Describe features in terms that hold for both ("the bulletin", "your event's rules"). The reference docs and how-to guides can still be specific about each event.
+- Field Day Commander works with whatever computers a club has: club-owned equipment, members' own laptops and tablets (BYOD), or a mix. Never make club equipment sound required, and don't say "club laptop" when you mean "a computer". Station mode is for any computer that stays at a station while operators take turns on it ("bind a shared computer to its station"), whoever owns it. Signing in with a personal account on your own device is equally supported. GOTA and visitors are just more cases of shared computers.
 - Lead with the answer a reader is hoping for when it's true. "Do operators need accounts?" opens with "Not to log," then explains station mode, then what accounts are still good for.
 - Headlines are short, concrete outcomes: "Know where every piece of gear is."
 - Feature checklists use `✓` items, each a short fragment with no ending period.

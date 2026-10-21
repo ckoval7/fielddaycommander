@@ -1,4 +1,4 @@
-# FD Commander
+# Field Day Commander
 
 A self-hosted web app that ham radio clubs run during ARRL Field Day and Winter Field Day. It covers the whole event, not just logging: multi-operator contact logging with live dupe checks, real-time scoring with bonus tracking, station and equipment management, volunteer shifts, the guestbook, NTS message traffic and the net log, safety checklists, photos, and Cabrillo/ADIF export.
 
@@ -44,6 +44,7 @@ Activate the `branch-workflow` skill before you start, commit or merge work, tou
 
 - **Commits:** Conventional Commits, describing the change in plain words (`fix(logging): show the first queued contact before it syncs`).
 - **Changelog:** anything a user or self-hoster could notice gets a `CHANGELOG.md` entry under **Unreleased** in the same branch. Describe fixes by what the person saw and when, not what changed in the code. Skip refactors, typos and CI. `CONTRIBUTING.md` has the full rules.
+- **Product name:** Field Day Commander. "FD Commander" is only a short name for repeat mentions in prose. Titles, headings, banners and export headers always use the full name. The `fd-commander` and `fd_commander` slugs are identifiers: don't rename them.
 - **User-facing prose** (UI copy, README, changelog, the website and docs in the `fielddaycommander-pages` worktree): activate the `docs-prose` skill.
 - Only create documentation files when asked.
 

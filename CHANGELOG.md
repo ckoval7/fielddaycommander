@@ -1,10 +1,14 @@
 # Changelog
 
-Changes that someone running or using FD Commander would notice, newest release first. Versions are `YY.MM.N`, and each one matches a `vYY.MM.N` tag and Docker image. [CONTRIBUTING.md](CONTRIBUTING.md#changelog) explains what goes in here.
+Changes that someone running or using Field Day Commander would notice, newest release first. Versions are `YY.MM.N`, and each one matches a `vYY.MM.N` tag and Docker image. [CONTRIBUTING.md](CONTRIBUTING.md#changelog) explains what goes in here.
 
 This changelog starts after 26.10.9. For earlier releases, see the commit history.
 
 ## Unreleased
+
+### Changed
+
+- Cabrillo and ADIF exports now name the program as Field Day Commander instead of FD Commander. So do the service names in `systemctl status`, the backup timers, and the messages from `deploy.sh`, `update.sh`, `backup.sh`, `restore.sh` and the Docker container. Services pick up the new names on the next `update.sh` run.
 
 ### Fixed
 

@@ -1,6 +1,6 @@
 ---
 name: release
-description: Use this skill to cut an FD Commander release. Triggers include a version bump, a release, tagging (vYY.MM.N), or "ship it". The release runs a full Sonar scan until it is clean, a Trivy scan, package updates, and only then the version bump and tag. Never bump or tag without completing the earlier steps.
+description: Use this skill to cut a Field Day Commander release. Triggers include a version bump, a release, tagging (vYY.MM.N), or "ship it". The release runs a full Sonar scan until it is clean, a Trivy scan, package updates, and only then the version bump and tag. Never bump or tag without completing the earlier steps.
 ---
 
 # Release
