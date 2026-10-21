@@ -60,7 +60,7 @@ usage() {
     cat <<'USAGE'
 Usage: update.sh [options]
 
-Updates an existing FD Commander deployment with the latest code.
+Updates an existing Field Day Commander deployment with the latest code.
 
 Options:
   --app-path <path>     Deploy path (default: /var/www/fd-commander)
@@ -96,7 +96,7 @@ done
 # --- Validation ---
 if [[ ! -d "$APP_PATH" ]]; then
     log_error "App path does not exist: $APP_PATH"
-    log_error "Has FD Commander been deployed? Run deploy.sh first."
+    log_error "Has Field Day Commander been deployed? Run deploy.sh first."
     exit 1
 fi
 
@@ -108,7 +108,7 @@ fi
 # The web group is the app user's own group, the one deploy.sh created it
 # with. (The install directory is root-owned, so its group says nothing.)
 if ! WEB_GROUP=$(id -gn fdcommander 2>/dev/null); then
-    log_error "User fdcommander not found. Has FD Commander been deployed with deploy.sh?"
+    log_error "User fdcommander not found. Has Field Day Commander been deployed with deploy.sh?"
     exit 1
 fi
 
@@ -462,6 +462,25 @@ sync_octane_workers() {
     return 0
 }
 
+# Rename the product in unit descriptions written by older installs, so
+# systemctl status shows the full name. Idempotent.
+rename_unit_descriptions() {
+    local changed=0 unit_file
+    for unit_file in /etc/systemd/system/fdcommander*.service /etc/systemd/system/fdcommander*.timer; do
+        [[ -f "$unit_file" ]] || continue
+        if grep -q 'FD Commander' "$unit_file"; then
+            sed -i 's/FD Commander/Field Day Commander/g' "$unit_file"
+            changed=1
+        fi
+    done
+
+    if [[ $changed -eq 1 ]]; then
+        log_info "Renamed services to Field Day Commander"
+        systemctl daemon-reload
+    fi
+    return 0
+}
+
 # Convert the scheduler from a oneshot unit + timer (older installs) to a
 # long-running schedule:work service. A oneshot unit's cgroup is killed when
 # schedule:run exits, which also kills any external-logger listener that
@@ -741,7 +760,7 @@ bootstrap_redis() {
 
     mkdir -p "$(dirname "$override")"
     cat > "$override" <<REDISEOF
-# FD Commander Redis tuning — durable queue + heavy RAM cache.
+# Field Day Commander Redis tuning — durable queue + heavy RAM cache.
 appendonly yes
 appendfsync always
 no-appendfsync-on-rewrite no
@@ -761,7 +780,7 @@ REDISEOF
 
     if ! grep -q "^include ${override}" "$conf_file"; then
         echo "" >> "$conf_file"
-        echo "# FD Commander overrides" >> "$conf_file"
+        echo "# Field Day Commander overrides" >> "$conf_file"
         echo "include ${override}" >> "$conf_file"
     fi
 
@@ -1032,7 +1051,7 @@ tls_files_usable() {
     for file in "$cert" "$key"; do
         if path_in_private_tmp "$file"; then
             log_warn "${file} (SSL_CERT/SSL_KEY in .env) is under /tmp or /var/tmp, which the"
-            log_warn "FD Commander services cannot see (PrivateTmp), so Caddy keeps using automatic"
+            log_warn "Field Day Commander services cannot see (PrivateTmp), so Caddy keeps using automatic"
             log_warn "HTTPS. Move the certificate and key somewhere permanent (e.g. /etc/ssl/fd-commander/),"
             log_warn "update SSL_CERT/SSL_KEY, delete ${CADDY_SNIPPET_DIR}/tls.caddy and run update.sh --force."
             return 1
@@ -1089,7 +1108,7 @@ note_trusted_hosts() {
     chmod 640 "$env_file"
     # Not enforced while APP_URL is localhost.
     [[ -n "$app_host" && "$app_host" != "localhost" ]] || return 0
-    log_warn "FD Commander now only answers for ${app_host}, private IP addresses"
+    log_warn "Field Day Commander now only answers for ${app_host}, private IP addresses"
     log_warn "and .local names. If people reach it by another name or a public IP, add it to"
     log_warn "TRUSTED_HOSTS in ${env_file} (comma-separated), then run: sudo -u fdcommander php artisan optimize"
     return 0
@@ -1104,7 +1123,7 @@ note_trusted_proxies() {
     grep -qE '^#? *TRUSTED_PROXIES=' "$env_file" && return 0
 
     printf '%s\n' "# TRUSTED_PROXIES=127.0.0.1,::1 (the default; list your reverse proxy's IP if one sits in front)" >> "$env_file"
-    log_warn "FD Commander now believes X-Forwarded-For only from this machine (127.0.0.1, ::1)."
+    log_warn "Field Day Commander now believes X-Forwarded-For only from this machine (127.0.0.1, ::1)."
     log_warn "If a reverse proxy or load balancer sits in front of it, set TRUSTED_PROXIES in"
     log_warn "${env_file} to its IP or CIDR (comma-separated), then run: sudo -u fdcommander php artisan optimize"
     return 0
@@ -1120,7 +1139,7 @@ write_caddy_tls_snippet() {
     local snippet="${CADDY_SNIPPET_DIR}/tls.caddy"
     install -d -m 0755 "$CADDY_SNIPPET_DIR"
     {
-        echo "# Written by deploy.sh/update.sh. Imported into the FD Commander site block."
+        echo "# Written by deploy.sh/update.sh. Imported into the Field Day Commander site block."
         if [[ -n "$cert" ]]; then
             echo "tls \"${cert}\" \"${key}\""
         elif [[ -n "$email" ]]; then
@@ -1131,7 +1150,7 @@ write_caddy_tls_snippet() {
     return 0
 }
 
-# write_unit_hardening: same as deploy.sh. Sandboxes every FD Commander unit
+# write_unit_hardening: same as deploy.sh. Sandboxes every Field Day Commander unit
 # with a drop-in; the services may write only storage/ and bootstrap/cache
 # (plus Caddy's certificate store for the web server).
 write_unit_hardening() {
@@ -1225,6 +1244,7 @@ restart_services() {
     migrate_octane_unit
     sync_octane_workers
     migrate_scheduler_unit
+    rename_unit_descriptions
     migrate_queue_unit
     write_unit_hardening
 
@@ -1345,7 +1365,7 @@ verify_services() {
 
 # --- Main ---
 main() {
-    log_phase "FD Commander Update — $(date '+%Y-%m-%d %H:%M:%S')"
+    log_phase "Field Day Commander Update — $(date '+%Y-%m-%d %H:%M:%S')"
 
     trap on_exit EXIT
     repair_env_access
@@ -1370,14 +1390,14 @@ main() {
     restart_services
     leave_maintenance
     if ! verify_services; then
-        log_error "The update was installed, but FD Commander is not running correctly (see above)."
+        log_error "The update was installed, but Field Day Commander is not running correctly (see above)."
         log_error "Update log: ${LOG_FILE}"
         exit 1
     fi
 
     echo ""
     echo -e "${BOLD}============================================${NC}"
-    echo -e "${GREEN}${BOLD}  FD Commander Update Complete!${NC}"
+    echo -e "${GREEN}${BOLD}  Field Day Commander Update Complete!${NC}"
     echo -e "${BOLD}============================================${NC}"
     echo ""
     local app_version="unknown"

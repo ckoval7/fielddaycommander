@@ -64,7 +64,7 @@ class CabrilloExporter
     {
         $lines = [
             'START-OF-LOG: 3.0',
-            'CREATED-BY: FD Commander',
+            'CREATED-BY: Field Day Commander',
             'CONTEST: '.$config->cabrilloContestName(),
             'CALLSIGN: '.$config->callsign,
             'LOCATION: '.$config->section->code,
@@ -130,7 +130,7 @@ class CabrilloExporter
 
         $lines = [
             'START-OF-LOG: 3.0',
-            'CREATED-BY: FD Commander',
+            'CREATED-BY: Field Day Commander',
             'LOCATION: '.$config->section->code,
             'CALLSIGN: '.$config->callsign,
         ];

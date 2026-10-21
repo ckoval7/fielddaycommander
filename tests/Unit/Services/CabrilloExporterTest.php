@@ -56,7 +56,7 @@ test('includes required cabrillo header fields', function () {
 
     expect($output)
         ->toContain('START-OF-LOG: 3.0')
-        ->toContain('CREATED-BY: FD Commander')
+        ->toContain('CREATED-BY: Field Day Commander')
         ->toContain('CONTEST: ARRL-FD')
         ->toContain('CALLSIGN: W1AW')
         ->toContain('LOCATION: CT')

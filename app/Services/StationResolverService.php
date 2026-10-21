@@ -10,7 +10,7 @@ use App\Models\Station;
 class StationResolverService
 {
     /**
-     * Resolve a station identifier to a FD Commander Station.
+     * Resolve a station identifier to a Field Day Commander Station.
      *
      * Match order: name (exact, case-insensitive) -> hostname (exact, case-insensitive) -> auto-create.
      */
