@@ -1,7 +1,8 @@
 ---
 name: docs-prose
+
 description: Use this skill when writing or editing any user-facing prose for Field Day Commander, including the website and docs in the github.io branch (docs/ folder, fielddaycommander-pages worktree), how-to guides, the FAQ, feature copy, README text, release notes, and CHANGELOG.md entries. It sets the voice, punctuation rules (no em dashes), and HTML conventions so new text reads like the rest of the site and like a person wrote it.
----
+
 
 # Field Day Commander docs prose
 
