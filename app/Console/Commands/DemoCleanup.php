@@ -43,7 +43,7 @@ class DemoCleanup extends Command
              */
             $adminDemoDb = config('database.connections.demo.database');
             $ttlHours = config('demo.ttl_hours', 24);
-            $dropped = 0;
+            $dropped = [];
 
             foreach ($rows as $row) {
                 $dbName = $row->schema_name ?? $row->SCHEMA_NAME;
@@ -78,7 +78,7 @@ class DemoCleanup extends Command
                         DB::connection('demo')->statement("DROP DATABASE `{$dbName}`");
                         DemoCache::forget($dbName);
                         $this->info("Dropped expired demo database: {$dbName}");
-                        $dropped++;
+                        $dropped[] = $dbName;
                     }
                 } catch (\Throwable $e) {
                     $this->warn("Could not process {$dbName}: {$e->getMessage()}");
@@ -88,13 +88,13 @@ class DemoCleanup extends Command
             Config::set('database.connections.demo.database', $adminDemoDb);
             DB::purge('demo');
 
-            if ($dropped === 0) {
+            if ($dropped === []) {
                 $this->info('No expired demo databases found.');
             } else {
-                $this->info("Dropped {$dropped} expired demo database(s).");
+                $this->info('Dropped '.count($dropped).' expired demo database(s).');
             }
 
-            $this->dropOrphans($pool, $rows);
+            $this->dropOrphans($pool, $rows, $dropped);
         }
 
         $this->pruneAnalytics();
@@ -103,11 +103,13 @@ class DemoCleanup extends Command
     }
 
     /**
-     * @param  list<object>  $rows
+     * @param  list<object>  $rows  The demo_* schemas listed before the TTL sweep.
+     * @param  list<string>  $alreadyDropped  Schemas the TTL sweep just dropped, which no longer exist.
      */
-    private function dropOrphans(DemoDatabasePool $pool, array $rows): void
+    private function dropOrphans(DemoDatabasePool $pool, array $rows, array $alreadyDropped): void
     {
         $names = array_map(fn (object $row): string => $row->schema_name ?? $row->SCHEMA_NAME, $rows);
+        $names = array_values(array_diff($names, $alreadyDropped));
 
         foreach ($pool->dropOrphans($names) as $dbName) {
             $this->info("Dropped orphaned demo database: {$dbName}");
