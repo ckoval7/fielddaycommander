@@ -538,15 +538,11 @@ stage_frankenphp_update() {
     fi
 
     current=$("$binary" version 2>/dev/null | awk '{print $2}' | sed 's/^v//' || true)
-    if [[ "$current" == "$desired" ]]; then
-        log_info "FrankenPHP already at ${desired}"
-        return 0
-    fi
 
     local arch sha_var
     case "$(uname -m)" in
-        x86_64)  arch="linux-x86_64";  sha_var="FRANKENPHP_SHA256_X86_64" ;;
-        aarch64) arch="linux-aarch64"; sha_var="FRANKENPHP_SHA256_AARCH64" ;;
+        x86_64)  arch="linux-x86_64-gnu";  sha_var="FRANKENPHP_SHA256_X86_64" ;;
+        aarch64) arch="linux-aarch64-gnu"; sha_var="FRANKENPHP_SHA256_AARCH64" ;;
         *)       log_warn "Unsupported architecture $(uname -m) — keeping FrankenPHP ${current}"
                  return 0 ;;
     esac
@@ -556,6 +552,13 @@ stage_frankenphp_update() {
     expected_sha=$(grep -m1 -E "^${sha_var}=" "$APP_PATH/deploy.sh" 2>/dev/null | cut -d'"' -f2 || true)
     if [[ ! "$expected_sha" =~ ^[0-9a-f]{64}$ ]]; then
         log_warn "No ${sha_var} pinned in $APP_PATH/deploy.sh — keeping FrankenPHP ${current}"
+        return 0
+    fi
+
+    # Compare the binary itself, not just the version: 1.13.2 installs got the
+    # musl build, which has to be swapped for the -gnu build of the same version.
+    if echo "${expected_sha}  ${binary}" | sha256sum --check --quiet --status; then
+        log_info "FrankenPHP already at ${desired}"
         return 0
     fi
 
@@ -573,9 +576,9 @@ stage_frankenphp_update() {
         return 0
     fi
     chmod 755 "$tmp"
-    if ! "$tmp" version &>/dev/null; then
+    if ! "$tmp" version &>/dev/null || ! "$tmp" php-cli -r 'hash("sha256", "x");' &>/dev/null; then
         rm -f "$tmp"
-        log_warn "Downloaded FrankenPHP binary did not run — keeping FrankenPHP ${current}"
+        log_warn "Downloaded FrankenPHP binary did not run on this server — keeping FrankenPHP ${current}"
         return 0
     fi
     setcap cap_net_bind_service=+ep "$tmp" || log_warn "setcap failed — FrankenPHP relies on the unit's capabilities to bind ports below 1024"

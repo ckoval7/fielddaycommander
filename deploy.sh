@@ -7,13 +7,16 @@ set -euo pipefail
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
 FRANKENPHP_VERSION="1.13.2"
+# The glibc (-gnu) builds, which need glibc 2.28+. The musl builds of 1.13.2
+# die with SIGILL in hash('sha256') on CPUs without SHA-NI, which is most VPS
+# hosts (php/frankenphp#2743).
 # SHA-256 of the release binaries. FrankenPHP publishes no checksum file, so
 # these are GitHub's asset digests; update them with FRANKENPHP_VERSION:
 #   curl -fsS https://api.github.com/repos/php/frankenphp/releases/tags/v<ver> \
-#     | jq -r '.assets[] | select(.name|test("^frankenphp-linux-(x86_64|aarch64)$")) | "\(.name) \(.digest)"'
+#     | jq -r '.assets[] | select(.name|test("^frankenphp-linux-(x86_64|aarch64)-gnu$")) | "\(.name) \(.digest)"'
 # update.sh reads all three values from this file.
-FRANKENPHP_SHA256_X86_64="f8a54e583a23fbdf048bd6e1c6842b96ad7689117cab4c8f404dcc6b6393929b"
-FRANKENPHP_SHA256_AARCH64="157a208732e5e8d12b83bdbf2be82e3ab2610316f69bce737ac29753ac4e8a0b"
+FRANKENPHP_SHA256_X86_64="5fdef42b73c19f8ff601edbde6f205836c0903bd3fb0ef807b8ae7fb088d9536"
+FRANKENPHP_SHA256_AARCH64="555a3c531b01da66cf77e04290d81d68c1a9c2c8ee98de4a9961293f6b087047"
 NODE_MAJOR="22"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 readonly DISTRO_DEBIAN="debian"
@@ -561,8 +564,8 @@ install_frankenphp() {
     log_info "Installing FrankenPHP ${FRANKENPHP_VERSION}..."
     local arch expected_sha
     case "$(uname -m)" in
-        x86_64)  arch="linux-x86_64";  expected_sha="$FRANKENPHP_SHA256_X86_64" ;;
-        aarch64) arch="linux-aarch64"; expected_sha="$FRANKENPHP_SHA256_AARCH64" ;;
+        x86_64)  arch="linux-x86_64-gnu";  expected_sha="$FRANKENPHP_SHA256_X86_64" ;;
+        aarch64) arch="linux-aarch64-gnu"; expected_sha="$FRANKENPHP_SHA256_AARCH64" ;;
         *)       log_error "Unsupported architecture: $(uname -m)"; exit 1 ;;
     esac
     local url="https://github.com/php/frankenphp/releases/download/v${FRANKENPHP_VERSION}/frankenphp-${arch}"
@@ -580,6 +583,12 @@ install_frankenphp() {
     setcap cap_net_bind_service=+ep "$dest"
     if ! "$dest" version &>/dev/null; then
         log_error "FrankenPHP binary verification failed"
+        exit 1
+    fi
+    # A plain version check passes even on a build that crashes on this CPU,
+    # and Laravel hashes with SHA-256 on nearly every request.
+    if ! "$dest" php-cli -r 'hash("sha256", "x");' &>/dev/null; then
+        log_error "FrankenPHP crashed running PHP on this CPU"
         exit 1
     fi
     log_info "FrankenPHP $("$dest" version) installed to ${dest}"
