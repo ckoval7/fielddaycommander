@@ -45,6 +45,7 @@ trait EditsNetLogEntries
             'priority' => $parsed['priority'] ?? NetPriority::Routine,
         ]);
 
+        $this->recordRollCallAnswer($entry);
         NetLogChanged::dispatch($this->event->id, $entry->id);
         $this->reset('exchangeInput', 'suggestions');
         unset($this->entries);

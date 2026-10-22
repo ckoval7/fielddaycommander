@@ -27,7 +27,7 @@
     {{-- Net switcher --}}
     <div class="flex flex-wrap items-end gap-2" data-net-switcher>
         @if($this->nets->isNotEmpty())
-            <div class="min-w-0 flex-1 sm:flex-initial sm:w-72">
+            <div class="min-w-0 w-full sm:w-72">
                 <x-select
                     label="Net"
                     wire:model.live="netId"
@@ -38,8 +38,19 @@
                 />
             </div>
         @endif
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
             @if($this->currentNet)
+                @if($this->activeRollCall === null && $this->stationStatus->isNotEmpty())
+                    @can('create', \App\Models\NetLogEntry::class)
+                        <x-button
+                            label="Roll call"
+                            icon="phosphor-list-checks"
+                            class="btn-ghost min-h-11"
+                            wire:click="startRollCall"
+                            spinner="startRollCall"
+                        />
+                    @endcan
+                @endif
                 @can('update', $this->currentNet)
                     <x-button
                         label="Edit net"
@@ -70,6 +81,10 @@
             </p>
         </div>
     @else
+        @if($this->activeRollCall)
+            <x-logging.net-roll-call :roll-call="$this->activeRollCall" wire:key="roll-call-{{ $this->activeRollCall->id }}" />
+        @endif
+
         @if($this->stationStatus->isNotEmpty())
             <x-logging.net-station-status
                 :stations="$this->stationStatus"

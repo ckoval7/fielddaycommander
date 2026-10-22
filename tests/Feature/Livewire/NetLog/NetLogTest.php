@@ -12,9 +12,11 @@ use App\Models\EventConfiguration;
 use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Models\OperatingSession;
+use App\Models\RollCallStation;
 use App\Models\ShiftRole;
 use App\Models\Station;
 use App\Models\User;
+use App\Services\RollCallService;
 use App\Support\BroadcastChannels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event as EventFacade;
@@ -479,4 +481,63 @@ test('a net\'s overdue threshold is set and cleared in the net form', function (
         ->assertHasNoErrors();
 
     expect($this->net->fresh()->overdue_after_minutes)->toBeNull();
+});
+
+test('net control runs a roll call from the net log', function () {
+    EventFacade::fake([NetLogChanged::class]);
+    Station::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Aid 7']);
+    Station::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Aid 9']);
+
+    $component = Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->assertSeeHtml('wire:click="startRollCall"')
+        ->call('startRollCall')
+        ->assertSeeHtml('data-roll-call')
+        ->assertDontSeeHtml('wire:click="startRollCall"')
+        ->assertSee('0 of 2 accounted for')
+        ->assertSeeHtml('wire:confirm="2 stations are not accounted for. End the roll call anyway?"')
+        ->assertSee('ROLL CALL (PAR): 2 STATIONS');
+
+    $aid7 = RollCallStation::where('name', 'Aid 7')->sole();
+
+    $component->call('markAccounted', $aid7->id)
+        ->assertSee('1 of 2 accounted for')
+        ->call('logEntry', 'NCS Aid 9 par')
+        ->assertSee('2 of 2 accounted for')
+        ->assertDontSeeHtml('End the roll call anyway?')
+        ->call('endRollCall')
+        ->assertDontSeeHtml('data-roll-call')
+        ->assertSee('ROLL CALL COMPLETE: 2 OF 2 ACCOUNTED FOR');
+
+    EventFacade::assertDispatched(NetLogChanged::class);
+});
+
+test('editing an entry to come from an expected station accounts for it', function () {
+    Station::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Aid 7']);
+    $component = Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->call('startRollCall')
+        ->call('logEntry', 'NCS W9XYZ par');
+
+    $entry = NetLogEntry::latest('id')->first();
+    $component->call('updateEntry', $entry->id, 'NCS Aid 7 par')
+        ->assertSee('1 of 1 accounted for');
+});
+
+test('a roll call needs the net log permission and a station on this net', function () {
+    Station::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Aid 7']);
+    $otherNet = Net::factory()->create(['event_configuration_id' => $this->config->id]);
+    $otherRollCall = app(RollCallService::class)->start($otherNet, $this->operator);
+
+    Livewire::actingAs(User::factory()->create())->test(NetLog::class, ['event' => $this->event])
+        ->call('startRollCall')
+        ->assertForbidden();
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->set('netId', $this->net->id)
+        ->call('markAccounted', $otherRollCall->stations->first()->id)
+        ->assertNotFound();
+});
+
+test('without stations to call there is no roll call button', function () {
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->assertDontSeeHtml('wire:click="startRollCall"');
 });
