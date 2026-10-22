@@ -89,6 +89,23 @@ describe('kiosk page', function () {
             ->assertDontSee('Sign the Guestbook');
     });
 
+    test('checks the same event as the form when browsing a past event', function (string $route) {
+        $pastEvent = Event::factory()->create([
+            'start_time' => now()->subYear(),
+            'end_time' => now()->subYear()->addDay(),
+        ]);
+        EventConfiguration::factory()->create([
+            'event_id' => $pastEvent->id,
+            'guestbook_enabled' => false,
+        ]);
+
+        $this->withSession(['viewing_event_id' => $pastEvent->id])
+            ->get(route($route))
+            ->assertOk()
+            ->assertSee('No Active Event')
+            ->assertDontSee('Sign the Guestbook');
+    })->with(['guestbook.kiosk', 'guestbook.index']);
+
     test('sizes the entry grid to its column rather than the screen', function () {
         GuestbookEntry::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
 

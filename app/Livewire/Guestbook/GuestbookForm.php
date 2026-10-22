@@ -198,8 +198,11 @@ class GuestbookForm extends Component
         }
 
         // Check rate limit (per IP per hour)
-        $rateLimitKey = ($this->kiosk ? 'guestbook-kiosk-entry:' : 'guestbook-entry:').request()->ip();
-        if (RateLimiter::tooManyAttempts($rateLimitKey, $this->kiosk ? self::KIOSK_RATE_LIMIT : self::RATE_LIMIT)) {
+        [$rateLimitKey, $maxEntries] = $this->kiosk
+            ? ['guestbook-kiosk-entry:'.request()->ip(), self::KIOSK_RATE_LIMIT]
+            : ['guestbook-entry:'.request()->ip(), self::RATE_LIMIT];
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, $maxEntries)) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
             $minutes = ceil($seconds / 60);
 

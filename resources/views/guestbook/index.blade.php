@@ -3,8 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 @php
-    $activeEvent = \App\Models\Event::active()->with('eventConfiguration')->first()
-        ?? \App\Models\Event::inSetupWindow()->orderBy('start_time')->with('eventConfiguration')->first();
+    // The same event the form and list use
+    $guestbookOpen = app(\App\Services\EventContextService::class)->getContextEvent()?->eventConfiguration?->guestbook_enabled;
 @endphp
 
 <x-layouts.app>
@@ -21,7 +21,7 @@
         </div>
 
         {{-- No Active Event Message --}}
-        @if (! $activeEvent || ! $activeEvent->eventConfiguration || ! $activeEvent->eventConfiguration->guestbook_enabled)
+        @if (! $guestbookOpen)
             <div class="alert alert-info mb-8">
                 <x-icon name="phosphor-info" class="w-6 h-6" />
                 <div>

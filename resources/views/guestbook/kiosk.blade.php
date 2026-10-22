@@ -10,32 +10,13 @@ sidebar, the form at the top and the latest entries below it, newest first.
 Like the TV dashboard it reloads itself on a 419 rather than leaving the page.
 --}}
 @php
-    $activeEvent = \App\Models\Event::active()->with('eventConfiguration')->first()
-        ?? \App\Models\Event::inSetupWindow()->orderBy('start_time')->with('eventConfiguration')->first();
-    $guestbookOpen = $activeEvent?->eventConfiguration?->guestbook_enabled;
+    // The same event the form and list use
+    $guestbookOpen = app(\App\Services\EventContextService::class)->getContextEvent()?->eventConfiguration?->guestbook_enabled;
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-reload-on-session-expiry>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <x-reverb-config-meta />
-    <title>Sign Our Guestbook - {{ \App\Models\Setting::get('site_name') ?: config('app.name') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
-    <x-pwa-meta />
-
-    <script>
-        (function() {
-            const theme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1d232a' : '#ffffff');
-        })();
-    </script>
-
-    <x-silence-livewire-rejections />
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-layouts.head :title="'Sign Our Guestbook - '.(\App\Models\Setting::get('site_name') ?: config('app.name'))" viewport-fit />
 </head>
 <body class="min-h-dvh font-sans antialiased bg-base-200">
     <main class="mx-auto max-w-6xl space-y-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
@@ -68,6 +49,7 @@ Like the TV dashboard it reloads itself on a 419 rather than leaving the page.
         </div>
     </main>
 
+    <x-toast />
     <x-form-error-summary />
 </body>
 </html>
