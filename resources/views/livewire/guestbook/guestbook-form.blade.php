@@ -7,13 +7,15 @@
         eventLat: {{ $this->eventLocation['latitude'] ?? 'null' }},
         eventLon: {{ $this->eventLocation['longitude'] ?? 'null' }},
         radius: {{ $this->eventLocation['radius'] }},
+        kiosk: @js($kiosk),
         locationStatus: 'idle',
         locationMessage: '',
         userDistance: null,
 
         init() {
-            // Auto-detect location on page load if event has location configured
-            if (this.eventLat !== null && this.eventLon !== null) {
+            // Auto-detect location on page load if event has location configured.
+            // A kiosk sits at the event, so its visitors are always in person.
+            if (!this.kiosk && this.eventLat !== null && this.eventLon !== null) {
                 this.detectLocation();
             }
         },
@@ -207,7 +209,7 @@
                         />
 
                         {{-- Location detection hint --}}
-                        @if($this->hasEventLocation)
+                        @if($this->hasEventLocation && ! $kiosk)
                             <div
                                 x-show="locationMessage"
                                 x-transition
@@ -288,12 +290,49 @@
                 <x-icon name="phosphor-check-circle" class="w-16 h-16 mx-auto text-success" />
                 <h3 class="text-xl font-semibold">Thank You!</h3>
                 <p class="text-base-content/70">Your guestbook entry has been recorded.</p>
-                <x-button
-                    label="Sign Again"
-                    wire:click="hideSuccess"
-                    class="btn-primary"
-                    icon="phosphor-plus"
-                />
+                {{-- On a kiosk, a ring beside the button counts down and clears the thank-you screen for the next visitor --}}
+                <div
+                    @if($kiosk)
+                        x-data="{
+                            total: {{ $this::KIOSK_THANK_YOU_SECONDS * 1000 }},
+                            left: {{ $this::KIOSK_THANK_YOU_SECONDS * 1000 }},
+                            timer: null,
+                            init() {
+                                const endsAt = Date.now() + this.total;
+                                this.timer = setInterval(() => {
+                                    this.left = Math.max(0, endsAt - Date.now());
+                                    if (this.left === 0) {
+                                        clearInterval(this.timer);
+                                        $wire.hideSuccess();
+                                    }
+                                }, 100);
+                            },
+                            destroy() {
+                                clearInterval(this.timer);
+                            },
+                        }"
+                        data-kiosk-countdown
+                    @endif
+                    class="flex items-center justify-center gap-3"
+                >
+                    <x-button
+                        label="Sign Again"
+                        wire:click="hideSuccess"
+                        class="btn-primary"
+                        icon="phosphor-plus"
+                    />
+
+                    @if($kiosk)
+                        {{-- Same height as the button beside it: 2.5rem, or 2.75rem on touchscreens (see app.css) --}}
+                        <div
+                            class="radial-progress text-primary [--size:2.5rem] pointer-coarse:[--size:2.75rem] [--thickness:4px]"
+                            style="--value: 100"
+                            :style="`--value: ${left / total * 100}`"
+                            aria-hidden="true"
+                        ></div>
+                        <span class="sr-only">This screen clears for the next visitor in {{ $this::KIOSK_THANK_YOU_SECONDS }} seconds.</span>
+                    @endif
+                </div>
             </div>
         </x-card>
     @endif

@@ -208,9 +208,8 @@
         {{-- Chart container --}}
         <div
             class="relative flex-1 {{ $size === 'tv' ? 'min-h-0' : 'min-h-[200px]' }}"
-            role="img"
-            :aria-label="chartData.description || 'Chart visualization'"
         >
+            <p class="sr-only" x-text="chartData.description || 'Chart visualization'"></p>
             <canvas
                 wire:ignore
                 x-ref="canvas"
@@ -221,22 +220,23 @@
         </div>
 
         {{-- Screen reader data table --}}
-        <div class="sr-only" role="table" aria-label="{{ $chartData['title'] ?? 'Chart' }} data">
-            <div role="rowgroup">
-                <div role="row">
-                    <span role="columnheader">Category</span>
-                    <span role="columnheader">Value</span>
-                </div>
-            </div>
-            <div role="rowgroup">
+        <table class="sr-only">
+            <caption>{{ $chartData['title'] ?? 'Chart' }} data</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Category</th>
+                    <th scope="col">Value</th>
+                </tr>
+            </thead>
+            <tbody>
                 @foreach(($chartData['labels'] ?? []) as $index => $label)
-                    <div role="row">
-                        <span role="cell">{{ $label }}</span>
-                        <span role="cell">{{ $chartData['datasets'][0]['data'][$index] ?? 0 }}</span>
-                    </div>
+                    <tr>
+                        <td>{{ $label }}</td>
+                        <td>{{ $chartData['datasets'][0]['data'][$index] ?? 0 }}</td>
+                    </tr>
                 @endforeach
-            </div>
-        </div>
+            </tbody>
+        </table>
 
         {{-- Empty state --}}
         @if(empty($chartData['labels'] ?? []))
