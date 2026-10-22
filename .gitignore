@@ -28,6 +28,7 @@ Thumbs.db
 sonar-project.properties
 .claude/*
 !.claude/skills/
+!.claude/agents/
 .mcp.json
 boost.json
 /frankenphp
