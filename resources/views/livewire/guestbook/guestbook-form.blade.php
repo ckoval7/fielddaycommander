@@ -7,13 +7,15 @@
         eventLat: {{ $this->eventLocation['latitude'] ?? 'null' }},
         eventLon: {{ $this->eventLocation['longitude'] ?? 'null' }},
         radius: {{ $this->eventLocation['radius'] }},
+        kiosk: @js($kiosk),
         locationStatus: 'idle',
         locationMessage: '',
         userDistance: null,
 
         init() {
-            // Auto-detect location on page load if event has location configured
-            if (this.eventLat !== null && this.eventLon !== null) {
+            // Auto-detect location on page load if event has location configured.
+            // A kiosk sits at the event, so its visitors are always in person.
+            if (!this.kiosk && this.eventLat !== null && this.eventLon !== null) {
                 this.detectLocation();
             }
         },
@@ -207,7 +209,7 @@
                         />
 
                         {{-- Location detection hint --}}
-                        @if($this->hasEventLocation)
+                        @if($this->hasEventLocation && ! $kiosk)
                             <div
                                 x-show="locationMessage"
                                 x-transition
@@ -284,7 +286,11 @@
     @else
         {{-- After success, show option to add another entry --}}
         <x-card class="text-center">
-            <div class="py-8 space-y-4">
+            {{-- On a kiosk, clear the thank-you screen for the next visitor --}}
+            <div
+                class="py-8 space-y-4"
+                @if($kiosk) x-init="setTimeout(() => $wire.hideSuccess(), 8000)" @endif
+            >
                 <x-icon name="phosphor-check-circle" class="w-16 h-16 mx-auto text-success" />
                 <h3 class="text-xl font-semibold">Thank You!</h3>
                 <p class="text-base-content/70">Your guestbook entry has been recorded.</p>

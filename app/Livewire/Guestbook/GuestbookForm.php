@@ -17,10 +17,29 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class GuestbookForm extends Component
 {
+    /**
+     * Entries per IP per hour on a personal device.
+     */
+    public const RATE_LIMIT = 5;
+
+    /**
+     * Entries per IP per hour on a kiosk, where every visitor shares one browser.
+     */
+    public const KIOSK_RATE_LIMIT = 60;
+
+    /**
+     * Whether the form runs on a shared kiosk at the event site. A kiosk never
+     * pre-fills or keeps a signed-in user's details, assumes visitors are there
+     * in person, and returns to a blank form after each entry.
+     */
+    #[Locked]
+    public bool $kiosk = false;
+
     /**
      * Visitor's name (first and last combined for simplicity).
      */
@@ -75,6 +94,12 @@ class GuestbookForm extends Component
         $activeEvent = app(EventContextService::class)->getContextEvent();
         $config = $activeEvent?->eventConfiguration;
         $this->eventConfig = ($config && $config->guestbook_enabled) ? $config : null;
+
+        if ($this->kiosk) {
+            $this->presence_type = PresenceType::InPerson->value;
+
+            return;
+        }
 
         // Pre-fill form if user is authenticated
         if (auth()->check()) {
@@ -167,9 +192,9 @@ class GuestbookForm extends Component
             return;
         }
 
-        // Check rate limit (5 entries per IP per hour)
-        $rateLimitKey = 'guestbook-entry:'.request()->ip();
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+        // Check rate limit (per IP per hour)
+        $rateLimitKey = ($this->kiosk ? 'guestbook-kiosk-entry:' : 'guestbook-entry:').request()->ip();
+        if (RateLimiter::tooManyAttempts($rateLimitKey, $this->kiosk ? self::KIOSK_RATE_LIMIT : self::RATE_LIMIT)) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
             $minutes = ceil($seconds / 60);
 
@@ -187,7 +212,7 @@ class GuestbookForm extends Component
         // Create the guestbook entry
         $entry = GuestbookEntry::create([
             'event_configuration_id' => $this->eventConfig->id,
-            'user_id' => auth()->id(),
+            'user_id' => $this->kiosk ? null : auth()->id(),
             'first_name' => $nameParts['first_name'],
             'last_name' => $nameParts['last_name'],
             'callsign' => ! empty($validated['callsign']) ? strtoupper($validated['callsign']) : null,
@@ -229,7 +254,7 @@ class GuestbookForm extends Component
     public function resetFormFields(): void
     {
         // Keep name/callsign/email if logged in user, otherwise reset
-        if (! auth()->check()) {
+        if ($this->kiosk || ! auth()->check()) {
             $this->name = '';
             $this->callsign = '';
             $this->email = '';
@@ -238,6 +263,10 @@ class GuestbookForm extends Component
         $this->comments = '';
         $this->visitor_category = VisitorCategory::GeneralPublic->value;
         $this->honeypot = '';
+
+        if ($this->kiosk) {
+            $this->presence_type = PresenceType::InPerson->value;
+        }
     }
 
     /**

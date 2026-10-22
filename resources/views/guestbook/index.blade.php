@@ -48,6 +48,17 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Full-screen guestbook for a shared tablet or laptop at the event --}}
+            <div class="flex justify-end mt-4">
+                <a
+                    href="{{ route('guestbook.kiosk') }}"
+                    class="btn btn-ghost btn-sm text-base-content/50 font-normal"
+                >
+                    <x-icon name="phosphor-monitor" class="w-4 h-4" />
+                    Kiosk mode
+                </a>
+            </div>
         @endif
     </div>
 </x-layouts.app>
