@@ -13,6 +13,7 @@
 - When running `deploy.sh` or `update.sh`, every `[INFO]`, `[WARN]`, `[ERROR]`, and phase line appeared twice in `/var/log/fd-commander-deploy.log` or `/var/log/fd-commander-update.log`, respectively. Each line now appears once, and the message shown when running without root privileges goes to stderr.
 - On the station equipment assignment page, keyboard and screen reader users tabbing through **Committed to Event** or **All Equipment Catalog** heard drag instructions that promised arrow-key controls that didn't work. They now tab to each card's **Assign** or **Commit & Assign** button, which names the equipment, and mouse drag and drop still works.
 - When reading dashboard chart data with a screen reader, the hidden data table wasn't reliably announced as a table with column headers. It now uses an HTML table with column headers.
+- Since 26.09.0, ticking **Youth (age 18 or younger)** on your own Profile page and saving left the box unticked when you returned. Operators who marked themselves as youth this way weren't counted toward the Field Day youth participation bonus. The setting now saves.
 
 ## 26.10.11 - 2026-10-21
 
