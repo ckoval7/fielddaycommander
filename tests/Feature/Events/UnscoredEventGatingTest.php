@@ -180,3 +180,11 @@ test('the default net traffic widget shows only at unscored events', function ()
         ->and($service->isHiddenForEvent($added, eventIsScored: true))->toBeFalse()
         ->and($service->isHiddenForEvent(['type' => 'sections_worked', 'config' => []], eventIsScored: false))->toBeTrue();
 });
+
+test('the default station status widget shows only at unscored events', function () {
+    $stationStatus = collect(config('dashboard.default_dashboards.user.widgets'))->firstWhere('id', 'station-status');
+
+    expect($stationStatus['config']['list_type'])->toBe('station_status')
+        ->and(app(DashboardService::class)->isHiddenForEvent($stationStatus, eventIsScored: true))->toBeTrue()
+        ->and(app(DashboardService::class)->isHiddenForEvent($stationStatus, eventIsScored: false))->toBeFalse();
+});

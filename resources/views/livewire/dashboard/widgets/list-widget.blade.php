@@ -11,6 +11,7 @@ previous render get the dashboard-item-new highlight (see HighlightsNewItems):
 - active_stations: Active stations with operator, band, status
 - equipment_status: Equipment with status and assignment
 - net_traffic: Newest net log entries with from, to, net, message and priority
+- station_status: Net positions with location, operator, last heard and overdue state
 
 Size variants:
 - normal: 15 items, standard text, max-h-96
@@ -23,6 +24,7 @@ Size variants:
         'active_stations' => 'Active Stations',
         'equipment_status' => 'Equipment Status',
         'net_traffic' => 'Net Traffic',
+        'station_status' => 'Station Status',
     ];
     $title = $titles[$listType] ?? 'List';
     $titleSize = $size === 'tv' ? 'text-2xl' : 'text-lg';
@@ -123,6 +125,45 @@ Size variants:
                             </div>
                         </div>
 
+                    @elseif($item['type'] === 'station_status')
+                        {{-- Station Status Item --}}
+                        <div
+                            wire:key="list-item-{{ $item['key'] }}"
+                            @class([
+                                'bg-base-100 border rounded-lg transition-all duration-200',
+                                $size === 'tv' ? 'p-4' : 'p-3',
+                                'border-error bg-error/10' => $item['overdue'],
+                                'border-base-content/10' => ! $item['overdue'],
+                            ])
+                            data-station-status-item
+                        >
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="@if($size === 'tv') text-2xl @else text-lg @endif font-bold break-words min-w-0">
+                                        {{ $item['name'] }}
+                                    </div>
+                                    @if($item['unavailable'])
+                                        <x-badge value="Out of service" class="badge-ghost {{ $size === 'tv' ? 'badge-md' : 'badge-sm' }} shrink-0" />
+                                    @elseif($item['overdue'])
+                                        <span class="badge badge-error gap-1 {{ $size === 'tv' ? 'badge-md' : 'badge-sm' }} shrink-0">
+                                            <x-icon name="phosphor-warning" class="w-3 h-3" />
+                                            Overdue
+                                        </span>
+                                    @endif
+                                </div>
+                                @if($item['location'])
+                                    <div class="flex items-start gap-1 @if($size === 'tv') text-lg @else text-sm @endif text-base-content/70 break-words">
+                                        <x-icon name="phosphor-map-pin" class="w-4 h-4 shrink-0 mt-0.5" />
+                                        <span class="min-w-0">{{ $item['location'] }}</span>
+                                    </div>
+                                @endif
+                                <div class="flex flex-wrap justify-between gap-x-3 @if($size === 'tv') text-lg @else text-sm @endif text-base-content/80">
+                                    <span>{{ $item['operator'] ?? 'No operator on duty' }}</span>
+                                    <span><span class="sr-only">Last heard</span> {{ $item['last_heard'] ?? 'Not heard yet' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
                     @elseif($item['type'] === 'equipment')
                         {{-- Equipment Status Item --}}
                         <div
@@ -181,6 +222,11 @@ Size variants:
                                 'icon' => 'phosphor-list-checks',
                                 'title' => 'No net traffic yet',
                                 'message' => 'Entries logged in the Net Log will appear here',
+                            ],
+                            'station_status' => [
+                                'icon' => 'phosphor-map-pin',
+                                'title' => 'No stations to show',
+                                'message' => 'Stations with a tactical callsign or location appear here',
                             ],
                         ];
                         $empty = $emptyMessages[$listType] ?? ['icon' => 'phosphor-tray', 'title' => 'No data available', 'message' => ''];

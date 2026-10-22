@@ -930,3 +930,72 @@ describe('net traffic list', function () {
             ->assertDontSee('Net Traffic');
     });
 });
+
+describe('station status list', function () {
+    beforeEach(function () {
+        $this->net = Net::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'overdue_after_minutes' => 30]);
+        $this->station = fn (string $tactical, ?string $location = null) => Station::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'tactical_callsign' => $tactical,
+            'location' => $location,
+        ]);
+        $this->heard = fn (string $from, int $minutesAgo) => NetLogEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'net_id' => $this->net->id,
+            'from_station' => $from,
+            'logged_at' => appNow()->subMinutes($minutesAgo),
+        ]);
+    });
+
+    it('lists net positions with location, last heard and overdue stations first', function () {
+        ($this->station)('Aid 2', 'Mile 2');
+        ($this->station)('Aid 7', 'Mile 12');
+        ($this->station)('Aid 9');
+        ($this->heard)('Aid 2', 5);
+        ($this->heard)('Aid 7', 45);
+
+        $component = Livewire::test(ListWidget::class, ['config' => ['list_type' => 'station_status']]);
+        $items = $component->viewData('items');
+
+        expect(array_column($items, 'name'))->toBe(['Aid 7', 'Aid 9', 'Aid 2'])
+            ->and($items[0]['overdue'])->toBeTrue()
+            ->and($items[0]['last_heard'])->toBe('45m ago')
+            ->and($items[2]['overdue'])->toBeFalse();
+
+        $component->assertSee('Station Status')->assertSee('Mile 12')->assertSee('Overdue')->assertSee('No operator on duty');
+    });
+
+    it('uses the overdue threshold of the net with the latest traffic', function () {
+        ($this->station)('Aid 7');
+        ($this->heard)('Aid 7', 45);
+        $quietNet = Net::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'overdue_after_minutes' => null]);
+        NetLogEntry::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'net_id' => $quietNet->id, 'from_station' => 'NCS', 'logged_at' => appNow()]);
+
+        expect(Livewire::test(ListWidget::class, ['config' => ['list_type' => 'station_status']])->viewData('items')[0]['overdue'])->toBeFalse();
+    });
+
+    it('shows an empty state when no station has a tactical callsign or location', function () {
+        Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+
+        Livewire::test(ListWidget::class, ['config' => ['list_type' => 'station_status']])
+            ->assertSee('No stations to show')
+            ->assertSee('Stations with a tactical callsign or location appear here');
+    });
+
+    it('refreshes live when the net log changes', function () {
+        config(['broadcasting.default' => 'reverb', 'reverb.apps.apps.0.key' => 'test-key']);
+
+        expect(Livewire::test(ListWidget::class, ['config' => ['list_type' => 'station_status']])->instance()->getWidgetListeners())->toBe([
+            "echo-private:event.{$this->event->id},.NetLogChanged" => 'handleUpdate',
+        ]);
+    });
+
+    it('never shows where stations are to guests on the public TV', function () {
+        ($this->station)('Aid 7', 'Behind the fire hall');
+        auth()->logout();
+
+        Livewire::test(ListWidget::class, ['config' => ['list_type' => 'station_status']])
+            ->assertDontSee('Behind the fire hall')
+            ->assertDontSee('Station Status');
+    });
+});

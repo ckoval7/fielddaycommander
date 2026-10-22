@@ -16,6 +16,7 @@ use App\Models\NetLogEntry;
 use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Services\EventContextService;
+use App\Services\StationLastHeardService;
 use App\Support\BroadcastChannels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -24,14 +25,16 @@ use Livewire\Component;
 /**
  * ListWidget - Displays scrollable lists of data.
  *
- * Supports three list types:
+ * Supports these list types:
  * - recent_contacts: Last N contacts with time, callsign, band, mode, operator
  * - active_stations: Currently active stations with operator, band, status
  * - equipment_status: Equipment usage with name, status, assigned_to
+ * - net_traffic: The newest net log entries
+ * - station_status: Net positions with location, operator, last heard and overdue state
  *
  * Config structure:
  * [
- *   'list_type' => 'recent_contacts|active_stations|equipment_status'
+ *   'list_type' => 'recent_contacts|active_stations|equipment_status|net_traffic|station_status'
  * ]
  *
  * Size variants:
@@ -57,9 +60,10 @@ class ListWidget extends Component
 
     /**
      * List types shown only to signed-in users. Net traffic can carry
-     * medical or personal details, so it never reaches the public TV.
+     * medical or personal details, and station status says where volunteers
+     * are, so neither reaches the public TV.
      */
-    protected const MEMBER_LIST_TYPES = ['equipment_status', 'net_traffic'];
+    protected const MEMBER_LIST_TYPES = ['equipment_status', 'net_traffic', 'station_status'];
 
     protected const DEFAULT_LIST_TYPE = 'recent_contacts';
 
@@ -89,7 +93,7 @@ class ListWidget extends Component
 
         return match ($listType) {
             'recent_contacts' => $this->contactChangeListeners(),
-            'net_traffic' => $this->netLogChangeListeners(),
+            'net_traffic', 'station_status' => $this->netLogChangeListeners(),
             default => [],
         };
     }
@@ -115,6 +119,7 @@ class ListWidget extends Component
             'active_stations' => $this->getActiveStations($event),
             'equipment_status' => $this->getEquipmentStatus($event),
             'net_traffic' => $this->getNetTraffic($event),
+            'station_status' => $this->getStationStatus($event),
             default => [],
         };
 
@@ -181,6 +186,35 @@ class ListWidget extends Component
                 'message' => $entry->message,
                 'priority' => $entry->priority->value,
             ])
+            ->all();
+    }
+
+    /**
+     * Net positions as net control sees them, overdue stations first. The
+     * overdue threshold comes from the net a net log screen opens on: the
+     * one with the latest traffic.
+     *
+     * Format: Name, location, operator, last heard, overdue or out of service
+     */
+    protected function getStationStatus(Event $event): array
+    {
+        $config = $event->eventConfiguration;
+
+        return app(StationLastHeardService::class)
+            ->forEvent($config, Net::busiestForEvent($config->id))
+            ->sortBy(fn (array $row) => $row['overdue'] ? 0 : 1)
+            ->take($this->itemLimit())
+            ->map(fn (array $row) => [
+                'type' => 'station_status',
+                'key' => "station-{$row['station']->id}",
+                'name' => $row['name'],
+                'location' => $row['location'],
+                'operator' => $row['operator'],
+                'last_heard' => $row['last_heard_at'] === null ? null : $this->formatTimeAgo($row['last_heard_at']),
+                'overdue' => $row['overdue'],
+                'unavailable' => $row['unavailable'],
+            ])
+            ->values()
             ->all();
     }
 
