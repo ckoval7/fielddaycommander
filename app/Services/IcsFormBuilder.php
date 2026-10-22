@@ -86,7 +86,8 @@ class IcsFormBuilder
     }
 
     /**
-     * ICS-211 Incident Check-In List: one row per shift check-in.
+     * ICS-211 Incident Check-In List: one row per shift check-in, with each
+     * person's phone and unexpired credentials.
      *
      * @return IcsForm
      */
@@ -106,7 +107,7 @@ class IcsFormBuilder
         $checkIns = ShiftAssignment::query()
             ->whereNotNull('checked_in_at')
             ->whereHas('shift', fn ($query) => $query->forEvent($config->id))
-            ->with(['user', 'shift.shiftRole'])
+            ->with(['user.credentials', 'shift.shiftRole'])
             ->orderBy('checked_in_at')
             ->get();
 
@@ -122,6 +123,8 @@ class IcsFormBuilder
                     "R{$row} Total Personnel {$row}" => '1',
                     "R{$row} Agency {$row}" => (string) $config->club_name,
                     "R{$row} Incident Assignment {$row}" => (string) ($role?->tactical_callsign ?: $role?->name),
+                    "R{$row} Other Qualifications {$row}" => (string) $assignment->user?->credentialSummary(),
+                    "R{$row} Incident Contact {$row}" => (string) $assignment->user?->phone,
                     "R{$row} Date/Time Check In {$row}" => $this->formatLocal($assignment->checked_in_at, self::DATETIME_FORMAT),
                 ];
             }),

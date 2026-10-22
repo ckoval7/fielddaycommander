@@ -5,9 +5,13 @@
 
 namespace App\Livewire\Profile;
 
+use App\Enums\Credential;
 use App\Models\AuditLog;
 use App\Models\OperatingSession;
 use App\Models\Setting;
+use App\Models\User;
+use App\Models\UserCredential;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
@@ -34,6 +38,15 @@ class UserProfile extends Component
     public string $last_name = '';
 
     public string $email = '';
+
+    public ?string $phone = null;
+
+    /**
+     * Credentials being edited, keyed by Credential value.
+     *
+     * @var array<string, array{held: bool, level: ?string, expires_at: ?string}>
+     */
+    public array $credentials = [];
 
     /**
      * Current password, required only when the email address changes.
@@ -144,6 +157,8 @@ class UserProfile extends Component
         $this->last_name = $user->last_name;
         $this->email = $user->email;
         $this->savedEmail = $user->email;
+        $this->phone = $user->phone;
+        $this->loadCredentials($user);
         $this->license_class = $user->license_class;
         $this->preferred_timezone = $user->preferred_timezone ?? Setting::get('timezone', config('app.timezone'));
         $this->is_youth = (bool) $user->is_youth;
@@ -176,9 +191,11 @@ class UserProfile extends Component
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
             'license_class' => ['nullable', 'string', 'in:Technician,General,Advanced,Extra'],
             'preferred_timezone' => ['nullable', 'string', 'timezone:all'],
             'is_youth' => ['boolean'],
+            ...$this->credentialRules(),
             'is_cpr_aed_trained' => ['boolean'],
         ]);
 
@@ -199,6 +216,7 @@ class UserProfile extends Component
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
                 'email' => $this->email,
+                'phone' => $this->phone,
                 'license_class' => $this->license_class,
                 'preferred_timezone' => $this->preferred_timezone,
                 'is_youth' => $this->is_youth,
@@ -226,10 +244,71 @@ class UserProfile extends Component
             ]
         );
 
+        $this->saveCredentials($user);
+
         $this->savedEmail = $user->fresh()->email;
         $this->email = $this->savedEmail;
 
         $this->success('Profile updated successfully.');
+    }
+
+    /**
+     * @return array<string, list<mixed>>
+     */
+    protected function credentialRules(): array
+    {
+        $rules = [];
+
+        foreach (Credential::cases() as $credential) {
+            $key = "credentials.{$credential->value}";
+            $rules["{$key}.held"] = ['boolean'];
+            $rules["{$key}.expires_at"] = ['nullable', 'date'];
+            $rules["{$key}.level"] = $credential->levels() === []
+                ? ['nullable', 'prohibited']
+                : ['nullable', Rule::in($credential->levels())];
+        }
+
+        return $rules;
+    }
+
+    protected function loadCredentials(User $user): void
+    {
+        $held = $user->credentials()->get()->keyBy(fn (UserCredential $credential) => $credential->credential->value);
+
+        foreach (Credential::cases() as $credential) {
+            $record = $held->get($credential->value);
+
+            $this->credentials[$credential->value] = [
+                'held' => $record !== null,
+                'level' => $record?->level,
+                'expires_at' => $record?->expires_at?->toDateString(),
+            ];
+        }
+    }
+
+    /**
+     * Keep the credentials that are ticked, with their level and expiry, and
+     * drop the rest.
+     */
+    protected function saveCredentials(User $user): void
+    {
+        foreach (Credential::cases() as $credential) {
+            $input = $this->credentials[$credential->value] ?? [];
+
+            if (empty($input['held'])) {
+                $user->credentials()->where('credential', $credential->value)->delete();
+
+                continue;
+            }
+
+            $user->credentials()->updateOrCreate(
+                ['credential' => $credential->value],
+                [
+                    'level' => $credential->levels() === [] ? null : (filled($input['level'] ?? null) ? $input['level'] : null),
+                    'expires_at' => filled($input['expires_at'] ?? null) ? $input['expires_at'] : null,
+                ],
+            );
+        }
     }
 
     public function toggleAllCategories(bool $enabled): void

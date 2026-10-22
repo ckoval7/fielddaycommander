@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use App\Enums\Credential;
 use App\Livewire\Messages\MessageTrafficIndex;
 use App\Livewire\Reports\ReportsIndex;
 use App\Models\Event;
@@ -16,6 +17,7 @@ use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Models\Station;
 use App\Models\User;
+use App\Models\UserCredential;
 use App\Services\IcsFormBuilder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -134,9 +136,13 @@ test('channels past the eighth row go on another page', function () {
 test('the ICS-211 lists shift check-ins in order', function () {
     $role = ShiftRole::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'Net Control Operator', 'tactical_callsign' => 'Net Control']);
     $shift = Shift::factory()->create(['event_configuration_id' => $this->config->id, 'shift_role_id' => $role->id]);
+    $sam = User::factory()->create(['first_name' => 'Sam', 'last_name' => 'Ray', 'call_sign' => 'K1SAM', 'phone' => '555-0142']);
+    UserCredential::factory()->create(['user_id' => $sam->id, 'credential' => Credential::Ares, 'level' => 'Level 2']);
+    UserCredential::factory()->create(['user_id' => $sam->id, 'credential' => Credential::Is100]);
+    UserCredential::factory()->expired()->create(['user_id' => $sam->id, 'credential' => Credential::Coml]);
     ShiftAssignment::factory()->create([
         'shift_id' => $shift->id,
-        'user_id' => User::factory()->create(['first_name' => 'Sam', 'last_name' => 'Ray', 'call_sign' => 'K1SAM'])->id,
+        'user_id' => $sam->id,
         'status' => ShiftAssignment::STATUS_CHECKED_IN,
         'checked_in_at' => now()->subHour(),
     ]);
@@ -155,6 +161,8 @@ test('the ICS-211 lists shift check-ins in order', function () {
         ->and($page["R1 Leader's Name 1"])->toBe('Sam Ray')
         ->and($page['R1 Incident Assignment 1'])->toBe('Net Control')
         ->and($page['R1 Agency 1'])->toBe('Anytown ARES')
+        ->and($page['R1 Other Qualifications 1'])->toBe('IS-100, ARES L2')
+        ->and($page['R1 Incident Contact 1'])->toBe('555-0142')
         ->and($page['R1 Date/Time Check In 1'])->not->toBe('')
         ->and($page)->not->toHaveKey('R2 Resource Name or ID 2');
 

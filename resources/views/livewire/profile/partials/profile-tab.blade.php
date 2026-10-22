@@ -51,6 +51,16 @@
                     hint="Changing your email will require verification"
                 />
 
+                {{-- Phone --}}
+                <x-input
+                    label="Phone"
+                    type="tel"
+                    wire:model="phone"
+                    autocomplete="tel"
+                    maxlength="30"
+                    hint="Optional. Your contact number on the ICS-211 check-in list."
+                />
+
                 {{-- Current password, only needed when the email changes --}}
                 <div x-show="($wire.email ?? '').toLowerCase() !== ($wire.savedEmail ?? '').toLowerCase()" x-cloak>
                     <x-input
@@ -88,6 +98,59 @@
                     <input type="checkbox" class="checkbox checkbox-sm" wire:model="is_cpr_aed_trained" />
                     <span class="text-sm">CPR / AED trained</span>
                 </label>
+            </div>
+        </div>
+
+        {{-- Credentials Section --}}
+        <div class="card bg-base-100 shadow" data-credentials>
+            <div class="card-body">
+                <h3 class="card-title">Credentials</h3>
+                <p class="text-sm text-base-content/70">
+                    Tick the emergency communications credentials you hold. Unexpired credentials appear under Other Qualifications on the ICS-211 check-in list.
+                </p>
+
+                <ul class="divide-y divide-base-300">
+                    @foreach(\App\Enums\Credential::cases() as $credential)
+                        @php
+                            $key = $credential->value;
+                            $expiresAt = $credentials[$key]['expires_at'] ?? null;
+                            $expired = ($credentials[$key]['held'] ?? false) && $expiresAt && \Illuminate\Support\Carbon::parse($expiresAt)->lt(appNow()->startOfDay());
+                        @endphp
+                        <li class="py-3 space-y-2" wire:key="credential-{{ $key }}">
+                            <label class="flex items-start gap-3 cursor-pointer min-h-11">
+                                <input type="checkbox" class="checkbox mt-0.5" wire:model="credentials.{{ $key }}.held" />
+                                <span class="min-w-0">
+                                    <span class="font-semibold">{{ $credential->label() }}</span>
+                                    @if($expired)
+                                        <span class="badge badge-warning badge-sm ml-1">Expired</span>
+                                    @endif
+                                    <span class="block text-sm text-base-content/70">{{ $credential->description() }}</span>
+                                </span>
+                            </label>
+
+                            <div
+                                class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:pl-9"
+                                x-show="$wire.credentials['{{ $key }}'].held"
+                                @unless($credentials[$key]['held'] ?? false) style="display: none" @endunless
+                            >
+                                @if($credential->levels() !== [])
+                                    <x-select
+                                        label="Level"
+                                        wire:model="credentials.{{ $key }}.level"
+                                        :options="collect($credential->levels())->map(fn ($level) => ['id' => $level, 'name' => $level])->all()"
+                                        placeholder="Not specified"
+                                    />
+                                @endif
+                                <x-input
+                                    label="Expires"
+                                    type="date"
+                                    wire:model="credentials.{{ $key }}.expires_at"
+                                    hint="Leave blank if it doesn't expire"
+                                />
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
             </div>
         </div>
 
