@@ -1,9 +1,5 @@
 # Changelog
 
-Changes that someone running or using Field Day Commander would notice, newest release first. Versions are `YY.MM.N`, and each one matches a `vYY.MM.N` tag and Docker image. [CONTRIBUTING.md](CONTRIBUTING.md#changelog) explains what goes in here.
-
-This changelog starts after 26.10.9. For earlier releases, see the commit history.
-
 ## Unreleased
 
 ### Added

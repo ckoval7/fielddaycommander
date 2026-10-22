@@ -43,7 +43,7 @@ Activate the `branch-workflow` skill before you start, commit or merge work, tou
 ## Writing
 
 - **Commits:** Conventional Commits, describing the change in plain words (`fix(logging): show the first queued contact before it syncs`).
-- **Changelog:** anything a user or self-hoster could notice gets a `CHANGELOG.md` entry under **Unreleased** in the same branch. Describe fixes by what the person saw and when, not what changed in the code. Skip refactors, typos and CI. `CONTRIBUTING.md` has the full rules.
+- **Changelog:** anything a user or self-hoster could notice gets a `CHANGELOG.md` entry under **Unreleased** in the same branch. Describe fixes by what the person saw and when, not what changed in the code. Skip refactors, typos and CI. `CONTRIBUTING.md` has the full rules. The changelog starts after 26.10.9; earlier history is only in git. Keep the file to release sections: no intro or preamble.
 - **Product name:** Field Day Commander. "FD Commander" is only a short name for repeat mentions in prose. Titles, headings, banners and export headers always use the full name. The `fd-commander` and `fd_commander` slugs are identifiers: don't rename them.
 - **User-facing prose** (UI copy, README, changelog, the website and docs in the `fielddaycommander-pages` worktree): activate the `docs-prose` skill.
 - Only create documentation files when asked.
