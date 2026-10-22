@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Set Up a LAN for Field Operations - Field Day Commander</title>
-<meta name="description" content="Build a reliable local network for your Field Day site. Covers the router, a fixed IP for the server, how clients connect, and Wi-Fi tips for FD Commander.">
+<meta name="description" content="Build a reliable local network for your Field Day site. Covers the router, a fixed IP for the server, how clients connect, and Wi-Fi tips for Field Day Commander.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/lan-setup.html">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="article">
@@ -15,12 +15,12 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Set Up a LAN for Field Operations - Field Day Commander">
 <meta name="twitter:description" content="Build a reliable local network for Field Day with routers, switches, and proper IP configuration.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
-<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -191,7 +191,7 @@
 <section class="page-hero" style="padding-bottom:2rem;">
   <div class="container">
     <h1>Set Up a LAN for <span class="gradient">Field Operations</span></h1>
-    <p>Build a reliable local network for your Field Day site so every station can reach FD Commander.</p>
+    <p>Build a reliable local network for your Field Day site so every station can reach Field Day Commander.</p>
   </div>
 </section>
 
@@ -206,11 +206,11 @@
       <!-- WHAT YOU NEED -->
       <h2>What You Need</h2>
 
-      <p>FD Commander runs on your local network. Every device that needs to log contacts, view scores, or sign the guestbook connects to the same LAN. You don't need an internet connection.</p>
+      <p>Field Day Commander runs on your local network. Every device that needs to log contacts, view scores, or sign the guestbook connects to the same LAN. You don't need an internet connection.</p>
 
       <ul>
         <li>A <strong>Wi-Fi router.</strong> A cheap home router works fine.</li>
-        <li>The <strong>server</strong> running FD Commander (a Raspberry Pi, laptop, or any Linux box).</li>
+        <li>The <strong>server</strong> running Field Day Commander (a Raspberry Pi, laptop, or any Linux box).</li>
         <li><strong>Client devices</strong> with a web browser (laptops, tablets, phones).</li>
         <li>An <strong>ethernet cable</strong> to connect the server to the router.</li>
       </ul>
@@ -220,12 +220,12 @@
 
       <div class="step-box">
         <p><span class="step-number">1</span> Power on the router. Leave the WAN/internet port empty. You don't need upstream connectivity.</p>
-        <p><span class="step-number">2</span> Plug the FD Commander server into a LAN port on the router with an ethernet cable.</p>
+        <p><span class="step-number">2</span> Plug the Field Day Commander server into a LAN port on the router with an ethernet cable.</p>
         <p><span class="step-number">3</span> Connect client devices to the router's Wi-Fi network.</p>
-        <p><span class="step-number">4</span> Open a browser on any client and go to the server's IP address.</p>
+        <p><span class="step-number">4</span> Open a browser on any client and use the hostname configured during installation. If you deployed with an IP address instead, use that IP. <a href="install.html#choose-hostname">The installation guide explains how to verify the address</a>.</p>
       </div>
 
-      <p>That's the whole setup. The router handles DHCP (assigning IP addresses) and Wi-Fi. The server runs FD Commander. Clients open a browser and connect.</p>
+      <p>That's the whole setup. The router handles DHCP (assigning IP addresses) and Wi-Fi. The server runs Field Day Commander. Clients open a browser and connect.</p>
 
       <!-- GIVE THE SERVER A STATIC IP -->
       <h2>Give the Server a Static IP</h2>
@@ -237,8 +237,8 @@
       <p>If your router doesn't support reservations, you can set a static IP on the server itself. On Raspberry Pi OS, or any other system that uses NetworkManager:</p>
 
       <div class="code-block">
-<span class="comment"># Find your interface name (usually eth0)</span>
-<span class="cmd">ip link show</span>
+<span class="comment"># Find the active NetworkManager connection name</span>
+<span class="cmd">nmcli connection show --active</span>
 
 <span class="comment"># Set a static IP</span>
 <span class="cmd">sudo nmcli con mod "Wired connection 1" \
@@ -250,16 +250,18 @@
 <span class="cmd">sudo nmcli con up "Wired connection 1"</span>
       </div>
 
+      <p>Replace <code>Wired connection 1</code> in both commands with the connection name shown in the <code>NAME</code> column. This is the NetworkManager connection name, which may differ from the interface name, such as <code>eth0</code>. See <a href="https://networkmanager.dev/docs/api/latest/nmcli-examples.html">NetworkManager’s nmcli examples</a> for connection profiles and manual IP settings.</p>
+
       <p>Pick an address outside your router's DHCP range so it won't conflict with automatically assigned addresses. Check your router's admin page to see what range it uses.</p>
 
       <!-- ACCESSING FD COMMANDER -->
-      <h2>Accessing FD Commander</h2>
+      <h2 id="accessing-fd-commander">Accessing Field Day Commander</h2>
 
-      <p>Clients reach FD Commander at the address you gave the deploy script with <code>--domain</code>. If you deployed with the IP, that's <code>http://192.168.1.50</code> (or whatever address you chose). The server only answers to that name, so a browser pointed at a different hostname or IP for the same machine will get a blank page. If you change the address later, re-run the deploy script with the new <code>--domain</code>.</p>
+      <p>Clients reach Field Day Commander at the address you gave the deploy script with <code>--domain</code>. That option does not rename the device or create a hostname. Prefer a hostname that resolves from your station devices, using mDNS or your local DNS. Verify it before deploying; <a href="install.html#choose-hostname">Choose and Verify Your Server’s Hostname</a> walks through this. If hostname resolution cannot be set up, the server’s actual LAN IP is a fallback. Find it with <code>hostname -I</code> on the server. If you deployed with the IP, that's <code>http://192.168.1.50</code> (or whatever address you chose). The server only answers to that name, so a browser pointed at a different hostname or IP for the same machine will get a blank page. If you change the address later, re-run the deploy script with the new <code>--domain</code>.</p>
 
       <p>Browsers only need the web port. Live updates on the dashboards travel over the same connection, so there's no second port to open or remember.</p>
 
-      <p>If you're running FD Commander on a Raspberry Pi, mDNS may already be working, which means devices can reach it by hostname without knowing the IP. If you followed <a href="pi-setup.html">Prepare a Raspberry Pi</a> and named it <code>fd-commander</code>, deploying with <code>--domain fd-commander.local</code> lets everyone use <code>http://fd-commander.local</code>. Some Android devices and older Windows machines don't resolve <code>.local</code> names, so an IP address is the safer choice when you're not sure what your operators will bring.</p>
+      <p>If you're running Field Day Commander on a Raspberry Pi, mDNS may already be working, which means devices can reach it by hostname without knowing the IP. Check the device name with <code>hostname</code> on the server. If you followed <a href="pi-setup.html">Prepare a Raspberry Pi</a> and actually named it <code>fd-commander</code>, deploying with <code>--domain fd-commander.local</code> lets everyone use <code>http://fd-commander.local</code>. Some clients may not resolve <code>.local</code> names. Test the devices your operators will bring; use local DNS if needed, or deploy with a fixed LAN IP as a fallback.</p>
 
       <div class="callout tip">
         <div class="callout-title">Tip</div>
@@ -284,7 +286,7 @@
       <p>Set everything up at home before Field Day and make sure it works:</p>
 
       <div class="step-box">
-        <p><span class="step-number">1</span> Power on the router and server. Wait for FD Commander to start.</p>
+        <p><span class="step-number">1</span> Power on the router and server. Wait for Field Day Commander to start.</p>
         <p><span class="step-number">2</span> Connect a phone or laptop to the Wi-Fi.</p>
         <p><span class="step-number">3</span> Open a browser and go to the server's address. You should see the login page.</p>
         <p><span class="step-number">4</span> Try a second device. Log a test contact from each and make sure they both see it.</p>
@@ -292,7 +294,7 @@
 
       <div class="callout warning">
         <div class="callout-title">Watch out</div>
-        <p>If you're using a Raspberry Pi, make sure it has a reliable power supply. A Pi that brown-outs under load will corrupt its SD card and take your server down mid-event.</p>
+        <p>If you're using a Raspberry Pi, make sure it has a reliable power supply. A Pi that loses power under load can corrupt its SD card or interrupt logging.</p>
       </div>
 
       <!-- QUICK REFERENCE -->
@@ -307,9 +309,8 @@
         <p><strong>Router Admin:</strong> _______________</p>
       </div>
 
-      <div class="guide-nav">
-        <a href="index.html">&larr; All Guides</a>
-        <a href="external-loggers.html">External Loggers &rarr;</a>
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
       </div>
 
     </div>
@@ -319,6 +320,7 @@
 <footer></footer>
 <script src="../footer.js"></script>
 <script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
 
 </body>
 </html>

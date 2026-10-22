@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>First Event Setup - Field Day Commander</title>
-<meta name="description" content="Walk through setting up your first Field Day event in FD Commander: create the event, add equipment, configure stations, build the schedule, and invite your club's operators.">
+<meta name="description" content="Walk through setting up your first Field Day event in Field Day Commander: create the event, add equipment, configure stations, build the schedule, and invite your club's operators.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/first-event.html">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="article">
 <meta property="og:title" content="First Event Setup - Field Day Commander">
-<meta property="og:description" content="Set up your first Field Day event in FD Commander: event configuration, stations, equipment, scheduling, and operator registration.">
+<meta property="og:description" content="Set up your first Field Day event in Field Day Commander: event configuration, stations, equipment, scheduling, and operator registration.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/first-event.html">
 <meta property="og:image" content="https://fielddaycommander.org/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="First Event Setup - Field Day Commander">
 <meta name="twitter:description" content="Set up your first Field Day event: stations, equipment, scheduling, and operator registration.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
-<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -186,15 +186,15 @@
         <a href="index.html">How-To Guides</a> &rsaquo; First Event Setup
       </div>
 
-      <p>You've deployed FD Commander and can reach it in a browser. Now what? This guide walks through everything between "the server is running" and "operators are logging contacts." The whole process takes about 20 minutes if you have your event details handy.</p>
+      <p>You’ve deployed Field Day Commander and can reach it in a browser. If you haven’t installed it yet, start with <a href="install.html">Install Field Day Commander</a>. This guide walks through everything between "the server is running" and "operators are logging contacts."</p>
 
       <h2>Initial Setup Wizard</h2>
 
-      <p>The first time you open FD Commander in a browser, it launches a three-step setup wizard. The deploy script already created a System Administrator account for you (callsign: <code>SYSTEM</code>, email: <code>admin@localhost</code>). The wizard walks you through configuring it.</p>
+      <p>The first time you open Field Day Commander in a browser, it launches a three-step setup wizard. The deploy script already created a System Administrator account for you (callsign: <code>SYSTEM</code>, email: <code>admin@localhost</code>). The wizard walks you through configuring it.</p>
 
       <h3>Step 1: Admin Password</h3>
 
-      <p>Set a secure password for the admin account. The password must be at least 12 characters with uppercase, lowercase, numbers, and symbols. FD Commander checks it against known data breaches and will reject passwords that have appeared in public leaks.</p>
+      <p>Set a secure password for the admin account. The password must be at least 12 characters with uppercase, lowercase, numbers, and symbols. Field Day Commander checks it against known data breaches and will reject passwords that have appeared in public leaks.</p>
 
       <div class="callout warning">
         <div class="callout-title">Write this password down</div>
@@ -203,7 +203,7 @@
 
       <h3>Step 2: Site Branding</h3>
 
-      <p>Customize how FD Commander looks for your club:</p>
+      <p>Customize how Field Day Commander looks for your club:</p>
 
       <ul>
         <li><strong>Site Name</strong>: defaults to "Field Day Commander." You might change it to your club name or something like "W3XYZ Field Day 2026."</li>
@@ -225,7 +225,7 @@
         <li><strong>Contact Email</strong>: optional, used as public contact information.</li>
       </ul>
 
-      <p>Click <strong>Complete Setup</strong>. FD Commander saves your settings and redirects you to the login page. Sign in with the email <code>admin@localhost</code> and the password you just created. You'll land on the main dashboard.</p>
+      <p>Click <strong>Complete Setup</strong>. Field Day Commander saves your settings and redirects you to the login page. Sign in with the email <code>admin@localhost</code> and the password you just created. You'll land on the main dashboard.</p>
 
       <div class="callout info">
         <div class="callout-title">You can change all of this later</div>
@@ -237,7 +237,7 @@
       <p>From the dashboard, click <strong>Create Event</strong> (or go to <strong>Administration &gt; Events</strong> and click it there). The form is a stack of cards: <strong>Event Information</strong>, <strong>Event Location</strong>, <strong>Station Configuration</strong>, <strong>Power Configuration</strong>, <strong>GOTA Station (Get On The Air)</strong>, <strong>Public Visitors</strong>, and <strong>Guestbook Settings</strong>. Only the first, third, and fourth have required fields.</p>
 
       <figure class="screenshot">
-        <a href="../screenshots/no-active-event-dark.png"><img src="../screenshots/no-active-event-dark.png" alt="The FD Commander dashboard with no event yet, showing No Active Event and a Create Event button" loading="lazy" width="1920" height="1080"></a>
+        <a href="../screenshots/no-active-event-dark.png"><img src="../screenshots/no-active-event-dark.png" alt="The Field Day Commander dashboard with no event yet, showing No Active Event and a Create Event button" loading="lazy" width="1920" height="1080"></a>
         <figcaption>Right after setup, the dashboard has no event yet. Start with Create Event.</figcaption>
       </figure>
 
@@ -246,12 +246,12 @@
       <ul>
         <li><strong>Event Name</strong> (required): a descriptive name like "Field Day 2026."</li>
         <li><strong>Event Type</strong> (required): Field Day or Winter Field Day. This controls which rulebook scores the event, which operating classes you can pick, and the official schedule.</li>
-        <li><strong>Scoring Rules</strong>: which year's rules to score by. Leave it on the default and FD Commander will use the rules for the event's year. You can change it until the event starts, and then it locks.</li>
+        <li><strong>Scoring Rules</strong>: which year's rules to score by. Leave it on the default and Field Day Commander will use the rules for the event's year. You can change it until the event starts, and then it locks.</li>
         <li><strong>Year</strong>: auto-detected from the event name.</li>
         <li><strong>Start Date &amp; Time (UTC)</strong> and <strong>End Date &amp; Time (UTC)</strong>: filled in when you pick an event type, based on the official schedule. Field Day runs 1800Z Saturday to 2059Z Sunday on the fourth full weekend of June. Winter Field Day runs 1600Z Saturday to 2159Z Sunday on the fourth full weekend of January. Adjust them if your club operates a shorter window.</li>
       </ul>
 
-      <p>Below the dates, a <strong>Setup window opens</strong> line shows the earliest time your crew can start setting up. For both events that's 24 hours before the start.</p>
+      <p>Below the dates, a <strong>Setup window opens</strong> line helps with planning. Check it against the rules for your event year. <a href="https://www.arrl.org/files/file/Field-Day/2026/2026-Field-Day-Rules.pdf">ARRL’s 2026 rules, section 3</a> distinguish setup start limits, cumulative setup time, and operating periods; a blanket “24 hours before the start” does not describe all of them. Use the <a href="https://winterfieldday.org/sop.php">WFDA rules</a> for Winter Field Day instead.</p>
 
       <h3>Event Location</h3>
 
@@ -338,7 +338,7 @@
         <li><strong>Station Name</strong>: something descriptive like "HF CW 1," "VHF/UHF," or "GOTA." It must be unique within the event.</li>
         <li><strong>Hostname (NetBIOS Name)</strong>: only needed if this station runs N1MM Logger+, WSJT-X, or another external logger. See <a href="external-loggers.html">Connect External Loggers</a>.</li>
         <li><strong>Station type</strong>: check any special designations. <strong>GOTA Station (Get On The Air)</strong> marks the Get On The Air station (only one per event). <strong>VHF/UHF Only</strong> restricts it to those bands. <strong>Satellite Station</strong> marks it for satellite contacts.</li>
-        <li><strong>Primary Radio</strong>: the main transceiver for this station. FD Commander shows the radio's power capability so you can verify it fits your power class.</li>
+        <li><strong>Primary Radio</strong>: the main transceiver for this station. Field Day Commander shows the radio's power capability so you can verify it fits your power class.</li>
         <li><strong>Max Power Output (Watts)</strong>, <strong>Power Source</strong>, and <strong>Power Source Notes</strong>: the station's default operating power, its main power source, and any details worth recording, like "Honda EU2200i" or "200Ah LiFePO4 bank." Operators can override the power when they start a session.</li>
       </ul>
 
@@ -360,7 +360,7 @@
 
       <h3>Set up roles</h3>
 
-      <p>FD Commander ships with default roles for common Field Day positions: Safety Officer, Site Responsibilities, Public Information Table, Public Greeter, GOTA Coach, Message Handler, Event Manager, Station Captain, and Operator. Each role has a description, an icon, and an optional bonus point value.</p>
+      <p>Field Day Commander ships with default roles for common Field Day positions: Safety Officer, Site Responsibilities, Public Information Table, Public Greeter, GOTA Coach, Message Handler, Event Manager, Station Captain, and Operator. Each role has a description, an icon, and an optional bonus point value.</p>
 
       <p>Review the defaults on the <strong>Roles</strong> tab and tweak them for your club. You can edit them, delete ones you don't need, or click <strong>Add Custom Role</strong> to create your own (e.g., "Antenna Setup Crew" or "Food Coordinator").</p>
 
@@ -385,7 +385,7 @@
       <p>Once shifts exist, the <strong>Dashboard</strong> button on <strong>Event Management &gt; Shift Schedule</strong> opens the Shift Dashboard: a timeline of every role, your overall coverage, and a list of upcoming shifts that are empty or less than half staffed. It's the quickest way to spot the 2 AM hole before Field Day does.</p>
 
       <figure class="screenshot">
-        <a href="../screenshots/shift-dashboard-dark.png"><img src="../screenshots/shift-dashboard-dark.png" alt="FD Commander Shift Dashboard with a timeline of shifts for each role across Saturday and Sunday, a 73% coverage gauge with filled and open slot counts, and a Coverage Gaps list showing two Operator shifts" loading="lazy" width="1920" height="1080"></a>
+        <a href="../screenshots/shift-dashboard-dark.png"><img src="../screenshots/shift-dashboard-dark.png" alt="Field Day Commander Shift Dashboard with a timeline of shifts for each role across Saturday and Sunday, a 73% coverage gauge with filled and open slot counts, and a Coverage Gaps list showing two Operator shifts" loading="lazy" width="1920" height="1080"></a>
         <figcaption>The Shift Dashboard. Coverage Gaps lists the shifts that still need people, like the Saturday night Operator slots here.</figcaption>
       </figure>
 
@@ -400,11 +400,11 @@
 
       <p>Only people assigned to a <strong>Safety Officer</strong> or <strong>Site Responsibilities</strong> shift can check items off, so make sure that shift exists and has a name on it. Everyone else can read the list.</p>
 
-      <p>You won't complete it now, obviously. But review the items so you know what to bring and what to check off when you arrive at the site. If your club has additional safety requirements, you can add custom items under <strong>Administration &gt; Manage Safety Checklist</strong>.</p>
+      <p>Review the checklist before arriving so you know what to bring and what to check on site. If your club has additional safety requirements, you can add custom items under <strong>Administration &gt; Manage Safety Checklist</strong>.</p>
 
       <h2>Invite Operators</h2>
 
-      <p>Until the event starts, the dashboard's <strong>Invite participants</strong> card shows a registration link that you can share with your club. By default this is a local network address (e.g., <code>http://fd.local/register</code>), so operators need to be on the same LAN or Wi-Fi network as the server to reach it. If you've configured DNS and TLS (<a href="dns-tls.html">see the DNS &amp; TLS guide</a>), operators can register remotely using your public hostname. Send the link out via your club's email list, group chat, or repeater net. Operators visit it, register with their callsign, and they're in the system with the default Operator role.</p>
+      <p>Until the event starts, the dashboard's <strong>Invite participants</strong> card shows a registration link that you can share with your club. For a local install, this uses the server address you configured during deployment (for example, <code>http://fd-commander.local/register</code> if that is your configured, reachable hostname), so operators need to be on the same LAN or Wi-Fi network as the server to reach it. If you've configured DNS and TLS (<a href="dns-tls.html">see the DNS &amp; TLS guide</a>), operators can register remotely using your public hostname. Send the link out via your club's email list, group chat, or repeater net. Operators visit it, register with their callsign, and they're in the system with the default Operator role.</p>
 
       <figure class="screenshot compact">
         <a href="../screenshots/invite-participants-dark.png"><img src="../screenshots/invite-participants-dark.png" alt="The Invite participants card on the dashboard, showing the registration link and a copy button" loading="lazy" width="686" height="192"></a>
@@ -431,7 +431,7 @@
 
       <h2>The Dashboard Checklist</h2>
 
-      <p>Until the event starts, the dashboard shows a countdown, a <strong>Setup Checklist</strong>, and an <strong>Invite participants</strong> card. The checklist tracks five milestones. Once all five are checked, your event is ready for Field Day:</p>
+      <p>Until the event starts, the dashboard shows a countdown, a <strong>Setup Checklist</strong>, and an <strong>Invite participants</strong> card. The checklist tracks five milestones. These five milestones cover the basic setup:</p>
 
       <ol>
         <li><strong>Event configuration created</strong>: your event exists with its callsign, section, class, and power sources.</li>
@@ -453,9 +453,8 @@
         <p>Set up the event at least a month before Field Day and have a few club members register, sign up for shifts, and commit their equipment. This catches configuration problems while there's still time to fix them, and it gets operators familiar with the interface before the event.</p>
       </div>
 
-      <div class="guide-nav">
-        <a href="index.html">&larr; All Guides</a>
-        <a href="lan-setup.html">LAN Setup &rarr;</a>
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
       </div>
 
     </div>
@@ -465,6 +464,7 @@
 <footer></footer>
 <script src="../footer.js"></script>
 <script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
 <script src="../lightbox.js"></script>
 
 </body>

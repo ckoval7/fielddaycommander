@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install Field Day Commander</title>
+<meta name="description" content="Install Field Day Commander on a Linux server: verify its hostname, run the installer, complete setup, and check access from a station laptop.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/install.html">
+<meta property="og:site_name" content="Field Day Commander">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Install Field Day Commander">
+<meta property="og:description" content="Install Field Day Commander on a Linux server: verify its hostname, run the installer, complete setup, and check access from a station laptop.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/install.html">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Install Field Day Commander">
+<meta name="twitter:description" content="Install Field Day Commander on a Linux server: verify its hostname, run the installer, complete setup, and check access from a station laptop.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<style>
+  .guide-layout {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .guide-layout h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-layout h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .guide-layout h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .guide-layout p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .guide-layout ul, .guide-layout ol {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  .guide-layout li {
+    margin-bottom: 0.5rem;
+  }
+  .guide-layout strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .guide-layout code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    color: var(--accent-emerald);
+  }
+  .guide-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .guide-breadcrumb a {
+    color: var(--text-muted);
+  }
+  .guide-breadcrumb a:hover {
+    color: var(--text-primary);
+  }
+
+  .step-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step-box p {
+    margin-bottom: 0.5rem;
+  }
+  .step-box p:last-child {
+    margin-bottom: 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--accent-sky);
+    color: #15191e;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout p {
+    margin-bottom: 0;
+  }
+  .callout.tip {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+  }
+  .callout.tip .callout-title { color: var(--accent-green); }
+  .callout.info {
+    background: rgba(74, 141, 247, 0.08);
+    border: 1px solid rgba(74, 141, 247, 0.25);
+  }
+  .callout.info .callout-title { color: var(--accent-sky); }
+  .callout.warning {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .callout.warning .callout-title { color: var(--accent-orange); }
+
+  .code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    white-space: normal;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .command-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    padding: 0.65rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+  .command-header strong { color: var(--text-primary); }
+  .command-body {
+    margin: 0;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: inherit;
+  }
+  .guide-layout .device-context {
+    margin-bottom: 0.75rem;
+    color: var(--accent-sky);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .cmd { color: var(--text-primary); }
+  .code-block .output { color: var(--accent-sky); }
+
+  .guide-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .guide-nav a {
+    color: var(--accent-sky);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .guide-layout h2 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Install <span class="gradient">Field Day Commander</span></h1>
+    <p>Verify your server’s hostname, run the installer, and get the site ready for your club.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; Install Field Day Commander
+      </div>
+
+      <p>You’ll install Field Day Commander on one Linux computer, then open it from a laptop on the same network. This guide covers a fresh install on Raspberry Pi OS, Debian, or Ubuntu. For Docker and advanced options, use the <a href="../fd-commander-docs.html#installation">installation reference</a>.</p>
+
+      <h2>Before You Start</h2>
+      <ul>
+        <li>A <strong>64-bit Linux server</strong> with at least 2 GB RAM and 16 GB storage. If you’re starting with a Pi, follow <a href="pi-setup.html">Prepare a Raspberry Pi</a> first. Other supported systems are listed in the <a href="../fd-commander-docs.html#installation">system requirements</a>.</li>
+        <li>A terminal on that server, either directly or over SSH, with an account that can run <code>sudo</code>. <a href="ssh-basics.html">SSH &amp; Command-Line Basics</a> covers connecting.</li>
+        <li>Internet access on the server for downloading the software, and a laptop on the same local network to check the installation.</li>
+      </ul>
+      <p>If you’re connected over SSH, your terminal is already running commands on the server. Keep that session open. The headers on each command block tell you which computer to use. “On your laptop” means a local terminal outside the SSH session; “On the server” includes commands you run through SSH.</p>
+
+      <h2 id="choose-hostname">1. Check Your Server’s Hostname</h2>
+      <p>The hostname gives your operators an address to open in their browsers. <strong>On the server</strong>, run:</p>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">hostname</span></pre>
+      </div>
+      <p>The Pi setup guide uses <code>fd-commander</code> as its example name. With mDNS working, that becomes <code>fd-commander.local</code> on your network. If you chose a different device name, substitute it in the examples below. Installing Field Day Commander won’t change the name.</p>
+
+      <p><strong>On your laptop</strong>, open a separate terminal outside the SSH session and check that the name resolves:</p>
+      <div class="code-block">
+        <div class="command-header"><strong>On your laptop</strong><span>Local terminal — outside SSH</span></div>
+        <pre class="command-body"><span class="cmd">ping fd-commander.local</span></pre>
+      </div>
+      <p>You should see the server’s IP address. Press <strong>Ctrl+C</strong> to stop ping. To confirm it’s the right machine, compare that address with the output of <code>hostname -I</code> on the server. If the name isn’t found or the address doesn’t match, <a href="#hostname-trouble">sort out hostname resolution</a> before continuing.</p>
+      <p>A hostname provided by your router’s local DNS works too. The important part is that your laptop can resolve it to the server. See <a href="https://www.raspberrypi.com/documentation/computers/remote-access.html">Raspberry Pi’s hostname and address-discovery instructions</a> for more detail.</p>
+
+      <h2>2. Install Field Day Commander</h2>
+      <p><strong>Back in the server terminal</strong>, install Git if needed, download Field Day Commander, and enter its directory. These commands are for Raspberry Pi OS, Debian, and Ubuntu:</p>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo apt update</span>
+<span class="cmd">sudo apt install git</span>
+<span class="cmd">git clone https://github.com/ckoval7/fielddaycommander.git</span>
+<span class="cmd">cd fielddaycommander</span></pre>
+      </div>
+      <p>Then run the installer. Replace <code>YOUR_SERVER_HOSTNAME</code> with the name you verified in step 1, such as <code>fd-commander.local</code>. Include the <code>.local</code> suffix if you used it for the check, but leave out <code>http://</code> and any trailing slash:</p>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo ./deploy.sh --domain YOUR_SERVER_HOSTNAME</span></pre>
+      </div>
+      <p>The <code>--domain</code> option tells the web server which address to serve. It doesn’t create that hostname. Keep the verified name handy; you’ll use the same one in your browser.</p>
+      <p>The installer handles the dependencies, database, web server, and background services. Let it finish and keep the terminal open. A Pi can take longer than a desktop. If your SSH connection is unreliable, <a href="ssh-basics.html#run-something-that-survives-disconnection">tmux</a> lets the installation continue through a disconnection.</p>
+      <p>This installs the site for local-network access over HTTP. For public access with HTTPS, follow <a href="dns-tls.html">DNS &amp; TLS Setup</a>. Custom ports and other options are in the <a href="../fd-commander-docs.html#deploy-flags">deployment flags reference</a>.</p>
+
+      <h2>3. Open the Site</h2>
+      <p class="device-context">On your laptop · Web browser</p>
+      <p><strong>On your laptop</strong>, open <code>http://</code> followed by the hostname you used in the install command. If you deployed with <code>fd-commander.local</code>, open <code>http://fd-commander.local</code>.</p>
+      <p>You should see the initial setup wizard. Set the administrator password, choose your site branding, and enter your organization details and preferences. Store the password somewhere safe, then sign in with <code>admin@localhost</code> and that password. <a href="first-event.html#initial-setup-wizard">First Event Setup</a> explains the wizard fields if you need help.</p>
+
+      <h2>4. Check Another Device</h2>
+      <p class="device-context">On another laptop, tablet, or phone · Web browser</p>
+      <p>Open the same address on another laptop, tablet, or phone connected to your LAN. If the site loads, the server is ready for event setup. Write down the working browser address for your operators.</p>
+      <p>Repeat this check with the devices and network you’ll use at Field Day. A hostname that works at home may need network configuration at the site; <a href="lan-setup.html">Set Up a LAN for Field Operations</a> walks through that.</p>
+      <p>You don’t need to log a contact to check the installation. Logging needs an event whose operating window is open. Use the <a href="multi-station-logging.html#test-your-multi-station-setup-before-field-day">multi-station practice procedure</a> when you’re ready to test logging.</p>
+
+      <h2 id="troubleshooting">If Something Doesn't Work</h2>
+      <h3 id="hostname-trouble">Your laptop can’t find the hostname</h3>
+      <p>Check the output of <code>hostname</code> on the server and make sure you’re using that exact name. Both devices must be on the same network; guest Wi-Fi may isolate them. A ping timeout can mean replies are blocked, while “could not find host” or “name not known” means the name didn’t resolve.</p>
+      <p>If mDNS isn’t available, use a local DNS name configured through your router or ask your club’s network administrator. As a fallback, use the server’s actual LAN IP for both <code>--domain</code> and browser access. Give it a <a href="lan-setup.html#give-the-server-a-static-ip">DHCP reservation or fixed IP</a>.</p>
+
+      <h3>The name resolves, but the website doesn’t load</h3>
+      <p>Check that installation finished successfully and that you’re using <code>http://</code> with the exact hostname supplied to <code>--domain</code>. Another hostname or IP pointing at the same computer may not serve the site. If you change the chosen address, re-run deployment with the new <code>--domain</code> value.</p>
+      <p><strong>On the server</strong>, check the web service and recent logs:</p>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo systemctl status fdcommander --no-pager</span>
+<span class="cmd">sudo journalctl -u fdcommander --since "10 minutes ago" --no-pager</span></pre>
+      </div>
+      <p>If the service is running, check the firewall and Wi-Fi client isolation. <a href="ssh-basics.html#checking-on-fd-commander">SSH Basics</a> covers the other services and application logs.</p>
+
+      <h3>The download or installer stops</h3>
+      <p>If Git reports that <code>fielddaycommander</code> already exists, check the directory before continuing. An existing installation needs the <a href="../fd-commander-docs.html#updating">update procedure</a>.</p>
+      <p>For an installer error, read the failed step and check <code>/var/log/fd-commander-deploy.log</code>. Confirm internet access, free disk space, and a supported OS before retrying. When asking for help, share the relevant error text with passwords and other private values removed.</p>
+
+      <h2>Next Steps</h2>
+      <p>Prepare your <a href="lan-setup.html">field network</a>, then follow <a href="first-event.html">First Event Setup</a> to create the event, configure stations, and invite operators. Set up <a href="backup-restore.html">backups</a> before relying on the server for your event.</p>
+      <p>Once installed, core logging and event operation work on your local network without internet. Internet-fed weather information and optional email still need their respective connectivity and services.</p>
+
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+<script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
+
+</body>
+</html>

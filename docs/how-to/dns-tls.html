@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DNS &amp; TLS Setup - Field Day Commander</title>
-<meta name="description" content="Point a domain at your FD Commander server and enable HTTPS with automatic Let's Encrypt certificates via Caddy. Only needed for internet-facing deployments.">
+<meta name="description" content="Point a domain at your Field Day Commander server and enable HTTPS with automatic Let's Encrypt certificates via Caddy. Only needed for internet-facing deployments.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/dns-tls.html">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="article">
@@ -15,12 +15,12 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DNS &amp; TLS Setup - Field Day Commander">
-<meta name="twitter:description" content="Set up a domain and HTTPS for internet-facing FD Commander deployments.">
+<meta name="twitter:description" content="Set up a domain and HTTPS for internet-facing Field Day Commander deployments.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
-<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -210,7 +210,7 @@
 <section class="page-hero" style="padding-bottom:2rem;">
   <div class="container">
     <h1>DNS &amp; <span class="gradient">TLS Setup</span></h1>
-    <p>Point a domain name at your FD Commander server and secure it with HTTPS.</p>
+    <p>Point a domain name at your Field Day Commander server and secure it with HTTPS.</p>
   </div>
 </section>
 
@@ -224,22 +224,22 @@
 
       <div class="badge-advanced">Advanced &middot; Optional</div>
 
-      <p>This guide is only necessary if you want to make FD Commander accessible over the internet. If you're running it on a LAN at your Field Day site with no outside access, you can skip this entirely. FD Commander works fine on a local network over plain HTTP.</p>
+      <p>This guide is only necessary if you want to make Field Day Commander accessible over the internet. If you're running it on a LAN at your Field Day site with no outside access, you can skip this entirely. Field Day Commander works fine on a local network over plain HTTP.</p>
 
-      <p>But if you want club members to register equipment and sign up for shifts before the event, or let people follow the live score from home during the event, you need a domain name and TLS. There is no good reason to put FD Commander on the public internet without HTTPS.</p>
+      <p>Public access lets club members register equipment and sign up for shifts from home, or follow the live score during the event. The steps below configure a domain name and HTTPS for that access.</p>
 
       <div class="callout danger">
         <div class="callout-title">Do not skip TLS</div>
-        <p>Running over plain HTTP on a LAN is fine. Running over plain HTTP on the open internet means passwords and session tokens travel in cleartext, and anyone on the path can read them. If you're exposing FD Commander to the internet, use TLS. <a href="https://letsencrypt.org/" target="_blank" rel="noopener">Let's Encrypt</a> is free.</p>
+        <p>Running over plain HTTP on a LAN is fine. Running over plain HTTP on the open internet means passwords and session tokens travel in cleartext, and anyone on the path can read them. If you're exposing Field Day Commander to the internet, use TLS. <a href="https://letsencrypt.org/" target="_blank" rel="noopener">Let's Encrypt</a> is free.</p>
       </div>
 
       <h2>What You Need</h2>
 
       <ul>
         <li>A <strong>domain name</strong> you control. You can register one from any registrar (<a href="https://www.namecheap.com/" target="_blank" rel="noopener">Namecheap</a>, <a href="https://www.cloudflare.com/products/registrar/" target="_blank" rel="noopener">Cloudflare</a>, <a href="https://www.porkbun.com/" target="_blank" rel="noopener">Porkbun</a>, etc.). Something like <code>yourcallsign.com</code> works well.</li>
-        <li>A <strong>public IP address</strong> at the location where FD Commander will run, or the ability to set one up (most home/club internet connections have one).</li>
+        <li>A <strong>public IP address</strong> at the location where Field Day Commander will run, or the ability to set one up (most home/club internet connections have one).</li>
         <li>Access to your <strong>router</strong> to set up port forwarding.</li>
-        <li>FD Commander already <strong>deployed and running</strong> on your Pi or server.</li>
+        <li>Field Day Commander already <strong>deployed and running</strong> on your Pi or server.</li>
       </ul>
 
       <h2>How It Fits Together</h2>
@@ -256,7 +256,7 @@
 
       <h2>Step 1: Get Your Public IP</h2>
 
-      <p>From any computer on the network where FD Commander will run, find your public IP address:</p>
+      <p>From any computer on the network where Field Day Commander will run, find your public IP address:</p>
 
       <div class="code-block"><span class="prompt">$</span> <span class="cmd">curl -s ifconfig.me</span>
 <span class="output">203.0.113.42</span></div>
@@ -320,7 +320,7 @@ Address: 203.0.113.42</span></div>
 
       <h2>Step 4: Deploy with TLS Enabled</h2>
 
-      <p>FD Commander uses <a href="https://caddyserver.com/" target="_blank" rel="noopener">Caddy</a> as its built-in web server. Caddy automatically obtains and renews TLS certificates from Let's Encrypt. You don't need to install anything extra or manage certificates manually.</p>
+      <p>Field Day Commander uses <a href="https://caddyserver.com/" target="_blank" rel="noopener">Caddy</a> as its built-in web server. Caddy’s <a href="https://caddyserver.com/docs/automatic-https">automatic HTTPS</a> obtains and renews certificates using ACME certificate authorities such as Let's Encrypt. You don't need to install anything extra or manage certificates manually.</p>
 
       <p>When you run the deploy script, include the <code>--ssl</code> and <code>--email</code> flags:</p>
 
@@ -334,11 +334,11 @@ Address: 203.0.113.42</span></div>
 
       <p>On a server that uses firewalld, run <code>sudo firewall-cmd --permanent --add-service=http</code> and then <code>sudo firewall-cmd --reload</code>.</p>
 
-      <p>The script sets <code>APP_URL</code> to <code>https://fd.yourcallsign.com</code>, configures the Caddyfile with your domain, and starts the service on port 443. Caddy contacts Let's Encrypt, proves you own the domain (using the port 80 you forwarded earlier), obtains a TLS certificate, and starts serving HTTPS. It also renews the certificate before it expires, so you never have to think about it again.</p>
+      <p>The script sets <code>APP_URL</code> to <code>https://fd.yourcallsign.com</code>, configures the Caddyfile with your domain, and starts the service on port 443. Caddy validates control of your domain, obtains a TLS certificate, and starts serving HTTPS. Its default challenge options use port 80 (HTTP-01) or port 443 (TLS-ALPN-01). Caddy handles renewal automatically while the required connectivity remains available.</p>
 
       <div class="callout warning">
         <div class="callout-title">Port 80 must be reachable</div>
-        <p>Caddy uses port 80 to prove domain ownership to Let's Encrypt. If it can't bind to port 80 or the port isn't forwarded, certificate issuance can fail. Check your port forwarding if you see errors in <code>sudo journalctl -u fdcommander</code>.</p>
+        <p>Keep port 80 reachable for HTTP redirects and HTTP-01 validation. Caddy can also validate over port 443 with TLS-ALPN-01; port 80 is not the only certificate-validation path. See <a href="https://letsencrypt.org/docs/challenge-types/">Let’s Encrypt’s challenge documentation</a> and <a href="https://caddyserver.com/docs/automatic-https">Caddy’s automatic HTTPS requirements</a>. Check the server logs if neither challenge succeeds.</p>
       </div>
 
       <div class="callout info">
@@ -348,7 +348,7 @@ Address: 203.0.113.42</span></div>
 
       <h3>Verify HTTPS</h3>
 
-      <p>Open a browser and go to <code>https://fd.yourcallsign.com</code>. You should see FD Commander load with a padlock icon in the address bar. If you get a certificate warning, check the logs: <code>sudo journalctl -u fdcommander --no-pager</code>.</p>
+      <p>Open a browser and go to <code>https://fd.yourcallsign.com</code>. You should see Field Day Commander load with a padlock icon in the address bar. If you get a certificate warning, check the logs: <code>sudo journalctl -u fdcommander --no-pager</code>.</p>
 
       <p>Caddy automatically redirects HTTP to HTTPS, so if someone types <code>http://fd.yourcallsign.com</code> they'll be sent to the secure version automatically.</p>
 
@@ -367,12 +367,12 @@ Address: 203.0.113.42</span></div>
 
       <div class="callout tip">
         <div class="callout-title">Back to LAN for the event?</div>
-        <p>If your Field Day site won't have internet, that's fine. Set everything up ahead of time over the internet, then run the event on a LAN. FD Commander doesn't need the internet to operate. The DNS and TLS setup is just for the pre-event and remote-access use cases.</p>
+        <p>Plan the address operators will use before moving the server to an offline site. A public hostname must resolve to the server's address on the field LAN if you want to keep using it there. Alternatively, configure the server for a local address using the <code>--domain</code> guidance in <a href="lan-setup.html">Set Up a LAN for Field Operations</a>. Simply opening the server's local IP in a browser does not change its configured hostname.</p>
+        <p>Test the chosen address from the actual station devices with the internet disconnected before the event. Core event operation does not require internet access, but public DNS lookups and certificate issuance or renewal need their respective connectivity.</p>
       </div>
 
-      <div class="guide-nav">
-        <a href="index.html">&larr; All Guides</a>
-        <a href="ssh-basics.html">SSH Basics &rarr;</a>
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
       </div>
 
     </div>
@@ -382,6 +382,7 @@ Address: 203.0.113.42</span></div>
 <footer></footer>
 <script src="../footer.js"></script>
 <script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
 
 </body>
 </html>

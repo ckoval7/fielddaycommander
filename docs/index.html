@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring</title>
-<meta name="description" content="Bring your club together for ARRL Field Day and Winter Field Day. Plan shifts and gear, share one log, and follow the live score. Free and open source.">
+<meta name="description" content="Field Day Commander (FD Commander) is free, open-source software for ARRL Field Day and Winter Field Day: plan gear and shifts, share a log, and track scores.">
 <link rel="canonical" href="https://fielddaycommander.org/">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring">
-<meta property="og:description" content="Bring your club together for ARRL Field Day and Winter Field Day. Plan shifts and gear, share one log, and follow the live score. Free and open source.">
+<meta property="og:description" content="Field Day Commander (FD Commander) is free, open-source software for ARRL Field Day and Winter Field Day: plan gear and shifts, share a log, and track scores.">
 <meta property="og:url" content="https://fielddaycommander.org/">
 <meta property="og:image" content="https://fielddaycommander.org/og-image.png">
 <meta property="og:image:type" content="image/png">
@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Field Day Commander - Open-Source Field Day Planning, Logging, and Scoring">
-<meta name="twitter:description" content="Bring your club together for ARRL Field Day and Winter Field Day. Plan shifts and gear, share one log, and follow the live score. Free and open source.">
+<meta name="twitter:description" content="Field Day Commander (FD Commander) is free, open-source software for ARRL Field Day and Winter Field Day: plan gear and shifts, share a log, and track scores.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
 <meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -463,7 +463,7 @@
       "height": 1080
     }
   ],
-  "description": "Free, open-source Field Day logging software and event management platform for ARRL Field Day and Winter Field Day. Includes a built-in multi-station logger with real-time dupe checking, live scoring, and Cabrillo and ADIF export, so no other logging software is required. Also handles volunteer scheduling, equipment tracking, and safety checklists. Runs on a local network with no internet connection, including on a Raspberry Pi.",
+  "description": "Field Day Commander (FD Commander) is free, open-source Field Day logging software and event management platform for ARRL Field Day and Winter Field Day. Includes a built-in multi-station logger with real-time dupe checking, live scoring, and Cabrillo and ADIF export, so no other logging software is required. Also handles volunteer scheduling, equipment tracking, and safety checklists. Runs on a local network with no internet connection, including on a Raspberry Pi.",
   "applicationCategory": "UtilitiesApplication",
   "applicationSubCategory": "Amateur radio Field Day logger",
   "operatingSystem": "Linux (server); any modern web browser (operators)",
@@ -474,7 +474,7 @@
     "price": "0",
     "priceCurrency": "USD"
   },
-  "keywords": "Field Day logger, Field Day logging software, ARRL Field Day, Winter Field Day, WFD, ham radio logging, amateur radio, multi-station logging, Cabrillo, ADIF",
+  "keywords": "Field Day Commander, FD Commander, Field Day logger, Field Day logging software, ARRL Field Day, Winter Field Day, WFD, ham radio logging, amateur radio, multi-station logging, Cabrillo, ADIF",
   "featureList": [
     "Built-in browser-based Field Day logger; no other logging software required",
     "Multi-station, multi-operator logging with real-time dupe checking across all stations and bands",
@@ -785,7 +785,7 @@
         <p class="rail-subline">Take a look around the live demo, then share it with your Field Day team. When you&#39;re ready, the install guide walks you through setting up your club&#39;s server.</p>
         <div class="closing-actions">
           <a href="https://demo.fielddaycommander.org/" target="_blank" rel="noopener" class="btn-accent">Try the Live Demo</a>
-          <a href="fd-commander-docs.html" class="btn-outline">Read the Install Guide &rarr;</a>
+          <a href="how-to/install.html" class="btn-outline">Read the Install Guide &rarr;</a>
         </div>
       </div>
       <div class="deploy-rail">
@@ -794,6 +794,7 @@
           <button type="button" class="deploy-rail-copy" aria-label="Copy all three deploy commands">Copy all</button>
           <span class="sr-only" role="status" aria-live="polite"></span>
         </div>
+        <p>Run these commands on your server. Replace <code>YOUR_SERVER_HOSTNAME</code> with a hostname your station devices can resolve. For a Pi named <code>fd-commander</code>, that may be <code>fd-commander.local</code>; verify it on your network first. <a href="how-to/install.html#choose-hostname">Choose your server address</a>.</p>
         <ol class="deploy-rail-steps" role="list">
           <li class="deploy-rail-step">
             <span class="deploy-rail-marker" aria-hidden="true"></span>
@@ -813,7 +814,7 @@
             <span class="deploy-rail-marker" aria-hidden="true"></span>
             <div class="deploy-rail-body">
               <span class="deploy-rail-label">Deploy</span>
-              <code>sudo ./deploy.sh --domain fd.local</code>
+              <code>sudo ./deploy.sh --domain YOUR_SERVER_HOSTNAME</code>
               <ul class="deploy-rail-checks" role="list">
                 <li>&#10003; Dependencies</li>
                 <li>&#10003; Database</li>
@@ -824,7 +825,7 @@
           <li class="deploy-rail-step is-live">
             <span class="deploy-rail-marker" aria-hidden="true"></span>
             <div class="deploy-rail-body">
-              <span class="deploy-rail-label deploy-rail-live">Live at <code>http://fd.local</code></span>
+              <span class="deploy-rail-label deploy-rail-live">Open <code>http://YOUR_SERVER_HOSTNAME</code> using the same address</span>
               <span class="deploy-rail-signoff">Ready for Field Day &middot; 73</span>
             </div>
           </li>
@@ -875,7 +876,7 @@
     button.addEventListener('click', function () {
       navigator.clipboard.writeText(commands).then(function () {
         button.textContent = 'Copied';
-        status.textContent = 'Commands copied to clipboard';
+        status.textContent = 'Commands copied. Replace YOUR_SERVER_HOSTNAME with your server’s verified hostname before running.';
         clearTimeout(resetTimer);
         resetTimer = setTimeout(function () {
           button.textContent = 'Copy all';

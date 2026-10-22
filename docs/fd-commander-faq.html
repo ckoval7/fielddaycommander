@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FAQ - Field Day Commander</title>
-<meta name="description" content="Common questions about FD Commander: hardware requirements, licensing, how ARRL Field Day and Winter Field Day scoring works, internet access, shared station computers, backups, and how it compares to other Field Day logging software.">
+<meta name="description" content="Common questions about Field Day Commander (FD Commander): hardware requirements, licensing, how ARRL Field Day and Winter Field Day scoring works, internet access, shared station computers, backups, and how it compares to other Field Day logging software.">
 <link rel="canonical" href="https://fielddaycommander.org/fd-commander-faq.html">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="website">
 <meta property="og:title" content="FAQ - Field Day Commander">
-<meta property="og:description" content="Common questions about FD Commander: hardware, licensing, scoring, internet access, supported modes, and comparisons to other Field Day software.">
+<meta property="og:description" content="Common questions about Field Day Commander (FD Commander): hardware, licensing, scoring, internet access, supported modes, and comparisons to other Field Day software.">
 <meta property="og:url" content="https://fielddaycommander.org/fd-commander-faq.html">
 <meta property="og:image" content="https://fielddaycommander.org/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="FAQ - Field Day Commander">
-<meta name="twitter:description" content="Common questions about FD Commander: hardware, licensing, scoring, internet access, and supported modes.">
+<meta name="twitter:description" content="Common questions about Field Day Commander (FD Commander): hardware, licensing, scoring, internet access, and supported modes.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
-<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fd-commander.css">
 <style>
@@ -107,7 +107,7 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What do I need to run FD Commander?",
+      "name": "What do I need to run Field Day Commander?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Operators can use it from any device with a web browser: Windows, Mac, Linux, a tablet, or a phone. The server runs on Linux (a Raspberry Pi, old PC, or any spare box). The deploy script supports Ubuntu, Debian, 64-bit Raspberry Pi OS, and RHEL-family distros such as Rocky and AlmaLinux, and setup takes about 5 minutes."
@@ -115,7 +115,7 @@
     },
     {
       "@type": "Question",
-      "name": "Can FD Commander run on a Raspberry Pi?",
+      "name": "Can Field Day Commander run on a Raspberry Pi?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Yes. It has been tested on a Raspberry Pi 4 with 2 GB of RAM running off a battery pack. FrankenPHP and Laravel Octane keep the memory footprint small. A Pi is a great Field Day server: low power draw, fits in a pelican case, and you can prep it at home weeks before the event."
@@ -123,7 +123,7 @@
     },
     {
       "@type": "Question",
-      "name": "Does FD Commander need internet access?",
+      "name": "Does Field Day Commander need internet access?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "To deploy: yes, the install script downloads dependencies. To run: no. Once deployed, it runs entirely on your LAN with no cloud dependencies. The weather page is the only feature that uses the internet, and the rest of the app works without it. Many Field Day sites have no internet at all."
@@ -131,31 +131,31 @@
     },
     {
       "@type": "Question",
-      "name": "Can I use my own logging software and still have contacts show up in FD Commander?",
+      "name": "Can I use my own logging software and still have contacts show up in Field Day Commander?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. FD Commander has built-in UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Enable the listener for your program, point the program at the server's IP and port, and contacts flow in automatically. You can also import an ADIF file after the fact through a guided wizard."
+        "text": "Yes. Field Day Commander has built-in UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Enable the listener for your program, point the program at the server's IP and port, and contacts flow in automatically. You can also import an ADIF file after the fact through a guided wizard."
       }
     },
     {
       "@type": "Question",
-      "name": "Do I need separate logging software to use FD Commander?",
+      "name": "Do I need separate logging software to use Field Day Commander?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. FD Commander has a built-in logger. Operators open a browser on any laptop, tablet, or phone on the network and log contacts directly, with dupes checked across every station, live scoring, and Cabrillo export at the end. Connecting other software is optional: operators who prefer N1MM Logger+, or who run digital modes in WSJT-X, JTDX, or fldigi, can send those contacts into the same log over UDP."
+        "text": "No. Field Day Commander has a built-in logger. Operators open a browser on any laptop, tablet, or phone on the network and log contacts directly, with dupes checked across every station, live scoring, and Cabrillo export at the end. Connecting other software is optional: operators who prefer N1MM Logger+, or who run digital modes in WSJT-X, JTDX, or fldigi, can send those contacts into the same log over UDP."
       }
     },
     {
       "@type": "Question",
-      "name": "How is FD Commander different from cloud-based logging services?",
+      "name": "How is Field Day Commander different from cloud-based logging services?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Cloud loggers work well for individual operators and for sites with dependable internet. FD Commander is built for the Field Day site itself. Every station connects to a server on your own network, so multi-station logging and cross-station dupe checking keep working with no internet or cell service. Operators sign in on a shared station computer with their callsign, or with their own account on their own device, and the same system runs the schedule, equipment, safety checklist, guestbook, and bonus tracking. Your log stays on hardware your club controls."
+        "text": "Cloud loggers work well for individual operators and for sites with dependable internet. Field Day Commander is built for the Field Day site itself. Every station connects to a server on your own network, so multi-station logging and cross-station dupe checking keep working with no internet or cell service. Operators sign in on a shared station computer with their callsign, or with their own account on their own device, and the same system runs the schedule, equipment, safety checklist, guestbook, and bonus tracking. Your log stays on hardware your club controls."
       }
     },
     {
       "@type": "Question",
-      "name": "Does FD Commander export Cabrillo?",
+      "name": "Does Field Day Commander export Cabrillo?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Yes. Cabrillo export is a core feature. When the event ends, you can generate a Cabrillo file ready to upload to the ARRL submission page. For Winter Field Day, the file uses the WFDA's Cabrillo header, and you also get an Event Summary PDF with your objectives and score worksheet."
@@ -166,7 +166,7 @@
       "name": "How does dupe checking work across multiple stations?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "All contacts go into a single shared database in real time. When an operator enters a callsign, FD Commander checks it against every contact logged by every station. The same callsign on the same band and mode is a dupe, and it's flagged instantly before the contact is saved."
+        "text": "All contacts go into a single shared database in real time. When an operator enters a callsign, Field Day Commander checks it against every contact logged by every station. The same callsign on the same band and mode is a dupe, and it's flagged instantly before the contact is saved."
       }
     },
     {
@@ -174,12 +174,12 @@
       "name": "What happens if the server goes down during the event?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Operators keep logging. If a browser loses its connection to the server, contacts will queue locally on the device and sync automatically when the connection comes back. FD Commander also has a paper log transcription feature for entering contacts with correct timestamps if needed."
+        "text": "Operators keep logging. If a browser loses its connection to the server, contacts will queue locally on the device and sync automatically when the connection comes back. Field Day Commander also has a paper log transcription feature for entering contacts with correct timestamps if needed."
       }
     },
     {
       "@type": "Question",
-      "name": "Is FD Commander really free?",
+      "name": "Is Field Day Commander really free?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Yes. It is free and open source under the GPL v3 license. No paid tiers, no premium features, no telemetry, and no accounts on someone else's server. The code is on GitHub."
@@ -187,10 +187,10 @@
     },
     {
       "@type": "Question",
-      "name": "Can I use FD Commander for contests other than Field Day?",
+      "name": "Can I use Field Day Commander for contests other than Field Day?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "FD Commander supports ARRL Field Day and Winter Field Day, each scored under its own published rules. The scoring, bonus categories and objectives, exchange format, and Cabrillo export are specific to those events. It is not a general contest logger."
+        "text": "Field Day Commander supports ARRL Field Day and Winter Field Day, each scored under its own published rules. The scoring, bonus categories and objectives, exchange format, and Cabrillo export are specific to those events. It is not a general contest logger."
       }
     },
     {
@@ -203,7 +203,7 @@
     },
     {
       "@type": "Question",
-      "name": "Does FD Commander handle Winter Field Day?",
+      "name": "Does Field Day Commander handle Winter Field Day?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Yes. The app picks the right Winter Field Day scoring rules for the event: QSO points times (objective multiplier + 1), with no power multiplier or GOTA. Every objective is tracked, and band, mode, QRP, and bulletin objectives are earned automatically. The exchange uses the H, I, O, and M categories. At the end you get a WFDA-format Cabrillo log, an ADIF file, and an Event Summary PDF."
@@ -219,7 +219,7 @@
     },
     {
       "@type": "Question",
-      "name": "How many simultaneous operators can FD Commander handle?",
+      "name": "How many simultaneous operators can Field Day Commander handle?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "More than you will need. The server uses persistent workers (Laravel Octane on FrankenPHP) and a dedicated WebSocket process for real-time updates. Even on a Raspberry Pi 4, the stack can handle dozens of simultaneous connections. A typical Field Day site runs 5 to 15 stations, which is nowhere near the limit."
@@ -253,28 +253,28 @@
         <div class="faq-item">
           <div class="faq-question">My favorite Field Day logging software works fine. Why would I switch?</div>
           <div class="faq-answer">
-            You don't have to switch. FD Commander has its own built-in logger, but it doesn't force anyone off the software they know. It receives contacts over UDP from N1MM Logger+ and from digital-mode programs like WSJT-X, JTDX, and fldigi, and it can import ADIF files if you'd rather bring contacts in after the fact. The reason to bring FD Commander in is everything else Field Day involves: volunteer scheduling, equipment tracking, safety checklists, guestbooks, NTS message handling, and scoring with all 18 ARRL bonus categories (or the Winter Field Day objectives). If your club coordinates all of that with spreadsheets, paper sign-ups, and group texts, FD Commander puts it in one place. Operators who prefer their own software can keep using it.
+            You don't have to switch. Field Day Commander has its own built-in logger, but it doesn't force anyone off the software they know. It receives contacts over UDP from N1MM Logger+ and from digital-mode programs like WSJT-X, JTDX, and fldigi, and it can import ADIF files if you'd rather bring contacts in after the fact. The reason to bring Field Day Commander in is everything else Field Day involves: volunteer scheduling, equipment tracking, safety checklists, guestbooks, NTS message handling, and scoring with all 18 ARRL bonus categories (or the Winter Field Day objectives). If your club coordinates all of that with spreadsheets, paper sign-ups, and group texts, Field Day Commander puts it in one place. Operators who prefer their own software can keep using it.
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question">My club uses paper logs and a spreadsheet. We do fine.</div>
           <div class="faq-answer">
-            Plenty of clubs do, and there's nothing wrong with that. But if your club has ever had duplicate contacts across stations that nobody caught until Cabrillo review, or an empty operator chair at 2 AM because two people thought the other one had that shift, or the safety checklist didn't get done because everyone assumed someone else handled it... those are the problems FD Commander solves. If none of that has ever happened to you, you're either very organized or very lucky.
+            Plenty of clubs do, and there's nothing wrong with that. But if your club has ever had duplicate contacts across stations that nobody caught until Cabrillo review, or an empty operator chair at 2 AM because two people thought the other one had that shift, or the safety checklist didn't get done because everyone assumed someone else handled it... those are the problems Field Day Commander solves. If none of that has ever happened to you, you're either very organized or very lucky.
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question">Is this just another Field Day logger with a web UI?</div>
           <div class="faq-answer">
-            No. It includes a fast multi-station logger, but that's one piece of it. FD Commander also handles pre-event planning (stations, equipment, schedules, safety checklists), contact intake from N1MM Logger+ and digital-mode software like WSJT-X and fldigi (via UDP, plus ADIF file import), a visitor guestbook, NTS radiogram tracking, photo uploads, role-based access control, and live scoring with the full ARRL bonus point formula. The logging part is intentionally simple: a single-field entry flow designed for speed. The rest of the platform is what makes it different.
+            No. It includes a fast multi-station logger, but that's one piece of it. Field Day Commander also handles pre-event planning (stations, equipment, schedules, safety checklists), contact intake from N1MM Logger+ and digital-mode software like WSJT-X and fldigi (via UDP, plus ADIF file import), a visitor guestbook, NTS radiogram tracking, photo uploads, role-based access control, and live scoring with the full ARRL bonus point formula. The logging part is intentionally simple: a single-field entry flow designed for speed. The rest of the platform is what makes it different.
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question">How is this different from cloud-based logging services?</div>
           <div class="faq-answer">
-            Cloud loggers work well for individual operators and for sites with dependable internet. FD Commander is built for the Field Day site itself. Every station connects to a server on your own network, so multi-station logging and cross-station dupe checking keep working with no internet or cell service. Operators sign in on a shared station computer with their callsign, or with their own account on their own device, and the same system runs the schedule, equipment, safety checklist, guestbook, and bonus tracking. Your log stays on hardware your club controls.
+            Cloud loggers work well for individual operators and for sites with dependable internet. Field Day Commander is built for the Field Day site itself. Every station connects to a server on your own network, so multi-station logging and cross-station dupe checking keep working with no internet or cell service. Operators sign in on a shared station computer with their callsign, or with their own account on their own device, and the same system runs the schedule, equipment, safety checklist, guestbook, and bonus tracking. Your log stays on hardware your club controls.
           </div>
         </div>
       </div>
@@ -293,7 +293,7 @@
         <div class="faq-item">
           <div class="faq-question">Do I need to know Linux to set it up?</div>
           <div class="faq-answer">
-            You need to be able to clone a git repo and run a shell script. The deploy command is literally <code>sudo ./deploy.sh --domain fd.local</code> and it handles everything: dependencies, database, web server. You don't need to configure Apache, edit PHP files, or touch a database. But if the phrase "SSH into the Pi" makes you uncomfortable, you'll want to recruit your club's tech person.
+            You need to be able to clone a git repo and run a shell script. The deploy command is <code>sudo ./deploy.sh --domain YOUR_SERVER_HOSTNAME</code>: replace <code>YOUR_SERVER_HOSTNAME</code> with a hostname your station devices can resolve. For example, <code>fd-commander.local</code> only applies to a device named <code>fd-commander</code> with working mDNS. The <a href="how-to/install.html#choose-hostname">installation guide explains how to choose the address</a>. The script handles everything: dependencies, database, web server. You don't need to configure Apache, edit PHP files, or touch a database. But if the phrase "SSH into the Pi" makes you uncomfortable, you'll want to recruit your club's tech person.
           </div>
         </div>
 
@@ -307,7 +307,7 @@
         <div class="faq-item">
           <div class="faq-question">What happens if the server goes down during the event?</div>
           <div class="faq-answer">
-            Operators keep logging. If a browser loses its connection to the server, contacts will queue locally on the device. When the connection comes back, they'll sync automatically. You don't lose contacts because someone tripped over the ethernet cable. If the server goes down entirely and you need to log on paper for a while, FD Commander has a paper log transcription feature so you can enter those contacts with the correct timestamps once you're back up. Either way, bring a spare SD card with a known-good image, and a recent backup to restore onto it.
+            Operators keep logging. If a browser loses its connection to the server, contacts will queue locally on the device. When the connection comes back, they'll sync automatically. You don't lose contacts because someone tripped over the ethernet cable. If the server goes down entirely and you need to log on paper for a while, Field Day Commander has a paper log transcription feature so you can enter those contacts with the correct timestamps once you're back up. Either way, bring a spare SD card with a known-good image, and a recent backup to restore onto it.
           </div>
         </div>
 
@@ -323,7 +323,7 @@
         <div class="faq-item">
           <div class="faq-question">Can I put it on the internet so remote operators can log in?</div>
           <div class="faq-answer">
-            Yes. FD Commander is a full Laravel application with role-based authentication, CSRF protection, and input validation. It's built the same way any production web app is, so exposing it to the internet is fine if your setup calls for it. This is especially useful in the weeks before the event: club members can register their equipment, sign up for operating shifts, and review station assignments from home instead of waiting until setup day. During the event, people who can't make it to the site can follow the live score, and you can make the guestbook accessible from a public URL.
+            Yes. Field Day Commander is a full Laravel application with role-based authentication, CSRF protection, and input validation. It's built the same way any production web app is, so exposing it to the internet is fine if your setup calls for it. This is especially useful in the weeks before the event: club members can register their equipment, sign up for operating shifts, and review station assignments from home instead of waiting until setup day. During the event, people who can't make it to the site can follow the live score, and you can make the guestbook accessible from a public URL.
             <br><br>
             <strong>If you do this, use TLS.</strong> Running over plain HTTP on a LAN is one thing. Running over plain HTTP on the open internet means passwords and session tokens travel in cleartext, which anyone on the path can read. Set up a TLS certificate (Let's Encrypt is free) and make sure all traffic goes through HTTPS. The deploy script supports this. There is no good reason to skip it.
           </div>
@@ -332,7 +332,7 @@
         <div class="faq-item">
           <div class="faq-question">Does it do CAT control or talk to my radio?</div>
           <div class="faq-answer">
-            <strong>No.</strong> FD Commander is a web application, not a rig control program. It doesn't key your radio, decode digital modes, or read frequency from CAT. CAT control is a fundamentally different technology. However, FD Commander does integrate over UDP with software that handles the radio side: N1MM Logger+, plus digital-mode programs like WSJT-X, JTDX, and fldigi. FD Commander receives each contact in real time as it's logged, so operators don't have to double-log. Stations without any of that use the built-in logger.
+            <strong>No.</strong> Field Day Commander is a web application, not a rig control program. It doesn't key your radio, decode digital modes, or read frequency from CAT. CAT control is a fundamentally different technology. However, Field Day Commander does integrate over UDP with software that handles the radio side: N1MM Logger+, plus digital-mode programs like WSJT-X, JTDX, and fldigi. Field Day Commander receives each contact in real time as it's logged, so operators don't have to double-log. Stations without any of that use the built-in logger.
             <span class="faq-honest">CAT control isn't on the roadmap. Log integration is already here.</span>
           </div>
         </div>
@@ -343,9 +343,9 @@
         <div class="faq-category-title">Logging &amp; Scoring</div>
 
         <div class="faq-item">
-          <div class="faq-question">Do I need separate logging software to use FD Commander?</div>
+          <div class="faq-question">Do I need separate logging software to use Field Day Commander?</div>
           <div class="faq-answer">
-            No. FD Commander has a built-in logger. Operators open a browser on any laptop, tablet, or phone on the network and log contacts directly, with dupes checked across every station, live scoring, and Cabrillo export at the end. Connecting other software is optional: operators who prefer N1MM Logger+, or who run digital modes in WSJT-X, JTDX, or fldigi, can send those contacts into the same log over UDP.
+            No. Field Day Commander has a built-in logger. Operators open a browser on any laptop, tablet, or phone on the network and log contacts directly, with dupes checked across every station, live scoring, and Cabrillo export at the end. Connecting other software is optional: operators who prefer N1MM Logger+, or who run digital modes in WSJT-X, JTDX, or fldigi, can send those contacts into the same log over UDP.
           </div>
         </div>
 
@@ -359,23 +359,23 @@
         <div class="faq-item">
           <div class="faq-question">Does it support ADIF?</div>
           <div class="faq-answer">
-            <strong>Import: yes.</strong> FD Commander can receive ADIF data in real time over UDP from N1MM Logger+ and digital-mode software such as WSJT-X and fldigi, and it has a file import wizard for uploading .adi/.adif files with station mapping and record validation.
+            <strong>Import: yes.</strong> Field Day Commander can receive ADIF data in real time over UDP from N1MM Logger+ and digital-mode software such as WSJT-X and fldigi, and it has a file import wizard for uploading .adi/.adif files with station mapping and record validation.
             <br><br>
             <strong>Export: yes.</strong> The Reports page has an <strong>ADIF Log</strong> download alongside the Cabrillo file. It includes every credited, non-dupe contact with the band, mode, sub-mode, class, section, and operator, so you can load the weekend into the club&#39;s logging software.
           </div>
         </div>
 
         <div class="faq-item">
-          <div class="faq-question">Can I use my own logging software and still have contacts show up in FD Commander?</div>
+          <div class="faq-question">Can I use my own logging software and still have contacts show up in Field Day Commander?</div>
           <div class="faq-answer">
-            Yes. FD Commander has built-in UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Enable the listener for your program, point the program at the server's IP and port, and contacts flow into FD Commander automatically. Dupe checking, scoring, and Cabrillo export all work the same whether a contact was logged in FD Commander's built-in logger or received from another program. You can also import an ADIF file after the fact through a guided wizard that lets you map stations and review every record before it's committed.
+            Yes. Field Day Commander has built-in UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Enable the listener for your program, point the program at the server's IP and port, and contacts flow into Field Day Commander automatically. Dupe checking, scoring, and Cabrillo export all work the same whether a contact was logged in Field Day Commander's built-in logger or received from another program. You can also import an ADIF file after the fact through a guided wizard that lets you map stations and review every record before it's committed.
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question">How does dupe checking work across multiple stations?</div>
           <div class="faq-answer">
-            All contacts go into a single shared database in real time. When an operator enters a callsign, FD Commander checks it against every contact logged by every station. The same callsign on the same band and mode is a dupe, and it's flagged instantly before the contact is saved. No post-event deduplication needed.
+            All contacts go into a single shared database in real time. When an operator enters a callsign, Field Day Commander checks it against every contact logged by every station. The same callsign on the same band and mode is a dupe, and it's flagged instantly before the contact is saved. No post-event deduplication needed.
           </div>
         </div>
 
@@ -424,7 +424,7 @@
         <div class="faq-item">
           <div class="faq-question">Can I use this for contests other than Field Day?</div>
           <div class="faq-answer">
-            FD Commander supports ARRL Field Day and Winter Field Day (run by the Winter Field Day Association), each scored under its own published rules. The scoring, bonus categories and objectives, exchange format, and Cabrillo export are specific to those events. If you're looking for a general contest logger, this isn't it.
+            Field Day Commander supports ARRL Field Day and Winter Field Day (run by the Winter Field Day Association), each scored under its own published rules. The scoring, bonus categories and objectives, exchange format, and Cabrillo export are specific to those events. If you're looking for a general contest logger, this isn't it.
             <span class="faq-honest">Focus is a feature, not a limitation.</span>
           </div>
         </div>
@@ -451,14 +451,14 @@
         <div class="faq-item">
           <div class="faq-question">Who maintains this?</div>
           <div class="faq-answer">
-            K3CPK. Licensed for over 10 years, organizer for several Field Day events, and tired of Field Day software that felt outdated and only ran on one OS. FD Commander grew out of <a href="https://github.com/ckoval7/fdlogdb" target="_blank" rel="noopener">fdlogdb</a>, an earlier Field Day logging tool that proved the concept but hit its limits. FD Commander is the full rebuild with everything that project taught him. It's open source and the code is on GitHub for anyone to fork, contribute to, or audit.
+            K3CPK. Licensed for over 10 years, organizer for several Field Day events, and tired of Field Day software that felt outdated and only ran on one OS. Field Day Commander grew out of <a href="https://github.com/ckoval7/fdlogdb" target="_blank" rel="noopener">fdlogdb</a>, an earlier Field Day logging tool that proved the concept but hit its limits. Field Day Commander is the full rebuild with everything that project taught him. It's open source and the code is on GitHub for anyone to fork, contribute to, or audit.
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question">What if it breaks during Field Day and there's no support?</div>
           <div class="faq-answer">
-            This is a real concern with any self-hosted open-source tool. Mitigate it: test your deployment at home well before the event, do a dry run with your club, keep a backup SD card imaged and ready, schedule automatic backups with the included <code>backup.sh</code> script (see <a href="how-to/backup-restore.html">Back Up and Restore</a>), and make sure at least one person in the club is comfortable reading a log file. If all else fails, you can always fall back to paper for a while. When the server comes back up, FD Commander has a paper log transcription feature that lets you enter those contacts with the correct timestamps so nothing is lost.
+            This is a real concern with any self-hosted open-source tool. Mitigate it: test your deployment at home well before the event, do a dry run with your club, keep a backup SD card imaged and ready, schedule automatic backups with the included <code>backup.sh</code> script (see <a href="how-to/backup-restore.html">Back Up and Restore</a>), and make sure at least one person in the club is comfortable reading a log file. If all else fails, you can always fall back to paper for a while. When the server comes back up, Field Day Commander has a paper log transcription feature that lets you enter those contacts with the correct timestamps so nothing is lost.
             <br><br>
             If you find a bug, please <a href="https://github.com/ckoval7/fielddaycommander/issues" target="_blank" rel="noopener">open an issue on GitHub</a>. Say what you were doing, what you expected, and what happened instead, and include any error message. That's the quickest way to get it fixed.
           </div>

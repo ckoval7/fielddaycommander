@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>External Loggers - Field Day Commander</title>
-<meta name="description" content="Connect N1MM Logger+, WSJT-X, JTDX, and fldigi to FD Commander over UDP so every contact lands in your Field Day log automatically.">
+<meta name="description" content="Connect N1MM Logger+, WSJT-X, JTDX, and fldigi to Field Day Commander over UDP so every contact lands in your Field Day log automatically.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/external-loggers.html">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="article">
 <meta property="og:title" content="External Loggers - Field Day Commander">
-<meta property="og:description" content="Send contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi straight into FD Commander over UDP.">
+<meta property="og:description" content="Send contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi straight into Field Day Commander over UDP.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/external-loggers.html">
 <meta property="og:image" content="https://fielddaycommander.org/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="External Loggers - Field Day Commander">
-<meta name="twitter:description" content="Connect N1MM Logger+, WSJT-X, JTDX, and fldigi to FD Commander.">
+<meta name="twitter:description" content="Connect N1MM Logger+, WSJT-X, JTDX, and fldigi to Field Day Commander.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
-<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -248,7 +248,7 @@
 <section class="page-hero" style="padding-bottom:2rem;">
   <div class="container">
     <h1>Connect <span class="gradient">External Loggers</span></h1>
-    <p>Send contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi straight into FD Commander.</p>
+    <p>Send contacts from N1MM Logger+, WSJT-X, JTDX, and fldigi straight into Field Day Commander.</p>
   </div>
 </section>
 
@@ -262,14 +262,14 @@
 
       <div class="badge-advanced">Logging &middot; Optional</div>
 
-      <p>Your operators already know their favorite programs, and there's no reason to make them give those up for the weekend. FD Commander can listen on the local network for contacts sent by N1MM Logger+, digital-mode programs like WSJT-X, JTDX, and fldigi, and anything else that sends ADIF over UDP. Each contact lands in the log a moment after the operator saves it, where it counts toward the score, gets checked for dupes, and shows up on the dashboards. This is optional: stations that don't run any of this software log in FD Commander's built-in logger with nothing to configure.</p>
+      <p>Your operators already know their favorite programs, and there's no reason to make them give those up for the weekend. Field Day Commander can listen on the local network for contacts sent by N1MM Logger+, digital-mode programs like WSJT-X, JTDX, and fldigi, and anything else that sends ADIF over UDP. Each contact lands in the log a moment after the operator saves it, where it counts toward the score, gets checked for dupes, and shows up on the dashboards. This is optional: stations that don't run any of this software log in Field Day Commander's built-in logger with nothing to configure.</p>
 
       <p>This guide walks through one logging PC from start to finish. Plan on about fifteen minutes for the first PC and a few minutes for each one after that.</p>
 
       <h2>Before You Start</h2>
 
       <ul>
-        <li><strong>FD Commander is running on your field network</strong> with a fixed IP address. If you haven't set that up yet, start with <a href="lan-setup.html">Set Up a LAN for Field Operations</a>. The examples below use <code>192.168.1.50</code> as the server address.</li>
+        <li><strong>Field Day Commander is running on your field network</strong> with a fixed IP address. If you haven't set that up yet, start with <a href="lan-setup.html">Set Up a LAN for Field Operations</a>. The examples below use <code>192.168.1.50</code> as the server address.</li>
         <li><strong>Your event exists.</strong> Listeners attach to the current event, which is the active one or, if none is active yet, the next upcoming one. Create it first with <a href="first-event.html">First Event Setup</a>.</li>
         <li><strong>You can sign in as a System Administrator or Event Manager.</strong> The External Loggers page requires the permission to import contacts, and those two roles have it by default.</li>
         <li><strong>The logging PCs are on the same network as the server.</strong> A guest Wi-Fi network with client isolation turned on will quietly drop the traffic.</li>
@@ -277,12 +277,12 @@
 
       <div class="callout warning">
         <div class="callout-title">Private networks only</div>
-        <p>UDP has no authentication. Anyone who can reach these ports can send contacts into your log. Only turn the listeners on when FD Commander is on a private, firewalled network, and never on a server that is reachable from the internet.</p>
+        <p>UDP has no authentication. Anyone who can reach these ports can send contacts into your log. Only turn the listeners on when Field Day Commander is on a private, firewalled network, and never on a server that is reachable from the internet.</p>
       </div>
 
       <h2>How It Works</h2>
 
-      <p>Each program sends a small UDP packet to the server every time a contact is logged. FD Commander runs a separate listener for each kind of program, and each listener has its own port:</p>
+      <p>Each program sends a small UDP packet to the server every time a contact is logged. Field Day Commander runs a separate listener for each kind of program, and each listener has its own port:</p>
 
       <div class="table-wrap">
       <table class="port-table">
@@ -295,13 +295,13 @@
       </table>
       </div>
 
-      <p>When a contact arrives, FD Commander works out which station it came from, who was operating, and which band and mode were in use. It then opens an operating session for that station automatically, so the station shows up as <strong>Occupied</strong> on the Log Contact page just as if someone had signed in through the browser. A session closes on its own after about 30 minutes without a new contact.</p>
+      <p>When a contact arrives, Field Day Commander works out which station it came from, who was operating, and which band and mode were in use. It then opens an operating session for that station automatically, so the station shows up as <strong>Occupied</strong> on the Log Contact page just as if someone had signed in through the browser. A session closes on its own after about 30 minutes without a new contact.</p>
 
       <p>The mode the program reports, such as FT8, RTTY, or USB, is saved as the contact's <strong>Sub-mode</strong>, so the logbook shows entries like "Digital &middot; FT8." Scoring still goes by the CW, Phone, or Digital group, with one exception covered in the Winter Field Day note below.</p>
 
       <div class="callout info">
         <div class="callout-title">One path per contact</div>
-        <p>Some stations chain programs together, such as WSJT-X or fldigi feeding N1MM Logger+. In that case, let N1MM Logger+ send the contacts and leave the other program pointed at N1MM. If both programs send the same contact to FD Commander, it will arrive twice and the second copy will be marked as a dupe.</p>
+        <p>Some stations chain programs together, such as WSJT-X or fldigi feeding N1MM Logger+. In that case, let N1MM Logger+ send the contacts and leave the other program pointed at N1MM. If both programs send the same contact to Field Day Commander, it will arrive twice and the second copy will be marked as a dupe.</p>
       </div>
 
       <h2>Step 1: Open the Firewall on the Server</h2>
@@ -327,13 +327,13 @@
 
       <div class="callout tip">
         <div class="callout-title">Running in Docker?</div>
-        <p>The included <code>docker-compose.yml</code> already publishes all three UDP ports. If you change a listener's port in FD Commander, set the matching <code>N1MM_PORT</code>, <code>WSJTX_PORT</code>, or <code>UDP_ADIF_PORT</code> value in your <code>.env</code> file to the same number, then run <code>docker compose up -d</code> so the container picks it up.</p>
+        <p>The included <code>docker-compose.yml</code> already publishes all three UDP ports. If you change a listener's port in Field Day Commander, set the matching <code>N1MM_PORT</code>, <code>WSJTX_PORT</code>, or <code>UDP_ADIF_PORT</code> value in your <code>.env</code> file to the same number, then run <code>docker compose up -d</code> so the container picks it up.</p>
       </div>
 
       <h2>Step 2: Turn On the Listener</h2>
 
       <div class="step-box">
-        <p><span class="step-number">1</span> Sign in to FD Commander and open <strong>Logging &gt; External Loggers</strong>.</p>
+        <p><span class="step-number">1</span> Sign in to Field Day Commander and open <strong>Logging &gt; External Loggers</strong>.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">2</span> Find the card for your program and flip its toggle on. The status changes from <strong>Starting listener...</strong> to <strong>Listening on port 12060</strong> (or whichever port that listener uses), followed by packet and error counters.</p>
@@ -344,11 +344,11 @@
 
       <p>The default ports work for nearly everyone. If you need a different one, turn the listener off first, since the port field is locked while the listener is switched on. Ports from 1024 to 65535 are allowed.</p>
 
-      <p>You don't need to babysit the listeners. FD Commander checks on them every minute and restarts any that have stopped unexpectedly. If the External Loggers page is open, it restarts them within a few seconds.</p>
+      <p>You don't need to babysit the listeners. Field Day Commander checks on them every minute and restarts any that have stopped unexpectedly. If the External Loggers page is open, it restarts them within a few seconds.</p>
 
       <h2>Step 3: Match Logging PCs to Stations</h2>
 
-      <p>Every contact carries an identifier for where it came from. FD Commander compares that identifier with the <strong>name</strong> of each station in your event, then with each station's <strong>Hostname (NetBIOS Name)</strong> field. Neither comparison cares about capitalization. If nothing matches, FD Commander creates a new station named after the identifier, so contacts are never lost, but they may land somewhere you didn't expect. A few minutes of setup here keeps the stations tidy.</p>
+      <p>Every contact carries an identifier for where it came from. Field Day Commander compares that identifier with the <strong>name</strong> of each station in your event, then with each station's <strong>Hostname (NetBIOS Name)</strong> field. Neither comparison cares about capitalization. If nothing matches, Field Day Commander creates a new station named after the identifier, so contacts are never lost, but they may land somewhere you didn't expect. A few minutes of setup here keeps the stations tidy.</p>
 
       <h3>N1MM Logger+ stations</h3>
 
@@ -357,15 +357,15 @@
       <div class="code-block"><span class="prompt">C:\&gt;</span> <span class="cmd">echo %COMPUTERNAME%</span>
 <span class="output">SHACK-PC-2</span></div>
 
-      <p>In FD Commander, open <strong>Stations</strong>, edit the station that PC will run, and enter that name in the <strong>Hostname (NetBIOS Name)</strong> field. Repeat for each N1MM Logger+ PC.</p>
+      <p>In Field Day Commander, open <strong>Stations</strong>, edit the station that PC will run, and enter that name in the <strong>Hostname (NetBIOS Name)</strong> field. Repeat for each N1MM Logger+ PC.</p>
 
       <h3>WSJT-X, JTDX, and fldigi stations</h3>
 
-      <p>These programs identify contacts by the station callsign in the log record, which is normally your club or event callsign. That means every digital PC using the same callsign lands on the same FD Commander station. Pick the station that should receive those contacts, usually your digital station, and enter the event callsign (for example, <code>W3XYZ</code>) in its <strong>Hostname (NetBIOS Name)</strong> field.</p>
+      <p>These programs identify contacts by the station callsign in the log record, which is normally your club or event callsign. That means every digital PC using the same callsign lands on the same Field Day Commander station. Pick the station that should receive those contacts, usually your digital station, and enter the event callsign (for example, <code>W3XYZ</code>) in its <strong>Hostname (NetBIOS Name)</strong> field.</p>
 
       <h3>Operator credit</h3>
 
-      <p>Contacts are credited to the operator whose callsign the sending program reports. If that callsign belongs to an FD Commander user, the contact goes to them. If it doesn't, FD Commander creates a ghost account for that callsign, with <strong>(Imported)</strong> as its last name, so the contact still has an operator. A ghost account can't sign in. It shows a <strong>Ghost</strong> badge under <strong>Administration &gt; Users</strong>, and an admin can turn it into a real login later with <strong>Activate Account</strong>, which keeps the operator's contacts with them. Inviting your operators before the event, with their callsigns filled in, avoids a pile of ghosts.</p>
+      <p>Contacts are credited to the operator whose callsign the sending program reports. If that callsign belongs to an Field Day Commander user, the contact goes to them. If it doesn't, Field Day Commander creates a ghost account for that callsign, with <strong>(Imported)</strong> as its last name, so the contact still has an operator. A ghost account has no password-based login. It shows a <strong>Ghost</strong> badge under <strong>Administration &gt; Users</strong>, and an admin can turn it into a real login later with <strong>Activate Account</strong>, which keeps the operator's contacts with them. Inviting your operators before the event, with their callsigns filled in, avoids a pile of ghosts.</p>
 
       <p>If the sending program doesn't report an operator at all, the contact may end up with no operator, or with a placeholder for whatever callsign the program fills in by default. Each program section below shows where the operator's callsign goes, and it's worth making that part of every operator change.</p>
 
@@ -374,6 +374,8 @@
       <p>Follow the section for your program, then come back for Step 5. Repeat this step on every logging PC, since these settings are stored on each PC.</p>
 
       <h3>N1MM Logger+</h3>
+
+      <p>The <a href="https://n1mmwp.hamdocs.com/appendices/external-udp-broadcasts/">official N1MM Logger+ UDP documentation</a> explains the Broadcast Data controls, destination format, and contact update/delete messages.</p>
 
       <div class="step-box">
         <p><span class="step-number">1</span> In the Entry Window, open <strong>Config &gt; Configure Ports, Mode Control, Audio, Other</strong> and select the <strong>Broadcast Data</strong> tab.</p>
@@ -391,12 +393,14 @@
         <p><span class="step-number">5</span> Make sure the PC is logging in an <strong>ARRL Field Day</strong> contest log (or the Winter Field Day log for a WFD event), so the received class and section are sent in their own fields.</p>
       </div>
       <div class="step-box">
-        <p><span class="step-number">6</span> When an operator sits down, have them press <strong>Ctrl+O</strong> (or type <code>OPON</code> in the callsign box) and enter their own callsign. That's the callsign FD Commander uses for operator credit.</p>
+        <p><span class="step-number">6</span> When an operator sits down, have them press <strong>Ctrl+O</strong> (or type <code>OPON</code> in the callsign box) and enter their own callsign. That's the callsign Field Day Commander uses for operator credit.</p>
       </div>
 
-      <p>If an operator edits or deletes a contact in N1MM Logger+, the change carries over to FD Commander.</p>
+      <p>If an operator edits or deletes a contact in N1MM Logger+, the change carries over to Field Day Commander.</p>
 
       <h3>WSJT-X</h3>
+
+      <p>For the sending side, the <a href="https://github.com/WSJTX/wsjtx/blob/master/manpages/man1/udp_daemon.1.txt">WSJT-X project’s UDP integration manual</a> identifies the Reporting &gt; UDP Server settings. Field Day Commander’s listener and station mapping are configured separately below.</p>
 
       <p>These steps match WSJT-X 3.0. Open the settings with <strong>File &gt; Settings</strong> (or press F2).</p>
 
@@ -418,12 +422,12 @@
 
       <div class="callout info">
         <div class="callout-title">WSJT-X sends to one place</div>
-        <p>The UDP Server setting holds a single address. If this PC also runs JTAlert, GridTracker, or N1MM Logger+'s WSJT-X integration, those programs expect WSJT-X's traffic as well. Either point WSJT-X at FD Commander and do without the companion program, or leave WSJT-X pointed at the companion program and have it pass contacts along. With N1MM Logger+, that means letting its broadcast carry the contacts, as described above. Some companion programs, such as GridTracker, can rebroadcast WSJT-X traffic to another port; check that program's documentation for details.</p>
+        <p>The UDP Server setting holds a single address. If this PC also runs JTAlert, GridTracker, or N1MM Logger+'s WSJT-X integration, those programs expect WSJT-X's traffic as well. Either point WSJT-X at Field Day Commander and do without the companion program, or leave WSJT-X pointed at the companion program and have it pass contacts along. With N1MM Logger+, that means letting its broadcast carry the contacts, as described above. Some companion programs, such as GridTracker, can rebroadcast WSJT-X traffic to another port; check that program's documentation for details.</p>
       </div>
 
       <div class="callout warning">
         <div class="callout-title">Winter Field Day 2027: no credit for WSJT modes</div>
-        <p>The WFD 2027 rules don't allow WSJT modes (FT8, FT4, JT65, Q65, MSK144, and the rest) or satellite contacts. When your event is scored by those rules, the WSJT-X card on the External Loggers page shows a yellow <strong>No credit</strong> notice. Those contacts still arrive and stay in the log, marked <strong>no credit</strong>, but they earn no QSO points and count toward no objective. JTTY is the exception and scores as a normal digital contact. The <strong>ARRL Field Day</strong> activity in WSJT-X is for June Field Day only.</p>
+        <p>The <a href="https://winterfieldday.org/sop.php">WFDA’s 2027 rules</a> don't allow WSJT modes (FT8, FT4, JT65, Q65, MSK144, and the rest) or satellite contacts. When your event is scored by those rules, the WSJT-X card on the External Loggers page shows a yellow <strong>No credit</strong> notice. Those contacts still arrive and stay in the log, marked <strong>no credit</strong>, but they earn no QSO points and count toward no objective. JTTY is the exception and scores as a normal digital contact. The <strong>ARRL Field Day</strong> activity in WSJT-X is for June Field Day only.</p>
       </div>
 
       <h3>JTDX</h3>
@@ -431,6 +435,8 @@
       <p>JTDX is built on WSJT-X and sends the same UDP messages, so it uses the same <strong>WSJTX / JTDX</strong> listener on port 2237. Its UDP server settings are on the <strong>Reporting</strong> tab of its Settings window. Enter the server's address and port there, just as you would in WSJT-X.</p>
 
       <h3>fldigi</h3>
+
+      <p>Use the <a href="fldigi-digital-modes.html">Digital Modes with fldigi guide</a> for the complete operating setup and a practice-contact test. The <a href="https://www.w1hkj.org/FldigiHelp/contesting_page.html">official fldigi contesting manual</a> explains its local exchange fields and logbook.</p>
 
       <p>These steps match fldigi 4.2. Open <strong>Configure &gt; Config Dialog</strong>.</p>
 
@@ -452,7 +458,7 @@
 
       <h3>Other programs</h3>
 
-      <p>Any program that can send plain ADIF records over UDP can use the <strong>UDP ADIF (fldigi, etc.)</strong> listener on port 2238. FD Commander needs at least the callsign, date, and time of each contact. Include the band or frequency, mode, station callsign, operator, class, and section for full credit and a complete log.</p>
+      <p>Any program that can send plain ADIF records over UDP can use the <strong>UDP ADIF (fldigi, etc.)</strong> listener on port 2238. Field Day Commander needs at least the callsign, date, and time of each contact. Include the band or frequency, mode, station callsign, operator, class, and section for full credit and a complete log.</p>
 
       <h2>Step 5: Log a Test Contact</h2>
 
@@ -465,12 +471,13 @@
         <p><span class="step-number">2</span> On the External Loggers page, expand <strong>Last Log Received</strong> under that listener. You should see the callsign, band, mode, section, and QSO time.</p>
       </div>
       <div class="step-box">
-        <p><span class="step-number">3</span> Look at the badge next to it. <strong>Accepted</strong> means the contact is in the log. <strong>outside event window</strong> means the contact's time falls outside the event's start and end times, so FD Commander turned it away.</p>
+        <p><span class="step-number">3</span> Look at the badge next to it. <strong>Accepted</strong> means the contact is in the log. <strong>outside event window</strong> means the contact's time falls outside the event's start and end times, so Field Day Commander turned it away.</p>
       </div>
 
       <div class="callout tip">
         <div class="callout-title">Testing before the event</div>
-        <p>Contacts are only accepted between the event's start and end times, so any test you run the week before will show <strong>outside event window</strong>. That's a good result. It means the packet made it all the way through and was read correctly, and nothing landed in your real log. Once the event starts, check that the station shows as <strong>Occupied</strong> on the <strong>Log Contact</strong> page, with the operator's callsign and the source program next to it.</p>
+        <p>Contacts are only accepted between the event's start and end times, so any test you run the week before will show <strong>outside event window</strong>. This confirms that Field Day Commander received and read the packet, but it does not test whether a contact is accepted into the log.</p>
+        <p>To test acceptance before the weekend, use a short practice event that covers your test time, as described in <a href="multi-station-logging.html">Set Up Multi-Station Logging</a>. Check for an <strong>Accepted</strong> badge and find the contact in the log. Once the real event starts, also check that the station shows as <strong>Occupied</strong> on the <strong>Log Contact</strong> page, with the operator's callsign and source program.</p>
       </div>
 
       <h2>Troubleshooting</h2>
@@ -478,15 +485,15 @@
       <h3>The packet counter stays at zero</h3>
 
       <ul>
-        <li>Confirm the logging PC can reach the server at all by opening FD Commander in a browser on that PC.</li>
+        <li>Confirm the logging PC can reach the server at all by opening Field Day Commander in a browser on that PC.</li>
         <li>Double-check the address and port in the sending program. A typo in either one is the most common cause.</li>
         <li>Check the server's firewall (Step 1). The listener can be running perfectly and still never see a packet.</li>
-        <li>On Docker, make sure the port in FD Commander matches the port published in <code>.env</code>.</li>
+        <li>On Docker, make sure the port in Field Day Commander matches the port published in <code>.env</code>.</li>
       </ul>
 
       <h3>The status says the process crashed</h3>
 
-      <p>FD Commander tries to restart it automatically, and you can click <strong>Retry</strong>. If it keeps crashing, another program on the server is probably using the same port. Pick a different port for the listener and update the logging programs to match.</p>
+      <p>Field Day Commander tries to restart it automatically, and you can click <strong>Retry</strong>. If it keeps crashing, another program on the server is probably using the same port. Pick a different port for the listener and update the logging programs to match.</p>
 
       <h3>Packets arrive, but contacts don't</h3>
 
@@ -498,11 +505,11 @@
 
       <h3>A new station appeared with a computer name or callsign</h3>
 
-      <p>The identifier didn't match any station's name or hostname, so FD Commander created one. Add the identifier to the <strong>Hostname (NetBIOS Name)</strong> field of the station it belongs to (Step 3). New contacts will go to the right place from then on. Contacts that already arrived stay on the station that was created for them.</p>
+      <p>The identifier didn't match any station's name or hostname, so Field Day Commander created one. Add the identifier to the <strong>Hostname (NetBIOS Name)</strong> field of the station it belongs to (Step 3). New contacts will go to the right place from then on. Contacts that already arrived stay on the station that was created for them.</p>
 
       <h3>Contacts are credited to a ghost account marked "(Imported)"</h3>
 
-      <p>The operator's callsign in the sending program didn't match any FD Commander user. Check for typos in N1MM Logger+'s operator login, WSJT-X's Op Call, or fldigi's Operator Callsign, and make sure the operator's FD Commander account has their callsign filled in. If the ghost belongs to a real person who should have a login, find it with the <strong>Ghost (No Login)</strong> status filter on <strong>Administration &gt; Users</strong> and use <strong>Activate Account</strong>.</p>
+      <p>The operator's callsign in the sending program didn't match any Field Day Commander user. Check for typos in N1MM Logger+'s operator login, WSJT-X's Op Call, or fldigi's Operator Callsign, and make sure the operator's Field Day Commander account has their callsign filled in. If the ghost belongs to a real person who should have a login, find it with the <strong>Ghost (No Login)</strong> status filter on <strong>Administration &gt; Users</strong> and use <strong>Activate Account</strong>.</p>
 
       <h3>WSJT-X contacts don't show up on the section map</h3>
 
@@ -520,9 +527,8 @@
         <p><strong>Event callsign:</strong> _______________</p>
       </div>
 
-      <div class="guide-nav">
-        <a href="index.html">&larr; All Guides</a>
-        <a href="backup-restore.html">Back Up and Restore &rarr;</a>
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
       </div>
 
     </div>
@@ -532,6 +538,7 @@
 <footer></footer>
 <script src="../footer.js"></script>
 <script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
 
 </body>
 </html>

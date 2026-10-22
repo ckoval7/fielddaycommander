@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prepare a Raspberry Pi - Field Day Commander</title>
-<meta name="description" content="Use Raspberry Pi Imager to flash an SD card, set a hostname, configure Wi-Fi or Ethernet, enable SSH, and get your Pi ready for FD Commander.">
+<meta name="description" content="Use Raspberry Pi Imager to flash an SD card, set a hostname, configure Wi-Fi or Ethernet, enable SSH, and get your Pi ready for Field Day Commander.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/pi-setup.html">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Prepare a Raspberry Pi - Field Day Commander">
-<meta property="og:description" content="Flash an SD card with Raspberry Pi Imager, set a hostname, configure Wi-Fi or Ethernet, and enable SSH for FD Commander.">
+<meta property="og:description" content="Flash an SD card with Raspberry Pi Imager, set a hostname, configure Wi-Fi or Ethernet, and enable SSH for Field Day Commander.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/pi-setup.html">
 <meta property="og:image" content="https://fielddaycommander.org/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Prepare a Raspberry Pi - Field Day Commander">
-<meta name="twitter:description" content="Flash an SD card, set a hostname, configure networking, and enable SSH for FD Commander.">
+<meta name="twitter:description" content="Flash an SD card, set a hostname, configure networking, and enable SSH for Field Day Commander.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
-<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -191,7 +191,7 @@
 <section class="page-hero" style="padding-bottom:2rem;">
   <div class="container">
     <h1>Prepare a <span class="gradient">Raspberry Pi</span></h1>
-    <p>Flash an SD card, set a hostname, and get your Pi on the network so it's ready for FD Commander.</p>
+    <p>Flash an SD card, set a hostname, and get your Pi on the network so it's ready for Field Day Commander.</p>
   </div>
 </section>
 
@@ -208,7 +208,7 @@
       <ul>
         <li>A <strong>Raspberry Pi</strong> (Pi 4 or Pi 5 recommended, 2 GB RAM minimum).</li>
         <li>A <strong>micro SD card</strong> (16 GB minimum, 32 GB recommended). Class 10 or better.</li>
-        <li>An <strong>SD card reader</strong> for your computer. Most laptops have one built in, otherwise use a USB adapter.</li>
+        <li>An <strong>SD card reader</strong>, built in or USB, for your computer.</li>
         <li>A computer (Windows, Mac, or Linux) with <strong>Raspberry Pi Imager</strong> installed.</li>
         <li>For Ethernet: an <strong>ethernet cable</strong> and access to a router or switch.</li>
         <li>For Wi-Fi: your <strong>network name and password</strong>.</li>
@@ -216,12 +216,14 @@
 
       <h2>Install Raspberry Pi Imager</h2>
 
-      <p>Download <a href="https://www.raspberrypi.com/software/" target="_blank" rel="noopener">Raspberry Pi Imager</a> and install it. It runs on Windows, macOS, and Linux. This is the official tool from the Raspberry Pi Foundation and it handles everything: downloading the OS, writing it to the card, and pre-configuring settings like hostname, user accounts, and Wi-Fi.</p>
+      <p>Download <a href="https://www.raspberrypi.com/software/" target="_blank" rel="noopener">Raspberry Pi Imager</a> and install it. It runs on Windows, macOS, and Linux. This is the official Raspberry Pi tool and it handles everything: downloading the OS, writing it to the card, and pre-configuring settings like hostname, user accounts, and Wi-Fi.</p>
 
       <div class="callout info">
         <div class="callout-title">Why Imager?</div>
-        <p>You could download an OS image and flash it manually with another tool, but Imager lets you set the hostname, create a user account, and configure Wi-Fi before the Pi ever boots. That means no monitor, no keyboard, and no extra setup steps.</p>
+        <p>Imager lets you prepare the Pi for remote access before its first boot, so you can set it up without a monitor or keyboard.</p>
       </div>
+
+      <p>For the current Imager screens, see <a href="https://www.raspberrypi.com/documentation/computers/getting-started.html">Raspberry Pi’s official installation instructions</a>. The steps below use the General/Services layout; newer versions may split the same settings across separate screens.</p>
 
       <h2>Flash the SD Card</h2>
 
@@ -238,7 +240,7 @@
       </div>
 
       <div class="step-box">
-        <p><span class="step-number">4</span> <strong>Choose OS.</strong> Select <strong>Raspberry Pi OS (64-bit)</strong> under "Raspberry Pi OS (other)." Pick the <strong>Lite</strong> version. It has no desktop environment, which is exactly what you want for a headless server. FD Commander doesn't need a GUI. Stick with the 64-bit image: the deploy script only supports 64-bit systems and will stop on a 32-bit one.</p>
+        <p><span class="step-number">4</span> <strong>Choose OS.</strong> Select <strong>Raspberry Pi OS (64-bit)</strong> under "Raspberry Pi OS (other)." Pick the <strong>Lite</strong> version. It has no desktop environment, which is exactly what you want for a headless server. Field Day Commander doesn't need a GUI. Stick with the 64-bit image: the deploy script only supports 64-bit systems and will stop on a 32-bit one.</p>
       </div>
 
       <div class="step-box">
@@ -255,7 +257,7 @@
 
       <h3>General Tab</h3>
 
-      <p><strong>Set hostname.</strong> This is the name your Pi will advertise on the network. Other devices can reach it at <code>hostname.local</code> instead of memorizing an IP address. Pick something short and descriptive, like <code>fd-commander</code> or <code>fdpi</code>. Use only lowercase letters, numbers, and hyphens.</p>
+      <p><strong>Set hostname.</strong> This is the name your Pi will advertise on the network. On devices that support mDNS, its local address is that exact name followed by <code>.local</code>: choosing <code>fd-commander</code> means <code>fd-commander.local</code>. Installing Field Day Commander does not change this hostname. This guide uses <code>fd-commander</code> as the example hostname; you can choose another short, descriptive name. Use only lowercase letters, numbers, and hyphens.</p>
 
       <p><strong>Set username and password.</strong> Create a user account you'll use to SSH in. The old default <code>pi</code>/<code>raspberry</code> login no longer works on new installs. Pick a username and a real password.</p>
 
@@ -297,7 +299,9 @@
 
       <h2>Connect to the Pi</h2>
 
-      <p>From another computer on the same network, SSH into the Pi using the hostname you set:</p>
+      <p><a href="https://www.raspberrypi.com/documentation/computers/remote-access.html">Raspberry Pi’s remote-access documentation</a> covers SSH, hostname discovery, and connecting by IP address if <code>.local</code> does not work.</p>
+
+      <p>The command below assumes you named the Pi <code>fd-commander</code>. Replace that name before running it if you chose another one. From another computer on the same network, connect using your Pi’s actual hostname:</p>
 
       <div class="code-block"><span class="cmd">ssh your-username@fd-commander.local</span></div>
 
@@ -321,7 +325,7 @@
 <span class="cmd">ping -c 3 google.com</span>
 <span class="output">3 packets transmitted, 3 received, 0% packet loss</span></div>
 
-      <p>The first command confirms your hostname. The second shows the Pi's IP address on the network. The third confirms internet access, which you need to run the FD Commander deploy script.</p>
+      <p>The first command confirms your hostname. The second shows the Pi's IP address on the network. The third confirms internet access, which you need to run the Field Day Commander deploy script.</p>
 
       <h2>Update the System</h2>
 
@@ -329,16 +333,15 @@
 
       <div class="code-block"><span class="cmd">sudo apt update && sudo apt upgrade -y</span></div>
 
-      <p>This pulls the latest security patches and package lists. It can take a few minutes on a fresh install. Once it finishes, the Pi is ready for the FD Commander deploy script.</p>
+      <p>This pulls the latest security patches and package lists. It can take a few minutes on a fresh install. Once it finishes, the Pi is ready for the Field Day Commander deploy script.</p>
 
       <div class="callout tip">
         <div class="callout-title">Next Step</div>
-        <p>Your Pi is now online and accessible over SSH. From here, follow the <a href="../fd-commander-docs.html#installation">Installation</a> guide to deploy FD Commander.</p>
+        <p>Your Pi is now online and accessible over SSH. From here, follow the <a href="install.html">Install Field Day Commander</a> guide to deploy Field Day Commander.</p>
       </div>
 
-      <div class="guide-nav">
-        <a href="index.html">&larr; All Guides</a>
-        <a href="lan-setup.html">LAN Setup &rarr;</a>
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
       </div>
 
     </div>
@@ -348,6 +351,7 @@
 <footer></footer>
 <script src="../footer.js"></script>
 <script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
 
 </body>
 </html>

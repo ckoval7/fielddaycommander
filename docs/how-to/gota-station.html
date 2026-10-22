@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Field Day GOTA Station Setup - Field Day Commander</title>
-<meta name="description" content="Run the Field Day GOTA (Get On The Air) station in FD Commander: mark the GOTA station, log each new operator, and earn the GOTA QSO and coach bonuses.">
+<meta name="description" content="Run the Field Day GOTA (Get On The Air) station in Field Day Commander: mark the GOTA station, log each new operator, and earn the GOTA QSO and coach bonuses.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/gota-station.html">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Field Day GOTA Station Setup - Field Day Commander">
-<meta property="og:description" content="Run the Field Day GOTA (Get On The Air) station in FD Commander: mark the GOTA station, log each new operator, and earn the GOTA QSO and coach bonuses.">
+<meta property="og:description" content="Run the Field Day GOTA (Get On The Air) station in Field Day Commander: mark the GOTA station, log each new operator, and earn the GOTA QSO and coach bonuses.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/gota-station.html">
 <meta property="og:image" content="https://fielddaycommander.org/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Field Day GOTA Station Setup - Field Day Commander">
-<meta name="twitter:description" content="Run the Field Day GOTA (Get On The Air) station in FD Commander: mark the GOTA station, log each new operator, and earn the GOTA QSO and coach bonuses.">
+<meta name="twitter:description" content="Run the Field Day GOTA (Get On The Air) station in Field Day Commander: mark the GOTA station, log each new operator, and earn the GOTA QSO and coach bonuses.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
-<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -186,12 +186,14 @@
         <a href="index.html">How-To Guides</a> &rsaquo; GOTA Station
       </div>
 
-      <p>The GOTA (Get On The Air) station is where new operators make Field Day contacts with a coach beside them. In FD Commander, the Field Day GOTA station is a regular station with a GOTA flag. It sends its own callsign, has its own dupe checking, and gets its own bonus on the Scoring page. This guide covers setting up the GOTA station, logging each operator, and how the bonus is scored.</p>
+      <p>The GOTA (Get On The Air) station is where new operators make Field Day contacts with a coach beside them. In Field Day Commander, the Field Day GOTA station is a regular station with a GOTA flag. It sends its own callsign, has its own dupe checking, and gets its own bonus on the Scoring page. This guide covers setting up the GOTA station, logging each operator, and how the bonus is scored.</p>
 
       <h2>What You Need</h2>
 
+      <p><a href="https://www.arrl.org/files/file/Field-Day/2026/2026-Field-Day-Rules.pdf">ARRL’s 2026 rules, section 4.1.1</a> define GOTA eligibility, callsign, supervision, and power limits. Check <a href="https://www.arrl.org/field-day">the packet for your event year</a> before planning the station.</p>
+
       <ul>
-        <li><strong>A Field Day event in Class A or F.</strong> Those are the only classes that allow a GOTA station. Winter Field Day doesn't have a GOTA station, so FD Commander won't let you turn it on for a WFD event.</li>
+        <li><strong>A Field Day event in Class A or F.</strong> Those are the only classes that allow a GOTA station. Winter Field Day doesn't have a GOTA station, so Field Day Commander won't let you turn it on for a WFD event.</li>
         <li><strong>A GOTA callsign</strong>. The rules require it to be different from your main callsign.</li>
         <li><strong>A computer at the GOTA station</strong>, set up like the others in <a href="multi-station-logging.html">Set Up Multi-Station Logging</a>.</li>
       </ul>
@@ -233,18 +235,20 @@
         <li><strong>For a visitor</strong>, fill in <strong>First Name</strong> and <strong>Last Name</strong>, plus <strong>Callsign (optional)</strong> if they have one.</li>
       </ul>
 
-      <p>Enter the GOTA operator before they make their first contact. FD Commander won't log a GOTA contact with the panel empty. You'll see "Enter the GOTA operator in the GOTA Operator panel before logging." Each contact is credited to whoever is in the panel when it's logged, not to the coach. The operator stays set from one contact to the next. When someone new sits down, click <strong>Change</strong> next to a linked member, or type over the names.</p>
+      <p>Enter the GOTA operator before they make their first contact. Field Day Commander won't log a GOTA contact with the panel empty. You'll see "Enter the GOTA operator in the GOTA Operator panel before logging." Each contact is credited to whoever is in the panel when it's logged, not to the coach. The operator stays set from one contact to the next. When someone new sits down, click <strong>Change</strong> next to a linked member, or type over the names.</p>
 
       <p>The names are worth getting right. The <strong>Submission Sheet</strong> on the Reports page has a GOTA page that lists each GOTA operator with their contacts by mode. A linked member whose profile is marked <strong>Youth (age 18 or younger)</strong> will also count toward the youth participation bonus.</p>
 
       <h2>How the Get On The Air Station Is Scored</h2>
+
+      <p><a href="https://www.arrl.org/files/file/Field-Day/2026/2026-Field-Day-Rules.pdf">ARRL’s 2026 GOTA bonus rules (7.3.13)</a> specify five bonus points per completed contact and the coached-contact requirement. The steps below describe how Field Day Commander tracks those bonuses.</p>
 
       <ul>
         <li><strong>GOTA QSO Bonus</strong>: 5 points for each GOTA contact that isn't a dupe, on any mode. It's added after the power multiplier, so it isn't multiplied, and GOTA contacts don't count toward your QSO points.</li>
         <li><strong>GOTA Coach Bonus</strong>: a single 100-point bonus once at least 10 GOTA contacts (dupes excluded) were logged in supervised sessions. The count covers every supervised session, not one coach's.</li>
       </ul>
 
-      <p>FD Commander doesn't cap GOTA contacts or limit how many one operator can make. The coach bonus comes from supervised sessions alone, so confirming a <strong>GOTA Coach</strong> shift check-in on the schedule won't award it.</p>
+      <p>Field Day Commander doesn't cap GOTA contacts or limit how many one operator can make. The coach bonus comes from supervised sessions alone, so confirming a <strong>GOTA Coach</strong> shift check-in on the schedule won't award it.</p>
 
       <p>On the <a href="../fd-commander-docs.html#scoring">Scoring</a> page, the <strong>QSO Points</strong> column shows a <strong>GOTA Contacts</strong> count once the GOTA station has logged one. Those contacts aren't included in <strong>Valid QSOs</strong>. The <strong>Bonus Points</strong> column has a <strong>GOTA Station Bonus</strong> section with each bonus and its progress, such as "8 supervised contacts (need 10+)." The score equation at the top adds a <strong>GOTA Bonus</strong> term.</p>
 
@@ -256,9 +260,8 @@
 
       <p>If the GOTA station logs in N1MM Logger+ or WSJT-X, or you import an ADIF file for it, those contacts count as GOTA contacts and are dupe-checked the same way. They aren't tied to a GOTA operator, though, so they won't appear by name on the Submission Sheet's GOTA page. To credit each operator, log GOTA contacts in the browser.</p>
 
-      <div class="guide-nav">
-        <a href="index.html">&larr; All Guides</a>
-        <a href="station-mode.html">Station Mode &rarr;</a>
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
       </div>
 
     </div>
@@ -268,6 +271,7 @@
 <footer></footer>
 <script src="../footer.js"></script>
 <script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
 
 </body>
 </html>

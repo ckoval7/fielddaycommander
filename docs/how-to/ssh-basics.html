@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SSH &amp; Command Line Basics - Field Day Commander</title>
-<meta name="description" content="Connect to your Raspberry Pi over SSH from Windows, Mac, or Linux. Learn essential commands, check FD Commander status, copy files with scp, and use tmux.">
+<meta name="description" content="Connect to your Raspberry Pi over SSH from Windows, Mac, or Linux. Learn essential commands, check Field Day Commander status, copy files with scp, and use tmux.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/ssh-basics.html">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="article">
 <meta property="og:title" content="SSH &amp; Command Line Basics - Field Day Commander">
-<meta property="og:description" content="Connect to your Pi over SSH, learn essential Linux commands, check FD Commander status, and copy files with scp.">
+<meta property="og:description" content="Connect to your Pi over SSH, learn essential Linux commands, check Field Day Commander status, and copy files with scp.">
 <meta property="og:url" content="https://fielddaycommander.org/how-to/ssh-basics.html">
 <meta property="og:image" content="https://fielddaycommander.org/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="SSH &amp; Command Line Basics - Field Day Commander">
-<meta name="twitter:description" content="Connect to your Pi over SSH, learn essential commands, and check on FD Commander.">
+<meta name="twitter:description" content="Connect to your Pi over SSH, learn essential commands, and check on Field Day Commander.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
-<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -220,7 +220,7 @@
 <section class="page-hero" style="padding-bottom:2rem;">
   <div class="container">
     <h1>SSH &amp; <span class="gradient">Command Line Basics</span></h1>
-    <p>Connect to your Pi remotely and learn the essential commands for managing FD Commander.</p>
+    <p>Connect to your Pi remotely and learn the essential commands for managing Field Day Commander.</p>
   </div>
 </section>
 
@@ -234,7 +234,9 @@
 
       <h2>What Is SSH?</h2>
 
-      <p>SSH (Secure Shell) lets you control your Pi from another computer over the network. Instead of plugging a monitor and keyboard into the Pi, you open a terminal on your laptop, type a command, and you're in. Everything you type runs on the Pi. This is how you'll install FD Commander, check on the server, and fix things if something goes wrong during the event.</p>
+      <p>SSH (Secure Shell) lets you control your Pi from another computer over the network. Instead of plugging a monitor and keyboard into the Pi, you open a terminal on your laptop, type a command, and you're in. Everything you type runs on the Pi. This is how you'll install Field Day Commander, check on the server, and fix things if something goes wrong during the event.</p>
+
+      <p>In the examples below, <code>$</code> represents the terminal prompt. Type the command after it, without the <code>$</code>.</p>
 
       <h2>Connecting from Your Computer</h2>
 
@@ -262,7 +264,7 @@
 ED25519 key fingerprint is SHA256:xxxxxxxxxxxxxxxxxxx.
 Are you sure you want to continue connecting (yes/no/[fingerprint])?</span></div>
 
-      <p>Type <code>yes</code> and press Enter. This is normal. Your computer is recording the Pi's identity so it can verify it next time. You won't see this again unless you reinstall the Pi.</p>
+      <p>Type <code>yes</code> and press Enter. This is normal. Your computer is recording the Pi's identity so it can verify it next time. Your computer remembers this identity for future connections.</p>
 
       <p>Then enter your password. The cursor won't move while you type it. That's a security feature, not a bug. Press Enter when done.</p>
 
@@ -304,7 +306,7 @@ drwxr-xr-x 15 pi pi 4096 Jun 25 09:02 fielddaycommander</span></div>
 
       <h2>Essential Commands</h2>
 
-      <p>You don't need to memorize a lot. These are the commands you'll actually use with FD Commander.</p>
+      <p>You don't need to memorize a lot. These are the commands you'll actually use with Field Day Commander.</p>
 
       <table class="cmd-table">
         <thead><tr><th>Command</th><th>What It Does</th></tr></thead>
@@ -328,9 +330,9 @@ drwxr-xr-x 15 pi pi 4096 Jun 25 09:02 fielddaycommander</span></div>
         <p>Some commands need administrator access, like installing software or restarting services. Put <code>sudo</code> in front of the command and enter your password when prompted. Don't use <code>sudo</code> for everything. Only use it when a command tells you "permission denied" or the instructions specifically say to.</p>
       </div>
 
-      <h2>Checking on FD Commander</h2>
+      <h2 id="checking-on-fd-commander">Checking on Field Day Commander</h2>
 
-      <p>Once FD Commander is deployed, here are the commands you'll reach for most often.</p>
+      <p>Once Field Day Commander is deployed, here are the commands you'll reach for most often.</p>
 
       <h3>Is the server running?</h3>
 
@@ -371,7 +373,7 @@ Swap:           99Mi         0B        99Mi</span></div>
 
       <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo journalctl -u fdcommander --since "1 hour ago" --no-pager</span></div>
 
-      <p>This shows the last hour of web server logs. Swap in another service name, like <code>fdcommander-queue</code>, to see that one instead. Application errors go to FD Commander's own log file:</p>
+      <p>This shows the last hour of web server logs. Swap in another service name, like <code>fdcommander-queue</code>, to see that one instead. Application errors go to Field Day Commander's own log file:</p>
 
       <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo tail -50 /var/www/fd-commander/storage/logs/laravel.log</span></div>
 
@@ -386,7 +388,7 @@ Swap:           99Mi         0B        99Mi</span></div>
 
       <p>The <code>.</code> at the end means "put it in my current directory."</p>
 
-      <p>This only works for files your user can read. FD Commander's backups in <code>/var/backups/fd-commander</code> are readable by root only, so a plain <code>scp</code> of them will fail with "permission denied." The <a href="backup-restore.html">Back Up and Restore</a> guide shows how to copy them off.</p>
+      <p>This only works for files your user can read. Field Day Commander's backups in <code>/var/backups/fd-commander</code> are readable by root only, so a plain <code>scp</code> of them will fail with "permission denied." The <a href="backup-restore.html">Back Up and Restore</a> guide shows how to copy them off.</p>
 
       <h3>Upload a file to the Pi</h3>
 
@@ -409,7 +411,7 @@ Swap:           99Mi         0B        99Mi</span></div>
       <div class="code-block"><span class="cmd">Host *
     ServerAliveInterval 60</span></div>
 
-      <p>This sends a keepalive signal every 60 seconds. In PuTTY, go to Connection and set "Seconds between keepalives" to 60.</p>
+      <p>This sends a keepalive message after 60 seconds without data from the server. See <a href="https://man.openbsd.org/ssh_config#ServerAliveInterval">OpenSSH’s ServerAliveInterval reference</a> for the setting and related timeout controls. In PuTTY, go to Connection and set "Seconds between keepalives" to 60.</p>
 
       <h3>Run something that survives disconnection</h3>
 
@@ -420,16 +422,17 @@ Swap:           99Mi         0B        99Mi</span></div>
 <span class="comment"># press Ctrl+B, then D to detach</span>
 <span class="prompt">$</span> <span class="cmd">tmux attach</span>             <span class="comment"># reconnect to the session later</span></div>
 
-      <p>The command keeps running even if you close your laptop. When you SSH back in, <code>tmux attach</code> picks up right where you left off.</p>
+      <p>The command keeps running even if you close your laptop. When you SSH back in, <code>tmux attach</code> picks up right where you left off. The <a href="https://github.com/tmux/tmux/wiki/Getting-Started">official tmux getting-started guide</a> explains sessions, detaching, and reattaching.</p>
 
       <div class="callout tip">
         <div class="callout-title">That's the essentials</div>
-        <p>You don't need to be a Linux expert to run FD Commander. These commands cover connecting, checking status, and basic troubleshooting. If something comes up that isn't covered here, the <a href="../fd-commander-docs.html">full documentation</a> has more detail.</p>
+        <p>You don't need to be a Linux expert to run Field Day Commander. These commands cover connecting, checking status, and basic troubleshooting. If something comes up that isn't covered here, the <a href="../fd-commander-docs.html">full documentation</a> has more detail.</p>
       </div>
 
-      <div class="guide-nav">
-        <a href="index.html">&larr; All Guides</a>
-        <a href="pi-setup.html">Pi Setup &rarr;</a>
+      <p>Ready to deploy? Follow <a href="install.html">Install Field Day Commander</a> for the hostname checks and installation steps.</p>
+
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
       </div>
 
     </div>
@@ -439,6 +442,7 @@ Swap:           99Mi         0B        99Mi</span></div>
 <footer></footer>
 <script src="../footer.js"></script>
 <script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
 
 </body>
 </html>

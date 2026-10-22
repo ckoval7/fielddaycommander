@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Back Up and Restore - Field Day Commander</title>
-<meta name="description" content="Schedule automatic backups of your FD Commander log, photos, and settings, copy them off the server, and restore everything onto the same server or a new one.">
+<meta name="description" content="Schedule automatic backups of your Field Day Commander log, photos, and settings, copy them off the server, and restore everything onto the same server or a new one.">
 <link rel="canonical" href="https://fielddaycommander.org/how-to/backup-restore.html">
 <meta property="og:site_name" content="Field Day Commander">
 <meta property="og:type" content="article">
@@ -15,12 +15,12 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Back Up and Restore - Field Day Commander">
-<meta name="twitter:description" content="Back up your FD Commander log, photos, and settings, and restore them when you need to.">
+<meta name="twitter:description" content="Back up your Field Day Commander log, photos, and settings, and restore them when you need to.">
 <meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
-<meta name="twitter:image:alt" content="FD Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
 <style>
@@ -262,7 +262,7 @@
 
       <div class="badge-advanced">Maintenance</div>
 
-      <p>FD Commander ships with two scripts, <code>backup.sh</code> and <code>restore.sh</code>, that will save the database, uploaded photos, and settings, and can put them back onto the same server or a new one.</p>
+      <p>Field Day Commander ships with two scripts, <code>backup.sh</code> and <code>restore.sh</code>, that will save the database, uploaded photos, and settings, and can put them back onto the same server or a new one.</p>
 
       <p>This guide covers a native install made with <code>deploy.sh</code> and a Docker Compose install. You'll need an SSH session on the server and an account that can run <code>sudo</code>. If SSH is new to you, start with <a href="ssh-basics.html">SSH Basics</a>.</p>
 
@@ -285,18 +285,18 @@
 
       <p>Keep the three files together. The <code>APP_KEY</code> in the env file encrypts each user's two-factor authentication secret, so a database restored under a different key will lock those users out. The env file also holds passwords, so the backup folder is readable by root only.</p>
 
-      <p>FD Commander keeps running during a backup, so you can take one in the middle of the event. Server logs, cached data, and TLS certificates aren't included. The cache rebuilds on its own.</p>
+      <p>Field Day Commander keeps running during a backup, so you can take one in the middle of the event. Server logs, cached data, and TLS certificates aren't included. The cache rebuilds on its own.</p>
 
       <div class="callout info">
         <div class="callout-title">Older installs</div>
-        <p>On a native install the scripts are in <code>/var/www/fd-commander</code>. If <code>backup.sh</code> isn't there, run <code>sudo ./update.sh</code> from your FD Commander folder to copy both scripts into place.</p>
+        <p>On a native install the scripts are in <code>/var/www/fd-commander</code>. If <code>backup.sh</code> isn't there, run <code>sudo ./update.sh</code> from your Field Day Commander folder to copy both scripts into place.</p>
       </div>
 
       <h2>Automatic Backups</h2>
 
       <h3>Native install</h3>
 
-      <p>This command sets up two systemd timers (Linux's built-in job scheduler): a database backup every hour, and a full backup of all three files every night at 02:30.</p>
+      <p>This command sets up two <a href="https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html">systemd timers</a> (Linux's built-in job scheduler): a database backup every hour, and a full backup of all three files every night at 02:30.</p>
 
       <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/backup.sh --install-schedule</span></div>
 
@@ -353,7 +353,7 @@
         <p>Hourly backups don't include photos or the env file. Only the nightly run and a backup by hand without <code>--db-only</code> write all three files.</p>
       </div>
 
-      <h2>Copying Backups Off the Server</h2>
+      <h2 id="copying-backups-off-the-server">Copy Backups Manually</h2>
 
       <p>A backup on the server's SD card or disk is lost if that card fails. Before you leave the site, copy the backups to a laptop or a USB drive.</p>
 
@@ -384,7 +384,7 @@
         <p>The <code>fdc-env-*</code> files contain your <code>APP_KEY</code>, database password, and mail password. Keep your copies somewhere only club officers can reach, not in a shared club folder.</p>
       </div>
 
-      <h2>Keep Copies Off the Server</h2>
+      <h2 id="keep-copies-off-the-server">Automate Copies to Another Device</h2>
 
       <p>Backups that only live on the server won't help if the server is lost or its storage fails. Keep at least one copy on another device, and automate it if you can. Any of the options below will work, and you can combine them. On a Docker host, use the <code>backups</code> folder next to your <code>docker-compose.yml</code> in place of <code>/var/backups/fd-commander</code>.</p>
 
@@ -413,7 +413,7 @@
         <p>This copies at a quarter past every hour, after the hourly backup. When the other computer can't be reached, such as at a site with no internet, the copy will fail and the next one will catch up.</p>
       </div>
 
-      <p>Leave out <code>--delete</code>. Without it, files that get wiped from the server stay on the other computer. The other side won't clean up old files on its own, so check its free space now and then.</p>
+      <p>The <a href="https://download.samba.org/pub/rsync/rsync.1">rsync manual</a> explains the archive and deletion options. Leave out <code>--delete</code>. Without it, files that get wiped from the server stay on the other computer. The other side won't clean up old files on its own, so check its free space now and then.</p>
 
       <h3>restic</h3>
 
@@ -434,16 +434,20 @@
         <div class="code-block">RESTIC_REPOSITORY=sftp:backup@nas.local:/srv/restic/fd-commander
 RESTIC_PASSWORD_FILE=/root/.restic-password
 30 3 * * * root restic backup /var/backups/fd-commander &amp;&amp; restic forget --keep-daily 14 --keep-weekly 8 --prune</div>
-        <p>This runs at 03:30, after the nightly full backup. It keeps two weeks of daily snapshots and eight weekly ones.</p>
+        <p>This runs at 03:30, after the nightly full backup. It keeps two weeks of daily snapshots and eight weekly ones. See <a href="https://restic.readthedocs.io/en/stable/060_forget.html">restic’s retention-policy documentation</a> for how daily and weekly retention select snapshots.</p>
       </div>
 
       <p>To get files back, restore a snapshot to a folder, then use <code>restore.sh</code> on the files as described below:</p>
       <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo restic -r sftp:backup@nas.local:/srv/restic/fd-commander --password-file /root/.restic-password restore latest --target /root/fdc-restore</span></div>
-      <p>restic recreates the full path, so the files land in <code>/root/fdc-restore/var/backups/fd-commander</code>. Point <code>restore.sh</code> at the database file there. The matching files and env backups are next to it.</p>
+      <p>The <a href="https://restic.readthedocs.io/en/stable/050_restore.html">restic restore documentation</a> covers <code>latest</code> and <code>--target</code>. restic recreates the full path, so the files land in <code>/root/fdc-restore/var/backups/fd-commander</code>. Point <code>restore.sh</code> at the database file there. The matching files and env backups are next to it.</p>
 
       <h2>Restoring</h2>
 
-      <p>A restore replaces everything in FD Commander with the contents of a backup, so anything logged after that backup will be gone. Pick the most recent good backup. To find it, check the stamps with <code>sudo ls -lh</code> and match them to when things went wrong. Point <code>restore.sh</code> at the database file, and it will find the other two files by their matching stamp. All three need to be in the same folder.</p>
+      <p>Pick the most recent good backup from before the problem occurred. List the files with <code>sudo ls -lh</code> and compare their timestamps with when things went wrong.</p>
+
+      <p>Point <code>restore.sh</code> at the database file. For a full restore, it finds the uploaded-files archive and settings backup by their matching timestamp. Keep all three files in the same folder.</p>
+
+      <p>A full restore replaces the database and uploaded files with the backup contents. Contacts logged and files uploaded after that backup will no longer be in the restored system. Settings handling differs between a same-server restore and a move to new hardware; see <a href="#new-server">Moving to a New Server</a> for the latter.</p>
 
       <div class="code-block"><span class="comment"># Native install</span>
 <span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/restore.sh /var/backups/fd-commander/fdc-db-20260628-023000.sql.gz</span>
@@ -453,13 +457,13 @@ RESTIC_PASSWORD_FILE=/root/.restic-password
 
       <p>To restore an hourly backup, add <code>--db-only</code>. Without it, the script stops and tells you the files archive is missing. Photos and other uploads on the server stay as they are.</p>
 
-      <p>Before it changes anything, the script checks that the backup files are intact and that the database name matches this install. It then shows what it will restore and asks you to type <code>yes</code>. Read that summary before you answer. Anything else cancels the restore. Next it backs up the current data so the restore can be undone, stops FD Commander, loads the backup, runs any database updates, and starts everything back up. Nobody can log while that happens, so do it during a lull.</p>
+      <p>Before it changes anything, the script checks that the backup files are intact and that the database name matches this install. It then shows what it will restore and asks you to type <code>yes</code>. Read that summary before you answer. Anything else cancels the restore. Next it backs up the current data so the restore can be undone, stops Field Day Commander, loads the backup, runs any database updates, and starts everything back up. Nobody can log while that happens, so do it during a lull.</p>
 
-      <p>When it finishes, you'll see <strong>FD Commander Restore Complete!</strong> and the path to the pre-restore backup. The full output is saved to <code>/var/log/fd-commander-restore.log</code>.</p>
+      <p>When it finishes, you'll see <strong>Field Day Commander Restore Complete!</strong> and the path to the pre-restore backup. The full output is saved to <code>/var/log/fd-commander-restore.log</code>.</p>
 
       <p>Then sign in and check the log. The contact count and the last few QSOs should match the backup's time stamp.</p>
 
-      <p>You can restore an older backup onto a newer version of FD Commander, because the database updates run after the backup is loaded. The reverse doesn't work, so update the server first if the backup came from a newer release.</p>
+      <p>You can restore an older backup onto a newer version of Field Day Commander, because the database updates run after the backup is loaded. The reverse doesn't work, so update the server first if the backup came from a newer release.</p>
 
       <div class="callout tip">
         <div class="callout-title">Two-factor warning</div>
@@ -480,12 +484,12 @@ RESTIC_PASSWORD_FILE=/root/.restic-password
 
       <h2 id="new-server">Moving to a New Server</h2>
 
-      <p>The same scripts handle a move to new hardware, such as an upgraded Pi or a replacement for a dead SD card. Install FD Commander on the new server first. You don't need to finish the setup wizard, since the restore replaces everything.</p>
+      <p>The same scripts handle a move to new hardware, such as an upgraded Pi or a replacement for a dead SD card. Install Field Day Commander on the new server first. You don't need to finish the setup wizard, since the restore replaces everything.</p>
 
       <h3>Native install</h3>
 
       <div class="step-box">
-        <p><span class="step-number">1</span> Install FD Commander on the new server with <code>deploy.sh</code>, as described in the <a href="../fd-commander-docs.html#installation">Installation</a> guide. Use the same release as the old server or a newer one. If the old server used a custom <code>--db-name</code>, use the same name here. The restore stops if the names don't match.</p>
+        <p><span class="step-number">1</span> Install Field Day Commander on the new server with <code>deploy.sh</code>, as described in the <a href="../fd-commander-docs.html#installation">Installation</a> guide. Use the same release as the old server or a newer one. If the old server used a custom <code>--db-name</code>, use the same name here. The restore stops if the names don't match.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">2</span> Copy all three files from one backup set to your home folder on the new server:</p>
@@ -559,9 +563,8 @@ RESTIC_PASSWORD_FILE=/root/.restic-password
         <p>Sunday afternoon, after the last contact: take a full backup by hand, copy it to a laptop, and check that the laptop copy has all three files. Then shut the Pi down.</p>
       </div>
 
-      <div class="guide-nav">
-        <a href="index.html">&larr; All Guides</a>
-        <a href="email-setup.html">Email Setup &rarr;</a>
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
       </div>
 
     </div>
@@ -571,6 +574,7 @@ RESTIC_PASSWORD_FILE=/root/.restic-password
 <footer></footer>
 <script src="../footer.js"></script>
 <script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
 
 </body>
 </html>
