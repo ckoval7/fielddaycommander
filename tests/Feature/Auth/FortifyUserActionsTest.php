@@ -94,6 +94,7 @@ describe('UpdateUserProfileInformation', function () {
             'email' => $user->email,
             'license_class' => 'Extra',
             'preferred_timezone' => 'America/New_York',
+            'is_youth' => true,
             'is_cpr_aed_trained' => true,
         ]);
 
@@ -102,6 +103,7 @@ describe('UpdateUserProfileInformation', function () {
         expect($user->last_name)->toBe('Maxim');
         expect($user->license_class)->toBe('Extra');
         expect($user->preferred_timezone)->toBe('America/New_York');
+        expect($user->is_youth)->toBeTrue();
         expect($user->is_cpr_aed_trained)->toBeTrue();
         expect($user->email_verified_at)->not->toBeNull();
     });

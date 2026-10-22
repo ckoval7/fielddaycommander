@@ -242,3 +242,19 @@ test('allCategoriesEnabled is false when notify_weather_alert is disabled', func
 
     expect($component->get('allCategoriesEnabled'))->toBeFalse();
 });
+
+test('ticking and unticking youth on the profile is saved', function () {
+    Livewire::test(UserProfile::class)
+        ->set('is_youth', true)
+        ->call('saveProfile')
+        ->assertHasNoErrors();
+
+    expect($this->user->fresh()->is_youth)->toBeTrue();
+
+    Livewire::test(UserProfile::class)
+        ->assertSet('is_youth', true)
+        ->set('is_youth', false)
+        ->call('saveProfile');
+
+    expect($this->user->fresh()->is_youth)->toBeFalse();
+});
