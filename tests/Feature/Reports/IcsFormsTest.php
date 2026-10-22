@@ -69,7 +69,7 @@ function expectFieldsExistInFemaPdf(array $form, string $pdf): void
 test('the blank FEMA forms ship with the app', function (string $form) {
     expect(public_path("forms/ics/{$form}.pdf"))->toBeFile()
         ->and(file_get_contents(public_path("forms/ics/{$form}.pdf"), length: 5))->toBe('%PDF-');
-})->with(['ics-205', 'ics-211', 'ics-213']);
+})->with(['ics-205', 'ics-205a', 'ics-211', 'ics-213']);
 
 test('the ICS-205 lists the talk-in frequency and each station channel', function () {
     Station::factory()->create([
@@ -169,6 +169,55 @@ test('the ICS-211 lists shift check-ins in order', function () {
     expectFieldsExistInFemaPdf($form, 'ics-211');
 });
 
+test('the ICS-205A lists everyone with a shift, by last name, with contact and credentials', function () {
+    $netControl = ShiftRole::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'Net Control Operator', 'tactical_callsign' => 'Net Control']);
+    $logger = ShiftRole::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'Logger', 'tactical_callsign' => null]);
+    $morning = Shift::factory()->create(['event_configuration_id' => $this->config->id, 'shift_role_id' => $netControl->id]);
+    $evening = Shift::factory()->create(['event_configuration_id' => $this->config->id, 'shift_role_id' => $netControl->id]);
+    $logging = Shift::factory()->create(['event_configuration_id' => $this->config->id, 'shift_role_id' => $logger->id]);
+
+    $sam = User::factory()->create(['first_name' => 'Sam', 'last_name' => 'Young', 'call_sign' => 'K1SAM', 'phone' => '555-0142', 'email' => 'sam@example.com']);
+    UserCredential::factory()->create(['user_id' => $sam->id, 'credential' => Credential::Auxcomm]);
+    $ann = User::factory()->create(['first_name' => 'Ann', 'last_name' => 'Abbott', 'call_sign' => 'W1ANN', 'phone' => null, 'email' => 'ann@example.com']);
+    $gone = User::factory()->create(['last_name' => 'Missing', 'call_sign' => 'K1NOP']);
+
+    foreach ([[$morning, $sam], [$evening, $sam], [$logging, $ann]] as [$shift, $user]) {
+        ShiftAssignment::factory()->create(['shift_id' => $shift->id, 'user_id' => $user->id, 'status' => ShiftAssignment::STATUS_SCHEDULED]);
+    }
+    ShiftAssignment::factory()->create(['shift_id' => $logging->id, 'user_id' => $gone->id, 'status' => ShiftAssignment::STATUS_NO_SHOW]);
+
+    $form = $this->actingAs($this->user)->getJson(route('reports.ics-205a'))->assertOk()->json();
+    $page = $form['pages'][0];
+
+    expect($form['template'])->toEndWith('/forms/ics/ics-205a.pdf')
+        ->and($form['filename'])->toBe('ics-205a-city-marathon.pdf')
+        ->and($page['1 Incident Name_9'])->toBe('City Marathon')
+        ->and($page['4 Prepared by Name'])->toBe('Pat Lee, W1PAT')
+        ->and($page['Name AlphabetizedRow1'])->toBe('Abbott, Ann, W1ANN')
+        ->and($page['Incident Assigned PositionRow1'])->toBe('Logger')
+        ->and($page['Methods of Contact phone pager cell etcRow1'])->toBe('ann@example.com')
+        ->and($page['Name AlphabetizedRow2'])->toBe('Young, Sam, K1SAM')
+        ->and($page['Incident Assigned PositionRow2'])->toBe('Net Control Operator / Net Control')
+        ->and($page['Methods of Contact phone pager cell etcRow2'])->toBe('555-0142, sam@example.com; AUXCOMM')
+        ->and($page)->not->toHaveKey('Name AlphabetizedRow3');
+
+    expectFieldsExistInFemaPdf($form, 'ics-205a');
+});
+
+test('the ICS-205A fits 34 people on a page', function () {
+    $role = ShiftRole::factory()->create(['event_configuration_id' => $this->config->id]);
+    $shift = Shift::factory()->create(['event_configuration_id' => $this->config->id, 'shift_role_id' => $role->id]);
+    User::factory()->count(IcsFormBuilder::COMMS_LIST_ROWS_PER_PAGE + 1)->create()
+        ->each(fn (User $user) => ShiftAssignment::factory()->create(['shift_id' => $shift->id, 'user_id' => $user->id]));
+
+    $form = app(IcsFormBuilder::class)->ics205a($this->config->fresh(), $this->user);
+
+    expect($form['pages'])->toHaveCount(2)
+        ->and($form['pages'][0])->toHaveKey('Name AlphabetizedRow34')
+        ->and($form['pages'][1])->toHaveKey('Name AlphabetizedRow1')
+        ->and($form['pages'][1])->not->toHaveKey('Name AlphabetizedRow2');
+});
+
 test('the ICS-213 fills a message into the FEMA form', function () {
     $message = Message::factory()->ics213()->create([
         'event_configuration_id' => $this->config->id,
@@ -246,7 +295,7 @@ test('the ICS-309 for one net lists only that net and names it', function () {
 
 test('ICS forms need the view-reports permission', function (string $route) {
     $this->actingAs(User::factory()->create())->get(route($route))->assertForbidden();
-})->with(['reports.ics-205', 'reports.ics-211', 'reports.ics-309']);
+})->with(['reports.ics-205', 'reports.ics-205a', 'reports.ics-211', 'reports.ics-309']);
 
 test('the reports page offers the ICS forms', function () {
     Livewire::actingAs($this->user)->test(ReportsIndex::class)

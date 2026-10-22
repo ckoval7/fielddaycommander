@@ -58,7 +58,7 @@
                     wire:model="phone"
                     autocomplete="tel"
                     maxlength="30"
-                    hint="Optional. Your contact number on the ICS-211 check-in list."
+                    hint="Optional. Your contact number on the ICS-211 check-in list and ICS-205A communications list."
                 />
 
                 {{-- Current password, only needed when the email changes --}}
@@ -106,7 +106,7 @@
             <div class="card-body">
                 <h3 class="card-title">Credentials</h3>
                 <p class="text-sm text-base-content/70">
-                    Tick the emergency communications credentials you hold. Unexpired credentials appear under Other Qualifications on the ICS-211 check-in list.
+                    Tick the emergency communications credentials you hold. Unexpired credentials appear on the ICS-211 check-in list and ICS-205A communications list.
                 </p>
 
                 <ul class="divide-y divide-base-300">
