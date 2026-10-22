@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Enums\StationUnavailableReason;
+use App\Exceptions\RollCallException;
 use App\Models\EventConfiguration;
 use App\Models\Net;
 use App\Models\NetLogEntry;
@@ -52,7 +53,7 @@ test('a net with no stations to call cannot start a roll call', function () {
     Station::query()->delete();
 
     $this->service->start($this->net, $this->user);
-})->throws(RuntimeException::class);
+})->throws(RollCallException::class);
 
 test('an entry from an expected station accounts for it, by tactical name or operator callsign', function () {
     OperatingSession::factory()->create([

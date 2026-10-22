@@ -301,10 +301,12 @@ class UserProfile extends Component
                 continue;
             }
 
+            $level = filled($input['level'] ?? null) && $credential->levels() !== [] ? $input['level'] : null;
+
             $user->credentials()->updateOrCreate(
                 ['credential' => $credential->value],
                 [
-                    'level' => $credential->levels() === [] ? null : (filled($input['level'] ?? null) ? $input['level'] : null),
+                    'level' => $level,
                     'expires_at' => filled($input['expires_at'] ?? null) ? $input['expires_at'] : null,
                 ],
             );

@@ -6,12 +6,12 @@
 namespace App\Livewire\NetLog\Concerns;
 
 use App\Events\NetLogChanged;
+use App\Exceptions\RollCallException;
 use App\Models\NetLogEntry;
 use App\Models\RollCall;
 use App\Models\RollCallStation;
 use App\Services\RollCallService;
 use Livewire\Attributes\Computed;
-use RuntimeException;
 
 /**
  * Starting, marking and ending a roll call (PAR) on the net being logged.
@@ -45,7 +45,7 @@ trait RunsRollCalls
 
         try {
             app(RollCallService::class)->start($this->currentNet, auth()->user());
-        } catch (RuntimeException $exception) {
+        } catch (RollCallException $exception) {
             $this->dispatch('toast', title: $exception->getMessage(), type: 'error');
 
             return;

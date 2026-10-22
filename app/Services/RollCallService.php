@@ -6,13 +6,13 @@
 namespace App\Services;
 
 use App\Enums\NetPriority;
+use App\Exceptions\RollCallException;
 use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Models\RollCall;
 use App\Models\RollCallStation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 /**
  * Runs roll calls (PAR) on a net.
@@ -38,7 +38,7 @@ class RollCallService
     /**
      * Start a roll call on the net, or return the one already open.
      *
-     * @throws RuntimeException when the net has no stations to call
+     * @throws RollCallException when the net has no stations to call
      */
     public function start(Net $net, User $user): RollCall
     {
@@ -53,7 +53,7 @@ class RollCallService
                 ->reject(fn (array $row) => $row['unavailable']);
 
             if ($expected->isEmpty()) {
-                throw new RuntimeException('No stations to call. Add a tactical callsign or location to stations first.');
+                throw new RollCallException('No stations to call. Add a tactical callsign or location to stations first.');
             }
 
             $rollCall = $net->rollCalls()->create([
