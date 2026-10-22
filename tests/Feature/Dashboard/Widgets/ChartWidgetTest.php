@@ -650,8 +650,10 @@ test('view contains screen reader data table', function () {
         'config' => ['chart_type' => 'bar', 'data_source' => 'qsos_per_hour'],
         'size' => 'normal',
     ])
-        ->assertSeeHtml('role="table"')
-        ->assertSeeHtml('class="sr-only"');
+        ->assertSeeHtml('<table class="sr-only">')
+        ->assertSeeHtml('<th scope="col">Category</th>')
+        ->assertDontSeeHtml('role="table"')
+        ->assertDontSeeHtml('role="img"');
 });
 
 test('view shows empty state when no data', function () {

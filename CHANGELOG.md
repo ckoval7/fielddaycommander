@@ -13,6 +13,10 @@ This changelog starts after 26.10.9. For earlier releases, see the commit histor
 ### Fixed
 
 - On a laptop or desktop, the guestbook's recent visitors were squeezed into narrow columns, with names, dates and comments cut off or wrapped a word per line. They now fill the column, one card per row. The form and the entry list also lost a second heading each, and on phones the form fields sit closer to the screen edge.
+- When equipment committed to an event was marked lost or damaged, System Administrators received the incident notification twice, and owners who were also admins or equipment managers could receive it two or three times. Each person now receives it once.
+- When running `deploy.sh` or `update.sh`, every `[INFO]`, `[WARN]`, `[ERROR]`, and phase line appeared twice in `/var/log/fd-commander-deploy.log` or `/var/log/fd-commander-update.log`, respectively. Each line now appears once, and the message shown when running without root privileges goes to stderr.
+- On the station equipment assignment page, keyboard and screen reader users tabbing through **Committed to Event** or **All Equipment Catalog** heard drag instructions that promised arrow-key controls that didn't work. They now tab to each card's **Assign** or **Commit & Assign** button, which names the equipment, and mouse drag and drop still works.
+- When reading dashboard chart data with a screen reader, the hidden data table wasn't reliably announced as a table with column headers. It now uses an HTML table with column headers.
 
 ## 26.10.11 - 2026-10-21
 

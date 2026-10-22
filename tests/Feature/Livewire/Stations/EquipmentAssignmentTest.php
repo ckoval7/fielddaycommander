@@ -140,6 +140,37 @@ test('can assign equipment from committed tab', function () {
     ]);
 });
 
+test('equipment cards leave keyboard access to their labelled assign buttons', function () {
+    $antenna = Equipment::factory()->create([
+        'type' => 'antenna',
+        'make' => 'SteppIR',
+        'model' => 'BigIR',
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    EquipmentEvent::create([
+        'equipment_id' => $antenna->id,
+        'event_id' => $this->event->id,
+        'station_id' => null,
+        'status' => 'committed',
+        'committed_at' => now(),
+        'status_changed_at' => now(),
+    ]);
+
+    Equipment::factory()->create([
+        'type' => 'antenna',
+        'make' => 'Comet',
+        'model' => 'GP-3',
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
+        ->assertSeeHtml('aria-label="Assign SteppIR BigIR"')
+        ->assertSeeHtml('aria-label="Commit and assign Comet GP-3"')
+        ->assertDontSeeHtml('tabindex="0"')
+        ->assertDontSeeHtml('aria-grabbed');
+});
+
 test('can assign equipment from catalog with commit', function () {
     // Create antenna not committed to event
     $antenna = Equipment::factory()->create([
