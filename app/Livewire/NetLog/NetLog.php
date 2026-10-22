@@ -13,10 +13,12 @@ use App\Models\Event;
 use App\Models\Net;
 use App\Models\NetLogEntry;
 use App\Services\NetLogExchangeParser;
+use App\Services\StationLastHeardService;
 use App\Services\TacticalCallsignResolver;
 use App\Support\BroadcastChannels;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -150,6 +152,18 @@ class NetLog extends Component
             ->all();
     }
 
+    /**
+     * Each net position with its location, operator on duty and when it was
+     * last heard, flagged overdue past this net's threshold.
+     *
+     * @return SupportCollection<int, array<string, mixed>>
+     */
+    #[Computed]
+    public function stationStatus(): SupportCollection
+    {
+        return app(StationLastHeardService::class)->forEvent($this->event->eventConfiguration, $this->currentNet);
+    }
+
     public function refreshEntries(): void
     {
         $this->reloadNets($this->netId);
@@ -170,7 +184,7 @@ class NetLog extends Component
      */
     public function updatedNetId(): void
     {
-        unset($this->currentNet, $this->entries, $this->tacticalNames);
+        unset($this->currentNet, $this->entries, $this->tacticalNames, $this->stationStatus);
         $this->netId = $this->resolveNetId($this->netId);
         $this->reset('exchangeInput', 'suggestions', 'parseError', 'priority');
     }
@@ -216,7 +230,7 @@ class NetLog extends Component
 
         NetLogChanged::dispatch($this->event->id, $entry->id);
         $this->reset('exchangeInput', 'suggestions', 'priority');
-        unset($this->entries);
+        unset($this->entries, $this->stationStatus);
 
         $this->dispatch('contact-logged');
     }
@@ -255,7 +269,7 @@ class NetLog extends Component
      */
     private function reloadNets(?int $netId): void
     {
-        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames);
+        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames, $this->stationStatus);
         $this->netId = $this->resolveNetId($netId);
     }
 

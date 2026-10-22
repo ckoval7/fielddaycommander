@@ -624,12 +624,13 @@ test('rejects invalid power source value', function () {
         ->assertHasErrors(['power_source']);
 });
 
-test('a station saves its tactical callsign and channel', function () {
+test('a station saves its tactical callsign, location and channel', function () {
     Livewire::test(StationForm::class)
         ->set('name', 'Aid Station 7')
         ->set('event_configuration_id', $this->eventConfig->id)
         ->set('radio_equipment_id', $this->radio->id)
         ->set('tactical_callsign', 'Aid 7')
+        ->set('location', 'Mile 12 aid station, Elm St and 3rd')
         ->set('rx_frequency', '146.940')
         ->set('tx_frequency', '146.340')
         ->set('tone', '100.0')
@@ -640,6 +641,7 @@ test('a station saves its tactical callsign and channel', function () {
     $this->assertDatabaseHas('stations', [
         'name' => 'Aid Station 7',
         'tactical_callsign' => 'Aid 7',
+        'location' => 'Mile 12 aid station, Elm St and 3rd',
         'rx_frequency' => '146.940',
         'tx_frequency' => '146.340',
         'tone' => '100.0',

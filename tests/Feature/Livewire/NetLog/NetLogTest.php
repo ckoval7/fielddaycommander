@@ -398,3 +398,85 @@ test('nets from another event cannot be touched', function () {
         ->call('open', $other->id)
         ->assertNotFound();
 });
+
+test('net control sees each station with its location, operator and last heard', function () {
+    $this->travelTo(now()->setTime(12, 0));
+    $this->net->update(['overdue_after_minutes' => 30]);
+    $aid7 = Station::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'tactical_callsign' => 'Aid 7',
+        'location' => 'Mile 12 aid station, Elm St and 3rd',
+    ]);
+    OperatingSession::factory()->create([
+        'station_id' => $aid7->id,
+        'operator_user_id' => User::factory()->create(['call_sign' => 'W1ABC'])->id,
+        'end_time' => null,
+        'is_transcription' => false,
+    ]);
+    Station::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Aid 9']);
+    NetLogEntry::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'net_id' => $this->net->id,
+        'from_station' => 'Aid 9',
+        'logged_at' => now()->subMinutes(45),
+    ]);
+    NetLogEntry::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'net_id' => $this->net->id,
+        'from_station' => 'Aid 7',
+        'logged_at' => now()->subMinutes(5),
+    ]);
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->assertSeeHtml('x-data="stationLastHeard"')
+        ->assertSeeHtml('wire:ignore.self')
+        ->assertSeeHtml('x-text="ago($el.dataset.heardAt)"')
+        ->assertSeeHtml(':class="{ \'!border-error bg-error/10\': isOverdue($el.dataset.overdueAt) }"')
+        ->assertSee('Mile 12 aid station, Elm St and 3rd')
+        ->assertSee('W1ABC')
+        ->assertSee('5m ago')
+        ->assertSee('45m ago')
+        ->assertSee('1 overdue')
+        ->assertSee('Overdue after 30 min')
+        ->assertSee('No operator on duty');
+});
+
+test('the station list is left out when no station has a tactical callsign or location', function () {
+    Station::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'Station 1']);
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->assertDontSeeHtml('data-station-status');
+});
+
+test('logging traffic updates when a station was last heard', function () {
+    Station::factory()->create(['event_configuration_id' => $this->config->id, 'tactical_callsign' => 'Aid 7']);
+
+    Livewire::actingAs($this->operator)->test(NetLog::class, ['event' => $this->event])
+        ->assertSee('Not heard yet')
+        ->call('logEntry', 'NCS Aid 7 all quiet')
+        ->assertDontSee('Not heard yet')
+        ->assertSee('just now');
+});
+
+test('a net\'s overdue threshold is set and cleared in the net form', function () {
+    Livewire::actingAs($this->operator)->test(NetForm::class, ['event' => $this->event])
+        ->call('open', $this->net->id)
+        ->assertSeeHtml('inputmode="numeric"')
+        ->set('netOverdueAfterMinutes', 20)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($this->net->fresh()->overdue_after_minutes)->toBe(20);
+
+    Livewire::actingAs($this->operator)->test(NetForm::class, ['event' => $this->event])
+        ->call('open', $this->net->id)
+        ->assertSet('netOverdueAfterMinutes', 20)
+        ->set('netOverdueAfterMinutes', 0)
+        ->call('save')
+        ->assertHasErrors(['netOverdueAfterMinutes' => 'min'])
+        ->set('netOverdueAfterMinutes', null)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($this->net->fresh()->overdue_after_minutes)->toBeNull();
+});

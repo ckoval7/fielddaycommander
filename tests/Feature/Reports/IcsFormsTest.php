@@ -78,6 +78,7 @@ test('the ICS-205 lists the talk-in frequency and each station channel', functio
         'tx_frequency' => '146.340',
         'tone' => '100.0',
         'comms_mode' => 'FM',
+        'location' => 'Mile 12',
     ]);
     Station::factory()->create([
         'event_configuration_id' => $this->config->id,
@@ -102,6 +103,8 @@ test('the ICS-205 lists the talk-in frequency and each station channel', functio
         ->and($page['TX Freq N or WRow2'])->toBe('146.340')
         ->and($page['RX ToneNACRow2'])->toBe('100.0')
         ->and($page['Mode A D or MRow2'])->toBe('A')
+        ->and($page['RemarksRow2'])->toBe('FM, Mile 12')
+        ->and($page['RemarksRow3'])->toBe('DMR')
         ->and($page['Channel NameTrunked Radio System TalkgroupRow3'])->toBe('Finish Line')
         ->and($page['TX Freq N or WRow3'])->toBe('441.000')
         ->and($page['Mode A D or MRow3'])->toBe('D')

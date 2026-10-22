@@ -55,7 +55,7 @@ export default function updatedAgo() {
     };
 }
 
-function formatAge(seconds) {
+export function formatAge(seconds) {
     if (seconds < 60) {
         return 'just now';
     }

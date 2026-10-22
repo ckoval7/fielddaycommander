@@ -158,7 +158,8 @@ class IcsFormBuilder
 
     /**
      * Radio channels for the ICS-205: the talk-in frequency, then every
-     * station with a frequency or tactical callsign.
+     * station with a frequency or tactical callsign. A station's remarks
+     * carry its mode and where it is.
      *
      * @return Collection<int, array{function: string, name: string, assignment: string, rx: string, tx: string, tone: string, mode_letter: string, remarks: string}>
      */
@@ -197,7 +198,7 @@ class IcsFormBuilder
             'tx' => (string) ($station->tx_frequency ?: $station->rx_frequency),
             'tone' => (string) $station->tone,
             'mode_letter' => $this->modeLetter($station->comms_mode),
-            'remarks' => (string) $station->comms_mode,
+            'remarks' => collect([$station->comms_mode, $station->location])->filter()->implode(', '),
         ]))->values();
     }
 
