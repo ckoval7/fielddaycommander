@@ -4,7 +4,10 @@
 --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<x-layouts.head :title="config('app.name')" />
+<head>
+    <title>{{ config('app.name') }}</title>
+    <x-layouts.head />
+</head>
 <body class="min-h-dvh font-sans antialiased bg-base-200">
     <div class="flex min-h-dvh flex-col items-center justify-center px-4 py-12">
         {{-- Logo/Brand --}}

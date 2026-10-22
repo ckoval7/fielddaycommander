@@ -3,19 +3,18 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 {{--
-The shared head element for the app, guest and guestbook kiosk pages.
+Shared head contents for the app, guest and guestbook kiosk pages. Each page
+writes its own head element and title around this, so every page file still
+reads as a complete document.
 
 Props:
-- $title: The full page title
 - $viewportFit: Let the page draw under notches (it must pad itself with the safe-area insets)
 --}}
-@props(['title', 'viewportFit' => false])
-<head>
+@props(['viewportFit' => false])
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0{{ $viewportFit ? ', viewport-fit=cover' : '' }}">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <x-reverb-config-meta />
-<title>{{ $title }}</title>
 <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 <x-pwa-meta />
 
@@ -43,4 +42,3 @@ Props:
 <x-silence-livewire-rejections />
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
