@@ -9,6 +9,7 @@ use App\Enums\NetPriority;
 use App\Events\NetLogChanged;
 use App\Livewire\NetLog\Concerns\EditsNetLogEntries;
 use App\Livewire\NetLog\Concerns\HasNetSuggestions;
+use App\Livewire\NetLog\Concerns\RunsRollCalls;
 use App\Models\Event;
 use App\Models\Net;
 use App\Models\NetLogEntry;
@@ -35,7 +36,7 @@ use Livewire\Component;
  */
 class NetLog extends Component
 {
-    use EditsNetLogEntries, HasNetSuggestions;
+    use EditsNetLogEntries, HasNetSuggestions, RunsRollCalls;
 
     /**
      * Entries shown in the log window. The full log is on the ICS-309.
@@ -184,7 +185,7 @@ class NetLog extends Component
      */
     public function updatedNetId(): void
     {
-        unset($this->currentNet, $this->entries, $this->tacticalNames, $this->stationStatus);
+        unset($this->currentNet, $this->entries, $this->tacticalNames, $this->stationStatus, $this->activeRollCall);
         $this->netId = $this->resolveNetId($this->netId);
         $this->reset('exchangeInput', 'suggestions', 'parseError', 'priority');
     }
@@ -228,6 +229,7 @@ class NetLog extends Component
             'priority' => $parsed['priority'] ?? NetPriority::from($this->priority),
         ]);
 
+        $this->recordRollCallAnswer($entry);
         NetLogChanged::dispatch($this->event->id, $entry->id);
         $this->reset('exchangeInput', 'suggestions', 'priority');
         unset($this->entries, $this->stationStatus);
@@ -269,7 +271,7 @@ class NetLog extends Component
      */
     private function reloadNets(?int $netId): void
     {
-        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames, $this->stationStatus);
+        unset($this->nets, $this->currentNet, $this->entries, $this->tacticalNames, $this->stationStatus, $this->activeRollCall);
         $this->netId = $this->resolveNetId($netId);
     }
 

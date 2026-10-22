@@ -66,6 +66,11 @@ class Net extends Model
         return $this->hasMany(NetLogEntry::class);
     }
 
+    public function rollCalls(): HasMany
+    {
+        return $this->hasMany(RollCall::class);
+    }
+
     /**
      * @param  Builder<Net>  $query
      * @return Builder<Net>
