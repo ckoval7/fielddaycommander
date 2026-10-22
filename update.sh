@@ -19,7 +19,7 @@ NC='\033[0m'
 
 # --- Early root check ---
 if [[ $EUID -ne 0 ]]; then
-    echo -e "\033[0;31m[ERROR]\033[0m This script must be run as root (or via sudo)"
+    echo -e "\033[0;31m[ERROR]\033[0m This script must be run as root (or via sudo)" >&2
     exit 1
 fi
 
@@ -28,10 +28,12 @@ fi
 umask 022
 
 # --- Logging ---
-log_info()    { echo -e "${GREEN}[INFO]${NC} $1" | tee -a "$LOG_FILE"; }
-log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1" | tee -a "$LOG_FILE"; }
-log_error()   { echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"; }
-log_phase()   { echo -e "\n${CYAN}${BOLD}=== $1 ===${NC}" | tee -a "$LOG_FILE"; }
+# All output already goes through the tee to $LOG_FILE set up below, so these
+# only print; teeing here as well wrote every line to the log twice.
+log_info()    { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error()   { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+log_phase()   { echo -e "\n${CYAN}${BOLD}=== $1 ===${NC}"; }
 
 # The log can hold secrets and hostnames, so keep it readable by root only.
 (umask 077 && touch "$LOG_FILE")

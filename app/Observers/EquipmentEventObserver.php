@@ -37,7 +37,7 @@ class EquipmentEventObserver
             }
 
             // Send alert to Event Managers
-            $managers = $this->getEventManagers($equipmentEvent->event_id);
+            $managers = $this->equipmentManagers();
             foreach ($managers as $manager) {
                 $manager->notify(new EquipmentCommitted($equipmentEvent, 'manager'));
             }
@@ -124,7 +124,7 @@ class EquipmentEventObserver
         }
 
         // Notify managers
-        $managers = $this->getEventManagers($equipmentEvent->event_id);
+        $managers = $this->equipmentManagers();
         foreach ($managers as $manager) {
             $manager->notify(new EquipmentDelivered($equipmentEvent, 'manager'));
         }
@@ -159,21 +159,17 @@ class EquipmentEventObserver
         // Create incident notification (NOT queued for immediate delivery)
         $notification = new EquipmentIncident($equipmentEvent, $incidentType);
 
-        // Notify operator immediately
+        // Admins usually hold manage-event-equipment too, and the owner may be
+        // either, so merge by user id to send each person one notification.
+        $recipients = User::role('System Administrator')->get()
+            ->merge($this->equipmentManagers());
+
         if ($operator) {
-            $operator->notifyNow($notification);
+            $recipients = $recipients->merge([$operator]);
         }
 
-        // Notify admins immediately
-        $admins = User::role('System Administrator')->get();
-        foreach ($admins as $admin) {
-            $admin->notifyNow($notification);
-        }
-
-        // Also notify event managers
-        $managers = $this->getEventManagers($equipmentEvent->event_id);
-        foreach ($managers as $manager) {
-            $manager->notifyNow($notification);
+        foreach ($recipients as $recipient) {
+            $recipient->notifyNow($notification);
         }
     }
 
@@ -185,21 +181,21 @@ class EquipmentEventObserver
     protected function handleCancelled(EquipmentEvent $equipmentEvent): void
     {
         // Notify Event Managers only
-        $managers = $this->getEventManagers($equipmentEvent->event_id);
+        $managers = $this->equipmentManagers();
         foreach ($managers as $manager) {
             $manager->notify(new EquipmentCancelled($equipmentEvent));
         }
     }
 
     /**
-     * Get all Event Managers for a specific event.
+     * Get every user who manages event equipment.
      *
-     * Event Managers are users with 'manage-event-equipment' permission.
+     * The 'manage-event-equipment' permission is global rather than per event,
+     * so the same users are notified for every event.
      *
-     * @param  int  $eventId  The event ID
      * @return Collection<int, User>
      */
-    protected function getEventManagers(int $eventId): Collection
+    protected function equipmentManagers(): Collection
     {
         return User::permission('manage-event-equipment')->get();
     }

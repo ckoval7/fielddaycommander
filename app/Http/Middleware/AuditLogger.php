@@ -30,16 +30,16 @@ class AuditLogger
         $routeKey = "{$method} /{$path}";
 
         match ($routeKey) {
-            'POST /login' => $this->logLogin($response),
+            'POST /login' => $this->logLogin(),
             'POST /logout' => $this->logAction('user.logout', $preAuthUserId),
-            'POST /two-factor-challenge' => $this->logTwoFactorChallenge($response),
+            'POST /two-factor-challenge' => $this->logTwoFactorChallenge(),
             'POST /register' => $this->logRegister(),
             'POST /password/reset' => $this->logAction('user.password.reset', auth()->id()),
             default => null,
         };
     }
 
-    protected function logLogin(Response $response): void
+    protected function logLogin(): void
     {
         if (auth()->check()) {
             AuditLog::log(action: 'user.login.success');
@@ -52,7 +52,7 @@ class AuditLogger
         }
     }
 
-    protected function logTwoFactorChallenge(Response $response): void
+    protected function logTwoFactorChallenge(): void
     {
         if (auth()->check()) {
             AuditLog::log(action: 'user.login.success');
