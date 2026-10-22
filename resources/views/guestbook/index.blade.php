@@ -30,23 +30,11 @@
                 </div>
             </div>
         @else
-            {{-- Two-Column Layout for Form and Entries --}}
+            {{-- Two-Column Layout for Form and Entries. Each component brings its own card and heading. --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                {{-- Left Column: Guestbook Form --}}
-                <div>
-                    <div class="card bg-base-100 shadow-md p-4 sm:p-6">
-                        <h2 class="card-title text-xl sm:text-2xl mb-4">Add Your Entry</h2>
-                        <livewire:guestbook.guestbook-form />
-                    </div>
-                </div>
+                <livewire:guestbook.guestbook-form />
 
-                {{-- Right Column: Guestbook Entries List --}}
-                <div>
-                    <div class="card bg-base-100 shadow-md p-4 sm:p-6">
-                        <h2 class="card-title text-xl sm:text-2xl mb-4">Recent Entries</h2>
-                        <livewire:guestbook.guestbook-list />
-                    </div>
-                </div>
+                <livewire:guestbook.guestbook-list />
             </div>
 
             {{-- Full-screen guestbook for a shared tablet or laptop at the event --}}

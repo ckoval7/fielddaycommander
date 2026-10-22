@@ -89,6 +89,22 @@ describe('kiosk page', function () {
             ->assertDontSee('Sign the Guestbook');
     });
 
+    test('sizes the entry grid to its column rather than the screen', function () {
+        GuestbookEntry::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+
+        $this->get(route('guestbook.index'))
+            ->assertSee('@container', false)
+            ->assertSee('grid-cols-1 @xl:grid-cols-2 @4xl:grid-cols-3', false);
+    });
+
+    test('gives each part of the guestbook page one heading', function () {
+        $this->get(route('guestbook.index'))
+            ->assertDontSee('Add Your Entry')
+            ->assertDontSee('Recent Entries')
+            ->assertSee('Sign the Guestbook')
+            ->assertSee('Recent Visitors');
+    });
+
     test('is offered from the guestbook page', function () {
         $this->get(route('guestbook.index'))
             ->assertSee('Kiosk mode')
