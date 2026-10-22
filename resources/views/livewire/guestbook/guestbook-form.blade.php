@@ -328,13 +328,9 @@
                             class="radial-progress text-primary [--size:2.5rem] pointer-coarse:[--size:2.75rem] [--thickness:4px]"
                             style="--value: 100"
                             :style="`--value: ${left / total * 100}`"
-                            role="progressbar"
-                            aria-label="Seconds until the form clears for the next visitor"
-                            aria-valuemin="0"
-                            aria-valuemax="{{ $this::KIOSK_THANK_YOU_SECONDS }}"
-                            aria-valuenow="{{ $this::KIOSK_THANK_YOU_SECONDS }}"
-                            :aria-valuenow="Math.ceil(left / 1000)"
+                            aria-hidden="true"
                         ></div>
+                        <span class="sr-only">This screen clears for the next visitor in {{ $this::KIOSK_THANK_YOU_SECONDS }} seconds.</span>
                     @endif
                 </div>
             </div>

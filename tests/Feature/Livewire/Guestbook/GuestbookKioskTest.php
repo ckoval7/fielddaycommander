@@ -169,6 +169,7 @@ describe('kiosk form', function () {
             ->assertSeeHtml('data-kiosk-countdown')
             ->assertSeeHtml('class="radial-progress')
             ->assertDontSeeHtml('x-text="Math.ceil')
+            ->assertSee('This screen clears for the next visitor in '.GuestbookForm::KIOSK_THANK_YOU_SECONDS.' seconds.')
             ->assertSeeHtml('$wire.hideSuccess()')
             ->assertSeeHtml('total: '.GuestbookForm::KIOSK_THANK_YOU_SECONDS * 1000);
     });
