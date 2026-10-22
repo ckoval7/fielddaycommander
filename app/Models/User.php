@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use App\Enums\Credential;
 use App\Enums\NotificationCategory;
 use App\Support\DeveloperMode;
 use App\Support\StationMode;
@@ -45,6 +46,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'first_name',
         'last_name',
         'email',
+        'phone',
         'email_verified_at',
         'password',
         'license_class',
@@ -344,6 +346,30 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Get the user's shift assignments.
      */
+    /**
+     * Emergency communications credentials this user holds.
+     */
+    public function credentials(): HasMany
+    {
+        return $this->hasMany(UserCredential::class);
+    }
+
+    /**
+     * Credentials that haven't expired, as ICS forms list them, in the
+     * order the profile shows them, e.g. "IS-100, IS-700, AUXCOMM, ARES L2".
+     * Expects credentials to be eager-loaded when called for many users.
+     */
+    public function credentialSummary(): string
+    {
+        $order = array_flip(array_map(fn (Credential $credential) => $credential->value, Credential::cases()));
+
+        return $this->credentials
+            ->reject(fn (UserCredential $credential) => $credential->isExpired())
+            ->sortBy(fn (UserCredential $credential) => $order[$credential->credential->value])
+            ->map(fn (UserCredential $credential) => $credential->shortLabel())
+            ->implode(', ');
+    }
+
     public function shiftAssignments(): HasMany
     {
         return $this->hasMany(ShiftAssignment::class);
