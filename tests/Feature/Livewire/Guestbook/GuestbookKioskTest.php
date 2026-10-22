@@ -168,6 +168,7 @@ describe('kiosk form', function () {
             ->assertSet('showSuccess', true)
             ->assertSeeHtml('data-kiosk-countdown')
             ->assertSeeHtml('class="radial-progress')
+            ->assertDontSeeHtml('x-text="Math.ceil')
             ->assertSeeHtml('$wire.hideSuccess()')
             ->assertSeeHtml('total: '.GuestbookForm::KIOSK_THANK_YOU_SECONDS * 1000);
     });

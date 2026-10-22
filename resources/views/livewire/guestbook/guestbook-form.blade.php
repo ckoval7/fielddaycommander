@@ -290,16 +290,9 @@
                 <x-icon name="phosphor-check-circle" class="w-16 h-16 mx-auto text-success" />
                 <h3 class="text-xl font-semibold">Thank You!</h3>
                 <p class="text-base-content/70">Your guestbook entry has been recorded.</p>
-                <x-button
-                    label="Sign Again"
-                    wire:click="hideSuccess"
-                    class="btn-primary"
-                    icon="phosphor-plus"
-                />
-
-                {{-- On a kiosk, count down and clear the thank-you screen for the next visitor --}}
-                @if($kiosk)
-                    <div
+                {{-- On a kiosk, a ring beside the button counts down and clears the thank-you screen for the next visitor --}}
+                <div
+                    @if($kiosk)
                         x-data="{
                             total: {{ $this::KIOSK_THANK_YOU_SECONDS * 1000 }},
                             left: {{ $this::KIOSK_THANK_YOU_SECONDS * 1000 }},
@@ -318,25 +311,32 @@
                                 clearInterval(this.timer);
                             },
                         }"
-                        class="flex flex-col items-center gap-2 pt-2"
                         data-kiosk-countdown
-                    >
+                    @endif
+                    class="flex items-center justify-center gap-3"
+                >
+                    <x-button
+                        label="Sign Again"
+                        wire:click="hideSuccess"
+                        class="btn-primary"
+                        icon="phosphor-plus"
+                    />
+
+                    @if($kiosk)
+                        {{-- Same height as the button beside it: 2.5rem, or 2.75rem on touchscreens (see app.css) --}}
                         <div
-                            class="radial-progress text-primary text-lg font-semibold"
-                            style="--value: 100; --size: 3.5rem; --thickness: 4px"
+                            class="radial-progress text-primary [--size:2.5rem] pointer-coarse:[--size:2.75rem] [--thickness:4px]"
+                            style="--value: 100"
                             :style="`--value: ${left / total * 100}`"
                             role="progressbar"
-                            aria-label="Seconds until the form clears"
+                            aria-label="Seconds until the form clears for the next visitor"
                             aria-valuemin="0"
                             aria-valuemax="{{ $this::KIOSK_THANK_YOU_SECONDS }}"
                             aria-valuenow="{{ $this::KIOSK_THANK_YOU_SECONDS }}"
                             :aria-valuenow="Math.ceil(left / 1000)"
-                        >
-                            <span x-text="Math.ceil(left / 1000)">{{ $this::KIOSK_THANK_YOU_SECONDS }}</span>
-                        </div>
-                        <p class="text-sm text-base-content/60">Clearing for the next visitor</p>
-                    </div>
-                @endif
+                        ></div>
+                    @endif
+                </div>
             </div>
         </x-card>
     @endif
