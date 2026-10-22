@@ -29,6 +29,7 @@ class Station extends Model
         'radio_equipment_id',
         'name',
         'tactical_callsign',
+        'location',
         'rx_frequency',
         'tx_frequency',
         'tone',

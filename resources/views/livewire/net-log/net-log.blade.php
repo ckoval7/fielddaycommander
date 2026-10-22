@@ -70,6 +70,14 @@
             </p>
         </div>
     @else
+        @if($this->stationStatus->isNotEmpty())
+            <x-logging.net-station-status
+                :stations="$this->stationStatus"
+                :net="$this->currentNet"
+                wire:key="station-status-{{ $this->currentNet->id }}"
+            />
+        @endif
+
         <div class="max-sm:-mx-3 space-y-2" x-data="netLogRecall" wire:key="net-log-{{ $this->currentNet->id }}">
             @php
                 $netDetails = collect([

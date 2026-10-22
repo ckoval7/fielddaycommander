@@ -69,6 +69,18 @@
             hint="The name this position answers to on the net"
         />
 
+        <div class="md:col-span-2">
+            <x-input
+                label="Location"
+                wire:model.blur="location"
+                autocomplete="off"
+                icon="phosphor-map-pin"
+                placeholder="Mile 12, Elm St and 3rd"
+                maxlength="150"
+                hint="Where to find this station or post"
+            />
+        </div>
+
         <x-input
             label="Mode"
             wire:model.blur="comms_mode"

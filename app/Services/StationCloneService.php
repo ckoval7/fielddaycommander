@@ -322,6 +322,7 @@ class StationCloneService
                 'max_power_watts' => $sourceStation->max_power_watts,
                 'power_source_description' => $sourceStation->power_source_description,
                 'tactical_callsign' => $sourceStation->tactical_callsign,
+                'location' => $sourceStation->location,
                 'rx_frequency' => $sourceStation->rx_frequency,
                 'tx_frequency' => $sourceStation->tx_frequency,
                 'tone' => $sourceStation->tone,

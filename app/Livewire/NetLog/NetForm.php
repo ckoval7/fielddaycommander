@@ -43,6 +43,12 @@ class NetForm extends Component
     public ?string $netControlStation = null;
 
     /**
+     * Minutes a station can stay quiet before it shows as overdue, or null
+     * for no overdue flag.
+     */
+    public ?int $netOverdueAfterMinutes = null;
+
+    /**
      * @return Collection<int, Band>
      */
     #[Computed]
@@ -83,6 +89,7 @@ class NetForm extends Component
         $this->netBandId = $net?->band_id;
         $this->netModeId = $net?->mode_id;
         $this->netControlStation = $net?->net_control_station;
+        $this->netOverdueAfterMinutes = $net?->overdue_after_minutes;
         $this->showNetForm = true;
     }
 
@@ -96,12 +103,14 @@ class NetForm extends Component
             'netBandId' => ['nullable', 'integer', 'exists:bands,id'],
             'netModeId' => ['nullable', 'integer', 'exists:modes,id'],
             'netControlStation' => ['nullable', 'string', 'max:50'],
+            'netOverdueAfterMinutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
         ], attributes: [
             'netName' => 'net name',
             'netFrequency' => 'frequency',
             'netBandId' => 'band',
             'netModeId' => 'mode',
             'netControlStation' => 'net control station',
+            'netOverdueAfterMinutes' => 'overdue time',
         ]);
 
         $attributes = [
@@ -110,6 +119,7 @@ class NetForm extends Component
             'band_id' => $validated['netBandId'],
             'mode_id' => $validated['netModeId'],
             'net_control_station' => $this->blankToNull($validated['netControlStation']),
+            'overdue_after_minutes' => $validated['netOverdueAfterMinutes'],
         ];
 
         $net = $this->editingNet;

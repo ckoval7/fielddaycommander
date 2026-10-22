@@ -31,7 +31,15 @@ class Net extends Model
         'band_id',
         'mode_id',
         'net_control_station',
+        'overdue_after_minutes',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'overdue_after_minutes' => 'integer',
+        ];
+    }
 
     public function eventConfiguration(): BelongsTo
     {

@@ -43,6 +43,8 @@ class StationForm extends Component
 
     public ?string $tactical_callsign = null;
 
+    public ?string $location = null;
+
     public ?string $rx_frequency = null;
 
     public ?string $tx_frequency = null;
@@ -104,6 +106,7 @@ class StationForm extends Component
         $this->name = $station->name;
         $this->hostname = $station->hostname;
         $this->tactical_callsign = $station->tactical_callsign;
+        $this->location = $station->location;
         $this->rx_frequency = $station->rx_frequency;
         $this->tx_frequency = $station->tx_frequency;
         $this->tone = $station->tone;
@@ -305,6 +308,7 @@ class StationForm extends Component
             'name' => $validated['name'],
             'hostname' => $validated['hostname'],
             'tactical_callsign' => $validated['tactical_callsign'] ?: null,
+            'location' => $validated['location'] ?: null,
             'rx_frequency' => $validated['rx_frequency'] ?: null,
             'tx_frequency' => $validated['tx_frequency'] ?: null,
             'tone' => $validated['tone'] ?: null,
@@ -387,6 +391,7 @@ class StationForm extends Component
             'name',
             'hostname',
             'tactical_callsign',
+            'location',
             'rx_frequency',
             'tx_frequency',
             'tone',
@@ -454,6 +459,7 @@ class StationForm extends Component
             ],
             'hostname' => ['nullable', 'string', 'max:50'],
             'tactical_callsign' => ['nullable', 'string', 'max:50'],
+            'location' => ['nullable', 'string', 'max:150'],
             'rx_frequency' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+(\.[0-9]+)?$/'],
             'tx_frequency' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+(\.[0-9]+)?$/'],
             'tone' => ['nullable', 'string', 'max:20'],

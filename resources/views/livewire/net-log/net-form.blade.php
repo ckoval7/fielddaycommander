@@ -43,6 +43,19 @@
                 autocapitalize="characters"
             />
 
+            <x-input
+                label="Overdue after (minutes)"
+                wire:model="netOverdueAfterMinutes"
+                type="number"
+                min="1"
+                max="1440"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                placeholder="30"
+                hint="Flag quiet stations as overdue. Leave blank to turn off."
+                autocomplete="off"
+            />
+
             <div class="flex flex-wrap justify-between gap-2 pt-2">
                 <div>
                     @if($this->editingNet)

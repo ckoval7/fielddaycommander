@@ -92,17 +92,30 @@ class TacticalCallsignResolver
             ->first();
     }
 
-    protected function stationOperatorCallsign(Station $station): ?string
+    /**
+     * Callsign of the operator on duty at each station, keyed by station id,
+     * in one query. Stations nobody is operating are left out.
+     *
+     * @param  iterable<int, int>  $stationIds
+     * @return array<int, string>
+     */
+    public function stationOperatorCallsigns(iterable $stationIds): array
     {
         return OperatingSession::query()
             ->active()
-            ->forStation($station->id)
+            ->whereIn('station_id', $stationIds)
             ->where('is_transcription', false)
-            ->with('operator')
-            ->latest('start_time')
-            ->first()
-            ?->operator
-            ?->call_sign;
+            ->with('operator:id,call_sign')
+            ->orderBy('start_time')
+            ->get()
+            ->filter(fn (OperatingSession $session) => filled($session->operator?->call_sign))
+            ->mapWithKeys(fn (OperatingSession $session) => [$session->station_id => $session->operator->call_sign])
+            ->all();
+    }
+
+    protected function stationOperatorCallsign(Station $station): ?string
+    {
+        return $this->stationOperatorCallsigns([$station->id])[$station->id] ?? null;
     }
 
     protected function roleOperatorCallsign(EventConfiguration $config, ShiftRole $role): ?string
