@@ -285,12 +285,7 @@ class NetLog extends Component
             return $netId;
         }
 
-        $latestTraffic = NetLogEntry::forEvent($this->event->eventConfiguration->id)
-            ->orderByDesc('logged_at')
-            ->orderByDesc('id')
-            ->value('net_id');
-
-        return $latestTraffic ?? $this->nets->sortByDesc('id')->first()?->id;
+        return Net::busiestForEvent($this->event->eventConfiguration->id)?->id;
     }
 
     /**

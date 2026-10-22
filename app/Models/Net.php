@@ -81,6 +81,21 @@ class Net extends Model
     }
 
     /**
+     * The net a screen opens on when none is picked: the one with the latest
+     * traffic, otherwise the newest net.
+     */
+    public static function busiestForEvent(int $eventConfigurationId): ?self
+    {
+        $latestTraffic = NetLogEntry::forEvent($eventConfigurationId)
+            ->orderByDesc('logged_at')
+            ->orderByDesc('id')
+            ->value('net_id');
+
+        return ($latestTraffic === null ? null : self::find($latestTraffic))
+            ?? self::forEvent($eventConfigurationId)->latest('id')->first();
+    }
+
+    /**
      * Frequency, band and mode as one line, e.g. "146.520 MHz · 2m · FM".
      */
     public function details(): string
