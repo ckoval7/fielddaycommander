@@ -33,7 +33,8 @@ class GuestbookList extends Component
 
     public function loadEntries(): void
     {
-        $activeEvent = app(EventContextService::class)->getContextEvent();
+        // The event the form signs visitors into, even while a past event is being browsed
+        $activeEvent = app(EventContextService::class)->getGuestbookEvent();
 
         if (! $activeEvent || ! $activeEvent->eventConfiguration) {
             $this->entries = collect();
@@ -56,7 +57,7 @@ class GuestbookList extends Component
     #[Computed]
     public function bonusCategories(): array
     {
-        return app(EventContextService::class)->getContextEvent()?->guestbookBonusCategories() ?? [];
+        return app(EventContextService::class)->getGuestbookEvent()?->guestbookBonusCategories() ?? [];
     }
 
     public function render(): View

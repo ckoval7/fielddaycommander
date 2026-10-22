@@ -6,6 +6,7 @@
 use App\Enums\PresenceType;
 use App\Enums\VisitorCategory;
 use App\Livewire\Guestbook\GuestbookForm;
+use App\Livewire\Guestbook\GuestbookList;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
@@ -135,6 +136,25 @@ describe('kiosk page', function () {
 
         Livewire::test(GuestbookForm::class, ['kiosk' => true])
             ->assertSet('eventConfig.id', $this->eventConfig->id);
+    });
+
+    test('lists the running event\'s visitors while a past event is being browsed', function () {
+        $pastEvent = Event::factory()->create([
+            'start_time' => now()->subYear(),
+            'end_time' => now()->subYear()->addDay(),
+            'setup_allowed_from' => now()->subYear()->subDay(),
+        ]);
+        $pastConfig = EventConfiguration::factory()->create([
+            'event_id' => $pastEvent->id,
+            'guestbook_enabled' => true,
+        ]);
+        GuestbookEntry::factory()->create(['event_configuration_id' => $pastConfig->id, 'first_name' => 'Lastyear']);
+        GuestbookEntry::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'first_name' => 'Thisyear']);
+        session(['viewing_event_id' => $pastEvent->id]);
+
+        Livewire::test(GuestbookList::class)
+            ->assertSee('Thisyear')
+            ->assertDontSee('Lastyear');
     });
 
     test('sizes the entry grid to its column rather than the screen', function () {
