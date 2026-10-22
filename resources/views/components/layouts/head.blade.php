@@ -3,13 +3,14 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 {{--
-Shared <head> contents for the app, guest and guestbook kiosk pages.
+The shared head element for the app, guest and guestbook kiosk pages.
 
 Props:
 - $title: The full page title
 - $viewportFit: Let the page draw under notches (it must pad itself with the safe-area insets)
 --}}
 @props(['title', 'viewportFit' => false])
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0{{ $viewportFit ? ', viewport-fit=cover' : '' }}">
 <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -19,7 +20,7 @@ Props:
 <x-pwa-meta />
 
 {{-- Set theme before page renders to prevent flash. wire:navigate strips
-     unknown attributes from <html>, so re-apply in onSwap (synchronously,
+     unknown attributes from the html element, so re-apply in onSwap (synchronously,
      before paint) to avoid a flash of the prefersdark theme, and again on
      livewire:navigated as a fallback. --}}
 <script>
@@ -42,3 +43,4 @@ Props:
 <x-silence-livewire-rejections />
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>

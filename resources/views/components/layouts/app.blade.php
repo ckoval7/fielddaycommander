@@ -4,9 +4,7 @@
 --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <x-layouts.head :title="isset($title) ? $title.' - '.(\App\Models\Setting::get('site_name') ?: config('app.name')) : (\App\Models\Setting::get('site_name') ?: config('app.name'))" viewport-fit />
-</head>
+<x-layouts.head :title="isset($title) ? $title.' - '.(\App\Models\Setting::get('site_name') ?: config('app.name')) : (\App\Models\Setting::get('site_name') ?: config('app.name'))" viewport-fit />
 <body class="min-h-dvh font-sans antialiased bg-base-200">
 
     @php

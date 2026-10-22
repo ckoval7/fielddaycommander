@@ -15,9 +15,7 @@ Like the TV dashboard it reloads itself on a 419 rather than leaving the page.
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-reload-on-session-expiry>
-<head>
-    <x-layouts.head :title="'Sign Our Guestbook - '.(\App\Models\Setting::get('site_name') ?: config('app.name'))" viewport-fit />
-</head>
+<x-layouts.head :title="'Sign Our Guestbook - '.(\App\Models\Setting::get('site_name') ?: config('app.name'))" viewport-fit />
 <body class="min-h-dvh font-sans antialiased bg-base-200">
     <main class="mx-auto max-w-6xl space-y-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         @if (! $guestbookOpen)
