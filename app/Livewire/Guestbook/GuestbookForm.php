@@ -33,6 +33,11 @@ class GuestbookForm extends Component
     public const KIOSK_RATE_LIMIT = 60;
 
     /**
+     * Seconds the kiosk shows its thank-you screen before clearing for the next visitor.
+     */
+    public const KIOSK_THANK_YOU_SECONDS = 8;
+
+    /**
      * Whether the form runs on a shared kiosk at the event site. A kiosk never
      * pre-fills or keeps a signed-in user's details, assumes visitors are there
      * in person, and returns to a blank form after each entry.

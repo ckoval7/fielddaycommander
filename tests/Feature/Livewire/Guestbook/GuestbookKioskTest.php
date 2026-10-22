@@ -161,12 +161,15 @@ describe('kiosk form', function () {
             ->assertSet('presence_type', PresenceType::InPerson->value);
     });
 
-    test('returns to a blank form after the thank-you screen', function () {
+    test('counts down on the thank-you screen, then returns to a blank form', function () {
         Livewire::test(GuestbookForm::class, ['kiosk' => true])
             ->set('name', 'Walk Up')
             ->call('save')
             ->assertSet('showSuccess', true)
-            ->assertSeeHtml('setTimeout(() => $wire.hideSuccess(), 8000)');
+            ->assertSeeHtml('data-kiosk-countdown')
+            ->assertSeeHtml('class="radial-progress')
+            ->assertSeeHtml('$wire.hideSuccess()')
+            ->assertSeeHtml('total: '.GuestbookForm::KIOSK_THANK_YOU_SECONDS * 1000);
     });
 
     test('keeps the thank-you screen on personal devices', function () {
@@ -175,7 +178,7 @@ describe('kiosk form', function () {
             ->set('presence_type', PresenceType::Online->value)
             ->call('save')
             ->assertSet('showSuccess', true)
-            ->assertDontSeeHtml('$wire.hideSuccess(), 8000');
+            ->assertDontSeeHtml('data-kiosk-countdown');
     });
 
     test('takes more than the per-device limit, since every visitor shares one browser', function () {
