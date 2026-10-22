@@ -89,22 +89,53 @@ describe('kiosk page', function () {
             ->assertDontSee('Sign the Guestbook');
     });
 
-    test('checks the same event as the form when browsing a past event', function (string $route) {
-        $pastEvent = Event::factory()->create([
-            'start_time' => now()->subYear(),
-            'end_time' => now()->subYear()->addDay(),
-        ]);
-        EventConfiguration::factory()->create([
-            'event_id' => $pastEvent->id,
-            'guestbook_enabled' => false,
+    test('opens during the setup window', function (string $route) {
+        $this->event->update([
+            'start_time' => now()->addHours(6),
+            'end_time' => now()->addHours(30),
+            'setup_allowed_from' => now()->subHour(),
         ]);
 
-        $this->withSession(['viewing_event_id' => $pastEvent->id])
-            ->get(route($route))
+        $this->get(route($route))
+            ->assertOk()
+            ->assertSee('Sign the Guestbook');
+    })->with(['guestbook.kiosk', 'guestbook.index']);
+
+    test('stays closed outside an event and its setup window', function (string $route, array $times) {
+        $this->event->update($times);
+
+        $this->get(route($route))
             ->assertOk()
             ->assertSee('No Active Event')
             ->assertDontSee('Sign the Guestbook');
-    })->with(['guestbook.kiosk', 'guestbook.index']);
+    })->with(['guestbook.kiosk', 'guestbook.index'])->with([
+        'before setup opens' => fn () => [
+            'start_time' => now()->addDays(10),
+            'end_time' => now()->addDays(11),
+            'setup_allowed_from' => now()->addDays(9),
+        ],
+        'after the event ends' => fn () => [
+            'start_time' => now()->subDays(3),
+            'end_time' => now()->subDays(2),
+            'setup_allowed_from' => now()->subDays(4),
+        ],
+    ]);
+
+    test('signs the running event while a past event is being browsed', function () {
+        $pastEvent = Event::factory()->create([
+            'start_time' => now()->subYear(),
+            'end_time' => now()->subYear()->addDay(),
+            'setup_allowed_from' => now()->subYear()->subDay(),
+        ]);
+        EventConfiguration::factory()->create([
+            'event_id' => $pastEvent->id,
+            'guestbook_enabled' => true,
+        ]);
+        session(['viewing_event_id' => $pastEvent->id]);
+
+        Livewire::test(GuestbookForm::class, ['kiosk' => true])
+            ->assertSet('eventConfig.id', $this->eventConfig->id);
+    });
 
     test('sizes the entry grid to its column rather than the screen', function () {
         GuestbookEntry::factory()->create(['event_configuration_id' => $this->eventConfig->id]);

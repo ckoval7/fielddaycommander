@@ -10,8 +10,8 @@ sidebar, the form at the top and the latest entries below it, newest first.
 Like the TV dashboard it reloads itself on a 419 rather than leaving the page.
 --}}
 @php
-    // The same event the form and list use
-    $guestbookOpen = app(\App\Services\EventContextService::class)->getContextEvent()?->eventConfiguration?->guestbook_enabled;
+    // The same check the form makes: a running event, or one in its setup window
+    $guestbookOpen = app(\App\Services\EventContextService::class)->getOpenGuestbookEvent() !== null;
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-reload-on-session-expiry>

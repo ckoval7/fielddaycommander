@@ -66,6 +66,18 @@ class ActiveEventService
     }
 
     /**
+     * Get the event taking guestbook entries right now: the running event, or
+     * one in its setup window, as long as its guestbook is turned on.
+     */
+    public function getOpenGuestbookEvent(): ?Event
+    {
+        $event = $this->getActiveEvent()
+            ?? Event::inSetupWindow()->orderBy('start_time')->with('eventConfiguration')->first();
+
+        return $event?->eventConfiguration?->guestbook_enabled ? $event : null;
+    }
+
+    /**
      * Get the active event ID.
      *
      * Returns a string 'no-event' when no event is active, for use in cache keys.

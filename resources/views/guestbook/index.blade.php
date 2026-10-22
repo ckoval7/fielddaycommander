@@ -3,8 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 @php
-    // The same event the form and list use
-    $guestbookOpen = app(\App\Services\EventContextService::class)->getContextEvent()?->eventConfiguration?->guestbook_enabled;
+    // The same check the form makes: a running event, or one in its setup window
+    $guestbookOpen = app(\App\Services\EventContextService::class)->getOpenGuestbookEvent() !== null;
 @endphp
 
 <x-layouts.app>
