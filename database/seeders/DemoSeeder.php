@@ -5,6 +5,9 @@
 
 namespace Database\Seeders;
 
+use App\Enums\MessageFormat;
+use App\Enums\MessagePrecedence;
+use App\Enums\MessageRole;
 use App\Enums\NotificationCategory;
 use App\Enums\PowerSource;
 use App\Models\Band;
@@ -17,6 +20,7 @@ use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\GuestbookEntry;
+use App\Models\Message;
 use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\OperatingSession;
@@ -31,6 +35,7 @@ use App\Models\ShiftRole;
 use App\Models\Station;
 use App\Models\User;
 use App\Notifications\InAppNotification;
+use App\Scoring\DomainEvents\MessageChanged;
 use App\Support\CallsignGenerator;
 use App\Support\CanadianSectionPicker;
 use App\Support\TransmitterCountGenerator;
@@ -238,6 +243,7 @@ class DemoSeeder extends Seeder
             'longitude' => -72.8906,
             'city' => 'Hamden',
             'state' => 'CT',
+            ...$this->publicVisitorDetails(),
         ]);
 
         // Planning starts weeks ahead of the operating weekend.
@@ -272,6 +278,9 @@ class DemoSeeder extends Seeder
         // 8. Bonuses
         $this->seedBonuses($config, $manager, $event);
 
+        // 8b. Message traffic
+        $this->seedMessages($config, $event, $admin);
+
         // 9. Safety checklist (~60% complete)
         $this->seedSafetyChecklist($captain1, $event);
 
@@ -280,6 +289,38 @@ class DemoSeeder extends Seeder
 
         // 11. Notification feed history, replayed from everything above
         $this->seedNotificationHistory($config);
+    }
+
+    /**
+     * What the club tells the public about visiting, shown on the public
+     * landing page.
+     *
+     * The demo event starts whenever the visitor arrives, so visiting hours
+     * are written without clock times rather than against a fixed schedule.
+     *
+     * @return array<string, mixed>
+     */
+    private function publicVisitorDetails(): array
+    {
+        $description = $this->isWinter()
+            ? "The Demo Radio Club is on the air for Winter Field Day, running four stations outdoors on solar and battery power to practice emergency communications in cold weather.\n\nStop by to see how it works, warm up by the heater, and ask any questions you like. No license or experience needed."
+            : "The Demo Radio Club is on the air for ARRL Field Day, running four HF stations and a VHF station on generator power to practice emergency communications.\n\nCome see how it works, ask the operators anything, and make a contact yourself at our Get On The Air station. No license or experience needed. Families and scout troops are welcome.";
+
+        $visitingHours = $this->isWinter()
+            ? "Drop in any time while we're on the air. The visitor table is staffed from late morning until dark each day. Overnight the stations keep running, but it's quiet and cold."
+            : "Drop in any time while we're on the air. The visitor table and GOTA station are staffed from noon until 8 PM each day. Overnight the stations keep running with a smaller crew.";
+
+        return [
+            'tagline' => $this->isWinter() ? 'On the air all weekend, rain, snow or shine' : 'Amateur radio in action, all weekend long',
+            'talk_in_frequency' => '146.520 MHz simplex',
+            'is_open_to_public' => true,
+            'public_description' => $description,
+            'public_directions' => "Hilltop Park pavilion, off Route 10 in Hamden. Follow the antenna masts past the ball fields and park in the upper lot by the orange cones.\n\nThe pavilion and the paths to it are wheelchair accessible.",
+            'public_visiting_hours' => $visitingHours,
+            'public_contact_email' => 'info@demoradioclub.example',
+            'public_contact_phone' => '(860) 555-0173',
+            'public_website_url' => 'https://demoradioclub.example',
+        ];
     }
 
     private function makeUser(
@@ -751,7 +792,7 @@ class DemoSeeder extends Seeder
      */
     private function deliveredAt(Event $event): Carbon
     {
-        return $event->start_time->copy()->subMinutes(random_int(30, 600));
+        return $event->start_time->copy()->subMinutes(random_int(30, 330));
     }
 
     /**
@@ -993,6 +1034,105 @@ class DemoSeeder extends Seeder
     }
 
     /**
+     * Originate the radiograms a club sends early in the event: the Field Day
+     * message to the Section Manager, and one a visitor wrote to their family.
+     *
+     * Both have been handed to the NTS net, so they earn the message bonuses.
+     * Those derived bonuses are stamped with when the message went out, not
+     * when the demo was built.
+     */
+    private function seedMessages(EventConfiguration $config, Event $event, User $handler): void
+    {
+        $eventName = $this->isWinter() ? 'WINTER FIELD DAY' : 'FIELD DAY';
+
+        $messages = [
+            [
+                'is_sm_message' => true,
+                'addressee_name' => 'Section Manager',
+                'addressee_address' => 'ARRL Connecticut Section',
+                'addressee_city' => null,
+                'addressee_state' => 'CT',
+                'addressee_zip' => null,
+                'message_text' => "W1FDC DEMO RADIO CLUB OPERATING {$eventName} FROM HAMDEN WITH FOURTEEN OPERATORS X FOUR TRANSMITTERS ON EMERGENCY POWER X 73",
+                'signature' => 'Emma Mitchell K4EM',
+                'sent_to' => 'K1CTN',
+                'frequency' => '3.640',
+                'filed_after' => [10, 25],
+            ],
+            [
+                'is_sm_message' => false,
+                'addressee_name' => 'Ana Rivera',
+                'addressee_address' => '18 Whitney Avenue',
+                'addressee_city' => 'Hamden',
+                'addressee_state' => 'CT',
+                'addressee_zip' => '06517',
+                'message_text' => "HAVING A GREAT TIME AT {$eventName} X I TALKED TO OHIO ON THE RADIO X SEE YOU AT DINNER LOVE",
+                'signature' => 'Jamie',
+                'sent_to' => 'K1CTN',
+                'frequency' => '146.940',
+                'filed_after' => [50, 80],
+            ],
+        ];
+
+        // The Section Manager message is an ARRL Field Day bonus. Winter
+        // Field Day has no equivalent, so only the visitor's message is sent.
+        if ($this->isWinter()) {
+            $messages = array_values(array_filter($messages, fn (array $def): bool => ! $def['is_sm_message']));
+        }
+
+        $sentAtByBonus = [];
+
+        foreach ($messages as $index => $def) {
+            $filedAt = $event->start_time->copy()->addMinutes(random_int(...$def['filed_after']))->min(now()->subMinutes(20));
+            $sentAt = $filedAt->copy()->addMinutes(random_int(5, 15))->min(now()->subMinutes(5));
+
+            $message = Message::create([
+                'event_configuration_id' => $config->id,
+                'user_id' => $handler->id,
+                'format' => MessageFormat::Radiogram,
+                'role' => MessageRole::Originated,
+                'is_sm_message' => $def['is_sm_message'],
+                'message_number' => $index + 1,
+                'precedence' => MessagePrecedence::Routine,
+                'station_of_origin' => 'W1FDC',
+                'check' => (string) count(explode(' ', $def['message_text'])),
+                'place_of_origin' => 'Hamden CT',
+                'filed_at' => $filedAt,
+                'addressee_name' => $def['addressee_name'],
+                'addressee_address' => $def['addressee_address'],
+                'addressee_city' => $def['addressee_city'],
+                'addressee_state' => $def['addressee_state'],
+                'addressee_zip' => $def['addressee_zip'],
+                'message_text' => $def['message_text'],
+                'signature' => $def['signature'],
+                'sent_to' => $def['sent_to'],
+                'sent_at' => $sentAt,
+                'sent_by_user_id' => $handler->id,
+                'frequency' => $def['frequency'],
+                'mode_category' => 'Phone',
+            ]);
+            $this->backdate($message, $filedAt, ['updated_at' => $sentAt]);
+
+            $sentAtByBonus[$def['is_sm_message'] ? 'sm_sec_message' : 'nts_message'] = $sentAt;
+        }
+
+        // Model events are switched off while seeding, so the observer that
+        // would reconcile the message bonuses never fires. Raise it by hand.
+        event(new MessageChanged($message, $config->id));
+
+        foreach ($sentAtByBonus as $code => $sentAt) {
+            $bonusType = BonusType::resolveFor($event, $code);
+            $bonus = $bonusType
+                ? EventBonus::where('event_configuration_id', $config->id)->where('bonus_type_id', $bonusType->id)->first()
+                : null;
+
+            if ($bonus) {
+                $this->backdate($bonus, $sentAt, ['verified_at' => $sentAt]);
+            }
+        }
+    }
+
+    /**
      * Work through most of the safety walk-through during setup, before the
      * operating period begins.
      */
@@ -1162,6 +1302,20 @@ class DemoSeeder extends Seeder
         User $captain2,
         array $operators
     ): array {
+        // Setup is club-specific work rather than a bonus role, so it is a
+        // custom role alongside the defaults.
+        ShiftRole::create([
+            'event_configuration_id' => $config->id,
+            'name' => 'Site Setup',
+            'description' => 'Raises antennas, runs power and sets up the stations before the operating period',
+            'is_default' => false,
+            'bonus_points' => null,
+            'requires_confirmation' => false,
+            'icon' => 'phosphor-wrench',
+            'color' => '#78716c',
+            'sort_order' => ShiftRole::where('event_configuration_id', $config->id)->max('sort_order') + 1,
+        ]);
+
         $roles = ShiftRole::where('event_configuration_id', $config->id)
             ->get()
             ->keyBy('name');
@@ -1169,6 +1323,27 @@ class DemoSeeder extends Seeder
         // Every block is laid out from the event start (always on the hour),
         // so the schedule reads like one a club would actually publish.
         $at = fn (int $hours): Carbon => $event->start_time->copy()->addHours($hours);
+
+        // ── Site setup: two crews in the 6 hours before the start ────────────
+        // Antennas go up first, then stations and power. Each crew has one
+        // spot left open for a late volunteer.
+        $antennaCrew = $this->makeShift($config, $roles['Site Setup'], $at(-6), $at(-3), 6, 'Antennas, masts and guy lines');
+        foreach ([$captain2, $operators[0], $operators[1], $operators[4], $operators[5]] as $user) {
+            $this->assign($antennaCrew, $user);
+        }
+
+        $stationCrew = $this->makeShift($config, $roles['Site Setup'], $at(-3), $at(0), 6, 'Stations, generator and power distribution');
+        foreach ([$captain2, $operators[2], $operators[3], $operators[6], $operators[7]] as $user) {
+            $this->assign($stationCrew, $user);
+        }
+
+        // Someone watches for hazards the whole time setup is underway. WFD
+        // has no Safety Officer role, so Site Responsibilities covers it there.
+        $setupSafetyRole = $roles->get('Safety Officer') ?? $roles->get('Site Responsibilities');
+        if ($setupSafetyRole) {
+            $setupSafety = $this->makeShift($config, $setupSafetyRole, $at(-6), $at(0), 1, 'Setup safety: antenna raising, guying, generator and fuel');
+            $this->assign($setupSafety, $captain1);
+        }
 
         // ── Operator shifts: 2-hour blocks, crews alternating ─────────────────
         // One spot per block is left open for a walk-in volunteer.
@@ -1231,9 +1406,9 @@ class DemoSeeder extends Seeder
             $this->assign($site, $captain2);
         }
 
-        // ── Message Handler: one shift ─────────────────────────────────────────
+        // ── Message Handler: from the start, to send the SM message early ─────
         if ($roles->has('Message Handler')) {
-            $msg = $this->makeShift($config, $roles['Message Handler'], $at(4), $at(12), 1);
+            $msg = $this->makeShift($config, $roles['Message Handler'], $at(0), $at(8), 1);
             $this->assign($msg, $admin);
         }
 
@@ -1368,7 +1543,8 @@ class DemoSeeder extends Seeder
         ShiftRole $role,
         Carbon $start,
         Carbon $end,
-        int $capacity
+        int $capacity,
+        ?string $notes = null,
     ): Shift {
         return Shift::create([
             'event_configuration_id' => $config->id,
@@ -1377,6 +1553,7 @@ class DemoSeeder extends Seeder
             'end_time' => $end,
             'capacity' => $capacity,
             'is_open' => true,
+            'notes' => $notes,
         ]);
     }
 

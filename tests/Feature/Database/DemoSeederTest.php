@@ -3,12 +3,14 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use App\Enums\MessageRole;
 use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\GuestbookEntry;
+use App\Models\Message;
 use App\Models\OperatingSession;
 use App\Models\Organization;
 use App\Models\SafetyChecklistEntry;
@@ -263,6 +265,13 @@ test('seeder claims setup bonuses before the event and leaves media publicity pe
     $event = Event::where('is_active', true)->firstOrFail();
 
     EventBonus::with('bonusType')->get()->each(function (EventBonus $bonus) use ($event) {
+        if (in_array($bonus->bonusType->code, ['sm_sec_message', 'nts_message'], true)) {
+            expect($bonus->created_at->gt($event->start_time))->toBeTrue();
+            expect($bonus->created_at->isFuture())->toBeFalse();
+
+            return;
+        }
+
         if ($bonus->bonusType->code === 'media_publicity') {
             expect($bonus->is_verified)->toBeFalse();
             expect($bonus->verified_at)->toBeNull();
@@ -330,4 +339,54 @@ test('seeder replays a notification feed spread over the event', function () {
     });
 
     expect($user->unreadNotifications()->count())->toBeLessThan($notifications->count());
+});
+
+test('seeder staffs site setup before the event with a safety officer on watch', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+    $setupShifts = Shift::whereHas('shiftRole', fn ($q) => $q->where('name', 'Site Setup'))->with('assignments')->get();
+
+    expect($setupShifts)->toHaveCount(2);
+    $setupShifts->each(function (Shift $shift) use ($event) {
+        expect($shift->end_time->lte($event->start_time))->toBeTrue();
+        expect($shift->assignments)->not->toBeEmpty();
+    });
+
+    $setupStart = $setupShifts->min('start_time');
+    $safetyWatch = Shift::whereHas('shiftRole', fn ($q) => $q->where('name', 'Safety Officer'))
+        ->where('start_time', '<=', $setupStart)
+        ->where('end_time', '>=', $event->start_time)
+        ->withCount('assignments')
+        ->first();
+
+    expect($safetyWatch)->not->toBeNull();
+    expect($safetyWatch->assignments_count)->toBe(1);
+});
+
+test('seeder originates the Section Manager message and a visitor message', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+    $messages = Message::all();
+
+    expect($messages)->toHaveCount(2);
+    expect($messages->where('is_sm_message', true))->toHaveCount(1);
+    $messages->each(function (Message $message) use ($event) {
+        expect($message->role)->toBe(MessageRole::Originated);
+        expect($message->check)->toBe((string) count(explode(' ', $message->message_text)));
+        expect($message->sent_at->gt($message->filed_at))->toBeTrue();
+        expect($message->filed_at->gt($event->start_time))->toBeTrue();
+        expect($message->sent_at->isFuture())->toBeFalse();
+    });
+
+    $earned = EventBonus::with('bonusType')->get()->pluck('bonusType.code');
+    expect($earned)->toContain('sm_sec_message', 'nts_message');
+});
+
+test('seeder fills in the public visitor details', function () {
+    $config = Event::where('is_active', true)->firstOrFail()->eventConfiguration;
+
+    expect($config->is_open_to_public)->toBeTrue();
+    expect($config->talk_in_frequency)->not->toBeEmpty();
+    expect($config->public_description)->toContain('Get On The Air');
+    expect($config->public_directions)->not->toBeEmpty();
+    expect($config->public_visiting_hours)->not->toBeEmpty();
+    expect($config->public_contact_email)->not->toBeEmpty();
 });

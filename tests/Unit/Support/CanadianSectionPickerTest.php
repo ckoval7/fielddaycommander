@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 
 function canadianSections(): Collection
 {
-    return collect(['AB', 'BC', 'GH', 'MB', 'NB', 'NL', 'NS', 'ONE', 'ONN', 'ONS', 'PE', 'QC', 'SK', 'TER'])
+    return collect(['AB', 'BC', 'GH', 'MB', 'NB', 'NL', 'NS', 'ONE', 'ONN', 'ONS', 'PE', 'QC', 'SK', 'TER', 'YT'])
         ->map(fn (string $code): Section => new Section(['code' => $code, 'country' => 'CA']));
 }
 
@@ -33,7 +33,7 @@ test('pick() only returns sections from the given collection', function () {
     }
 });
 
-test('pick() makes TER much rarer than other Canadian sections', function () {
+test('pick() makes TER and YT much rarer than other Canadian sections', function () {
     $sections = canadianSections();
     $counts = [];
     foreach (range(1, 5000) as $i) {
@@ -42,6 +42,7 @@ test('pick() makes TER much rarer than other Canadian sections', function () {
     }
 
     expect($counts['TER'] ?? 0)->toBeLessThan(60)
+        ->and($counts['YT'] ?? 0)->toBeLessThan(60)
         ->and($counts['ONS'])->toBeGreaterThan(200);
 });
 

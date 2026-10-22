@@ -6,6 +6,7 @@
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
+use App\Models\Message;
 use App\Models\OperatingSession;
 use App\Models\Shift;
 use App\Models\ShiftRole;
@@ -105,4 +106,19 @@ test('seeds a shift schedule with WFD-appropriate roles', function () {
 
 test('leaves open operating sessions for the simulator', function () {
     expect(OperatingSession::whereNull('end_time')->count())->toBe(3);
+});
+
+test('covers site setup safety with Site Responsibilities', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+
+    expect(Shift::whereHas('shiftRole', fn ($q) => $q->where('name', 'Site Setup'))->count())->toBe(2);
+    expect(Shift::whereHas('shiftRole', fn ($q) => $q->where('name', 'Site Responsibilities'))
+        ->where('end_time', '<=', $event->start_time)
+        ->exists())->toBeTrue();
+});
+
+test('originates a visitor message but no Section Manager message', function () {
+    expect(Message::count())->toBe(1);
+    expect(Message::where('is_sm_message', true)->exists())->toBeFalse();
+    expect(Message::first()->message_text)->toContain('WINTER FIELD DAY');
 });

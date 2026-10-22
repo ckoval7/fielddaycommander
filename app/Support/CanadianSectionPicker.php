@@ -12,7 +12,8 @@ use Illuminate\Support\Collection;
  * Decides how often generated demo QSOs come from Canada and which Canadian
  * section they land in. Canada stays a minority of the log, and the
  * Territories (TER) are weighted to show up only occasionally, the way a
- * real Field Day log rarely includes one.
+ * real Field Day log rarely includes one. Yukon (YT), which Winter Field Day
+ * lists on its own and ARRL folds into TER, is just as rare.
  */
 class CanadianSectionPicker
 {
@@ -29,6 +30,7 @@ class CanadianSectionPicker
     /** @var array<string, int> */
     private const SECTION_WEIGHTS = [
         'TER' => 1,
+        'YT' => 1,
     ];
 
     public static function isCanadianContact(): bool
