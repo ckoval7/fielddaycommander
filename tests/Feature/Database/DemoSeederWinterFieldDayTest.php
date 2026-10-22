@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use App\Models\BulletinScheduleEntry;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventBonus;
@@ -121,4 +122,12 @@ test('originates a visitor message but no Section Manager message', function () 
     expect(Message::count())->toBe(1);
     expect(Message::where('is_sm_message', true)->exists())->toBeFalse();
     expect(Message::first()->message_text)->toContain('WINTER FIELD DAY');
+});
+
+test('fills the bulletin sked without the ARRL senders', function () {
+    $entries = BulletinScheduleEntry::all();
+
+    expect($entries)->not->toBeEmpty();
+    expect($entries->pluck('source'))->not->toContain('W1AW', 'K6KPH');
+    $entries->each(fn (BulletinScheduleEntry $entry) => expect($entry->scheduled_at->isFuture())->toBeTrue());
 });

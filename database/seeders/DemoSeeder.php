@@ -12,6 +12,7 @@ use App\Enums\NotificationCategory;
 use App\Enums\PowerSource;
 use App\Models\Band;
 use App\Models\BonusType;
+use App\Models\BulletinScheduleEntry;
 use App\Models\Contact;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
@@ -278,8 +279,9 @@ class DemoSeeder extends Seeder
         // 8. Bonuses
         $this->seedBonuses($config, $manager, $event);
 
-        // 8b. Message traffic
+        // 8b. Message traffic and the bulletin sked
         $this->seedMessages($config, $event, $admin);
+        $this->seedBulletinSchedule($event, $manager, $plannedAt);
 
         // 9. Safety checklist (~60% complete)
         $this->seedSafetyChecklist($captain1, $event);
@@ -1129,6 +1131,50 @@ class DemoSeeder extends Seeder
             if ($bonus) {
                 $this->backdate($bonus, $sentAt, ['verified_at' => $sentAt]);
             }
+        }
+    }
+
+    /**
+     * Enter the bulletin transmissions the club plans to copy.
+     *
+     * Every entry is still ahead, so the bulletin bonus is left for the
+     * visitor to earn, and the first one lands inside the reminder window.
+     * Field Day uses W1AW's and K6KPH's published frequencies. The WFDA names
+     * no fixed sender, so the Winter sked lists the association itself.
+     */
+    private function seedBulletinSchedule(Event $event, User $manager, Carbon $plannedAt): void
+    {
+        $frequencies = [
+            'cw' => '3.5815, 7.0475, 14.0475, 21.0675, 28.0675',
+            'digital' => '3.5975, 7.095, 14.095, 21.0975, 28.0975',
+            'phone' => '3.990, 7.290, 14.290, 21.390, 28.590',
+        ];
+
+        $entries = $this->isWinter()
+            ? [
+                [3, 'phone', 'WFDA', 'Station Alpha copies, then we read it to visitors'],
+                [6, 'cw', 'WFDA', 'Station Charlie copies'],
+                [20, 'digital', 'WFDA', null],
+            ]
+            : [
+                [3, 'phone', 'W1AW', 'Station Alpha copies'],
+                [5, 'cw', 'W1AW', 'Station Charlie copies; good one for the CW demo'],
+                [6, 'cw', 'K6KPH', 'West coast relay, backup if we miss W1AW'],
+                [7, 'digital', 'W1AW', null],
+                [21, 'phone', 'W1AW', 'Sunday morning repeat'],
+            ];
+
+        foreach ($entries as [$hours, $mode, $source, $notes]) {
+            $entry = BulletinScheduleEntry::create([
+                'event_id' => $event->id,
+                'scheduled_at' => $event->start_time->copy()->addHours($hours),
+                'mode' => $mode,
+                'frequencies' => $frequencies[$mode],
+                'source' => $source,
+                'notes' => $notes,
+                'created_by' => $manager->id,
+            ]);
+            $this->backdate($entry, $plannedAt->copy()->addDays(random_int(7, 20))->setTime(random_int(18, 21), random_int(0, 59)));
         }
     }
 

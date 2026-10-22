@@ -5,6 +5,7 @@
 
 use App\Enums\MessageRole;
 use App\Models\BonusType;
+use App\Models\BulletinScheduleEntry;
 use App\Models\Contact;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
@@ -389,4 +390,20 @@ test('seeder fills in the public visitor details', function () {
     expect($config->public_directions)->not->toBeEmpty();
     expect($config->public_visiting_hours)->not->toBeEmpty();
     expect($config->public_contact_email)->not->toBeEmpty();
+});
+
+test('seeder fills the bulletin sked with upcoming W1AW and K6KPH transmissions', function () {
+    $event = Event::where('is_active', true)->firstOrFail();
+    $entries = BulletinScheduleEntry::forEvent($event->id)->orderBy('scheduled_at')->get();
+
+    expect($entries->count())->toBeGreaterThanOrEqual(3);
+    expect($entries->pluck('source')->unique()->sort()->values()->all())->toBe(['K6KPH', 'W1AW']);
+    expect($entries->pluck('mode')->unique())->toContain('cw', 'digital', 'phone');
+    $entries->each(function (BulletinScheduleEntry $entry) use ($event) {
+        expect($entry->scheduled_at->isFuture())->toBeTrue();
+        expect($entry->scheduled_at->lt($event->end_time))->toBeTrue();
+        expect($entry->created_at->lt($event->start_time))->toBeTrue();
+    });
+
+    expect(BulletinScheduleEntry::inReminderWindow()->exists())->toBeTrue();
 });
