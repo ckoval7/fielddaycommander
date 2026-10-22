@@ -5,10 +5,12 @@
 
 namespace App\Livewire\Guestbook;
 
+use App\Enums\VisitorCategory;
 use App\Models\GuestbookEntry;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -17,11 +19,6 @@ class GuestbookList extends Component
     public int $limit = 30;
 
     public Collection $entries;
-
-    /**
-     * Whether verified entries earn a guestbook bonus at this event.
-     */
-    public bool $isScoredEvent = true;
 
     public function mount(): void
     {
@@ -36,8 +33,8 @@ class GuestbookList extends Component
 
     public function loadEntries(): void
     {
-        $activeEvent = app(EventContextService::class)->getContextEvent();
-        $this->isScoredEvent = $activeEvent?->isScored() ?? true;
+        // The event the form signs visitors into, even while a past event is being browsed
+        $activeEvent = app(EventContextService::class)->getGuestbookEvent();
 
         if (! $activeEvent || ! $activeEvent->eventConfiguration) {
             $this->entries = collect();
@@ -50,6 +47,17 @@ class GuestbookList extends Component
             ->latest()
             ->limit($this->limit)
             ->get();
+    }
+
+    /**
+     * Visitor categories that earn a bonus under the active event's rulebook.
+     *
+     * @return list<VisitorCategory>
+     */
+    #[Computed]
+    public function bonusCategories(): array
+    {
+        return app(EventContextService::class)->getGuestbookEvent()?->guestbookBonusCategories() ?? [];
     }
 
     public function render(): View

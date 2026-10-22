@@ -10,6 +10,7 @@ use App\Models\EventConfiguration;
 use App\Models\Station;
 use App\Models\User;
 use App\Services\EquipmentReportService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
@@ -101,7 +102,7 @@ test('delivery checklist export returns pdf', function () {
 
     $response->assertOk();
     expect($response->headers->get('content-type'))->toStartWith('application/pdf');
-    expect($response->headers->get('content-disposition'))->toContain('.pdf');
+    expect($response->headers->get('content-disposition'))->toStartWith('inline')->toContain('.pdf');
     expect($response->getContent())->toStartWith('%PDF-');
 });
 
@@ -233,6 +234,64 @@ test('pdf header includes both club name and event name', function () {
     expect($html)
         ->toContain('Acme Repeater Society')
         ->toContain($this->event->name);
+});
+
+test('pdf reports keep their page margins so rows stay clear of the footer', function () {
+    $service = app(EquipmentReportService::class);
+    $data = $service->generateStationInventory($this->event->id);
+
+    $pdf = Pdf::loadView('equipment.reports.station-inventory', $data + ['generated_at' => now()])
+        ->setPaper('letter', 'portrait');
+    $pdf->render();
+
+    // dompdf takes page margins from the root element's style, which a
+    // universal margin reset in the layout would zero out.
+    $rootStyle = $pdf->getDomPDF()->getTree()->get_root()->get_style();
+
+    expect((float) $rootStyle->length_in_pt($rootStyle->margin_top))->toBeGreaterThan(0)
+        ->and((float) $rootStyle->length_in_pt($rootStyle->margin_bottom))->toBeGreaterThan(0);
+});
+
+test('owner contacts pdf fills each page before starting the next', function () {
+    // 60 one-line rows (18.2pt each) fit on two pages: 32 under the page 1
+    // banner and the rest on page 2. The old fixed 20pt estimate and budgets
+    // spread them over three pages, leaving each about three quarters full.
+    $contacts = collect(range(1, 60))->map(fn (int $i) => [
+        'owner_name' => "Owner {$i}",
+        'callsign' => 'W1AW',
+        'email' => "owner{$i}@example.com",
+        'emergency_contacts' => collect(['555-0100']),
+        'equipment_count' => 1,
+    ]);
+
+    $html = view('equipment.reports.owner-contacts', [
+        'event' => $this->event,
+        'contacts' => $contacts,
+        'generated_at' => now(),
+    ])->render();
+
+    expect(substr_count($html, 'style="page-break-before: always;"'))->toBe(1);
+});
+
+test('owner contacts pdf sizes rows by their wrapped emergency contacts', function () {
+    // Four phone numbers wrap to two lines, so fewer rows fit per page.
+    $contacts = collect(range(1, 56))->map(fn (int $i) => [
+        'owner_name' => "Owner {$i}",
+        'callsign' => 'W1AW',
+        'email' => "owner{$i}@example.com",
+        'emergency_contacts' => collect(['(480) 227-3882', '719-829-9328', '+1.952.500.7645', '959-513-1297']),
+        'equipment_count' => 4,
+    ]);
+
+    $html = view('equipment.reports.owner-contacts', [
+        'event' => $this->event,
+        'contacts' => $contacts,
+        'generated_at' => now(),
+    ])->render();
+
+    // 31.2pt rows: 18 on page 1 and 20 on each later page, so three pages.
+    // The old fixed estimate packed 26 of them onto page 1, which overflowed.
+    expect(substr_count($html, 'style="page-break-before: always;"'))->toBe(2);
 });
 
 test('export filenames contain event name and date', function () {

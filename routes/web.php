@@ -141,6 +141,10 @@ Route::get('/guestbook', function () {
     return view('guestbook.index');
 })->name('guestbook.index');
 
+Route::get('/guestbook/kiosk', function () {
+    return view('guestbook.kiosk');
+})->name('guestbook.kiosk');
+
 // Gallery
 Route::get('/gallery', GalleryIndex::class)->name('gallery.index');
 Route::get('/gallery/{eventConfiguration}', GalleryShow::class)->name('gallery.show');

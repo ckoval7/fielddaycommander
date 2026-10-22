@@ -20,6 +20,7 @@ use App\Models\W1awBulletin;
 use App\Services\AdifExporter;
 use App\Services\AdifParserService;
 use App\Services\WfdEventSummaryService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Database\Seeders\BonusTypeSeeder;
 use Database\Seeders\EventTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -107,7 +108,7 @@ describe('ADIF export', function () {
 
         expect($adif)
             ->toContain('<ADIF_VER:5>3.1.4')
-            ->toContain('<PROGRAMID:12>FD Commander')
+            ->toContain('<PROGRAMID:19>Field Day Commander')
             ->toContain('<PROGRAMVERSION:'.strlen(config('app.version')).'>'.config('app.version'))
             ->toContain('<EOH>')
             ->toContain('<CALL:5>W0MET <QSO_DATE:8>20270123 <TIME_ON:6>202120 <BAND:3>20M <MODE:3>SSB <SUBMODE:3>USB <CLASS:2>2M <ARRL_SECT:2>AL <STATION_CALLSIGN:7>K4SCO/P')
@@ -194,7 +195,7 @@ describe('ADIF export', function () {
 
         expect($parsed['errors'])->toBe([])
             ->and($parsed['version'])->toBe(3)
-            ->and($parsed['header']['PROGRAMID'])->toBe('FD Commander')
+            ->and($parsed['header']['PROGRAMID'])->toBe('Field Day Commander')
             ->and($parsed['records'])->toHaveCount(2)
             ->and($parsed['records'][0])->toMatchArray([
                 'CALL' => 'W0MET', 'QSO_DATE' => '20270123', 'TIME_ON' => '202120', 'BAND' => '20M',
@@ -285,7 +286,7 @@ describe('WFD event summary', function () {
         $response = $this->actingAs($this->user)->get(route('reports.wfd-event-summary'));
 
         $response->assertSuccessful()->assertHeader('Content-Type', 'application/pdf');
-        expect($response->headers->get('Content-Disposition'))->toContain('k4sco_p-')->toContain('event-summary.pdf');
+        expect($response->headers->get('Content-Disposition'))->toStartWith('inline')->toContain('k4sco_p-')->toContain('event-summary.pdf');
     })->with(['2027', '2026']);
 
     test('includes the saved bulletin copy under its WFD name', function () {
@@ -302,6 +303,18 @@ describe('WFD event summary', function () {
             ->and(collect($data['objectives'])->firstWhere('code', 'bulletin')['achieved'])->toBeTrue();
 
         $this->actingAs($this->user)->get(route('reports.wfd-event-summary'))->assertSuccessful();
+    });
+
+    test('keeps its page margins so text stays clear of the footer', function () {
+        $config = makeReportEvent('WFD', '2027');
+        $data = app(WfdEventSummaryService::class)->getData($config);
+
+        $pdf = Pdf::loadView('reports.wfd-event-summary-pdf', $data)->setPaper('letter', 'portrait');
+        $pdf->render();
+        $rootStyle = $pdf->getDomPDF()->getTree()->get_root()->get_style();
+
+        expect((float) $rootStyle->length_in_pt($rootStyle->margin_top))->toBeGreaterThan(0)
+            ->and((float) $rootStyle->length_in_pt($rootStyle->margin_bottom))->toBeGreaterThan(0);
     });
 
     test('route is not available for Field Day events', function () {

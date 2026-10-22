@@ -7,8 +7,10 @@
 #   sonar-local.sh up     start a throwaway sonarqube:community server (idempotent)
 #   sonar-local.sh scan   copy the repo, scan everything, print open issues + hotspots
 #   sonar-local.sh down   remove the server and all cached state
-#   sonar-local.sh cloud  print SonarCloud's quality gate + open issues for main
-#                         (needs SONAR_TOKEN in the repo's .env)
+#   sonar-local.sh cloud [branch]  print SonarCloud's quality gate + open issues
+#                         for a branch, default main (needs SONAR_TOKEN in .env)
+#   sonar-local.sh pr <number>     wait for SonarCloud to analyse the PR's head
+#                         commit, then print its gate, issues and hotspots
 #
 # The repo is copied under ~/.cache (Docker on WSL can't see /tmp), because the
 # JS analyzer dies on root-owned storage/framework/testing dirs in the real tree.
@@ -73,6 +75,10 @@ import_cloud_profiles() {
         | jq -r '.profiles[] | [.language, .name] | @tsv')
 }
 
+# Print issue or hotspot arrays from the issues/hotspots search APIs as a table.
+print_issues() { local json="$1"; jq -r '.[] | [(.impacts[0].severity // .severity), .type, .rule, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"${json}" | sort | column -t -s $'\t' || true; }
+print_hotspots() { local json="$1"; jq -r '.[] | [.vulnerabilityProbability, .ruleKey, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"${json}" | column -t -s $'\t' || true; }
+
 cmd_up() {
     mkdir -p "${STATE_DIR}"
     if [[ -f "${STATE_FILE}" ]] && docker ps --format '{{.Names}}' | grep -qx "${NAME}"; then
@@ -129,10 +135,10 @@ report() {
 
     echo
     echo "== Issues: $(jq length <<<"${issues}") open =="
-    jq -r '.[] | [(.impacts[0].severity // .severity), .type, .rule, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"${issues}" | sort | column -t -s $'\t' || true
+    print_issues "${issues}"
     echo
     echo "== Security hotspots: $(jq length <<<"${hotspots}") to review =="
-    jq -r '.[] | [.vulnerabilityProbability, .ruleKey, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"${hotspots}" | column -t -s $'\t' || true
+    print_hotspots "${hotspots}"
     echo
     echo "== Quality gate: $(api "${URL}/api/qualitygates/project_status?projectKey=${PROJECT}" | jq -r .projectStatus.status) =="
 }
@@ -197,12 +203,39 @@ cmd_cloud() {
     issues="$(curl -fsS -u "${token}:" "${base}/issues/search?componentKeys=${cloud_project}&branch=${branch}&issueStatuses=OPEN,CONFIRMED&ps=500")"
     echo
     echo "== SonarCloud issues: $(jq .total <<<"${issues}") open =="
-    jq -r '.issues[] | [(.impacts[0].severity // .severity), .type, .rule, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"${issues}" | sort | column -t -s $'\t' || true
+    print_issues "$(jq .issues <<<"${issues}")"
     local hotspots
     hotspots="$(curl -fsS -u "${token}:" "${base}/hotspots/search?projectKey=${cloud_project}&branch=${branch}&status=TO_REVIEW&ps=500")"
     echo
     echo "== SonarCloud hotspots: $(jq '.paging.total' <<<"${hotspots}") to review =="
-    jq -r '.hotspots[] | [.vulnerabilityProbability, .ruleKey, ((.component | sub("^[^:]*:"; "")) + ":" + ((.line // 0) | tostring)), .message] | @tsv' <<<"${hotspots}" | column -t -s $'\t' || true
+    print_hotspots "$(jq .hotspots <<<"${hotspots}")"
+}
+
+cmd_pr() {
+    local pr="${1:?Usage: $0 pr <number>}" token head analysed status issues hotspots
+    token="$(cloud_token)"
+    head="$(gh pr view "${pr}" --json headRefOid -q .headRefOid)"
+    printf 'Waiting for SonarCloud to analyse PR #%s at %s' "${pr}" "${head:0:7}"
+    for _ in $(seq 1 120); do
+        analysed="$(gh api "repos/{owner}/{repo}/commits/${head}/check-runs?check_name=SonarCloud%20Code%20Analysis" \
+            -q '.check_runs[0].status // empty' 2>/dev/null || true)"
+        [[ "${analysed}" = "completed" ]] && break
+        printf '.'
+        sleep 15
+    done
+    echo
+    [[ "${analysed}" = "completed" ]] || { echo "Timed out waiting for the SonarCloud check" >&2; exit 1; }
+    status="$(curl -fsS -u "${token}:" "${CLOUD_API}/qualitygates/project_status?projectKey=${CLOUD_PROJECT}&pullRequest=${pr}" | jq -r .projectStatus.status)"
+    echo "== SonarCloud quality gate (PR #${pr}): ${status} =="
+    issues="$(curl -fsS -u "${token}:" "${CLOUD_API}/issues/search?componentKeys=${CLOUD_PROJECT}&pullRequest=${pr}&issueStatuses=OPEN,CONFIRMED&ps=500")"
+    echo
+    echo "== SonarCloud issues: $(jq .total <<<"${issues}") open =="
+    print_issues "$(jq .issues <<<"${issues}")"
+    hotspots="$(curl -fsS -u "${token}:" "${CLOUD_API}/hotspots/search?projectKey=${CLOUD_PROJECT}&pullRequest=${pr}&status=TO_REVIEW&ps=500")"
+    echo
+    echo "== SonarCloud hotspots: $(jq '.paging.total' <<<"${hotspots}") to review =="
+    print_hotspots "$(jq .hotspots <<<"${hotspots}")"
+    [[ "${status}" = "OK" ]] && [[ "$(jq .total <<<"${issues}")" = "0" ]] && [[ "$(jq '.paging.total' <<<"${hotspots}")" = "0" ]]
 }
 
 cmd_down() {
@@ -216,5 +249,6 @@ case "${1:-}" in
     scan) cmd_scan ;;
     down) cmd_down ;;
     cloud) cmd_cloud "${2:-main}" ;;
-    *) echo "Usage: $0 {up|scan|down|cloud [branch]}" >&2; exit 2 ;;
+    pr) cmd_pr "${2:-}" ;;
+    *) echo "Usage: $0 {up|scan|down|cloud [branch]|pr <number>}" >&2; exit 2 ;;
 esac

@@ -42,13 +42,13 @@
                         title="Delivery Checklist (PDF)"
                         icon="phosphor-clipboard-text"
                         link="{{ route('events.equipment.reports.delivery-checklist', ['event' => $event->id]) }}"
-                        no-wire-navigate
+                        external
                     />
                     <x-menu-item
                         title="Station Inventory (PDF)"
                         icon="phosphor-buildings"
                         link="{{ route('events.equipment.reports.station-inventory-pdf', ['event' => $event->id]) }}"
-                        no-wire-navigate
+                        external
                     />
                     <x-menu-item
                         title="Station Inventory (CSV)"
@@ -63,7 +63,7 @@
                         title="Return Checklist (PDF)"
                         icon="phosphor-arrow-u-up-left"
                         link="{{ route('events.equipment.reports.return-checklist', ['event' => $event->id]) }}"
-                        no-wire-navigate
+                        external
                     />
                     <x-menu-item
                         title="Historical Record (CSV)"
@@ -78,7 +78,7 @@
                         title="Owner Contacts (PDF)"
                         icon="phosphor-users"
                         link="{{ route('events.equipment.reports.owner-contacts-pdf', ['event' => $event->id]) }}"
-                        no-wire-navigate
+                        external
                     />
                     <x-menu-item
                         title="Owner Contacts (CSV)"
@@ -90,7 +90,7 @@
                         title="Incident Report (PDF)"
                         icon="phosphor-warning"
                         link="{{ route('events.equipment.reports.incident-report-pdf', ['event' => $event->id]) }}"
-                        no-wire-navigate
+                        external
                     />
                     <x-menu-item
                         title="Incident Report (CSV)"

@@ -2,7 +2,8 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-<div wire:poll.30s>
+{{-- A container, so the entry grid follows the space it's given (half the guestbook page, or the full kiosk width) rather than the screen --}}
+<div wire:poll.30s class="@container">
     <x-header title="Recent Visitors" subtitle="Who's been here" class="mb-6" />
 
     @if($entries->isEmpty())
@@ -14,7 +15,7 @@
             </div>
         </x-card>
     @else
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 @xl:grid-cols-2 @4xl:grid-cols-3 gap-4">
             @foreach($entries as $entry)
                 <x-card
                     class="shadow-md transition-all {{ $entry->is_verified ? 'border-l-4 border-l-success bg-success/5' : '' }}"
@@ -58,7 +59,7 @@
                         </div>
 
                         {{-- Bonus Eligible Badge --}}
-                        @if($isScoredEvent && $entry->is_verified && $entry->is_bonus_eligible)
+                        @if($entry->is_verified && in_array($entry->visitor_category, $this->bonusCategories, true))
                             <div class="flex-shrink-0">
                                 <div
                                     class="w-8 h-8 rounded-full bg-warning flex items-center justify-center"

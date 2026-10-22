@@ -1,4 +1,4 @@
-# Contributing to FD Commander
+# Contributing to Field Day Commander
 
 Thanks for helping out. This page covers how branches flow, what a pull request needs, and how releases get cut.
 

@@ -8,7 +8,7 @@ namespace App\Services;
 use App\Models\Mode;
 
 /**
- * Sorts a raw mode name into FD Commander's mode groups: CW, Phone or Digital.
+ * Sorts a raw mode name into Field Day Commander's mode groups: CW, Phone or Digital.
  *
  * Neither ARRL Field Day nor Winter Field Day lists the modes it allows, so
  * this classifies rather than gatekeeps: CW is CW, a mode whose far end is
@@ -44,7 +44,7 @@ class ModeResolverService
     }
 
     /**
-     * Resolve a raw mode string to a FD Commander Mode ID.
+     * Resolve a raw mode string to a Field Day Commander Mode ID.
      *
      * The sub-mode decides when it names CW or a voice mode; otherwise an
      * ADIF parent mode that does (e.g. DIGITALVOICE) decides; anything else

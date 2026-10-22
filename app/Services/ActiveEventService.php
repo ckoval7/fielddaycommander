@@ -66,6 +66,28 @@ class ActiveEventService
     }
 
     /**
+     * Get the event the public guestbook belongs to right now: the running
+     * event, or one in its setup window. Ignores a past event being browsed,
+     * so the form and the entry list always agree.
+     */
+    public function getGuestbookEvent(): ?Event
+    {
+        return $this->getActiveEvent()
+            ?? Event::inSetupWindow()->orderBy('start_time')->with('eventConfiguration')->first();
+    }
+
+    /**
+     * Get the event taking guestbook entries right now: the guestbook event,
+     * as long as its guestbook is turned on.
+     */
+    public function getOpenGuestbookEvent(): ?Event
+    {
+        $event = $this->getGuestbookEvent();
+
+        return $event?->eventConfiguration?->guestbook_enabled ? $event : null;
+    }
+
+    /**
      * Get the active event ID.
      *
      * Returns a string 'no-event' when no event is active, for use in cache keys.

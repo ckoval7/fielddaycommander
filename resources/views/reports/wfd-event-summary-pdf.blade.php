@@ -8,7 +8,10 @@
     <meta charset="utf-8" />
     <title>{{ $callsign }} — Winter Field Day Event Summary</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { padding: 0; box-sizing: border-box; }
+        /* dompdf seeds the root element's style from @page, so a margin reset
+           on * (which matches the html element) would wipe out the page margins. */
+        body, body * { margin: 0; }
 
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -18,12 +21,17 @@
             line-height: 1.35;
         }
 
-        @page { margin: 48px 0; }
+        /* The bottom margin holds the fixed footer, which sits below the
+           content box via a negative offset so long pages can't run under it. */
+        @page { margin: 32px 0 88px; }
 
         .header-bar {
             background-color: #1e3ea8;
             color: #fff;
             padding: 12px 48px 8px;
+            /* Pull the bar up into the @page top margin so it meets the paper
+               edge on page 1; later pages keep the margin. */
+            margin-top: -32px;
             margin-bottom: 14px;
             text-align: center;
         }
@@ -61,6 +69,8 @@
             font-style: italic; color: #94a3b8;
         }
         td.m { font-family: DejaVu Sans Mono, monospace; font-weight: bold; }
+        /* The break goes on the header bar itself: dompdf drops the top margin
+           of a block that follows an empty page-break div, which left a gap. */
         .page-break { page-break-before: always; }
         .bulletin-text {
             font-family: DejaVu Sans Mono, monospace; font-size: 10px; line-height: 1.5;
@@ -69,7 +79,7 @@
         .note { margin-top: 6px; font-size: 9px; color: #64748b; font-style: italic; }
 
         .page-footer {
-            position: fixed; bottom: 24px; left: 0; right: 0;
+            position: fixed; bottom: -60px; left: 0; right: 0;
             border-top: 2px solid #1e3ea8; background: #fff;
         }
         .page-footer-left, .page-footer-right { padding: 4px 48px; font-size: 9px; color: #475569; }
@@ -185,9 +195,7 @@
          BULLETIN COPY — own page; the rules require it with the entry
     ============================================================ --}}
     @if ($bulletin)
-        <div class="page-break"></div>
-
-        <div class="header-bar">
+        <div class="header-bar page-break">
             <div class="header-callsign">{{ $callsign }}</div>
             <div class="header-sub">Winter Field Day {{ $event_year }} — {{ $bulletin['name'] }}</div>
         </div>

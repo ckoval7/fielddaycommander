@@ -54,6 +54,7 @@ class StationMode
         'section-map',
         'scoring.index',
         'guestbook.index',
+        'guestbook.kiosk',
         'gallery.index',
         'gallery.show',
         'gallery.thumb',

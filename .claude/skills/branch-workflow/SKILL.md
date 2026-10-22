@@ -1,6 +1,6 @@
 ---
 name: branch-workflow
-description: Use this skill for any of these tasks in FD Commander: choosing which checkout (main or the demo worktree) and which branch work belongs on; starting, committing or merging work; merging feature branches into dev or dev into feature/demo-mode; the GitHub branch protection rulesets; starting or fixing the local Sail container; running artisan, tests or Pint; or setting up the demo worktree from scratch.
+description: Use this skill for any of these tasks in Field Day Commander: choosing which checkout (main or the demo worktree) and which branch work belongs on; starting, committing or merging work; merging feature branches into dev or dev into feature/demo-mode; the GitHub branch protection rulesets; starting or fixing the local Sail container; running artisan, tests or Pint; or setting up the demo worktree from scratch.
 ---
 
 # Branch & Worktree Workflow

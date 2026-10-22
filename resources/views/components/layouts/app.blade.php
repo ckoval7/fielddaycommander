@@ -5,38 +5,8 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <x-reverb-config-meta />
     <title>{{ isset($title) ? $title.' - '.(\App\Models\Setting::get('site_name') ?: config('app.name')) : (\App\Models\Setting::get('site_name') ?: config('app.name')) }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
-    <x-pwa-meta />
-
-    {{-- Set theme before page renders to prevent flash. wire:navigate strips
-         unknown attributes from <html>, so re-apply in onSwap (synchronously,
-         before paint) to avoid a flash of the prefersdark theme, and again on
-         livewire:navigated as a fallback. --}}
-    <script>
-        (function() {
-            function applyTheme() {
-                let theme = localStorage.getItem('theme');
-                if (!theme) {
-                    theme = 'light';
-                    localStorage.setItem('theme', theme);
-                }
-                document.documentElement.setAttribute('data-theme', theme);
-                document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1d232a' : '#ffffff');
-            }
-            applyTheme();
-            document.addEventListener('livewire:navigating', (event) => event.detail.onSwap(applyTheme));
-            document.addEventListener('livewire:navigated', applyTheme);
-        })();
-    </script>
-
-    <x-silence-livewire-rejections />
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-layouts.head viewport-fit />
 </head>
 <body class="min-h-dvh font-sans antialiased bg-base-200">
 
@@ -434,7 +404,7 @@
                     :class="canScrollDown ? 'opacity-100' : 'opacity-0 invisible'"
                     @click="$refs.scrollArea.scrollBy({ top: 120, behavior: 'smooth' })"
                     type="button"
-                    class="absolute inset-x-0 bottom-0 z-10 flex justify-center pt-3 pb-1 bg-linear-to-t from-base-100 lg:from-base-200 to-transparent text-base-content/60 hover:text-base-content transition-[opacity,visibility] duration-150"
+                    class="absolute inset-x-0 bottom-0 z-10 flex justify-center items-end pt-3 pb-1 pointer-coarse:min-h-11 bg-linear-to-t from-base-100 lg:from-base-200 to-transparent text-base-content/60 hover:text-base-content transition-[opacity,visibility] duration-150"
                     aria-label="Scroll down"
                 >
                     <x-icon name="phosphor-caret-down" class="size-4" />

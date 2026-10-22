@@ -446,7 +446,8 @@
 
     /* Sidebar and other menu rows. daisyUI top-aligns the row grid, so
        center it or the extra height all lands under the label. */
-    .menu :where(li:not(.menu-title) > :is(a, button, summary)) {
+    .menu :where(li:not(.menu-title) > :is(a, button, summary)),
+    .menu :where(li:not(.menu-title) > details > summary) {
         min-height: 2.75rem;
         align-content: center;
     }

@@ -54,7 +54,7 @@ usage() {
     cat <<'USAGE'
 Usage: restore.sh <path/to/fdc-db-STAMP.sql.gz> [options]
 
-Restores an FD Commander backup made by backup.sh. The matching
+Restores a Field Day Commander backup made by backup.sh. The matching
 fdc-files-STAMP.tar.gz and fdc-env-STAMP must sit next to the database file.
 A restore replaces all current data, so a fresh backup is taken first.
 
@@ -143,7 +143,7 @@ if [[ $DOCKER -eq 1 ]]; then
     PRE_RESTORE_DIR="$COMPOSE_DIR/backups/pre-restore-$(date +%Y%m%d-%H%M%S)"
 else
     if [[ ! -f "$APP_PATH/artisan" ]]; then
-        log_error "No FD Commander install found at $APP_PATH — pass --app-path"
+        log_error "No Field Day Commander install found at $APP_PATH — pass --app-path"
         exit 1
     fi
     APP_PATH="$(cd "$APP_PATH" && pwd)"
@@ -294,7 +294,7 @@ confirm() {
     backup_date=$(date -d "${STAMP:0:8} ${STAMP:9:2}:${STAMP:11:2}:${STAMP:13:2}" '+%A %Y-%m-%d %H:%M:%S')
 
     echo ""
-    echo -e "${BOLD}Restore FD Commander backup${NC}"
+    echo -e "${BOLD}Restore Field Day Commander backup${NC}"
     echo "  Backup taken:  ${backup_date}"
     echo "  Database:      ${DB_BACKUP}"
     if [[ $DB_ONLY -eq 0 ]]; then
@@ -357,7 +357,7 @@ restore_native() {
     # The app user's own group, the same one deploy.sh created it with. (The
     # install directory is root-owned, so its group says nothing.)
     if ! WEB_GROUP=$(id -gn fdcommander 2>/dev/null); then
-        log_error "User fdcommander not found. Has FD Commander been deployed with deploy.sh?"
+        log_error "User fdcommander not found. Has Field Day Commander been deployed with deploy.sh?"
         exit 1
     fi
 
@@ -476,7 +476,7 @@ restore_docker() {
 
 # --- Main ---
 main() {
-    log_phase "FD Commander Restore — $(date '+%Y-%m-%d %H:%M:%S')"
+    log_phase "Field Day Commander Restore — $(date '+%Y-%m-%d %H:%M:%S')"
 
     preflight
     confirm
@@ -491,7 +491,7 @@ main() {
 
     echo ""
     echo -e "${BOLD}============================================${NC}"
-    echo -e "${GREEN}${BOLD}  FD Commander Restore Complete!${NC}"
+    echo -e "${GREEN}${BOLD}  Field Day Commander Restore Complete!${NC}"
     echo -e "${BOLD}============================================${NC}"
     echo ""
     echo "  Restored backup:     ${STAMP}"

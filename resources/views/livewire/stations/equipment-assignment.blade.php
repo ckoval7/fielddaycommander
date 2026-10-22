@@ -2,16 +2,7 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-<div class="space-y-4" x-data="{
-    announceMessage: '',
-    announce(message) {
-        this.announceMessage = message;
-        setTimeout(() => { this.announceMessage = ''; }, 3000);
-    }
-}">
-    {{-- Screen Reader Announcements --}}
-    <output class="sr-only" aria-live="polite" aria-atomic="true" x-text="announceMessage"></output>
-
+<div class="space-y-4">
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-start lg:items-center sm:justify-between gap-4">
         <div class="min-w-0">
@@ -260,47 +251,7 @@
                                 class="bg-base-100 border border-base-300 rounded-lg p-2 sm:p-3 hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing focus:ring-2 focus:ring-primary focus:outline-none"
                                 wire:key="committed-{{ $commitment->id }}"
                                 draggable="true"
-                                tabindex="0"
-                                aria-label="Drag {{ $commitment->equipment->make }} {{ $commitment->equipment->model }} to assign to station. Press Space to pick up, Arrow keys to navigate, Space to drop, Escape to cancel."
-                                onkeydown="/* handled by Alpine */"
-                                @keydown="handleKeydown($event)"
-                                x-data="{
-                                    isDragging: false,
-                                    keyboardDrag: false,
-                                    handleKeydown(e) {
-                                        if (e.key === ' ' && !this.keyboardDrag) {
-                                            e.preventDefault();
-                                            this.startKeyboardDrag();
-                                        } else if (e.key === ' ' && this.keyboardDrag) {
-                                            e.preventDefault();
-                                            this.finishKeyboardDrag();
-                                        } else if (e.key === 'Escape' && this.keyboardDrag) {
-                                            e.preventDefault();
-                                            this.cancelKeyboardDrag();
-                                        }
-                                    },
-                                    startKeyboardDrag() {
-                                        this.keyboardDrag = true;
-                                        this.$el.setAttribute('aria-grabbed', 'true');
-                                        this.$el.classList.add('ring-2', 'ring-primary', 'scale-105', 'shadow-lg');
-                                        this.$root.announce('Equipment picked up. Press Space to drop in assigned zone, or Escape to cancel.');
-                                    },
-                                    finishKeyboardDrag() {
-                                        this.keyboardDrag = false;
-                                        this.$el.setAttribute('aria-grabbed', 'false');
-                                        this.$el.classList.remove('ring-2', 'ring-primary', 'scale-105', 'shadow-lg');
-                                        $wire.handleDrop({{ $commitment->equipment->id }}, false);
-                                        this.$root.announce('Equipment assigned to station.');
-                                    },
-                                    cancelKeyboardDrag() {
-                                        this.keyboardDrag = false;
-                                        this.$el.setAttribute('aria-grabbed', 'false');
-                                        this.$el.classList.remove('ring-2', 'ring-primary', 'scale-105', 'shadow-lg');
-                                        this.$root.announce('Drag cancelled.');
-                                    }
-                                }"
-                                @keydown="handleKeydown($event)"
-                                @keydown.enter.prevent="handleKeydown({key: ' ', preventDefault: () => {}})"
+                                x-data="{ isDragging: false }"
                                 x-on:dragstart="
                                     isDragging = true;
                                     $event.dataTransfer.setData('application/json', JSON.stringify({
@@ -320,7 +271,6 @@
                                         }, 150);
                                     }, 50);
                                 "
-                                aria-grabbed="false"
                             >
                                 <div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
                                     @if($commitment->equipment->photo_path)
@@ -358,6 +308,7 @@
                                     @if($this->canManage)
                                         <x-button
                                             label="Assign"
+                                            aria-label="Assign {{ $commitment->equipment->make }} {{ $commitment->equipment->model }}"
                                             icon="phosphor-plus"
                                             class="btn-primary btn-sm w-full sm:w-auto min-h-[2.75rem] sm:min-h-[1.75rem] flex-shrink-0"
                                             wire:click="assignEquipment({{ $commitment->equipment->id }}, false)"
@@ -390,47 +341,7 @@
                                 class="bg-base-100 border border-base-300 rounded-lg p-2 sm:p-3 hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing focus:ring-2 focus:ring-primary focus:outline-none"
                                 wire:key="catalog-{{ $equipment->id }}"
                                 draggable="true"
-                                tabindex="0"
-                                aria-label="Drag {{ $equipment->make }} {{ $equipment->model }} to commit and assign to station. Press Space to pick up, Arrow keys to navigate, Space to drop, Escape to cancel."
-                                onkeydown="/* handled by Alpine */"
-                                @keydown="handleKeydown($event)"
-                                x-data="{
-                                    isDragging: false,
-                                    keyboardDrag: false,
-                                    handleKeydown(e) {
-                                        if (e.key === ' ' && !this.keyboardDrag) {
-                                            e.preventDefault();
-                                            this.startKeyboardDrag();
-                                        } else if (e.key === ' ' && this.keyboardDrag) {
-                                            e.preventDefault();
-                                            this.finishKeyboardDrag();
-                                        } else if (e.key === 'Escape' && this.keyboardDrag) {
-                                            e.preventDefault();
-                                            this.cancelKeyboardDrag();
-                                        }
-                                    },
-                                    startKeyboardDrag() {
-                                        this.keyboardDrag = true;
-                                        this.$el.setAttribute('aria-grabbed', 'true');
-                                        this.$el.classList.add('ring-2', 'ring-primary', 'scale-105', 'shadow-lg');
-                                        this.$root.announce('Equipment picked up. Press Space to commit and assign to station, or Escape to cancel.');
-                                    },
-                                    finishKeyboardDrag() {
-                                        this.keyboardDrag = false;
-                                        this.$el.setAttribute('aria-grabbed', 'false');
-                                        this.$el.classList.remove('ring-2', 'ring-primary', 'scale-105', 'shadow-lg');
-                                        $wire.handleDrop({{ $equipment->id }}, true);
-                                        this.$root.announce('Equipment committed and assigned to station.');
-                                    },
-                                    cancelKeyboardDrag() {
-                                        this.keyboardDrag = false;
-                                        this.$el.setAttribute('aria-grabbed', 'false');
-                                        this.$el.classList.remove('ring-2', 'ring-primary', 'scale-105', 'shadow-lg');
-                                        this.$root.announce('Drag cancelled.');
-                                    }
-                                }"
-                                @keydown="handleKeydown($event)"
-                                @keydown.enter.prevent="handleKeydown({key: ' ', preventDefault: () => {}})"
+                                x-data="{ isDragging: false }"
                                 x-on:dragstart="
                                     isDragging = true;
                                     $event.dataTransfer.setData('application/json', JSON.stringify({
@@ -450,7 +361,6 @@
                                         }, 150);
                                     }, 50);
                                 "
-                                aria-grabbed="false"
                             >
                                 <div class="flex flex-col lg:flex-row lg:items-start gap-2 lg:gap-3">
                                     @if($equipment->photo_path)
@@ -491,6 +401,7 @@
                                     @if($this->canManage)
                                         <x-button
                                             label="Commit & Assign"
+                                            aria-label="Commit and assign {{ $equipment->make }} {{ $equipment->model }}"
                                             icon="phosphor-plus"
                                             class="btn-success btn-sm w-full lg:w-auto min-h-[2.75rem] lg:min-h-[1.75rem] flex-shrink-0"
                                             wire:click="assignEquipment({{ $equipment->id }}, true)"

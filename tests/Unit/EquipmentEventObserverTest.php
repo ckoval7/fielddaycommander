@@ -152,6 +152,30 @@ test('observer sends incident notifications when equipment is damaged', function
     Notification::assertSentTo($manager, EquipmentIncident::class);
 });
 
+test('observer sends one incident notification to a user who is admin, manager and owner', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('System Administrator');
+    $admin->givePermissionTo('manage-event-equipment');
+    $manager = User::factory()->create();
+    $manager->givePermissionTo('manage-event-equipment');
+
+    $equipment = Equipment::factory()->create(['owner_user_id' => $admin->id]);
+
+    $equipmentEvent = EquipmentEvent::factory()->create([
+        'equipment_id' => $equipment->id,
+        'event_id' => Event::factory()->create()->id,
+        'status' => 'delivered',
+    ]);
+
+    Notification::fake();
+
+    $equipmentEvent->status = 'lost';
+    $equipmentEvent->save();
+
+    Notification::assertSentToTimes($admin, EquipmentIncident::class, 1);
+    Notification::assertSentToTimes($manager, EquipmentIncident::class, 1);
+});
+
 test('observer sends cancellation notifications to managers only', function () {
     $owner = User::factory()->create();
     $manager = User::factory()->create();

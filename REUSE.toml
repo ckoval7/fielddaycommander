@@ -1,5 +1,5 @@
 version = 1
-SPDX-PackageName = "FD Commander"
+SPDX-PackageName = "Field Day Commander"
 SPDX-PackageSupplier = "Corey Koval <ckoval7@gmail.com>"
 SPDX-PackageDownloadLocation = "https://github.com/ckoval7/fielddaycommander"
 

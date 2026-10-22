@@ -211,7 +211,7 @@
 
             {{-- WFD EVENT SUMMARY — blue. Stands in for the ARRL sheet on other rulebooks. --}}
             @if ($this->showsWfdEventSummary)
-            <a href="{{ route('reports.wfd-event-summary') }}"
+            <a href="{{ route('reports.wfd-event-summary') }}" target="_blank" rel="noopener"
                class="group no-underline block rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md"
                style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
                 <div class="flex items-start gap-4">
@@ -228,7 +228,7 @@
                         </div>
                         <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
                              style="color: var(--reports-pdf-icon);">
-                            Download &rarr;
+                            Open &rarr;
                         </div>
                     </div>
                 </div>
@@ -238,7 +238,7 @@
             {{-- ARRL SUBMISSION SHEET — blue border. Field Day only; WFD entrants
                  upload their log on winterfieldday.org instead. --}}
             @if ($this->showsArrlSubmissionSheet)
-            <a href="{{ route('reports.submission-sheet') }}"
+            <a href="{{ route('reports.submission-sheet') }}" target="_blank" rel="noopener"
                class="group no-underline block rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md"
                style="background-color: var(--reports-pdf-bg); border: 2px solid var(--reports-pdf-border);">
                 <div class="flex items-start gap-4">
@@ -255,7 +255,7 @@
                         </div>
                         <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
                              style="color: var(--reports-pdf-icon);">
-                            Download &rarr;
+                            Open &rarr;
                         </div>
                     </div>
                 </div>

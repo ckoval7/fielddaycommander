@@ -1,6 +1,6 @@
 ---
 name: release
-description: Use this skill to cut an FD Commander release. Triggers include a version bump, a release, tagging (vYY.MM.N), or "ship it". The release runs a full Sonar scan until it is clean, a Trivy scan, package updates, and only then the version bump and tag. Never bump or tag without completing the earlier steps.
+description: Use this skill to cut a Field Day Commander release. Triggers include a version bump, a release, tagging (vYY.MM.N), or "ship it". The release runs a full Sonar scan until it is clean, a Trivy scan, package updates, and only then the version bump and tag. Never bump or tag without completing the earlier steps.
 ---
 
 # Release
@@ -22,7 +22,9 @@ git status --short                 # must be clean
 git switch dev && git pull --ff-only
 ```
 
-Work out the next version. The scheme is `vYY.MM.N`, where `N` counts releases within the month. If `VERSION` has the current year and month, increment `N`. Otherwise use `YY.MM.1` for the current month. Confirm the version with the user, then create the branch:
+If `VERSION` on `dev` is already a number with no tag, the `promote-dev` skill has bumped it. Release that version: still run steps 1–3 on the release branch, but skip the bump commit in step 4 and go straight to the merges and tag.
+
+Otherwise, work out the next version. The scheme is `vYY.MM.N`, where `N` counts releases within the month. If `VERSION` has the current year and month, increment `N`. Otherwise use `YY.MM.1` for the current month. Confirm the version with the user, then create the branch:
 
 ```bash
 git switch -c release/vYY.MM.N
@@ -37,6 +39,7 @@ S=.claude/skills/release/scripts/sonar-local.sh
 $S up        # ~1 min the first time; reuses the server if it's already running
 $S scan      # scans HEAD plus uncommitted changes; prints issues, hotspots and extra checks
 $S cloud     # SonarCloud's gate and open issues for main, for comparison
+$S pr <n>    # waits for SonarCloud's analysis of a PR, then prints its gate and issues
 ```
 
 Repeat this loop until the scan reports **0 issues and 0 hotspots**, the "SonarCloud-only rule checks" section prints `none`, and `cloud` shows no open issues:
