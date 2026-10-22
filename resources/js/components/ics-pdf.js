@@ -51,7 +51,9 @@ function shrinkToFit(field, text, font) {
         return;
     }
 
-    const size = Number(/([\d.]+)\s+Tf/.exec(field.acroField.getDefaultAppearance() ?? '')?.[1] ?? 0);
+    // The default appearance reads like "/Helv 10 Tf 0 g": the size is the token before Tf.
+    const appearance = (field.acroField.getDefaultAppearance() ?? '').trim().split(/\s+/);
+    const size = Number(appearance[appearance.indexOf('Tf') - 1] ?? 0);
     const width = field.acroField.getWidgets()[0]?.getRectangle().width ?? 0;
     const available = width - 4;
     const needed = font.widthOfTextAtSize(text, size);
