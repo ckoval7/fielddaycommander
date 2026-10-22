@@ -290,6 +290,7 @@ Route::middleware(['auth', 'verified', 'can:manage-settings'])->group(function (
 Route::middleware(['auth', 'verified', 'can:view-reports'])->group(function () {
     Route::get('/reports', ReportsIndex::class)->name('reports.index');
     Route::get('/reports/ics-205', [IcsFormController::class, 'ics205'])->name('reports.ics-205');
+    Route::get('/reports/ics-205a', [IcsFormController::class, 'ics205a'])->name('reports.ics-205a');
     Route::get('/reports/ics-211', [IcsFormController::class, 'ics211'])->name('reports.ics-211');
     Route::get('/reports/ics-309', [IcsFormController::class, 'ics309'])->name('reports.ics-309');
 

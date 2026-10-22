@@ -31,6 +31,11 @@ class IcsFormBuilder
      */
     public const ROWS_PER_PAGE = 8;
 
+    /**
+     * Table rows on one page of the ICS-205A.
+     */
+    public const COMMS_LIST_ROWS_PER_PAGE = 34;
+
     private const DATE_FORMAT = 'Y-m-d';
 
     private const TIME_FORMAT = 'H:i';
@@ -132,6 +137,66 @@ class IcsFormBuilder
     }
 
     /**
+     * ICS-205A Communications List: everyone with a shift at the event, once
+     * per role, sorted by last name as the form asks. Contact is their phone
+     * and email, followed by any unexpired credentials.
+     *
+     * @return IcsForm
+     */
+    public function ics205a(EventConfiguration $config, ?User $preparedBy): array
+    {
+        $event = $config->event;
+
+        $header = [
+            '1 Incident Name_9' => (string) $event->name,
+            'Date From' => $this->formatLocal($event->start_time, self::DATE_FORMAT),
+            'Date To' => $this->formatLocal($event->end_time, self::DATE_FORMAT),
+            'Time From' => $this->formatLocal($event->start_time, self::TIME_FORMAT),
+            'Time To' => $this->formatLocal($event->end_time, self::TIME_FORMAT),
+            '4 Prepared by Name' => $this->personName($preparedBy),
+            'PositionTitle_8' => 'Communications',
+            'DateTime_9' => $this->now()->format(self::DATETIME_FORMAT),
+        ];
+
+        $entries = ShiftAssignment::query()
+            ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
+            ->whereHas('shift', fn ($query) => $query->forEvent($config->id))
+            ->whereHas('user')
+            ->with(['user.credentials', 'shift.shiftRole'])
+            ->get()
+            ->unique(fn (ShiftAssignment $assignment) => $assignment->user_id.'-'.$assignment->shift?->shift_role_id)
+            ->map(function (ShiftAssignment $assignment): array {
+                $user = $assignment->user;
+                $role = $assignment->shift?->shiftRole;
+
+                return [
+                    'sort' => mb_strtolower("{$user->last_name} {$user->first_name} {$user->call_sign}"),
+                    'position' => collect([$role?->name, $role?->tactical_callsign])
+                        ->filter()
+                        ->unique(fn (string $part) => mb_strtolower($part))
+                        ->implode(' / '),
+                    'name' => collect([trim("{$user->last_name}, {$user->first_name}", ', '), $user->call_sign])->filter()->implode(', '),
+                    'contact' => collect([
+                        collect([$user->phone, $user->email])->filter()->implode(', '),
+                        $user->credentialSummary(),
+                    ])->filter()->implode('; '),
+                ];
+            })
+            ->sortBy('sort')
+            ->values();
+
+        return [
+            'template' => asset('forms/ics/ics-205a.pdf'),
+            'filename' => $this->filename('ics-205a', $event->name),
+            'pages' => $this->paginate($header, $entries, fn (array $entry, int $row): array => [
+                "Incident Assigned PositionRow{$row}" => $entry['position'],
+                "Name AlphabetizedRow{$row}" => $entry['name'],
+                "Methods of Contact phone pager cell etcRow{$row}" => $entry['contact'],
+            ], self::COMMS_LIST_ROWS_PER_PAGE),
+        ];
+    }
+
+    /**
      * ICS-213 General Message for one ICS-213 message.
      *
      * @return IcsForm
@@ -206,24 +271,25 @@ class IcsFormBuilder
     }
 
     /**
-     * Split rows into form pages of ROWS_PER_PAGE, repeating the header on
+     * Split rows into form pages of $perPage rows, repeating the header on
      * each page. A form with no rows still gets one page.
      *
      * @param  array<string, string>  $header
      * @param  Collection<int, mixed>  $rows
      * @param  callable(mixed, int, int): array<string, string>  $rowFields  row item, row on the page (1-based), number across the form (1-based)
+     * @param  int  $perPage  table rows on one page of the form
      * @return list<array<string, string>>
      */
-    protected function paginate(array $header, Collection $rows, callable $rowFields): array
+    protected function paginate(array $header, Collection $rows, callable $rowFields, int $perPage = self::ROWS_PER_PAGE): array
     {
         if ($rows->isEmpty()) {
             return [$header];
         }
 
         return $rows->values()
-            ->chunk(self::ROWS_PER_PAGE)
+            ->chunk($perPage)
             ->map(fn (Collection $chunk): array => array_merge($header, ...$chunk
-                ->map(fn (mixed $item, int $index): array => $rowFields($item, $index % self::ROWS_PER_PAGE + 1, $index + 1))
+                ->map(fn (mixed $item, int $index): array => $rowFields($item, $index % $perPage + 1, $index + 1))
                 ->all()))
             ->values()
             ->all();

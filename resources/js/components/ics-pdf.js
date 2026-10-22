@@ -34,20 +34,51 @@ function toWinAnsi(value) {
         .replaceAll(/[^\n\r\t\x20-\x7E\xA0-\xFF]/g, '?');
 }
 
+/**
+ * Smallest size a long value is shrunk to. Past this it's cut off at the
+ * field's edge, as it would be on paper.
+ */
+const MIN_FONT_SIZE = 5;
+
+/**
+ * Shrink a single-line field's text when it's wider than the field. FEMA's
+ * fields have a fixed size (10pt on the ICS-205A), so a long position or
+ * contact would otherwise be cut off. Multi-line fields wrap instead, and
+ * fields set to auto size already fit.
+ */
+function shrinkToFit(field, text, font) {
+    if (text === '' || field.isMultiline()) {
+        return;
+    }
+
+    const size = Number(/([\d.]+)\s+Tf/.exec(field.acroField.getDefaultAppearance() ?? '')?.[1] ?? 0);
+    const width = field.acroField.getWidgets()[0]?.getRectangle().width ?? 0;
+    const available = width - 4;
+    const needed = font.widthOfTextAtSize(text, size);
+
+    if (size > 0 && available > 0 && needed > available) {
+        field.setFontSize(Math.max(MIN_FONT_SIZE, Math.floor((size * available / needed) * 10) / 10));
+    }
+}
+
 async function buildIcsPdf(form) {
-    const { PDFDocument } = await import('pdf-lib');
+    const { PDFDocument, StandardFonts } = await import('pdf-lib');
     const blank = await (await fetchOk(form.template)).arrayBuffer();
     const output = await PDFDocument.create();
 
     const pages = await Promise.all(form.pages.map(async (fields) => {
         const page = await PDFDocument.load(blank);
         const pdfForm = page.getForm();
+        const helvetica = await page.embedFont(StandardFonts.Helvetica);
 
         for (const [name, value] of Object.entries(fields)) {
             const field = pdfForm.getFieldMaybe(name);
 
             if (field && typeof field.setText === 'function') {
-                field.setText(toWinAnsi(value));
+                const text = toWinAnsi(value);
+
+                field.setText(text);
+                shrinkToFit(field, text, helvetica);
             }
         }
 

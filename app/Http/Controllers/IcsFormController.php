@@ -36,6 +36,11 @@ class IcsFormController extends Controller
         return response()->json($this->builder->ics205($this->configuration(), $request->user()));
     }
 
+    public function ics205a(Request $request): JsonResponse
+    {
+        return response()->json($this->builder->ics205a($this->configuration(), $request->user()));
+    }
+
     public function ics211(Request $request): JsonResponse
     {
         return response()->json($this->builder->ics211($this->configuration(), $request->user()));

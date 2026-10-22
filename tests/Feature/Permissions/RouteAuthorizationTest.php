@@ -113,6 +113,7 @@ $gatedEndpoints = [
     'reports.wfd-event-summary' => ['get', 'reports.wfd-event-summary', 'view-reports', fn () => []],
     'reports.submission-sheet' => ['get', 'reports.submission-sheet', 'view-reports', fn () => []],
     'reports.ics-205' => ['get', 'reports.ics-205', 'view-reports', fn () => []],
+    'reports.ics-205a' => ['get', 'reports.ics-205a', 'view-reports', fn () => []],
     'reports.ics-211' => ['get', 'reports.ics-211', 'view-reports', fn () => []],
     'events.messages.ics-213' => ['get', 'events.messages.ics-213', 'log-contacts', fn () => ['event' => $this->event, 'message' => $this->message]],
     'album-export.store' => ['post', 'album-export.store', 'manage-images', fn () => ['eventConfiguration' => $this->eventConfiguration]],
