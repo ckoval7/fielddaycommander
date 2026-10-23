@@ -19,10 +19,18 @@ class GalleryUpload extends Component
 
     public EventConfiguration $eventConfiguration;
 
-    #[Validate('required|image|mimes:jpeg,png,gif,webp|max:25600')]
+    #[Validate('required|image|mimes:jpeg,png,gif,webp|max:25600', message: [
+        'photo.required' => 'Choose a photo to upload.',
+        'photo.image' => 'Upload a valid JPEG, PNG, GIF, or WebP photo.',
+        'photo.mimes' => 'Upload a JPEG, PNG, GIF, or WebP photo.',
+        'photo.max' => 'Choose a photo up to 12 MB.',
+    ])]
     public $photo;
 
-    #[Validate('nullable|string|max:500')]
+    #[Validate('nullable|string|max:500', message: [
+        'caption.string' => 'Enter a text caption.',
+        'caption.max' => 'Keep the caption to 500 characters or fewer.',
+    ])]
     public ?string $caption = null;
 
     public function mount(EventConfiguration $eventConfiguration): void
@@ -39,13 +47,13 @@ class GalleryUpload extends Component
         $imageService = app(ImageService::class);
 
         if (! $imageService->isValidImage($this->photo)) {
-            $this->addError('photo', 'Please upload a valid image file (JPEG, PNG, GIF, or WebP) under 25MB.');
+            $this->addError('photo', 'Upload a valid JPEG, PNG, GIF, or WebP photo up to 12 MB.');
 
             return;
         }
 
         if (! $imageService->hasAcceptableDimensions($this->photo)) {
-            $this->addError('photo', 'This image is too large or too narrow. Please upload a photo under 50 megapixels.');
+            $this->addError('photo', 'Choose a photo up to 50 megapixels, with the longer side no more than 20 times the shorter side.');
 
             return;
         }
@@ -59,7 +67,7 @@ class GalleryUpload extends Component
             ->exists();
 
         if ($alreadyInGallery) {
-            $this->addError('photo', 'This photo has already been uploaded.');
+            $this->addError('photo', 'This photo is already in this album.');
 
             return;
         }
@@ -80,7 +88,7 @@ class GalleryUpload extends Component
             'caption' => $this->caption,
         ]);
 
-        session()->flash('toast', ['title' => 'Success', 'description' => 'Photo uploaded successfully!', 'type' => 'success']);
+        session()->flash('toast', ['title' => 'Success', 'description' => 'Photo uploaded.', 'type' => 'success']);
 
         $this->redirectRoute('gallery.show', $this->eventConfiguration);
     }

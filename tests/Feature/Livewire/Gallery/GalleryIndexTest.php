@@ -117,7 +117,7 @@ test('download button visible on event cards for users with manage-images permis
 
     Livewire::actingAs($user)
         ->test(GalleryIndex::class)
-        ->assertSee('Download');
+        ->assertSee('Prepare Album ZIP');
 });
 
 test('download button hidden on event cards for users without manage-images permission', function () {
@@ -127,7 +127,7 @@ test('download button hidden on event cards for users without manage-images perm
 
     Livewire::actingAs($user)
         ->test(GalleryIndex::class)
-        ->assertDontSee('Download');
+        ->assertDontSee('Prepare Album ZIP');
 });
 
 test('gallery index hides the upload button in station mode', function () {

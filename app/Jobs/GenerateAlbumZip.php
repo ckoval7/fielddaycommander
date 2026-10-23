@@ -100,7 +100,7 @@ class GenerateAlbumZip implements ShouldBeUnique, ShouldQueue
         $user->notify(new InAppNotification(
             category: NotificationCategory::Photos,
             title: 'Album Ready',
-            message: "Your photo album for {$eventConfig->event->name} is ready to download.",
+            message: "Your photo album for {$eventConfig->event->name} is ready to download. The download link expires in 24 hours.",
             url: $downloadUrl,
         ));
     }

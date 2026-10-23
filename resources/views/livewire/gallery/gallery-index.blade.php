@@ -3,7 +3,7 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
-    <x-header title="Photo Gallery" subtitle="Field Day memories">
+    <x-header title="Photo Gallery" subtitle="Photo albums by event">
         @if($this->canUpload)
             <x-slot:actions>
                 @if($this->activeEventConfiguration)
@@ -42,14 +42,14 @@
                 @if($this->canUpload)
                     @if($this->activeEventConfiguration)
                         <x-button
-                            label="Be the first to upload!"
+                            label="Upload Photo"
                             icon="phosphor-upload-simple"
                             link="{{ route('gallery.upload', $this->activeEventConfiguration) }}"
                             class="btn-primary mt-4"
                         />
                     @elseif($this->uploadableEvents->isNotEmpty())
                         <x-button
-                            label="Be the first to upload!"
+                            label="Upload Photo"
                             icon="phosphor-upload-simple"
                             wire:click="$set('showEventSelector', true)"
                             class="btn-primary mt-4"
@@ -68,7 +68,7 @@
                                 @if($eventConfig->images->first())
                                     <img
                                         src="{{ route('gallery.thumb', $eventConfig->images->first()) }}"
-                                        alt="Preview"
+                                        alt="Photo from {{ $eventConfig->event->name }}"
                                         class="w-full h-full object-cover"
                                     >
                                 @else
@@ -89,7 +89,7 @@
                             <div class="mt-3 pt-3 border-t border-base-200">
                                 <form method="POST" action="{{ route('album-export.store', $eventConfig) }}">
                                     @csrf
-                                    <x-button type="submit" label="Download" icon="phosphor-download-simple" class="btn-sm btn-ghost w-full" />
+                                    <x-button type="submit" label="Prepare Album ZIP" icon="phosphor-download-simple" class="btn-sm btn-ghost w-full" />
                                 </form>
                             </div>
                         @endcan
@@ -101,7 +101,7 @@
 
     {{-- Event Selector Modal --}}
     <x-modal wire:model="showEventSelector" title="Select Event" box-class="max-w-md">
-        <p class="text-base-content/70 mb-4">Which event would you like to upload photos to?</p>
+        <p class="text-base-content/70 mb-4">Choose an event for your photos.</p>
 
         <div class="space-y-2">
             @foreach($this->uploadableEvents as $eventConfig)
@@ -119,7 +119,7 @@
             <x-button label="Cancel" wire:click="$set('showEventSelector', false)" />
             @if($selectedEventId)
                 <x-button
-                    label="Continue"
+                    label="Upload Photo"
                     icon="phosphor-arrow-right"
                     class="btn-primary"
                     wire:click="uploadToEvent"
