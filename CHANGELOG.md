@@ -63,6 +63,7 @@
 - The Weather page showed only "No weather data yet" while a local weather alert was active but no forecast had loaded, such as with no internet. Active alerts now show whether or not there is a forecast.
 - With metric units, the Weather page highlighted wind gusts from 25 km/h, well below the 25 mph it uses otherwise. Gusts are now highlighted from 40 km/h, the same as 25 mph.
 - On the Scoring page, when a station was set to more power than the event's power setting, the **Multiplier Rules** table highlighted the row for the event's setting instead of the one the multiplier came from. When the event was set to 5W or less on natural power but a station used commercial or generator power, the page said the event qualified for 5× even though it scored 2×. The table and the explanation now match the multiplier.
+- After you filtered the logbook, **Export CSV** ignored the filters and included contacts outside the list you were viewing. When you browsed a past event, including through the Reports page's **Review in logbook** link, the CSV could come from the current event instead. The CSV now matches exactly the contacts listed for the event shown and follows filter changes without reloading the page.
 
 ## 26.10.11 - 2026-10-21
 
