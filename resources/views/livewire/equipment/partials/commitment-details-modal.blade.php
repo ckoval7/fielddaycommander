@@ -13,7 +13,7 @@
                     @if($detailCommitment->equipment->photo_path)
                         <img
                             src="{{ asset('storage/' . $detailCommitment->equipment->photo_path) }}"
-                            alt="Equipment"
+                            alt="{{ $detailCommitment->equipment->make }} {{ $detailCommitment->equipment->model }}"
                             class="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                             wire:click="viewPhoto({{ Js::from($detailCommitment->equipment->photo_path) }}, {{ Js::from($detailCommitment->equipment->make.' '.$detailCommitment->equipment->model) }})"
                         />
@@ -117,7 +117,7 @@
             {{-- Manager Notes --}}
             @if($detailCommitment->manager_notes)
                 <div>
-                    <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-2">Status History</h3>
+                    <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-2">Manager Notes</h3>
                     <div class="text-sm bg-base-200 rounded-lg p-3 whitespace-pre-wrap font-mono text-xs">{{ $detailCommitment->manager_notes }}</div>
                 </div>
             @endif
@@ -142,7 +142,7 @@
                     @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
                         @if($status !== $detailCommitment->status)
                             <x-menu-item
-                                title="{{ ucfirst(str_replace('_', ' ', $status)) }}"
+                                title="Mark as {{ ucfirst(str_replace('_', ' ', $status)) }}"
                                 wire:click="changeStatus({{ $detailCommitment->id }}, '{{ $status }}')"
                                 spinner="changeStatus({{ $detailCommitment->id }}, '{{ $status }}')"
                             />
@@ -151,7 +151,7 @@
                 </x-dropdown>
 
                 <x-button
-                    label="Update Notes"
+                    label="Update Delivery Notes"
                     icon="phosphor-pencil-simple"
                     class="btn-outline btn-sm"
                     wire:click="openNotesModal({{ $detailCommitment->id }})"

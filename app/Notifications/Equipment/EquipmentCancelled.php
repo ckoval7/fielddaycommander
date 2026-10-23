@@ -51,12 +51,12 @@ class EquipmentCancelled extends Notification implements ShouldQueue
         $operator = $equipment->owner;
 
         $message = (new MailMessage)
-            ->subject("Equipment Commitment Cancelled: {$equipment->make} {$equipment->model} by {$operator->call_sign}")
+            ->subject("Equipment Commitment Cancelled: {$equipment->make} {$equipment->model}")
             ->greeting("Hello {$notifiable->first_name},")
             ->line("An equipment commitment has been cancelled for {$event->name}.")
             ->line('**Cancelled Equipment**:')
             ->line("{$equipment->make} {$equipment->model}")
-            ->line("**Type**: {$equipment->type}");
+            ->line('**Type**: '.ucfirst(str_replace('_', ' ', $equipment->type)));
 
         if ($equipment->description) {
             $message->line("**Description**: {$equipment->description}");
@@ -70,7 +70,7 @@ class EquipmentCancelled extends Notification implements ShouldQueue
         }
 
         if ($operator) {
-            $message->line('**Operator Contact Information**:')
+            $message->line('**Owner Contact Information**:')
                 ->line("{$operator->first_name} {$operator->last_name} ({$operator->call_sign})")
                 ->line("Email: {$operator->email}");
 
@@ -80,7 +80,7 @@ class EquipmentCancelled extends Notification implements ShouldQueue
         }
 
         if ($this->equipmentEvent->manager_notes) {
-            $message->line('**Notes from Cancellation**:')
+            $message->line('**Manager Notes**:')
                 ->line($this->equipmentEvent->manager_notes);
         }
 
@@ -88,8 +88,8 @@ class EquipmentCancelled extends Notification implements ShouldQueue
             ->line('This cancellation may affect your event setup. You may need to find replacement equipment or adjust your station configuration.');
 
         $message->action('View Equipment Dashboard', route('events.equipment.dashboard', $event))
-            ->line('Use the equipment dashboard to find replacement equipment or contact other operators who may be able to help.')
-            ->line('If you need assistance, please reach out to the operator or check the available equipment list.');
+            ->line('Review the event commitments on the equipment dashboard.')
+            ->line('Contact the equipment owner to discuss alternatives.');
 
         return $message;
     }

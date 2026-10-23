@@ -54,7 +54,7 @@ class EquipmentStatusChanged extends Notification implements ShouldQueue
 
         $equipmentName = trim("{$equipment->make} {$equipment->model}");
         if (! $equipmentName) {
-            $equipmentName = ucfirst($equipment->type);
+            $equipmentName = ucfirst(str_replace('_', ' ', $equipment->type));
         }
 
         $changedByName = $statusChangedBy ? trim("{$statusChangedBy->first_name} {$statusChangedBy->last_name}") : 'Event Manager';
@@ -71,7 +71,7 @@ class EquipmentStatusChanged extends Notification implements ShouldQueue
             ->line('')
             ->line('**Equipment Details:**')
             ->line("Make/Model: {$equipmentName}")
-            ->line('Type: '.ucfirst($equipment->type))
+            ->line('Type: '.ucfirst(str_replace('_', ' ', $equipment->type)))
             ->line('')
             ->line('**Status Change:**')
             ->line("Previous Status: {$oldStatus}")
@@ -84,7 +84,7 @@ class EquipmentStatusChanged extends Notification implements ShouldQueue
             $message->line('')
                 ->line('**Station Assignment:**')
                 ->line("Station: {$station->name}")
-                ->line("Assigned by: {$changedByName}");
+                ->line("Status changed by: {$changedByName}");
         }
 
         // Add manager notes if present
@@ -95,13 +95,13 @@ class EquipmentStatusChanged extends Notification implements ShouldQueue
         }
 
         $message->line('')
-            ->action('View Commitment Details', $url);
+            ->action('View My Equipment', $url);
 
         // Add contextual footer based on status
         if ($this->equipmentEvent->status === 'returned') {
-            $message->line('Thank you for your contribution to our Field Day event!');
+            $message->line('Thank you for lending your equipment.');
         } elseif ($this->equipmentEvent->status === 'delivered') {
-            $message->line('Your equipment has been delivered and is ready for use at the event.');
+            $message->line('Your equipment has been marked as delivered.');
         }
 
         return $message;

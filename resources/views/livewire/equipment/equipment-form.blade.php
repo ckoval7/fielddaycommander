@@ -5,8 +5,8 @@
 <div class="space-y-6">
     {{-- Header --}}
     <x-header
-        title="{{ $equipmentId ? 'Edit Equipment' : ($isClubEquipment ? 'Create Club Equipment' : 'Create Equipment') }}"
-        subtitle="{{ $equipmentId ? 'Update equipment details' : ($isClubEquipment ? 'Add equipment to the club inventory' : 'Add a new piece of equipment to your inventory') }}"
+        title="{{ $equipmentId ? 'Edit Equipment' : ($isClubEquipment ? 'Add Club Equipment' : 'Add Equipment') }}"
+        subtitle="{{ $equipmentId ? 'Update equipment details' : ($isClubEquipment ? 'Add equipment to the club inventory' : 'Add equipment details') }}"
         separator
         progress-indicator
     >
@@ -113,7 +113,7 @@
                         option-value="id"
                         option-label="name"
                         placeholder="No specific manager"
-                        hint="Optional - Assign a specific person to manage this club equipment"
+                        hint="Optional. Choose who manages this equipment."
                         icon="phosphor-user"
                     />
                 </div>
@@ -170,7 +170,7 @@
                     wire:model.live="tagsInput"
                     icon="phosphor-tag"
                     placeholder="Comma-separated"
-                    hint="Optional - e.g., HF,Portable,Contest"
+                    hint="Optional. Separate tags with commas, e.g., HF, Portable, Battery."
                 />
 
                 {{-- Notes --}}
@@ -261,8 +261,8 @@
                         >
                             <div wire:loading.remove wire:target="photo">
                                 <x-icon name="phosphor-image" class="w-12 h-12 text-base-content/40 mb-3" />
-                                <p class="text-base font-medium text-base-content mb-1">Click to upload photo</p>
-                                <p class="text-sm text-base-content/60">PNG or JPEG up to 5MB</p>
+                                <p class="text-base font-medium text-base-content mb-1">Choose a photo</p>
+                                <p class="text-sm text-base-content/60">PNG or JPEG up to 5 MB</p>
                             </div>
                             <div wire:loading wire:target="photo" class="flex items-center gap-2">
                                 <span class="loading loading-spinner loading-md"></span>
@@ -275,7 +275,7 @@
                         <p class="mt-2 text-sm text-error">{{ $message }}</p>
                     @enderror
 
-                    <p class="mt-2 text-xs text-base-content/50">Max 5MB. Formats: PNG, JPEG</p>
+                    <p class="mt-2 text-xs text-base-content/50">Max 5 MB. Formats: PNG, JPEG</p>
                 </div>
             </div>
         </x-card>
@@ -290,7 +290,7 @@
                 wire:navigate
             />
             <x-button
-                label="{{ $equipmentId ? 'Update Equipment' : 'Create Equipment' }}"
+                label="{{ $equipmentId ? 'Update Equipment' : 'Add Equipment' }}"
                 type="submit"
                 class="btn-primary"
                 icon="phosphor-check"

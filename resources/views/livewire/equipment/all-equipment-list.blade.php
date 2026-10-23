@@ -3,15 +3,15 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
-    <x-slot:title>All User Catalogs</x-slot:title>
+    <x-slot:title>Equipment Catalog</x-slot:title>
 
     <div class="p-6 max-sm:px-0">
         {{-- Header --}}
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-            <h1 class="text-3xl font-bold">All User Catalogs</h1>
+            <h1 class="text-3xl font-bold">Equipment Catalog</h1>
             @can('edit-any-equipment')
                 <x-button
-                    label="Add Equipment for User"
+                    label="Add Equipment for Owner"
                     icon="phosphor-plus"
                     class="btn-primary btn-sm sm:btn-md"
                     link="{{ route('equipment.create', $userFilter && $userFilter !== 'club' ? ['for_user' => $userFilter] : []) }}"
@@ -54,7 +54,7 @@
                                         Club
                                     </span>
                                     @if($item->managed_by_user_id && $item->manager)
-                                        <span class="text-xs opacity-70 ml-1">Mgr: {{ $item->manager->call_sign }}</span>
+                                        <span class="text-xs opacity-70 ml-1">Manager: {{ $item->manager->call_sign }}</span>
                                     @endif
                                 @elseif($item->owner)
                                     <span class="text-sm font-semibold">{{ $item->owner->call_sign }}</span>
@@ -122,7 +122,7 @@
                                         </span>
                                         @if($item->managed_by_user_id && $item->manager)
                                             <div class="text-xs opacity-70 mt-0.5">
-                                                Mgr: {{ $item->manager->call_sign }}
+                                                Manager: {{ $item->manager->call_sign }}
                                             </div>
                                         @endif
                                     @elseif($item->owner)

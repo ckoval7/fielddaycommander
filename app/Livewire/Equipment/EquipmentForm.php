@@ -164,7 +164,7 @@ class EquipmentForm extends Component
             ->get()
             ->map(fn ($user) => [
                 'id' => $user->id,
-                'name' => $user->call_sign.' — '.trim($user->first_name.' '.$user->last_name),
+                'name' => $user->call_sign.', '.trim($user->first_name.' '.$user->last_name),
             ]);
     }
 
@@ -266,7 +266,7 @@ class EquipmentForm extends Component
         // Success notification
         $this->dispatch('toast', [
             'title' => 'Success',
-            'description' => $this->equipmentId ? 'Equipment updated successfully' : 'Equipment created successfully',
+            'description' => $this->equipmentId ? 'Equipment updated.' : 'Equipment added.',
             'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ]);
@@ -402,15 +402,15 @@ class EquipmentForm extends Component
     protected function messages(): array
     {
         return [
-            'make.required' => 'Please provide the equipment manufacturer.',
-            'model.required' => 'Please provide the equipment model.',
-            'type.required' => 'Please select an equipment type.',
-            'type.in' => 'The selected equipment type is invalid.',
+            'make.required' => 'Enter the equipment make.',
+            'model.required' => 'Enter the equipment model.',
+            'type.required' => 'Select an equipment type.',
+            'type.in' => 'Select a valid equipment type.',
             'value_usd.min' => 'The value must be at least $0.',
             'power_output_watts.min' => 'Power output must be at least 1 watt.',
             'power_output_watts.max' => 'Power output cannot exceed 10,000 watts.',
             'photo.image' => 'The file must be an image.',
-            'photo.max' => 'The photo size cannot exceed 5MB.',
+            'photo.max' => 'The photo must be 5 MB or smaller.',
         ];
     }
 

@@ -153,7 +153,7 @@ class ClubEquipmentList extends Component
             $equipment->delete();
         }
 
-        $this->dispatch('notify', title: 'Success', description: "{$count} item(s) deleted successfully.", type: 'success');
+        $this->dispatch('notify', title: 'Success', description: $count.' '.str('item')->plural($count).' deleted.', type: 'success');
 
         $this->selectedIds = [];
 
@@ -181,7 +181,7 @@ class ClubEquipmentList extends Component
 
         $equipment->delete();
 
-        $this->dispatch('notify', title: 'Success', description: 'Equipment deleted successfully.', type: 'success');
+        $this->dispatch('notify', title: 'Success', description: 'Equipment deleted.', type: 'success');
 
         unset($this->equipment);
     }
