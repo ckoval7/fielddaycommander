@@ -56,7 +56,7 @@ test('rejects empty input', function () {
     $result = $this->parser->parse('');
 
     expect($result['success'])->toBeFalse()
-        ->and($result['errors'])->toContain('Exchange is empty');
+        ->and($result['errors'])->toContain('Enter callsign, class, and section');
 });
 
 test('rejects input with only one part', function () {
@@ -77,7 +77,7 @@ test('rejects input with too many parts', function () {
     $result = $this->parser->parse('W1AW 3A CT EXTRA');
 
     expect($result['success'])->toBeFalse()
-        ->and($result['errors'])->toContain('Too many parts in exchange');
+        ->and($result['errors'])->toContain('Use only callsign, class, and section');
 });
 
 test('rejects invalid callsign too short', function () {

@@ -83,7 +83,7 @@ class LoggingWarningService
             return null;
         }
 
-        return strtoupper(trim($callsign))." is a participant in this event — contacts with your own participants don't count for QSO credit.";
+        return strtoupper(trim($callsign))." is a participant in this event. Contacts with your own participants earn no QSO credit.";
     }
 
     /**
@@ -119,7 +119,7 @@ class LoggingWarningService
         $stationName = $conflict->station?->name ?? 'Another station';
         $bandName = $conflict->band?->name ?? 'this band';
 
-        return "{$stationName} is also on {$bandName} {$category} — only one transmitter per band-mode at a time.";
+        return "{$stationName} is also on {$bandName} {$category}. Only one transmitter per band/mode is allowed at a time.";
     }
 
     /**

@@ -135,16 +135,16 @@ class ContactSyncController extends Controller
         }
 
         if ($session->end_time !== null && ! $qsoTime->between($session->start_time, $session->end_time)) {
-            return response()->json(['message' => 'This operating session has ended.'], 422);
+            return response()->json(['message' => 'Contact time is outside this operating session.'], 422);
         }
 
         $event = $session->station->eventConfiguration?->event;
         if (! $event || Carbon::parse($event->end_time)->lt($qsoTime)) {
-            return response()->json(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.'], 422);
+            return response()->json(['message' => 'Contact time is after the event. Use Transcribe Paper Log for paper entries.'], 422);
         }
 
         if (Carbon::parse($event->start_time)->gt($qsoTime)) {
-            return response()->json(['message' => 'This event has not started yet. Contacts can only be logged once the event begins.'], 422);
+            return response()->json(['message' => 'Contact time is before the event starts.'], 422);
         }
 
         return null;

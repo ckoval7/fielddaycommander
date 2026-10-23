@@ -76,7 +76,7 @@ class ExchangeParserService
         $input = trim($input);
 
         if ($input === '') {
-            $errors[] = 'Exchange is empty';
+            $errors[] = 'Enter callsign, class, and section';
 
             return null;
         }
@@ -85,8 +85,8 @@ class ExchangeParserService
 
         if (count($tokens) !== 3) {
             $errors[] = count($tokens) < 3
-                ? 'Exchange must contain callsign, class, and section (e.g. W1AW 3A CT)'
-                : 'Too many parts in exchange';
+                ? 'Enter callsign, class, and section (e.g. W1AW 3A CT)'
+                : 'Use only callsign, class, and section';
 
             return null;
         }
@@ -125,7 +125,7 @@ class ExchangeParserService
     private function applyExchangeClass(string $token, ?int $eventTypeId, array &$result): bool
     {
         if (! preg_match('/^(\d{1,2})('.self::EXCHANGE_CLASS_CODES.')$/i', $token, $matches)) {
-            $result['errors'][] = "Invalid class: {$token} (expected format like 3A, 1D, 2M)";
+            $result['errors'][] = "Invalid class: {$token} (use a number and class letter, e.g. 3A or 2M)";
 
             return false;
         }

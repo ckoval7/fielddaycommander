@@ -100,7 +100,7 @@ test('live logging warns for event, gota, operator, shift and guest operator cal
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->set('exchangeInput', "{$callsign} 1B CT")
-        ->assertSet('participantWarning', strtoupper($callsign).' is a participant in this event — contacts with your own participants don\'t count for QSO credit.')
+        ->assertSet('participantWarning', strtoupper($callsign).' is a participant in this event. Contacts with your own participants earn no QSO credit.')
         ->assertSee('is a participant in this event');
 })->with(['W1CLUB', 'W1GOTA', 'k1opr/p', 'N2SHF', 'KD9GST']);
 
@@ -180,9 +180,9 @@ test('station select warns when another station is on the same band and mode gro
         ->set('selectedStationId', $third->id)
         ->set('selectedBandId', $this->band->id)
         ->set('selectedModeId', $fm->id)
-        ->assertSee("Station 2 is also on {$this->band->name} Phone — only one transmitter per band-mode at a time.")
+        ->assertSee("Station 2 is also on {$this->band->name} Phone. Only one transmitter per band/mode is allowed at a time.")
         ->set('selectedModeId', $this->cw->id)
-        ->assertDontSee('only one transmitter per band-mode');
+        ->assertDontSee('Only one transmitter per band/mode');
 });
 
 test('live logging header warns about a conflicting active session and not otherwise', function () {
@@ -190,7 +190,7 @@ test('live logging header warns about a conflicting active session and not other
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->assertSet('bandModeWarning', '')
-        ->assertDontSee('only one transmitter per band-mode');
+        ->assertDontSee('Only one transmitter per band/mode');
 
     $other = Station::factory()->create([
         'event_configuration_id' => $this->config->id,
@@ -204,7 +204,7 @@ test('live logging header warns about a conflicting active session and not other
 
     $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->assertSee('Station 2 is also on')
-        ->assertSee('only one transmitter per band-mode at a time');
+        ->assertSee('Only one transmitter per band/mode is allowed at a time');
 
     $otherSession->update(['end_time' => now()]);
     $component->call('refreshBandModeWarning')->assertSet('bandModeWarning', '');
