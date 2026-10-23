@@ -27,7 +27,7 @@ test('yellow alert shows Nearby Danger label', function () {
 
     Livewire::test(WeatherAlertBanner::class)
         ->assertSee('Severe Thunderstorm Warning for New Haven County')
-        ->assertSee('Nearby Danger');
+        ->assertSee('Nearby Weather Alert');
 });
 
 test('red alert shows Immediate Danger label', function () {
@@ -42,7 +42,7 @@ test('red alert shows Immediate Danger label', function () {
 
     Livewire::test(WeatherAlertBanner::class)
         ->assertSee('Tornado Warning in effect')
-        ->assertSee('Immediate Danger');
+        ->assertSee('Weather Alert at Event Site');
 });
 
 test('red and yellow alerts render as separate rows', function () {
@@ -54,8 +54,8 @@ test('red and yellow alerts render as separate rows', function () {
     Livewire::test(WeatherAlertBanner::class)
         ->assertSee('Tornado Warning headline')
         ->assertSee('Flash Flood Watch headline')
-        ->assertSee('Immediate Danger')
-        ->assertSee('Nearby Danger');
+        ->assertSee('Weather Alert at Event Site')
+        ->assertSee('Nearby Weather Alert');
 });
 
 test('banner hides after user dismisses it', function () {

@@ -13,7 +13,7 @@
     <div class="alert alert-error shadow-lg items-start">
         <x-icon name="phosphor-warning" class="w-5 h-5 shrink-0 mt-0.5" />
         <div class="flex-1 min-w-0">
-            <div class="font-bold">Please fix the following errors:</div>
+            <div class="font-bold">Fix the following errors:</div>
             <ul class="text-sm mt-1 max-h-48 overflow-y-auto space-y-0.5">
                 <template x-for="error in $store.formErrors.messages" :key="error.id">
                     {{-- Bullet is drawn manually: a <button> is always laid out inline-block, which pushes a native list marker down to its last line. --}}
@@ -24,7 +24,7 @@
                 </template>
             </ul>
         </div>
-        <button type="button" class="btn btn-ghost btn-xs btn-circle" x-on:click="$store.formErrors.dismiss()" aria-label="Dismiss errors">
+        <button type="button" class="btn btn-ghost btn-xs btn-circle" x-on:click="$store.formErrors.dismiss()" aria-label="Hide error summary">
             <x-icon name="phosphor-x" class="w-4 h-4" />
         </button>
     </div>

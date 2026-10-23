@@ -40,7 +40,7 @@
                         wire:model.live="role"
                         class="select select-sm bg-base-100 text-base-content min-w-[160px]"
                     >
-                        <option value="">— No Override —</option>
+                        <option value="">Use My Role</option>
                         @foreach($roles as $availableRole)
                             <option value="{{ $availableRole }}">{{ $availableRole }}</option>
                         @endforeach
@@ -68,7 +68,7 @@
                         type="button"
                         class="btn btn-sm btn-outline border-purple-400 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 hover:border-purple-500"
                     >
-                        Reset
+                        Clear Overrides
                     </button>
                 @endif
             </div>

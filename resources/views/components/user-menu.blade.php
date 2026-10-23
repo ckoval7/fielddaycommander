@@ -100,7 +100,7 @@
                 @csrf
                 <button type="submit" class="text-error">
                     <x-icon name="phosphor-sign-out" class="w-4 h-4" />
-                    Logout
+                    Sign Out
                 </button>
             </form>
         </li>
@@ -109,6 +109,6 @@
 @endif
 @else
 <a href="{{ route('login') }}" wire:navigate class="btn btn-primary">
-    Login
+    Sign In
 </a>
 @endauth

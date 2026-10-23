@@ -109,7 +109,7 @@ class ContactObserver
 
         $this->notificationService->notifyAll(
             category: NotificationCategory::NewSection,
-            title: 'New Section Worked!',
+            title: 'New Section Worked',
             message: "{$opCall} worked {$sectionName} on {$band} {$mode}",
             url: '/logbook',
             groupKey: "new_section_event_{$eventConfigId}",
@@ -130,8 +130,8 @@ class ContactObserver
         if ($totalQsos > 0 && $totalQsos % 50 === 0) {
             $this->notificationService->notifyAll(
                 category: NotificationCategory::QsoMilestone,
-                title: 'QSO Milestone!',
-                message: "Congratulations! {$totalQsos} QSOs logged for this event!",
+                title: 'QSO Milestone',
+                message: "{$totalQsos} QSOs logged for this event",
                 url: '/logbook',
                 groupKey: "qso_milestone_{$totalQsos}",
             );

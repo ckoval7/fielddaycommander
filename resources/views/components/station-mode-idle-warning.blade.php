@@ -66,14 +66,14 @@
             <x-icon name="phosphor-timer" class="w-12 h-12 mx-auto text-warning" />
             <h3 id="station-mode-idle-title" class="font-bold text-lg mt-2">Are you still operating?</h3>
             <p class="mt-2 text-sm">
-                This station has been idle for {{ intdiv(\App\Support\StationMode::IDLE_WARNING_AFTER_SECONDS, 60) }} minutes.
+                This browser has been idle for {{ intdiv(\App\Support\StationMode::IDLE_WARNING_AFTER_SECONDS, 60) }} minutes.
                 Your session will end in
                 <span class="font-mono font-bold" x-text="remaining"></span>
                 seconds.
             </p>
             <div class="modal-action justify-center">
                 <button type="button" class="btn btn-ghost" @click="$refs.endSessionForm.submit()">End Session Now</button>
-                <button type="button" class="btn btn-primary" x-ref="stillHere" @click="dismiss()">I'm Still Here</button>
+                <button type="button" class="btn btn-primary" x-ref="stillHere" @click="dismiss()">Keep Session Open</button>
             </div>
         </div>
     </dialog>

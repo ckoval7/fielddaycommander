@@ -48,7 +48,7 @@ class ShiftReminderSource implements ReminderSource
 
         return [
             'title' => "Shift in {$minuteLabel}: {$roleName}",
-            'message' => "{$roleName} shift from {$timeRange}. Don't forget to check in!",
+            'message' => "{$roleName} shift from {$timeRange}. Check in from My Shifts.",
             'url' => '/schedule/my-shifts',
         ];
     }

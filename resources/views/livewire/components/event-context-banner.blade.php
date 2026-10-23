@@ -12,7 +12,7 @@
                         <strong>Viewing:</strong> {{ $contextEvent->name }}
                         @if($gracePeriodStatus === 'grace')
                             <x-badge value="Grace Period" class="badge-warning badge-sm ml-1" />
-                            <span class="text-sm opacity-75">&mdash; {{ $graceDaysRemaining }} days remaining</span>
+                            <span class="text-sm opacity-75">({{ $graceDaysRemaining }} days remaining)</span>
                         @elseif($gracePeriodStatus === 'archived')
                             <x-badge value="Read Only" class="badge-ghost badge-sm ml-1" />
                         @endif

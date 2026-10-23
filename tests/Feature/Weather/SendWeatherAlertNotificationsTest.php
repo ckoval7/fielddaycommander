@@ -246,7 +246,7 @@ test('announces local alert lifted without emailing when NWS alerts remain', fun
 
     Notification::assertSentTo($user, InAppNotification::class, function ($notification) {
         return $notification->title === 'Local Alert Lifted'
-            && $notification->message === 'The local alert has been cleared; 1 NWS alert still active';
+            && $notification->message === 'The local alert has been cleared. 1 NWS alert still active';
     });
     Notification::assertNotSentTo($user, WeatherAlertMail::class);
 });
