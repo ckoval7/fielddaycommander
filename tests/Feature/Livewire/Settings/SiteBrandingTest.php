@@ -187,40 +187,12 @@ test('removing logo logs to audit log', function () {
     expect($auditLog->old_values['logo'])->toBe($path);
 });
 
-test('sanitizes script content from uploaded svg logo', function () {
-    $svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" onload="alert(1)">'
-        .'<script>alert(1)</script>'
-        .'<a xlink:HrEf="javascript:alert(1)"><rect width="10" height="10"/></a>'
-        .'</svg>';
-    $logo = UploadedFile::fake()->createWithContent('logo.svg', $svg);
+test('rejects svg logos', function () {
+    $logo = UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>');
 
     Livewire::test(SiteBranding::class)
         ->set('site_name', 'Test')
         ->set('new_logo', $logo)
-        ->call('save')
-        ->assertHasNoErrors();
-
-    $logoPath = Setting::get('site_logo_path');
-    expect($logoPath)->toEndWith('.svg');
-
-    $stored = Storage::disk('public')->get($logoPath);
-    expect($stored)
-        ->toContain('<rect')
-        ->not->toContain('<script')
-        ->not->toContain('onload')
-        ->not->toContain('javascript:');
-});
-
-test('rejects svg logo containing dtd declarations', function () {
-    $svg = '<?xml version="1.0"?>'
-        .'<!DOCTYPE svg [<!ENTITY xss "&lt;script&gt;alert(1)&lt;/script&gt;"><!ATTLIST svg onload CDATA "alert(1)">]>'
-        .'<svg xmlns="http://www.w3.org/2000/svg"><text>&xss;</text></svg>';
-    $logo = UploadedFile::fake()->createWithContent('logo.svg', $svg);
-
-    Livewire::test(SiteBranding::class)
-        ->set('site_name', 'Test')
-        ->set('new_logo', $logo)
-        ->call('save')
         ->assertHasErrors(['new_logo']);
 
     expect(Setting::get('site_logo_path'))->toBeNull();
