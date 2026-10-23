@@ -37,7 +37,7 @@ class RoleManager extends Component
     protected array $categories = [
         'Contact Logging' => ['log-contacts', 'edit-contacts', 'import-contacts'],
         'Event Management' => ['view-events', 'create-events', 'edit-events', 'delete-events', 'manage-bulletins', 'verify-bonuses'],
-        'Station & Equipment' => ['view-stations', 'manage-stations', 'manage-equipment', 'manage-own-equipment', 'view-all-equipment', 'manage-event-equipment', 'edit-any-equipment'],
+        'Station & Equipment' => ['view-stations', 'manage-stations', 'manage-own-equipment', 'view-all-equipment', 'manage-event-equipment', 'edit-any-equipment'],
         'User Administration' => ['manage-users', 'manage-roles', 'manage-settings'],
         'Content Management' => ['manage-guestbook', 'manage-shifts', 'sign-up-shifts', 'manage-images'],
         'Weather' => ['manage-weather'],
@@ -274,7 +274,6 @@ class RoleManager extends Component
                 'verify-bonuses' => 'Verify Bonuses',
                 'view-stations' => 'View Stations',
                 'manage-stations' => 'Manage Stations',
-                'manage-equipment' => 'Manage Equipment (Legacy)',
                 'manage-own-equipment' => 'Manage Own Equipment',
                 'view-all-equipment' => 'View All Equipment',
                 'manage-event-equipment' => 'Manage Event Equipment',

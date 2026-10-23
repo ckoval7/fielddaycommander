@@ -11,10 +11,9 @@ use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     Permission::create(['name' => 'edit-any-equipment']);
-    Permission::create(['name' => 'manage-equipment']);
 
     $this->user = User::factory()->create();
-    $this->user->givePermissionTo(['edit-any-equipment', 'manage-equipment']);
+    $this->user->givePermissionTo('edit-any-equipment');
 
     $this->organization = Organization::factory()->create(['name' => 'Test Club']);
     Setting::set('default_organization_id', $this->organization->id);

@@ -28,7 +28,6 @@ class PermissionSeeder extends Seeder
             // Station & Equipment
             ['name' => 'view-stations', 'description' => 'View stations list and details'],
             ['name' => 'manage-stations', 'description' => 'Create, edit, and delete stations, and change their readiness'],
-            ['name' => 'manage-equipment', 'description' => 'Legacy permission. Use the equipment permissions below to grant access.'],
 
             // Equipment Management (New)
             ['name' => 'manage-own-equipment', 'description' => 'Create, edit, and delete personal equipment in catalog'],
