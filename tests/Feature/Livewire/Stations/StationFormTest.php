@@ -623,3 +623,11 @@ test('rejects invalid power source value', function () {
         ->call('save')
         ->assertHasErrors(['power_source']);
 });
+
+test('choosing Other power explains that a methane generator is a Generator', function () {
+    Livewire::test(StationForm::class)
+        ->set('power_source', 'other')
+        ->assertSee('Use Other for wind, water, or another source without an engine.')
+        ->set('power_source', 'solar')
+        ->assertDontSee('Use Other for wind, water');
+});
