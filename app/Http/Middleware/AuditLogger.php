@@ -18,12 +18,12 @@ class AuditLogger
 
         $response = $next($request);
 
-        $this->logIfAuditable($request, $response, $preAuthUserId);
+        $this->logIfAuditable($request, $preAuthUserId);
 
         return $response;
     }
 
-    protected function logIfAuditable(Request $request, Response $response, ?int $preAuthUserId): void
+    protected function logIfAuditable(Request $request, ?int $preAuthUserId): void
     {
         $method = $request->method();
         $path = $request->path();

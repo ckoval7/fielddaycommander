@@ -72,23 +72,10 @@ class RoleManager extends Component
 
         $role = Role::findById($this->selectedRoleId);
 
-        // System Administrator protection
-        if ($role->name === self::SYSTEM_ADMIN_ROLE && empty($this->selectedPermissions)) {
-            $this->dispatch('notify', title: 'Error', description: 'Keep at least one permission for the System Administrator role.');
+        $error = $this->permissionChangeError($role->name);
 
-            return;
-        }
-
-        // System Administrator must keep role management, so roles can always be fixed
-        if ($role->name === self::SYSTEM_ADMIN_ROLE && ! in_array('manage-roles', $this->selectedPermissions, true)) {
-            $this->dispatch('notify', title: 'Error', description: 'The System Administrator role must keep the Manage Roles permission.');
-
-            return;
-        }
-
-        // Config Only role protection - permissions are immutable
-        if ($role->name === 'Config Only') {
-            $this->dispatch('notify', title: 'Error', description: 'Permissions for the Config Only role cannot be changed.');
+        if ($error !== null) {
+            $this->dispatch('notify', title: 'Error', description: $error);
 
             return;
         }
@@ -105,6 +92,22 @@ class RoleManager extends Component
         ]);
 
         $this->dispatch('notify', title: 'Success', description: 'Permissions saved.');
+    }
+
+    /**
+     * Explain why the selected permissions can't be saved for this role, or null when they can.
+     */
+    protected function permissionChangeError(string $roleName): ?string
+    {
+        return match (true) {
+            // System Administrator protection
+            $roleName === self::SYSTEM_ADMIN_ROLE && empty($this->selectedPermissions) => 'Keep at least one permission for the System Administrator role.',
+            // System Administrator must keep role management, so roles can always be fixed
+            $roleName === self::SYSTEM_ADMIN_ROLE && ! in_array('manage-roles', $this->selectedPermissions, true) => 'The System Administrator role must keep the Manage Roles permission.',
+            // Config Only role protection - permissions are immutable
+            $roleName === 'Config Only' => 'Permissions for the Config Only role cannot be changed.',
+            default => null,
+        };
     }
 
     public function openCreateModal(): void
