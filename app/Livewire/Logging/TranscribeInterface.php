@@ -609,6 +609,18 @@ class TranscribeInterface extends Component
         return $this->station->eventConfiguration?->event?->event_type_id;
     }
 
+    /**
+     * Sample callsign, class and section for the event's rulebook, shown as
+     * the exchange placeholder and help text.
+     */
+    #[Computed]
+    public function exchangeExample(): string
+    {
+        $code = $this->station->eventConfiguration?->event?->eventType?->code;
+
+        return $code === 'WFD' ? 'W1AW 1H CT' : 'W1AW 3A CT';
+    }
+
     protected function extractCallsign(): ?string
     {
         return app(ExchangeParserService::class)
