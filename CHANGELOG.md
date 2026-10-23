@@ -66,6 +66,7 @@
 - When the browser could not save queued contacts on the device, the logging screen gave no warning that closing or reloading the page offline would lose unsynced contacts. A warning now stays visible until saving works again or no contacts are waiting to sync.
 - When several people requested a photo album ZIP while it was being built, only the first received the promised notification. Everyone waiting now gets notified when it is ready.
 - On the event dashboard's **Overview** tab, **Scoring Summary** showed Field Day figures for Winter Field Day that didn't add up to the final score. It now matches the **Scoring** tab: QSO points, power multiplier, and bonus points for Field Day, plus GOTA bonus when there's a GOTA station, or QSO points and OM + 1 for Winter Field Day. The final score uses the same calculation too.
+- In Guestbook Manager on a laptop or desktop with the sidebar open, long visitor categories such as "Agency (Red Cross, Emergency Management)" appeared as colored pills that didn't wrap, pushing the Signed column and the edit and delete buttons off the right edge so you had to scroll the table sideways to reach them. Category, presence, and callsign now show as plain text in the same font as the rest of the table, long categories wrap so the whole table fits, and verified entries in bonus-eligible categories show "Bonus Eligible" under the category.
 
 ## 26.10.11 - 2026-10-21
 

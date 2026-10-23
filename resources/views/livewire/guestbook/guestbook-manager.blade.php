@@ -208,7 +208,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="font-medium truncate">{{ $entry->first_name }} {{ $entry->last_name }}</div>
                                     @if($entry->callsign)
-                                        <code class="text-sm font-mono">{{ $entry->callsign }}</code>
+                                        <div class="text-sm">{{ $entry->callsign }}</div>
                                     @endif
                                     @if($entry->email)
                                         <div class="text-sm text-base-content/60 break-all">{{ $entry->email }}</div>
@@ -227,20 +227,17 @@
                                 @endif
                             </div>
 
-                            <div class="flex flex-wrap items-center gap-1.5 mt-2">
-                                @php
-                                    $isBonusCategory = in_array($entry->visitor_category, $bonusCategories, true);
-                                @endphp
-                                <x-badge
-                                    :value="$entry->visitor_category->label() . ($isBonusCategory && $entry->is_verified ? ' (bonus)' : '')"
-                                    :class="$isBonusCategory ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
-                                />
-                                @if($entry->presence_type === \App\Enums\PresenceType::InPerson)
-                                    <x-badge value="In Person" class="badge-info badge-sm" />
-                                @else
-                                    <x-badge value="Online" class="badge-ghost badge-sm" />
+                            @php
+                                $isBonusCategory = in_array($entry->visitor_category, $bonusCategories, true);
+                            @endphp
+                            <div class="mt-2 text-sm">
+                                {{ $entry->visitor_category->label() }}
+                                @if($isBonusCategory && $entry->is_verified)
+                                    <span class="text-base-content/60">· Bonus Eligible</span>
                                 @endif
-                                <span class="text-sm text-base-content/60 ml-auto">{{ $entry->created_at->format('M j, Y g:i A') }}</span>
+                            </div>
+                            <div class="text-sm text-base-content/60">
+                                {{ $entry->presence_type === \App\Enums\PresenceType::InPerson ? 'In Person' : 'Online' }} · {{ $entry->created_at->format('M j, Y g:i A') }}
                             </div>
 
                             @can('manage-guestbook')
@@ -278,14 +275,14 @@
                             <div class="min-w-0">
                                 <div class="font-medium truncate">{{ $entry->first_name }} {{ $entry->last_name }}</div>
                                 @if($entry->email)
-                                    <div class="text-xs text-base-content/60 truncate">{{ $entry->email }}</div>
+                                    <div class="text-base-content/60 truncate">{{ $entry->email }}</div>
                                 @endif
                             </div>
                         @endscope
 
                         @scope('cell_callsign', $entry)
                             @if($entry->callsign)
-                                <code class="text-sm font-mono">{{ $entry->callsign }}</code>
+                                {{ $entry->callsign }}
                             @else
                                 <span class="text-base-content/40">-</span>
                             @endif
@@ -295,44 +292,33 @@
                             @php
                                 $isBonusCategory = in_array($entry->visitor_category, $bonusCategories, true);
                             @endphp
-                            <div class="flex items-center gap-1">
-                                <x-badge
-                                    :value="$entry->visitor_category->label()"
-                                    :class="$isBonusCategory ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
-                                />
-                                @if($isBonusCategory && $entry->is_verified)
-                                    <span title="Bonus Eligible">+</span>
-                                @endif
-                            </div>
+                            <div>{{ $entry->visitor_category->label() }}</div>
+                            @if($isBonusCategory && $entry->is_verified)
+                                <div class="text-base-content/60">Bonus Eligible</div>
+                            @endif
                         @endscope
 
                         @scope('cell_presence_type', $entry)
-                            @if($entry->presence_type === \App\Enums\PresenceType::InPerson)
-                                <x-badge value="In Person" class="badge-info badge-sm" />
-                            @else
-                                <x-badge value="Online" class="badge-ghost badge-sm" />
-                            @endif
+                            <span class="whitespace-nowrap">{{ $entry->presence_type === \App\Enums\PresenceType::InPerson ? 'In Person' : 'Online' }}</span>
                         @endscope
 
                         @scope('cell_is_verified', $entry)
                             @if($entry->is_verified)
                                 <div class="flex items-center gap-1 text-success">
                                     <x-icon name="phosphor-check-circle" class="w-4 h-4" />
-                                    <span class="text-xs">Verified</span>
+                                    <span>Verified</span>
                                 </div>
                             @else
-                                <div class="flex items-center gap-1 text-base-content/50">
+                                <div class="flex items-center gap-1 text-base-content/60">
                                     <x-icon name="phosphor-clock" class="w-4 h-4" />
-                                    <span class="text-xs">Unverified</span>
+                                    <span>Unverified</span>
                                 </div>
                             @endif
                         @endscope
 
                         @scope('cell_created_at', $entry)
-                            <div class="text-sm">
-                                <div>{{ $entry->created_at->format('M j, Y') }}</div>
-                                <div class="text-xs text-base-content/60">{{ $entry->created_at->format('g:i A') }}</div>
-                            </div>
+                            <div class="whitespace-nowrap">{{ $entry->created_at->format('M j, Y') }}</div>
+                            <div class="text-base-content/60">{{ $entry->created_at->format('g:i A') }}</div>
                         @endscope
 
                         @scope('actions', $entry)
@@ -396,7 +382,7 @@
                         </div>
                         <div>
                             <div class="text-xs text-base-content/60">Callsign</div>
-                            <div class="font-mono">{{ $this->editingEntry->callsign ?: '-' }}</div>
+                            <div>{{ $this->editingEntry->callsign ?: '-' }}</div>
                         </div>
                         <div>
                             <div class="text-xs text-base-content/60">Email</div>
