@@ -363,3 +363,54 @@ describe('bulletin ownership', function () {
             ->set('bulletinId', 12345);
     })->throws(CannotUpdateLockedPropertyException::class);
 });
+
+describe('schedule entries are scoped to the current event', function () {
+    beforeEach(function () {
+        Permission::firstOrCreate(['name' => 'manage-bulletins']);
+        $this->operator->givePermissionTo('manage-bulletins');
+
+        $this->otherEntry = BulletinScheduleEntry::factory()->create([
+            'event_id' => Event::factory()->create(['event_type_id' => $this->eventType->id])->id,
+        ]);
+    });
+
+    test('cannot edit another events entry', function () {
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->call('editScheduleEntry', $this->otherEntry->id)
+            ->assertNotFound();
+    });
+
+    test('cannot update another events entry', function () {
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->set('editingEntryId', $this->otherEntry->id)
+            ->set('scheduleMode', 'cw')
+            ->set('scheduleFrequencies', '7.0475')
+            ->set('scheduleScheduledAt', now()->addDay()->format('Y-m-d\TH:i'))
+            ->set('scheduleSource', 'W1AW')
+            ->call('updateScheduleEntry')
+            ->assertNotFound();
+
+        expect($this->otherEntry->fresh()->frequencies)->toBe($this->otherEntry->frequencies);
+    });
+
+    test('cannot delete another events entry', function () {
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->call('deleteScheduleEntry', $this->otherEntry->id)
+            ->assertNotFound();
+
+        expect(BulletinScheduleEntry::find($this->otherEntry->id))->not->toBeNull();
+    });
+
+    test('can still delete its own events entry', function () {
+        $entry = BulletinScheduleEntry::factory()->create(['event_id' => $this->event->id]);
+
+        Livewire::actingAs($this->operator)
+            ->test(W1awBulletinForm::class)
+            ->call('deleteScheduleEntry', $entry->id);
+
+        expect(BulletinScheduleEntry::find($entry->id))->toBeNull();
+    });
+});
