@@ -341,6 +341,12 @@ service:
 ingress:
   enabled: false
   className: ""
+  # Largest request body the ingress accepts, set as the ingress-nginx
+  # proxy-body-size annotation. Photo uploads go up to 25 MB, and the app
+  # accepts requests up to 35 MB. Blank leaves the controller's own limit
+  # (ingress-nginx defaults to 1m). Controllers other than ingress-nginx
+  # ignore it; set their own limit through annotations or middleware.
+  maxBodySize: 35m
   annotations: {}
   host: fd-commander.local
   path: /
