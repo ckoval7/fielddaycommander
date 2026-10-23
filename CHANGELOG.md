@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fixed
+
+- The Weather page showed only "No weather data yet" while a local weather alert was active but no forecast had loaded, such as with no internet. Active alerts now show whether or not there is a forecast.
+- With metric units, the Weather page highlighted wind gusts from 25 km/h. Gusts are now highlighted from 40 km/h, the same as 25 mph.
+
 ### Added
 
 - The guestbook has a kiosk mode for a shared tablet or laptop at the event. Open it from the small Kiosk mode link at the bottom of the guestbook page. It drops the header and menu, shows the form at the top with the latest entries below it, newest first, and after each entry a countdown ring on the thank-you screen clears it for the next visitor. It never fills in or credits whoever is signed in on that browser, and it marks visitors as in person. Because every visitor shares one browser, the kiosk accepts up to 60 entries an hour instead of 5.
