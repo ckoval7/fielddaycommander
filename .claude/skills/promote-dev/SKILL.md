@@ -84,10 +84,12 @@ If a push is rejected because the remote moved, stop and tell the user. Don't pu
 gh pr list --base main --head dev
 ```
 
-If a PR is already open, the push has updated it. Otherwise open one:
+Title the PR `Release vYY.MM.N`, using the version step 8 will bump to. Work it out now with the scheme in step 0 of the `release` skill, checking `VERSION` and `git tag` so you don't reuse a tagged number.
+
+If a PR is already open, the push has updated it. Check its title and fix it if it names a different version (`gh pr edit <number> --title "Release vYY.MM.N"`). Otherwise open one:
 
 ```bash
-gh pr create --base main --head dev --title "Merge dev into main" --body-file <scratchpad>/pr.md
+gh pr create --base main --head dev --title "Release vYY.MM.N" --body-file <scratchpad>/pr.md
 ```
 
 Build the body from **Unreleased** in `CHANGELOG.md`: a short highlights list, then a Checks section with the local scan and Trivy results. End it with the PR attribution lines from the system reminder.
@@ -106,7 +108,7 @@ For a finding that is truly intentional, document it in `sonar-project.propertie
 
 Once both PR checks pass (`gh pr checks <number>`), bump the version on a release branch off `dev`.
 
-1. Work out the next version with the `vYY.MM.N` scheme in step 0 of the `release` skill. Check `VERSION` and `git tag` so you don't reuse a tagged number.
+1. Use the version from the PR title (step 6). If the month has rolled over or a tag has taken that number since, work it out again and retitle the PR to match.
 2. `git switch -c release/vYY.MM.N` off `dev`.
 3. Before bumping, check **Unreleased** in `CHANGELOG.md` against `git log --no-merges <last tag>..dev`. Add entries for anything a user or self-hoster would notice, using the `docs-prose` skill. A fix for a change that hasn't been released yet doesn't need its own entry.
 4. Change exactly the three files in step 4 of the `release` skill: `VERSION`, `appVersion` in `charts/fd-commander/Chart.yaml`, and `CHANGELOG.md` (rename Unreleased to `## YY.MM.N - YYYY-MM-DD` and add an empty `## Unreleased` above it).
