@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- During Winter Field Day, the transcribe screen's exchange box and help text showed a Field Day example (1423 W1AW 3A CT), but 3A is not a Winter Field Day class. The example now matches the event, such as 1423 W1AW 1H CT.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.
