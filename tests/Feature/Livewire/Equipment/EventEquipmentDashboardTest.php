@@ -245,6 +245,18 @@ test('clearFilters resets all filters', function () {
         ->assertSet('stationFilter', null);
 });
 
+test('clear filters button shows when only the Unassigned station is selected', function () {
+    $this->actingAs($this->manager);
+
+    Livewire::test(EventEquipmentDashboard::class, ['event' => $this->event])
+        ->assertDontSee('Clear Filters')
+        ->set('stationFilter', 0)
+        ->assertSee('Clear Filters')
+        ->call('clearFilters')
+        ->assertSet('stationFilter', null)
+        ->assertDontSee('Clear Filters');
+});
+
 // Status Change Tests
 
 test('manager can change equipment status', function () {
