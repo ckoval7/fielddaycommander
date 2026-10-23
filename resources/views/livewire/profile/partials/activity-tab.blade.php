@@ -56,7 +56,7 @@
                 @if($activityLog->count() >= $activityLimit)
                     <div class="card-actions justify-center mt-6">
                         <x-button class="btn-outline" wire:click="loadMoreActivity">
-                            Load More
+                            Load More Activity
                         </x-button>
                     </div>
                 @endif

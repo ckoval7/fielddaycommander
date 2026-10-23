@@ -11,7 +11,7 @@
 
     @if(auth()->user()->requires_password_change)
         <x-alert icon="phosphor-warning" class="alert-warning mb-6">
-            You must change your password before you can access the rest of the application.
+            Change your password to continue using Field Day Commander.
         </x-alert>
     @endif
 
@@ -35,7 +35,7 @@
            class="tab {{ $activeTab === 'sessions' ? 'tab-active' : '' }}"
            wire:click="$set('activeTab', 'sessions')">
             <x-icon name="phosphor-desktop" class="w-4 h-4 mr-2" />
-            Login Sessions
+            Sign-In Sessions
         </a>
 
         <a role="tab"

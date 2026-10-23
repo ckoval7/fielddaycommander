@@ -512,7 +512,7 @@ test('load more button hidden when all entries are shown', function () {
 
     Livewire::test(UserProfile::class)
         ->set('activeTab', 'activity')
-        ->assertDontSee('Load More');
+        ->assertDontSee('Load More Activity');
 });
 
 test('load more button shown when more entries may exist', function () {
@@ -527,7 +527,7 @@ test('load more button shown when more entries may exist', function () {
 
     Livewire::test(UserProfile::class)
         ->set('activeTab', 'activity')
-        ->assertSee('Load More');
+        ->assertSee('Load More Activity');
 });
 
 // =============================================================================
