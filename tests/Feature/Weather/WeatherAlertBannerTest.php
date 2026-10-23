@@ -30,7 +30,7 @@ test('yellow alert shows Nearby Danger label', function () {
         ->assertSee('Nearby Weather Alert');
 });
 
-test('red alert shows Immediate Danger label', function () {
+test('red alert shows Weather Alert at Event Site label', function () {
     Setting::set('weather.alerts', [[
         'event' => 'Tornado Warning',
         'headline' => 'Tornado Warning in effect',

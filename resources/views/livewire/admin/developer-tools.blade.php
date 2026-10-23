@@ -451,7 +451,7 @@
                 <li>Accounts with callsigns beginning with TEST</li>
                 <li>Their contacts and operating sessions stay in the log</li>
             </ul>
-            <p class="font-semibold">This cannot be undone. Are you sure?</p>
+            <p class="font-semibold">This cannot be undone.</p>
         </div>
 
         <x-slot:actions>

@@ -53,7 +53,7 @@ class InvitationController extends Controller
 
         if ($invitation->user->isLocked()) {
             return redirect()->route('login')
-                ->with('error', 'This account has been locked. Please contact an administrator.');
+                ->with('error', 'This account is locked. Contact an administrator.');
         }
 
         $validated = $request->validate([

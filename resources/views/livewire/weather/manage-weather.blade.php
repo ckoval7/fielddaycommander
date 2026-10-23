@@ -379,7 +379,7 @@
                                 <x-icon name="phosphor-lightning-duotone" class="w-4 h-4" />
                                 {{ $cannedAlert->label() }}
                             </span>
-                            <span class="text-xs font-normal normal-case">{{ \Illuminate\Support\Str::after($cannedAlert->headline(), '— ') }}</span>
+                            <span class="text-xs font-normal normal-case">{{ \Illuminate\Support\Str::after($cannedAlert->headline(), 'miles. ') }}</span>
                         </button>
                     @endforeach
                 </div>

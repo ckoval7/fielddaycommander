@@ -83,7 +83,7 @@ class LoggingWarningService
             return null;
         }
 
-        return strtoupper(trim($callsign))." is a participant in this event. Contacts with your own participants earn no QSO credit.";
+        return strtoupper(trim($callsign)).' is a participant in this event. Contacts with your own participants earn no QSO credit.';
     }
 
     /**

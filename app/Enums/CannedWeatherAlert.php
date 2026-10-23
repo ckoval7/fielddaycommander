@@ -24,8 +24,8 @@ enum CannedWeatherAlert: string
     public function headline(): string
     {
         return match ($this) {
-            self::LightningWithinFifteenMiles => 'Lightning within 15 miles — disconnect radios from power and antennas',
-            self::LightningWithinTenMiles => 'Lightning within 10 miles — hands off all wired equipment and seek shelter immediately',
+            self::LightningWithinFifteenMiles => 'Lightning within 15 miles. Disconnect radios from power and antennas.',
+            self::LightningWithinTenMiles => 'Lightning within 10 miles. Hands off all wired equipment and seek shelter immediately.',
         };
     }
 
@@ -34,7 +34,7 @@ enum CannedWeatherAlert: string
         return match ($this) {
             self::LightningWithinFifteenMiles => 'Stop operating. Disconnect feedlines from radios and unplug radios from power. '
                 .'Do not touch coax, antennas, masts, or guy lines once disconnected. '
-                .'Be ready to move to shelter — the next step is a full stand-down.',
+                .'Be ready to move to shelter. The next step is a full stand-down.',
             self::LightningWithinTenMiles => 'Do not touch radios, feedlines, power cords, generators, or anything connected to an antenna. '
                 .'Go to a hard-topped vehicle or enclosed building now. Tents and canopies are not shelter. '
                 .'Remain sheltered until 30 minutes after the last lightning or thunder within 10 miles.',

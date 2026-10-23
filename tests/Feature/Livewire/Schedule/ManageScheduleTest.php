@@ -90,7 +90,7 @@ describe('role management', function () {
             ->set('roleColor', '#14b8a6')
             ->call('saveRole')
             ->assertSet('showRoleModal', false)
-            ->assertDispatched('toast', title: 'Success', description: 'Role created successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Role created');
 
         expect(ShiftRole::where('name', 'Band Captain')->exists())->toBeTrue();
     });
@@ -120,7 +120,7 @@ describe('role management', function () {
             ->assertSet('roleName', 'Station Operator')
             ->set('roleName', 'Updated Operator')
             ->call('saveRole')
-            ->assertDispatched('toast', title: 'Success', description: 'Role updated successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Role updated');
 
         expect($this->role->fresh()->name)->toBe('Updated Operator');
     });
@@ -130,7 +130,7 @@ describe('role management', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('deleteRole', $this->role->id)
-            ->assertDispatched('toast', title: 'Success', description: 'Role deleted successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Role deleted');
 
         expect($this->role->fresh()->trashed())->toBeTrue();
     });
@@ -177,7 +177,7 @@ describe('shift management', function () {
             ->set('shiftIsOpen', true)
             ->call('saveShift')
             ->assertSet('showShiftModal', false)
-            ->assertDispatched('toast', title: 'Success', description: 'Shift created successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Shift created');
 
         expect(Shift::where('shift_role_id', $this->role->id)->count())->toBe(1);
     });
@@ -196,7 +196,7 @@ describe('shift management', function () {
             ->assertSet('editingShiftId', $shift->id)
             ->set('shiftCapacity', 5)
             ->call('saveShift')
-            ->assertDispatched('toast', title: 'Success', description: 'Shift updated successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Shift updated');
 
         expect($shift->fresh()->capacity)->toBe(5);
     });
@@ -241,7 +241,7 @@ describe('shift management', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('deleteShift', $shift->id)
-            ->assertDispatched('toast', title: 'Success', description: 'Shift deleted successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Shift deleted');
 
         expect($shift->fresh()->trashed())->toBeTrue();
     });

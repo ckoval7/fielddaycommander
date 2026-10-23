@@ -396,7 +396,7 @@ class DeveloperTools extends Component
             $this->showSelectiveResetModal = false;
 
             $this->success(
-                'Tables reset successfully',
+                'Tables reset',
                 'Cleared: '.implode(', ', $tablesToTruncate)
             );
         } catch (\Exception $e) {

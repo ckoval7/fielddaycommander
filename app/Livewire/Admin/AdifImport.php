@@ -254,7 +254,7 @@ class AdifImport extends Component
             ->count();
 
         if ($unmappedCount > 0) {
-            $this->addError('mapping', "{$unmappedCount} ".str('record')->plural($unmappedCount)." with unmapped fields. Map all fields before continuing.");
+            $this->addError('mapping', "{$unmappedCount} ".str('record')->plural($unmappedCount).' with unmapped fields. Map all fields before continuing.');
 
             return;
         }

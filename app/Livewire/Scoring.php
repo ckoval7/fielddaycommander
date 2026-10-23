@@ -603,7 +603,7 @@ class Scoring extends Component
             $notices[] = [
                 'severity' => 'error',
                 'section' => 'qso',
-                'message' => "{$zeroCount} ".str('contact')->plural($zeroCount)." logged with 0 points. Check their band and mode.",
+                'message' => "{$zeroCount} ".str('contact')->plural($zeroCount).' logged with 0 points. Check their band and mode.',
             ];
         }
 
@@ -613,7 +613,7 @@ class Scoring extends Component
             $notices[] = [
                 'severity' => 'error',
                 'section' => 'qso',
-                'message' => "{$gotaCount} GOTA ".str('contact')->plural($gotaCount)." logged, but no GOTA station is configured.",
+                'message' => "{$gotaCount} GOTA ".str('contact')->plural($gotaCount).' logged, but no GOTA station is configured.',
             ];
         }
 
@@ -625,7 +625,7 @@ class Scoring extends Component
             $notices[] = [
                 'severity' => 'warning',
                 'section' => 'bonus',
-                'message' => "{$unverifiedCount} bonus ".str('claim')->plural($unverifiedCount)." not yet verified.",
+                'message' => "{$unverifiedCount} bonus ".str('claim')->plural($unverifiedCount).' not yet verified.',
             ];
         }
 

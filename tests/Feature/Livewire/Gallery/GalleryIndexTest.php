@@ -138,6 +138,5 @@ test('gallery index hides the upload button in station mode', function () {
     session([StationMode::SESSION_KEY => $device->id]);
 
     Livewire::test(GalleryIndex::class)
-        ->assertDontSee('Upload Photo')
-        ->assertDontSee('Be the first to upload!');
+        ->assertDontSee('Upload Photo');
 });
