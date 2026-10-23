@@ -115,6 +115,17 @@ test('step 2 validates logo file type', function () {
     $response->assertSessionHasErrors('logo');
 });
 
+test('step 2 rejects svg logos', function () {
+    $file = UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+
+    $response = $this->post(route('setup.step-2'), [
+        'site_name' => 'Test Site',
+        'logo' => $file,
+    ]);
+
+    $response->assertSessionHasErrors('logo');
+});
+
 test('step 2 stores data in session and redirects to step 3', function () {
     $response = $this->post(route('setup.step-2'), [
         'site_name' => 'My Club',
