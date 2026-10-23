@@ -969,7 +969,7 @@ test('updateContact rejects invalid exchange', function () {
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->call('updateContact', $contact->id, 'INVALID')
-        ->assertSet('parseError', 'Exchange must contain callsign, class, and section (e.g. W1AW 3A CT)');
+        ->assertSet('parseError', 'Enter callsign, class, and section (e.g. W1AW 3A CT)');
 
     expect($contact->fresh()->callsign)->toBe('W1OLD');
 });

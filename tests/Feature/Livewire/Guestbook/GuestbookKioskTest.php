@@ -86,7 +86,7 @@ describe('kiosk page', function () {
 
         $this->get(route('guestbook.kiosk'))
             ->assertOk()
-            ->assertSee('No Active Event')
+            ->assertSee('Guestbook Closed')
             ->assertDontSee('Sign the Guestbook');
     });
 
@@ -107,7 +107,7 @@ describe('kiosk page', function () {
 
         $this->get(route($route))
             ->assertOk()
-            ->assertSee('No Active Event')
+            ->assertSee('Guestbook Closed')
             ->assertDontSee('Sign the Guestbook');
     })->with(['guestbook.kiosk', 'guestbook.index'])->with([
         'before setup opens' => fn () => [
@@ -199,7 +199,7 @@ describe('kiosk form', function () {
         Livewire::test(GuestbookForm::class, ['kiosk' => true])
             ->assertSet('presence_type', PresenceType::InPerson->value)
             ->assertSeeHtml('kiosk: true')
-            ->assertDontSee('Re-detect location');
+            ->assertDontSee('Check location again');
     });
 
     test('does not tie entries to whoever is signed in on the kiosk', function () {

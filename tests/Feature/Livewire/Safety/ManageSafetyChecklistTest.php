@@ -76,7 +76,7 @@ describe('item management', function () {
             ->set('itemChecklistType', ChecklistType::SafetyOfficer->value)
             ->call('saveItem')
             ->assertSet('showItemModal', false)
-            ->assertDispatched('toast', title: 'Success', description: 'Item created successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Checklist item added.');
 
         $item = SafetyChecklistItem::where('label', 'Custom safety item')->first();
         expect($item)->not->toBeNull();
@@ -108,7 +108,7 @@ describe('item management', function () {
             ->set('itemHelpText', 'Updated help text.')
             ->set('itemIsRequired', true)
             ->call('saveItem')
-            ->assertDispatched('toast', title: 'Success', description: 'Item updated successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Checklist item updated.');
 
         $item->refresh();
         expect($item->label)->toBe('Updated label');
@@ -144,7 +144,7 @@ describe('item management', function () {
 
         Livewire::test(ManageSafetyChecklist::class)
             ->call('deleteItem', $item->id)
-            ->assertDispatched('toast', title: 'Success', description: 'Item deleted successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Checklist item deleted.');
 
         expect($item->fresh()->trashed())->toBeTrue();
     });
@@ -159,7 +159,7 @@ describe('item management', function () {
 
         Livewire::test(ManageSafetyChecklist::class)
             ->call('deleteItem', $item->id)
-            ->assertDispatched('toast', title: 'Error', description: 'Cannot delete default ARRL items');
+            ->assertDispatched('toast', title: 'Error', description: 'Default checklist items cannot be deleted.');
 
         expect($item->fresh()->trashed())->toBeFalse();
     });

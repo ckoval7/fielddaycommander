@@ -3,7 +3,7 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 {{-- Bulk Commit Modal --}}
-<x-modal wire:model="showBulkCommitModal" title="Commit {{ count($selectedIds) }} Item(s) to Event" class="backdrop-blur">
+<x-modal wire:model="showBulkCommitModal" title="Commit {{ count($selectedIds) }} {{ str('Item')->plural(count($selectedIds)) }} to Event" class="backdrop-blur">
     <x-form wire:submit="bulkCommitEquipment" class="space-y-4">
         <x-select
             label="Event"
@@ -19,7 +19,7 @@
         />
 
         <x-flatpickr
-            label="Expected Delivery"
+            label="Expected Delivery (optional)"
             wire:model="bulkCommitExpectedDeliveryAt"
             mode="date"
             icon="phosphor-calendar"
@@ -27,9 +27,9 @@
         />
 
         <x-textarea
-            label="Delivery Notes"
+            label="Delivery Notes (optional)"
             wire:model="bulkCommitDeliveryNotes"
-            placeholder="Add any special instructions or notes about delivery..."
+            placeholder="Delivery instructions or pickup details"
             hint="Maximum 500 characters"
             rows="4"
         />
@@ -43,7 +43,7 @@
 
         <x-slot:actions>
             <x-button label="Cancel" wire:click="$set('showBulkCommitModal', false)" class="btn-ghost" />
-            <x-button label="Commit All" type="submit" class="btn-primary" spinner="bulkCommitEquipment" />
+            <x-button label="Commit Selected" type="submit" class="btn-primary" spinner="bulkCommitEquipment" />
         </x-slot:actions>
     </x-form>
 </x-modal>

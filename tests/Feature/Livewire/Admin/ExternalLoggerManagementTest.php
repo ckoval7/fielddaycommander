@@ -145,7 +145,7 @@ test('displays firewall reminder in setup instructions', function () {
 
 test('renders WSJTX section with stopped status', function () {
     Livewire::test(ExternalLoggerManagement::class)
-        ->assertSee('WSJTX / JTDX')
+        ->assertSee('WSJT-X / JTDX')
         ->assertSee('Stopped');
 });
 
@@ -172,7 +172,7 @@ test('renders WSJTX with running status when heartbeat exists', function () {
     Livewire::test(ExternalLoggerManagement::class)
         ->assertSee('Listening on port 2237')
         ->assertSee('25 packets')
-        ->assertSee('1 errors');
+        ->assertSee('1 error');
 });
 
 test('toggleWsjtx enables and starts process', function () {
@@ -226,7 +226,7 @@ test('WSJTX setup instructions do not point to multicast outgoing interfaces', f
 
 test('WSJTX and UDP ADIF setup instructions explain station callsign matching', function () {
     Livewire::test(ExternalLoggerManagement::class)
-        ->assertSeeInOrder(['WSJTX / JTDX', 'station callsign', 'UDP ADIF (fldigi, etc.)', 'station callsign'])
+        ->assertSeeInOrder(['WSJT-X / JTDX', 'station callsign', 'UDP ADIF (fldigi, etc.)', 'station callsign'])
         ->assertSee('receiving station')
         ->assertDontSee('each station');
 });
@@ -325,7 +325,7 @@ test('shows last log received section with no-contact placeholder when listener 
     ], 15);
 
     Livewire::test(ExternalLoggerManagement::class)
-        ->assertSee('Last Log Received')
+        ->assertSee('Last Contact Received')
         ->assertSee('No contacts received yet');
 });
 
@@ -343,7 +343,7 @@ test('shows accepted badge and callsign when last log was accepted', function ()
     ], 60 * 60 * 24);
 
     Livewire::test(ExternalLoggerManagement::class)
-        ->assertSee('Last Log Received')
+        ->assertSee('Last Contact Received')
         ->assertSee('Accepted')
         ->assertSee('W1AW');
 });
@@ -362,7 +362,7 @@ test('shows rejection reason badge and callsign when last log was out of period'
     ], 60 * 60 * 24);
 
     Livewire::test(ExternalLoggerManagement::class)
-        ->assertSee('Last Log Received')
+        ->assertSee('Last Contact Received')
         ->assertSee('outside event window')
         ->assertSee('K1XYZ');
 });
@@ -373,12 +373,12 @@ test('warns that WSJT-X contacts earn no credit under WFD 2027', function () {
 
     Livewire::test(ExternalLoggerManagement::class)
         ->assertSee(WinterFieldDay2027::NO_CREDIT_WSJT)
-        ->assertSee('Contacts in those modes (FT8, FT4 and the like) are still logged');
+        ->assertSee('Contacts in those modes (FT8, FT4, and related modes) are still logged');
 });
 
 test('does not warn about WSJT-X credit for rulesets that allow it', function () {
     Livewire::test(ExternalLoggerManagement::class)
-        ->assertDontSee('Contacts in those modes (FT8, FT4 and the like) are still logged');
+        ->assertDontSee('Contacts in those modes (FT8, FT4, and related modes) are still logged');
 });
 
 test('logger panels trim their padding on phones', function () {

@@ -32,7 +32,7 @@
         <x-card class="shadow-md">
             <div class="text-center mb-4">
                 <h2 class="text-xl font-bold">Section Map</h2>
-                <p class="text-sm text-base-content/70">{{ $sectionsWorked }}/{{ $totalSections }} Sections &middot; {{ $totalQsos }} QSOs</p>
+                <p class="text-sm text-base-content/70">{{ $sectionsWorked }}/{{ $totalSections }} sections worked &middot; {{ $totalQsos }} QSOs</p>
             </div>
 
             <div
@@ -308,7 +308,7 @@
                 <div class="flex justify-center gap-1 mb-3">
                     <span class="text-xs text-base-content/70 self-center mr-1">Color:</span>
                     <div class="join">
-                        <button class="join-item btn btn-xs" :class="colorMode === 'band' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'band'">Band</button>
+                        <button class="join-item btn btn-xs" :class="colorMode === 'band' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'band'">Latest Band</button>
                         <button class="join-item btn btn-xs" :class="colorMode === 'qso' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'qso'">QSO Count</button>
                         <button class="join-item btn btn-xs" :class="colorMode === 'time' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'time'">Recency</button>
                     </div>
@@ -328,7 +328,7 @@
    @click="handleTouchTap($event)"
    @pointerleave="clearHover()"
    role="img"
-   aria-label="ARRL Section Map"
+   aria-label="Sections worked map"
    focusable="false">
 <defs
      id="defs1" /><g
@@ -922,7 +922,7 @@
                 <div x-show="colorMode === 'band'" x-cloak>
                     <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-4 text-xs text-base-content/70">
                         <div class="flex items-center gap-1">
-                            <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
+                            <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> Not worked
                         </div>
                         <template x-for="band in ['160m','80m','40m','20m','15m','10m']" :key="band">
                             <div class="flex items-center gap-1">
@@ -941,7 +941,7 @@
                         <span>&middot;</span>
                         <span>vivid = 2 bands</span>
                         <span>&middot;</span>
-                        <span>deep = 3+</span>
+                        <span>deep = 3+ bands</span>
                     </div>
                 </div>
 
@@ -949,7 +949,7 @@
                 <div x-show="colorMode === 'qso'" x-cloak>
                     <div class="flex items-center justify-center gap-2 mt-4 text-xs text-base-content/70">
                         <div class="flex items-center gap-1">
-                            <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
+                            <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> Not worked
                         </div>
                         <div class="flex items-center gap-1">
                             <div class="h-3 w-48 rounded" style="background: linear-gradient(to right, hsl(130,20%,85%), hsl(130,70%,40%))"></div>
@@ -964,7 +964,7 @@
                 <div x-show="colorMode === 'time'" x-cloak>
                     <div class="flex items-center justify-center gap-2 mt-4 text-xs text-base-content/70">
                         <div class="flex items-center gap-1">
-                            <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> None
+                            <span class="inline-block w-3 h-3 rounded" style="background:#d1d5db"></span> Not worked
                         </div>
                         <span>&lt;5m</span>
                         <div class="flex items-center gap-1">
@@ -979,8 +979,8 @@
         <x-card class="shadow-md">
             <div class="text-center py-12">
                 <x-icon name="phosphor-map-trifold" class="w-16 h-16 mx-auto text-warning" />
-                <p class="mt-4 text-lg font-medium">No Active Event</p>
-                <p class="text-sm text-base-content/70 mt-2">No active event &mdash; section data will appear during Field Day.</p>
+                <p class="mt-4 text-lg font-medium">No active event</p>
+                <p class="text-sm text-base-content/70 mt-2">Sections worked appear here when an event is selected.</p>
             </div>
         </x-card>
     @endif

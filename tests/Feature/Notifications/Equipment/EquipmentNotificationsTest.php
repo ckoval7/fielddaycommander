@@ -86,7 +86,7 @@ test('EquipmentCommitted sends notification to manager with operator details', f
             expect($channels)->toBe(['mail']);
 
             $mail = $notification->toMail($this->manager);
-            expect($mail->subject)->toContain('New Equipment Committed by W1AW');
+            expect($mail->subject)->toContain('Equipment Committed: Icom IC-7300 to Field Day 2025');
 
             return true;
         }

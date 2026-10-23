@@ -25,20 +25,20 @@
                  Leave the choice to the visitor rather than guessing they're remote. --}}
             if (!window.isSecureContext) {
                 this.locationStatus = 'unsupported';
-                this.locationMessage = '📍 Choose below whether you are here in person or signing in from afar';
+                this.locationMessage = 'Choose In Person or Online below.';
                 $wire.clearPresenceType();
                 return;
             }
 
             if (!navigator.geolocation) {
                 this.locationStatus = 'unsupported';
-                this.locationMessage = '🌐 Geolocation is not supported by your browser - signing in remotely';
+                this.locationMessage = 'Your browser cannot check your location. Online is selected. Choose In Person if you are at the event.';
                 $wire.setPresenceType('online');
                 return;
             }
 
             this.locationStatus = 'detecting';
-            this.locationMessage = '📍 Detecting your location...';
+            this.locationMessage = 'Checking your location...';
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -49,11 +49,11 @@
 
                     if (distance <= this.radius) {
                         this.locationStatus = 'in_person';
-                        this.locationMessage = `📍 Looks like you're here at the event! (${this.userDistance}m away)`;
+                        this.locationMessage = `Looks like you're here at the event! (${this.userDistance} m away). Change the selection below if needed.`;
                         $wire.setPresenceType('in_person');
                     } else {
                         this.locationStatus = 'online';
-                        this.locationMessage = `🌐 Signing in from afar (${this.formatDistance(distance)} away)`;
+                        this.locationMessage = `You appear to be away from the event (${this.formatDistance(distance)} away). Change the selection below if needed.`;
                         $wire.setPresenceType('online');
                     }
                 },
@@ -64,16 +64,16 @@
 
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            this.locationMessage = '🌐 Signing in remotely (location access denied)';
+                            this.locationMessage = 'Location access is blocked. Online is selected. Choose In Person if you are at the event.';
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            this.locationMessage = '🌐 Location unavailable - signing in remotely';
+                            this.locationMessage = 'Your location is unavailable. Online is selected. Choose In Person if you are at the event.';
                             break;
                         case error.TIMEOUT:
-                            this.locationMessage = '🌐 Location request timed out - signing in remotely';
+                            this.locationMessage = 'The location check timed out. Online is selected. Choose In Person if you are at the event.';
                             break;
                         default:
-                            this.locationMessage = '🌐 Unable to detect location - signing in remotely';
+                            this.locationMessage = 'Your location could not be checked. Online is selected. Choose In Person if you are at the event.';
                     }
                 },
                 {
@@ -113,7 +113,7 @@
     @if($showSuccess)
         <x-alert
             title="Thank you for signing our guestbook!"
-            description="Your entry has been recorded. We appreciate your visit!"
+            description="Your entry has been saved. We appreciate your visit!"
             icon="phosphor-check-circle"
             class="alert-success"
             dismissible
@@ -124,7 +124,7 @@
     {{-- Form Card --}}
     @if(!$showSuccess)
         @if($eventConfig)
-            <x-card title="Sign the Guestbook" subtitle="Welcome! Please sign our event guestbook.">
+            <x-card title="Sign the Guestbook" subtitle="Welcome! Please sign our event guestbook. Your name and comments will appear in the visitor list.">
                 <form wire:submit="save" class="space-y-4">
                     {{-- Honeypot field - hidden from real users, bots will fill it --}}
                     <div class="hidden" aria-hidden="true">
@@ -164,27 +164,27 @@
 
                         {{-- Callsign --}}
                         <x-input
-                            label="Callsign"
+                            label="Radio call sign (optional)"
                             wire:model="callsign"
                             autocomplete="off"
                             autocapitalize="characters"
                             autocorrect="off"
                             spellcheck="false"
                             icon="phosphor-cell-signal-high"
-                            placeholder="Optional - e.g., W1AW"
-                            hint="Your amateur radio callsign (if applicable)"
+                            placeholder="For example, W1AW"
+                            hint="Leave blank if you do not have a radio call sign."
                         />
                     </div>
 
                     {{-- Email --}}
                     <x-input
-                        label="Email"
+                        label="Email (optional)"
                         wire:model="email"
                         autocomplete="email"
                         type="email"
                         icon="phosphor-envelope"
-                        placeholder="Optional - your@email.com"
-                        hint="We'll only use this to contact you about the event"
+                        placeholder="you@example.com"
+                        hint="Your email is not shown in the visitor list."
                     />
 
                     {{-- Visitor Category --}}
@@ -243,16 +243,16 @@
                                 class="btn btn-xs btn-ghost"
                             >
                                 <x-icon name="phosphor-arrow-clockwise" class="w-3 h-3" />
-                                Re-detect location
+                                Check location again
                             </button>
                         @endif
                     </div>
 
                     {{-- Comments --}}
                     <x-textarea
-                        label="Comments"
+                        label="Comments (optional)"
                         wire:model="comments"
-                        placeholder="Optional - Share your thoughts about the event!"
+                        placeholder="Share your thoughts about the event!"
                         hint="Maximum 500 characters"
                         rows="3"
                     />
@@ -277,8 +277,8 @@
         @else
             {{-- No active event with guestbook enabled --}}
             <x-alert
-                title="Guestbook Not Available"
-                description="There is no active event with the guestbook enabled at this time."
+                title="Guestbook Closed"
+                description="The guestbook is not accepting entries. Check back later."
                 icon="phosphor-info"
                 class="alert-info"
             />
@@ -316,7 +316,7 @@
                     class="flex items-center justify-center gap-3"
                 >
                     <x-button
-                        label="Sign Again"
+                        label="Add Another Entry"
                         wire:click="hideSuccess"
                         class="btn-primary"
                         icon="phosphor-plus"

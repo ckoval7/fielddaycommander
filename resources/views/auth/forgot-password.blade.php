@@ -6,7 +6,7 @@
     <x-slot:title>Forgot Password</x-slot:title>
 
     <div class="mb-4 text-sm">
-        Forgot your password? Enter your email and we'll send you a password reset link.
+        Enter your account email address to request a password reset link.
     </div>
 
     @if (session('status'))
@@ -21,7 +21,7 @@
 
             <div class="flex items-center justify-between pt-2">
                 <a href="{{ route('login') }}" class="link link-primary text-sm">
-                    Back to login
+                    Back to sign in
                 </a>
 
                 <x-button label="Email Reset Link" type="submit" class="btn-primary" icon="phosphor-paper-plane-tilt" />

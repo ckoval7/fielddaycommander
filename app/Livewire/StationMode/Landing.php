@@ -97,7 +97,7 @@ class Landing extends Component
         $this->validate([
             'callSign' => ['required', 'string', 'max:12', 'regex:/^[A-Z0-9\/]+$/'],
         ], [
-            'callSign.regex' => 'Enter a callsign using letters, numbers and "/" only.',
+            'callSign.regex' => 'Enter a callsign using letters, numbers, and "/" only.',
         ], [
             'callSign' => 'callsign',
         ]);
@@ -205,7 +205,7 @@ class Landing extends Component
             || ! $captain->checkPermissionTo('manage-stations')
         ) {
             RateLimiter::hit($rateLimitKey);
-            $this->addError('exitEmail', 'These credentials cannot take this browser out of station mode.');
+            $this->addError('exitEmail', 'This email and password cannot take this browser out of station mode.');
 
             return;
         }

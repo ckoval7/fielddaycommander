@@ -98,8 +98,8 @@ class DashboardManager extends Component
             'newDescription' => ['nullable', 'string'],
             'copyFrom' => ['nullable', 'integer', Rule::exists('dashboards', 'id')->where('user_id', auth()->id())],
         ], [
-            'newTitle.required' => 'Please provide a title for your dashboard.',
-            'newTitle.max' => 'The title cannot exceed 255 characters.',
+            'newTitle.required' => 'Please enter a dashboard name.',
+            'newTitle.max' => 'The dashboard name cannot exceed 255 characters.',
             'copyFrom.exists' => 'The selected dashboard to copy does not exist.',
         ]);
 
@@ -144,7 +144,7 @@ class DashboardManager extends Component
 
             $this->dispatch('toast', [
                 'title' => 'Success',
-                'description' => 'Dashboard duplicated successfully',
+                'description' => 'Dashboard duplicated',
                 'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
             ]);
@@ -197,7 +197,7 @@ class DashboardManager extends Component
 
             $this->dispatch('toast', [
                 'title' => 'Success',
-                'description' => 'Dashboard deleted successfully',
+                'description' => 'Dashboard deleted',
                 'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
             ]);

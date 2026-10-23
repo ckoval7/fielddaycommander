@@ -158,7 +158,7 @@ describe('approval_required mode', function () {
     test('registration pending page can be rendered', function () {
         $response = $this->get(route('registration.pending'));
         $response->assertStatus(200);
-        $response->assertSee('pending');
+        $response->assertSee('awaiting administrator approval');
     });
 });
 

@@ -39,15 +39,15 @@ class UserInvitation extends Notification
         $invitationUrl = url("/register/invite/{$this->token}");
 
         return (new MailMessage)
-            ->subject("You've been invited to FD Log DB")
+            ->subject("You've been invited to Field Day Commander")
             ->greeting("Hello {$notifiable->first_name},")
-            ->line("{$this->adminName} has invited you to join FD Log DB.")
+            ->line("{$this->adminName} has invited you to join Field Day Commander.")
             ->line('Your account details:')
             ->line("Call Sign: {$notifiable->call_sign}")
             ->line("Email: {$notifiable->email}")
             ->action('Accept Invitation', $invitationUrl)
             ->line('This invitation will expire in 72 hours.')
-            ->line("If you didn't expect this invitation, please disregard this email.");
+            ->line("If you didn't expect this invitation, please ignore this email.");
     }
 
     /**

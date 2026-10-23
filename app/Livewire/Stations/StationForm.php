@@ -278,11 +278,11 @@ class StationForm extends Component
             // Update existing station
             $station = Station::findOrFail($this->stationId);
             $station->update($stationData);
-            $successMessage = 'Station updated successfully';
+            $successMessage = 'Station updated.';
         } else {
             // Create new station
             $station = Station::create($stationData);
-            $successMessage = 'Station created successfully';
+            $successMessage = 'Station created.';
         }
 
         // Emit event to refresh parent list
@@ -358,7 +358,7 @@ class StationForm extends Component
         }
 
         if (! $this->allowsGota) {
-            $fail('The selected event\'s operating class does not allow a GOTA station.');
+            $fail('GOTA is not available for the selected event and operating class.');
         }
 
         if ($this->is_vhf_only || $this->is_satellite) {
@@ -422,7 +422,7 @@ class StationForm extends Component
     protected function messages(): array
     {
         return [
-            'name.required' => 'Please provide a station name.',
+            'name.required' => 'Please enter a station name.',
             'name.unique' => 'A station with this name already exists for this event.',
             'event_configuration_id.required' => 'Please select an event.',
             'radio_equipment_id.required' => 'Please select a primary radio.',

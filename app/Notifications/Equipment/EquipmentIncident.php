@@ -76,7 +76,7 @@ class EquipmentIncident extends Notification
         $message->greeting("Hello {$notifiable->first_name},")
             ->line("This is an urgent notification regarding your equipment at {$event->name}.")
             ->line("**Equipment {$incidentLabel}**: {$equipment->make} {$equipment->model}")
-            ->line("**Type**: {$equipment->type}")
+            ->line('**Type**: '.ucfirst(str_replace('_', ' ', $equipment->type)))
             ->line("**Status**: {$incidentLabel} on {$this->equipmentEvent->status_changed_at->format('M d, Y \a\t g:i A')}")
             ->line('**Event**: '.$event->name);
 
@@ -97,7 +97,7 @@ class EquipmentIncident extends Notification
             ->line("An equipment incident has been reported at {$event->name}.")
             ->line("**Incident Type**: {$incidentLabel}")
             ->line("**Equipment**: {$equipment->make} {$equipment->model}")
-            ->line("**Type**: {$equipment->type}")
+            ->line('**Type**: '.ucfirst(str_replace('_', ' ', $equipment->type)))
             ->line('**Serial Number**: '.($equipment->serial_number ?? 'Not recorded'));
 
         if ($equipment->value_usd) {

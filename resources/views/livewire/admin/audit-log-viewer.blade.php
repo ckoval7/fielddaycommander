@@ -10,7 +10,7 @@
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h1 class="text-3xl font-bold">Audit Logs</h1>
-                <p class="text-base-content/60 mt-1">View security and activity logs across the system</p>
+                <p class="text-base-content/60 mt-1">Review security events and activity in Field Day Commander.</p>
             </div>
             <x-button
                 label="Export CSV"
@@ -181,7 +181,7 @@
                             <div class="font-medium">{{ $log->user->call_sign }}</div>
                             <div class="text-xs text-base-content/60">{{ $log->user->first_name }} {{ $log->user->last_name }}</div>
                         @else
-                            <span class="text-base-content/40">—</span>
+                            <span class="text-base-content/40">System</span>
                         @endif
                     @endscope
 
@@ -241,7 +241,7 @@
                 <div class="text-center py-12">
                     <x-icon name="phosphor-file-magnifying-glass" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
                     <h3 class="text-lg font-semibold mb-2">No audit logs found</h3>
-                    <p class="text-base-content/60">Try adjusting your filters to see more results.</p>
+                    <p class="text-base-content/60">No activity matches the current filters. Clear filters to check for other entries.</p>
                 </div>
             </x-card>
         @endif
@@ -255,7 +255,7 @@
                 @if($this->selectedLog->is_critical)
                     <x-alert
                         title="Critical Security Event"
-                        description="This action has been flagged as a critical security event requiring attention."
+                        description="This action is marked as a critical security event."
                         icon="phosphor-warning"
                         class="alert-error"
                     />

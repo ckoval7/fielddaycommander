@@ -327,17 +327,17 @@ describe('WFD event summary', function () {
         makeReportEvent('WFD', '2027');
 
         Livewire\Livewire::actingAs($this->user)->test(ReportsIndex::class)
-            ->assertSee('WFD Event Summary (PDF)')
+            ->assertSee('Winter Field Day Summary (PDF)')
             ->assertSee('ADIF Log')
-            ->assertDontSee('Submission Sheet');
+            ->assertDontSee('ARRL Submission Sheet');
     });
 
     test('reports page hides the summary for Field Day events', function () {
         makeReportEvent('FD', '2025');
 
         Livewire\Livewire::actingAs($this->user)->test(ReportsIndex::class)
-            ->assertDontSee('WFD Event Summary (PDF)')
+            ->assertDontSee('Winter Field Day Summary (PDF)')
             ->assertSee('ADIF Log')
-            ->assertSee('Submission Sheet');
+            ->assertSee('ARRL Submission Sheet');
     });
 });

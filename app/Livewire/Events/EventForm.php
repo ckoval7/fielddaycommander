@@ -593,7 +593,7 @@ class EventForm extends Component
     {
         // Prevent updates to locked fields BEFORE the value changes
         if ($this->isLocked && array_key_exists($property, self::LOCKED_FIELDS)) {
-            $this->dispatch('notify', title: 'Field Locked', description: 'This field cannot be modified because the event has contacts.');
+            $this->dispatch('notify', title: 'Field Locked', description: 'This field is locked because the event has contacts or has started.');
 
             // Cancel the update by not allowing it to proceed
             $this->skipRender();
@@ -688,7 +688,7 @@ class EventForm extends Component
             return;
         }
 
-        session()->flash('toast', ['title' => 'Success', 'description' => 'Event saved successfully.', 'type' => 'success']);
+        session()->flash('toast', ['title' => 'Success', 'description' => 'Event saved.', 'type' => 'success']);
         $this->redirect(route('events.index'), navigate: true);
     }
 
@@ -956,7 +956,7 @@ class EventForm extends Component
                 'boolean',
                 function ($attribute, $value, $fail) {
                     if (! $this->hasAnyPowerSourceSelected()) {
-                        $fail('At least one power source must be selected.');
+                        $fail('Select at least one power source.');
                     }
                 },
             ],
@@ -1107,17 +1107,17 @@ class EventForm extends Component
     protected function messages(): array
     {
         return [
-            'name.required' => 'Please provide an event name.',
+            'name.required' => 'Please enter an event name.',
             'event_type_id.required' => 'Please select an event type.',
-            'start_time.required' => 'Please provide a start time.',
-            'end_time.required' => 'Please provide an end time.',
+            'start_time.required' => 'Please enter a start time.',
+            'end_time.required' => 'Please enter an end time.',
             'end_time.after' => 'The end time must be after the start time.',
-            'callsign.required' => 'Please provide a callsign.',
+            'callsign.required' => 'Please enter a callsign.',
             'callsign.regex' => 'The callsign format is invalid. Use only letters, numbers, and forward slashes.',
             'section_id.required' => 'Please select an ARRL/RAC section.',
             'operating_class_id.required' => 'Please select an operating class.',
-            'transmitter_count.required' => 'Please specify the number of transmitters.',
-            'max_power_watts.required' => 'Please specify the maximum power.',
+            'transmitter_count.required' => 'Please enter the number of transmitters.',
+            'max_power_watts.required' => 'Please enter the maximum power.',
             'gota_callsign.regex' => 'The GOTA callsign format is invalid. Use only letters, numbers, and forward slashes.',
             'gridSquare.regex' => 'Grid square must be a valid Maidenhead locator (e.g. DM79 or DM79ab).',
             'latitude.min' => 'Latitude must be between -90 and 90 degrees.',

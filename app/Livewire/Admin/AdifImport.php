@@ -130,7 +130,7 @@ class AdifImport extends Component
         }
 
         if (empty($result['records'])) {
-            $this->addError('adifFile', 'No QSO records found in the file.');
+            $this->addError('adifFile', 'No contacts found. Select an ADIF file containing contact records.');
 
             return;
         }
@@ -204,7 +204,7 @@ class AdifImport extends Component
         $this->operatorMappings = $this->withoutBlankSelections($this->operatorMappings);
 
         if (! $this->mappingsReferenceValidRecords($import)) {
-            $this->addError('mapping', 'One or more selected mappings are not valid for this event. Please review your selections.');
+            $this->addError('mapping', 'One or more field mappings are invalid for this event. Please review your selections.');
 
             return;
         }
@@ -254,7 +254,7 @@ class AdifImport extends Component
             ->count();
 
         if ($unmappedCount > 0) {
-            $this->addError('mapping', "{$unmappedCount} records still have unmapped fields. Please resolve all mappings before continuing.");
+            $this->addError('mapping', "{$unmappedCount} ".str('record')->plural($unmappedCount).' with unmapped fields. Please map all fields before continuing.');
 
             return;
         }

@@ -45,7 +45,7 @@ test('error fallback view renders with widget name', function () {
     ])->render();
 
     expect($view)->toContain('Test Widget');
-    expect($view)->toContain('Failed to load widget');
+    expect($view)->toContain('Could not load widget. Reload the page to try again.');
 });
 
 test('error fallback shows error message in debug mode', function () {
@@ -68,7 +68,7 @@ test('error fallback hides error message in production', function () {
     ])->render();
 
     expect($view)->not->toContain('Database connection failed');
-    expect($view)->toContain('Failed to load widget');
+    expect($view)->toContain('Could not load widget. Reload the page to try again.');
 });
 
 test('BandModeGrid pads band columns and pins the mode column for narrow screens', function () {

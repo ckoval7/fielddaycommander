@@ -4,7 +4,7 @@
 --}}
 <div class="space-y-6">
     {{-- Header --}}
-    <x-header title="Stations" subtitle="Manage field day stations and equipment assignments" separator progress-indicator>
+    <x-header title="Stations" subtitle="Manage stations and equipment assignments" separator progress-indicator>
         <x-slot:actions>
             @can('log-contacts')
                 <x-button label="Log Contact" icon="phosphor-pencil-line" class="btn-outline" link="{{ route('logging.station-select') }}" wire:navigate responsive />
@@ -113,7 +113,7 @@
                                 @endif
 
                                 @if($station->is_vhf_only)
-                                    <x-badge value="VHF-only" class="badge-info badge-sm sm:badge-md" icon="phosphor-cell-signal-high" />
+                                    <x-badge value="VHF/UHF Only" class="badge-info badge-sm sm:badge-md" icon="phosphor-cell-signal-high" />
                                 @endif
 
                                 @if($station->is_satellite)
@@ -203,22 +203,22 @@
                                             @endif
                                         </span>
                                         <x-button
-                                            label="Revoke"
+                                            label="Remove Browser"
                                             class="btn-xs btn-ghost text-error"
                                             wire:click="revokeDevice({{ $device->id }})"
-                                            wire:confirm="Revoke this browser? It will no longer be able to start station-mode sessions."
+                                            wire:confirm="Remove this browser from station mode? It will no longer be able to start station-mode sessions."
                                             spinner="revokeDevice({{ $device->id }})"
                                         />
                                     </div>
                                 @empty
-                                    <p class="text-xs text-base-content/60">None enrolled.</p>
+                                    <p class="text-xs text-base-content/60">No browsers are enrolled for this station.</p>
                                 @endforelse
                                 <x-button
                                     label="Use This Browser for Station Mode"
                                     icon="phosphor-desktop-tower"
                                     class="btn-xs btn-outline mt-2 h-auto min-h-6 py-1 pointer-coarse:min-h-11"
                                     wire:click="enrollThisBrowser({{ $station->id }})"
-                                    wire:confirm="Turn this browser into the station-mode terminal for '{{ $station->name }}'? You will be signed out, and operators will be able to log here by callsign."
+                                    wire:confirm="Use this browser for station mode at '{{ $station->name }}'? You will be signed out. Operators can then sign in here by callsign to log at this station."
                                     spinner="enrollThisBrowser({{ $station->id }})"
                                 />
                             </div>
@@ -270,7 +270,7 @@
                                     icon="phosphor-trash"
                                     class="btn-sm btn-ghost text-error min-h-[2.75rem] sm:min-h-[1.75rem]"
                                     wire:click="deleteStation({{ $station->id }})"
-                                    wire:confirm="Are you sure you want to delete '{{ $station->name }}'? {{ $station->contacts()->exists() ? 'This station has contacts and will be archived (soft deleted).' : 'This station will be permanently deleted.' }}"
+                                    wire:confirm="Delete '{{ $station->name }}'? {{ $station->contacts()->exists() ? 'This station has logged contacts and will be archived.' : 'This station will be permanently deleted.' }}"
                                     spinner
                                 />
                             @endcan

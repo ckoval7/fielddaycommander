@@ -98,13 +98,13 @@
 
                 {{-- Timezone --}}
                 <x-choices-offline
-                    label="Preferred Timezone"
+                    label="Preferred Time Zone"
                     wire:model="preferred_timezone"
                     :options="collect(timezone_identifiers_list())->map(fn($tz) => ['id' => $tz, 'name' => str_replace('_', ' ', $tz)])->toArray()"
-                    placeholder="Search timezone..."
+                    placeholder="Search time zones..."
                     single
                     searchable
-                    hint="Used for displaying timestamps in your local time"
+                    hint="Used where times are shown in your local time"
                 />
 
                 {{-- Email Notifications --}}
@@ -117,7 +117,7 @@
                             <div class="flex items-center gap-2">
                                 <x-checkbox checked disabled />
                                 <span>Security Alerts <span class="text-xs text-base-content/60">(always enabled)</span></span>
-                                <div class="tooltip" data-tip="Security notifications cannot be disabled for your protection">
+                                <div class="tooltip" data-tip="Security alerts are always enabled">
                                     <x-icon name="phosphor-info" class="w-4 h-4 text-base-content/40 cursor-help" />
                                 </div>
                             </div>
@@ -186,7 +186,7 @@
                             <x-icon name="phosphor-globe" class="w-5 h-5 text-primary shrink-0" />
                             <div class="min-w-0">
                                 <div class="font-medium">New Section Worked</div>
-                                <div class="text-sm text-base-content/60">When a new ARRL/RAC section is worked for the first time</div>
+                                <div class="text-sm text-base-content/60">When a new ARRL/RAC section is worked</div>
                             </div>
                         </div>
                         <x-toggle wire:model="notify_new_section" />
@@ -332,7 +332,7 @@
                                                 type="button"
                                                 wire:click="removeShiftReminderMinute({{ $minutes }})"
                                                 class="btn btn-ghost btn-xs btn-square -mr-1.5"
-                                                aria-label="Remove {{ $minutes }} minute reminder"
+                                                aria-label="Remove {{ $minutes }}-minute reminder"
                                             >
                                                 <x-icon name="phosphor-x" class="w-3 h-3" />
                                             </button>
@@ -340,7 +340,7 @@
                                     @endforeach
                                 </div>
                             @else
-                                <p class="text-sm text-base-content/50 mb-3">No reminders configured. You won't receive shift notifications.</p>
+                                <p class="text-sm text-base-content/50 mb-3">No shift reminders set. Add a time from 1 to 60 minutes before your shift.</p>
                             @endif
 
                             @if(count($this->shiftReminderMinutes) < 5)
@@ -355,7 +355,7 @@
                                         class="w-32"
                                     />
                                     <x-button
-                                        label="Add"
+                                        label="Add Reminder"
                                         wire:click="addShiftReminderMinute"
                                         class="btn-primary btn-sm"
                                         icon="phosphor-plus"
@@ -390,7 +390,7 @@
                                                 type="button"
                                                 wire:click="removeBulletinReminderMinute({{ $minutes }})"
                                                 class="btn btn-ghost btn-xs btn-square -mr-1.5"
-                                                aria-label="Remove {{ $minutes }} minute reminder"
+                                                aria-label="Remove {{ $minutes }}-minute reminder"
                                             >
                                                 <x-icon name="phosphor-x" class="w-3 h-3" />
                                             </button>
@@ -398,7 +398,7 @@
                                     @endforeach
                                 </div>
                             @else
-                                <p class="text-sm text-base-content/50 mb-3">No reminders configured. You won't receive bulletin notifications.</p>
+                                <p class="text-sm text-base-content/50 mb-3">No bulletin reminders set. Add a time from 1 to 60 minutes before a transmission.</p>
                             @endif
 
                             @if(count($this->bulletinReminderMinutes) < 5)
@@ -413,7 +413,7 @@
                                         class="w-32"
                                     />
                                     <x-button
-                                        label="Add"
+                                        label="Add Reminder"
                                         wire:click="addBulletinReminderMinute"
                                         class="btn-primary btn-sm"
                                         icon="phosphor-plus"

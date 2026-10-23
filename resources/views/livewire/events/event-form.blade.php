@@ -6,7 +6,7 @@
     <!-- Header -->
     <x-header
         title="{{ $mode === 'create' ? 'Create Event' : ($mode === 'clone' ? 'Clone Event' : 'Edit Event') }}"
-        subtitle="{{ $mode === 'create' ? 'Set up a new Field Day or contest event' : ($mode === 'clone' ? 'Create a copy of this event with updated details' : 'Update event details and configuration') }}"
+        subtitle="{{ $mode === 'create' ? 'Set up a Field Day or Winter Field Day event' : ($mode === 'clone' ? 'Create a copy of this event with updated details' : 'Update event details and configuration') }}"
         separator
         progress-indicator
     >
@@ -70,7 +70,7 @@
                         option-value="id"
                         icon="phosphor-scales"
                         placeholder="Default ({{ $year }})"
-                        hint="{{ $rulesVersionLocked ? 'Locked — event has already started.' : 'Which ARRL rule year to score by. Editable until the event starts.' }}"
+                        hint="{{ $rulesVersionLocked ? 'Locked because the event has started.' : 'Rules version used for scoring. Editable until the event starts.' }}"
                         :disabled="$rulesVersionLocked || empty($this->rulesVersionOptions)"
                     />
                 </div>
@@ -125,7 +125,7 @@
             <x-slot:title>Event Location</x-slot:title>
 
             <div class="space-y-4">
-                <p class="text-sm text-base-content/60">All location fields are optional, but each one unlocks different features. Fill in as many as apply to your site.</p>
+                <p class="text-sm text-base-content/60">Location details are optional. Add the details that apply to your site.</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <x-input
@@ -137,7 +137,7 @@
                         spellcheck="false"
                         icon="phosphor-map-trifold"
                         placeholder="DM79"
-                        hint="Maidenhead locator (e.g. DM79 or DM79ab). Reference info for operators; not used by any automated feature yet."
+                        hint="Maidenhead locator, such as DM79 or DM79ab."
                         maxlength="6"
                     />
 
@@ -268,7 +268,7 @@
                     <input type="checkbox" aria-label="Toggle WFD rules guidance" />
                     <div class="collapse-title text-sm font-medium">
                         <x-icon name="phosphor-info" class="w-4 h-4 inline" />
-                        WFD rules: class, category and location
+                        WFD rules: class, category, and location
                     </div>
                     <div class="collapse-content text-sm space-y-3">
                         <p>
@@ -280,17 +280,17 @@
                             <ul class="list-disc ml-5 mt-1 space-y-0.5">
                                 <li><strong>H, Home:</strong> inside a permanent livable residence.</li>
                                 <li><strong>I, Indoor:</strong> away from home, inside an insulated building on a permanent foundation (club shack, EOC, church, cabin).</li>
-                                <li><strong>O, Outdoor:</strong> tents, pavilions, canopies or other shelter without plumbing or HVAC.</li>
-                                <li><strong>M, Mobile:</strong> an RV, car, van, trailer or anything able to become mobile.</li>
+                                <li><strong>O, Outdoor:</strong> tents, pavilions, canopies, or other shelter without plumbing or HVAC.</li>
+                                <li><strong>M, Mobile:</strong> an RV, car, van, trailer, or anything able to become mobile.</li>
                             </ul>
                         </div>
                         <p>
-                            Class, category and location identifier stay the same for the whole event, even if you move.
+                            Class, category, and location identifier stay the same for the whole event, even if you move.
                             A moving station uses the section of its first contact: ARRL/RAC section for the US and Canada,
                             MX for Mexico, DX for everyone else.
                         </p>
                         <p>
-                            All operators, antennas and feed lines must fit within a 300 m diameter circle.
+                            All operators, antennas, and feed lines must fit within a 300 m diameter circle.
                             No remote operation, and 100 W PEP maximum.
                         </p>
                     </div>
@@ -398,7 +398,7 @@
                     autocapitalize="sentences"
                     icon="phosphor-lightbulb"
                     placeholder="Describe any other power source"
-                    hint="Optional: Specify other renewable/alternative power"
+                    hint="Optional. Describe any other power source."
                     :disabled="$isLocked"
                 />
 
@@ -490,7 +490,7 @@
                     />
 
                     <x-textarea
-                        label="Setup, operating and best visiting times"
+                        label="Setup, operating, and best visiting times"
                         wire:model="public_visiting_hours"
                         rows="2"
                         maxlength="500"
@@ -524,7 +524,7 @@
                         icon="phosphor-globe"
                         maxlength="255"
                         placeholder="https://example.org"
-                        hint="Optional. Website or Facebook page; must start with http:// or https://. Shown on the public page."
+                        hint="Optional. Website or social page, starting with http:// or https://. Shown on the public page."
                     />
 
                     <x-textarea
@@ -553,7 +553,7 @@
                     <x-alert icon="phosphor-info" class="alert-info">
                         <div class="text-sm">
                             <strong>Location-based Check-in:</strong>
-                            Visitors must be within the detection radius of your event location OR on a local subnet to sign the guestbook.
+                            Visitors must be within the detection radius of your event location or on a local subnet to sign the guestbook.
                             Set latitude and longitude in the <strong>Event Location</strong> section above.
                         </div>
                     </x-alert>
@@ -590,7 +590,7 @@
                         rows="4"
                         icon="phosphor-globe"
                         :placeholder="'192.168.1.0/24'.PHP_EOL.'10.0.0.0/8'"
-                        hint="One CIDR notation per line (e.g., 192.168.1.0/24). Visitors on these networks can sign in."
+                        hint="One network in CIDR notation per line (e.g., 192.168.1.0/24). Visitors on these networks can sign in."
                     />
                 @endif
             </div>

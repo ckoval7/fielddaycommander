@@ -108,7 +108,7 @@
                     icon="phosphor-stop"
                     class="btn-outline btn-error btn-sm"
                     wire:click="endSession"
-                    wire:confirm="Are you sure you want to end this session?"
+                    wire:confirm="End this session?"
                 />
             </div>
         </div>

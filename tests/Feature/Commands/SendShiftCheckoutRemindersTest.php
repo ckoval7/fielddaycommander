@@ -57,7 +57,7 @@ test('sends checkout reminder when a checked-in user is past the 30-minute thres
     Notification::assertSentTo($this->user, InAppNotification::class, function ($notification) {
         $data = $notification->toArray($this->user);
 
-        return str_contains($data['title'], 'Forgot to check out')
+        return str_contains($data['title'], 'Shift Check-out')
             && str_contains($data['title'], 'Operator');
     });
 });

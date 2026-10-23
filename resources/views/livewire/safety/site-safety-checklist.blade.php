@@ -44,11 +44,11 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-info" class="alert-info">
-                No event is currently selected. Please select an event to view the safety checklist.
+                Please select an event to view its safety checklist.
             </x-alert>
         @elseif($this->items->isEmpty())
             <x-alert icon="phosphor-info" class="alert-info">
-                No safety checklist items are applicable for this operating class.
+                No safety checklist items are available for this event.
             </x-alert>
         @else
             @php
@@ -62,7 +62,7 @@
                     $requiredRoles = collect($checklistTypes)->map(fn($t) => $t->label())->join(' or ');
                 @endphp
                 <x-alert icon="phosphor-lock" class="alert-warning">
-                    You must be signed on to a <strong>{{ $requiredRoles }}</strong> shift to check off items.
+                    Only volunteers assigned to a <strong>{{ $requiredRoles }}</strong> shift for this event can check off items.
                 </x-alert>
             @endif
 
@@ -101,7 +101,7 @@
                                                 <input
                                                     type="checkbox"
                                                     class="checkbox checkbox-sm mt-0.5"
-                                                    aria-label="Completion status: {{ $item->label }}"
+                                                    aria-label="Mark complete: {{ $item->label }}"
                                                     @checked($item->entry?->is_completed)
                                                     disabled
                                                 />
@@ -145,7 +145,7 @@
                                                 @if(str_contains($item->label, 'CPR - AED') && $this->cprAedTrainedUsers->isNotEmpty())
                                                     <div class="mt-2 text-xs text-success bg-success/5 border border-success/20 rounded-md px-3 py-2">
                                                         <x-icon name="phosphor-heart" class="w-3.5 h-3.5 inline text-success mr-1 -mt-0.5" />
-                                                        <span class="font-medium">Trained personnel:</span>
+                                                        <span class="font-medium">Users marked as CPR/AED trained:</span>
                                                         {{ $this->cprAedTrainedUsers->map(fn($u) => $u->call_sign . ' (' . $u->first_name . ')')->join(', ') }}
                                                     </div>
                                                 @endif

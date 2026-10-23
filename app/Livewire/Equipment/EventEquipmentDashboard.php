@@ -481,7 +481,7 @@ class EventEquipmentDashboard extends Component
 
         // Attempt status change
         if ($commitment->changeStatus($newStatus, auth()->user(), $notes)) {
-            $this->dispatch('notify', title: 'Success', description: 'Equipment status updated successfully.', type: 'success');
+            $this->dispatch('notify', title: 'Success', description: 'Equipment status updated.', type: 'success');
 
             // Clear cached computed properties
             unset($this->allCommitments);
@@ -498,7 +498,7 @@ class EventEquipmentDashboard extends Component
             $this->newStatus = '';
             $this->statusChangeNotes = '';
         } else {
-            $this->dispatch('notify', title: 'Error', description: 'Invalid status transition.', type: 'error');
+            $this->dispatch('notify', title: 'Error', description: 'This status change is not available.', type: 'error');
         }
     }
 

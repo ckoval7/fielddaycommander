@@ -9,7 +9,7 @@
             <x-slot:title>Roles</x-slot:title>
             <x-slot:menu>
                 <x-button wire:click="openCreateModal" class="btn-primary btn-sm" icon="phosphor-plus">
-                    Create New Role
+                    Create Role
                 </x-button>
             </x-slot:menu>
 
@@ -33,7 +33,7 @@
                                 <td>
                                     <div class="font-medium">{{ $role->name }}</div>
                                     @if($role->name === 'System Administrator' || $role->name === 'Config Only')
-                                        <x-badge value="System Protected" class="badge-warning badge-sm" />
+                                        <x-badge value="Protected Role" class="badge-warning badge-sm" />
                                     @endif
                                 </td>
                                 <td>
@@ -47,6 +47,7 @@
                                         wire:click.stop="confirmDelete({{ $role->id }})"
                                         class="btn-ghost btn-xs text-error"
                                         icon="phosphor-trash"
+                                        aria-label="Delete role {{ $role->name }}"
                                     />
                                 </td>
                             </tr>
@@ -87,7 +88,7 @@
                                         <x-checkbox
                                             value="{{ $permission->name }}"
                                             wire:model.live="selectedPermissions"
-                                            :label="$permission->name"
+                                            :label="$permissionLabels[$permission->name] ?? $permission->name"
                                             :hint="$permission->description"
                                         />
                                     @endforeach
@@ -115,14 +116,14 @@
         @else
             <x-card>
                 <div class="text-center py-12 text-gray-500">
-                    Select a role to manage permissions
+                    Select a role to view and change its permissions.
                 </div>
             </x-card>
         @endif
     </div>
 
     {{-- Create Role Modal --}}
-    <x-modal wire:model="showCreateModal" title="Create New Role">
+    <x-modal wire:model="showCreateModal" title="Create Role">
         <div class="space-y-4">
             <x-input
                 label="Role Name"
@@ -144,7 +145,7 @@
                 <div class="space-y-2 max-h-48 overflow-y-auto border border-base-300 rounded p-2">
                     @foreach($permissions as $permission)
                         <x-checkbox
-                            label="{{ $permission->name }}"
+                            label="{{ $permissionLabels[$permission->name] ?? $permission->name }}"
                             value="{{ $permission->name }}"
                             wire:model="initialPermissions"
                             wire:key="perm-{{ $permission->id }}"
@@ -171,7 +172,7 @@
 
     {{-- Delete Confirmation Modal --}}
     <x-modal wire:model="showDeleteModal" title="Delete Role">
-        <p>Are you sure you want to delete this role? This action cannot be undone.</p>
+        <p>Delete '{{ $roles->firstWhere('id', $roleToDelete)?->name }}'? This cannot be undone.</p>
 
         <x-slot:actions>
             <x-button wire:click="$set('showDeleteModal', false)" class="btn-ghost">

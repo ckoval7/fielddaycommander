@@ -144,7 +144,7 @@ test('event form can create new event with configuration', function () {
         ->assertHasNoErrors()
         ->assertRedirect(route('events.index'));
 
-    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved successfully.']);
+    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved.']);
 
     // Verify Event was created
     $event = Event::where('name', 'Field Day 2025')->first();
@@ -265,7 +265,7 @@ test('event form can edit existing event', function () {
         ->assertHasNoErrors()
         ->assertRedirect(route('events.index'));
 
-    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved successfully.']);
+    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved.']);
 
     $event->refresh();
     expect($event->name)->toBe('Updated Name');
@@ -1415,7 +1415,7 @@ test('event form highlights power source checkboxes when none are selected', fun
         ->assertHasErrors(['uses_commercial_power'])
         ->assertSeeHtml('checkbox checkbox-sm checkbox-error')
         ->assertSeeHtml('border-error bg-error/5')
-        ->assertSee('At least one power source must be selected.');
+        ->assertSee('Select at least one power source.');
 });
 
 test('WFD rules guidance shows for WFD events only', function () {
@@ -1431,10 +1431,10 @@ test('WFD rules guidance shows for WFD events only', function () {
 
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('event_type_id', $wfdType->id)
-        ->assertSee('WFD rules: class, category and location')
+        ->assertSee('WFD rules: class, category, and location')
         ->assertSee('300 m diameter')
         ->set('event_type_id', $this->eventType->id)
-        ->assertDontSee('WFD rules: class, category and location')
+        ->assertDontSee('WFD rules: class, category, and location')
         ->assertDontSee('300 m diameter');
 });
 

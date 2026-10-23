@@ -384,9 +384,9 @@ class EventDashboard extends Component
         $this->rescoreTargetVersion = '';
 
         $bonusSummary = sprintf(
-            '%d bonus %s repointed, %d recomputed, %d invalidated',
+            '%d bonus %s moved to the selected rules, %d recalculated, %d invalidated',
             $result['bonuses_repointed'],
-            $result['bonuses_repointed'] === 1 ? 'claim' : 'claims',
+            str('claim')->plural($result['bonuses_repointed']),
             $result['bonuses_recomputed'],
             $result['bonuses_invalidated'],
         );
@@ -398,7 +398,7 @@ class EventDashboard extends Component
         $this->dispatch(
             'notify',
             title: 'Rescored',
-            description: "Applied {$target} rules. {$result['rescored']} contacts updated, {$result['unchanged']} unchanged. {$bonusSummary}. Review any invalidated or flagged bonuses.",
+            description: "Applied {$target} rules. Contacts updated: {$result['rescored']}. Unchanged: {$result['unchanged']}. {$bonusSummary}. Review your bonus and objective claims.",
         );
     }
 

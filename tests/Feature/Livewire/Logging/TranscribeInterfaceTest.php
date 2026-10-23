@@ -330,7 +330,7 @@ test('archived event shows read-only message', function () {
     $archivedStation = $archivedEvent->eventConfiguration->stations->first();
 
     Livewire::test(TranscribeInterface::class, ['station' => $archivedStation])
-        ->assertSee('This event is archived');
+        ->assertSee('Transcription unavailable');
 });
 
 // --- QSO Edit / Delete / Restore ---

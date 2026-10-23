@@ -16,7 +16,7 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <x-button
-                    label="Full Shift Schedule"
+                    label="Shift Schedule"
                     icon="phosphor-calendar"
                     class="btn-outline"
                     link="{{ route('schedule.index') }}"
@@ -36,7 +36,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-info" class="alert-info">
-                No event is currently selected. Please select an event to view your shifts.
+                Please select an event to view your shifts.
             </x-alert>
         @else
             {{-- Event hours summary --}}
@@ -174,7 +174,7 @@
                                     @if($this->activeFilterCount > 0)
                                         No upcoming shifts match your filters.
                                     @else
-                                        You have no upcoming shifts scheduled.
+                                        You have no upcoming shifts. Open Shift Schedule to sign up.
                                     @endif
                                 </p>
                             </div>

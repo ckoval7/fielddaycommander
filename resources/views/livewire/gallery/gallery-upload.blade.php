@@ -5,7 +5,7 @@
 <div>
     <x-header title="Upload Photo" :subtitle="$eventConfiguration->event->name">
         <x-slot:actions>
-            <x-button label="Back to Gallery" icon="phosphor-arrow-left" link="{{ route('gallery.show', $eventConfiguration) }}" />
+            <x-button label="Back to Album" icon="phosphor-arrow-left" link="{{ route('gallery.show', $eventConfiguration) }}" />
         </x-slot:actions>
     </x-header>
 
@@ -39,7 +39,7 @@
                     @if($photo)
                         <div class="space-y-4">
                             @if(in_array($photo->getMimeType(), ['image/jpeg', 'image/png', 'image/gif', 'image/webp']))
-                                <img src="{{ $photo->temporaryUrl() }}" alt="Preview" class="max-h-64 mx-auto rounded-lg">
+                                <img src="{{ $photo->temporaryUrl() }}" alt="Preview of your upload" class="max-h-64 mx-auto rounded-lg">
                             @endif
                             <p class="text-sm text-base-content/70">{{ $photo->getClientOriginalName() }}</p>
                             <x-button label="Choose Different Photo" icon="phosphor-arrow-clockwise" x-on:click="$refs.fileInput.click()" />
@@ -51,7 +51,7 @@
                                 <p class="text-base-content/70">Drag and drop a photo here, or</p>
                                 <x-button label="Choose Photo" icon="phosphor-folder-open" x-on:click="$refs.fileInput.click()" class="mt-2" />
                             </div>
-                            <p class="text-xs text-base-content/50">JPEG, PNG, GIF, or WebP up to 25MB</p>
+                            <p class="text-xs text-base-content/50">JPEG, PNG, GIF, or WebP up to 12 MB</p>
                         </div>
                     @endif
                 </div>
@@ -64,8 +64,8 @@
                 wire:model="caption"
                 autocapitalize="sentences"
                 label="Caption (optional)"
-                placeholder="Add a caption to your photo..."
-                hint="Describe what's happening in the photo"
+                placeholder="Add a caption"
+                hint="Describe what's happening in the photo (up to 500 characters)."
             />
 
             <div class="flex justify-end gap-3">

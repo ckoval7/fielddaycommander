@@ -72,7 +72,7 @@ test('cannot modify Config Only role permissions', function () {
         ->call('selectRole', $configOnlyRole->id)
         ->set('selectedPermissions', ['manage-users'])
         ->call('savePermissions')
-        ->assertDispatched('notify', fn ($name, $params) => str_contains($params['description'] ?? '', 'cannot be modified'));
+        ->assertDispatched('notify', fn ($name, $params) => str_contains($params['description'] ?? '', 'cannot be changed'));
 
     // Permissions should be unchanged (8 permissions)
     expect($configOnlyRole->fresh()->permissions->count())->toBe(8);

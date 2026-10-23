@@ -158,7 +158,7 @@ test('buildNotificationData returns correct data', function () {
 
     $data = $this->source->buildNotificationData($assignment, $this->user, 0);
 
-    expect($data['title'])->toBe('Forgot to check out? Operator')
+    expect($data['title'])->toBe('Shift Check-out: Operator')
         ->and($data['message'])->toContain('Operator')
         ->and($data['message'])->toContain($shift->end_time->format('H:i'))
         ->and($data['url'])->toBe('/schedule/my-shifts');

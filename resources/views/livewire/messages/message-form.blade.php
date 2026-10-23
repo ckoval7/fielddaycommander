@@ -6,7 +6,7 @@
     {{-- Header --}}
     <x-header
         title="{{ $isEditing ? 'Edit Message' : 'Log Message' }}"
-        subtitle="{{ $isEditing ? 'Update message details' : ($ics213Enabled ? 'Enter a new radiogram or ICS-213 message' : 'Enter a new radiogram message') }}"
+        subtitle="{{ $isEditing ? 'Update message details' : ($ics213Enabled ? 'Enter a new radiogram or ICS-213 message' : 'Enter a new radiogram') }}"
         separator
         progress-indicator
     >
@@ -107,7 +107,7 @@
                     />
 
                     <x-select
-                        label="HX Code (Optional)"
+                        label="Handling Instructions (HX, Optional)"
                         wire:model.live="hxCode"
                         :options="[
                             ['id' => 'hxa', 'name' => 'HXA - Collect delivery authorized'],
@@ -158,8 +158,8 @@
                         label="Check (Word Count)"
                         wire:model="checkCount"
                         icon="phosphor-calculator"
-                        placeholder="Auto-calculated from message text"
-                        hint="Automatically counted from message text"
+                        placeholder="Counted from message text"
+                        hint="Updated when you change the message text"
                         required
                     />
 
@@ -311,10 +311,10 @@
             <x-textarea
                 label="Message Text"
                 wire:model.live.debounce.300ms="messageText"
-                placeholder="{{ $format === 'radiogram' ? 'Enter message text using X for periods, XX for paragraph breaks...' : 'Enter message text' }}"
+                placeholder="{{ $format === 'radiogram' ? 'Enter the radiogram text. Use X in place of a period.' : 'Enter message text' }}"
                 rows="6"
                 required
-                hint="{{ $format === 'radiogram' ? 'Word count is auto-calculated as the Check field' : '' }}"
+                hint="{{ $format === 'radiogram' ? 'The word count updates the Check field' : '' }}"
             />
 
             @if($format === 'radiogram' && $checkCount)
@@ -343,12 +343,12 @@
                         <x-toggle
                             label="SM/SEC Message"
                             wire:model.live="isSmMessage"
-                            :hint="$scoresMessageBonuses ? 'Mark as the official Section Manager / Section Emergency Coordinator message' : 'Mark as the message to your Section Manager / Section Emergency Coordinator (not scored for this event)'"
+                            :hint="$scoresMessageBonuses ? 'Message to your Section Manager or Section Emergency Coordinator. For bonus credit, send it from the event site via amateur radio RF during Field Day.' : 'Message to your Section Manager or Section Emergency Coordinator (not scored for this event)'"
                         />
 
                         @if($isSmMessage)
                             <x-alert icon="phosphor-warning" class="alert-warning">
-                                Only one SM/SEC message may exist per event. This message will be marked as the official SM/SEC radiogram.
+                                You can mark one message per event as the SM/SEC message.
                             </x-alert>
                         @endif
 
@@ -379,12 +379,12 @@
                         <x-toggle
                             label="SM/SEC Message"
                             wire:model.live="isSmMessage"
-                            :hint="$scoresMessageBonuses ? 'Mark as the official Section Manager / Section Emergency Coordinator message' : 'Mark as the message to your Section Manager / Section Emergency Coordinator (not scored for this event)'"
+                            :hint="$scoresMessageBonuses ? 'Message to your Section Manager or Section Emergency Coordinator. For bonus credit, send it from the event site via amateur radio RF during Field Day.' : 'Message to your Section Manager or Section Emergency Coordinator (not scored for this event)'"
                         />
 
                         @if($isSmMessage)
                             <x-alert icon="phosphor-warning" class="alert-warning">
-                                Only one SM/SEC message may exist per event.
+                                You can mark one message per event as the SM/SEC message.
                             </x-alert>
                         @endif
 
@@ -459,7 +459,7 @@
                         label="Mode"
                         wire:model="modeCategory"
                         :options="[
-                            ['id' => '', 'name' => '— Select —'],
+                            ['id' => '', 'name' => 'Select mode'],
                             ['id' => 'CW', 'name' => 'CW'],
                             ['id' => 'Phone', 'name' => 'Phone'],
                             ['id' => 'Digital', 'name' => 'Digital'],

@@ -6,7 +6,7 @@
     {{-- Header --}}
     <x-header
         title="{{ $stationId ? 'Edit Station' : 'Create Station' }}"
-        subtitle="{{ $stationId ? 'Update station configuration and equipment' : 'Configure a new station for field day operations' }}"
+        subtitle="{{ $stationId ? 'Update station configuration and equipment' : 'Configure a new station for your event' }}"
         separator
         progress-indicator
     >

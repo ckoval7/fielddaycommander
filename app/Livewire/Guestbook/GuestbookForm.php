@@ -190,7 +190,7 @@ class GuestbookForm extends Component
 
         // Check if guestbook is enabled
         if (! $this->eventConfig || ! $this->eventConfig->guestbook_enabled) {
-            $this->addError('form', 'The guestbook is currently not accepting entries.');
+            $this->addError('form', 'The guestbook is not accepting entries. Check back later.');
 
             return;
         }
@@ -205,7 +205,7 @@ class GuestbookForm extends Component
             $minutes = ceil($seconds / 60);
 
             throw ValidationException::withMessages([
-                'form' => "Too many entries. Please try again in {$minutes} minute(s).",
+                'form' => "Too many entries. Please try again in {$minutes} ".str('minute')->plural($minutes).'.',
             ]);
         }
 
@@ -325,8 +325,8 @@ class GuestbookForm extends Component
     {
         return [
             'name.required' => 'Please enter your name.',
-            'presence_type.required' => 'Please select how you are visiting.',
-            'visitor_category.required' => 'Please select a visitor category.',
+            'presence_type.required' => 'Please choose In Person or Online.',
+            'visitor_category.required' => 'Please choose an option under “I am visiting as”.',
             'honeypot.max' => 'Form submission failed.',
         ];
     }

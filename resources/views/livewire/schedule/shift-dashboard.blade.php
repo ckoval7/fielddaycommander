@@ -36,7 +36,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-info" class="alert-info">
-                No event is currently selected. Please select an event to view the shift dashboard.
+                Please select an event to view the shift dashboard.
             </x-alert>
         @elseif(!$coverage)
             <div class="text-center py-12">
@@ -168,7 +168,7 @@
                                                     data-assignable
                                                 @endif
                                                 style="left: {{ $coverage->offsetPercent($shift->start_time) }}%; width: {{ $coverage->widthPercent($shift->start_time, $shift->end_time) }}%; top: {{ $laneIndex * $laneHeight + 4 }}px; height: {{ $laneHeight - 6 }}px; {{ $barStyle }}"
-                                                title="{{ $row['role']->name }} · {{ $formatRange($shift->start_time, $shift->end_time) }} · {{ $staffed }}/{{ $shift->capacity }} filled{{ $names ? ' · ' . $names : '' }}{{ $canAssign ? ' · Click to assign someone' : '' }}"
+                                                title="{{ $row['role']->name }} · {{ $formatRange($shift->start_time, $shift->end_time) }} · {{ $staffed }}/{{ $shift->capacity }} filled{{ $names ? ' · ' . $names : '' }}{{ $canAssign ? ' · Assign a volunteer' : '' }}"
                                                 data-testid="gantt-bar"
                                             >
                                                 <span class="font-semibold">{{ $staffed }}/{{ $shift->capacity }}</span>
@@ -251,13 +251,13 @@
                     </x-slot:menu>
 
                     <p class="text-xs text-base-content/60 mb-3">
-                        Shifts with nobody signed up, or less than half filled.
+                        Time periods with no volunteers assigned or less than half the scheduled capacity filled.
                     </p>
 
                     @if($activeGaps->isEmpty())
                         <div class="text-center py-8">
                             <x-icon name="phosphor-check-circle" class="w-12 h-12 mx-auto mb-2 text-success" />
-                            <p class="font-medium">No upcoming coverage gaps</p>
+                            <p class="font-medium">No current or upcoming coverage gaps</p>
                         </div>
                     @else
                         <ul class="space-y-2 max-h-96 overflow-y-auto">
@@ -276,7 +276,7 @@
                                     @if($gapShift)
                                         role="button"
                                         tabindex="0"
-                                        title="Click to assign someone"
+                                        title="Assign a volunteer"
                                         wire:click="openAssignModal({{ $gapShift->id }})"
                                         x-on:keydown.enter="$wire.openAssignModal({{ $gapShift->id }})"
                                         data-assignable

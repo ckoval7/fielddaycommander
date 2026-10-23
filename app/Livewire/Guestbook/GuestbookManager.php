@@ -302,7 +302,7 @@ class GuestbookManager extends Component
         $this->dispatch('bonus-claimed');
 
         $this->closeVerifyModal();
-        $this->dispatch('toast', title: 'Success', description: 'Entry updated successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Entry updated.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function openDeleteModal(int $entryId): void
@@ -342,7 +342,7 @@ class GuestbookManager extends Component
 
         $this->selectedIds = array_values(array_diff($this->selectedIds, [$entry->id]));
         $this->closeDeleteModal();
-        $this->dispatch('toast', title: 'Success', description: 'Entry deleted successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Entry deleted.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function toggleSelectAll(): void
@@ -410,7 +410,7 @@ class GuestbookManager extends Component
         }
 
         if (count($this->selectedIds) > self::BULK_ACTION_LIMIT) {
-            $this->dispatch('toast', title: 'Error', description: 'Bulk actions limited to '.self::BULK_ACTION_LIMIT.' entries', icon: 'phosphor-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'Select no more than '.self::BULK_ACTION_LIMIT.' entries at a time.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -433,7 +433,7 @@ class GuestbookManager extends Component
         $this->dispatch('bonus-claimed');
 
         $this->selectedIds = [];
-        $this->dispatch('toast', title: 'Success', description: count($selectedIds)." entries {$verb}", icon: $icon, css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: count($selectedIds).' '.str('entry')->plural(count($selectedIds))." {$verb}.", icon: $icon, css: 'alert-success');
     }
 
     public function clearFilters(): void

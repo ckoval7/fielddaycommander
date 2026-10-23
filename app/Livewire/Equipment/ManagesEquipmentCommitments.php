@@ -189,7 +189,7 @@ trait ManagesEquipmentCommitments
             ]
         );
 
-        $this->dispatch('notify', title: 'Success', description: 'Equipment committed to event successfully.', type: 'success');
+        $this->dispatch('notify', title: 'Success', description: 'Equipment committed to event.', type: 'success');
 
         $this->showCommitModal = false;
         $this->commitEquipmentId = null;
@@ -245,7 +245,7 @@ trait ManagesEquipmentCommitments
             $this->showDetailsModal = false;
             unset($this->equipment);
         } else {
-            $this->dispatch('notify', title: 'Error', description: 'Invalid status.', type: 'error');
+            $this->dispatch('notify', title: 'Error', description: 'Select a valid status.', type: 'error');
         }
     }
 
@@ -293,7 +293,7 @@ trait ManagesEquipmentCommitments
             'delivery_notes' => $this->tempNotes,
         ]);
 
-        $this->dispatch('notify', title: 'Success', description: 'Notes updated successfully.', type: 'success');
+        $this->dispatch('notify', title: 'Success', description: 'Delivery notes saved.', type: 'success');
         $this->showNotesModal = false;
         $this->updateNoteId = null;
         $this->tempNotes = null;
@@ -385,7 +385,7 @@ trait ManagesEquipmentCommitments
         }
 
         $count = $equipmentItems->count();
-        $this->dispatch('notify', title: 'Success', description: "{$count} item(s) committed to event successfully.", type: 'success');
+        $this->dispatch('notify', title: 'Success', description: $count.' '.str('item')->plural($count).' committed to event.', type: 'success');
 
         $this->showBulkCommitModal = false;
         $this->bulkCommitEventId = null;
