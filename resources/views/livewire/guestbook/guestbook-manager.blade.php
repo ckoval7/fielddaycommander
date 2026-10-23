@@ -437,8 +437,11 @@
                 <x-toggle
                     label="Mark as Verified"
                     wire:model="editVerified"
-                    hint="Confirm the visitor’s category and visit details before verifying."
+                    hint="Confirm the visitor’s category and visit details before verifying. Agency and elected official visits must be in person to count."
                 />
+                @error('editVerified')
+                    <div class="text-sm text-error" role="alert">{{ $message }}</div>
+                @enderror
 
                 @if($this->editingEntry->is_verified && $this->editingEntry->verifiedBy)
                     <div class="text-sm text-base-content/60">

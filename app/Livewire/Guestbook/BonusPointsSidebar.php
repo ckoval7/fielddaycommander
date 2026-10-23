@@ -30,6 +30,7 @@ class BonusPointsSidebar extends Component
     {
         return GuestbookEntry::where('event_configuration_id', $this->eventConfigId)
             ->verified()
+            ->whereNot(fn ($query) => $query->online()->whereIn('visitor_category', VisitorCategory::inPersonVisitCategories()))
             ->toBase()
             ->selectRaw('visitor_category, COUNT(*) as aggregate')
             ->groupBy('visitor_category')

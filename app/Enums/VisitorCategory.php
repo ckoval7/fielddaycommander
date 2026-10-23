@@ -41,11 +41,32 @@ enum VisitorCategory: string
     }
 
     /**
+     * Whether the bonus for this category requires the visitor to come to the site.
+     *
+     * Both visit bonuses (elected official and served agency) count only in-person visits,
+     * so an online guestbook entry in these categories can't be verified.
+     */
+    public function requiresInPersonVisit(): bool
+    {
+        return in_array($this, self::inPersonVisitCategories(), true);
+    }
+
+    /**
+     * Categories whose bonus requires an on-site visit. The single list the guestbook checks against.
+     *
+     * @return list<self>
+     */
+    public static function inPersonVisitCategories(): array
+    {
+        return [self::ElectedOfficial, self::Agency];
+    }
+
+    /**
      * @return list<self>
      */
     public static function bonusEligible(): array
     {
-        return [self::ElectedOfficial, self::Agency];
+        return self::inPersonVisitCategories();
     }
 
     /**
