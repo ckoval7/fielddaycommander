@@ -60,6 +60,8 @@ Keep the conditions that narrow it down (screen size, offline, a particular mode
 
 Leave out changes nobody would notice: typos, wording tweaks, refactors, tests, CI, formatting, and dependency bumps that don't fix anything or need action. When you're not sure, ask whether anyone would ever search the changelog for it.
 
+Also leave out fixes for bugs that never reached a release. If the problem came in with a change still under **Unreleased**, nobody running a release ever saw it, so fold the fix into that work instead of adding an entry.
+
 
 ## Releases
 
