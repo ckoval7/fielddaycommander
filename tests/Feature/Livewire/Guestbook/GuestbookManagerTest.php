@@ -506,7 +506,6 @@ describe('additional features', function () {
         expect($component->get('entryStats')['bonus_eligible'])->toBe(0);
         $component->assertDontSee('Guestbook Bonuses')
             ->assertDontSee('Bonus Eligible')
-            ->assertDontSee('Elected Official (bonus)')
             ->assertSee('Elected Official');
     });
 
@@ -533,7 +532,25 @@ describe('additional features', function () {
         Livewire::test(GuestbookManager::class, ['event' => $this->event])
             ->assertSee('Guestbook Bonuses')
             ->assertSee('Bonus Eligible')
-            ->assertSee('Elected Official (bonus)');
+            ->assertSeeHtml('<span class="text-base-content/60">· Bonus Eligible</span>')
+            ->assertSeeHtml('<div class="text-base-content/60">Bonus Eligible</div>');
+    });
+
+    test('entry rows show category, presence and callsign as plain text, not badges or code', function () {
+        $this->actingAs($this->admin);
+
+        GuestbookEntry::factory()->verified()->electedOfficial()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'callsign' => 'K1ABC',
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->assertSee('K1ABC')
+            ->assertSeeHtml('<span class="whitespace-nowrap">In Person</span>')
+            ->assertDontSeeHtml('<code')
+            ->assertDontSeeHtml('font-mono')
+            ->assertDontSeeHtml('badge-warning')
+            ->assertDontSeeHtml('badge-info');
     });
 
     test('search resets pagination', function () {
