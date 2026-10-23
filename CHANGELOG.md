@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- On the Clone Stations page, the target event was preselected using the wrong ID, so it could show blank or a different event, and accepting the default could clone stations into the wrong event or fail. It now preselects the event you're viewing.
 - Opening an invitation link that was invalid, expired or already used sent you to a blank sign-in page. The page now says the invitation is invalid, expired, or already accepted.
 - In developer mode, clicking the X on the amber testing banner did nothing. It now hides the banner and keeps it hidden for the rest of your session.
 - On the event equipment dashboard, choosing **Unassigned** in the station filter on its own did not show the **Clear Filters** button, so the only way back to all stations was to reopen the filter. The button now appears.
