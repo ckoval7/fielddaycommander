@@ -58,7 +58,7 @@ class StationClone extends Component
         // Default target to context event
         $contextEvent = app(EventContextService::class)->getContextEvent();
         if ($contextEvent) {
-            $this->targetEventId = $contextEvent->id;
+            $this->targetEventId = $contextEvent->eventConfiguration?->id;
         }
     }
 
@@ -363,7 +363,7 @@ class StationClone extends Component
         // Reset to context event (session-overridden or active event)
         $activeEvent = app(EventContextService::class)->getContextEvent();
         if ($activeEvent) {
-            $this->targetEventId = $activeEvent->id;
+            $this->targetEventId = $activeEvent->eventConfiguration?->id;
         }
     }
 
