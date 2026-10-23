@@ -238,17 +238,17 @@
                             <div class="text-sm text-base-content/60">Contacts</div>
                             <div class="text-2xl font-bold">{{ number_format($this->qsoBreakdown['total_contacts']) }}</div>
                         </div>
-                        <div>
-                            <div class="text-sm text-base-content/60">QSO Points</div>
-                            <div class="text-2xl font-bold">{{ number_format($event->eventConfiguration?->calculateQsoScore() ?? 0) }}</div>
-                        </div>
-                        <div>
-                            <div class="text-sm text-base-content/60">Bonus Points</div>
-                            <div class="text-2xl font-bold">{{ number_format($event->eventConfiguration?->calculateBonusScore() ?? 0) }}</div>
-                        </div>
+                        @foreach($this->scoringHeadline as $term)
+                            @if($term instanceof \App\Scoring\Dto\ScoreTerm)
+                                <div>
+                                    <div class="text-sm text-base-content/60">{{ $term->label }}</div>
+                                    <div class="text-2xl font-bold">{{ $term->value }}</div>
+                                </div>
+                            @endif
+                        @endforeach
                         <div>
                             <div class="text-sm text-base-content/60">Final Score</div>
-                            <div class="text-2xl font-bold text-primary">{{ number_format($event->final_score) }}</div>
+                            <div class="text-2xl font-bold text-primary">{{ number_format($this->scoreBreakdown?->total ?? $event->final_score) }}</div>
                         </div>
                     </div>
                     <div class="mt-4 text-xs text-base-content/60">

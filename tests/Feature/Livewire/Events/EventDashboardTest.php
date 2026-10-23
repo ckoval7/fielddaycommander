@@ -19,6 +19,7 @@ use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -914,3 +915,29 @@ test('delete requires delete-events permission', function () {
         ->call('delete')
         ->assertForbidden();
 });
+
+test('overview scoring summary follows the event rule set', function (string $code, string $version, array $expected, array $absent) {
+    $this->actingAs($this->user);
+
+    $eventType = EventType::firstOrCreate(['code' => $code], ['name' => $code, 'is_active' => true]);
+    $event = Event::factory()->create(['event_type_id' => $eventType->id, 'rules_version' => $version]);
+    EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'max_power_watts' => 100,
+        'has_gota_station' => false,
+    ]);
+
+    $html = Livewire::test(EventDashboard::class, ['event' => $event])->html();
+    $card = Str::between($html, 'Scoring Summary', 'Scores are calculated');
+
+    foreach ($expected as $label) {
+        expect($card)->toContain($label);
+    }
+    foreach ($absent as $label) {
+        expect($card)->not->toContain($label);
+    }
+})->with([
+    'Field Day' => ['FD', '2025', ['QSO Base Pts', 'Power Multi.', 'Bonus Pts', 'Final Score'], ['OM + 1']],
+    'Winter Field Day' => ['WFD', '2026', ['QSO Points', 'OM + 1', 'Final Score'], ['Bonus', 'Power Multi.']],
+]);
