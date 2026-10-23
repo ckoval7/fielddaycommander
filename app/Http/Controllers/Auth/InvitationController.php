@@ -27,7 +27,7 @@ class InvitationController extends Controller
 
         if (! $invitation || ! $invitation->isValid()) {
             return redirect()->route('login')
-                ->with('error', 'This invitation is invalid or has expired.');
+                ->with('error', 'This invitation is invalid, expired, or already accepted.');
         }
 
         return view('auth.accept-invitation', [
@@ -48,7 +48,7 @@ class InvitationController extends Controller
 
         if (! $invitation || ! $invitation->isValid()) {
             return redirect()->route('login')
-                ->with('error', 'This invitation is invalid or has expired.');
+                ->with('error', 'This invitation is invalid, expired, or already accepted.');
         }
 
         if ($invitation->user->isLocked()) {

@@ -8,10 +8,10 @@
     <div x-data="{ recovery: false }">
         <div class="mb-4 text-sm text-base-content/70">
             <p x-show="! recovery">
-                Please enter the authentication code from your authenticator app.
+                Enter the authentication code from your authenticator app.
             </p>
             <p x-show="recovery" x-cloak>
-                Please enter one of your emergency recovery codes.
+                Enter one of your recovery codes.
             </p>
         </div>
 
@@ -20,7 +20,7 @@
 
             <div class="space-y-4">
                 <div x-show="! recovery">
-                    <x-input label="Code" name="code" inputmode="numeric" autofocus autocomplete="one-time-code" errorField="code" />
+                    <x-input label="Authentication Code" name="code" inputmode="numeric" autofocus autocomplete="one-time-code" errorField="code" />
                 </div>
 
                 <div x-show="recovery" x-cloak>
@@ -35,7 +35,7 @@
                         Use an authentication code
                     </button>
 
-                    <x-button label="Log In" type="submit" class="btn-primary" icon="phosphor-sign-in" />
+                    <x-button label="Sign In" type="submit" class="btn-primary" icon="phosphor-sign-in" />
                 </div>
             </div>
         </form>

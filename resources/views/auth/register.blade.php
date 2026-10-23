@@ -11,7 +11,7 @@
         @if(config('auth-security.registration_mode') === 'approval_required')
             <div class="alert alert-info mb-4">
                 <x-icon name="phosphor-info" class="w-5 h-5" />
-                <span class="text-sm">New accounts require administrator approval before you can log in.</span>
+                <span class="text-sm">New accounts require administrator approval before you can sign in.</span>
             </div>
         @endif
 
@@ -37,7 +37,7 @@
 
             <div class="flex items-center justify-end pt-2">
                 <a href="{{ route('login') }}" class="link link-primary text-sm mr-4">
-                    Already registered?
+                    Sign in
                 </a>
 
                 <x-button label="Register" type="submit" class="btn-primary" icon="phosphor-user-plus" />
