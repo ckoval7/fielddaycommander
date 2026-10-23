@@ -20,11 +20,11 @@ enum VisitorCategory: string
     {
         return match ($this) {
             self::GeneralPublic => 'General Public',
-            self::HamClub => 'Ham Club Member',
+            self::HamClub => 'Amateur Radio Club Member',
             self::Youth => 'Youth',
-            self::AresRaces => 'ARES/RACES',
-            self::Media => 'Media',
-            self::Agency => 'Agency (FEMA, etc.)',
+            self::AresRaces => 'ARES/RACES Volunteer',
+            self::Media => 'Media Representative',
+            self::Agency => 'Agency Representative (e.g., Red Cross)',
             self::ArrlOfficial => 'ARRL Official',
             self::ElectedOfficial => 'Elected Official',
         };

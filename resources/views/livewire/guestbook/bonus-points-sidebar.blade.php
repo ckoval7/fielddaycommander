@@ -39,7 +39,7 @@
                     </div>
                     <x-badge :value="$this->arrlOfficialCount" class="badge-warning badge-sm" />
                 </div>
-                <div class="text-xs text-base-content/50 -mt-2 ml-7">Tracked but not bonus-eligible per rules</div>
+                <div class="text-xs text-base-content/50 -mt-2 ml-7">ARRL official visits do not earn a guestbook bonus.</div>
             @endif
 
             {{-- Media Representatives (tracked here, bonus claimed in Manual Bonus Claims) --}}
@@ -51,7 +51,7 @@
                     </div>
                     <x-badge :value="$this->mediaCount" class="badge-secondary badge-sm" />
                 </div>
-                <div class="text-xs text-base-content/50 -mt-2 ml-7">Claim Media Publicity bonus on the event dashboard</div>
+                <div class="text-xs text-base-content/50 -mt-2 ml-7">A media visit alone does not earn points. Claim qualifying media coverage on the event dashboard.</div>
             @endif
 
             <div class="divider my-2"></div>
@@ -76,7 +76,7 @@
                 </x-alert>
             @elseif($this->totalBonusPoints === $this->maxBonusPoints)
                 <x-alert icon="phosphor-check-circle" class="alert-success text-xs">
-                    All guestbook bonuses earned!
+                    All guestbook bonuses earned.
                 </x-alert>
             @endif
         </div>
