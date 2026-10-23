@@ -6,12 +6,25 @@
 
 - The guestbook has a kiosk mode for a shared tablet or laptop at the event. Open it from the small Kiosk mode link at the bottom of the guestbook page. It drops the header and menu, shows the form at the top with the latest entries below it, newest first, and after each entry a countdown ring on the thank-you screen clears it for the next visitor. It never fills in or credits whoever is signed in on that browser, and it marks visitors as in person. Because every visitor shares one browser, the kiosk accepts up to 60 entries an hour instead of 5.
 
+### Changed
+
+- Equipment menus now use **My Equipment** and **Equipment Catalog** instead of **My Catalog** and **All User Catalogs**, matching the page headings. **Settings** is now **System Settings** in the sidebar, user menu, and page heading. Sign-in and session controls use **Sign In** and **Sign Out**, including station mode's former **End Session** button.
+- Guestbook visitor categories use plainer names for club members, agency representatives, ARES/RACES volunteers, and media representatives, with stored values unchanged. The message format and printed header now say **Radiogram** instead of **ARRL Radiogram**.
+
 ### Fixed
 
+- Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
+- The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
+- The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.
+- The photo upload page said photos up to 25 MB were accepted, but uploads over 12 MB failed. It now says 12 MB.
+- The setup wizard and **Site Branding** said SVG logos were accepted, but they were rejected on upload. They now say PNG or JPG.
+- The logbook's **Operator** filter selected contacts by who logged them. It's now labeled **Logger**. The dashboard Info Card's **Location** row showed the ARRL/RAC section and is now labeled **Section**.
+- The event dashboard's scoring note said scores updated there in real time, but the page doesn't live-update. It now says scores are calculated from logged contacts and claimed awards.
+- System Settings and the setup wizard described the weather contact email as a public site contact. They now label it **Weather Contact Email** and explain that it's sent to the National Weather Service with weather requests.
 - On a laptop or desktop, the guestbook's recent visitors were squeezed into narrow columns, with names, dates and comments cut off or wrapped a word per line. They now fill the column, one card per row. The form and the entry list also lost a second heading each, and on phones the form fields sit closer to the screen edge.
 - When equipment committed to an event was marked lost or damaged, System Administrators received the incident notification twice, and owners who were also admins or equipment managers could receive it two or three times. Each person now receives it once.
 - When running `deploy.sh` or `update.sh`, every `[INFO]`, `[WARN]`, `[ERROR]`, and phase line appeared twice in `/var/log/fd-commander-deploy.log` or `/var/log/fd-commander-update.log`, respectively. Each line now appears once, and the message shown when running without root privileges goes to stderr.
-- On the station equipment assignment page, keyboard and screen reader users tabbing through **Committed to Event** or **All Equipment Catalog** heard drag instructions that promised arrow-key controls that didn't work. They now tab to each card's **Assign** or **Commit & Assign** button, which names the equipment, and mouse drag and drop still works.
+- On the station equipment assignment page, keyboard and screen reader users tabbing through **Committed to Event** or **Equipment Catalog** heard drag instructions that promised arrow-key controls that didn't work. They now tab to each card's **Assign** or **Commit & Assign** button, which names the equipment, and mouse drag and drop still works.
 - When reading dashboard chart data with a screen reader, the hidden data table wasn't reliably announced as a table with column headers. It now uses an HTML table with column headers.
 - Since 26.09.0, ticking **Youth (age 18 or younger)** on your own Profile page and saving left the box unticked when you returned. Operators who marked themselves as youth this way weren't counted toward the Field Day youth participation bonus. The setting now saves.
 
