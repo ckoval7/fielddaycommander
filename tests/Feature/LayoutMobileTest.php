@@ -74,5 +74,5 @@ test('manifest is valid and its icons exist', function () {
 test('touch-height menu rows keep their labels vertically centered', function () {
     $css = file_get_contents(resource_path('css/app.css'));
 
-    expect($css)->toMatch('/\.menu :where\(li:not\(\.menu-title\) > :is\(a, button, summary\)\) \{[^}]*min-height: 2\.75rem;[^}]*align-content: center;/');
+    expect($css)->toMatch('/\.menu :where\(li:not\(\.menu-title\) > :is\(a, button, summary\)\),\s*\.menu :where\(li:not\(\.menu-title\) > details > summary\) \{[^}]*min-height: 2\.75rem;[^}]*align-content: center;/');
 });

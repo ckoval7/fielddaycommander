@@ -773,7 +773,7 @@ class EquipmentAssignment extends Component
         $warnings = [];
 
         $bandCheck = $this->validateBandCompatibility($equipmentId, $this->stationId);
-        if (! $bandCheck['compatible'] && $bandCheck['warning_message']) {
+        if ($bandCheck['warning_message']) {
             $warnings[] = [
                 'title' => 'Band Compatibility',
                 'message' => $bandCheck['warning_message'],

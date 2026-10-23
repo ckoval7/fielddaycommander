@@ -38,6 +38,7 @@ class DeveloperBanner extends Component
     public function dismiss(): void
     {
         $this->isDismissed = true;
+        $this->isVisible = false;
     }
 
     public function refreshTime(): void

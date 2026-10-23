@@ -9,6 +9,7 @@ use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Section;
@@ -1142,4 +1143,35 @@ test('full-bleed transcribe layout matches the 12px phone gutter', function () {
     Livewire::test(TranscribeInterface::class, ['station' => $this->station])
         ->assertSeeHtml('class="max-sm:-mx-3"')
         ->assertDontSeeHtml('max-sm:-mx-5');
+});
+
+test('exchange example follows the event type', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->assertSeeHtml('placeholder="1423 W1AW 3A CT"');
+
+    $wfd = EventType::firstOrCreate(
+        ['code' => 'WFD'],
+        ['name' => 'Winter Field Day', 'is_active' => true],
+    );
+    $this->event->update(['event_type_id' => $wfd->id]);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station->fresh()])
+        ->assertSeeHtml('placeholder="1423 W1AW 1H CT"')
+        ->assertDontSee('3A CT');
+});
+
+test('change station link has an accessible name', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->assertSeeHtml('aria-label="Change Station"');
+});
+
+test('exchange composer only prevents default on tab when accepting a suggestion', function () {
+    $view = file_get_contents(resource_path('views/components/logging/exchange-composer.blade.php'));
+
+    expect($view)->not->toContain('@keydown.tab.prevent')
+        ->and($view)->toContain('@keydown.tab="');
 });

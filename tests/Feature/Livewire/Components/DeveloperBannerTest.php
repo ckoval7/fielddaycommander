@@ -65,7 +65,9 @@ describe('Banner Visibility', function () {
             ->assertSet('isVisible', true)
             ->assertSee('DEVELOPER MODE (TESTING)')
             ->call('dismiss')
-            ->assertSet('isDismissed', true);
+            ->assertSet('isDismissed', true)
+            ->assertSet('isVisible', false)
+            ->assertDontSee('DEVELOPER MODE (TESTING)');
     });
 
     test('dismissal persists in session across component instances', function () {
@@ -80,7 +82,10 @@ describe('Banner Visibility', function () {
             ->call('dismiss')
             ->assertSet('isDismissed', true);
 
-        // The session-based dismissal is tested via the isDismissed property
+        // A fresh instance in the same session stays hidden
+        Livewire::test(DeveloperBanner::class)
+            ->assertSet('isVisible', false)
+            ->assertDontSee('DEVELOPER MODE (TESTING)');
     });
 });
 

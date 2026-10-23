@@ -194,7 +194,7 @@
                     option-label="name"
                     class="w-40"
                 />
-                @if($searchQuery || $typeFilter || $statusFilter || $stationFilter)
+                @if($searchQuery || $typeFilter || $statusFilter || $stationFilter !== null)
                     <x-button
                         label="Clear Filters"
                         icon="phosphor-x"
@@ -352,7 +352,7 @@
                             <x-icon name="phosphor-tray" class="w-16 h-16 mx-auto opacity-50 mb-4" />
                             <p class="text-lg font-semibold mb-2">No Equipment Found</p>
                             <p class="text-sm">
-                                @if($searchQuery || $typeFilter || $statusFilter || $stationFilter)
+                                @if($searchQuery || $typeFilter || $statusFilter || $stationFilter !== null)
                                     No equipment matches your current filters.
                                 @else
                                     No equipment has been committed to this event yet.

@@ -75,7 +75,7 @@
                     @endif
                 </div>
                 <div class="flex-shrink-0">
-                    <a href="{{ route('logging.transcribe.select') }}" class="btn btn-ghost btn-sm" wire:navigate>
+                    <a href="{{ route('logging.transcribe.select') }}" class="btn btn-ghost btn-sm" aria-label="Change Station" wire:navigate>
                         <x-icon name="phosphor-arrow-left" class="w-4 h-4" />
                         <span class="hidden sm:inline">Change Station</span>
                     </a>
@@ -239,7 +239,7 @@
             <x-logging.qso-log
                 title="Recently Transcribed"
                 subtitle="This station only"
-                example="1423 W1AW 3A CT"
+                :example="$this->exchangeExample"
                 :time-heading="'Time ('.$timeLabel.')'"
             >
                 <x-slot:cards>
@@ -286,7 +286,7 @@
                 </x-slot:rows>
 
                 <x-logging.exchange-composer
-                    placeholder="1423 W1AW 3A CT"
+                    :placeholder="'1423 '.$this->exchangeExample"
                     :suggestions="$suggestions"
                     :duplicate-warning="$isDuplicate ? $dupeWarning : null"
                 :participant-warning="$participantWarning ?: null"
@@ -299,7 +299,7 @@
 
                     <div class="flex flex-wrap items-center gap-x-2 text-xs text-base-content/50">
                         <span>Time: <span class="font-mono font-semibold text-base-content/70">{{ $contactTime }}</span> {{ $timeLabel }}</span>
-                        <span class="text-base-content/30">Start with the QSO time, e.g. 1423 W1AW 3A CT. Time stays set for the next entry.</span>
+                        <span class="text-base-content/30">Start with the QSO time, e.g. 1423 {{ $this->exchangeExample }}. Time stays set for the next entry.</span>
                     </div>
                 </x-logging.exchange-composer>
             </x-logging.qso-log>

@@ -13,6 +13,19 @@
 
 ### Fixed
 
+- On the Clone Stations page, the target event could show blank or a different event, and accepting the default could clone stations into the wrong event or fail. It now preselects the event you're viewing.
+- A screen left on the get-ready countdown stayed on 00:00:00 after the event started until someone refreshed it. It now switches to the live dashboard within a few seconds of the start time, staggered so several screens don't all reload at once.
+- Opening an invitation link that was invalid, expired or already used sent you to a blank sign-in page. It now says the invitation is invalid, expired or already accepted.
+- In developer mode, clicking the X on the amber testing banner did nothing. It now hides the banner and keeps it hidden for the rest of your session.
+- On the event equipment dashboard, choosing only **Unassigned** in the station filter did not show **Clear Filters**, so the only way back to all stations was to reopen the filter. The button now appears.
+- Downloading the Field Day Cabrillo log or the submission sheet PDF failed with a server error when the event callsign was portable, such as W1AW/1. The files now download, with the slash in the file name replaced by an underscore.
+- During Winter Field Day, the transcribe screen's exchange box and help text showed a Field Day example (1423 W1AW 3A CT), but 3A is not a Winter Field Day class. The example now fits the event, such as 1423 W1AW 1H CT.
+- On the logging and transcribe screens, pressing Tab in the exchange box did nothing, so keyboard users couldn't reach the band and mode controls or the log. Tab now moves on, and accepts a suggestion only when one is highlighted. On phones, screen readers had no name for the transcribe screen's back button; it now reads Change Station.
+- Screen readers read the remove buttons on the logbook's active filter chips as "times" or nothing. Each now reads "Remove" and the filter name. On the equipment list, a photo thumbnail could only be opened with a mouse or touch; keyboard users can now Tab to it and press Enter.
+- On a shared station computer in station mode, every page change added another set of idle-activity listeners in the browser, and they piled up. They are now removed when the page changes.
+- Clearing the weather contact email or the callsign API key in System Settings and saving left the old value in place, so the old address was still sent to the National Weather Service. Blanking either field now clears it.
+- Permission descriptions in the Role Manager kept their old text after an update. Existing installs now pick up new descriptions when permissions are re-seeded.
+- Assigning equipment to a station gave no warning when the antenna or the station's radio had no bands set, or when the station had no primary radio. Those cases now show the same confirmation as an incompatible band, so you can check before assigning.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.
@@ -27,6 +40,8 @@
 - On the station equipment assignment page, keyboard and screen reader users tabbing through **Committed to Event** or **Equipment Catalog** heard drag instructions that promised arrow-key controls that didn't work. They now tab to each card's **Assign** or **Commit & Assign** button, which names the equipment, and mouse drag and drop still works.
 - When reading dashboard chart data with a screen reader, the hidden data table wasn't reliably announced as a table with column headers. It now uses an HTML table with column headers.
 - Since 26.09.0, ticking **Youth (age 18 or younger)** on your own Profile page and saving left the box unticked when you returned. Operators who marked themselves as youth this way weren't counted toward the Field Day youth participation bonus. The setting now saves.
+- The Weather page showed only "No weather data yet" while a local weather alert was active but no forecast had loaded, such as with no internet. Active alerts now show whether or not there is a forecast.
+- With metric units, the Weather page highlighted wind gusts from 25 km/h, well below the 25 mph it uses otherwise. Gusts are now highlighted from 40 km/h, the same as 25 mph.
 
 ## 26.10.11 - 2026-10-21
 

@@ -236,7 +236,7 @@ class W1awBulletinForm extends Component
             abort(403);
         }
 
-        $entry = BulletinScheduleEntry::findOrFail($entryId);
+        $entry = BulletinScheduleEntry::forEvent($this->event->id)->findOrFail($entryId);
         $this->editingEntryId = $entry->id;
         $this->scheduleMode = $entry->mode;
         $this->scheduleFrequencies = $entry->frequencies;
@@ -259,7 +259,7 @@ class W1awBulletinForm extends Component
             'scheduleNotes' => 'nullable|string|max:500',
         ]);
 
-        $entry = BulletinScheduleEntry::findOrFail($this->editingEntryId);
+        $entry = BulletinScheduleEntry::forEvent($this->event->id)->findOrFail($this->editingEntryId);
         $entry->update([
             'scheduled_at' => $this->scheduleScheduledAt,
             'mode' => $this->scheduleMode,
@@ -287,7 +287,7 @@ class W1awBulletinForm extends Component
             abort(403);
         }
 
-        BulletinScheduleEntry::findOrFail($entryId)->delete();
+        BulletinScheduleEntry::forEvent($this->event->id)->findOrFail($entryId)->delete();
         $this->dispatch('toast', title: 'Transmission deleted', type: 'success');
     }
 
