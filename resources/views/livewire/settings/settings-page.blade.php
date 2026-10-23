@@ -9,16 +9,20 @@
     </div>
 
     <x-tabs wire:model="activeTab">
-        <x-tab name="system-preferences" label="System Preferences" icon="phosphor-gear-six">
-            <livewire:settings.system-preferences />
-        </x-tab>
+        @can('manage-settings')
+            <x-tab name="system-preferences" label="System Preferences" icon="phosphor-gear-six">
+                <livewire:settings.system-preferences />
+            </x-tab>
 
-        <x-tab name="branding" label="Site Branding" icon="phosphor-paint-brush">
-            <livewire:settings.site-branding />
-        </x-tab>
+            <x-tab name="branding" label="Site Branding" icon="phosphor-paint-brush">
+                <livewire:settings.site-branding />
+            </x-tab>
+        @endcan
 
-        <x-tab name="roles" label="Role Management" icon="phosphor-shield-check">
-            <livewire:settings.role-manager />
-        </x-tab>
+        @can('manage-roles')
+            <x-tab name="roles" label="Role Management" icon="phosphor-shield-check">
+                <livewire:settings.role-manager />
+            </x-tab>
+        @endcan
     </x-tabs>
 </div>

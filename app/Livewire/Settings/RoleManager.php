@@ -25,6 +25,8 @@ class RoleManager extends Component
 
     public ?int $roleToDelete = null;
 
+    public ?int $editingRoleId = null;
+
     // Create/Edit form fields
     public string $roleName = '';
 
@@ -45,12 +47,12 @@ class RoleManager extends Component
 
     public function mount(): void
     {
-        Gate::authorize('manage-settings');
+        Gate::authorize('manage-roles');
     }
 
     public function selectRole(int $roleId): void
     {
-        Gate::authorize('manage-settings');
+        Gate::authorize('manage-roles');
 
         $this->selectedRoleId = $roleId;
         $role = Role::findById($roleId);
@@ -59,7 +61,7 @@ class RoleManager extends Component
 
     public function savePermissions(): void
     {
-        Gate::authorize('manage-settings');
+        Gate::authorize('manage-roles');
 
         if (! $this->selectedRoleId) {
             return;
@@ -70,6 +72,13 @@ class RoleManager extends Component
         // System Administrator protection
         if ($role->name === 'System Administrator' && empty($this->selectedPermissions)) {
             $this->dispatch('notify', title: 'Error', description: 'Keep at least one permission for the System Administrator role.');
+
+            return;
+        }
+
+        // System Administrator must keep role management, so roles can always be fixed
+        if ($role->name === 'System Administrator' && ! in_array('manage-roles', $this->selectedPermissions, true)) {
+            $this->dispatch('notify', title: 'Error', description: 'The System Administrator role must keep the Manage Roles permission.');
 
             return;
         }
@@ -103,17 +112,20 @@ class RoleManager extends Component
 
     public function createRole(): void
     {
-        Gate::authorize('manage-settings');
+        Gate::authorize('manage-roles');
 
         $this->validate([
             'roleName' => ['required', 'string', 'max:255', 'unique:roles,name'],
             'roleDescription' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $role = Role::create([
+        // Unguarded so a column-list cache from before the description
+        // column existed (Eloquent keeps one per process) can't drop it.
+        $role = Role::unguarded(fn (): Role => Role::create([
             'name' => $this->roleName,
             'guard_name' => 'web',
-        ]);
+            'description' => $this->normalizedDescription(),
+        ]));
 
         if (! empty($this->initialPermissions)) {
             $role->givePermissionTo($this->initialPermissions);
@@ -121,6 +133,7 @@ class RoleManager extends Component
 
         AuditLog::log('role.created', newValues: [
             'role' => $role->name,
+            'description' => $role->description,
             'permissions' => $this->initialPermissions,
         ]);
 
@@ -128,9 +141,62 @@ class RoleManager extends Component
         $this->dispatch('notify', title: 'Success', description: 'Role created.');
     }
 
+    public function openEditModal(int $roleId): void
+    {
+        Gate::authorize('manage-roles');
+
+        $role = Role::findById($roleId);
+
+        $this->resetValidation();
+        $this->editingRoleId = $role->id;
+        $this->roleDescription = $role->description ?? '';
+        $this->showEditModal = true;
+    }
+
+    public function updateRole(): void
+    {
+        Gate::authorize('manage-roles');
+
+        if (! $this->editingRoleId) {
+            return;
+        }
+
+        $this->validate([
+            'roleDescription' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $role = Role::findById($this->editingRoleId);
+        $oldDescription = $role->description;
+
+        $role->forceFill(['description' => $this->normalizedDescription()])->save();
+
+        AuditLog::log('role.updated', newValues: [
+            'role' => $role->name,
+            'description' => $role->description,
+        ], oldValues: [
+            'description' => $oldDescription,
+        ]);
+
+        $this->showEditModal = false;
+        $this->editingRoleId = null;
+        $this->reset('roleDescription');
+
+        $this->dispatch('notify', title: 'Success', description: 'Role updated.');
+    }
+
+    /**
+     * The description field trimmed, with a blank value stored as null.
+     */
+    private function normalizedDescription(): ?string
+    {
+        $description = trim($this->roleDescription);
+
+        return $description === '' ? null : $description;
+    }
+
     public function confirmDelete(int $roleId): void
     {
-        Gate::authorize('manage-settings');
+        Gate::authorize('manage-roles');
 
         $role = Role::findById($roleId);
 
@@ -160,7 +226,7 @@ class RoleManager extends Component
 
     public function deleteRole(): void
     {
-        Gate::authorize('manage-settings');
+        Gate::authorize('manage-roles');
 
         if (! $this->roleToDelete) {
             return;
@@ -214,7 +280,7 @@ class RoleManager extends Component
                 'manage-event-equipment' => 'Manage Event Equipment',
                 'edit-any-equipment' => 'Edit Any Equipment',
                 'manage-users' => 'Manage Users',
-                'manage-roles' => 'Manage Roles (Unused)',
+                'manage-roles' => 'Manage Roles',
                 'manage-settings' => 'Manage System Settings',
                 'sign-up-shifts' => 'Sign Up for Shifts',
                 'manage-guestbook' => 'Manage Guestbook',

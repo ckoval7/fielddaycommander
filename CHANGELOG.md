@@ -8,12 +8,14 @@
 
 ### Changed
 
+- Role management is now controlled by the **Manage Roles** permission instead of **Manage System Settings**, so you can let someone edit roles without giving them system preferences and site branding. Someone with only **Manage Roles** sees just the **Role Management** tab in **System Settings**. On upgrade, every role that could change system settings also gets **Manage Roles**, so nobody loses access, and the System Administrator role can't have it removed.
 - Equipment menus now use **My Equipment** and **Equipment Catalog** instead of **My Catalog** and **All User Catalogs**, matching the page headings. **Settings** is now **System Settings** in the sidebar, user menu, and page heading. Sign-in and session controls use **Sign In** and **Sign Out**, including station mode's former **End Session** button.
 - Guestbook visitor categories use plainer names for club members, agency representatives, ARES/RACES volunteers, and media representatives, with stored values unchanged. The printed message header now says **Radiogram** instead of **ARRL Radiogram**.
 
 ### Fixed
 
 - A guestbook entry from an online visitor could be verified as an agency or elected official visit, which earns the visit bonus even though the visit was not in person. Verifying one from the edit window now shows a message that agency and elected official visits must be in person to count, and **Verify** on a selection skips those entries and says how many it skipped. The bonus eligible count and the bonus sidebar no longer include online entries. Entries already verified are left as they are.
+- In the Role Manager, the description typed when creating a role was thrown away. It's now saved and shown under the role's name, and you can change it later with the **Edit** button on the selected role. The built-in roles get short descriptions on upgrade, unless they already have one.
 - On the Clone Stations page, the target event could show blank or a different event, and accepting the default could clone stations into the wrong event or fail. It now preselects the event you're viewing.
 - A screen left on the get-ready countdown stayed on 00:00:00 after the event started until someone refreshed it. It now switches to the live dashboard within a few seconds of the start time, staggered so several screens don't all reload at once.
 - Opening an invitation link that was invalid, expired or already used sent you to a blank sign-in page. It now says the invitation is invalid, expired or already accepted.
@@ -25,7 +27,6 @@
 - Screen readers read the remove buttons on the logbook's active filter chips as "times" or nothing. Each now reads "Remove" and the filter name. On the equipment list, a photo thumbnail could only be opened with a mouse or touch; keyboard users can now Tab to it and press Enter.
 - On a shared station computer in station mode, every page change added another set of idle-activity listeners in the browser, and they piled up. They are now removed when the page changes.
 - Clearing the weather contact email or the callsign API key in System Settings and saving left the old value in place, so the old address was still sent to the National Weather Service. Blanking either field now clears it.
-- Permission descriptions in the Role Manager kept their old text after an update. Existing installs now pick up new descriptions when permissions are re-seeded.
 - Assigning equipment to a station gave no warning when the antenna or the station's radio had no bands set, or when the station had no primary radio. Those cases now show the same confirmation as an incompatible band, so you can check before assigning.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.

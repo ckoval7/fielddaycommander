@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\Setting;
 use App\Support\VolunteerHours;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -37,6 +38,15 @@ class SystemPreferences extends Component
     public ?string $organization_email = null;
 
     public ?string $organization_phone = null;
+
+    /**
+     * Runs on every request, so actions stay gated even though the settings
+     * page also opens for users who can only manage roles.
+     */
+    public function boot(): void
+    {
+        Gate::authorize('manage-settings');
+    }
 
     public function mount(): void
     {

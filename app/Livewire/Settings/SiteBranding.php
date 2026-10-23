@@ -7,6 +7,7 @@ namespace App\Livewire\Settings;
 
 use App\Models\AuditLog;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -26,6 +27,15 @@ class SiteBranding extends Component
     public ?string $footer_text = null;
 
     public ?string $welcome_message = null;
+
+    /**
+     * Runs on every request, so actions stay gated even though the settings
+     * page also opens for users who can only manage roles.
+     */
+    public function boot(): void
+    {
+        Gate::authorize('manage-settings');
+    }
 
     public function mount(): void
     {

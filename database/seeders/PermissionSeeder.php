@@ -38,8 +38,8 @@ class PermissionSeeder extends Seeder
 
             // User Administration
             ['name' => 'manage-users', 'description' => 'Create, edit, and delete user accounts'],
-            ['name' => 'manage-roles', 'description' => 'Not used. Role management requires manage-settings.'],
-            ['name' => 'manage-settings', 'description' => 'Change system preferences, site branding, roles, and permissions'],
+            ['name' => 'manage-roles', 'description' => 'Create and delete roles and choose their permissions'],
+            ['name' => 'manage-settings', 'description' => 'Change system preferences and site branding'],
 
             // Shift Participation
             ['name' => 'sign-up-shifts', 'description' => 'Sign up for shifts, cancel signups, and check in and out'],

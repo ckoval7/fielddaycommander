@@ -280,7 +280,7 @@ Route::middleware(['auth', 'verified', 'can:manage-users'])->group(function () {
     Route::get('/users', UserManagement::class)->name('users.index');
 });
 
-Route::middleware(['auth', 'verified', 'can:manage-settings'])->group(function () {
+Route::middleware(['auth', 'verified', 'can:access-settings'])->group(function () {
     Route::get('/settings', SettingsPage::class)->name('settings.index');
 });
 
