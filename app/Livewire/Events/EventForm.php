@@ -14,6 +14,8 @@ use App\Models\Organization;
 use App\Models\Section;
 use App\Models\Setting;
 use App\Scoring\Contracts\FieldDayRuleSet;
+use App\Scoring\Contracts\RuleSet;
+use App\Scoring\Dto\PowerContext;
 use App\Scoring\RuleSetFactory;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
@@ -474,6 +476,17 @@ class EventForm extends Component
     #[Computed]
     public function usesPowerMultiplier(): bool
     {
+        $rules = $this->selectedRuleSet();
+
+        return $rules === null || $rules instanceof FieldDayRuleSet;
+    }
+
+    /**
+     * The ruleset the event would be scored under with the form's current
+     * event type and rules version, or null when neither resolves one.
+     */
+    protected function selectedRuleSet(): ?RuleSet
+    {
         $code = $this->event_type_id
             ? EventType::query()->whereKey($this->event_type_id)->value('code')
             : null;
@@ -481,51 +494,68 @@ class EventForm extends Component
         $versions = $code ? app(RuleSetFactory::class)->versionsFor($code) : [];
 
         if ($code === null || $versions === []) {
-            return true;
+            return null;
         }
 
-        $rules = app(RuleSetFactory::class)->resolve($code, $this->rules_version ?? end($versions));
-
-        return $rules instanceof FieldDayRuleSet;
-    }
-
-    #[Computed]
-    public function powerMultiplier(): string
-    {
-        if ($this->max_power_watts > 100) {
-            return '1';
-        }
-
-        if ($this->max_power_watts <= 5 && $this->hasQrpNaturalPowerBonus()) {
-            return '5';
-        }
-
-        // 6-100W or QRP without natural power bonus gets 2x
-        return '2';
+        return app(RuleSetFactory::class)->resolve($code, $this->rules_version ?? end($versions));
     }
 
     /**
-     * Check if current power configuration qualifies for QRP natural power bonus (5x).
+     * Power multiplier preview, computed by the selected rules version.
+     *
+     * Uses the same effective power and natural-power checks as scoring. When
+     * editing a saved event, its stations count too. A new or cloned event has
+     * no stations yet, so the preview reflects the event-level settings only.
      */
-    protected function hasQrpNaturalPowerBonus(): bool
+    #[Computed]
+    public function powerMultiplier(): string
     {
-        $hasNaturalPower = $this->uses_battery
-            || $this->uses_solar
-            || $this->uses_wind
-            || $this->uses_water;
+        // Before an event type is picked, preview with the newest Field Day rules.
+        $rules = $this->selectedRuleSet() ?? app(RuleSetFactory::class)->resolve('FD', (string) $this->year);
 
-        $hasDisqualifyingPower = $this->uses_commercial_power || $this->uses_generator;
+        if (! $rules instanceof FieldDayRuleSet) {
+            return '1';
+        }
 
-        return $hasNaturalPower && ! $hasDisqualifyingPower;
+        $config = $this->previewConfiguration();
+
+        return $rules->powerMultiplier(new PowerContext(
+            effectivePowerWatts: $config->effectiveMaxPowerWatts(),
+            qualifiesForQrpNaturalBonus: $config->hasQrpNaturalPowerBonus(),
+        ));
+    }
+
+    /**
+     * An unsaved configuration carrying the form's power settings.
+     *
+     * When editing, it is the saved configuration with the form's values laid
+     * over it in memory, so its existing stations are included in the checks.
+     */
+    protected function previewConfiguration(): EventConfiguration
+    {
+        $config = $this->mode === 'edit' && $this->eventId
+            ? EventConfiguration::query()->where('event_id', $this->eventId)->first()
+            : null;
+
+        return ($config ?? new EventConfiguration)->fill([
+            'max_power_watts' => (int) $this->max_power_watts,
+            'uses_commercial_power' => $this->uses_commercial_power,
+            'uses_generator' => $this->uses_generator,
+            'uses_battery' => $this->uses_battery,
+            'uses_solar' => $this->uses_solar,
+            'uses_wind' => $this->uses_wind,
+            'uses_water' => $this->uses_water,
+            'uses_methane' => $this->uses_methane,
+        ]);
     }
 
     #[Computed]
     public function powerMultiplierColor(): string
     {
         return match ($this->powerMultiplier) {
-            5 => 'success',
-            2 => 'warning',
-            1 => 'error',
+            '5' => 'success',
+            '2' => 'warning',
+            '1' => 'error',
             default => 'neutral',
         };
     }

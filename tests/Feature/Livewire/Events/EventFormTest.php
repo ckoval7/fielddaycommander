@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use App\Enums\PowerSource;
 use App\Livewire\Events\EventForm;
 use App\Models\AuditLog;
 use App\Models\Contact;
@@ -13,6 +14,7 @@ use App\Models\OperatingClass;
 use App\Models\Organization;
 use App\Models\Section;
 use App\Models\Setting;
+use App\Models\Station;
 use App\Models\User;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
@@ -184,6 +186,81 @@ test('event form calculates power multiplier correctly', function () {
     // Test 1x multiplier: >100W
     $component->set('max_power_watts', 150);
     expect($component->get('powerMultiplier'))->toBe('1');
+});
+
+test('event form colors the multiplier badge by multiplier', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('max_power_watts', 5)
+        ->set('uses_battery', true);
+
+    expect($component->get('powerMultiplierColor'))->toBe('success');
+
+    $component->set('max_power_watts', 50);
+    expect($component->get('powerMultiplierColor'))->toBe('warning');
+
+    $component->set('max_power_watts', 150);
+    expect($component->get('powerMultiplierColor'))->toBe('error');
+
+    // A new event has no stations yet, so the form says they can change it.
+    $component->assertSee('Station settings count too');
+});
+
+test('event form multiplier preview follows the selected rules version', function () {
+    $this->actingAs($this->user);
+
+    // The synthetic TEST rulebook scores 6-100W at 3x instead of 2x.
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('rules_version', 'TEST')
+        ->set('max_power_watts', 50);
+
+    expect($component->get('powerMultiplier'))->toBe('3');
+
+    $component->set('rules_version', '2025');
+    expect($component->get('powerMultiplier'))->toBe('2');
+});
+
+test('event form multiplier preview counts the saved stations when editing', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'rules_version' => '2025',
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(11),
+    ]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+        'power_source' => PowerSource::Generator,
+    ]);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
+
+    // Event-level settings alone would earn 5x, but the generator station rules it out.
+    expect($component->get('powerMultiplier'))->toBe('2')
+        ->and($config->fresh()->calculatePowerMultiplier())->toBe('2');
+
+    $station->update(['power_source' => PowerSource::Battery, 'max_power_watts' => 100]);
+
+    // A station above 5W sets the effective power, so the event is out of QRP.
+    expect(Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])->get('powerMultiplier'))
+        ->toBe('2');
+
+    $station->update(['max_power_watts' => 5]);
+
+    expect(Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])->get('powerMultiplier'))
+        ->toBe('5');
 });
 
 test('event form locks fields when event has contacts', function () {
