@@ -58,7 +58,7 @@ Each item: id, icon, title, message, time_ago, read
             @empty
                 <div class="flex flex-col items-center justify-center py-16 text-base-content/50">
                     <x-icon name="phosphor-tray" class="w-16 h-16 mb-4" />
-                    <p class="text-xl">No activity yet</p>
+                    <p class="text-xl">No notifications yet</p>
                 </div>
             @endforelse
         </div>
@@ -102,7 +102,7 @@ Each item: id, icon, title, message, time_ago, read
             @empty
                 <div class="flex flex-col items-center justify-center py-8 text-base-content/50">
                     <x-icon name="phosphor-tray" class="w-10 h-10 mb-2" />
-                    <p class="text-sm">No activity yet</p>
+                    <p class="text-sm">No notifications yet</p>
                 </div>
             @endforelse
         </div>

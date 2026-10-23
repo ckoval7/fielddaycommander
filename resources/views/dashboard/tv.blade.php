@@ -245,7 +245,7 @@ Props from controller:
                 <div class="flex flex-col items-center justify-center h-full text-center">
                     <x-icon name="phosphor-television" class="w-32 h-32 text-base-content/30 mb-6" />
                     <h2 class="text-4xl font-bold text-base-content mb-4">No widgets configured</h2>
-                    <p class="text-2xl text-base-content/60">Configure widgets in the main dashboard to display here</p>
+                    <p class="text-2xl text-base-content/60">No widgets are set up for the TV dashboard.</p>
                 </div>
             @endif
         </div>

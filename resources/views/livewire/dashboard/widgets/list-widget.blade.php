@@ -138,17 +138,17 @@ Size variants:
                             'recent_contacts' => [
                                 'icon' => 'phosphor-radio',
                                 'title' => 'No contacts logged yet',
-                                'message' => 'Start making contacts to see them appear here',
+                                'message' => 'Logged contacts appear here.',
                             ],
                             'active_stations' => [
                                 'icon' => 'phosphor-cell-signal-high',
                                 'title' => 'No active stations',
-                                'message' => 'Ready to get on the air? Hop on a station and start making contacts!',
+                                'message' => 'Start an operating session to appear here.',
                             ],
                             'equipment_status' => [
                                 'icon' => 'phosphor-wrench',
-                                'title' => 'No equipment status',
-                                'message' => 'Equipment assignments will appear here',
+                                'title' => 'No equipment to show',
+                                'message' => 'Committed and delivered equipment appears here.',
                             ],
                         ];
                         $empty = $emptyMessages[$listType] ?? ['icon' => 'phosphor-tray', 'title' => 'No data available', 'message' => ''];

@@ -342,8 +342,8 @@ describe('rendering and display', function () {
     it('includes celebration overlay elements', function () {
         Livewire::test(ProgressBar::class)
             ->assertSeeHtml('x-show="isCelebrating"') // Celebration overlay
-            ->assertSeeHtml('Milestone!') // Celebration message
-            ->assertSeeHtml('QSOs logged!'); // QSO count message
+            ->assertSeeHtml('Milestone reached') // Celebration message
+            ->assertSeeHtml('QSOs logged'); // QSO count message
     });
 
     it('includes Alpine.js celebration logic', function () {

@@ -372,7 +372,7 @@ class DashboardEditor extends Component
 
         $this->dispatch('toast', [
             'title' => 'Widget Removed',
-            'description' => 'Widget has been removed from the dashboard',
+            'description' => 'Widget removed. Save the dashboard to keep this change.',
             'icon' => 'phosphor-trash',
             'css' => 'alert-info',
         ]);
@@ -422,7 +422,7 @@ class DashboardEditor extends Component
 
         $this->dispatch('toast', [
             'title' => 'Widget Added',
-            'description' => 'New widget has been added to the dashboard',
+            'description' => 'Widget added. Save the dashboard to keep this change.',
             'icon' => 'phosphor-plus-circle',
             'css' => 'alert-success',
         ]);
@@ -495,7 +495,7 @@ class DashboardEditor extends Component
 
             $this->dispatch('toast', [
                 'title' => 'Widget Updated',
-                'description' => 'Widget configuration saved',
+                'description' => 'Widget updated. Save the dashboard to keep this change.',
                 'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
             ]);

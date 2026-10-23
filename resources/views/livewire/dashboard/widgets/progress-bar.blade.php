@@ -100,10 +100,10 @@ Celebration features:
             {{-- Milestone Message --}}
             <div>
                 <div class="@if($size === 'tv') text-3xl @else text-xl @endif font-bold text-primary">
-                    Milestone!
+                    Milestone reached
                 </div>
                 <div class="@if($size === 'tv') text-xl @else text-base @endif font-semibold text-base-content mt-1">
-                    <span x-text="celebratedMilestone.toLocaleString()"></span> {{ $data['unit_label'] ?? 'QSOs' }} logged!
+                    <span x-text="celebratedMilestone.toLocaleString()"></span> {{ $data['unit_label'] ?? 'QSOs' }} logged
                 </div>
             </div>
         </div>

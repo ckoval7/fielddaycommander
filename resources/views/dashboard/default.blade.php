@@ -73,7 +73,7 @@ Props from controller:
 
                 {{-- Dashboard Management Button --}}
                 <x-button
-                    label="Manage"
+                    label="Manage Dashboards"
                     icon="phosphor-gear-six"
                     class="btn-ghost btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                     @click="Livewire.dispatch('open-modal', { modalId: 'dashboard-manager' })"

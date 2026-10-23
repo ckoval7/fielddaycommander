@@ -162,7 +162,7 @@ class Chart extends Component
                 default => 'QSOs per Hour',
             };
 
-            $title = $baseTitle.' — '.self::TIME_RANGE_LABELS[$timeRange];
+            $title = $baseTitle.': '.self::TIME_RANGE_LABELS[$timeRange];
 
             return $this->formatChartData($rawData, $chartType, $title, $dataSource, $this->elapsedHoursInRange($timeRange));
         });

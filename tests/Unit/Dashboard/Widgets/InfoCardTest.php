@@ -97,7 +97,7 @@ test('event_details variant returns N/A rows when no active event', function () 
 
     expect($data['title'])->toBe('Event Info')
         ->and(infoRow($data, 'Event'))->toBe('N/A')
-        ->and(infoRow($data, 'Location'))->toBe('N/A')
+        ->and(infoRow($data, 'Section'))->toBe('N/A')
         ->and(infoRow($data, 'Class'))->toBe('N/A')
         ->and(infoRow($data, 'Call Sign'))->toBe('N/A');
 });
@@ -116,7 +116,7 @@ test('event_details variant returns N/A rows when event has no configuration', f
     $data = $component->viewData('data');
 
     expect(infoRow($data, 'Event'))->not->toBe('N/A')
-        ->and(infoRow($data, 'Location'))->toBe('N/A')
+        ->and(infoRow($data, 'Section'))->toBe('N/A')
         ->and(infoRow($data, 'Class'))->toBe('N/A')
         ->and(infoRow($data, 'Call Sign'))->toBe('N/A');
 });
@@ -160,7 +160,7 @@ test('event_details variant displays event name, callsign, section, class', func
 
     expect($data['title'])->toBe('Event Info')
         ->and(infoRow($data, 'Event'))->toBe('Field Day 2025')
-        ->and(infoRow($data, 'Location'))->toBe('Eastern Massachusetts')
+        ->and(infoRow($data, 'Section'))->toBe('Eastern Massachusetts')
         ->and(infoRow($data, 'Class'))->toBe('1D')
         ->and(infoRow($data, 'Call Sign'))->toBe('K1MZ');
 });
@@ -317,7 +317,7 @@ test('operating_class variant lists class, transmitters, GOTA, max watts, power 
     $data = $component->viewData('data');
 
     expect($data['title'])->toBe('Operating Class')
-        ->and(infoRow($data, 'Class'))->toBe('3A — Class A — Club, Portable')
+        ->and(infoRow($data, 'Class'))->toBe('3A: Class A — Club, Portable')
         ->and(infoRow($data, 'Transmitters'))->toBe('3')
         ->and(infoRow($data, 'GOTA Station'))->toBe('Yes (W1GOTA)')
         ->and(infoRow($data, 'Max Power'))->toBe('100 W')

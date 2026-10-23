@@ -109,7 +109,7 @@
                         <button
                             class="btn btn-ghost btn-sm btn-square"
                             @click="navigator.clipboard.writeText('{{ route('register') }}'); copied = true; setTimeout(() => copied = false, 2000)"
-                            :title="copied ? 'Copied!' : 'Copy link'"
+                            :title="copied ? 'Copied' : 'Copy link'"
                         >
                             <x-icon x-show="!copied" name="phosphor-clipboard" class="w-4 h-4" />
                             <x-icon x-show="copied" x-cloak name="phosphor-check" class="w-4 h-4 text-success" />

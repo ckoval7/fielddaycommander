@@ -9,7 +9,7 @@
             <x-mary-icon name="phosphor-calendar" class="w-16 h-16 text-base-content/30 mb-4" />
             <h1 class="text-2xl font-bold mb-2">No Active Event</h1>
             <p class="text-base-content/60 mb-6 max-w-md">
-                There is no Field Day event currently in progress. The dashboard will become available when an event starts.
+                No event is available. The dashboard shows event statistics once an event starts.
             </p>
 
             @if($upcomingEvents->isNotEmpty())

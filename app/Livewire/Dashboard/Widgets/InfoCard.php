@@ -76,7 +76,7 @@ class InfoCard extends Component
             'title' => 'Event Info',
             'rows' => [
                 ['label' => 'Event', 'value' => $event?->name ?? 'N/A'],
-                ['label' => 'Location', 'value' => $config?->section?->name ?? 'N/A'],
+                ['label' => 'Section', 'value' => $config?->section?->name ?? 'N/A'],
                 ['label' => 'Class', 'value' => $this->entryClass($config) ?? 'N/A'],
                 ['label' => 'Call Sign', 'value' => $config?->callsign ?? 'N/A', 'highlight' => true],
             ],
@@ -126,7 +126,7 @@ class InfoCard extends Component
 
         $entryClass = $this->entryClass($config);
         $className = $config?->operatingClass?->name;
-        $classSuffix = $className ? " — {$className}" : '';
+        $classSuffix = $className ? ": {$className}" : '';
         $classDisplay = $entryClass ? "{$entryClass}{$classSuffix}" : 'N/A';
 
         $transmitters = $config?->transmitter_count !== null
