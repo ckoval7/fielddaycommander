@@ -68,7 +68,7 @@
                                 @if($eventConfig->images->first())
                                     <img
                                         src="{{ route('gallery.thumb', $eventConfig->images->first()) }}"
-                                        alt="Photo from {{ $eventConfig->event->name }}"
+                                        alt=""
                                         class="w-full h-full object-cover"
                                     >
                                 @else
