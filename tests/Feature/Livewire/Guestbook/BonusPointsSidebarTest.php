@@ -117,7 +117,7 @@ test('shows all guestbook bonuses earned when both are earned', function () {
     ]);
 
     Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id])
-        ->assertSee('All guestbook bonuses earned.')
+        ->assertSee('All guestbook bonuses earned!')
         ->assertDontSee('Still needed:');
 });
 
@@ -131,7 +131,7 @@ test('shows still needed alert listing missing bonuses when some are unearned', 
     Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id])
         ->assertSee('Still needed:')
         ->assertSee('Served Agency Visit')
-        ->assertDontSee('All guestbook bonuses earned.');
+        ->assertDontSee('All guestbook bonuses earned!');
 });
 
 test('only counts verified entries for bonus status', function () {

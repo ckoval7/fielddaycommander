@@ -36,7 +36,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-info" class="alert-info">
-                Select an event to view your shifts.
+                Please select an event to view your shifts.
             </x-alert>
         @else
             {{-- Event hours summary --}}

@@ -280,7 +280,7 @@ test('validation and the import run on the queue while the wizard polls their pr
 
     $component->call('refreshProgress')
         ->assertSet('importStatus', 'completed')
-        ->assertSee('Import complete.');
+        ->assertSee('Import complete!');
 
     expect(Contact::where('callsign', 'W1AW')->exists())->toBeTrue();
 });
@@ -462,7 +462,7 @@ test('the progress poll picks up completion written to the database', function (
 
     $component->call('refreshProgress')
         ->assertSet('importStatus', 'completed')
-        ->assertSee('Import complete.')
+        ->assertSee('Import complete!')
         ->assertSee('1 imported')
         ->assertDontSeeHtml('wire:poll');
 });

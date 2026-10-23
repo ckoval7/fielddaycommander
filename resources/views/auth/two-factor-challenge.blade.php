@@ -8,10 +8,10 @@
     <div x-data="{ recovery: false }">
         <div class="mb-4 text-sm text-base-content/70">
             <p x-show="! recovery">
-                Enter the authentication code from your authenticator app.
+                Please enter the authentication code from your authenticator app.
             </p>
             <p x-show="recovery" x-cloak>
-                Enter one of your recovery codes.
+                Please enter one of your recovery codes.
             </p>
         </div>
 

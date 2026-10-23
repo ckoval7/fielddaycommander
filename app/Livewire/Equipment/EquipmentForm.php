@@ -402,9 +402,9 @@ class EquipmentForm extends Component
     protected function messages(): array
     {
         return [
-            'make.required' => 'Enter the equipment make.',
-            'model.required' => 'Enter the equipment model.',
-            'type.required' => 'Select an equipment type.',
+            'make.required' => 'Please enter the equipment make.',
+            'model.required' => 'Please enter the equipment model.',
+            'type.required' => 'Please select an equipment type.',
             'type.in' => 'Select a valid equipment type.',
             'value_usd.min' => 'The value must be at least $0.',
             'power_output_watts.min' => 'Power output must be at least 1 watt.',

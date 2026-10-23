@@ -35,7 +35,7 @@
                 <x-icon name="phosphor-image" class="w-16 h-16 mx-auto text-base-content/30" />
                 <p class="mt-4 text-base-content/70">No photos have been uploaded for this event yet.</p>
                 @if($this->canUpload)
-                    <x-button label="Upload Photo" icon="phosphor-upload-simple" link="{{ route('gallery.upload', $eventConfiguration) }}" class="btn-primary mt-4" />
+                    <x-button label="Upload the first photo!" icon="phosphor-upload-simple" link="{{ route('gallery.upload', $eventConfiguration) }}" class="btn-primary mt-4" />
                 @endif
             </div>
         </x-card>

@@ -89,7 +89,7 @@ class EquipmentDelivered extends Notification implements ShouldQueue
             ->line("Timestamp: {$timestamp}")
             ->line('')
             ->action('View My Equipment', $url)
-            ->line('Thank you for lending your equipment.');
+            ->line('Thank you for your contribution to our Field Day event!');
     }
 
     /**

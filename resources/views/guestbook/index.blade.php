@@ -15,7 +15,7 @@
         <div class="mb-8">
             <h1 class="text-3xl sm:text-4xl font-bold mb-3">Sign Our Guestbook</h1>
             <p class="text-base sm:text-lg text-base-content/70 max-w-2xl">
-                Thanks for visiting. Sign our guestbook and share your experience.
+                Thank you for visiting our Field Day event! Please sign our guestbook and share your experience.
             </p>
         </div>
 
@@ -25,7 +25,7 @@
                 <x-icon name="phosphor-info" class="w-6 h-6" />
                 <div>
                     <h3 class="font-bold">Guestbook Closed</h3>
-                    <p>The guestbook is not accepting entries. Check back later.</p>
+                    <p>The guestbook is not accepting entries. Please check back later.</p>
                 </div>
             </div>
         @else

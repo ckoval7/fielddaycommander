@@ -63,7 +63,7 @@ class EquipmentIncident extends Notification
 
         $message->line($isOwner
             ? 'We are sorry this happened.'
-            : 'Contact the equipment owner or club equipment manager to follow up on this incident.');
+            : 'Please contact the equipment owner or club equipment manager to follow up on this incident.');
 
         return $message;
     }
@@ -85,7 +85,7 @@ class EquipmentIncident extends Notification
                 ->line($this->equipmentEvent->manager_notes);
         }
 
-        $message->line('Contact the event organizers to discuss what happened and the next steps.');
+        $message->line('Please contact the event organizers to discuss what happened and the next steps.');
     }
 
     /**

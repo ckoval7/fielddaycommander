@@ -422,10 +422,10 @@ class StationForm extends Component
     protected function messages(): array
     {
         return [
-            'name.required' => 'Enter a station name.',
+            'name.required' => 'Please enter a station name.',
             'name.unique' => 'A station with this name already exists for this event.',
-            'event_configuration_id.required' => 'Select an event.',
-            'radio_equipment_id.required' => 'Select a primary radio.',
+            'event_configuration_id.required' => 'Please select an event.',
+            'radio_equipment_id.required' => 'Please select a primary radio.',
             'radio_equipment_id.unique' => 'This radio is already assigned as the primary radio for another station in this event.',
             'max_power_watts.min' => 'Power output must be at least 1 watt.',
             'max_power_watts.max' => 'Power output cannot exceed 5000 watts.',

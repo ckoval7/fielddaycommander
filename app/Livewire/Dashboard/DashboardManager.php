@@ -98,7 +98,7 @@ class DashboardManager extends Component
             'newDescription' => ['nullable', 'string'],
             'copyFrom' => ['nullable', 'integer', Rule::exists('dashboards', 'id')->where('user_id', auth()->id())],
         ], [
-            'newTitle.required' => 'Enter a dashboard name.',
+            'newTitle.required' => 'Please enter a dashboard name.',
             'newTitle.max' => 'The dashboard name cannot exceed 255 characters.',
             'copyFrom.exists' => 'The selected dashboard to copy does not exist.',
         ]);

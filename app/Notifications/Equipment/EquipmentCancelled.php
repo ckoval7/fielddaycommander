@@ -89,7 +89,7 @@ class EquipmentCancelled extends Notification implements ShouldQueue
 
         $message->action('View Equipment Dashboard', route('events.equipment.dashboard', $event))
             ->line('Review the event commitments on the equipment dashboard.')
-            ->line('Contact the equipment owner to discuss alternatives.');
+            ->line('Please contact the equipment owner to discuss alternatives.');
 
         return $message;
     }

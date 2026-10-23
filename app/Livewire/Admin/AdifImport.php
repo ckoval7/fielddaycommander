@@ -204,7 +204,7 @@ class AdifImport extends Component
         $this->operatorMappings = $this->withoutBlankSelections($this->operatorMappings);
 
         if (! $this->mappingsReferenceValidRecords($import)) {
-            $this->addError('mapping', 'One or more field mappings are invalid for this event. Review your selections.');
+            $this->addError('mapping', 'One or more field mappings are invalid for this event. Please review your selections.');
 
             return;
         }
@@ -254,7 +254,7 @@ class AdifImport extends Component
             ->count();
 
         if ($unmappedCount > 0) {
-            $this->addError('mapping', "{$unmappedCount} ".str('record')->plural($unmappedCount).' with unmapped fields. Map all fields before continuing.');
+            $this->addError('mapping', "{$unmappedCount} ".str('record')->plural($unmappedCount).' with unmapped fields. Please map all fields before continuing.');
 
             return;
         }

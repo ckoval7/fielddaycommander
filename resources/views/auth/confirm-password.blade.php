@@ -6,7 +6,7 @@
     <x-slot:title>Confirm Password</x-slot:title>
 
     <div class="mb-4 text-sm">
-        Enter your password to continue.
+        Please enter your password to continue.
     </div>
 
     <form method="POST" action="{{ route('password.confirm') }}">

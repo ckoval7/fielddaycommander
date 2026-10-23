@@ -47,7 +47,7 @@ class ShiftCheckinReminderMail extends Notification implements ShouldQueue
             ->line("Time: {$timeRange}")
             ->line('')
             ->action('View My Shifts', $url)
-            ->line('Check in from My Shifts.');
+            ->line("Don't forget to check in from My Shifts when your shift begins!");
     }
 
     /**

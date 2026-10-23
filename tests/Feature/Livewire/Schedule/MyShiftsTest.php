@@ -313,7 +313,7 @@ test('my shifts shows no event alert when no event configured', function () {
     $this->actingAs($this->user);
 
     Livewire::test(MyShifts::class)
-        ->assertSee('Select an event to view your shifts');
+        ->assertSee('Please select an event to view your shifts');
 });
 
 // =============================================================================

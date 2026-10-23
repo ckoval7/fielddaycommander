@@ -99,7 +99,7 @@ class EquipmentStatusChanged extends Notification implements ShouldQueue
 
         // Add contextual footer based on status
         if ($this->equipmentEvent->status === 'returned') {
-            $message->line('Thank you for lending your equipment.');
+            $message->line('Thank you for your contribution to our Field Day event!');
         } elseif ($this->equipmentEvent->status === 'delivered') {
             $message->line('Your equipment has been marked as delivered.');
         }

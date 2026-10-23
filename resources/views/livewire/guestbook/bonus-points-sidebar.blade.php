@@ -76,7 +76,7 @@
                 </x-alert>
             @elseif($this->totalBonusPoints === $this->maxBonusPoints)
                 <x-alert icon="phosphor-check-circle" class="alert-success text-xs">
-                    All guestbook bonuses earned.
+                    All guestbook bonuses earned!
                 </x-alert>
             @endif
         </div>

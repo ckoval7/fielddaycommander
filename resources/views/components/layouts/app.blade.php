@@ -531,7 +531,7 @@
             Livewire.dispatch('toast', [{
                 type: 'warning',
                 title: 'Your session expired.',
-                description: 'Sign in again to continue.',
+                description: 'Please sign in again to continue.',
                 timeout: 6000,
             }]);
 

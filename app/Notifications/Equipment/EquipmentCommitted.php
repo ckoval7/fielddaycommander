@@ -88,7 +88,7 @@ class EquipmentCommitted extends Notification implements ShouldQueue
             ->lineIf($this->equipmentEvent->delivery_notes, "Delivery Notes: {$this->equipmentEvent->delivery_notes}")
             ->line('')
             ->action('View My Equipment', $url)
-            ->line('Thank you for lending your equipment.');
+            ->line('Thank you for contributing to our Field Day event!');
     }
 
     /**
@@ -122,7 +122,7 @@ class EquipmentCommitted extends Notification implements ShouldQueue
             ->lineIf($this->equipmentEvent->delivery_notes, "Delivery Notes: {$this->equipmentEvent->delivery_notes}")
             ->line('')
             ->action('View Equipment Dashboard', $url)
-            ->line('Coordinate with the equipment owner for delivery and setup.');
+            ->line('Please coordinate with the equipment owner for delivery and setup.');
     }
 
     /**

@@ -96,7 +96,7 @@ class EquipmentReassigned extends Notification implements ShouldQueue
 
         $message->line('')
             ->action('View Stations', $url)
-            ->line('Coordinate the equipment handoff with the new station.');
+            ->line('Please coordinate the equipment handoff with the new station.');
 
         return $message;
     }

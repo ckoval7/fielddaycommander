@@ -41,7 +41,7 @@ class ShiftCheckoutReminderMail extends Notification implements ShouldQueue
             ->line("Your **{$roleName}** shift ended at **{$endTime}** and you haven't checked out yet.")
             ->line('')
             ->action('View My Shifts', $url)
-            ->line('Check out from My Shifts so your hours are recorded correctly.');
+            ->line('Please check out from My Shifts so your hours are recorded correctly.');
     }
 
     /**

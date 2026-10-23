@@ -11,7 +11,7 @@
             <div class="text-center py-12">
                 <x-icon name="phosphor-users-three" class="w-16 h-16 mx-auto text-base-content/30" />
                 <p class="mt-4 text-base-content/70">No visitors have signed the guestbook yet.</p>
-                <p class="text-sm text-base-content/50 mt-2">Add your name using the guestbook form.</p>
+                <p class="text-sm text-base-content/50 mt-2">Be the first to sign the guestbook!</p>
             </div>
         </x-card>
     @else

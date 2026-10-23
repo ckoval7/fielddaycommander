@@ -69,7 +69,7 @@ class SetupController extends Controller
         // Verify all steps are complete
         if (! $step1 || ! $step2) {
             return redirect()->route('setup.welcome')
-                ->with('error', 'Setup details are missing. Start again with the admin password.');
+                ->with('error', 'Setup details are missing. Please start again with the admin password.');
         }
 
         DB::transaction(function () use ($step1, $step2, $step3) {
@@ -142,6 +142,6 @@ class SetupController extends Controller
         // Clear wizard session data
         $request->session()->forget('setup_wizard');
 
-        return redirect()->route('login')->with('success', 'Setup is complete. Sign in with admin@localhost and the password you set.');
+        return redirect()->route('login')->with('success', 'Setup is complete! Please sign in with admin@localhost and the password you set.');
     }
 }

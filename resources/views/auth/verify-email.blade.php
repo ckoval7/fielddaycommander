@@ -6,11 +6,11 @@
     <x-slot:title>Verify Email</x-slot:title>
 
     <div class="mb-4 text-sm">
-        Verify your email address using the link in your verification email.
+        Thanks for signing up! Please verify your email address using the link in your verification email.
     </div>
 
     @if (session('status') == 'verification-link-sent')
-        <x-alert title="A new verification link has been emailed to you." class="mb-4" success />
+        <x-alert title="A new verification link has been emailed to you!" class="mb-4" success />
     @endif
 
     <div class="space-y-4">

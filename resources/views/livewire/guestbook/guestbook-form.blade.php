@@ -49,7 +49,7 @@
 
                     if (distance <= this.radius) {
                         this.locationStatus = 'in_person';
-                        this.locationMessage = `You appear to be at the event (${this.userDistance} m away). Change the selection below if needed.`;
+                        this.locationMessage = `Looks like you're here at the event! (${this.userDistance} m away). Change the selection below if needed.`;
                         $wire.setPresenceType('in_person');
                     } else {
                         this.locationStatus = 'online';
@@ -112,8 +112,8 @@
     {{-- Success Message --}}
     @if($showSuccess)
         <x-alert
-            title="Thank you for signing our guestbook."
-            description="Your entry has been saved."
+            title="Thank you for signing our guestbook!"
+            description="Your entry has been saved. We appreciate your visit!"
             icon="phosphor-check-circle"
             class="alert-success"
             dismissible
@@ -124,7 +124,7 @@
     {{-- Form Card --}}
     @if(!$showSuccess)
         @if($eventConfig)
-            <x-card title="Sign the Guestbook" subtitle="Your name and comments will appear in the visitor list.">
+            <x-card title="Sign the Guestbook" subtitle="Welcome! Please sign our event guestbook. Your name and comments will appear in the visitor list.">
                 <form wire:submit="save" class="space-y-4">
                     {{-- Honeypot field - hidden from real users, bots will fill it --}}
                     <div class="hidden" aria-hidden="true">
@@ -252,7 +252,7 @@
                     <x-textarea
                         label="Comments (optional)"
                         wire:model="comments"
-                        placeholder="Share your thoughts about the event."
+                        placeholder="Share your thoughts about the event!"
                         hint="Maximum 500 characters"
                         rows="3"
                     />
@@ -288,7 +288,7 @@
         <x-card class="text-center">
             <div class="py-8 space-y-4">
                 <x-icon name="phosphor-check-circle" class="w-16 h-16 mx-auto text-success" />
-                <h3 class="text-xl font-semibold">Thank You</h3>
+                <h3 class="text-xl font-semibold">Thank You!</h3>
                 <p class="text-base-content/70">Your guestbook entry has been recorded.</p>
                 {{-- On a kiosk, a ring beside the button counts down and clears the thank-you screen for the next visitor --}}
                 <div

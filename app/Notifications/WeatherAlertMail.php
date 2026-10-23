@@ -42,6 +42,6 @@ class WeatherAlertMail extends Notification implements ShouldQueue
                 ->line($alert['headline']);
         }
 
-        return $mail->line('Follow the safety instructions in each alert. Check current conditions before resuming operations.');
+        return $mail->line('Please follow the safety instructions in each alert. Check current conditions before resuming operations.');
     }
 }

@@ -15,7 +15,7 @@
 
                 {{-- Center: Message --}}
                 <div class="flex-1 text-sm sm:text-base">
-                    You are signed in as the <strong>SYSTEM account</strong>. Use this account for initial setup. Create a personal account with your callsign for everyday use.
+                    You are signed in as the <strong>SYSTEM account</strong>. Use this account for initial setup. Please create a personal account with your callsign for everyday use.
                 </div>
 
                 {{-- Right: Link to User Management --}}

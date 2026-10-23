@@ -44,7 +44,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-info" class="alert-info">
-                Select an event to view its safety checklist.
+                Please select an event to view its safety checklist.
             </x-alert>
         @elseif($this->items->isEmpty())
             <x-alert icon="phosphor-info" class="alert-info">

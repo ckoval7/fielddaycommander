@@ -437,7 +437,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     // Session or CSRF expired - stop retrying, user must refresh
                     candidate.status = 'failed';
                     candidate.attempts = 999;
-                    candidate.last_error = 'Session expired. Refresh the page, then retry.';
+                    candidate.last_error = 'Session expired. Please refresh the page, then retry.';
                     this.saveQueue();
                 } else {
                     // Transient server error - retry

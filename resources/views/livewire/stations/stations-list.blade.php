@@ -82,7 +82,7 @@
             <div class="text-center py-12 text-base-content/60">
                 <x-icon name="phosphor-radio" class="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p class="text-lg font-semibold mb-2">No Event Selected</p>
-                <p class="text-sm">Select an event to view its stations.</p>
+                <p class="text-sm">Please select an event to view its stations.</p>
             </div>
         </x-card>
     @elseif($stations->isEmpty())

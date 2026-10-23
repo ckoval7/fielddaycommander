@@ -143,7 +143,7 @@ Size variants:
                             'active_stations' => [
                                 'icon' => 'phosphor-cell-signal-high',
                                 'title' => 'No active stations',
-                                'message' => 'Start an operating session to appear here.',
+                                'message' => 'Ready to get on the air? Hop on a station, start an operating session, and make some contacts!',
                             ],
                             'equipment_status' => [
                                 'icon' => 'phosphor-wrench',

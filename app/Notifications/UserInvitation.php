@@ -47,7 +47,7 @@ class UserInvitation extends Notification
             ->line("Email: {$notifiable->email}")
             ->action('Accept Invitation', $invitationUrl)
             ->line('This invitation will expire in 72 hours.')
-            ->line("If you didn't expect this invitation, you can ignore this email.");
+            ->line("If you didn't expect this invitation, please ignore this email.");
     }
 
     /**

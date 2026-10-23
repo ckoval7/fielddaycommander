@@ -39,7 +39,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-warning" class="alert-warning">
-                Select an event with a configuration to manage its schedule.
+                Please select an event with a configuration to manage its schedule.
             </x-alert>
         @else
             {{-- Tabs --}}

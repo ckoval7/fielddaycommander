@@ -53,7 +53,7 @@
                 />
 
                 @if($needsName)
-                    <p class="text-sm text-base-content/70">We don't have a name for this callsign yet. Enter yours to continue.</p>
+                    <p class="text-sm text-base-content/70">We don't have a name for this callsign yet. Please enter yours to continue.</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <x-input label="First name" wire:model="firstName" autocomplete="off" maxlength="50" autocapitalize="words" />
                         <x-input label="Last name" wire:model="lastName" autocomplete="off" maxlength="50" autocapitalize="words" />

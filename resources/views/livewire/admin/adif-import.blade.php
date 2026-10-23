@@ -328,14 +328,14 @@
 
                 @if ($importStatus === 'completed')
                     <x-alert icon="phosphor-check-circle" class="alert-success">
-                        Import complete.
+                        Import complete!
                         {{ $this->currentImport?->imported_records ?? 0 }} imported,
                         {{ $this->currentImport?->merged_records ?? 0 }} merged,
                         {{ $this->currentImport?->skipped_records ?? 0 }} skipped.
                     </x-alert>
                 @elseif ($importStatus === 'failed')
                     <x-alert icon="phosphor-warning" class="alert-error">
-                        The file could not be validated or fully imported. Contacts already imported remain in the log. Check the application logs before importing the file again.
+                        The file could not be validated or fully imported. Contacts already imported remain in the log. Please check the application logs before importing the file again.
                     </x-alert>
                 @else
                     @if ($this->hasInvalidRecords)

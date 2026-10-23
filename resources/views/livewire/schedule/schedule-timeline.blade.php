@@ -50,7 +50,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-info" class="alert-info">
-                Select an event to view the schedule.
+                Please select an event to view the schedule.
             </x-alert>
         @else
             @php

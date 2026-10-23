@@ -22,7 +22,7 @@ class StationClone extends Component
 {
     use AuthorizesRequests;
 
-    private const SELECT_STATION_MESSAGE = 'Select at least one station to clone.';
+    private const SELECT_STATION_MESSAGE = 'Please select at least one station to clone.';
 
     // Modal state
     public bool $showModal = false;
@@ -302,7 +302,7 @@ class StationClone extends Component
         }
 
         if (! $result['success']) {
-            $this->addError('general', 'Unable to clone stations. Review the errors and try again.');
+            $this->addError('general', 'Unable to clone stations. Please review the errors and try again.');
         }
     }
 
@@ -388,10 +388,10 @@ class StationClone extends Component
     protected function messages(): array
     {
         return [
-            'sourceEventId.required' => 'Select a source event.',
+            'sourceEventId.required' => 'Please select a source event.',
             'selectedStationIds.required' => self::SELECT_STATION_MESSAGE,
             'selectedStationIds.min' => self::SELECT_STATION_MESSAGE,
-            'targetEventId.required' => 'Select a target event.',
+            'targetEventId.required' => 'Please select a target event.',
             'nameSuffix.max' => 'Name suffix must not exceed 50 characters.',
         ];
     }

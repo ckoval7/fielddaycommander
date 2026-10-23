@@ -47,13 +47,13 @@ class GalleryUpload extends Component
         $imageService = app(ImageService::class);
 
         if (! $imageService->isValidImage($this->photo)) {
-            $this->addError('photo', 'Upload a valid JPEG, PNG, GIF, or WebP photo up to 12 MB.');
+            $this->addError('photo', 'Please upload a valid JPEG, PNG, GIF, or WebP photo up to 12 MB.');
 
             return;
         }
 
         if (! $imageService->hasAcceptableDimensions($this->photo)) {
-            $this->addError('photo', 'Choose a photo up to 50 megapixels, with the longer side no more than 20 times the shorter side.');
+            $this->addError('photo', 'Please choose a photo up to 50 megapixels, with the longer side no more than 20 times the shorter side.');
 
             return;
         }
@@ -88,7 +88,7 @@ class GalleryUpload extends Component
             'caption' => $this->caption,
         ]);
 
-        session()->flash('toast', ['title' => 'Success', 'description' => 'Photo uploaded.', 'type' => 'success']);
+        session()->flash('toast', ['title' => 'Success', 'description' => 'Photo uploaded!', 'type' => 'success']);
 
         $this->redirectRoute('gallery.show', $this->eventConfiguration);
     }

@@ -34,7 +34,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-warning" class="alert-warning">
-                No event configuration found. Configure an event to manage its safety checklist.
+                No event configuration found. Please configure an event to manage its safety checklist.
             </x-alert>
         @else
             {{-- Items list --}}

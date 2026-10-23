@@ -205,7 +205,7 @@ class GuestbookForm extends Component
             $minutes = ceil($seconds / 60);
 
             throw ValidationException::withMessages([
-                'form' => "Too many entries. Try again in {$minutes} ".str('minute')->plural($minutes).'.',
+                'form' => "Too many entries. Please try again in {$minutes} ".str('minute')->plural($minutes).'.',
             ]);
         }
 
@@ -324,9 +324,9 @@ class GuestbookForm extends Component
     protected function messages(): array
     {
         return [
-            'name.required' => 'Enter your name.',
-            'presence_type.required' => 'Choose In Person or Online.',
-            'visitor_category.required' => 'Choose an option under “I am visiting as”.',
+            'name.required' => 'Please enter your name.',
+            'presence_type.required' => 'Please choose In Person or Online.',
+            'visitor_category.required' => 'Please choose an option under “I am visiting as”.',
             'honeypot.max' => 'Form submission failed.',
         ];
     }

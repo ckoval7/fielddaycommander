@@ -105,7 +105,7 @@ document.addEventListener('livewire:init', () => {
                 globalThis.Livewire.dispatch('toast', [{
                     type: 'error',
                     title: 'Something went wrong on the server.',
-                    description: 'Try again in a moment. If this keeps happening, contact your administrator.',
+                    description: 'Please try again in a moment. If this keeps happening, contact your administrator.',
                     timeout: 8000,
                 }]);
             }

@@ -23,7 +23,7 @@ use Spatie\Permission\Models\Role;
 
 class UserManagement extends Component
 {
-    private const BULK_LIMIT_ERROR = 'Select no more than 50 users for a bulk action.';
+    private const BULK_LIMIT_ERROR = 'Please select no more than 50 users for a bulk action.';
 
     use WithPagination;
 

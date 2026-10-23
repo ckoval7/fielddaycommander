@@ -102,7 +102,7 @@ describe('responsive layout patterns', function () {
 
         Livewire::test(LogbookBrowser::class)
             ->assertSee('No Logbook Available')
-            ->assertSee('An event must be configured');
+            ->assertSee('Please configure an event');
     });
 });
 

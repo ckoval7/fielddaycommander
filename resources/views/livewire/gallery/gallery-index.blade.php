@@ -42,14 +42,14 @@
                 @if($this->canUpload)
                     @if($this->activeEventConfiguration)
                         <x-button
-                            label="Upload Photo"
+                            label="Be the first to upload!"
                             icon="phosphor-upload-simple"
                             link="{{ route('gallery.upload', $this->activeEventConfiguration) }}"
                             class="btn-primary mt-4"
                         />
                     @elseif($this->uploadableEvents->isNotEmpty())
                         <x-button
-                            label="Upload Photo"
+                            label="Be the first to upload!"
                             icon="phosphor-upload-simple"
                             wire:click="$set('showEventSelector', true)"
                             class="btn-primary mt-4"

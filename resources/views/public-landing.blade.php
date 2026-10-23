@@ -194,7 +194,7 @@
             <div class="border-t border-base-300 pt-8">
                 <div class="text-center py-12">
                     <x-icon name="phosphor-calendar" class="w-16 h-16 text-base-content/30 mx-auto mb-4" />
-                    <p class="text-lg text-base-content/60">No event is underway or open for setup. Event details and stats will appear here when available.</p>
+                    <p class="text-lg text-base-content/60">No event is underway or open for setup. Event details and stats will appear here when available. Check back soon!</p>
                 </div>
             </div>
         @endif

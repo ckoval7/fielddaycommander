@@ -163,7 +163,7 @@ test('re-uploading a deleted photo adds it as a new photo', function () {
         ->assertHasNoErrors()
         ->assertRedirect();
 
-    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Photo uploaded.', 'type' => 'success']);
+    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Photo uploaded!', 'type' => 'success']);
 
     $new = Image::sole();
 

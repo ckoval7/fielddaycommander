@@ -66,7 +66,7 @@ class GenerateAlbumZip implements ShouldBeUnique, ShouldQueue
             $user->notify(new InAppNotification(
                 category: NotificationCategory::Photos,
                 title: 'Album Export Failed',
-                message: 'Failed to create the photo album for '.$eventConfig->event->name.'. Try again.',
+                message: 'Failed to create the photo album for '.$eventConfig->event->name.'. Please try again.',
             ));
 
             return;
@@ -131,7 +131,7 @@ class GenerateAlbumZip implements ShouldBeUnique, ShouldQueue
         $user->notify(new InAppNotification(
             category: NotificationCategory::Photos,
             title: 'Album Export Failed',
-            message: "Failed to create the photo album for {$eventName}. Try again.",
+            message: "Failed to create the photo album for {$eventName}. Please try again.",
         ));
     }
 

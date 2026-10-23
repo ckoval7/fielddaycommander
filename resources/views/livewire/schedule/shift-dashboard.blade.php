@@ -36,7 +36,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-info" class="alert-info">
-                Select an event to view the shift dashboard.
+                Please select an event to view the shift dashboard.
             </x-alert>
         @elseif(!$coverage)
             <div class="text-center py-12">
