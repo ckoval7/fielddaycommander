@@ -2,11 +2,6 @@
 
 ## Unreleased
 
-### Fixed
-
-- When a browser couldn't save queued contacts on the device (storage full, private browsing or blocked site data), the logging screen said nothing, and reloading or closing the tab while offline lost contacts that hadn't synced. A warning now stays at the top of the logging screen while contacts are waiting and can't be saved, and goes away once saving works again or the queue is empty.
-- If two people asked for the photo album ZIP while one was already being built, the second person was told they'd get a notification when it was ready but never received one. Everyone who asked while the ZIP was being built now gets the notification.
-
 ### Added
 
 - The guestbook has a kiosk mode for a shared tablet or laptop at the event. Open it from the small Kiosk mode link at the bottom of the guestbook page. It drops the header and menu, shows the form at the top with the latest entries below it, newest first, and after each entry a countdown ring on the thank-you screen clears it for the next visitor. It never fills in or credits whoever is signed in on that browser, and it marks visitors as in person. Because every visitor shares one browser, the kiosk accepts up to 60 entries an hour instead of 5.
@@ -47,7 +42,6 @@
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.
-- The photo upload page said photos up to 25 MB were accepted, but uploads over 12 MB failed. It now says 12 MB.
 - The setup wizard and **Site Branding** said SVG logos were accepted, but they were rejected on upload. They now say PNG or JPG, and the file picker no longer offers SVG files.
 - Photo uploads over 12 MB failed even though the upload page said photos up to 25 MB were accepted. Uploads up to 25 MB now work. Helm installs behind ingress-nginx also lift the ingress's 1 MB request limit to 35 MB, so photo uploads there are no longer rejected.
 - The setup wizard and **Site Branding** said SVG logos were accepted, but they were rejected on upload. They now say PNG or JPG.
@@ -67,6 +61,8 @@
 - For a Winter Field Day event, the **Scoring** tab on the event dashboard showed the ARRL Field Day formula (QSO points × power multiplier + bonuses), listed mode points from Field Day rules, and showed objectives as points. It now shows the Winter Field Day formula, QSO points × (OM + 1), with mode points and objective multipliers from the event's rules, and the event overview no longer shows a power multiplier.
 - On the event form, the power multiplier badge stayed gray whatever the multiplier was. It now turns green for 5×, yellow for 2×, and red for 1×. The multiplier shown also ignored the selected rules version and the event's stations, so it could show 5× for an event that would score 2×. It now follows the selected rules version, and when editing an event it counts each station's power and power source.
 - On a phone, Manage Schedule scrolled sideways when ended shifts had assignments still to be marked worked or no-show, because the notice's **Mark all worked** button ran off the screen. The notice now stacks its buttons under the message. Its small icon buttons, such as **Remove Assignment**, are also easier to tap and are now named for screen readers, as are the back buttons on Manage Schedule, Manage Safety Checklist and Guestbook Manager.
+- When a browser couldn't save queued contacts on the device (storage full, private browsing or blocked site data), the logging screen said nothing, and reloading or closing the tab while offline lost contacts that hadn't synced. A warning now stays at the top of the logging screen while contacts are waiting and can't be saved, and goes away once saving works again or the queue is empty.
+- If two people asked for the photo album ZIP while one was already being built, the second person was told they'd get a notification when it was ready but never received one. Everyone who asked while the ZIP was being built now gets the notification.
 
 ## 26.10.11 - 2026-10-21
 
