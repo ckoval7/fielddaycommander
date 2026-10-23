@@ -220,23 +220,25 @@
         </div>
 
         {{-- Screen reader data table --}}
-        <table class="sr-only">
-            <caption>{{ $chartData['title'] ?? 'Chart' }} data</caption>
-            <thead>
-                <tr>
-                    <th scope="col">Category</th>
-                    <th scope="col">Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach(($chartData['labels'] ?? []) as $index => $label)
+        <div class="sr-only">
+            <table>
+                <caption>{{ $chartData['title'] ?? 'Chart' }} data</caption>
+                <thead>
                     <tr>
-                        <td>{{ $label }}</td>
-                        <td>{{ $chartData['datasets'][0]['data'][$index] ?? 0 }}</td>
+                        <th scope="col">Category</th>
+                        <th scope="col">Value</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach(($chartData['labels'] ?? []) as $index => $label)
+                        <tr>
+                            <td>{{ $label }}</td>
+                            <td>{{ $chartData['datasets'][0]['data'][$index] ?? 0 }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
         {{-- Empty state --}}
         @if(empty($chartData['labels'] ?? []))
