@@ -5,6 +5,7 @@
 ### Fixed
 
 - When a browser couldn't save queued contacts on the device (storage full, private browsing or blocked site data), the logging screen said nothing, and reloading or closing the tab while offline lost contacts that hadn't synced. A warning now stays at the top of the logging screen while contacts are waiting and can't be saved, and goes away once saving works again or the queue is empty.
+- If two people asked for the photo album ZIP while one was already being built, the second person was told they'd get a notification when it was ready but never received one. Everyone who asked while the ZIP was being built now gets the notification.
 
 ### Added
 

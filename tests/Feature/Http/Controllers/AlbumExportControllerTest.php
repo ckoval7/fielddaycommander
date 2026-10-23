@@ -7,6 +7,7 @@ use App\Jobs\GenerateAlbumZip;
 use App\Models\AuditLog;
 use App\Models\EventConfiguration;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -42,6 +43,22 @@ test('authorized user can request album export', function () {
         return $job->eventConfigurationId === $eventConfig->id
             && $job->userId === $user->id;
     });
+});
+
+test('a second requester is recorded so the shared zip job notifies them too', function () {
+    Queue::fake();
+
+    $eventConfig = EventConfiguration::factory()->create();
+    $first = User::factory()->create();
+    $second = User::factory()->create();
+    $first->givePermissionTo('manage-images');
+    $second->givePermissionTo('manage-images');
+
+    $this->actingAs($first)->post(route('album-export.store', $eventConfig));
+    $this->actingAs($second)->post(route('album-export.store', $eventConfig));
+
+    expect(Cache::get(GenerateAlbumZip::requestersKey($eventConfig->id)))
+        ->toEqualCanonicalizing([$first->id, $second->id]);
 });
 
 test('unauthorized user cannot request album export', function () {

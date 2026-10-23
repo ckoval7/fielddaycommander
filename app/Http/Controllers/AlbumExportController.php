@@ -16,6 +16,9 @@ class AlbumExportController extends Controller
 {
     public function store(EventConfiguration $eventConfiguration): RedirectResponse
     {
+        // Record the requester first: if a ZIP for this event is already queued
+        // or running, this dispatch is dropped and the running job notifies them.
+        GenerateAlbumZip::addRequester($eventConfiguration->id, auth()->id());
         GenerateAlbumZip::dispatch($eventConfiguration->id, auth()->id());
 
         AuditLog::log(
