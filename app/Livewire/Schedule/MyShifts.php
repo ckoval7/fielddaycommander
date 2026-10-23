@@ -193,7 +193,7 @@ class MyShifts extends Component
             ->firstOrFail();
 
         if (! $assignment->shift->can_check_in) {
-            $this->dispatch('toast', title: 'Too Early', description: 'Check-in opens 15 minutes before the shift starts.', icon: 'phosphor-clock', css: 'alert-warning');
+            $this->dispatch('toast', title: 'Check-in Unavailable', description: 'Check in from 15 minutes before the shift starts until it ends.', icon: 'phosphor-clock', css: 'alert-warning');
 
             return;
         }

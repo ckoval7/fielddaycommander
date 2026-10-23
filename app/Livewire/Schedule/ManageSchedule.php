@@ -451,7 +451,7 @@ class ManageSchedule extends Component
         unset($this->shifts);
 
         $description = $assignmentCount > 0
-            ? "Shift and {$assignmentCount} assignment(s) deleted"
+            ? "Shift and {$assignmentCount} ".str('assignment')->plural($assignmentCount).' deleted'
             : 'Shift deleted successfully';
 
         $this->dispatch('toast', title: 'Success', description: $description, icon: 'phosphor-check-circle', css: 'alert-success');
@@ -537,7 +537,7 @@ class ManageSchedule extends Component
         $this->resetBulkForm();
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: "{$createdCount} shifts created successfully", icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$createdCount} ".str('shift')->plural($createdCount).' created', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     // --- Assignments ---
@@ -641,7 +641,7 @@ class ManageSchedule extends Component
 
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'User checked in', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Volunteer checked in', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function managerCheckOut(int $assignmentId): void
@@ -664,7 +664,7 @@ class ManageSchedule extends Component
 
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'User checked out', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Volunteer checked out', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function markNoShow(int $assignmentId): void

@@ -38,7 +38,7 @@ class ShiftCheckinReminderMail extends Notification implements ShouldQueue
         $url = route('schedule.my-shifts');
 
         return (new MailMessage)
-            ->subject("Shift Reminder: {$roleName} in {$minuteLabel}")
+            ->subject("Check-in reminder: {$roleName} in {$minuteLabel}")
             ->greeting("Hello {$notifiable->first_name},")
             ->line("Your **{$roleName}** shift starts in **{$minuteLabel}**.")
             ->line('')
@@ -47,7 +47,7 @@ class ShiftCheckinReminderMail extends Notification implements ShouldQueue
             ->line("Time: {$timeRange}")
             ->line('')
             ->action('View My Shifts', $url)
-            ->line("Don't forget to check in when your shift begins!");
+            ->line('Check in from My Shifts.');
     }
 
     /**

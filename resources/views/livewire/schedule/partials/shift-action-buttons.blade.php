@@ -20,11 +20,11 @@
                 @endif
                 @if($myAssignment->signup_type === \App\Models\ShiftAssignment::SIGNUP_TYPE_SELF_SIGNUP)
                     <x-button
-                        label="Drop"
+                        label="Drop Shift"
                         icon="phosphor-x"
                         class="btn-ghost btn-sm text-error"
                         wire:click="cancelSignUp({{ $myAssignment->id }})"
-                        wire:confirm="Are you sure you want to drop this shift?"
+                        wire:confirm="Drop this shift?"
                         spinner="cancelSignUp"
                     />
                 @endif
@@ -33,7 +33,7 @@
                 @php
                     $minutesLeft = (int) appNow()->diffInMinutes($shift->end_time);
                     $checkoutConfirm = $minutesLeft >= 1
-                        ? "You still have {$minutesLeft} " . ($minutesLeft === 1 ? 'minute' : 'minutes') . ' left in this shift. Are you sure you want to check out?'
+                        ? "You still have {$minutesLeft} " . ($minutesLeft === 1 ? 'minute' : 'minutes') . ' left in this shift. Check out now?'
                         : null;
                 @endphp
                 <x-button

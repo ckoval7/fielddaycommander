@@ -288,7 +288,7 @@ describe('bulk creation', function () {
             ->set('bulkCapacity', 2)
             ->call('createBulkShifts')
             ->assertSet('showBulkModal', false)
-            ->assertDispatched('toast', title: 'Success', description: '3 shifts created successfully');
+            ->assertDispatched('toast', title: 'Success', description: '3 shifts created');
 
         expect(Shift::where('shift_role_id', $this->role->id)->count())->toBe(3);
     });
@@ -307,7 +307,7 @@ describe('bulk creation', function () {
             ->set('bulkDurationMinutes', 120)
             ->set('bulkCapacity', 1)
             ->call('createBulkShifts')
-            ->assertDispatched('toast', title: 'Success', description: '3 shifts created successfully');
+            ->assertDispatched('toast', title: 'Success', description: '3 shifts created');
 
         $shifts = Shift::where('shift_role_id', $this->role->id)->orderBy('start_time')->get();
         expect($shifts)->toHaveCount(3);
@@ -351,7 +351,7 @@ describe('assignments', function () {
             ->set('assignUserId', $this->regularUser->id)
             ->call('assignUser')
             ->assertSet('showAssignModal', false)
-            ->assertDispatched('toast', title: 'Success', description: 'User assigned to shift');
+            ->assertDispatched('toast', title: 'Success', description: 'Volunteer assigned to shift');
 
         expect(ShiftAssignment::where('shift_id', $shift->id)
             ->where('user_id', $this->regularUser->id)->exists())->toBeTrue();
@@ -375,7 +375,7 @@ describe('assignments', function () {
             ->call('openAssignModal', $shift->id)
             ->set('assignUserId', $this->regularUser->id)
             ->call('assignUser')
-            ->assertDispatched('toast', title: 'Error', description: 'User is already assigned to this shift.');
+            ->assertDispatched('toast', title: 'Error', description: 'This volunteer is already assigned to this shift.');
     });
 
     test('cannot assign user when shift at capacity', function () {
@@ -396,7 +396,7 @@ describe('assignments', function () {
             ->call('openAssignModal', $shift->id)
             ->set('assignUserId', $this->regularUser->id)
             ->call('assignUser')
-            ->assertDispatched('toast', title: 'Error', description: 'This shift is already at capacity.');
+            ->assertDispatched('toast', title: 'Error', description: 'This shift is full.');
     });
 
     test('can remove an assignment', function () {
@@ -511,7 +511,7 @@ describe('manager overrides', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('managerCheckIn', $assignment->id)
-            ->assertDispatched('toast', title: 'Success', description: 'User checked in');
+            ->assertDispatched('toast', title: 'Success', description: 'Volunteer checked in');
 
         expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_IN);
     });
@@ -533,7 +533,7 @@ describe('manager overrides', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('managerCheckOut', $assignment->id)
-            ->assertDispatched('toast', title: 'Success', description: 'User checked out');
+            ->assertDispatched('toast', title: 'Success', description: 'Volunteer checked out');
 
         expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
     });

@@ -329,7 +329,7 @@ describe('check in and check out', function () {
         $this->actingAs($this->user);
 
         Livewire::test(ScheduleTimeline::class)
-            ->assertSee('Are you sure you want to check out?', false);
+            ->assertSee('Check out now?', false);
     });
 
     test('checkout confirmation warning is not shown when shift has already ended', function () {
@@ -354,7 +354,7 @@ describe('check in and check out', function () {
         $this->actingAs($this->user);
 
         Livewire::test(ScheduleTimeline::class)
-            ->assertDontSee('Are you sure you want to check out?', false);
+            ->assertDontSee('Check out now?', false);
     });
 });
 

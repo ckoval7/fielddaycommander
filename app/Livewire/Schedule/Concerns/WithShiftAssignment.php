@@ -71,7 +71,7 @@ trait WithShiftAssignment
         // Check capacity
         if (! $shift->has_capacity) {
             $this->showAssignModal = false;
-            $this->dispatch('toast', title: 'Error', description: 'This shift is already at capacity.', icon: 'phosphor-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'This shift is full.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -83,7 +83,7 @@ trait WithShiftAssignment
 
         if ($alreadyAssigned) {
             $this->showAssignModal = false;
-            $this->dispatch('toast', title: 'Error', description: 'User is already assigned to this shift.', icon: 'phosphor-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'This volunteer is already assigned to this shift.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -107,7 +107,7 @@ trait WithShiftAssignment
         $this->assignUserId = null;
         $this->shiftAssigned();
 
-        $this->dispatch('toast', title: 'Success', description: 'User assigned to shift', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Volunteer assigned to shift', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     /**

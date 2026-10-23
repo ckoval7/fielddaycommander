@@ -24,7 +24,7 @@
                     />
                 @endcan
                 <x-button
-                    label="Dashboard"
+                    label="Shift Dashboard"
                     icon="phosphor-chart-bar-horizontal"
                     class="btn-outline"
                     link="{{ route('schedule.dashboard') }}"
@@ -50,7 +50,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-info" class="alert-info">
-                No event is currently selected. Please select an event to view the schedule.
+                Select an event to view the schedule.
             </x-alert>
         @else
             @php
@@ -75,8 +75,8 @@
                 @else
                     <div class="text-center py-12">
                         <x-icon name="phosphor-calendar" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-                        <h3 class="text-lg font-semibold mb-2">No roles configured</h3>
-                        <p class="text-base-content/60">Shift roles have not been set up for this event yet.</p>
+                        <h3 class="text-lg font-semibold mb-2">No current or upcoming shifts</h3>
+                        <p class="text-base-content/60">Change the Time filter to All to include past shifts.</p>
                     </div>
                 @endif
             @elseif($this->isFlattened)
