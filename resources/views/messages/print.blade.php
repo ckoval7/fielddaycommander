@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Messages - {{ $event->eventConfiguration->callsign ?? 'Field Day' }}</title>
+    <title>Field Day Commander - Messages - {{ $event->eventConfiguration->callsign ?? 'Field Day' }}</title>
     <style>
         @media print {
             .page-break { page-break-after: always; }
@@ -42,7 +42,7 @@
         @if($message->format->value === 'radiogram')
             {{-- ARRL Radiogram Layout --}}
             <div class="radiogram">
-                <div class="header">ARRL RADIOGRAM</div>
+                <div class="header">RADIOGRAM</div>
 
                 <div class="preamble">
                     <div class="preamble-item">

@@ -176,7 +176,7 @@ class W1awBulletinForm extends Component
             $bulletin->delete();
             $this->bulletinId = null;
             $this->reset(['frequency', 'mode', 'receivedAt', 'bulletinText']);
-            $this->dispatch('toast', title: 'Bulletin removed', type: 'success');
+            $this->dispatch('toast', title: 'Bulletin deleted', type: 'success');
         }
     }
 
@@ -288,7 +288,7 @@ class W1awBulletinForm extends Component
         }
 
         BulletinScheduleEntry::findOrFail($entryId)->delete();
-        $this->dispatch('toast', title: 'Transmission removed', type: 'success');
+        $this->dispatch('toast', title: 'Transmission deleted', type: 'success');
     }
 
     /**

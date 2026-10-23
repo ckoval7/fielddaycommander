@@ -241,19 +241,21 @@ describe('sent tracking', function () {
             ->and($message->mode_category)->toBeNull();
     });
 
-    test('unsent messages show draft badge', function () {
+    test('unsent messages show unmarked status badge', function () {
         $message = Message::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'user_id' => $this->operator->id,
             'sent_at' => null,
         ]);
 
-        Livewire::actingAs($this->operator)
+        $html = Livewire::actingAs($this->operator)
             ->test(MessageTrafficIndex::class, ['event' => $this->event])
-            ->assertSee('Draft');
+            ->html();
+
+        expect($html)->toMatch('/Not (sent|delivered)/');
     });
 
-    test('sent messages do not show draft badge', function () {
+    test('sent messages do not show unmarked status badge', function () {
         $message = Message::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,
             'user_id' => $this->operator->id,
@@ -261,9 +263,11 @@ describe('sent tracking', function () {
             'sent_by_user_id' => $this->operator->id,
         ]);
 
-        Livewire::actingAs($this->operator)
+        $html = Livewire::actingAs($this->operator)
             ->test(MessageTrafficIndex::class, ['event' => $this->event])
-            ->assertDontSee('Draft');
+            ->html();
+
+        expect($html)->not->toMatch('/Not (sent|delivered)/');
     });
 
     test('displays sent status on index', function () {
@@ -337,7 +341,7 @@ describe('message bonus scoring by rulebook', function () {
             ->test(MessageTrafficIndex::class, ['event' => $this->event])
             ->assertSee('SM/SEC')
             ->assertSee('W1AW')
-            ->assertDontSee('awards no points for message traffic');
+            ->assertDontSee('does not award message traffic points');
     });
 
     test('hides bonus point cards but keeps SM/SEC available for Winter Field Day', function () {
@@ -348,7 +352,7 @@ describe('message bonus scoring by rulebook', function () {
 
         Livewire::actingAs($this->operator)
             ->test(MessageTrafficIndex::class, ['event' => $wfdEvent])
-            ->assertSee('awards no points for message traffic')
+            ->assertSee('does not award message traffic points')
             ->assertSee('SM/SEC Message')
             ->assertDontSee('W1AW')
             ->assertDontSee(' pts');

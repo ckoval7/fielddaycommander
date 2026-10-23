@@ -6,7 +6,7 @@
     {{-- Header --}}
     <x-header
         :title="$this->nomenclature->bulletinName"
-        :subtitle="'Capture the ' . $this->nomenclature->bulletinName . ' as copied over the air'"
+        :subtitle="'Record the ' . $this->nomenclature->bulletinName . ' as copied over the air'"
         separator
         progress-indicator
     >
@@ -26,7 +26,7 @@
         @if($bulletinId)
             <x-badge :value="$this->nomenclature->bulletinCapturedLabel" class="badge-success" icon="phosphor-check-circle" />
         @else
-            <x-badge value="Not Yet Captured" class="badge-warning" icon="phosphor-clock" />
+            <x-badge value="Not Yet Saved" class="badge-warning" icon="phosphor-clock" />
         @endif
     </div>
 
@@ -50,7 +50,7 @@
                         <x-icon name="phosphor-clock" class="w-4 h-4" />
                         <span class="text-sm font-medium">
                             Next: {{ $this->nextScheduleEntry->mode_label }} on {{ $this->nextScheduleEntry->frequencies }} MHz
-                            — <span x-text="countdown">loading...</span>
+                            (<span x-text="countdown">Loading...</span>)
                         </span>
                     </div>
                 </div>
@@ -90,15 +90,15 @@
                                                 class="btn-ghost btn-xs"
                                                 wire:click="editScheduleEntry({{ $entry->id }})"
                                                 spinner="editScheduleEntry({{ $entry->id }})"
-                                                title="Edit"
+                                                title="Edit transmission"
                                             />
                                             <x-button
                                                 icon="phosphor-trash"
                                                 class="btn-ghost btn-xs text-error"
                                                 wire:click="deleteScheduleEntry({{ $entry->id }})"
-                                                wire:confirm="Remove this transmission from the schedule?"
+                                                wire:confirm="Delete this scheduled transmission?"
                                                 spinner="deleteScheduleEntry({{ $entry->id }})"
-                                                title="Delete"
+                                                title="Delete transmission"
                                             />
                                         </div>
                                     </td>
@@ -174,7 +174,7 @@
                 <div class="flex gap-2 mt-3">
                     @if($editingEntryId)
                         <x-button
-                            label="Update"
+                            label="Update Transmission"
                             wire:click="updateScheduleEntry"
                             class="btn-primary btn-sm"
                             icon="phosphor-check"
@@ -252,7 +252,7 @@
                 <x-textarea
                     label="Bulletin Text"
                     wire:model="bulletinText"
-                    :placeholder="'Enter the ' . $this->nomenclature->bulletinName . ' text as received...'"
+                    :placeholder="'Enter the ' . $this->nomenclature->bulletinName . ' text as received'"
                     rows="10"
                     required
                     class="font-mono"
@@ -273,7 +273,7 @@
                     <x-button
                         label="Delete Bulletin"
                         wire:click="deleteBulletin"
-                        wire:confirm="Are you sure you want to delete this bulletin? This cannot be undone."
+                        wire:confirm="Delete this bulletin?"
                         class="btn-error"
                         icon="phosphor-trash"
                         spinner="deleteBulletin"
@@ -346,7 +346,7 @@
 @script
 <script>
     Alpine.data('bulletinCountdown', (isoTime) => ({
-        countdown: 'loading...',
+        countdown: 'Loading...',
         interval: null,
         init() {
             this.tick();
@@ -358,7 +358,7 @@
             const diff = target - now;
 
             if (diff <= 0) {
-                this.countdown = 'NOW';
+                this.countdown = 'Now';
                 clearInterval(this.interval);
                 return;
             }

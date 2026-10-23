@@ -13,7 +13,7 @@ enum MessageFormat: string
     public function label(): string
     {
         return match ($this) {
-            self::Radiogram => 'ARRL Radiogram',
+            self::Radiogram => 'Radiogram',
             self::Ics213 => 'ICS-213',
         };
     }
