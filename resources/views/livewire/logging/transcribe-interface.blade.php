@@ -75,7 +75,7 @@
                     @endif
                 </div>
                 <div class="flex-shrink-0">
-                    <a href="{{ route('logging.transcribe.select') }}" class="btn btn-ghost btn-sm" wire:navigate>
+                    <a href="{{ route('logging.transcribe.select') }}" class="btn btn-ghost btn-sm" aria-label="Change Station" wire:navigate>
                         <x-icon name="phosphor-arrow-left" class="w-4 h-4" />
                         <span class="hidden sm:inline">Change Station</span>
                     </a>

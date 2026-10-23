@@ -100,7 +100,13 @@ Slots:
                 @keydown.delete="
                     if (isRecalling) { $event.preventDefault(); deleteRecalled($refs.exchangeInput); }
                 "
-                @keydown.tab.prevent="si >= 0 && $wire.suggestions?.length > 0 ? ($wire.selectSuggestion($wire.suggestions[si].exchange), si = -1) : null"
+                @keydown.tab="
+                    if (si >= 0 && $wire.suggestions?.length > 0) {
+                        $event.preventDefault();
+                        $wire.selectSuggestion($wire.suggestions[si].exchange);
+                        si = -1;
+                    }
+                "
                 @contact-logged.window="$refs.exchangeInput.focus(); $refs.exchangeInput.select(); si = -1"
                 @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
                 class="input input-lg w-full text-2xl font-mono uppercase tracking-wider"

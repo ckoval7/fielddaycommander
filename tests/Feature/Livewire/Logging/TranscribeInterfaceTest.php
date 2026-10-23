@@ -1161,3 +1161,17 @@ test('exchange example follows the event type', function () {
         ->assertSeeHtml('placeholder="1423 W1AW 1H CT"')
         ->assertDontSee('3A CT');
 });
+
+test('change station link has an accessible name', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->assertSeeHtml('aria-label="Change Station"');
+});
+
+test('exchange composer only prevents default on tab when accepting a suggestion', function () {
+    $view = file_get_contents(resource_path('views/components/logging/exchange-composer.blade.php'));
+
+    expect($view)->not->toContain('@keydown.tab.prevent')
+        ->and($view)->toContain('@keydown.tab="');
+});
