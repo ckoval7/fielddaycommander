@@ -33,7 +33,8 @@ enum PowerSource: string
     }
 
     /**
-     * Natural power = battery, solar, or other (covers water, wind, methane, etc.).
+     * Natural power = battery, solar, or other (wind, water, or another source
+     * without an engine). A methane generator should be recorded as Generator.
      * NOT generator or commercial mains.
      */
     public function isNaturalPower(): bool

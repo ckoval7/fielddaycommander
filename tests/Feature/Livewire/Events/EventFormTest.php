@@ -1744,3 +1744,11 @@ test('local subnets placeholder shows one example per line, not an escaped entit
         ->assertSeeHtml("placeholder=\"192.168.1.0/24\n10.0.0.0/8\"")
         ->assertDontSeeHtml('&amp;#10;');
 });
+
+test('alternate power hint tells methane generators to tick Generator too', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->assertSee('A methane generator counts as alternate power.')
+        ->assertSeeHtml('Also tick <strong>Generator</strong>');
+});
