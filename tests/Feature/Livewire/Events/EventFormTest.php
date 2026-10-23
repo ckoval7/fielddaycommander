@@ -16,6 +16,8 @@ use App\Models\Section;
 use App\Models\Setting;
 use App\Models\Station;
 use App\Models\User;
+use App\Scoring\Dto\PowerContext;
+use App\Scoring\Rules\FieldDay2025;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -221,6 +223,54 @@ test('event form multiplier preview follows the selected rules version', functio
 
     $component->set('rules_version', '2025');
     expect($component->get('powerMultiplier'))->toBe('2');
+});
+
+test('the power multiplier box shows the selected rules version\'s thresholds', function () {
+    $this->actingAs($this->user);
+
+    // A rulebook with different limits than Field Day 2025.
+    app()->bind(FieldDay2025::class, fn () => new class extends FieldDay2025
+    {
+        public function powerMultiplier(PowerContext $ctx): string
+        {
+            if ($ctx->effectivePowerWatts > 150) {
+                return '1';
+            }
+
+            return $ctx->effectivePowerWatts <= 10 && $ctx->qualifiesForQrpNaturalBonus ? '5' : '2';
+        }
+    });
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('rules_version', '2025')
+        ->assertSeeHtml('<strong>5×:</strong>')
+        ->assertSee('10 W or less, using only battery, solar, wind, or water power.')
+        ->assertSee('150 W or less')
+        ->assertSee('over 150 W')
+        ->assertDontSee('5 W or less,')
+        ->assertDontSee('over 100 W');
+
+    // The synthetic TEST rulebook scores the middle tier at 3x.
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('rules_version', 'TEST')
+        ->assertSeeHtml('<strong>3×:</strong>')
+        ->assertDontSeeHtml('<strong>2×:</strong>');
+});
+
+test('the power multiplier box names the power sources scoring counts as natural', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('rules_version', '2025')
+        ->assertSee('5 W or less, using only battery, solar, wind, or water power. No commercial power or generators.')
+        ->assertSee('100 W or less')
+        ->assertSee('over 100 W')
+        ->assertSee('Examples: solar, wind, and water (hydro).')
+        ->assertDontSee('alternate power)')
+        ->assertDontSee('Methane');
 });
 
 test('event form multiplier preview counts the saved stations when editing', function () {
@@ -1472,12 +1522,12 @@ test('the power multiplier badge is hidden for event types that have no multipli
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('event_type_id', $wfdType->id)
         ->assertSet('event_type_id', $wfdType->id)
-        ->assertDontSee('Power Multiplier Rules');
+        ->assertDontSee('Power multipliers');
 
     // Field Day still shows it.
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('event_type_id', $this->eventType->id)
-        ->assertSee('Power Multiplier Rules');
+        ->assertSee('Power multipliers');
 });
 
 test('event form highlights power source checkboxes when none are selected', function () {
