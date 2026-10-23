@@ -17,8 +17,8 @@
         <div class="alert alert-warning text-sm">
             <x-icon name="phosphor-warning-duotone" class="w-5 h-5 shrink-0" />
             <div>
-                <p class="font-medium">Weather APIs cannot fetch data</p>
-                <p class="text-xs mt-0.5">No active or upcoming event has a location configured. Set latitude, longitude, and state on an event to enable live weather fetching.</p>
+                <p class="font-medium">Event location needed</p>
+                <p class="text-xs mt-0.5">Set latitude, longitude, and state for the selected event to fetch weather data. The server must be able to reach the internet.</p>
             </div>
         </div>
     @endif
@@ -50,7 +50,7 @@
     {{-- API Status --}}
     <div class="card bg-base-200 shadow">
         <div class="card-body space-y-3">
-            <h2 class="card-title text-base">API Status</h2>
+            <h2 class="card-title text-base">Weather Sources</h2>
 
             {{-- Open-Meteo Forecast --}}
             <div class="collapse collapse-arrow bg-base-100">
@@ -63,7 +63,7 @@
                                 wire:click.stop="toggleOpenMeteo"
                                 @checked($openMeteoEnabled)
                                 wire:confirm="{{ $openMeteoEnabled ? 'Disable Open-Meteo? The stored forecast will be cleared.' : 'Enable Open-Meteo forecast polling?' }}" />
-                            <span class="text-sm font-medium">Open-Meteo Forecast</span>
+                            <span class="text-sm font-medium">Open-Meteo Forecast (internet required)</span>
                         </div>
                         <div class="flex items-center gap-2">
                             @if(! $openMeteoEnabled)
@@ -104,7 +104,7 @@
                                 @endif
                             </dl>
                         @elseif($requested)
-                            <p class="text-base-content/60">Requested {{ $requested['lat'] }}, {{ $requested['lon'] }} — no resolved location yet (no successful fetch).</p>
+                            <p class="text-base-content/60">Requested {{ $requested['lat'] }}, {{ $requested['lon'] }}. No location returned yet. A successful fetch is needed.</p>
                         @else
                             <p class="text-base-content/60">No active event location configured.</p>
                         @endif
@@ -127,7 +127,7 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">Fetch status</p>
                         @if(! $openMeteoEnabled)
-                            <p class="text-base-content/60">Polling is disabled — forecast has been cleared.</p>
+                            <p class="text-base-content/60">Polling is disabled. The stored forecast has been cleared.</p>
                         @elseif($forecastStatus === null)
                             <p class="text-base-content/60">No fetch has been attempted yet.</p>
                         @else
@@ -154,7 +154,7 @@
                                 wire:click.stop="toggleNws"
                                 @checked($nwsEnabled)
                                 wire:confirm="{{ $nwsEnabled ? 'Disable NWS Alerts? Stored NWS alerts will be cleared. Local alerts are unaffected.' : 'Enable NWS alert polling?' }}" />
-                            <span class="text-sm font-medium">NWS Alerts</span>
+                            <span class="text-sm font-medium">NWS Alerts (internet required)</span>
                         </div>
                         <div class="flex items-center gap-2">
                             @if(! $nwsEnabled)
@@ -174,7 +174,7 @@
                 <div class="collapse-content text-sm space-y-3">
                     {{-- Location NWS thinks you are in --}}
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">Location NWS thinks you are in</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">NWS alert area</p>
                         @php($requested = $this->locationConfig)
                         @php($resolved = $this->resolvedNwsLocation)
                         @if($resolved)
@@ -193,13 +193,13 @@
                                 <dd class="font-mono">{{ $resolved['county'] }}</dd>
                             </dl>
                         @elseif($requested)
-                            <p class="text-base-content/60">Requested {{ $requested['lat'] }}, {{ $requested['lon'] }} — NWS has not resolved a zone/county yet.</p>
+                            <p class="text-base-content/60">Requested {{ $requested['lat'] }}, {{ $requested['lon'] }}. NWS has not returned a forecast zone and county yet.</p>
                         @else
                             <p class="text-base-content/60">No active event location configured.</p>
                         @endif
                         @if($resolved || $requested)
                             <button wire:click="clearNwsLocationCache"
-                                wire:confirm="Clear the cached NWS zone, county, and city for the active event's coordinates? NWS will re-resolve on the next poll."
+                                wire:confirm="Clear the cached NWS location? If NWS alerts are enabled, the server will try to look up the location again now."
                                 class="btn btn-outline btn-xs mt-2">
                                 <x-icon name="phosphor-arrow-clockwise" class="w-3 h-3" />
                                 Clear cached location
@@ -248,7 +248,7 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">Fetch status</p>
                         @if(! $nwsEnabled)
-                            <p class="text-base-content/60">Polling is disabled — stored NWS alerts have been cleared (manual alerts preserved).</p>
+                            <p class="text-base-content/60">Polling is disabled. Stored NWS alerts have been cleared. Local alerts are unchanged.</p>
                         @elseif($alertsStatus === null)
                             <p class="text-base-content/60">No fetch has been attempted yet.</p>
                         @else
@@ -290,7 +290,7 @@
                         Set by {{ $currentOverride['updated_by'] ?? '?' }}
                     </p>
                 </div>
-                <button wire:click="clearOverride" wire:confirm="Clear the manual override and return to live data?"
+                <button wire:click="clearOverride" wire:confirm="Clear the manual override? The dashboard will show the stored forecast, if available."
                     class="btn btn-outline btn-sm">
                     Clear Override
                 </button>
@@ -338,7 +338,7 @@
     <div class="card bg-base-200 shadow">
         <div class="card-body space-y-4">
             <div class="flex items-center justify-between">
-                <h2 class="card-title text-base">Storm / Lightning Alert</h2>
+                <h2 class="card-title text-base">Local Alerts</h2>
                 @if($manualAlertActive)
                     <div class="badge badge-error">Local Alert Active</div>
                 @elseif(!empty($currentAlerts))
@@ -384,7 +384,7 @@
                     @endforeach
                 </div>
                 @if($manualAlertActive)
-                    <p class="text-xs text-base-content/50">Triggering a quick alert replaces the active local alert — use it to escalate or step down.</p>
+                    <p class="text-xs text-base-content/50">Posting a quick alert replaces the active local alert.</p>
                 @endif
             </div>
 
@@ -392,16 +392,16 @@
                 <div class="space-y-2">
                     <label for="weather-alert-message" class="block py-1 text-sm text-xs">Custom Alert Message</label>
                     <input id="weather-alert-message" wire:model="alertMessage" type="text" class="input w-full" autocapitalize="sentences"
-                        placeholder="Lightning within 10 miles — seek shelter immediately" />
+                        placeholder="Lightning within 10 miles. Seek shelter immediately." />
                     @error('alertMessage') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <button wire:click="triggerAlert" class="btn btn-warning btn-sm">
-                    Trigger Alert
+                    Post Local Alert
                 </button>
             @endif
 
             <p class="text-xs text-base-content/50">
-                Triggering an alert broadcasts immediately to all connected users via the alert banner.
+                Local alerts work without internet access. Posting an alert sends it to connected users through the alert banner.
                 Local alerts stay active alongside any NWS alerts until you clear them.
             </p>
 
@@ -427,14 +427,14 @@
                     <div>
                         <p class="font-semibold">Alert levels</p>
                         <ul class="list-disc pl-5 text-base-content/70 space-y-1">
-                            <li><span class="font-medium text-base-content">Lightning &lt; 15 mi:</span> Immediately stop operating; disconnect radios from power and antennas.</li>
-                            <li><span class="font-medium text-base-content">Lightning &lt; 10 mi, or thunder heard:</span> hands off all wired equipment; everyone to a hard-topped vehicle or enclosed building. Tents and canopies are not shelter.</li>
+                            <li><span class="font-medium text-base-content">Lightning &lt; 15 mi:</span> Stop operating immediately. Disconnect radios from power and antennas.</li>
+                            <li><span class="font-medium text-base-content">Lightning &lt; 10 mi, or thunder heard:</span> Keep hands off all wired equipment. Everyone must move to a hard-topped vehicle or enclosed building. Tents and canopies are not shelter.</li>
                         </ul>
                     </div>
 
                     <div>
                         <p class="font-semibold">All clear</p>
-                        <p class="text-base-content/70">Wait 30 minutes after the last lightning or thunder within 10 miles; restart the clock on every new strike. Step down to the 15-mile alert first if storms are still nearby, then clear.</p>
+                        <p class="text-base-content/70">Wait 30 minutes after the last lightning or thunder within 10 miles. Restart the clock on every new strike. Step down to the 15-mile alert first if storms are still nearby, then clear.</p>
                     </div>
                 </div>
             </details>

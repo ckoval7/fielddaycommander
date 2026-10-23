@@ -32,7 +32,7 @@
                 <x-icon name="phosphor-cloud-duotone" class="w-16 h-16 mb-4 opacity-30" />
                 @if($canManageWeather)
                     <p class="text-lg font-medium text-base-content/70">No weather data yet.</p>
-                    <p class="text-sm mt-1 max-w-sm">Set up an active event with coordinates to enable automatic weather monitoring.</p>
+                    <p class="text-sm mt-1 max-w-sm">Set the event’s latitude, longitude, and state in its configuration. Enable Open-Meteo in Manage Weather. The server needs internet access to fetch forecasts.</p>
                 @else
                     <p class="text-lg font-medium text-base-content/70">No weather data available.</p>
                 @endif
@@ -62,7 +62,7 @@
                                 @endif
                                 @if(isset($d['precipitation_chance']))
                                     <div>
-                                        <span class="text-base-content/50">Precip chance</span>
+                                        <span class="text-base-content/50">Precipitation chance</span>
                                         <span class="ml-1 font-medium">{{ $d['precipitation_chance'] }}%</span>
                                     </div>
                                 @endif
@@ -95,7 +95,7 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <span class="text-base-content/50">Precip</span>
+                                    <span class="text-base-content/50">Precipitation</span>
                                     <span class="ml-1 font-medium">{{ $c['precipitation'] ?? 0 }} mm</span>
                                 </div>
                             </div>
@@ -230,12 +230,12 @@
             {{-- Data Source Footer --}}
             <div class="text-xs text-base-content/40 text-center pt-2 pb-4">
                 @if($isManual)
-                    Manual override active — entered by {{ $manualOverride['updated_by'] ?? 'unknown' }}
+                    Manual override active. Entered by {{ $manualOverride['updated_by'] ?? 'unknown' }}
                     @if(! empty($manualOverride['updated_at']))
                         at {{ \Carbon\Carbon::parse($manualOverride['updated_at'])->format('M j, Y g:i A') }}
                     @endif
                 @elseif($lastFetch)
-                    Updated {{ \Carbon\Carbon::parse($lastFetch)->diffForHumans() }} · Open-Meteo / NWS
+                    Updated {{ \Carbon\Carbon::parse($lastFetch)->diffForHumans() }} · Forecast: Open-Meteo · Alerts: NWS
                 @endif
             </div>
 
