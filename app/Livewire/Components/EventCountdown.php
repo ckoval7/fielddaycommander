@@ -54,6 +54,12 @@ class EventCountdown extends Component
         $this->setStateStyles();
     }
 
+    /**
+     * Deliberately ignores EventContextService: the header countdown always
+     * points at the real current or next event, even while someone browses a
+     * past event, so a screen left on the dashboard never counts toward an
+     * event that's over.
+     */
     protected function getRelevantEvent(): ?Event
     {
         // Priority 1: Active event (currently in date range)
