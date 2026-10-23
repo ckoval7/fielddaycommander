@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- On the logging and transcribe screens, pressing Tab in the exchange box did nothing, so keyboard users couldn't move on to the band and mode controls or the log. Tab now moves on, and only accepts a suggestion when one is highlighted. On phones, the transcribe screen's back button had no name for screen readers; it is now announced as Change Station.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.

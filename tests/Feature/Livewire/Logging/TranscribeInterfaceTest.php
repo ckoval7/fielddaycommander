@@ -1143,3 +1143,17 @@ test('full-bleed transcribe layout matches the 12px phone gutter', function () {
         ->assertSeeHtml('class="max-sm:-mx-3"')
         ->assertDontSeeHtml('max-sm:-mx-5');
 });
+
+test('change station link has an accessible name', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->assertSeeHtml('aria-label="Change Station"');
+});
+
+test('exchange composer only prevents default on tab when accepting a suggestion', function () {
+    $view = file_get_contents(resource_path('views/components/logging/exchange-composer.blade.php'));
+
+    expect($view)->not->toContain('@keydown.tab.prevent')
+        ->and($view)->toContain('@keydown.tab="');
+});
