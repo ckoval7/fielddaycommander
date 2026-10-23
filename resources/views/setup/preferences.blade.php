@@ -15,7 +15,7 @@
     </div>
 
     <div class="space-y-6">
-        <p class="text-center">Configure essential system settings.</p>
+        <p class="text-center">Enter your organization details and choose date and time formats.</p>
 
         <form method="POST" action="{{ route('setup.complete') }}" class="space-y-6">
             @csrf
@@ -36,7 +36,7 @@
             {{-- Organization Information --}}
             <div class="space-y-4">
                 <h3 class="text-lg font-semibold mb-2">Organization Information</h3>
-                <p class="text-sm text-gray-600 mb-4">Set up your club or organization details. This will be used for club-owned equipment.</p>
+                <p class="text-sm text-gray-600 mb-4">Add your club or organization. Equipment can be recorded as club-owned or personal.</p>
 
                 <x-input
                     autocapitalize="words"
@@ -57,7 +57,7 @@
                     spellcheck="false"
                     icon="phosphor-cell-signal-high"
                     placeholder="e.g., W1ABC"
-                    hint="Optional - Club station callsign (3-10 uppercase letters/numbers)"
+                    hint="Optional. Club station callsign, 3–10 uppercase letters or numbers"
                     errorField="organization_callsign"
                 />
 
@@ -67,7 +67,7 @@
                     name="organization_email"
                     icon="phosphor-envelope"
                     placeholder="e.g., info@example.org"
-                    hint="Optional - Club contact email"
+                    hint="Optional. Club contact email"
                     errorField="organization_email"
                 />
 
@@ -77,7 +77,7 @@
                     name="organization_phone"
                     icon="phosphor-phone"
                     placeholder="e.g., (555) 123-4567"
-                    hint="Optional - Club contact phone number"
+                    hint="Optional. Club contact phone number"
                     errorField="organization_phone"
                 />
             </div>
@@ -153,7 +153,7 @@
                                         ></button>
                                     </li>
                                 </template>
-                                <li x-show="filtered.length === 0" class="px-3 py-2 text-sm text-base-content/50">No results found.</li>
+                                <li x-show="filtered.length === 0" class="px-3 py-2 text-sm text-base-content/50">No matching timezones. Try another search.</li>
                             </ul>
                         </div>
                     </div>
@@ -180,7 +180,7 @@
                     type="email"
                     name="contact_email"
                     icon="phosphor-envelope"
-                    hint="Optional - for public contact information"
+                    hint="Optional. Site contact email"
                     errorField="contact_email"
                 />
             </div>

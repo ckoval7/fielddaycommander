@@ -67,7 +67,7 @@
             @if($activeEvent && $activeEvent->start_time && $activeEvent->end_time)
                 @php $tz = \App\Models\Setting::get('timezone', 'America/New_York'); @endphp
                 <p class="text-base text-base-content/50 mb-4">
-                    {{ $activeEvent->start_time->timezone($tz)->format('F j, Y g:i A') }} &mdash;
+                    {{ $activeEvent->start_time->timezone($tz)->format('F j, Y g:i A') }} &ndash;
                     {{ $activeEvent->end_time->timezone($tz)->format('F j, Y g:i A T') }}
                 </p>
             @endif
@@ -111,7 +111,7 @@
                     <p class="text-center font-medium">
                         Open to the public
                         @if($eventConfig->club_name)
-                            &mdash; hosted by {{ $eventConfig->club_name }}
+                            · Hosted by {{ $eventConfig->club_name }}
                         @endif
                     </p>
                     @if($eventConfig->public_description)
@@ -194,7 +194,7 @@
             <div class="border-t border-base-300 pt-8">
                 <div class="text-center py-12">
                     <x-icon name="phosphor-calendar" class="w-16 h-16 text-base-content/30 mx-auto mb-4" />
-                    <p class="text-lg text-base-content/60">No active event at this time. Check back soon!</p>
+                    <p class="text-lg text-base-content/60">No event is underway or open for setup. Event details and stats will appear here when available.</p>
                 </div>
             </div>
         @endif
