@@ -24,7 +24,7 @@ enum VisitorCategory: string
             self::Youth => 'Youth',
             self::AresRaces => 'ARES/RACES Volunteer',
             self::Media => 'Media Representative',
-            self::Agency => 'Agency Representative (e.g., Red Cross)',
+            self::Agency => 'Agency (Red Cross, Emergency Management)',
             self::ArrlOfficial => 'ARRL Official',
             self::ElectedOfficial => 'Elected Official',
         };

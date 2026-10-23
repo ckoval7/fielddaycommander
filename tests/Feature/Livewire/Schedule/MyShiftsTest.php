@@ -139,6 +139,52 @@ test('user can check in to a scheduled shift', function () {
     expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_IN);
 });
 
+test('check-in before the window opens says it is too early', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->addHour(),
+        'end_time' => appNow()->addHours(2),
+    ]);
+
+    $assignment = ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->call('checkIn', $assignment->id)
+        ->assertDispatched('toast', title: 'Too Early', description: 'Check-in opens 15 minutes before the shift starts.');
+
+    expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_SCHEDULED);
+});
+
+test('check-in after the shift ended says it is too late', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(3),
+        'end_time' => appNow()->subHour(),
+    ]);
+
+    $assignment = ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->call('checkIn', $assignment->id)
+        ->assertDispatched('toast', title: 'Too Late', description: 'This shift has already ended.');
+
+    expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_SCHEDULED);
+});
+
 test('user can check out of a checked-in shift', function () {
     $shift = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,

@@ -62,8 +62,8 @@ class EquipmentIncident extends Notification
         $message->action('View Equipment Dashboard', route('events.equipment.dashboard', $event));
 
         $message->line($isOwner
-            ? 'We are sorry this happened.'
-            : 'Please contact the equipment owner or club equipment manager to follow up on this incident.');
+            ? 'We apologize for this incident and will work with you to resolve it.'
+            : 'Please contact the equipment owner as soon as possible to discuss recovery or compensation.');
 
         return $message;
     }
@@ -85,7 +85,7 @@ class EquipmentIncident extends Notification
                 ->line($this->equipmentEvent->manager_notes);
         }
 
-        $message->line('Please contact the event organizers to discuss what happened and the next steps.');
+        $message->line('Please contact the event organizers immediately to discuss recovery or compensation.');
     }
 
     /**

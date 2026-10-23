@@ -205,7 +205,7 @@ class Landing extends Component
             || ! $captain->checkPermissionTo('manage-stations')
         ) {
             RateLimiter::hit($rateLimitKey);
-            $this->addError('exitEmail', 'Check the email and password. Use an unlocked account with permission to manage stations.');
+            $this->addError('exitEmail', 'This email and password cannot take this browser out of station mode.');
 
             return;
         }

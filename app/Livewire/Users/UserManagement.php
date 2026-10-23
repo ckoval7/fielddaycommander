@@ -25,6 +25,16 @@ class UserManagement extends Component
 {
     private const BULK_LIMIT_ERROR = 'Please select no more than 50 users for a bulk action.';
 
+    private const FIRST_NAME_REQUIRED = 'Enter a first name.';
+
+    private const LAST_NAME_REQUIRED = 'Enter a last name.';
+
+    private const EMAIL_REQUIRED = 'Enter an email address.';
+
+    private const EMAIL_INVALID = 'Enter a valid email address.';
+
+    private const EMAIL_TAKEN = 'This email address is already registered.';
+
     use WithPagination;
 
     // Search and filters
@@ -234,13 +244,13 @@ class UserManagement extends Component
             'password' => ['required_if:inviteMode,false', 'confirmed', Password::defaults()],
         ], [
             'call_sign.required' => 'Enter a callsign.',
-            'first_name.required' => 'Enter a first name.',
-            'last_name.required' => 'Enter a last name.',
-            'email.required' => 'Enter an email address.',
-            'email.email' => 'Enter a valid email address.',
+            'first_name.required' => self::FIRST_NAME_REQUIRED,
+            'last_name.required' => self::LAST_NAME_REQUIRED,
+            'email.required' => self::EMAIL_REQUIRED,
+            'email.email' => self::EMAIL_INVALID,
             'role_id.required' => 'Select a role.',
             'call_sign.unique' => 'This callsign is already registered.',
-            'email.unique' => 'This email address is already registered.',
+            'email.unique' => self::EMAIL_TAKEN,
             'password.required_if' => 'Enter a password or send an invitation.',
         ]);
 
@@ -319,13 +329,13 @@ class UserManagement extends Component
             'role_id' => ['required', 'exists:roles,id'],
         ], [
             'call_sign.required' => 'Enter a callsign.',
-            'first_name.required' => 'Enter a first name.',
-            'last_name.required' => 'Enter a last name.',
-            'email.required' => 'Enter an email address.',
-            'email.email' => 'Enter a valid email address.',
+            'first_name.required' => self::FIRST_NAME_REQUIRED,
+            'last_name.required' => self::LAST_NAME_REQUIRED,
+            'email.required' => self::EMAIL_REQUIRED,
+            'email.email' => self::EMAIL_INVALID,
             'role_id.required' => 'Select a role.',
             'call_sign.unique' => 'This callsign is already registered.',
-            'email.unique' => 'This email address is already registered.',
+            'email.unique' => self::EMAIL_TAKEN,
         ]);
 
         $user = User::findOrFail($this->editingUserId);
@@ -470,11 +480,11 @@ class UserManagement extends Component
             'activateLastName' => ['required', 'string', 'max:50'],
             'activatePassword' => ['required', 'string', 'min:8'],
         ], [
-            'activateEmail.required' => 'Enter an email address.',
-            'activateEmail.email' => 'Enter a valid email address.',
-            'activateEmail.unique' => 'This email address is already registered.',
-            'activateFirstName.required' => 'Enter a first name.',
-            'activateLastName.required' => 'Enter a last name.',
+            'activateEmail.required' => self::EMAIL_REQUIRED,
+            'activateEmail.email' => self::EMAIL_INVALID,
+            'activateEmail.unique' => self::EMAIL_TAKEN,
+            'activateFirstName.required' => self::FIRST_NAME_REQUIRED,
+            'activateLastName.required' => self::LAST_NAME_REQUIRED,
         ], attributes: [
             'activateEmail' => 'email',
             'activateFirstName' => 'first name',

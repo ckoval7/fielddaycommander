@@ -9,7 +9,7 @@
 ### Changed
 
 - Equipment menus now use **My Equipment** and **Equipment Catalog** instead of **My Catalog** and **All User Catalogs**, matching the page headings. **Settings** is now **System Settings** in the sidebar, user menu, and page heading. Sign-in and session controls use **Sign In** and **Sign Out**, including station mode's former **End Session** button.
-- Guestbook visitor categories use plainer names for club members, agency representatives, ARES/RACES volunteers, and media representatives, with stored values unchanged. The message format and printed header now say **Radiogram** instead of **ARRL Radiogram**.
+- Guestbook visitor categories use plainer names for club members, agency representatives, ARES/RACES volunteers, and media representatives, with stored values unchanged. The printed message header now says **Radiogram** instead of **ARRL Radiogram**.
 
 ### Fixed
 

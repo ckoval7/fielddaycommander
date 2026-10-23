@@ -186,7 +186,7 @@ class WeatherService
                 cache()->put('weather.alerts_status', [
                     'last_attempt' => now()->toIso8601String(),
                     'success' => false,
-                    'error' => 'NWS could not identify the forecast zone and county for the event location. Check the event coordinates and the server’s internet connection.',
+                    'error' => 'Failed to resolve NWS zone/county for coordinates',
                 ], now()->addHours(2));
 
                 return;

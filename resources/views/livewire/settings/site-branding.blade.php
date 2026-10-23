@@ -13,7 +13,7 @@
                 autocapitalize="words"
                 required
                 icon="phosphor-buildings"
-                hint="Name shown in site branding and browser titles"
+                hint="Your club or organization name"
             />
 
             <x-input

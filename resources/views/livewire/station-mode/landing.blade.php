@@ -75,7 +75,7 @@
 
             <x-modal wire:model="showExitModal" title="Exit Station Mode" persistent>
                 <div class="space-y-4">
-                    <p class="text-sm">Enter the email and password of someone with permission to manage stations. This takes the browser out of station mode without signing them in.</p>
+                    <p class="text-sm">A station captain or administrator must enter their email and password to exit station mode.</p>
                     <x-input label="Email" type="email" wire:model="exitEmail" autocomplete="off" icon="phosphor-envelope" />
                     <x-input label="Password" type="password" wire:model="exitPassword" autocomplete="off" icon="phosphor-lock" />
                 </div>

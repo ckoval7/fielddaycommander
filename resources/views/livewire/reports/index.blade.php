@@ -473,7 +473,7 @@
 
         <div class="text-xs mb-4" style="color: var(--reports-text-muted);">
             @if ($this->volunteerHoursMode === \App\Support\VolunteerHours::MODE_WALL_CLOCK)
-                Overlapping shifts count once in worked and scheduled hours.
+                Wall-clock hours: overlapping shifts merged.
             @else
                 Hours are counted per assignment, including overlapping shifts.
             @endif

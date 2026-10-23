@@ -53,7 +53,7 @@ class GalleryUpload extends Component
         }
 
         if (! $imageService->hasAcceptableDimensions($this->photo)) {
-            $this->addError('photo', 'Please choose a photo up to 50 megapixels, with the longer side no more than 20 times the shorter side.');
+            $this->addError('photo', 'This photo is too large or too narrow. Please resize or crop it and try again.');
 
             return;
         }

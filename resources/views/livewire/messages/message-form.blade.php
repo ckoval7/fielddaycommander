@@ -35,7 +35,7 @@
                         label="Format"
                         wire:model.live="format"
                         :options="[
-                            ['id' => 'radiogram', 'name' => 'Radiogram'],
+                            ['id' => 'radiogram', 'name' => 'ARRL Radiogram'],
                             ['id' => 'ics213', 'name' => 'ICS-213'],
                         ]"
                         option-value="id"

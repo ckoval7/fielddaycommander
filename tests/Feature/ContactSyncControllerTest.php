@@ -274,7 +274,7 @@ test('cannot sync contacts after event has ended', function () {
             'qso_time' => now()->toISOString(),
         ])
         ->assertUnprocessable()
-        ->assertJson(['message' => 'Contact time is after the event. Use Transcribe Paper Log for paper entries.']);
+        ->assertJson(['message' => 'This event has ended. Use Transcribe Paper Log to enter contacts from paper logs.']);
 });
 
 test('cannot sync contacts before event has started', function () {
@@ -294,7 +294,7 @@ test('cannot sync contacts before event has started', function () {
             'qso_time' => now()->toISOString(),
         ])
         ->assertUnprocessable()
-        ->assertJson(['message' => 'Contact time is before the event starts.']);
+        ->assertJson(['message' => 'This event has not started yet. Contacts can only be logged once the event begins.']);
 });
 
 test('syncing a gota contact assigns 5 bonus points', function () {
@@ -405,7 +405,7 @@ test('cannot sync contacts timed after their session ended', function () {
     $this->actingAs($this->user)
         ->postJson('/logging/contacts', syncPayload($this, now()->subMinutes(5)))
         ->assertUnprocessable()
-        ->assertJson(['message' => 'Contact time is outside this operating session.']);
+        ->assertJson(['message' => 'This operating session has ended.']);
 
     expect(Contact::count())->toBe(0);
 });
@@ -416,7 +416,7 @@ test('cannot sync contacts timed before their ended session started', function (
     $this->actingAs($this->user)
         ->postJson('/logging/contacts', syncPayload($this, now()->subHours(3)))
         ->assertUnprocessable()
-        ->assertJson(['message' => 'Contact time is outside this operating session.']);
+        ->assertJson(['message' => 'This operating session has ended.']);
 });
 
 test('queued contacts made during a session sync after the station is taken over', function () {

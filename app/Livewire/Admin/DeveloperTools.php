@@ -265,7 +265,7 @@ class DeveloperTools extends Component
 
             $this->success(
                 "Time set to {$time->format('M j, Y g:i A')}",
-                $this->timeFrozen ? 'Time is frozen' : 'Time advances from the selected moment'
+                $this->timeFrozen ? 'Time is frozen' : 'Time is flowing'
             );
         } catch (\Exception $e) {
             $this->reportFailure('Failed to set time', $e);

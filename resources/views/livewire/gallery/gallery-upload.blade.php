@@ -39,7 +39,7 @@
                     @if($photo)
                         <div class="space-y-4">
                             @if(in_array($photo->getMimeType(), ['image/jpeg', 'image/png', 'image/gif', 'image/webp']))
-                                <img src="{{ $photo->temporaryUrl() }}" alt="Selected photo preview" class="max-h-64 mx-auto rounded-lg">
+                                <img src="{{ $photo->temporaryUrl() }}" alt="Preview of your upload" class="max-h-64 mx-auto rounded-lg">
                             @endif
                             <p class="text-sm text-base-content/70">{{ $photo->getClientOriginalName() }}</p>
                             <x-button label="Choose Different Photo" icon="phosphor-arrow-clockwise" x-on:click="$refs.fileInput.click()" />

@@ -273,7 +273,7 @@
                     <x-button
                         label="Delete Bulletin"
                         wire:click="deleteBulletin"
-                        wire:confirm="Delete this bulletin?"
+                        wire:confirm="Delete this bulletin? This cannot be undone."
                         class="btn-error"
                         icon="phosphor-trash"
                         spinner="deleteBulletin"

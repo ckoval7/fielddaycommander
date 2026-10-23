@@ -28,7 +28,7 @@
                 required
                 icon="phosphor-buildings"
                 errorField="site_name"
-                hint="The name shown on your site"
+                hint="Your club or organization name"
             />
 
             <x-input
