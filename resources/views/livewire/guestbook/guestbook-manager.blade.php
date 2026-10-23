@@ -12,9 +12,10 @@
                 <div class="flex items-center gap-2 mb-2">
                     <x-button
                         icon="phosphor-arrow-left"
-                        class="btn-ghost btn-sm"
+                        class="btn-ghost btn-sm btn-square"
                         link="{{ route('events.show', $event) }}"
                         tooltip="Back to Event"
+                        aria-label="Back to Event"
                     />
                     <h1 class="text-2xl md:text-3xl font-bold">Guestbook Manager</h1>
                 </div>
