@@ -27,6 +27,7 @@
 - On the station equipment assignment page, keyboard and screen reader users tabbing through **Committed to Event** or **Equipment Catalog** heard drag instructions that promised arrow-key controls that didn't work. They now tab to each card's **Assign** or **Commit & Assign** button, which names the equipment, and mouse drag and drop still works.
 - When reading dashboard chart data with a screen reader, the hidden data table wasn't reliably announced as a table with column headers. It now uses an HTML table with column headers.
 - Since 26.09.0, ticking **Youth (age 18 or younger)** on your own Profile page and saving left the box unticked when you returned. Operators who marked themselves as youth this way weren't counted toward the Field Day youth participation bonus. The setting now saves.
+- For a Winter Field Day event, the **Scoring** tab on the event dashboard showed the ARRL Field Day formula (QSO points × power multiplier + bonuses), listed mode points from Field Day rules, and showed objectives as points. It now shows the Winter Field Day formula, QSO points × (OM + 1), with mode points and objective multipliers from the event's rules, and the event overview no longer shows a power multiplier.
 
 ## 26.10.11 - 2026-10-21
 

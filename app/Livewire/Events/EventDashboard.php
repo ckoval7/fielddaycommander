@@ -16,6 +16,10 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use App\Models\Mode;
+use App\Models\Station;
+use App\Scoring\Dto\Nomenclature;
+use App\Scoring\Dto\ScoreBreakdown;
+use App\Scoring\Dto\ScoreTerm;
 use App\Scoring\RuleSetFactory;
 use App\Services\RescoreService;
 use Illuminate\Contracts\View\View;
@@ -188,14 +192,61 @@ class EventDashboard extends Component
         }
 
         return [
-            'qso_base_points' => (int) $config->contacts()->notDuplicate()->where('is_gota_contact', false)->sum('points'),
+            'qso_base_points' => $this->scoreBreakdown?->value('qso_points') ?? 0,
             'power_multiplier' => (int) $config->calculatePowerMultiplier(),
             'qso_score' => $config->calculateQsoScore(),
             'bonus_score' => $config->calculateBonusScore(),
             'gota_bonus' => $config->calculateGotaBonus() + $config->calculateGotaCoachBonus(),
             'has_gota' => $config->has_gota_station,
-            'final_score' => $config->calculateFinalScore(),
+            'final_score' => $this->scoreBreakdown?->total ?? 0,
         ];
+    }
+
+    /**
+     * The event's score as its pinned ruleset composes it, or null with no config.
+     */
+    #[Computed]
+    public function scoreBreakdown(): ?ScoreBreakdown
+    {
+        return $this->config()?->scoreBreakdown();
+    }
+
+    /**
+     * Ordered headline equation parts supplied by the ruleset, so Field Day
+     * shows (QSO x Power) + Bonus and Winter Field Day shows QSO x (OM + 1).
+     *
+     * @return array<int, ScoreTerm|string>
+     */
+    #[Computed]
+    public function scoringHeadline(): array
+    {
+        return $this->scoreBreakdown?->headline ?? [];
+    }
+
+    /**
+     * The award wording this event's rulebook uses ("Bonus" vs "Objective").
+     */
+    #[Computed]
+    public function terms(): Nomenclature
+    {
+        return $this->config()?->nomenclature() ?? new Nomenclature;
+    }
+
+    /**
+     * Points a single contact in this mode is worth under the event's ruleset.
+     *
+     * Field Day reads modes.points_fd and Winter Field Day modes.points_wfd, so
+     * the scoring key asks the ruleset rather than picking a column.
+     */
+    public function pointsForMode(Mode $mode): int
+    {
+        $config = $this->config();
+
+        if (! $config) {
+            return (int) ($mode->points_fd ?? 1);
+        }
+
+        return $config->pointsForContact($mode, Station::make(['is_gota' => false]));
     }
 
     #[Computed]
@@ -302,6 +353,12 @@ class EventDashboard extends Component
             'verified_pts' => (int) $list->where('status', 'verified')->sum('points'),
             'claimed_pts' => (int) $list->where('status', 'claimed')->sum('points'),
             'unclaimed_count' => $list->where('status', 'unclaimed')->count(),
+            // Objective rulebooks award multipliers rather than points, so the
+            // same tiles show summed OM instead of summed points.
+            'verified_multiplier' => (int) $list->where('status', 'verified')
+                ->sum(fn (array $item) => (int) $item['type']->objective_multiplier),
+            'claimed_multiplier' => (int) $list->where('status', 'claimed')
+                ->sum(fn (array $item) => (int) $item['type']->objective_multiplier),
         ];
     }
 

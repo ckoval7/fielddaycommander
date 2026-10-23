@@ -162,11 +162,13 @@
                                 <div class="font-semibold">{{ $event->eventConfiguration->max_power_watts }}W</div>
                             </div>
 
-                            <!-- Power Multiplier -->
-                            <div>
-                                <div class="text-sm text-base-content/60">Power Multiplier</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->calculatePowerMultiplier() }}x</div>
-                            </div>
+                            {{-- Power multiplier: Field Day rulebooks only --}}
+                            @if($event->eventConfiguration->usesPowerMultiplier())
+                                <div>
+                                    <div class="text-sm text-base-content/60">Power Multiplier</div>
+                                    <div class="font-semibold">{{ $event->eventConfiguration->calculatePowerMultiplier() }}x</div>
+                                </div>
+                            @endif
 
                             <!-- Scoring Rules -->
                             <div>
@@ -393,27 +395,18 @@
                 {{-- Score Headline --}}
                 <x-card shadow>
                     <div class="flex flex-wrap items-center justify-center gap-4 md:gap-8 py-4">
-                        <div class="text-center">
-                            <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['qso_base_points']) }}</div>
-                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">QSO Base Pts</div>
-                        </div>
-                        <span class="text-2xl font-light text-base-content/30">&times;</span>
-                        <div class="text-center">
-                            <div class="text-3xl font-black tabular-nums">{{ $this->scoringTotals['power_multiplier'] }}&times;</div>
-                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">Power Multiplier</div>
-                        </div>
-                        <span class="text-2xl font-light text-base-content/30">+</span>
-                        <div class="text-center">
-                            <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['bonus_score']) }}</div>
-                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">Bonus Pts</div>
-                        </div>
-                        @if($this->scoringTotals['has_gota'])
-                            <span class="text-2xl font-light text-base-content/30">+</span>
-                            <div class="text-center">
-                                <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['gota_bonus']) }}</div>
-                                <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">GOTA Bonus</div>
-                            </div>
-                        @endif
+                        {{-- Equation shape comes from the event's ruleset, so Field Day renders
+                             (QSO x Power) + Bonus while Winter Field Day renders QSO x (OM + 1). --}}
+                        @foreach($this->scoringHeadline as $part)
+                            @if(is_string($part))
+                                <span class="text-2xl font-light text-base-content/30">{{ $part }}</span>
+                            @else
+                                <div class="text-center">
+                                    <div class="text-3xl font-black tabular-nums">{{ $part->value }}</div>
+                                    <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">{{ $part->label }}</div>
+                                </div>
+                            @endif
+                        @endforeach
                         <span class="text-2xl font-light text-base-content/30">=</span>
                         <div class="text-center">
                             <div class="text-4xl font-black tabular-nums text-primary">{{ number_format($this->scoringTotals['final_score']) }}</div>
@@ -429,8 +422,9 @@
                         {{-- Mode scoring key --}}
                         <div class="flex flex-wrap gap-2 mb-4">
                             @foreach($this->modes as $mode)
+                                @php $modePoints = $this->pointsForMode($mode); @endphp
                                 <span class="badge badge-outline badge-sm">
-                                    {{ $mode->name }} = {{ $mode->points_fd }} {{ $mode->points_fd === 1 ? 'pt' : 'pts' }}
+                                    {{ $mode->name }} = {{ $modePoints }} {{ $modePoints === 1 ? 'pt' : 'pts' }}
                                 </span>
                             @endforeach
                         </div>
@@ -485,17 +479,30 @@
                         @endif
                     </x-card>
 
-                    {{-- Column 2: Bonus Points --}}
-                    <x-card title="Bonus Points" shadow>
+                    {{-- Column 2: the rulebook's awards, "Bonus Points" for Field Day and
+                         "Objectives" for Winter Field Day --}}
+                    <x-card :title="$this->terms->awardSectionTitle" shadow>
                         {{-- Summary row --}}
                         <div class="grid grid-cols-3 gap-2 mb-4 text-center">
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Verified</div>
-                                <div class="text-lg font-bold tabular-nums text-success">{{ number_format($this->bonusSummary['verified_pts']) }}</div>
+                                <div class="text-lg font-bold tabular-nums text-success">
+                                    @if($this->terms->awardsAreMultipliers)
+                                        {{ $this->bonusSummary['verified_multiplier'] }}×
+                                    @else
+                                        {{ number_format($this->bonusSummary['verified_pts']) }}
+                                    @endif
+                                </div>
                             </div>
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Claimed</div>
-                                <div class="text-lg font-bold tabular-nums text-warning">{{ number_format($this->bonusSummary['claimed_pts']) }}</div>
+                                <div class="text-lg font-bold tabular-nums text-warning">
+                                    @if($this->terms->awardsAreMultipliers)
+                                        {{ $this->bonusSummary['claimed_multiplier'] }}×
+                                    @else
+                                        {{ number_format($this->bonusSummary['claimed_pts']) }}
+                                    @endif
+                                </div>
                             </div>
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Unclaimed</div>
@@ -517,7 +524,7 @@
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <span class="text-xs tabular-nums font-semibold {{ $item['status'] !== 'unclaimed' ? 'text-base-content' : 'text-base-content/40' }}">
-                                            @if($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
+                                            @if($item['type']->objective_multiplier !== null) OM ×{{ $item['type']->objective_multiplier }} @elseif($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
                                         </span>
                                         @if($item['status'] === 'verified')
                                             <x-badge value="Verified" class="badge-success badge-xs" />
