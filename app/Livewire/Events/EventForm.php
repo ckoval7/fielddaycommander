@@ -16,6 +16,7 @@ use App\Models\Setting;
 use App\Scoring\Contracts\FieldDayRuleSet;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Dto\PowerContext;
+use App\Scoring\PowerMultiplierTiers;
 use App\Scoring\RuleSetFactory;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
@@ -510,10 +511,9 @@ class EventForm extends Component
     #[Computed]
     public function powerMultiplier(): string
     {
-        // Before an event type is picked, preview with the newest Field Day rules.
-        $rules = $this->selectedRuleSet() ?? app(RuleSetFactory::class)->resolve('FD', (string) $this->year);
+        $rules = $this->previewFieldDayRules();
 
-        if (! $rules instanceof FieldDayRuleSet) {
+        if ($rules === null) {
             return '1';
         }
 
@@ -523,6 +523,31 @@ class EventForm extends Component
             effectivePowerWatts: $config->effectiveMaxPowerWatts(),
             qualifiesForQrpNaturalBonus: $config->hasQrpNaturalPowerBonus(),
         ));
+    }
+
+    /**
+     * The selected rules version's power multiplier tiers, for the rules box.
+     *
+     * @return list<array{multiplier: string, minWatts: int, maxWatts: ?int, naturalPowerOnly: bool}>
+     */
+    #[Computed]
+    public function powerMultiplierTiers(): array
+    {
+        $rules = $this->previewFieldDayRules();
+
+        return $rules === null ? [] : PowerMultiplierTiers::for($rules);
+    }
+
+    /**
+     * The Field Day rules the power preview uses, or null when the selected
+     * rulebook has no power multiplier (Winter Field Day).
+     */
+    protected function previewFieldDayRules(): ?FieldDayRuleSet
+    {
+        // Before an event type is picked, preview with the newest Field Day rules.
+        $rules = $this->selectedRuleSet() ?? app(RuleSetFactory::class)->resolve('FD', (string) $this->year);
+
+        return $rules instanceof FieldDayRuleSet ? $rules : null;
     }
 
     /**
