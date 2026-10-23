@@ -373,8 +373,8 @@ class StationsList extends Component
         unset($this->stations);
 
         $this->dispatch('toast', [
-            'title' => 'Browser Revoked',
-            'description' => "A station-mode browser for {$device->station->name} was revoked.",
+            'title' => 'Browser Removed',
+            'description' => "A browser was removed from station mode for {$device->station->name}.",
             'icon' => 'phosphor-power',
             'css' => 'alert-info',
         ]);

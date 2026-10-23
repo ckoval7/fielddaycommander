@@ -203,22 +203,22 @@
                                             @endif
                                         </span>
                                         <x-button
-                                            label="Revoke"
+                                            label="Remove Browser"
                                             class="btn-xs btn-ghost text-error"
                                             wire:click="revokeDevice({{ $device->id }})"
-                                            wire:confirm="Revoke this browser? It will no longer be able to start station-mode sessions."
+                                            wire:confirm="Remove this browser from station mode? It will no longer be able to start station-mode sessions."
                                             spinner="revokeDevice({{ $device->id }})"
                                         />
                                     </div>
                                 @empty
-                                    <p class="text-xs text-base-content/60">None enrolled.</p>
+                                    <p class="text-xs text-base-content/60">No browsers are enrolled for this station.</p>
                                 @endforelse
                                 <x-button
                                     label="Use This Browser for Station Mode"
                                     icon="phosphor-desktop-tower"
                                     class="btn-xs btn-outline mt-2 h-auto min-h-6 py-1 pointer-coarse:min-h-11"
                                     wire:click="enrollThisBrowser({{ $station->id }})"
-                                    wire:confirm="Turn this browser into the station-mode terminal for '{{ $station->name }}'? You will be signed out, and operators will be able to log here by callsign."
+                                    wire:confirm="Use this browser for station mode at '{{ $station->name }}'? You will be signed out. Operators can then sign in here by callsign to log at this station."
                                     spinner="enrollThisBrowser({{ $station->id }})"
                                 />
                             </div>

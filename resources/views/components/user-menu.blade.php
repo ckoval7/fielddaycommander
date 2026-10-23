@@ -8,9 +8,9 @@
     <x-theme-switch compact />
     <form method="POST" action="{{ route('station-mode.end') }}" data-navigate-ignore>
         @csrf
-        <button type="submit" class="btn btn-error btn-sm sm:btn-md" title="End your station-mode session">
+        <button type="submit" class="btn btn-error btn-sm sm:btn-md" title="Sign out of station mode">
             <x-icon name="phosphor-sign-out" class="w-4 h-4" />
-            <span>End Session</span>
+            <span>Sign Out</span>
             <span class="font-mono hidden sm:inline">({{ auth()->user()->call_sign }})</span>
         </button>
     </form>

@@ -67,12 +67,12 @@
             <h3 id="station-mode-idle-title" class="font-bold text-lg mt-2">Are you still operating?</h3>
             <p class="mt-2 text-sm">
                 This browser has been idle for {{ intdiv(\App\Support\StationMode::IDLE_WARNING_AFTER_SECONDS, 60) }} minutes.
-                Your session will end in
+                You will be signed out in
                 <span class="font-mono font-bold" x-text="remaining"></span>
                 seconds.
             </p>
             <div class="modal-action justify-center">
-                <button type="button" class="btn btn-ghost" @click="$refs.endSessionForm.submit()">End Session Now</button>
+                <button type="button" class="btn btn-ghost" @click="$refs.endSessionForm.submit()">Sign Out Now</button>
                 <button type="button" class="btn btn-primary" x-ref="stillHere" @click="dismiss()">Keep Session Open</button>
             </div>
         </div>
