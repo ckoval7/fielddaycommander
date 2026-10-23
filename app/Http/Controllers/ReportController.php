@@ -121,7 +121,7 @@ class ReportController extends Controller
 
         $data = $this->submissionReportService->getData($config);
 
-        $callsign = strtolower($config->callsign);
+        $callsign = strtolower(str_replace('/', '_', $config->callsign));
         $year = $config->event->start_time->year;
         $filename = "{$callsign}-{$year}-submission-sheet.pdf";
 

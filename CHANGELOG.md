@@ -16,6 +16,7 @@
 - Opening an invitation link that was invalid, expired or already used sent you to a blank sign-in page. The page now says the invitation is invalid, expired, or already accepted.
 - In developer mode, clicking the X on the amber testing banner did nothing. It now hides the banner and keeps it hidden for the rest of your session.
 - On the event equipment dashboard, choosing **Unassigned** in the station filter on its own did not show the **Clear Filters** button, so the only way back to all stations was to reopen the filter. The button now appears.
+- Downloading the Field Day Cabrillo log or the submission sheet PDF failed with a server error when the event callsign was portable, such as W1AW/1. The files now download, with the slash in the name replaced by an underscore.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.

@@ -183,6 +183,11 @@ test('generates a correct filename', function () {
     expect($filename)->toBe('w1aw-2025-field-day.log');
 });
 
+test('field day filename replaces a slash in a portable callsign', function () {
+    $config = makeCabrilloExporterConfig(['callsign' => 'W1AW/1'], ['start_time' => '2025-06-28 12:00:00']);
+    expect(app(CabrilloExporter::class)->filename($config))->toBe('w1aw_1-2025-field-day.log');
+});
+
 test('uses frequency 0 for satellite band contacts', function () {
     $config = makeCabrilloExporterConfig();
     $satBand = Band::factory()->create(['name' => 'Satellite', 'frequency_mhz' => null]);
