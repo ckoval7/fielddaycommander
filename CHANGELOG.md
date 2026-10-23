@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- A screen left on the get-ready countdown stayed on 00:00:00 after the event started until someone refreshed it. It now loads the live dashboard within a few seconds of the start time, spread out so several screens don't all reload at the same moment.
 - Opening an invitation link that was invalid, expired or already used sent you to a blank sign-in page. The page now says the invitation is invalid, expired, or already accepted.
 - In developer mode, clicking the X on the amber testing banner did nothing. It now hides the banner and keeps it hidden for the rest of your session.
 - On the event equipment dashboard, choosing **Unassigned** in the station filter on its own did not show the **Clear Filters** button, so the only way back to all stations was to reopen the filter. The button now appears.
