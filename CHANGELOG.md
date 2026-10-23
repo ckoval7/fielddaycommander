@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- On the event equipment dashboard, choosing **Unassigned** in the station filter on its own did not show the **Clear Filters** button, so the only way back to all stations was to reopen the filter. The button now appears.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.
