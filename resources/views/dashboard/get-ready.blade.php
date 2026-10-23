@@ -32,6 +32,7 @@
                      now: new Date(@js(appNow()->toIso8601String())),
                      formattedTime: '--:--:--',
                      intervalId: null,
+                     reloading: false,
 
                      init() {
                          this.updateCountdown();
@@ -50,6 +51,11 @@
                          if (diff <= 0) {
                              this.formattedTime = '00:00:00';
                              if (this.intervalId) clearInterval(this.intervalId);
+                             if (!this.reloading) {
+                                 this.reloading = true;
+                                 // Spread reloads over a few seconds so many screens don't hit the server at once.
+                                 setTimeout(() => window.location.reload(), 1000 + Math.random() * 4000);
+                             }
                              return;
                          }
                          const totalSeconds = Math.floor(diff / 1000);
