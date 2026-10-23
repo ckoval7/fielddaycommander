@@ -35,6 +35,10 @@
 - Assigning equipment to a station gave no warning when the antenna or the station's radio had no bands set, or when the station had no primary radio. Those cases now show the same confirmation as an incompatible band, so you can check before assigning.
 - On your Profile page, typing a wrong or expired code while turning on two-factor authentication showed no message under the code field. It now shows the error.
 - Changing your password with a new password that was too weak or didn't match its confirmation blamed the current password field. The error now appears under the field that failed.
+
+- On the Users page, **Delete** in the bulk actions bar deleted every selected account the moment you tapped it. It now asks you to confirm first.
+- When the SYSTEM account was among the selected users, the bulk role, lock and delete messages counted it even though it was skipped. The messages now report only the accounts that changed, and lock, unlock and delete leave SYSTEM alone too.
+- When creating a user with an invitation email and the email failed to send, the Add User dialog stayed open with the same details, and saving again said the callsign was already registered. The dialog now closes and the message says the email failed, so you can send a password reset email from the user's row.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.

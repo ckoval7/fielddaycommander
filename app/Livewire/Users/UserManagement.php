@@ -53,6 +53,8 @@ class UserManagement extends Component
 
     public bool $showDeleteModal = false;
 
+    public bool $showBulkDeleteModal = false;
+
     public bool $showActivateModal = false;
 
     // User being edited
@@ -306,7 +308,10 @@ class UserManagement extends Component
                     'error' => $e->getMessage(),
                 ]);
 
-                $this->dispatch('toast', title: 'Warning', description: 'User created, but the invitation email could not be sent. Check the application logs for details.', icon: 'phosphor-warning', css: 'alert-warning');
+                $this->showModal = false;
+                $this->reset(['selectedUsers', 'selectAll']);
+                unset($this->users);
+                $this->dispatch('toast', title: 'Warning', description: "User created, but the invitation email could not be sent. Open {$user->call_sign} and use Reset Password to send an email again, or check the application logs.", icon: 'phosphor-warning', css: 'alert-warning');
             }
         } else {
             $this->showModal = false;
@@ -610,24 +615,23 @@ class UserManagement extends Component
         }
 
         $role = Role::find($this->bulk_role_id);
-        $userIds = $this->selectedUsers;
-        User::whereIn('id', $userIds)
+        $users = User::whereIn('id', $this->selectedUsers)
             ->excludeSystem()
             ->with('roles')
-            ->get()
-            ->each(function ($user) use ($role) {
-                $oldRole = $user->roles->first()?->name;
-                $user->syncRoles([$role]);
+            ->get();
+        $count = $users->count();
+        $users->each(function ($user) use ($role) {
+            $oldRole = $user->roles->first()?->name;
+            $user->syncRoles([$role]);
 
-                AuditLog::log('role.assigned', auditable: $user, oldValues: [
-                    'role' => $oldRole,
-                ], newValues: [
-                    'role' => $role->name,
-                    'call_sign' => $user->call_sign,
-                ]);
-            });
+            AuditLog::log('role.assigned', auditable: $user, oldValues: [
+                'role' => $oldRole,
+            ], newValues: [
+                'role' => $role->name,
+                'call_sign' => $user->call_sign,
+            ]);
+        });
 
-        $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll', 'bulk_role_id']);
         $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} ".str('user')->plural($count).'.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
@@ -652,7 +656,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = $this->selectedUsers;
+        $userIds = User::whereIn('id', $this->selectedUsers)->excludeSystem()->pluck('id')->all();
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => $this->bulkLockExpiry ?? now(),
@@ -687,7 +691,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = $this->selectedUsers;
+        $userIds = User::whereIn('id', $this->selectedUsers)->excludeSystem()->pluck('id')->all();
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => null,
@@ -705,6 +709,17 @@ class UserManagement extends Component
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll']);
         $this->dispatch('toast', title: 'Success', description: "{$count} ".str('account')->plural($count).' unlocked.', icon: 'phosphor-lock-open', css: 'alert-success');
+    }
+
+    public function openBulkDeleteModal(): void
+    {
+        Gate::authorize('manage-users');
+
+        if (empty($this->selectedUsers)) {
+            return;
+        }
+
+        $this->showBulkDeleteModal = true;
     }
 
     public function bulkDeleteUsers(): void
@@ -727,7 +742,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = $this->selectedUsers;
+        $userIds = User::whereIn('id', $this->selectedUsers)->excludeSystem()->pluck('id')->all();
 
         $users = User::whereIn('id', $userIds)->get();
         foreach ($users as $user) {
@@ -741,6 +756,7 @@ class UserManagement extends Component
         User::whereIn('id', $userIds)->delete();
 
         $count = count($userIds);
+        $this->showBulkDeleteModal = false;
         $this->reset(['selectedUsers', 'selectAll']);
         $this->dispatch('toast', title: 'Success', description: "{$count} ".str('user')->plural($count).' deleted.', icon: 'phosphor-trash', css: 'alert-success');
     }
