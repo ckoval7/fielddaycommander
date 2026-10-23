@@ -65,6 +65,7 @@
 - On phones, the notice about unresolved assignments on ended shifts made Manage Schedule scroll sideways. Its buttons now stack below the message. Small icon buttons are easier to tap and have screen reader names, as do the back buttons on Manage Schedule, Manage Safety Checklist, and Guestbook Manager.
 - When the browser could not save queued contacts on the device, the logging screen gave no warning that closing or reloading the page offline would lose unsynced contacts. A warning now stays visible until saving works again or no contacts are waiting to sync.
 - When several people requested a photo album ZIP while it was being built, only the first received the promised notification. Everyone waiting now gets notified when it is ready.
+- On the event dashboard's **Overview** tab, **Scoring Summary** showed Field Day figures for Winter Field Day that didn't add up to the final score. It now matches the **Scoring** tab: QSO points, power multiplier, and bonus points for Field Day, plus GOTA bonus when there's a GOTA station, or QSO points and OM + 1 for Winter Field Day. The final score uses the same calculation too.
 
 ## 26.10.11 - 2026-10-21
 
