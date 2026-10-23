@@ -15,8 +15,8 @@
 - The event and station forms now explain that a methane generator counts as alternate power but should be recorded as **Generator**, since engine-driven generators don't qualify for ARRL's 5× multiplier.
 
 ### Fixed
-- Over plain HTTP on the club LAN, copying the registration link on Get Ready or a generated password in the user reset and activate dialogs did nothing. The password buttons still reported success. These buttons now try copying on HTTP and report failures.
 
+- Over plain HTTP on the club LAN, copying the registration link on Get Ready or a generated password in the user reset and activate dialogs did nothing. The password buttons still reported success. These buttons now try copying on HTTP and report failures.
 - Online guestbook entries could be verified as agency or elected official visits, which require an in-person visit for the bonus. The edit dialog now explains why these entries cannot be verified, and bulk **Verify** skips them and reports how many. The bonus count and sidebar exclude them. Already verified entries are unchanged.
 - Creating a role discarded its description. Descriptions now save, appear under the role name, and can be changed with **Edit**. Upgrades add descriptions to built-in roles that do not have one.
 - On the Clone Stations page, the target event could show blank or a different event, and accepting the default could clone stations into the wrong event or fail. It now preselects the event you're viewing.
@@ -33,11 +33,9 @@
 - Assigning equipment to a station gave no warning when the antenna or the station's radio had no bands set, or when the station had no primary radio. Those cases now show the same confirmation as an incompatible band, so you can check before assigning.
 - On your Profile page, a wrong or expired code when turning on two-factor authentication showed no error. The error now appears under the code field.
 - When changing your password, a weak new password or mismatched confirmation showed an error under the current password. Errors now appear under the field that failed.
-
 - On the Users page, bulk **Delete** deleted selected accounts immediately. It now asks for confirmation.
 - Bulk user actions counted the SYSTEM account even when it was skipped. Role, lock, unlock, and delete messages now count only affected accounts, and lock, unlock, and delete skip SYSTEM too.
 - When an invitation email failed after creating a user, the Add User dialog stayed open, and saving again said the callsign was already registered. The dialog now closes and reports the email failure. You can send another email with **Reset Password**.
-
 - Schedule filters and sorting counted no-shows as filled places, and Manage Schedule included them in its capacity count. The filters, sorting, and counts now exclude no-shows.
 - On My Shifts, a shift you never checked in to still said "Check-in opens" after it ended. It now says "Shift ended".
 - On Manage Schedule, shifts that crossed midnight showed an end time without a date, making them look as though they ended before they started. They now show the end date too.
