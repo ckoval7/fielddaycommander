@@ -84,7 +84,7 @@
             </li>
         @endcan
 
-        @can('manage-settings')
+        @can('access-settings')
             <li>
                 <a href="{{ route('settings.index') }}" wire:navigate>
                     <x-icon name="phosphor-gear-six" class="w-4 h-4" />

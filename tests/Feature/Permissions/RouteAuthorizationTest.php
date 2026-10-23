@@ -174,11 +174,19 @@ test('developer tools return 404 for permitted users when developer mode is disa
 });
 
 test('users with an unrelated permission are still forbidden', function () {
-    $this->user->givePermissionTo('manage-roles');
+    $this->user->givePermissionTo('manage-users');
 
     $this->actingAs($this->user)
         ->get(route('settings.index'))
         ->assertForbidden();
+});
+
+test('users with only manage-roles can open the settings page', function () {
+    $this->user->givePermissionTo('manage-roles');
+
+    $this->actingAs($this->user)
+        ->get(route('settings.index'))
+        ->assertOk();
 });
 
 test('every can: gated route in routes/web.php is covered by a dataset', function () use ($gatedPages, $gatedEndpoints) {
@@ -203,10 +211,23 @@ test('dataset permissions match the can: middleware on each route', function () 
     $expectedPermissions = collect($gatedPages)->map(fn (array $row) => $row[1])
         ->merge(collect($gatedEndpoints)->map(fn (array $row) => $row[2]));
 
+    /**
+     * Gates defined in AppServiceProvider that any of several permissions pass.
+     *
+     * @var array<string, array<int, string>>
+     */
+    $compositeAbilities = [
+        'access-settings' => ['manage-settings', 'manage-roles'],
+    ];
+
     foreach ($expectedPermissions as $routeName => $permission) {
         $middleware = Route::getRoutes()->getByName($routeName)->gatherMiddleware();
 
-        expect(in_array("can:{$permission}", $middleware, true))
+        $gatedByComposite = collect($compositeAbilities)
+            ->contains(fn (array $permissions, string $ability) => in_array($permission, $permissions, true)
+                && in_array("can:{$ability}", $middleware, true));
+
+        expect(in_array("can:{$permission}", $middleware, true) || $gatedByComposite)
             ->toBeTrue("Route {$routeName} is not gated by can:{$permission}");
     }
 });

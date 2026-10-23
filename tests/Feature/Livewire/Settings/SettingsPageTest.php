@@ -22,7 +22,8 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $role = Role::create(['name' => 'Admin', 'guard_name' => 'web']);
     Permission::create(['name' => 'manage-settings']);
-    $role->givePermissionTo('manage-settings');
+    Permission::create(['name' => 'manage-roles']);
+    $role->givePermissionTo(['manage-settings', 'manage-roles']);
     $this->user->assignRole($role);
     $this->actingAs($this->user);
 });
@@ -37,6 +38,18 @@ test('settings page renders all settings tabs', function () {
         ->assertSee('System Preferences')
         ->assertSee('Site Branding')
         ->assertSee('Role Management');
+});
+
+test('settings page hides the role manager without manage-roles', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-settings');
+
+    $this->actingAs($user)
+        ->get(route('settings.index'))
+        ->assertOk()
+        ->assertSeeLivewire(SystemPreferences::class)
+        ->assertDontSeeLivewire(RoleManager::class)
+        ->assertDontSee('Role Management');
 });
 
 test('settings page opens on the system preferences tab', function () {

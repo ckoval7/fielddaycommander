@@ -32,6 +32,9 @@
                             >
                                 <td>
                                     <div class="font-medium">{{ $role->name }}</div>
+                                    @if($role->description)
+                                        <div class="text-sm text-base-content/70 whitespace-normal">{{ $role->description }}</div>
+                                    @endif
                                     @if($role->name === 'System Administrator' || $role->name === 'Config Only')
                                         <x-badge value="Protected Role" class="badge-warning badge-sm" />
                                     @endif
@@ -66,6 +69,19 @@
                 <x-slot:subtitle>
                     {{ $selectedRole->users_count }} {{ Str::plural('user', $selectedRole->users_count) }} assigned
                 </x-slot:subtitle>
+                <x-slot:menu>
+                    <x-button
+                        wire:click="openEditModal({{ $selectedRole->id }})"
+                        class="btn-ghost btn-sm"
+                        icon="phosphor-pencil-simple"
+                        label="Edit"
+                        aria-label="Edit description for {{ $selectedRole->name }}"
+                    />
+                </x-slot:menu>
+
+                <p class="text-sm text-base-content/70 mb-4 break-words">
+                    {{ $selectedRole->description ?: 'No description yet.' }}
+                </p>
 
                 <div class="space-y-4">
                     @foreach($categories as $category => $categoryPermissions)
@@ -137,7 +153,7 @@
                 label="Description"
                 wire:model="roleDescription"
                 rows="2"
-                hint="Optional description of this role's purpose"
+                hint="Optional. What this role is for, shown in the roles list"
             />
 
             <div>
@@ -166,6 +182,30 @@
             >
                 <span wire:loading.remove wire:target="createRole">Create Role</span>
                 <span wire:loading wire:target="createRole">Creating...</span>
+            </x-button>
+        </x-slot:actions>
+    </x-modal>
+
+    {{-- Edit Role Modal --}}
+    <x-modal wire:model="showEditModal" title="Edit Role">
+        <x-textarea
+            label="Description"
+            wire:model="roleDescription"
+            rows="3"
+            hint="What this role is for, shown in the roles list"
+        />
+
+        <x-slot:actions>
+            <x-button wire:click="$set('showEditModal', false)" class="btn-ghost">
+                Cancel
+            </x-button>
+            <x-button
+                wire:click="updateRole"
+                class="btn-primary"
+                spinner="updateRole"
+            >
+                <span wire:loading.remove wire:target="updateRole">Save</span>
+                <span wire:loading wire:target="updateRole">Saving...</span>
             </x-button>
         </x-slot:actions>
     </x-modal>

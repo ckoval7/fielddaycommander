@@ -302,7 +302,7 @@
                                 exact :active="request()->routeIs('events.w1aw-bulletin')" />
                         @endif
 
-                        @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment', 'manage-weather'])
+                        @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-roles', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment', 'manage-weather'])
                             <x-menu-separator title="ADMINISTRATION" />
 
                             @canany(['create-events', 'edit-events'])
@@ -339,7 +339,7 @@
                                 <x-menu-item title="Users" icon="phosphor-users-three" link="/users" />
                             @endcan
 
-                            @can('manage-settings')
+                            @can('access-settings')
                                 <x-menu-item title="System Settings" icon="phosphor-gear-six" link="/settings" />
                             @endcan
 
