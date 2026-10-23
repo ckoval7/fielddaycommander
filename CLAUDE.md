@@ -50,4 +50,4 @@ Activate the `branch-workflow` skill before you start, commit or merge work, tou
 
 ## Releases
 
-Activate the `release` skill for any version bump, release or tag. To get `dev` past SonarCloud and into a PR for `main` without releasing, activate the `promote-dev` skill. A release runs a full Sonar scan until it is clean, a Trivy scan, and package updates before the version bump and tag.
+Activate the `release` skill for any version bump, release or tag, and to get `dev` past SonarCloud into a PR for `main` ("promote dev"), which stops before shipping. A release runs a Sonar scan and a Trivy scan until clean and updates packages before the version bump, then fast-forwards `main` and tags.
