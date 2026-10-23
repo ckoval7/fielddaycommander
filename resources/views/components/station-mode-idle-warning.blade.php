@@ -14,10 +14,12 @@
         warning: false,
         idleTimer: null,
         countdownTimer: null,
+        activityEvents: ['keydown', 'pointerdown', 'pointermove', 'touchstart', 'wheel'],
+        onActivity: null,
         init() {
-            const onActivity = () => { if (! this.warning) this.resetIdleTimer(); };
-            ['keydown', 'pointerdown', 'pointermove', 'touchstart', 'wheel'].forEach((type) => {
-                window.addEventListener(type, onActivity, { passive: true });
+            this.onActivity = () => { if (! this.warning) this.resetIdleTimer(); };
+            this.activityEvents.forEach((type) => {
+                window.addEventListener(type, this.onActivity, { passive: true });
             });
             this.resetIdleTimer();
         },
@@ -46,6 +48,9 @@
             this.resetIdleTimer();
         },
         destroy() {
+            this.activityEvents.forEach((type) => {
+                window.removeEventListener(type, this.onActivity);
+            });
             clearTimeout(this.idleTimer);
             clearInterval(this.countdownTimer);
         }

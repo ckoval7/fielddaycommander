@@ -16,12 +16,17 @@
 @endphp
 
 @if($item->photo_path)
-    <img
-        src="{{ asset('storage/' . $item->photo_path) }}"
-        alt="{{ $item->make }} {{ $item->model }}"
-        class="{{ $sizeClasses }} object-cover rounded cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+    <button
+        type="button"
+        class="flex-shrink-0 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         wire:click="viewPhoto({{ Js::from($item->photo_path) }}, {{ Js::from($item->make.' '.$item->model) }})"
-    />
+    >
+        <img
+            src="{{ asset('storage/' . $item->photo_path) }}"
+            alt="{{ $item->make }} {{ $item->model }}"
+            class="{{ $sizeClasses }} object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+        />
+    </button>
 @else
     <div class="{{ $sizeClasses }} bg-base-300 rounded flex items-center justify-center flex-shrink-0">
         <x-icon name="phosphor-camera" class="{{ $iconSize }} text-base-content/50" />
