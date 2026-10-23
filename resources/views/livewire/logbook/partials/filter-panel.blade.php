@@ -25,7 +25,7 @@
                 wire:click="resetFilters"
                 class="btn btn-ghost btn-xs text-error"
             >
-                Clear all
+                Clear filters
             </button>
         @endif
     </div>
@@ -83,11 +83,11 @@
 
                 {{-- Operator Filter --}}
                 <x-choices-offline
-                    label="Operator"
+                    label="Logger"
                     wire:model.live="operatorIds"
                     :options="$this->operators"
                     option-label="display_name"
-                    placeholder="All Operators"
+                    placeholder="All Loggers"
                     icon="phosphor-user"
                     searchable
                 />
@@ -111,35 +111,35 @@
                     autocapitalize="characters"
                     autocorrect="off"
                     spellcheck="false"
-                    placeholder="Search callsign..."
+                    placeholder="Search callsigns"
                     icon="phosphor-magnifying-glass"
                     clearable
                 />
 
                 {{-- Time From --}}
                 <x-flatpickr
-                    label="Time From"
+                    label="QSO Time From (UTC)"
                     wire:model.live="timeFrom"
                     icon="phosphor-calendar"
                 />
 
                 {{-- Time To --}}
                 <x-flatpickr
-                    label="Time To"
+                    label="QSO Time To (UTC)"
                     wire:model.live="timeTo"
                     icon="phosphor-calendar"
                 />
 
                 {{-- Duplicate Filter --}}
                 <fieldset class="flex flex-col gap-2">
-                    <legend class="text-sm font-medium text-base-content/70">Duplicate Status</legend>
+                    <legend class="text-sm font-medium text-base-content/70">Dupe Status</legend>
                     <div class="flex flex-col gap-2">
                         <x-radio
                             wire:model.live="showDuplicates"
                             :options="[
                                 ['id' => null, 'name' => 'All Contacts'],
-                                ['id' => 'exclude', 'name' => 'Exclude Duplicates'],
-                                ['id' => 'only', 'name' => 'Duplicates Only']
+                                ['id' => 'exclude', 'name' => 'Exclude Dupes'],
+                                ['id' => 'only', 'name' => 'Dupes Only']
                             ]"
                         />
                     </div>
@@ -196,7 +196,7 @@
                             <x-radio
                                 wire:model.live="showDeleted"
                                 :options="[
-                                    ['id' => null, 'name' => 'Active Only'],
+                                    ['id' => null, 'name' => 'Not Deleted'],
                                     ['id' => 'include', 'name' => 'Include Deleted'],
                                     ['id' => 'only', 'name' => 'Deleted Only']
                                 ]"

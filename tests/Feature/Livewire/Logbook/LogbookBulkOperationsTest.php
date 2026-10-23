@@ -89,13 +89,13 @@ describe('selection state', function () {
 
     test('bulk action bar is hidden when no contacts are selected', function () {
         Livewire::test(LogbookBrowser::class)
-            ->assertDontSee('contact(s) selected');
+            ->assertDontSee('Clear Selection');
     });
 
     test('bulk action bar appears when contacts are selected', function () {
         Livewire::test(LogbookBrowser::class)
             ->set('selectedIds', $this->contacts->pluck('id')->toArray())
-            ->assertSee('contact(s) selected')
+            ->assertSee($this->contacts->count().' selected')
             ->assertSeeHtml('open-bulk-change-logger')
             ->assertSeeHtml('bulk-delete-contacts');
     });

@@ -15,7 +15,7 @@
     {{-- Total Points --}}
     <x-card class="shadow-md">
         <div class="text-center">
-            <div class="text-xs sm:text-sm text-base-content/70 uppercase tracking-wide">Total Points</div>
+            <div class="text-xs sm:text-sm text-base-content/70 uppercase tracking-wide">QSO Points</div>
             <div class="text-2xl sm:text-3xl font-bold text-success mt-1">{{ number_format($this->stats['total_points']) }}</div>
         </div>
     </x-card>
@@ -36,7 +36,7 @@
             </div>
             @if(empty($this->stats['by_mode']))
                 <div class="text-center text-sm text-base-content/50 py-2">
-                    No contacts yet
+                    No contacts to summarize
                 </div>
             @else
                 <div class="grid grid-cols-3 gap-2">
@@ -61,7 +61,7 @@
             </div>
             @if(empty($this->stats['by_band']))
                 <div class="text-center text-sm text-base-content/50 py-2">
-                    No contacts yet
+                    No contacts to summarize
                 </div>
             @else
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
