@@ -39,7 +39,7 @@ class SetupStep2Request extends FormRequest
             'logo' => [
                 'nullable',
                 'image',
-                'mimes:jpeg,jpg,png,svg',
+                'mimes:jpeg,jpg,png',
                 'max:2048', // 2MB
             ],
         ];

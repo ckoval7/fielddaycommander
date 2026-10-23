@@ -51,7 +51,7 @@
             <x-file
                 label="Upload New Logo"
                 wire:model="new_logo"
-                accept="image/png,image/jpeg,image/svg+xml"
+                accept="image/png,image/jpeg"
                 hint="PNG or JPG, up to 2 MB."
             >
                 <x-slot:append>

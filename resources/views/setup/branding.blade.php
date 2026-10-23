@@ -49,7 +49,7 @@
                     type="file"
                     name="logo"
                     id="logo-input"
-                    accept="image/png,image/jpeg,image/svg+xml"
+                    accept="image/png,image/jpeg"
                     class="file-input w-full"
                 />
                 <span class="block py-1 text-xs">Optional. PNG or JPG, up to 2 MB. Recommended: a square image, at least 200 × 200 pixels.</span>
