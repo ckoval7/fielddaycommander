@@ -57,7 +57,7 @@ class SiteBranding extends Component
             ]);
 
             $this->logo_path = null;
-            $this->dispatch('notify', title: 'Success', description: 'Logo removed successfully.');
+            $this->dispatch('notify', title: 'Success', description: 'Logo removed.');
         }
     }
 
@@ -90,7 +90,7 @@ class SiteBranding extends Component
                 $cleanSvg = $sanitizer->sanitize(file_get_contents($this->new_logo->getRealPath()));
 
                 if (! $cleanSvg) {
-                    $this->addError('new_logo', 'The SVG file could not be sanitized and was rejected.');
+                    $this->addError('new_logo', 'This SVG could not be made safe to display. Upload a PNG or JPG instead.');
 
                     return;
                 }
@@ -117,7 +117,7 @@ class SiteBranding extends Component
             'has_logo' => ! empty($this->logo_path),
         ]);
 
-        $this->dispatch('notify', title: 'Success', description: 'Branding settings saved successfully.');
+        $this->dispatch('notify', title: 'Success', description: 'Site branding saved.');
     }
 
     public function render()

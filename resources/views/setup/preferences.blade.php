@@ -176,11 +176,11 @@
                 />
 
                 <x-input
-                    label="Contact Email"
+                    label="Weather Contact Email"
                     type="email"
                     name="contact_email"
                     icon="phosphor-envelope"
-                    hint="Optional. Site contact email"
+                    hint="Optional. Sent to the National Weather Service with weather requests"
                     errorField="contact_email"
                 />
             </div>

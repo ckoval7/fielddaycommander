@@ -340,7 +340,7 @@
                             @endcan
 
                             @can('manage-settings')
-                                <x-menu-item title="Settings" icon="phosphor-gear-six" link="/settings" />
+                                <x-menu-item title="System Settings" icon="phosphor-gear-six" link="/settings" />
                             @endcan
 
                             @can('view-reports')
