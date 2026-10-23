@@ -40,7 +40,8 @@
                         type="button"
                         wire:click="removeFilter('{{ $pill['key'] }}')"
                         class="hover:text-error"
-                    >&times;</button>
+                        aria-label="Remove {{ $pill['label'] }} filter"
+                    ><span aria-hidden="true">&times;</span></button>
                 </span>
             @endforeach
         </div>

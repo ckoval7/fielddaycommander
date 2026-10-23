@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Screen readers announced the logbook's active filter chips' remove buttons as "times" or nothing. Each now reads "Remove" followed by the filter name. On the equipment list, a photo thumbnail could only be opened with a mouse or touch; keyboard users can now Tab to it and press Enter.
+- On a shared station computer in station mode, each page navigation stacked another set of idle-activity listeners in the browser. They are now removed when the page changes.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.

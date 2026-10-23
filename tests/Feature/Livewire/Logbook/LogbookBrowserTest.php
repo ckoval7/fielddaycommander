@@ -453,6 +453,12 @@ describe('activeFilterPills', function () {
         expect($component->activeFilterPills())->toBe([]);
     });
 
+    test('filter pill remove buttons have accessible names', function () {
+        Livewire::test(LogbookBrowser::class)
+            ->set('callsignSearch', 'W1AW')
+            ->assertSeeHtml('aria-label="Remove Callsign: W1AW filter"');
+    });
+
     test('returns a band pill with selected-count label', function () {
         $component = new LogbookBrowser;
         $component->bandIds = [$this->band->id];
