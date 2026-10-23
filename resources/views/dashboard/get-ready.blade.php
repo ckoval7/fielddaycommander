@@ -100,7 +100,7 @@
                 </div>
             </div>
             {{-- Invite Participants CTA --}}
-            <div class="card bg-primary/5 border border-primary/20 mt-6" x-data="{ copied: false }">
+            <div class="card bg-primary/5 border border-primary/20 mt-6" x-data="{ copied: false, failed: false }">
                 <div class="card-body text-center py-6">
                     <h3 class="text-lg font-bold mb-1">Invite participants</h3>
                     <p class="text-sm text-base-content/60 mb-3">Share this link so operators can create accounts, claim shifts, and log contacts.</p>
@@ -108,13 +108,14 @@
                         <code class="text-sm bg-base-200 px-3 py-1.5 rounded-lg select-all">{{ route('register') }}</code>
                         <button
                             class="btn btn-ghost btn-sm btn-square"
-                            @click="navigator.clipboard.writeText('{{ route('register') }}'); copied = true; setTimeout(() => copied = false, 2000)"
-                            :title="copied ? 'Copied!' : 'Copy link'"
+                            @click="if (await $copy(@js(route('register')))) { copied = true; failed = false; setTimeout(() => copied = false, 2000) } else { failed = true; setTimeout(() => failed = false, 4000) }"
+                            :title="copied ? 'Copied!' : (failed ? 'Could not copy' : 'Copy link')"
                         >
                             <x-icon x-show="!copied" name="phosphor-clipboard" class="w-4 h-4" />
                             <x-icon x-show="copied" x-cloak name="phosphor-check" class="w-4 h-4 text-success" />
                         </button>
                     </div>
+                    <p x-show="failed" x-cloak class="text-sm text-error -mt-2 mb-4" role="status">Could not copy automatically. Select the link above and copy it.</p>
                     @can('manage-users')
                         <a href="{{ route('users.index') }}" class="btn btn-ghost btn-sm text-base-content/60">
                             <x-icon name="phosphor-users" class="w-4 h-4" />

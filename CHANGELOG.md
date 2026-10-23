@@ -12,6 +12,7 @@
 - Guestbook visitor categories use plainer names for club members, agency representatives, ARES/RACES volunteers, and media representatives, with stored values unchanged. The printed message header now says **Radiogram** instead of **ARRL Radiogram**.
 
 ### Fixed
+- Over plain HTTP on the club LAN, the copy buttons for the registration link on the Get Ready page and for generated passwords in the user reset and activate dialogs did nothing, and the password buttons still said "Copied". They now copy in that case too, and show a message if copying fails.
 
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
