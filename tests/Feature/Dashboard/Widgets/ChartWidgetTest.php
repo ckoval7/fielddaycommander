@@ -650,7 +650,7 @@ test('view contains screen reader data table', function () {
         'config' => ['chart_type' => 'bar', 'data_source' => 'qsos_per_hour'],
         'size' => 'normal',
     ])
-        ->assertSeeHtml('<table class="sr-only">')
+        ->assertSeeHtmlInOrder(['<div class="sr-only">', '<table>', '<caption>'])
         ->assertSeeHtml('<th scope="col">Category</th>')
         ->assertDontSeeHtml('role="table"')
         ->assertDontSeeHtml('role="img"');
