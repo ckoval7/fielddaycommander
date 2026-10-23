@@ -11,6 +11,7 @@
 - Role management required **Manage System Settings**. It now uses **Manage Roles**, so you can let someone edit roles without access to system preferences or site branding. With only this permission, they see only **Role Management** in **System Settings**. Upgrades grant it to roles that could manage settings, and the System Administrator role must keep it.
 - Equipment menus now use **My Equipment** and **Equipment Catalog** instead of **My Catalog** and **All User Catalogs**, matching the page headings. **Settings** is now **System Settings** in the sidebar, user menu, and page heading. Sign-in and session controls use **Sign In** and **Sign Out**, including station mode's former **End Session** button.
 - Guestbook visitor categories use plainer names for club members, agency representatives, ARES/RACES volunteers, and media representatives, with stored values unchanged. The printed message header now says **Radiogram** instead of **ARRL Radiogram**.
+- The unused **Manage Equipment** permission, labeled Legacy, is gone from the Role Manager. Nothing checked it. The narrower equipment permissions control equipment access, and upgrades remove it from any role or user that had it.
 
 ### Fixed
 - Over plain HTTP on the club LAN, copying the registration link on Get Ready or a generated password in the user reset and activate dialogs did nothing. The password buttons still reported success. These buttons now try copying on HTTP and report failures.
