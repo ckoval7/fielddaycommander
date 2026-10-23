@@ -171,3 +171,15 @@ test('only counts entries for specific event configuration', function () {
 
     expect($component->get('totalBonusPoints'))->toBe(100);
 });
+
+test('does not count verified online entries in visit categories', function () {
+    GuestbookEntry::factory()->online()->verified()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'visitor_category' => VisitorCategory::Agency,
+    ]);
+
+    $component = Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id]);
+
+    expect($component->get('agencyCount'))->toBe(0);
+    expect($component->get('totalBonusPoints'))->toBe(0);
+});
