@@ -381,7 +381,7 @@
                                 <span class="text-sm">Alternate Power</span>
                             </label>
                             <p class="text-xs text-base-content/60 ml-9 -mt-2">
-                                Examples: Solar, Wind, Water (Hydro), Methane
+                                Examples: solar, wind, and water (hydro).
                             </p>
                         </div>
                     </div>
@@ -405,13 +405,24 @@
                 @if($this->usesPowerMultiplier)
                     <x-alert icon="phosphor-info" class="alert-info">
                         <div class="text-sm">
-                            <strong>Power Multiplier Rules:</strong>
+                            <strong>Power multipliers</strong>
+                            <p class="mt-1">The highest multiplier your entry qualifies for applies.</p>
                             <ul class="list-disc list-inside mt-1 space-y-1">
-                                <li><strong>5×:</strong> ≤5W + Natural power (battery/alternate power) + No commercial/generator</li>
-                                <li><strong>2×:</strong> ≤5W + Commercial/generator OR 6-100W (any power)</li>
-                                <li><strong>1×:</strong> >100W (any power)</li>
+                                @foreach($this->powerMultiplierTiers as $tier)
+                                    @php
+                                        $wattage = match (true) {
+                                            $tier['maxWatts'] === null => 'over '.($tier['minWatts'] - 1).' W',
+                                            $tier['minWatts'] === 1 => $tier['maxWatts'].' W or less',
+                                            default => $tier['minWatts'].' W to '.$tier['maxWatts'].' W',
+                                        };
+                                    @endphp
+                                    <li>
+                                        <strong>{{ $tier['multiplier'] }}×:</strong>
+                                        {{ $wattage }}{{ $tier['naturalPowerOnly'] ? ', using only battery, solar, wind, or water power. No commercial power or generators.' : '' }}
+                                    </li>
+                                @endforeach
                             </ul>
-                            <p class="mt-2">Station settings count too. A station set to more power than this, or to commercial or generator power, can lower the multiplier.</p>
+                            <p class="mt-2">Station settings count too. Higher station power, commercial power, or generator power can lower the multiplier.</p>
                         </div>
                     </x-alert>
                 @endif
