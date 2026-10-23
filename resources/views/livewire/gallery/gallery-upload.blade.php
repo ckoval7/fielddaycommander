@@ -51,7 +51,7 @@
                                 <p class="text-base-content/70">Drag and drop a photo here, or</p>
                                 <x-button label="Choose Photo" icon="phosphor-folder-open" x-on:click="$refs.fileInput.click()" class="mt-2" />
                             </div>
-                            <p class="text-xs text-base-content/50">JPEG, PNG, GIF, or WebP up to 12 MB</p>
+                            <p class="text-xs text-base-content/50">JPEG, PNG, GIF, or WebP up to 25 MB</p>
                         </div>
                     @endif
                 </div>

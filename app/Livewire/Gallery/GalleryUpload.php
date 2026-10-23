@@ -23,7 +23,7 @@ class GalleryUpload extends Component
         'photo.required' => 'Choose a photo to upload.',
         'photo.image' => 'Upload a valid JPEG, PNG, GIF, or WebP photo.',
         'photo.mimes' => 'Upload a JPEG, PNG, GIF, or WebP photo.',
-        'photo.max' => 'Choose a photo up to 12 MB.',
+        'photo.max' => 'Choose a photo up to 25 MB.',
     ])]
     public $photo;
 
@@ -47,7 +47,7 @@ class GalleryUpload extends Component
         $imageService = app(ImageService::class);
 
         if (! $imageService->isValidImage($this->photo)) {
-            $this->addError('photo', 'Please upload a valid JPEG, PNG, GIF, or WebP photo up to 12 MB.');
+            $this->addError('photo', 'Please upload a valid JPEG, PNG, GIF, or WebP photo up to 25 MB.');
 
             return;
         }

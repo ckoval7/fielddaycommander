@@ -46,6 +46,7 @@ at an existing server through `externalDatabase` or `externalRedis`.
 | `image.tag` | Image tag. Defaults to the chart's `appVersion`. | `""` |
 | `app.trustedProxies` | Proxies whose forwarded client IP and scheme are believed. | private ranges |
 | `ingress.enabled` | Expose through an ingress controller. | `false` |
+| `ingress.maxBodySize` | Largest request body ingress-nginx accepts (photo uploads go up to 25 MB). Blank keeps the controller's limit. | `35m` |
 | `service.type` | Service type for the web interface. | `ClusterIP` |
 | `persistence.size` | Volume for uploads, gallery images and logs. | `10Gi` |
 | `mysql.enabled` | Deploy the bundled MySQL StatefulSet. | `true` |
