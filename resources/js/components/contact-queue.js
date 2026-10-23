@@ -17,6 +17,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         isOnline: navigator.onLine,
         syncIntervalId: null,
         storageKey: `fd-commander-queue-${sessionId}`,
+        // True while the last attempt to save the queue to localStorage failed.
+        storageFailing: false,
         recallIndex: -1,
         recalledContactId: null,
         recalledUuid: null,
@@ -110,6 +112,15 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             setTimeout(() => {
                 this.now = Date.now();
             }, this.pendingIndicatorDelayMs);
+        },
+
+        /**
+         * Warn while the queue can't be saved on this device and contacts are
+         * still waiting, so a reload or closed tab would lose them.
+         */
+        get storageWarningVisible() {
+            return this.storageFailing
+                && this.queue.some(c => c.status !== 'synced');
         },
 
         get failedCount() {
@@ -750,8 +761,11 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         saveQueue() {
             try {
                 localStorage.setItem(this.storageKey, JSON.stringify(this.queue));
+                this.storageFailing = false;
             } catch (e) {
-                // localStorage full or unavailable - queue lives in memory only for this session
+                // localStorage full or unavailable - queue lives in memory only for this session;
+                // storageWarningVisible tells the operator while contacts are waiting.
+                this.storageFailing = true;
                 console.warn('Failed to persist contact queue to localStorage:', e);
             }
         },
