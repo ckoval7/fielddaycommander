@@ -449,7 +449,9 @@
             <ul class="list-disc list-inside text-base-content/70 space-y-1">
                 <li><strong>{{ $this->getTestUserPoolCount() }} test users</strong></li>
                 <li>Accounts with callsigns beginning with TEST</li>
-                <li>Their contacts and operating sessions stay in the log</li>
+                <li>Every contact they logged and every operating session they ran</li>
+                <li>Accounts already in the trash, so the same callsigns can be seeded again</li>
+                <li>Scores for the affected events are recalculated afterward</li>
             </ul>
             <p class="font-semibold">This cannot be undone.</p>
         </div>

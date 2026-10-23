@@ -9,14 +9,18 @@ use App\Models\AuditLog;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Image;
+use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Models\User;
 use App\Services\DatabaseSnapshotService;
 use App\Services\DeveloperClockService;
+use App\Services\RescoreService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -866,6 +870,67 @@ test('clearTestUsers deletes all test users', function () {
 
     expect(User::where('call_sign', 'LIKE', 'TEST%')->count())->toBe(0)
         ->and(User::count())->toBe(3); // Only regular user and 2 from beforeEach remain
+});
+
+test('clearTestUsers permanently removes test users, their contacts and sessions, and rescores', function () {
+    $this->actingAs($this->adminUser);
+
+    Storage::fake('local');
+    $config = EventConfiguration::factory()->create();
+    $testUser = User::factory()->create(['call_sign' => 'TEST1AA']);
+    Storage::disk('local')->put('gallery/ab/test.jpg', 'x');
+    Storage::disk('local')->put('gallery/ab/test_thumb.jpg', 'x');
+    Image::factory()->create(['uploaded_by_user_id' => $testUser->id, 'storage_path' => 'gallery/ab/test.jpg']);
+    $trashed = User::factory()->create(['call_sign' => 'TEST2AB']);
+    $trashed->delete();
+
+    $testSession = OperatingSession::factory()->create(['operator_user_id' => $testUser->id]);
+    Contact::factory()->count(2)->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $testSession->id,
+        'logger_user_id' => $testUser->id,
+    ]);
+    $trashedContact = Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $testSession->id,
+        'logger_user_id' => $testUser->id,
+    ]);
+    $trashedContact->delete();
+
+    $realSession = OperatingSession::factory()->create(['operator_user_id' => $this->regularUser->id]);
+    $realContact = Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'operating_session_id' => $realSession->id,
+        'logger_user_id' => $this->regularUser->id,
+    ]);
+
+    $this->mock(RescoreService::class)
+        ->shouldReceive('rescoreEvent')
+        ->once()
+        ->withArgs(fn (Event $event) => $event->id === $config->event_id);
+
+    Livewire::test(DeveloperTools::class)->call('clearTestUsers');
+
+    expect(User::withTrashed()->where('call_sign', 'LIKE', 'TEST%')->count())->toBe(0)
+        ->and(Contact::withTrashed()->where('logger_user_id', $testUser->id)->count())->toBe(0)
+        ->and(OperatingSession::where('operator_user_id', $testUser->id)->count())->toBe(0)
+        ->and(Image::where('uploaded_by_user_id', $testUser->id)->count())->toBe(0)
+        ->and(Storage::disk('local')->exists('gallery/ab/test.jpg'))->toBeFalse()
+        ->and(Storage::disk('local')->exists('gallery/ab/test_thumb.jpg'))->toBeFalse()
+        ->and(Contact::find($realContact->id))->not->toBeNull()
+        ->and(OperatingSession::find($realSession->id))->not->toBeNull();
+});
+
+test('test users can be seeded again with the same callsigns after clearing', function () {
+    $this->actingAs($this->adminUser);
+
+    User::factory()->create(['call_sign' => 'TEST1AA'])->delete();
+
+    Livewire::test(DeveloperTools::class)
+        ->call('clearTestUsers')
+        ->call('initializeTestUsers', 3);
+
+    expect(User::where('call_sign', 'LIKE', 'TEST%')->count())->toBe(3);
 });
 
 test('clearTestUsers logs audit trail with count', function () {
