@@ -27,6 +27,7 @@
 - On the station equipment assignment page, keyboard and screen reader users tabbing through **Committed to Event** or **Equipment Catalog** heard drag instructions that promised arrow-key controls that didn't work. They now tab to each card's **Assign** or **Commit & Assign** button, which names the equipment, and mouse drag and drop still works.
 - When reading dashboard chart data with a screen reader, the hidden data table wasn't reliably announced as a table with column headers. It now uses an HTML table with column headers.
 - Since 26.09.0, ticking **Youth (age 18 or younger)** on your own Profile page and saving left the box unticked when you returned. Operators who marked themselves as youth this way weren't counted toward the Field Day youth participation bonus. The setting now saves.
+- On the Scoring page, when a station was set to more power than the event's power setting, the **Multiplier Rules** table highlighted the row for the event's setting instead of the one the multiplier came from. When the event was set to 5W or less on natural power but a station used commercial or generator power, the page said the event qualified for 5× even though it scored 2×. The table and the explanation now match the multiplier.
 
 ## 26.10.11 - 2026-10-21
 
