@@ -5,6 +5,7 @@
 
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
@@ -50,4 +51,13 @@ test('event manager role has manage-weather permission', function () {
     $eventManager = Role::findByName('Event Manager');
 
     expect($eventManager->hasPermissionTo('manage-weather'))->toBeTrue();
+});
+
+test('permission seeder refreshes descriptions of existing permissions', function () {
+    Permission::where('name', 'manage-weather')->update(['description' => 'Old text']);
+
+    $this->seed(PermissionSeeder::class);
+
+    expect(Permission::where('name', 'manage-weather')->count())->toBe(1)
+        ->and(Permission::where('name', 'manage-weather')->value('description'))->not->toBe('Old text');
 });

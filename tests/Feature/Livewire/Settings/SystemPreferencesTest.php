@@ -210,3 +210,17 @@ test('rejects invalid volunteer_hours_mode value', function () {
         ->call('save')
         ->assertHasErrors(['volunteer_hours_mode']);
 });
+
+test('blanking the contact email and API key clears the stored values', function () {
+    Setting::set('contact_email', 'ops@example.com');
+    Setting::set('callsign_api_key', 'secret-key');
+
+    Livewire::test(SystemPreferences::class)
+        ->set('contact_email', '')
+        ->set('api_key', '')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Setting::get('contact_email'))->toBeNull()
+        ->and(Setting::get('callsign_api_key'))->toBeNull();
+});
