@@ -83,7 +83,7 @@
                 <div class="space-y-3" wire:loading.class="opacity-50">
                     @foreach($this->filteredShifts as $shift)
                         @php
-                            $filledCount = $shift->assignments->count();
+                            $filledCount = $shift->slotsTaken();
                             $isFull = $filledCount >= $shift->capacity;
                             $isMyShift = in_array($shift->id, $myAssignmentIds);
                             $myAssignment = $myAssignmentsKeyed->get($shift->id);
@@ -205,7 +205,7 @@
                                 <div class="space-y-3">
                                     @foreach($shifts as $shift)
                                         @php
-                                            $filledCount = $shift->assignments->count();
+                                            $filledCount = $shift->slotsTaken();
                                             $isFull = $filledCount >= $shift->capacity;
                                             $isMyShift = in_array($shift->id, $myAssignmentIds);
                                             $myAssignment = $myAssignmentsKeyed->get($shift->id);

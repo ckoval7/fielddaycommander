@@ -15,6 +15,8 @@
                         wire:click="checkIn({{ $myAssignment->id }})"
                         spinner="checkIn"
                     />
+                @elseif($shift->is_past)
+                    <x-badge value="Shift ended" class="badge-ghost badge-sm" />
                 @else
                     <x-badge value="Check-in opens {{ toLocalTime($shift->start_time->copy()->subMinutes(15))->format(timeFormat() . ' T') }}" class="badge-ghost badge-sm" />
                 @endif

@@ -128,10 +128,14 @@
                                                     @endif
                                                 </div>
                                                 <div class="text-sm text-base-content/70">
-                                                    {{ toLocalTime($shift->start_time)->format('M j, ' . timeFormat()) }} - {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
+                                                    @php
+                                                        $shiftStart = toLocalTime($shift->start_time);
+                                                        $shiftEnd = toLocalTime($shift->end_time);
+                                                    @endphp
+                                                    {{ $shiftStart->format('M j, ' . timeFormat()) }} - {{ $shiftEnd->format(($shiftEnd->isSameDay($shiftStart) ? '' : 'M j, ') . timeFormat() . ' T') }}
                                                 </div>
                                                 <div class="text-sm text-base-content/50 mt-1">
-                                                    Capacity: {{ $shift->assignments->count() }}/{{ $shift->capacity }}
+                                                    Capacity: {{ $shift->slotsTaken() }}/{{ $shift->capacity }}
                                                     @if($shift->notes)
                                                         <span class="ml-2">| {{ $shift->notes }}</span>
                                                     @endif
@@ -249,7 +253,7 @@
 
                                             {{-- Shift actions --}}
                                             <div class="flex items-center gap-1 shrink-0">
-                                                @if($shift->assignments->where('status', '!=', \App\Models\ShiftAssignment::STATUS_NO_SHOW)->count() < $shift->capacity)
+                                                @if($shift->slotsTaken() < $shift->capacity)
                                                     <x-button
                                                         icon="phosphor-user-plus"
                                                         class="btn-ghost btn-sm"
