@@ -489,8 +489,9 @@ test('checkForConflicts dispatches no conflicts and proceeds with clone when no 
 });
 
 test('target defaults to the context event configuration id, not the event id', function () {
-    // Offset the config ids so they differ from the event ids.
-    EventConfiguration::factory()->count(3)->create();
+    // Offset the event ids so they differ from the config ids. Creating
+    // configs would not work: each config factory also creates an event.
+    Event::factory()->count(3)->create();
 
     $event = Event::factory()->create([
         'start_time' => appNow()->subHour(),
