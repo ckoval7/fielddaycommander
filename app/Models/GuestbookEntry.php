@@ -126,4 +126,19 @@ class GuestbookEntry extends Model
     {
         return $this->visitor_category?->isBonusEligible() ?? false;
     }
+
+    /**
+     * Message shown when an online entry can't be verified because its category needs an on-site visit.
+     */
+    public const string IN_PERSON_REQUIRED_MESSAGE = 'Agency and elected official visits must be in person to count toward the bonus. Change the category, or leave this entry unverified.';
+
+    /**
+     * Whether an entry with this category and presence may be verified.
+     *
+     * Online entries can't be verified in a category whose bonus requires an on-site visit.
+     */
+    public static function canBeVerifiedAs(?VisitorCategory $category, ?PresenceType $presence): bool
+    {
+        return ! ($presence === PresenceType::Online && $category?->requiresInPersonVisit());
+    }
 }

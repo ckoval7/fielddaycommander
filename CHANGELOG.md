@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- A guestbook entry from an online visitor could be verified as an agency or elected official visit, which earns the visit bonus even though the visit was not in person. Verifying one from the edit window now shows a message that agency and elected official visits must be in person to count, and **Verify** on a selection skips those entries and says how many it skipped. The bonus eligible count and the bonus sidebar no longer include online entries. Entries already verified are left as they are.
 - On the Clone Stations page, the target event could show blank or a different event, and accepting the default could clone stations into the wrong event or fail. It now preselects the event you're viewing.
 - A screen left on the get-ready countdown stayed on 00:00:00 after the event started until someone refreshed it. It now switches to the live dashboard within a few seconds of the start time, staggered so several screens don't all reload at once.
 - Opening an invitation link that was invalid, expired or already used sent you to a blank sign-in page. It now says the invitation is invalid, expired or already accepted.
