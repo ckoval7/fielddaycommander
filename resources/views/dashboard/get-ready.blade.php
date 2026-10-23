@@ -121,7 +121,7 @@
                             <x-icon x-show="copied" x-cloak name="phosphor-check" class="w-4 h-4 text-success" />
                         </button>
                     </div>
-                    <p x-show="failed" x-cloak class="text-sm text-error -mt-2 mb-4" role="status">Could not copy automatically. Select the link above and copy it.</p>
+                    <output x-show="failed" x-cloak class="block text-sm text-error -mt-2 mb-4">Could not copy automatically. Select the link above and copy it.</output>
                     @can('manage-users')
                         <a href="{{ route('users.index') }}" class="btn btn-ghost btn-sm text-base-content/60">
                             <x-icon name="phosphor-users" class="w-4 h-4" />

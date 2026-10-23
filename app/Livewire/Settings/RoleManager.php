@@ -13,6 +13,9 @@ use Spatie\Permission\Models\Role;
 
 class RoleManager extends Component
 {
+    /** The built-in role that must always keep role management and can't be deleted. */
+    private const SYSTEM_ADMIN_ROLE = 'System Administrator';
+
     public ?int $selectedRoleId = null;
 
     public array $selectedPermissions = [];
@@ -70,14 +73,14 @@ class RoleManager extends Component
         $role = Role::findById($this->selectedRoleId);
 
         // System Administrator protection
-        if ($role->name === 'System Administrator' && empty($this->selectedPermissions)) {
+        if ($role->name === self::SYSTEM_ADMIN_ROLE && empty($this->selectedPermissions)) {
             $this->dispatch('notify', title: 'Error', description: 'Keep at least one permission for the System Administrator role.');
 
             return;
         }
 
         // System Administrator must keep role management, so roles can always be fixed
-        if ($role->name === 'System Administrator' && ! in_array('manage-roles', $this->selectedPermissions, true)) {
+        if ($role->name === self::SYSTEM_ADMIN_ROLE && ! in_array('manage-roles', $this->selectedPermissions, true)) {
             $this->dispatch('notify', title: 'Error', description: 'The System Administrator role must keep the Manage Roles permission.');
 
             return;
@@ -201,7 +204,7 @@ class RoleManager extends Component
         $role = Role::findById($roleId);
 
         // System Administrator protection
-        if ($role->name === 'System Administrator') {
+        if ($role->name === self::SYSTEM_ADMIN_ROLE) {
             $this->dispatch('notify', title: 'Error', description: 'The System Administrator role cannot be deleted.');
 
             return;
