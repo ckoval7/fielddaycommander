@@ -8,6 +8,7 @@ use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -296,4 +297,16 @@ test('deleting user cascades and deletes invitations', function () {
     $user->forceDelete();
 
     expect(UserInvitation::count())->toBe(0);
+});
+
+test('sign-in page shows why an invitation link did not work', function () {
+    DB::table('system_config')->updateOrInsert(
+        ['key' => 'setup_completed'],
+        ['value' => 'true', 'updated_at' => now()]
+    );
+
+    $this->withSession(['error' => 'This invitation is invalid, expired, or already accepted.'])
+        ->get(route('login'))
+        ->assertOk()
+        ->assertSee('This invitation is invalid, expired, or already accepted.');
 });

@@ -5,6 +5,10 @@
 <x-layouts.guest>
     <x-slot:title>Sign In</x-slot:title>
 
+    @if (session('error'))
+        <x-alert :title="session('error')" class="mb-4 alert-warning" icon="phosphor-warning" />
+    @endif
+
     @if (session('status'))
         <x-alert :title="session('status')" class="mb-4" />
     @elseif ($accountMessage = \App\Http\Middleware\EnsureAccountNotLocked::messageFor(request()->query(\App\Http\Middleware\EnsureAccountNotLocked::REASON_PARAMETER)))
