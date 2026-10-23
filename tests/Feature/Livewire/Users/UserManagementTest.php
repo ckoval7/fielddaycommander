@@ -866,7 +866,7 @@ test('bulk actions toolbar appears when users selected', function () {
     Livewire::test(UserManagement::class)
         ->set('selectedUsers', [$user->id])
         ->assertSet('selectedUsers', [$user->id])
-        ->assertSee('1 user(s) selected')
+        ->assertSee('1 user selected')
         ->assertSeeHtml('btn-primary border-white/70');
 });
 

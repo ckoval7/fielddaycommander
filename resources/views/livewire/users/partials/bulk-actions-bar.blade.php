@@ -4,13 +4,13 @@
 --}}
 <x-alert icon="phosphor-check-circle" class="alert-info mb-4">
     <div class="flex items-center justify-between w-full gap-4">
-        <span class="font-semibold">{{ count($selectedUsers) }} user(s) selected</span>
+        <span class="font-semibold">{{ count($selectedUsers) }} {{ str('user')->plural(count($selectedUsers)) }} selected</span>
 
         <div class="flex flex-wrap items-center gap-2">
             {{-- Assign Role --}}
             <div class="w-44 [&_select]:!text-base-content [&_select]:dark:!bg-base-300">
                 <x-select
-                    placeholder="Assign Role"
+                    placeholder="Select Role" aria-label="Role to assign to selected users"
                     wire:model="bulk_role_id"
                     :options="$this->roles"
                     option-value="id"
@@ -18,7 +18,7 @@
                 />
             </div>
             <x-button
-                label="Assign"
+                label="Assign Role"
                 icon="phosphor-users-three"
                 class="btn-sm btn-primary border-white/70"
                 wire:click="bulkAssignRole"
@@ -55,7 +55,7 @@
 
             {{-- Cancel --}}
             <x-button
-                label="Cancel"
+                label="Clear Selection"
                 class="btn-sm btn-ghost"
                 wire:click="$set('selectedUsers', [])"
             />

@@ -23,7 +23,7 @@ use Spatie\Permission\Models\Role;
 
 class UserManagement extends Component
 {
-    private const BULK_LIMIT_ERROR = 'Bulk actions limited to 50 users. Please select fewer users.';
+    private const BULK_LIMIT_ERROR = 'Select no more than 50 users for a bulk action.';
 
     use WithPagination;
 
@@ -233,9 +233,15 @@ class UserManagement extends Component
             'role_id' => ['required', 'exists:roles,id'],
             'password' => ['required_if:inviteMode,false', 'confirmed', Password::defaults()],
         ], [
-            'call_sign.unique' => 'This call sign is already registered',
-            'email.unique' => 'This email is already registered',
-            'password.required_if' => 'A password is required when not sending an invitation.',
+            'call_sign.required' => 'Enter a callsign.',
+            'first_name.required' => 'Enter a first name.',
+            'last_name.required' => 'Enter a last name.',
+            'email.required' => 'Enter an email address.',
+            'email.email' => 'Enter a valid email address.',
+            'role_id.required' => 'Select a role.',
+            'call_sign.unique' => 'This callsign is already registered.',
+            'email.unique' => 'This email address is already registered.',
+            'password.required_if' => 'Enter a password or send an invitation.',
         ]);
 
         $user = User::create([
@@ -280,7 +286,7 @@ class UserManagement extends Component
                 $this->showModal = false;
                 $this->reset(['selectedUsers', 'selectAll']);
                 unset($this->users);
-                $this->dispatch('toast', title: 'Success', description: 'User created and invitation email sent', icon: 'phosphor-envelope', css: 'alert-success');
+                $this->dispatch('toast', title: 'Success', description: 'User created and invitation email sent.', icon: 'phosphor-envelope', css: 'alert-success');
             } catch (\Exception $e) {
                 Log::error('Failed to send user invitation email', [
                     'user_id' => $user->id,
@@ -290,13 +296,13 @@ class UserManagement extends Component
                     'error' => $e->getMessage(),
                 ]);
 
-                $this->dispatch('toast', title: 'Warning', description: 'User created but invitation email failed to send. Check application logs for details.', icon: 'phosphor-warning', css: 'alert-warning');
+                $this->dispatch('toast', title: 'Warning', description: 'User created, but the invitation email could not be sent. Check the application logs for details.', icon: 'phosphor-warning', css: 'alert-warning');
             }
         } else {
             $this->showModal = false;
             $this->reset(['selectedUsers', 'selectAll']);
             unset($this->users);
-            $this->dispatch('toast', title: 'Success', description: 'User created successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+            $this->dispatch('toast', title: 'Success', description: 'User created.', icon: 'phosphor-check-circle', css: 'alert-success');
         }
     }
 
@@ -312,8 +318,14 @@ class UserManagement extends Component
             'is_cpr_aed_trained' => ['boolean'],
             'role_id' => ['required', 'exists:roles,id'],
         ], [
-            'call_sign.unique' => 'This call sign is already registered',
-            'email.unique' => 'This email is already registered',
+            'call_sign.required' => 'Enter a callsign.',
+            'first_name.required' => 'Enter a first name.',
+            'last_name.required' => 'Enter a last name.',
+            'email.required' => 'Enter an email address.',
+            'email.email' => 'Enter a valid email address.',
+            'role_id.required' => 'Select a role.',
+            'call_sign.unique' => 'This callsign is already registered.',
+            'email.unique' => 'This email address is already registered.',
         ]);
 
         $user = User::findOrFail($this->editingUserId);
@@ -357,7 +369,7 @@ class UserManagement extends Component
 
         unset($this->users);
 
-        $this->dispatch('toast', title: 'Success', description: 'User updated successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'User updated.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function openLockModal(int $userId): void
@@ -416,7 +428,7 @@ class UserManagement extends Component
             'call_sign' => $user->call_sign,
         ]);
 
-        $this->dispatch('toast', title: 'Success', description: 'User will be prompted to change password on next login', icon: 'phosphor-key', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'The user must change their password at next sign-in.', icon: 'phosphor-key', css: 'alert-success');
     }
 
     public function openResetModal(int $userId): void
@@ -457,6 +469,12 @@ class UserManagement extends Component
             'activateFirstName' => ['required', 'string', 'max:50'],
             'activateLastName' => ['required', 'string', 'max:50'],
             'activatePassword' => ['required', 'string', 'min:8'],
+        ], [
+            'activateEmail.required' => 'Enter an email address.',
+            'activateEmail.email' => 'Enter a valid email address.',
+            'activateEmail.unique' => 'This email address is already registered.',
+            'activateFirstName.required' => 'Enter a first name.',
+            'activateLastName.required' => 'Enter a last name.',
         ], attributes: [
             'activateEmail' => 'email',
             'activateFirstName' => 'first name',
@@ -514,7 +532,7 @@ class UserManagement extends Component
             ], isCritical: true);
 
             $this->showResetModal = false;
-            $this->dispatch('toast', title: 'Success', description: 'Password reset successfully', icon: 'phosphor-key', css: 'alert-success');
+            $this->dispatch('toast', title: 'Success', description: 'Password reset.', icon: 'phosphor-key', css: 'alert-success');
         } else {
             $user = User::findOrFail($this->resettingUserId);
 
@@ -526,7 +544,7 @@ class UserManagement extends Component
                 ]);
 
                 $this->showResetModal = false;
-                $this->dispatch('toast', title: 'Success', description: 'Password reset email sent', icon: 'phosphor-envelope', css: 'alert-success');
+                $this->dispatch('toast', title: 'Success', description: 'Password reset email sent.', icon: 'phosphor-envelope', css: 'alert-success');
             } else {
                 $this->dispatch('toast', title: 'Error', description: __($status), icon: 'phosphor-x-circle', css: 'alert-error');
 
@@ -601,7 +619,7 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll', 'bulk_role_id']);
-        $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} users", icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} ".str('user')->plural($count).'.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function bulkLockAccounts(): void
@@ -642,7 +660,7 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll', 'bulkLockExpiry']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} accounts locked", icon: 'phosphor-lock', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} ".str('account')->plural($count).' locked.', icon: 'phosphor-lock', css: 'alert-success');
     }
 
     public function bulkUnlockAccounts(): void
@@ -676,7 +694,7 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} accounts unlocked", icon: 'phosphor-lock-open', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} ".str('account')->plural($count).' unlocked.', icon: 'phosphor-lock-open', css: 'alert-success');
     }
 
     public function bulkDeleteUsers(): void
@@ -714,7 +732,7 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} users deleted", icon: 'phosphor-trash', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} ".str('user')->plural($count).' deleted.', icon: 'phosphor-trash', css: 'alert-success');
     }
 
     public function render()
@@ -731,6 +749,8 @@ class UserManagement extends Component
     {
         return [
             'role_id' => 'role',
+            'call_sign' => 'callsign',
+            'newPassword' => 'temporary password',
         ];
     }
 }
