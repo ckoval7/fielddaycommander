@@ -367,7 +367,10 @@ class UserProfile extends Component
 
             $this->success('Password changed.');
         } catch (ValidationException $e) {
-            $this->addError('current_password', 'Check your current password and the new password requirements.');
+            foreach ($e->errors() as $field => $messages) {
+                $this->addError($field, $messages[0]);
+            }
+
             $this->error('Password change failed.', 'Check the password fields and try again.');
         }
     }
@@ -463,7 +466,13 @@ class UserProfile extends Component
             'twoFactorCode' => ['required', 'string'],
         ]);
 
-        app(ConfirmTwoFactorAuthentication::class)(auth()->user(), $this->twoFactorCode);
+        try {
+            app(ConfirmTwoFactorAuthentication::class)(auth()->user(), $this->twoFactorCode);
+        } catch (ValidationException $e) {
+            $this->addError('twoFactorCode', $e->errors()['code'][0] ?? 'That code is not valid. Try the current code from your app.');
+
+            return;
+        }
 
         auth()->user()->refresh();
 
