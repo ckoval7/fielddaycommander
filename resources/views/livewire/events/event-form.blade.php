@@ -381,7 +381,7 @@
                                 <span class="text-sm">Alternate Power</span>
                             </label>
                             <p class="text-xs text-base-content/60 ml-9 -mt-2">
-                                Examples: solar, wind, and water (hydro).
+                                Examples: solar, wind, and water (hydro). A methane generator counts as alternate power. Also tick <strong>Generator</strong>, since engine-driven generators don't qualify for ARRL's 5&times; multiplier.
                             </p>
                         </div>
                     </div>

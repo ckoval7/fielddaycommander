@@ -180,6 +180,9 @@
                 >
                     @if($ps->isNaturalPower())
                         Counts toward the 100% emergency power bonus and the 5&times; natural power multiplier (5W or less, every station on natural power).
+                        @if($ps === \App\Enums\PowerSource::Other)
+                            Use Other for wind, water, or another source without an engine. Methane counts as alternate power, but choose <strong>Generator</strong> for any fuel-burning generator. Engine-driven generators don't qualify for ARRL's 5&times; multiplier.
+                        @endif
                     @elseif($ps->isEmergencyPower())
                         Counts toward the 100% emergency power bonus. Rules out the 5&times; natural power multiplier for the whole entry.
                     @else
