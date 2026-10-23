@@ -512,7 +512,7 @@ test('an imported contact logged after an existing one is a zero-point dupe and 
         ->and($imported->duplicate_of_contact_id)->toBe($existing->id)
         ->and($imported->points)->toBe(0)
         ->and($existing->fresh()->is_duplicate)->toBeFalse()
-        ->and($record->fresh()->notes)->toContain('duplicate');
+        ->and($record->fresh()->notes)->toContain('dupe');
 });
 
 test('dupes within one import file are settled by qso time, not file order', function () {
@@ -534,7 +534,7 @@ test('dupes within one import file are settled by qso time, not file order', fun
             && $contact->points === 0
             && $contact->duplicate_of_contact_id === $original->id))->toBeTrue()
         ->and($earlier->fresh()->notes)->toBeNull()
-        ->and($later->fresh()->notes)->toContain('duplicate')
+        ->and($later->fresh()->notes)->toContain('dupe')
         ->and($import->fresh()->imported_records)->toBe(3)
         ->and(OperatingSession::sum('qso_count'))->toBe(3);
 });
@@ -588,7 +588,7 @@ test('dupe groups spanning batches are settled against earlier batches', functio
         ->and($original->is_duplicate)->toBeFalse()
         ->and(Contact::where('is_duplicate', true)->where('duplicate_of_contact_id', $original->id)->count())->toBe(100)
         ->and($earliest->fresh()->notes)->toBeNull()
-        ->and($firstBatchRecord->fresh()->notes)->toContain("duplicate of contact #{$original->id}");
+        ->and($firstBatchRecord->fresh()->notes)->toContain("dupe of contact #{$original->id}");
 });
 
 test('an unmapped record in a later batch fails the import before anything is written', function () {

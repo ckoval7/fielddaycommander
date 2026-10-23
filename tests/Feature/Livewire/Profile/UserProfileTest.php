@@ -457,7 +457,7 @@ test('activity log returns real audit entries for user', function () {
 
     expect($activityLog)->toHaveCount(1)
         ->and($activityLog->first()->action)->toBe('user.login.success')
-        ->and($activityLog->first()->action_label)->toBe('Logged in');
+        ->and($activityLog->first()->action_label)->toBe('Signed in');
 });
 
 test('activity log excludes other users', function () {

@@ -434,7 +434,7 @@ class AdifImportService
                     $notes = null;
 
                     if ($contact?->is_duplicate) {
-                        $notes = "Imported as a duplicate of contact #{$contact->duplicate_of_contact_id} (0 points)";
+                        $notes = "Imported as a dupe of contact #{$contact->duplicate_of_contact_id} (0 points)";
                     } elseif ($contact?->qso_time !== null && $event?->start_time !== null && $event->end_time !== null
                         && ! $contact->qso_time->between($event->start_time, $event->end_time)) {
                         $notes = 'Imported outside the event period (0 points)';

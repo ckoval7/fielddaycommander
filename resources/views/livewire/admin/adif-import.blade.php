@@ -38,7 +38,7 @@
                             Uploading file...
                         </div>
 
-                        <x-button type="submit" label="Parse & Continue" icon="phosphor-arrow-right" class="btn-primary" spinner="uploadFile" />
+                        <x-button type="submit" label="Read File & Continue" icon="phosphor-arrow-right" class="btn-primary" spinner="uploadFile" />
                     </div>
                 </form>
             </x-card>
@@ -139,7 +139,7 @@
                 {{-- Inconsistencies --}}
                 @if (!empty($inconsistencies))
                     <x-card title="Class/Section Inconsistencies">
-                        <p class="text-sm text-base-content/70 mb-4">These callsigns have conflicting class or section values across QSOs. Pick the correct value.</p>
+                        <p class="text-sm text-base-content/70 mb-4">These callsigns have conflicting class or section values across QSOs. Select the correct value.</p>
                         @foreach ($inconsistencies as $callsign => $issues)
                             <div class="mb-4 p-3 bg-base-200 rounded-lg">
                                 <span class="font-mono font-bold text-lg">{{ $callsign }}</span>
@@ -189,11 +189,11 @@
                         @if ($importStatus === 'validating')
                             Matching records against the log and checking them against the event. This page updates on its own.
                         @else
-                            Writing contacts to the log. You can leave this page; the import keeps running.
+                            Writing contacts to the log. You can leave this page. The import keeps running.
                         @endif
                     </p>
                     @php($percent = $this->currentImport?->progressPercent() ?? 0)
-                    <progress class="progress progress-primary w-full" value="{{ $percent }}" max="100" aria-label="Progress"></progress>
+                    <progress class="progress progress-primary w-full" value="{{ $percent }}" max="100" aria-label="ADIF import progress"></progress>
                     <p class="text-sm text-base-content/70 mt-2">
                         @if ($importStatus === 'importing')
                             {{ $this->currentImport?->progress_processed ?? 0 }} of {{ $this->currentImport?->progress_total ?? 0 }} records
@@ -252,7 +252,7 @@
                                 <tr>
                                     <th>Status</th>
                                     <th>Callsign</th>
-                                    <th>QSO Time</th>
+                                    <th>QSO Time (UTC)</th>
                                     <th>Band</th>
                                     <th>Mode</th>
                                     <th>Section</th>
@@ -273,7 +273,7 @@
                                                     <span class="badge badge-info badge-sm">Merge</span>
                                                     @break
                                                 @case('skipped')
-                                                    <span class="badge badge-warning badge-sm">Skip</span>
+                                                    <span class="badge badge-warning badge-sm">Skipped</span>
                                                     @break
                                                 @case('imported')
                                                     <span @class(['badge badge-sm', 'badge-success' => ! $record->notes, 'badge-warning' => $record->notes]) title="{{ $record->notes }}">{{ $record->notes ? 'Imported (0 pts)' : 'Imported' }}</span>
@@ -328,22 +328,22 @@
 
                 @if ($importStatus === 'completed')
                     <x-alert icon="phosphor-check-circle" class="alert-success">
-                        Import completed successfully!
+                        Import complete.
                         {{ $this->currentImport?->imported_records ?? 0 }} imported,
                         {{ $this->currentImport?->merged_records ?? 0 }} merged,
                         {{ $this->currentImport?->skipped_records ?? 0 }} skipped.
                     </x-alert>
                 @elseif ($importStatus === 'failed')
                     <x-alert icon="phosphor-warning" class="alert-error">
-                        Import failed. Please check the logs and try again.
+                        The file could not be validated or fully imported. Contacts already imported remain in the log. Check the application logs before importing the file again.
                     </x-alert>
                 @else
                     @if ($this->hasInvalidRecords)
                         <x-alert icon="phosphor-warning" class="alert-warning mb-4">
                             <div class="flex flex-wrap items-center justify-between gap-3 w-full">
                                 <span>
-                                    <strong>{{ $matchSummary['invalid'] ?? 0 }} invalid record(s)</strong> have validation errors and must be skipped before importing.
-                                    Filter the table to <em>Invalid</em> to review them.
+                                    <strong>{{ $matchSummary['invalid'] ?? 0 }} invalid {{ str('record')->plural($matchSummary['invalid'] ?? 0) }}</strong> must be skipped before importing.
+                                    Select <em>Invalid</em> in the record filter to review errors.
                                 </span>
                                 <x-button
                                     wire:click="skipAllInvalid"

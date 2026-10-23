@@ -156,7 +156,7 @@ class DeveloperTools extends Component
             if ($event === null) {
                 return [
                     'status' => 'No Active Event',
-                    'message' => 'No event is currently active.',
+                    'message' => 'No event is in progress at the selected time.',
                     'class' => 'badge-warning',
                 ];
             }
@@ -238,7 +238,7 @@ class DeveloperTools extends Component
     public function setTime(): void
     {
         if ($this->fakeDate === null) {
-            $this->error('Please select a date.');
+            $this->error('Select a date.');
 
             return;
         }
@@ -265,7 +265,7 @@ class DeveloperTools extends Component
 
             $this->success(
                 "Time set to {$time->format('M j, Y g:i A')}",
-                $this->timeFrozen ? 'Time is frozen' : 'Time is flowing'
+                $this->timeFrozen ? 'Time is frozen' : 'Time advances from the selected moment'
             );
         } catch (\Exception $e) {
             $this->reportFailure('Failed to set time', $e);
@@ -340,7 +340,7 @@ class DeveloperTools extends Component
     public function confirmSelectiveReset(): void
     {
         if (empty($this->selectedTables)) {
-            $this->error('Please select at least one category to reset.');
+            $this->error('Select at least one category to reset.');
 
             return;
         }
@@ -411,7 +411,7 @@ class DeveloperTools extends Component
     public function createSnapshot(): void
     {
         if (empty($this->snapshotName)) {
-            $this->error('Please enter a snapshot name.');
+            $this->error('Enter a snapshot name.');
 
             return;
         }
@@ -654,7 +654,7 @@ class DeveloperTools extends Component
     protected function validateSeedPrerequisites(): ?array
     {
         if (! $this->testUserPoolExists()) {
-            return ['title' => 'Test user pool required', 'message' => 'Please initialize the test user pool before seeding contacts.'];
+            return ['title' => 'Test user pool required', 'message' => 'Initialize the test user pool before seeding contacts.'];
         }
 
         $event = Event::active()->first();
@@ -667,7 +667,7 @@ class DeveloperTools extends Component
         }
 
         if (Station::count() === 0) {
-            return ['title' => 'No stations configured', 'message' => 'Please create at least one station before seeding test contacts.'];
+            return ['title' => 'No stations configured', 'message' => 'Create at least one station before seeding test contacts.'];
         }
 
         return null;
