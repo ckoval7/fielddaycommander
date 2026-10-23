@@ -511,21 +511,27 @@ class Scoring extends Component
             ? " A station is configured at {$effectiveWatts}W, which overrides the event setting of {$configWatts}W."
             : '';
 
-        if ($effectiveWatts > 100) {
+        $multiplier = $this->powerMultiplier;
+
+        if ($multiplier === 1) {
             return "Operating at {$effectiveWatts}W (over 100W) gives a 1\u{00d7} multiplier.{$stationNote}";
+        }
+
+        if ($multiplier === 5) {
+            return "At {$effectiveWatts}W on natural power only, the event qualifies for a 5\u{00d7} multiplier.";
         }
 
         if ($effectiveWatts > 5) {
             return "Operating at {$effectiveWatts}W (over 5W, up to 100W) gives a 2\u{00d7} multiplier.{$stationNote}";
         }
 
-        // QRP (5W or less) - determine reason based on power sources
+        // QRP (5W or less) but not 5x: explain which power setting rules it out.
         $hasNaturalPower = $config->uses_battery || $config->uses_solar || $config->uses_wind || $config->uses_water;
         $hasDisqualifyingPower = $config->uses_commercial_power || $config->uses_generator;
 
         return match (true) {
-            $hasNaturalPower && ! $hasDisqualifyingPower => "At {$effectiveWatts}W on natural power only, the event qualifies for a 5\u{00d7} multiplier, as long as no station uses commercial or generator power.",
             $hasDisqualifyingPower => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier. Switch to natural power only to qualify for 5\u{00d7}.",
+            $hasNaturalPower => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier. A station is set to commercial or generator power, so the event doesn't qualify for 5\u{00d7}.",
             default => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier.",
         };
     }
@@ -536,7 +542,8 @@ class Scoring extends Component
 
     /**
      * Rules table for the power multiplier, with the active row flagged.
-     * Depends on the powerMultiplier computed property.
+     * Depends on the powerMultiplier computed property, and uses the same
+     * effective power (highest of the event and its stations) that drives it.
      *
      * @return array<int, array{condition: string, multiplier: string, active: bool}>
      */
@@ -544,7 +551,7 @@ class Scoring extends Component
     public function powerMultiplierRules(): array
     {
         $config = $this->config();
-        $watts = $config?->max_power_watts ?? 0;
+        $watts = $config?->effectiveMaxPowerWatts() ?? 0;
         $multi = $this->powerMultiplier;
 
         return [
@@ -630,7 +637,7 @@ class Scoring extends Component
         }
 
         // QRP power opportunity: <=5W but only 2x because no natural power
-        $watts = $this->config()->max_power_watts;
+        $watts = $this->config()->effectiveMaxPowerWatts();
         $multiplier = $this->powerMultiplier;
         if ($watts <= 5 && $multiplier === 2) {
             $hasAnyNaturalPower = $this->config()->uses_battery
