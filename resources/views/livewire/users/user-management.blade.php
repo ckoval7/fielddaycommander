@@ -276,4 +276,7 @@
 
     {{-- Delete Confirmation Modal --}}
     @include('livewire.users.partials.delete-modal')
+
+    {{-- Bulk Delete Confirmation Modal --}}
+    @include('livewire.users.partials.bulk-delete-modal')
 </div>

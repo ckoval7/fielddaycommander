@@ -411,6 +411,7 @@
                                 <li><strong>2×:</strong> ≤5W + Commercial/generator OR 6-100W (any power)</li>
                                 <li><strong>1×:</strong> >100W (any power)</li>
                             </ul>
+                            <p class="mt-2">Station settings count too. A station set to more power than this, or to commercial or generator power, can lower the multiplier.</p>
                         </div>
                     </x-alert>
                 @endif

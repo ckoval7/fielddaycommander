@@ -693,6 +693,68 @@ test('scoring tab displays band/mode grid and bonus checklist', function () {
         ->assertSee('Final Score');
 });
 
+test('scoring tab follows Winter Field Day rules for a WFD event', function () {
+    $this->actingAs($this->user);
+
+    $eventType = EventType::firstOrCreate(
+        ['code' => 'WFD'],
+        ['name' => 'Winter Field Day', 'is_active' => true],
+    );
+    $event = Event::factory()->create(['event_type_id' => $eventType->id, 'rules_version' => '2026']);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'callsign' => 'W1AW',
+        'max_power_watts' => 100,
+        'has_gota_station' => false,
+    ]);
+
+    // Distinct FD and WFD values so the key shows which column the ruleset read.
+    $mode = Mode::create([
+        'name' => 'Phone',
+        'category' => 'Phone',
+        'points_fd' => 1,
+        'points_wfd' => 3,
+    ]);
+    $band = Band::factory()->create(['name' => '20m', 'allowed_fd' => true, 'sort_order' => 4]);
+
+    Contact::factory()->count(2)->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'is_duplicate' => false,
+        'points' => 3,
+    ]);
+
+    BonusType::factory()->create([
+        'event_type_id' => $eventType->id,
+        'rules_version' => '2026',
+        'code' => 'wfd_test_objective',
+        'name' => 'Test Objective',
+        'base_points' => 0,
+        'objective_multiplier' => 2,
+        'is_active' => true,
+    ]);
+
+    $component = Livewire::test(EventDashboard::class, ['event' => $event])
+        ->set('activeTab', 'scoring');
+
+    $labels = collect($component->get('scoringHeadline'))
+        ->reject(fn ($part) => is_string($part))
+        ->map(fn ($part) => $part->label)
+        ->values()
+        ->all();
+
+    expect($labels)->toBe(['QSO Points', 'OM + 1'])
+        ->and($component->get('scoringTotals')['final_score'])->toBe(6); // 6 QSO pts x (0 + 1)
+
+    $component->assertSee('Phone = 3 pts')
+        ->assertDontSee('Phone = 1 pt')
+        ->assertSee('OM + 1')
+        ->assertDontSee('Power Multi')
+        ->assertSee('Objectives')
+        ->assertSee('OM ×2');
+});
+
 test('scoringTotals returns correct QSO and bonus scores', function () {
     $this->actingAs($this->user);
 

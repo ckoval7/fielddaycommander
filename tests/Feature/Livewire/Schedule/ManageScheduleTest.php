@@ -1578,3 +1578,28 @@ describe('timezone handling', function () {
             ->assertSet('bulkEndTime', $expectedEnd);
     });
 });
+
+describe('phone layout', function () {
+    test('stacks the unresolved assignments alert and names its icon buttons', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(5),
+            'end_time' => appNow()->subHours(3),
+        ]);
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->set('timeFilter', 'past')
+            ->assertSeeHtml('alert-vertical sm:alert-horizontal')
+            ->assertSeeHtml('aria-label="Back to Shift Schedule"')
+            ->assertSeeHtml('aria-label="Remove Assignment"')
+            ->assertSeeHtml('aria-label="Edit Shift"');
+    });
+});

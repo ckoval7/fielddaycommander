@@ -6,6 +6,7 @@ import dashboardSortable from './components/dashboard-sortable';
 import contactQueue from './components/contact-queue';
 import transcribeRecall from './components/transcribe-recall';
 import updatedAgo from './components/updated-ago';
+import { copyToClipboard } from './clipboard';
 import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
@@ -30,6 +31,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('updatedAgo', updatedAgo);
     Alpine.data('formErrorSummaryPanel', formErrorSummaryPanel);
     Alpine.data('flatpickr', flatpickrComponent);
+    Alpine.magic('copy', () => copyToClipboard);
 });
 
 // Suppress only the W3C-spec'd benign "ResizeObserver loop completed with

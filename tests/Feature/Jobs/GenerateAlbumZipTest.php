@@ -8,6 +8,7 @@ use App\Models\EventConfiguration;
 use App\Models\Image;
 use App\Models\User;
 use App\Notifications\InAppNotification;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
@@ -151,4 +152,38 @@ test('failed method sends error notification and cleans up partial zip', functio
 
     // Partial zip should be cleaned up
     expect(Storage::disk('local')->files($exportDir))->toBeEmpty();
+});
+
+test('everyone who requested the album while the job was waiting is notified', function () {
+    $eventConfig = EventConfiguration::factory()->create();
+    $first = User::factory()->create();
+    $second = User::factory()->create();
+    $bystander = User::factory()->create();
+
+    $image = Image::factory()->create(['event_configuration_id' => $eventConfig->id]);
+    Storage::disk('local')->put($image->storage_path, 'fake-content');
+
+    GenerateAlbumZip::addRequester($eventConfig->id, $first->id);
+    GenerateAlbumZip::addRequester($eventConfig->id, $second->id);
+    GenerateAlbumZip::addRequester($eventConfig->id, $second->id);
+
+    (new GenerateAlbumZip($eventConfig->id, $first->id))->handle();
+
+    Notification::assertSentTo($first, InAppNotification::class, fn ($n) => $n->title === 'Album Ready');
+    Notification::assertSentTo($second, InAppNotification::class, fn ($n) => $n->title === 'Album Ready');
+    Notification::assertNotSentTo($bystander, InAppNotification::class, fn ($n) => $n->title === 'Album Ready');
+    expect(Cache::has(GenerateAlbumZip::requestersKey($eventConfig->id)))->toBeFalse();
+});
+
+test('every requester is told when the album export fails', function () {
+    $eventConfig = EventConfiguration::factory()->create();
+    $first = User::factory()->create();
+    $second = User::factory()->create();
+
+    GenerateAlbumZip::addRequester($eventConfig->id, $second->id);
+
+    (new GenerateAlbumZip($eventConfig->id, $first->id))->failed(new RuntimeException('boom'));
+
+    Notification::assertSentTo($first, InAppNotification::class, fn ($n) => $n->title === 'Album Export Failed');
+    Notification::assertSentTo($second, InAppNotification::class, fn ($n) => $n->title === 'Album Export Failed');
 });

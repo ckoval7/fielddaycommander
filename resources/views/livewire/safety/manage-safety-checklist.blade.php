@@ -12,9 +12,10 @@
                 <div class="flex items-center gap-2 mb-2">
                     <x-button
                         icon="phosphor-arrow-left"
-                        class="btn-ghost btn-sm"
+                        class="btn-ghost btn-sm btn-square"
                         link="{{ route('site-safety.index') }}"
                         tooltip="Back to Safety Checklist"
+                        aria-label="Back to Safety Checklist"
                     />
                     <h1 class="text-2xl md:text-3xl font-bold">Manage Safety Checklist</h1>
                 </div>

@@ -95,6 +95,17 @@ it('can confirm two factor with valid code', function () {
         ->assertHasNoErrors();
 });
 
+it('shows an error under the code field for a wrong two factor code', function () {
+    app(EnableTwoFactorAuthentication::class)($this->user);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('twoFactorCode', '000000')
+        ->call('confirmTwoFactor')
+        ->assertHasErrors(['twoFactorCode'])
+        ->assertSet('showingRecoveryCodes', false);
+});
+
 it('can disable two factor authentication', function () {
     // Enable and confirm 2FA
     app(EnableTwoFactorAuthentication::class)($this->user);

@@ -7,14 +7,12 @@ namespace App\Livewire\Logbook;
 
 use App\Livewire\Dashboard\Widgets\Concerns\ListensForBroadcasts;
 use App\Models\Band;
-use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\Section;
 use App\Models\Station;
 use App\Models\User;
-use App\Services\EventContextService;
-use App\Services\LogbookQueryBuilder;
+use App\Services\LogbookFilters;
 use App\Support\BroadcastChannels;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\View\View;
@@ -28,22 +26,6 @@ class LogbookBrowser extends Component
 {
     use ListensForBroadcasts;
     use WithPagination;
-
-    private const FILTER_PROPERTIES = [
-        'bandIds',
-        'modeIds',
-        'stationIds',
-        'operatorIds',
-        'timeFrom',
-        'timeTo',
-        'callsignSearch',
-        'sectionIds',
-        'showDuplicates',
-        'showTranscribed',
-        'showGota',
-        'showDeleted',
-        'needsAttention',
-    ];
 
     #[Url]
     public array $bandIds = [];
@@ -100,48 +82,14 @@ class LogbookBrowser extends Component
 
     public function mount(): void
     {
-        $service = app(EventContextService::class);
-        $activeEvent = $this->eventId !== null
-            ? Event::query()->with('eventConfiguration')->find($this->eventId)
-            : null;
-        $activeEvent ??= $service->getContextEvent();
+        $activeEvent = LogbookFilters::resolveEvent($this->eventId);
 
-        // No active event — fall back to most recently ended event (handles grace period)
-        if (! $activeEvent) {
-            $activeEvent = Event::query()
-                ->with('eventConfiguration')
-                ->where('end_time', '<=', appNow())
-                ->orderByDesc('end_time')
-                ->first();
-        }
-
-        if (! $activeEvent || ! $activeEvent->eventConfiguration) {
-            $this->eventConfigurationId = null;
-
-            return;
-        }
-
-        $this->eventConfigurationId = $activeEvent->eventConfiguration->id;
+        $this->eventConfigurationId = $activeEvent?->eventConfiguration?->id;
     }
 
     public function resetFilters(): void
     {
-        $this->reset([
-            'bandIds',
-            'modeIds',
-            'stationIds',
-            'operatorIds',
-            'timeFrom',
-            'timeTo',
-            'callsignSearch',
-            'sectionIds',
-            'showDuplicates',
-            'showTranscribed',
-            'showGota',
-            'showDeleted',
-            'needsAttention',
-            'selectedIds',
-        ]);
+        $this->reset([...LogbookFilters::FILTER_KEYS, 'selectedIds']);
         $this->resetPage();
     }
 
@@ -152,7 +100,7 @@ class LogbookBrowser extends Component
 
     public function updated(string $property): void
     {
-        if (in_array($property, self::FILTER_PROPERTIES, true)) {
+        if (in_array($property, LogbookFilters::FILTER_KEYS, true)) {
             $this->selectedIds = [];
             $this->resetPage();
         }
@@ -279,6 +227,34 @@ class LogbookBrowser extends Component
         $this->resetPage();
     }
 
+    /**
+     * The filters currently applied to the list.
+     */
+    public function filters(): LogbookFilters
+    {
+        return LogbookFilters::fromArray(
+            collect(LogbookFilters::FILTER_KEYS)->mapWithKeys(fn (string $key): array => [$key => $this->{$key}])->all()
+        );
+    }
+
+    /**
+     * Link to a CSV of exactly the contacts listed: the filters on screen and
+     * the event being shown. Built from component state, since during a
+     * Livewire update the request is /livewire/update, not the page URL.
+     */
+    #[Computed]
+    public function exportUrl(): string
+    {
+        $eventId = $this->eventConfigurationId !== null
+            ? EventConfiguration::query()->whereKey($this->eventConfigurationId)->value('event_id')
+            : null;
+
+        return route('logbook.export', array_filter([
+            'event' => $eventId,
+            ...$this->filters()->toQueryParameters(),
+        ], fn (mixed $value): bool => $value !== null));
+    }
+
     #[Computed]
     public function contacts(): CursorPaginator
     {
@@ -286,28 +262,7 @@ class LogbookBrowser extends Component
             return collect()->cursorPaginate($this->perPage);
         }
 
-        $queryBuilder = new LogbookQueryBuilder;
-
-        $filters = [
-            'event_configuration_id' => $this->eventConfigurationId,
-            'band_ids' => $this->bandIds,
-            'mode_ids' => $this->modeIds,
-            'station_ids' => $this->stationIds,
-            'operator_ids' => $this->operatorIds,
-            'time_from' => $this->timeFrom,
-            'time_to' => $this->timeTo,
-            'callsign' => $this->callsignSearch,
-            'section_ids' => $this->sectionIds,
-            'duplicate_filter' => $this->showDuplicates,
-            'transcribed_filter' => $this->showTranscribed,
-            'gota_filter' => $this->showGota,
-            'deleted_filter' => $this->showDeleted,
-            'attention_filter' => $this->needsAttention,
-        ];
-
-        $query = $queryBuilder->applyFilters($filters);
-
-        return $query->cursorPaginate($this->perPage);
+        return $this->filters()->query($this->eventConfigurationId)->cursorPaginate($this->perPage);
     }
 
     /**
@@ -432,26 +387,8 @@ class LogbookBrowser extends Component
             ];
         }
 
-        $queryBuilder = new LogbookQueryBuilder;
-
-        $filters = [
-            'event_configuration_id' => $this->eventConfigurationId,
-            'band_ids' => $this->bandIds,
-            'mode_ids' => $this->modeIds,
-            'station_ids' => $this->stationIds,
-            'operator_ids' => $this->operatorIds,
-            'time_from' => $this->timeFrom,
-            'time_to' => $this->timeTo,
-            'callsign' => $this->callsignSearch,
-            'section_ids' => $this->sectionIds,
-            'duplicate_filter' => $this->showDuplicates,
-            'transcribed_filter' => $this->showTranscribed,
-            'gota_filter' => $this->showGota,
-            'deleted_filter' => $this->showDeleted,
-            'attention_filter' => $this->needsAttention,
-        ];
-
-        $query = $queryBuilder->applyFilters($filters)->reorder();
+        $filters = $this->filters();
+        $query = $filters->query($this->eventConfigurationId)->reorder();
 
         // Get aggregated stats
         $totalQsos = $query->count();
@@ -459,7 +396,7 @@ class LogbookBrowser extends Component
         $uniqueSections = $query->distinct('section_id')->count('section_id');
 
         // Stats by band
-        $byBand = $queryBuilder->applyFilters($filters)->reorder()
+        $byBand = $filters->query($this->eventConfigurationId)->reorder()
             ->select('band_id', \DB::raw('count(*) as count'))
             ->groupBy('band_id')
             ->with('band')
@@ -470,7 +407,7 @@ class LogbookBrowser extends Component
             ->toArray();
 
         // Stats by mode
-        $byMode = $queryBuilder->applyFilters($filters)->reorder()
+        $byMode = $filters->query($this->eventConfigurationId)->reorder()
             ->select('mode_id', \DB::raw('count(*) as count'))
             ->groupBy('mode_id')
             ->with('mode')

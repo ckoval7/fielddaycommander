@@ -13,6 +13,7 @@
 - Guestbook visitor categories use plainer names for club members, agency representatives, ARES/RACES volunteers, and media representatives, with stored values unchanged. The printed message header now says **Radiogram** instead of **ARRL Radiogram**.
 
 ### Fixed
+- Over plain HTTP on the club LAN, the copy buttons for the registration link on the Get Ready page and for generated passwords in the user reset and activate dialogs did nothing, and the password buttons still said "Copied". They now copy in that case too, and show a message if copying fails.
 
 - A guestbook entry from an online visitor could be verified as an agency or elected official visit, which earns the visit bonus even though the visit was not in person. Verifying one from the edit window now shows a message that agency and elected official visits must be in person to count, and **Verify** on a selection skips those entries and says how many it skipped. The bonus eligible count and the bonus sidebar no longer include online entries. Entries already verified are left as they are.
 - In the Role Manager, the description typed when creating a role was thrown away. It's now saved and shown under the role's name, and you can change it later with the **Edit** button on the selected role. The built-in roles get short descriptions on upgrade, unless they already have one.
@@ -28,11 +29,22 @@
 - On a shared station computer in station mode, every page change added another set of idle-activity listeners in the browser, and they piled up. They are now removed when the page changes.
 - Clearing the weather contact email or the callsign API key in System Settings and saving left the old value in place, so the old address was still sent to the National Weather Service. Blanking either field now clears it.
 - Assigning equipment to a station gave no warning when the antenna or the station's radio had no bands set, or when the station had no primary radio. Those cases now show the same confirmation as an incompatible band, so you can check before assigning.
+- On your Profile page, typing a wrong or expired code while turning on two-factor authentication showed no message under the code field. It now shows the error.
+- Changing your password with a new password that was too weak or didn't match its confirmation blamed the current password field. The error now appears under the field that failed.
+
+- On the Users page, **Delete** in the bulk actions bar deleted every selected account the moment you tapped it. It now asks you to confirm first.
+- When the SYSTEM account was among the selected users, the bulk role, lock and delete messages counted it even though it was skipped. The messages now report only the accounts that changed, and lock, unlock and delete leave SYSTEM alone too.
+- When creating a user with an invitation email and the email failed to send, the Add User dialog stayed open with the same details, and saving again said the callsign was already registered. The dialog now closes and the message says the email failed, so you can send a password reset email from the user's row.
+
+- On the schedule screens, a shift whose only volunteer was marked a no-show was listed under the **Full** filter and sorted as filled, even though people could still sign up for it. Manage Schedule's capacity count also included no-shows. The filters, sort and counts now ignore no-shows.
+- On My Shifts, a shift you never checked in to still said "Check-in opens" after it ended. It now says "Shift ended".
+- On Manage Schedule, a shift that ran past midnight, such as 10 PM to 2 AM, showed only the end time, so it looked like it ended before it started. It now shows the end date too.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.
-- The photo upload page said photos up to 25 MB were accepted, but uploads over 12 MB failed. It now says 12 MB.
 - The setup wizard and **Site Branding** said SVG logos were accepted, but they were rejected on upload. They now say PNG or JPG, and the file picker no longer offers SVG files.
+- Photo uploads over 12 MB failed even though the upload page said photos up to 25 MB were accepted. Uploads up to 25 MB now work. Helm installs behind ingress-nginx also lift the ingress's 1 MB request limit to 35 MB, so photo uploads there are no longer rejected.
+- The setup wizard and **Site Branding** said SVG logos were accepted, but they were rejected on upload. They now say PNG or JPG.
 - The logbook's **Operator** filter selected contacts by who logged them. It's now labeled **Logger**. The dashboard Info Card's **Location** row showed the ARRL/RAC section and is now labeled **Section**.
 - The event dashboard's scoring note said scores updated there in real time, but the page doesn't live-update. It now says scores are calculated from logged contacts and claimed awards.
 - System Settings and the setup wizard described the weather contact email as a public site contact. They now label it **Weather Contact Email** and explain that it's sent to the National Weather Service with weather requests.
@@ -44,6 +56,13 @@
 - Since 26.09.0, ticking **Youth (age 18 or younger)** on your own Profile page and saving left the box unticked when you returned. Operators who marked themselves as youth this way weren't counted toward the Field Day youth participation bonus. The setting now saves.
 - The Weather page showed only "No weather data yet" while a local weather alert was active but no forecast had loaded, such as with no internet. Active alerts now show whether or not there is a forecast.
 - With metric units, the Weather page highlighted wind gusts from 25 km/h, well below the 25 mph it uses otherwise. Gusts are now highlighted from 40 km/h, the same as 25 mph.
+- On the Scoring page, when a station was set to more power than the event's power setting, the **Multiplier Rules** table highlighted the row for the event's setting instead of the one the multiplier came from. When the event was set to 5W or less on natural power but a station used commercial or generator power, the page said the event qualified for 5× even though it scored 2×. The table and the explanation now match the multiplier.
+- After you filtered the logbook, **Export CSV** ignored the filters and included contacts outside the list you were viewing. When you browsed a past event, including through the Reports page's **Review in logbook** link, the CSV could come from the current event instead. The CSV now matches exactly the contacts listed for the event shown and follows filter changes without reloading the page.
+- For a Winter Field Day event, the **Scoring** tab on the event dashboard showed the ARRL Field Day formula (QSO points × power multiplier + bonuses), listed mode points from Field Day rules, and showed objectives as points. It now shows the Winter Field Day formula, QSO points × (OM + 1), with mode points and objective multipliers from the event's rules, and the event overview no longer shows a power multiplier.
+- On the event form, the power multiplier badge stayed gray whatever the multiplier was. It now turns green for 5×, yellow for 2×, and red for 1×. The multiplier shown also ignored the selected rules version and the event's stations, so it could show 5× for an event that would score 2×. It now follows the selected rules version, and when editing an event it counts each station's power and power source.
+- On a phone, Manage Schedule scrolled sideways when ended shifts had assignments still to be marked worked or no-show, because the notice's **Mark all worked** button ran off the screen. The notice now stacks its buttons under the message. Its small icon buttons, such as **Remove Assignment**, are also easier to tap and are now named for screen readers, as are the back buttons on Manage Schedule, Manage Safety Checklist and Guestbook Manager.
+- When a browser couldn't save queued contacts on the device (storage full, private browsing or blocked site data), the logging screen said nothing, and reloading or closing the tab while offline lost contacts that hadn't synced. A warning now stays at the top of the logging screen while contacts are waiting and can't be saved, and goes away once saving works again or the queue is empty.
+- If two people asked for the photo album ZIP while one was already being built, the second person was told they'd get a notification when it was ready but never received one. Everyone who asked while the ZIP was being built now gets the notification.
 
 ## 26.10.11 - 2026-10-21
 

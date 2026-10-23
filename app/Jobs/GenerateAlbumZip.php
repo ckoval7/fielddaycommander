@@ -12,6 +12,8 @@ use App\Notifications\InAppNotification;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -35,18 +37,65 @@ class GenerateAlbumZip implements ShouldBeUnique, ShouldQueue
         return (string) $this->eventConfigurationId;
     }
 
+    /**
+     * Remember that a user wants this album. Only one ZIP job runs per event
+     * configuration at a time, so everyone who asks while it is queued or
+     * running is notified when that one ZIP is ready.
+     */
+    public static function addRequester(int $eventConfigurationId, int $userId): void
+    {
+        Cache::lock(self::requestersKey($eventConfigurationId).':lock', 5)->block(3, function () use ($eventConfigurationId, $userId) {
+            $key = self::requestersKey($eventConfigurationId);
+            $ids = Cache::get($key, []);
+            $ids[] = $userId;
+
+            Cache::put($key, array_values(array_unique($ids)), now()->addHour());
+        });
+    }
+
+    public static function requestersKey(int $eventConfigurationId): string
+    {
+        return "album-zip-requesters:{$eventConfigurationId}";
+    }
+
+    /**
+     * Everyone waiting on this ZIP, including the user the job was dispatched
+     * for. Clears the waiting list.
+     *
+     * @return Collection<int, User>
+     */
+    protected function takeRequesters(): Collection
+    {
+        $key = self::requestersKey($this->eventConfigurationId);
+
+        $ids = Cache::lock($key.':lock', 5)->block(3, fn () => tap(Cache::get($key, []), fn () => Cache::forget($key)));
+
+        return User::whereIn('id', array_unique([...$ids, $this->userId]))->get();
+    }
+
+    protected function notifyRequesters(NotificationCategory $category, string $title, string $message, ?string $url = null): void
+    {
+        foreach ($this->takeRequesters() as $user) {
+            $user->notify(new InAppNotification(
+                category: $category,
+                title: $title,
+                message: $message,
+                url: $url,
+            ));
+        }
+    }
+
     public function handle(): void
     {
         $eventConfig = EventConfiguration::with('event')->findOrFail($this->eventConfigurationId);
-        $user = User::findOrFail($this->userId);
         $images = $eventConfig->images()->get();
 
         if ($images->isEmpty()) {
-            $user->notify(new InAppNotification(
-                category: NotificationCategory::Photos,
-                title: 'Album Export',
-                message: 'No photos to export for '.$eventConfig->event->name.'.',
-            ));
+            $this->notifyRequesters(
+                NotificationCategory::Photos,
+                'Album Export',
+                'No photos to export for '.$eventConfig->event->name.'.',
+            );
 
             return;
         }
@@ -63,11 +112,11 @@ class GenerateAlbumZip implements ShouldBeUnique, ShouldQueue
         if ($zip->open($absolutePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             Log::error("Failed to create zip for event config {$eventConfig->id}");
 
-            $user->notify(new InAppNotification(
-                category: NotificationCategory::Photos,
-                title: 'Album Export Failed',
-                message: 'Failed to create the photo album for '.$eventConfig->event->name.'. Please try again.',
-            ));
+            $this->notifyRequesters(
+                NotificationCategory::Photos,
+                'Album Export Failed',
+                'Failed to create the photo album for '.$eventConfig->event->name.'. Please try again.',
+            );
 
             return;
         }
@@ -97,12 +146,12 @@ class GenerateAlbumZip implements ShouldBeUnique, ShouldQueue
             ]);
         }
 
-        $user->notify(new InAppNotification(
-            category: NotificationCategory::Photos,
-            title: 'Album Ready',
-            message: "Your photo album for {$eventConfig->event->name} is ready to download. The download link expires in 24 hours.",
-            url: $downloadUrl,
-        ));
+        $this->notifyRequesters(
+            NotificationCategory::Photos,
+            'Album Ready',
+            "Your photo album for {$eventConfig->event->name} is ready to download. The download link expires in 24 hours.",
+            $downloadUrl,
+        );
     }
 
     /**
@@ -111,11 +160,6 @@ class GenerateAlbumZip implements ShouldBeUnique, ShouldQueue
     public function failed(\Throwable $exception): void
     {
         Log::error("Album export failed for event config {$this->eventConfigurationId}: {$exception->getMessage()}");
-
-        $user = User::find($this->userId);
-        if (! $user) {
-            return;
-        }
 
         $eventConfig = EventConfiguration::with('event')->find($this->eventConfigurationId);
         $eventName = $eventConfig?->event?->name ?? 'unknown event';
@@ -128,11 +172,11 @@ class GenerateAlbumZip implements ShouldBeUnique, ShouldQueue
             }
         }
 
-        $user->notify(new InAppNotification(
-            category: NotificationCategory::Photos,
-            title: 'Album Export Failed',
-            message: "Failed to create the photo album for {$eventName}. Please try again.",
-        ));
+        $this->notifyRequesters(
+            NotificationCategory::Photos,
+            'Album Export Failed',
+            "Failed to create the photo album for {$eventName}. Please try again.",
+        );
     }
 
     /**

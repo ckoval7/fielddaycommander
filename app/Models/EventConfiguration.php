@@ -357,7 +357,7 @@ class EventConfiguration extends Model
      * Requires natural power sources at event level and no commercial/generator power.
      * Also checks that all stations with a power_source set use natural power.
      */
-    protected function hasQrpNaturalPowerBonus(): bool
+    public function hasQrpNaturalPowerBonus(): bool
     {
         $hasNaturalPower = $this->uses_battery
             || $this->uses_solar

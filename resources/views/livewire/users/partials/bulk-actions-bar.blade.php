@@ -49,8 +49,7 @@
                 label="Delete"
                 icon="phosphor-trash"
                 class="btn-sm btn-error"
-                wire:click="bulkDeleteUsers"
-                spinner="bulkDeleteUsers"
+                wire:click="openBulkDeleteModal"
             />
 
             {{-- Cancel --}}
