@@ -5,6 +5,7 @@
 
 namespace App\Livewire\Schedule\Concerns;
 
+use App\Models\Shift;
 use App\Models\ShiftRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -62,9 +63,9 @@ trait WithScheduleFilters
         }
 
         if ($this->availability === 'unfilled') {
-            $query->whereRaw('(select count(*) from shift_assignments where shift_assignments.shift_id = shifts.id and shift_assignments.deleted_at is null) < shifts.capacity');
+            $query->whereRaw(Shift::slotsTakenSql().' < shifts.capacity');
         } elseif ($this->availability === 'full') {
-            $query->whereRaw('(select count(*) from shift_assignments where shift_assignments.shift_id = shifts.id and shift_assignments.deleted_at is null) >= shifts.capacity');
+            $query->whereRaw(Shift::slotsTakenSql().' >= shifts.capacity');
         }
 
         if ($this->timeFilter === 'current') {
@@ -113,7 +114,7 @@ trait WithScheduleFilters
                 ->orderBy('shifts.start_time', 'asc')
                 ->select('shifts.*');
         } elseif ($this->sortBy === 'fill') {
-            $query->orderByRaw('((select count(*) from shift_assignments where shift_assignments.shift_id = shifts.id and shift_assignments.deleted_at is null) * 1.0 / shifts.capacity) '.$dir)
+            $query->orderByRaw('('.Shift::slotsTakenSql().' * 1.0 / shifts.capacity) '.$dir)
                 ->orderBy('start_time', 'asc');
         } else {
             $query->orderBy('start_time', $dir);

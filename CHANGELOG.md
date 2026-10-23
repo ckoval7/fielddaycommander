@@ -13,6 +13,9 @@
 
 ### Fixed
 
+- On the schedule screens, a shift whose only volunteer was marked a no-show was listed under the **Full** filter and sorted as filled, even though people could still sign up for it. Manage Schedule's capacity count also included no-shows. The filters, sort and counts now ignore no-shows.
+- On My Shifts, a shift you never checked in to still said "Check-in opens" after it ended. It now says "Shift ended".
+- On Manage Schedule, a shift that ran past midnight, such as 10 PM to 2 AM, showed only the end time, so it looked like it ended before it started. It now shows the end date too.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.

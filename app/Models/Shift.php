@@ -117,9 +117,35 @@ class Shift extends Model
     {
         return Attribute::make(
             get: fn (): bool => $this->assignments()
-                ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
+                ->countingTowardCapacity()
                 ->count() < $this->capacity
         );
+    }
+
+    /**
+     * Count the assignments that take up a slot (everything except no-shows).
+     * Uses the loaded assignments relation when present, so lists don't re-query.
+     */
+    public function slotsTaken(): int
+    {
+        if ($this->relationLoaded('assignments')) {
+            return $this->assignments
+                ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
+                ->count();
+        }
+
+        return $this->assignments()->countingTowardCapacity()->count();
+    }
+
+    /**
+     * Raw SQL subquery counting the slots taken on a shift row, for filters and sorting.
+     * Mirrors ShiftAssignment::scopeCountingTowardCapacity.
+     */
+    public static function slotsTakenSql(): string
+    {
+        $noShow = ShiftAssignment::STATUS_NO_SHOW;
+
+        return "(select count(*) from shift_assignments where shift_assignments.shift_id = shifts.id and shift_assignments.deleted_at is null and shift_assignments.status != '{$noShow}')";
     }
 
     /**
