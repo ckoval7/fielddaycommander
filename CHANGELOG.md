@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- Downloading the Field Day Cabrillo log or the submission sheet PDF failed with a server error when the event callsign was portable, such as W1AW/1. The files now download, with the slash in the name replaced by an underscore.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.

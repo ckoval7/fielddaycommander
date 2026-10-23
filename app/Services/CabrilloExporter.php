@@ -226,7 +226,7 @@ class CabrilloExporter
         }
 
         $year = $config->event->start_time->year;
-        $callsign = strtolower($config->callsign);
+        $callsign = strtolower(str_replace('/', '_', $config->callsign));
 
         return "{$callsign}-{$year}-{$config->logFilenameSlug()}.log";
     }
