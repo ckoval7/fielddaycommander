@@ -94,7 +94,7 @@ class EventsList extends Component
         if ($hasContacts) {
             // Soft delete if has contacts
             $event->delete();
-            $this->dispatch('notify', title: 'Event Archived', description: "Event '{$event->name}' has been archived (soft deleted) because it has contacts.");
+            $this->dispatch('notify', title: 'Event Archived', description: "Event '{$event->name}' has been archived because it has contacts.");
         } else {
             // Hard delete if no contacts
             $event->forceDelete();
