@@ -28,6 +28,8 @@
 - On a shared station computer in station mode, every page change added another set of idle-activity listeners in the browser, and they piled up. They are now removed when the page changes.
 - Clearing the weather contact email or the callsign API key in System Settings and saving left the old value in place, so the old address was still sent to the National Weather Service. Blanking either field now clears it.
 - Assigning equipment to a station gave no warning when the antenna or the station's radio had no bands set, or when the station had no primary radio. Those cases now show the same confirmation as an incompatible band, so you can check before assigning.
+- On your Profile page, typing a wrong or expired code while turning on two-factor authentication showed no message under the code field. It now shows the error.
+- Changing your password with a new password that was too weak or didn't match its confirmation blamed the current password field. The error now appears under the field that failed.
 - Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
 - The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
 - The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.
