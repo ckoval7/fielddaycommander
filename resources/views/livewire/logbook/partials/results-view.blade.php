@@ -12,7 +12,7 @@
             @endif
         </h3>
         <a
-            href="{{ route('logbook.export', request()->query()) }}"
+            href="{{ $this->exportUrl }}"
             class="btn btn-sm btn-primary min-h-[2.75rem] sm:min-h-[1.75rem]"
             target="_blank"
         >

@@ -5,8 +5,8 @@
 
 namespace App\Services;
 
+use App\Models\Contact;
 use App\Support\CsvSafe;
-use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ContactExporter
@@ -14,9 +14,12 @@ class ContactExporter
     /**
      * Export contacts to CSV format.
      *
-     * @param  Collection  $contacts  Collection of Contact models
+     * Rows are written as the iterable yields them, so a lazy collection
+     * streams a large log without loading it all into memory.
+     *
+     * @param  iterable<Contact>  $contacts
      */
-    public function exportCsv(Collection $contacts): StreamedResponse
+    public function exportCsv(iterable $contacts): StreamedResponse
     {
         $filename = 'field-day-logbook-'.date('Y-m-d-His').'.csv';
 
