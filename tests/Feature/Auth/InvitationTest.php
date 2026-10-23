@@ -45,7 +45,7 @@ test('invitation acceptance page redirects with invalid token', function () {
     $response = $this->get('/register/invite/invalid-token');
 
     $response->assertRedirect(route('login'))
-        ->assertSessionHas('error', 'This invitation is invalid or has expired.');
+        ->assertSessionHas('error', 'This invitation is invalid, expired, or already accepted.');
 });
 
 test('invitation acceptance page redirects with expired token', function () {
@@ -63,7 +63,7 @@ test('invitation acceptance page redirects with expired token', function () {
     $response = $this->get("/register/invite/{$token}");
 
     $response->assertRedirect(route('login'))
-        ->assertSessionHas('error', 'This invitation is invalid or has expired.');
+        ->assertSessionHas('error', 'This invitation is invalid, expired, or already accepted.');
 });
 
 test('invitation acceptance page redirects with already accepted token', function () {
@@ -82,7 +82,7 @@ test('invitation acceptance page redirects with already accepted token', functio
     $response = $this->get("/register/invite/{$token}");
 
     $response->assertRedirect(route('login'))
-        ->assertSessionHas('error', 'This invitation is invalid or has expired.');
+        ->assertSessionHas('error', 'This invitation is invalid, expired, or already accepted.');
 });
 
 test('user can accept invitation and set password', function () {

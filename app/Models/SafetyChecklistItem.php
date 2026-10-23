@@ -54,7 +54,7 @@ class SafetyChecklistItem extends Model
             [
                 'label' => 'Access to NWS alerts to monitor for inclement weather',
                 'is_required' => true,
-                'help_text' => 'Have at least one active weather monitoring source: a weather radio tuned to the local NWS frequency, a smartphone app with push alerts (e.g., Weather.gov, weather radio apps), or a dedicated NOAA receiver. Designate someone to monitor and announce warnings. Plan a shelter-in-place or evacuation procedure in advance.',
+                'help_text' => 'Have at least one active weather monitoring source: a weather radio tuned to the local NWS frequency, an app that receives NWS alerts, or a dedicated NOAA receiver. Designate someone to monitor and announce warnings. Plan a shelter-in-place or evacuation procedure in advance.',
             ],
             [
                 'label' => 'Tent stakes properly installed and marked',
@@ -74,7 +74,7 @@ class SafetyChecklistItem extends Model
             [
                 'label' => 'Site is set up in a neat and orderly manner to reduce hazards',
                 'is_required' => true,
-                'help_text' => 'Keep operating positions organized with cables managed and excess coiled. Maintain clear walkways between stations and exits. Store personal gear, coolers, and supplies in designated areas, not in traffic paths. A tidy site signals professionalism to visitors and reduces accidents.',
+                'help_text' => 'Keep operating positions organized with cables managed and excess coiled. Maintain clear walkways between stations and exits. Store personal gear, coolers, and supplies in designated areas, not in traffic paths.',
             ],
             [
                 'label' => 'Stations and equipment properly grounded',
@@ -126,7 +126,7 @@ class SafetyChecklistItem extends Model
             [
                 'label' => 'Access to NWS alerts to monitor for inclement weather',
                 'is_required' => false,
-                'help_text' => 'Have at least one active weather monitoring source: a weather radio tuned to the local NWS frequency, a smartphone app with push alerts (e.g., Weather.gov, weather radio apps), or a dedicated NOAA receiver. Designate someone to monitor and announce warnings. Plan a shelter-in-place or evacuation procedure in advance.',
+                'help_text' => 'Have at least one active weather monitoring source: a weather radio tuned to the local NWS frequency, an app that receives NWS alerts, or a dedicated NOAA receiver. Designate someone to monitor and announce warnings. Plan a shelter-in-place or evacuation procedure in advance.',
             ],
             [
                 'label' => 'Tent (if used) stakes properly installed and marked',
@@ -146,7 +146,7 @@ class SafetyChecklistItem extends Model
             [
                 'label' => 'Site is set up in a neat and orderly manner',
                 'is_required' => true,
-                'help_text' => 'Keep operating positions organized with cables managed and excess coiled. Maintain clear walkways between stations and exits. Store personal gear, coolers, and supplies in designated areas, not in traffic paths. A tidy site signals professionalism to visitors and reduces accidents.',
+                'help_text' => 'Keep operating positions organized with cables managed and excess coiled. Maintain clear walkways between stations and exits. Store personal gear, coolers, and supplies in designated areas, not in traffic paths.',
             ],
             [
                 'label' => 'Stations and equipment properly grounded',

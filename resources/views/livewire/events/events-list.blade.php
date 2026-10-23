@@ -4,7 +4,7 @@
 --}}
 <div class="space-y-6">
     <!-- Header -->
-    <x-header title="Events" subtitle="Manage Field Day and other contest events" separator progress-indicator>
+    <x-header title="Events" subtitle="Manage Field Day and Winter Field Day events" separator progress-indicator>
         <x-slot:actions>
             @can('create-events')
                 <x-button label="Create Event" icon="phosphor-plus" class="btn-primary" link="{{ route('events.create') }}" wire:navigate responsive />
@@ -62,7 +62,7 @@
                         @endcan
                         @can('delete-events')
                             @if(!$event->deleted_at)
-                                <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}" />
+                                <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived.' : 'This event will be permanently deleted.' }}" />
                             @endif
                         @endcan
                     </x-dropdown>
@@ -106,7 +106,7 @@
                     <x-icon name="phosphor-calendar" class="w-12 h-12 opacity-50" />
                     <p>No events found</p>
                     @can('create-events')
-                        <x-button label="Create First Event" icon="phosphor-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" wire:navigate />
+                        <x-button label="Create Event" icon="phosphor-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" wire:navigate />
                     @endcan
                 </div>
             </div>
@@ -210,7 +210,7 @@
                                     @endcan
                                     @can('delete-events')
                                         @if(!$event->deleted_at)
-                                            <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}" />
+                                            <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="delete({{ $event->id }})" wire:confirm="Delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived.' : 'This event will be permanently deleted.' }}" />
                                         @endif
                                     @endcan
                                 </x-dropdown>
@@ -223,7 +223,7 @@
                                     <x-icon name="phosphor-calendar" class="w-12 h-12 opacity-50" />
                                     <p>No events found</p>
                                     @can('create-events')
-                                        <x-button label="Create First Event" icon="phosphor-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" wire:navigate />
+                                        <x-button label="Create Event" icon="phosphor-plus" class="btn-primary btn-sm mt-2" link="{{ route('events.create') }}" wire:navigate />
                                     @endcan
                                 </div>
                             </td>

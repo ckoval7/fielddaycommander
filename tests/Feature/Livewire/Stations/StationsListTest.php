@@ -365,7 +365,8 @@ test('delete confirmation modal shows', function () {
     Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
 
     Livewire::test(StationsList::class)
-        ->assertSee('Are you sure');
+        ->assertSee('Delete', escape: false)
+        ->assertSee('This station will be permanently deleted.');
 });
 
 test('successful delete shows toast notification', function () {

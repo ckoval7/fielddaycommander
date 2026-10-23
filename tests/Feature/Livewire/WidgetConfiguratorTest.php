@@ -63,7 +63,7 @@ test('component renders select field for select type schema', function () {
         ->call('setWidgetType', 'stat_card')
         ->assertSee('Metric')
         ->assertSee('Total Score')
-        ->assertSee('QSO Count');
+        ->assertSee('QSOs');
 });
 
 test('component renders toggle field for toggle type schema', function () {
@@ -274,7 +274,7 @@ test('component displays widget description in add mode', function () {
         ->set('showModal', true)
         ->set('mode', 'add')
         ->call('setWidgetType', 'stat_card')
-        ->assertSee('Display a single metric as a large number with optional trend indicator');
+        ->assertSee('Show a metric with an optional trend indicator.');
 });
 
 test('component shows save button as disabled when no widget type selected', function () {

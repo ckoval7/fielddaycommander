@@ -190,11 +190,11 @@ class AuditLogViewer extends Component
     {
         return [
             'Authentication' => [
-                'user.login.success' => 'Logged in',
-                'user.login.failed' => 'Failed login attempt',
+                'user.login.success' => 'Signed in',
+                'user.login.failed' => 'Failed sign-in attempt',
                 'user.login.2fa_failed' => 'Failed 2FA verification',
                 'user.2fa.challenge' => '2FA challenge',
-                'user.logout' => 'Logged out',
+                'user.logout' => 'Signed out',
                 'user.register' => 'User registered',
                 'user.password.reset' => 'Password reset',
                 'user.password.changed' => 'Password changed',
@@ -232,8 +232,8 @@ class AuditLogViewer extends Component
                 'event.deactivated' => 'Event deactivated',
             ],
             'Developer Tools' => [
-                'developer.time_travel.set' => 'Time travel set',
-                'developer.time_travel.clear' => 'Time travel cleared',
+                'developer.time_travel.set' => 'Clock override set',
+                'developer.time_travel.clear' => 'Clock override cleared',
                 'developer.database.full_reset' => 'Database full reset',
                 'developer.database.selective_reset' => 'Database selective reset',
                 'developer.snapshot.create' => 'Snapshot created',

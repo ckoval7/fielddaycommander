@@ -274,7 +274,7 @@ test('cannot sync contacts after event has ended', function () {
             'qso_time' => now()->toISOString(),
         ])
         ->assertUnprocessable()
-        ->assertJson(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.']);
+        ->assertJson(['message' => 'This event has ended. Use Transcribe Paper Log to enter contacts from paper logs.']);
 });
 
 test('cannot sync contacts before event has started', function () {

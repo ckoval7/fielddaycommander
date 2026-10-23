@@ -60,13 +60,13 @@
 
             @if(config('auth-security.2fa_mode') === 'required' && ! $user->hasEnabledTwoFactorAuthentication() && ! $showingQrCode)
                 <x-alert icon="phosphor-warning" class="alert-error">
-                    Two-factor authentication is required. You must set it up before you can use the application.
+                    Set up two-factor authentication to continue using Field Day Commander.
                 </x-alert>
             @endif
 
             @if($showingQrCode && $user->two_factor_secret && ! $user->two_factor_confirmed_at)
                 <x-alert icon="phosphor-device-mobile" class="alert-info">
-                    Scan the QR code below with your authenticator app
+                    Scan this QR code with your authenticator app, or enter the key below.
                 </x-alert>
 
                 <div class="flex justify-center my-4">
@@ -76,12 +76,12 @@
                 </div>
 
                 <p class="text-xs text-base-content/60 text-center mb-4">
-                    Or enter this key manually: <code class="text-sm">{{ decrypt(auth()->user()->two_factor_secret) }}</code>
+                    Setup key: <code class="text-sm">{{ decrypt(auth()->user()->two_factor_secret) }}</code>
                 </p>
 
                 <x-form wire:submit="confirmTwoFactor">
                     <x-input
-                        label="Verification Code"
+                        label="Authentication Code"
                         wire:model="twoFactorCode"
                         inputmode="numeric"
                         autocomplete="one-time-code"
@@ -96,7 +96,7 @@
                         </x-button>
                         @endif
                         <x-button type="submit" spinner="confirmTwoFactor" class="btn-primary">
-                            Confirm & Enable
+                            Enable 2FA
                         </x-button>
                     </div>
                 </x-form>
@@ -106,7 +106,7 @@
                 </x-alert>
 
                 <p class="text-sm text-base-content/60">
-                    Your account is protected with two-factor authentication.
+                    Use an authentication code or a recovery code when you sign in.
                 </p>
 
                 {{-- Recovery codes display --}}
@@ -114,7 +114,7 @@
                     <div class="mt-4 p-4 bg-base-200 rounded-lg">
                         <p class="text-sm font-semibold mb-2">Recovery Codes</p>
                         <p class="text-xs text-base-content/60 mb-3">
-                            Store these codes in a secure location. Each code can only be used once.
+                            Save these codes somewhere secure. Use one if you cannot access your authenticator app. Each code works once. Generating new codes replaces all old codes.
                         </p>
                         <div class="grid grid-cols-2 gap-1 font-mono text-sm">
                             @foreach($user->recoveryCodes() as $code)
@@ -132,7 +132,7 @@
                                 type="password"
                                 wire:model="recoveryCodesPassword"
                                 autocomplete="current-password"
-                                :placeholder="$confirmingTwoFactorAction === 'view-codes' ? 'Confirm password to view codes' : 'Confirm password to regenerate codes'"
+                                :placeholder="$confirmingTwoFactorAction === 'view-codes' ? 'Confirm password to view codes' : 'Enter password to replace old codes'"
                             />
                         </div>
                         @if($confirmingTwoFactorAction === 'view-codes')
@@ -196,7 +196,7 @@
                 @endif
 
                 <p class="text-sm text-base-content/60">
-                    Enable two-factor authentication to add an extra layer of security to your account.
+                    Set up an authenticator app to get codes for signing in.
                 </p>
 
                 <div class="flex items-end gap-2 mt-4">
@@ -206,11 +206,11 @@
                             type="password"
                             wire:model="enableTwoFactorPassword"
                             autocomplete="current-password"
-                            placeholder="Confirm password to enable"
+                            placeholder="Enter your current password"
                         />
                     </div>
                     <x-button wire:click="enableTwoFactor" spinner="enableTwoFactor" class="btn-primary">
-                        Enable 2FA
+                        Set Up 2FA
                     </x-button>
                 </div>
             @endif

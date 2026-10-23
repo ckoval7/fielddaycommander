@@ -117,7 +117,7 @@ Slots:
         <div class="h-full flex items-center justify-center group-has-[tbody_tr]/log:hidden">
             <div class="text-center text-base-content/50 space-y-1">
                 <p>No contacts logged yet.</p>
-                <p class="text-xs">Type the other station's exchange, e.g. <span class="font-mono font-bold">{{ $example }}</span></p>
+                <p class="text-xs">Enter callsign, class, and section, e.g. <span class="font-mono font-bold">{{ $example }}</span></p>
             </div>
         </div>
 
@@ -134,7 +134,7 @@ Slots:
                         <th>#</th>
                         <th>{{ $timeHeading }}</th>
                         <th>Callsign</th>
-                        <th>Exchange</th>
+                        <th>Class</th>
                         <th>Section</th>
                         {{ $extraColumns ?? '' }}
                     </tr>

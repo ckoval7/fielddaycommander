@@ -9,7 +9,7 @@
         <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
             <x-mary-icon name="phosphor-trophy" class="w-16 h-16 opacity-30" />
             <div class="text-2xl font-semibold opacity-50">No active event</div>
-            <p class="text-sm opacity-40">Scores will appear here during an active Field Day event.</p>
+            <p class="text-sm opacity-40">Scores appear here when an event is selected.</p>
         </div>
     @else
 
@@ -112,7 +112,7 @@
                                 <th class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
                                     style="color: var(--score-text-muted);">QSOs</th>
                                 <th class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
-                                    style="color: var(--score-text-muted);">Pts</th>
+                                    style="color: var(--score-text-muted);">QSO Points</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -182,7 +182,7 @@
                     </div>
                 </div>
                 <div>
-                    <div class="text-xs uppercase tracking-wide" style="color: var(--score-text-muted);">Duplicates</div>
+                    <div class="text-xs uppercase tracking-wide" style="color: var(--score-text-muted);">Dupes</div>
                     <div class="text-xl font-semibold tabular-nums mt-0.5"
                          style="color: {{ $this->duplicateCount > 0 ? 'var(--score-warning)' : 'var(--score-text-muted)' }};">
                         {{ $this->duplicateCount }}
@@ -415,7 +415,7 @@
                                     <span class="text-sm font-medium" style="color: var(--score-text);">GOTA Coach Bonus</span>
                                 </x-bonus-rule-help>
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
-                                    {{ $this->gotaSupervisedCount }} supervised contacts (need 10+)
+                                    {{ $this->gotaSupervisedCount }} supervised contacts (10 required)
                                 </div>
                             </div>
                             @if ($this->gotaCoachBonus > 0)
@@ -477,7 +477,7 @@
         <div class="mt-8 text-center text-xs text-base-content/50 border-t border-base-200 pt-3">
             Scored per {{ $event->eventType->name ?? 'Field Day' }}
             rules version <span class="font-mono">{{ $event->resolved_rules_version }}</span>@if ($event->effective_rules_version !== $event->resolved_rules_version)
-                <span class="text-warning"> (event pinned to {{ $event->effective_rules_version }}; not yet shipped)</span>@endif.
+                <span class="text-warning"> (event pinned to {{ $event->effective_rules_version }}, which is not yet available)</span>@endif.
         </div>
     @endif
 </div>

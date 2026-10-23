@@ -258,7 +258,7 @@ class ContactEditor extends Component
         if ($count > 0) {
             ContactChanged::notify(BroadcastChannels::CONTACT_DELETED, $deleted);
             $this->dispatch('contact-deleted');
-            $this->dispatch('notify', title: 'Success', description: "{$count} contact(s) deleted.", type: 'success');
+            $this->dispatch('notify', title: 'Success', description: 'Deleted '.$count.' '.str('contact')->plural($count).'.', type: 'success');
         }
     }
 
@@ -347,7 +347,7 @@ class ContactEditor extends Component
 
         if ($count > 0) {
             $this->dispatch('contact-updated');
-            $this->dispatch('notify', title: 'Success', description: "Logger updated for {$count} contact(s).", type: 'success');
+            $this->dispatch('notify', title: 'Success', description: 'Logger updated on '.$count.' '.str('contact')->plural($count).'.', type: 'success');
         }
     }
 
@@ -368,7 +368,7 @@ class ContactEditor extends Component
     {
         return Section::where('is_active', true)->orderBy('code')->get()
             ->map(function (Section $section) {
-                $section->display_name = "{$section->code} – {$section->name}";
+                $section->display_name = "{$section->code}: {$section->name}";
 
                 return $section;
             });

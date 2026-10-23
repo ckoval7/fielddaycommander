@@ -35,13 +35,13 @@ class WeatherAlertMail extends Notification implements ShouldQueue
         $mail = (new MailMessage)
             ->subject("Weather Alert: {$this->title}")
             ->greeting("Hello {$notifiable->first_name},")
-            ->line('A weather alert is active for your event location.');
+            ->line('Weather or local alerts are active at or near your event site. Review the alert details below.');
 
         foreach ($this->alerts as $alert) {
             $mail->line("**{$alert['event']}**")
                 ->line($alert['headline']);
         }
 
-        return $mail->line('Please take appropriate safety precautions.');
+        return $mail->line('Please follow the safety instructions in each alert. Check current conditions before resuming operations.');
     }
 }

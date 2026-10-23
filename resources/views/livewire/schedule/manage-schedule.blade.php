@@ -39,7 +39,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-warning" class="alert-warning">
-                No active event configuration found. Please configure an event first.
+                Please select an event with a configuration to manage its schedule.
             </x-alert>
         @else
             {{-- Tabs --}}
@@ -56,7 +56,7 @@
                                 wire:click="openShiftModal"
                             />
                             <x-button
-                                label="Bulk Create"
+                                label="Create Multiple Shifts"
                                 icon="phosphor-squares-four"
                                 class="btn-outline btn-sm"
                                 wire:click="openBulkModal"
@@ -107,8 +107,8 @@
                                         <p class="text-sm mb-3">Try adjusting your filters or clearing them.</p>
                                         <button wire:click="resetFilters" class="btn btn-sm btn-outline">Clear filters</button>
                                     @else
-                                        <p class="text-lg font-medium">No shifts created yet</p>
-                                        <p class="text-sm">Create individual shifts or use bulk creation to get started.</p>
+                                        <p class="text-lg font-medium">No current or upcoming shifts</p>
+                                        <p class="text-sm">Add a shift, or change the Time filter to All to include past shifts.</p>
                                     @endif
                                 </div>
                             </x-card>
@@ -254,7 +254,7 @@
                                                         icon="phosphor-user-plus"
                                                         class="btn-ghost btn-sm"
                                                         wire:click="openAssignModal({{ $shift->id }})"
-                                                        tooltip="Assign User"
+                                                        tooltip="Assign Volunteer"
                                                     />
                                                 @endif
                                                 <x-button
@@ -295,7 +295,7 @@
                                 <div class="text-center py-8 text-base-content/60">
                                     <x-icon name="phosphor-tag" class="w-12 h-12 mx-auto mb-3 opacity-30" />
                                     <p class="text-lg font-medium">No roles configured</p>
-                                    <p class="text-sm">Roles will be seeded automatically when available.</p>
+                                    <p class="text-sm">Add a custom role to start building the schedule.</p>
                                 </div>
                             </x-card>
                         @else
@@ -340,7 +340,7 @@
                                                 <x-button
                                                     icon="phosphor-trash"
                                                     class="btn-ghost btn-sm text-error"
-                                                    x-on:click="askConfirm({ message: 'Delete this role? Any shifts without assignments will also be deleted.', confirmLabel: 'Delete', action: 'deleteRole', args: [{{ $role->id }}] })"
+                                                    x-on:click="askConfirm({ message: {{ Js::from("Delete '" . $role->name . "'? Its shifts will be deleted too. A role with assigned shifts can't be deleted.") }}, confirmLabel: 'Delete Role', action: 'deleteRole', args: [{{ $role->id }}] })"
                                                     tooltip="Delete Role"
                                                 />
                                             </div>
@@ -455,7 +455,7 @@
                     type="number"
                     min="0"
                     placeholder="Leave empty for no bonus"
-                    hint="Setting bonus points will auto-enable confirmation requirement"
+                    hint="Roles with bonus points always require manager confirmation"
                 />
                 <x-toggle
                     label="Requires Confirmation"
@@ -518,7 +518,7 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showRoleModal = false" />
-                <x-button label="Save" wire:click="saveRole" class="btn-primary" spinner="saveRole" />
+                <x-button label="Save Role" wire:click="saveRole" class="btn-primary" spinner="saveRole" />
             </x-slot:actions>
         </div>
     </x-modal>
@@ -558,7 +558,7 @@
                 <x-toggle
                     label="Open for Sign-ups"
                     wire:model="shiftIsOpen"
-                    hint="Allow users to self-sign-up for this shift"
+                    hint="Let volunteers sign up for this shift"
                 />
                 <x-textarea
                     label="Notes"
@@ -570,13 +570,13 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showShiftModal = false" />
-                <x-button label="Save" wire:click="saveShift" class="btn-primary" spinner="saveShift" />
+                <x-button label="Save Shift" wire:click="saveShift" class="btn-primary" spinner="saveShift" />
             </x-slot:actions>
         </div>
     </x-modal>
 
     {{-- Bulk Creation Modal --}}
-    <x-modal wire:model="showBulkModal" title="Bulk Create Shifts">
+    <x-modal wire:model="showBulkModal" title="Create Multiple Shifts">
         <div>
             <div class="space-y-4">
                 <x-select
@@ -607,7 +607,7 @@
                     min="15"
                     max="1440"
                     required
-                    hint="Each shift will be this many minutes long"
+                    hint="The last shift may be shorter to fit the end time"
                 />
                 <x-input
                     label="Capacity per Shift"
@@ -619,7 +619,7 @@
                 <x-toggle
                     label="Open for Sign-ups"
                     wire:model="bulkIsOpen"
-                    hint="Allow users to self-sign-up for these shifts"
+                    hint="Let volunteers sign up for these shifts"
                 />
             </div>
 

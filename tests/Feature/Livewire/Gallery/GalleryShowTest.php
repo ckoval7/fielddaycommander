@@ -116,7 +116,7 @@ test('download button visible for users with manage-images permission', function
 
     Livewire::actingAs($user)
         ->test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
-        ->assertSee('Download Album');
+        ->assertSee('Prepare Album ZIP');
 });
 
 test('download button hidden for users without manage-images permission', function () {
@@ -126,7 +126,7 @@ test('download button hidden for users without manage-images permission', functi
 
     Livewire::actingAs($user)
         ->test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
-        ->assertDontSee('Download Album');
+        ->assertDontSee('Prepare Album ZIP');
 });
 
 test('download button hidden when no images exist', function () {
@@ -136,7 +136,7 @@ test('download button hidden when no images exist', function () {
 
     Livewire::actingAs($user)
         ->test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
-        ->assertDontSee('Download Album');
+        ->assertDontSee('Prepare Album ZIP');
 });
 
 test('gallery show hides the upload button in station mode', function () {
@@ -146,12 +146,11 @@ test('gallery show hides the upload button in station mode', function () {
     $this->actingAs(User::factory()->create());
 
     Livewire::test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
-        ->assertSee('Upload the first photo!');
+        ->assertSee('Upload Photo');
 
     session([StationMode::SESSION_KEY => $device->id]);
 
     Livewire::test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
-        ->assertDontSee('Upload the first photo!')
         ->assertDontSee('Upload Photo');
 });
 

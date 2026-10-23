@@ -165,7 +165,7 @@ class TranscribeInterface extends Component
         $this->parseError = '';
 
         if (! $this->event) {
-            $this->parseError = 'No active or grace-period event found.';
+            $this->parseError = 'Transcription is unavailable outside the event and its grace period.';
 
             return;
         }
@@ -204,7 +204,7 @@ class TranscribeInterface extends Component
 
         $exchange = $this->getExchangeWithoutTime();
         if (trim($exchange) === '') {
-            $this->parseError = 'Exchange is empty';
+            $this->parseError = 'Enter callsign, class, and section';
 
             return;
         }

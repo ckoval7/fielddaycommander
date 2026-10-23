@@ -13,7 +13,7 @@
             wire:navigate
             href="{{ route('weather.index') }}"
             class="flex items-center gap-1.5 btn btn-ghost btn-md lg:btn-sm px-2 min-w-11 {{ $isGrayedOut ? 'opacity-40' : '' }}"
-            title="Weather"
+            title="View Weather"
         >
             <x-icon name="{{ $this->iconName() }}" class="w-6 h-6 lg:w-5 lg:h-5" />
 
@@ -22,7 +22,7 @@
             @endif
 
             @if($isManual && $hasData)
-                <span class="badge badge-warning badge-xs font-bold">M</span>
+                <span class="badge badge-warning badge-xs font-bold">Manual</span>
             @endif
 
             @if($hasData && $gusts !== null && $gusts >= 25)

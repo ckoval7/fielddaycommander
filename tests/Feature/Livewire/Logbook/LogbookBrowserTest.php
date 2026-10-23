@@ -495,7 +495,7 @@ describe('activeFilterPills', function () {
 
         $pills = collect($component->activeFilterPills())->keyBy('key');
 
-        expect($pills['showDuplicates']['label'])->toBe('Duplicates: Exclude')
+        expect($pills['showDuplicates']['label'])->toBe('Dupes: Exclude')
             ->and($pills['showTranscribed']['label'])->toBe('Transcribed: Only')
             ->and($pills['showGota']['label'])->toBe('GOTA: Only')
             ->and($pills['showDeleted']['label'])->toBe('Deleted: Include');

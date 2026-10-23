@@ -14,7 +14,7 @@
                 class="btn btn-ghost btn-xs btn-circle text-info hover:text-info-content hover:bg-info"
                 :title="expanded ? 'Hide {{ $rulebook }} rule' : 'Show {{ $rulebook }} rule {{ $rule['section'] }}'"
                 :aria-expanded="expanded"
-                aria-label="Show {{ $rulebook }} rule {{ $rule['section'] }}"
+                aria-label="Toggle {{ $rulebook }} rule {{ $rule['section'] }} details"
             >
                 <x-icon name="phosphor-question" class="w-5 h-5" />
             </button>

@@ -181,6 +181,6 @@ test('reminder remove buttons are labelled tap targets', function () {
 
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
-        ->assertSeeHtml('aria-label="Remove 5 minute reminder"')
+        ->assertSeeHtml('aria-label="Remove 5-minute reminder"')
         ->assertDontSeeHtml('btn btn-ghost btn-xs p-0 min-h-0 h-auto');
 });

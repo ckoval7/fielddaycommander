@@ -5,13 +5,13 @@
 <div>
     <x-header :title="$eventConfiguration->event->name" subtitle="Photo Gallery">
         <x-slot:actions class="flex-wrap max-sm:w-full">
-            <x-button label="Back to Gallery" icon="phosphor-arrow-left" link="{{ route('gallery.index') }}" />
+            <x-button label="All Albums" icon="phosphor-arrow-left" link="{{ route('gallery.index') }}" />
             @auth
                 @can('manage-images')
                     @if($this->images->isNotEmpty())
                         <form method="POST" action="{{ route('album-export.store', $eventConfiguration) }}" class="inline">
                             @csrf
-                            <x-button type="submit" label="Download Album" icon="phosphor-download-simple" class="btn-secondary" />
+                            <x-button type="submit" label="Prepare Album ZIP" icon="phosphor-download-simple" class="btn-secondary" />
                         </form>
                     @endif
                 @endcan
@@ -45,7 +45,7 @@
                 <div wire:key="image-{{ $image->id }}" class="group relative aspect-square bg-base-300 rounded-lg overflow-hidden cursor-pointer" wire:click="openLightbox({{ $image->id }})">
                     <img
                         src="{{ route('gallery.thumb', $image) }}"
-                        alt="{{ $image->caption ?? 'Gallery entry' }}"
+                        alt="{{ $image->caption ?? 'Photo from '.$eventConfiguration->event->name }}"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         loading="lazy"
                     >
@@ -60,7 +60,7 @@
                     @can('delete', $image)
                         <button
                             wire:click.stop="deleteImage({{ $image->id }})"
-                            wire:confirm="Are you sure you want to delete this photo?"
+                            wire:confirm="Delete this photo?"
                             type="button"
                             aria-label="Delete photo"
                             class="absolute top-2 right-2 flex items-center justify-center p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 bg-red-700/80 text-white rounded-full opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-red-800 active:bg-red-900 touch-manipulation"
@@ -110,7 +110,7 @@
                             >
                                 <img
                                     src="{{ route('gallery.image', $currentImage) }}"
-                                    alt="{{ $currentImage->caption ?? 'Gallery entry' }}"
+                                    alt="{{ $currentImage->caption ?? 'Photo from '.$eventConfiguration->event->name }}"
                                     class="block w-full"
                                 >
                             </button>
@@ -128,7 +128,7 @@
                             </button>
                             <a href="{{ route('gallery.image', $currentImage) }}" target="_blank" rel="noopener" class="btn btn-sm btn-ghost">
                                 <x-icon name="phosphor-arrows-out" class="w-4 h-4" />
-                                Full size
+                                Open Full-size Photo
                             </a>
                         </div>
                     </div>
@@ -142,11 +142,11 @@
                         </div>
                         @can('delete', $currentImage)
                             <x-button
-                                label="Delete"
+                                label="Delete Photo"
                                 icon="phosphor-trash"
                                 class="btn-error btn-sm"
                                 wire:click="deleteImage({{ $currentImage->id }})"
-                                wire:confirm="Are you sure you want to delete this photo?"
+                                wire:confirm="Delete this photo?"
                             />
                         @endcan
                     </div>

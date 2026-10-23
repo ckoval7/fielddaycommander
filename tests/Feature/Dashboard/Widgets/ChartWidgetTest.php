@@ -136,7 +136,7 @@ test('getData returns expected structure with no active event', function () {
         ->and($data['labels'])->toBeArray()
         ->and($data['datasets'])->toBeArray()
         ->and($data['chart_type'])->toBe('bar')
-        ->and($data['title'])->toBe('QSOs per Hour — Entire Event')
+        ->and($data['title'])->toBe('QSOs per Hour: Entire Event')
         ->and($data['data_source'])->toBe('qsos_per_hour');
 });
 
@@ -159,9 +159,9 @@ test('getData returns correct title for each data source', function (string $dat
 
     expect($data['title'])->toBe($expectedTitle);
 })->with([
-    ['qsos_per_hour', 'QSOs per Hour — Entire Event'],
-    ['qsos_per_band', 'QSOs per Band — Entire Event'],
-    ['qsos_per_mode', 'QSOs per Mode — Entire Event'],
+    ['qsos_per_hour', 'QSOs per Hour: Entire Event'],
+    ['qsos_per_band', 'QSOs per Band: Entire Event'],
+    ['qsos_per_mode', 'QSOs per Mode: Entire Event'],
 ]);
 
 // ────────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ test('getData defaults to qsos_per_hour for invalid data source', function () {
     $data = $chart->getData();
 
     expect($data['data_source'])->toBe('qsos_per_hour')
-        ->and($data['title'])->toBe('QSOs per Hour — Entire Event');
+        ->and($data['title'])->toBe('QSOs per Hour: Entire Event');
 });
 
 // ────────────────────────────────────────────────────────────────
@@ -796,7 +796,7 @@ test('time_range filter excludes contacts older than the lookback window', funct
     $data = $chart->getData();
 
     expect(array_sum($data['datasets'][0]['data']))->toBe(3)
-        ->and($data['title'])->toBe('QSOs per Band — Last Hour');
+        ->and($data['title'])->toBe('QSOs per Band: Last Hour');
 });
 
 test('invalid time_range falls back to entire event', function () {
@@ -823,7 +823,7 @@ test('invalid time_range falls back to entire event', function () {
     $data = $chart->getData();
 
     expect(array_sum($data['datasets'][0]['data']))->toBe(2)
-        ->and($data['title'])->toBe('QSOs per Band — Entire Event');
+        ->and($data['title'])->toBe('QSOs per Band: Entire Event');
 });
 
 test('view keeps the Chart.js instance out of reactive Alpine state', function () {

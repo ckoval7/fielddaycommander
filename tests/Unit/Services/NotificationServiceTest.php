@@ -187,7 +187,7 @@ test('zero debounce categories always create new notifications', function () {
     $this->service->notify(
         user: $user,
         category: NotificationCategory::QsoMilestone,
-        title: 'QSO Milestone!',
+        title: 'QSO Milestone',
         message: '50 QSOs logged',
         groupKey: 'qso_milestone_50',
     );
@@ -195,7 +195,7 @@ test('zero debounce categories always create new notifications', function () {
     $this->service->notify(
         user: $user,
         category: NotificationCategory::QsoMilestone,
-        title: 'QSO Milestone!',
+        title: 'QSO Milestone',
         message: '100 QSOs logged',
         groupKey: 'qso_milestone_100',
     );
@@ -210,7 +210,7 @@ test('new section notifications debounce within 120 second window', function () 
     $this->service->notify(
         user: $user,
         category: NotificationCategory::NewSection,
-        title: 'New Section Worked!',
+        title: 'New Section Worked',
         message: 'First section',
         groupKey: 'new_section_event_1',
     );
@@ -218,7 +218,7 @@ test('new section notifications debounce within 120 second window', function () 
     $this->service->notify(
         user: $user,
         category: NotificationCategory::NewSection,
-        title: 'New Section Worked!',
+        title: 'New Section Worked',
         message: 'Second section',
         groupKey: 'new_section_event_1',
     );
@@ -234,7 +234,7 @@ test('debounce updates title to reflect count when count exceeds 1', function ()
     $this->service->notify(
         user: $user,
         category: NotificationCategory::NewSection,
-        title: 'New Section Worked!',
+        title: 'New Section Worked',
         message: 'CT worked',
         groupKey: 'new_section_event_1',
     );
@@ -242,24 +242,24 @@ test('debounce updates title to reflect count when count exceeds 1', function ()
     $this->service->notify(
         user: $user,
         category: NotificationCategory::NewSection,
-        title: 'New Section Worked!',
+        title: 'New Section Worked',
         message: 'NY worked',
         groupKey: 'new_section_event_1',
     );
 
     $user->refresh();
-    expect($user->notifications->first()->data['title'])->toBe('2 New Sections Worked!');
+    expect($user->notifications->first()->data['title'])->toBe('2 New Sections Worked');
 
     $this->service->notify(
         user: $user,
         category: NotificationCategory::NewSection,
-        title: 'New Section Worked!',
+        title: 'New Section Worked',
         message: 'WA worked',
         groupKey: 'new_section_event_1',
     );
 
     $user->refresh();
-    expect($user->notifications->first()->data['title'])->toBe('3 New Sections Worked!');
+    expect($user->notifications->first()->data['title'])->toBe('3 New Sections Worked');
 });
 
 test('notification data structure matches contract', function () {
@@ -268,7 +268,7 @@ test('notification data structure matches contract', function () {
     $this->service->notify(
         user: $user,
         category: NotificationCategory::NewSection,
-        title: 'New Section Worked!',
+        title: 'New Section Worked',
         message: 'W1AW worked CT on 20m CW',
         url: '/contacts',
         groupKey: 'new_section_event_1',
@@ -280,7 +280,7 @@ test('notification data structure matches contract', function () {
     expect($data)->toHaveKeys(['category', 'group_key', 'title', 'message', 'url', 'count', 'icon']);
     expect($data['category'])->toBe('new_section');
     expect($data['group_key'])->toBe('new_section_event_1');
-    expect($data['title'])->toBe('New Section Worked!');
+    expect($data['title'])->toBe('New Section Worked');
     expect($data['message'])->toBe('W1AW worked CT on 20m CW');
     expect($data['url'])->toBe('/contacts');
     expect($data['count'])->toBe(1);

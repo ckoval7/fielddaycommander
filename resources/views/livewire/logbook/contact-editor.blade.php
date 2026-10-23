@@ -27,7 +27,7 @@
                     spellcheck="false"
                     placeholder="e.g. 3A"
                     icon="phosphor-file-text"
-                    hint="Transmitter count + class letter"
+                    hint="Transmitter count and class letter"
                     required
                 />
 
@@ -84,7 +84,7 @@
                 </datalist>
 
                 <x-flatpickr
-                    label="QSO Time"
+                    label="QSO Time (UTC)"
                     wire:model="qsoTime"
                     icon="phosphor-clock"
                     required
@@ -96,7 +96,7 @@
                 <x-textarea
                     label="Notes"
                     wire:model="notes"
-                    placeholder="Optional notes..."
+                    placeholder="Optional notes"
                     rows="2"
                 />
             </div>
@@ -109,7 +109,7 @@
     </x-modal>
 
     {{-- Bulk Change Logger Modal --}}
-    <x-modal wire:model="showBulkLoggerModal" title="Change Logger for {{ count($bulkLoggerContactIds) }} Contact(s)" class="backdrop-blur">
+    <x-modal wire:model="showBulkLoggerModal" title="Change Logger for {{ count($bulkLoggerContactIds) }} {{ str('Contact')->plural(count($bulkLoggerContactIds)) }}" class="backdrop-blur">
         <x-form wire:submit="bulkChangeLogger" class="space-y-4">
             <x-choices-offline
                 label="New Logger"
@@ -117,7 +117,7 @@
                 :options="$this->operators"
                 option-label="display_name"
                 option-value="id"
-                placeholder="Select a logger..."
+                placeholder="Select a logger"
                 icon="phosphor-user"
                 searchable
                 single
@@ -133,7 +133,7 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" wire:click="$set('showBulkLoggerModal', false)" class="btn-ghost" />
-                <x-button label="Apply" type="submit" class="btn-primary" spinner="bulkChangeLogger" />
+                <x-button label="Change Logger" type="submit" class="btn-primary" spinner="bulkChangeLogger" />
             </x-slot:actions>
         </x-form>
     </x-modal>

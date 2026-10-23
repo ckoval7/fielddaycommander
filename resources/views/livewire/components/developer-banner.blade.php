@@ -9,7 +9,7 @@
                 {{-- Left: Warning Icon + Label + Divider --}}
                 <div class="flex items-center gap-3 shrink-0">
                     <x-icon name="phosphor-warning" class="w-5 h-5 text-amber-600" />
-                    <span class="font-bold text-sm sm:text-base">DEVELOPER MODE</span>
+                    <span class="font-bold text-sm sm:text-base">DEVELOPER MODE (TESTING)</span>
                     <span class="hidden sm:inline text-amber-400">|</span>
                 </div>
 
@@ -20,7 +20,7 @@
                         {{ $fakeTime?->timezone('UTC')->format('F j, Y H:i:s') }} UTC
                     </span>
                     <span class="badge badge-sm {{ $isFrozen ? 'badge-warning' : 'badge-info' }} shrink-0">
-                        {{ $isFrozen ? 'frozen' : 'flowing' }}
+                        {{ $isFrozen ? 'clock paused' : 'clock running' }}
                     </span>
                 </div>
 
@@ -32,7 +32,7 @@
                             class="link link-hover font-semibold text-sm sm:text-base"
                             wire:navigate
                         >
-                            Configure
+                            Developer Settings
                         </a>
                     @endcan
                     <button

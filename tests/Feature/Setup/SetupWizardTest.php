@@ -33,7 +33,7 @@ test('setup routes redirect to home when setup is already complete', function ()
 test('step 1 displays admin password form', function () {
     $this->get(route('setup.welcome'))
         ->assertOk()
-        ->assertSee('Admin Password Setup')
+        ->assertSee('Step 1: Admin Password')
         ->assertSee('name="admin_password"', false)
         ->assertSee('name="admin_password_confirmation"', false)
         ->assertSee('action="'.route('setup.step-1').'"', false);

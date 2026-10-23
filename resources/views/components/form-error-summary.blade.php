@@ -24,7 +24,7 @@
                 </template>
             </ul>
         </div>
-        <button type="button" class="btn btn-ghost btn-xs btn-circle" x-on:click="$store.formErrors.dismiss()" aria-label="Dismiss errors">
+        <button type="button" class="btn btn-ghost btn-xs btn-circle" x-on:click="$store.formErrors.dismiss()" aria-label="Hide error summary">
             <x-icon name="phosphor-x" class="w-4 h-4" />
         </button>
     </div>

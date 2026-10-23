@@ -158,7 +158,7 @@ class DeveloperTools extends Component
             if ($event === null) {
                 return [
                     'status' => 'No Active Event',
-                    'message' => 'No event is currently active.',
+                    'message' => 'No event is in progress at the selected time.',
                     'class' => 'badge-warning',
                 ];
             }
@@ -398,7 +398,7 @@ class DeveloperTools extends Component
             $this->showSelectiveResetModal = false;
 
             $this->success(
-                'Tables reset successfully',
+                'Tables reset',
                 'Cleared: '.implode(', ', $tablesToTruncate)
             );
         } catch (\Exception $e) {

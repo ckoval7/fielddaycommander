@@ -65,7 +65,7 @@ it('shows no-event message when no active event exists', function () {
     $response = $this->get('/');
 
     $response->assertStatus(200);
-    $response->assertSee('No active event at this time');
+    $response->assertSee('No event is underway or open for setup');
 });
 
 it('shows talk-in frequency when set on the active event configuration', function () {

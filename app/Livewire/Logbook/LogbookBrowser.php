@@ -216,7 +216,7 @@ class LogbookBrowser extends Component
             'bandIds' => ['key' => 'bandIds', 'prefix' => 'Band'],
             'modeIds' => ['key' => 'modeIds', 'prefix' => 'Mode'],
             'stationIds' => ['key' => 'stationIds', 'prefix' => 'Station'],
-            'operatorIds' => ['key' => 'operatorIds', 'prefix' => 'Operator'],
+            'operatorIds' => ['key' => 'operatorIds', 'prefix' => 'Logger'],
             'sectionIds' => ['key' => 'sectionIds', 'prefix' => 'Section'],
         ];
 
@@ -239,7 +239,7 @@ class LogbookBrowser extends Component
         }
 
         $radioLabels = [
-            'showDuplicates' => ['prefix' => 'Duplicates', 'values' => ['exclude' => 'Exclude', 'only' => 'Only']],
+            'showDuplicates' => ['prefix' => 'Dupes', 'values' => ['exclude' => 'Exclude', 'only' => 'Only']],
             'showTranscribed' => ['prefix' => 'Transcribed', 'values' => ['only' => 'Only']],
             'showGota' => ['prefix' => 'GOTA', 'values' => ['only' => 'Only', 'exclude' => 'Exclude']],
             'showDeleted' => ['prefix' => 'Deleted', 'values' => ['include' => 'Include', 'only' => 'Only']],
@@ -413,7 +413,7 @@ class LogbookBrowser extends Component
     public function sections()
     {
         return Section::orderBy('code')->get()->map(function (Section $section) {
-            $section->display_name = "{$section->code} – {$section->name}";
+            $section->display_name = "{$section->code}: {$section->name}";
 
             return $section;
         });

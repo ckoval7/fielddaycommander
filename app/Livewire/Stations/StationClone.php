@@ -264,7 +264,7 @@ class StationClone extends Component
             );
 
             $this->dispatch('toast', [
-                'title' => 'Successfully Cloned Stations',
+                'title' => 'Stations Cloned',
                 'description' => $description,
                 'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
@@ -302,7 +302,7 @@ class StationClone extends Component
         }
 
         if (! $result['success']) {
-            $this->addError('general', 'Unable to clone stations. Please check the errors above.');
+            $this->addError('general', 'Unable to clone stations. Please review the errors and try again.');
         }
     }
 

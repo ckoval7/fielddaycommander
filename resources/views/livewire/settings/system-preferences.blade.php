@@ -29,7 +29,7 @@
                 spellcheck="false"
                 icon="phosphor-cell-signal-high"
                 placeholder="e.g., W1ABC"
-                hint="Club station callsign (3-10 uppercase letters/numbers)"
+                hint="Club station callsign (3–10 uppercase letters and numbers)"
             />
 
             <x-input
@@ -95,7 +95,7 @@
                 type="number"
                 wire:model="post_event_grace_period_days"
                 icon="phosphor-clock"
-                hint="Number of days after an event ends that operators can still enter late contacts (e.g., paper logs). Set to 0 to disable."
+                hint="Days after an event ends when operators can transcribe late contacts from paper logs. Set to 0 for no grace period."
                 min="0"
                 max="365"
             />
@@ -103,7 +103,7 @@
             <x-toggle
                 label="Enable ICS-213 Message Format"
                 wire:model="enable_ics213"
-                hint="Allow logging ICS-213 General Messages in addition to ARRL Radiograms. Most Field Day operations only need radiograms."
+                hint="Show the ICS-213 format option when logging message traffic, alongside radiograms."
             />
         </div>
     </x-card>
@@ -112,11 +112,11 @@
         <x-slot:title>Contact Information</x-slot:title>
 
         <x-input
-            label="Contact Email"
+            label="Weather Contact Email"
             type="email"
             wire:model="contact_email"
             icon="phosphor-envelope"
-            hint="Public contact email for the site"
+            hint="Contact email sent to the National Weather Service with weather requests"
         />
     </x-card>
 
@@ -138,7 +138,7 @@
                 />
                 <div>
                     <div class="font-medium">Count all hours (sum)</div>
-                    <div class="text-sm opacity-70">Each role's hours count separately. Recognizes multi-role contribution.</div>
+                    <div class="text-sm opacity-70">Each shift's hours count separately, including overlapping time.</div>
                 </div>
             </label>
 
@@ -151,7 +151,7 @@
                 />
                 <div>
                     <div class="font-medium">Wall-clock hours (merge overlaps)</div>
-                    <div class="text-sm opacity-70">Overlapping shifts merge into the actual time the volunteer was on site.</div>
+                    <div class="text-sm opacity-70">Count overlapping time once for both scheduled hours and hours worked.</div>
                 </div>
             </label>
         </div>

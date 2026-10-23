@@ -86,7 +86,7 @@ class SystemPreferences extends Component
             'volunteer_hours_mode' => ['required', Rule::in([VolunteerHours::MODE_SUM, VolunteerHours::MODE_WALL_CLOCK])],
         ], [
             'organization_name.required' => 'An organization name is required.',
-            'organization_callsign.regex' => 'The callsign must be 3-10 uppercase letters and numbers.',
+            'organization_callsign.regex' => 'Enter a callsign with 3–10 uppercase letters and numbers.',
         ]);
 
         $oldValues = [
@@ -124,7 +124,7 @@ class SystemPreferences extends Component
             'volunteer_hours_mode' => $this->volunteer_hours_mode,
         ]);
 
-        $this->dispatch('notify', title: 'Success', description: 'System preferences saved successfully.');
+        $this->dispatch('notify', title: 'Success', description: 'System preferences saved.');
     }
 
     protected function saveOrganization(): void

@@ -145,7 +145,7 @@ class ContactSyncController extends Controller
 
         $event = $session->station->eventConfiguration?->event;
         if (! $event || Carbon::parse($event->end_time)->lt($qsoTime)) {
-            return response()->json(['message' => 'This event has ended. Use transcription to enter contacts from paper logs.'], 422);
+            return response()->json(['message' => 'This event has ended. Use Transcribe Paper Log to enter contacts from paper logs.'], 422);
         }
 
         if (Carbon::parse($event->start_time)->gt($qsoTime)) {

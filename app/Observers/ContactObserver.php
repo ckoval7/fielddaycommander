@@ -131,7 +131,7 @@ class ContactObserver
             $this->notificationService->notifyAll(
                 category: NotificationCategory::QsoMilestone,
                 title: 'QSO Milestone!',
-                message: "Congratulations! {$totalQsos} QSOs logged for this event!",
+                message: "Congratulations! {$totalQsos} QSOs logged for this event.",
                 url: '/logbook',
                 groupKey: "qso_milestone_{$totalQsos}",
             );

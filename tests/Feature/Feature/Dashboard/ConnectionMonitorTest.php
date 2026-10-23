@@ -7,7 +7,7 @@ it('renders connection monitor component', function () {
     $html = view('components.dashboard.connection-monitor')->render();
 
     expect($html)->toContain('Real-time updates paused');
-    expect($html)->toContain('Reconnecting');
+    expect($html)->toContain('Waiting for connection');
     expect($html)->toContain('Real-time updates restored');
 });
 

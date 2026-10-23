@@ -30,7 +30,7 @@
         label="Status"
         wire:model.live="statusFilter"
         :options="[
-            ['value' => null, 'label' => 'All Status'],
+            ['value' => null, 'label' => 'All Statuses'],
             ['value' => 'available', 'label' => 'Available'],
             ['value' => 'committed', 'label' => 'Committed'],
         ]"

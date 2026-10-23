@@ -45,7 +45,7 @@
 
             @if($operatingSessions->isEmpty())
                 <x-alert icon="phosphor-info">
-                    You haven't operated any stations yet.
+                    No operating sessions recorded yet.
                 </x-alert>
             @else
                 {{-- Table of operating sessions --}}

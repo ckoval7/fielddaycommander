@@ -11,7 +11,7 @@
     </ul>
 
     <div class="mb-6">
-        <h2 class="text-2xl font-bold">Admin Password Setup</h2>
+        <h2 class="text-2xl font-bold">Step 1: Admin Password</h2>
     </div>
 
     <div class="space-y-6">
@@ -36,7 +36,7 @@
                     required
                     icon="phosphor-lock"
                     errorField="admin_password"
-                    hint="Minimum 12 characters with uppercase, lowercase, numbers, and symbols"
+                    hint="At least 12 characters, including uppercase and lowercase letters, numbers, and symbols"
                 />
 
                 <x-input

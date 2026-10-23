@@ -65,7 +65,7 @@ class EquipmentDelivered extends Notification implements ShouldQueue
     {
         $equipmentName = trim("{$equipment->make} {$equipment->model}");
         if (! $equipmentName) {
-            $equipmentName = ucfirst($equipment->type);
+            $equipmentName = ucfirst(str_replace('_', ' ', $equipment->type));
         }
 
         $changedByName = $statusChangedBy ? trim("{$statusChangedBy->first_name} {$statusChangedBy->last_name}") : 'Event Manager';
@@ -80,7 +80,7 @@ class EquipmentDelivered extends Notification implements ShouldQueue
             ->line('')
             ->line('**Equipment Details:**')
             ->line("Make/Model: {$equipmentName}")
-            ->line('Type: '.ucfirst($equipment->type))
+            ->line('Type: '.ucfirst(str_replace('_', ' ', $equipment->type)))
             ->line('Current Status: '.ucfirst($this->equipmentEvent->status))
             ->line('')
             ->line('**Delivery Information:**')
@@ -88,7 +88,7 @@ class EquipmentDelivered extends Notification implements ShouldQueue
             ->line("Marked by: {$changedByName}")
             ->line("Timestamp: {$timestamp}")
             ->line('')
-            ->action('View Equipment Dashboard', $url)
+            ->action('View My Equipment', $url)
             ->line('Thank you for your contribution to our Field Day event!');
     }
 
@@ -99,7 +99,7 @@ class EquipmentDelivered extends Notification implements ShouldQueue
     {
         $equipmentName = trim("{$equipment->make} {$equipment->model}");
         if (! $equipmentName) {
-            $equipmentName = ucfirst($equipment->type);
+            $equipmentName = ucfirst(str_replace('_', ' ', $equipment->type));
         }
 
         $owner = $equipment->owner;
@@ -117,7 +117,7 @@ class EquipmentDelivered extends Notification implements ShouldQueue
             ->line('')
             ->line('**Equipment Details:**')
             ->line("Make/Model: {$equipmentName}")
-            ->line('Type: '.ucfirst($equipment->type))
+            ->line('Type: '.ucfirst(str_replace('_', ' ', $equipment->type)))
             ->line("Owner: {$ownerName} ({$ownerCallsign})")
             ->line('Current Status: '.ucfirst($this->equipmentEvent->status))
             ->line('')
@@ -126,7 +126,7 @@ class EquipmentDelivered extends Notification implements ShouldQueue
             ->line("Timestamp: {$timestamp}")
             ->line('')
             ->action('View Equipment Dashboard', $url)
-            ->line('Equipment is now ready for assignment to stations.');
+            ->line('Review the station assignment on the equipment dashboard.');
     }
 
     /**

@@ -7,7 +7,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {{-- Call Sign --}}
             <x-input
-                label="Call Sign"
+                label="Callsign"
                 wire:model="call_sign"
                 autocomplete="off"
                 autocapitalize="characters"
@@ -89,7 +89,7 @@
             {{-- Invitation Mode Toggle (only for new users) --}}
             @if(config('mail.email_configured'))
                 <div class="flex flex-col mt-4">
-                    <x-checkbox label="Send invitation email (user sets own password)" wire:model.live="inviteMode" />
+                    <x-checkbox label="Send invitation email (expires in 72 hours)" wire:model.live="inviteMode" />
                 </div>
             @endif
 
@@ -118,7 +118,7 @@
                 <div class="flex flex-col mt-2">
                     <label class="flex items-center gap-3 cursor-pointer py-2">
                         <input type="checkbox" class="checkbox checkbox-sm" wire:model="requirePasswordChange" />
-                        <span class="text-sm">User must change password on next login</span>
+                        <span class="text-sm">Require a password change at next sign-in</span>
                     </label>
                 </div>
             @endif
@@ -126,7 +126,7 @@
 
         <x-slot:actions>
             <x-button label="Cancel" wire:click="$set('showModal', false)" class="btn-ghost" />
-            <x-button label="{{ $editingUserId ? 'Update' : 'Create' }}" wire:click="saveUser" class="btn-primary" spinner="saveUser" />
+            <x-button label="{{ $editingUserId ? 'Save Changes' : ($inviteMode ? 'Create and Send Invite' : 'Create User') }}" wire:click="saveUser" class="btn-primary" spinner="saveUser" />
         </x-slot:actions>
     </form>
 </x-modal>

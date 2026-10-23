@@ -421,7 +421,7 @@ describe('cpr/aed trained personnel', function () {
         $this->actingAs($this->regularUser);
 
         Livewire::test(SiteSafetyChecklist::class)
-            ->assertDontSee('Trained personnel');
+            ->assertDontSee('Users marked as CPR/AED trained');
     });
 
     test('does not show trained users on non-CPR checklist items', function () {
@@ -442,7 +442,7 @@ describe('cpr/aed trained personnel', function () {
         $this->actingAs($this->regularUser);
 
         Livewire::test(SiteSafetyChecklist::class)
-            ->assertDontSee('Trained personnel');
+            ->assertDontSee('Users marked as CPR/AED trained');
     });
 });
 

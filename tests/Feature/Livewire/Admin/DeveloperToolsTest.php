@@ -139,7 +139,7 @@ test('component loads without errors', function () {
     Livewire::test(DeveloperTools::class)
         ->assertStatus(200)
         ->assertSee('Developer Tools')
-        ->assertSee('Time Travel');
+        ->assertSee('Clock Override');
 });
 
 test('component initializes with default property values', function () {

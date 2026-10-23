@@ -18,9 +18,9 @@
                             @if($isManual)
                                 Local Alert
                             @elseif($isRed)
-                                Immediate Danger
+                                Weather Alert at Event Site
                             @else
-                                Nearby Danger
+                                Nearby Weather Alert
                             @endif
                         </span>
                         <p class="text-sm font-medium">{{ $alert['headline'] }}</p>

@@ -3,7 +3,7 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <x-layouts.guest>
-    <x-slot:title>Log In</x-slot:title>
+    <x-slot:title>Sign In</x-slot:title>
 
     @if (session('status'))
         <x-alert :title="session('status')" class="mb-4" />
@@ -26,7 +26,7 @@
                     </a>
                 @endif
 
-                <x-button label="Log In" type="submit" class="btn-primary" icon="phosphor-sign-in" />
+                <x-button label="Sign In" type="submit" class="btn-primary" icon="phosphor-sign-in" />
             </div>
 
             @if (config('auth-security.registration_mode') !== 'disabled')

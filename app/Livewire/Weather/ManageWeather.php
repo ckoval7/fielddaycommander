@@ -94,7 +94,7 @@ class ManageWeather extends Component
         $this->authorize('manage-weather');
         $weatherService->clearManualOverride();
         $this->loadCurrentState();
-        $this->dispatch('toast', title: 'Override cleared — using live data', type: 'info');
+        $this->dispatch('toast', title: 'Manual override cleared', type: 'info');
     }
 
     public function triggerAlert(WeatherService $weatherService): void
@@ -105,7 +105,7 @@ class ManageWeather extends Component
         $weatherService->setManualAlert($this->alertMessage);
         $this->alertMessage = '';
         $this->loadCurrentState();
-        $this->dispatch('toast', title: 'Alert triggered', type: 'warning');
+        $this->dispatch('toast', title: 'Local alert posted', type: 'warning');
     }
 
     public function triggerCannedAlert(WeatherService $weatherService, string $preset): void
@@ -122,7 +122,7 @@ class ManageWeather extends Component
 
         $weatherService->setManualAlert($cannedAlert->headline(), $cannedAlert->description());
         $this->loadCurrentState();
-        $this->dispatch('toast', title: 'Alert triggered', type: 'warning');
+        $this->dispatch('toast', title: 'Local alert posted', type: 'warning');
     }
 
     public function clearAlert(WeatherService $weatherService): void
@@ -130,7 +130,7 @@ class ManageWeather extends Component
         $this->authorize('manage-weather');
         $weatherService->clearManualAlert();
         $this->loadCurrentState();
-        $this->dispatch('toast', title: 'Alert cleared', type: 'info');
+        $this->dispatch('toast', title: 'Local alert cleared', type: 'info');
     }
 
     public function saveUnits(string $units): void
@@ -156,7 +156,7 @@ class ManageWeather extends Component
         if ($this->openMeteoEnabled) {
             $weatherService->disableOpenMeteo();
             $this->loadCurrentState();
-            $this->dispatch('toast', title: 'Open-Meteo disabled — forecast cleared', type: 'info');
+            $this->dispatch('toast', title: 'Open-Meteo disabled. Stored forecast cleared.', type: 'info');
         } else {
             $weatherService->enableOpenMeteo();
             $this->loadCurrentState();
@@ -170,7 +170,7 @@ class ManageWeather extends Component
         $weatherService->clearNwsLocationCache();
         unset($this->resolvedNwsLocation);
         $this->loadCurrentState();
-        $this->dispatch('toast', title: 'NWS location cache cleared — re-resolving', type: 'info');
+        $this->dispatch('toast', title: 'Cached NWS location cleared', type: 'info');
     }
 
     public function toggleNws(WeatherService $weatherService): void
@@ -180,11 +180,11 @@ class ManageWeather extends Component
         if ($this->nwsEnabled) {
             $weatherService->disableNws();
             $this->loadCurrentState();
-            $this->dispatch('toast', title: 'NWS Alerts disabled — alerts cleared', type: 'info');
+            $this->dispatch('toast', title: 'NWS alerts disabled. Stored NWS alerts cleared.', type: 'info');
         } else {
             $weatherService->enableNws();
             $this->loadCurrentState();
-            $this->dispatch('toast', title: 'NWS Alerts enabled', type: 'success');
+            $this->dispatch('toast', title: 'NWS alerts enabled', type: 'success');
         }
     }
 

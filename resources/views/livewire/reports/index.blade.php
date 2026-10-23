@@ -81,7 +81,7 @@
             <x-mary-icon name="phosphor-chart-bar" class="w-16 h-16 opacity-25" />
             <div class="text-2xl font-semibold opacity-50">No active event</div>
             <p class="text-sm text-center max-w-sm" style="color: var(--reports-text-muted);">
-                Reports will be available once a Field Day event is active.
+                Select an event to view its reports.
             </p>
         </div>
     @else
@@ -141,7 +141,7 @@
             <x-alert icon="phosphor-warning" class="alert-warning mb-5" data-testid="needs-attention-alert">
                 <div>
                     <span class="font-semibold">
-                        {{ $this->contactsNeedingAttentionCount }} {{ Str::plural('contact', $this->contactsNeedingAttentionCount) }} {{ $this->contactsNeedingAttentionCount === 1 ? 'needs' : 'need' }} attention.
+                        {{ $this->contactsNeedingAttentionCount }} {{ str('contact')->plural($this->contactsNeedingAttentionCount) }} {{ $this->contactsNeedingAttentionCount === 1 ? 'needs' : 'need' }} attention.
                     </span>
                     They're missing a band or mode, or were logged outside the event window. They earn no points and won't be in the Cabrillo log until you fix them.
                 </div>
@@ -167,7 +167,7 @@
                             Cabrillo Log
                         </div>
                         <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
-                            ARRL submission format · .cbr file
+                            Submission log for this event · .log file
                         </div>
                         <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
                              style="color: var(--reports-cabrillo-icon);">
@@ -191,7 +191,7 @@
                             ADIF Log
                         </div>
                         <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
-                            Universal log format · .adi file
+                            Non-dupe contacts for other loggers · .adi file
                         </div>
                         <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
                              style="color: var(--reports-csv-icon);">
@@ -213,10 +213,10 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
-                            WFD Event Summary (PDF)
+                            Winter Field Day Summary (PDF)
                         </div>
                         <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
-                            Objectives and score worksheet · .pdf
+                            Station details, objectives, and score for your records · .pdf
                         </div>
                         <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
                              style="color: var(--reports-pdf-icon);">
@@ -240,10 +240,10 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-base leading-tight" style="color: var(--reports-text);">
-                            Submission Sheet
+                            ARRL Submission Sheet
                         </div>
                         <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
-                            ARRL entry form reference · .pdf with dupe sheet
+                            Score, bonuses, and QSO breakdown for your entry · .pdf
                         </div>
                         <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
                              style="color: var(--reports-pdf-icon);">
@@ -268,7 +268,7 @@
                             Logbook CSV
                         </div>
                         <div class="text-xs mt-1 leading-snug" style="color: var(--reports-text-muted);">
-                            Full contact log · spreadsheet format
+                            All contacts, including duplicates, for spreadsheet review · .csv
                         </div>
                         <div class="mt-3 text-xs font-semibold uppercase tracking-wide"
                              style="color: var(--reports-csv-icon);">
@@ -355,7 +355,7 @@
         <div class="text-xs font-bold uppercase tracking-widest mb-5"
              style="color: var(--reports-text-muted); display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 3px; height: 1em; background-color: var(--reports-section-bar); border-radius: 2px;"></span>
-            Operator Summary
+            Contacts by Logger
         </div>
 
         <div class="rounded-lg overflow-hidden"
@@ -363,7 +363,7 @@
             @if (count($this->operatorSummary) === 0)
                 <div class="flex flex-col items-center justify-center py-12 gap-3">
                     <x-mary-icon name="phosphor-users" class="w-10 h-10 opacity-25" />
-                    <p class="text-sm" style="color: var(--reports-text-muted);">No operator data yet.</p>
+                    <p class="text-sm" style="color: var(--reports-text-muted);">No contacts logged yet.</p>
                 </div>
             @else
                 <div class="overflow-x-auto">
@@ -375,7 +375,7 @@
                                 <th class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Name</th>
                                 <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
-                                    style="color: var(--reports-text-muted);">Valid QSOs</th>
+                                    style="color: var(--reports-text-muted);">Non-dupe QSOs</th>
                                 <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Total Logged</th>
                                 <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
@@ -473,9 +473,9 @@
 
         <div class="text-xs mb-4" style="color: var(--reports-text-muted);">
             @if ($this->volunteerHoursMode === \App\Support\VolunteerHours::MODE_WALL_CLOCK)
-                Wall-clock hours — overlapping shifts merged.
+                Wall-clock hours: overlapping shifts merged.
             @else
-                Hours counted per role (overlaps not merged).
+                Hours are counted per assignment, including overlapping shifts.
             @endif
         </div>
 
@@ -483,7 +483,7 @@
             <div class="flex flex-col items-center justify-center py-12 gap-3 rounded-lg"
                  style="border: 1px solid var(--reports-border); background-color: var(--reports-surface);">
                 <x-mary-icon name="phosphor-clock-countdown" class="w-10 h-10 opacity-25" />
-                <p class="text-sm" style="color: var(--reports-text-muted);">No volunteer hours logged yet.</p>
+                <p class="text-sm" style="color: var(--reports-text-muted);">No volunteer shift assignments to report yet.</p>
             </div>
         @else
             {{-- Totals summary --}}

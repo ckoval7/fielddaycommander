@@ -692,7 +692,7 @@ it('generates a warning when duplicate rate exceeds 5%', function () {
     $component = Livewire::test(Scoring::class);
 
     $notice = collect($component->notices)
-        ->first(fn ($n) => str_contains($n['message'], 'duplicate rate'));
+        ->first(fn ($n) => str_contains($n['message'], 'dupe rate'));
 
     expect($notice)->not->toBeNull();
     expect($notice['severity'])->toBe('warning');

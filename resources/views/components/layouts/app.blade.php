@@ -292,11 +292,11 @@
 
                         <x-menu-sub title="Equipment" icon="phosphor-toolbox">
                             @unless($isStationMode)
-                                <x-menu-item title="My Catalog" link="{{ route('equipment.index') }}" route="equipment.index" />
+                                <x-menu-item title="My Equipment" link="{{ route('equipment.index') }}" route="equipment.index" />
                             @endunless
                             <x-menu-item title="Club Equipment" link="{{ route('equipment.club') }}" route="equipment.club" />
                             @can('view-all-equipment')
-                                <x-menu-item title="All User Catalogs" link="{{ route('equipment.all') }}" route="equipment.all" />
+                                <x-menu-item title="Equipment Catalog" link="{{ route('equipment.all') }}" route="equipment.all" />
                             @endcan
                         </x-menu-sub>
 
@@ -352,7 +352,7 @@
                             @endcan
 
                             @can('manage-settings')
-                                <x-menu-item title="Settings" icon="phosphor-gear-six" link="/settings" />
+                                <x-menu-item title="System Settings" icon="phosphor-gear-six" link="/settings" />
                             @endcan
 
                             @can('view-reports')

@@ -57,7 +57,7 @@ class EquipmentReassigned extends Notification implements ShouldQueue
     {
         $equipmentName = trim("{$this->equipment->make} {$this->equipment->model}");
         if (! $equipmentName) {
-            $equipmentName = ucfirst($this->equipment->type);
+            $equipmentName = ucfirst(str_replace('_', ' ', $this->equipment->type));
         }
 
         $reassignedByName = trim("{$this->reassignedBy->first_name} {$this->reassignedBy->last_name}");
@@ -73,7 +73,7 @@ class EquipmentReassigned extends Notification implements ShouldQueue
             ->line('')
             ->line('**Equipment Details:**')
             ->line("Make/Model: {$equipmentName}")
-            ->line('Type: '.ucfirst($this->equipment->type));
+            ->line('Type: '.ucfirst(str_replace('_', ' ', $this->equipment->type)));
 
         // Add value if available
         if ($this->equipment->value_usd) {
@@ -95,8 +95,8 @@ class EquipmentReassigned extends Notification implements ShouldQueue
         }
 
         $message->line('')
-            ->action('View Station Equipment', $url)
-            ->line('Please coordinate with the new station to ensure proper equipment handoff.');
+            ->action('View Stations', $url)
+            ->line('Please coordinate the equipment handoff with the new station.');
 
         return $message;
     }

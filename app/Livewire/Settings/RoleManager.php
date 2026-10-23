@@ -69,14 +69,14 @@ class RoleManager extends Component
 
         // System Administrator protection
         if ($role->name === 'System Administrator' && empty($this->selectedPermissions)) {
-            $this->dispatch('notify', title: 'Error', description: 'System Administrator role must have at least one permission.');
+            $this->dispatch('notify', title: 'Error', description: 'Keep at least one permission for the System Administrator role.');
 
             return;
         }
 
         // Config Only role protection - permissions are immutable
         if ($role->name === 'Config Only') {
-            $this->dispatch('notify', title: 'Error', description: 'Config Only role permissions cannot be modified.');
+            $this->dispatch('notify', title: 'Error', description: 'Permissions for the Config Only role cannot be changed.');
 
             return;
         }
@@ -92,7 +92,7 @@ class RoleManager extends Component
             'permissions' => $oldPermissions,
         ]);
 
-        $this->dispatch('notify', title: 'Success', description: 'Permissions updated successfully.');
+        $this->dispatch('notify', title: 'Success', description: 'Permissions saved.');
     }
 
     public function openCreateModal(): void
@@ -125,7 +125,7 @@ class RoleManager extends Component
         ]);
 
         $this->showCreateModal = false;
-        $this->dispatch('notify', title: 'Success', description: 'Role created successfully.');
+        $this->dispatch('notify', title: 'Success', description: 'Role created.');
     }
 
     public function confirmDelete(int $roleId): void
@@ -136,20 +136,20 @@ class RoleManager extends Component
 
         // System Administrator protection
         if ($role->name === 'System Administrator') {
-            $this->dispatch('notify', title: 'Error', description: 'System Administrator role cannot be deleted.');
+            $this->dispatch('notify', title: 'Error', description: 'The System Administrator role cannot be deleted.');
 
             return;
         }
 
         if ($role->name === 'Config Only') {
-            $this->dispatch('notify', title: 'Error', description: 'Config Only role cannot be deleted.');
+            $this->dispatch('notify', title: 'Error', description: 'The Config Only role cannot be deleted.');
 
             return;
         }
 
         // Check if role has users
         if ($role->users()->count() > 0) {
-            $this->dispatch('notify', title: 'Error', description: "Cannot delete role with {$role->users()->count()} assigned users. Remove users first.");
+            $this->dispatch('notify', title: 'Error', description: "Remove this role from {$role->users()->count()} assigned ".str('user')->plural($role->users()->count()).' before deleting it.');
 
             return;
         }
@@ -178,7 +178,7 @@ class RoleManager extends Component
         $this->roleToDelete = null;
         $this->selectedRoleId = null;
 
-        $this->dispatch('notify', title: 'Success', description: 'Role deleted successfully.');
+        $this->dispatch('notify', title: 'Success', description: 'Role deleted.');
     }
 
     public function toggleCategory(string $category, bool $checked): void
@@ -197,6 +197,34 @@ class RoleManager extends Component
         return view('livewire.settings.role-manager', [
             'roles' => Role::withCount(['permissions', 'users'])->get(),
             'permissions' => Permission::all(),
+            'permissionLabels' => [
+                'log-contacts' => 'Log Contacts',
+                'edit-contacts' => 'Edit Contacts',
+                'view-events' => 'View Events',
+                'create-events' => 'Create Events',
+                'edit-events' => 'Edit Events',
+                'delete-events' => 'Delete Events',
+                'manage-bulletins' => 'Manage Bulletin Schedule',
+                'verify-bonuses' => 'Verify Bonuses',
+                'view-stations' => 'View Stations',
+                'manage-stations' => 'Manage Stations',
+                'manage-equipment' => 'Manage Equipment (Legacy)',
+                'manage-own-equipment' => 'Manage Own Equipment',
+                'view-all-equipment' => 'View All Equipment',
+                'manage-event-equipment' => 'Manage Event Equipment',
+                'edit-any-equipment' => 'Edit Any Equipment',
+                'manage-users' => 'Manage Users',
+                'manage-roles' => 'Manage Roles (Unused)',
+                'manage-settings' => 'Manage System Settings',
+                'sign-up-shifts' => 'Sign Up for Shifts',
+                'manage-guestbook' => 'Manage Guestbook',
+                'manage-shifts' => 'Manage Shifts',
+                'manage-images' => 'Delete Any Photo',
+                'view-reports' => 'View Reports',
+                'view-security-logs' => 'View Audit Logs',
+                'import-contacts' => 'Import Contacts',
+                'manage-weather' => 'Manage Weather',
+            ],
             'selectedRole' => $this->selectedRoleId ? Role::findById($this->selectedRoleId) : null,
             'categories' => $this->categories,
         ]);

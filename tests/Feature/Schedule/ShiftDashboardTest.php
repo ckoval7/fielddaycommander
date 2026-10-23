@@ -130,7 +130,7 @@ describe('page', function () {
 
         Livewire::test(ShiftDashboard::class)
             ->assertSee('0 open')
-            ->assertSee('No upcoming coverage gaps');
+            ->assertSee('No current or upcoming coverage gaps');
     });
 
     test('schedule page links to the dashboard', function () {
@@ -348,7 +348,7 @@ describe('assigning', function () {
         $this->actingAs($this->manager);
 
         Livewire::test(ShiftDashboard::class)
-            ->assertSeeHtmlInOrder(['data-testid="gaps-card"', 'title="Click to assign someone"', 'wire:click="openAssignModal('.$shift->id.')"']);
+            ->assertSeeHtmlInOrder(['data-testid="gaps-card"', 'title="Assign a volunteer"', 'wire:click="openAssignModal('.$shift->id.')"']);
     });
 
     test('full shifts are not clickable', function () {
@@ -368,7 +368,7 @@ describe('assigning', function () {
 
         Livewire::test(ShiftDashboard::class)
             ->assertDontSeeHtml('openAssignModal(')
-            ->assertDontSee('Assign User to Shift')
+            ->assertDontSee('Assign Volunteer to Shift')
             ->call('openAssignModal', $shift->id)
             ->assertForbidden();
     });

@@ -88,7 +88,7 @@ class SetupStep3Request extends FormRequest
             'contact_email.max' => 'The contact email must not exceed 255 characters.',
             'organization_name.required' => 'An organization name is required.',
             'organization_name.max' => 'The organization name must not exceed 255 characters.',
-            'organization_callsign.regex' => 'The callsign must be 3-10 uppercase letters and numbers.',
+            'organization_callsign.regex' => 'The callsign must be 3–10 characters using uppercase letters or numbers.',
             'organization_callsign.max' => 'The callsign must not exceed 20 characters.',
             'organization_email.email' => 'The organization email must be a valid email address.',
             'organization_email.max' => 'The organization email must not exceed 255 characters.',

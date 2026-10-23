@@ -28,7 +28,7 @@ describe('Banner Visibility', function () {
 
         Livewire::test(DeveloperBanner::class)
             ->assertSet('isVisible', true)
-            ->assertSee('DEVELOPER MODE')
+            ->assertSee('DEVELOPER MODE (TESTING)')
             ->assertSee('June 28, 2025 18:00');
     });
 
@@ -63,7 +63,7 @@ describe('Banner Visibility', function () {
 
         Livewire::test(DeveloperBanner::class)
             ->assertSet('isVisible', true)
-            ->assertSee('DEVELOPER MODE')
+            ->assertSee('DEVELOPER MODE (TESTING)')
             ->call('dismiss')
             ->assertSet('isDismissed', true);
     });
@@ -98,7 +98,7 @@ describe('Permission Tests', function () {
 
         Livewire::test(DeveloperBanner::class)
             ->assertSet('isVisible', true)
-            ->assertSee('Configure');
+            ->assertSee('Developer Settings');
     });
 
     test('configure link not visible to regular users without permission', function () {
@@ -112,7 +112,7 @@ describe('Permission Tests', function () {
 
         Livewire::test(DeveloperBanner::class)
             ->assertSet('isVisible', true)
-            ->assertDontSee('Configure');
+            ->assertDontSee('Developer Settings');
     });
 
     test('banner itself is visible to all users when conditions met', function () {
@@ -126,7 +126,7 @@ describe('Permission Tests', function () {
 
         Livewire::test(DeveloperBanner::class)
             ->assertSet('isVisible', true)
-            ->assertSee('DEVELOPER MODE')
+            ->assertSee('DEVELOPER MODE (TESTING)')
             ->assertSee('June 28, 2025 18:00');
     });
 
@@ -138,7 +138,7 @@ describe('Permission Tests', function () {
 
         Livewire::test(DeveloperBanner::class)
             ->assertSet('isVisible', true)
-            ->assertDontSee('Configure');
+            ->assertDontSee('Developer Settings');
     });
 });
 
@@ -164,7 +164,7 @@ describe('Content Display', function () {
         Livewire::test(DeveloperBanner::class)
             ->assertSet('isVisible', true)
             ->assertSet('isFrozen', true)
-            ->assertSee('frozen');
+            ->assertSee('clock paused');
     });
 
     test('shows flowing badge when time is not frozen', function () {
@@ -176,7 +176,7 @@ describe('Content Display', function () {
         Livewire::test(DeveloperBanner::class)
             ->assertSet('isVisible', true)
             ->assertSet('isFrozen', false)
-            ->assertSee('flowing');
+            ->assertSee('clock running');
     });
 
     test('displays time with different date formats correctly', function () {

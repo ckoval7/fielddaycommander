@@ -22,7 +22,7 @@
                     <span class="font-semibold">IP Address:</span> {{ request()->ip() }}
                 </p>
                 <p class="text-sm">
-                    <span class="font-semibold">Login Time:</span> {{ $user->last_login_at?->format('F j, Y g:i A') ?? 'Unknown' }}
+                    <span class="font-semibold">Last Account Sign-In:</span> {{ $user->last_login_at?->format('F j, Y g:i A') ?? 'Unknown' }}
                 </p>
             </div>
         </div>
@@ -32,9 +32,9 @@
     @if($sessions->count() > 1)
         <div class="card bg-base-100 shadow">
             <div class="card-body">
-                <h3 class="card-title">Other Active Sessions</h3>
+                <h3 class="card-title">Other Sign-In Sessions</h3>
                 <p class="text-sm text-gray-500">
-                    You have {{ $sessions->count() - 1 }} other active session(s).
+                    You have {{ $sessions->count() - 1 }} other {{ str('session')->plural($sessions->count() - 1) }}.
                 </p>
 
                 <div class="space-y-4 mt-4">
@@ -50,7 +50,7 @@
                                     </p>
                                 </div>
                                 <x-button class="btn-outline btn-sm" wire:click="revokeSession('{{ $session->id }}')">
-                                    Revoke
+                                    Sign Out
                                 </x-button>
                             </div>
                         @endif
@@ -62,14 +62,14 @@
         {{-- Logout All Other Sessions --}}
         <div class="card bg-base-100 shadow">
             <div class="card-body">
-                <h3 class="card-title">Logout All Other Devices</h3>
+                <h3 class="card-title">Sign Out Other Sessions</h3>
                 <p class="text-sm text-gray-500">
-                    This will log you out of all other devices where you're currently signed in.
+                    Sign out of all other browsers and devices. This session will stay signed in.
                 </p>
 
                 <div class="mt-4">
                     <x-input
-                        label="Enter your password to confirm"
+                        label="Current Password"
                         type="password"
                         wire:model="current_password"
                         autocomplete="current-password"
@@ -83,14 +83,14 @@
                         wire:click="logoutOtherSessions"
                         spinner="logoutOtherSessions"
                     >
-                        Logout All Other Devices
+                        Sign Out Other Sessions
                     </x-button>
                 </div>
             </div>
         </div>
     @else
         <x-alert icon="phosphor-info">
-            You are only logged in on this device.
+            No other sign-in sessions are listed.
         </x-alert>
     @endif
 </div>

@@ -26,7 +26,7 @@ class AlbumExportController extends Controller
             ]
         );
 
-        return back()->with('status', 'Your album is being prepared. You\'ll receive a notification when it\'s ready.');
+        return back()->with('status', 'Your album ZIP has been requested. You\'ll receive a notification when it\'s ready to download.');
     }
 
     public function download(EventConfiguration $eventConfiguration, string $filename): StreamedResponse

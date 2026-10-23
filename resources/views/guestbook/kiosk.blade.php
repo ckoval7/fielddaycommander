@@ -25,8 +25,8 @@ Like the TV dashboard it reloads itself on a 419 rather than leaving the page.
             <div class="alert alert-info">
                 <x-icon name="phosphor-info" class="w-6 h-6" />
                 <div>
-                    <h1 class="font-bold">No Active Event</h1>
-                    <p>Currently, there is no active Field Day event accepting guestbook entries. Please check back later!</p>
+                    <h1 class="font-bold">Guestbook Closed</h1>
+                    <p>The guestbook is not accepting entries. Please check back later.</p>
                 </div>
             </div>
         @else
