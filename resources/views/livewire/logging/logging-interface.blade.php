@@ -135,6 +135,11 @@
                 spellcheck="false"
             />
         </div>
+
+        {{-- Shown while the browser can't save the queue and contacts are waiting to sync --}}
+        <div x-show="storageWarningVisible" x-cloak role="alert" data-queue-storage-warning class="bg-warning text-warning-content text-sm font-semibold px-4 py-2 text-center">
+            Contacts waiting to sync aren't saved on this device. Don't close or reload this page until they sync.
+        </div>
     </div>
 
     <div wire:poll.30s="refreshBandModeWarning">
