@@ -15,7 +15,7 @@
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 text-xs sm:text-sm flex-shrink-0">
                 <span class="flex items-center gap-1.5">
                     <x-icon name="phosphor-cube" class="w-4 h-4 flex-shrink-0" />
-                    <span class="font-medium">{{ $this->assignedCount }}</span> <span class="hidden sm:inline">items</span>
+                    <span class="font-medium">{{ $this->assignedCount }}</span> <span class="hidden sm:inline">{{ str('item')->plural($this->assignedCount) }}</span>
                 </span>
                 @if($this->assignedTotalValue > 0)
                     <span class="flex items-center gap-1.5">
@@ -70,7 +70,7 @@
                         <span>Assigned to Station</span>
                     </div>
                     <div class="text-xs text-base-content/50 font-normal hidden sm:block">
-                        Drag equipment here or use keyboard (Space/Arrows/Escape)
+                        Drag equipment here or use the assignment buttons
                     </div>
                 </div>
             </x-slot:title>
@@ -101,11 +101,11 @@
                                 icon="phosphor-eye"
                                 class="btn-ghost btn-sm btn-circle min-h-[2.75rem] sm:min-h-[1.75rem] flex-shrink-0"
                                 wire:click="showDetails({{ $this->stationModel->primaryRadio->id }})"
-                                title="View details"
+                                title="View equipment details"
                             />
                         </div>
                         <div class="mt-2 text-xs text-base-content/50 italic">
-                            Primary radio is selected in the main station form
+                            Select the primary radio on the Configuration tab
                         </div>
                     </div>
                 </div>
@@ -157,7 +157,7 @@
                                             icon="phosphor-eye"
                                             class="btn-ghost btn-sm btn-circle min-h-[2.75rem] sm:min-h-[1.75rem]"
                                             wire:click="showDetails({{ $commitment->equipment->id }})"
-                                            title="View details"
+                                            title="View equipment details"
                                         />
                                         @if($this->canManage)
                                             <x-button
@@ -166,7 +166,7 @@
                                                 wire:click="requestUnassign({{ $commitment->equipment->id }})"
                                                 wire:loading.attr="disabled"
                                                 wire:target="requestUnassign"
-                                                title="Unassign"
+                                                title="Unassign equipment"
                                             />
                                         @endif
                                     </div>
@@ -181,15 +181,15 @@
                         <x-icon name="phosphor-cube" class="w-10 sm:w-12 h-10 sm:h-12 mx-auto text-base-content/30" />
                         <p class="mt-2 text-xs sm:text-base text-base-content/70">No equipment assigned</p>
                         <p class="text-xs sm:text-sm text-base-content/50 mt-1">
-                            Browse available equipment below, then drag & drop to assign
+                            Use the available equipment tabs to find equipment to assign
                         </p>
                         <p class="text-xs text-base-content/40 mt-2 hidden sm:block">
-                            Keyboard: Tab to equipment, Space to pick up, Space again to drop, Escape to cancel
+                            Keyboard: Tab to an assignment button, then press Enter or Space
                         </p>
                     </output>
                 @else
                     <output class="text-center py-4 text-xs sm:text-sm text-base-content/50 block">
-                        No additional equipment assigned. Browse available equipment below.
+                        No additional equipment assigned. Check the available equipment tabs.
                     </output>
                 @endif
             @endforelse
@@ -326,7 +326,7 @@
                                     @if($searchQuery || $typeFilter || $ownerFilter !== 'all')
                                         No equipment matches your filters
                                     @else
-                                        No uncommitted equipment available for this event
+                                        No equipment is waiting for a station assignment
                                     @endif
                                 </p>
                             </div>
@@ -334,7 +334,7 @@
                     </div>
                 </x-tab>
 
-                <x-tab name="catalog" label="All Equipment Catalog" icon="phosphor-archive">
+                <x-tab name="catalog" label="Equipment Catalog" icon="phosphor-archive">
                     <div class="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2">
                         @forelse($this->catalogEquipment as $equipment)
                             <div
@@ -485,9 +485,9 @@
     </x-modal>
 
     {{-- Unassign Confirmation Modal --}}
-    <x-modal wire:model="showUnassignConfirmModal" title="Confirm Unassign" persistent>
+    <x-modal wire:model="showUnassignConfirmModal" title="Unassign Equipment?" persistent>
         <x-alert icon="phosphor-warning" class="alert-warning">
-            This station has an active operating session. Unassigning equipment while the station is in use may cause issues.
+            This station has an active operating session. Check with the operator before removing equipment.
         </x-alert>
         <p class="mt-4 text-xs sm:text-sm text-base-content/70">
             The equipment will remain committed to this event but will no longer be assigned to this station.
@@ -513,7 +513,7 @@
     <x-modal wire:model="showWarningModal" title="Assignment Warnings" persistent>
         <div class="space-y-3">
             <p class="text-sm text-base-content/70">
-                The following issues were detected. Would you like to proceed anyway?
+                Review these warnings before assigning the equipment.
             </p>
 
             @foreach($warningMessages as $warning)

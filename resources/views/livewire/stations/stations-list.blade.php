@@ -4,7 +4,7 @@
 --}}
 <div class="space-y-6">
     {{-- Header --}}
-    <x-header title="Stations" subtitle="Manage field day stations and equipment assignments" separator progress-indicator>
+    <x-header title="Stations" subtitle="Manage stations and equipment assignments" separator progress-indicator>
         <x-slot:actions>
             @can('log-contacts')
                 <x-button label="Log Contact" icon="phosphor-pencil-line" class="btn-outline" link="{{ route('logging.station-select') }}" wire:navigate responsive />
@@ -82,7 +82,7 @@
             <div class="text-center py-12 text-base-content/60">
                 <x-icon name="phosphor-radio" class="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p class="text-lg font-semibold mb-2">No Event Selected</p>
-                <p class="text-sm">Please select an event to view its stations.</p>
+                <p class="text-sm">Select an event to view its stations.</p>
             </div>
         </x-card>
     @elseif($stations->isEmpty())
@@ -113,7 +113,7 @@
                                 @endif
 
                                 @if($station->is_vhf_only)
-                                    <x-badge value="VHF-only" class="badge-info badge-sm sm:badge-md" icon="phosphor-cell-signal-high" />
+                                    <x-badge value="VHF/UHF Only" class="badge-info badge-sm sm:badge-md" icon="phosphor-cell-signal-high" />
                                 @endif
 
                                 @if($station->is_satellite)
@@ -270,7 +270,7 @@
                                     icon="phosphor-trash"
                                     class="btn-sm btn-ghost text-error min-h-[2.75rem] sm:min-h-[1.75rem]"
                                     wire:click="deleteStation({{ $station->id }})"
-                                    wire:confirm="Are you sure you want to delete '{{ $station->name }}'? {{ $station->contacts()->exists() ? 'This station has contacts and will be archived (soft deleted).' : 'This station will be permanently deleted.' }}"
+                                    wire:confirm="Delete '{{ $station->name }}'? {{ $station->contacts()->exists() ? 'This station has logged contacts and will be archived.' : 'This station will be permanently deleted.' }}"
                                     spinner
                                 />
                             @endcan

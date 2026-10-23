@@ -4,7 +4,7 @@
 --}}
 <div>
     {{-- Clone Modal --}}
-    <x-modal wire:model="showModal" title="Clone Stations from Previous Event" subtitle="Copy station configurations from a past event to a new event" class="backdrop-blur" persistent>
+    <x-modal wire:model="showModal" title="Clone Stations from Event" subtitle="Copy station configurations to another event" class="backdrop-blur" persistent>
         <form wire:submit.prevent>
             {{-- Step 1: Event Selection --}}
             <div class="mb-6">
@@ -19,7 +19,7 @@
                         option-label="name"
                         placeholder="Select an event to clone from..."
                         icon="phosphor-calendar"
-                        hint="Only completed or past events with stations are shown"
+                        hint="Only events with stations are shown"
                         required
                     >
                         <x-slot:prepend>
@@ -88,11 +88,11 @@
                                             @endif
 
                                             @if($station->is_vhf_only)
-                                                <x-badge value="VHF" class="badge-info badge-sm" icon="phosphor-cell-signal-high" />
+                                                <x-badge value="VHF/UHF Only" class="badge-info badge-sm" icon="phosphor-cell-signal-high" />
                                             @endif
 
                                             @if($station->is_satellite)
-                                                <x-badge value="SAT" class="badge-accent badge-sm" icon="phosphor-globe" />
+                                                <x-badge value="Satellite" class="badge-accent badge-sm" icon="phosphor-globe" />
                                             @endif
                                         </div>
 
@@ -124,7 +124,7 @@
 
                 {{-- Step 3: Clone Options --}}
                 <div class="mb-6">
-                    <x-header title="Step 3: Clone Options" subtitle="Configure how stations should be cloned" size="text-lg" separator />
+                    <x-header title="Step 3: Clone Options" subtitle="Choose the destination and what to copy" size="text-lg" separator />
 
                     <div class="mt-4 space-y-4">
                         {{-- Target Event --}}
@@ -231,14 +231,14 @@
                         {{-- Conflict Actions --}}
                         <div class="flex gap-3 justify-end pt-2">
                             <x-button
-                                label="Cancel Clone"
+                                label="Back to Clone Options"
                                 icon="phosphor-x"
                                 class="btn-ghost"
                                 wire:click="cancelConflictPreview"
                                 type="button"
                             />
                             <x-button
-                                label="Skip Unavailable Equipment & Continue"
+                                label="Clone Without Unavailable Equipment"
                                 icon="phosphor-arrow-clockwise"
                                 class="btn-warning"
                                 wire:click="continueWithSkip"
@@ -293,7 +293,7 @@
         <div class="text-center">
             <x-loading class="loading-spinner loading-lg" />
             <div class="mt-4 text-lg font-medium">Cloning {{ count($selectedStationIds) }} {{ str('station')->plural(count($selectedStationIds)) }}...</div>
-            <div class="text-sm text-base-content/70 mt-1">Creating equipment assignments...</div>
+            <div class="text-sm text-base-content/70 mt-1">Saving station configurations...</div>
         </div>
     </div>
 </div>
