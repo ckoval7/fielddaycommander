@@ -33,8 +33,11 @@
                             class="btn-ghost"
                             type="button"
                             x-on:click="
-                                navigator.clipboard.writeText($wire.newPassword);
-                                $wire.dispatch('toast', { title: 'Copied', description: 'Password copied to clipboard', icon: 'phosphor-clipboard', css: 'alert-info' });
+                                if (await $copy($wire.newPassword)) {
+                                    $wire.dispatch('toast', { title: 'Copied', description: 'Password copied to clipboard', icon: 'phosphor-clipboard', css: 'alert-info' });
+                                } else {
+                                    $wire.dispatch('toast', { title: 'Could not copy', description: 'Select the password and copy it manually', icon: 'phosphor-warning', css: 'alert-warning' });
+                                }
                             "
                             tooltip="Copy password"
                         aria-label="Copy password"

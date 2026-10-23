@@ -17,6 +17,7 @@
 - Guestbook visitor categories use plainer names for club members, agency representatives, ARES/RACES volunteers, and media representatives, with stored values unchanged. The printed message header now says **Radiogram** instead of **ARRL Radiogram**.
 
 ### Fixed
+- Over plain HTTP on the club LAN, the copy buttons for the registration link on the Get Ready page and for generated passwords in the user reset and activate dialogs did nothing, and the password buttons still said "Copied". They now copy in that case too, and show a message if copying fails.
 
 - A guestbook entry from an online visitor could be verified as an agency or elected official visit, which earns the visit bonus even though the visit was not in person. Verifying one from the edit window now shows a message that agency and elected official visits must be in person to count, and **Verify** on a selection skips those entries and says how many it skipped. The bonus eligible count and the bonus sidebar no longer include online entries. Entries already verified are left as they are.
 - In the Role Manager, the description typed when creating a role was thrown away. It's now saved and shown under the role's name, and you can change it later with the **Edit** button on the selected role. The built-in roles get short descriptions on upgrade, unless they already have one.
