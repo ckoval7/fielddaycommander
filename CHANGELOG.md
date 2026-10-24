@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- Checklists can run once for the event, once per station, or once per person, with required items and checkbox, yes/no/N/A, short text, or number answers. Progress updates live as volunteers answer.
+- Seven checklist templates cover ARRL safety checks, volunteer briefings, station setup, go-kits, shelter or EOC opening, and teardown. You can also copy items and settings from a past event without its answers, or start blank. Operators at a station-mode computer can complete that station's checklists if they aren't limited to shift roles.
+
+### Changed
+
+- **Checklists** replaces **Site Safety**, and **Manage Checklists** replaces its management page. Old links redirect, and existing checklists and answers carry over. The ARRL Safety Officer and Site Responsibilities bonuses are still recorded automatically when their checklists are complete. Their completion rules stay fixed, and their ARRL items can't be deleted.
+
 ## 26.10.12 - 2026-10-23
 
 ### Added

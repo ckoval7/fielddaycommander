@@ -3,23 +3,25 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use App\Enums\ChecklistType;
 use App\Models\BonusType;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\OperatingClass;
-use App\Models\SafetyChecklistEntry;
-use App\Models\SafetyChecklistItem;
 use Database\Seeders\BonusTypeSeeder;
 use Database\Seeders\EventTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed([EventTypeSeeder::class, BonusTypeSeeder::class]);
     $this->fdTypeId = EventType::where('code', 'FD')->value('id');
+
+    // These migrations ran against the fixed-type checklist tables, which a
+    // later migration moved into checklist records and dropped.
+    (require database_path('migrations/2026_10_24_000001_move_safety_checklists_to_checklist_records.php'))->down();
 });
 
 function fieldDayBonusType(int $eventTypeId, string $code, string $version = '2025'): BonusType
@@ -27,9 +29,9 @@ function fieldDayBonusType(int $eventTypeId, string $code, string $version = '20
     return BonusType::where('event_type_id', $eventTypeId)->where('rules_version', $version)->where('code', $code)->sole();
 }
 
-function checklistItem(EventConfiguration $config, ChecklistType $type, bool $completed, bool $required = true): void
+function checklistItem(EventConfiguration $config, string $type, bool $completed, bool $required = true): void
 {
-    $item = SafetyChecklistItem::create([
+    $itemId = DB::table('safety_checklist_items')->insertGetId([
         'event_configuration_id' => $config->id,
         'checklist_type' => $type,
         'label' => fake()->unique()->sentence(3),
@@ -37,7 +39,7 @@ function checklistItem(EventConfiguration $config, ChecklistType $type, bool $co
         'is_default' => true,
         'sort_order' => 0,
     ]);
-    SafetyChecklistEntry::create(['safety_checklist_item_id' => $item->id, 'is_completed' => $completed]);
+    DB::table('safety_checklist_entries')->insert(['safety_checklist_item_id' => $itemId, 'is_completed' => $completed]);
 }
 
 test('computed and checklist field day bonuses are derived for every rules version', function () {
@@ -58,10 +60,10 @@ test('computed and checklist field day bonuses are derived for every rules versi
 
 test('manually claimed safety bonuses without a complete checklist are removed', function () {
     $earned = EventConfiguration::factory()->create();
-    checklistItem($earned, ChecklistType::SafetyOfficer, completed: true);
+    checklistItem($earned, 'safety_officer', completed: true);
 
     $skipped = EventConfiguration::factory()->create();
-    checklistItem($skipped, ChecklistType::SafetyOfficer, completed: false);
+    checklistItem($skipped, 'safety_officer', completed: false);
 
     $safetyOfficer = fieldDayBonusType($this->fdTypeId, 'safety_officer');
 
@@ -89,16 +91,16 @@ test('safety officer bonus and checklist are removed from non class A events', f
     $siteResponsibilities = fieldDayBonusType($this->fdTypeId, 'site_responsibilities');
 
     foreach ([$classA, $classF] as $config) {
-        checklistItem($config, ChecklistType::SafetyOfficer, completed: true);
+        checklistItem($config, 'safety_officer', completed: true);
         EventBonus::factory()->create(['event_configuration_id' => $config->id, 'bonus_type_id' => $safetyOfficer->id, 'is_verified' => true]);
     }
-    checklistItem($classF, ChecklistType::SiteResponsibilities, completed: true);
+    checklistItem($classF, 'site_responsibilities', completed: true);
     EventBonus::factory()->create(['event_configuration_id' => $classF->id, 'bonus_type_id' => $siteResponsibilities->id, 'is_verified' => true]);
 
     (require database_path('migrations/2026_10_17_230001_remove_safety_officer_from_non_class_a_events.php'))->up();
 
     expect(EventBonus::where('event_configuration_id', $classA->id)->pluck('bonus_type_id')->all())->toBe([$safetyOfficer->id])
         ->and(EventBonus::where('event_configuration_id', $classF->id)->pluck('bonus_type_id')->all())->toBe([$siteResponsibilities->id])
-        ->and(SafetyChecklistItem::forEvent($classF->id)->pluck('checklist_type')->all())->toBe([ChecklistType::SiteResponsibilities])
-        ->and(SafetyChecklistItem::forEvent($classA->id)->count())->toBe(1);
+        ->and(DB::table('safety_checklist_items')->where('event_configuration_id', $classF->id)->pluck('checklist_type')->all())->toBe(['site_responsibilities'])
+        ->and(DB::table('safety_checklist_items')->where('event_configuration_id', $classA->id)->count())->toBe(1);
 });

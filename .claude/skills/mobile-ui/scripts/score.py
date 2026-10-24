@@ -14,7 +14,7 @@ AUTH_PAGES = [
     "/", "/logging/session/1", "/logging/transcribe", "/logbook", "/events", "/events/create",
     "/stations", "/stations/create", "/schedule", "/schedule/manage", "/schedule/my-shifts",
     "/equipment", "/equipment/create", "/guestbook", "/gallery", "/users", "/profile", "/settings",
-    "/admin/audit-logs", "/scoring", "/reports", "/weather", "/site-safety", "/section-map",
+    "/admin/audit-logs", "/scoring", "/reports", "/weather", "/checklists", "/section-map",
     "/w1aw-bulletin",
 ]
 

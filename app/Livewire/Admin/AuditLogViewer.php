@@ -250,7 +250,14 @@ class AuditLogViewer extends Component
                 'bulletin.updated' => 'Bulletin updated',
                 'bulletin.deleted' => 'Bulletin deleted',
             ],
-            'Safety' => [
+            'Checklists' => [
+                'checklist.created' => 'Checklist created',
+                'checklist.updated' => 'Checklist updated',
+                'checklist.deleted' => 'Checklist deleted',
+                'checklist.item.created' => 'Checklist item created',
+                'checklist.item.updated' => 'Checklist item updated',
+                'checklist.item.deleted' => 'Checklist item deleted',
+                'checklist.item.answered' => 'Checklist item answered',
                 'safety.item.created' => 'Safety item created',
                 'safety.item.updated' => 'Safety item updated',
                 'safety.item.deleted' => 'Safety item deleted',
