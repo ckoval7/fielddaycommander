@@ -208,7 +208,7 @@
       <ul>
         <li><strong>Site Name</strong>: defaults to "Field Day Commander." You might change it to your club name or something like "W3XYZ Field Day 2026."</li>
         <li><strong>Site Tagline</strong>: defaults to "ARRL Field Day Logging System." It shows under the site name.</li>
-        <li><strong>Site Logo</strong>: upload your club logo (PNG, JPG, or SVG, max 2 MB, square and at least 200x200px). Optional.</li>
+        <li><strong>Site Logo</strong>: upload your club logo (PNG or JPG, max 2 MB, square and at least 200x200px). Optional.</li>
       </ul>
 
       <h3>Step 3: System Preferences</h3>
@@ -222,14 +222,14 @@
         <li><strong>Timezone</strong> (required): searchable dropdown. Pick the timezone where your event will run.</li>
         <li><strong>Date Format</strong> (required): ISO (2026-04-05), US (04/05/2026), or EU (05/04/2026).</li>
         <li><strong>Time Format</strong> (required): 24-hour (16:10) or 12-hour (04:10 PM).</li>
-        <li><strong>Contact Email</strong>: optional, used as public contact information.</li>
+        <li><strong>Weather Contact Email</strong>: optional, sent to the National Weather Service with weather requests.</li>
       </ul>
 
       <p>Click <strong>Complete Setup</strong>. Field Day Commander saves your settings and redirects you to the login page. Sign in with the email <code>admin@localhost</code> and the password you just created. You'll land on the main dashboard.</p>
 
       <div class="callout info">
         <div class="callout-title">You can change all of this later</div>
-        <p>Everything from the setup wizard is editable under <strong>Administration &gt; Settings</strong>. You can update your admin password under your profile, and change branding and preferences any time.</p>
+        <p>Everything from the setup wizard is editable under <strong>Administration &gt; System Settings</strong>. You can update your admin password under your profile, and change branding and preferences any time.</p>
       </div>
 
       <h2>Create the Event</h2>
@@ -299,7 +299,7 @@
 
       <h2>Add Equipment</h2>
 
-      <p>Before you can create stations, you need radios in the system. Go to <strong>Equipment &gt; My Catalog</strong>. This page lists your personal gear. There are two ways to add equipment:</p>
+      <p>Before you can create stations, you need radios in the system. Go to <strong>Equipment &gt; My Equipment</strong>. This page lists your personal gear. There are two ways to add equipment:</p>
 
       <h3>Personal equipment</h3>
 
@@ -314,7 +314,7 @@
       <p>Once equipment is in the system, it needs to be <strong>committed</strong> to the event. There are two ways this happens:</p>
 
       <ul>
-        <li><strong>Operators commit their own gear</strong> from <strong>Equipment &gt; My Catalog</strong>. Click the actions menu (<strong>⋮</strong>) on any item and choose <strong>Commit to Event</strong>. A dialog asks which event, the expected delivery date, and any delivery notes.</li>
+        <li><strong>Operators commit their own gear</strong> from <strong>Equipment &gt; My Equipment</strong>. Click the actions menu (<strong>⋮</strong>) on any item and choose <strong>Commit to Event</strong>. A dialog asks which event, the expected delivery date, and any delivery notes.</li>
         <li><strong>Admins commit club equipment</strong> from the Equipment Dashboard at <strong>Administration &gt; Event Equipment</strong>. Click <strong>Commit Club Equipment</strong> to assign club gear in bulk. The dashboard tracks each item through its lifecycle: committed, delivered on-site, and returned after the event, and flags issues like lost or damaged gear.</li>
       </ul>
 
@@ -375,7 +375,7 @@
 
       <p>Switch to the <strong>Shifts</strong> tab and click <strong>Add Shift</strong>. Each shift needs a role, a start and end time, a capacity (how many people can fill the slot), and optionally notes. The <strong>Open for Sign-ups</strong> toggle controls whether operators can self-assign or whether you assign them manually.</p>
 
-      <p>For a 24-hour Field Day, you'll probably want shift blocks of 2 to 4 hours per station. Use the <strong>Bulk Create</strong> button to generate multiple blocks at once instead of creating them one by one.</p>
+      <p>For a 24-hour Field Day, you'll probably want shift blocks of 2 to 4 hours per station. Use the <strong>Create Multiple Shifts</strong> button to generate multiple blocks at once instead of creating them one by one.</p>
 
       <div class="callout warning">
         <div class="callout-title">Times are entered in local time</div>

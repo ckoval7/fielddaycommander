@@ -557,7 +557,7 @@
     <h2 id="first-event">First Event Setup</h2>
     <p>The first time you open Field Day Commander, a setup wizard walks you through three steps. Step 1 sets the admin password for the pre-created <code>SYSTEM</code> account (callsign SYSTEM, email <code>admin@localhost</code>). Step 2 configures site branding: your site name (defaults to "Field Day Commander"), an optional tagline, and an optional logo upload. Step 3 sets your organization information and system preferences including timezone, date format, and time format. After the wizard completes, you're redirected to the login page.</p>
 
-    <p>Sign in with <code>admin@localhost</code> and the password you set. The app will display a prominent warning that the SYSTEM account is for initial configuration only. Your first action should be to create a personal account tied to your own callsign. Go to <strong>Administration &gt; Users</strong>, click <strong>Add User</strong>, fill in your callsign, email, name, and password, and set the role to <strong>System Administrator</strong>. Then log out via the account menu in the top-right corner and sign back in with your personal account. From that point on the SYSTEM account can be left alone. See the <a href="how-to/first-event.html">First Event Setup how-to</a> for a detailed walkthrough.</p>
+    <p>Sign in with <code>admin@localhost</code> and the password you set. The app will display a prominent warning that the SYSTEM account is for initial configuration only. Your first action should be to create a personal account tied to your own callsign. Go to <strong>Administration &gt; Users</strong>, click <strong>Add User</strong>, fill in your callsign, email, name, and password, and set the role to <strong>System Administrator</strong>. Then choose <strong>Sign Out</strong> from the account menu in the top-right corner and sign back in with your personal account. From that point on the SYSTEM account can be left alone. See the <a href="how-to/first-event.html">First Event Setup how-to</a> for a detailed walkthrough.</p>
 
     <h3>Create an Event</h3>
     <p>Click <strong>Create Event</strong> on the dashboard. The form is split into cards. Under <strong>Event Information</strong>, give the event a name and pick the event type. For Field Day, the start and end times fill in from the ARRL schedule (fourth full weekend of June, 1800 UTC Saturday to 2059 UTC Sunday). For Winter Field Day, they come from the WFDA schedule (fourth full weekend of January, 1600 UTC Saturday to 2159 UTC Sunday). The form also shows when the setup window opens. For Winter Field Day that's 24 hours before the start, Friday at 1600 UTC. The <strong>Scoring Rules</strong> dropdown lets you pick which rule year to score by. It defaults to the event's year and locks once the event starts.</p>
@@ -640,17 +640,17 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="user-roles">User Roles</h2>
-    <p>Field Day Commander ships with five built-in roles. Each role has a specific set of permissions that control what parts of the system a user can access. Roles are managed under <strong>Settings &gt; Role Management</strong> (a tab on the Settings page).</p>
+    <p>Field Day Commander ships with five built-in roles. Each role has a specific set of permissions that control what parts of the system a user can access. Roles are managed under <strong>System Settings &gt; Role Management</strong> (a tab on the System Settings page).</p>
 
     <div class="req-table-wrapper">
       <table class="req-table">
         <thead><tr><th>Role</th><th>What They Can Do</th></tr></thead>
         <tbody>
-          <tr><td>System Administrator</td><td>26 permissions. Full access to everything: contact logging, all event management, all station and equipment functions, user administration, scheduling, content management, reporting, security logs, contact import, and weather management. Marked as <em>System Protected</em>, so this role always exists and can't be deleted.</td></tr>
+          <tr><td>System Administrator</td><td>26 permissions. Full access to everything: contact logging, all event management, all station and equipment functions, user administration, scheduling, content management, reporting, security logs, contact import, and weather management. Marked as <em>Protected Role</em>, so this role always exists and can't be deleted.</td></tr>
           <tr><td>Event Manager</td><td>23 permissions. Manages the full operational side of Field Day: logging and importing contacts, managing events, stations, equipment, schedules, bonuses, guestbook, photos, security logs, and weather. Cannot administer users, roles, or system settings.</td></tr>
           <tr><td>Station Captain</td><td>10 permissions. Logs and edits contacts, manages stations and equipment inventory, marks stations unavailable or ready, sets up station-mode browsers, handles equipment assignments, manages the W1AW bulletin schedule, views all equipment, and signs up for shifts. Runs an operating position and keeps operators on task.</td></tr>
           <tr><td>Operator</td><td>4 permissions. Logs contacts, views stations, manages personal equipment, and signs up for shifts. The default role for new registrations. Intentionally minimal so new hams can get on the air without seeing admin clutter.</td></tr>
-          <tr><td>Config Only</td><td>8 permissions. A restricted bootstrap role: can manage users, roles, and settings, and has read-only access to events, stations, equipment, reports, and security logs. Cannot log contacts, manage events operationally, or participate in operations. Assigned exclusively to the built-in SYSTEM account. Marked as <em>System Protected</em>.</td></tr>
+          <tr><td>Config Only</td><td>8 permissions. A restricted bootstrap role: can manage users, roles, and settings, and has read-only access to events, stations, equipment, reports, and security logs. Cannot log contacts, manage events operationally, or participate in operations. Assigned exclusively to the built-in SYSTEM account. Marked as <em>Protected Role</em>.</td></tr>
         </tbody>
       </table>
     </div>
@@ -901,7 +901,7 @@
     </div>
 
     <h3>Creating Custom Roles</h3>
-    <p>The five default roles cover most clubs, but you can create your own. Go to <strong>Settings &gt; Role Management</strong> and click <strong>+ Create New Role</strong>. Give the role a name, then check the permissions you want it to have. Permissions are grouped by category with a <em>Select All</em> toggle at the top of each group, so you can quickly grant an entire category at once or pick individual permissions one by one. Click <strong>Save Permissions</strong> when you're done.</p>
+    <p>The five default roles cover most clubs, but you can create your own. Go to <strong>System Settings &gt; Role Management</strong> and click <strong>Create Role</strong>. Give the role a name, then check the permissions you want it to have. Permissions are grouped by category with a <em>Select All</em> toggle at the top of each group, so you can quickly grant an entire category at once or pick individual permissions one by one. Click <strong>Save Permissions</strong> when you're done.</p>
 
     <p>A few ideas for custom roles: a <em>Logger</em> role with log-contacts and edit-contacts for experienced operators who need to fix mistakes, a <em>Public Info</em> role with just manage-guestbook and view-reports for the person running the public information table, or a <em>Tech Lead</em> with manage-stations and manage-equipment but no event management access.</p>
 
@@ -913,12 +913,12 @@
     <h3>User Management Actions</h3>
     <p>The Users page also gives administrators a few account management tools. From the actions menu on any user row, you can <strong>Lock Account</strong> to temporarily disable a user's access (and <strong>Unlock Account</strong> to restore it), <strong>Force Password Change</strong> to require them to change their password on next login, <strong>Reset Password</strong> to generate a new one, or <strong>Delete</strong> to remove the account entirely. These actions are only available to users with the manage-users permission.</p>
 
-    <h3>Ghost Accounts</h3>
-    <p>A ghost account is a callsign with no login. Field Day Commander creates one when it sees a new callsign at a <a href="#station-mode">station-mode</a> browser, from an external logger, or in an ADIF import. The account lets contacts be credited to that callsign. Nobody can sign in with it.</p>
+    <h3>Callsign-Only Accounts</h3>
+    <p>A callsign-only account is a callsign with no login. Field Day Commander creates one when it sees a new callsign at a <a href="#station-mode">station-mode</a> browser, from an external logger, or in an ADIF import. The account lets contacts be credited to that callsign. It has no personal sign-in; the operator can still use their callsign at a station-mode browser.</p>
 
-    <p>Ghost accounts show a <strong>Ghost</strong> badge on the Users page. To list them, set the <strong>Status</strong> filter to <strong>Ghost (No Login)</strong>.</p>
+    <p>Callsign-only accounts show a <strong>No Sign-In</strong> badge on the Users page. To list them, set the <strong>Status</strong> filter to <strong>No Sign-In (callsign only)</strong>.</p>
 
-    <p>To turn a ghost into a real login, choose <strong>Activate Account</strong> from its actions menu. Enter an email, confirm the name, and copy the <strong>Temporary Password</strong> to give the operator. Click <strong>Activate</strong>. The account gets the Operator role if it has none, and they'll have to change the password the first time they sign in.</p>
+    <p>To give a callsign-only account a personal sign-in, choose <strong>Activate Account</strong> from its actions menu. Enter an email, confirm the name, and copy the <strong>Temporary Password</strong> to give the operator. Click <strong>Activate Account</strong>. The account gets the Operator role if it has none, and they'll have to change the password the first time they sign in.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  STATIONS                                  -->
@@ -939,7 +939,7 @@
     <p><strong>Power Configuration:</strong> Set the max power output in watts. Field Day Commander validates this against the event's power limit and shows a confirmation when it's within range. Pick a <strong>Power Source</strong> (Generator, Commercial Mains, Battery, Solar, or Other) and add optional <strong>Power Source Notes</strong>. Both the power and the power source feed the power multiplier: the highest station power sets it for the whole entry, and a station on generator or commercial power rules out the 5x QRP multiplier.</p>
 
     <h3>Assigning Equipment</h3>
-    <p>Switch to the <strong>Equipment</strong> tab to assign additional gear beyond the primary radio. The left panel shows what's already assigned to the station. The right panel lists available equipment, filterable by type, owner, and whether it's committed to this event or from the general catalog. Drag items from right to left to assign them, or use keyboard navigation with Space/Arrows/Escape.</p>
+    <p>Switch to the <strong>Equipment</strong> tab to assign additional gear beyond the primary radio. The left panel shows what's already assigned to the station. The right panel lists available equipment, filterable by type, owner, and whether it's committed to this event or from the general catalog. Use the search and filters to find equipment, then drag items from right to left to assign them.</p>
 
     <h3>Station Activity</h3>
     <p>The <strong>Activity</strong> tab on a station's edit page shows what the station has done so far: <strong>Total QSOs</strong>, <strong>Total Sessions</strong>, and an <strong>Operating Sessions</strong> table listing each operator's band, mode, start and end times, duration, and QSO count.</p>
@@ -963,15 +963,15 @@
     <p>Station captains, event managers, and admins can enroll a browser. On the laptop that will stay at the station, sign in and go to <strong>Event Management &gt; Stations</strong>. Each station card has a <strong>Station-Mode Browsers</strong> block. Click <strong>Use This Browser for Station Mode</strong> and confirm. You're signed out right away, and the browser now shows the station-mode screen for that station. The enrollment lasts a year, and a station can have more than one enrolled browser.</p>
 
     <h3>What Operators See</h3>
-    <p>The station-mode screen shows the station name, a <strong>Your callsign</strong> field, and a <strong>Start Logging</strong> button. If Field Day Commander doesn't know the callsign yet, it asks for a first and last name and creates a <a href="#user-roles">ghost account</a> for it. An existing member's callsign works too, without their password, but they only get station-mode powers. On a GOTA station the field is labeled <strong>Control operator callsign</strong>. The GOTA coach signs in and stays put, and each GOTA operator is entered on the logging screen as usual.</p>
+    <p>The station-mode screen shows the station name, a <strong>Your callsign</strong> field, and a <strong>Start Logging</strong> button. If Field Day Commander doesn't know the callsign yet, it asks for a first and last name and creates a <a href="#user-roles">callsign-only account</a> for it. An existing member's callsign works too, without their password, but they only get station-mode powers. On a GOTA station the field is labeled <strong>Control operator callsign</strong>. The GOTA coach signs in and stays put, and each GOTA operator is entered on the logging screen as usual.</p>
 
     <p>After signing in, the operator goes straight to Log Contact with the station already chosen. They pick band, mode, and power and start logging. The session can only log for that station. Admin pages, Transcribe Paper Log, Message Traffic, the bulletin page, photo uploads, and dashboard editing are all off limits, and the safety checklist is read-only. An admin who types their own callsign at the terminal still gets only logging powers. Operators can view the dashboard, the log, the section map, scoring, the shift schedule, and similar read-only pages.</p>
 
     <h3>Ending a Session</h3>
-    <p>The header has a red <strong>End Session</strong> button in place of the user menu. Clicking it (or <strong>End Session</strong> on the logging screen) ends the operating session, signs the operator out, and returns the browser to the callsign screen for the next person. If nobody touches the keyboard, mouse, or screen for 15 minutes, an <strong>Are you still operating?</strong> dialog counts down 60 seconds. Click <strong>I'm Still Here</strong> to keep going. Otherwise the session ends on its own, so a forgotten session doesn't stay open for the next person who walks up.</p>
+    <p>The header has a red <strong>Sign Out</strong> button in place of the user menu. Clicking it (or <strong>End Session</strong> on the logging screen) ends the operating session, signs the operator out, and returns the browser to the callsign screen for the next person. If nobody touches the keyboard, mouse, or screen for 15 minutes, an <strong>Are you still operating?</strong> dialog counts down 60 seconds. Click <strong>Keep Session Open</strong> to keep going. Otherwise the session ends on its own, so a forgotten session doesn't stay open for the next person who walks up.</p>
 
     <h3>Revoking and Exiting</h3>
-    <p>To take a browser out of station mode from anywhere, click <strong>Revoke</strong> next to it on the Stations page. Any operator session on it ends at the next click, and the browser can't start new sessions. At the laptop itself, click <strong>Station captain: exit station mode</strong> at the bottom of the callsign screen and enter the email and password of a captain or admin. A captain who signs in normally on an enrolled browser also gets a <strong>Station Mode Browser</strong> link in the user menu, with <strong>Sign Out</strong> and <strong>Exit Station Mode</strong> buttons.</p>
+    <p>To take a browser out of station mode from anywhere, click <strong>Remove Browser</strong> next to it on the Stations page. Any operator session on it ends at the next click, and the browser can't start new sessions. At the laptop itself, click <strong>Station captain: exit station mode</strong> at the bottom of the callsign screen and enter the email and password of someone with Manage Stations permission. This exits station mode without signing that person in. A captain who signs in normally on an enrolled browser also gets a <strong>Station Mode Browser</strong> link in the user menu, with <strong>Sign Out</strong> and <strong>Exit Station Mode</strong> buttons.</p>
 
     <p>If a station is <a href="#stations">marked unavailable</a>, the station-mode screen shows a warning. Operators can still sign in to view the log, but they can't start a session until the station is marked ready.</p>
 
@@ -992,7 +992,7 @@
     <h3>Creating Shifts</h3>
     <p>Switch to the <strong>Shifts</strong> tab and click <strong>Add Shift</strong>. Each shift needs a role (from the dropdown), a start time and end time (entered in your local timezone and shown to each volunteer in theirs), a capacity (how many people can fill the slot), and optionally notes. The <strong>Open for Sign-ups</strong> toggle controls whether operators can self-assign or whether the manager must assign them manually.</p>
 
-    <p>For events with lots of shifts, use the <strong>Bulk Create</strong> button to generate multiple shift blocks at once instead of creating them one at a time.</p>
+    <p>For events with lots of shifts, use the <strong>Create Multiple Shifts</strong> button to generate multiple shift blocks at once instead of creating them one at a time.</p>
 
     <h3>Managing Shifts</h3>
     <p>Each shift card on the admin Shifts tab has buttons to edit or delete the shift. Unfilled slots have an <strong>Assign</strong> button so the event manager can manually place someone without waiting for self-sign-up. For each person already assigned to a shift, the manager can <strong>Check In</strong>, <strong>Check Out</strong>, <strong>Mark No-Show</strong>, or <strong>Remove Assignment</strong> directly from the card. A no-show frees the slot, so you can assign someone else to it.</p>
@@ -1006,7 +1006,7 @@
     <p>To see who's covering the overnight hours, open <strong>Event Management &gt; Shift Schedule</strong> and click <strong>Dashboard</strong>. Any signed-in user can view it, and it refreshes itself every minute. The <strong>Timeline</strong> card draws each role's shifts across the event, shaded full, partial, or empty, with a marker for the current time. The <strong>Coverage</strong> card gives an overall percentage plus filled slots, open slots, fully staffed shifts, and who's on duty now. <strong>Coverage Gaps</strong> lists upcoming shifts that are unstaffed or under half staffed. Managers can click an open shift on the timeline, or a gap in the list, to assign someone on the spot.</p>
 
     <h3>The Operator View</h3>
-    <p>Operators go to <strong>Event Management &gt; Shift Schedule</strong> to see available shifts filtered by role. They can sign up for open slots and click <strong>My Shifts</strong> to see only their own assignments. <strong>My Shifts</strong> is also in the user menu in the top-right corner.</p>
+    <p>Operators go to <strong>Event Management &gt; Shift Schedule</strong> to see available shifts filtered by role. Check-in opens 15 minutes before a shift starts and closes when it ends. They can sign up for open slots and click <strong>My Shifts</strong> to see only their own assignments. <strong>My Shifts</strong> is also in the user menu in the top-right corner.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  EQUIPMENT                                 -->
@@ -1015,8 +1015,8 @@
     <h2 id="equipment">Equipment Tracking</h2>
     <p>Field Day Commander gives every operator a personal equipment catalog and ties it into the event workflow so you always know what gear is where. There are four equipment pages depending on your role and what you're looking at.</p>
 
-    <h3>My Catalog</h3>
-    <p>Go to <strong>Equipment &gt; My Catalog</strong> and click <strong>Add Equipment</strong>. The form captures everything you'd want to know about a piece of gear:</p>
+    <h3>My Equipment</h3>
+    <p>Go to <strong>Equipment &gt; My Equipment</strong> and click <strong>Add Equipment</strong>. The form captures everything you'd want to know about a piece of gear:</p>
 
     <p><strong>Equipment Details:</strong> Make and model (required), type (Radio, Antenna, Amplifier, Computer, Power Supply, Accessory, Tool, Furniture, or Other), serial number, and a free-text description. Admins also see an <strong>Owner</strong> dropdown to assign equipment to any registered user. Operators creating their own gear won't see this field. Their equipment is assigned to them automatically.</p>
 
@@ -1029,14 +1029,14 @@
     <p><strong>Equipment Photo:</strong> Upload a PNG or JPEG (up to 5 MB) so people can visually identify the gear on-site.</p>
 
     <h3>Club Equipment</h3>
-    <p>Admins and event managers can click <strong>Add Club Equipment</strong> (visible on both the My Catalog page and under <strong>Equipment &gt; Club Equipment</strong>) for gear that belongs to the club rather than any individual member. Operators won't see this button. The form is the same as personal equipment except there's no owner field. Instead there's an optional <strong>Managed By</strong> field to assign a specific person to be responsible for it. Club equipment has its own dedicated listing page where you can filter by type and status.</p>
+    <p>Admins and event managers can click <strong>Add Club Equipment</strong> (visible on both the My Equipment page and under <strong>Equipment &gt; Club Equipment</strong>) for gear that belongs to the club rather than any individual member. Operators won't see this button. The form is the same as personal equipment except there's no owner field. Instead there's an optional <strong>Managed By</strong> field to assign a specific person to be responsible for it. Club equipment has its own dedicated listing page where you can filter by type and status.</p>
 
-    <h3>All User Catalogs</h3>
-    <p>Station captains, event managers, and admins can go to <strong>Equipment &gt; All User Catalogs</strong> to see every piece of equipment in the system across all members, filterable by owner, type, and status. Event managers and admins (anyone with edit-any-equipment) also get an <strong>Add Equipment for User</strong> button, so they can add gear directly to a member's catalog without logging in as that user, and a menu on each item to <strong>Edit</strong> it, <strong>Commit to Event</strong>, update a commitment's status or notes, or <strong>Delete</strong> it.</p>
+    <h3>Equipment Catalog</h3>
+    <p>Station captains, event managers, and admins can go to <strong>Equipment &gt; Equipment Catalog</strong> to see every piece of equipment in the system across all members, filterable by owner, type, and status. Event managers and admins (anyone with edit-any-equipment) also get an <strong>Add Equipment for Owner</strong> button, so they can add gear directly to a member's catalog without logging in as that user, and a menu on each item to <strong>Edit</strong> it, <strong>Commit to Event</strong>, update a commitment's status or notes, or <strong>Delete</strong> it.</p>
 
     <h3>Committing to an Event</h3>
     <p>Committing equipment pledges it for an event. Gear you assign from the general catalog on a station's Equipment tab is committed for you. There are two commitment paths:</p>
-    <p><strong>Operators commit their own gear</strong> directly from <strong>Equipment &gt; My Catalog</strong>. Click the actions menu on any item and choose <strong>Commit to Event</strong>. A dialog asks which event to commit to, an expected delivery date, and optional delivery notes.</p>
+    <p><strong>Operators commit their own gear</strong> directly from <strong>Equipment &gt; My Equipment</strong>. Click the actions menu on any item and choose <strong>Commit to Event</strong>. A dialog asks which event to commit to, an expected delivery date, and optional delivery notes.</p>
     <p><strong>Admins commit club equipment</strong> from the Equipment Dashboard at <strong>Administration &gt; Event Equipment</strong>. Click <strong>Commit Club Equipment</strong> to assign club gear to the event. Committed gear can then be assigned to specific stations on the station's Equipment tab.</p>
 
     <h3>Equipment Dashboard</h3>
@@ -1083,7 +1083,7 @@
     <p>On a GOTA station, the logging interface shows additional fields to identify the operator making the contact: search for a registered user by name or callsign, or manually enter a first name, last name, and callsign for unregistered visitors. This attaches the GOTA operator to each contact for reporting purposes. A GOTA contact can't be logged until a GOTA operator is entered, either a linked user or a first and last name. The same rule applies to paper log transcription for the GOTA station. Contacts that reach the GOTA station from an external logger or an ADIF import count as GOTA contacts, but they aren't tied to a GOTA operator. For setting up and scoring the GOTA station, see the <a href="how-to/gota-station.html">GOTA Station how-to</a>.</p>
 
     <h3>Browsing the Logbook</h3>
-    <p>Go to <strong>Logging &gt; View Log</strong> to open the Logbook Browser. Stats at the top show running totals: total QSOs, total points, unique sections worked, QSOs by mode, and QSOs by band. Below that, a full set of filters lets you slice the log by band, mode, station, operator, ARRL section, callsign, time range, duplicate status (all, exclude dupes, dupes only), and whether the contact was transcribed from paper. The contact table shows QSO time (UTC), callsign, band, mode (with the sub-mode, like "Digital · FT8"), class, section, points, station, and the logger who entered it. On Winter Field Day 2027 events, contacts that earn nothing get a red <strong>no credit</strong> badge, and hovering it says why (see <a href="#winter-field-day">Winter Field Day</a>). Users who can edit contacts can select rows and use <strong>Change Logger</strong> or <strong>Delete</strong> on all of them at once. Use the <strong>Export CSV</strong> button to download the filtered log.</p>
+    <p>Go to <strong>Logging &gt; View Log</strong> to open the Logbook Browser. Stats at the top show running totals: total QSOs, total points, unique sections worked, QSOs by mode, and QSOs by band. Below that, a full set of filters lets you slice the log by band, mode, station, logger, ARRL section, callsign, time range, duplicate status (all, exclude dupes, dupes only), and whether the contact was transcribed from paper. The contact table shows QSO time (UTC), callsign, band, mode (with the sub-mode, like "Digital · FT8"), class, section, points, station, and the logger who entered it. On Winter Field Day 2027 events, contacts that earn nothing get a red <strong>no credit</strong> badge, and hovering it says why (see <a href="#winter-field-day">Winter Field Day</a>). Users who can edit contacts can select rows and use <strong>Change Logger</strong> or <strong>Delete</strong> on all of them at once. Use the <strong>Export CSV</strong> button to download the filtered log.</p>
 
     <h3>Post-Event Editing</h3>
     <p>After the event, operators with the right permissions can edit contacts to fix exchange errors or delete accidental entries. There's a configurable grace period (default: 30 days) during which late contacts can still be added. This is useful for transcribing paper logs (see <a href="#paper-transcription">Paper Log Transcription</a>).</p>
@@ -1111,7 +1111,7 @@
       <li>Set the destination IP to the Field Day Commander server's address with the configured port.</li>
       <li>Optionally, enter each logging PC's computer name in its station's <strong>Hostname (NetBIOS Name)</strong> field on the Stations page for automatic station matching.</li>
     </ul>
-    <p>The listener shows live stats: packets received, errors, and uptime. You can expand "Last Log Received" to see the most recent contact data. When an operator edits or deletes a contact in N1MM+, the change carries over to Field Day Commander.</p>
+    <p>The listener shows live stats: packets received, errors, and uptime. You can expand "Last Contact Received" to see the most recent contact data. When an operator edits or deletes a contact in N1MM+, the change carries over to Field Day Commander.</p>
 
     <h3>WSJT-X / JTDX</h3>
     <p>WSJT-X and JTDX can send logged QSOs as ADIF records over UDP. This is ideal for FT8, FT4, JT65, and other digital modes where WSJT-X handles the decoding and the operator logs contacts from within WSJT-X. To set it up:</p>
@@ -1247,7 +1247,7 @@
     <p>WFD 2027 doesn't allow WSJT modes (FT8, FT4, JT65, Q65, and the rest of the family), and satellite contacts earn nothing. Field Day Commander decides this from the contact's sub-mode, so log the sub-mode when you can. JTTY is allowed and counts as digital. These contacts are still accepted from every source and kept in the log, but they score 0 points, count toward no objective, and are left out of the Cabrillo and ADIF exports. The logbook marks them with a <strong>no credit</strong> badge, and the scoring page shows a <strong>No Credit</strong> count.</p>
 
     <h3>What Else Changes</h3>
-    <p>The bulletin page becomes the <strong>WFD Bulletin</strong> (<strong>WFD Special Bulletin</strong> for 2026), and saving a copy earns its objective. Message traffic isn't scored, so the message page tracks radiograms for your records only. At the end, the Reports page gives you a WFDA-format Cabrillo log and a <strong>WFD Event Summary (PDF)</strong> in place of the ARRL submission sheet (see <a href="#reports">Reports</a>).</p>
+    <p>The bulletin page becomes the <strong>WFD Bulletin</strong> (<strong>WFD Special Bulletin</strong> for 2026), and saving a copy earns its objective. Message traffic isn't scored, so the message page tracks radiograms for your records only. At the end, the Reports page gives you a WFDA-format Cabrillo log and a <strong>Winter Field Day Summary (PDF)</strong> in place of the ARRL submission sheet (see <a href="#reports">Reports</a>).</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  SECTION MAP                               -->
@@ -1337,11 +1337,11 @@
 
     <p><strong>Unit System.</strong> Switch between metric and imperial. This affects all temperature and wind displays site-wide.</p>
 
-    <p><strong>API Status.</strong> Shows the connection status for Open-Meteo and NWS. Open-Meteo forecast polling and NWS alert polling each have their own on/off toggle. When enabled, you can filter which NWS event types are shown (e.g. hide watch-level alerts and only show warnings). Disabling NWS clears stored NWS alerts but preserves any manual alerts you've entered.</p>
+    <p><strong>Weather Sources.</strong> Shows the connection status for Open-Meteo and NWS. Both sources require the server to have internet access. Open-Meteo forecast polling and NWS alert polling each have their own on/off toggle. When enabled, you can filter which NWS event types are shown (e.g. hide watch-level alerts and only show warnings). Disabling NWS clears stored NWS alerts but preserves any manual alerts you've entered.</p>
 
     <p><strong>Manual Forecast Override.</strong> If your site has no internet access, you can enter conditions manually: temperature, wind speed, wind direction, rain chance, and optional notes. The dashboard shows the override data with a notice that it was manually entered. Clear the override at any time to return to live data.</p>
 
-    <p><strong>Storm / Lightning Alert.</strong> Post a local alert that broadcasts immediately to all connected users as a prominent banner. The NWS won't tell you how far away the lightning is, so this is how the safety officer calls everyone in. Two quick buttons, <strong>Lightning &lt; 15 mi</strong> and <strong>Lightning &lt; 10 mi</strong>, send ready-made warnings. Pressing one replaces the current local alert, so you can escalate or step down. For anything else, type a <strong>Custom Alert Message</strong> and click <strong>Trigger Alert</strong>. Local alerts and NWS alerts show side by side, and neither replaces the other. <strong>Clear Local Alert</strong> lifts yours and leaves any NWS alerts in place. The panel also has a <strong>How to monitor for lightning</strong> guide with apps, detectors, and the flash-to-bang count.</p>
+    <p><strong>Local Alerts.</strong> Local alerts work without internet access. Post a local alert that broadcasts immediately to all connected users as a prominent banner. The NWS won't tell you how far away the lightning is, so this is how the safety officer calls everyone in. Two quick buttons, <strong>Lightning &lt; 15 mi</strong> and <strong>Lightning &lt; 10 mi</strong>, send ready-made warnings. Pressing one replaces the current local alert, so you can escalate or step down. For anything else, type a <strong>Custom Alert Message</strong> and click <strong>Post Local Alert</strong>. Local alerts and NWS alerts show side by side, and neither replaces the other. <strong>Clear Local Alert</strong> lifts yours and leaves any NWS alerts in place. The panel also has a <strong>How to monitor for lightning</strong> guide with apps, detectors, and the flash-to-bang count.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  NTS MESSAGES                              -->
@@ -1353,13 +1353,13 @@
     <p>Winter Field Day awards nothing for message traffic. On WFD events the page says so, the point tallies are gone, and messages are tracked for your records only.</p>
 
     <h3>Logging Messages</h3>
-    <p>Click <strong>New Message</strong> to record each radiogram with its type and details. On Field Day events, the running count and point total show at the top of the page alongside the SM/SEC and W1AW tallies.</p>
+    <p>Click <strong>Log Message</strong> to record each radiogram with its type and details. On Field Day events, the running count and point total show at the top of the page alongside the SM/SEC and W1AW tallies.</p>
 
     <h3>Section Manager Message</h3>
-    <p>On Field Day events, the Section Manager/SEC message bonus (100 points) has its own button on the page: <strong>SM/SEC Message</strong>. Send a formal message to your ARRL Section Manager or Section Emergency Coordinator from your site to claim it. This is tracked separately from the per-radiogram bonus.</p>
+    <p>On Field Day events, the Section Manager/SEC message bonus (100 points) has its own button on the page: <strong>SM/SEC Message</strong>. Send a formal message to your ARRL Section Manager or Section Emergency Coordinator from the event site via amateur radio RF during Field Day to claim it. This is tracked separately from the per-radiogram bonus.</p>
 
     <h3>ICS-213 Support</h3>
-    <p>If your group practices ARES/RACES emergency communications, Field Day Commander also supports the ICS-213 General Message format. Enable it under <strong>Settings &gt; System Preferences &gt; Enable ICS-213 Message Format</strong> to get the standardized form alongside the traditional radiogram format.</p>
+    <p>If your group practices ARES/RACES emergency communications, Field Day Commander also supports the ICS-213 General Message format. Enable it under <strong>System Settings &gt; System Preferences &gt; Enable ICS-213 Message Format</strong> to get the standardized form alongside the traditional radiogram format.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  W1AW BULLETIN                             -->
@@ -1372,7 +1372,7 @@
     <p>The top of the page shows a transmission schedule so your team knows exactly when to listen, with a countdown to the next one. Each entry lists the <strong>Time (UTC)</strong>, <strong>Mode</strong>, <strong>Frequencies (MHz)</strong>, and <strong>Source</strong>. Station captains, event managers, and admins use the <strong>Add Transmission</strong> form to build out the schedule from the published times. For Field Day the source is W1AW or K6KPH. For Winter Field Day you type in the sending callsign. Everyone gets a reminder 15 minutes before each transmission, and each user can change the timing (up to five reminders) under <strong>Bulletin transmission reminders</strong> on their profile.</p>
 
     <h3>Bulletin Details</h3>
-    <p>When someone copies the bulletin, fill in the <strong>Frequency (MHz)</strong> you received it on, the <strong>Mode</strong>, and the <strong>Received At (UTC)</strong> timestamp. Paste the full text of the bulletin into the <strong>Bulletin Text</strong> field and click <strong>Save Bulletin</strong>. Any operator who can log contacts can save it. The bulletin must be copied over the air. It won't appear on Internet bulletins or BBS sites. An accurate copy is required as proof, so Field Day Commander prints it on its own page in the ARRL Submission Sheet or the WFD Event Summary.</p>
+    <p>When someone copies the bulletin, fill in the <strong>Frequency (MHz)</strong> you received it on, the <strong>Mode</strong>, and the <strong>Received At (UTC)</strong> timestamp. Paste the full text of the bulletin into the <strong>Bulletin Text</strong> field and click <strong>Save Bulletin</strong>. Any operator who can log contacts can save it. The bulletin must be copied over the air. It won't appear on Internet bulletins or BBS sites. An accurate copy is required as proof, so Field Day Commander prints it on its own page in the ARRL Submission Sheet or the Winter Field Day Summary.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  PHOTOS                                    -->
@@ -1382,17 +1382,17 @@
     <p>The photo gallery (<strong>Event Management &gt; Gallery</strong>) gives your group a shared place to collect pictures during the event. Photos are organized into event albums automatically. Each event gets its own album with a cover thumbnail, date, and photo count.</p>
 
     <h3>Uploading</h3>
-    <p>Any logged-in user can click <strong>Upload Photo</strong> from the gallery page or snap a picture directly from a phone browser (except on a station-mode browser). Everything is stored on the local server with no cloud dependency, so uploads work even at sites with no internet. Each photo is tagged with who uploaded it and when. Uploaders can delete their own photos, and event managers and admins can delete any.</p>
+    <p>Any logged-in user can click <strong>Upload Photo</strong> from the gallery page or snap a picture directly from a phone browser (except on a station-mode browser). Everything is stored on the local server with no cloud dependency, so uploads work even at sites with no internet. Upload JPEG, PNG, GIF, or WebP images up to 25 MB each. Each photo is tagged with who uploaded it and when. Uploaders can delete their own photos, and event managers and admins can delete any.</p>
 
     <h3>After the Event</h3>
-    <p>The gallery persists after the event ends, so you can browse photos later and grab a whole album as a download (<strong>Download</strong> on the album card, or <strong>Download Album</strong> inside it) for your club newsletter, social media, or the ARRL Field Day submission page. Photos from previous events stay in their own albums and don't clutter the current one.</p>
+    <p>The gallery persists after the event ends, so you can browse photos later and grab a whole album as a download (<strong>Download</strong> on the album card, or <strong>Download Album</strong> inside it) for your club newsletter, social media, or the ARRL Field Day submission page. Album downloads are prepared as ZIP files, and download links expire after 24 hours. Photos from previous events stay in their own albums and don't clutter the current one.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  REPORTS / CABRILLO                        -->
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="reports">Reports</h2>
-    <p>When the event wraps up, go to <strong>Reports</strong> in the Administration section of the sidebar. Event managers and admins (anyone with view-reports) can open it. The <strong>Export &amp; Download</strong> cards depend on the event type: every event gets Cabrillo Log, ADIF Log, and Logbook CSV, plus Submission Sheet for Field Day or WFD Event Summary (PDF) for Winter Field Day. Duplicates and no-credit contacts are left out of the Cabrillo and ADIF files, and contacts you transcribed from paper are included. For a step-by-step walkthrough, see <a href="how-to/submit-field-day-entry.html">Submit Your Field Day Entry</a>.</p>
+    <p>When the event wraps up, go to <strong>Reports</strong> in the Administration section of the sidebar. Event managers and admins (anyone with view-reports) can open it. The <strong>Export &amp; Download</strong> cards depend on the event type: every event gets Cabrillo Log, ADIF Log, and Logbook CSV, plus Submission Sheet for Field Day or Winter Field Day Summary (PDF) for Winter Field Day. Duplicates and no-credit contacts are left out of the Cabrillo and ADIF files, and contacts you transcribed from paper are included. For a step-by-step walkthrough, see <a href="how-to/submit-field-day-entry.html">Submit Your Field Day Entry</a>.</p>
 
     <h3>Cabrillo Log</h3>
     <p>Field Day Commander pulls together every QSO across all stations and writes a Cabrillo file in the format your event needs. For Field Day, that's the ARRL format with your callsign, class, section, category lines, claimed score, and every contact, saved as <code>CALLSIGN-YEAR-field-day.log</code> and ready to upload to the <a href="https://field-day.arrl.org/" target="_blank">ARRL Field Day submission page</a>. For Winter Field Day, it's the WFDA format (contest WFD, your location, power category, operators, and exchange), saved as <code>CALLSIGN.log</code> as the WFDA asks, for upload at <a href="https://winterfieldday.org/" target="_blank">winterfieldday.org</a>. Bands above 1.2 GHz use the Cabrillo GHz designators (2.3G, 10G, and so on).</p>
@@ -1403,14 +1403,14 @@
     <h3>ARRL Submission Sheet</h3>
     <p>Field Day events only. Downloads a PDF formatted to the official ARRL Field Day submission sheet. It has your entry information, power sources, bonus claims, claimed score, and a band and mode breakdown, plus a GOTA page if you ran a GOTA station. If you saved a W1AW bulletin copy, it gets its own page. Useful as a backup record even if you submit electronically.</p>
 
-    <h3>WFD Event Summary</h3>
+    <h3>Winter Field Day Summary</h3>
     <p>Winter Field Day events only. Downloads a PDF that mirrors the WFDA summary form: your station details, the objectives checklist with each OM, your QSO point totals, and the final score worked out as QSO points x (OM + 1). A second page has the bulletin copy if you saved one.</p>
 
     <h3>Logbook CSV</h3>
     <p>Downloads a spreadsheet of all contacts in the logbook, with time, callsign, band, mode, section, class, points, dupe status, logger, and station. Useful for post-event analysis or sharing with club members.</p>
 
     <h3>On-Page Reports</h3>
-    <p>Below the downloads, the page shows <strong>QSO Rate by Hour</strong> broken out by mode, an <strong>Operator Summary</strong> with each operator's valid QSOs and dupes, the <strong>Sections Worked</strong> grid, and <strong>Volunteer Hours</strong>. Volunteer Hours opens with totals for hours worked, hours scheduled, and number of volunteers. A setting under <strong>Settings &gt; System Preferences</strong> decides whether overlapping shifts count once (wall-clock hours) or once per role.</p>
+    <p>Below the downloads, the page shows <strong>QSO Rate by Hour</strong> broken out by mode, <strong>Contacts by Logger</strong> with each logger's non-dupe QSOs, total logged contacts, and dupes, the <strong>Sections Worked</strong> grid, and <strong>Volunteer Hours</strong>. Volunteer Hours opens with totals for hours worked, hours scheduled, and number of volunteers. A setting under <strong>System Settings &gt; System Preferences</strong> decides whether overlapping shifts count once (wall-clock hours) or once per shift, including overlapping time.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  AUDIT LOGS                                -->

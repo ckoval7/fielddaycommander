@@ -289,7 +289,7 @@
         <thead><tr><th>Program</th><th>Listener</th><th>Default port</th><th>Station is matched by</th></tr></thead>
         <tbody>
           <tr><td>N1MM Logger+</td><td>N1MM Logger+</td><td>12060</td><td>The PC's computer (NetBIOS) name</td></tr>
-          <tr><td>WSJT-X, JTDX</td><td>WSJTX / JTDX</td><td>2237</td><td>The station callsign</td></tr>
+          <tr><td>WSJT-X, JTDX</td><td>WSJT-X / JTDX</td><td>2237</td><td>The station callsign</td></tr>
           <tr><td>fldigi and other ADIF senders</td><td>UDP ADIF (fldigi, etc.)</td><td>2238</td><td>The station callsign</td></tr>
         </tbody>
       </table>
@@ -365,7 +365,7 @@
 
       <h3>Operator credit</h3>
 
-      <p>Contacts are credited to the operator whose callsign the sending program reports. If that callsign belongs to an Field Day Commander user, the contact goes to them. If it doesn't, Field Day Commander creates a ghost account for that callsign, with <strong>(Imported)</strong> as its last name, so the contact still has an operator. A ghost account has no password-based login. It shows a <strong>Ghost</strong> badge under <strong>Administration &gt; Users</strong>, and an admin can turn it into a real login later with <strong>Activate Account</strong>, which keeps the operator's contacts with them. Inviting your operators before the event, with their callsigns filled in, avoids a pile of ghosts.</p>
+      <p>Contacts are credited to the operator whose callsign the sending program reports. If that callsign belongs to a Field Day Commander user, the contact goes to them. If it doesn't, Field Day Commander creates a callsign-only account for that callsign, with <strong>(Imported)</strong> as its last name, so the contact still has an operator. A callsign-only account has no password-based login. It shows a <strong>No Sign-In</strong> badge under <strong>Administration &gt; Users</strong>, and an admin can turn it into a real login later with <strong>Activate Account</strong>, which keeps the operator's contacts with them. Inviting your operators before the event, with their callsigns filled in, keeps contacts attached to their existing accounts.</p>
 
       <p>If the sending program doesn't report an operator at all, the contact may end up with no operator, or with a placeholder for whatever callsign the program fills in by default. Each program section below shows where the operator's callsign goes, and it's worth making that part of every operator change.</p>
 
@@ -432,7 +432,7 @@
 
       <h3>JTDX</h3>
 
-      <p>JTDX is built on WSJT-X and sends the same UDP messages, so it uses the same <strong>WSJTX / JTDX</strong> listener on port 2237. Its UDP server settings are on the <strong>Reporting</strong> tab of its Settings window. Enter the server's address and port there, just as you would in WSJT-X.</p>
+      <p>JTDX is built on WSJT-X and sends the same UDP messages, so it uses the same <strong>WSJT-X / JTDX</strong> listener on port 2237. Its UDP server settings are on the <strong>Reporting</strong> tab of its Settings window. Enter the server's address and port there, just as you would in WSJT-X.</p>
 
       <h3>fldigi</h3>
 
@@ -453,7 +453,7 @@
         <p><span class="step-number">4</span> Click <strong>Select Fields</strong> and confirm that the callsign, date, time on, band, frequency, mode, station callsign, operator, class, and section fields are selected. They're all selected out of the box, so this is only a check.</p>
       </div>
       <div class="step-box">
-        <p><span class="step-number">5</span> Check <strong>Enable</strong>, then click <strong>TEST</strong>. The packet counter on the External Loggers page should go up by one. The test packet isn't a real contact, so <strong>Last Log Received</strong> won't change.</p>
+        <p><span class="step-number">5</span> Check <strong>Enable</strong>, then click <strong>TEST</strong>. The packet counter on the External Loggers page should go up by one. The test packet isn't a real contact, so <strong>Last Contact Received</strong> won't change.</p>
       </div>
 
       <h3>Other programs</h3>
@@ -468,7 +468,7 @@
         <p><span class="step-number">1</span> Log a contact in the sending program.</p>
       </div>
       <div class="step-box">
-        <p><span class="step-number">2</span> On the External Loggers page, expand <strong>Last Log Received</strong> under that listener. You should see the callsign, band, mode, section, and QSO time.</p>
+        <p><span class="step-number">2</span> On the External Loggers page, expand <strong>Last Contact Received</strong> under that listener. You should see the callsign, band, mode, section, and QSO time.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">3</span> Look at the badge next to it. <strong>Accepted</strong> means the contact is in the log. <strong>outside event window</strong> means the contact's time falls outside the event's start and end times, so Field Day Commander turned it away.</p>
@@ -493,12 +493,12 @@
 
       <h3>The status says the process crashed</h3>
 
-      <p>Field Day Commander tries to restart it automatically, and you can click <strong>Retry</strong>. If it keeps crashing, another program on the server is probably using the same port. Pick a different port for the listener and update the logging programs to match.</p>
+      <p>Field Day Commander tries to restart it automatically, and you can click <strong>Restart Listener</strong>. If it keeps crashing, another program on the server is probably using the same port. Pick a different port for the listener and update the logging programs to match.</p>
 
       <h3>Packets arrive, but contacts don't</h3>
 
       <ul>
-        <li>Check the <strong>Last Log Received</strong> badge. If it says <strong>outside event window</strong>, compare the event's start and end times with the contact's QSO time.</li>
+        <li>Check the <strong>Last Contact Received</strong> badge. If it says <strong>outside event window</strong>, compare the event's start and end times with the contact's QSO time.</li>
         <li>If the error counter is climbing, the server log has the details. On a server set up with the deploy script, run <code>sudo tail -50 /var/www/fd-commander/storage/logs/laravel.log</code> and look for "packet processing error."</li>
         <li>For fldigi and other ADIF senders, make sure the callsign, date, and time fields are included. Records missing any of them are skipped.</li>
       </ul>
@@ -507,9 +507,9 @@
 
       <p>The identifier didn't match any station's name or hostname, so Field Day Commander created one. Add the identifier to the <strong>Hostname (NetBIOS Name)</strong> field of the station it belongs to (Step 3). New contacts will go to the right place from then on. Contacts that already arrived stay on the station that was created for them.</p>
 
-      <h3>Contacts are credited to a ghost account marked "(Imported)"</h3>
+      <h3>Contacts are credited to a callsign-only account marked "(Imported)"</h3>
 
-      <p>The operator's callsign in the sending program didn't match any Field Day Commander user. Check for typos in N1MM Logger+'s operator login, WSJT-X's Op Call, or fldigi's Operator Callsign, and make sure the operator's Field Day Commander account has their callsign filled in. If the ghost belongs to a real person who should have a login, find it with the <strong>Ghost (No Login)</strong> status filter on <strong>Administration &gt; Users</strong> and use <strong>Activate Account</strong>.</p>
+      <p>The operator's callsign in the sending program didn't match any Field Day Commander user. Check for typos in N1MM Logger+'s operator login, WSJT-X's Op Call, or fldigi's Operator Callsign, and make sure the operator's Field Day Commander account has their callsign filled in. If the operator should have a personal sign-in, find it with the <strong>No Sign-In (callsign only)</strong> status filter on <strong>Administration &gt; Users</strong> and use <strong>Activate Account</strong>.</p>
 
       <h3>WSJT-X contacts don't show up on the section map</h3>
 

@@ -224,7 +224,7 @@
 
       <div class="callout warning">
         <div class="callout-title">Use a normal browser window</div>
-        <p>A private or incognito window deletes the cookie when it closes, and so does clearing the browser's cookies. Either one turns the laptop back into a normal browser. If that happens, revoke the old entry on the Stations page and bind the browser again.</p>
+        <p>A private or incognito window deletes the cookie when it closes, and so does clearing the browser's cookies. Either one turns the laptop back into a normal browser. If that happens, remove the old entry on the Stations page and bind the browser again.</p>
       </div>
 
       <p>While nobody is signed in, every page except the regular sign-in page sends you back to the station-mode screen. A station captain can still sign in there.</p>
@@ -246,16 +246,16 @@
         <p><span class="step-number">3</span> Session setup opens for this station. Choose the band, mode, and power, then click <strong>Start Session</strong>. From here the logger works as usual.</p>
       </div>
       <div class="step-box">
-        <p><span class="step-number">4</span> When done, click the red <strong>End Session</strong> button in the top-right corner (it shows the callsign on wider screens). That ends the session, signs the operator out, and brings back the station-mode screen.</p>
+        <p><span class="step-number">4</span> When done, click the red <strong>Sign Out</strong> button in the top-right corner (it shows the callsign on wider screens). That ends the session, signs the operator out, and brings back the station-mode screen.</p>
       </div>
 
-      <p>Brief your operators on step 4. If someone walks away without clicking <strong>End Session</strong>, the next person will log under their callsign until the idle timeout kicks in.</p>
+      <p>Brief your operators on step 4. If someone walks away without clicking <strong>Sign Out</strong>, the next person will log under their callsign until the idle timeout kicks in.</p>
 
       <p>Station mode doesn't ask for a password. Any callsign works, including one that has an account, and contacts go to whatever callsign was typed. Station mode limits access to logging and event information.</p>
 
       <h3>What the terminal can reach</h3>
 
-      <p>Operators can log on the bound station and sign the visitor guestbook. They can also view event information: the log, dashboards, score and section map; stations and shift schedules; and site safety, club equipment, weather, and photos. Everything else is hidden, including <strong>Transcribe Paper Log</strong>, <strong>Message Traffic</strong>, the bulletin page, <strong>My Catalog</strong>, profiles, and the Administration menu. A direct link to another page shows "This page is not available in station mode."</p>
+      <p>Operators can log on the bound station and sign the visitor guestbook. They can also view event information: the log, dashboards, score and section map; stations and shift schedules; and site safety, club equipment, weather, and photos. Everything else is hidden, including <strong>Transcribe Paper Log</strong>, <strong>Message Traffic</strong>, the bulletin page, <strong>My Equipment</strong>, profiles, and the Administration menu. A direct link to another page shows "This page is not available in station mode."</p>
 
       <p>Apart from logging contacts and signing the guestbook, access to these pages is read-only. Operators can't upload or delete photos, check off safety items, edit the dashboard layout, or log on a different station ("This browser can only log for its assigned station."). The same limits apply when an Event Manager types their callsign at the terminal.</p>
 
@@ -265,27 +265,27 @@
 
       <h2>Idle Timeout</h2>
 
-      <p>After 15 minutes with no typing, clicking, or touching, the terminal asks <strong>Are you still operating?</strong> and counts down 60 seconds. <strong>I'm Still Here</strong> dismisses it. <strong>End Session Now</strong>, or letting the countdown run out, ends the session and brings back the station-mode screen.</p>
+      <p>After 15 minutes with no typing, clicking, or touching, the terminal asks <strong>Are you still operating?</strong> and counts down 60 seconds. <strong>Keep Session Open</strong> dismisses it. <strong>Sign Out Now</strong>, or letting the countdown run out, ends the session and brings back the station-mode screen.</p>
 
       <h2>Taking a Browser Out of Station Mode</h2>
 
       <p>There are three ways, and each needs the Manage Stations permission.</p>
 
       <ul>
-        <li><strong>From the terminal.</strong> On the station-mode screen, click <strong>Station captain: exit station mode</strong> at the bottom. Enter your <strong>Email</strong> and <strong>Password</strong> and click <strong>Exit Station Mode</strong>. After five wrong tries, the form will make you wait.</li>
+        <li><strong>From the terminal.</strong> On the station-mode screen, click <strong>Station captain: exit station mode</strong> at the bottom. Enter your <strong>Email</strong> and <strong>Password</strong> and click <strong>Exit Station Mode</strong>. This exits station mode without signing you in. After five wrong tries, the form will make you wait.</li>
         <li><strong>By signing in on the terminal.</strong> Use the regular sign-in page, then open your user menu (top right) and choose <strong>Station Mode Browser</strong>. Click <strong>Sign Out</strong> to hand the station back to operators, or <strong>Exit Station Mode</strong>.</li>
-        <li><strong>From anywhere, by revoking it.</strong> On <strong>Event Management &gt; Stations</strong>, click <strong>Revoke</strong> next to the browser in the station's <strong>Station-Mode Browsers</strong> list. If someone is using it, their session will end on their next click. Use this when a laptop goes home with its owner on Sunday afternoon.</li>
+        <li><strong>From anywhere, by removing it.</strong> On <strong>Event Management &gt; Stations</strong>, click <strong>Remove Browser</strong> next to the browser in the station's <strong>Station-Mode Browsers</strong> list. If someone is using it, their session will end on their next click. Use this when a laptop goes home with its owner on Sunday afternoon.</li>
       </ul>
 
-      <p>If your password is refused at the exit link, check that your account has the Manage Stations permission. An Operator account can't exit station mode, even with the right password. The audit log records every bind, revoke, exit, and station-mode session.</p>
+      <p>If your password is refused at the exit link, check that your account has the Manage Stations permission. An Operator account can't exit station mode, even with the right password. The audit log records every enrollment, removal, exit, and station-mode session.</p>
 
-      <h2>Ghost Accounts and Activate Account</h2>
+      <h2 id="ghost-accounts-and-activate-account">Callsign-Only Accounts and Activate Account</h2>
 
-      <p>When someone types a callsign Field Day Commander doesn't know, it creates a ghost account with the name they entered. External loggers and ADIF imports do the same for unknown operators. A ghost account holds contacts but can only sign in at a station-mode terminal.</p>
+      <p>When someone types a callsign Field Day Commander doesn't know, it creates a callsign-only account with the name they entered. External loggers and ADIF imports do the same for unknown operators. A callsign-only account holds contacts but can only sign in at a station-mode terminal.</p>
 
-      <p>To find them, go to <strong>Administration &gt; Users</strong> and set the <strong>Status</strong> filter to <strong>Ghost (No Login)</strong>. Each one has a <strong>Ghost</strong> badge.</p>
+      <p>To find them, go to <strong>Administration &gt; Users</strong> and set the <strong>Status</strong> filter to <strong>No Sign-In (callsign only)</strong>. Each one has a <strong>No Sign-In</strong> badge.</p>
 
-      <p>To give a ghost a real login, such as a new member who first showed up at the GOTA table, open the actions menu (<strong>⋮</strong>) on that row and choose <strong>Activate Account</strong>. Enter an <strong>Email</strong>, check the <strong>First name</strong> and <strong>Last name</strong>, and copy the <strong>Temporary Password</strong> before clicking <strong>Activate</strong>. They'll have to change it the first time they sign in. The account gets the Operator role if it has none, and keeps everything they logged. This needs the Manage Users permission.</p>
+      <p>To give a callsign-only account a personal sign-in, such as a new member who first showed up at the GOTA table, open the actions menu (<strong>⋮</strong>) on that row and choose <strong>Activate Account</strong>. Enter an <strong>Email</strong>, check the <strong>First Name</strong> and <strong>Last Name</strong>, and copy the <strong>Temporary Password</strong> before clicking <strong>Activate Account</strong>. They'll have to change it the first time they sign in. The account gets the Operator role if it has none, and keeps everything they logged. This needs the Manage Users permission.</p>
 
       <h2>Marking a Station Unavailable</h2>
 
