@@ -163,6 +163,16 @@ test('validates organization name is required', function () {
         ->assertHasErrors(['organization_name' => 'required']);
 });
 
+test('uppercases a lowercase organization callsign', function () {
+    Livewire::test(SystemPreferences::class)
+        ->set('organization_callsign', ' k2new ')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('organization_callsign', 'K2NEW');
+
+    expect($this->organization->refresh()->callsign)->toBe('K2NEW');
+});
+
 test('validates organization callsign format', function () {
     Livewire::test(SystemPreferences::class)
         ->set('organization_callsign', 'invalid!')

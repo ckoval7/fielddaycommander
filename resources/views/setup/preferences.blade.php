@@ -42,6 +42,7 @@
                     autocapitalize="words"
                     label="Organization Name"
                     name="organization_name"
+                    :value="old('organization_name')"
                     icon="phosphor-buildings"
                     placeholder="e.g., Springfield Amateur Radio Club"
                     required
@@ -51,13 +52,14 @@
                 <x-input
                     label="Organization Callsign"
                     name="organization_callsign"
+                    :value="old('organization_callsign')"
                     autocomplete="off"
                     autocapitalize="characters"
                     autocorrect="off"
                     spellcheck="false"
                     icon="phosphor-cell-signal-high"
                     placeholder="e.g., W1ABC"
-                    hint="Optional. Club station callsign, 3–10 uppercase letters or numbers"
+                    hint="Optional. Club station callsign, 3–10 letters and numbers"
                     errorField="organization_callsign"
                 />
 
@@ -65,6 +67,7 @@
                     label="Organization Email"
                     type="email"
                     name="organization_email"
+                    :value="old('organization_email')"
                     icon="phosphor-envelope"
                     placeholder="e.g., info@example.org"
                     hint="Optional. Club contact email"
@@ -75,6 +78,7 @@
                     label="Organization Phone"
                     type="tel"
                     name="organization_phone"
+                    :value="old('organization_phone')"
                     icon="phosphor-phone"
                     placeholder="e.g., (555) 123-4567"
                     hint="Optional. Club contact phone number"
@@ -179,6 +183,7 @@
                     label="Weather Contact Email"
                     type="email"
                     name="contact_email"
+                    :value="old('contact_email')"
                     icon="phosphor-envelope"
                     hint="Optional. Sent to the National Weather Service with weather requests"
                     errorField="contact_email"

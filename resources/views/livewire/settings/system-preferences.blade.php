@@ -29,7 +29,7 @@
                 spellcheck="false"
                 icon="phosphor-cell-signal-high"
                 placeholder="e.g., W1ABC"
-                hint="Club station callsign (3–10 uppercase letters and numbers)"
+                hint="Club station callsign (3–10 letters and numbers)"
             />
 
             <x-input
