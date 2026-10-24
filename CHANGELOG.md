@@ -5,6 +5,7 @@
 ### Fixed
 
 - Entering the organization callsign in lowercase, such as w1abc, during setup or in **System Preferences** was rejected as an invalid callsign. It is now saved in uppercase, like operator callsigns. Setup also kept clearing the organization fields and weather email whenever a field failed validation. They now keep what you typed.
+- On the Shift Dashboard, the timeline's horizontal scrollbar could sit on top of the bottom role row in browsers with overlay scrollbars, such as Chrome and Edge on Windows 11. It now sits below the chart.
 
 ## 26.10.12 - 2026-10-23
 
