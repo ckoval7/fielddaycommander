@@ -198,6 +198,11 @@
   }
   .req-table td:first-child { color: var(--text-primary); font-weight: 500; }
   .req-table tr:last-child td { border-bottom: none; }
+  .permissions-table th,
+  .permissions-table td {
+    padding: 0.35rem 0.5rem;
+    line-height: 1.4;
+  }
   .req-table-wrapper {
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -659,7 +664,7 @@
     <p>The permission system is organized into eight categories with 26 individual permissions. Each permission controls access to a specific area of Field Day Commander. The table below shows what each operational role gets out of the box. Config Only (the SYSTEM account role) is not shown here since it is not used for normal operations.</p>
 
     <div class="req-table-wrapper">
-      <table class="req-table">
+      <table class="req-table permissions-table">
         <thead>
           <tr>
             <th>Category</th>
