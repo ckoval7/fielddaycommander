@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Since 26.10.12, **Manage Schedule** > **Roles** showed only the edit (pencil) button for each role, so you couldn't delete roles. The delete (trash) button is back and still asks for confirmation, deletes the role's unassigned shifts, and refuses to delete a role with assigned shifts.
+
 ## 26.10.12 - 2026-10-23
 
 ### Added
