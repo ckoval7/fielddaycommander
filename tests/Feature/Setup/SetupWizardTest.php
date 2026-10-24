@@ -288,3 +288,39 @@ test('complete wizard creates organization without optional fields', function ()
     expect($organization->phone)->toBeNull();
     expect($organization->is_active)->toBeTrue();
 });
+
+test('step 3 uppercases a lowercase organization callsign', function () {
+    User::factory()->create(['call_sign' => 'SYSTEM']);
+
+    $this->session([
+        'setup_wizard.step1' => ['admin_password' => 'NewPass123!@#'],
+        'setup_wizard.step2' => ['site_name' => 'Test'],
+    ]);
+
+    $this->post(route('setup.complete'), [
+        'organization_name' => 'Test Org',
+        'organization_callsign' => ' w1abc ',
+        'timezone' => 'America/New_York',
+        'date_format' => 'Y-m-d',
+        'time_format' => 'H:i:s',
+    ])->assertSessionHasNoErrors();
+
+    expect(Organization::first()->callsign)->toBe('W1ABC');
+});
+
+test('step 3 keeps entered values after a validation error', function () {
+    $this->session(['setup_wizard.step1' => ['admin_password' => 'pass']]);
+    $this->session(['setup_wizard.step2' => ['site_name' => 'Test']]);
+
+    $this->from(route('setup.preferences'))->post(route('setup.complete'), [
+        'organization_name' => 'Test Org',
+        'organization_callsign' => 'W1-ABC',
+        'timezone' => 'America/New_York',
+        'date_format' => 'Y-m-d',
+        'time_format' => 'H:i:s',
+    ])->assertSessionHasErrors('organization_callsign');
+
+    $this->get(route('setup.preferences'))
+        ->assertSee('value="W1-ABC"', false)
+        ->assertSee('value="Test Org"', false);
+});

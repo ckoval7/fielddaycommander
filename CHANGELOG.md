@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Entering the organization callsign in lowercase, such as w1abc, during setup or in **System Preferences** was rejected as an invalid callsign. It is now saved in uppercase, like operator callsigns. Setup also kept clearing the organization fields and weather email whenever a field failed validation. They now keep what you typed.
+
 ## 26.10.12 - 2026-10-23
 
 ### Added
