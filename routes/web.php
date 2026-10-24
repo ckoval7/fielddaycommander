@@ -18,6 +18,10 @@ use App\Livewire\Admin\AdifImport;
 use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\DeveloperTools;
 use App\Livewire\Admin\ExternalLoggerManagement;
+use App\Livewire\Checklists\ChecklistIndex;
+use App\Livewire\Checklists\ChecklistShow;
+use App\Livewire\Checklists\EditChecklist;
+use App\Livewire\Checklists\ManageChecklists;
 use App\Livewire\Equipment\AllEquipmentList;
 use App\Livewire\Equipment\ClubEquipmentList;
 use App\Livewire\Equipment\EquipmentForm;
@@ -40,8 +44,6 @@ use App\Livewire\Messages\W1awBulletinForm;
 use App\Livewire\NetLog\NetLog;
 use App\Livewire\Profile\UserProfile;
 use App\Livewire\Reports\ReportsIndex;
-use App\Livewire\Safety\ManageSafetyChecklist;
-use App\Livewire\Safety\SiteSafetyChecklist;
 use App\Livewire\Schedule\ManageSchedule;
 use App\Livewire\Schedule\MyShifts;
 use App\Livewire\Schedule\ScheduleTimeline;
@@ -256,14 +258,19 @@ Route::middleware(['auth', 'verified', 'can:manage-shifts'])->group(function () 
     Route::get('/schedule/manage', ManageSchedule::class)->name('schedule.manage');
 });
 
-// Site Safety
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/site-safety', SiteSafetyChecklist::class)->name('site-safety.index');
+// Checklists
+Route::middleware(['auth', 'verified', 'can:manage-shifts'])->group(function () {
+    Route::get('/checklists/manage', ManageChecklists::class)->name('checklists.manage');
+    Route::get('/checklists/{checklist}/edit', EditChecklist::class)->name('checklists.edit');
 });
 
-Route::middleware(['auth', 'verified', 'can:manage-shifts'])->group(function () {
-    Route::get('/site-safety/manage', ManageSafetyChecklist::class)->name('site-safety.manage');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/checklists', ChecklistIndex::class)->name('checklists.index');
+    Route::get('/checklists/{checklist}', ChecklistShow::class)->name('checklists.show');
 });
+
+Route::redirect('/site-safety', '/checklists');
+Route::redirect('/site-safety/manage', '/checklists/manage');
 
 // Equipment Reports - requires manage-event-equipment permission
 Route::middleware(['auth', 'verified', 'can:manage-event-equipment'])->prefix('events/{event}/equipment/reports')->name('events.equipment.reports.')->group(function () {

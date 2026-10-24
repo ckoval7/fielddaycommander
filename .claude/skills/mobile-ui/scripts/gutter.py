@@ -7,7 +7,7 @@ PAGES = sys.argv[1:] or ["/", "/logging/session/1", "/logging/transcribe", "/log
     "/stations", "/stations/create", "/schedule", "/schedule/manage", "/schedule/my-shifts", "/equipment",
     "/equipment/create", "/guestbook", "/gallery", "/users", "/profile", "/settings", "/admin/audit-logs",
     "/admin/developer", "/admin/external-loggers", "/admin/import/adif", "/scoring", "/reports", "/weather",
-    "/weather/manage", "/site-safety", "/site-safety/manage", "/section-map", "/w1aw-bulletin", "/logging"]
+    "/weather/manage", "/checklists", "/checklists/manage", "/section-map", "/w1aw-bulletin", "/logging"]
 JS = r"""
 () => {
   const root = document.querySelector('.drawer-content') || document.body;

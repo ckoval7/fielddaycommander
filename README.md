@@ -7,7 +7,7 @@
 
 # Field Day Commander
 
-Field Day Commander helps ham radio clubs run ARRL Field Day and Winter Field Day. Log contacts, schedule volunteers, track equipment, manage safety checklists, and follow scores from phones, tablets, and laptops on your local network.
+Field Day Commander helps ham radio clubs run ARRL Field Day and Winter Field Day. Log contacts, schedule volunteers, track equipment, manage flexible checklists, and follow scores from phones, tablets, and laptops on your local network.
 
 It runs on modest hardware, including a Raspberry Pi 4, and works without an internet connection after installation.
 
@@ -27,7 +27,7 @@ It runs on modest hardware, including a Raspberry Pi 4, and works without an int
 - **NTS message traffic:** log radiograms, track originated/relayed/received messages, and capture the Section Manager message for bonus points
 - **Photo uploads:** capture the event from any device on the network, with photos stored on your server
 - **Role-based access:** four roles (System Admin, Event Manager, Station Captain, Operator) with fully customizable permissions
-- **Safety checklist:** built-in 15-item ARRL safety checklist with required/complete tracking
+- **Checklists:** event, station, and personal checklists with seven templates, several answer types, and live progress
 - **Cabrillo export:** generate submission-ready files when the event wraps up
 - **Logging during network interruptions:** if the server connection drops, contacts queue in the browser and sync automatically when connectivity returns
 - **Offline operation:** logging and event management work without internet access after installation

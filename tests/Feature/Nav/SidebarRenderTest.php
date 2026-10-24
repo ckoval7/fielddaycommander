@@ -89,9 +89,9 @@ test('a manage page does not also highlight the nav item whose link prefixes its
     EventConfiguration::factory()->create(['event_id' => $event->id]);
     Setting::set('active_event_id', $event->id);
 
-    $html = $this->actingAs($user)->get(route('site-safety.manage'))->assertOk()->getContent();
+    $html = $this->actingAs($user)->get(route('checklists.manage'))->assertOk()->getContent();
 
-    expect(activeMenuTitles($html))->toBe(['Manage Safety Checklist']);
+    expect(activeMenuTitles($html))->toBe(['Manage Checklists']);
 });
 
 test('sidebar items with an explicit active rule opt out of URL-prefix matching', function () {

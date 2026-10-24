@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use App\Models\Checklist;
 use App\Models\Equipment;
 use App\Models\Event;
 use App\Models\EventConfiguration;
@@ -80,7 +81,8 @@ $gatedPages = [
     'events.net-log' => ['events.net-log', 'log-contacts', fn () => ['event' => $this->event]],
     'reports.ics-309' => ['reports.ics-309', 'view-reports', fn () => []],
     'schedule.manage' => ['schedule.manage', 'manage-shifts', fn () => []],
-    'site-safety.manage' => ['site-safety.manage', 'manage-shifts', fn () => []],
+    'checklists.manage' => ['checklists.manage', 'manage-shifts', fn () => []],
+    'checklists.edit' => ['checklists.edit', 'manage-shifts', fn () => ['checklist' => Checklist::factory()->create()]],
     'events.equipment.reports.commitment-summary' => ['events.equipment.reports.commitment-summary', 'manage-event-equipment', fn () => ['event' => $this->event]],
     'events.equipment.reports.delivery-checklist' => ['events.equipment.reports.delivery-checklist', 'manage-event-equipment', fn () => ['event' => $this->event]],
     'events.equipment.reports.station-inventory-csv' => ['events.equipment.reports.station-inventory-csv', 'manage-event-equipment', fn () => ['event' => $this->event]],

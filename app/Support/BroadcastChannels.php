@@ -36,6 +36,11 @@ class BroadcastChannels
     public const NET_LOG_CHANGED = 'NetLogChanged';
 
     /**
+     * Broadcast name for a checklist answer changed on the event channel.
+     */
+    public const CHECKLIST_CHANGED = 'ChecklistChanged';
+
+    /**
      * Prevent instantiation — this class exposes only static helpers.
      */
     private function __construct() {}

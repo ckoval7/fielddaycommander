@@ -295,7 +295,7 @@
                         @endcan
 
                         <x-menu-item title="Shift Schedule" icon="phosphor-calendar-dots" link="{{ route('schedule.index') }}" exact :active="request()->routeIs('schedule.index', 'schedule.my-shifts', 'schedule.dashboard')" />
-                        <x-menu-item title="Site Safety" icon="phosphor-shield-check" link="{{ route('site-safety.index') }}" exact :active="request()->routeIs('site-safety.index')" />
+                        <x-menu-item title="Checklists" icon="phosphor-list-checks" link="{{ route('checklists.index') }}" exact :active="request()->routeIs('checklists.index', 'checklists.show')" />
 
                         <x-menu-sub title="Equipment" icon="phosphor-toolbox">
                             @unless($isStationMode)
@@ -339,7 +339,7 @@
                             @endcan
 
                             @can('manage-shifts')
-                                <x-menu-item title="Manage Safety Checklist" icon="phosphor-clipboard-text" link="{{ route('site-safety.manage') }}" exact :active="request()->routeIs('site-safety.manage')" />
+                                <x-menu-item title="Manage Checklists" icon="phosphor-clipboard-text" link="{{ route('checklists.manage') }}" exact :active="request()->routeIs('checklists.manage', 'checklists.edit')" />
                             @endcan
 
                             @can('manage-weather')
