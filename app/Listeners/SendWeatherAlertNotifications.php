@@ -51,7 +51,7 @@ class SendWeatherAlertNotifications
             ! $event->hasAlerts => ['Weather Alert Lifted', 'The active weather alert has been cleared'],
             $this->isLocalAlertLifted($event) => [
                 'Local Alert Lifted',
-                "The local alert has been cleared; {$count} NWS ".str('alert')->plural($count).' still active',
+                "The local alert has been cleared. {$count} NWS ".str('alert')->plural($count).' still active',
             ],
             $event->manual && $localAlert !== null => [$localAlert['event'], $localAlert['headline']],
             $count === 1 => [$event->alerts[0]['event'], $event->alerts[0]['headline']],

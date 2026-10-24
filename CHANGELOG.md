@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 26.10.12 - 2026-10-23
+
 ### Added
 
 - A **Public Service / Other** event type for marathons, parades, SKYWARN nets, ARES drills and other events that aren't scored. These events don't ask for a section, operating class, power or GOTA station, and they start with net roles such as Net Control instead of the Field Day roles. Traffic goes in the Net Log, so contact logging, the logbook and external loggers are turned off for them, along with scoring, bonuses, the section map, the bulletin page and the contest reports. Stations are called positions.
@@ -16,15 +18,66 @@
 - An **ICS Forms** section in **Reports**. It fills FEMA's own ICS-205 radio plan and ICS-211 check-in list PDFs from your stations and shift check-ins, and prints an ICS-309 communications log from the net log. ICS-213 messages in **Message Traffic** can also be opened as FEMA's ICS-213 PDF. Each form opens in a new tab. The blank forms ship with FD Commander, so this works without internet. Long entries in one-line boxes on the ICS-205, ICS-205A, ICS-211, and ICS-213 print smaller to fit, down to 5 points, so more of a long club name fits in the ICS-211 Agency box.
 - The guestbook has a kiosk mode for a shared tablet or laptop at the event. Open it from the small Kiosk mode link at the bottom of the guestbook page. It drops the header and menu, shows the form at the top with the latest entries below it, newest first, and after each entry a countdown ring on the thank-you screen clears it for the next visitor. It never fills in or credits whoever is signed in on that browser, and it marks visitors as in person. Because every visitor shares one browser, the kiosk accepts up to 60 entries an hour instead of 5.
 
+### Changed
+
+- Role management required **Manage System Settings**. It now uses **Manage Roles**, so you can let someone edit roles without access to system preferences or site branding. With only this permission, they see only **Role Management** in **System Settings**. Upgrades grant it to roles that could manage settings, and the System Administrator role must keep it.
+- Equipment menus now use **My Equipment** and **Equipment Catalog** instead of **My Catalog** and **All User Catalogs**, matching the page headings. **Settings** is now **System Settings** in the sidebar, user menu, and page heading. Sign-in and session controls use **Sign In** and **Sign Out**, including station mode's former **End Session** button.
+- Guestbook visitor categories use plainer names for club members, agency representatives, ARES/RACES volunteers, and media representatives, with stored values unchanged. The printed message header now says **Radiogram** instead of **ARRL Radiogram**.
+- The unused **Manage Equipment** permission, labeled Legacy, is gone from the Role Manager. Nothing checked it. The narrower equipment permissions control equipment access, and upgrades remove it from any role or user that had it.
+- The event and station forms now explain that a methane generator counts as alternate power but should be recorded as **Generator**, since engine-driven generators don't qualify for ARRL's 5× multiplier.
+
 ### Fixed
 
+- Over plain HTTP on the club LAN, copying the registration link on Get Ready or a generated password in the user reset and activate dialogs did nothing. The password buttons still reported success. These buttons now try copying on HTTP and report failures.
+- Online guestbook entries could be verified as agency or elected official visits, which require an in-person visit for the bonus. The edit dialog now explains why these entries cannot be verified, and bulk **Verify** skips them and reports how many. The bonus count and sidebar exclude them. Already verified entries are unchanged.
+- Creating a role discarded its description. Descriptions now save, appear under the role name, and can be changed with **Edit**. Upgrades add descriptions to built-in roles that do not have one.
+- On the Clone Stations page, the target event could show blank or a different event, and accepting the default could clone stations into the wrong event or fail. It now preselects the event you're viewing.
+- A screen left on the get-ready countdown stayed on 00:00:00 after the event started until someone refreshed it. It now switches to the live dashboard within a few seconds of the start time, staggered so several screens don't all reload at once.
+- Opening an invitation link that was invalid, expired or already used sent you to a blank sign-in page. It now says the invitation is invalid, expired or already accepted.
+- In developer mode, clicking the X on the amber testing banner did nothing. It now hides the banner and keeps it hidden for the rest of your session.
+- On the event equipment dashboard, choosing only **Unassigned** in the station filter did not show **Clear Filters**, so the only way back to all stations was to reopen the filter. The button now appears.
+- Downloading the Field Day Cabrillo log or the submission sheet PDF failed with a server error when the event callsign was portable, such as W1AW/1. The files now download, with the slash in the file name replaced by an underscore.
+- During Winter Field Day, the transcribe screen's exchange box and help text showed a Field Day example (1423 W1AW 3A CT), but 3A is not a Winter Field Day class. The example now fits the event, such as 1423 W1AW 1H CT.
+- On the logging and transcribe screens, pressing Tab in the exchange box did nothing, so keyboard users couldn't reach the band and mode controls or the log. Tab now moves on, and accepts a suggestion only when one is highlighted. On phones, screen readers had no name for the transcribe screen's back button; it now reads Change Station.
+- Screen readers read the remove buttons on the logbook's active filter chips as "times" or nothing. Each now reads "Remove" and the filter name. On the equipment list, a photo thumbnail could only be opened with a mouse or touch; keyboard users can now Tab to it and press Enter.
+- On a shared station computer in station mode, every page change added another set of idle-activity listeners in the browser, and they piled up. They are now removed when the page changes.
+- Clearing the weather contact email or the callsign API key in System Settings and saving left the old value in place, so the old address was still sent to the National Weather Service. Blanking either field now clears it.
+- Assigning equipment to a station gave no warning when the antenna or the station's radio had no bands set, or when the station had no primary radio. Those cases now show the same confirmation as an incompatible band, so you can check before assigning.
+- On your Profile page, a wrong or expired code when turning on two-factor authentication showed no error. The error now appears under the code field.
+- When changing your password, a weak new password or mismatched confirmation showed an error under the current password. Errors now appear under the field that failed.
+- On the Users page, bulk **Delete** deleted selected accounts immediately. It now asks for confirmation.
+- Bulk user actions counted the SYSTEM account even when it was skipped. Role, lock, unlock, and delete messages now count only affected accounts, and lock, unlock, and delete skip SYSTEM too.
+- When an invitation email failed after creating a user, the Add User dialog stayed open, and saving again said the callsign was already registered. The dialog now closes and reports the email failure. You can send another email with **Reset Password**.
+- Schedule filters and sorting counted no-shows as filled places, and Manage Schedule included them in its capacity count. The filters, sorting, and counts now exclude no-shows.
+- On My Shifts, a shift you never checked in to still said "Check-in opens" after it ended. It now says "Shift ended".
+- On Manage Schedule, shifts that crossed midnight showed an end time without a date, making them look as though they ended before they started. They now show the end date too.
+- Invitation emails and the accept-invitation page called the app "FD Log DB". They now say Field Day Commander.
+- The Reports page described the Cabrillo download as a `.cbr` file. It now correctly says `.log`.
+- The event dashboard's rescore dialog said bonuses weren't recalculated automatically. It now explains that rescoring updates existing claims and recalculates automatic awards. Claims with no match in the selected rules version become unverified and worth zero points.
+- Photo uploads over 12 MB failed despite the advertised 25 MB limit. Photos up to 25 MB are now accepted. Helm installs using ingress-nginx now default `ingress.maxBodySize` to 35 MB so the ingress can accept them.
+- The setup wizard and **Site Branding** said SVG logos were accepted, but they were rejected on upload. They now say PNG or JPG.
+- The logbook's **Operator** filter selected contacts by who logged them. It's now labeled **Logger**. The dashboard Info Card's **Location** row showed the ARRL/RAC section and is now labeled **Section**.
+- The event dashboard's scoring note said scores updated there in real time, but the page doesn't live-update. It now says scores are calculated from logged contacts and claimed awards.
+- System Settings and the setup wizard described the weather contact email as a public site contact. They now label it **Weather Contact Email** and explain that it's sent to the National Weather Service with weather requests.
 - On a laptop or desktop, the guestbook's recent visitors were squeezed into narrow columns, with names, dates and comments cut off or wrapped a word per line. They now fill the column, one card per row. The form and the entry list also lost a second heading each, and on phones the form fields sit closer to the screen edge.
 - When equipment committed to an event was marked lost or damaged, System Administrators received the incident notification twice, and owners who were also admins or equipment managers could receive it two or three times. Each person now receives it once.
 - When running `deploy.sh` or `update.sh`, every `[INFO]`, `[WARN]`, `[ERROR]`, and phase line appeared twice in `/var/log/fd-commander-deploy.log` or `/var/log/fd-commander-update.log`, respectively. Each line now appears once, and the message shown when running without root privileges goes to stderr.
-- On the station equipment assignment page, keyboard and screen reader users tabbing through **Committed to Event** or **All Equipment Catalog** heard drag instructions that promised arrow-key controls that didn't work. They now tab to each card's **Assign** or **Commit & Assign** button, which names the equipment, and mouse drag and drop still works.
+- On the station equipment assignment page, keyboard and screen reader users tabbing through **Committed to Event** or **Equipment Catalog** heard drag instructions that promised arrow-key controls that didn't work. They now tab to each card's **Assign** or **Commit & Assign** button, which names the equipment, and mouse drag and drop still works.
 - When reading dashboard chart data with a screen reader, the hidden data table wasn't reliably announced as a table with column headers. It now uses an HTML table with column headers.
 - The SM/SEC message template for a Winter Field Day event named the event "FIELD DAY" instead of "WINTER FIELD DAY".
 - Since 26.09.0, ticking **Youth (age 18 or younger)** on your own Profile page and saving left the box unticked when you returned. Operators who marked themselves as youth this way weren't counted toward the Field Day youth participation bonus. The setting now saves.
+- The Weather page showed only "No weather data yet" while a local weather alert was active but no forecast had loaded, such as with no internet. Active alerts now show whether or not there is a forecast.
+- With metric units, the Weather page highlighted wind gusts from 25 km/h, well below the 25 mph it uses otherwise. Gusts are now highlighted from 40 km/h, the same as 25 mph.
+- On the Scoring page, station power settings could leave **Multiplier Rules** highlighting the wrong row or the explanation claiming 5× when the score used 2×. Both now match the scored multiplier.
+- Logbook **Export CSV** ignored filters and could export the current event while you were viewing a past event. It now uses the displayed event and filters, including filter changes made without reloading.
+- For Winter Field Day, the event dashboard’s **Scoring** tab showed the ARRL Field Day formula and mode points, and listed objectives as points. It now uses the event’s rules for the formula, mode points, and objective multipliers. The overview no longer shows a power multiplier.
+- On the event form, the power multiplier badge stayed gray and could disagree with the score. It now shows green for 5×, yellow for 2×, and red for 1×, and uses the selected rules version. When editing an event, it includes station power and power sources.
+- On the event form, the Power Configuration card implied that methane qualified for the 5× multiplier, but scoring doesn't count it. The rules box now names battery, solar, wind, and water as qualifying sources and shows wattage limits from the selected rules version. The **Alternate Power** hint no longer lists methane.
+- On phones, the notice about unresolved assignments on ended shifts made Manage Schedule scroll sideways. Its buttons now stack below the message. Small icon buttons are easier to tap and have screen reader names, as do the back buttons on Manage Schedule, Manage Safety Checklist, and Guestbook Manager.
+- When the browser could not save queued contacts on the device, the logging screen gave no warning that closing or reloading the page offline would lose unsynced contacts. A warning now stays visible until saving works again or no contacts are waiting to sync.
+- When several people requested a photo album ZIP while it was being built, only the first received the promised notification. Everyone waiting now gets notified when it is ready.
+- On the event dashboard's **Overview** tab, **Scoring Summary** showed Field Day figures for Winter Field Day that didn't add up to the final score. It now matches the **Scoring** tab: QSO points, power multiplier, and bonus points for Field Day, plus GOTA bonus when there's a GOTA station, or QSO points and OM + 1 for Winter Field Day. The final score uses the same calculation too.
+- In Guestbook Manager on a laptop or desktop with the sidebar open, long visitor categories such as "Agency (Red Cross, Emergency Management)" appeared as colored pills that didn't wrap, pushing the Signed column and the edit and delete buttons off the right edge so you had to scroll the table sideways to reach them. Category, presence, and callsign now show as plain text in the same font as the rest of the table, long categories wrap so the whole table fits, and verified entries in bonus-eligible categories show "Bonus Eligible" under the category.
 
 ## 26.10.11 - 2026-10-21
 

@@ -90,7 +90,7 @@ describe('role management', function () {
             ->set('roleColor', '#14b8a6')
             ->call('saveRole')
             ->assertSet('showRoleModal', false)
-            ->assertDispatched('toast', title: 'Success', description: 'Role created successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Role created');
 
         expect(ShiftRole::where('name', 'Band Captain')->exists())->toBeTrue();
     });
@@ -139,7 +139,7 @@ describe('role management', function () {
             ->assertSet('roleName', 'Station Operator')
             ->set('roleName', 'Updated Operator')
             ->call('saveRole')
-            ->assertDispatched('toast', title: 'Success', description: 'Role updated successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Role updated');
 
         expect($this->role->fresh()->name)->toBe('Updated Operator');
     });
@@ -149,7 +149,7 @@ describe('role management', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('deleteRole', $this->role->id)
-            ->assertDispatched('toast', title: 'Success', description: 'Role deleted successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Role deleted');
 
         expect($this->role->fresh()->trashed())->toBeTrue();
     });
@@ -196,7 +196,7 @@ describe('shift management', function () {
             ->set('shiftIsOpen', true)
             ->call('saveShift')
             ->assertSet('showShiftModal', false)
-            ->assertDispatched('toast', title: 'Success', description: 'Shift created successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Shift created');
 
         expect(Shift::where('shift_role_id', $this->role->id)->count())->toBe(1);
     });
@@ -215,7 +215,7 @@ describe('shift management', function () {
             ->assertSet('editingShiftId', $shift->id)
             ->set('shiftCapacity', 5)
             ->call('saveShift')
-            ->assertDispatched('toast', title: 'Success', description: 'Shift updated successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Shift updated');
 
         expect($shift->fresh()->capacity)->toBe(5);
     });
@@ -260,7 +260,7 @@ describe('shift management', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('deleteShift', $shift->id)
-            ->assertDispatched('toast', title: 'Success', description: 'Shift deleted successfully');
+            ->assertDispatched('toast', title: 'Success', description: 'Shift deleted');
 
         expect($shift->fresh()->trashed())->toBeTrue();
     });
@@ -307,7 +307,7 @@ describe('bulk creation', function () {
             ->set('bulkCapacity', 2)
             ->call('createBulkShifts')
             ->assertSet('showBulkModal', false)
-            ->assertDispatched('toast', title: 'Success', description: '3 shifts created successfully');
+            ->assertDispatched('toast', title: 'Success', description: '3 shifts created');
 
         expect(Shift::where('shift_role_id', $this->role->id)->count())->toBe(3);
     });
@@ -326,7 +326,7 @@ describe('bulk creation', function () {
             ->set('bulkDurationMinutes', 120)
             ->set('bulkCapacity', 1)
             ->call('createBulkShifts')
-            ->assertDispatched('toast', title: 'Success', description: '3 shifts created successfully');
+            ->assertDispatched('toast', title: 'Success', description: '3 shifts created');
 
         $shifts = Shift::where('shift_role_id', $this->role->id)->orderBy('start_time')->get();
         expect($shifts)->toHaveCount(3);
@@ -370,7 +370,7 @@ describe('assignments', function () {
             ->set('assignUserId', $this->regularUser->id)
             ->call('assignUser')
             ->assertSet('showAssignModal', false)
-            ->assertDispatched('toast', title: 'Success', description: 'User assigned to shift');
+            ->assertDispatched('toast', title: 'Success', description: 'Volunteer assigned to shift');
 
         expect(ShiftAssignment::where('shift_id', $shift->id)
             ->where('user_id', $this->regularUser->id)->exists())->toBeTrue();
@@ -394,7 +394,7 @@ describe('assignments', function () {
             ->call('openAssignModal', $shift->id)
             ->set('assignUserId', $this->regularUser->id)
             ->call('assignUser')
-            ->assertDispatched('toast', title: 'Error', description: 'User is already assigned to this shift.');
+            ->assertDispatched('toast', title: 'Error', description: 'This volunteer is already assigned to this shift.');
     });
 
     test('cannot assign user when shift at capacity', function () {
@@ -415,7 +415,7 @@ describe('assignments', function () {
             ->call('openAssignModal', $shift->id)
             ->set('assignUserId', $this->regularUser->id)
             ->call('assignUser')
-            ->assertDispatched('toast', title: 'Error', description: 'This shift is already at capacity.');
+            ->assertDispatched('toast', title: 'Error', description: 'This shift is full.');
     });
 
     test('can remove an assignment', function () {
@@ -530,7 +530,7 @@ describe('manager overrides', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('managerCheckIn', $assignment->id)
-            ->assertDispatched('toast', title: 'Success', description: 'User checked in');
+            ->assertDispatched('toast', title: 'Success', description: 'Volunteer checked in');
 
         expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_IN);
     });
@@ -552,7 +552,7 @@ describe('manager overrides', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('managerCheckOut', $assignment->id)
-            ->assertDispatched('toast', title: 'Success', description: 'User checked out');
+            ->assertDispatched('toast', title: 'Success', description: 'Volunteer checked out');
 
         expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_OUT);
     });
@@ -1635,5 +1635,30 @@ describe('unscored events', function () {
 
         expect($role->bonus_points)->toBeNull()
             ->and($role->requires_confirmation)->toBeFalse();
+    });
+});
+
+describe('phone layout', function () {
+    test('stacks the unresolved assignments alert and names its icon buttons', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->subHours(5),
+            'end_time' => appNow()->subHours(3),
+        ]);
+        ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->set('timeFilter', 'past')
+            ->assertSeeHtml('alert-vertical sm:alert-horizontal')
+            ->assertSeeHtml('aria-label="Back to Shift Schedule"')
+            ->assertSeeHtml('aria-label="Remove Assignment"')
+            ->assertSeeHtml('aria-label="Edit Shift"');
     });
 });

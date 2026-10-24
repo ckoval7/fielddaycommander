@@ -136,9 +136,9 @@
             <div class="flex items-center gap-3">
                 <x-icon name="phosphor-warning" class="w-6 h-6 flex-shrink-0" />
                 <div>
-                    <div class="font-semibold">Connection Lost</div>
+                    <div class="font-semibold">Live Updates Paused</div>
                     <div class="text-sm opacity-90">
-                        Real-time updates are unavailable. Attempting to reconnect...
+                        Live connection lost. Updates may be delayed.
                     </div>
                 </div>
             </div>
@@ -146,7 +146,7 @@
                 @click="dismissBanner"
                 type="button"
                 class="btn btn-ghost btn-sm btn-circle"
-                aria-label="Dismiss banner"
+                aria-label="Dismiss connection status"
             >
                 <x-icon name="phosphor-x" class="w-5 h-5" />
             </button>
@@ -183,7 +183,7 @@
                 >
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-error-content"></span>
                 </span>
-                <span x-text="connecting ? 'Connecting...' : 'Offline'"></span>
+                <span x-text="connecting ? 'Connecting...' : 'Disconnected'"></span>
             </div>
 
             <div

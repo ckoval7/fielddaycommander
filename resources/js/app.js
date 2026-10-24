@@ -8,6 +8,7 @@ import { transcribeRecall, netLogRecall } from './components/server-recall';
 import updatedAgo from './components/updated-ago';
 import stationLastHeard from './components/station-last-heard';
 import icsPdf from './components/ics-pdf';
+import { copyToClipboard } from './clipboard';
 import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
@@ -35,6 +36,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('netLogRecall', netLogRecall);
     Alpine.data('formErrorSummaryPanel', formErrorSummaryPanel);
     Alpine.data('flatpickr', flatpickrComponent);
+    Alpine.magic('copy', () => copyToClipboard);
 });
 
 // Suppress only the W3C-spec'd benign "ResizeObserver loop completed with

@@ -19,7 +19,7 @@
         />
 
         <x-flatpickr
-            label="Expected Delivery"
+            label="Expected Delivery (optional)"
             wire:model="commitExpectedDeliveryAt"
             mode="date"
             icon="phosphor-calendar"
@@ -27,9 +27,9 @@
         />
 
         <x-textarea
-            label="Delivery Notes"
+            label="Delivery Notes (optional)"
             wire:model="commitDeliveryNotes"
-            placeholder="Add any special instructions or notes about delivery..."
+            placeholder="Delivery instructions or pickup details"
             hint="Maximum 500 characters"
             rows="4"
         />

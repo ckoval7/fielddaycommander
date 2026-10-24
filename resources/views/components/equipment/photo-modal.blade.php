@@ -4,7 +4,7 @@
 --}}
 @props(['photoPath' => null, 'photoDescription' => null])
 
-<x-modal wire:model="showPhotoModal" :title="$photoDescription ?? 'Equipment Detail'" class="backdrop-blur" box-class="max-w-4xl">
+<x-modal wire:model="showPhotoModal" :title="$photoDescription ?? 'Equipment Photo'" class="backdrop-blur" box-class="max-w-4xl">
     @if($photoPath)
         <div class="flex justify-center items-center">
             <img

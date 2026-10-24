@@ -185,7 +185,7 @@ class MessageForm extends Component
         }
 
         if ($existingSmQuery->exists()) {
-            $this->addError('isSmMessage', 'An SM/SEC message already exists for this event.');
+            $this->addError('isSmMessage', 'An SM/SEC message already exists for this event. Edit that message or turn off SM/SEC Message here.');
 
             return false;
         }

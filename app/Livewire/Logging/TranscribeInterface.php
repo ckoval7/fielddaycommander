@@ -165,7 +165,7 @@ class TranscribeInterface extends Component
         $this->parseError = '';
 
         if (! $this->event) {
-            $this->parseError = 'No active or grace-period event found.';
+            $this->parseError = 'Transcription is unavailable outside the event and its grace period.';
 
             return;
         }
@@ -204,7 +204,7 @@ class TranscribeInterface extends Component
 
         $exchange = $this->getExchangeWithoutTime();
         if (trim($exchange) === '') {
-            $this->parseError = 'Exchange is empty';
+            $this->parseError = 'Enter callsign, class, and section';
 
             return;
         }
@@ -607,6 +607,18 @@ class TranscribeInterface extends Component
     protected function eventTypeId(): ?int
     {
         return $this->station->eventConfiguration?->event?->event_type_id;
+    }
+
+    /**
+     * Sample callsign, class and section for the event's rulebook, shown as
+     * the exchange placeholder and help text.
+     */
+    #[Computed]
+    public function exchangeExample(): string
+    {
+        $code = $this->station->eventConfiguration?->event?->eventType?->code;
+
+        return $code === 'WFD' ? 'W1AW 1H CT' : 'W1AW 3A CT';
     }
 
     protected function extractCallsign(): ?string

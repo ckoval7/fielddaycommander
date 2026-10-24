@@ -150,7 +150,7 @@ class ManageSafetyChecklist extends Component
                 );
             }
 
-            $message = 'Item updated successfully';
+            $message = 'Checklist item updated.';
         } else {
             $maxSortOrder = SafetyChecklistItem::query()
                 ->forEvent($this->eventConfig->id)
@@ -181,7 +181,7 @@ class ManageSafetyChecklist extends Component
                 ]
             );
 
-            $message = 'Item created successfully';
+            $message = 'Checklist item added.';
         }
 
         $this->showItemModal = false;
@@ -198,7 +198,7 @@ class ManageSafetyChecklist extends Component
         $item = SafetyChecklistItem::findOrFail($id);
 
         if ($item->is_default) {
-            $this->dispatch('toast', title: 'Error', description: 'Cannot delete default ARRL items', icon: 'phosphor-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'Default checklist items cannot be deleted.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
@@ -216,7 +216,7 @@ class ManageSafetyChecklist extends Component
 
         unset($this->items);
 
-        $this->dispatch('toast', title: 'Success', description: 'Item deleted successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Checklist item deleted.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function seedDefaults(): void
@@ -227,7 +227,7 @@ class ManageSafetyChecklist extends Component
 
         unset($this->items);
 
-        $this->dispatch('toast', title: 'Success', description: 'Default items seeded successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Default checklist items added.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function moveUp(int $id): void
@@ -295,7 +295,7 @@ class ManageSafetyChecklist extends Component
     protected function validationAttributes(): array
     {
         return [
-            'itemLabel' => 'label',
+            'itemLabel' => 'item text',
             'itemHelpText' => 'help text',
             'itemChecklistType' => 'checklist type',
         ];

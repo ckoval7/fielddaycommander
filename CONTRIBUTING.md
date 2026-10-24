@@ -60,10 +60,12 @@ Keep the conditions that narrow it down (screen size, offline, a particular mode
 
 Leave out changes nobody would notice: typos, wording tweaks, refactors, tests, CI, formatting, and dependency bumps that don't fix anything or need action. When you're not sure, ask whether anyone would ever search the changelog for it.
 
+Also leave out fixes for bugs that never reached a release. If the problem came in with a change still under **Unreleased**, nobody running a release ever saw it, so fold the fix into that work instead of adding an entry.
+
 
 ## Releases
 
-Releases are cut from `dev` by the maintainer. A release branch off `dev` gets the quality and security scans, package updates and the version bump, then merges back into `dev`. `main` is then fast-forwarded to `dev` and tagged `vYY.MM.N`. The tag builds and publishes the Docker image.
+Releases are cut from `dev` by the maintainer. `dev` gets the quality and security scans and package updates, then a `Release vYY.MM.N` pull request into `main` has to pass SonarCloud before the version bump lands on `dev`. `main` is then fast-forwarded to `dev` and tagged `vYY.MM.N`. The tag builds and publishes the Docker image.
 
 Because `main` only ever moves forward to match `dev`, it never has commits of its own, and fixes always go through `dev` first.
 

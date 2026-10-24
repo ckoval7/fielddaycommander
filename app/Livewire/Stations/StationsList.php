@@ -196,7 +196,7 @@ class StationsList extends Component
 
         $this->dispatch('toast', [
             'title' => 'Sessions Ended',
-            'description' => "Closed {$closed} active session(s) for {$station->name}.",
+            'description' => "Closed {$closed} active ".str('session')->plural($closed)." for {$station->name}.",
             'icon' => 'phosphor-check-circle',
             'css' => 'alert-success',
         ]);
@@ -286,7 +286,7 @@ class StationsList extends Component
 
         $description = "{$station->name} is now marked unavailable ({$reason->label()}).";
         if ($endedSessions > 0) {
-            $description .= " Ended {$endedSessions} active session(s).";
+            $description .= " Ended {$endedSessions} active ".str('session')->plural($endedSessions).'.';
         }
 
         $this->dispatch('toast', [
@@ -373,8 +373,8 @@ class StationsList extends Component
         unset($this->stations);
 
         $this->dispatch('toast', [
-            'title' => 'Browser Revoked',
-            'description' => "A station-mode browser for {$device->station->name} was revoked.",
+            'title' => 'Browser Removed',
+            'description' => "A browser was removed from station mode for {$device->station->name}.",
             'icon' => 'phosphor-power',
             'css' => 'alert-info',
         ]);
@@ -395,7 +395,7 @@ class StationsList extends Component
         if ($hasContacts) {
             // Soft delete if has contacts
             $station->delete();
-            $this->dispatch('notify', title: 'Station Archived', description: "Station '{$station->name}' has been archived (soft deleted) because it has logged contacts.");
+            $this->dispatch('notify', title: 'Station Archived', description: "Station '{$station->name}' has been archived because it has logged contacts.");
         } else {
             // Hard delete if no contacts
             $station->forceDelete();

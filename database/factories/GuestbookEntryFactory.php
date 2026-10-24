@@ -32,7 +32,7 @@ class GuestbookEntryFactory extends Factory
             'callsign' => strtoupper(fake()->bothify('??#???')),
             'email' => fake()->optional(0.7)->email(),
             'comments' => fake()->optional(0.6)->sentence(),
-            'presence_type' => fake()->randomElement(PresenceType::cases()),
+            'presence_type' => PresenceType::InPerson,
             'visitor_category' => fake()->randomElement(VisitorCategory::cases()),
             'is_verified' => false,
             'verified_by' => null,

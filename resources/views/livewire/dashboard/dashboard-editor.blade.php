@@ -47,7 +47,7 @@
                 <div class="flex items-center gap-2 text-info">
                     <x-icon name="phosphor-note-pencil" class="w-5 h-5" />
                     <span class="font-medium text-sm">Editing dashboard</span>
-                    <span class="text-xs text-base-content/60 hidden sm:inline">— drag to reorder, click controls to configure</span>
+                    <span class="text-xs text-base-content/60 hidden sm:inline">Drag to reorder. Use widget controls to configure.</span>
                 </div>
 
                 <div class="flex flex-wrap gap-2 flex-shrink-0">
@@ -63,12 +63,12 @@
                         class="btn-ghost btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                         wire:click="undo"
                         :disabled="! $this->canUndo()"
-                        title="Undo last change (Ctrl+Z)"
+                        title="Undo last layout change (Ctrl+Z or Cmd+Z)"
                         aria-keyshortcuts="Control+Z Meta+Z"
                         spinner="undo"
                     />
                     <x-button
-                        label="Save"
+                        label="Save Dashboard"
                         icon="phosphor-check"
                         class="btn-primary btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                         wire:click="saveLayout"
@@ -408,7 +408,7 @@
         <div class="text-center py-12">
             <x-icon name="phosphor-squares-four" class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
             <p class="text-lg font-medium text-base-content mb-2">No widgets configured</p>
-            <p class="text-sm text-base-content/60 mb-6">Click "Add Widget" above to add your first widget</p>
+            <p class="text-sm text-base-content/60 mb-6">In edit mode, use "Add Widget" to build this dashboard.</p>
             @if(!$editMode)
                 <x-button
                     label="Edit Layout"
@@ -428,7 +428,7 @@
                     <x-icon name="phosphor-warning" class="w-6 h-6 text-error" />
                 </div>
                 <div>
-                    <p class="font-medium mb-2">Are you sure you want to remove this widget?</p>
+                    <p class="font-medium mb-2">Remove this widget from the dashboard?</p>
                     <p class="text-sm text-base-content/70">The widget will be removed from your dashboard. You can add it back later.</p>
                 </div>
             </div>

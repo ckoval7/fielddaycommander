@@ -506,7 +506,6 @@ describe('additional features', function () {
         expect($component->get('entryStats')['bonus_eligible'])->toBe(0);
         $component->assertDontSee('Guestbook Bonuses')
             ->assertDontSee('Bonus Eligible')
-            ->assertDontSee('Elected Official (bonus)')
             ->assertSee('Elected Official');
     });
 
@@ -533,7 +532,25 @@ describe('additional features', function () {
         Livewire::test(GuestbookManager::class, ['event' => $this->event])
             ->assertSee('Guestbook Bonuses')
             ->assertSee('Bonus Eligible')
-            ->assertSee('Elected Official (bonus)');
+            ->assertSeeHtml('<span class="text-base-content/60">· Bonus Eligible</span>')
+            ->assertSeeHtml('<div class="text-base-content/60">Bonus Eligible</div>');
+    });
+
+    test('entry rows show category, presence and callsign as plain text, not badges or code', function () {
+        $this->actingAs($this->admin);
+
+        GuestbookEntry::factory()->verified()->electedOfficial()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'callsign' => 'K1ABC',
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->assertSee('K1ABC')
+            ->assertSeeHtml('<span class="whitespace-nowrap">In Person</span>')
+            ->assertDontSeeHtml('<code')
+            ->assertDontSeeHtml('font-mono')
+            ->assertDontSeeHtml('badge-warning')
+            ->assertDontSeeHtml('badge-info');
     });
 
     test('search resets pagination', function () {
@@ -1030,4 +1047,106 @@ test('an unscored event shows no guestbook bonuses', function () {
         ->assertDontSee('Bonus Eligible')
         ->assertDontSee('(bonus)')
         ->assertDontSee('Guestbook Bonuses');
+});
+
+describe('online entries in in-person-only categories', function () {
+    test('refuses to verify an online agency entry from the edit modal', function (VisitorCategory $category) {
+        $this->actingAs($this->admin);
+
+        $entry = GuestbookEntry::factory()->online()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => VisitorCategory::GeneralPublic,
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->call('openVerifyModal', $entry->id)
+            ->set('editCategory', $category->value)
+            ->set('editVerified', true)
+            ->call('saveVerification')
+            ->assertHasErrors(['editVerified'])
+            ->assertSet('showVerifyModal', true);
+
+        expect($entry->fresh()->is_verified)->toBeFalse();
+        expect($entry->fresh()->visitor_category)->toBe(VisitorCategory::GeneralPublic);
+    })->with([VisitorCategory::Agency, VisitorCategory::ElectedOfficial]);
+
+    test('refuses to change an already verified online entry to a visit category', function () {
+        $this->actingAs($this->admin);
+
+        $entry = GuestbookEntry::factory()->online()->verified()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => VisitorCategory::GeneralPublic,
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->call('openVerifyModal', $entry->id)
+            ->set('editCategory', VisitorCategory::Agency->value)
+            ->call('saveVerification')
+            ->assertHasErrors(['editVerified']);
+
+        expect($entry->fresh()->visitor_category)->toBe(VisitorCategory::GeneralPublic);
+    });
+
+    test('allows verifying online entries in other categories and in-person visit entries', function () {
+        $this->actingAs($this->admin);
+
+        $online = GuestbookEntry::factory()->online()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => VisitorCategory::Media,
+        ]);
+        $inPerson = GuestbookEntry::factory()->inPerson()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => VisitorCategory::Agency,
+        ]);
+
+        foreach ([$online, $inPerson] as $entry) {
+            Livewire::test(GuestbookManager::class, ['event' => $this->event])
+                ->call('openVerifyModal', $entry->id)
+                ->set('editVerified', true)
+                ->call('saveVerification')
+                ->assertHasNoErrors();
+
+            expect($entry->fresh()->is_verified)->toBeTrue();
+        }
+    });
+
+    test('bulk verify skips online visit entries and reports how many', function () {
+        $this->actingAs($this->admin);
+
+        $skipped = GuestbookEntry::factory()->online()->count(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => VisitorCategory::ElectedOfficial,
+            'is_verified' => false,
+        ]);
+        $ok = GuestbookEntry::factory()->online()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => VisitorCategory::GeneralPublic,
+            'is_verified' => false,
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->set('selectedIds', [...$skipped->pluck('id')->all(), $ok->id])
+            ->call('bulkVerify')
+            ->assertDispatched('toast', fn ($name, $params) => str_contains($params['description'], '2 online entries left unverified'));
+
+        expect($ok->fresh()->is_verified)->toBeTrue();
+        expect(GuestbookEntry::whereIn('id', $skipped->pluck('id'))->where('is_verified', true)->count())->toBe(0);
+    });
+
+    test('bonus eligible stat leaves out verified online visit entries', function () {
+        $this->actingAs($this->admin);
+
+        GuestbookEntry::factory()->online()->verified()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => VisitorCategory::Agency,
+        ]);
+        GuestbookEntry::factory()->inPerson()->verified()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'visitor_category' => VisitorCategory::Agency,
+        ]);
+
+        $component = Livewire::test(GuestbookManager::class, ['event' => $this->event]);
+
+        expect($component->get('entryStats')['bonus_eligible'])->toBe(1);
+    });
 });

@@ -145,7 +145,7 @@ class StationSelect extends Component
         if (! $station->primaryRadio) {
             return [
                 'type' => 'info',
-                'message' => 'This station has no radio assigned — band compatibility cannot be verified.',
+                'message' => 'No radio assigned. Band compatibility cannot be checked.',
             ];
         }
 
@@ -154,7 +154,7 @@ class StationSelect extends Component
         if ($radioBands->isEmpty()) {
             return [
                 'type' => 'info',
-                'message' => "This station's radio has no band information configured — compatibility cannot be verified.",
+                'message' => "No bands are configured for this station's radio. Band compatibility cannot be checked.",
             ];
         }
 

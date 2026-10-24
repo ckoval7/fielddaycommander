@@ -788,7 +788,7 @@ describe('View Rendering', function () {
             'config' => ['list_type' => 'recent_contacts'],
         ])
             ->assertSee('No contacts logged yet')
-            ->assertSee('Start making contacts to see them appear here');
+            ->assertSee('Logged contacts appear here.');
     });
 
     it('applies tv size classes correctly', function () {

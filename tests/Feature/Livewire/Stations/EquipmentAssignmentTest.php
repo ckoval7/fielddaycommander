@@ -81,6 +81,16 @@ beforeEach(function () {
     ]);
 });
 
+/**
+ * Give the station's radio and an antenna a shared band so band checks have nothing to warn about.
+ */
+function shareBandWithRadio(Equipment $radio, Equipment $antenna): void
+{
+    $band = Band::factory()->create(['name' => '20m', 'meters' => 20, 'is_hf' => true]);
+    $radio->bands()->attach($band);
+    $antenna->bands()->attach($band);
+}
+
 test('component can render with station', function () {
     Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
         ->assertStatus(200)
@@ -128,6 +138,7 @@ test('can assign equipment from committed tab', function () {
         'committed_at' => now(),
         'status_changed_at' => now(),
     ]);
+    shareBandWithRadio($this->radio, $antenna);
 
     Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
         ->call('assignEquipment', $antenna->id, false)
@@ -179,6 +190,7 @@ test('can assign equipment from catalog with commit', function () {
         'model' => 'Deluxe',
         'owner_user_id' => $this->user->id,
     ]);
+    shareBandWithRadio($this->radio, $antenna);
 
     Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
         ->call('assignEquipment', $antenna->id, true)
@@ -523,6 +535,7 @@ test('handles drop event from drag and drop', function () {
         'committed_at' => now(),
         'status_changed_at' => now(),
     ]);
+    shareBandWithRadio($this->radio, $antenna);
 
     Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
         ->dispatch('equipment-dropped', equipmentId: $antenna->id, fromCatalog: false)
@@ -883,6 +896,29 @@ test('validateEquipmentType accepts valid equipment types', function () {
     }
 });
 
+test('shows warning modal when band information is incomplete', function () {
+    $antenna = Equipment::factory()->create([
+        'type' => 'antenna',
+        'make' => 'No Bands',
+        'model' => 'Antenna',
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    EquipmentEvent::create([
+        'equipment_id' => $antenna->id,
+        'event_id' => $this->event->id,
+        'station_id' => null,
+        'status' => 'committed',
+        'committed_at' => now(),
+        'status_changed_at' => now(),
+    ]);
+
+    Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
+        ->call('assignEquipment', $antenna->id, false)
+        ->assertSet('showWarningModal', true)
+        ->assertSet('warningMessages.0.message', 'Band information is incomplete. Please check antenna and radio compatibility.');
+});
+
 test('shows warning modal for incompatible antenna bands', function () {
     $hfBand = Band::factory()->create(['name' => '20m', 'meters' => 20, 'is_hf' => true]);
     $vhfBand = Band::factory()->create(['name' => '2m', 'meters' => 2, 'is_vhf_uhf' => true]);
@@ -1161,6 +1197,7 @@ describe('audit logging', function () {
             'status' => 'committed',
             'committed_at' => now(),
         ]);
+        shareBandWithRadio($this->radio, $antenna);
 
         Livewire::test(EquipmentAssignment::class, ['stationId' => $this->station->id])
             ->call('assignEquipment', $antenna->id);

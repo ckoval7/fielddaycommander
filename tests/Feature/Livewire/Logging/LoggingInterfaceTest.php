@@ -167,6 +167,15 @@ test('queued contact sync indicators wait for the pending delay', function () {
         ->assertSee("contact.status === 'syncing') && isPendingIndicatorVisible(contact)", false);
 });
 
+test('logging screen has a warning for contacts the browser cannot save', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertSeeHtml('data-queue-storage-warning')
+        ->assertSee('x-show="storageWarningVisible"', false)
+        ->assertSee("Contacts waiting to sync aren't saved on this device.", false);
+});
+
 test('club exchange is displayed with callsign', function () {
     $this->actingAs($this->user);
 
@@ -969,7 +978,7 @@ test('updateContact rejects invalid exchange', function () {
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->call('updateContact', $contact->id, 'INVALID')
-        ->assertSet('parseError', 'Exchange must contain callsign, class, and section (e.g. W1AW 3A CT)');
+        ->assertSet('parseError', 'Enter callsign, class, and section (e.g. W1AW 3A CT)');
 
     expect($contact->fresh()->callsign)->toBe('W1OLD');
 });

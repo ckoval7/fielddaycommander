@@ -165,6 +165,18 @@ test('shows get-ready view when upcoming event exists', function () {
     $response->assertViewIs('dashboard.get-ready');
 });
 
+test('get-ready countdown reloads into the dashboard when it reaches zero', function () {
+    $user = User::factory()->create();
+    Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+
+    $this->actingAs($user)->get(route('dashboard'))
+        ->assertViewIs('dashboard.get-ready')
+        ->assertSee('window.location.reload()', escape: false);
+});
+
 test('get-ready header shows the operating class once', function () {
     $user = User::factory()->create();
     $event = Event::factory()->create([

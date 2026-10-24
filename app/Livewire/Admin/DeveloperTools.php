@@ -8,11 +8,14 @@ namespace App\Livewire\Admin;
 use App\Models\AuditLog;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\EventConfiguration;
 use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Models\User;
 use App\Services\DatabaseSnapshotService;
 use App\Services\DeveloperClockService;
+use App\Services\ImageService;
+use App\Services\RescoreService;
 use App\Support\DeveloperMode;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -156,7 +159,7 @@ class DeveloperTools extends Component
             if ($event === null) {
                 return [
                     'status' => 'No Active Event',
-                    'message' => 'No event is currently active.',
+                    'message' => 'No event is in progress at the selected time.',
                     'class' => 'badge-warning',
                 ];
             }
@@ -396,7 +399,7 @@ class DeveloperTools extends Component
             $this->showSelectiveResetModal = false;
 
             $this->success(
-                'Tables reset successfully',
+                'Tables reset',
                 'Cleared: '.implode(', ', $tablesToTruncate)
             );
         } catch (\Exception $e) {
@@ -609,21 +612,37 @@ class DeveloperTools extends Component
     }
 
     /**
-     * Clear all test users from the pool.
+     * Permanently remove the test users, their contacts and operating
+     * sessions, then rescore every event those contacts were logged in.
      */
-    public function clearTestUsers(): void
+    public function clearTestUsers(RescoreService $rescorer, ImageService $images): void
     {
         try {
-            $count = $this->getTestUserPoolCount();
+            $userIds = User::withTrashed()
+                ->where('call_sign', 'LIKE', self::TEST_USER_CALLSIGN_PATTERN)
+                ->pluck('id')
+                ->all();
 
-            if ($count === 0) {
+            if ($userIds === []) {
                 $this->info('No test users to clear');
 
                 return;
             }
 
-            // Delete all test users (cascade will handle related records)
-            User::where('call_sign', 'LIKE', self::TEST_USER_CALLSIGN_PATTERN)->delete();
+            $imagePaths = [];
+            $eventConfigIds = DB::transaction(function () use ($userIds, &$imagePaths): array {
+                return $this->purgeTestUsers($userIds, $imagePaths);
+            });
+
+            foreach ($imagePaths as $path) {
+                $images->delete($path, dirname($path).'/'.pathinfo($path, PATHINFO_FILENAME).'_thumb.jpg');
+            }
+
+            foreach (Event::whereIn('id', EventConfiguration::whereIn('id', $eventConfigIds)->pluck('event_id'))->get() as $event) {
+                $rescorer->rescoreEvent($event);
+            }
+
+            $count = count($userIds);
 
             AuditLog::log(
                 action: 'developer.test_users.clear',
@@ -640,6 +659,70 @@ class DeveloperTools extends Component
         } catch (\Exception $e) {
             $this->reportFailure('Failed to clear test users', $e);
         }
+    }
+
+    /**
+     * Delete the given users for good, along with everything that would
+     * otherwise block the delete or be left pointing at them.
+     *
+     * Contacts and sessions are removed outright (soft-deleted ones too).
+     * Rows another user owns that merely mention a test user keep their
+     * data and lose the reference. Tables whose foreign key already cascades
+     * or nulls on delete (user_invitations, dashboards, adif_imports, audit
+     * logs, equipment owners and so on) are left to the database.
+     *
+     * @param  array<int, int>  $userIds
+     * @param  array<int, string>  $imagePaths  Filled with the storage paths of deleted images, for the caller to remove once the transaction commits
+     * @return array<int, int> Event configuration ids that lost contacts
+     */
+    protected function purgeTestUsers(array $userIds, array &$imagePaths = []): array
+    {
+        $sessionIds = DB::table('operating_sessions')->whereIn('operator_user_id', $userIds)->pluck('id');
+
+        $contacts = fn () => DB::table('contacts')->where(function ($query) use ($userIds, $sessionIds): void {
+            $query->whereIn('logger_user_id', $userIds)
+                ->orWhereIn('operating_session_id', $sessionIds);
+        });
+
+        $eventConfigIds = $contacts()->distinct()->pluck('event_configuration_id')->all();
+
+        // Contacts reference sessions and users with restrict or cascade keys;
+        // duplicate_of_contact_id, adif_import_records and adif_imports null out.
+        $contacts()->delete();
+        DB::table('operating_sessions')->whereIn('id', $sessionIds)->delete();
+
+        $imagePaths = DB::table('images')->whereIn('uploaded_by_user_id', $userIds)->pluck('storage_path')->all();
+
+        // Restrict keys on rows the test users own.
+        foreach (['messages' => 'user_id', 'shift_assignments' => 'user_id', 'w1aw_bulletins' => 'user_id', 'images' => 'uploaded_by_user_id'] as $table => $column) {
+            DB::table($table)->whereIn($column, $userIds)->delete();
+        }
+
+        // Restrict keys on rows that should survive: drop the reference.
+        foreach ([
+            ['messages', 'sent_by_user_id'],
+            ['shift_assignments', 'confirmed_by_user_id'],
+            ['event_bonuses', 'claimed_by_user_id'],
+            ['event_bonuses', 'verified_by_user_id'],
+            ['contacts', 'gota_coach_user_id'],
+        ] as [$table, $column]) {
+            DB::table($table)->whereIn($column, $userIds)->update([$column => null]);
+        }
+
+        // Can't be empty, so reassign it to the person clearing the pool.
+        DB::table('event_configurations')
+            ->whereIn('created_by_user_id', $userIds)
+            ->update(['created_by_user_id' => auth()->id()]);
+
+        // Tables with no foreign key.
+        DB::table('sessions')->whereIn('user_id', $userIds)->delete();
+        DB::table('model_has_roles')->where('model_type', (new User)->getMorphClass())->whereIn('model_id', $userIds)->delete();
+        DB::table('model_has_permissions')->where('model_type', (new User)->getMorphClass())->whereIn('model_id', $userIds)->delete();
+        DB::table('notifications')->where('notifiable_type', (new User)->getMorphClass())->whereIn('notifiable_id', $userIds)->delete();
+
+        User::withTrashed()->whereIn('id', $userIds)->forceDelete();
+
+        return $eventConfigIds;
     }
 
     // =====================

@@ -30,7 +30,7 @@
             placeholder="e.g., CONTEST-PC"
             autocomplete="off"
             maxlength="50"
-            hint="Matches external logger contacts to this station. N1MM+ matches on the PC's computer name; WSJT-X, JTDX, and ADIF loggers match on the station callsign."
+            hint="Matches external logger contacts to this station. N1MM+ matches on the PC's computer name. WSJT-X, JTDX, and ADIF loggers match on the station callsign."
         />
 
         {{-- Event Selection --}}
@@ -44,7 +44,7 @@
             icon="phosphor-calendar"
             required
             :disabled="$stationId ? true : false"
-            :hint="$stationId ? 'Event cannot be changed when editing' : 'Select the event'"
+            :hint="$stationId ? 'Event cannot be changed when editing' : 'Select an event'"
         />
     </div>
 </x-card>
@@ -140,13 +140,13 @@
         <x-checkbox
             label="GOTA Station (Get On The Air)"
             wire:model.live="is_gota"
-            hint="Special station for new operators. Only one GOTA station allowed per event."
+            hint="Get On The Air station. Only one is allowed per eligible event."
             :disabled="!$this->allowsGota"
         />
 
         @if(!$this->allowsGota && $event_configuration_id)
             <x-alert icon="phosphor-info" class="alert-warning">
-                The selected event's operating class does not allow a GOTA station.
+                GOTA is not available for the selected event and operating class.
             </x-alert>
         @endif
 
@@ -222,13 +222,13 @@
             @if($max_power_watts > $this->maxPowerLimit)
                 <x-alert icon="phosphor-warning" class="alert-warning">
                     <span class="font-semibold">Scoring impact:</span> This station's power ({{ $max_power_watts }}W) exceeds the event's {{ $this->maxPowerLimit }}W setting.
-                    Per Field Day rules, the highest station power determines the multiplier for the <span class="font-semibold">entire entry</span>
+                    For ARRL Field Day, the highest station power sets the power multiplier for the <span class="font-semibold">entire entry</span>.
                     @if($max_power_watts > 100)
-                        &mdash; this will reduce it to 1&times;.
+                        This will reduce it to 1&times;.
                     @elseif($this->maxPowerLimit <= 5)
-                        &mdash; this will reduce it from 5&times; to 2&times;.
+                        This will reduce it from 5&times; to 2&times;.
                     @else
-                        &mdash; this may reduce your power multiplier.
+                        This may reduce your power multiplier.
                     @endif
                 </x-alert>
             @else
@@ -260,11 +260,14 @@
                     class="{{ $ps->isNaturalPower() ? 'alert-success' : ($ps->isEmergencyPower() ? 'alert-info' : 'alert-warning') }}"
                 >
                     @if($ps->isNaturalPower())
-                        Qualifies for emergency power bonus and natural power (5&times; QRP) multiplier.
+                        Counts toward the 100% emergency power bonus and the 5&times; natural power multiplier (5W or less, every station on natural power).
+                        @if($ps === \App\Enums\PowerSource::Other)
+                            Use Other for wind, water, or another source without an engine. Methane counts as alternate power, but choose <strong>Generator</strong> for any fuel-burning generator. Engine-driven generators don't qualify for ARRL's 5&times; multiplier.
+                        @endif
                     @elseif($ps->isEmergencyPower())
-                        Qualifies for emergency power bonus. Does not qualify for natural power (5&times; QRP) multiplier.
+                        Counts toward the 100% emergency power bonus. Rules out the 5&times; natural power multiplier for the whole entry.
                     @else
-                        Does not qualify for emergency power bonus or natural power multiplier.
+                        Rules out the 100% emergency power bonus and the 5&times; natural power multiplier for the whole entry.
                     @endif
                 </x-alert>
             @endif

@@ -30,7 +30,7 @@ test('UserInvitation mail has correct subject', function () {
 
     $mail = $notification->toMail($this->invitedUser);
 
-    expect($mail->subject)->toContain("You've been invited to FD Log DB");
+    expect($mail->subject)->toContain("You've been invited to Field Day Commander");
 });
 
 test('UserInvitation mail greeting contains user first name', function () {
@@ -110,7 +110,7 @@ test('UserInvitation is sent to user via Notification facade', function () {
             expect($channels)->toBe(['mail']);
 
             $mail = $notification->toMail($this->invitedUser);
-            expect($mail->subject)->toContain("You've been invited to FD Log DB")
+            expect($mail->subject)->toContain("You've been invited to Field Day Commander")
                 ->and($mail->actionUrl)->toContain($this->token);
 
             return true;

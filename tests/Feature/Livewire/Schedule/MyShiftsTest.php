@@ -52,7 +52,7 @@ test('my shifts shows empty state when no shifts', function () {
 
     Livewire::test(MyShifts::class)
         ->assertSee('You have no shifts happening right now.')
-        ->assertSee('You have no upcoming shifts scheduled.')
+        ->assertSee('You have no upcoming shifts. Open Shift Schedule to sign up.')
         ->assertSee('You have no past shifts for this event.');
 });
 
@@ -139,6 +139,52 @@ test('user can check in to a scheduled shift', function () {
     expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_CHECKED_IN);
 });
 
+test('check-in before the window opens says it is too early', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->addHour(),
+        'end_time' => appNow()->addHours(2),
+    ]);
+
+    $assignment = ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->call('checkIn', $assignment->id)
+        ->assertDispatched('toast', title: 'Too Early', description: 'Check-in opens 15 minutes before the shift starts.');
+
+    expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_SCHEDULED);
+});
+
+test('check-in after the shift ended says it is too late', function () {
+    $shift = Shift::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'shift_role_id' => $this->role->id,
+        'start_time' => appNow()->subHours(3),
+        'end_time' => appNow()->subHour(),
+    ]);
+
+    $assignment = ShiftAssignment::factory()->create([
+        'shift_id' => $shift->id,
+        'user_id' => $this->user->id,
+        'status' => ShiftAssignment::STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($this->user);
+
+    Livewire::test(MyShifts::class)
+        ->call('checkIn', $assignment->id)
+        ->assertDispatched('toast', title: 'Too Late', description: 'This shift has already ended.');
+
+    expect($assignment->fresh()->status)->toBe(ShiftAssignment::STATUS_SCHEDULED);
+});
+
 test('user can check out of a checked-in shift', function () {
     $shift = Shift::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,
@@ -181,7 +227,7 @@ test('checkout confirmation warning is shown when shift has not ended', function
     $this->actingAs($this->user);
 
     Livewire::test(MyShifts::class)
-        ->assertSee('Are you sure you want to check out?', false);
+        ->assertSee('Check out now?', false);
 });
 
 test('checkout confirmation warning is not shown when shift has already ended', function () {
@@ -202,7 +248,7 @@ test('checkout confirmation warning is not shown when shift has already ended', 
     $this->actingAs($this->user);
 
     Livewire::test(MyShifts::class)
-        ->assertDontSee('Are you sure you want to check out?', false);
+        ->assertDontSee('Check out now?', false);
 });
 
 test('user can drop a self-signup', function () {
@@ -313,7 +359,7 @@ test('my shifts shows no event alert when no event configured', function () {
     $this->actingAs($this->user);
 
     Livewire::test(MyShifts::class)
-        ->assertSee('No event is currently selected');
+        ->assertSee('Please select an event to view your shifts');
 });
 
 // =============================================================================
@@ -527,7 +573,7 @@ test('my shifts does not show other users shifts', function () {
     $this->actingAs($this->user);
 
     Livewire::test(MyShifts::class)
-        ->assertSee('You have no upcoming shifts scheduled.');
+        ->assertSee('You have no upcoming shifts. Open Shift Schedule to sign up.');
 });
 
 test('user can check out of a past shift they forgot to check out of', function () {

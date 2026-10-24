@@ -23,7 +23,17 @@ use Spatie\Permission\Models\Role;
 
 class UserManagement extends Component
 {
-    private const BULK_LIMIT_ERROR = 'Bulk actions limited to 50 users. Please select fewer users.';
+    private const BULK_LIMIT_ERROR = 'Please select no more than 50 users for a bulk action.';
+
+    private const FIRST_NAME_REQUIRED = 'Enter a first name.';
+
+    private const LAST_NAME_REQUIRED = 'Enter a last name.';
+
+    private const EMAIL_REQUIRED = 'Enter an email address.';
+
+    private const EMAIL_INVALID = 'Enter a valid email address.';
+
+    private const EMAIL_TAKEN = 'This email address is already registered.';
 
     use WithPagination;
 
@@ -42,6 +52,8 @@ class UserManagement extends Component
     public bool $showResetModal = false;
 
     public bool $showDeleteModal = false;
+
+    public bool $showBulkDeleteModal = false;
 
     public bool $showActivateModal = false;
 
@@ -233,9 +245,15 @@ class UserManagement extends Component
             'role_id' => ['required', 'exists:roles,id'],
             'password' => ['required_if:inviteMode,false', 'confirmed', Password::defaults()],
         ], [
-            'call_sign.unique' => 'This call sign is already registered',
-            'email.unique' => 'This email is already registered',
-            'password.required_if' => 'A password is required when not sending an invitation.',
+            'call_sign.required' => 'Enter a callsign.',
+            'first_name.required' => self::FIRST_NAME_REQUIRED,
+            'last_name.required' => self::LAST_NAME_REQUIRED,
+            'email.required' => self::EMAIL_REQUIRED,
+            'email.email' => self::EMAIL_INVALID,
+            'role_id.required' => 'Select a role.',
+            'call_sign.unique' => 'This callsign is already registered.',
+            'email.unique' => self::EMAIL_TAKEN,
+            'password.required_if' => 'Enter a password or send an invitation.',
         ]);
 
         $user = User::create([
@@ -280,7 +298,7 @@ class UserManagement extends Component
                 $this->showModal = false;
                 $this->reset(['selectedUsers', 'selectAll']);
                 unset($this->users);
-                $this->dispatch('toast', title: 'Success', description: 'User created and invitation email sent', icon: 'phosphor-envelope', css: 'alert-success');
+                $this->dispatch('toast', title: 'Success', description: 'User created and invitation email sent.', icon: 'phosphor-envelope', css: 'alert-success');
             } catch (\Exception $e) {
                 Log::error('Failed to send user invitation email', [
                     'user_id' => $user->id,
@@ -290,13 +308,16 @@ class UserManagement extends Component
                     'error' => $e->getMessage(),
                 ]);
 
-                $this->dispatch('toast', title: 'Warning', description: 'User created but invitation email failed to send. Check application logs for details.', icon: 'phosphor-warning', css: 'alert-warning');
+                $this->showModal = false;
+                $this->reset(['selectedUsers', 'selectAll']);
+                unset($this->users);
+                $this->dispatch('toast', title: 'Warning', description: "User created, but the invitation email could not be sent. Open {$user->call_sign} and use Reset Password to send an email again, or check the application logs.", icon: 'phosphor-warning', css: 'alert-warning');
             }
         } else {
             $this->showModal = false;
             $this->reset(['selectedUsers', 'selectAll']);
             unset($this->users);
-            $this->dispatch('toast', title: 'Success', description: 'User created successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+            $this->dispatch('toast', title: 'Success', description: 'User created.', icon: 'phosphor-check-circle', css: 'alert-success');
         }
     }
 
@@ -312,8 +333,14 @@ class UserManagement extends Component
             'is_cpr_aed_trained' => ['boolean'],
             'role_id' => ['required', 'exists:roles,id'],
         ], [
-            'call_sign.unique' => 'This call sign is already registered',
-            'email.unique' => 'This email is already registered',
+            'call_sign.required' => 'Enter a callsign.',
+            'first_name.required' => self::FIRST_NAME_REQUIRED,
+            'last_name.required' => self::LAST_NAME_REQUIRED,
+            'email.required' => self::EMAIL_REQUIRED,
+            'email.email' => self::EMAIL_INVALID,
+            'role_id.required' => 'Select a role.',
+            'call_sign.unique' => 'This callsign is already registered.',
+            'email.unique' => self::EMAIL_TAKEN,
         ]);
 
         $user = User::findOrFail($this->editingUserId);
@@ -357,7 +384,7 @@ class UserManagement extends Component
 
         unset($this->users);
 
-        $this->dispatch('toast', title: 'Success', description: 'User updated successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'User updated.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function openLockModal(int $userId): void
@@ -416,7 +443,7 @@ class UserManagement extends Component
             'call_sign' => $user->call_sign,
         ]);
 
-        $this->dispatch('toast', title: 'Success', description: 'User will be prompted to change password on next login', icon: 'phosphor-key', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'The user must change their password at next sign-in.', icon: 'phosphor-key', css: 'alert-success');
     }
 
     public function openResetModal(int $userId): void
@@ -457,6 +484,12 @@ class UserManagement extends Component
             'activateFirstName' => ['required', 'string', 'max:50'],
             'activateLastName' => ['required', 'string', 'max:50'],
             'activatePassword' => ['required', 'string', 'min:8'],
+        ], [
+            'activateEmail.required' => self::EMAIL_REQUIRED,
+            'activateEmail.email' => self::EMAIL_INVALID,
+            'activateEmail.unique' => self::EMAIL_TAKEN,
+            'activateFirstName.required' => self::FIRST_NAME_REQUIRED,
+            'activateLastName.required' => self::LAST_NAME_REQUIRED,
         ], attributes: [
             'activateEmail' => 'email',
             'activateFirstName' => 'first name',
@@ -514,7 +547,7 @@ class UserManagement extends Component
             ], isCritical: true);
 
             $this->showResetModal = false;
-            $this->dispatch('toast', title: 'Success', description: 'Password reset successfully', icon: 'phosphor-key', css: 'alert-success');
+            $this->dispatch('toast', title: 'Success', description: 'Password reset.', icon: 'phosphor-key', css: 'alert-success');
         } else {
             $user = User::findOrFail($this->resettingUserId);
 
@@ -526,7 +559,7 @@ class UserManagement extends Component
                 ]);
 
                 $this->showResetModal = false;
-                $this->dispatch('toast', title: 'Success', description: 'Password reset email sent', icon: 'phosphor-envelope', css: 'alert-success');
+                $this->dispatch('toast', title: 'Success', description: 'Password reset email sent.', icon: 'phosphor-envelope', css: 'alert-success');
             } else {
                 $this->dispatch('toast', title: 'Error', description: __($status), icon: 'phosphor-x-circle', css: 'alert-error');
 
@@ -582,26 +615,25 @@ class UserManagement extends Component
         }
 
         $role = Role::find($this->bulk_role_id);
-        $userIds = $this->selectedUsers;
-        User::whereIn('id', $userIds)
+        $users = User::whereIn('id', $this->selectedUsers)
             ->excludeSystem()
             ->with('roles')
-            ->get()
-            ->each(function ($user) use ($role) {
-                $oldRole = $user->roles->first()?->name;
-                $user->syncRoles([$role]);
+            ->get();
+        $count = $users->count();
+        $users->each(function ($user) use ($role) {
+            $oldRole = $user->roles->first()?->name;
+            $user->syncRoles([$role]);
 
-                AuditLog::log('role.assigned', auditable: $user, oldValues: [
-                    'role' => $oldRole,
-                ], newValues: [
-                    'role' => $role->name,
-                    'call_sign' => $user->call_sign,
-                ]);
-            });
+            AuditLog::log('role.assigned', auditable: $user, oldValues: [
+                'role' => $oldRole,
+            ], newValues: [
+                'role' => $role->name,
+                'call_sign' => $user->call_sign,
+            ]);
+        });
 
-        $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll', 'bulk_role_id']);
-        $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} users", icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} ".str('user')->plural($count).'.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function bulkLockAccounts(): void
@@ -624,7 +656,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = $this->selectedUsers;
+        $userIds = User::whereIn('id', $this->selectedUsers)->excludeSystem()->pluck('id')->all();
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => $this->bulkLockExpiry ?? now(),
@@ -642,7 +674,7 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll', 'bulkLockExpiry']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} accounts locked", icon: 'phosphor-lock', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} ".str('account')->plural($count).' locked.', icon: 'phosphor-lock', css: 'alert-success');
     }
 
     public function bulkUnlockAccounts(): void
@@ -659,7 +691,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = $this->selectedUsers;
+        $userIds = User::whereIn('id', $this->selectedUsers)->excludeSystem()->pluck('id')->all();
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => null,
@@ -676,7 +708,18 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $this->reset(['selectedUsers', 'selectAll']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} accounts unlocked", icon: 'phosphor-lock-open', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} ".str('account')->plural($count).' unlocked.', icon: 'phosphor-lock-open', css: 'alert-success');
+    }
+
+    public function openBulkDeleteModal(): void
+    {
+        Gate::authorize('manage-users');
+
+        if (empty($this->selectedUsers)) {
+            return;
+        }
+
+        $this->showBulkDeleteModal = true;
     }
 
     public function bulkDeleteUsers(): void
@@ -699,7 +742,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = $this->selectedUsers;
+        $userIds = User::whereIn('id', $this->selectedUsers)->excludeSystem()->pluck('id')->all();
 
         $users = User::whereIn('id', $userIds)->get();
         foreach ($users as $user) {
@@ -713,8 +756,9 @@ class UserManagement extends Component
         User::whereIn('id', $userIds)->delete();
 
         $count = count($userIds);
+        $this->showBulkDeleteModal = false;
         $this->reset(['selectedUsers', 'selectAll']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} users deleted", icon: 'phosphor-trash', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$count} ".str('user')->plural($count).' deleted.', icon: 'phosphor-trash', css: 'alert-success');
     }
 
     public function render()
@@ -731,6 +775,8 @@ class UserManagement extends Component
     {
         return [
             'role_id' => 'role',
+            'call_sign' => 'callsign',
+            'newPassword' => 'temporary password',
         ];
     }
 }

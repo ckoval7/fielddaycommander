@@ -16,6 +16,9 @@ class AlbumExportController extends Controller
 {
     public function store(EventConfiguration $eventConfiguration): RedirectResponse
     {
+        // Record the requester first: if a ZIP for this event is already queued
+        // or running, this dispatch is dropped and the running job notifies them.
+        GenerateAlbumZip::addRequester($eventConfiguration->id, auth()->id());
         GenerateAlbumZip::dispatch($eventConfiguration->id, auth()->id());
 
         AuditLog::log(
@@ -26,7 +29,7 @@ class AlbumExportController extends Controller
             ]
         );
 
-        return back()->with('status', 'Your album is being prepared. You\'ll receive a notification when it\'s ready.');
+        return back()->with('status', 'Your album ZIP has been requested. You\'ll receive a notification when it\'s ready to download.');
     }
 
     public function download(EventConfiguration $eventConfiguration, string $filename): StreamedResponse

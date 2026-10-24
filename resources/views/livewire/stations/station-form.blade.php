@@ -6,7 +6,7 @@
     {{-- Header --}}
     <x-header
         title="{{ ($stationId ? 'Edit ' : 'Create ').$this->terms->stationSingular }}"
-        subtitle="{{ $stationId ? 'Update configuration and equipment' : 'Configure a new '.strtolower($this->terms->stationSingular).' for this event' }}"
+        subtitle="{{ $stationId ? 'Update '.strtolower($this->terms->stationSingular).' configuration and equipment' : 'Configure a new '.strtolower($this->terms->stationSingular).' for your event' }}"
         separator
         progress-indicator
     >

@@ -12,9 +12,10 @@
                 <div class="flex items-center gap-2 mb-2">
                     <x-button
                         icon="phosphor-arrow-left"
-                        class="btn-ghost btn-sm"
+                        class="btn-ghost btn-sm btn-square"
                         link="{{ route('site-safety.index') }}"
                         tooltip="Back to Safety Checklist"
+                        aria-label="Back to Safety Checklist"
                     />
                     <h1 class="text-2xl md:text-3xl font-bold">Manage Safety Checklist</h1>
                 </div>
@@ -34,7 +35,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-warning" class="alert-warning">
-                No active event configuration found. Please configure an event first.
+                No event configuration found. Please configure an event to manage its safety checklist.
             </x-alert>
         @else
             {{-- Items list --}}
@@ -43,7 +44,7 @@
                     <div class="text-center py-8 text-base-content/60">
                         <x-icon name="phosphor-clipboard-text" class="w-12 h-12 mx-auto mb-3 opacity-30" />
                         <p class="text-lg font-medium">No checklist items yet</p>
-                        <p class="text-sm">Add custom items to get started.</p>
+                        <p class="text-sm">Add an item to this event’s safety checklist.</p>
                     </div>
                 </x-card>
             @else
@@ -100,7 +101,7 @@
                                         icon="phosphor-trash"
                                         class="btn-ghost btn-sm text-error"
                                         wire:click="deleteItem({{ $item->id }})"
-                                        wire:confirm="Delete this checklist item?"
+                                        wire:confirm="Delete &#039;{{ $item->label }}&#039;?"
                                         tooltip="Delete Item"
                                         :disabled="$item->is_default"
                                     />
@@ -118,7 +119,7 @@
         <div>
             <div class="space-y-4">
                 <x-input
-                    label="Label"
+                    label="Item Text"
                     wire:model="itemLabel"
                     autocapitalize="sentences"
                     placeholder="e.g., Fire extinguisher on hand"
@@ -127,14 +128,14 @@
                 <x-textarea
                     label="Help Text"
                     wire:model="itemHelpText"
-                    placeholder="Optional guidance shown when users click the ? button"
+                    placeholder="Optional guidance for this item"
                     rows="4"
-                    hint="Displayed as an expandable tip on the checklist"
+                    hint="Shown when you select the ? button on the checklist"
                 />
                 <x-toggle
                     label="Required"
                     wire:model="itemIsRequired"
-                    hint="Mark this item as required for checklist completion"
+                    hint="Safety Officer requires every item. Site Responsibilities requires all required items and more than half of all items."
                 />
                 @if(!$editingItemId)
                     <x-select
@@ -151,7 +152,7 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showItemModal = false" />
-                <x-button label="Save" wire:click="saveItem" class="btn-primary" spinner="saveItem" />
+                <x-button label="Save Item" wire:click="saveItem" class="btn-primary" spinner="saveItem" />
             </x-slot:actions>
         </div>
     </x-modal>

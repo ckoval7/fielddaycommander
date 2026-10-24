@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use App\Enums\PowerSource;
 use App\Livewire\Events\EventForm;
 use App\Models\AuditLog;
 use App\Models\Contact;
@@ -13,7 +14,10 @@ use App\Models\OperatingClass;
 use App\Models\Organization;
 use App\Models\Section;
 use App\Models\Setting;
+use App\Models\Station;
 use App\Models\User;
+use App\Scoring\Dto\PowerContext;
+use App\Scoring\Rules\FieldDay2025;
 use Database\Seeders\EventTypeSeeder;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
@@ -145,7 +149,7 @@ test('event form can create new event with configuration', function () {
         ->assertHasNoErrors()
         ->assertRedirect(route('events.index'));
 
-    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved successfully.']);
+    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved.']);
 
     // Verify Event was created
     $event = Event::where('name', 'Field Day 2025')->first();
@@ -185,6 +189,129 @@ test('event form calculates power multiplier correctly', function () {
     // Test 1x multiplier: >100W
     $component->set('max_power_watts', 150);
     expect($component->get('powerMultiplier'))->toBe('1');
+});
+
+test('event form colors the multiplier badge by multiplier', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('max_power_watts', 5)
+        ->set('uses_battery', true);
+
+    expect($component->get('powerMultiplierColor'))->toBe('success');
+
+    $component->set('max_power_watts', 50);
+    expect($component->get('powerMultiplierColor'))->toBe('warning');
+
+    $component->set('max_power_watts', 150);
+    expect($component->get('powerMultiplierColor'))->toBe('error');
+
+    // A new event has no stations yet, so the form says they can change it.
+    $component->assertSee('Station settings count too');
+});
+
+test('event form multiplier preview follows the selected rules version', function () {
+    $this->actingAs($this->user);
+
+    // The synthetic TEST rulebook scores 6-100W at 3x instead of 2x.
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('rules_version', 'TEST')
+        ->set('max_power_watts', 50);
+
+    expect($component->get('powerMultiplier'))->toBe('3');
+
+    $component->set('rules_version', '2025');
+    expect($component->get('powerMultiplier'))->toBe('2');
+});
+
+test('the power multiplier box shows the selected rules version\'s thresholds', function () {
+    $this->actingAs($this->user);
+
+    // A rulebook with different limits than Field Day 2025.
+    app()->bind(FieldDay2025::class, fn () => new class extends FieldDay2025
+    {
+        public function powerMultiplier(PowerContext $ctx): string
+        {
+            if ($ctx->effectivePowerWatts > 150) {
+                return '1';
+            }
+
+            return $ctx->effectivePowerWatts <= 10 && $ctx->qualifiesForQrpNaturalBonus ? '5' : '2';
+        }
+    });
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('rules_version', '2025')
+        ->assertSeeHtml('<strong>5×:</strong>')
+        ->assertSee('10 W or less, using only battery, solar, wind, or water power.')
+        ->assertSee('150 W or less')
+        ->assertSee('over 150 W')
+        ->assertDontSee('5 W or less,')
+        ->assertDontSee('over 100 W');
+
+    // The synthetic TEST rulebook scores the middle tier at 3x.
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('rules_version', 'TEST')
+        ->assertSeeHtml('<strong>3×:</strong>')
+        ->assertDontSeeHtml('<strong>2×:</strong>');
+});
+
+test('the power multiplier box names the power sources scoring counts as natural', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('rules_version', '2025')
+        ->assertSee('5 W or less, using only battery, solar, wind, or water power. No commercial power or generators.')
+        ->assertSee('100 W or less')
+        ->assertSee('over 100 W')
+        ->assertSee('Examples: solar, wind, and water (hydro).')
+        ->assertDontSee('alternate power)')
+        ->assertDontSee('Methane');
+});
+
+test('event form multiplier preview counts the saved stations when editing', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'rules_version' => '2025',
+        'start_time' => now()->addDays(10),
+        'end_time' => now()->addDays(11),
+    ]);
+    $config = EventConfiguration::factory()->create([
+        'event_id' => $event->id,
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_commercial_power' => false,
+        'uses_generator' => false,
+    ]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+        'power_source' => PowerSource::Generator,
+    ]);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id]);
+
+    // Event-level settings alone would earn 5x, but the generator station rules it out.
+    expect($component->get('powerMultiplier'))->toBe('2')
+        ->and($config->fresh()->calculatePowerMultiplier())->toBe('2');
+
+    $station->update(['power_source' => PowerSource::Battery, 'max_power_watts' => 100]);
+
+    // A station above 5W sets the effective power, so the event is out of QRP.
+    expect(Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])->get('powerMultiplier'))
+        ->toBe('2');
+
+    $station->update(['max_power_watts' => 5]);
+
+    expect(Livewire::test(EventForm::class, ['mode' => 'edit', 'eventId' => $event->id])->get('powerMultiplier'))
+        ->toBe('5');
 });
 
 test('event form locks fields when event has contacts', function () {
@@ -266,7 +393,7 @@ test('event form can edit existing event', function () {
         ->assertHasNoErrors()
         ->assertRedirect(route('events.index'));
 
-    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved successfully.']);
+    expect(session('toast'))->toMatchArray(['title' => 'Success', 'description' => 'Event saved.']);
 
     $event->refresh();
     expect($event->name)->toBe('Updated Name');
@@ -1396,12 +1523,12 @@ test('the power multiplier badge is hidden for event types that have no multipli
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('event_type_id', $wfdType->id)
         ->assertSet('event_type_id', $wfdType->id)
-        ->assertDontSee('Power Multiplier Rules');
+        ->assertDontSee('Power multipliers');
 
     // Field Day still shows it.
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('event_type_id', $this->eventType->id)
-        ->assertSee('Power Multiplier Rules');
+        ->assertSee('Power multipliers');
 });
 
 test('event form highlights power source checkboxes when none are selected', function () {
@@ -1416,7 +1543,7 @@ test('event form highlights power source checkboxes when none are selected', fun
         ->assertHasErrors(['uses_commercial_power'])
         ->assertSeeHtml('checkbox checkbox-sm checkbox-error')
         ->assertSeeHtml('border-error bg-error/5')
-        ->assertSee('At least one power source must be selected.');
+        ->assertSee('Select at least one power source.');
 });
 
 test('WFD rules guidance shows for WFD events only', function () {
@@ -1432,10 +1559,10 @@ test('WFD rules guidance shows for WFD events only', function () {
 
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('event_type_id', $wfdType->id)
-        ->assertSee('WFD rules: class, category and location')
+        ->assertSee('WFD rules: class, category, and location')
         ->assertSee('300 m diameter')
         ->set('event_type_id', $this->eventType->id)
-        ->assertDontSee('WFD rules: class, category and location')
+        ->assertDontSee('WFD rules: class, category, and location')
         ->assertDontSee('300 m diameter');
 });
 
@@ -1700,4 +1827,12 @@ test('an unscored event has no setup window', function () {
         ->assertHasNoErrors();
 
     expect(Event::where('name', 'Parade 2026')->first()->setup_allowed_from)->toBeNull();
+});
+
+test('alternate power hint tells methane generators to tick Generator too', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->assertSee('A methane generator counts as alternate power.')
+        ->assertSeeHtml('Also tick <strong>Generator</strong>');
 });

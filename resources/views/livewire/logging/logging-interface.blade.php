@@ -108,7 +108,7 @@
                     icon="phosphor-stop"
                     class="btn-outline btn-error btn-sm"
                     wire:click="endSession"
-                    wire:confirm="Are you sure you want to end this session?"
+                    wire:confirm="End this session?"
                 />
             </div>
         </div>
@@ -134,6 +134,11 @@
                 autocorrect="off"
                 spellcheck="false"
             />
+        </div>
+
+        {{-- Shown while the browser can't save the queue and contacts are waiting to sync --}}
+        <div x-show="storageWarningVisible" x-cloak role="alert" data-queue-storage-warning class="bg-warning text-warning-content text-sm font-semibold px-4 py-2 text-center">
+            Contacts waiting to sync aren't saved on this device. Don't close or reload this page until they sync.
         </div>
     </div>
 

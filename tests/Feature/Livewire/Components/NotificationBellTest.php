@@ -44,14 +44,14 @@ test('component shows notification content', function () {
     $user = User::factory()->create();
 
     createNotification($user, [
-        'title' => 'New Section Worked!',
+        'title' => 'New Section Worked',
         'message' => 'W1AW worked CT on 20m CW',
         'icon' => 'phosphor-globe',
     ]);
 
     Livewire::actingAs($user)
         ->test(NotificationBell::class)
-        ->assertSee('New Section Worked!')
+        ->assertSee('New Section Worked')
         ->assertSee('W1AW worked CT on 20m CW');
 });
 

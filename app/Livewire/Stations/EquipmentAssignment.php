@@ -491,7 +491,7 @@ class EquipmentAssignment extends Component
         $radioBands = $station->primaryRadio->bands->pluck('id');
 
         if ($equipmentBands->isEmpty() || $radioBands->isEmpty()) {
-            return ['compatible' => true, 'warning_message' => 'Band information is incomplete. Please verify compatibility manually.'];
+            return ['compatible' => true, 'warning_message' => 'Band information is incomplete. Please check antenna and radio compatibility.'];
         }
 
         if ($equipmentBands->intersect($radioBands)->isEmpty()) {
@@ -542,7 +542,7 @@ class EquipmentAssignment extends Component
         if ($amplifierPower === 0) {
             return [
                 'within_limits' => true,
-                'warning_message' => 'Amplifier power output not specified. Please verify power limits manually.',
+                'warning_message' => 'Amplifier power output is not specified. Please check the amplifier against station and event power limits.',
                 'calculated_power' => 0,
             ];
         }
@@ -773,7 +773,7 @@ class EquipmentAssignment extends Component
         $warnings = [];
 
         $bandCheck = $this->validateBandCompatibility($equipmentId, $this->stationId);
-        if (! $bandCheck['compatible'] && $bandCheck['warning_message']) {
+        if ($bandCheck['warning_message']) {
             $warnings[] = [
                 'title' => 'Band Compatibility',
                 'message' => $bandCheck['warning_message'],

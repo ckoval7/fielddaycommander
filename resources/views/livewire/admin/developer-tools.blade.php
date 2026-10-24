@@ -10,20 +10,20 @@
         <div class="flex justify-between items-center">
             <div>
                 <h1 class="text-3xl font-bold">Developer Tools</h1>
-                <p class="text-base-content/60 mt-1">Administrative tools for development and testing</p>
+                <p class="text-base-content/60 mt-1">Testing tools for Field Day Commander. Do not use during a live event.</p>
             </div>
         </div>
 
         {{-- Warning Alert --}}
         <x-alert
             title="Destructive Operations"
-            description="The tools on this page can permanently modify or delete data. Use with caution. All actions are logged for audit purposes."
+            description="The tools on this page can permanently modify or delete data. Use a test database. Database resets and snapshot restores can erase audit history."
             icon="phosphor-warning"
             class="alert-warning"
         />
 
         {{-- Time Travel Section --}}
-        <x-card title="Time Travel" subtitle="Override the application's current time for testing" icon="phosphor-clock">
+        <x-card title="Clock Override" subtitle="Override the application's current time for testing" icon="phosphor-clock">
             <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <x-flatpickr
@@ -57,7 +57,7 @@
                             spinner="setTime"
                         />
                         <x-button
-                            label="Clear"
+                            label="Clear Override"
                             wire:click="clearTime"
                             class="btn-ghost"
                             icon="phosphor-x"
@@ -93,7 +93,7 @@
                     <div class="py-4 space-y-4">
                         <x-alert
                             title="Full Database Reset"
-                            description="This will drop all tables and re-run all migrations with seeders. All data will be lost and you will be logged out."
+                            description="This will drop all tables and re-run all migrations with seeders. All data will be lost and you will be signed out."
                             icon="phosphor-warning-circle"
                             class="alert-error"
                         />
@@ -111,7 +111,7 @@
                 <x-tab name="selective-reset" label="Selective Reset" icon="phosphor-funnel">
                     <div class="py-4 space-y-4">
                         <p class="text-base-content/70">
-                            Select which data categories to clear. This truncates the selected tables without affecting the rest of the database.
+                            Select which data categories to clear. All rows in the selected tables will be deleted.
                         </p>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -211,15 +211,15 @@
                                                                 icon="phosphor-arrow-u-up-left"
                                                                 wire:click="confirmRestore('{{ $snapshot['filename'] }}')"
                                                                 class="btn-sm btn-ghost"
-                                                                tooltip="Restore"
+                                                                tooltip="Restore snapshot"
                                                                 spinner
                                                             />
                                                             <x-button
                                                                 icon="phosphor-trash"
                                                                 wire:click="deleteSnapshot('{{ $snapshot['filename'] }}')"
-                                                                wire:confirm="Are you sure you want to delete this snapshot?"
+                                                                wire:confirm="Delete '{{ $snapshot['name'] }}'?"
                                                                 class="btn-sm btn-ghost text-error"
-                                                                tooltip="Delete"
+                                                                tooltip="Delete snapshot"
                                                                 spinner
                                                             />
                                                         </div>
@@ -307,7 +307,7 @@
                             min="3"
                             max="50"
                             icon="phosphor-users-three"
-                            hint="Range: 3-50 users"
+                            hint="Range: 3–50 users"
                         />
                     </div>
 
@@ -337,7 +337,7 @@
     <x-modal wire:model="showResetModal" title="Confirm Full Database Reset" persistent class="backdrop-blur">
         <div class="space-y-4">
             <x-alert
-                title="This action cannot be undone!"
+                title="This action cannot be undone."
                 icon="phosphor-warning"
                 class="alert-error"
             />
@@ -347,9 +347,9 @@
                 <li>Re-run all migrations</li>
                 <li>Run all database seeders</li>
                 <li>Destroy all existing data</li>
-                <li>Log out all users</li>
+                <li>Sign out all users</li>
             </ul>
-            <p class="font-semibold">Are you absolutely sure you want to proceed?</p>
+            <p class="font-semibold">Reset the database and delete all existing data?</p>
         </div>
 
         <x-slot:actions>
@@ -359,7 +359,7 @@
                 class="btn-ghost"
             />
             <x-button
-                label="Yes, Reset Everything"
+                label="Reset Database"
                 wire:click="fullReset"
                 class="btn-error"
                 icon="phosphor-trash"
@@ -372,7 +372,7 @@
     <x-modal wire:model="showSelectiveResetModal" title="Confirm Selective Reset" persistent class="backdrop-blur">
         <div class="space-y-4">
             <x-alert
-                title="This will permanently delete data!"
+                title="This will permanently delete data."
                 icon="phosphor-warning"
                 class="alert-warning"
             />
@@ -396,7 +396,7 @@
                 class="btn-ghost"
             />
             <x-button
-                label="Yes, Clear Selected"
+                label="Clear Selected Tables"
                 wire:click="selectiveReset"
                 class="btn-warning"
                 icon="phosphor-trash"
@@ -409,7 +409,7 @@
     <x-modal wire:model="showRestoreModal" title="Confirm Snapshot Restore" persistent class="backdrop-blur">
         <div class="space-y-4">
             <x-alert
-                title="This will replace all current data!"
+                title="This will replace all current data."
                 icon="phosphor-warning"
                 class="alert-warning"
             />
@@ -417,7 +417,7 @@
             <p class="font-mono bg-base-200 p-2 rounded">{{ $selectedSnapshot }}</p>
             <p class="text-base-content/70">
                 All current data will be replaced with the data from this snapshot.
-                You will be logged out and redirected to the home page.
+                You will be redirected to the home page.
             </p>
         </div>
 
@@ -428,7 +428,7 @@
                 class="btn-ghost"
             />
             <x-button
-                label="Yes, Restore Snapshot"
+                label="Restore Snapshot"
                 wire:click="restoreSnapshot"
                 class="btn-warning"
                 icon="phosphor-arrow-u-up-left"
@@ -441,18 +441,19 @@
     <x-modal wire:model="showClearTestUsersModal" title="Confirm Clear Test Users" persistent class="backdrop-blur">
         <div class="space-y-4">
             <x-alert
-                title="This action will permanently delete data!"
+                title="This action will permanently delete data."
                 icon="phosphor-warning"
                 class="alert-warning"
             />
-            <p>You are about to delete:</p>
+            <p>Delete these test accounts?</p>
             <ul class="list-disc list-inside text-base-content/70 space-y-1">
                 <li><strong>{{ $this->getTestUserPoolCount() }} test users</strong></li>
-                <li>All contacts logged by these users</li>
-                <li>All operating sessions created by these users</li>
-                <li>All other data associated with these users</li>
+                <li>Accounts with callsigns beginning with TEST</li>
+                <li>Every contact they logged and every operating session they ran</li>
+                <li>Accounts already in the trash, so the same callsigns can be seeded again</li>
+                <li>Scores for the affected events are recalculated afterward</li>
             </ul>
-            <p class="font-semibold">This cannot be undone. Are you sure?</p>
+            <p class="font-semibold">This cannot be undone.</p>
         </div>
 
         <x-slot:actions>
@@ -462,7 +463,7 @@
                 class="btn-ghost"
             />
             <x-button
-                label="Yes, Delete All Test Users"
+                label="Delete All Test Users"
                 wire:click="clearTestUsers"
                 class="btn-error"
                 icon="phosphor-trash"

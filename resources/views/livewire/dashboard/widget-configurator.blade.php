@@ -160,7 +160,7 @@
         <x-slot:actions>
             <x-button label="Cancel" @click="$wire.cancel()" />
             <x-button
-                label="Save"
+                label="Apply"
                 class="btn-primary"
                 wire:click="save"
                 :disabled="!$widgetType"

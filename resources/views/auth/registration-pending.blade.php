@@ -13,13 +13,13 @@
         <h2 class="text-xl font-semibold">Account Pending Approval</h2>
 
         <p class="text-sm text-base-content/70">
-            Your account has been created and is pending administrator approval.
-            You will be able to log in once an administrator has activated your account.
+            Your account is awaiting administrator approval.
+            You can sign in once an administrator approves it.
         </p>
 
         <div class="pt-4 border-t">
             <a href="{{ route('login') }}" class="link link-primary text-sm">
-                Return to login
+                Back to sign in
             </a>
         </div>
     </div>

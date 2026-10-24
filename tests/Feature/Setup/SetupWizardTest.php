@@ -33,7 +33,7 @@ test('setup routes redirect to home when setup is already complete', function ()
 test('step 1 displays admin password form', function () {
     $this->get(route('setup.welcome'))
         ->assertOk()
-        ->assertSee('Admin Password Setup')
+        ->assertSee('Step 1: Admin Password')
         ->assertSee('name="admin_password"', false)
         ->assertSee('name="admin_password_confirmation"', false)
         ->assertSee('action="'.route('setup.step-1').'"', false);
@@ -106,6 +106,17 @@ test('step 2 validates site name required', function () {
 
 test('step 2 validates logo file type', function () {
     $file = UploadedFile::fake()->create('document.pdf', 100);
+
+    $response = $this->post(route('setup.step-2'), [
+        'site_name' => 'Test Site',
+        'logo' => $file,
+    ]);
+
+    $response->assertSessionHasErrors('logo');
+});
+
+test('step 2 rejects svg logos', function () {
+    $file = UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
 
     $response = $this->post(route('setup.step-2'), [
         'site_name' => 'Test Site',

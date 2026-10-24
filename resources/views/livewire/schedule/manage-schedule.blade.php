@@ -25,9 +25,10 @@
                 <div class="flex items-center gap-2 mb-2">
                     <x-button
                         icon="phosphor-arrow-left"
-                        class="btn-ghost btn-sm"
+                        class="btn-ghost btn-sm btn-square"
                         link="{{ route('schedule.index') }}"
                         tooltip="Back to Shift Schedule"
+                        aria-label="Back to Shift Schedule"
                     />
                     <h1 class="text-2xl md:text-3xl font-bold">Manage Schedule</h1>
                 </div>
@@ -39,7 +40,7 @@
 
         @if(!$eventConfig)
             <x-alert icon="phosphor-warning" class="alert-warning">
-                No active event configuration found. Please configure an event first.
+                Please select an event with a configuration to manage its schedule.
             </x-alert>
         @else
             {{-- Tabs --}}
@@ -56,7 +57,7 @@
                                 wire:click="openShiftModal"
                             />
                             <x-button
-                                label="Bulk Create"
+                                label="Create Multiple Shifts"
                                 icon="phosphor-squares-four"
                                 class="btn-outline btn-sm"
                                 wire:click="openBulkModal"
@@ -76,7 +77,7 @@
                         @if($this->unresolvedPastAssignmentCount > 0)
                             <x-alert
                                 icon="phosphor-seal-question"
-                                class="alert-info"
+                                class="alert-info alert-vertical sm:alert-horizontal"
                                 title="{{ $this->unresolvedPastAssignmentCount }} {{ Str::plural('assignment', $this->unresolvedPastAssignmentCount) }} on ended shifts {{ $this->unresolvedPastAssignmentCount === 1 ? 'needs' : 'need' }} to be marked worked or no-show"
                             >
                                 <x-slot:actions>
@@ -107,8 +108,8 @@
                                         <p class="text-sm mb-3">Try adjusting your filters or clearing them.</p>
                                         <button wire:click="resetFilters" class="btn btn-sm btn-outline">Clear filters</button>
                                     @else
-                                        <p class="text-lg font-medium">No shifts created yet</p>
-                                        <p class="text-sm">Create individual shifts or use bulk creation to get started.</p>
+                                        <p class="text-lg font-medium">No current or upcoming shifts</p>
+                                        <p class="text-sm">Add a shift, or change the Time filter to All to include past shifts.</p>
                                     @endif
                                 </div>
                             </x-card>
@@ -128,10 +129,14 @@
                                                     @endif
                                                 </div>
                                                 <div class="text-sm text-base-content/70">
-                                                    {{ toLocalTime($shift->start_time)->format('M j, ' . timeFormat()) }} - {{ toLocalTime($shift->end_time)->format(timeFormat() . ' T') }}
+                                                    @php
+                                                        $shiftStart = toLocalTime($shift->start_time);
+                                                        $shiftEnd = toLocalTime($shift->end_time);
+                                                    @endphp
+                                                    {{ $shiftStart->format('M j, ' . timeFormat()) }} - {{ $shiftEnd->format(($shiftEnd->isSameDay($shiftStart) ? '' : 'M j, ') . timeFormat() . ' T') }}
                                                 </div>
                                                 <div class="text-sm text-base-content/50 mt-1">
-                                                    Capacity: {{ $shift->assignments->count() }}/{{ $shift->capacity }}
+                                                    Capacity: {{ $shift->slotsTaken() }}/{{ $shift->capacity }}
                                                     @if($shift->notes)
                                                         <span class="ml-2">| {{ $shift->notes }}</span>
                                                     @endif
@@ -190,25 +195,28 @@
                                                                     @if($assignment->status === 'scheduled')
                                                                         <x-button
                                                                             icon="phosphor-sign-in"
-                                                                            class="btn-ghost btn-xs"
+                                                                            class="btn-ghost btn-xs btn-square"
                                                                             wire:click="managerCheckIn({{ $assignment->id }})"
                                                                             tooltip="Check In"
+                                                                            aria-label="Check In"
                                                                         />
                                                                     @endif
                                                                     @if($assignment->status === 'checked_in')
                                                                         <x-button
                                                                             icon="phosphor-sign-out"
-                                                                            class="btn-ghost btn-xs"
+                                                                            class="btn-ghost btn-xs btn-square"
                                                                             wire:click="managerCheckOut({{ $assignment->id }})"
                                                                             tooltip="Check Out"
+                                                                            aria-label="Check Out"
                                                                         />
                                                                     @endif
                                                                     @if($assignment->status === 'scheduled' || $assignment->status === 'checked_in')
                                                                         <x-button
                                                                             icon="phosphor-x"
-                                                                            class="btn-ghost btn-xs text-error"
+                                                                            class="btn-ghost btn-xs text-error btn-square"
                                                                             x-on:click="askConfirm({ message: {{ Js::from('Mark ' . $assignment->user->first_name . ' ' . $assignment->user->last_name . ' as a no-show?') }}, confirmLabel: 'Mark no-show', action: 'markNoShow', args: [{{ $assignment->id }}] })"
                                                                             tooltip="Mark No-Show"
+                                                                            aria-label="Mark No-Show"
                                                                         />
                                                                     @endif
                                                                     @if($shift->end_time->isPast())
@@ -219,24 +227,27 @@
                                                                         @if($isMarkWorked)
                                                                             <x-button
                                                                                 icon="phosphor-arrow-counter-clockwise"
-                                                                                class="btn-ghost btn-xs text-warning"
+                                                                                class="btn-ghost btn-xs text-warning btn-square"
                                                                                 wire:click="unmarkWorked({{ $assignment->id }})"
                                                                                 tooltip="Undo Mark Worked"
+                                                                                aria-label="Undo Mark Worked"
                                                                             />
                                                                         @else
                                                                             <x-button
                                                                                 icon="phosphor-seal-check"
-                                                                                class="btn-ghost btn-xs text-success"
+                                                                                class="btn-ghost btn-xs text-success btn-square"
                                                                                 wire:click="markWorked({{ $assignment->id }})"
                                                                                 tooltip="Mark Worked"
+                                                                                aria-label="Mark Worked"
                                                                             />
                                                                         @endif
                                                                     @endif
                                                                     <x-button
                                                                         icon="phosphor-user-minus"
-                                                                        class="btn-ghost btn-xs text-error"
+                                                                        class="btn-ghost btn-xs text-error btn-square"
                                                                         x-on:click="askConfirm({ message: {{ Js::from('Remove ' . $assignment->user->first_name . ' ' . $assignment->user->last_name . ' from this shift?') }}, confirmLabel: 'Remove', action: 'removeAssignment', args: [{{ $assignment->id }}] })"
                                                                         tooltip="Remove Assignment"
+                                                                        aria-label="Remove Assignment"
                                                                     />
                                                                 </div>
                                                             </div>
@@ -249,25 +260,28 @@
 
                                             {{-- Shift actions --}}
                                             <div class="flex items-center gap-1 shrink-0">
-                                                @if($shift->assignments->where('status', '!=', \App\Models\ShiftAssignment::STATUS_NO_SHOW)->count() < $shift->capacity)
+                                                @if($shift->slotsTaken() < $shift->capacity)
                                                     <x-button
                                                         icon="phosphor-user-plus"
-                                                        class="btn-ghost btn-sm"
+                                                        class="btn-ghost btn-sm btn-square"
                                                         wire:click="openAssignModal({{ $shift->id }})"
-                                                        tooltip="Assign User"
+                                                        tooltip="Assign Volunteer"
+                                                        aria-label="Assign Volunteer"
                                                     />
                                                 @endif
                                                 <x-button
                                                     icon="phosphor-pencil-simple"
-                                                    class="btn-ghost btn-sm"
+                                                    class="btn-ghost btn-sm btn-square"
                                                     wire:click="openShiftModal({{ $shift->id }})"
                                                     tooltip="Edit Shift"
+                                                    aria-label="Edit Shift"
                                                 />
                                                 <x-button
                                                     icon="phosphor-trash"
-                                                    class="btn-ghost btn-sm text-error"
+                                                    class="btn-ghost btn-sm text-error btn-square"
                                                     x-on:click="askConfirm({ message: {{ Js::from('Delete this shift' . ($shift->assignments->count() > 0 ? ' and its ' . $shift->assignments->count() . ' ' . Str::plural('assignment', $shift->assignments->count()) : '') . '?') }}, confirmLabel: 'Delete', action: 'deleteShift', args: [{{ $shift->id }}] })"
                                                     tooltip="Delete Shift"
+                                                    aria-label="Delete Shift"
                                                 />
                                             </div>
                                         </div>
@@ -295,7 +309,7 @@
                                 <div class="text-center py-8 text-base-content/60">
                                     <x-icon name="phosphor-tag" class="w-12 h-12 mx-auto mb-3 opacity-30" />
                                     <p class="text-lg font-medium">No roles configured</p>
-                                    <p class="text-sm">Roles will be seeded automatically when available.</p>
+                                    <p class="text-sm">Add a custom role to start building the schedule.</p>
                                 </div>
                             </x-card>
                         @else
@@ -333,15 +347,17 @@
                                             <div class="flex items-center gap-1 shrink-0">
                                                 <x-button
                                                     icon="phosphor-pencil-simple"
-                                                    class="btn-ghost btn-sm"
+                                                    class="btn-ghost btn-sm btn-square"
                                                     wire:click="openRoleModal({{ $role->id }})"
                                                     tooltip="Edit Role"
+                                                    aria-label="Edit Role"
                                                 />
                                                 <x-button
                                                     icon="phosphor-trash"
-                                                    class="btn-ghost btn-sm text-error"
-                                                    x-on:click="askConfirm({ message: 'Delete this role? Any shifts without assignments will also be deleted.', confirmLabel: 'Delete', action: 'deleteRole', args: [{{ $role->id }}] })"
+                                                    class="btn-ghost btn-sm text-error btn-square"
+                                                    x-on:click="askConfirm({ message: {{ Js::from("Delete '" . $role->name . "'? Its shifts will be deleted too. A role with assigned shifts can't be deleted.") }}, confirmLabel: 'Delete Role', action: 'deleteRole', args: [{{ $role->id }}] })"
                                                     tooltip="Delete Role"
+                                                    aria-label="Delete Role"
                                                 />
                                             </div>
                                         </div>
@@ -467,7 +483,7 @@
                         type="number"
                         min="0"
                         placeholder="Leave empty for no bonus"
-                        hint="Setting bonus points will auto-enable confirmation requirement"
+                        hint="Roles with bonus points always require manager confirmation"
                     />
                 @endif
                 <x-toggle
@@ -531,7 +547,7 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showRoleModal = false" />
-                <x-button label="Save" wire:click="saveRole" class="btn-primary" spinner="saveRole" />
+                <x-button label="Save Role" wire:click="saveRole" class="btn-primary" spinner="saveRole" />
             </x-slot:actions>
         </div>
     </x-modal>
@@ -571,7 +587,7 @@
                 <x-toggle
                     label="Open for Sign-ups"
                     wire:model="shiftIsOpen"
-                    hint="Allow users to self-sign-up for this shift"
+                    hint="Let volunteers sign up for this shift"
                 />
                 <x-textarea
                     label="Notes"
@@ -583,13 +599,13 @@
 
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showShiftModal = false" />
-                <x-button label="Save" wire:click="saveShift" class="btn-primary" spinner="saveShift" />
+                <x-button label="Save Shift" wire:click="saveShift" class="btn-primary" spinner="saveShift" />
             </x-slot:actions>
         </div>
     </x-modal>
 
     {{-- Bulk Creation Modal --}}
-    <x-modal wire:model="showBulkModal" title="Bulk Create Shifts">
+    <x-modal wire:model="showBulkModal" title="Create Multiple Shifts">
         <div>
             <div class="space-y-4">
                 <x-select
@@ -620,7 +636,7 @@
                     min="15"
                     max="1440"
                     required
-                    hint="Each shift will be this many minutes long"
+                    hint="The last shift may be shorter to fit the end time"
                 />
                 <x-input
                     label="Capacity per Shift"
@@ -632,7 +648,7 @@
                 <x-toggle
                     label="Open for Sign-ups"
                     wire:model="bulkIsOpen"
-                    hint="Allow users to self-sign-up for these shifts"
+                    hint="Let volunteers sign up for these shifts"
                 />
             </div>
 

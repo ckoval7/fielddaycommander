@@ -67,7 +67,7 @@ class EquipmentCommitted extends Notification implements ShouldQueue
     {
         $equipmentName = trim("{$equipment->make} {$equipment->model}");
         if (! $equipmentName) {
-            $equipmentName = ucfirst($equipment->type);
+            $equipmentName = ucfirst(str_replace('_', ' ', $equipment->type));
         }
 
         $url = route('equipment.index');
@@ -75,11 +75,11 @@ class EquipmentCommitted extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("Equipment Committed: {$equipmentName} to {$event->name}")
             ->greeting("Hello {$notifiable->first_name},")
-            ->line("You have successfully committed your equipment to {$event->name}.")
+            ->line("Your equipment is committed to {$event->name}.")
             ->line('')
             ->line('**Equipment Details:**')
             ->line("Make/Model: {$equipmentName}")
-            ->line('Type: '.ucfirst($equipment->type))
+            ->line('Type: '.ucfirst(str_replace('_', ' ', $equipment->type)))
             ->line('')
             ->line('**Event Details:**')
             ->line("Event: {$event->name}")
@@ -87,7 +87,7 @@ class EquipmentCommitted extends Notification implements ShouldQueue
             ->lineIf($this->equipmentEvent->expected_delivery_at, "Expected Delivery: {$this->equipmentEvent->expected_delivery_at?->format(self::DATE_FORMAT)}")
             ->lineIf($this->equipmentEvent->delivery_notes, "Delivery Notes: {$this->equipmentEvent->delivery_notes}")
             ->line('')
-            ->action('Manage Your Commitments', $url)
+            ->action('View My Equipment', $url)
             ->line('Thank you for contributing to '.($this->equipmentEvent->event?->name ?? 'our event').'!');
     }
 
@@ -98,7 +98,7 @@ class EquipmentCommitted extends Notification implements ShouldQueue
     {
         $equipmentName = trim("{$equipment->make} {$equipment->model}");
         if (! $equipmentName) {
-            $equipmentName = ucfirst($equipment->type);
+            $equipmentName = ucfirst(str_replace('_', ' ', $equipment->type));
         }
 
         $operatorName = $operator ? trim("{$operator->first_name} {$operator->last_name}") : 'Unknown';
@@ -107,13 +107,13 @@ class EquipmentCommitted extends Notification implements ShouldQueue
         $url = route('events.equipment.dashboard', ['event' => $event->id]);
 
         return (new MailMessage)
-            ->subject("New Equipment Committed by {$operatorCallsign}")
+            ->subject("Equipment Committed: {$equipmentName} to {$event->name}")
             ->greeting("Hello {$notifiable->first_name},")
-            ->line("{$operatorName} ({$operatorCallsign}) has committed equipment to {$event->name}.")
+            ->line("Equipment has been committed to {$event->name}.")
             ->line('')
             ->line('**Equipment Details:**')
             ->line("Make/Model: {$equipmentName}")
-            ->line('Type: '.ucfirst($equipment->type))
+            ->line('Type: '.ucfirst(str_replace('_', ' ', $equipment->type)))
             ->line("Owner: {$operatorName} ({$operatorCallsign})")
             ->line('')
             ->line('**Event Details:**')
@@ -122,7 +122,7 @@ class EquipmentCommitted extends Notification implements ShouldQueue
             ->lineIf($this->equipmentEvent->delivery_notes, "Delivery Notes: {$this->equipmentEvent->delivery_notes}")
             ->line('')
             ->action('View Equipment Dashboard', $url)
-            ->line('Please coordinate with the operator for equipment delivery and setup.');
+            ->line('Please coordinate with the equipment owner for delivery and setup.');
     }
 
     /**

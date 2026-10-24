@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
@@ -866,7 +867,7 @@ test('bulk actions toolbar appears when users selected', function () {
     Livewire::test(UserManagement::class)
         ->set('selectedUsers', [$user->id])
         ->assertSet('selectedUsers', [$user->id])
-        ->assertSee('1 user(s) selected')
+        ->assertSee('1 user selected')
         ->assertSeeHtml('btn-primary border-white/70');
 });
 
@@ -1245,4 +1246,61 @@ test('bulk delete logs individual audit entries for each user', function () {
     $auditLogs = AuditLog::where('action', 'user.deleted')->get();
     expect($auditLogs)->toHaveCount(2);
     expect($auditLogs->pluck('old_values.call_sign')->sort()->values()->toArray())->toBe(['K2XYZ', 'W1AW']);
+});
+
+test('bulk delete asks for confirmation before deleting anyone', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create();
+
+    Livewire::test(UserManagement::class)
+        ->set('selectedUsers', [$user->id])
+        ->call('openBulkDeleteModal')
+        ->assertSet('showBulkDeleteModal', true);
+
+    expect(User::find($user->id))->not->toBeNull();
+});
+
+test('bulk toasts count only the users actually changed, not SYSTEM', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create();
+    $operatorRole = Role::where('name', 'Operator')->first();
+    $systemUser = User::factory()->create(['call_sign' => User::SYSTEM_CALL_SIGN]);
+    $ids = [$systemUser->id, $user->id];
+
+    Livewire::test(UserManagement::class)
+        ->set('selectedUsers', $ids)
+        ->set('bulk_role_id', $operatorRole->id)
+        ->call('bulkAssignRole')
+        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === 'Role assigned to 1 user.')
+        ->set('selectedUsers', $ids)
+        ->call('bulkLockAccounts')
+        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === '1 account locked.')
+        ->set('selectedUsers', $ids)
+        ->call('bulkDeleteUsers')
+        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === '1 user deleted.');
+
+    expect(User::find($systemUser->id))->not->toBeNull();
+});
+
+test('create modal closes and the email failure is reported when the invitation cannot be sent', function () {
+    Config::set('mail.email_configured', true);
+    $this->mock(Dispatcher::class)
+        ->shouldReceive('send')->andThrow(new Exception('smtp down'));
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->call('openCreateModal')
+        ->set('call_sign', 'W1AW')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('role_id', $this->roles['Operator']->id)
+        ->call('saveUser')
+        ->assertSet('showModal', false)
+        ->assertDispatched('toast', fn ($name, $params) => str_contains($params['description'], 'invitation email could not be sent'));
+
+    expect(User::where('call_sign', 'W1AW')->exists())->toBeTrue();
 });

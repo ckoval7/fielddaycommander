@@ -40,7 +40,7 @@ Slots:
     'example' => 'W1AW 3A CT',
     'timeHeading' => 'Time',
     'emptyTitle' => 'No contacts logged yet.',
-    'emptyHint' => "Type the other station's exchange, e.g.",
+    'emptyHint' => 'Enter callsign, class, and section, e.g.',
 ])
 
 <div
@@ -143,7 +143,7 @@ Slots:
                             <th>#</th>
                             <th>{{ $timeHeading }}</th>
                             <th>Callsign</th>
-                            <th>Exchange</th>
+                            <th>Class</th>
                             <th>Section</th>
                             {{ $extraColumns ?? '' }}
                         @endisset

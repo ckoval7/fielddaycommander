@@ -15,7 +15,7 @@
     </div>
 
     <div class="space-y-6">
-        <p class="text-center">Customize your site's appearance and identity.</p>
+        <p class="text-center">Choose the name and logo shown on your site.</p>
 
         <form method="POST" action="{{ route('setup.step-2') }}" enctype="multipart/form-data" class="space-y-6">
             @csrf
@@ -28,14 +28,14 @@
                 required
                 icon="phosphor-buildings"
                 errorField="site_name"
-                hint="Your organization or club name"
+                hint="Your club or organization name"
             />
 
             <x-input
                 autocapitalize="sentences"
                 label="Site Tagline"
                 name="site_tagline"
-                value="{{ old('site_tagline', 'ARRL Field Day Logging System') }}"
+                value="{{ old('site_tagline', 'Field Day Logging and Scoring') }}"
                 icon="phosphor-chat-centered-dots"
                 errorField="site_tagline"
                 hint="Optional subtitle or motto"
@@ -49,10 +49,10 @@
                     type="file"
                     name="logo"
                     id="logo-input"
-                    accept="image/png,image/jpeg,image/svg+xml"
+                    accept="image/png,image/jpeg"
                     class="file-input w-full"
                 />
-                <span class="block py-1 text-xs">PNG, JPG, or SVG. Maximum 2MB. Recommended: square image, 200x200px or larger</span>
+                <span class="block py-1 text-xs">Optional. PNG or JPG, up to 2 MB. Recommended: a square image, at least 200 × 200 pixels.</span>
             </div>
 
             <div class="flex justify-between">

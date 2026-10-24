@@ -8,16 +8,16 @@
         @if($showCreateForm)
             {{-- Create Dashboard Form --}}
             <div class="space-y-4">
-                <x-header title="Create New Dashboard" subtitle="Start with a blank dashboard or copy an existing one" size="text-lg" />
+                <x-header title="Create Dashboard" subtitle="Start with a blank dashboard or copy an existing one" size="text-lg" />
 
                 <form wire:submit="createDashboard">
                     <div class="space-y-4">
                         {{-- Title Input --}}
                         <x-input
-                            label="Dashboard Title"
+                            label="Dashboard Name"
                             wire:model="newTitle"
                             autocapitalize="words"
-                            placeholder="e.g., My Custom Dashboard"
+                            placeholder="e.g., Overnight Operations"
                             icon="phosphor-stack"
                             required
                             maxlength="255"
@@ -28,7 +28,7 @@
                             label="Description"
                             wire:model="newDescription"
                             placeholder="Optional description"
-                            hint="Optional - describe what this dashboard is for"
+                            hint="Describe what this dashboard is for (optional)"
                             rows="3"
                         />
 
@@ -145,7 +145,7 @@
                     {{-- Create New Button --}}
                     <div class="pt-4 border-t border-base-300">
                         <x-button
-                            label="Create New Dashboard"
+                            label="Create Dashboard"
                             icon="phosphor-plus"
                             class="btn-primary w-full"
                             wire:click="openCreateForm"
@@ -172,7 +172,7 @@
                     <x-icon name="phosphor-warning" class="w-6 h-6 text-error" />
                 </div>
                 <div>
-                    <p class="font-medium mb-2">Are you sure you want to delete this dashboard?</p>
+                    <p class="font-medium mb-2">Delete this dashboard?</p>
                     <p class="text-sm text-base-content/70">This action cannot be undone. All widgets and settings for this dashboard will be permanently removed.</p>
                 </div>
             </div>

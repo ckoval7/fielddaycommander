@@ -26,13 +26,48 @@
             @endcan
         </div>
 
+        {{-- Active Alerts --}}
+        @if(! empty($alerts))
+            <div class="mb-4 space-y-2">
+                <h2 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">Active Alerts</h2>
+                @foreach($alerts as $alert)
+                    @php $isLocalAlert = ($alert['event'] ?? '') === 'Local Alert'; @endphp
+                    <div
+                        x-data="{ expanded: false }"
+                        class="{{ $isLocalAlert ? 'alert alert-error' : 'alert bg-amber-100 text-amber-950 dark:bg-yellow-400/20 dark:text-yellow-100' }} flex-col items-start gap-1"
+                    >
+                        <div class="flex items-start justify-between w-full gap-2">
+                            <div class="flex items-center gap-2">
+                                <x-icon name="{{ $isLocalAlert ? 'phosphor-warning-octagon-duotone' : 'phosphor-warning-duotone' }}" class="w-5 h-5 shrink-0" />
+                                <span class="font-semibold text-sm">{{ $alert['headline'] ?? $alert['event'] }}</span>
+                            </div>
+                            @if(! $isLocalAlert && ! empty($alert['description']))
+                                <button
+                                    @click="expanded = !expanded"
+                                    type="button"
+                                    class="btn btn-ghost btn-xs shrink-0"
+                                >
+                                    <x-icon name="phosphor-caret-down" class="w-4 h-4" x-bind:class="expanded ? 'rotate-180' : ''" />
+                                </button>
+                            @endif
+                        </div>
+                        @if(! $isLocalAlert && ! empty($alert['description']))
+                            <div x-show="expanded" x-cloak class="text-sm mt-2 whitespace-pre-line">{{ $alert['description'] }}</div>
+                        @elseif($isLocalAlert && ! empty($alert['description']) && $alert['description'] !== $alert['headline'])
+                            <div class="text-sm whitespace-pre-line">{{ $alert['description'] }}</div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
         {{-- Empty state --}}
         @if(! $hasData)
             <div class="flex flex-col items-center justify-center py-16 text-center text-base-content/60">
                 <x-icon name="phosphor-cloud-duotone" class="w-16 h-16 mb-4 opacity-30" />
                 @if($canManageWeather)
                     <p class="text-lg font-medium text-base-content/70">No weather data yet.</p>
-                    <p class="text-sm mt-1 max-w-sm">Set up an active event with coordinates to enable automatic weather monitoring.</p>
+                    <p class="text-sm mt-1 max-w-sm">Set the event’s latitude, longitude, and state in its configuration. Enable Open-Meteo in Manage Weather. The server needs internet access to fetch forecasts.</p>
                 @else
                     <p class="text-lg font-medium text-base-content/70">No weather data available.</p>
                 @endif
@@ -62,7 +97,7 @@
                                 @endif
                                 @if(isset($d['precipitation_chance']))
                                     <div>
-                                        <span class="text-base-content/50">Precip chance</span>
+                                        <span class="text-base-content/50">Precipitation chance</span>
                                         <span class="ml-1 font-medium">{{ $d['precipitation_chance'] }}%</span>
                                     </div>
                                 @endif
@@ -88,14 +123,14 @@
                                 <div>
                                     <span class="text-base-content/50">Wind</span>
                                     <span class="ml-1 font-medium">{{ round($c['wind_speed_10m']) }} {{ $windUnit }}</span>
-                                    @if(($c['wind_gusts_10m'] ?? 0) >= 25)
+                                    @if(($c['wind_gusts_10m'] ?? 0) >= ($windUnit === 'km/h' ? 40 : 25))
                                         <span class="ml-1 text-warning font-medium">gusts {{ round($c['wind_gusts_10m']) }} {{ $windUnit }}</span>
                                     @elseif(($c['wind_gusts_10m'] ?? 0) > 0)
                                         <span class="ml-1 text-base-content/50">gusts {{ round($c['wind_gusts_10m']) }} {{ $windUnit }}</span>
                                     @endif
                                 </div>
                                 <div>
-                                    <span class="text-base-content/50">Precip</span>
+                                    <span class="text-base-content/50">Precipitation</span>
                                     <span class="ml-1 font-medium">{{ $c['precipitation'] ?? 0 }} mm</span>
                                 </div>
                             </div>
@@ -192,50 +227,15 @@
                 </div>
             @endif
 
-            {{-- Active Alerts --}}
-            @if(! empty($alerts))
-                <div class="mb-4 space-y-2">
-                    <h2 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">Active Alerts</h2>
-                    @foreach($alerts as $alert)
-                        @php $isLocalAlert = ($alert['event'] ?? '') === 'Local Alert'; @endphp
-                        <div
-                            x-data="{ expanded: false }"
-                            class="{{ $isLocalAlert ? 'alert alert-error' : 'alert bg-amber-100 text-amber-950 dark:bg-yellow-400/20 dark:text-yellow-100' }} flex-col items-start gap-1"
-                        >
-                            <div class="flex items-start justify-between w-full gap-2">
-                                <div class="flex items-center gap-2">
-                                    <x-icon name="{{ $isLocalAlert ? 'phosphor-warning-octagon-duotone' : 'phosphor-warning-duotone' }}" class="w-5 h-5 shrink-0" />
-                                    <span class="font-semibold text-sm">{{ $alert['headline'] ?? $alert['event'] }}</span>
-                                </div>
-                                @if(! $isLocalAlert && ! empty($alert['description']))
-                                    <button
-                                        @click="expanded = !expanded"
-                                        type="button"
-                                        class="btn btn-ghost btn-xs shrink-0"
-                                    >
-                                        <x-icon name="phosphor-caret-down" class="w-4 h-4" x-bind:class="expanded ? 'rotate-180' : ''" />
-                                    </button>
-                                @endif
-                            </div>
-                            @if(! $isLocalAlert && ! empty($alert['description']))
-                                <div x-show="expanded" x-cloak class="text-sm mt-2 whitespace-pre-line">{{ $alert['description'] }}</div>
-                            @elseif($isLocalAlert && ! empty($alert['description']) && $alert['description'] !== $alert['headline'])
-                                <div class="text-sm whitespace-pre-line">{{ $alert['description'] }}</div>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-
             {{-- Data Source Footer --}}
             <div class="text-xs text-base-content/40 text-center pt-2 pb-4">
                 @if($isManual)
-                    Manual override active — entered by {{ $manualOverride['updated_by'] ?? 'unknown' }}
+                    Manual override active. Entered by {{ $manualOverride['updated_by'] ?? 'unknown' }}
                     @if(! empty($manualOverride['updated_at']))
                         at {{ \Carbon\Carbon::parse($manualOverride['updated_at'])->format('M j, Y g:i A') }}
                     @endif
                 @elseif($lastFetch)
-                    Updated {{ \Carbon\Carbon::parse($lastFetch)->diffForHumans() }} · Open-Meteo / NWS
+                    Updated {{ \Carbon\Carbon::parse($lastFetch)->diffForHumans() }} · Forecast: Open-Meteo · Alerts: NWS
                 @endif
             </div>
 

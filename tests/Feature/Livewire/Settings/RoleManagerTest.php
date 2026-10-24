@@ -4,6 +4,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Livewire\Settings\RoleManager;
+use App\Livewire\Settings\SettingsPage;
+use App\Livewire\Settings\SiteBranding;
+use App\Livewire\Settings\SystemPreferences;
 use App\Models\AuditLog;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
@@ -15,8 +18,9 @@ use Spatie\Permission\Models\Role;
 beforeEach(function () {
     $this->user = User::factory()->create();
     $role = Role::create(['name' => 'Admin', 'guard_name' => 'web']);
+    Permission::create(['name' => 'manage-roles']);
     Permission::create(['name' => 'manage-settings']);
-    $role->givePermissionTo('manage-settings');
+    $role->givePermissionTo('manage-roles');
     $this->user->assignRole($role);
     $this->actingAs($this->user);
 
@@ -114,14 +118,14 @@ test('deletes role without users', function () {
 // Authorization
 // =============================================================================
 
-test('user without manage-settings cannot mount the component', function () {
+test('user without manage-roles cannot mount the component', function () {
     $this->actingAs(User::factory()->create());
 
     Livewire::test(RoleManager::class)
         ->assertForbidden();
 });
 
-test('user without manage-settings cannot save permissions', function () {
+test('user without manage-roles cannot save permissions', function () {
     $role = Role::create(['name' => 'Test Role', 'guard_name' => 'web']);
     $component = Livewire::test(RoleManager::class)
         ->call('selectRole', $role->id)
@@ -135,7 +139,7 @@ test('user without manage-settings cannot save permissions', function () {
     expect($role->fresh()->hasPermissionTo('manage-users'))->toBeFalse();
 });
 
-test('user without manage-settings cannot create or delete roles', function () {
+test('user without manage-roles cannot create or delete roles', function () {
     $role = Role::create(['name' => 'Doomed Role', 'guard_name' => 'web']);
     $deleteComponent = Livewire::test(RoleManager::class)
         ->call('confirmDelete', $role->id);
@@ -151,16 +155,55 @@ test('user without manage-settings cannot create or delete roles', function () {
     expect(Role::where('name', 'Sneaky Role')->exists())->toBeFalse();
 });
 
-test('settings page is forbidden to a user holding only manage-roles', function () {
+test('manage-settings alone does not grant role management', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-settings');
+
+    $this->actingAs($user);
+
+    Livewire::test(RoleManager::class)->assertForbidden();
+});
+
+test('a user holding only manage-roles sees only the role manager in settings', function () {
     DB::table('system_config')->updateOrInsert(
         ['key' => 'setup_completed'],
         ['value' => 'true'],
     );
-    Permission::create(['name' => 'manage-roles']);
-    $user = User::factory()->create();
-    $user->givePermissionTo('manage-roles');
 
-    $this->actingAs($user)->get(route('settings.index'))->assertForbidden();
+    $this->get(route('settings.index'))
+        ->assertOk()
+        ->assertSeeLivewire(RoleManager::class)
+        ->assertDontSeeLivewire(SystemPreferences::class)
+        ->assertDontSeeLivewire(SiteBranding::class);
+
+    Livewire::test(SettingsPage::class)->assertSet('activeTab', 'roles');
+});
+
+test('a user holding only manage-roles cannot use the system settings components', function () {
+    Livewire::test(SystemPreferences::class)->assertForbidden();
+    Livewire::test(SiteBranding::class)->assertForbidden();
+});
+
+test('the System Administrator role cannot lose manage-roles', function () {
+    $systemAdmin = Role::create(['name' => 'System Administrator', 'guard_name' => 'web']);
+    $systemAdmin->givePermissionTo(['manage-roles', 'log-contacts']);
+
+    Livewire::test(RoleManager::class)
+        ->call('selectRole', $systemAdmin->id)
+        ->set('selectedPermissions', ['log-contacts'])
+        ->call('savePermissions')
+        ->assertDispatched('notify', description: 'The System Administrator role must keep the Manage Roles permission.');
+
+    expect($systemAdmin->fresh()->hasPermissionTo('manage-roles'))->toBeTrue();
+});
+
+test('the Manage Roles permission is no longer labelled unused', function () {
+    $role = Role::create(['name' => 'Test Role', 'guard_name' => 'web']);
+
+    Livewire::test(RoleManager::class)
+        ->call('selectRole', $role->id)
+        ->assertSee('Manage Roles')
+        ->assertDontSee('Manage Roles (Unused)');
 });
 
 // =============================================================================
@@ -218,4 +261,82 @@ test('every seeded permission is exposed in a role-manager category', function (
     $missing = array_diff($allPermissions, $categorized);
 
     expect($missing)->toBe([], 'Permissions missing from RoleManager $categories: '.implode(', ', $missing));
+});
+
+// =============================================================================
+// Role descriptions
+// =============================================================================
+
+test('creating a role saves its description', function () {
+    Livewire::test(RoleManager::class)
+        ->set('roleName', 'Safety Crew')
+        ->set('roleDescription', '  Walks the site and fills in the safety checklist  ')
+        ->call('createRole')
+        ->assertHasNoErrors();
+
+    expect(Role::findByName('Safety Crew')->description)
+        ->toBe('Walks the site and fills in the safety checklist');
+});
+
+test('a blank description is stored as null', function () {
+    Livewire::test(RoleManager::class)
+        ->set('roleName', 'Quiet Role')
+        ->set('roleDescription', '   ')
+        ->call('createRole');
+
+    expect(Role::findByName('Quiet Role')->description)->toBeNull();
+});
+
+test('editing a role updates its description', function () {
+    $role = Role::unguarded(fn () => Role::create(['name' => 'Test Role', 'guard_name' => 'web', 'description' => 'Old text']));
+
+    Livewire::test(RoleManager::class)
+        ->call('openEditModal', $role->id)
+        ->assertSet('roleDescription', 'Old text')
+        ->assertSet('showEditModal', true)
+        ->set('roleDescription', 'New text')
+        ->call('updateRole')
+        ->assertHasNoErrors()
+        ->assertSet('showEditModal', false)
+        ->assertDispatched('notify');
+
+    expect($role->fresh()->description)->toBe('New text');
+
+    $auditLog = AuditLog::where('action', 'role.updated')->first();
+    expect($auditLog->old_values['description'])->toBe('Old text')
+        ->and($auditLog->new_values['description'])->toBe('New text');
+});
+
+test('role descriptions are limited to 500 characters', function () {
+    $role = Role::create(['name' => 'Test Role', 'guard_name' => 'web']);
+
+    Livewire::test(RoleManager::class)
+        ->call('openEditModal', $role->id)
+        ->set('roleDescription', str_repeat('a', 501))
+        ->call('updateRole')
+        ->assertHasErrors(['roleDescription' => 'max']);
+
+    expect($role->fresh()->description)->toBeNull();
+});
+
+test('the roles list and selected role show the description', function () {
+    $role = Role::unguarded(fn () => Role::create(['name' => 'Test Role', 'guard_name' => 'web', 'description' => 'Keeps the generator fed']));
+
+    Livewire::test(RoleManager::class)
+        ->assertSee('Keeps the generator fed')
+        ->call('selectRole', $role->id)
+        ->assertSeeHtml('aria-label="Edit description for Test Role"');
+});
+
+test('user without manage-settings cannot edit a role description', function () {
+    $role = Role::create(['name' => 'Test Role', 'guard_name' => 'web']);
+    $component = Livewire::test(RoleManager::class)
+        ->call('openEditModal', $role->id)
+        ->set('roleDescription', 'Sneaky');
+
+    $this->actingAs(User::factory()->create());
+
+    $component->call('updateRole')->assertForbidden();
+
+    expect($role->fresh()->description)->toBeNull();
 });

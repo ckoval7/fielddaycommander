@@ -61,7 +61,7 @@ test('EquipmentCancelled implements ShouldQueue', function () {
     expect($notification)->toBeInstanceOf(ShouldQueue::class);
 });
 
-test('EquipmentCancelled mail subject contains equipment name and operator call sign', function () {
+test('EquipmentCancelled mail subject identifies the cancelled equipment', function () {
     Notification::fake();
 
     $this->manager->notify(new EquipmentCancelled($this->equipmentEvent));
@@ -73,9 +73,7 @@ test('EquipmentCancelled mail subject contains equipment name and operator call 
             expect($channels)->toBe(['mail']);
 
             $mail = $notification->toMail($this->manager);
-            expect($mail->subject)->toContain('Equipment Commitment Cancelled')
-                ->and($mail->subject)->toContain('Icom IC-7300')
-                ->and($mail->subject)->toContain('W1AW');
+            expect($mail->subject)->toBe('Equipment Commitment Cancelled: Icom IC-7300');
 
             return true;
         }
@@ -97,7 +95,7 @@ test('EquipmentCancelled mail contains equipment and event details', function ()
 
             expect($allLines)->toContain('Field Day 2025')
                 ->and($allLines)->toContain('Icom IC-7300')
-                ->and($allLines)->toContain('radio');
+                ->and($allLines)->toContain('Radio');
 
             return true;
         }
@@ -164,7 +162,7 @@ test('EquipmentCancelled mail does not include manager notes when not set', func
     $mail = $notification->toMail($this->manager);
     $allLines = collect($mail->introLines)->implode(' ');
 
-    expect($allLines)->not->toContain('Notes from Cancellation');
+    expect($allLines)->not->toContain('Manager Notes');
 });
 
 test('EquipmentCancelled mail includes manager notes when present', function () {
@@ -175,7 +173,7 @@ test('EquipmentCancelled mail includes manager notes when present', function () 
     $mail = $notification->toMail($this->manager);
     $allLines = collect($mail->introLines)->implode(' ');
 
-    expect($allLines)->toContain('Notes from Cancellation')
+    expect($allLines)->toContain('Manager Notes')
         ->and($allLines)->toContain('Operator withdrew due to health issues');
 });
 

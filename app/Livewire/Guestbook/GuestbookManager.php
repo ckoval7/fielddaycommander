@@ -191,7 +191,7 @@ class GuestbookManager extends Component
             ->selectRaw('SUM(CASE WHEN is_verified = 0 THEN 1 ELSE 0 END) as unverified')
             ->selectRaw('SUM(CASE WHEN presence_type = ? THEN 1 ELSE 0 END) as in_person', [PresenceType::InPerson->value])
             ->selectRaw('SUM(CASE WHEN presence_type = ? THEN 1 ELSE 0 END) as online', [PresenceType::Online->value])
-            ->selectRaw("SUM(CASE WHEN is_verified = 1 AND visitor_category IN ({$bonusPlaceholders}) THEN 1 ELSE 0 END) as bonus_eligible", $bonusCategories)
+            ->selectRaw("SUM(CASE WHEN is_verified = 1 AND presence_type <> ? AND visitor_category IN ({$bonusPlaceholders}) THEN 1 ELSE 0 END) as bonus_eligible", [PresenceType::Online->value, ...$bonusCategories])
             ->first();
 
         return array_map(fn ($count) => (int) $count, (array) $row);
@@ -248,6 +248,7 @@ class GuestbookManager extends Component
 
     public function closeVerifyModal(): void
     {
+        $this->resetErrorBag();
         $this->showVerifyModal = false;
         $this->editingEntryId = null;
         $this->editCategory = null;
@@ -263,6 +264,12 @@ class GuestbookManager extends Component
         }
 
         $entry = $this->eventEntries()->findOrFail($this->editingEntryId);
+
+        if ($this->editVerified && ! GuestbookEntry::canBeVerifiedAs(VisitorCategory::tryFrom((string) $this->editCategory), $entry->presence_type)) {
+            $this->addError('editVerified', GuestbookEntry::IN_PERSON_REQUIRED_MESSAGE);
+
+            return;
+        }
 
         $oldValues = [
             'visitor_category' => $entry->visitor_category,
@@ -302,7 +309,7 @@ class GuestbookManager extends Component
         $this->dispatch('bonus-claimed');
 
         $this->closeVerifyModal();
-        $this->dispatch('toast', title: 'Success', description: 'Entry updated successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Entry updated.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function openDeleteModal(int $entryId): void
@@ -342,7 +349,7 @@ class GuestbookManager extends Component
 
         $this->selectedIds = array_values(array_diff($this->selectedIds, [$entry->id]));
         $this->closeDeleteModal();
-        $this->dispatch('toast', title: 'Success', description: 'Entry deleted successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Entry deleted.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function toggleSelectAll(): void
@@ -359,7 +366,8 @@ class GuestbookManager extends Component
         $this->runBulkAction(
             action: 'bulk_verified',
             verb: 'verified',
-            pending: fn (Builder $query) => $query->where('is_verified', false),
+            pending: fn (Builder $query) => $query->where('is_verified', false)->whereNot(fn (Builder $q) => $q->online()->whereIn('visitor_category', VisitorCategory::inPersonVisitCategories())),
+            skipped: fn (Builder $query) => $query->where('is_verified', false)->online()->whereIn('visitor_category', VisitorCategory::inPersonVisitCategories()),
             apply: fn (GuestbookEntry $entry) => $entry->update([
                 'is_verified' => true,
                 'verified_by' => auth()->id(),
@@ -400,8 +408,9 @@ class GuestbookManager extends Component
      *
      * @param  Closure(Builder<GuestbookEntry>): Builder<GuestbookEntry>  $pending  narrows the selection to entries the action would change
      * @param  Closure(GuestbookEntry): mixed  $apply
+     * @param  (Closure(Builder<GuestbookEntry>): Builder<GuestbookEntry>)|null  $skipped  selects selected entries the action must leave alone, reported in the toast
      */
-    protected function runBulkAction(string $action, string $verb, Closure $pending, Closure $apply, string $icon = 'phosphor-check-circle'): void
+    protected function runBulkAction(string $action, string $verb, Closure $pending, Closure $apply, string $icon = 'phosphor-check-circle', ?Closure $skipped = null): void
     {
         Gate::authorize('manage-guestbook');
 
@@ -410,13 +419,14 @@ class GuestbookManager extends Component
         }
 
         if (count($this->selectedIds) > self::BULK_ACTION_LIMIT) {
-            $this->dispatch('toast', title: 'Error', description: 'Bulk actions limited to '.self::BULK_ACTION_LIMIT.' entries', icon: 'phosphor-x-circle', css: 'alert-error');
+            $this->dispatch('toast', title: 'Error', description: 'Select no more than '.self::BULK_ACTION_LIMIT.' entries at a time.', icon: 'phosphor-x-circle', css: 'alert-error');
 
             return;
         }
 
         $selectedIds = $this->eventEntries()->whereIn('id', $this->selectedIds)->pluck('id')->all();
         $entries = $pending($this->eventEntries()->whereIn('id', $selectedIds))->get();
+        $skippedCount = $skipped ? $skipped($this->eventEntries()->whereIn('id', $selectedIds))->count() : 0;
 
         foreach ($entries as $entry) {
             $apply($entry);
@@ -433,7 +443,14 @@ class GuestbookManager extends Component
         $this->dispatch('bonus-claimed');
 
         $this->selectedIds = [];
-        $this->dispatch('toast', title: 'Success', description: count($selectedIds)." entries {$verb}", icon: $icon, css: 'alert-success');
+
+        if ($skippedCount > 0) {
+            $this->dispatch('toast', title: 'Some entries skipped', description: $entries->count().' '.str('entry')->plural($entries->count())." {$verb}. {$skippedCount} online ".str('entry')->plural($skippedCount).' left unverified: agency and elected official visits must be in person to count.', icon: 'phosphor-warning', css: 'alert-warning');
+
+            return;
+        }
+
+        $this->dispatch('toast', title: 'Success', description: count($selectedIds).' '.str('entry')->plural(count($selectedIds))." {$verb}.", icon: $icon, css: 'alert-success');
     }
 
     public function clearFilters(): void

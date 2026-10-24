@@ -266,7 +266,7 @@ class ManageSchedule extends Component
                 );
             }
 
-            $message = 'Role updated successfully';
+            $message = 'Role updated';
         } else {
             $maxSortOrder = ShiftRole::query()
                 ->forEvent($this->eventConfig->id)
@@ -288,7 +288,7 @@ class ManageSchedule extends Component
                 ]
             );
 
-            $message = 'Role created successfully';
+            $message = 'Role created';
         }
 
         $this->showRoleModal = false;
@@ -332,7 +332,7 @@ class ManageSchedule extends Component
         unset($this->roles);
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'Role deleted successfully', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Role deleted', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     // --- Shift CRUD ---
@@ -415,7 +415,7 @@ class ManageSchedule extends Component
                 );
             }
 
-            $message = 'Shift updated successfully';
+            $message = 'Shift updated';
         } else {
             $shift = Shift::create(array_merge($data, [
                 'event_configuration_id' => $this->eventConfig->id,
@@ -432,7 +432,7 @@ class ManageSchedule extends Component
                 ]
             );
 
-            $message = 'Shift created successfully';
+            $message = 'Shift created';
         }
 
         $this->showShiftModal = false;
@@ -470,8 +470,8 @@ class ManageSchedule extends Component
         unset($this->shifts);
 
         $description = $assignmentCount > 0
-            ? "Shift and {$assignmentCount} assignment(s) deleted"
-            : 'Shift deleted successfully';
+            ? "Shift and {$assignmentCount} ".str('assignment')->plural($assignmentCount).' deleted'
+            : 'Shift deleted';
 
         $this->dispatch('toast', title: 'Success', description: $description, icon: 'phosphor-check-circle', css: 'alert-success');
     }
@@ -556,7 +556,7 @@ class ManageSchedule extends Component
         $this->resetBulkForm();
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: "{$createdCount} shifts created successfully", icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: "{$createdCount} ".str('shift')->plural($createdCount).' created', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     // --- Assignments ---
@@ -660,7 +660,7 @@ class ManageSchedule extends Component
 
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'User checked in', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Volunteer checked in', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function managerCheckOut(int $assignmentId): void
@@ -683,7 +683,7 @@ class ManageSchedule extends Component
 
         unset($this->shifts);
 
-        $this->dispatch('toast', title: 'Success', description: 'User checked out', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatch('toast', title: 'Success', description: 'Volunteer checked out', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function markNoShow(int $assignmentId): void

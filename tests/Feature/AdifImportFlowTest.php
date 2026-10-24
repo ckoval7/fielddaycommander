@@ -280,7 +280,7 @@ test('validation and the import run on the queue while the wizard polls their pr
 
     $component->call('refreshProgress')
         ->assertSet('importStatus', 'completed')
-        ->assertSee('Import completed successfully');
+        ->assertSee('Import complete!');
 
     expect(Contact::where('callsign', 'W1AW')->exists())->toBeTrue();
 });
@@ -358,7 +358,7 @@ test('skip all invalid skips every invalid record at once so the import can run'
         ->call('applyMappingsAndContinue')
         ->assertSet('step', 3)
         ->assertSet('matchSummary.invalid', 4)
-        ->assertSee('4 invalid record(s)')
+        ->assertSee('4 invalid records')
         ->assertSee('Skip all 4 invalid');
 
     $import = AdifImportModel::sole();
@@ -462,7 +462,7 @@ test('the progress poll picks up completion written to the database', function (
 
     $component->call('refreshProgress')
         ->assertSet('importStatus', 'completed')
-        ->assertSee('Import completed successfully')
+        ->assertSee('Import complete!')
         ->assertSee('1 imported')
         ->assertDontSeeHtml('wire:poll');
 });

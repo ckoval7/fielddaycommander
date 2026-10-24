@@ -26,7 +26,7 @@ class ShiftRole extends Model
      */
     public const DEFAULTS = [
         'Safety Officer' => [
-            'description' => 'Verifies all safety concerns on the Safety Officer checklist',
+            'description' => 'Checks the items on the Safety Officer Checklist',
             'bonus_points' => 100,
             'requires_confirmation' => true,
             'eligible_classes' => ['A'],
@@ -34,7 +34,7 @@ class ShiftRole extends Model
             'color' => '#dc2626',
         ],
         'Site Responsibilities' => [
-            'description' => 'Ensures site is free of hazards and provides a point of contact for visitors',
+            'description' => 'Checks the site for hazards and serves as a contact for visitors',
             'bonus_points' => 50,
             'requires_confirmation' => true,
             'eligible_classes' => ['B', 'C', 'D', 'E', 'F'],
@@ -50,7 +50,7 @@ class ShiftRole extends Model
             'color' => '#3b82f6',
         ],
         'Public Greeter' => [
-            'description' => 'Greets visitors at a publicly accessible location with name badge',
+            'description' => 'Wears a name badge and greets visitors at a publicly accessible location',
             'bonus_points' => 100,
             'requires_confirmation' => true,
             'eligible_classes' => ['A', 'B', 'F'],

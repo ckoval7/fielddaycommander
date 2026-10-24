@@ -39,7 +39,7 @@ class SetupStep2Request extends FormRequest
             'logo' => [
                 'nullable',
                 'image',
-                'mimes:jpeg,jpg,png,svg',
+                'mimes:jpeg,jpg,png',
                 'max:2048', // 2MB
             ],
         ];
@@ -57,8 +57,8 @@ class SetupStep2Request extends FormRequest
             'site_name.max' => 'The site name must not exceed 100 characters.',
             'site_tagline.max' => 'The site tagline must not exceed 255 characters.',
             'logo.image' => 'The site logo must be an image file.',
-            'logo.mimes' => 'The site logo must be a JPEG, PNG, or SVG file.',
-            'logo.max' => 'The site logo must not exceed 2MB.',
+            'logo.mimes' => 'The site logo must be a JPEG or PNG file.',
+            'logo.max' => 'The site logo must not exceed 2 MB.',
         ];
     }
 

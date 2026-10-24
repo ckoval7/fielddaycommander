@@ -89,7 +89,7 @@ class AllEquipmentList extends Component
     public function userOptions(): array
     {
         $options = [
-            ['id' => '', 'name' => 'All Users'],
+            ['id' => '', 'name' => 'All Owners'],
             ['id' => 'club', 'name' => 'Club Equipment'],
         ];
 
@@ -101,7 +101,7 @@ class AllEquipmentList extends Component
         foreach ($users as $user) {
             $label = $user->call_sign;
             if ($user->first_name || $user->last_name) {
-                $label .= ' — '.trim($user->first_name.' '.$user->last_name);
+                $label .= ', '.trim($user->first_name.' '.$user->last_name);
             }
             $options[] = ['id' => $user->id, 'name' => $label];
         }
@@ -200,7 +200,7 @@ class AllEquipmentList extends Component
 
         $equipment->delete();
 
-        $this->dispatch('notify', title: 'Success', description: 'Equipment deleted successfully.', type: 'success');
+        $this->dispatch('notify', title: 'Success', description: 'Equipment deleted.', type: 'success');
 
         unset($this->equipment);
     }

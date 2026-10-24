@@ -161,7 +161,7 @@
                 </x-logging.exchange-composer>
             </x-logging.qso-log>
 
-            <x-logging.keyboard-shortcuts log-label="Log entry" recall-label="Recall entries" />
+            <x-logging.keyboard-shortcuts recall-noun="entry" />
         </div>
     @endif
 

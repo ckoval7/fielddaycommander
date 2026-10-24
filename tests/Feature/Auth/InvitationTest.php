@@ -8,6 +8,7 @@ use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -45,7 +46,7 @@ test('invitation acceptance page redirects with invalid token', function () {
     $response = $this->get('/register/invite/invalid-token');
 
     $response->assertRedirect(route('login'))
-        ->assertSessionHas('error', 'This invitation is invalid or has expired.');
+        ->assertSessionHas('error', 'This invitation is invalid, expired, or already accepted.');
 });
 
 test('invitation acceptance page redirects with expired token', function () {
@@ -63,7 +64,7 @@ test('invitation acceptance page redirects with expired token', function () {
     $response = $this->get("/register/invite/{$token}");
 
     $response->assertRedirect(route('login'))
-        ->assertSessionHas('error', 'This invitation is invalid or has expired.');
+        ->assertSessionHas('error', 'This invitation is invalid, expired, or already accepted.');
 });
 
 test('invitation acceptance page redirects with already accepted token', function () {
@@ -82,7 +83,7 @@ test('invitation acceptance page redirects with already accepted token', functio
     $response = $this->get("/register/invite/{$token}");
 
     $response->assertRedirect(route('login'))
-        ->assertSessionHas('error', 'This invitation is invalid or has expired.');
+        ->assertSessionHas('error', 'This invitation is invalid, expired, or already accepted.');
 });
 
 test('user can accept invitation and set password', function () {
@@ -296,4 +297,16 @@ test('deleting user cascades and deletes invitations', function () {
     $user->forceDelete();
 
     expect(UserInvitation::count())->toBe(0);
+});
+
+test('sign-in page shows why an invitation link did not work', function () {
+    DB::table('system_config')->updateOrInsert(
+        ['key' => 'setup_completed'],
+        ['value' => 'true', 'updated_at' => now()]
+    );
+
+    $this->withSession(['error' => 'This invitation is invalid, expired, or already accepted.'])
+        ->get(route('login'))
+        ->assertOk()
+        ->assertSee('This invitation is invalid, expired, or already accepted.');
 });

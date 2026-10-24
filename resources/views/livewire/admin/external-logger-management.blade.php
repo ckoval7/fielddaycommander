@@ -24,13 +24,13 @@
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">N1MM Logger+</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Receive live QSO data via UDP broadcast</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Receive contact and radio data as XML over UDP</p>
                         </div>
                         <button
                             wire:click="toggleN1mm"
                             class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $n1mmEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
                         >
-                            <span class="sr-only">Toggle N1MM listener</span>
+                            <span class="sr-only">Toggle N1MM Logger+ listener</span>
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $n1mmEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
                         </button>
                     </div>
@@ -44,8 +44,8 @@
                             </span>
                             <span class="text-sm text-gray-700 dark:text-gray-300">
                                 Listening on port {{ $heartbeat['port'] ?? $n1mmPort }}
-                                &middot; {{ $heartbeat['packets_received'] ?? 0 }} packets
-                                &middot; {{ $heartbeat['errors'] ?? 0 }} errors
+                                &middot; {{ $heartbeat['packets_received'] ?? 0 }} {{ str('packet')->plural($heartbeat['packets_received'] ?? 0) }}
+                                &middot; {{ $heartbeat['errors'] ?? 0 }} {{ str('error')->plural($heartbeat['errors'] ?? 0) }}
                                 @if (! empty($heartbeat['last_packet_at']))
                                     &middot; last packet {{ \Carbon\Carbon::parse($heartbeat['last_packet_at'])->diffForHumans() }}
                                 @endif
@@ -59,13 +59,13 @@
                         @elseif ($processStatus === 'crashed')
                             <span class="inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                             <span class="text-sm text-red-600 dark:text-red-400">
-                                Process crashed &middot; Restarting...
+                                Listener stopped unexpectedly &middot; Restart pending
                             </span>
                             <button
                                 wire:click="restartProcess"
                                 class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                             >
-                                Retry
+                                Restart Listener
                             </button>
                         @else
                             <span class="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
@@ -89,7 +89,7 @@
                                 class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                             >
                                 <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
-                                <span>Last Log Received</span>
+                                <span>Last Contact Received</span>
                                 @if ($lastLog !== null)
                                     @if ($lastLog['accepted'])
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Accepted</span>
@@ -149,7 +149,7 @@
                             <li>Check "Contacts" and "Radio" checkboxes</li>
                             <li>Ensure your firewall allows inbound UDP on port {{ $n1mmPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $n1mmPort }}/udp</code>)</li>
                             <li>Set the destination IP to this server's address with port {{ $n1mmPort }}</li>
-                            <li>Optionally configure Station hostnames on the Stations page for automatic matching</li>
+                            <li>On Stations, set Hostname (NetBIOS Name) to the logging PC's computer name. N1MM Logger+ sends it as StationName. If no station name or hostname matches, a station is created</li>
                         </ol>
                     </div>
                 </div>
@@ -158,21 +158,21 @@
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">WSJTX / JTDX</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Receive live QSO data via UDP ADIF broadcast</p>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">WSJT-X / JTDX</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Receive contacts in WSJT-X binary UDP messages (Logged ADIF)</p>
                         </div>
                         <button
                             wire:click="toggleWsjtx"
                             class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $wsjtxEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
                         >
-                            <span class="sr-only">Toggle WSJTX listener</span>
+                            <span class="sr-only">Toggle WSJT-X / JTDX listener</span>
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $wsjtxEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
                         </button>
                     </div>
 
                     @if ($wsjtxNoCreditReason)
                         <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 mb-4">
-                            <p class="text-sm text-yellow-800 dark:text-yellow-200"><strong>No credit:</strong> {{ $wsjtxNoCreditReason }}. Contacts in those modes (FT8, FT4 and the like) are still logged, but they earn no QSO points and count toward no objective. Other WSJT-X modes, such as JTTY, score normally.</p>
+                            <p class="text-sm text-yellow-800 dark:text-yellow-200"><strong>No credit:</strong> {{ $wsjtxNoCreditReason }}. Contacts in those modes (FT8, FT4, and related modes) are still logged, but they earn no QSO points and count toward no objective. Other WSJT-X modes, such as JTTY, score normally.</p>
                         </div>
                     @endif
 
@@ -185,8 +185,8 @@
                             </span>
                             <span class="text-sm text-gray-700 dark:text-gray-300">
                                 Listening on port {{ $wsjtxHeartbeat['port'] ?? $wsjtxPort }}
-                                &middot; {{ $wsjtxHeartbeat['packets_received'] ?? 0 }} packets
-                                &middot; {{ $wsjtxHeartbeat['errors'] ?? 0 }} errors
+                                &middot; {{ $wsjtxHeartbeat['packets_received'] ?? 0 }} {{ str('packet')->plural($wsjtxHeartbeat['packets_received'] ?? 0) }}
+                                &middot; {{ $wsjtxHeartbeat['errors'] ?? 0 }} {{ str('error')->plural($wsjtxHeartbeat['errors'] ?? 0) }}
                                 @if (! empty($wsjtxHeartbeat['last_packet_at']))
                                     &middot; last packet {{ \Carbon\Carbon::parse($wsjtxHeartbeat['last_packet_at'])->diffForHumans() }}
                                 @endif
@@ -200,13 +200,13 @@
                         @elseif ($wsjtxProcessStatus === 'crashed')
                             <span class="inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                             <span class="text-sm text-red-600 dark:text-red-400">
-                                Process crashed &middot; Restarting...
+                                Listener stopped unexpectedly &middot; Restart pending
                             </span>
                             <button
                                 wire:click="restartWsjtxProcess"
                                 class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                             >
-                                Retry
+                                Restart Listener
                             </button>
                         @else
                             <span class="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
@@ -230,7 +230,7 @@
                                 class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                             >
                                 <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
-                                <span>Last Log Received</span>
+                                <span>Last Contact Received</span>
                                 @if ($wsjtxLastLog !== null)
                                     @if ($wsjtxLastLog['accepted'])
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Accepted</span>
@@ -286,13 +286,13 @@
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
                         <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Instructions</h4>
                         <ol class="text-sm text-gray-500 dark:text-gray-400 list-decimal list-inside space-y-1">
-                            <li>In WSJTX, go to File &gt; Settings &gt; Reporting &gt; UDP Server</li>
+                            <li>In WSJT-X, go to File &gt; Settings &gt; Reporting &gt; UDP Server</li>
                             <li>Set the UDP server address to this server's IP and port {{ $wsjtxPort }}</li>
                             <li>Use this server's regular IP address, not a multicast address</li>
                             <li>Ensure your firewall allows inbound UDP on port {{ $wsjtxPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $wsjtxPort }}/udp</code>)</li>
                             <li>Set Settings &gt; Reporting &gt; Op Call to the operator's callsign so contacts are credited to them</li>
                             <li>Turn on Settings &gt; Advanced &gt; Special operating activity &gt; ARRL Field Day so the class and section are logged</li>
-                            <li>Contacts are matched to a station by the station callsign (My Call), so give the receiving station's name or hostname that callsign on the Stations page</li>
+                            <li>Contacts are matched to a station by the station callsign (My Call in WSJT-X or JTDX). Give the receiving station's name or hostname that callsign on the Stations page. If neither matches, a station is created</li>
                         </ol>
                     </div>
                 </div>
@@ -321,8 +321,8 @@
                             </span>
                             <span class="text-sm text-gray-700 dark:text-gray-300">
                                 Listening on port {{ $udpAdifHeartbeat['port'] ?? $udpAdifPort }}
-                                &middot; {{ $udpAdifHeartbeat['packets_received'] ?? 0 }} packets
-                                &middot; {{ $udpAdifHeartbeat['errors'] ?? 0 }} errors
+                                &middot; {{ $udpAdifHeartbeat['packets_received'] ?? 0 }} {{ str('packet')->plural($udpAdifHeartbeat['packets_received'] ?? 0) }}
+                                &middot; {{ $udpAdifHeartbeat['errors'] ?? 0 }} {{ str('error')->plural($udpAdifHeartbeat['errors'] ?? 0) }}
                                 @if (! empty($udpAdifHeartbeat['last_packet_at']))
                                     &middot; last packet {{ \Carbon\Carbon::parse($udpAdifHeartbeat['last_packet_at'])->diffForHumans() }}
                                 @endif
@@ -336,13 +336,13 @@
                         @elseif ($udpAdifProcessStatus === 'crashed')
                             <span class="inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                             <span class="text-sm text-red-600 dark:text-red-400">
-                                Process crashed &middot; Restarting...
+                                Listener stopped unexpectedly &middot; Restart pending
                             </span>
                             <button
                                 wire:click="restartUdpAdifProcess"
                                 class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                             >
-                                Retry
+                                Restart Listener
                             </button>
                         @else
                             <span class="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
@@ -366,7 +366,7 @@
                                 class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                             >
                                 <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
-                                <span>Last Log Received</span>
+                                <span>Last Contact Received</span>
                                 @if ($udpAdifLastLog !== null)
                                     @if ($udpAdifLastLog['accepted'])
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Accepted</span>
@@ -425,7 +425,7 @@
                             <li>Configure your logging application to send ADIF records via UDP</li>
                             <li>Set the destination to this server's IP and port {{ $udpAdifPort }}</li>
                             <li>In fldigi: Configure &gt; Config Dialog &gt; Logging &gt; Cloud-UDP &gt; set UDP address and port and check enable</li>
-                            <li>Contacts are matched to a station by the station callsign (fldigi's Station Callsign), so give the receiving station's name or hostname that callsign on the Stations page</li>
+                            <li>Contacts are matched to a station by the station callsign (fldigi's Station Callsign). Give the receiving station's name or hostname that callsign on the Stations page. If neither matches, a station is created</li>
                             <li>Ensure your firewall allows inbound UDP on port {{ $udpAdifPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $udpAdifPort }}/udp</code>)</li>
                         </ol>
                     </div>

@@ -12,7 +12,7 @@
             @endif
         </h3>
         <a
-            href="{{ route('logbook.export', request()->query()) }}"
+            href="{{ $this->exportUrl }}"
             class="btn btn-sm btn-primary min-h-[2.75rem] sm:min-h-[1.75rem]"
             target="_blank"
         >
@@ -25,9 +25,9 @@
     @can('edit-contacts')
         @if(count($selectedIds) > 0)
             <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                <span class="text-sm font-semibold whitespace-nowrap">{{ count($selectedIds) }} contact(s) selected</span>
+                <span class="text-sm font-semibold whitespace-nowrap">{{ count($selectedIds) }} selected</span>
                 <x-button
-                    label="Clear"
+                    label="Clear Selection"
                     icon="phosphor-x"
                     class="btn-ghost btn-sm ml-auto sm:order-last"
                     wire:click="deselectAll"
@@ -44,7 +44,7 @@
                         icon="phosphor-trash"
                         class="btn-error btn-sm flex-1 sm:flex-none"
                         wire:click="$dispatch('bulk-delete-contacts', { contactIds: $wire.selectedIds })"
-                        wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} contact(s)?"
+                        wire:confirm="Delete {{ count($selectedIds) }} {{ str('contact')->plural(count($selectedIds)) }}? You can restore them from the logbook."
                     />
                 </div>
             </div>
@@ -54,8 +54,8 @@
     @if($this->contacts->isEmpty())
         <div class="text-center py-12">
             <x-icon name="phosphor-magnifying-glass" class="w-16 h-16 mx-auto text-base-content/30" />
-            <p class="mt-4 text-base-content/70">No contacts found matching the current filters.</p>
-            <p class="text-sm text-base-content/50 mt-2">Try adjusting your filter criteria.</p>
+            <p class="mt-4 text-base-content/70">No contacts found.</p>
+            <p class="text-sm text-base-content/50 mt-2">Clear any active filters to check the full logbook.</p>
         </div>
     @else
         {{-- Desktop Table View --}}
@@ -103,7 +103,7 @@
                             <x-badge value="DELETED" class="badge-xs badge-error" />
                         @endif
                         @if($contact->is_duplicate)
-                            <x-badge value="DUP" class="badge-xs badge-warning" />
+                            <x-badge value="Dupe" class="badge-xs badge-warning" />
                         @endif
                         @if($contact->is_transcribed)
                             <span class="badge badge-outline badge-xs badge-warning ml-1">transcribed</span>
@@ -172,9 +172,9 @@
                                 <x-button
                                     icon="phosphor-arrow-u-up-left"
                                     wire:click="$dispatch('restore-contact', { contactId: {{ $contact->id }} })"
-                                    wire:confirm="Are you sure you want to restore this contact?"
+                                    wire:confirm="Restore this contact?"
                                     class="btn-ghost btn-xs text-success"
-                                    tooltip="Restore"
+                                    tooltip="Restore contact"
                                     spinner
                                 />
                             @else
@@ -182,15 +182,15 @@
                                     icon="phosphor-note-pencil"
                                     wire:click="$dispatch('open-edit-contact', { contactId: {{ $contact->id }} })"
                                     class="btn-ghost btn-xs"
-                                    tooltip="Edit"
+                                    tooltip="Edit contact"
                                     spinner
                                 />
                                 <x-button
                                     icon="phosphor-trash"
                                     wire:click="$dispatch('delete-contact', { contactId: {{ $contact->id }} })"
-                                    wire:confirm="Are you sure you want to delete this contact?"
+                                    wire:confirm="Delete this contact? You can restore it from the logbook."
                                     class="btn-ghost btn-xs text-error"
-                                    tooltip="Delete"
+                                    tooltip="Delete contact"
                                     spinner
                                 />
                             @endif
@@ -225,7 +225,7 @@
                             </div>
                             <div class="flex flex-col items-end gap-1 flex-shrink-0">
                                 @if($contact->is_duplicate)
-                                    <x-badge value="DUPLICATE" class="badge-xs badge-warning" />
+                                    <x-badge value="Dupe" class="badge-xs badge-warning" />
                                 @endif
                                 @if($contact->is_transcribed)
                                     <span class="badge badge-outline badge-xs badge-warning">transcribed</span>
@@ -299,7 +299,7 @@
                                         icon="phosphor-arrow-u-up-left"
                                         label="Restore"
                                         wire:click="$dispatch('restore-contact', { contactId: {{ $contact->id }} })"
-                                        wire:confirm="Are you sure you want to restore this contact?"
+                                        wire:confirm="Restore this contact?"
                                         class="btn-ghost btn-xs text-success"
                                         spinner
                                     />
@@ -315,7 +315,7 @@
                                         icon="phosphor-trash"
                                         label="Delete"
                                         wire:click="$dispatch('delete-contact', { contactId: {{ $contact->id }} })"
-                                        wire:confirm="Are you sure you want to delete this contact?"
+                                        wire:confirm="Delete this contact? You can restore it from the logbook."
                                         class="btn-ghost btn-xs text-error"
                                         spinner
                                     />

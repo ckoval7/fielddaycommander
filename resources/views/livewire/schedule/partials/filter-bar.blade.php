@@ -33,7 +33,7 @@
                 wire:click="resetFilters"
                 class="btn btn-ghost btn-xs text-error"
             >
-                Clear all
+                Reset filters and sort
             </button>
         @endif
     </div>
@@ -63,7 +63,7 @@
             {{-- Search --}}
             @if($showSearch)
                 <div>
-                    <label for="schedule-search" class="block py-1 text-xs font-semibold">Search by name / call sign</label>
+                    <label for="schedule-search" class="block py-1 text-xs font-semibold">Search by name or call sign</label>
                     <input
                         id="schedule-search"
                         type="text"
@@ -141,7 +141,7 @@
                             <option value="time">Time</option>
                             <option value="role">Role</option>
                             @if($showAvailability)
-                                <option value="fill">Fill %</option>
+                                <option value="fill">Filled slots (%)</option>
                             @endif
                         </select>
                     </label>
@@ -149,7 +149,7 @@
                         type="button"
                         wire:click="$set('sortDir', '{{ $sortDir === 'asc' ? 'desc' : 'asc' }}')"
                         class="btn btn-sm btn-outline"
-                        title="{{ $sortDir === 'asc' ? 'Ascending' : 'Descending' }}"
+                        title="{{ $sortDir === 'asc' ? 'Sort descending' : 'Sort ascending' }}"
                     >
                         @if($sortDir === 'asc')
                             <x-icon name="phosphor-sort-ascending" class="w-4 h-4" />

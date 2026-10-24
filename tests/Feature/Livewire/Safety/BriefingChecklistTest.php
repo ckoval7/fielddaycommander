@@ -95,5 +95,5 @@ test('any volunteer with a shift can check off briefing items without earning a 
 
 test('volunteers without a shift cannot check off briefing items', function () {
     Livewire::actingAs(User::factory()->create())->test(SiteSafetyChecklist::class)
-        ->assertSee('You must be signed up for a shift at this event to check off items.');
+        ->assertSee('Only volunteers signed up for a shift at this event can check off items.');
 });

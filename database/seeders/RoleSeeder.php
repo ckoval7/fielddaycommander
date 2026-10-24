@@ -12,27 +12,33 @@ use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
+    /**
+     * Default descriptions for the built-in roles. They only fill a blank
+     * description, so text an admin has edited is kept.
+     *
+     * @var array<string, string>
+     */
+    public const array DESCRIPTIONS = [
+        'System Administrator' => 'Full access to every feature and setting',
+        'Event Manager' => 'Runs events: logging, stations, equipment, shifts, photos, and reports',
+        'Station Captain' => 'Runs a station: logs and edits contacts, manages stations and event equipment',
+        'Operator' => 'Logs contacts, signs up for shifts, and manages their own equipment',
+        'Config Only' => 'Setup account for users, roles, and settings. It can\'t log contacts.',
+    ];
+
     public function run(): void
     {
         // Clear permission cache to ensure all permissions are available
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // System Administrator - All permissions
-        $systemAdmin = Role::firstOrCreate([
-            'name' => 'System Administrator',
-        ], [
-            'guard_name' => 'web',
-        ]);
+        $systemAdmin = $this->ensureRole('System Administrator');
         $systemAdmin->givePermissionTo(
             Permission::pluck('name')
         );
 
         // Event Manager
-        $eventManager = Role::firstOrCreate([
-            'name' => 'Event Manager',
-        ], [
-            'guard_name' => 'web',
-        ]);
+        $eventManager = $this->ensureRole('Event Manager');
         $eventManager->givePermissionTo([
             'log-contacts',
             'edit-contacts',
@@ -44,7 +50,6 @@ class RoleSeeder extends Seeder
             'manage-bulletins',
             'view-stations',
             'manage-stations',
-            'manage-equipment',
             'verify-bonuses',
             'view-reports',
             'manage-guestbook',
@@ -60,11 +65,7 @@ class RoleSeeder extends Seeder
         ]);
 
         // Operator (Default)
-        $operator = Role::firstOrCreate([
-            'name' => 'Operator',
-        ], [
-            'guard_name' => 'web',
-        ]);
+        $operator = $this->ensureRole('Operator');
         $operator->givePermissionTo([
             'log-contacts',
             'sign-up-shifts',
@@ -73,11 +74,7 @@ class RoleSeeder extends Seeder
         ]);
 
         // Station Captain
-        $stationCaptain = Role::firstOrCreate([
-            'name' => 'Station Captain',
-        ], [
-            'guard_name' => 'web',
-        ]);
+        $stationCaptain = $this->ensureRole('Station Captain');
         $stationCaptain->givePermissionTo([
             'log-contacts',
             'edit-contacts',
@@ -85,18 +82,13 @@ class RoleSeeder extends Seeder
             'view-stations',
             'manage-stations',
             'manage-bulletins',
-            'manage-equipment',
             'manage-own-equipment',
             'view-all-equipment',
             'manage-event-equipment',
         ]);
 
         // Config Only - View and admin permissions only (for SYSTEM bootstrap account)
-        $configOnly = Role::firstOrCreate([
-            'name' => 'Config Only',
-        ], [
-            'guard_name' => 'web',
-        ]);
+        $configOnly = $this->ensureRole('Config Only');
         $configOnly->givePermissionTo([
             'manage-users',
             'manage-roles',
@@ -109,5 +101,20 @@ class RoleSeeder extends Seeder
         ]);
 
         $this->command->info('Created or updated 5 roles with permissions');
+    }
+
+    /**
+     * Find or create a built-in role and give it its default description
+     * when it doesn't have one yet.
+     */
+    private function ensureRole(string $name): Role
+    {
+        $role = Role::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+
+        if ($role->description === null && isset(self::DESCRIPTIONS[$name])) {
+            $role->forceFill(['description' => self::DESCRIPTIONS[$name]])->save();
+        }
+
+        return $role;
     }
 }

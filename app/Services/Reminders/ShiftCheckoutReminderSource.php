@@ -45,8 +45,8 @@ class ShiftCheckoutReminderSource implements ReminderSource
         $endTime = $shift->end_time->format('H:i').' UTC';
 
         return [
-            'title' => "Forgot to check out? {$roleName}",
-            'message' => "Your {$roleName} shift ended at {$endTime}. Don't forget to check out.",
+            'title' => "Shift Check-out: {$roleName}",
+            'message' => "Your {$roleName} shift ended at {$endTime}. Check out from My Shifts.",
             'url' => '/schedule/my-shifts',
         ];
     }

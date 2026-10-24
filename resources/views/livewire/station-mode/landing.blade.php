@@ -53,7 +53,7 @@
                 />
 
                 @if($needsName)
-                    <p class="text-sm text-base-content/70">We don't have a name for this callsign yet. Please enter yours.</p>
+                    <p class="text-sm text-base-content/70">We don't have a name for this callsign yet. Please enter yours to continue.</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <x-input label="First name" wire:model="firstName" autocomplete="off" maxlength="50" autocapitalize="words" />
                         <x-input label="Last name" wire:model="lastName" autocomplete="off" maxlength="50" autocapitalize="words" />
@@ -75,7 +75,7 @@
 
             <x-modal wire:model="showExitModal" title="Exit Station Mode" persistent>
                 <div class="space-y-4">
-                    <p class="text-sm">A station captain or administrator must sign in to take this browser out of station mode.</p>
+                    <p class="text-sm">A station captain or administrator must enter their email and password to exit station mode.</p>
                     <x-input label="Email" type="email" wire:model="exitEmail" autocomplete="off" icon="phosphor-envelope" />
                     <x-input label="Password" type="password" wire:model="exitPassword" autocomplete="off" icon="phosphor-lock" />
                 </div>

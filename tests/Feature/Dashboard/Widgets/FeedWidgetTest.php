@@ -622,7 +622,7 @@ test('shows empty state when no notifications exist', function () {
         'config' => ['feed_type' => 'all_activity'],
         'size' => 'normal',
     ])
-        ->assertSee('No activity yet');
+        ->assertSee('No notifications yet');
 });
 
 test('shows empty state in tv mode', function () {
@@ -630,7 +630,7 @@ test('shows empty state in tv mode', function () {
         'config' => ['feed_type' => 'all_activity'],
         'size' => 'tv',
     ])
-        ->assertSee('No activity yet');
+        ->assertSee('No notifications yet');
 });
 
 // ────────────────────────────────────────────────────────────────

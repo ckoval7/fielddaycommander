@@ -16,7 +16,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <x-input
                 label="Search"
-                placeholder="Search by call sign, name, or email..."
+                placeholder="Callsign, name, or email"
                 wire:model.live.debounce.300ms="search"
                 icon="phosphor-magnifying-glass"
                 clearable
@@ -38,8 +38,8 @@
                     ['value' => 'active', 'label' => 'Active'],
                     ['value' => 'locked', 'label' => 'Locked'],
                     ['value' => '2fa_enabled', 'label' => '2FA Enabled'],
-                    ['value' => 'password_reset_required', 'label' => 'Password Reset Required'],
-                    ['value' => 'ghost', 'label' => 'Ghost (No Login)'],
+                    ['value' => 'password_reset_required', 'label' => 'Password Change Required'],
+                    ['value' => 'ghost', 'label' => 'No Sign-In (callsign only)'],
                 ]"
                 option-value="value"
                 option-label="label"
@@ -58,12 +58,12 @@
                     <thead>
                         <tr>
                             <th>
-                                <x-checkbox wire:model.live="selectAll" />
+                                <x-checkbox wire:model.live="selectAll" aria-label="Select all users on this page" />
                             </th>
-                            <th>Call Sign</th>
+                            <th>Callsign</th>
                             <th>Name</th>
                             <th>Email</th>
-                            <th>Role(s)</th>
+                            <th>Roles</th>
                             <th>License</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -73,7 +73,7 @@
                         @forelse($this->users as $user)
                             <tr wire:key="user-desktop-{{ $user->id }}">
                                 <td>
-                                    <x-checkbox wire:model.live="selectedUsers" value="{{ $user->id }}" />
+                                    <x-checkbox wire:model.live="selectedUsers" aria-label="Select {{ $user->call_sign }}" value="{{ $user->id }}" />
                                 </td>
                                 <td class="font-semibold">{{ $user->call_sign }}</td>
                                 <td>{{ $user->first_name }} {{ $user->last_name }}</td>
@@ -87,9 +87,9 @@
                                 <td>
                                     <div class="flex flex-col gap-1">
                                         @if($user->is_ghost)
-                                            <span class="badge badge-ghost badge-sm" title="Created from a callsign without a login">
+                                            <span class="badge badge-ghost badge-sm" title="Callsign record without a personal sign-in. Activate the account to set up sign-in.">
                                                 <x-icon name="phosphor-ghost" class="w-3 h-3 mr-1" />
-                                                Ghost
+                                                No Sign-In
                                             </span>
                                         @endif
                                         @if($user->account_locked_at)
@@ -107,7 +107,7 @@
                                         @if($user->requires_password_change)
                                             <span class="badge badge-warning badge-sm">
                                                 <x-icon name="phosphor-key" class="w-3 h-3 mr-1" />
-                                                Reset Required
+                                                Password Change Required
                                             </span>
                                         @endif
 
@@ -122,7 +122,7 @@
                                 <td>
                                     <x-dropdown>
                                         <x-slot:trigger>
-                                            <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" />
+                                            <x-button icon="phosphor-dots-three-vertical" aria-label="Actions for {{ $user->call_sign }}" class="btn-sm btn-ghost" />
                                         </x-slot:trigger>
 
                                         <x-menu-item title="Edit" icon="phosphor-pencil-simple" wire:click="openEditModal({{ $user->id }})" />
@@ -134,7 +134,7 @@
                                             <x-menu-item title="Lock Account" icon="phosphor-lock" wire:click="openLockModal({{ $user->id }})" />
                                         @endif
 
-                                        <x-menu-item title="Force Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
+                                        <x-menu-item title="Require Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
                                         @if($user->is_ghost)
                                             <x-menu-item title="Activate Account" icon="phosphor-user-check" wire:click="openActivateModal({{ $user->id }})" />
                                         @else
@@ -149,7 +149,7 @@
                             <tr>
                                 <td colspan="8" class="text-center py-8 text-base-content/60">
                                     <x-icon name="phosphor-users-three" class="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                    <p>No users found</p>
+                                    <p>No users found. Try another search or filter, or add a user.</p>
                                 </td>
                             </tr>
                         @endforelse
@@ -170,7 +170,7 @@
                     <div class="card-body p-4">
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex items-start gap-3 min-w-0">
-                                <x-checkbox wire:model.live="selectedUsers" value="{{ $user->id }}" class="mt-1" />
+                                <x-checkbox wire:model.live="selectedUsers" aria-label="Select {{ $user->call_sign }}" value="{{ $user->id }}" class="mt-1" />
                                 <div class="min-w-0">
                                     <div class="font-bold text-lg">{{ $user->call_sign }}</div>
                                     <div class="text-sm text-base-content/70">{{ $user->first_name }} {{ $user->last_name }}</div>
@@ -179,7 +179,7 @@
                             </div>
                             <x-dropdown>
                                 <x-slot:trigger>
-                                    <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" />
+                                    <x-button icon="phosphor-dots-three-vertical" aria-label="Actions for {{ $user->call_sign }}" class="btn-sm btn-ghost" />
                                 </x-slot:trigger>
 
                                 <x-menu-item title="Edit" icon="phosphor-pencil-simple" wire:click="openEditModal({{ $user->id }})" />
@@ -191,7 +191,7 @@
                                     <x-menu-item title="Lock Account" icon="phosphor-lock" wire:click="openLockModal({{ $user->id }})" />
                                 @endif
 
-                                <x-menu-item title="Force Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
+                                <x-menu-item title="Require Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
                                 @if($user->is_ghost)
                                     <x-menu-item title="Activate Account" icon="phosphor-user-check" wire:click="openActivateModal({{ $user->id }})" />
                                 @else
@@ -214,7 +214,7 @@
                             @if($user->is_ghost)
                                 <span class="badge badge-ghost badge-sm">
                                     <x-icon name="phosphor-ghost" class="w-3 h-3 mr-1" />
-                                    Ghost
+                                    No Sign-In
                                 </span>
                             @endif
 
@@ -233,7 +233,7 @@
                             @if($user->requires_password_change)
                                 <span class="badge badge-warning badge-sm">
                                     <x-icon name="phosphor-key" class="w-3 h-3 mr-1" />
-                                    Reset Required
+                                    Password Change Required
                                 </span>
                             @endif
 
@@ -250,7 +250,7 @@
                 <div class="card bg-base-100 shadow">
                     <div class="card-body items-center text-center py-8 text-base-content/60">
                         <x-icon name="phosphor-users-three" class="w-12 h-12 mb-2 opacity-50" />
-                        <p>No users found</p>
+                        <p>No users found. Try another search or filter, or add a user.</p>
                     </div>
                 </div>
             @endforelse
@@ -276,4 +276,7 @@
 
     {{-- Delete Confirmation Modal --}}
     @include('livewire.users.partials.delete-modal')
+
+    {{-- Bulk Delete Confirmation Modal --}}
+    @include('livewire.users.partials.bulk-delete-modal')
 </div>

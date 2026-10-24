@@ -95,7 +95,7 @@ test('shows download link text when event is active', function () {
     Livewire::actingAs($user)
         ->test(ReportsIndex::class)
         ->assertSee('Cabrillo Log')
-        ->assertSee('Submission Sheet');
+        ->assertSee('ARRL Submission Sheet');
 });
 
 // ============================================================================

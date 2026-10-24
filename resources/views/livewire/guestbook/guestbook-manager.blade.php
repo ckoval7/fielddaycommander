@@ -12,13 +12,14 @@
                 <div class="flex items-center gap-2 mb-2">
                     <x-button
                         icon="phosphor-arrow-left"
-                        class="btn-ghost btn-sm"
+                        class="btn-ghost btn-sm btn-square"
                         link="{{ route('events.show', $event) }}"
                         tooltip="Back to Event"
+                        aria-label="Back to Event"
                     />
                     <h1 class="text-2xl md:text-3xl font-bold">Guestbook Manager</h1>
                 </div>
-                <p class="text-base-content/60">{{ $event->name }} - {{ $this->entryStats['total'] }} total entries</p>
+                <p class="text-base-content/60">{{ $event->name }}: {{ $this->entryStats['total'] }} {{ str('entry')->plural($this->entryStats['total']) }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <x-button
@@ -38,7 +39,7 @@
             <x-alert icon="phosphor-info" class="alert-info">
                 The guestbook is currently disabled for this event.
                 <x-button
-                    label="Enable in Event Settings"
+                    label="Open Event Settings"
                     class="btn-sm btn-ghost ml-2"
                     link="{{ route('events.edit', ['eventId' => $event->id]) }}"
                 />
@@ -144,7 +145,7 @@
                 @can('manage-guestbook')
                     <x-alert icon="phosphor-check-circle" class="alert-info mb-4">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
-                            <span class="font-semibold">{{ count($selectedIds) }} entry(ies) selected</span>
+                            <span class="font-semibold">{{ count($selectedIds) }} {{ str('entry')->plural(count($selectedIds)) }} selected</span>
 
                             <div class="flex flex-wrap items-center gap-2">
                                 <x-button
@@ -166,7 +167,7 @@
                                     icon="phosphor-trash"
                                     class="btn-sm btn-error"
                                     wire:click="bulkDelete"
-                                    wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} entries? This action cannot be undone."
+                                    wire:confirm="Delete {{ count($selectedIds) }} selected {{ str('entry')->plural(count($selectedIds)) }}? This cannot be undone."
                                     spinner="bulkDelete"
                                 />
                                 <x-button
@@ -207,7 +208,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="font-medium truncate">{{ $entry->first_name }} {{ $entry->last_name }}</div>
                                     @if($entry->callsign)
-                                        <code class="text-sm font-mono">{{ $entry->callsign }}</code>
+                                        <div class="text-sm">{{ $entry->callsign }}</div>
                                     @endif
                                     @if($entry->email)
                                         <div class="text-sm text-base-content/60 break-all">{{ $entry->email }}</div>
@@ -221,31 +222,28 @@
                                 @else
                                     <div class="flex items-center gap-1 text-base-content/60 shrink-0">
                                         <x-icon name="phosphor-clock" class="w-4 h-4" />
-                                        <span class="text-sm">Pending</span>
+                                        <span class="text-sm">Unverified</span>
                                     </div>
                                 @endif
                             </div>
 
-                            <div class="flex flex-wrap items-center gap-1.5 mt-2">
-                                @php
-                                    $isBonusCategory = in_array($entry->visitor_category, $bonusCategories, true);
-                                @endphp
-                                <x-badge
-                                    :value="$entry->visitor_category->label() . ($isBonusCategory && $entry->is_verified ? ' (bonus)' : '')"
-                                    :class="$isBonusCategory ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
-                                />
-                                @if($entry->presence_type === \App\Enums\PresenceType::InPerson)
-                                    <x-badge value="In Person" class="badge-info badge-sm" />
-                                @else
-                                    <x-badge value="Online" class="badge-ghost badge-sm" />
+                            @php
+                                $isBonusCategory = in_array($entry->visitor_category, $bonusCategories, true);
+                            @endphp
+                            <div class="mt-2 text-sm">
+                                {{ $entry->visitor_category->label() }}
+                                @if($isBonusCategory && $entry->is_verified)
+                                    <span class="text-base-content/60">· Bonus Eligible</span>
                                 @endif
-                                <span class="text-sm text-base-content/60 ml-auto">{{ $entry->created_at->format('M j, Y g:i A') }}</span>
+                            </div>
+                            <div class="text-sm text-base-content/60">
+                                {{ $entry->presence_type === \App\Enums\PresenceType::InPerson ? 'In Person' : 'Online' }} · {{ $entry->created_at->format('M j, Y g:i A') }}
                             </div>
 
                             @can('manage-guestbook')
                                 <div class="flex items-center gap-2 mt-3 pt-3 border-t border-base-200">
                                     <x-button
-                                        label="Edit"
+                                        label="Edit or Verify"
                                         icon="phosphor-pencil-simple"
                                         class="btn-ghost btn-sm min-h-11 flex-1"
                                         wire:click="openVerifyModal({{ $entry->id }})"
@@ -277,14 +275,14 @@
                             <div class="min-w-0">
                                 <div class="font-medium truncate">{{ $entry->first_name }} {{ $entry->last_name }}</div>
                                 @if($entry->email)
-                                    <div class="text-xs text-base-content/60 truncate">{{ $entry->email }}</div>
+                                    <div class="text-base-content/60 truncate">{{ $entry->email }}</div>
                                 @endif
                             </div>
                         @endscope
 
                         @scope('cell_callsign', $entry)
                             @if($entry->callsign)
-                                <code class="text-sm font-mono">{{ $entry->callsign }}</code>
+                                {{ $entry->callsign }}
                             @else
                                 <span class="text-base-content/40">-</span>
                             @endif
@@ -294,44 +292,33 @@
                             @php
                                 $isBonusCategory = in_array($entry->visitor_category, $bonusCategories, true);
                             @endphp
-                            <div class="flex items-center gap-1">
-                                <x-badge
-                                    :value="$entry->visitor_category->label()"
-                                    :class="$isBonusCategory ? 'badge-warning badge-sm whitespace-nowrap' : 'badge-neutral badge-sm whitespace-nowrap'"
-                                />
-                                @if($isBonusCategory && $entry->is_verified)
-                                    <span title="Bonus Eligible">+</span>
-                                @endif
-                            </div>
+                            <div>{{ $entry->visitor_category->label() }}</div>
+                            @if($isBonusCategory && $entry->is_verified)
+                                <div class="text-base-content/60">Bonus Eligible</div>
+                            @endif
                         @endscope
 
                         @scope('cell_presence_type', $entry)
-                            @if($entry->presence_type === \App\Enums\PresenceType::InPerson)
-                                <x-badge value="In Person" class="badge-info badge-sm" />
-                            @else
-                                <x-badge value="Online" class="badge-ghost badge-sm" />
-                            @endif
+                            <span class="whitespace-nowrap">{{ $entry->presence_type === \App\Enums\PresenceType::InPerson ? 'In Person' : 'Online' }}</span>
                         @endscope
 
                         @scope('cell_is_verified', $entry)
                             @if($entry->is_verified)
                                 <div class="flex items-center gap-1 text-success">
                                     <x-icon name="phosphor-check-circle" class="w-4 h-4" />
-                                    <span class="text-xs">Verified</span>
+                                    <span>Verified</span>
                                 </div>
                             @else
-                                <div class="flex items-center gap-1 text-base-content/50">
+                                <div class="flex items-center gap-1 text-base-content/60">
                                     <x-icon name="phosphor-clock" class="w-4 h-4" />
-                                    <span class="text-xs">Pending</span>
+                                    <span>Unverified</span>
                                 </div>
                             @endif
                         @endscope
 
                         @scope('cell_created_at', $entry)
-                            <div class="text-sm">
-                                <div>{{ $entry->created_at->format('M j, Y') }}</div>
-                                <div class="text-xs text-base-content/60">{{ $entry->created_at->format('g:i A') }}</div>
-                            </div>
+                            <div class="whitespace-nowrap">{{ $entry->created_at->format('M j, Y') }}</div>
+                            <div class="text-base-content/60">{{ $entry->created_at->format('g:i A') }}</div>
                         @endscope
 
                         @scope('actions', $entry)
@@ -342,7 +329,7 @@
                                         class="btn-ghost btn-sm"
                                         wire:click="openVerifyModal({{ $entry->id }})"
                                         spinner="openVerifyModal"
-                                        tooltip="Edit/Verify"
+                                        tooltip="Edit or Verify Entry"
                                     />
                                     <x-button
                                         icon="phosphor-trash"
@@ -364,7 +351,7 @@
                         <h3 class="text-lg font-semibold mb-2">No entries found</h3>
                         <p class="text-base-content/60">
                             @if($search || $filterPresence || $filterCategory || $filterVerified)
-                                Try adjusting your filters to see more results.
+                                Change your search or clear the filters to see more entries.
                             @else
                                 No one has signed the guestbook yet.
                             @endif
@@ -395,7 +382,7 @@
                         </div>
                         <div>
                             <div class="text-xs text-base-content/60">Callsign</div>
-                            <div class="font-mono">{{ $this->editingEntry->callsign ?: '-' }}</div>
+                            <div>{{ $this->editingEntry->callsign ?: '-' }}</div>
                         </div>
                         <div>
                             <div class="text-xs text-base-content/60">Email</div>
@@ -429,7 +416,7 @@
 
                 @if($this->isBonusCategory(\App\Enums\VisitorCategory::tryFrom((string) $editCategory)))
                     <x-alert icon="phosphor-star" class="alert-warning">
-                        This category is <strong>bonus eligible</strong>. Verified entries in this category contribute to Field Day bonus points.
+                        For this visitor bonus, confirm that the visitor came to the site at your group’s invitation. Then choose <strong>Mark as Verified</strong>.
                     </x-alert>
                 @endif
 
@@ -437,8 +424,11 @@
                 <x-toggle
                     label="Mark as Verified"
                     wire:model="editVerified"
-                    hint="Verified entries are confirmed by event staff"
+                    hint="Confirm the visitor’s category and visit details before verifying. Agency and elected official visits must be in person to count."
                 />
+                @error('editVerified')
+                    <div class="text-sm text-error" role="alert">{{ $message }}</div>
+                @enderror
 
                 @if($this->editingEntry->is_verified && $this->editingEntry->verifiedBy)
                     <div class="text-sm text-base-content/60">
@@ -464,7 +454,7 @@
     <x-modal wire:model="showDeleteModal" title="Delete Entry" class="backdrop-blur">
         <div class="space-y-4">
             <x-alert icon="phosphor-warning" class="alert-error">
-                Are you sure you want to delete this guestbook entry? This action cannot be undone.
+                This deletion cannot be undone.
             </x-alert>
 
             @if($deletingEntryId)
@@ -473,7 +463,7 @@
                 @endphp
                 @if($deletingEntry)
                     <div class="bg-base-200 p-4 rounded-lg">
-                        <div class="font-medium">{{ $deletingEntry->first_name }} {{ $deletingEntry->last_name }}</div>
+                        <div class="font-medium">Delete '{{ $deletingEntry->first_name }} {{ $deletingEntry->last_name }}'?</div>
                         @if($deletingEntry->callsign)
                             <div class="text-sm text-base-content/60">{{ $deletingEntry->callsign }}</div>
                         @endif
@@ -485,7 +475,7 @@
         <x-slot:actions>
             <x-button label="Cancel" @click="$wire.closeDeleteModal()" class="btn-ghost" />
             <x-button
-                label="Delete"
+                label="Delete Entry"
                 wire:click="deleteEntry"
                 class="btn-error"
                 spinner="deleteEntry"

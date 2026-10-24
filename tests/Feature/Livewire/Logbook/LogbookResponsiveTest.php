@@ -58,7 +58,7 @@ describe('responsive layout patterns', function () {
         // Verify stats grid follows pattern: grid-cols-2 md:grid-cols-3 lg:grid-cols-6
         Livewire::test(LogbookBrowser::class)
             ->assertSee('Total QSOs')
-            ->assertSee('Total Points');
+            ->assertSee('QSO Points');
     });
 
     test('results view exists and is rendered', function () {
@@ -101,8 +101,8 @@ describe('responsive layout patterns', function () {
         app(EventContextService::class)->clearCache();
 
         Livewire::test(LogbookBrowser::class)
-            ->assertSee('No Active Event')
-            ->assertSee('Please activate an event');
+            ->assertSee('No Logbook Available')
+            ->assertSee('Please configure an event');
     });
 });
 

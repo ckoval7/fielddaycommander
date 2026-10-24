@@ -88,6 +88,14 @@ class ShiftAssignment extends Model
     /**
      * Scope a query to only include checked-in assignments.
      */
+    /**
+     * Scope to assignments that take up a slot on the shift (everything except no-shows).
+     */
+    public function scopeCountingTowardCapacity(Builder $query): Builder
+    {
+        return $query->where('status', '!=', self::STATUS_NO_SHOW);
+    }
+
     public function scopeCheckedIn(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_CHECKED_IN);

@@ -264,14 +264,14 @@ test('add equipment for user button is visible to users with edit-any-equipment 
     $this->actingAs($manager);
 
     Livewire::test(AllEquipmentList::class)
-        ->assertSee('Add Equipment for User');
+        ->assertSee('Add Equipment for Owner');
 });
 
 test('add equipment for user button is hidden from users without edit-any-equipment permission', function () {
     $this->actingAs($this->user);
 
     Livewire::test(AllEquipmentList::class)
-        ->assertDontSee('Add Equipment for User');
+        ->assertDontSee('Add Equipment for Owner');
 });
 
 // --- Management actions ---

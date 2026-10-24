@@ -14,6 +14,9 @@ use App\Models\Organization;
 use App\Models\Section;
 use App\Models\Setting;
 use App\Scoring\Contracts\FieldDayRuleSet;
+use App\Scoring\Contracts\RuleSet;
+use App\Scoring\Dto\PowerContext;
+use App\Scoring\PowerMultiplierTiers;
 use App\Scoring\RuleSetFactory;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
@@ -474,6 +477,17 @@ class EventForm extends Component
     #[Computed]
     public function usesPowerMultiplier(): bool
     {
+        $rules = $this->selectedRuleSet();
+
+        return $rules === null || $rules instanceof FieldDayRuleSet;
+    }
+
+    /**
+     * The ruleset the event would be scored under with the form's current
+     * event type and rules version, or null when neither resolves one.
+     */
+    protected function selectedRuleSet(): ?RuleSet
+    {
         $code = $this->event_type_id
             ? EventType::query()->whereKey($this->event_type_id)->value('code')
             : null;
@@ -481,51 +495,92 @@ class EventForm extends Component
         $versions = $code ? app(RuleSetFactory::class)->versionsFor($code) : [];
 
         if ($code === null || $versions === []) {
-            return true;
+            return null;
         }
 
-        $rules = app(RuleSetFactory::class)->resolve($code, $this->rules_version ?? end($versions));
-
-        return $rules instanceof FieldDayRuleSet;
-    }
-
-    #[Computed]
-    public function powerMultiplier(): string
-    {
-        if ($this->max_power_watts > 100) {
-            return '1';
-        }
-
-        if ($this->max_power_watts <= 5 && $this->hasQrpNaturalPowerBonus()) {
-            return '5';
-        }
-
-        // 6-100W or QRP without natural power bonus gets 2x
-        return '2';
+        return app(RuleSetFactory::class)->resolve($code, $this->rules_version ?? end($versions));
     }
 
     /**
-     * Check if current power configuration qualifies for QRP natural power bonus (5x).
+     * Power multiplier preview, computed by the selected rules version.
+     *
+     * Uses the same effective power and natural-power checks as scoring. When
+     * editing a saved event, its stations count too. A new or cloned event has
+     * no stations yet, so the preview reflects the event-level settings only.
      */
-    protected function hasQrpNaturalPowerBonus(): bool
+    #[Computed]
+    public function powerMultiplier(): string
     {
-        $hasNaturalPower = $this->uses_battery
-            || $this->uses_solar
-            || $this->uses_wind
-            || $this->uses_water;
+        $rules = $this->previewFieldDayRules();
 
-        $hasDisqualifyingPower = $this->uses_commercial_power || $this->uses_generator;
+        if ($rules === null) {
+            return '1';
+        }
 
-        return $hasNaturalPower && ! $hasDisqualifyingPower;
+        $config = $this->previewConfiguration();
+
+        return $rules->powerMultiplier(new PowerContext(
+            effectivePowerWatts: $config->effectiveMaxPowerWatts(),
+            qualifiesForQrpNaturalBonus: $config->hasQrpNaturalPowerBonus(),
+        ));
+    }
+
+    /**
+     * The selected rules version's power multiplier tiers, for the rules box.
+     *
+     * @return list<array{multiplier: string, minWatts: int, maxWatts: ?int, naturalPowerOnly: bool}>
+     */
+    #[Computed]
+    public function powerMultiplierTiers(): array
+    {
+        $rules = $this->previewFieldDayRules();
+
+        return $rules === null ? [] : PowerMultiplierTiers::for($rules);
+    }
+
+    /**
+     * The Field Day rules the power preview uses, or null when the selected
+     * rulebook has no power multiplier (Winter Field Day).
+     */
+    protected function previewFieldDayRules(): ?FieldDayRuleSet
+    {
+        // Before an event type is picked, preview with the newest Field Day rules.
+        $rules = $this->selectedRuleSet() ?? app(RuleSetFactory::class)->resolve('FD', (string) $this->year);
+
+        return $rules instanceof FieldDayRuleSet ? $rules : null;
+    }
+
+    /**
+     * An unsaved configuration carrying the form's power settings.
+     *
+     * When editing, it is the saved configuration with the form's values laid
+     * over it in memory, so its existing stations are included in the checks.
+     */
+    protected function previewConfiguration(): EventConfiguration
+    {
+        $config = $this->mode === 'edit' && $this->eventId
+            ? EventConfiguration::query()->where('event_id', $this->eventId)->first()
+            : null;
+
+        return ($config ?? new EventConfiguration)->fill([
+            'max_power_watts' => (int) $this->max_power_watts,
+            'uses_commercial_power' => $this->uses_commercial_power,
+            'uses_generator' => $this->uses_generator,
+            'uses_battery' => $this->uses_battery,
+            'uses_solar' => $this->uses_solar,
+            'uses_wind' => $this->uses_wind,
+            'uses_water' => $this->uses_water,
+            'uses_methane' => $this->uses_methane,
+        ]);
     }
 
     #[Computed]
     public function powerMultiplierColor(): string
     {
         return match ($this->powerMultiplier) {
-            5 => 'success',
-            2 => 'warning',
-            1 => 'error',
+            '5' => 'success',
+            '2' => 'warning',
+            '1' => 'error',
             default => 'neutral',
         };
     }
@@ -610,7 +665,7 @@ class EventForm extends Component
     {
         // Prevent updates to locked fields BEFORE the value changes
         if ($this->isLocked && array_key_exists($property, self::LOCKED_FIELDS)) {
-            $this->dispatch('notify', title: 'Field Locked', description: 'This field cannot be modified because the event has contacts.');
+            $this->dispatch('notify', title: 'Field Locked', description: 'This field is locked because the event has contacts or has started.');
 
             // Cancel the update by not allowing it to proceed
             $this->skipRender();
@@ -709,7 +764,7 @@ class EventForm extends Component
             return;
         }
 
-        session()->flash('toast', ['title' => 'Success', 'description' => 'Event saved successfully.', 'type' => 'success']);
+        session()->flash('toast', ['title' => 'Success', 'description' => 'Event saved.', 'type' => 'success']);
         $this->redirect(route('events.index'), navigate: true);
     }
 
@@ -1006,7 +1061,7 @@ class EventForm extends Component
                 'boolean',
                 function ($attribute, $value, $fail) {
                     if ($this->isScoredType && ! $this->hasAnyPowerSourceSelected()) {
-                        $fail('At least one power source must be selected.');
+                        $fail('Select at least one power source.');
                     }
                 },
             ],
@@ -1157,17 +1212,17 @@ class EventForm extends Component
     protected function messages(): array
     {
         return [
-            'name.required' => 'Please provide an event name.',
+            'name.required' => 'Please enter an event name.',
             'event_type_id.required' => 'Please select an event type.',
-            'start_time.required' => 'Please provide a start time.',
-            'end_time.required' => 'Please provide an end time.',
+            'start_time.required' => 'Please enter a start time.',
+            'end_time.required' => 'Please enter an end time.',
             'end_time.after' => 'The end time must be after the start time.',
-            'callsign.required' => 'Please provide a callsign.',
+            'callsign.required' => 'Please enter a callsign.',
             'callsign.regex' => 'The callsign format is invalid. Use only letters, numbers, and forward slashes.',
             'section_id.required' => 'Please select an ARRL/RAC section.',
             'operating_class_id.required' => 'Please select an operating class.',
-            'transmitter_count.required' => 'Please specify the number of transmitters.',
-            'max_power_watts.required' => 'Please specify the maximum power.',
+            'transmitter_count.required' => 'Please enter the number of transmitters.',
+            'max_power_watts.required' => 'Please enter the maximum power.',
             'gota_callsign.regex' => 'The GOTA callsign format is invalid. Use only letters, numbers, and forward slashes.',
             'gridSquare.regex' => 'Grid square must be a valid Maidenhead locator (e.g. DM79 or DM79ab).',
             'latitude.min' => 'Latitude must be between -90 and 90 degrees.',

@@ -32,7 +32,7 @@ it('shows enable 2fa form when 2fa is not enabled', function () {
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
         ->assertSee('Two-factor authentication is not enabled')
-        ->assertSee('Enable 2FA');
+        ->assertSee('Set Up 2FA');
 });
 
 it('requires password to enable 2fa', function () {
@@ -59,7 +59,7 @@ it('shows qr code after enabling 2fa', function () {
         ->set('enableTwoFactorPassword', 'password123')
         ->call('enableTwoFactor')
         ->assertSet('showingQrCode', true)
-        ->assertSeeHtml('Scan the QR code');
+        ->assertSeeHtml('Scan this QR code');
 });
 
 it('cancelling 2fa setup cleans up the unconfirmed secret', function () {
@@ -93,6 +93,17 @@ it('can confirm two factor with valid code', function () {
         ->assertSet('showingQrCode', false)
         ->assertSet('showingRecoveryCodes', true)
         ->assertHasNoErrors();
+});
+
+it('shows an error under the code field for a wrong two factor code', function () {
+    app(EnableTwoFactorAuthentication::class)($this->user);
+
+    Livewire::actingAs($this->user)
+        ->test(UserProfile::class)
+        ->set('twoFactorCode', '000000')
+        ->call('confirmTwoFactor')
+        ->assertHasErrors(['twoFactorCode'])
+        ->assertSet('showingRecoveryCodes', false);
 });
 
 it('can disable two factor authentication', function () {
@@ -239,7 +250,7 @@ it('shows 2fa required banner when mode is required and 2fa not set up', functio
     Livewire::actingAs($this->user)
         ->test(UserProfile::class)
         ->set('activeTab', 'security')
-        ->assertSee('Two-factor authentication is required');
+        ->assertSee('Set up two-factor authentication to continue');
 });
 
 it('hides disable button when mode is required and 2fa is enabled', function () {

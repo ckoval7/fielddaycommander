@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\Setting;
 use App\Support\VolunteerHours;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -37,6 +38,15 @@ class SystemPreferences extends Component
     public ?string $organization_email = null;
 
     public ?string $organization_phone = null;
+
+    /**
+     * Runs on every request, so actions stay gated even though the settings
+     * page also opens for users who can only manage roles.
+     */
+    public function boot(): void
+    {
+        Gate::authorize('manage-settings');
+    }
 
     public function mount(): void
     {
@@ -86,7 +96,7 @@ class SystemPreferences extends Component
             'volunteer_hours_mode' => ['required', Rule::in([VolunteerHours::MODE_SUM, VolunteerHours::MODE_WALL_CLOCK])],
         ], [
             'organization_name.required' => 'An organization name is required.',
-            'organization_callsign.regex' => 'The callsign must be 3-10 uppercase letters and numbers.',
+            'organization_callsign.regex' => 'Enter a callsign with 3–10 uppercase letters and numbers.',
         ]);
 
         $oldValues = [
@@ -102,13 +112,8 @@ class SystemPreferences extends Component
         Setting::set('time_format', $this->time_format);
         Setting::set('datetime_format', $this->date_format.' '.$this->time_format);
 
-        if ($this->contact_email) {
-            Setting::set('contact_email', $this->contact_email);
-        }
-
-        if ($this->api_key) {
-            Setting::set('callsign_api_key', $this->api_key);
-        }
+        Setting::set('contact_email', $this->contact_email ?: null);
+        Setting::set('callsign_api_key', $this->api_key ?: null);
 
         Setting::set('post_event_grace_period_days', $this->post_event_grace_period_days);
         Setting::set('enable_ics213', $this->enable_ics213 ? '1' : '0');
@@ -124,7 +129,7 @@ class SystemPreferences extends Component
             'volunteer_hours_mode' => $this->volunteer_hours_mode,
         ]);
 
-        $this->dispatch('notify', title: 'Success', description: 'System preferences saved successfully.');
+        $this->dispatch('notify', title: 'Success', description: 'System preferences saved.');
     }
 
     protected function saveOrganization(): void

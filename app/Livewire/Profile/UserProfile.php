@@ -249,7 +249,7 @@ class UserProfile extends Component
         $this->savedEmail = $user->fresh()->email;
         $this->email = $this->savedEmail;
 
-        $this->success('Profile updated successfully.');
+        $this->success('Profile updated.');
     }
 
     /**
@@ -356,13 +356,13 @@ class UserProfile extends Component
         $current = auth()->user()->getShiftReminderMinutes();
 
         if (count($current) >= 5) {
-            $this->addError('shiftReminderMinute', 'Maximum of 5 reminders allowed.');
+            $this->addError('shiftReminderMinute', 'Remove a reminder before adding another. You can set up to 5.');
 
             return;
         }
 
         if (in_array((int) $this->shiftReminderMinute, $current, true)) {
-            $this->addError('shiftReminderMinute', 'This reminder time already exists.');
+            $this->addError('shiftReminderMinute', 'Choose a different time. This reminder is already set.');
 
             return;
         }
@@ -397,13 +397,13 @@ class UserProfile extends Component
         $current = auth()->user()->getBulletinReminderMinutes();
 
         if (count($current) >= 5) {
-            $this->addError('bulletinReminderMinute', 'Maximum of 5 reminders allowed.');
+            $this->addError('bulletinReminderMinute', 'Remove a reminder before adding another. You can set up to 5.');
 
             return;
         }
 
         if (in_array((int) $this->bulletinReminderMinute, $current, true)) {
-            $this->addError('bulletinReminderMinute', 'This reminder time already exists.');
+            $this->addError('bulletinReminderMinute', 'Choose a different time. This reminder is already set.');
 
             return;
         }
@@ -446,10 +446,13 @@ class UserProfile extends Component
             $this->password = '';
             $this->password_confirmation = '';
 
-            $this->success('Password changed successfully.');
+            $this->success('Password changed.');
         } catch (ValidationException $e) {
-            $this->addError('current_password', 'The current password is incorrect.');
-            $this->error('Password change failed.', 'The current password is incorrect.');
+            foreach ($e->errors() as $field => $messages) {
+                $this->addError($field, $messages[0]);
+            }
+
+            $this->error('Password change failed.', 'Check the password fields and try again.');
         }
     }
 
@@ -468,7 +471,7 @@ class UserProfile extends Component
 
         $this->current_password = '';
 
-        $this->success('Logged out of all other devices.');
+        $this->success('Other sessions signed out.');
     }
 
     /**
@@ -486,7 +489,7 @@ class UserProfile extends Component
             ->where('user_id', auth()->id())
             ->delete();
 
-        $this->success('Session revoked.');
+        $this->success('Session signed out.');
     }
 
     public function enableTwoFactor(): void
@@ -544,7 +547,13 @@ class UserProfile extends Component
             'twoFactorCode' => ['required', 'string'],
         ]);
 
-        app(ConfirmTwoFactorAuthentication::class)(auth()->user(), $this->twoFactorCode);
+        try {
+            app(ConfirmTwoFactorAuthentication::class)(auth()->user(), $this->twoFactorCode);
+        } catch (ValidationException $e) {
+            $this->addError('twoFactorCode', $e->errors()['code'][0] ?? 'That code is not valid. Try the current code from your app.');
+
+            return;
+        }
 
         auth()->user()->refresh();
 

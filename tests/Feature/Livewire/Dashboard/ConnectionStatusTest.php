@@ -30,13 +30,13 @@ test('component displays connection status badge by default', function () {
 
 test('component shows offline banner elements', function () {
     Livewire::test(ConnectionStatus::class)
-        ->assertSee('Connection Lost')
-        ->assertSee('Real-time updates are unavailable');
+        ->assertSee('Live Updates Paused')
+        ->assertSee('Live connection lost. Updates may be delayed.');
 });
 
 test('component has dismissible banner', function () {
     Livewire::test(ConnectionStatus::class)
-        ->assertSee('Dismiss banner'); // Aria label for dismiss button
+        ->assertSee('Dismiss connection status'); // Aria label for dismiss button
 });
 
 test('TV mode uses larger badge styling', function () {
@@ -55,13 +55,13 @@ test('normal mode uses standard badge styling', function () {
 
 test('component includes warning banner text', function () {
     Livewire::test(ConnectionStatus::class)
-        ->assertSee('Connection Lost')
-        ->assertSee('Attempting to reconnect');
+        ->assertSee('Live Updates Paused')
+        ->assertSee('Live connection lost. Updates may be delayed.');
 });
 
 test('component includes dismiss button', function () {
     Livewire::test(ConnectionStatus::class)
-        ->assertSee('Dismiss banner');
+        ->assertSee('Dismiss connection status');
 });
 
 test('component renders banner and badge elements', function () {
@@ -89,5 +89,5 @@ test('component supports different connection states', function () {
     Livewire::test(ConnectionStatus::class)
         ->assertSee('Connected')
         ->assertSee('Connecting')
-        ->assertSee('Offline');
+        ->assertSee('Disconnected');
 });

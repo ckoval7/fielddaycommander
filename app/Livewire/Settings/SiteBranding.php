@@ -7,7 +7,7 @@ namespace App\Livewire\Settings;
 
 use App\Models\AuditLog;
 use App\Models\Setting;
-use enshrined\svgSanitize\Sanitizer;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -28,6 +28,15 @@ class SiteBranding extends Component
 
     public ?string $welcome_message = null;
 
+    /**
+     * Runs on every request, so actions stay gated even though the settings
+     * page also opens for users who can only manage roles.
+     */
+    public function boot(): void
+    {
+        Gate::authorize('manage-settings');
+    }
+
     public function mount(): void
     {
         $this->site_name = Setting::get('site_name', 'Field Day Commander');
@@ -40,7 +49,7 @@ class SiteBranding extends Component
     public function updatedNewLogo(): void
     {
         $this->validate([
-            'new_logo' => ['image', 'max:2048', 'mimes:png,jpg,jpeg,svg'],
+            'new_logo' => ['image', 'max:2048', 'mimes:png,jpg,jpeg'],
         ]);
     }
 
@@ -57,7 +66,7 @@ class SiteBranding extends Component
             ]);
 
             $this->logo_path = null;
-            $this->dispatch('notify', title: 'Success', description: 'Logo removed successfully.');
+            $this->dispatch('notify', title: 'Success', description: 'Logo removed.');
         }
     }
 
@@ -66,7 +75,7 @@ class SiteBranding extends Component
         $this->validate([
             'site_name' => ['required', 'string', 'max:100'],
             'site_tagline' => ['nullable', 'string', 'max:200'],
-            'new_logo' => ['nullable', 'image:allow_svg', 'max:2048', 'mimes:png,jpg,jpeg,svg'],
+            'new_logo' => ['nullable', 'image', 'max:2048', 'mimes:png,jpg,jpeg'],
             'footer_text' => ['nullable', 'string', 'max:500'],
             'welcome_message' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -81,25 +90,8 @@ class SiteBranding extends Component
                 Storage::disk('public')->delete($this->logo_path);
             }
 
-            // Save new logo (sanitize SVGs to prevent XSS)
             $extension = $this->new_logo->guessExtension() ?: 'png';
-            $filename = 'logo-'.time().'.'.$extension;
-
-            if ($extension === 'svg') {
-                $sanitizer = new Sanitizer;
-                $cleanSvg = $sanitizer->sanitize(file_get_contents($this->new_logo->getRealPath()));
-
-                if (! $cleanSvg) {
-                    $this->addError('new_logo', 'The SVG file could not be sanitized and was rejected.');
-
-                    return;
-                }
-
-                $path = 'branding/'.$filename;
-                Storage::disk('public')->put($path, $cleanSvg);
-            } else {
-                $path = $this->new_logo->storeAs('branding', $filename, 'public');
-            }
+            $path = $this->new_logo->storeAs('branding', 'logo-'.time().'.'.$extension, 'public');
 
             Setting::set('site_logo_path', $path);
             $this->logo_path = $path;
@@ -117,7 +109,7 @@ class SiteBranding extends Component
             'has_logo' => ! empty($this->logo_path),
         ]);
 
-        $this->dispatch('notify', title: 'Success', description: 'Branding settings saved successfully.');
+        $this->dispatch('notify', title: 'Success', description: 'Site branding saved.');
     }
 
     public function render()

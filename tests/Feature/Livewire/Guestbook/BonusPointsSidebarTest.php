@@ -67,7 +67,7 @@ test('media representatives are listed as tracked but not bonus-eligible in this
 
     $component = Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id])
         ->assertSee('Media Representatives')
-        ->assertSee('Claim Media Publicity bonus on the event dashboard');
+        ->assertSee('A media visit alone does not earn points. Claim qualifying media coverage on the event dashboard.');
 
     expect($component->get('totalBonusPoints'))->toBe(0);
 });
@@ -81,13 +81,13 @@ test('arrl officials show tracked but not bonus-eligible text when present', fun
 
     Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id])
         ->assertSee('ARRL Officials')
-        ->assertSee('Tracked but not bonus-eligible per rules');
+        ->assertSee('ARRL official visits do not earn a guestbook bonus.');
 });
 
 test('arrl officials section is hidden when none exist', function () {
     Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id])
         ->assertDontSee('ARRL Officials')
-        ->assertDontSee('Tracked but not bonus-eligible per rules');
+        ->assertDontSee('ARRL official visits do not earn a guestbook bonus.');
 });
 
 test('total bonus points equals 100 per earned bonus type with max of 200', function () {
@@ -170,4 +170,16 @@ test('only counts entries for specific event configuration', function () {
     $component = Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id]);
 
     expect($component->get('totalBonusPoints'))->toBe(100);
+});
+
+test('does not count verified online entries in visit categories', function () {
+    GuestbookEntry::factory()->online()->verified()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'visitor_category' => VisitorCategory::Agency,
+    ]);
+
+    $component = Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id]);
+
+    expect($component->get('agencyCount'))->toBe(0);
+    expect($component->get('totalBonusPoints'))->toBe(0);
 });

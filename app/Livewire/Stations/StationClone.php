@@ -58,7 +58,7 @@ class StationClone extends Component
         // Default target to context event
         $contextEvent = app(EventContextService::class)->getContextEvent();
         if ($contextEvent) {
-            $this->targetEventId = $contextEvent->id;
+            $this->targetEventId = $contextEvent->eventConfiguration?->id;
         }
     }
 
@@ -264,7 +264,7 @@ class StationClone extends Component
             );
 
             $this->dispatch('toast', [
-                'title' => 'Successfully Cloned Stations',
+                'title' => 'Stations Cloned',
                 'description' => $description,
                 'icon' => 'phosphor-check-circle',
                 'css' => 'alert-success',
@@ -302,7 +302,7 @@ class StationClone extends Component
         }
 
         if (! $result['success']) {
-            $this->addError('general', 'Unable to clone stations. Please check the errors above.');
+            $this->addError('general', 'Unable to clone stations. Please review the errors and try again.');
         }
     }
 
@@ -363,7 +363,7 @@ class StationClone extends Component
         // Reset to context event (session-overridden or active event)
         $activeEvent = app(EventContextService::class)->getContextEvent();
         if ($activeEvent) {
-            $this->targetEventId = $activeEvent->id;
+            $this->targetEventId = $activeEvent->eventConfiguration?->id;
         }
     }
 

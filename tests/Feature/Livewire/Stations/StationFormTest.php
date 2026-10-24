@@ -685,3 +685,11 @@ test('an unscored event gets a plain position with no station types or power bon
 
     expect(Station::where('name', 'Aid Station 3')->first()->is_vhf_only)->toBeFalse();
 });
+
+test('choosing Other power explains that a methane generator is a Generator', function () {
+    Livewire::test(StationForm::class)
+        ->set('power_source', 'other')
+        ->assertSee('Use Other for wind, water, or another source without an engine.')
+        ->set('power_source', 'solar')
+        ->assertDontSee('Use Other for wind, water');
+});

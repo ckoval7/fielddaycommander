@@ -33,7 +33,7 @@ class FortifyServiceProvider extends ServiceProvider
     /**
      * Shown only after a correct password, to registrations still awaiting administrator approval.
      */
-    public const PENDING_APPROVAL_MESSAGE = 'Your account has been created and is pending administrator approval. You will be able to log in once an administrator has activated it.';
+    public const PENDING_APPROVAL_MESSAGE = 'Your account is awaiting administrator approval. You can sign in once an administrator approves it.';
 
     /** @var list<string> */
     private const VALID_REGISTRATION_MODES = ['open', 'approval_required', 'email_verification_required', 'disabled'];

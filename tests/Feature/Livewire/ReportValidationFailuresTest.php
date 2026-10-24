@@ -83,5 +83,5 @@ test('the floating summary panel renders as a dismissable top-layer popover', fu
     $this->blade('<x-form-error-summary />')
         ->assertSee('x-data="formErrorSummaryPanel"', false)
         ->assertSee('popover="manual"', false)
-        ->assertSee('aria-label="Dismiss errors"', false);
+        ->assertSee('aria-label="Hide error summary"', false);
 });

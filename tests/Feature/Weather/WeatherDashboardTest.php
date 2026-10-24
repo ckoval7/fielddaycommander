@@ -373,3 +373,39 @@ test('dashboard header uses NWS location even with no event configuration', func
         ->assertSet('locationLabel', 'Madison, CT')
         ->assertSee('Weather for Madison, CT');
 });
+
+test('dashboard shows active alerts even when there is no forecast', function () {
+    Setting::set('weather.alerts', [[
+        'event' => 'Local Alert',
+        'headline' => 'Lightning within 10 miles',
+        'description' => 'Lightning within 10 miles',
+        'severity' => 'Severe',
+        'expires' => null,
+    ]]);
+
+    Livewire::actingAs(User::factory()->create())
+        ->test(WeatherDashboard::class)
+        ->assertSet('hasData', false)
+        ->assertSee('Active Alerts')
+        ->assertSee('Lightning within 10 miles');
+});
+
+test('gust highlight threshold follows the wind unit', function (string $units, float $gust, bool $highlighted) {
+    Setting::set('weather.units', $units);
+    Setting::set('weather.forecast', [
+        'current' => ['temperature_2m' => 20.0, 'wind_speed_10m' => 10.0, 'wind_gusts_10m' => $gust, 'precipitation' => 0.0, 'weather_code' => 0],
+        'hourly' => ['time' => [], 'temperature_2m' => [], 'precipitation_probability' => [], 'wind_speed_10m' => [], 'weather_code' => [], 'cape' => []],
+        'daily' => ['time' => [], 'temperature_2m_max' => [], 'temperature_2m_min' => [], 'precipitation_probability_max' => [], 'wind_speed_10m_max' => [], 'wind_gusts_10m_max' => [], 'weather_code' => []],
+    ]);
+
+    $test = Livewire::actingAs(User::factory()->create())->test(WeatherDashboard::class);
+
+    $highlighted
+        ? $test->assertSeeHtml('text-warning font-medium">gusts')
+        : $test->assertDontSeeHtml('text-warning font-medium">gusts');
+})->with([
+    'metric 25 km/h is not highlighted' => ['metric', 25.0, false],
+    'metric 40 km/h is highlighted' => ['metric', 40.0, true],
+    'imperial 25 mph is highlighted' => ['imperial', 25.0, true],
+    'imperial 24 mph is not highlighted' => ['imperial', 24.0, false],
+]);

@@ -32,7 +32,7 @@
             @else
                 this address.
             @endif
-            Ask your administrator to add it to <code>TRUSTED_HOSTS</code> in the server's settings.
+            Ask your administrator to add it to <code>TRUSTED_HOSTS</code> in the server configuration.
         </p>
         @if ($appUrl !== '')
             <p>Until then, you can open Field Day Commander at <a href="{{ $appUrl }}">{{ $appUrl }}</a>.</p>

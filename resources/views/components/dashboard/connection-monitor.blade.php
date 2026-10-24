@@ -188,13 +188,13 @@ Props:
                 <x-icon name="phosphor-warning" class="w-5 h-5 flex-shrink-0" />
                 <div class="flex-1">
                     <span class="font-semibold">Real-time updates paused</span>
-                    <span class="hidden sm:inline"> - Reconnecting...</span>
+                    <span class="hidden sm:inline">. Waiting for connection.</span>
                 </div>
             </div>
             <button
                 @click="dismissBanner()"
                 class="btn btn-sm btn-ghost"
-                aria-label="Dismiss"
+                aria-label="Dismiss connection status"
             >
                 <x-icon name="phosphor-x" class="w-4 h-4" />
             </button>

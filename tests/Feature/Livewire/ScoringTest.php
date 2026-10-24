@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use App\Enums\PowerSource;
 use App\Livewire\Scoring;
 use App\Models\Band;
 use App\Models\BonusType;
@@ -14,6 +15,7 @@ use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
+use App\Models\Station;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -692,7 +694,7 @@ it('generates a warning when duplicate rate exceeds 5%', function () {
     $component = Livewire::test(Scoring::class);
 
     $notice = collect($component->notices)
-        ->first(fn ($n) => str_contains($n['message'], 'duplicate rate'));
+        ->first(fn ($n) => str_contains($n['message'], 'dupe rate'));
 
     expect($notice)->not->toBeNull();
     expect($notice['severity'])->toBe('warning');
@@ -795,6 +797,53 @@ it('shows 5x multiplier in power column for QRP with natural power', function ()
 
     Livewire::test(Scoring::class)
         ->assertSeeText('5×');
+});
+
+it('highlights the multiplier row for a station running more power than the event setting', function () {
+    $config = makeActiveEvent([
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_generator' => false,
+        'uses_commercial_power' => false,
+    ]);
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 100,
+        'power_source' => PowerSource::Battery,
+    ]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $active = collect($component->powerMultiplierRules)->where('active', true)->values();
+
+    expect($component->powerMultiplier)->toBe(2)
+        ->and($active)->toHaveCount(1)
+        ->and($active[0]['condition'])->toBe('Over 5W, up to 100W (any power source)')
+        ->and($component->powerMultiplierReason)->toContain('100W');
+});
+
+it('explains a 2x QRP multiplier when a station uses generator power', function () {
+    $config = makeActiveEvent([
+        'max_power_watts' => 5,
+        'uses_battery' => true,
+        'uses_generator' => false,
+        'uses_commercial_power' => false,
+    ]);
+    Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'max_power_watts' => 5,
+        'power_source' => PowerSource::Generator,
+    ]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $active = collect($component->powerMultiplierRules)->where('active', true)->values();
+
+    expect($component->powerMultiplier)->toBe(2)
+        ->and($active)->toHaveCount(1)
+        ->and($active[0]['condition'])->toBe('≤ 5W, other power settings')
+        ->and($component->powerMultiplierReason)->not->toContain('qualifies for a 5')
+        ->and($component->powerMultiplierReason)->toContain('A station is set to commercial or generator power');
 });
 
 // ============================================================================

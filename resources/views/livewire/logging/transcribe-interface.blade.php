@@ -8,8 +8,8 @@
         <div class="max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
             <div class="text-6xl">📋</div>
             <div>
-                <h2 class="text-2xl font-bold mb-2">This event is archived</h2>
-                <p class="text-base-content/60">Transcription is only available for active or grace-period events.</p>
+                <h2 class="text-2xl font-bold mb-2">Transcription unavailable</h2>
+                <p class="text-base-content/60">Enter paper logs during the event or its grace period.</p>
             </div>
             <a href="{{ route('logging.transcribe.select') }}" class="btn btn-primary" wire:navigate>
                 &larr; Back to Station Select
@@ -75,7 +75,7 @@
                     @endif
                 </div>
                 <div class="flex-shrink-0">
-                    <a href="{{ route('logging.transcribe.select') }}" class="btn btn-ghost btn-sm" wire:navigate>
+                    <a href="{{ route('logging.transcribe.select') }}" class="btn btn-ghost btn-sm" aria-label="Change Station" wire:navigate>
                         <x-icon name="phosphor-arrow-left" class="w-4 h-4" />
                         <span class="hidden sm:inline">Change Station</span>
                     </a>
@@ -90,7 +90,7 @@
                 <div>
                     <label for="transcribe-band" class="block py-1 text-xs font-semibold uppercase tracking-wider mb-1">Band <span class="text-error">*</span></label>
                     <select id="transcribe-band" wire:model.live="selectedBandId" class="select select-sm w-full">
-                        <option value="">— Band —</option>
+                        <option value="">Select a band</option>
                         @foreach($this->bands as $band)
                             <option value="{{ $band->id }}">{{ $band->name }}</option>
                         @endforeach
@@ -104,7 +104,7 @@
                 <div>
                     <label for="transcribe-mode" class="block py-1 text-xs font-semibold uppercase tracking-wider mb-1">Mode <span class="text-error">*</span></label>
                     <select id="transcribe-mode" wire:model.live="selectedModeId" class="select select-sm w-full">
-                        <option value="">— Mode —</option>
+                        <option value="">Select a mode</option>
                         @foreach($this->modes as $mode)
                             <option value="{{ $mode->id }}">{{ $mode->name }}</option>
                         @endforeach
@@ -239,7 +239,7 @@
             <x-logging.qso-log
                 title="Recently Transcribed"
                 subtitle="This station only"
-                example="1423 W1AW 3A CT"
+                :example="$this->exchangeExample"
                 :time-heading="'Time ('.$timeLabel.')'"
             >
                 <x-slot:cards>
@@ -286,7 +286,7 @@
                 </x-slot:rows>
 
                 <x-logging.exchange-composer
-                    placeholder="1423 W1AW 3A CT"
+                    :placeholder="'1423 '.$this->exchangeExample"
                     :suggestions="$suggestions"
                     :duplicate-warning="$isDuplicate ? $dupeWarning : null"
                 :participant-warning="$participantWarning ?: null"
@@ -299,7 +299,7 @@
 
                     <div class="flex flex-wrap items-center gap-x-2 text-xs text-base-content/50">
                         <span>Time: <span class="font-mono font-semibold text-base-content/70">{{ $contactTime }}</span> {{ $timeLabel }}</span>
-                        <span class="text-base-content/30">&mdash; prepend time to set, e.g. 1423 W1AW 3A CT</span>
+                        <span class="text-base-content/30">Start with the QSO time, e.g. 1423 {{ $this->exchangeExample }}. Time stays set for the next entry.</span>
                     </div>
                 </x-logging.exchange-composer>
             </x-logging.qso-log>

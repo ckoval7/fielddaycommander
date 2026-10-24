@@ -62,7 +62,7 @@
                     type="button"
                     class="btn btn-outline btn-error"
                     wire:click="delete"
-                    wire:confirm="Are you sure you want to delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived (soft deleted).' : 'This event will be permanently deleted.' }}"
+                    wire:confirm="Delete '{{ $event->name }}'? {{ $event->eventConfiguration?->hasContacts() ? 'This event has contacts and will be archived.' : 'This event will be permanently deleted.' }}"
                 >
                     <x-icon name="phosphor-trash" class="w-5 h-5" />
                     Delete
@@ -75,21 +75,21 @@
         <x-modal wire:model="showRescoreModal" title="Change Rules Version & Rescore">
             <div class="space-y-4">
                 <p class="text-sm">
-                    This will change the pinned rules version on this event and recompute <span class="font-semibold">every contact's point value</span> using the selected ruleset. Use this when an event was scored with an outdated ruleset and needs to be recalculated.
+                    This changes the rules version for this event and recalculates <span class="font-semibold">every contact's point value</span> using the selected rules.
                 </p>
 
                 <div class="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
                     <div class="font-semibold text-warning flex items-center gap-1">
                         <x-icon name="phosphor-warning" class="w-4 h-4" />
-                        Bonuses are not recalculated automatically
+                        Bonuses are recalculated too
                     </div>
                     <p class="mt-1 text-base-content/80">
-                        After rescoring, review the bonus checklist for any changes. Rule updates can alter bonus amounts, thresholds, or which bonuses apply — you may need to re-verify, adjust, or claim bonuses that changed between rule versions.
+                        Existing claims are updated to the selected rules, and automatic awards are recalculated. Claims with no match in the selected version are unverified and worth zero points. Review your claims after rescoring.
                     </p>
                 </div>
 
                 <div>
-                    <div class="text-xs text-base-content/60 mb-1">Current resolved version</div>
+                    <div class="text-xs text-base-content/60 mb-1">Current scoring version</div>
                     <div class="font-mono text-sm">{{ $event->resolved_rules_version }}</div>
                 </div>
 
@@ -100,7 +100,7 @@
                     option-label="name"
                     option-value="id"
                     icon="phosphor-scales"
-                    hint="Only shipped rulesets are listed."
+                    hint="Available versions for this event type."
                 />
             </div>
 
@@ -163,20 +163,22 @@
                                 <div class="font-semibold">{{ $event->eventConfiguration->max_power_watts }}W</div>
                             </div>
 
-                            <!-- Power Multiplier -->
-                            <div>
-                                <div class="text-sm text-base-content/60">Power Multiplier</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->calculatePowerMultiplier() }}x</div>
-                            </div>
+                            {{-- Power multiplier: Field Day rulebooks only --}}
+                            @if($event->eventConfiguration->usesPowerMultiplier())
+                                <div>
+                                    <div class="text-sm text-base-content/60">Power Multiplier</div>
+                                    <div class="font-semibold">{{ $event->eventConfiguration->calculatePowerMultiplier() }}x</div>
+                                </div>
+                            @endif
 
                             <!-- Scoring Rules -->
                             <div>
                                 <div class="text-sm text-base-content/60">Scoring Rules</div>
                                 <div class="font-semibold">
-                                    ARRL {{ $event->eventType->name ?? 'Field Day' }}
+                                    {{ $event->eventType->name ?? 'Field Day' }}
                                     <span class="font-mono">{{ $event->resolved_rules_version }}</span>
                                     @if ($event->effective_rules_version !== $event->resolved_rules_version)
-                                        <span class="text-xs text-warning" title="Pinned to {{ $event->effective_rules_version }} — that ruleset is not yet shipped, so scoring falls back to {{ $event->resolved_rules_version }}.">
+                                        <span class="text-xs text-warning" title="Rules version {{ $event->effective_rules_version }} is unavailable. Scoring uses {{ $event->resolved_rules_version }}.">
                                             (pinned {{ $event->effective_rules_version }})
                                         </span>
                                     @endif
@@ -245,22 +247,22 @@
                             <div class="text-sm text-base-content/60">Contacts</div>
                             <div class="text-2xl font-bold">{{ number_format($this->qsoBreakdown['total_contacts']) }}</div>
                         </div>
-                        <div>
-                            <div class="text-sm text-base-content/60">QSO Points</div>
-                            <div class="text-2xl font-bold">{{ number_format($event->eventConfiguration?->calculateQsoScore() ?? 0) }}</div>
-                        </div>
-                        <div>
-                            <div class="text-sm text-base-content/60">Bonus Points</div>
-                            <div class="text-2xl font-bold">{{ number_format($event->eventConfiguration?->calculateBonusScore() ?? 0) }}</div>
-                        </div>
+                        @foreach($this->scoringHeadline as $term)
+                            @if($term instanceof \App\Scoring\Dto\ScoreTerm)
+                                <div>
+                                    <div class="text-sm text-base-content/60">{{ $term->label }}</div>
+                                    <div class="text-2xl font-bold">{{ $term->value }}</div>
+                                </div>
+                            @endif
+                        @endforeach
                         <div>
                             <div class="text-sm text-base-content/60">Final Score</div>
-                            <div class="text-2xl font-bold text-primary">{{ number_format($event->final_score) }}</div>
+                            <div class="text-2xl font-bold text-primary">{{ number_format($this->scoreBreakdown?->total ?? $event->final_score) }}</div>
                         </div>
                     </div>
                     <div class="mt-4 text-xs text-base-content/60">
                         {{-- Placeholder note: Will be populated when contacts are logged --}}
-                        Note: Scoring will update in real-time as contacts are logged.
+                        Scores are calculated from logged contacts and claimed awards.
                     </div>
                 </x-card>
 
@@ -276,7 +278,7 @@
                                 <div class="flex items-center gap-2">
                                     <x-icon name="phosphor-user" class="w-4 h-4" />
                                     <span>{{ $participant['name'] }}</span>
-                                    <span class="text-xs text-base-content/60">({{ $participant['contact_count'] }} contacts)</span>
+                                    <span class="text-xs text-base-content/60">({{ $participant['contact_count'] }} {{ str('contact')->plural($participant['contact_count']) }})</span>
                                 </div>
                             @endforeach
                         </div>
@@ -389,7 +391,7 @@
                             </table>
                         </div>
                         <div class="text-xs text-base-content/40 mt-3">
-                            Showing last {{ $this->recentContacts->count() }} contacts
+                            Showing the latest {{ $this->recentContacts->count() }} {{ str('contact')->plural($this->recentContacts->count()) }}
                         </div>
                     @endif
                 </x-card>
@@ -404,27 +406,18 @@
                 {{-- Score Headline --}}
                 <x-card shadow>
                     <div class="flex flex-wrap items-center justify-center gap-4 md:gap-8 py-4">
-                        <div class="text-center">
-                            <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['qso_base_points']) }}</div>
-                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">QSO Base Pts</div>
-                        </div>
-                        <span class="text-2xl font-light text-base-content/30">&times;</span>
-                        <div class="text-center">
-                            <div class="text-3xl font-black tabular-nums">{{ $this->scoringTotals['power_multiplier'] }}&times;</div>
-                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">Power Multi.</div>
-                        </div>
-                        <span class="text-2xl font-light text-base-content/30">+</span>
-                        <div class="text-center">
-                            <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['bonus_score']) }}</div>
-                            <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">Bonus Pts</div>
-                        </div>
-                        @if($this->scoringTotals['has_gota'])
-                            <span class="text-2xl font-light text-base-content/30">+</span>
-                            <div class="text-center">
-                                <div class="text-3xl font-black tabular-nums">{{ number_format($this->scoringTotals['gota_bonus']) }}</div>
-                                <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">GOTA Bonus</div>
-                            </div>
-                        @endif
+                        {{-- Equation shape comes from the event's ruleset, so Field Day renders
+                             (QSO x Power) + Bonus while Winter Field Day renders QSO x (OM + 1). --}}
+                        @foreach($this->scoringHeadline as $part)
+                            @if(is_string($part))
+                                <span class="text-2xl font-light text-base-content/30">{{ $part }}</span>
+                            @else
+                                <div class="text-center">
+                                    <div class="text-3xl font-black tabular-nums">{{ $part->value }}</div>
+                                    <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">{{ $part->label }}</div>
+                                </div>
+                            @endif
+                        @endforeach
                         <span class="text-2xl font-light text-base-content/30">=</span>
                         <div class="text-center">
                             <div class="text-4xl font-black tabular-nums text-primary">{{ number_format($this->scoringTotals['final_score']) }}</div>
@@ -440,8 +433,9 @@
                         {{-- Mode scoring key --}}
                         <div class="flex flex-wrap gap-2 mb-4">
                             @foreach($this->modes as $mode)
+                                @php $modePoints = $this->pointsForMode($mode); @endphp
                                 <span class="badge badge-outline badge-sm">
-                                    {{ $mode->name }} = {{ $mode->points_fd }} {{ $mode->points_fd === 1 ? 'pt' : 'pts' }}
+                                    {{ $mode->name }} = {{ $modePoints }} {{ $modePoints === 1 ? 'pt' : 'pts' }}
                                 </span>
                             @endforeach
                         </div>
@@ -496,17 +490,30 @@
                         @endif
                     </x-card>
 
-                    {{-- Column 2: Bonus Points --}}
-                    <x-card title="Bonus Points" shadow>
+                    {{-- Column 2: the rulebook's awards, "Bonus Points" for Field Day and
+                         "Objectives" for Winter Field Day --}}
+                    <x-card :title="$this->terms->awardSectionTitle" shadow>
                         {{-- Summary row --}}
                         <div class="grid grid-cols-3 gap-2 mb-4 text-center">
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Verified</div>
-                                <div class="text-lg font-bold tabular-nums text-success">{{ number_format($this->bonusSummary['verified_pts']) }}</div>
+                                <div class="text-lg font-bold tabular-nums text-success">
+                                    @if($this->terms->awardsAreMultipliers)
+                                        {{ $this->bonusSummary['verified_multiplier'] }}×
+                                    @else
+                                        {{ number_format($this->bonusSummary['verified_pts']) }}
+                                    @endif
+                                </div>
                             </div>
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Claimed</div>
-                                <div class="text-lg font-bold tabular-nums text-warning">{{ number_format($this->bonusSummary['claimed_pts']) }}</div>
+                                <div class="text-lg font-bold tabular-nums text-warning">
+                                    @if($this->terms->awardsAreMultipliers)
+                                        {{ $this->bonusSummary['claimed_multiplier'] }}×
+                                    @else
+                                        {{ number_format($this->bonusSummary['claimed_pts']) }}
+                                    @endif
+                                </div>
                             </div>
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Unclaimed</div>
@@ -528,7 +535,7 @@
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <span class="text-xs tabular-nums font-semibold {{ $item['status'] !== 'unclaimed' ? 'text-base-content' : 'text-base-content/40' }}">
-                                            @if($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
+                                            @if($item['type']->objective_multiplier !== null) OM ×{{ $item['type']->objective_multiplier }} @elseif($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
                                         </span>
                                         @if($item['status'] === 'verified')
                                             <x-badge value="Verified" class="badge-success badge-xs" />

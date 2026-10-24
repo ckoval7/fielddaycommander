@@ -487,3 +487,21 @@ test('checkForConflicts dispatches no conflicts and proceeds with clone when no 
         ->assertSet('showConflicts', false)
         ->assertDispatched('stations-cloned');
 });
+
+test('target defaults to the context event configuration id, not the event id', function () {
+    // Offset the event ids so they differ from the config ids. Creating
+    // configs would not work: each config factory also creates an event.
+    Event::factory()->count(3)->create();
+
+    $event = Event::factory()->create([
+        'start_time' => appNow()->subHour(),
+        'end_time' => appNow()->addDay(),
+        'is_active' => true,
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    expect($config->id)->not->toBe($event->id);
+
+    Livewire::test(StationClone::class)
+        ->assertSet('targetEventId', $config->id);
+});

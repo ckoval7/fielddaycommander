@@ -478,7 +478,7 @@ test('band warning shows info when station has no radio assigned', function () {
     $warning = $component->get('bandWarning');
     expect($warning)->not->toBeNull()
         ->and($warning['type'])->toBe('info')
-        ->and($warning['message'])->toContain('no radio assigned');
+        ->and($warning['message'])->toContain('No radio assigned');
 });
 
 test('band warning shows info when station radio has no bands configured', function () {
@@ -505,7 +505,7 @@ test('band warning shows info when station radio has no bands configured', funct
     $warning = $component->get('bandWarning');
     expect($warning)->not->toBeNull()
         ->and($warning['type'])->toBe('info')
-        ->and($warning['message'])->toContain('no band information configured');
+        ->and($warning['message'])->toContain('No bands are configured');
 });
 
 test('cancel setup resets supervised session toggle', function () {

@@ -99,6 +99,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureStationMode();
 
+        // The settings page hosts system settings and the role manager, so
+        // either permission opens it. Each tab checks its own permission.
+        Gate::define('access-settings', fn (User $user): bool => $user->can('manage-settings') || $user->can('manage-roles'));
+
         // Register policies
         Gate::policy(Image::class, ImagePolicy::class);
         Gate::policy(GuestbookEntry::class, GuestbookEntryPolicy::class);

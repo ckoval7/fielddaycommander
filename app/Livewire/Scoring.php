@@ -511,21 +511,27 @@ class Scoring extends Component
             ? " A station is configured at {$effectiveWatts}W, which overrides the event setting of {$configWatts}W."
             : '';
 
-        if ($effectiveWatts > 100) {
+        $multiplier = $this->powerMultiplier;
+
+        if ($multiplier === 1) {
             return "Operating at {$effectiveWatts}W (over 100W) gives a 1\u{00d7} multiplier.{$stationNote}";
         }
 
-        if ($effectiveWatts > 5) {
-            return "Operating at {$effectiveWatts}W (6\u{2013}100W) gives a 2\u{00d7} multiplier.{$stationNote}";
+        if ($multiplier === 5) {
+            return "At {$effectiveWatts}W on natural power only, the event qualifies for a 5\u{00d7} multiplier.";
         }
 
-        // QRP (5W or less) - determine reason based on power sources
+        if ($effectiveWatts > 5) {
+            return "Operating at {$effectiveWatts}W (over 5W, up to 100W) gives a 2\u{00d7} multiplier.{$stationNote}";
+        }
+
+        // QRP (5W or less) but not 5x: explain which power setting rules it out.
         $hasNaturalPower = $config->uses_battery || $config->uses_solar || $config->uses_wind || $config->uses_water;
         $hasDisqualifyingPower = $config->uses_commercial_power || $config->uses_generator;
 
         return match (true) {
-            $hasNaturalPower && ! $hasDisqualifyingPower => "Operating at {$effectiveWatts}W with natural power and no commercial/generator power qualifies for the 5\u{00d7} QRP natural power bonus.",
             $hasDisqualifyingPower => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier. Switch to natural power only to qualify for 5\u{00d7}.",
+            $hasNaturalPower => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier. A station is set to commercial or generator power, so the event doesn't qualify for 5\u{00d7}.",
             default => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier.",
         };
     }
@@ -536,7 +542,8 @@ class Scoring extends Component
 
     /**
      * Rules table for the power multiplier, with the active row flagged.
-     * Depends on the powerMultiplier computed property.
+     * Depends on the powerMultiplier computed property, and uses the same
+     * effective power (highest of the event and its stations) that drives it.
      *
      * @return array<int, array{condition: string, multiplier: string, active: bool}>
      */
@@ -544,22 +551,22 @@ class Scoring extends Component
     public function powerMultiplierRules(): array
     {
         $config = $this->config();
-        $watts = $config?->max_power_watts ?? 0;
+        $watts = $config?->effectiveMaxPowerWatts() ?? 0;
         $multi = $this->powerMultiplier;
 
         return [
             [
-                'condition' => '≤ 5W + natural power, no commercial/generator',
+                'condition' => '≤ 5W, natural power at event and stations only',
                 'multiplier' => '5×',
                 'active' => $multi === 5,
             ],
             [
-                'condition' => '≤ 5W + commercial or generator power',
+                'condition' => '≤ 5W, other power settings',
                 'multiplier' => '2×',
                 'active' => $multi === 2 && $watts <= 5,
             ],
             [
-                'condition' => '6 – 100W (any power source)',
+                'condition' => 'Over 5W, up to 100W (any power source)',
                 'multiplier' => '2×',
                 'active' => $multi === 2 && $watts > 5 && $watts <= 100,
             ],
@@ -593,7 +600,7 @@ class Scoring extends Component
             $notices[] = [
                 'severity' => 'warning',
                 'section' => 'qso',
-                'message' => "High duplicate rate ({$rate}%) \u{2014} review log for callsign entry errors.",
+                'message' => "High dupe rate ({$rate}%). Review the log for callsign entry errors.",
             ];
         }
 
@@ -603,7 +610,7 @@ class Scoring extends Component
             $notices[] = [
                 'severity' => 'error',
                 'section' => 'qso',
-                'message' => "{$zeroCount} contact(s) logged with 0 points \u{2014} check band/mode assignment.",
+                'message' => "{$zeroCount} ".str('contact')->plural($zeroCount).' logged with 0 points. Check their band and mode.',
             ];
         }
 
@@ -613,7 +620,7 @@ class Scoring extends Component
             $notices[] = [
                 'severity' => 'error',
                 'section' => 'qso',
-                'message' => "{$gotaCount} GOTA contact(s) logged but no GOTA station is configured.",
+                'message' => "{$gotaCount} GOTA ".str('contact')->plural($gotaCount).' logged, but no GOTA station is configured.',
             ];
         }
 
@@ -625,12 +632,12 @@ class Scoring extends Component
             $notices[] = [
                 'severity' => 'warning',
                 'section' => 'bonus',
-                'message' => "{$unverifiedCount} bonus(es) claimed but not yet verified.",
+                'message' => "{$unverifiedCount} bonus ".str('claim')->plural($unverifiedCount).' not yet verified.',
             ];
         }
 
         // QRP power opportunity: <=5W but only 2x because no natural power
-        $watts = $this->config()->max_power_watts;
+        $watts = $this->config()->effectiveMaxPowerWatts();
         $multiplier = $this->powerMultiplier;
         if ($watts <= 5 && $multiplier === 2) {
             $hasAnyNaturalPower = $this->config()->uses_battery
@@ -641,7 +648,7 @@ class Scoring extends Component
                 $notices[] = [
                     'severity' => 'opportunity',
                     'section' => 'power',
-                    'message' => "Running {$watts}W QRP \u{2014} add a natural power source (battery, solar, wind, water) to qualify for the 5\u{00d7} multiplier.",
+                    'message' => "For the 5\u{00d7} multiplier, all stations must use 5W or less and natural power only (battery, solar, wind, or water). Commercial and generator power disqualify the event.",
                 ];
             }
         }

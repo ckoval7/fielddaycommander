@@ -17,6 +17,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         isOnline: navigator.onLine,
         syncIntervalId: null,
         storageKey: `fd-commander-queue-${sessionId}`,
+        // True while the last attempt to save the queue to localStorage failed.
+        storageFailing: false,
         recallIndex: -1,
         recalledContactId: null,
         recalledUuid: null,
@@ -112,6 +114,15 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             }, this.pendingIndicatorDelayMs);
         },
 
+        /**
+         * Warn while the queue can't be saved on this device and contacts are
+         * still waiting, so a reload or closed tab would lose them.
+         */
+        get storageWarningVisible() {
+            return this.storageFailing
+                && this.queue.some(c => c.status !== 'synced');
+        },
+
         get failedCount() {
             return this.failedContacts.length;
         },
@@ -192,7 +203,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         logContact(inputEl) {
             const rawInput = (inputEl?.value || '').trim();
             if (!rawInput) {
-                this.parseError = 'Exchange is empty';
+                this.parseError = 'Enter callsign, class, and section';
                 return;
             }
 
@@ -255,11 +266,11 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             const tokens = input.toUpperCase().trim().split(/\s+/);
 
             if (tokens.length < 3) {
-                this.parseError = 'Exchange must contain callsign, class, and section (e.g. W1AW 3A CT)';
+                this.parseError = 'Enter callsign, class, and section (e.g. W1AW 3A CT)';
                 return null;
             }
             if (tokens.length > 3) {
-                this.parseError = 'Too many parts in exchange';
+                this.parseError = 'Use only callsign, class, and section';
                 return null;
             }
 
@@ -272,7 +283,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             }
 
             if (!/^\d{1,2}[A-FHIMO]$/i.test(tokens[1])) {
-                this.parseError = `Invalid class: ${tokens[1]} (expected format like 3A, 1D, 2M)`;
+                this.parseError = `Invalid class: ${tokens[1]} (use a number and class letter, e.g. 3A or 2M)`;
                 return null;
             }
 
@@ -430,14 +441,14 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     candidate.status = 'failed';
                     candidate.attempts++;
                     candidate.lastAttemptTime = Date.now();
-                    candidate.last_error = errorData.message || 'Validation failed';
+                    candidate.last_error = errorData.message || 'Contact could not be synced. Check its details.';
                     candidate.last_error_code = errorData.code ?? null;
                     this.saveQueue();
                 } else if (response.status === 401 || response.status === 419) {
                     // Session or CSRF expired - stop retrying, user must refresh
                     candidate.status = 'failed';
                     candidate.attempts = 999;
-                    candidate.last_error = 'Session expired - please refresh the page';
+                    candidate.last_error = 'Session expired. Please refresh the page, then retry.';
                     this.saveQueue();
                 } else {
                     // Transient server error - retry
@@ -750,8 +761,11 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         saveQueue() {
             try {
                 localStorage.setItem(this.storageKey, JSON.stringify(this.queue));
+                this.storageFailing = false;
             } catch (e) {
-                // localStorage full or unavailable - queue lives in memory only for this session
+                // localStorage full or unavailable - queue lives in memory only for this session;
+                // storageWarningVisible tells the operator while contacts are waiting.
+                this.storageFailing = true;
                 console.warn('Failed to persist contact queue to localStorage:', e);
             }
         },

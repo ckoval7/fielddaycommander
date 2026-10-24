@@ -19,7 +19,7 @@ test('banner is visible when logged in as SYSTEM account', function () {
 
     Livewire::test(SystemAccountBanner::class)
         ->assertSee('SYSTEM account')
-        ->assertSee('configuration only')
+        ->assertSee('initial setup')
         ->assertSeeHtml('href');
 });
 

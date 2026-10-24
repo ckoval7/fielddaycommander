@@ -11,6 +11,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+use Laravel\Fortify\Contracts\UpdatesUserPasswords;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -203,6 +205,24 @@ test('password change validates current password', function () {
 
     $this->user->refresh();
     expect(Hash::check('password123', $this->user->password))->toBeTrue();
+});
+
+test('password change maps action errors onto the matching fields', function () {
+    app()->bind(UpdatesUserPasswords::class, fn () => new class implements UpdatesUserPasswords
+    {
+        public function update($user, array $input): void
+        {
+            throw ValidationException::withMessages(['password' => 'The password is too weak.']);
+        }
+    });
+
+    Livewire::test(UserProfile::class)
+        ->set('current_password', 'password123')
+        ->set('password', 'newpassword456')
+        ->set('password_confirmation', 'newpassword456')
+        ->call('changePassword')
+        ->assertHasErrors(['password'])
+        ->assertHasNoErrors(['current_password']);
 });
 
 test('password change validates password confirmation', function () {
@@ -457,7 +477,7 @@ test('activity log returns real audit entries for user', function () {
 
     expect($activityLog)->toHaveCount(1)
         ->and($activityLog->first()->action)->toBe('user.login.success')
-        ->and($activityLog->first()->action_label)->toBe('Logged in');
+        ->and($activityLog->first()->action_label)->toBe('Signed in');
 });
 
 test('activity log excludes other users', function () {
@@ -512,7 +532,7 @@ test('load more button hidden when all entries are shown', function () {
 
     Livewire::test(UserProfile::class)
         ->set('activeTab', 'activity')
-        ->assertDontSee('Load More');
+        ->assertDontSee('Load More Activity');
 });
 
 test('load more button shown when more entries may exist', function () {
@@ -527,7 +547,7 @@ test('load more button shown when more entries may exist', function () {
 
     Livewire::test(UserProfile::class)
         ->set('activeTab', 'activity')
-        ->assertSee('Load More');
+        ->assertSee('Load More Activity');
 });
 
 // =============================================================================

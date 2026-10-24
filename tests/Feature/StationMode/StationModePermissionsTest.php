@@ -120,7 +120,7 @@ test('station-mode header offers the theme switcher next to end session', functi
         ->get(route('logbook.index'))
         ->assertOk()
         ->assertSee('data-station-mode-controls', false)
-        ->assertSee('End Session')
+        ->assertSee('Sign Out')
         ->assertSee('Switch to dark mode', false);
 });
 

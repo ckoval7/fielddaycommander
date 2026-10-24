@@ -12,7 +12,7 @@
     >
         <x-slot:actions>
             <x-button
-                label="New Message"
+                label="Log Message"
                 icon="phosphor-plus"
                 class="btn-primary"
                 link="{{ route('events.messages.create', $event) }}"
@@ -26,7 +26,7 @@
                     link="{{ route('events.messages.create', ['event' => $event, 'template' => 'sm']) }}"
                 />
                 <x-button
-                    label="Print All"
+                    label="Print All Messages"
                     icon="phosphor-printer"
                     class="btn-ghost btn-sm"
                     link="{{ route('events.messages.print-all', $event) }}"
@@ -59,7 +59,7 @@
             <div class="flex items-center gap-2 lg:gap-3">
                 <x-icon name="phosphor-envelope" class="w-6 h-6 lg:w-8 lg:h-8 text-info shrink-0" />
                 <div class="min-w-0">
-                    <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">Messages</div>
+                    <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">Message Handling</div>
                     <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['traffic_count'] }}/10</div>
                     <div class="text-xs text-base-content/60">{{ $this->bonusSummary['traffic_points'] }} pts</div>
                 </div>
@@ -95,7 +95,7 @@
     @elseif($event->isScored())
     {{-- Unscored events score nothing, so there's nothing to explain --}}
     <x-alert icon="phosphor-info" class="alert-info">
-        This event's rulebook awards no points for message traffic. Messages are tracked here for record-keeping only.
+        This event does not award message traffic points. You can still log messages here.
     </x-alert>
     @endif
 
@@ -131,12 +131,12 @@
                     <x-icon name="phosphor-envelope" class="w-12 h-12 opacity-30" />
                     <p class="font-medium">No messages found</p>
                     @if($roleFilter)
-                        <p class="text-sm">Try removing the role filter or log a new message.</p>
+                        <p class="text-sm">Select All to see every message, or log a new message.</p>
                     @else
                         <p class="text-sm">Log your first message to get started.</p>
                     @endif
                     <x-button
-                        label="Log First Message"
+                        label="Log Message"
                         icon="phosphor-plus"
                         class="btn-primary btn-sm mt-2"
                         link="{{ route('events.messages.create', $event) }}"
@@ -156,8 +156,8 @@
                             <th>Role</th>
                             <th>Station of Origin</th>
                             <th>Addressee</th>
-                            <th>Date</th>
-                            <th>Freq</th>
+                            <th>Date Filed</th>
+                            <th>Frequency</th>
                             <th>Mode</th>
                             <th>Sent / Delivered</th>
                             <th class="text-right">Actions</th>
@@ -169,7 +169,7 @@
                                 $roleLabel = match($message->role->value) {
                                     'originated' => 'Originated',
                                     'relayed' => 'Relayed',
-                                    'received_delivered' => 'Rcvd & Delivered',
+                                    'received_delivered' => 'Received & Delivered',
                                     default => $message->role->value,
                                 };
                                 $roleBadge = match($message->role->value) {
@@ -183,7 +183,7 @@
                                 <td>
                                     <span class="font-mono font-semibold">{{ $message->message_number }}</span>
                                     @if($message->is_sm_message)
-                                        <x-badge value="SM" class="badge-warning badge-sm ml-1" />
+                                        <x-badge value="SM/SEC" class="badge-warning badge-sm ml-1" />
                                     @endif
                                 </td>
                                 @if($ics213Enabled)
@@ -235,7 +235,7 @@
                                         </div>
                                     @else
                                         <div class="flex items-center gap-1">
-                                            <x-badge value="Draft" class="badge-warning badge-outline badge-sm" />
+                                            <x-badge value="{{ $message->role->value === 'received_delivered' ? 'Not delivered' : 'Not sent' }}" class="badge-warning badge-outline badge-sm" />
                                             <x-button
                                                 label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
                                                 icon="phosphor-paper-plane-tilt"
@@ -277,7 +277,7 @@
                                                 class="btn-ghost btn-xs text-error"
                                                 tooltip="Delete"
                                                 wire:click="deleteMessage({{ $message->id }})"
-                                                wire:confirm="Are you sure you want to delete message #{{ $message->message_number }}?"
+                                                wire:confirm="Delete message #{{ $message->message_number }}?"
                                             />
                                         @endcan
                                     </div>
@@ -295,7 +295,7 @@
                         $roleLabel = match($message->role->value) {
                             'originated' => 'Originated',
                             'relayed' => 'Relayed',
-                            'received_delivered' => 'Rcvd & Delivered',
+                            'received_delivered' => 'Received & Delivered',
                             default => $message->role->value,
                         };
                         $roleBadge = match($message->role->value) {
@@ -312,7 +312,7 @@
                                 <div class="flex items-center gap-2 min-w-0">
                                     <span class="font-mono font-bold text-lg">{{ $message->message_number }}</span>
                                     @if($message->is_sm_message)
-                                        <x-badge value="SM" class="badge-warning badge-sm" />
+                                        <x-badge value="SM/SEC" class="badge-warning badge-sm" />
                                     @endif
                                     @if($ics213Enabled)
                                         <span class="text-xs text-base-content/60">{{ $message->format->value === 'radiogram' ? 'Radiogram' : 'ICS-213' }}</span>
@@ -368,7 +368,7 @@
                                         </div>
                                     @else
                                         <div class="flex items-center gap-1">
-                                            <x-badge value="Draft" class="badge-warning badge-outline badge-sm" />
+                                            <x-badge value="{{ $message->role->value === 'received_delivered' ? 'Not delivered' : 'Not sent' }}" class="badge-warning badge-outline badge-sm" />
                                             <x-button
                                                 label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
                                                 icon="phosphor-paper-plane-tilt"
@@ -413,7 +413,7 @@
                                             icon="phosphor-trash"
                                             class="btn-ghost btn-xs text-error"
                                             wire:click="deleteMessage({{ $message->id }})"
-                                            wire:confirm="Are you sure you want to delete message #{{ $message->message_number }}?"
+                                            wire:confirm="Delete message #{{ $message->message_number }}?"
                                         />
                                     @endcan
                                 </div>
@@ -472,7 +472,7 @@
                 wire:click="$set('showSentByModal', false)"
             />
             <x-button
-                label="Save"
+                label="Save Status"
                 class="btn-primary"
                 wire:click="saveSentBy"
             />

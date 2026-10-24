@@ -19,7 +19,7 @@
                 <x-icon name="phosphor-file-text" class="w-14 h-14 mx-auto text-base-content/25" />
                 <h3 class="mt-5 text-xl font-semibold">No event available for transcription</h3>
                 <p class="mt-2 text-base-content/60 max-w-md mx-auto">
-                    Transcription is only available during an active event or within the grace period following an event.
+                    Enter paper logs during the event or its grace period.
                 </p>
                 <div class="mt-6">
                     <x-button label="Return Home" link="{{ route('dashboard') }}" icon="phosphor-house" class="btn-ghost" />
@@ -36,7 +36,7 @@
                 <div>
                     <h1 class="text-2xl font-bold">Transcribe Paper Log</h1>
                     <p class="mt-1 text-base-content/65">
-                        Select the station you operated during the event to begin entering contacts from your paper log.
+                        Select the station for your paper log.
                     </p>
                 </div>
             </div>
@@ -104,7 +104,7 @@
                             <x-icon name="phosphor-hard-drives" class="w-12 h-12 mx-auto text-base-content/25" />
                             <h3 class="mt-4 text-lg font-semibold">No Stations Configured</h3>
                             <p class="mt-2 text-base-content/60">
-                                No stations have been set up for this event yet. Contact your event administrator.
+                                No stations are set up for this event. Contact your event administrator.
                             </p>
                         </div>
                     </x-card>

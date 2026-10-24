@@ -20,7 +20,7 @@ return [
         'stat_card' => [
             'component' => 'dashboard.widgets.stat-card',
             'name' => 'Stat Card',
-            'description' => 'Display a single metric as a large number with optional trend indicator',
+            'description' => 'Show a metric with an optional trend indicator.',
             'icon' => 'phosphor-chart-bar',
             'config_schema' => [
                 'metric' => [
@@ -28,12 +28,12 @@ return [
                     'label' => 'Metric',
                     'options' => [
                         'total_score' => 'Total Score',
-                        'qso_count' => 'QSO Count',
+                        'qso_count' => 'QSOs',
                         'sections_worked' => 'Sections Worked',
-                        'operators_count' => 'Active Operators',
+                        'operators_count' => 'Operators with Logged Contacts',
                         'stations_count' => 'Active Stations',
-                        'points_per_hour' => 'Points Per Hour',
-                        'qso_per_hour' => 'QSOs Per Hour',
+                        'points_per_hour' => 'Points per Hour',
+                        'qso_per_hour' => 'QSOs per Hour',
                         'avg_qso_rate_4h' => 'Avg QSO Rate (4h)',
                         'contacts_last_hour' => 'Contacts Last Hour',
                         'hours_remaining' => 'Hours Remaining',
@@ -68,7 +68,7 @@ return [
         'chart' => [
             'component' => 'dashboard.widgets.chart',
             'name' => 'Chart',
-            'description' => 'Visualize data with interactive graphs powered by Chart.js',
+            'description' => 'Chart contacts by hour, band, or mode.',
             'icon' => 'phosphor-chart-pie',
             'config_schema' => [
                 'chart_type' => [
@@ -111,16 +111,16 @@ return [
         'progress_bar' => [
             'component' => 'dashboard.widgets.progress-bar',
             'name' => 'Progress Bar',
-            'description' => 'Track progress toward goals and milestones',
+            'description' => 'Track progress toward goals and milestones.',
             'icon' => 'phosphor-trend-up',
             'config_schema' => [
                 'metric' => [
                     'type' => 'select',
                     'label' => 'Progress Metric',
                     'options' => [
-                        'next_milestone' => 'Next Milestone (50 QSO increments)',
-                        'event_goal' => 'Event Score Goal',
-                        'class_target' => 'Operating Class QSO Target',
+                        'next_milestone' => 'Next Milestone (every 50 QSOs)',
+                        'event_goal' => 'Score Goal (5,000 points)',
+                        'class_target' => 'QSO Target (200 per transmitter)',
                         'bonus_progress' => 'Bonus Point Progress',
                     ],
                     'default' => 'next_milestone',
@@ -137,7 +137,7 @@ return [
         'list_widget' => [
             'component' => 'dashboard.widgets.list-widget',
             'name' => 'List',
-            'description' => 'Display scrollable lists of data',
+            'description' => 'Show recent contacts, active stations, or equipment status.',
             'icon' => 'phosphor-list-bullets',
             'config_schema' => [
                 'list_type' => [
@@ -170,7 +170,7 @@ return [
         'timer' => [
             'component' => 'dashboard.widgets.timer',
             'name' => 'Timer',
-            'description' => 'Countdown to event start or end, with a setup-window heads-up',
+            'description' => 'Count down to the event start during setup, or to the event end.',
             'icon' => 'phosphor-clock',
             'config_schema' => [],
         ],
@@ -178,7 +178,7 @@ return [
         'info_card' => [
             'component' => 'dashboard.widgets.info-card',
             'name' => 'Info Card',
-            'description' => 'Display static or semi-static event information',
+            'description' => 'Show event details, location, operating class, and power sources.',
             'icon' => 'phosphor-info',
             'config_schema' => [
                 'info_type' => [
@@ -198,7 +198,7 @@ return [
         'feed' => [
             'component' => 'dashboard.widgets.feed',
             'name' => 'Activity Feed',
-            'description' => 'Live stream of your notifications: QSO milestones, new sections and equipment events',
+            'description' => 'Show your notifications for QSO milestones, new sections, and equipment events.',
             'icon' => 'phosphor-bell',
             'config_schema' => [
                 'feed_type' => [
@@ -219,7 +219,7 @@ return [
         'sections_worked' => [
             'component' => 'dashboard.widgets.sections-worked',
             'name' => 'Sections Worked',
-            'description' => 'All ARRL sections grouped by call area, showing worked vs not worked',
+            'description' => 'Show worked and unworked sections by call area.',
             'icon' => 'phosphor-map-trifold',
             'config_schema' => [],
         ],

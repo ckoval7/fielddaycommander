@@ -4,14 +4,14 @@
 --}}
 @php $terms = $this->activeEvent?->nomenclature() ?? new \App\Scoring\Dto\Nomenclature; @endphp
 <div>
-    <x-header title="{{ $terms->stationSingular }} Select" subtitle="Choose a {{ strtolower($terms->stationSingular) }} to begin logging" separator />
+    <x-header title="Select {{ $terms->stationSingular }}" subtitle="Choose a {{ strtolower($terms->stationSingular) }} to begin logging" separator />
 
     @if(! $this->activeEvent)
         <x-card>
             <div class="text-center py-8">
                 <x-icon name="phosphor-cell-signal-slash" class="w-12 h-12 mx-auto text-base-content/30" />
                 <h3 class="mt-4 text-lg font-semibold">No Active Event</h3>
-                <p class="mt-2 text-base-content/70">There is no event currently in progress. Logging is only available during an active event.</p>
+                <p class="mt-2 text-base-content/70">No event is running. Station setup opens 15 minutes before the next event starts.</p>
             </div>
         </x-card>
     @else
@@ -119,7 +119,7 @@
                         <div class="text-center py-8">
                             <x-icon name="phosphor-hard-drives" class="w-12 h-12 mx-auto text-base-content/30" />
                             <h3 class="mt-4 text-lg font-semibold">No Stations Configured</h3>
-                            <p class="mt-2 text-base-content/70">No stations have been set up for this event yet.</p>
+                            <p class="mt-2 text-base-content/70">No stations are set up for this event. Contact your event administrator.</p>
                         </div>
                     </x-card>
                 </div>
@@ -139,11 +139,11 @@
                 @php $stationForBands = $this->stations?->firstWhere('id', $selectedStationId); @endphp
                 @if($stationForBands && ! $stationForBands->primaryRadio)
                     <x-alert icon="phosphor-info" class="alert-info text-sm">
-                        No radio assigned — band compatibility unknown.
+                        No radio assigned. Band compatibility is unknown.
                     </x-alert>
                 @elseif($stationForBands)
                     <x-alert icon="phosphor-info" class="alert-info text-sm">
-                        No antennas assigned — band compatibility unknown.
+                        No antennas assigned. Band compatibility is unknown.
                     </x-alert>
                 @endif
             @elseif($supportedBands->isEmpty())
@@ -165,7 +165,7 @@
                 :options="$this->bands->map(fn($b) => ['value' => $b->id, 'label' => $b->name])"
                 option-value="value"
                 option-label="label"
-                placeholder="Select a band..."
+                placeholder="Select a band"
             />
 
             @if($this->bandWarning)
@@ -186,7 +186,7 @@
                 :options="$this->modes->map(fn($m) => ['value' => $m->id, 'label' => $m->name])"
                 option-value="value"
                 option-label="label"
-                placeholder="Select a mode..."
+                placeholder="Select a mode"
             />
 
             @if($this->bandModeConflictWarning)
@@ -211,7 +211,7 @@
                     <input type="checkbox" wire:model="isSupervisedSession" class="toggle toggle-sm toggle-primary" />
                     <div>
                         <span class="text-sm font-medium">Supervised Session (GOTA Coach present)</span>
-                        <span class="block text-xs text-base-content/60">Earn 100-point coach bonus if 10+ contacts are supervised</span>
+                        <span class="block text-xs text-base-content/60">A designated GOTA coach must supervise at least 10 contacts for the 100-point bonus.</span>
                     </div>
                 </label>
             @endif

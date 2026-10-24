@@ -164,7 +164,7 @@
             <div class="flex-1">
                 <x-input
                     wire:model.live.debounce.300ms="searchQuery"
-                    placeholder="Search equipment, make, model, owner..."
+                    placeholder="Search make, model, or owner..."
                     icon="phosphor-magnifying-glass"
                     clearable
                 />
@@ -194,9 +194,9 @@
                     option-label="name"
                     class="w-40"
                 />
-                @if($searchQuery || $typeFilter || $statusFilter || $stationFilter)
+                @if($searchQuery || $typeFilter || $statusFilter || $stationFilter !== null)
                     <x-button
-                        label="Clear"
+                        label="Clear Filters"
                         icon="phosphor-x"
                         class="btn-ghost btn-sm"
                         wire:click="clearFilters"
@@ -237,7 +237,7 @@
                                                     @if($commitment->equipment->photo_path)
                                                         <img
                                                             src="{{ asset('storage/' . $commitment->equipment->photo_path) }}"
-                                                            alt="Equipment"
+                                                            alt="{{ $commitment->equipment->make }} {{ $commitment->equipment->model }}"
                                                             class="w-10 h-10 object-cover rounded"
                                                         />
                                                     @else
@@ -352,7 +352,7 @@
                             <x-icon name="phosphor-tray" class="w-16 h-16 mx-auto opacity-50 mb-4" />
                             <p class="text-lg font-semibold mb-2">No Equipment Found</p>
                             <p class="text-sm">
-                                @if($searchQuery || $typeFilter || $statusFilter || $stationFilter)
+                                @if($searchQuery || $typeFilter || $statusFilter || $stationFilter !== null)
                                     No equipment matches your current filters.
                                 @else
                                     No equipment has been committed to this event yet.
@@ -433,7 +433,7 @@
                                     @if($ownerGroup['callsign'])
                                         <span class="font-mono text-sm text-base-content/60">({{ $ownerGroup['callsign'] }})</span>
                                     @endif
-                                    <x-badge value="{{ $ownerGroup['count'] }} items" class="badge-ghost" />
+                                    <x-badge value="{{ $ownerGroup['count'] }} {{ str('item')->plural($ownerGroup['count']) }}" class="badge-ghost" />
                                 </div>
                             </x-slot:title>
 
@@ -620,7 +620,7 @@
                                     @if($stationGroup['is_gota'])
                                         <x-badge value="GOTA" class="badge-warning badge-sm" />
                                     @endif
-                                    <x-badge value="{{ $stationGroup['count'] }} items" class="badge-ghost" />
+                                    <x-badge value="{{ $stationGroup['count'] }} {{ str('item')->plural($stationGroup['count']) }}" class="badge-ghost" />
                                 </div>
                             </x-slot:title>
 
@@ -750,7 +750,7 @@
                     @else
                         <div class="text-center py-4 text-base-content/60">
                             <x-icon name="phosphor-prohibit" class="w-12 h-12 mx-auto opacity-50 mb-2" />
-                            <p>No status transitions available from current status.</p>
+                            <p>No status changes are available.</p>
                         </div>
                     @endif
                 </div>
@@ -807,7 +807,7 @@
             @else
                 <div class="text-center py-4 text-base-content/60">
                     <x-icon name="phosphor-check-circle" class="w-12 h-12 mx-auto opacity-50 mb-2" />
-                    <p>All club equipment is already committed to this event.</p>
+                    <p>No club equipment is available to commit to this event.</p>
                 </div>
             @endif
 
