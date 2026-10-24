@@ -352,10 +352,12 @@
                                                     tooltip="Edit Role"
                                                     aria-label="Edit Role"
                                                 />
+                                                {{-- A double-quoted string inside a component attribute stops Blade compiling the tag --}}
+                                                @php $deleteMessage = "Delete '{$role->name}'? Its shifts will be deleted too. A role with assigned shifts can't be deleted."; @endphp
                                                 <x-button
                                                     icon="phosphor-trash"
                                                     class="btn-ghost btn-sm text-error btn-square"
-                                                    x-on:click="askConfirm({ message: {{ Js::from("Delete '" . $role->name . "'? Its shifts will be deleted too. A role with assigned shifts can't be deleted.") }}, confirmLabel: 'Delete Role', action: 'deleteRole', args: [{{ $role->id }}] })"
+                                                    x-on:click="askConfirm({ message: {{ Js::from($deleteMessage) }}, confirmLabel: 'Delete Role', action: 'deleteRole', args: [{{ $role->id }}] })"
                                                     tooltip="Delete Role"
                                                     aria-label="Delete Role"
                                                 />

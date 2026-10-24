@@ -78,6 +78,16 @@ describe('access control', function () {
 // =============================================================================
 
 describe('role management', function () {
+    test('each role has a delete button', function () {
+        $html = Livewire::actingAs($this->admin)->test(ManageSchedule::class)
+            ->set('activeTab', 'roles')
+            ->html();
+
+        // Compiled into a real button, not left as a raw <x-button> tag.
+        expect($html)->not->toContain('<x-button')
+            ->toMatch('/<button[^>]*Delete \\\\u0027Station Operator\\\\u0027\\?[^>]*aria-label="Delete Role"/');
+    });
+
     test('can create a custom role', function () {
         $this->actingAs($this->admin);
 
