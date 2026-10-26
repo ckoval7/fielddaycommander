@@ -63,32 +63,36 @@ Props:
         "
     @endif
 >
-    <select
-        x-ref="band"
-        @change="onChange()"
-        @keydown="onKeydown($event)"
-        :disabled="switching"
-        class="select select-sm text-base w-[4.5rem] sm:w-24 font-mono font-semibold touch-manipulation"
-        aria-label="Band"
-        data-band-switch
-    >
-        @foreach($bands as $band)
-            <option value="{{ $band->id }}" @selected($band->id === $session->band_id)>{{ $band->name }}</option>
-        @endforeach
-    </select>
-    <select
-        x-ref="mode"
-        @change="onChange()"
-        @keydown="onKeydown($event)"
-        :disabled="switching"
-        class="select select-sm text-base w-[7.25rem] sm:w-32 font-mono font-semibold touch-manipulation"
-        aria-label="Mode"
-        data-mode-switch
-    >
-        @foreach($modes as $mode)
-            <option value="{{ $mode->id }}" @selected($mode->id === $session->mode_id)>{{ $mode->name }}</option>
-        @endforeach
-    </select>
+    <label class="contents">
+        <span class="sr-only">Band</span>
+        <select
+            x-ref="band"
+            @change="onChange()"
+            @keydown="onKeydown($event)"
+            :disabled="switching"
+            class="select select-sm text-base w-[4.5rem] sm:w-24 font-mono font-semibold touch-manipulation"
+            data-band-switch
+        >
+            @foreach($bands as $band)
+                <option value="{{ $band->id }}" @selected($band->id === $session->band_id)>{{ $band->name }}</option>
+            @endforeach
+        </select>
+    </label>
+    <label class="contents">
+        <span class="sr-only">Mode</span>
+        <select
+            x-ref="mode"
+            @change="onChange()"
+            @keydown="onKeydown($event)"
+            :disabled="switching"
+            class="select select-sm text-base w-[7.25rem] sm:w-32 font-mono font-semibold touch-manipulation"
+            data-mode-switch
+        >
+            @foreach($modes as $mode)
+                <option value="{{ $mode->id }}" @selected($mode->id === $session->mode_id)>{{ $mode->name }}</option>
+            @endforeach
+        </select>
+    </label>
     <span x-show="staged" x-cloak class="text-xs text-base-content/70 whitespace-nowrap">
         <kbd class="kbd kbd-xs">Enter</kbd> to switch
     </span>

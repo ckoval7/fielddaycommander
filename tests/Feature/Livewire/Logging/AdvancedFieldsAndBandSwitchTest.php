@@ -169,8 +169,8 @@ describe('band/mode switch', function () {
         $this->actingAs($this->user);
 
         Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-            ->assertSeeHtml('aria-label="Band"')
-            ->assertSeeHtml('aria-label="Mode"')
+            ->assertSeeHtml('<span class="sr-only">Band</span>')
+            ->assertSeeHtml('<span class="sr-only">Mode</span>')
             ->assertSeeHtml('<option value="'.$this->forty->id.'"')
             ->assertSeeHtml('touch-manipulation')
             ->assertDontSee('end this session and start a new one');
