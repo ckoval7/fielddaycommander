@@ -11,6 +11,55 @@
  * Usage in Blade:
  *   <div x-data="contactQueue(sessionId, csrfToken)">
  */
+/** Where the Advanced Fields panel's open state is kept on this device. */
+const ADVANCED_OPEN_KEY = 'fd-commander-advanced-open';
+
+/** Where a half-typed contact waits while a band/mode switch loads the new session. */
+const SWITCH_DRAFT_KEY = 'fd-commander-switch-draft';
+
+/** RST (59, 599) or a digital-mode dB report (-10, +05). Matches AdvancedContactFields. */
+const RST_PATTERN = /^([1-5][1-9][1-9]?|[+-]\d{1,2})$/;
+
+/** A 4- or 6-character Maidenhead locator. */
+const GRID_PATTERN = /^[A-R]{2}\d{2}([A-X]{2})?$/i;
+
+/** Words that switch mode when typed alone in the exchange box, by mode category. */
+const MODE_COMMANDS = {
+    CW: 'CW',
+    PH: 'Phone',
+    PHONE: 'Phone',
+    SSB: 'Phone',
+    VOICE: 'Phone',
+    DIG: 'Digital',
+    DIGI: 'Digital',
+    DIGITAL: 'Digital',
+    DATA: 'Digital',
+};
+
+function emptyAdvancedFields(frequency = '') {
+    return { frequency, rst_sent: '', rst_received: '', grid_square: '', contact_name: '', notes: '' };
+}
+
+function readStorage(storage, key) {
+    try {
+        return storage.getItem(key);
+    } catch {
+        return null;
+    }
+}
+
+function writeStorage(storage, key, value) {
+    try {
+        if (value === null) {
+            storage.removeItem(key);
+        } else {
+            storage.setItem(key, value);
+        }
+    } catch {
+        // Private windows and blocked storage: the feature still works for this page.
+    }
+}
+
 export default function contactQueue(sessionId, csrfToken, sessionContext) {
     return {
         queue: [],
@@ -33,9 +82,20 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         clockOffsetMs: Number.isFinite(sessionContext?.server_time_ms)
             ? sessionContext.server_time_ms - Date.now()
             : 0,
+        // Advanced Fields. Frequency stays set between contacts; the rest
+        // clear once a contact is queued.
+        advanced: emptyAdvancedFields(),
+        advancedOpen: readStorage(localStorage, ADVANCED_OPEN_KEY) === '1',
+        // The fields as they were before a recall loaded a contact's own.
+        advancedBeforeRecall: null,
+        // {band_id, name} when a dial frequency is on another band.
+        offBandSuggestion: null,
+        switching: false,
+        switchError: '',
 
         init() {
             this.loadQueue();
+            this.restoreSwitchDraft();
 
             globalThis.addEventListener('online', () => {
                 this.isOnline = true;
@@ -123,6 +183,14 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 && this.queue.some(c => c.status !== 'synced');
         },
 
+        /**
+         * Queued contacts that belong to this session. Contacts carried over
+         * from a band/mode switch count toward the session they were made in.
+         */
+        get sessionQueueCount() {
+            return this.queue.filter(c => c.operating_session_id === sessionId).length;
+        },
+
         get failedCount() {
             return this.failedContacts.length;
         },
@@ -183,6 +251,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 gota_operator_last_name: contactData.gota_operator_last_name || null,
                 gota_operator_callsign: contactData.gota_operator_callsign || null,
                 gota_operator_user_id: contactData.gota_operator_user_id || null,
+                ...this.emptyToNull(contactData.advanced ?? {}),
                 qso_time: new Date(this.serverNow()).toISOString(),
                 clock_offset_ms: this.clockOffsetMs,
                 status: 'pending',
@@ -207,6 +276,12 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 return;
             }
 
+            const command = this.parseSwitchCommand(rawInput);
+            if (command) {
+                void this.switchBandMode(command.band_id, command.mode_id, { keepDraft: false });
+                return;
+            }
+
             if (sessionContext.is_gota && !this.hasGotaOperator()) {
                 this.parseError = 'Enter the GOTA operator in the GOTA Operator panel before logging.';
                 return;
@@ -214,6 +289,9 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             const parsed = this.parseExchange(rawInput);
             if (!parsed) return; // parseError already set
+
+            const advanced = this.parseAdvancedFields();
+            if (!advanced) return; // parseError already set
 
             this.enqueue({
                 band_id: sessionContext.band_id,
@@ -229,11 +307,13 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 gota_operator_last_name: sessionContext.gota_operator_last_name || null,
                 gota_operator_callsign: sessionContext.gota_operator_callsign || null,
                 gota_operator_user_id: sessionContext.gota_operator_user_id || null,
+                advanced,
             });
 
             // Clear input and refocus
             inputEl.value = '';
             this.parseError = '';
+            this.advanced = emptyAdvancedFields(this.advanced.frequency);
             // Sync Livewire state so wire:model.live stays in sync
             const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
             if (wire) {
@@ -310,6 +390,254 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             this.parseError = '';
             return { callsign, section_id: sectionId, section_code: sectionCode, transmitter_count, class_code };
+        },
+
+        /**
+         * Check and convert the Advanced Fields for queuing, or return null
+         * with parseError set. A frequency on another band offers a switch.
+         */
+        parseAdvancedFields() {
+            this.offBandSuggestion = null;
+            const fields = this.advanced;
+            const result = {};
+
+            const frequency = String(fields.frequency ?? '').trim();
+            if (frequency !== '') {
+                const mhz = Number(frequency.replace(',', '.'));
+                if (!Number.isFinite(mhz) || mhz <= 0) {
+                    this.parseError = `Invalid frequency: ${frequency} (enter MHz, e.g. 14.074)`;
+                    return null;
+                }
+                const bandId = this.bandIdForMhz(mhz);
+                const range = sessionContext.band_ranges?.[sessionContext.band_id];
+                if (range && bandId !== sessionContext.band_id) {
+                    if (bandId) {
+                        this.offBandSuggestion = { band_id: bandId, name: sessionContext.band_ranges[bandId].name };
+                        this.parseError = `${frequency} MHz is on ${this.offBandSuggestion.name}, not ${range.name}.`;
+                    } else {
+                        this.parseError = `${frequency} MHz is not on ${range.name}.`;
+                    }
+                    return null;
+                }
+                result.frequency_hz = Math.round(mhz * 1_000_000);
+            }
+
+            for (const [field, label] of [['rst_sent', 'sent'], ['rst_received', 'received']]) {
+                const value = String(fields[field] ?? '').trim().toUpperCase();
+                if (value !== '' && !RST_PATTERN.test(value)) {
+                    this.parseError = `Invalid ${label} report: ${value} (e.g. 59, 599, or -10)`;
+                    return null;
+                }
+                result[field] = value;
+            }
+
+            const grid = String(fields.grid_square ?? '').trim();
+            if (grid !== '' && !GRID_PATTERN.test(grid)) {
+                this.parseError = `Invalid grid square: ${grid} (e.g. FN31 or FN31pr)`;
+                return null;
+            }
+            result.grid_square = grid === '' ? '' : grid.slice(0, 4).toUpperCase() + grid.slice(4).toLowerCase();
+            result.contact_name = String(fields.contact_name ?? '').trim().slice(0, 50);
+            result.notes = String(fields.notes ?? '').trim().slice(0, 500);
+
+            return result;
+        },
+
+        /**
+         * The band a frequency in MHz falls on, or null.
+         */
+        bandIdForMhz(mhz) {
+            for (const [id, range] of Object.entries(sessionContext.band_ranges ?? {})) {
+                if (mhz >= range.low && mhz <= range.high) {
+                    return Number(id);
+                }
+            }
+            return null;
+        },
+
+        /**
+         * Blank strings as null, so the server stores nothing rather than ''.
+         */
+        emptyToNull(fields) {
+            return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, value === '' ? null : value]));
+        },
+
+        get frequencyPlaceholder() {
+            return String(sessionContext.band_ranges?.[sessionContext.band_id]?.low ?? '');
+        },
+
+        get reportPlaceholder() {
+            return { CW: '599', Phone: '59', Digital: '-10' }[sessionContext.mode_category] ?? '59';
+        },
+
+        /** Digital reports need a minus sign, which phone number pads don't have. */
+        get reportInputMode() {
+            return sessionContext.mode_category === 'Digital' ? 'text' : 'numeric';
+        },
+
+        /**
+         * Clear what was typed for this contact. The frequency stays.
+         */
+        clearAdvanced() {
+            this.advanced = emptyAdvancedFields(this.advanced.frequency);
+            this.offBandSuggestion = null;
+        },
+
+        toggleAdvanced(focusFirst = false) {
+            this.advancedOpen = !this.advancedOpen;
+            writeStorage(localStorage, ADVANCED_OPEN_KEY, this.advancedOpen ? '1' : '0');
+            if (this.advancedOpen && focusFirst) {
+                // After x-show has displayed the panel; a hidden field can't take focus.
+                this.$nextTick(() => requestAnimationFrame(() => document.getElementById('log-frequency')?.focus()));
+            } else if (!this.advancedOpen) {
+                document.getElementById('exchange-input')?.focus();
+            }
+        },
+
+        /**
+         * A band and/or mode typed alone in the exchange box ("40M", "40",
+         * "CW", "20M CW"), as the session it switches to, or null when the
+         * input is anything else.
+         */
+        parseSwitchCommand(input) {
+            const tokens = input.toUpperCase().trim().split(/\s+/);
+            if (tokens.length === 0 || tokens.length > 2) {
+                return null;
+            }
+
+            let bandId = null;
+            let modeId = null;
+            for (const token of tokens) {
+                const band = (sessionContext.bands ?? []).find(b =>
+                    b.name.toUpperCase() === token || b.name.toUpperCase() === `${token}M`
+                );
+                const category = MODE_COMMANDS[token];
+                const mode = category ? (sessionContext.modes ?? []).find(m => m.category === category) : null;
+
+                if (band && bandId === null) {
+                    bandId = band.id;
+                } else if (mode && modeId === null) {
+                    modeId = mode.id;
+                } else {
+                    return null;
+                }
+            }
+
+            return {
+                band_id: bandId ?? sessionContext.band_id,
+                mode_id: modeId ?? sessionContext.mode_id,
+            };
+        },
+
+        /**
+         * End this session and continue on another band and mode. Contacts
+         * still waiting to sync move to the new session's queue (they keep
+         * their own session, band and mode), the frequency comes along when
+         * it's on the new band, and with keepDraft so does the half-typed
+         * contact.
+         */
+        async switchBandMode(bandId, modeId, { keepDraft = true } = {}) {
+            bandId = Number(bandId);
+            modeId = Number(modeId);
+            this.switchError = '';
+
+            if (this.switching || (bandId === sessionContext.band_id && modeId === sessionContext.mode_id)) {
+                return;
+            }
+            if (!navigator.onLine) {
+                this.switchError = 'You are offline. Reconnect to change band or mode.';
+                return;
+            }
+
+            this.switching = true;
+            let result;
+            try {
+                result = await this.$wire.switchBandMode(bandId, modeId);
+            } catch (e) {
+                console.warn('Band/mode switch failed:', e);
+                result = null;
+            }
+
+            if (!result?.ok) {
+                this.switching = false;
+                this.switchError = result?.message ?? 'Band and mode could not be changed. Try again.';
+                return;
+            }
+
+            this.carryQueueTo(result.session_id);
+
+            // The frequency rides along when it's on the new band. With
+            // keepDraft, so does the contact being typed.
+            const input = document.getElementById('exchange-input');
+            const range = sessionContext.band_ranges?.[bandId];
+            const mhz = Number(String(this.advanced.frequency ?? '').replace(',', '.'));
+            const keepFrequency = range && Number.isFinite(mhz) && mhz >= range.low && mhz <= range.high;
+            writeStorage(sessionStorage, SWITCH_DRAFT_KEY, JSON.stringify({
+                session_id: result.session_id,
+                exchange: keepDraft ? (input?.value ?? '') : '',
+                advanced: {
+                    ...(keepDraft ? this.advanced : emptyAdvancedFields()),
+                    frequency: keepFrequency ? this.advanced.frequency : '',
+                },
+            }));
+
+            if (globalThis.Livewire?.navigate) {
+                globalThis.Livewire.navigate(result.url);
+            } else {
+                globalThis.location.assign(result.url);
+            }
+        },
+
+        /**
+         * Move every unsynced contact into another session's stored queue.
+         */
+        carryQueueTo(newSessionId) {
+            const waiting = this.queue.filter(c => c.status !== 'synced');
+            if (waiting.length === 0) {
+                return;
+            }
+            const key = `fd-commander-queue-${newSessionId}`;
+            let existing = [];
+            try {
+                existing = JSON.parse(readStorage(localStorage, key) ?? '[]');
+            } catch {
+                existing = [];
+            }
+            const known = new Set(existing.map(c => c.uuid));
+            writeStorage(localStorage, key, JSON.stringify([...waiting.filter(c => !known.has(c.uuid)), ...existing]));
+            this.queue = [];
+            writeStorage(localStorage, this.storageKey, null);
+        },
+
+        /**
+         * Refill the composer with what was being typed when the band or
+         * mode was switched.
+         */
+        restoreSwitchDraft() {
+            const raw = readStorage(sessionStorage, SWITCH_DRAFT_KEY);
+            if (!raw) {
+                return;
+            }
+            writeStorage(sessionStorage, SWITCH_DRAFT_KEY, null);
+            try {
+                const draft = JSON.parse(raw);
+                if (draft.session_id !== sessionId) {
+                    return;
+                }
+                this.advanced = { ...emptyAdvancedFields(), ...draft.advanced };
+                if (draft.exchange) {
+                    this.$nextTick(() => {
+                        const input = document.getElementById('exchange-input');
+                        if (input) {
+                            input.value = draft.exchange;
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            input.focus();
+                        }
+                    });
+                }
+            } catch {
+                // A malformed draft is dropped; the operator retypes.
+            }
         },
 
         /**
@@ -398,6 +726,12 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                         gota_operator_last_name: candidate.gota_operator_last_name || null,
                         gota_operator_callsign: candidate.gota_operator_callsign || null,
                         gota_operator_user_id: candidate.gota_operator_user_id || null,
+                        frequency_hz: candidate.frequency_hz ?? null,
+                        rst_sent: candidate.rst_sent ?? null,
+                        rst_received: candidate.rst_received ?? null,
+                        grid_square: candidate.grid_square ?? null,
+                        contact_name: candidate.contact_name ?? null,
+                        notes: candidate.notes ?? null,
                     }),
                 });
 
@@ -511,6 +845,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     exchangeClass: entry.exchange_class,
                     section: entry.section_code || '',
                     fullExchange: `${entry.callsign} ${entry.exchange_class} ${entry.section_code || ''}`.trim(),
+                    advanced: this.advancedFromStored(entry),
                 });
             }
 
@@ -537,6 +872,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                         exchangeClass,
                         section,
                         fullExchange: `${callsign} ${exchangeClass} ${section}`,
+                        advanced: this.advancedFromStored(JSON.parse(row.dataset.advanced || '{}')),
                     });
                 }
             });
@@ -613,6 +949,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             inputEl.value = contact.fullExchange;
             this.recalledExchange = contact.fullExchange;
+            this.advancedBeforeRecall ??= { ...this.advanced };
+            this.advanced = contact.advanced ?? emptyAdvancedFields();
 
             if (contact.source === 'queue') {
                 this.recalledUuid = contact.uuid;
@@ -649,6 +987,10 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             this.recalledContactId = null;
             this.recalledUuid = null;
             this.recalledExchange = '';
+            if (this.advancedBeforeRecall) {
+                this.advanced = this.advancedBeforeRecall;
+                this.advancedBeforeRecall = null;
+            }
             if (inputEl) {
                 inputEl.value = '';
                 const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
@@ -699,9 +1041,14 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     // parseError is already set by parseExchange; stay in recall mode.
                     return;
                 }
+                const advanced = this.parseAdvancedFields();
+                if (!advanced) {
+                    return;
+                }
 
                 const entry = this.queue.find(c => c.uuid === this.recalledUuid);
                 if (entry) {
+                    Object.assign(entry, this.emptyToNull(advanced));
                     entry.callsign = parsed.callsign;
                     entry.section_id = parsed.section_id;
                     entry.section_code = parsed.section_code;
@@ -726,13 +1073,58 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             // Server-sourced edit: delegate to Livewire.
             if (this.recalledContactId) {
+                const advanced = this.parseAdvancedFields();
+                if (!advanced) {
+                    return;
+                }
                 const contactId = this.recalledContactId;
                 const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
                 if (wire) {
-                    wire.call('updateContact', contactId, exchange);
+                    wire.call('updateContact', contactId, exchange, this.emptyToNull(advanced));
                 }
                 this.exitRecall(inputEl);
             }
+        },
+
+        /**
+         * The QSO log's details line for a queued contact. Mirrors
+         * AdvancedContactFields::summary().
+         */
+        queuedSummary(contact) {
+            const reports = contact.rst_sent || contact.rst_received
+                ? `${contact.rst_sent || '–'}/${contact.rst_received || '–'}`
+                : null;
+            return [
+                contact.frequency_hz ? String(contact.frequency_hz / 1_000_000) : null,
+                reports,
+                contact.grid_square,
+                contact.contact_name,
+            ].filter(Boolean).join(' · ');
+        },
+
+        /**
+         * A short note of what's filled in, shown on the Advanced Fields
+         * toggle while the panel is closed.
+         */
+        get advancedSummary() {
+            const a = this.advanced;
+            const reports = a.rst_sent || a.rst_received ? `${a.rst_sent || '–'}/${a.rst_received || '–'}` : null;
+            return [a.frequency ? `${a.frequency} MHz` : null, reports, a.grid_square, a.contact_name, a.notes ? 'note' : null]
+                .filter(Boolean).join(' · ');
+        },
+
+        /**
+         * Advanced Fields form values from a queued or server contact.
+         */
+        advancedFromStored(stored) {
+            return {
+                frequency: stored.frequency_hz ? String(stored.frequency_hz / 1_000_000) : '',
+                rst_sent: stored.rst_sent ?? '',
+                rst_received: stored.rst_received ?? '',
+                grid_square: stored.grid_square ?? '',
+                contact_name: stored.contact_name ?? '',
+                notes: stored.notes ?? '',
+            };
         },
 
         loadQueue() {

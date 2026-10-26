@@ -7,6 +7,7 @@ namespace App\Services;
 
 use App\Models\Contact;
 use App\Models\EventConfiguration;
+use App\Support\AdvancedContactFields;
 
 /**
  * Builds an ADIF 3.1 log of an event's creditable contacts.
@@ -192,12 +193,18 @@ class AdifExporter
             'QSO_DATE' => $time->format('Ymd'),
             'TIME_ON' => $time->format('His'),
             'BAND' => $this->adifBand($contact->band?->name),
+            'FREQ' => AdvancedContactFields::formatMhz($contact->frequency_hz),
             'MODE' => $mode,
             'SUBMODE' => $submode,
             'CLASS' => $contact->exchange_class,
             'ARRL_SECT' => $contact->section?->code,
             'STATION_CALLSIGN' => $isGota ? $config->gota_callsign : $config->callsign,
             'OPERATOR' => $operator ? strtoupper($operator) : null,
+            'RST_SENT' => $contact->rst_sent,
+            'RST_RCVD' => $contact->rst_received,
+            'GRIDSQUARE' => $contact->grid_square,
+            'NAME' => $contact->contact_name,
+            'COMMENT' => $contact->notes !== null ? preg_replace('/\s+/', ' ', $contact->notes) : null,
         ];
 
         $line = '';

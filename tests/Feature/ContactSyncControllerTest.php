@@ -691,3 +691,86 @@ test('with the developer fake clock set, contacts stamped on the server clock ar
         ->assertUnprocessable()
         ->assertJson(['code' => 'qso_time_in_future', 'server_time' => $fakeNow->getTimestampMs()]);
 });
+
+/**
+ * Put the session on 20m so dial frequencies can be checked against a known range.
+ *
+ * @return array<string, mixed>
+ */
+function twentyMeterPayload(object $test, array $advanced): array
+{
+    $band = Band::firstOrCreate(['name' => '20m'], ['meters' => 20, 'frequency_mhz' => 14.0, 'allowed_fd' => true, 'sort_order' => 6]);
+    $test->session->update(['band_id' => $band->id]);
+
+    return [
+        ...syncPayload($test, now()),
+        'band_id' => $band->id,
+        ...$advanced,
+    ];
+}
+
+test('syncing a contact stores its advanced fields', function () {
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', twentyMeterPayload($this, [
+            'frequency_hz' => 14_074_000,
+            'rst_sent' => '599',
+            'rst_received' => ' 579 ',
+            'grid_square' => 'fn31PR',
+            'contact_name' => ' Bob ',
+            'notes' => 'Big signal',
+        ]))
+        ->assertCreated();
+
+    expect(Contact::sole())
+        ->frequency_hz->toBe(14_074_000)
+        ->rst_sent->toBe('599')
+        ->rst_received->toBe('579')
+        ->grid_square->toBe('FN31pr')
+        ->contact_name->toBe('Bob')
+        ->notes->toBe('Big signal');
+});
+
+test('syncing a contact stores blank advanced fields as null', function () {
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', twentyMeterPayload($this, [
+            'frequency_hz' => null,
+            'rst_sent' => '',
+            'grid_square' => '  ',
+        ]))
+        ->assertCreated();
+
+    expect(Contact::sole())
+        ->frequency_hz->toBeNull()
+        ->rst_sent->toBeNull()
+        ->grid_square->toBeNull();
+});
+
+test('syncing a contact accepts digital-mode dB reports', function () {
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', twentyMeterPayload($this, ['rst_sent' => '-10', 'rst_received' => '+05']))
+        ->assertCreated();
+
+    expect(Contact::sole()->rst_sent)->toBe('-10');
+});
+
+test('syncing a contact rejects malformed advanced fields', function (array $advanced, string $field) {
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', twentyMeterPayload($this, $advanced))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors($field);
+
+    expect(Contact::count())->toBe(0);
+})->with([
+    'RST out of range' => [['rst_sent' => '699'], 'rst_sent'],
+    'RST with letters' => [['rst_received' => '5NN'], 'rst_received'],
+    'grid too short' => [['grid_square' => 'FN3'], 'grid_square'],
+    'grid out of range' => [['grid_square' => 'ZZ31'], 'grid_square'],
+    'name too long' => [['contact_name' => str_repeat('A', 51)], 'contact_name'],
+]);
+
+test('syncing a contact rejects a dial frequency on another band', function () {
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', twentyMeterPayload($this, ['frequency_hz' => 7_074_000]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['frequency_hz' => '7.074 MHz is not on 20m.']);
+});

@@ -14,7 +14,13 @@ exitRecall(input), recallUp(input) and recallDown(input). The Livewire
 component must provide exchangeInput, suggestions, selectSuggestion() and
 clearInput().
 
+With $advanced, the enclosing Alpine scope must also provide advanced,
+advancedOpen, advancedSummary, toggleAdvanced(focusFirst), clearAdvanced(),
+offBandSuggestion, frequencyPlaceholder, reportPlaceholder and
+reportInputMode.
+
 Props:
+- $advanced: bool - Show the Advanced Fields panel (frequency, reports, grid, name, notes)
 - $placeholder: string - Example exchange shown in the empty input
 - $suggestions: array - Autocomplete suggestions from the Livewire component
 - $duplicateWarning: string|null - Duplicate warning to show, if any
@@ -25,6 +31,7 @@ Slots:
 --}}
 
 @props([
+    'advanced' => false,
     'placeholder' => 'W1AW 3A CT',
     'suggestions' => [],
     'duplicateWarning' => null,
@@ -83,7 +90,7 @@ Slots:
                         ? (si = -1)
                         : (isRecalling
                             ? exitRecall($refs.exchangeInput)
-                            : (($refs.exchangeInput.value = ''), $wire.clearInput()))
+                            : (($refs.exchangeInput.value = ''), $wire.clearInput()@if($advanced), clearAdvanced()@endif))
                 "
                 @keydown.arrow-down.prevent="
                     $wire.suggestions?.length > 0
@@ -105,7 +112,10 @@ Slots:
                         $event.preventDefault();
                         $wire.selectSuggestion($wire.suggestions[si].exchange);
                         si = -1;
-                    }
+                    }@if($advanced) else if (advancedOpen && ! $event.shiftKey) {
+                        $event.preventDefault();
+                        document.getElementById('log-frequency')?.focus();
+                    }@endif
                 "
                 @contact-logged.window="$refs.exchangeInput.focus(); $refs.exchangeInput.select(); si = -1"
                 @suggestion-selected.window="$nextTick(() => { $refs.exchangeInput.focus(); si = -1 })"
@@ -152,6 +162,7 @@ Slots:
                     icon="phosphor-x"
                     class="btn-ghost btn-lg flex-1 sm:flex-initial"
                     wire:click="clearInput"
+                    x-on:click="{{ $advanced ? 'clearAdvanced()' : '' }}"
                     tooltip="Esc"
                     tooltip-position="tooltip-bottom"
                 />
@@ -177,4 +188,127 @@ Slots:
             </div>
         </template>
     </div>
+
+    @if($advanced)
+        @php
+            // Enter logs (or saves a recalled contact) from any field; Esc goes back to the exchange.
+            $fieldKeys = '@keydown.enter.prevent="isRecalling ? saveRecalled($refs.exchangeInput) : logContact($refs.exchangeInput)" '
+                .'@keydown.escape.prevent="$refs.exchangeInput.focus()"';
+        @endphp
+        <div
+            data-advanced-fields
+            @keydown.window="
+                if ($event.altKey && ! $event.ctrlKey && ! $event.metaKey && $event.code === 'KeyA') {
+                    $event.preventDefault();
+                    toggleAdvanced(true);
+                }
+            "
+        >
+            <button
+                type="button"
+                class="btn btn-ghost btn-sm gap-1.5 px-2 font-normal"
+                @click="toggleAdvanced(true)"
+                :aria-expanded="advancedOpen"
+                aria-controls="log-advanced-panel"
+            >
+                <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform motion-reduce:transition-none" ::class="advancedOpen && 'rotate-90'" />
+                <span>Advanced fields</span>
+                <span x-show="!advancedOpen && advancedSummary" x-text="advancedSummary" class="font-mono text-xs text-base-content/60 truncate max-w-48 sm:max-w-80"></span>
+                <kbd class="kbd kbd-xs max-sm:hidden pointer-coarse:hidden">Alt+A</kbd>
+            </button>
+
+            <div
+                id="log-advanced-panel"
+                x-show="advancedOpen"
+                x-cloak
+                class="grid grid-cols-6 sm:grid-cols-12 gap-2 pt-1"
+            >
+                <label class="col-span-2 flex flex-col gap-1">
+                    <span class="text-xs text-base-content/70">Freq (MHz)</span>
+                    <input
+                        id="log-frequency"
+                        type="text"
+                        x-model="advanced.frequency"
+                        @input="offBandSuggestion = null"
+                        @keydown.shift.tab="$event.preventDefault(); $refs.exchangeInput.focus()"
+                        {!! $fieldKeys !!}
+                        inputmode="decimal"
+                        autocomplete="off"
+                        maxlength="12"
+                        :placeholder="frequencyPlaceholder"
+                        class="input input-sm w-full font-mono"
+                    />
+                </label>
+                <label class="col-span-2 sm:col-span-1 flex flex-col gap-1">
+                    <span class="text-xs text-base-content/70">RST sent</span>
+                    <input
+                        id="log-rst-sent"
+                        type="text"
+                        x-model="advanced.rst_sent"
+                        {!! $fieldKeys !!}
+                        :inputmode="reportInputMode"
+                        autocomplete="off"
+                        maxlength="4"
+                        :placeholder="reportPlaceholder"
+                        class="input input-sm w-full font-mono"
+                    />
+                </label>
+                <label class="col-span-2 sm:col-span-1 flex flex-col gap-1">
+                    <span class="text-xs text-base-content/70">RST rcvd</span>
+                    <input
+                        id="log-rst-received"
+                        type="text"
+                        x-model="advanced.rst_received"
+                        {!! $fieldKeys !!}
+                        :inputmode="reportInputMode"
+                        autocomplete="off"
+                        maxlength="4"
+                        :placeholder="reportPlaceholder"
+                        class="input input-sm w-full font-mono"
+                    />
+                </label>
+                <label class="col-span-3 sm:col-span-2 flex flex-col gap-1">
+                    <span class="text-xs text-base-content/70">Grid</span>
+                    <input
+                        id="log-grid"
+                        type="text"
+                        x-model="advanced.grid_square"
+                        {!! $fieldKeys !!}
+                        autocomplete="off"
+                        autocapitalize="characters"
+                        autocorrect="off"
+                        spellcheck="false"
+                        maxlength="6"
+                        placeholder="FN31pr"
+                        class="input input-sm w-full font-mono"
+                    />
+                </label>
+                <label class="col-span-3 sm:col-span-2 flex flex-col gap-1">
+                    <span class="text-xs text-base-content/70">Name</span>
+                    <input
+                        id="log-contact-name"
+                        type="text"
+                        x-model="advanced.contact_name"
+                        {!! $fieldKeys !!}
+                        autocomplete="off"
+                        autocapitalize="words"
+                        maxlength="50"
+                        class="input input-sm w-full"
+                    />
+                </label>
+                <label class="col-span-6 sm:col-span-4 flex flex-col gap-1">
+                    <span class="text-xs text-base-content/70">Notes</span>
+                    <input
+                        id="log-notes"
+                        type="text"
+                        x-model="advanced.notes"
+                        {!! $fieldKeys !!}
+                        autocomplete="off"
+                        maxlength="500"
+                        class="input input-sm w-full"
+                    />
+                </label>
+            </div>
+        </div>
+    @endif
 </div>

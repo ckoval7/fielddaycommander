@@ -76,4 +76,43 @@ class BandResolverService
 
         return null;
     }
+
+    /**
+     * Whether a frequency in Hz falls inside a band. Bands with no known
+     * range (Satellite) accept any frequency.
+     */
+    public function bandContainsFrequencyHz(Band $band, int $frequencyHz): bool
+    {
+        $range = self::BAND_RANGES_MHZ[strtolower($band->name)] ?? null;
+
+        if ($range === null) {
+            return true;
+        }
+
+        $frequencyMhz = $frequencyHz / 1_000_000;
+
+        return $frequencyMhz >= $range[0] && $frequencyMhz <= $range[1];
+    }
+
+    /**
+     * Frequency ranges keyed by band id, for checking a dial frequency in
+     * the browser before a contact is queued.
+     *
+     * @param  iterable<Band>  $bands
+     * @return array<int, array{name: string, low: float, high: float}>
+     */
+    public function rangesFor(iterable $bands): array
+    {
+        $ranges = [];
+
+        foreach ($bands as $band) {
+            $range = self::BAND_RANGES_MHZ[strtolower($band->name)] ?? null;
+
+            if ($range !== null) {
+                $ranges[$band->id] = ['name' => $band->name, 'low' => $range[0], 'high' => $range[1]];
+            }
+        }
+
+        return $ranges;
+    }
 }
