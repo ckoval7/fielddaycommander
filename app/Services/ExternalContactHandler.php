@@ -162,6 +162,8 @@ class ExternalContactHandler
             'section_id' => $sectionId,
             'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange),
             'power_watts' => $session->power_watts,
+            ...$dto->advancedFields,
+            'adif_fields' => $dto->adifFields,
             'is_gota_contact' => (bool) $station->is_gota,
             'external_id' => $dto->externalId !== null ? $this->storableExternalId($dto->externalId, $config->id, $dto->source) : null,
             'external_source' => $dto->source,
@@ -328,6 +330,10 @@ class ExternalContactHandler
             'submode' => $dto->modeName !== null ? $this->storableSubmode($dto->modeName, $dto) : $contact->submode,
             'section_id' => $sectionId,
             'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange) ?? $contact->exchange_class,
+            // A replace carries the logger's full record, so what it sends
+            // wins; fields it leaves out keep their values.
+            ...$dto->advancedFields,
+            'adif_fields' => $dto->adifFields ?? $contact->adif_fields,
         ]);
 
         // Re-settles both the group the contact left and the one it joined,

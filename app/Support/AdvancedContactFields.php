@@ -27,6 +27,36 @@ final class AdvancedContactFields
      */
     public const GRID_PATTERN = '/^[A-R]{2}\d{2}([A-X]{2})?$/i';
 
+    /**
+     * Any locator ADIF allows in GRIDSQUARE: 2, 4, 6 or 8 characters.
+     */
+    public const ADIF_GRID_PATTERN = '/^[A-R]{2}(\d{2}([A-X]{2}(\d{2})?)?)?$/i';
+
+    /**
+     * ADIF tags read into these fields, by field.
+     *
+     * @var array<string, string>
+     */
+    public const ADIF_TAGS = [
+        'frequency_hz' => 'FREQ',
+        'rst_sent' => 'RST_SENT',
+        'rst_received' => 'RST_RCVD',
+        'grid_square' => 'GRIDSQUARE',
+        'contact_name' => 'NAME',
+        'notes' => 'COMMENT',
+    ];
+
+    /**
+     * ADIF tags the export always builds from the contact itself, so a
+     * stored copy from the original record is never written back over them.
+     *
+     * @var array<int, string>
+     */
+    public const DERIVED_ADIF_TAGS = [
+        'CALL', 'QSO_DATE', 'TIME_ON', 'BAND', 'FREQ', 'MODE', 'SUBMODE',
+        'CLASS', 'ARRL_SECT', 'STATION_CALLSIGN', 'OPERATOR',
+    ];
+
     public const NAME_MAX = 50;
 
     public const NOTES_MAX = 500;
@@ -90,6 +120,58 @@ final class AdvancedContactFields
     }
 
     /**
+     * Read the advanced fields from an ADIF record (or tags shaped like one)
+     * and set aside every other tag, so the record can be written back out
+     * whole. A value that doesn't fit its field (a "5NN" report, an
+     * over-long name) is kept with the other tags rather than lost.
+     *
+     * @param  array<string, string|null>  $tags  ADIF tags, upper-case names
+     * @return array{fields: array<string, mixed>, extra: array<string, string>}
+     */
+    public static function fromAdif(array $tags): array
+    {
+        $fields = [];
+        $extra = [];
+
+        foreach ($tags as $tag => $value) {
+            $tag = strtoupper((string) $tag);
+            $value = trim((string) $value);
+
+            if ($value === '' || preg_match('/^[A-Z][A-Z0-9_]*$/', $tag) !== 1) {
+                continue;
+            }
+
+            $field = array_search($tag, self::ADIF_TAGS, true);
+            $fieldValue = $field !== false ? self::adifValue($field, $value) : null;
+
+            if ($fieldValue !== null) {
+                $fields[$field] = $fieldValue;
+            } elseif (! in_array($tag, self::DERIVED_ADIF_TAGS, true)) {
+                $extra[$tag] = $value;
+            }
+        }
+
+        return ['fields' => $fields, 'extra' => $extra];
+    }
+
+    /**
+     * An ADIF value as the field stores it, or null when it doesn't fit.
+     */
+    private static function adifValue(string $field, string $value): mixed
+    {
+        return match ($field) {
+            'frequency_hz' => is_numeric($value)
+                && ($hz = (int) round((float) $value * 1_000_000)) >= self::MIN_FREQUENCY_HZ
+                && $hz <= self::MAX_FREQUENCY_HZ ? $hz : null,
+            'rst_sent', 'rst_received' => preg_match(self::RST_PATTERN, strtoupper($value)) === 1 ? strtoupper($value) : null,
+            'grid_square' => preg_match(self::ADIF_GRID_PATTERN, $value) === 1 ? self::formatGrid($value) : null,
+            'contact_name' => mb_strlen($value) <= self::NAME_MAX ? $value : null,
+            'notes' => mb_strlen($value) <= self::NOTES_MAX ? $value : null,
+            default => null,
+        };
+    }
+
+    /**
      * Trim the fields, turn blanks into null, and write the grid square the
      * usual way (FN31pr).
      *
@@ -128,7 +210,8 @@ final class AdvancedContactFields
     }
 
     /**
-     * Upper-case field and square, lower-case subsquare: "fn31PR" -> "FN31pr".
+     * Upper-case field and square, lower-case subsquare: "fn31PR" -> "FN31pr"
+     * (an 8-character locator keeps its trailing digits).
      */
     public static function formatGrid(string $grid): string
     {
