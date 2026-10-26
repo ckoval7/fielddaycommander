@@ -255,14 +255,20 @@
             :subtitle="$this->earlierContacts->isNotEmpty() ? 'Earlier sessions greyed out' : 'Current session'"
         >
             <x-slot:cards>
-                {{-- Earlier sessions at this station, read-only --}}
-                @foreach($this->earlierContacts->reverse() as $contact)
-                    <x-logging.contact-card
-                        :contact="$contact"
-                        :readonly="true"
-                        :details="array_values(array_filter([$contact->band?->name.' '.$contact->mode?->name, $contact->exchange_class, $contact->section->code ?? '—', \App\Support\AdvancedContactFields::summary($contact)]))"
-                    />
+                {{-- Sessions this one continues through band/mode switches, read-only, a divider per session --}}
+                @foreach($this->earlierContacts->reverse()->groupBy('operating_session_id') as $sessionContacts)
+                    <x-logging.session-divider :session="$sessionContacts->first()->operatingSession" />
+                    @foreach($sessionContacts as $contact)
+                        <x-logging.contact-card
+                            :contact="$contact"
+                            :readonly="true"
+                            :details="array_values(array_filter([$contact->exchange_class, $contact->section->code ?? '—', \App\Support\AdvancedContactFields::summary($contact)]))"
+                        />
+                    @endforeach
                 @endforeach
+                @if($this->earlierContacts->isNotEmpty())
+                    <x-logging.session-divider :session="$operatingSession" :current="true" />
+                @endif
 
                 {{-- Server-confirmed --}}
                 @foreach($this->recentContacts->reverse() as $contact)
@@ -307,12 +313,18 @@
             </x-slot:extraColumns>
 
             <x-slot:rows>
-                {{-- Earlier sessions at this station, read-only --}}
-                @foreach($this->earlierContacts->reverse() as $contact)
-                    <x-logging.contact-row :contact="$contact" :readonly="true">
-                        <td class="font-mono text-xs text-base-content/70">{{ implode(' · ', array_filter([$contact->band?->name.' '.$contact->mode?->name, \App\Support\AdvancedContactFields::summary($contact)])) }}</td>
-                    </x-logging.contact-row>
+                {{-- Sessions this one continues through band/mode switches, read-only, a divider per session --}}
+                @foreach($this->earlierContacts->reverse()->groupBy('operating_session_id') as $sessionContacts)
+                    <x-logging.session-divider :session="$sessionContacts->first()->operatingSession" :row="true" />
+                    @foreach($sessionContacts as $contact)
+                        <x-logging.contact-row :contact="$contact" :readonly="true">
+                            <td class="font-mono text-xs text-base-content/70">{{ \App\Support\AdvancedContactFields::summary($contact) }}</td>
+                        </x-logging.contact-row>
+                    @endforeach
                 @endforeach
+                @if($this->earlierContacts->isNotEmpty())
+                    <x-logging.session-divider :session="$operatingSession" :current="true" :row="true" />
+                @endif
 
                 {{-- Server-confirmed contacts --}}
                 @foreach($this->recentContacts->reverse() as $contact)

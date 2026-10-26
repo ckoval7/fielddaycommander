@@ -84,6 +84,7 @@ class BandModeSwitchService
             return OperatingSession::create([
                 'station_id' => $session->station_id,
                 'operator_user_id' => $session->operator_user_id,
+                'previous_session_id' => $session->id,
                 'band_id' => $band->id,
                 'mode_id' => $mode->id,
                 'power_watts' => $session->power_watts,

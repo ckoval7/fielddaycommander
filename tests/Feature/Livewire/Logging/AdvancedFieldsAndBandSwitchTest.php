@@ -308,7 +308,7 @@ describe('advanced fields', function () {
 });
 
 describe('log after a switch', function () {
-    test('shows the operator\'s earlier contacts at this station greyed out and read-only', function () {
+    test('shows the contacts from before a switch greyed out and read-only under session dividers', function () {
         $this->actingAs($this->user);
 
         $earlier = Contact::factory()->create([
@@ -322,30 +322,64 @@ describe('log after a switch', function () {
             'qso_time' => now()->subMinutes(5),
         ]);
 
-        $otherOperatorSession = OperatingSession::factory()->create([
-            'station_id' => $this->station->id,
-            'operator_user_id' => User::factory()->create()->id,
-            'band_id' => $this->twenty->id,
-            'mode_id' => $this->cw->id,
-            'end_time' => now()->subHour(),
-        ]);
-        Contact::factory()->create([
-            'event_configuration_id' => $this->config->id,
-            'operating_session_id' => $otherOperatorSession->id,
-            'callsign' => 'W9NOTME',
-            'qso_time' => now()->subHours(2),
-        ]);
-
         $newSession = app(BandModeSwitchService::class)->switchTo($this->session, $this->forty->id, $this->phone->id);
+
+        expect($newSession->previous_session_id)->toBe($this->session->id);
 
         Livewire::test(LoggingInterface::class, ['operatingSession' => $newSession])
             ->assertSee('K1OLD')
-            ->assertSee('20m Phone')
             ->assertSeeHtml('data-earlier-session')
             ->assertSeeHtml('data-contact-uuid="'.$earlier->uuid.'"')
             ->assertDontSeeHtml('recallByContactId('.$earlier->id.')')
-            ->assertDontSee('W9NOTME')
+            ->assertSeeHtml('data-session-divider')
+            ->assertSeeInOrder(['20m Phone', 'K1OLD', '40m Phone'])
             ->assertSee('Earlier sessions greyed out');
+    });
+
+    test('follows a chain of switches back through every earlier session', function () {
+        $this->actingAs($this->user);
+
+        Contact::factory()->create([
+            'event_configuration_id' => $this->config->id,
+            'operating_session_id' => $this->session->id,
+            'callsign' => 'K1FIRST',
+            'qso_time' => now()->subMinutes(10),
+        ]);
+        $second = app(BandModeSwitchService::class)->switchTo($this->session, $this->forty->id, $this->phone->id);
+        Contact::factory()->create([
+            'event_configuration_id' => $this->config->id,
+            'operating_session_id' => $second->id,
+            'callsign' => 'K1SECOND',
+            'qso_time' => now()->subMinutes(5),
+        ]);
+        $third = app(BandModeSwitchService::class)->switchTo($second, $this->forty->id, $this->cw->id);
+
+        Livewire::test(LoggingInterface::class, ['operatingSession' => $third])
+            ->assertSeeInOrder(['20m Phone', 'K1FIRST', '40m Phone', 'K1SECOND', '40m CW']);
+    });
+
+    test('a session started fresh shows an empty log', function () {
+        $this->actingAs($this->user);
+
+        Contact::factory()->create([
+            'event_configuration_id' => $this->config->id,
+            'operating_session_id' => $this->session->id,
+            'callsign' => 'K1OLD',
+            'qso_time' => now()->subMinutes(5),
+        ]);
+        $this->session->update(['end_time' => now()->subMinute()]);
+
+        $fresh = OperatingSession::factory()->active()->create([
+            'station_id' => $this->station->id,
+            'operator_user_id' => $this->user->id,
+            'band_id' => $this->forty->id,
+            'mode_id' => $this->phone->id,
+        ]);
+
+        Livewire::test(LoggingInterface::class, ['operatingSession' => $fresh])
+            ->assertDontSee('K1OLD')
+            ->assertDontSeeHtml('data-session-divider')
+            ->assertSee('Current session');
     });
 
     test('keeps the GOTA operator across a switch', function () {
