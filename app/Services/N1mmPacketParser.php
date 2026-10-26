@@ -7,6 +7,7 @@ namespace App\Services;
 
 use App\DTOs\ExternalContactDto;
 use App\DTOs\ExternalRadioInfoDto;
+use App\Support\AdvancedContactFields;
 use Illuminate\Support\Carbon;
 
 class N1mmPacketParser
@@ -43,6 +44,17 @@ class N1mmPacketParser
     private function parseContact(\SimpleXMLElement $doc, bool $isReplace, bool $isDelete): ExternalContactDto
     {
         $operator = $this->extractString($doc, 'operator');
+        $frequencyHz = $this->convertN1mmFrequency($this->extractString($doc, 'rxfreq'));
+
+        // N1MM's own fields, read through the same checks as an ADIF record.
+        ['fields' => $advancedFields] = AdvancedContactFields::fromAdif([
+            'FREQ' => $frequencyHz !== null ? (string) ($frequencyHz / 1_000_000) : null,
+            'RST_SENT' => $this->extractString($doc, 'snt'),
+            'RST_RCVD' => $this->extractString($doc, 'rcv'),
+            'GRIDSQUARE' => $this->extractString($doc, 'gridsquare'),
+            'NAME' => $this->extractString($doc, 'name'),
+            'COMMENT' => $this->extractString($doc, 'comment'),
+        ]);
 
         return new ExternalContactDto(
             callsign: strtoupper(trim((string) $doc->call)),
@@ -52,7 +64,7 @@ class N1mmPacketParser
             modeName: $this->extractString($doc, 'mode'),
             operatorCallsign: $operator !== null ? strtoupper($operator) : null,
             stationIdentifier: $this->extractString($doc, 'StationName'),
-            frequencyHz: $this->convertN1mmFrequency($this->extractString($doc, 'rxfreq')),
+            frequencyHz: $frequencyHz,
             sentReport: $this->extractString($doc, 'snt'),
             sentExchange: $this->extractString($doc, 'sntnr'),
             receivedReport: $this->extractString($doc, 'rcv'),
@@ -64,6 +76,7 @@ class N1mmPacketParser
             isReplace: $isReplace,
             oldCallsign: $this->extractString($doc, 'oldcall'),
             oldTimestamp: $this->parseTimestamp($this->extractString($doc, 'oldtimestamp')),
+            advancedFields: $advancedFields,
         );
     }
 

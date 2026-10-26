@@ -9,6 +9,10 @@ use Illuminate\Support\Carbon;
 
 readonly class ExternalContactDto
 {
+    /**
+     * @param  array<string, mixed>  $advancedFields  Frequency, reports, grid, name and notes, keyed as stored on the contact
+     * @param  array<string, string>|null  $adifFields  Every other ADIF tag of the record, to write back out on export
+     */
     public function __construct(
         public string $callsign,
         public Carbon $timestamp,
@@ -30,5 +34,7 @@ readonly class ExternalContactDto
         public ?string $oldCallsign = null,
         public ?Carbon $oldTimestamp = null,
         public ?string $parentModeName = null,
+        public array $advancedFields = [],
+        public ?array $adifFields = null,
     ) {}
 }
