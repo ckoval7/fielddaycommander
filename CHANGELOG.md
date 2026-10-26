@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 26.10.13 - 2026-10-26
+
 ### Added
 
 - On **Log Contact**, **Advanced fields** opens a panel below the exchange box with **Freq (MHz)**, **RST sent**, **RST rcvd**, **Grid**, **Name**, and **Notes**. Alt+A opens or closes it, and this device remembers that choice. With the panel open, Tab from the exchange box moves through the fields in order. Shift+Tab from **Freq (MHz)** returns to the exchange box, Enter logs the contact or saves a recalled edit, and Esc returns to the exchange box. Frequency stays filled between contacts and after a band or mode switch if it belongs on the new band. The other fields clear after each contact. Signal reports accept values such as 59, 599, and -10. Grid squares accept 4 or 6 characters and are stored like FN31pr. The log shows frequency, reports, grid, and name in **Details**, or on the card line on phones. Recalling a contact with the up arrow also loads its advanced fields for editing.
