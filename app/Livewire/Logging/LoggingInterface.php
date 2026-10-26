@@ -26,6 +26,7 @@ use App\Support\AdvancedContactFields;
 use App\Support\BroadcastChannels;
 use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
@@ -88,8 +89,9 @@ class LoggingInterface extends Component
     }
 
     /**
-     * Refill the GOTA operator panel from the session's latest contact, so a
-     * page reload mid-session keeps the operator who's at the radio.
+     * Refill the GOTA operator panel from the latest contact this operator
+     * logged at this station, so a page reload or a band/mode switch keeps
+     * the operator who's at the radio.
      */
     protected function restoreGotaOperator(): void
     {
@@ -97,7 +99,8 @@ class LoggingInterface extends Component
             return;
         }
 
-        $lastContact = $this->operatingSession->contacts()
+        $lastContact = Contact::query()
+            ->whereIn('operating_session_id', $this->stationSessionIds())
             ->where(fn ($query) => $query->whereNotNull('gota_operator_user_id')
                 ->orWhereNotNull('gota_operator_first_name')
                 ->orWhereNotNull('gota_operator_callsign'))
@@ -184,7 +187,7 @@ class LoggingInterface extends Component
     {
         $this->operatingSession->refresh();
         $this->refreshBandModeWarning();
-        unset($this->recentContacts);
+        unset($this->recentContacts, $this->earlierContacts);
     }
 
     #[On('contact-discarded')]
@@ -604,6 +607,38 @@ class LoggingInterface extends Component
         ]);
 
         return implode(', ', $parts);
+    }
+
+    /**
+     * This operator's sessions at this station, the current one included.
+     *
+     * @return Collection<int, int>
+     */
+    protected function stationSessionIds(): Collection
+    {
+        return OperatingSession::query()
+            ->where('station_id', $this->operatingSession->station_id)
+            ->where('operator_user_id', $this->operatingSession->operator_user_id)
+            ->pluck('id');
+    }
+
+    /**
+     * Contacts from this operator's earlier sessions at this station, newest
+     * first, so a band/mode switch doesn't empty the log. Shown greyed out
+     * and read-only above this session's contacts.
+     *
+     * @return EloquentCollection<int, Contact>
+     */
+    #[Computed]
+    public function earlierContacts(): EloquentCollection
+    {
+        return Contact::query()
+            ->whereIn('operating_session_id', $this->stationSessionIds()->reject(fn ($id): bool => (int) $id === $this->operatingSession->id))
+            ->with(['section', 'band', 'mode'])
+            ->latest('qso_time')
+            ->latest('id')
+            ->limit(20)
+            ->get();
     }
 
     #[Computed]
