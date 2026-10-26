@@ -411,6 +411,7 @@ footer {
 .lightbox {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   max-width: none;
   max-height: none;
   margin: 0;
@@ -433,6 +434,7 @@ footer {
   display: block;
   max-width: min(100%, 1400px);
   max-height: calc(100vh - 10rem);
+  max-height: calc(100dvh - 10rem);
   width: auto;
   height: auto;
   margin: 0 auto;
@@ -464,6 +466,49 @@ footer {
   cursor: pointer;
 }
 .lightbox-close:hover { background: rgba(40, 48, 58, 0.95); }
+
+/* Portrait phones: fitting a wide screenshot to the screen width leaves it no
+   bigger than on the page, so fit it to the height and let it pan sideways */
+@media (orientation: portrait) and (max-width: 768px) {
+  .lightbox[open] {
+    display: block;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 4.5rem 0 1rem;
+  }
+  .lightbox img {
+    max-width: none;
+    max-height: calc(100vh - 8.5rem);
+    max-height: calc(100dvh - 8.5rem);
+    border-radius: 0;
+  }
+  .lightbox-caption {
+    position: sticky;
+    left: 0;
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+    margin: 0.75rem 1rem 0;
+  }
+}
+
+/* Short screens (phones in landscape): the page already shows the image
+   taller than the screen, so fill the width and let it scroll down */
+@media (max-height: 500px) {
+  .lightbox[open] {
+    display: block;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 0;
+  }
+  .lightbox img {
+    max-width: 100%;
+    max-height: none;
+    border: none;
+    border-radius: 0;
+  }
+  .lightbox-caption { margin: 0.75rem auto; width: max-content; max-width: calc(100% - 2rem); }
+  .lightbox-close { top: 0.5rem; right: 0.75rem; }
+}
 
 /* Page table of contents (how-to guides and FAQ), built by toc.js */
 .guide-layout h2,
