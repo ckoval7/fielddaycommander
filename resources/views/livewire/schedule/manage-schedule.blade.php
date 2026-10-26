@@ -4,15 +4,10 @@
 --}}
 <div
     x-data="{
-        confirmDialog: { message: '', confirmLabel: '', action: null, args: [], danger: true },
-        askConfirm({ message, confirmLabel, action, args = [], danger = true }) {
-            this.confirmDialog = { message, confirmLabel, action, args, danger };
-            this.$refs.confirmDialog.showModal();
-        },
-        runConfirmed() {
-            const { action, args } = this.confirmDialog;
-            this.$refs.confirmDialog.close();
-            this.$wire[action](...args);
+        async askConfirm({ message, confirmLabel, action, args = [], danger = true }) {
+            if (await this.$confirm({ message, confirmLabel, danger })) {
+                this.$wire[action](...args);
+            }
         },
     }"
 >
@@ -433,22 +428,6 @@
             </x-tabs>
         @endif
     </div>
-
-    {{-- In-page confirmation dialog (replaces browser confirm()) --}}
-    <dialog x-ref="confirmDialog" class="modal" wire:ignore.self>
-        <div class="modal-box max-w-sm">
-            <p class="text-base" x-text="confirmDialog.message"></p>
-            <div class="modal-action">
-                <form method="dialog">
-                    <button class="btn btn-ghost btn-sm">Cancel</button>
-                </form>
-                <button type="button" class="btn btn-sm" :class="confirmDialog.danger ? 'btn-error' : 'btn-success'" x-on:click="runConfirmed()" x-text="confirmDialog.confirmLabel"></button>
-            </div>
-        </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>Close</button>
-        </form>
-    </dialog>
 
     {{-- Role Form Modal --}}
     <x-modal wire:model="showRoleModal" title="{{ $editingRoleId ? 'Edit Role' : 'Add Custom Role' }}">

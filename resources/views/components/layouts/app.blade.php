@@ -454,6 +454,7 @@
         <x-station-mode-idle-warning />
     @endif
     <x-form-error-summary />
+    <x-confirm-dialog />
 
     {{-- Toast notification listener: bridges Livewire "toast" and "notify" events to MaryUI's window.toast() --}}
     <script>

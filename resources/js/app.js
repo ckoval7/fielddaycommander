@@ -8,6 +8,7 @@ import transcribeRecall from './components/transcribe-recall';
 import updatedAgo from './components/updated-ago';
 import { copyToClipboard } from './clipboard';
 import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
+import { confirmDialogPanel, registerConfirmDialog } from './components/confirm-dialog';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
 
@@ -30,6 +31,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('transcribeRecall', transcribeRecall);
     Alpine.data('updatedAgo', updatedAgo);
     Alpine.data('formErrorSummaryPanel', formErrorSummaryPanel);
+    Alpine.data('confirmDialogPanel', confirmDialogPanel);
     Alpine.data('flatpickr', flatpickrComponent);
     Alpine.magic('copy', () => copyToClipboard);
 });
@@ -57,6 +59,7 @@ globalThis.addEventListener('error', (event) => {
 // it runs before laravel/boost's BrowserLogger listener.
 document.addEventListener('livewire:init', () => {
     registerFormErrorSummary(globalThis.Alpine, globalThis.Livewire);
+    registerConfirmDialog(globalThis.Alpine, globalThis.Livewire);
 
     // Drop responses for components that are no longer on the page. A
     // wire:poll request can still be in flight when wire:navigate swaps the

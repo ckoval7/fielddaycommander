@@ -52,5 +52,6 @@ Like the TV dashboard it reloads itself on a 419 rather than leaving the page.
 
     <x-toast />
     <x-form-error-summary />
+    <x-confirm-dialog />
 </body>
 </html>
