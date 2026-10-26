@@ -12,12 +12,13 @@ Props:
 - $contact: Contact - The contact to show
 - $number: int|null - Running QSO number, or null when not numbered
 - $time: Carbon|null - Time to display (defaults to the UTC QSO time)
+- $readonly: bool - Greyed out and not recallable (a contact from an earlier session)
 
 Slots:
 - $slot: Extra cells, after Section
 --}}
 
-@props(['contact', 'number' => null, 'time' => null])
+@props(['contact', 'number' => null, 'time' => null, 'readonly' => false])
 
 @php
     $time ??= $contact->qso_time;
@@ -27,7 +28,9 @@ Slots:
     @if($contact->uuid)
         data-contact-uuid="{{ $contact->uuid }}"
     @endif
-    @if(! $contact->trashed())
+    @if($readonly)
+        data-earlier-session
+    @elseif(! $contact->trashed())
         @click="recallByContactId({{ $contact->id }})"
         @keydown.enter="recallByContactId({{ $contact->id }})"
         tabindex="0"
@@ -38,8 +41,8 @@ Slots:
     }"
     {{ $attributes->class([
         'opacity-40 line-through' => $contact->trashed(),
-        'opacity-50' => ! $contact->trashed() && $contact->is_duplicate,
-        'cursor-pointer hover:bg-base-200' => ! $contact->trashed(),
+        'opacity-50' => ! $contact->trashed() && ($contact->is_duplicate || $readonly),
+        'cursor-pointer hover:bg-base-200' => ! $contact->trashed() && ! $readonly,
     ]) }}>
     <td class="font-mono">{{ $number ?? '-' }}</td>
     <td class="font-mono">{{ $time->format('H:i') }}</td>

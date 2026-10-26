@@ -12,16 +12,35 @@ Props:
 - $contact: Contact - The contact to show
 - $time: Carbon|null - Time to display (defaults to the UTC QSO time)
 - $details: array<int, string>|null - Detail line parts (defaults to class and section)
+- $readonly: bool - Greyed out and not recallable (a contact from an earlier session)
 --}}
 
-@props(['contact', 'time' => null, 'details' => null])
+@props(['contact', 'time' => null, 'details' => null, 'readonly' => false])
 
 @php
     $time ??= $contact->qso_time;
     $details ??= [$contact->exchange_class, $contact->section->code ?? '—'];
 @endphp
 
-@if($contact->trashed())
+@if($readonly)
+    <div wire:key="card-{{ $contact->id }}"
+        data-earlier-session
+        @if($contact->uuid)
+            data-contact-uuid="{{ $contact->uuid }}"
+        @endif
+        class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 opacity-50">
+        <div class="min-w-0">
+            <div class="font-bold font-mono uppercase text-lg truncate">
+                {{ $contact->callsign }}
+                @if($contact->is_duplicate)
+                    <x-badge value="DUPE" class="badge-xs badge-warning ml-1" />
+                @endif
+            </div>
+            <div class="text-xs text-base-content/60 font-mono">{{ implode(' · ', $details) }}</div>
+        </div>
+        <span class="font-mono text-xs text-base-content/60 flex-shrink-0">{{ $time->format('H:i') }}</span>
+    </div>
+@elseif($contact->trashed())
     <div wire:key="card-{{ $contact->id }}"
         class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 opacity-40 line-through">
         <div class="min-w-0">
