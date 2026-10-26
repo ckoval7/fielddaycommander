@@ -5,6 +5,12 @@
 ### Fixed
 
 - Since 26.10.12, **Manage Schedule** > **Roles** showed only the edit (pencil) button for each role, so you couldn't delete roles. The delete (trash) button is back and still asks for confirmation, deletes the role's unassigned shifts, and refuses to delete a role with assigned shifts.
+- Entering the organization callsign in lowercase, such as w1abc, during setup or in **System Preferences** was rejected as an invalid callsign. It is now saved in uppercase, like operator callsigns. Setup also kept clearing the organization fields and weather email whenever a field failed validation. They now keep what you typed.
+- On the Shift Dashboard, the timeline's horizontal scrollbar could sit on top of the bottom role row in browsers with overlay scrollbars, such as Chrome and Edge on Windows 11. It now sits below the chart.
+- With GOTA contacts or dupes in the log, QSO counts disagreed between the dashboard, **Scoring**, **Logbook**, and the event dashboard, and **Logbook** included GOTA bonus points in **QSO Points**. QSO totals now count non-duplicate contacts including GOTA, **Total Logged** counts every contact, **Dupes** includes GOTA dupes, and **Logbook** separates GOTA bonus points from **QSO Points** and leaves out contacts the rules give no credit.
+- On **Scoring** and the event dashboard, a pending bonus could show as **Claimed** but contribute zero to its summary tile, and **Verified** and **Claimed** showed points while **Unclaimed** counted bonuses. All three tiles now count bonuses, with points or Winter Field Day objective multipliers below **Verified** and **Claimed**, and pending claims show what verification would award in both the tile and the row.
+- On phones, the header's **LIVE** / **Ends in** bar appeared after the page loaded and pushed the page down, so a quick tap on **Select Station** or another page could land on the wrong card. The countdown now takes its space from the first paint.
+- Reloading a GOTA station's logging screen mid-session left **GOTA Operator** blank even though the operator's name was saved on contacts. The panel now refills from the session's latest contact with operator details.
 
 ## 26.10.12 - 2026-10-23
 

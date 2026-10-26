@@ -86,7 +86,7 @@
                     </div>
                 </x-slot:menu>
 
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto pb-3">
                     <div style="min-width: max(100%, {{ 9 + $windowHours * 2.5 }}rem);">
                         {{-- Time axis --}}
                         <div class="grid grid-cols-[6rem_1fr] sm:grid-cols-[9rem_1fr] border-b border-base-300">

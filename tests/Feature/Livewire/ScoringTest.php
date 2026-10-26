@@ -267,6 +267,25 @@ it('counts total, valid, and duplicate contacts', function () {
     expect($component->duplicateRate)->toBe(28.6);
 });
 
+it('counts GOTA contacts and dupes the same way the dashboard and logbook do', function () {
+    $config = makeActiveEvent();
+    $band = Band::first();
+    $mode = Mode::first();
+    $attributes = ['event_configuration_id' => $config->id, 'band_id' => $band->id, 'mode_id' => $mode->id];
+
+    Contact::factory()->count(4)->create($attributes);
+    Contact::factory()->gota()->count(2)->create($attributes + ['points' => 5]);
+    Contact::factory()->gota()->duplicate()->create($attributes);
+
+    $component = Livewire::test(Scoring::class);
+
+    expect($component->totalContacts)->toBe(7)
+        ->and($component->validContacts)->toBe(6)
+        ->and($component->mainStationContacts)->toBe(4)
+        ->and($component->duplicateCount)->toBe(1)
+        ->and($component->gotaContactCount)->toBe(2);
+});
+
 it('computes the band/mode grid', function () {
     $config = makeActiveEvent();
     $band = Band::first();
@@ -387,6 +406,30 @@ it('lists bonuses with claimed-unverified status', function () {
         ->first(fn ($b) => $b['type']->id === $bonusType->id);
 
     expect($entry['status'])->toBe('claimed');
+});
+
+it('values a pending claim at what verifying it would award', function () {
+    $config = makeActiveEvent();
+    $bonusType = BonusType::where('event_type_id', $this->eventType->id)
+        ->where('code', 'web_submission')
+        ->first();
+
+    EventBonus::factory()->create([
+        'event_configuration_id' => $config->id,
+        'bonus_type_id' => $bonusType->id,
+        'is_verified' => false,
+        'calculated_points' => 0,
+    ]);
+
+    $component = Livewire::test(Scoring::class);
+
+    $entry = collect($component->bonusList)
+        ->first(fn ($b) => $b['type']->id === $bonusType->id);
+
+    expect($entry['points'])->toBe($bonusType->base_points)
+        ->and($component->bonusSummary['claimed_pts'])->toBe($bonusType->base_points)
+        ->and($component->bonusSummary['claimed_count'])->toBe(1)
+        ->and($component->bonusSummary['verified_count'])->toBe(0);
 });
 
 it('lists unclaimed bonuses', function () {

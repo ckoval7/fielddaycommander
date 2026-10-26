@@ -152,7 +152,7 @@
                                     </td>
                                 @endforeach
                                 <td class="pt-2 text-right pl-2 tabular-nums" style="color: var(--score-text);">
-                                    {{ $this->validContacts }}
+                                    {{ $this->mainStationContacts }}
                                 </td>
                                 <td class="pt-2 text-right pl-2 tabular-nums" style="color: var(--score-text);">
                                     {{ $this->qsoBasePoints }}
@@ -161,6 +161,11 @@
                         </tfoot>
                     </table>
                 </div>
+                @if ($this->gotaContactCount > 0)
+                    <p class="text-xs -mt-2 mb-4" style="color: var(--score-text-muted);">
+                        GOTA contacts aren't in this table. They score as the GOTA bonus.
+                    </p>
+                @endif
             @else
                 <div class="text-sm py-4 text-center mb-4" style="color: var(--score-text-muted);">
                     No contacts logged yet.
@@ -204,6 +209,7 @@
                         <div class="text-xl font-semibold tabular-nums mt-0.5" style="color: var(--score-text);">
                             {{ $this->gotaContactCount }}
                         </div>
+                        <div class="text-xs" style="color: var(--score-text-muted);">Included in valid QSOs</div>
                     </div>
                 @endif
             </div>
@@ -305,25 +311,31 @@
                 </div>
             @endif
 
-            {{-- Bonus summary totals --}}
+            {{-- Bonus summary totals: each tile counts awards, with what they're worth below --}}
             <div class="grid grid-cols-3 gap-2 mb-4 text-center">
                 <div>
                     <div class="text-xs uppercase tracking-wide" style="color: var(--score-text-muted);">Verified</div>
                     <div class="text-xl font-bold tabular-nums" style="color: var(--score-verified);">
+                        {{ $this->bonusSummary['verified_count'] }}
+                    </div>
+                    <div class="text-xs tabular-nums" style="color: var(--score-text-muted);">
                         @if ($this->awardsAreMultipliers)
-                            {{ $this->bonusSummary['verified_multiplier'] }}×
+                            OM ×{{ $this->bonusSummary['verified_multiplier'] }}
                         @else
-                            {{ number_format($this->bonusSummary['verified_pts']) }}
+                            {{ number_format($this->bonusSummary['verified_pts']) }} pts
                         @endif
                     </div>
                 </div>
                 <div>
                     <div class="text-xs uppercase tracking-wide" style="color: var(--score-text-muted);">Claimed</div>
                     <div class="text-xl font-bold tabular-nums" style="color: var(--score-warning);">
+                        {{ $this->bonusSummary['claimed_count'] }}
+                    </div>
+                    <div class="text-xs tabular-nums" style="color: var(--score-text-muted);">
                         @if ($this->awardsAreMultipliers)
-                            {{ $this->bonusSummary['claimed_multiplier'] }}×
+                            OM ×{{ $this->bonusSummary['claimed_multiplier'] }} pending
                         @else
-                            {{ number_format($this->bonusSummary['claimed_pts']) }}
+                            {{ number_format($this->bonusSummary['claimed_pts']) }} pts pending
                         @endif
                     </div>
                 </div>
@@ -361,6 +373,8 @@
                                   style="color: {{ $item['status'] !== 'unclaimed' ? 'var(--score-headline)' : 'var(--score-text-muted)' }};">
                                 @if ($item['type']->objective_multiplier !== null)
                                     OM ×{{ $item['type']->objective_multiplier }}
+                                @elseif ($item['status'] === 'claimed')
+                                    {{ $item['points'] }} pts
                                 @elseif ($item['points'] > 0)
                                     +{{ $item['points'] }}
                                 @else

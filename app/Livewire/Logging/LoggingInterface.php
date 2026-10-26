@@ -76,6 +76,35 @@ class LoggingInterface extends Component
 
         $this->operatingSession = $operatingSession;
         $this->refreshBandModeWarning();
+        $this->restoreGotaOperator();
+    }
+
+    /**
+     * Refill the GOTA operator panel from the session's latest contact, so a
+     * page reload mid-session keeps the operator who's at the radio.
+     */
+    protected function restoreGotaOperator(): void
+    {
+        if (! $this->operatingSession->station->is_gota) {
+            return;
+        }
+
+        $lastContact = $this->operatingSession->contacts()
+            ->where(fn ($query) => $query->whereNotNull('gota_operator_user_id')
+                ->orWhereNotNull('gota_operator_first_name')
+                ->orWhereNotNull('gota_operator_callsign'))
+            ->latest('qso_time')
+            ->latest('id')
+            ->first();
+
+        if (! $lastContact) {
+            return;
+        }
+
+        $this->gotaOperatorUserId = $lastContact->gota_operator_user_id;
+        $this->gotaOperatorFirstName = $lastContact->gota_operator_first_name ?? '';
+        $this->gotaOperatorLastName = $lastContact->gota_operator_last_name ?? '';
+        $this->gotaOperatorCallsign = $lastContact->gota_operator_callsign ?? '';
     }
 
     public function refreshBandModeWarning(): void

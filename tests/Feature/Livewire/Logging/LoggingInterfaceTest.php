@@ -493,6 +493,68 @@ test('GOTA station shows operator fields', function () {
         ->assertSee('Last Name');
 });
 
+test('GOTA operator panel is refilled from the latest contact after a reload', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'power_watts' => 100,
+        'qso_count' => 0,
+    ]);
+
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $gotaSession->id,
+        'qso_time' => now()->subMinutes(10),
+        'gota_operator_first_name' => 'Earlier',
+        'gota_operator_last_name' => 'Operator',
+        'gota_operator_callsign' => 'KC1OLD',
+    ]);
+
+    Contact::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $gotaSession->id,
+        'qso_time' => now()->subMinute(),
+        'gota_operator_first_name' => 'Jamie',
+        'gota_operator_last_name' => 'Rivera',
+        'gota_operator_callsign' => 'KC1NEW',
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $gotaSession])
+        ->assertSet('gotaOperatorFirstName', 'Jamie')
+        ->assertSet('gotaOperatorLastName', 'Rivera')
+        ->assertSet('gotaOperatorCallsign', 'KC1NEW')
+        ->assertSet('gotaOperatorUserId', null);
+});
+
+test('GOTA operator panel starts empty when the session has no contacts', function () {
+    $this->actingAs($this->user);
+
+    $gotaStation = Station::factory()->gota()->create([
+        'event_configuration_id' => $this->config->id,
+    ]);
+
+    $gotaSession = OperatingSession::factory()->active()->create([
+        'station_id' => $gotaStation->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'power_watts' => 100,
+        'qso_count' => 0,
+    ]);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $gotaSession])
+        ->assertSet('gotaOperatorFirstName', '')
+        ->assertSet('gotaOperatorCallsign', '');
+});
+
 test('non-GOTA station does not show operator fields', function () {
     $this->actingAs($this->user);
 
